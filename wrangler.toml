@@ -6,7 +6,7 @@ compatibility_date = "2025-09-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "socal-lights"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "789bcc2e-76b8-4b6e-9007-29311d506fb2"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
