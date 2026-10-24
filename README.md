@@ -1,5 +1,9 @@
 # SoCal Lights Finder
 
+**Live:** https://socal-lights.pages.dev · **Admin:** https://socal-lights.pages.dev/admin/ (Cloudflare Access, rey@forza-tek.com)
+
+Setup below is already done for this project; it's kept for reference.
+
 Christmas light displays, boat parades and holiday events across Southern California on a street-level map, plus a "Showcase a House" gallery where homeowners and installers post their lights.
 
 Runs entirely on Cloudflare's free tier:
