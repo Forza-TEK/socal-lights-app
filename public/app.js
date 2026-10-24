@@ -76,7 +76,12 @@ function fitSoCal(animate) { map.fitBounds(SOCAL, { padding: padding(), duration
 function easeToPoint(lng, lat, minZoom = 12) { map.easeTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), minZoom), padding: padding(), duration: 600 }); }
 
 let mapReady = false;
-map.on("load", () => {
+// Add our layers as soon as the base style is parsed ("style.load"), not on "load",
+// which waits for every base-map tile and can stall on a slow or failed tile request.
+map.on("style.load", initLayers);
+map.on("load", initLayers);
+function initLayers() {
+  if (mapReady || map.getSource("pts")) return;
   const C = { ink: cssVar("--ink") || "#1d2433", free: "#1f6b4f", paid: "#c9361f", fav: "#b7790f", inst: "#2f6fa8" };
   map.addSource("pts", { type: "geojson", data: fc([]), cluster: true, clusterMaxZoom: 11, clusterRadius: 44 });
   map.addSource("hl", { type: "geojson", data: fc([]) });
@@ -115,7 +120,7 @@ map.on("load", () => {
   mapReady = true;
   fitSoCal(false);
   drawMap();
-});
+}
 
 const fc = (features) => ({ type: "FeatureCollection", features });
 const pt = (lng, lat, props) => ({ type: "Feature", geometry: { type: "Point", coordinates: [lng, lat] }, properties: props });
