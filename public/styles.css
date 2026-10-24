@@ -7,14 +7,16 @@
   --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
   --panel-w:410px;
+  --pumpkin:#c2410c; --season:var(--pine);
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root{
   --bg:#10151f; --surface:#171e2b; --ink:#ece6da; --muted:#9aa2b5; --line:#2a3345; --shadow:0 8px 28px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.4);
   --bulb:#ff7a5c; --bulb-soft:#3a2026; --pine:#5fc59a; --pine-soft:#173129; --gold:#f2b84b; --gold-soft:#33291a; --ice:#7fb6e6; --ice-soft:#1a2b3d;
-  --focus:#8fb0ff; color-scheme:dark}}
+  --focus:#8fb0ff; --pumpkin:#ea7a2f; color-scheme:dark}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+:root[data-season="halloween"]{--season:var(--pumpkin)}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -39,6 +41,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seasonbar{flex:none;display:inline-flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.seasonbar button{border:0;background:none;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:800;color:var(--muted);cursor:pointer}
+.seasonbar button[aria-selected="true"]{background:var(--season);color:#fff}
+.datetile.live{background:var(--gold-soft);color:var(--gold)}
 .chip .caret{font-size:10px;opacity:.7}
 .pop{position:fixed;z-index:60;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px;min-width:220px;max-width:min(320px,calc(100vw - 24px));display:grid;gap:8px}
 .pop h4{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}

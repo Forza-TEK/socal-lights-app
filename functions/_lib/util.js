@@ -28,7 +28,7 @@ export function rowToPost(r, admin = false) {
   const p = {
     id: r.id, biz: r.biz, title: r.title, city: r.city, county: r.county,
     lat: r.lat, lng: r.lng, web: r.web || "", phone: r.phone || "", where: r.where_txt || "",
-    desc: r.descr, photos: JSON.parse(r.photos || "[]"), created: r.created_at,
+    desc: r.descr, photos: JSON.parse(r.photos || "[]"), created: r.created_at, season: r.season || "christmas",
   };
   if (admin) { p.status = r.status; p.contact_email = r.contact_email || ""; p.approved = r.approved_at; }
   return p;
@@ -38,7 +38,7 @@ export function rowToEvent(r) {
   return {
     id: r.id, n: r.name, c: r.county, city: r.city, t: r.type, s: r.start_date, e: r.end_date,
     st: r.status === "confirmed" ? "c" : "e", free: !!r.free, p: r.price || "", h: r.hours || "",
-    lat: r.lat, lng: r.lng, b: r.blurb || "", u: r.url || "",
+    lat: r.lat, lng: r.lng, b: r.blurb || "", u: r.url || "", sn: r.season || "christmas",
   };
 }
 

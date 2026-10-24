@@ -2,6 +2,7 @@
 // Saves the post as 'pending' and its photos under pending/<id>/ in R2.
 import { json, err, clean, safeUrl, newId, verifyTurnstile, nearestCounty } from "../_lib/util.js";
 import { CITY } from "../../public/cities.js";
+import { SEASONS } from "../../public/seasons.js";
 
 const MAX_PHOTOS = 8;
 const MAX_BYTES = 6 * 1024 * 1024; // the browser resizes photos first, so real uploads are far smaller
@@ -37,6 +38,7 @@ export async function onRequestPost({ request, env }) {
   const web = safeUrl(webRaw);
   const phone = clean(form.get("phone"), 80);
   const where = clean(form.get("where"), 120);
+  const season = SEASONS[form.get("season")] ? form.get("season") : "christmas";
 
   if (!biz || !title || !descr) return err(400, "Fill in your name or business, display name and description.");
   if (!CITY[city]) return err(400, "Choose a city from the list.");
@@ -70,9 +72,9 @@ export async function onRequestPost({ request, env }) {
 
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email)
-       VALUES (?,'pending',?,?,?,?,?,?,?,?,?,?,?,?)`
-    ).bind(id, biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email),
+      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season)
+       VALUES (?,'pending',?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    ).bind(id, biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);

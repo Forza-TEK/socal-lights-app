@@ -1,12 +1,13 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js";
+import { SEASONS, TYPE_SHORT, defaultSeason } from "/seasons.js";
 
 /* ---------- constants & helpers ---------- */
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 const SOCAL = [[-120.15, 32.5], [-115.45, 35.0]];
 const COUNTIES = ["Los Angeles", "Orange", "Riverside", "San Bernardino", "San Diego", "Ventura", "Santa Barbara"];
-const TYPE = { walk: "Walk-through lights", drive: "Drive-by / neighborhood", parade: "Boat & street parades", park: "Theme parks & zoos", tree: "Tree lightings & villages", tour: "Tours & rides" };
-const TYPE_SHORT = { walk: "Walk-through", drive: "Drive-by", parade: "Parade", park: "Park / zoo", tree: "Tree lighting", tour: "Tour / ride" };
+// Today in Southern California, as YYYY-MM-DD
+const TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
 const M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -24,13 +25,15 @@ const miles = (a, b) => { const R = 3958.8, r = (x) => x * Math.PI / 180, dLa = 
 
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};
-const state = { q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", inView: true, sel: null, hot: null, detail: null, start: "" };
+const state = { season: defaultSeason(TODAY), q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", inView: true, sel: null, hot: null, detail: null, start: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
 const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify([...favs])); } catch {} };
 
 const CITY_OPTS = { ...CITY };
 const nearCity = (lat, lng) => { if (!state.city) return true; const c = CITY_OPTS[state.city]; return !c || miles({ lat, lng }, { lat: c[0], lng: c[1] }) <= state.radius; };
 function evMatch(ev) {
+  if ((ev.sn || "christmas") !== state.season) return false;
+  if (ev.e < TODAY) return false; // past events drop off automatically
   if (state.q && !(ev.n + " " + ev.city + " " + ev.c).toLowerCase().includes(state.q)) return false;
   if (state.counties.size && !state.counties.has(ev.c)) return false;
   if (!nearCity(ev.lat, ev.lng)) return false;
@@ -42,6 +45,7 @@ function evMatch(ev) {
   return true;
 }
 function instMatch(p) {
+  if ((p.season || "christmas") !== state.season) return false;
   if (state.q && !(p.biz + " " + p.title + " " + p.city + " " + p.desc).toLowerCase().includes(state.q)) return false;
   if (state.counties.size && !state.counties.has(p.county)) return false;
   if (!nearCity(p.lat, p.lng)) return false;
@@ -171,7 +175,7 @@ function renderPreview() {
   if (!it || (state.detail === state.sel && !isPhone())) { pv.hidden = true; return; }
   if (it.kind === "ev") {
     const ev = it.ev, [, m, d] = ev.s.split("-").map(Number);
-    pv.innerHTML = `<div class="datetile${ev.free ? " free" : ""}"><span>${M[m - 1]}</span><b>${d}</b><span>${ev.s === ev.e ? "one night" : "opens"}</span></div><div class="pv-body"><strong>${esc(ev.n)}</strong><div class="meta">${esc(ev.city)} · ${esc(ev.p)}</div><div class="dates">${range(ev)}</div></div><button class="x" type="button" aria-label="Close">×</button>`;
+    pv.innerHTML = `${datetile(ev)}<div class="pv-body"><strong>${esc(ev.n)}</strong><div class="meta">${esc(ev.city)} · ${esc(ev.p)}</div><div class="dates">${range(ev)}</div></div><button class="x" type="button" aria-label="Close">×</button>`;
   } else {
     const p = it.p, ph = p.photos || [];
     pv.innerHTML = `<div class="pv-img">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="">` : `<span class="meta">No photo</span>`}</div><div class="pv-body"><span class="tag ice" style="justify-self:start">Showcased house</span><strong>${esc(p.title)}</strong><div class="meta">${esc(p.biz)} · ${esc(p.city)}${ph.length > 1 ? ` · ${ph.length} photos` : ""}</div></div><button class="x" type="button" aria-label="Close">×</button>`;
@@ -187,7 +191,15 @@ function fitRoute() { const st = routeStops(); if (st.length < 2 || !mapReady) r
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
 let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (!state.detail && state.tab !== "plan") renderPanel(); }, 80); }
 function counts() { $("#n-events").textContent = E.filter(evMatch).length; $("#n-inst").textContent = SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; }
-function datetile(ev) { const [, m, d] = ev.s.split("-").map(Number); return `<div class="datetile${ev.free ? " free" : ""}"><span>${M[m - 1]}</span><b>${d}</b><span>${ev.s === ev.e ? "1 night" : "opens"}</span></div>`; }
+function datetile(ev) {
+  // Running now: "THRU 31 OCT". One night: "OCT 31 1 night". Upcoming: "NOV 27 opens".
+  const live = ev.s <= TODAY && ev.e >= TODAY && ev.s !== ev.e;
+  const [, m, d] = (live ? ev.e : ev.s).split("-").map(Number);
+  const top = live ? "thru" : M[m - 1];
+  const bottom = live ? M[m - 1] : ev.s === ev.e ? (ev.s === TODAY ? "today" : "1 night") : "opens";
+  return `<div class="datetile${ev.free ? " free" : ""}${live ? " live" : ""}"><span>${top}</span><b>${d}</b><span>${bottom}</span></div>`;
+}
+const effStart = (e) => (e.s > TODAY ? e.s : TODAY);
 function evItem(ev) {
   const f = favs.has(ev.id), k = "e:" + ev.id;
   return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${k}">${datetile(ev)}<div style="min-width:0"><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}</div><div class="tags"><span class="tag ${ev.free ? "free" : "paid"}">${esc(ev.p)}</span><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Confirmed" : "Expected"}</span></div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${f ? "★" : "☆"}</button></article>`;
@@ -203,7 +215,7 @@ function renderPanel() {
   head.hidden = false;
   const limit = `<label class="toggle"><input type="checkbox" id="inview" ${state.inView ? "checked" : ""}> Limit to map</label>`;
   if (state.tab === "events") {
-    const all = E.filter(evMatch).sort((a, b) => a.s.localeCompare(b.s) || a.n.localeCompare(b.n));
+    const all = E.filter(evMatch).sort((a, b) => effStart(a).localeCompare(effStart(b)) || a.e.localeCompare(b.e) || a.n.localeCompare(b.n));
     const vis = state.layers.events ? all.filter((e) => inView(e.lng, e.lat)) : [];
     head.innerHTML = `<span><b>${vis.length}</b> ${state.inView ? "in map view" : "events"}${state.date ? " · open " + fmt(state.date) : ""}</span>${limit}`;
     body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Layers.</div>`
@@ -212,8 +224,9 @@ function renderPanel() {
   } else if (state.tab === "inst") {
     const vis = SHOW.filter(instMatch).filter((p) => inView(p.plng, p.plat));
     head.innerHTML = `<span><b>${vis.length}</b> house${vis.length === 1 ? "" : "s"}${state.inView ? " in view" : ""}</span>${limit}`;
-    body.innerHTML = `<div class="cta"><h3>Showcase a House</h3>
-      <p style="margin:0;font-size:14px">Spent your weekends on a ladder getting it just right? Put your lights on the map. Families use this map to plan their nights out, and your house can sit right alongside the season's big shows.</p>
+    const sc = SEASONS[state.season].showcase;
+    body.innerHTML = `<div class="cta"><h3>${esc(sc.title)}</h3>
+      <p style="margin:0;font-size:14px">${esc(sc.pitch)}</p>
       <ul style="margin:0;padding-left:18px;font-size:13.5px;display:grid;gap:3px"><li>Free to post, up to 8 photos</li><li>Only your city is shown, never your address</li><li>Installers: link your website and phone, free advertising all season</li></ul>
       <div class="row"><button class="btn ice" type="button" id="openForm">Showcase a house</button></div></div>`
       + (SHOW.length ? (vis.length ? `<div class="list">${vis.map(instItem).join("")}</div>` : `<div class="empty">No showcased houses in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`)
@@ -286,6 +299,7 @@ function openForm() {
     <div class="two"><label for="fBiz">Your name or business<input id="fBiz" name="biz" maxlength="80" required autocomplete="organization" placeholder="e.g. The Garcia family, or Glow Pros"></label><label for="fTitle">Display name<input id="fTitle" name="title" maxlength="90" required placeholder="e.g. Music-synced rooftop show"></label></div>
     <div class="two"><label for="fCity">City<select id="fCity" name="city" required><option value="">Choose a city</option>${Object.keys(CITY).sort().map((c) => `<option>${esc(c)}</option>`).join("")}</select></label><label for="fEmail">Your email <span class="hint">private, only the site owner sees it</span><input id="fEmail" name="email" type="email" maxlength="120" required autocomplete="email"></label></div>
     <div class="two"><label for="fWeb">Website <span class="hint">optional</span><input id="fWeb" name="web" type="url" maxlength="200" placeholder="https://"></label><label for="fPhone">Phone for quotes <span class="hint">installers, optional, shown publicly</span><input id="fPhone" name="phone" maxlength="80"></label></div>
+    <label for="fSeason">Season<select id="fSeason" name="season">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === state.season ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label>
     <label for="fWhere">Where to see it <span class="hint">optional. Public spots only, never a client's street address. The map shows the city only.</span><input id="fWhere" name="where" maxlength="120" placeholder="e.g. Visible from Main St on weekend nights"></label>
     <label for="fDesc">About this house<textarea id="fDesc" name="desc" maxlength="1200" required placeholder="What you installed, how many lights, what makes it special"></textarea></label>
     <div class="drop" id="drop"><div><b style="color:var(--ink)">Photos</b> · up to 8. The first one is the cover.</div><div class="thumbs" id="thumbs"></div><div><label class="btn ghost" for="fPhotos" style="display:inline-flex">Choose photos</label><input id="fPhotos" type="file" accept="image/*" multiple hidden></div><div class="meta">Photos are resized on your device before upload. You can also drag them here.</div></div>
@@ -360,11 +374,11 @@ function setCity(n) {
 }
 function openPop(chip) {
   const k = chip.dataset.pop, p = $("#pop"); popFor = k; let h = "";
-  if (k === "date") h = `<h4>Open on</h4><input type="date" id="pDate" min="2026-11-01" max="2027-01-15" value="${state.date}"><button class="linkbtn" data-d="2026-11-27">Day after Thanksgiving (Nov 27)</button><button class="linkbtn" data-d="2026-12-12">Sat, Dec 12</button><button class="linkbtn" data-d="2026-12-19">Sat, Dec 19</button><button class="linkbtn" data-d="2026-12-23">Wed, Dec 23</button><button class="linkbtn" data-d="2026-12-31">New Year's Eve</button><button class="linkbtn" data-d="">Any date</button>`;
+  if (k === "date") { const S = SEASONS[state.season]; h = `<h4>Open on</h4><input type="date" id="pDate" min="${S.dateRange[0]}" max="${S.dateRange[1]}" value="${state.date}">${S.quickDates.filter(([d]) => d >= TODAY).map(([d, l]) => `<button class="linkbtn" data-d="${d}">${esc(l)}</button>`).join("")}<button class="linkbtn" data-d="${TODAY}">Today</button><button class="linkbtn" data-d="">Any date</button>`; }
   if (k === "city") h = `<h4>Near a city</h4><input type="search" id="pCityQ" placeholder="Type a city" aria-label="Find a city"><div class="citylist" id="pCityList"></div><h4>Within</h4><div class="seg">${[5, 10, 25].map((r) => `<button type="button" data-rad="${r}" class="${state.radius === r ? "on" : ""}">${r} mi</button>`).join("")}</div><button class="linkbtn" id="pAnyCity">Any city</button>`;
   if (k === "county") h = `<h4>Counties</h4>${COUNTIES.map((c) => `<label class="opt"><input type="checkbox" value="${c}" ${state.counties.has(c) ? "checked" : ""}> ${c}</label>`).join("")}<button class="linkbtn" id="pAllC">All counties</button>`;
   if (k === "cost") h = `<h4>Cost</h4><div class="seg">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-cost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div>`;
-  if (k === "type") h = `<h4>Type</h4><label class="opt"><input type="radio" name="pt" value="" ${!state.type ? "checked" : ""}> All types</label>${Object.entries(TYPE).map(([v, l]) => `<label class="opt"><input type="radio" name="pt" value="${v}" ${state.type === v ? "checked" : ""}> ${esc(l)}</label>`).join("")}`;
+  if (k === "type") h = `<h4>Type</h4><label class="opt"><input type="radio" name="pt" value="" ${!state.type ? "checked" : ""}> All types</label>${Object.entries(SEASONS[state.season].types).map(([v, l]) => `<label class="opt"><input type="radio" name="pt" value="${v}" ${state.type === v ? "checked" : ""}> ${esc(l)}</label>`).join("")}`;
   if (k === "layers") h = `<h4>Show on map</h4><label class="opt"><input type="checkbox" id="lEv" ${state.layers.events ? "checked" : ""}> <span class="tag paid">●</span> Events</label><label class="opt"><input type="checkbox" id="lIn" ${state.layers.inst ? "checked" : ""}> <span class="tag ice">●</span> Showcased houses</label>`;
   p.innerHTML = h; p.hidden = false;
   const r = chip.getBoundingClientRect(), pw = p.offsetWidth; p.style.top = r.bottom + 6 + "px"; p.style.left = Math.max(12, Math.min(r.left, innerWidth - pw - 12)) + "px";
@@ -386,6 +400,18 @@ function openPop(chip) {
   p.querySelectorAll("[data-cost]").forEach((b) => (b.onclick = () => { state.cost = b.dataset.cost; applyFilters(); closePop(); }));
   p.querySelectorAll("input[name=pt]").forEach((r) => (r.onchange = () => { state.type = r.value; applyFilters(); closePop(); }));
   const le = $("#lEv"), li = $("#lIn"); if (le) le.onchange = () => { state.layers.events = le.checked; applyFilters(); }; if (li) li.onchange = () => { state.layers.inst = li.checked; applyFilters(); };
+}
+function renderSeasonBar() {
+  const bar = $("#seasonbar"); if (!bar) return;
+  bar.innerHTML = Object.entries(SEASONS).map(([k, v]) => `<button type="button" role="tab" data-season="${k}" aria-selected="${k === state.season}">${esc(v.short)}</button>`).join("");
+  bar.querySelectorAll("[data-season]").forEach((b) => (b.onclick = () => setSeason(b.dataset.season)));
+  document.documentElement.dataset.season = state.season;
+}
+function setSeason(k) {
+  if (!SEASONS[k] || k === state.season) return;
+  state.season = k; state.type = ""; state.date = ""; state.sel = null; state.detail = null;
+  try { history.replaceState(null, "", "#" + k); } catch {}
+  renderSeasonBar(); applyFilters(); if (mapReady) fitSoCal(true);
 }
 function applyFilters() {
   $("#c-date").textContent = state.date ? "Open " + fmt(state.date) : "Any date";
@@ -437,8 +463,10 @@ async function load() {
   } catch {
     $("#pbody").innerHTML = `<div class="empty">Events couldn't load. Check your connection and refresh the page.</div>`; return;
   }
-  applyFilters();
-  if (location.hash === "#houses" || location.hash === "#showcase") { setTab("inst"); if (location.hash === "#showcase") openForm(); }
+  renderSeasonBar(); applyFilters();
+  const h = location.hash.slice(1);
+  if (SEASONS[h]) setSeason(h);
+  if (h === "houses" || h === "showcase") { setTab("inst"); if (h === "showcase") openForm(); }
 }
 setSheet("peek");
 let rT; addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); renderPanel(); }, 120); });
