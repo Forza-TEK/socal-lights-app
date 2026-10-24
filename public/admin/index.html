@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>SoCal Lights Admin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yeseva+One&family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  body{overflow:auto;background:var(--bg)}
+  .wrap{max-width:1000px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
+  header h1{font-family:var(--f-display);font-weight:400;font-size:28px;margin:0}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+  .tabs button{border:0;background:none;border-bottom:2.5px solid transparent;padding:10px 12px;font-weight:700;color:var(--muted);cursor:pointer}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--bulb)}
+  .cards{display:grid;gap:14px}
+  .acard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px}
+  .acard h3{margin:0;font-size:18px}
+  .pics{display:flex;gap:8px;overflow-x:auto}
+  .pics a img{height:120px;width:auto;border-radius:8px;display:block}
+  table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:12px;overflow:hidden;font-size:14px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .tablewrap{overflow-x:auto}
+  #pick{height:260px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>SoCal Lights Admin</h1>
+    <div class="row"><span class="meta" id="who">Checking sign-in…</span><a class="btn ghost" href="/">View site</a></div>
+  </header>
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" id="tab-pending" aria-selected="true">Waiting for review <span class="tag" id="nPending">0</span></button>
+    <button type="button" role="tab" id="tab-approved" aria-selected="false">Published houses</button>
+    <button type="button" role="tab" id="tab-events" aria-selected="false">Events</button>
+  </div>
+  <main id="main"><div class="empty">Loading…</div></main>
+</div>
+<div class="modal" id="modal" hidden></div>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script type="module" src="/admin/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# Cloudflare Pages project config. The IDs below are filled in during setup (see README).
+name = "socal-lights"
+pages_build_output_dir = "public"
+compatibility_date = "2025-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "socal-lights"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "socal-lights-photos"
+
+[vars]
+# Cloudflare Access (protects /admin). Fill in after setting up Access; see README step 6.
+ACCESS_TEAM_DOMAIN = ""      # e.g. "yourteam.cloudflareaccess.com"
+ACCESS_AUD = ""              # the Application Audience (AUD) tag
+# Cloudflare Turnstile public site key (the secret goes in a Pages secret named TURNSTILE_SECRET)
+TURNSTILE_SITE_KEY = ""
