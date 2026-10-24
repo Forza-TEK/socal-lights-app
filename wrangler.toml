@@ -15,7 +15,7 @@ bucket_name = "socal-lights-photos"
 
 [vars]
 # Cloudflare Access (protects /admin). Fill in after setting up Access; see README step 6.
-ACCESS_TEAM_DOMAIN = ""      # e.g. "yourteam.cloudflareaccess.com"
-ACCESS_AUD = ""              # the Application Audience (AUD) tag
+ACCESS_TEAM_DOMAIN = "still-rice-29b5.cloudflareaccess.com"      # e.g. "yourteam.cloudflareaccess.com"
+ACCESS_AUD = "a129de805c2dfbbc50b934ea12afe86921d58260e366e8aedd686db6878e1e3a"              # the Application Audience (AUD) tag
 # Cloudflare Turnstile public site key (the secret goes in a Pages secret named TURNSTILE_SECRET)
-TURNSTILE_SITE_KEY = ""
+TURNSTILE_SITE_KEY = "0x4AAAAAAFkk14dBx3bEsnCn"
