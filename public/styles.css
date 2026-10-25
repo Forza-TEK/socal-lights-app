@@ -93,6 +93,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 .item{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer}
 .item:hover,.item.hot{border-color:var(--ink)}
 .item.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-soft)}
+.mapspick{display:flex;align-items:center;gap:4px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.mapspick span{margin-right:4px}
+.mapspick button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:700;cursor:pointer}
+.mapspick button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
 .item.flash{animation:flash 1.4s ease-out}
 @keyframes flash{0%,35%{background:var(--gold-soft)}100%{background:var(--surface)}}
 @media (prefers-reduced-motion:reduce){.item.flash{animation:none}}

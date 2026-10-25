@@ -27,7 +27,25 @@ function destOf(ev) {
   const a = ev.a || "", v = ev.v || "";
   return !a ? ev.lat + "," + ev.lng : /^\d/.test(a) || a.includes("&") || !v || a.includes(v) ? a : v + ", " + a;
 }
-function dirUrl(ev) { return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destOf(ev)); }
+// Which maps app opens for directions: Apple Maps by default on iPhone/iPad, Google Maps elsewhere; the choice is remembered.
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const MAPS = { apple: "Apple Maps", google: "Google Maps" };
+let mapsApp = IS_IOS ? "apple" : "google";
+try { const v = localStorage.getItem("socal-maps"); if (MAPS[v]) mapsApp = v; } catch {}
+function setMapsApp(v) { if (!MAPS[v]) return; mapsApp = v; try { localStorage.setItem("socal-maps", v); } catch {} renderPanel(); }
+// stops: destination strings in order (last = final destination); origin: "" means "start from where I am"
+function navUrl(stops, origin) {
+  const dest = stops[stops.length - 1], way = stops.slice(0, -1), e = encodeURIComponent;
+  if (mapsApp === "apple") {
+    // Apple's unified Maps URLs (iOS 18.4+) take repeated waypoint= params for multi-stop routes
+    return "https://maps.apple.com/directions?" + (origin ? "source=" + e(origin) + "&" : "") + "destination=" + e(dest) + way.map((w) => "&waypoint=" + e(w)).join("") + "&mode=driving";
+  }
+  return "https://www.google.com/maps/dir/?api=1" + (origin ? "&origin=" + e(origin) : "") + "&destination=" + e(dest) + (way.length ? "&waypoints=" + e(way.join("|")) : "") + "&travelmode=driving";
+}
+function dirUrl(ev) { return navUrl([destOf(ev)], ""); }
+function mapsPicker() {
+  return `<div class="mapspick" role="group" aria-label="Maps app"><span>Open in</span>${Object.entries(MAPS).map(([k, l]) => `<button type="button" data-maps="${k}" aria-pressed="${k === mapsApp}">${l}</button>`).join("")}</div>`;
+}
 // "Event info" links: add a text fragment (#:~:text=) so Safari/Chrome/Edge scroll to and highlight the event's name
 // on pages that list many events. If the name isn't on the page, the page simply opens at the top.
 function infoUrl(u, name) {
@@ -301,19 +319,19 @@ function renderPanel() {
     let html = "", prev = routeOrigin(), total = 0;
     if (state.start === "me") html += `<div class="meta" style="padding:0 0 4px 2px">${state.me ? "📍 Starting from your location" : state.meErr ? esc(state.meErr) : "Finding your location…"}</div>`;
     st.forEach((ev) => { if (prev) { const m = miles(prev, ev) * 1.3; total += m; html += `<div class="meta" style="padding:2px 0 2px 74px;font-family:var(--f-mono);font-size:11.5px">↓ about ${Math.round(m)} mi · ~${Math.max(5, Math.round(m * 1.6))} min</div>`; } html += evItem(ev); prev = ev; });
-    // Google Maps: with "My location" we leave out origin, so Google starts from wherever the phone is right now.
+    // With "My location" we leave out the starting point, so the maps app starts from wherever the phone is right now.
     const pts = st.map(destOf), og = routeOrigin();
     const origin = state.start === "me" ? "" : og ? og.lat + "," + og.lng : pts[0];
-    const way = (origin && !og ? pts.slice(1, -1) : pts.slice(0, -1)).join("|");
-    const url = "https://www.google.com/maps/dir/?api=1" + (origin ? "&origin=" + encodeURIComponent(origin) : "") + "&destination=" + encodeURIComponent(pts[pts.length - 1]) + (way ? "&waypoints=" + encodeURIComponent(way) : "") + "&travelmode=driving";
+    const url = navUrl(origin && !og ? pts.slice(1) : pts, origin);
     const nights = st.filter((e) => e.s === e.e).map((e) => fmt(e.s));
-    body.innerHTML = `<div class="list">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${url}" target="_blank" rel="noopener">Open route in Google Maps ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
+    body.innerHTML = `<div class="list">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Open route in ${MAPS[mapsApp]} ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${mapsPicker()}${mapsApp === "apple" && st.length > 1 ? `<p class="meta" style="margin:6px 0 0">Multi-stop routes need iOS 18.4 or later; older iPhones open with the first stop.</p>` : ""}${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
   }
   const iv = $("#inview"); if (iv) iv.onchange = (e) => { state.inView = e.target.checked; renderPanel(); };
   body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
 }
 $("#pbody").addEventListener("click", (e) => {
+  const mp = e.target.closest("[data-maps]"); if (mp) { e.stopPropagation(); setMapsApp(mp.dataset.maps); return; }
   const f = e.target.closest("[data-fav]");
   if (f) { e.stopPropagation(); const id = f.dataset.fav; favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); return; }
   const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) selectKey(it.dataset.key, "list");
@@ -332,7 +350,7 @@ function detailHtml(k) {
     <h2>${esc(ev.n)}</h2><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div>
     <p style="margin:0">${esc(ev.b)}</p>
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates" style="font-size:13px">${range(ev)}</dd><dt>Hours</dt><dd>${esc(ev.h)}</dd><dt>Cost</dt><dd>${esc(ev.p)}</dd></dl>
-    <div class="row"><button class="btn${f ? " ghost" : ""}" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}">${f ? "★ In my night" : "☆ Add to my night"}</button>${url ? `<a class="btn ghost" href="${esc(infoUrl(url, ev.n))}" target="_blank" rel="noopener">Event info ↗</a>` : ""}<a class="btn ghost" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener">Directions ↗</a></div>
+    <div class="row"><button class="btn${f ? " ghost" : ""}" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}">${f ? "★ In my night" : "☆ Add to my night"}</button>${url ? `<a class="btn ghost" href="${esc(infoUrl(url, ev.n))}" target="_blank" rel="noopener">Event info ↗</a>` : ""}<a class="btn ghost" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener">Directions ↗</a></div>${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}</div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
