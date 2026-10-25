@@ -177,3 +177,16 @@ button,input,select,textarea{font:inherit;color:inherit}
   .maplibregl-ctrl-bottom-right{display:none}
 }
 @media (prefers-reduced-motion:reduce){.panel{transition:none}}
+
+/* phone & tablet: frosted, lightly see-through list and filters so the map shows through */
+@media (max-width:1200px){
+  :root{--glass:color-mix(in srgb,var(--surface) 76%,transparent);--glass-soft:color-mix(in srgb,var(--surface) 86%,transparent)}
+  @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .panel,.search,.brand,.chip,.seasonbar{background:var(--glass);-webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5)}
+    .chip.on{background:var(--ink)}
+    .item,.teaser,.star,.mapspick button:not([aria-pressed="true"]){background:var(--glass-soft)}
+  }
+}
+@media (prefers-reduced-transparency:reduce){
+  .panel,.search,.brand,.chip:not(.on),.seasonbar,.item,.teaser,.star{background:var(--surface)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+}
