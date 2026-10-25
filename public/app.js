@@ -28,6 +28,20 @@ function dirUrl(ev) {
   const dest = !a ? ev.lat + "," + ev.lng : /^\d/.test(a) || a.includes("&") || !v || a.includes(v) ? a : v + ", " + a;
   return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(dest);
 }
+// "Event info" links: add a text fragment (#:~:text=) so Safari/Chrome/Edge scroll to and highlight the event's name
+// on pages that list many events. If the name isn't on the page, the page simply opens at the top.
+function infoUrl(u, name) {
+  const enc = (s) => encodeURIComponent(s).replace(/-/g, "%2D");
+  const full = name.replace(/\s+/g, " ").trim();
+  // a shorter, distinctive version: drop "The", ordinals like "128th", years, and anything after " at " / " – " / ":" / " ("
+  // For "X at Y" names the venue part (Y) is the distinctive one; otherwise keep the main title.
+  const base = full.replace(/^the\s+/i, "").replace(/\b\d+(st|nd|rd|th)\s+(annual\s+)?/i, "").replace(/\s*\b20\d\d\b/g, "");
+  const at = base.split(/\s+(?:at|@)\s+/i);
+  const short = (at.length > 1 ? at[at.length - 1] : base).split(/\s+[–—-]\s+|:\s+|\s+\(/)[0].trim();
+  const parts = [full]; if (short && short.length >= 6 && short.toLowerCase() !== full.toLowerCase()) parts.push(short);
+  const frag = ":~:" + parts.map((t) => "text=" + enc(t)).join("&");
+  return u.includes("#") ? u + frag : u + "#" + frag;
+}
 function safeUrl(u) { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } }
 const miles = (a, b) => { const R = 3958.8, r = (x) => x * Math.PI / 180, dLa = r(b.lat - a.lat), dLo = r(b.lng - a.lng); const h = Math.sin(dLa / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
 
@@ -181,8 +195,24 @@ function selectKey(k, from) {
   const it = findKey(k); if (!it) return;
   state.sel = k;
   if (from === "list") { const [lng, lat] = it.kind === "ev" ? [it.ev.lng, it.ev.lat] : [it.p.plng, it.p.plat]; easeToPoint(lng, lat, 12.5); openDetail(k); }
-  else { renderPreview(); if (isPhone() && sheetState === "full") setSheet("peek"); }
+  else {
+    // Tapped on the map: show the preview card and bring the event into view in the list (the sheet itself doesn't move)
+    renderPreview();
+    const want = it.kind === "ev" ? (state.tab === "plan" && favs.has(it.ev.id) ? "plan" : "events") : "inst";
+    if (state.tab !== want) setTab(want);
+    else if (state.detail) { state.detail = null; renderPanel(); }
+    else if (!document.querySelector(`.item[data-key="${CSS.escape(k)}"]`)) renderPanel();
+  }
   drawHL(); markItems();
+  if (from !== "list") revealItem(k);
+}
+// Scroll the results list so this item sits at the top of the visible part of the list, and flash it
+function revealItem(k) {
+  const body = $("#pbody"), el = body.querySelector(`.item[data-key="${CSS.escape(k)}"]`);
+  if (!el) return;
+  const top = body.scrollTop + el.getBoundingClientRect().top - body.getBoundingClientRect().top - 10;
+  body.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
 }
 function renderPreview() {
   const pv = $("#preview"), it = findKey(state.sel);
@@ -230,13 +260,13 @@ function renderPanel() {
   const limit = `<label class="toggle"><input type="checkbox" id="inview" ${state.inView ? "checked" : ""}> Limit to map</label>`;
   if (state.tab === "events") {
     const all = E.filter(evMatch).sort((a, b) => effStart(a).localeCompare(effStart(b)) || a.e.localeCompare(b.e) || a.n.localeCompare(b.n));
-    const vis = state.layers.events ? all.filter((e) => inView(e.lng, e.lat)) : [];
+    const vis = state.layers.events ? all.filter((e) => inView(e.lng, e.lat) || state.sel === "e:" + e.id) : [];
     head.innerHTML = `<span><b>${vis.length}</b> ${state.inView ? "in map view" : "events"}${state.date ? " · open " + fmt(state.date) : ""}</span>${limit}`;
     body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Layers.</div>`
       : vis.length ? teaser() + `<div class="list">${vis.map(evItem).join("")}</div>`
       : `<div class="empty">No events ${state.inView ? "in this part of the map" : "match these filters"}.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "inst") {
-    const vis = SHOW.filter(instMatch).filter((p) => inView(p.plng, p.plat));
+    const vis = SHOW.filter(instMatch).filter((p) => inView(p.plng, p.plat) || state.sel === "i:" + p.id);
     head.innerHTML = `<span><b>${vis.length}</b> house${vis.length === 1 ? "" : "s"}${state.inView ? " in view" : ""}</span>${limit}`;
     const sc = SEASONS[state.season].showcase;
     body.innerHTML = `<div class="cta"><h3>${esc(sc.title)}</h3>
@@ -282,7 +312,7 @@ function detailHtml(k) {
     <h2>${esc(ev.n)}</h2><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div>
     <p style="margin:0">${esc(ev.b)}</p>
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates" style="font-size:13px">${range(ev)}</dd><dt>Hours</dt><dd>${esc(ev.h)}</dd><dt>Cost</dt><dd>${esc(ev.p)}</dd></dl>
-    <div class="row"><button class="btn${f ? " ghost" : ""}" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}">${f ? "★ In my night" : "☆ Add to my night"}</button>${url ? `<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Event info ↗</a>` : ""}<a class="btn ghost" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener">Directions ↗</a></div>
+    <div class="row"><button class="btn${f ? " ghost" : ""}" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}">${f ? "★ In my night" : "☆ Add to my night"}</button>${url ? `<a class="btn ghost" href="${esc(infoUrl(url, ev.n))}" target="_blank" rel="noopener">Event info ↗</a>` : ""}<a class="btn ghost" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener">Directions ↗</a></div>
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}</div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");

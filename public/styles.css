@@ -93,6 +93,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .item{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer}
 .item:hover,.item.hot{border-color:var(--ink)}
 .item.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-soft)}
+.item.flash{animation:flash 1.4s ease-out}
+@keyframes flash{0%,35%{background:var(--gold-soft)}100%{background:var(--surface)}}
+@media (prefers-reduced-motion:reduce){.item.flash{animation:none}}
 .item .datetile{border-radius:8px;height:62px}
 .item .thumb{width:62px;height:62px;border-radius:8px;overflow:hidden;background:var(--ice-soft);display:grid;place-items:center;color:var(--ice);font-size:11px}
 .item .thumb img{width:100%;height:100%;object-fit:cover}

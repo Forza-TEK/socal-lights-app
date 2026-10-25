@@ -39,7 +39,7 @@ live database (the site itself redeploys on every push through Cloudflare Pages)
 | address | full street address with ZIP (`29751 Crown Valley Pkwy, Laguna Niguel, CA 92677`) or an intersection (`Main St & Electric Ave, Seal Beach, CA 90740`). **Directions use this field**, so it must be right. |
 | lat / lng | the venue itself, not the city center. Get them by geocoding the address (OpenStreetMap Nominatim: `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=<address>`) or from the venue's map listing; inside lat 32–35.8, lng −121.5 to −114 |
 | blurb | one sentence in our own words, ≤ 180 chars — never copied text |
-| url | the official event page when one exists |
+| url | the event's **own** page (organizer or venue) whenever one exists, not a roundup listing many events. The site adds a text fragment so roundup links scroll to the event's name, but an event page is better. |
 
 Only add real events found in public sources. Never invent events, dates or prices.
 
