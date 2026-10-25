@@ -1,6 +1,6 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js";
-import { SEASONS, TYPE_SHORT, defaultSeason } from "/seasons.js";
+import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js";
 
 /* ---------- constants & helpers ---------- */
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
@@ -8,6 +8,7 @@ const SOCAL = [[-120.15, 32.5], [-115.45, 35.0]];
 const COUNTIES = ["Los Angeles", "Orange", "Riverside", "San Bernardino", "San Diego", "Ventura", "Santa Barbara"];
 // Today in Southern California, as YYYY-MM-DD
 const TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
+const NOW_SEASON = defaultSeason(TODAY);
 const M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -224,7 +225,7 @@ function renderPanel() {
     const vis = state.layers.events ? all.filter((e) => inView(e.lng, e.lat)) : [];
     head.innerHTML = `<span><b>${vis.length}</b> ${state.inView ? "in map view" : "events"}${state.date ? " · open " + fmt(state.date) : ""}</span>${limit}`;
     body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Layers.</div>`
-      : vis.length ? `<div class="list">${vis.map(evItem).join("")}</div>`
+      : vis.length ? teaser() + `<div class="list">${vis.map(evItem).join("")}</div>`
       : `<div class="empty">No events ${state.inView ? "in this part of the map" : "match these filters"}.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "inst") {
     const vis = SHOW.filter(instMatch).filter((p) => inView(p.plng, p.plat));
@@ -251,6 +252,7 @@ function renderPanel() {
     body.innerHTML = `<div class="list">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${url}" target="_blank" rel="noopener">Open route in Google Maps ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
   }
   const iv = $("#inview"); if (iv) iv.onchange = (e) => { state.inView = e.target.checked; renderPanel(); };
+  body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
 }
 $("#pbody").addEventListener("click", (e) => {
@@ -268,7 +270,7 @@ function detailHtml(k) {
   if (it.kind === "ev") {
     const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u);
     return `<div class="detail"><button class="back" type="button" id="back">← Back to results</button>
-    <div class="tags"><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "2026 dates confirmed" : "Expected, based on 2025"}</span><span class="tag">${TYPE_SHORT[ev.t] || ""}</span></div>
+    <div class="tags"><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${TYPE_SHORT[ev.t] || ""}</span></div>
     <h2>${esc(ev.n)}</h2><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div>
     <p style="margin:0">${esc(ev.b)}</p>
     <dl class="facts"><dt>Dates</dt><dd class="dates" style="font-size:13px">${range(ev)}</dd><dt>Hours</dt><dd>${esc(ev.h)}</dd><dt>Cost</dt><dd>${esc(ev.p)}</dd></dl>
@@ -406,9 +408,18 @@ function openPop(chip) {
   p.querySelectorAll("input[name=pt]").forEach((r) => (r.onchange = () => { state.type = r.value; applyFilters(); closePop(); }));
   const le = $("#lEv"), li = $("#lIn"); if (le) le.onchange = () => { state.layers.events = le.checked; applyFilters(); }; if (li) li.onchange = () => { state.layers.inst = li.checked; applyFilters(); };
 }
+// "Coming up next" card at the top of the events list, or a way back to what's on now
+function teaser() {
+  if (state.season !== NOW_SEASON) {
+    return `<button class="teaser now" type="button" data-goseason="${NOW_SEASON}" style="--tc:var(--s-${NOW_SEASON})"><span>On now</span><b>${esc(SEASONS[NOW_SEASON].label)}</b><i>→</i></button>`;
+  }
+  const next = seasonsFrom(NOW_SEASON)[1]; if (!next) return "";
+  const n = E.filter((e) => e.sn === next && e.e >= TODAY).length;
+  return `<button class="teaser" type="button" data-goseason="${next}" style="--tc:var(--s-${next})"><span>Coming up · from ${fmt(seasonStarts(next, TODAY))}</span><b>${esc(SEASONS[next].label)}</b><em>${n} event${n === 1 ? "" : "s"} already on the map</em><i>→</i></button>`;
+}
 function renderSeasonBar() {
   const bar = $("#seasonbar"); if (!bar) return;
-  bar.innerHTML = Object.entries(SEASONS).map(([k, v]) => `<button type="button" role="tab" data-season="${k}" aria-selected="${k === state.season}">${esc(v.short)}</button>`).join("");
+  bar.innerHTML = seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="tab" data-season="${k}" aria-selected="${k === state.season}"${k === NOW_SEASON ? ' class="now" title="On now"' : ""}>${esc(SEASONS[k].short)}</button>`).join("");
   bar.querySelectorAll("[data-season]").forEach((b) => (b.onclick = () => setSeason(b.dataset.season)));
   document.documentElement.dataset.season = state.season;
 }

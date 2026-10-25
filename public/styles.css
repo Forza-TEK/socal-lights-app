@@ -16,6 +16,9 @@
   --focus:#8fb0ff; --pumpkin:#ea7a2f; color-scheme:dark}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+:root{--s-newyear:#6d3fc0;--s-spring:#be3a78;--s-summer:#1e5fb3;--s-halloween:var(--pumpkin);--s-christmas:var(--pine)}
+@media (prefers-color-scheme: dark){:root{--s-newyear:#9d7be0;--s-spring:#e0679f;--s-summer:#5f9be6}}
+:root[data-season="newyear"]{--season:var(--s-newyear)} :root[data-season="spring"]{--season:var(--s-spring)} :root[data-season="summer"]{--season:var(--s-summer)}
 :root[data-season="halloween"]{--season:var(--pumpkin)}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;overflow:hidden}
@@ -44,6 +47,14 @@ button,input,select,textarea{font:inherit;color:inherit}
 .seasonbar{flex:none;display:inline-flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .seasonbar button{border:0;background:none;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:800;color:var(--muted);cursor:pointer}
 .seasonbar button[aria-selected="true"]{background:var(--season);color:#fff}
+.seasonbar button.now::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#e23b2e;margin-left:5px;vertical-align:2px;box-shadow:0 0 0 2px rgba(226,59,46,.2)}
+.seasonbar button.now[aria-selected="true"]::after{background:#fff;box-shadow:none}
+.teaser{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:1px 10px;width:100%;margin-bottom:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);border-left:5px solid var(--tc,var(--season));background:var(--surface)}
+.teaser:hover{background:var(--bg)} .teaser:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.teaser span{grid-column:1;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--tc,var(--season))}
+.teaser b{grid-column:1;font-size:15px}
+.teaser em{grid-column:1;font-style:normal;font-size:12.5px;color:var(--muted)}
+.teaser i{grid-column:2;grid-row:1/4;align-self:center;font-style:normal;font-size:20px;color:var(--tc,var(--season))}
 .datetile.live{background:var(--gold-soft);color:var(--gold)}
 .chip .caret{font-size:10px;opacity:.7}
 .pop{position:fixed;z-index:60;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px;min-width:220px;max-width:min(320px,calc(100vw - 24px));display:grid;gap:8px}
