@@ -1,5 +1,7 @@
 # Updating events
 
+For where to look, see [coverage-cities.md](coverage-cities.md): the deep search checks every city in every region.
+
 Events live in the D1 database. Changes go in through **new migration files** in `migrations/`.
 Pushing a new migration to `main` runs `.github/workflows/d1-migrations.yml`, which applies it to the
 live database (the site itself redeploys on every push through Cloudflare Pages).
