@@ -21,6 +21,13 @@ function range(ev) {
   const ys = ev.s.slice(0, 4), ye = ev.e.slice(0, 4);
   return fmt(ev.s) + (ys !== ye ? ", " + ys : "") + " – " + fmt(ev.e) + ", " + ye;
 }
+// Directions go to the venue's street address when we have one (Google resolves it to the right entrance),
+// otherwise to the pin.
+function dirUrl(ev) {
+  const a = ev.a || "", v = ev.v || "";
+  const dest = !a ? ev.lat + "," + ev.lng : /^\d/.test(a) || a.includes("&") || !v || a.includes(v) ? a : v + ", " + a;
+  return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(dest);
+}
 function safeUrl(u) { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } }
 const miles = (a, b) => { const R = 3958.8, r = (x) => x * Math.PI / 180, dLa = r(b.lat - a.lat), dLo = r(b.lng - a.lng); const h = Math.sin(dLa / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
 
@@ -274,8 +281,8 @@ function detailHtml(k) {
     <div class="tags"><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${TYPE_SHORT[ev.t] || ""}</span></div>
     <h2>${esc(ev.n)}</h2><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div>
     <p style="margin:0">${esc(ev.b)}</p>
-    <dl class="facts"><dt>Dates</dt><dd class="dates" style="font-size:13px">${range(ev)}</dd><dt>Hours</dt><dd>${esc(ev.h)}</dd><dt>Cost</dt><dd>${esc(ev.p)}</dd></dl>
-    <div class="row"><button class="btn${f ? " ghost" : ""}" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}">${f ? "★ In my night" : "☆ Add to my night"}</button>${url ? `<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Event info ↗</a>` : ""}<a class="btn ghost" href="https://www.google.com/maps/dir/?api=1&destination=${ev.lat},${ev.lng}" target="_blank" rel="noopener">Directions ↗</a></div>
+    <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates" style="font-size:13px">${range(ev)}</dd><dt>Hours</dt><dd>${esc(ev.h)}</dd><dt>Cost</dt><dd>${esc(ev.p)}</dd></dl>
+    <div class="row"><button class="btn${f ? " ghost" : ""}" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}">${f ? "★ In my night" : "☆ Add to my night"}</button>${url ? `<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Event info ↗</a>` : ""}<a class="btn ghost" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener">Directions ↗</a></div>
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}</div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");

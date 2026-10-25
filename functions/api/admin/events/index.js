@@ -13,6 +13,7 @@ export async function onRequestPost({ request, env }) {
     free: b.free ? 1 : 0, price: clean(b.price, 80), hours: clean(b.hours, 200),
     lat: Number(b.lat), lng: Number(b.lng), blurb: clean(b.blurb, 600), url: safeUrl(b.url),
     season: SEASONS[b.season] ? b.season : "christmas",
+    venue: clean(b.venue, 120), address: clean(b.address, 200),
   };
   if (!e.name || !e.city) return err(400, "Name and city are required.");
   if (!COUNTIES.includes(e.county)) return err(400, "Choose one of the seven counties.");
@@ -20,7 +21,16 @@ export async function onRequestPost({ request, env }) {
   if (!isDate(e.start) || !isDate(e.end) || e.end < e.start) return err(400, "Check the start and end dates.");
   if (!(e.lat > 32 && e.lat < 35.8 && e.lng > -121.5 && e.lng < -114)) return err(400, "The location is outside Southern California.");
 
-  await env.DB.prepare(
+  const withVenue = () => env.DB.prepare(
+    `INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address,updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
+     ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city, type=excluded.type,
+       start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status, free=excluded.free,
+       price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng, blurb=excluded.blurb,
+       url=excluded.url, season=excluded.season, venue=excluded.venue, address=excluded.address, updated_at=datetime('now')`
+  ).bind(e.id, e.name, e.county, e.city, e.type, e.start, e.end, e.status, e.free, e.price, e.hours, e.lat, e.lng, e.blurb, e.url, e.season, e.venue, e.address).run();
+  // Before migration 0006 (venue/address columns) reaches the live database, save without those fields.
+  const withoutVenue = () => env.DB.prepare(
     `INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,updated_at)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
      ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city, type=excluded.type,
@@ -28,5 +38,7 @@ export async function onRequestPost({ request, env }) {
        price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng, blurb=excluded.blurb,
        url=excluded.url, season=excluded.season, updated_at=datetime('now')`
   ).bind(e.id, e.name, e.county, e.city, e.type, e.start, e.end, e.status, e.free, e.price, e.hours, e.lat, e.lng, e.blurb, e.url, e.season).run();
+  try { await withVenue(); }
+  catch (x) { if (/no column named|no such column/i.test(String(x && x.message))) await withoutVenue(); else throw x; }
   return json({ ok: true, id: e.id });
 }

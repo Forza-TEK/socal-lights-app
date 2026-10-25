@@ -11,12 +11,13 @@ live database (the site itself redeploys on every push through Cloudflare Pages)
 2. **Upsert, don't insert.** Use this form so a file can add new events *and* update existing ones:
 
    ```sql
-   INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season)
+   INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address)
    VALUES ('id', ...), ('id2', ...)
    ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city,
      type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status,
      free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng,
-     blurb=excluded.blurb, url=excluded.url, season=excluded.season, updated_at=datetime('now');
+     blurb=excluded.blurb, url=excluded.url, season=excluded.season,
+     venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
    ```
 
    To change only a few fields, a plain `UPDATE events SET start_date='…', end_date='…', status='confirmed', hours='…', updated_at=datetime('now') WHERE id='…';` is fine.
@@ -34,7 +35,9 @@ live database (the site itself redeploys on every push through Cloudflare Pages)
 | start_date / end_date | `YYYY-MM-DD`, end ≥ start |
 | status | `confirmed` only when the organizer has published this year's dates; otherwise `expected` (dates estimated from last year, and `hours` says "check site") |
 | free | 1 or 0 |
-| lat / lng | the real venue; inside lat 32–35.8, lng −121.5 to −114 |
+| venue | the place name people type into Google Maps (e.g. `Crown Valley Community Park`). For parades: the start or main viewing area. |
+| address | full street address with ZIP (`29751 Crown Valley Pkwy, Laguna Niguel, CA 92677`) or an intersection (`Main St & Electric Ave, Seal Beach, CA 90740`). **Directions use this field**, so it must be right. |
+| lat / lng | the venue itself, not the city center. Get them by geocoding the address (OpenStreetMap Nominatim: `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=<address>`) or from the venue's map listing; inside lat 32–35.8, lng −121.5 to −114 |
 | blurb | one sentence in our own words, ≤ 180 chars — never copied text |
 | url | the official event page when one exists |
 

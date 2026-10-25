@@ -80,7 +80,8 @@ function editEvent(ev) {
     <label for="eH">Hours<input id="eH" value="${esc(e.h)}" maxlength="200"></label>
     <label for="eB">Description<textarea id="eB" maxlength="600">${esc(e.b)}</textarea></label>
     <label for="eU">Event website<input id="eU" type="url" value="${esc(e.u)}" maxlength="300"></label>
-    <div><div class="meta" style="margin-bottom:6px">Location: click the map to place the pin.</div><div id="pick"></div><div class="meta dates" id="ll" style="margin-top:4px"></div></div>
+    <div class="two"><label for="eV">Venue<input id="eV" value="${esc(e.v || "")}" maxlength="120" placeholder="Crown Valley Community Park"></label><label for="eA">Street address<input id="eA" value="${esc(e.a || "")}" maxlength="200" placeholder="29751 Crown Valley Pkwy, Laguna Niguel, CA 92677"></label></div>
+    <div><div class="row" style="margin-bottom:6px"><button class="btn ghost" type="button" id="eGeo">Place pin from address</button><span class="meta" id="geoMsg">Or click the map / drag the pin. Directions use the street address.</span></div><div id="pick"></div><div class="meta dates" id="ll" style="margin-top:4px"></div></div>
     <div class="row"><button class="btn" type="submit">Save event</button>${ev ? `<button class="btn ghost" type="button" id="eDel">Delete event</button>` : ""}<span class="msg" id="eMsg"></span></div>
   </form></div>`;
   m.hidden = false;
@@ -92,13 +93,24 @@ function editEvent(ev) {
   marker.on("dragend", () => { const p = marker.getLngLat(); lat = p.lat; lng = p.lng; show(); });
   show();
   $("#eSn").onchange = (x) => { $("#eT").innerHTML = typeOpts(x.target.value, ""); };
+  $("#eGeo").onclick = async () => {
+    const gm = $("#geoMsg"), q = $("#eA").value.trim() || ($("#eV").value.trim() + ", " + $("#eCity").value.trim() + ", CA");
+    gm.textContent = "Looking up…";
+    try {
+      const r = await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=us&viewbox=-121.5,35.8,-114,32&bounded=1&q=" + encodeURIComponent(q.replace(/&/g, " and ")));
+      const j = await r.json();
+      if (!j.length) { gm.textContent = "Address not found. Click the map to place the pin."; return; }
+      lat = +j[0].lat; lng = +j[0].lon; marker.setLngLat([lng, lat]); pm.easeTo({ center: [lng, lat], zoom: 16 }); show();
+      gm.textContent = "Found: " + j[0].display_name.split(",").slice(0, 3).join(",") + ". Drag the pin if it needs a nudge.";
+    } catch { gm.textContent = "Lookup failed. Click the map to place the pin."; }
+  };
   const close = () => { pm.remove(); m.hidden = true; m.innerHTML = ""; };
   $("#mClose").onclick = close;
   if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to delete"; return; } await api("/api/admin/events/" + encodeURIComponent(ev.id), { method: "DELETE" }); close(); renderEvents(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");
     const id = ev ? ev.id : $("#eN").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) + "-" + Math.random().toString(36).slice(2, 6);
-    const body = { id, season: $("#eSn").value, name: $("#eN").value, county: $("#eC").value, city: $("#eCity").value, type: $("#eT").value, start: $("#eS").value, end: $("#eE").value, status: $("#eSt").value, free: $("#eF").checked, price: $("#eP").value, hours: $("#eH").value, lat, lng, blurb: $("#eB").value, url: $("#eU").value };
+    const body = { id, season: $("#eSn").value, name: $("#eN").value, county: $("#eC").value, city: $("#eCity").value, type: $("#eT").value, start: $("#eS").value, end: $("#eE").value, status: $("#eSt").value, free: $("#eF").checked, price: $("#eP").value, hours: $("#eH").value, lat, lng, blurb: $("#eB").value, url: $("#eU").value, venue: $("#eV").value, address: $("#eA").value };
     try { await api("/api/admin/events", { method: "POST", body: JSON.stringify(body) }); close(); renderEvents(); }
     catch (err) { msg.className = "msg err"; msg.textContent = err.message; }
   };
