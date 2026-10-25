@@ -72,7 +72,8 @@ function padding() {
   const ph = isPhone();
   return { top: ph ? 120 : 118, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? sheetVisible() + 16 : 24 };
 }
-function mapArea() { const p = padding(); return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
+// On phones the list covers the map when expanded, so "in map view" means the map above the collapsed sheet.
+function mapArea() { const p = padding(); if (isPhone()) p.bottom = 164; return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
 function fitSoCal(animate) { map.fitBounds(SOCAL, { padding: padding(), duration: animate ? 600 : 0 }); }
 function easeToPoint(lng, lat, minZoom = 12) { map.easeTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), minZoom), padding: padding(), duration: 600 }); }
 
@@ -178,7 +179,7 @@ function selectKey(k, from) {
 }
 function renderPreview() {
   const pv = $("#preview"), it = findKey(state.sel);
-  if (!it || (state.detail === state.sel && !isPhone())) { pv.hidden = true; return; }
+  if (!it || state.detail === state.sel) { pv.hidden = true; return; }
   if (it.kind === "ev") {
     const ev = it.ev, [, m, d] = ev.s.split("-").map(Number);
     pv.innerHTML = `${datetile(ev)}<div class="pv-body"><strong>${esc(ev.n)}</strong><div class="meta">${esc(ev.city)} · ${esc(ev.p)}</div><div class="dates">${range(ev)}</div></div><button class="x" type="button" aria-label="Close">×</button>`;
@@ -264,7 +265,7 @@ $("#pbody").addEventListener("mouseover", (e) => { const it = e.target.closest("
 $("#pbody").addEventListener("mouseleave", () => setHot(null));
 function markItems() { document.querySelectorAll(".item").forEach((el) => el.classList.toggle("sel", el.dataset.key === state.sel)); }
 
-function openDetail(k) { state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet(sheetState === "full" ? "full" : "half"); drawHL(); }
+function openDetail(k) { state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
 function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
   if (it.kind === "ev") {
@@ -454,17 +455,60 @@ function setSheet(s) {
   panel.style.setProperty("--sheet-y", panel.offsetHeight - sheetVisible() + "px");
   document.documentElement.style.setProperty("--peek", sheetVisible() + "px");
 }
+// Drag the sheet from its top (handle, tabs, header) or from the list itself:
+// swiping up on a list that isn't full height expands the sheet; swiping down at the top of the list collapses it.
 (function () {
-  const g = $("#grab"), panel = $("#panel"); let y0 = null, start = 0, moved = false;
-  g.addEventListener("pointerdown", (e) => { if (!isPhone()) return; y0 = e.clientY; start = panel.offsetHeight - sheetVisible(); moved = false; panel.classList.add("dragging"); g.setPointerCapture(e.pointerId); });
-  g.addEventListener("pointermove", (e) => { if (y0 === null) return; const dy = e.clientY - y0; if (Math.abs(dy) > 4) moved = true; panel.style.setProperty("--sheet-y", Math.max(0, Math.min(panel.offsetHeight - 80, start + dy)) + "px"); });
-  const up = (e) => {
-    if (y0 === null) return; panel.classList.remove("dragging"); const dy = e.clientY - y0; y0 = null;
-    if (!moved) { setSheet(sheetState === "peek" ? "half" : sheetState === "half" ? "full" : "peek"); return; }
-    const vis = panel.offsetHeight - (start + dy), opts = [["peek", 148], ["half", innerHeight * 0.48], ["full", panel.offsetHeight]];
-    opts.sort((a, b) => Math.abs(a[1] - vis) - Math.abs(b[1] - vis)); setSheet(opts[0][0]); scheduleList();
-  };
-  g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
+  const panel = $("#panel"), body = $("#pbody"), g = $("#grab");
+  const d = { y0: null, start: 0, moved: false, justDragged: false };
+  const clampY = (y) => Math.max(0, Math.min(panel.offsetHeight - 80, y));
+  function begin(y) { d.y0 = y; d.start = panel.offsetHeight - sheetVisible(); d.moved = false; }
+  function move(y) {
+    if (d.y0 === null) return false;
+    const dy = y - d.y0;
+    if (!d.moved) { if (Math.abs(dy) < 6) return false; d.moved = true; panel.classList.add("dragging"); }
+    panel.style.setProperty("--sheet-y", clampY(d.start + dy) + "px");
+    return true;
+  }
+  function end(y) {
+    if (d.y0 === null) return false;
+    const dy = y - d.y0, moved = d.moved; d.y0 = null; panel.classList.remove("dragging");
+    if (!moved) return false;
+    const vis = panel.offsetHeight - clampY(d.start + dy);
+    const opts = [["peek", Math.min(148, panel.offsetHeight)], ["half", Math.round(innerHeight * 0.48)], ["full", panel.offsetHeight]];
+    let pick;
+    if (dy < -40) pick = opts.find((o) => o[1] >= vis - 1) || opts[2];       // flicked up: next stop above
+    else if (dy > 40) pick = [...opts].reverse().find((o) => o[1] <= vis + 1) || opts[0]; // flicked down: next stop below
+    else pick = [...opts].sort((a, b) => Math.abs(a[1] - vis) - Math.abs(b[1] - vis))[0];
+    setSheet(pick[0]); scheduleList();
+    d.justDragged = true; setTimeout(() => (d.justDragged = false), 50);
+    return true;
+  }
+
+  // Top of the sheet: pointer events (works for touch and mouse)
+  for (const zone of [g, document.querySelector(".ptabs"), $("#phead")]) {
+    zone.addEventListener("pointerdown", (e) => { if (!isPhone() || e.button > 0) return; begin(e.clientY); zone._pid = e.pointerId; });
+    zone.addEventListener("pointermove", (e) => { if (move(e.clientY) && !zone.hasPointerCapture(e.pointerId)) zone.setPointerCapture(e.pointerId); });
+    const up = (e) => { const wasTap = !end(e.clientY); if (wasTap && zone === g && e.type === "pointerup") setSheet(sheetState === "peek" ? "half" : sheetState === "half" ? "full" : "peek"); };
+    zone.addEventListener("pointerup", up); zone.addEventListener("pointercancel", up);
+    zone.addEventListener("click", (e) => { if (d.justDragged) { e.preventDefault(); e.stopPropagation(); } }, true);
+  }
+
+  // The list: touch events, so normal scrolling still works when the sheet is full
+  let mode = null;
+  body.addEventListener("touchstart", (e) => { if (!isPhone() || e.touches.length > 1) return; mode = null; begin(e.touches[0].clientY); }, { passive: true });
+  body.addEventListener("touchmove", (e) => {
+    if (d.y0 === null || mode === "scroll") return;
+    const y = e.touches[0].clientY, dy = y - d.y0;
+    if (!mode) {
+      if (Math.abs(dy) < 6) return;
+      mode = (sheetState !== "full" && dy < 0) || (body.scrollTop <= 0 && dy > 0) ? "sheet" : "scroll";
+      if (mode === "scroll") { d.y0 = null; return; }
+    }
+    e.preventDefault(); move(y);
+  }, { passive: false });
+  const tend = (e) => { if (mode === "sheet") end(e.changedTouches[0].clientY); else d.y0 = null; mode = null; };
+  body.addEventListener("touchend", tend); body.addEventListener("touchcancel", tend);
+
   g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSheet(sheetState === "full" ? "peek" : sheetState === "half" ? "full" : "half"); } });
   document.querySelectorAll(".ptab").forEach((t) => t.addEventListener("click", () => { if (isPhone() && sheetState === "peek") setSheet("half"); }));
 })();
