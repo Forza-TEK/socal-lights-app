@@ -23,11 +23,11 @@ function range(ev) {
 }
 // Directions go to the venue's street address when we have one (Google resolves it to the right entrance),
 // otherwise to the pin.
-function dirUrl(ev) {
+function destOf(ev) {
   const a = ev.a || "", v = ev.v || "";
-  const dest = !a ? ev.lat + "," + ev.lng : /^\d/.test(a) || a.includes("&") || !v || a.includes(v) ? a : v + ", " + a;
-  return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(dest);
+  return !a ? ev.lat + "," + ev.lng : /^\d/.test(a) || a.includes("&") || !v || a.includes(v) ? a : v + ", " + a;
 }
+function dirUrl(ev) { return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destOf(ev)); }
 // "Event info" links: add a text fragment (#:~:text=) so Safari/Chrome/Edge scroll to and highlight the event's name
 // on pages that list many events. If the name isn't on the page, the page simply opens at the top.
 function infoUrl(u, name) {
@@ -47,7 +47,7 @@ const miles = (a, b) => { const R = 3958.8, r = (x) => x * Math.PI / 180, dLa = 
 
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};
-const state = { season: defaultSeason(TODAY), q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", inView: true, sel: null, hot: null, detail: null, start: "" };
+const state = { season: defaultSeason(TODAY), q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
 const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify([...favs])); } catch {} };
 
@@ -158,7 +158,7 @@ function drawMap() {
   map.getSource("pts").setData(fc(feats));
   // planner route
   const st = state.tab === "plan" ? routeStops() : [];
-  const o = state.tab === "plan" && state.start && CITY[state.start] ? [[CITY[state.start][1], CITY[state.start][0]]] : [];
+  const og = state.tab === "plan" ? routeOrigin() : null, o = og ? [[og.lng, og.lat]] : [];
   const coords = [...o, ...st.map((e) => [e.lng, e.lat])];
   map.getSource("route").setData(fc(coords.length > 1 ? [{ type: "Feature", geometry: { type: "LineString", coordinates: coords }, properties: {} }] : []));
   map.getSource("stops").setData(fc(st.map((e, i) => pt(e.lng, e.lat, { key: "e:" + e.id, num: String(i + 1) }))));
@@ -177,9 +177,25 @@ function drawHL() {
 function setHot(k) { if (state.hot === k) return; state.hot = k; drawHL(); document.querySelectorAll(".item").forEach((el) => el.classList.toggle("hot", el.dataset.key === k)); }
 
 /* ---------- planner ---------- */
+// Where the route begins: your current location (default), a chosen city, or the first stop ("first" → null)
+function routeOrigin() {
+  if (state.start === "me") return state.me;
+  if (state.start && CITY[state.start]) return { lat: CITY[state.start][0], lng: CITY[state.start][1] };
+  return null;
+}
+let locating = false;
+function locateMe(force) {
+  if (locating || (!force && (state.me || state.meErr))) return;
+  if (!navigator.geolocation) { state.meErr = "Your browser can't share its location."; renderPanel(); return; }
+  locating = true;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => { locating = false; state.me = { lat: pos.coords.latitude, lng: pos.coords.longitude }; state.meErr = ""; if (state.tab === "plan") { renderPanel(); drawMap(); fitRoute(); } },
+    (err) => { locating = false; state.meErr = err.code === 1 ? "Location is blocked for this site, so the route starts at your first stop. Google Maps will still start from where you are." : "Couldn't find your location right now."; if (state.tab === "plan") renderPanel(); },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
+}
 function routeStops() {
   const fl = E.filter((e) => favs.has(e.id)); if (!fl.length) return [];
-  const o = state.start && CITY[state.start] ? { lat: CITY[state.start][0], lng: CITY[state.start][1] } : null;
+  const o = routeOrigin();
   let pool = [...fl], route = [], at = o || pool[0]; if (!o) route.push(pool.shift());
   while (pool.length) { pool.sort((a, b) => miles(at, a) - miles(at, b)); at = pool.shift(); route.push(at); }
   return route;
@@ -231,7 +247,7 @@ function renderPreview() {
 /* ---------- panel ---------- */
 function setTab(t) { state.tab = t; state.detail = null; ["events", "inst", "plan"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute(); }
 $("#t-events").onclick = () => setTab("events"); $("#t-inst").onclick = () => setTab("inst"); $("#t-plan").onclick = () => setTab("plan");
-function fitRoute() { const st = routeStops(); if (st.length < 2 || !mapReady) return; const b = new maplibregl.LngLatBounds(); st.forEach((e) => b.extend([e.lng, e.lat])); map.fitBounds(b, { padding: padding(), maxZoom: 13, duration: 600 }); }
+function fitRoute() { const st = routeStops(), og = routeOrigin(); if (st.length + (og ? 1 : 0) < 2 || !mapReady) return; const b = new maplibregl.LngLatBounds(); st.forEach((e) => b.extend([e.lng, e.lat])); if (og) b.extend([og.lng, og.lat]); map.fitBounds(b, { padding: padding(), maxZoom: 13, duration: 600 }); }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
 let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (!state.detail && state.tab !== "plan") renderPanel(); }, 80); }
 function counts() { $("#n-events").textContent = E.filter(evMatch).length; $("#n-inst").textContent = SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; }
@@ -278,14 +294,18 @@ function renderPanel() {
     $("#openForm").onclick = openForm;
   } else {
     const st = routeStops();
-    head.innerHTML = `<span><b>${favs.size}</b> starred</span><label class="toggle">Start from <select id="startFrom" style="border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:2px 4px;max-width:150px"><option value="">First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
-    $("#startFrom").onchange = (e) => { state.start = e.target.value; renderPanel(); drawMap(); fitRoute(); };
-    if (!st.length) { body.innerHTML = `<div class="empty">Tap ☆ on any event to add it. Your stops get a sensible driving order, a route on the map, and a Google Maps link.</div>`; return; }
-    let html = "", prev = state.start && CITY[state.start] ? { lat: CITY[state.start][0], lng: CITY[state.start][1] } : null, total = 0;
+    head.innerHTML = `<span><b>${favs.size}</b> starred</span><label class="toggle">Start from <select id="startFrom" style="border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:2px 4px;max-width:150px"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
+    $("#startFrom").onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
+    if (!st.length) { body.innerHTML = `<div class="empty">Tap ☆ on any event to add it. Your stops get a sensible driving order from where you are, a route on the map, and a Google Maps link.</div>`; return; }
+    if (state.start === "me") locateMe(false);
+    let html = "", prev = routeOrigin(), total = 0;
+    if (state.start === "me") html += `<div class="meta" style="padding:0 0 4px 2px">${state.me ? "📍 Starting from your location" : state.meErr ? esc(state.meErr) : "Finding your location…"}</div>`;
     st.forEach((ev) => { if (prev) { const m = miles(prev, ev) * 1.3; total += m; html += `<div class="meta" style="padding:2px 0 2px 74px;font-family:var(--f-mono);font-size:11.5px">↓ about ${Math.round(m)} mi · ~${Math.max(5, Math.round(m * 1.6))} min</div>`; } html += evItem(ev); prev = ev; });
-    const pts = st.map((e) => e.lat + "," + e.lng), o = state.start && CITY[state.start] ? CITY[state.start].join(",") : pts[0];
-    const way = (state.start && CITY[state.start] ? pts.slice(0, -1) : pts.slice(1, -1)).join("|");
-    const url = "https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(o) + "&destination=" + encodeURIComponent(pts[pts.length - 1]) + (way ? "&waypoints=" + encodeURIComponent(way) : "");
+    // Google Maps: with "My location" we leave out origin, so Google starts from wherever the phone is right now.
+    const pts = st.map(destOf), og = routeOrigin();
+    const origin = state.start === "me" ? "" : og ? og.lat + "," + og.lng : pts[0];
+    const way = (origin && !og ? pts.slice(1, -1) : pts.slice(0, -1)).join("|");
+    const url = "https://www.google.com/maps/dir/?api=1" + (origin ? "&origin=" + encodeURIComponent(origin) : "") + "&destination=" + encodeURIComponent(pts[pts.length - 1]) + (way ? "&waypoints=" + encodeURIComponent(way) : "") + "&travelmode=driving";
     const nights = st.filter((e) => e.s === e.e).map((e) => fmt(e.s));
     body.innerHTML = `<div class="list">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${url}" target="_blank" rel="noopener">Open route in Google Maps ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
   }
