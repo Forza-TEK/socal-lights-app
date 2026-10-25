@@ -1,8 +1,7 @@
 # Applies new database migrations (files in migrations/) to the live D1 database
-# whenever they're pushed to main. Needs two repository secrets:
-#   CLOUDFLARE_API_TOKEN  – a Cloudflare API token with "D1: Edit" on this account
-#   CLOUDFLARE_ACCOUNT_ID – the Cloudflare account id
-# Without them the job skips itself, so nothing breaks before they're added.
+# whenever they're pushed to main. Needs one repository secret:
+#   CLOUDFLARE_API_TOKEN – a Cloudflare API token with "D1: Edit" on this account
+# Without it the job skips itself, so nothing breaks before it's added.
 name: Apply database migrations
 
 on:
@@ -20,13 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ACCOUNT_ID: 52d622850c5e367e319d35143c43a275  # account id (not a secret)
     steps:
       - name: Check secrets
         id: check
         run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "Cloudflare secrets not set yet; skipping."
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "CLOUDFLARE_API_TOKEN secret not set yet; skipping."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/checkout@v4
