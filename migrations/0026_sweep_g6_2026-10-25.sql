@@ -1,0 +1,10 @@
+-- City sweep, group 6 (Long Beach & Gateway Cities), run 2026-10-25 (manual fire)
+INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES
+('g6-2nd-pch-ghouls-night-out','Halloween & Ghouls Night Out at 2ND & PCH','Los Angeles','Long Beach','family','2026-10-31','2026-10-31','confirmed',1,'Free (RSVP for costume contest)','5–8pm; trick-or-treat 5pm, Ghouls Night Out 6pm',33.7532,-118.1086,'Kids trick-or-treat around the waterfront center, then Ghouls Night Out brings live music and a costume contest.','https://www.eventbrite.com/e/ghouls-night-out-at-2nd-pch-tickets-1772722433519','halloween','2ND & PCH','6400 E Pacific Coast Hwy, Long Beach, CA 90803'),
+('g6-belmont-shore-trick-or-treat','Trick or Treat on 2nd Street (Belmont Shore)','Los Angeles','Long Beach','family','2026-10-31','2026-10-31','confirmed',1,'Free','4–6pm',33.7611,-118.1417,'Costumed kids trick-or-treat along Belmont Shore''s 2nd Street at businesses showing the jack-o''-lantern sign.','https://www.belmontshore.org/events/trick-or-treat-on-2nd-street','halloween','Belmont Shore (E 2nd Street)','E 2nd St & Quincy Ave, Long Beach, CA 90803'),
+('g6-la-mirada-halloweenfest','La Mirada Halloweenfest','Los Angeles','La Mirada','family','2026-10-31','2026-10-31','confirmed',1,'Free','4:30–8pm (sensory-friendly hour from 3:30pm)',33.89802,-118.02605,'The city''s free Halloween night at the historic Neff Estate, with a sensory-friendly hour before the main festival.','https://lmlamplighter.com/2026/10/02/la-mirada-offers-full-calendar-of-fall-events-in-october/','halloween','Neff Park (Neff Estate)','14300 San Cristobal Dr, La Mirada, CA 90638')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city,
+  type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status,
+  free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng,
+  blurb=excluded.blurb, url=excluded.url, season=excluded.season,
+  venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
