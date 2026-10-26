@@ -1,0 +1,7 @@
+-- City sweep group 15 (Southwest Riverside & the Pass), 2026-10-25 run (evening PT slot; group already swept many times).
+-- Only adds what earlier runs missed. 2025 date from Riverside County Library's listing for the city's tree lighting (Fri Nov 21, 2025, 5–6:45pm);
+-- venue is the Christmas tree in front of City Hall (908 Park Ave). Geocoding services were unreachable from this run:
+-- lat/lng is a venue-level estimate for Calimesa City Hall (not a city center) and should be spot-checked.
+INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES
+('g15-calimesa-tree-lighting','Calimesa City Tree Lighting','Riverside','Calimesa','tree','2026-11-20','2026-11-20','expected',1,'Free','Expected ~5–6:45pm, check site',34.0036,-117.0616,'Calimesa lights its Christmas tree in front of City Hall on a Friday evening before Thanksgiving, with kids'' crafts and activities from the county''s mobile library.','https://www.calimesa.gov/','christmas','Calimesa City Hall','908 Park Ave, Calimesa, CA 92320')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city, type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status, free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng, blurb=excluded.blurb, url=excluded.url, season=excluded.season, venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
