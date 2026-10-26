@@ -604,12 +604,22 @@ function peekH() {
   return PEEK + safeBottom;
 }
 let sheetState = "peek";
-// Half stop sits just above the middle of the screen, so it shows the vertical list
+// "cards" stop: just tall enough to show the whole sideways card row above the tab bar.
+// Measured from the card row itself while it's showing; the fallback covers the first call before the list renders.
+let cardsCache = 0;
+function cardsH() {
+  const panel = $("#panel"), item = panel.classList.contains("peek") && panel.querySelector(".list .item");
+  if (item) cardsCache = Math.round(item.getBoundingClientRect().bottom - panel.getBoundingClientRect().top + (innerHeight - $("#bnav").getBoundingClientRect().top) + 16);
+  return cardsCache || peekH() + 150;
+}
+// Half stop sits just above the middle of the screen (and clear of the cards stop on short phones), so it shows the vertical list
 const HALF = 0.55;
-function sheetVisible() { if (!isPhone()) return 0; const ph = $("#panel").offsetHeight || innerHeight * 0.8; return sheetState === "peek" ? Math.min(peekH(), ph) : sheetState === "half" ? Math.round(innerHeight * HALF) : ph; }
-// Below the middle of the screen the list is a sideways row of cards over the map; past the middle it becomes the vertical scrolling list
+function stopH(s) { const ph = $("#panel").offsetHeight || innerHeight * 0.8; return Math.min(ph, s === "peek" ? peekH() : s === "cards" ? cardsH() : s === "half" ? Math.max(Math.round(innerHeight * HALF), cardsCache + 60) : ph); }
+function sheetVisible() { return isPhone() ? stopH(sheetState) : 0; }
+// Below the middle of the screen (or the cards stop, on very short screens) the list is a sideways row of cards over the map;
+// past that it becomes the vertical scrolling list
 function setRowLayout(vis) {
-  const panel = $("#panel"), row = isPhone() && vis < innerHeight * 0.5;
+  const panel = $("#panel"), row = isPhone() && vis < Math.max(innerHeight * 0.5, cardsCache + 20);
   if (row === panel.classList.contains("peek")) return;
   panel.classList.toggle("peek", row);
   $("#pbody").scrollTop = 0; // the card row can't be scrolled vertically, and the list should start at the top
@@ -626,6 +636,7 @@ function setSheet(s) {
 (function () {
   const panel = $("#panel"), body = $("#pbody"), g = $("#grab");
   const d = { y0: null, start: 0, moved: false, justDragged: false };
+  const NEXT = { peek: "cards", cards: "half", half: "full", full: "peek" }; // tapping the handle steps up through the stops
   const clampY = (y) => Math.max(0, Math.min(panel.offsetHeight - 80, y));
   function begin(y) { d.y0 = y; d.start = panel.offsetHeight - sheetVisible(); d.moved = false; }
   function move(y) {
@@ -642,9 +653,9 @@ function setSheet(s) {
     const dy = y - d.y0, moved = d.moved; d.y0 = null; panel.classList.remove("dragging");
     if (!moved) return false;
     const vis = panel.offsetHeight - clampY(d.start + dy);
-    const opts = [["peek", Math.min(peekH(), panel.offsetHeight)], ["half", Math.round(innerHeight * HALF)], ["full", panel.offsetHeight]];
+    const opts = ["peek", "cards", "half", "full"].map((s) => [s, stopH(s)]);
     let pick;
-    if (dy < -40) pick = opts.find((o) => o[1] >= vis - 1) || opts[2];       // flicked up: next stop above
+    if (dy < -40) pick = opts.find((o) => o[1] >= vis - 1) || opts[opts.length - 1]; // flicked up: next stop above
     else if (dy > 40) pick = [...opts].reverse().find((o) => o[1] <= vis + 1) || opts[0]; // flicked down: next stop below
     else pick = [...opts].sort((a, b) => Math.abs(a[1] - vis) - Math.abs(b[1] - vis))[0];
     setSheet(pick[0]); scheduleList();
@@ -656,7 +667,7 @@ function setSheet(s) {
   for (const zone of [g, document.querySelector(".ptabs"), $("#phead")]) {
     zone.addEventListener("pointerdown", (e) => { if (!isPhone() || e.button > 0) return; begin(e.clientY); zone._pid = e.pointerId; });
     zone.addEventListener("pointermove", (e) => { if (move(e.clientY) && !zone.hasPointerCapture(e.pointerId)) zone.setPointerCapture(e.pointerId); });
-    const up = (e) => { const wasTap = !end(e.clientY); if (wasTap && zone === g && e.type === "pointerup") setSheet(sheetState === "peek" ? "half" : sheetState === "half" ? "full" : "peek"); };
+    const up = (e) => { const wasTap = !end(e.clientY); if (wasTap && zone === g && e.type === "pointerup") setSheet(NEXT[sheetState]); };
     zone.addEventListener("pointerup", up); zone.addEventListener("pointercancel", up);
     zone.addEventListener("click", (e) => { if (d.justDragged) { e.preventDefault(); e.stopPropagation(); } }, true);
   }
@@ -680,7 +691,7 @@ function setSheet(s) {
   const tend = (e) => { if (mode === "sheet") end(e.changedTouches[0].clientY); else d.y0 = null; mode = null; };
   body.addEventListener("touchend", tend); body.addEventListener("touchcancel", tend);
 
-  g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSheet(sheetState === "full" ? "peek" : sheetState === "half" ? "full" : "half"); } });
+  g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSheet(NEXT[sheetState]); } });
   document.querySelectorAll(".ptab").forEach((t) => t.addEventListener("click", () => { if (isPhone() && sheetState === "peek") setSheet("half"); }));
 })();
 
