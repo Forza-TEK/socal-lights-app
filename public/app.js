@@ -594,9 +594,10 @@ document.querySelectorAll("#bnav [data-tab]").forEach((b) => (b.onclick = () => 
 let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); }, 120); };
 
 /* ---------- bottom sheet (phone) ---------- */
-// Collapsed sheet height on phones: room for the quick picks, one row of swipeable cards and the tab bar
+// Collapsed sheet height on phones: just the grab handle and the quick-picks row, sitting above the tab bar
+// (tab bar 58px + 12px gap, handle ~19px, header row ~48px, a little air); the card row tucks behind the tab bar
 // (plus the home-indicator strip on newer iPhones, which the tab bar sits above)
-const PEEK = 276;
+const PEEK = 160;
 let safeBottom = null;
 function peekH() {
   if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
