@@ -10,9 +10,9 @@ UPDATE events SET start_date='2026-09-26', city='Santa Barbara', url='https://la
 UPDATE events SET start_date='2026-09-26', address='5750 N River Rd, Oceanside, CA 92057', updated_at=datetime('now') WHERE id='hw-mellano-harvest-festival';
 
 -- Listed as confirmed but no 2026 date found on an organizer page: back to expected
-UPDATE events SET status='expected', hours='11:30am–3:30pm — check site', updated_at=datetime('now') WHERE id='g1-boonion-station';
+UPDATE events SET status='expected', hours='11:30am–3:30pm — check site', url='https://unionstationla.com/happenings/boonion-station-halloween/', updated_at=datetime('now') WHERE id='g1-boonion-station';
 UPDATE events SET status='expected', updated_at=datetime('now') WHERE id='encinitas-holiday-parade';
-UPDATE events SET status='expected', hours='4–6pm — check site', updated_at=datetime('now') WHERE id='coc2-sa-magic-of-the-altars';
+UPDATE events SET status='expected', hours='4–6pm — check site', url='https://www.santa-ana.org/event/dia-de-los-muertos-magic-of-the-altars', updated_at=datetime('now') WHERE id='coc2-sa-magic-of-the-altars';
 
 -- Address / url hygiene
 UPDATE events SET address='25001 Dana Point Harbor Dr, Dana Point, CA 92629', url='https://raceroster.com/events/2026/112786/2026-dana-point-turkey-trot', updated_at=datetime('now') WHERE id='tg-dana-point-turkey-trot';
