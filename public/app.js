@@ -603,6 +603,21 @@ async function load() {
   if (SEASONS[h]) setSeason(h);
   if (h === "houses" || h === "showcase") { setTab("inst"); if (h === "showcase") openForm(); }
 }
+// Keep an open page fresh: when you come back to the tab (or every 15 minutes while it's open),
+// quietly reload the event list so newly added events appear without a manual refresh.
+let loadedAt = Date.now();
+async function refreshData() {
+  try {
+    const [ev, posts] = await Promise.all([fetch("/api/events", { cache: "no-cache" }).then((r) => r.json()), fetch("/api/posts", { cache: "no-cache" }).then((r) => r.json())]);
+    if (!Array.isArray(ev)) return;
+    E = ev; if (Array.isArray(posts)) SHOW = posts;
+    E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
+    placeHouses(); loadedAt = Date.now();
+    if (state.detail) { counts(); drawMap(); } else { renderPanel(); drawMap(); }
+  } catch {}
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - loadedAt > 5 * 60000) refreshData(); });
+setInterval(() => { if (document.visibilityState === "visible") refreshData(); }, 15 * 60000);
 setSheet("peek");
 let rT; addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); renderPanel(); }, 120); });
 load();
