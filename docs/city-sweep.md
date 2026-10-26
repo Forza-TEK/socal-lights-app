@@ -24,7 +24,7 @@ Verify each event's current-year dates on a page you actually loaded. For an ann
 aren't posted yet, add it with status `expected`, dates estimated from last year, and hours ending in
 "check site". Never invent events, dates, prices, addresses or URLs. Skip private/members-only events,
 small library story times, and anything ending before today. Skip events already on the map
-(`https://socal-lights.pages.dev/api/events`).
+(`https://socallights.app/api/events`).
 
 ## Every event needs
 id (lowercase a-z0-9 and hyphens, ≤40 chars, unique), name, county, city, season, type, start, end,

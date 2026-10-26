@@ -1,6 +1,6 @@
 # SoCal Lights Finder
 
-**Live:** https://socal-lights.pages.dev · **Admin:** https://socal-lights.pages.dev/admin/ (Cloudflare Access, rey@forza-tek.com)
+**Live:** https://socallights.app · **Admin:** https://socallights.app/admin/ (Cloudflare Access, rey@forza-tek.com)
 
 Setup below is already done for this project; it's kept for reference.
 
