@@ -15,7 +15,38 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Deploy gate: refuse migrations with HARD errors (bad ids, counties, seasons/types, dates, coordinates outside
+  # Southern California, unguarded DELETE/UPDATE/DROP, edits to existing migrations). It checks every migration
+  # added since the last successful deploy, so a rejected file cannot slip out with a later push.
+  validate:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Find the last deployed commit
+        id: base
+        run: |
+          SHA=$(gh run list --workflow d1-migrations.yml --branch main --status success --limit 1 --json headSha -q '.[0].headSha' || true)
+          if [ -z "$SHA" ] || ! git cat-file -e "$SHA^{commit}" 2>/dev/null; then SHA="${{ github.event.before }}"; fi
+          echo "Checking migrations added since $SHA"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+      - name: Check the new migrations
+        run: node --no-warnings scripts/validate-migrations.mjs --gate --base "${{ steps.base.outputs.sha }}"
+
   migrate:
+    needs: [validate]
+    if: ${{ !cancelled() && (needs.validate.result == 'success' || needs.validate.result == 'skipped') }}
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

@@ -51,6 +51,30 @@ When a season's events have all ended, re-add them for next year with the **same
 dates and `status='expected'`, then confirm them as organizers announce dates. Also update that
 season's `quickDates` and `dateRange` in `public/seasons.js` to the new year.
 
+## Validate before you push
+
+```sh
+npm run validate                                  # checks migrations added since origin/main, and loads each source url
+node scripts/validate-migrations.mjs --files migrations/0041_x.sql   # one file, no network
+```
+
+It replays every migration in a scratch database and checks the rows the new files add or change: id format,
+county, season/type, real dates (end ≥ start), coordinates inside Southern California, a pin more than 30 km from
+its city, blurb length, empty address/venue, bad or dead urls, duplicates, reused ids, and unguarded
+`DELETE`/`UPDATE`/`DROP`. **Errors must be fixed. Warnings need a look.** A deliberate bulk change can carry the
+comment `-- validate: allow-destructive`. The deploy workflow runs the same checks (hard errors only) before it
+applies anything to the live database.
+
+## Staging flow (scheduled and unattended runs)
+
+Unattended runs do not push to `main`. They open a pull request, and a human or the main Claude session reviews it:
+
+1. `git switch -c staging/<task>-<date>`, add the migration, commit, `git push -u origin HEAD`.
+2. `gh pr create --title "<what>" --body "<which pages you used, what you could not verify>"`.
+3. The "Validate migrations" check runs and comments the findings on the pull request.
+4. Review the comment and spot-check rows against their source pages. Merge only when errors are 0.
+5. Merging pushes to `main`, and the existing workflow applies the migration to the live database.
+
 ## Checking your work
 
 ```sh

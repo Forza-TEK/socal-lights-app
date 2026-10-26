@@ -1,0 +1,36 @@
+# Checks new event migrations on every pull request and posts the findings as a comment.
+# This is the staging gate: scheduled runs open a pull request instead of pushing to main; a human (or the
+# main Claude session) reviews the comment and merges, and the merge applies the migration to the live database.
+# Rules: scripts/validate-migrations.mjs, docs/updating-events.md
+name: Validate migrations
+
+on:
+  pull_request:
+    paths:
+      - "migrations/**"
+      - "scripts/validate-migrations.mjs"
+      - "public/seasons.js"
+      - "public/cities.js"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check the new migrations
+        run: node --no-warnings scripts/validate-migrations.mjs --base "origin/${{ github.base_ref }}" --check-urls --out result.md
+      - name: Comment on the pull request
+        if: always() && hashFiles('result.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh pr comment "${{ github.event.pull_request.number }}" --body-file result.md --edit-last --create-if-none

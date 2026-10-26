@@ -4,6 +4,7 @@
   "description": "SoCal Lights Finder: Christmas lights and holiday events across Southern California, with a street map and an installer showcase. Runs on Cloudflare Pages, D1 and R2.",
   "scripts": {
     "dev": "wrangler pages dev",
+    "validate": "node --no-warnings scripts/validate-migrations.mjs --base origin/main --check-urls",
     "db:migrate:local": "wrangler d1 migrations apply socal-lights --local",
     "db:migrate:remote": "wrangler d1 migrations apply socal-lights --remote"
   },
