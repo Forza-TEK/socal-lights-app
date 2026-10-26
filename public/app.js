@@ -604,12 +604,19 @@ function peekH() {
   return PEEK + safeBottom;
 }
 let sheetState = "peek";
-function sheetVisible() { if (!isPhone()) return 0; const ph = $("#panel").offsetHeight || innerHeight * 0.8; return sheetState === "peek" ? Math.min(peekH(), ph) : sheetState === "half" ? Math.round(innerHeight * 0.48) : ph; }
+// Half stop sits just above the middle of the screen, so it shows the vertical list
+const HALF = 0.55;
+function sheetVisible() { if (!isPhone()) return 0; const ph = $("#panel").offsetHeight || innerHeight * 0.8; return sheetState === "peek" ? Math.min(peekH(), ph) : sheetState === "half" ? Math.round(innerHeight * HALF) : ph; }
+// Below the middle of the screen the list is a sideways row of cards over the map; past the middle it becomes the vertical scrolling list
+function setRowLayout(vis) {
+  const panel = $("#panel"), row = isPhone() && vis < innerHeight * 0.5;
+  if (row === panel.classList.contains("peek")) return;
+  panel.classList.toggle("peek", row);
+  $("#pbody").scrollTop = 0; // the card row can't be scrolled vertically, and the list should start at the top
+}
 function setSheet(s) {
   sheetState = s; const panel = $("#panel");
-  // collapsed on a phone: the list turns into a sideways row of cards over the map
-  panel.classList.toggle("peek", isPhone() && s === "peek");
-  if (isPhone() && s === "peek") $("#pbody").scrollTop = 0; // the card row can't be scrolled vertically, so start it at the top
+  setRowLayout(sheetVisible());
   if (!isPhone()) { panel.style.removeProperty("--sheet-y"); return; }
   panel.style.setProperty("--sheet-y", panel.offsetHeight - sheetVisible() + "px");
   document.documentElement.style.setProperty("--peek", sheetVisible() + "px");
@@ -625,7 +632,9 @@ function setSheet(s) {
     if (d.y0 === null) return false;
     const dy = y - d.y0;
     if (!d.moved) { if (Math.abs(dy) < 6) return false; d.moved = true; panel.classList.add("dragging"); }
-    panel.style.setProperty("--sheet-y", clampY(d.start + dy) + "px");
+    const y1 = clampY(d.start + dy);
+    panel.style.setProperty("--sheet-y", y1 + "px");
+    setRowLayout(panel.offsetHeight - y1); // switch between card row and list live as the sheet crosses the middle
     return true;
   }
   function end(y) {
@@ -633,7 +642,7 @@ function setSheet(s) {
     const dy = y - d.y0, moved = d.moved; d.y0 = null; panel.classList.remove("dragging");
     if (!moved) return false;
     const vis = panel.offsetHeight - clampY(d.start + dy);
-    const opts = [["peek", Math.min(peekH(), panel.offsetHeight)], ["half", Math.round(innerHeight * 0.48)], ["full", panel.offsetHeight]];
+    const opts = [["peek", Math.min(peekH(), panel.offsetHeight)], ["half", Math.round(innerHeight * HALF)], ["full", panel.offsetHeight]];
     let pick;
     if (dy < -40) pick = opts.find((o) => o[1] >= vis - 1) || opts[2];       // flicked up: next stop above
     else if (dy > 40) pick = [...opts].reverse().find((o) => o[1] <= vis + 1) || opts[0]; // flicked down: next stop below
@@ -661,7 +670,7 @@ function setSheet(s) {
     const y = e.touches[0].clientY, dy = y - d.y0, dx = e.touches[0].clientX - x0;
     if (!mode) {
       if (Math.abs(dy) < 6 && Math.abs(dx) < 6) return;
-      // sideways swipe through the collapsed card row scrolls the cards, not the sheet
+      // sideways swipe through the card row scrolls the cards, not the sheet
       if (Math.abs(dx) > Math.abs(dy)) { mode = "scroll"; d.y0 = null; return; }
       mode = (sheetState !== "full" && dy < 0) || (body.scrollTop <= 0 && dy > 0) ? "sheet" : "scroll";
       if (mode === "scroll") { d.y0 = null; return; }
