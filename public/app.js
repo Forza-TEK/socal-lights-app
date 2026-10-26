@@ -3,7 +3,17 @@ import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js";
 
 /* ---------- constants & helpers ---------- */
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+// Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
+const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/positron", dark: "https://tiles.openfreemap.org/styles/dark" };
+const theme = () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+// Pin and cluster colors: free events are green; ticketed events, clusters and the route take the season's accent
+const SEASON_HEX = { light: { newyear: "#6d3fc0", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
+  dark: { newyear: "#a98bf0", spring: "#f07cb2", summer: "#6fa8f2", halloween: "#ff8a3d", christmas: "#ff6b6b" } };
+function mapColors() {
+  const t = theme(), dark = t === "dark";
+  return { season: SEASON_HEX[t][state.season] || "#e8590c", free: dark ? "#3ddc97" : "#0f9d6b", fav: dark ? "#f5c461" : "#c98a06", inst: dark ? "#7fb6ee" : "#2f6fd0",
+    ring: dark ? "#0b0d12" : "#ffffff", ink: dark ? "#f5f3ee" : "#14161b" };
+}
 const SOCAL = [[-120.15, 32.5], [-115.45, 35.0]];
 const COUNTIES = ["Los Angeles", "Orange", "Riverside", "San Bernardino", "San Diego", "Ventura", "Santa Barbara"];
 // Today in Southern California, as YYYY-MM-DD
@@ -102,47 +112,50 @@ function placeHouses() {
 }
 
 /* ---------- map ---------- */
-const map = new maplibregl.Map({ container: "map", style: MAP_STYLE, bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false });
+const map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false });
 map.touchZoomRotate.disableRotation();
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
 map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false }, trackUserLocation: false }), "top-right");
 
 function padding() {
   const ph = isPhone();
-  return { top: ph ? 132 : 130, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? sheetVisible() + 16 : 24 };
+  return { top: ph ? 120 : 170, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? sheetVisible() + 16 : 24 };
 }
 // On phones the list covers the map when expanded, so "in map view" means the map above the collapsed sheet.
-function mapArea() { const p = padding(); if (isPhone()) p.bottom = 164; return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
+function mapArea() { const p = padding(); if (isPhone()) p.bottom = peekH() + 16; return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
 function fitSoCal(animate) { map.fitBounds(SOCAL, { padding: padding(), duration: animate ? 600 : 0 }); }
 function easeToPoint(lng, lat, minZoom = 12) { map.easeTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), minZoom), padding: padding(), duration: 600 }); }
 
 let mapReady = false;
 // Add our layers as soon as the base style is parsed ("style.load"), not on "load",
 // which waits for every base-map tile and can stall on a slow or failed tile request.
+// Switching day/night swaps the base style, which drops our layers; "style.load" then adds them back.
 map.on("style.load", initLayers);
 map.on("load", initLayers);
+const catColor = (C) => ["match", ["get", "cat"], "free", C.free, "paid", C.season, "fav", C.fav, "inst", C.inst, C.season];
 function initLayers() {
-  if (mapReady || map.getSource("pts")) return;
-  const C = { ink: cssVar("--ink") || "#1d2433", free: "#1f6b4f", paid: "#c9361f", fav: "#b7790f", inst: "#2f6fa8" };
+  if (map.getSource("pts")) return;
+  const C = mapColors();
   map.addSource("pts", { type: "geojson", data: fc([]), cluster: true, clusterMaxZoom: 11, clusterRadius: 44 });
   map.addSource("hl", { type: "geojson", data: fc([]) });
   map.addSource("route", { type: "geojson", data: fc([]) });
   map.addSource("stops", { type: "geojson", data: fc([]) });
   map.addLayer({ id: "clusters", type: "circle", source: "pts", filter: ["has", "point_count"],
-    paint: { "circle-color": seasonColor(), "circle-opacity": 0.9, "circle-radius": ["step", ["get", "point_count"], 15, 8, 19, 20, 24], "circle-stroke-width": 3, "circle-stroke-color": "#ffffff" } });
+    paint: { "circle-color": C.season, "circle-opacity": 0.92, "circle-radius": ["step", ["get", "point_count"], 16, 8, 20, 20, 25], "circle-stroke-width": 4, "circle-stroke-color": C.ring, "circle-stroke-opacity": 0.9 } });
   map.addLayer({ id: "cluster-count", type: "symbol", source: "pts", filter: ["has", "point_count"],
     layout: { "text-field": ["get", "point_count_abbreviated"], "text-font": ["Noto Sans Bold"], "text-size": 13 }, paint: { "text-color": "#ffffff" } });
   map.addLayer({ id: "pt", type: "circle", source: "pts", filter: ["!", ["has", "point_count"]],
-    paint: { "circle-color": ["match", ["get", "cat"], "free", C.free, "paid", C.paid, "fav", C.fav, "inst", C.inst, C.paid],
-      "circle-radius": ["case", ["==", ["get", "cat"], "inst"], 8.5, ["==", ["get", "cat"], "fav"], 8.5, 7.5],
-      "circle-stroke-width": ["case", ["==", ["get", "cat"], "inst"], 3, 2.5], "circle-stroke-color": "#ffffff" } });
-  map.addLayer({ id: "route-line", type: "line", source: "route", paint: { "line-color": C.fav, "line-width": 3.5, "line-dasharray": [2, 2] } });
-  map.addLayer({ id: "stops", type: "circle", source: "stops", paint: { "circle-color": C.fav, "circle-radius": 12, "circle-stroke-width": 2.5, "circle-stroke-color": "#ffffff" } });
+    paint: { "circle-color": catColor(C),
+      "circle-radius": ["case", ["==", ["get", "cat"], "inst"], 8, ["==", ["get", "cat"], "fav"], 8, 7],
+      "circle-stroke-width": 2.5, "circle-stroke-color": C.ring } });
+  map.addLayer({ id: "route-line", type: "line", source: "route", paint: { "line-color": C.fav, "line-width": 4, "line-dasharray": [1.5, 1.5] } });
+  map.addLayer({ id: "stops", type: "circle", source: "stops", paint: { "circle-color": C.fav, "circle-radius": 12, "circle-stroke-width": 3, "circle-stroke-color": C.ring } });
   map.addLayer({ id: "stops-num", type: "symbol", source: "stops", layout: { "text-field": ["get", "num"], "text-font": ["Noto Sans Bold"], "text-size": 12, "text-allow-overlap": true }, paint: { "text-color": "#ffffff" } });
-  map.addLayer({ id: "hl", type: "circle", source: "hl", paint: { "circle-color": ["match", ["get", "cat"], "free", C.free, "paid", C.paid, "fav", C.fav, "inst", C.inst, C.paid], "circle-radius": 11, "circle-stroke-width": 3, "circle-stroke-color": "#1d2433" } });
+  map.addLayer({ id: "hl", type: "circle", source: "hl", paint: { "circle-color": catColor(C), "circle-radius": 11, "circle-stroke-width": 4, "circle-stroke-color": C.ring } });
   map.addLayer({ id: "hl-label", type: "symbol", source: "hl",
     layout: { "text-field": ["get", "label"], "text-font": ["Noto Sans Bold"], "text-size": 13, "text-anchor": "left", "text-offset": [1.2, 0], "text-allow-overlap": true, "text-max-width": 16 },
-    paint: { "text-color": "#1d2433", "text-halo-color": "#ffffff", "text-halo-width": 2.2 } });
+    paint: { "text-color": C.ink, "text-halo-color": C.ring, "text-halo-width": 2.2 } });
+  if (mapReady) { drawMap(); return; } // base style swapped (day/night): layers are back, nothing else to set up
 
   map.on("click", "clusters", async (e) => {
     const f = e.features[0];
@@ -166,8 +179,9 @@ function initLayers() {
 const fc = (features) => ({ type: "FeatureCollection", features });
 const pt = (lng, lat, props) => ({ type: "Feature", geometry: { type: "Point", coordinates: [lng, lat] }, properties: props });
 
+// While a day/night style swap is loading our sources don't exist yet; initLayers redraws once they're back
 function drawMap() {
-  if (!mapReady) return;
+  if (!mapReady || !map.getSource("pts")) return;
   const feats = [];
   if (state.tab !== "plan") {
     if (state.layers.events) E.filter(evMatch).forEach((e) => feats.push(pt(e.lng, e.lat, { key: "e:" + e.id, cat: favs.has(e.id) ? "fav" : e.free ? "free" : "paid" })));
@@ -183,7 +197,7 @@ function drawMap() {
   drawHL();
 }
 function drawHL() {
-  if (!mapReady) return;
+  if (!mapReady || !map.getSource("hl")) return;
   const out = [];
   for (const k of new Set([state.sel, state.hot].filter(Boolean))) {
     const it = findKey(k); if (!it) continue;
@@ -244,6 +258,11 @@ function selectKey(k, from) {
 function revealItem(k) {
   const body = $("#pbody"), el = body.querySelector(`.item[data-key="${CSS.escape(k)}"]`);
   if (!el) return;
+  if ($("#panel").classList.contains("peek")) {
+    const list = el.parentElement;
+    list.scrollTo({ left: Math.max(0, el.offsetLeft - list.offsetLeft - 16), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); return;
+  }
   const top = body.scrollTop + el.getBoundingClientRect().top - body.getBoundingClientRect().top - 10;
   body.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
@@ -263,12 +282,13 @@ function renderPreview() {
 }
 
 /* ---------- panel ---------- */
-function setTab(t) { state.tab = t; state.detail = null; ["events", "inst", "plan"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute(); }
+function setTab(t) { state.tab = t; state.detail = null; ["events", "inst", "plan"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
+  document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute(); }
 $("#t-events").onclick = () => setTab("events"); $("#t-inst").onclick = () => setTab("inst"); $("#t-plan").onclick = () => setTab("plan");
 function fitRoute() { const st = routeStops(), og = routeOrigin(); if (st.length + (og ? 1 : 0) < 2 || !mapReady) return; const b = new maplibregl.LngLatBounds(); st.forEach((e) => b.extend([e.lng, e.lat])); if (og) b.extend([og.lng, og.lat]); map.fitBounds(b, { padding: padding(), maxZoom: 13, duration: 600 }); }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
 let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (!state.detail && state.tab !== "plan") renderPanel(); }, 80); }
-function counts() { $("#n-events").textContent = E.filter(evMatch).length; $("#n-inst").textContent = SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; }
+function counts() { $("#n-events").textContent = E.filter(evMatch).length; $("#n-inst").textContent = SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; }
 function datetile(ev) {
   // Running now: "THRU 31 OCT". One night: "OCT 31 1 night". Upcoming: "NOV 27 opens".
   const live = ev.s <= TODAY && ev.e >= TODAY && ev.s !== ev.e;
@@ -278,24 +298,42 @@ function datetile(ev) {
   return `<div class="datetile${ev.free ? " free" : ""}${live ? " live" : ""}"><span>${top}</span><b>${d}</b><span>${bottom}</span></div>`;
 }
 const effStart = (e) => (e.s > TODAY ? e.s : TODAY);
+// A friendly picture for each kind of event, shown on its card tile and detail header
+const ICON = { park: "🎢", haunt: "👻", pumpkin: "🎃", family: "🍬", dia: "💀", show: "🎭", trot: "🏃", thanks: "🦃", walk: "✨", drive: "🚗", parade: "🎺", tree: "🎄", tour: "🚂",
+  nye: "🎆", lunar: "🏮", bloom: "🌸", nature: "🐋", stpat: "☘️", easter: "🐣", cinco: "🪅", festival: "🎪", fireworks: "🎆", fair: "🎡", concert: "🎶" };
+const ICON_BY_SEASON = { newyear: { family: "🎉", parade: "🌹" }, christmas: { parade: "⛵" } };
+const iconOf = (ev) => (ICON_BY_SEASON[ev.sn] || {})[ev.t] || ICON[ev.t] || "📍";
+// Short "when" label: "Tonight", "Thru Oct 30", "Oct 31 only", "Opens Nov 27"
+function whenShort(ev) {
+  if (ev.s <= TODAY && ev.e >= TODAY) return ev.e === TODAY ? "Tonight" : "Thru " + fmt(ev.e);
+  return ev.s === ev.e ? fmt(ev.s) + " only" : "Opens " + fmt(ev.s);
+}
+const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
 function evItem(ev) {
-  const f = favs.has(ev.id), k = "e:" + ev.id;
-  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${k}">${datetile(ev)}<div style="min-width:0"><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}</div><div class="tags"><span class="tag ${ev.free ? "free" : "paid"}">${esc(ev.p)}</span><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Confirmed" : "Expected"}</span></div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${f ? "★" : "☆"}</button></article>`;
+  const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY;
+  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}"><span class="emo" aria-hidden="true">${iconOf(ev)}</span><span class="when${now ? " now" : ""}">${whenShort(ev)}</span></div><div class="ibody"><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}</div><div class="tags"><span class="tag ${ev.free ? "free" : "paid"}">${esc(ev.p)}</span><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Confirmed" : "Expected"}</span></div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
 }
 function instItem(p) {
   const ph = p.photos || [], k = "i:" + p.id;
-  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : "No photo"}</div><div style="min-width:0"><h3>${esc(p.title)}</h3><div class="meta">${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><span></span></article>`;
+  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : `<span class="emo" aria-hidden="true">🏠</span>`}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><span></span></article>`;
+}
+// Quick picks above the events list; they set the same date and cost filters as the chips
+function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
+function quickPicks() {
+  const sat = nextSat(), q = [["date", TODAY, "Tonight"], ...(sat !== TODAY ? [["date", sat, "Saturday"]] : []), ["cost", "free", "Free"]];
+  return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${state[f] === v}">${l}</button>`).join("")}</div>`;
 }
 function renderPanel() {
   counts();
   const head = $("#phead"), body = $("#pbody");
+  document.body.classList.toggle("detail-open", !!state.detail);
   if (state.detail) { head.hidden = true; body.innerHTML = detailHtml(state.detail); wireDetail(); return; }
   head.hidden = false;
   const limit = `<label class="toggle"><input type="checkbox" id="inview" ${state.inView ? "checked" : ""}> Limit to map</label>`;
   if (state.tab === "events") {
     const all = E.filter(evMatch).sort((a, b) => effStart(a).localeCompare(effStart(b)) || a.e.localeCompare(b.e) || a.n.localeCompare(b.n));
     const vis = state.layers.events ? all.filter((e) => inView(e.lng, e.lat) || state.sel === "e:" + e.id) : [];
-    head.innerHTML = `<span><b>${vis.length}</b> ${state.inView ? "in map view" : "events"}${state.date ? " · open " + fmt(state.date) : ""}</span>${limit}`;
+    head.innerHTML = `<div class="hrow"><span><b>${vis.length}</b> ${state.inView ? "in map view" : "events"}${state.date ? " · open " + fmt(state.date) : ""}</span>${limit}</div>${quickPicks()}`;
     body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Layers.</div>`
       : vis.length ? teaser() + `<div class="list">${vis.map(evItem).join("")}</div>`
       : `<div class="empty">No events ${state.inView ? "in this part of the map" : "match these filters"}.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
@@ -314,11 +352,11 @@ function renderPanel() {
     const st = routeStops();
     head.innerHTML = `<span><b>${favs.size}</b> starred</span><label class="toggle">Start from <select id="startFrom" style="border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:2px 4px;max-width:150px"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
     $("#startFrom").onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
-    if (!st.length) { body.innerHTML = `<div class="empty"><b style="color:var(--ink)">Plan your family's night out</b>Tap ☆ on any event to add it. Your stops get a sensible driving order from where you are, a route on the map, and a link for your maps app.</div>`; return; }
+    if (!st.length) { body.innerHTML = `<div class="empty"><b style="color:var(--ink)">Plan your family's night out</b>Tap the heart on any event to add it. Your stops get a sensible driving order from where you are, a route on the map, and a link for your maps app.</div>`; return; }
     if (state.start === "me") locateMe(false);
     let html = "", prev = routeOrigin(), total = 0;
     if (state.start === "me") html += `<div class="meta" style="padding:0 0 4px 2px">${state.me ? "📍 Starting from your location" : state.meErr ? esc(state.meErr) : "Finding your location…"}</div>`;
-    st.forEach((ev) => { if (prev) { const m = miles(prev, ev) * 1.3; total += m; html += `<div class="meta" style="padding:2px 0 2px 74px;font-family:var(--f-mono);font-size:11.5px">↓ about ${Math.round(m)} mi · ~${Math.max(5, Math.round(m * 1.6))} min</div>`; } html += evItem(ev); prev = ev; });
+    st.forEach((ev) => { if (prev) { const m = miles(prev, ev) * 1.3; total += m; html += `<div class="meta leg">↓ about ${Math.round(m)} mi · ~${Math.max(5, Math.round(m * 1.6))} min</div>`; } html += evItem(ev); prev = ev; });
     // With "My location" we leave out the starting point, so the maps app starts from wherever the phone is right now.
     const pts = st.map(destOf), og = routeOrigin();
     const origin = state.start === "me" ? "" : og ? og.lat + "," + og.lng : pts[0];
@@ -336,6 +374,12 @@ $("#pbody").addEventListener("click", (e) => {
   if (f) { e.stopPropagation(); const id = f.dataset.fav; favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); return; }
   const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) selectKey(it.dataset.key, "list");
 });
+$("#phead").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-quick]"); if (!b) return;
+  const f = b.dataset.quick, v = b.dataset.v;
+  if (f === "date") state.date = state.date === v ? "" : v; else state.cost = state.cost === v ? "all" : v;
+  applyFilters();
+});
 $("#pbody").addEventListener("mouseover", (e) => { const it = e.target.closest(".item"); setHot(it ? it.dataset.key : null); });
 $("#pbody").addEventListener("mouseleave", () => setHot(null));
 function markItems() { document.querySelectorAll(".item").forEach((el) => el.classList.toggle("sel", el.dataset.key === state.sel)); }
@@ -345,16 +389,19 @@ function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
   if (it.kind === "ev") {
     const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u);
-    return `<div class="detail"><button class="back" type="button" id="back">← Back to results</button>
-    <div class="tags"><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${TYPE_SHORT[ev.t] || ""}</span></div>
-    <h2>${esc(ev.n)}</h2><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div>
-    <p style="margin:0">${esc(ev.b)}</p>
-    <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates" style="font-size:13px">${range(ev)}</dd><dt>Hours</dt><dd>${esc(ev.h)}</dd><dt>Cost</dt><dd>${esc(ev.p)}</dd></dl>
-    <div class="row"><button class="btn${f ? " ghost" : ""}" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}">${f ? "★ In my night" : "☆ Add to my night"}</button>${url ? `<a class="btn ghost" href="${esc(infoUrl(url, ev.n))}" target="_blank" rel="noopener">Event info ↗</a>` : ""}<a class="btn ghost" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener">Directions ↗</a></div>${mapsPicker()}
-    ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}</div>`;
+    return `<div class="detail">
+    <div class="hero${ev.free ? " free" : ""}"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><span class="emo" aria-hidden="true">${iconOf(ev)}</span>
+      <div class="htext"><div class="kicker">${esc(TYPE_SHORT[ev.t] || "Event")} · ${esc(ev.city)}</div><h2>${esc(ev.n)}</h2></div></div>
+    <div class="tags"><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
+    <div class="boxes"><div><span>When</span><b>${whenShort(ev)}</b></div><div><span>Hours</span><b>${esc(ev.h)}</b></div><div><span>Cost</span><b>${esc(ev.p)}</b></div></div>
+    <p class="blurb">${esc(ev.b)}</p>
+    <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd></dl>
+    ${mapsPicker()}
+    ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
+    <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button>${url ? `<a class="abtn" href="${esc(infoUrl(url, ev.n))}" target="_blank" rel="noopener" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
-  return `<div class="detail"><button class="back" type="button" id="back">← Back to results</button>
+  return `<div class="detail"><button class="back plain" type="button" id="back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>Back to results</button>
   ${ph.length ? `<div class="gallery"><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">‹</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">›</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><div class="ph-none">No photos yet</div></div>`}
   <span class="tag ice" style="justify-self:start">Showcased house</span>
   <h2>${esc(p.title)}</h2><div class="meta"><b style="color:var(--ink)">${esc(p.biz)}</b> · ${esc(p.city)}</div>
@@ -498,10 +545,26 @@ function renderSeasonBar() {
   bar.innerHTML = seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="tab" data-season="${k}" aria-selected="${k === state.season}"${k === NOW_SEASON ? ' class="now" title="On now"' : ""}>${esc(SEASONS[k].short)}</button>`).join("");
   bar.querySelectorAll("[data-season]").forEach((b) => (b.onclick = () => setSeason(b.dataset.season)));
   document.documentElement.dataset.season = state.season;
-  if (mapReady) map.setPaintProperty("clusters", "circle-color", seasonColor());
+  repaintMap();
 }
-// Map clusters take the season's accent; the dark-mode accent is too pale for white counts, so use the light one
-function seasonColor() { return { newyear: "#6d3fc0", spring: "#b8336f", summer: "#1e5fb3", halloween: "#c2410c", christmas: "#1f6b4f" }[state.season] || "#1d2433"; }
+function repaintMap() {
+  if (!mapReady || !map.getLayer("clusters")) return;
+  const C = mapColors();
+  map.setPaintProperty("clusters", "circle-color", C.season);
+  map.setPaintProperty("pt", "circle-color", catColor(C));
+  map.setPaintProperty("hl", "circle-color", catColor(C));
+}
+// Day / night toggle
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem("socal-theme", t); } catch {}
+  const b = $("#themebtn"), night = t === "dark";
+  b.setAttribute("aria-label", night ? "Switch to day mode" : "Switch to night mode"); b.title = night ? "Day mode" : "Night mode";
+  document.querySelector('meta[name="theme-color"]').content = night ? "#0b0d12" : "#f6f4f0";
+  map.setStyle(MAP_STYLES[t], { diff: false });
+}
+$("#themebtn").onclick = () => setTheme(theme() === "dark" ? "light" : "dark");
+if (theme() === "dark") { $("#themebtn").setAttribute("aria-label", "Switch to day mode"); $("#themebtn").title = "Day mode"; document.querySelector('meta[name="theme-color"]').content = "#0b0d12"; }
 function setSeason(k) {
   if (!SEASONS[k] || k === state.season) return;
   state.season = k; state.type = ""; state.date = ""; state.sel = null; state.detail = null;
@@ -520,15 +583,32 @@ function applyFilters() {
   document.querySelector('[data-pop="cost"]').classList.toggle("on", state.cost !== "all");
   document.querySelector('[data-pop="type"]').classList.toggle("on", !!state.type);
   $("#c-conf").classList.toggle("on", state.conf);
+  const nf = [state.date, state.city, state.counties.size, state.cost !== "all", state.type, state.conf].filter(Boolean).length;
+  $("#fcount").textContent = nf; $("#fcount").hidden = !nf;
   state.detail = null; renderPanel(); drawMap(); renderPreview();
 }
+// Phone: the filter chips sit behind the filter button in the search bar (desktop always shows them)
+$("#fbtn").onclick = () => { const open = !document.querySelector(".topbar").classList.contains("fopen"); document.querySelector(".topbar").classList.toggle("fopen", open); $("#fbtn").setAttribute("aria-expanded", open); if (!open) closePop(); };
+// Phone: the floating tab bar drives the same three tabs as the panel
+document.querySelectorAll("#bnav [data-tab]").forEach((b) => (b.onclick = () => $("#t-" + b.dataset.tab).click()));
 let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); }, 120); };
 
 /* ---------- bottom sheet (phone) ---------- */
+// Collapsed sheet height on phones: room for the quick picks, one row of swipeable cards and the tab bar
+// (plus the home-indicator strip on newer iPhones, which the tab bar sits above)
+const PEEK = 276;
+let safeBottom = null;
+function peekH() {
+  if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
+  return PEEK + safeBottom;
+}
 let sheetState = "peek";
-function sheetVisible() { if (!isPhone()) return 0; const ph = $("#panel").offsetHeight || innerHeight * 0.8; return sheetState === "peek" ? Math.min(148, ph) : sheetState === "half" ? Math.round(innerHeight * 0.48) : ph; }
+function sheetVisible() { if (!isPhone()) return 0; const ph = $("#panel").offsetHeight || innerHeight * 0.8; return sheetState === "peek" ? Math.min(peekH(), ph) : sheetState === "half" ? Math.round(innerHeight * 0.48) : ph; }
 function setSheet(s) {
   sheetState = s; const panel = $("#panel");
+  // collapsed on a phone: the list turns into a sideways row of cards over the map
+  panel.classList.toggle("peek", isPhone() && s === "peek");
+  if (isPhone() && s === "peek") $("#pbody").scrollTop = 0; // the card row can't be scrolled vertically, so start it at the top
   if (!isPhone()) { panel.style.removeProperty("--sheet-y"); return; }
   panel.style.setProperty("--sheet-y", panel.offsetHeight - sheetVisible() + "px");
   document.documentElement.style.setProperty("--peek", sheetVisible() + "px");
@@ -552,7 +632,7 @@ function setSheet(s) {
     const dy = y - d.y0, moved = d.moved; d.y0 = null; panel.classList.remove("dragging");
     if (!moved) return false;
     const vis = panel.offsetHeight - clampY(d.start + dy);
-    const opts = [["peek", Math.min(148, panel.offsetHeight)], ["half", Math.round(innerHeight * 0.48)], ["full", panel.offsetHeight]];
+    const opts = [["peek", Math.min(peekH(), panel.offsetHeight)], ["half", Math.round(innerHeight * 0.48)], ["full", panel.offsetHeight]];
     let pick;
     if (dy < -40) pick = opts.find((o) => o[1] >= vis - 1) || opts[2];       // flicked up: next stop above
     else if (dy > 40) pick = [...opts].reverse().find((o) => o[1] <= vis + 1) || opts[0]; // flicked down: next stop below
@@ -573,12 +653,15 @@ function setSheet(s) {
 
   // The list: touch events, so normal scrolling still works when the sheet is full
   let mode = null;
-  body.addEventListener("touchstart", (e) => { if (!isPhone() || e.touches.length > 1) return; mode = null; begin(e.touches[0].clientY); }, { passive: true });
+  let x0 = 0;
+  body.addEventListener("touchstart", (e) => { if (!isPhone() || e.touches.length > 1) return; mode = null; x0 = e.touches[0].clientX; begin(e.touches[0].clientY); }, { passive: true });
   body.addEventListener("touchmove", (e) => {
     if (d.y0 === null || mode === "scroll") return;
-    const y = e.touches[0].clientY, dy = y - d.y0;
+    const y = e.touches[0].clientY, dy = y - d.y0, dx = e.touches[0].clientX - x0;
     if (!mode) {
-      if (Math.abs(dy) < 6) return;
+      if (Math.abs(dy) < 6 && Math.abs(dx) < 6) return;
+      // sideways swipe through the collapsed card row scrolls the cards, not the sheet
+      if (Math.abs(dx) > Math.abs(dy)) { mode = "scroll"; d.y0 = null; return; }
       mode = (sheetState !== "full" && dy < 0) || (body.scrollTop <= 0 && dy > 0) ? "sheet" : "scroll";
       if (mode === "scroll") { d.y0 = null; return; }
     }
