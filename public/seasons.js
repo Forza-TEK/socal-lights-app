@@ -95,10 +95,12 @@ export const SEASONS = {
     },
   },
   christmas: {
-    label: "Christmas & Holiday Lights",
-    short: "Christmas",
+    label: "Thanksgiving & Holiday Lights",
+    short: "Holidays",
     window: ["11-03", "12-26"],
     types: {
+      trot: "Turkey trots & fun runs",
+      thanks: "Thanksgiving feasts & harvest",
       walk: "Walk-through lights",
       drive: "Drive-by / neighborhood",
       parade: "Boat & street parades",
@@ -107,6 +109,7 @@ export const SEASONS = {
       tour: "Tours & rides",
     },
     quickDates: [
+      ["2026-11-26", "Thanksgiving Day (Nov 26)"],
       ["2026-11-27", "Day after Thanksgiving (Nov 27)"],
       ["2026-12-12", "Sat, Dec 12"],
       ["2026-12-19", "Sat, Dec 19"],
@@ -125,7 +128,7 @@ export const SEASON_KEYS = Object.keys(SEASONS);
 
 // Short labels for every type, used on cards and tags
 export const TYPE_SHORT = {
-  walk: "Walk-through", drive: "Drive-by", parade: "Parade", park: "Park / zoo", tree: "Tree lighting", tour: "Tour / ride",
+  trot: "Turkey trot", thanks: "Thanksgiving", walk: "Walk-through", drive: "Drive-by", parade: "Parade", park: "Park / zoo", tree: "Tree lighting", tour: "Tour / ride",
   haunt: "Haunt", pumpkin: "Pumpkins", family: "Family event", dia: "Día de los Muertos", show: "Show",
   nye: "New Year's Eve", lunar: "Lunar New Year", bloom: "Blooms", nature: "Nature", stpat: "St. Patrick's",
   easter: "Easter", cinco: "Cinco de Mayo", festival: "Festival", fireworks: "Fireworks", fair: "Fair", concert: "Concert / movie",

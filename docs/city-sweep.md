@@ -11,7 +11,7 @@ if it starts within 6 weeks. Use only the allowed `types` for each season.
 ## How to search (Pomona-level scrutiny)
 Go through **every city in the group, one by one**. For each city check:
 - its parks & recreation / community services **events calendar** — search e.g. "<city> Halloween 2026",
-  "<city> trunk or treat", "<city> tree lighting", "<city> holiday parade", "<city> Día de los Muertos",
+  "<city> trunk or treat", "<city> tree lighting", "<city> holiday parade", "<city> turkey trot", "<city> Thanksgiving community dinner", "<city> Día de los Muertos",
   "<city> 4th of July fireworks", "<city> egg hunt", "<city> events calendar" (whichever fit the seasons)
 - the downtown / village association and chamber of commerce
 - shopping centers and malls in that city, community centers, libraries
