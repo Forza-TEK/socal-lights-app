@@ -109,7 +109,7 @@ map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAc
 
 function padding() {
   const ph = isPhone();
-  return { top: ph ? 120 : 118, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? sheetVisible() + 16 : 24 };
+  return { top: ph ? 132 : 130, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? sheetVisible() + 16 : 24 };
 }
 // On phones the list covers the map when expanded, so "in map view" means the map above the collapsed sheet.
 function mapArea() { const p = padding(); if (isPhone()) p.bottom = 164; return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
@@ -129,7 +129,7 @@ function initLayers() {
   map.addSource("route", { type: "geojson", data: fc([]) });
   map.addSource("stops", { type: "geojson", data: fc([]) });
   map.addLayer({ id: "clusters", type: "circle", source: "pts", filter: ["has", "point_count"],
-    paint: { "circle-color": "#1d2433", "circle-opacity": 0.88, "circle-radius": ["step", ["get", "point_count"], 15, 8, 19, 20, 24], "circle-stroke-width": 3, "circle-stroke-color": "#ffffff" } });
+    paint: { "circle-color": seasonColor(), "circle-opacity": 0.9, "circle-radius": ["step", ["get", "point_count"], 15, 8, 19, 20, 24], "circle-stroke-width": 3, "circle-stroke-color": "#ffffff" } });
   map.addLayer({ id: "cluster-count", type: "symbol", source: "pts", filter: ["has", "point_count"],
     layout: { "text-field": ["get", "point_count_abbreviated"], "text-font": ["Noto Sans Bold"], "text-size": 13 }, paint: { "text-color": "#ffffff" } });
   map.addLayer({ id: "pt", type: "circle", source: "pts", filter: ["!", ["has", "point_count"]],
@@ -314,7 +314,7 @@ function renderPanel() {
     const st = routeStops();
     head.innerHTML = `<span><b>${favs.size}</b> starred</span><label class="toggle">Start from <select id="startFrom" style="border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:2px 4px;max-width:150px"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
     $("#startFrom").onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
-    if (!st.length) { body.innerHTML = `<div class="empty">Tap ☆ on any event to add it. Your stops get a sensible driving order from where you are, a route on the map, and a Google Maps link.</div>`; return; }
+    if (!st.length) { body.innerHTML = `<div class="empty"><b style="color:var(--ink)">Plan your family's night out</b>Tap ☆ on any event to add it. Your stops get a sensible driving order from where you are, a route on the map, and a link for your maps app.</div>`; return; }
     if (state.start === "me") locateMe(false);
     let html = "", prev = routeOrigin(), total = 0;
     if (state.start === "me") html += `<div class="meta" style="padding:0 0 4px 2px">${state.me ? "📍 Starting from your location" : state.meErr ? esc(state.meErr) : "Finding your location…"}</div>`;
@@ -498,7 +498,10 @@ function renderSeasonBar() {
   bar.innerHTML = seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="tab" data-season="${k}" aria-selected="${k === state.season}"${k === NOW_SEASON ? ' class="now" title="On now"' : ""}>${esc(SEASONS[k].short)}</button>`).join("");
   bar.querySelectorAll("[data-season]").forEach((b) => (b.onclick = () => setSeason(b.dataset.season)));
   document.documentElement.dataset.season = state.season;
+  if (mapReady) map.setPaintProperty("clusters", "circle-color", seasonColor());
 }
+// Map clusters take the season's accent; the dark-mode accent is too pale for white counts, so use the light one
+function seasonColor() { return { newyear: "#6d3fc0", spring: "#b8336f", summer: "#1e5fb3", halloween: "#c2410c", christmas: "#1f6b4f" }[state.season] || "#1d2433"; }
 function setSeason(k) {
   if (!SEASONS[k] || k === state.season) return;
   state.season = k; state.type = ""; state.date = ""; state.sel = null; state.detail = null;
