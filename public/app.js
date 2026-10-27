@@ -621,6 +621,9 @@ function applyFilters() {
 $("#fbtn").onclick = () => { const open = !document.querySelector(".topbar").classList.contains("fopen"); document.querySelector(".topbar").classList.toggle("fopen", open); $("#fbtn").setAttribute("aria-expanded", open); if (!open) closePop(); };
 // Phone: the floating tab bar drives the same three tabs as the panel
 document.querySelectorAll("#bnav [data-tab]").forEach((b) => (b.onclick = () => $("#t-" + b.dataset.tab).click()));
+// the phone's search box shares its row with the logo and night-mode button, so keep the hint short enough to fit
+const fitHint = () => { $("#q").placeholder = innerWidth > 860 ? "Search events or a city" : innerWidth > 380 ? "Search events" : "Search"; };
+fitHint(); addEventListener("resize", fitHint);
 let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); }, 120); };
 
 /* ---------- bottom sheet (phone) ---------- */
