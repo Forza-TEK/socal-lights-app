@@ -299,11 +299,6 @@ function datetile(ev) {
   return `<div class="datetile${ev.free ? " free" : ""}${live ? " live" : ""}"><span>${top}</span><b>${d}</b><span>${bottom}</span></div>`;
 }
 const effStart = (e) => (e.s > TODAY ? e.s : TODAY);
-// A friendly picture for each kind of event, shown on its card tile and detail header
-const ICON = { park: "🎢", haunt: "👻", pumpkin: "🎃", family: "🍬", dia: "💀", show: "🎭", trot: "🏃", thanks: "🦃", walk: "✨", drive: "🚗", parade: "🎺", tree: "🎄", tour: "🚂",
-  nye: "🎆", lunar: "🏮", bloom: "🌸", nature: "🐋", stpat: "☘️", easter: "🐣", cinco: "🪅", festival: "🎪", fireworks: "🎆", fair: "🎡", concert: "🎶" };
-const ICON_BY_SEASON = { newyear: { family: "🎉", parade: "🌹" }, christmas: { parade: "⛵" } };
-const iconOf = (ev) => (ICON_BY_SEASON[ev.sn] || {})[ev.t] || ICON[ev.t] || "📍";
 // Photos: the event's own preview image (from its official page) when we have one, otherwise an openly licensed
 // stock photo of that kind of event, served from /img/stock. Credits show on the detail page.
 const STOCK_BY_SEASON = { halloween: { park: "haunt" }, christmas: { park: "xmaspark", tour: "walk" }, newyear: { family: "nye", parade: "roseparade", show: "nye" }, summer: { park: "zoo" } };
@@ -313,15 +308,16 @@ function stockKey(ev) {
 }
 const hashOf = (str) => { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
-function photoOf(ev) {
+function photoOf(ev, hero) {
   // each type has several stock photos; the event's id picks one, so the same event always gets the same photo
   const k = stockKey(ev), n = k ? hashOf(ev.id) % STOCK[k].length : 0, st = k && STOCK[k][n];
-  const stock = k ? `/img/stock/${k}-${n + 1}.jpg` : "", sc = k && `Photo: ${st.by} · ${st.lic}`;
+  const stock = k ? `/img/stock/${hero ? "" : "t/"}${k}-${n + 1}.jpg` : "", sc = k && `Photo: ${st.by} · ${st.lic}`;
   if (ev.img) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u };
   return k ? { src: stock, credit: sc, link: st.src } : null;
 }
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
 const photoImg = (ph) => `<img class="evimg" src="${esc(ph.src)}"${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
+document.addEventListener("load", (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains("evimg")) e.target.classList.add("ld"); }, true);
 document.addEventListener("error", (e) => {
   const i = e.target;
   if (!(i instanceof HTMLImageElement) || !i.classList.contains("evimg")) return;
@@ -340,11 +336,11 @@ function whenShort(ev) {
 const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
 function evItem(ev) {
   const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev);
-  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}"><span class="emo" aria-hidden="true">${iconOf(ev)}</span>${ph ? photoImg(ph) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span></div><div class="ibody"><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}</div><div class="tags"><span class="tag ${ev.free ? "free" : "paid"}">${esc(ev.p)}</span><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Confirmed" : "Expected"}</span></div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
+  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span></div><div class="ibody"><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}</div><div class="tags"><span class="tag ${ev.free ? "free" : "paid"}">${esc(ev.p)}</span><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Confirmed" : "Expected"}</span></div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
 }
 function instItem(p) {
   const ph = p.photos || [], k = "i:" + p.id;
-  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : `<span class="emo" aria-hidden="true">🏠</span>`}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><span></span></article>`;
+  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : ""}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><span></span></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
@@ -417,9 +413,9 @@ function openDetail(k) { state.detail = k; state.sel = k; renderPanel(); renderP
 function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
   if (it.kind === "ev") {
-    const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u), ph = photoOf(ev), cl = ph && safeUrl(ph.link);
+    const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u), ph = photoOf(ev, true), cl = ph && safeUrl(ph.link);
     return `<div class="detail">
-    <div class="hero${ev.free ? " free" : ""}${ph ? " photo" : ""}">${ph ? photoImg(ph) : ""}<button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><span class="emo" aria-hidden="true">${iconOf(ev)}</span>
+    <div class="hero${ev.free ? " free" : ""}${ph ? " photo" : ""}">${ph ? photoImg(ph) : ""}<button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
       ${ph ? (cl ? `<a class="credit" href="${esc(cl)}" target="_blank" rel="noopener">${esc(ph.credit)}</a>` : `<span class="credit">${esc(ph.credit)}</span>`) : ""}
       <div class="htext"><div class="kicker">${esc(TYPE_SHORT[ev.t] || "Event")} · ${esc(ev.city)}</div><h2>${esc(ev.n)}</h2></div></div>
     <div class="tags"><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>

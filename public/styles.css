@@ -8,7 +8,7 @@
   --free:#0f9d6b; --free-soft:#dcf5ea; --paid:#c2410c; --paid-soft:#fde7da; --gold:#9a6a00; --gold-soft:#fbefcc;
   --ice:#2f6fd0; --ice-soft:#e2ecfb; --heart:#e5484d; --focus:#2a5bd7;
   --s-newyear:#6d3fc0; --s-spring:#c0306f; --s-summer:#1e63c4; --s-halloween:#e8590c; --s-christmas:#d1343f;
-  --season:var(--s-halloween); --on-season:#ffffff;
+  --season:var(--s-halloween); --on-season:#ffffff; --badge:url(/img/badge-160.webp);
   --glass:color-mix(in srgb,var(--surface) 88%,transparent);
   --f-display:"Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-body:"Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -146,11 +146,14 @@ button{touch-action:manipulation}
 @keyframes flash{0%,35%{background:var(--season-soft)}100%{background:transparent}}
 .tile,.item .thumb{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;overflow:hidden;background:var(--season-soft)}
 .tile{position:relative}
+/* the logo stands in until an event's photo loads, and for events that have no photo */
+.tile::before,.item .thumb::before{content:"";position:absolute;inset:0;background:var(--badge) center/auto 78% no-repeat}
+.item .thumb{position:relative}
+.evimg{opacity:0;transition:opacity .25s}.evimg.ld{opacity:1}
 .tile .evimg,.hero .evimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .tile.free{background:var(--free-soft)}
 .item .thumb{background:var(--ice-soft)}
 .item .thumb img{width:100%;height:100%;object-fit:cover}
-.emo{font-size:30px;line-height:1}
 .tile .when{display:none}
 .ibody{min-width:0}
 .item h3{margin:0 0 2px;font-size:16px;font-weight:700;line-height:1.3;letter-spacing:-.01em;text-wrap:balance}
@@ -195,11 +198,10 @@ button{touch-action:manipulation}
 .detail{display:grid;gap:14px;padding-bottom:4px}
 .hero{position:relative;margin:0 -16px;height:210px;background:var(--season-soft);overflow:hidden}
 .hero.free{background:var(--free-soft)}
-.hero .emo{position:absolute;right:22px;top:26px;font-size:76px}
+.hero:not(.photo)::before{content:"";position:absolute;right:22px;top:26px;width:104px;height:104px;background:url(/img/badge-512.webp) center/contain no-repeat}
 .hero .back{position:absolute;left:14px;top:14px;z-index:2}
 /* with a photo: darken the bottom so the title reads in white */
 .hero.photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.72))}
-.hero.photo .emo{display:none}
 .hero.photo .htext{z-index:1;color:#fff}
 .hero.photo .kicker{color:rgba(255,255,255,.88)}
 .hero .credit{position:absolute;right:10px;top:12px;z-index:2;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;font-weight:600;color:#fff;background:rgba(0,0,0,.5);border-radius:999px;padding:3px 9px;text-decoration:none}
@@ -303,7 +305,6 @@ button{touch-action:manipulation}
   .panel.peek .item{flex:0 0 min(78%,300px);scroll-snap-align:start;grid-template-columns:1fr;gap:0;padding:0;align-items:stretch;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
   .panel.peek .item.sel{box-shadow:inset 0 0 0 2px var(--season)}
   .panel.peek .tile,.panel.peek .item .thumb{width:100%;height:84px;border-radius:0;position:relative}
-  .panel.peek .emo{font-size:28px}
   .panel.peek .tile .when{display:block;position:absolute;z-index:1;left:8px;top:8px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px}
   .panel.peek .tile .when.now{background:var(--ink);color:var(--surface)}
   .panel.peek .ibody{padding:9px 12px 11px}
