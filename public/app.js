@@ -311,12 +311,14 @@ function stockKey(ev) {
   if (ev.sn === "christmas" && ev.t === "parade" && /boat|harbou?r|yacht|marina|bay\b|cruise/i.test(ev.n)) return "boatparade";
   return (STOCK_BY_SEASON[ev.sn] || {})[ev.t] || (STOCK[ev.t] ? ev.t : "");
 }
+const hashOf = (str) => { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
 function photoOf(ev) {
-  const k = stockKey(ev), stock = k ? "/img/stock/" + k + ".jpg" : "";
-  const sc = k && `Photo: ${STOCK[k].by} · ${STOCK[k].lic}`;
-  if (ev.img) return { src: ev.img, fb: stock, fbc: sc, fbl: k && STOCK[k].src, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u };
-  return k ? { src: stock, credit: sc, link: STOCK[k].src } : null;
+  // each type has several stock photos; the event's id picks one, so the same event always gets the same photo
+  const k = stockKey(ev), n = k ? hashOf(ev.id) % STOCK[k].length : 0, st = k && STOCK[k][n];
+  const stock = k ? `/img/stock/${k}-${n + 1}.jpg` : "", sc = k && `Photo: ${st.by} · ${st.lic}`;
+  if (ev.img) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u };
+  return k ? { src: stock, credit: sc, link: st.src } : null;
 }
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
 const photoImg = (ph) => `<img class="evimg" src="${esc(ph.src)}"${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
