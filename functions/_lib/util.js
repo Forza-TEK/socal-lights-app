@@ -39,7 +39,7 @@ export function rowToEvent(r) {
     id: r.id, n: r.name, c: r.county, city: r.city, t: r.type, s: r.start_date, e: r.end_date,
     st: r.status === "confirmed" ? "c" : "e", free: !!r.free, p: r.price || "", h: r.hours || "",
     lat: r.lat, lng: r.lng, b: r.blurb || "", u: r.url || "", sn: r.season || "christmas",
-    v: r.venue || "", a: r.address || "",
+    v: r.venue || "", a: r.address || "", img: r.image || "",
   };
 }
 

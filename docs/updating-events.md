@@ -42,6 +42,7 @@ live database (the site itself redeploys on every push through Cloudflare Pages)
 | lat / lng | the venue itself, not the city center. Get them by geocoding the address (OpenStreetMap Nominatim: `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=<address>`) or from the venue's map listing; inside lat 32–35.8, lng −121.5 to −114 |
 | blurb | one sentence in our own words, ≤ 180 chars — never copied text |
 | url | the event's **own** page (organizer or venue) whenever one exists, not a roundup listing many events. The site adds a text fragment so roundup links scroll to the event's name, but an event page is better. |
+| image | optional. The event's own photo: the `og:image` of its official page when that is a real photo of the event (not a logo, flyer or clip art), landscape, under 1.5 MB. Set it with `UPDATE events SET image='…' WHERE id='…';`. Leave it empty otherwise: the card then shows the stock photo for the event's type (`public/stock.js`). Avoid `--` inside the URL (split it as `'…-' || '-…'`), since the validator reads `--` as a comment. |
 
 Only add real events found in public sources. Never invent events, dates or prices.
 

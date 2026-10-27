@@ -1,0 +1,30 @@
+// Openly licensed stock photos in /img/stock, one per kind of event. An event shows its own official photo when it has one
+// (the `image` column); otherwise it shows the stock photo for its type. All from Flickr via Openverse; CC BY photos must keep
+// their credit, which the detail page shows. To swap one, replace the file and update its line here.
+export const STOCK = {
+  bloom: { by: "janoma.cl", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/16982168@N05/4573892308" },
+  boatparade: { by: "Port of San Diego", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/8123170@N06/11298470145" },
+  cinco: { by: "ABQ Old Town", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/69855884@N02/14091460415" },
+  dia: { by: "pearlbear", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/34699077@N00/78583949" },
+  drive: { by: "sonstroem", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/96964826@N05/16056039496" },
+  easter: { by: "Presidio of Monterey: DLIFLC & USAG", lic: "Public domain", src: "https://www.flickr.com/photos/38345529@N05/41261375631" },
+  fair: { by: "Randy Heinitz", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/36509286@N03/8470111076" },
+  family: { by: "koadmunkee", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/29946035@N08/10701967196" },
+  festival: { by: "Amsterdam free photos", lic: "CC0", src: "https://www.flickr.com/photos/104736837@N03/10929482603" },
+  fireworks: { by: "be808", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/71356546@N04/9208815765" },
+  haunt: { by: "Prayitno", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/34128007@N04/21840248563" },
+  lunar: { by: "GeorgeTan#1", lic: "CC0", src: "https://www.flickr.com/photos/156700692@N02/55068970907" },
+  nature: { by: "eGuide Travel", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/31190896@N08/8058783438" },
+  nye: { by: "be808", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/71356546@N04/9208827393" },
+  parade: { by: "Greenville, NC", lic: "Public domain", src: "https://www.flickr.com/photos/156869144@N02/51729688525" },
+  pumpkin: { by: "Muffet", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/53133240@N00/10742561004" },
+  roseparade: { by: "IK's World Trip", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/28238346@N00/343028131" },
+  show: { by: "jbcurio", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/69131582@N00/2995866054" },
+  stpat: { by: "GoToVan", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/47022937@N03/25642002382" },
+  thanks: { by: "Accretion Disc", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/23642145@N00/11109552584" },
+  tree: { by: "waferboard", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/60944931@N00/4332639858" },
+  trot: { by: "donjd2", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/28156071@N00/51703633237" },
+  walk: { by: "ShebleyCL", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/25636851@N03/50687793476" },
+  xmaspark: { by: "shirokazan", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/11302107@N05/4145220044" },
+  zoo: { by: "Martin Pettitt", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/95012874@N00/11219971513" },
+};
