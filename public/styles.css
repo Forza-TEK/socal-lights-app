@@ -301,15 +301,16 @@ button{touch-action:manipulation}
   .panel.peek .teaser,.panel.peek .list>.meta,.panel.peek .pbody>.row,.panel.peek .pbody>p,.panel.peek .mapspick,.panel.peek .cta{display:none}
   .panel.peek .list{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 -16px;padding:2px 16px 4px;scroll-padding:0 16px}
   .panel.peek .list::-webkit-scrollbar{display:none}
-  .panel.peek .item{flex:0 0 min(78%,300px);scroll-snap-align:start;grid-template-columns:1fr;gap:0;padding:0;align-items:stretch;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
-  .panel.peek .item.sel{box-shadow:inset 0 0 0 2px var(--season)}
-  .panel.peek .tile,.panel.peek .item .thumb{width:100%;height:84px;border-radius:0;position:relative}
-  .panel.peek .tile .when{display:block;position:absolute;z-index:1;left:8px;top:8px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px}
-  .panel.peek .tile .when.now{background:var(--ink);color:var(--surface)}
-  .panel.peek .ibody{padding:9px 12px 11px}
-  .panel.peek .item h3{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .panel.peek .item .dates,.panel.peek .item .tags{display:none}
-  .panel.peek .star{position:absolute;right:6px;top:6px;width:40px;height:40px;background:var(--surface);box-shadow:var(--shadow-sm)}
+  /* cards: the same card in the sideways row (collapsed) and the vertical list (half and full) */
+  .list{gap:10px}
+  .panel .list .item{flex:0 0 min(78%,300px);scroll-snap-align:start;grid-template-columns:1fr;gap:0;padding:0;align-items:stretch;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+  .panel .list .item.sel{box-shadow:inset 0 0 0 2px var(--season)}
+  .panel .list .tile,.panel .list .item .thumb{width:100%;height:84px;border-radius:0;position:relative}
+  .panel .list .tile .when{display:block;position:absolute;z-index:1;left:8px;top:8px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px}
+  .panel .list .tile .when.now{background:var(--ink);color:var(--surface)}
+  .panel .list .ibody{padding:9px 12px 11px}
+  .panel .list .item h3{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .panel .list .star{position:absolute;right:6px;top:6px;width:40px;height:40px;background:var(--surface);box-shadow:var(--shadow-sm)}
   .panel.peek .empty{padding:14px 16px}
 
   /* floating tab bar */
