@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028y";
+import { SITE } from "/site-config.js?v=20261028z";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -77,7 +77,7 @@ const miles = (a, b) => { const R = 3958.8, r = (x) => x * Math.PI / 180, dLa = 
 
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};
-const state = { season: defaultSeason(TODAY), q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", shopCat: 0, inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
+const state = { season: defaultSeason(TODAY), q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
 const hfav = (p) => "h:" + p.id; // houses are starred as "h:<id>"; events by their plain id
 const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify([...favs])); } catch {} };
@@ -376,7 +376,7 @@ function renderPanel() {
       : `<div class="empty">No events in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
-    head.innerHTML = `<div class="hrow"><span><b>Shop</b> for ${esc(SEASONS[state.season].short || SEASONS[state.season].label)}</span></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
+    head.innerHTML = `<div class="hrow"><label class="shopsel"><b>Shop for</b> <select id="shopSeason" aria-label="Shop season">${Object.keys(SITE.shop).filter((k) => SEASONS[k]).map((k) => `<option value="${k}"${k === shopSeason() ? " selected" : ""}>${esc(SEASONS[k].short || SEASONS[k].label)}</option>`).join("")}</select></label></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
     body.innerHTML = `<div class="shopgrid">${c[1].map(([em, l, q]) => `<a class="shopcard" href="${amzUrl(q)}" target="_blank" rel="sponsored noopener"><span class="shopem" aria-hidden="true">${em}</span><span class="shoptx">${esc(l)}</span><span class="shopgo">Amazon ↗</span></a>`).join("")}</div><p class="meta" style="padding:4px 14px 14px">As an Amazon Associate we earn from qualifying purchases, at no extra cost to you.</p>`;
   } else if (state.tab === "inst") {
     const vis = SHOW.filter(instMatch).filter((p) => inView(p.plng, p.plat) || state.sel === "i:" + p.id);
@@ -414,6 +414,7 @@ $("#pbody").addEventListener("click", (e) => {
   if (f) { e.stopPropagation(); const id = f.dataset.fav; favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); return; }
   const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) selectKey(it.dataset.key, "list");
 });
+$("#phead").addEventListener("change", (e) => { if (e.target.id === "shopSeason") { state.shopSeason = e.target.value; state.shopCat = 0; renderPanel(); $("#pbody").scrollTop = 0; } });
 $("#phead").addEventListener("click", (e) => {
   const sb = e.target.closest("[data-shop]"); if (sb) { state.shopCat = +sb.dataset.shop; renderPanel(); $("#pbody").scrollTop = 0; return; }
   const b = e.target.closest("[data-quick]"); if (!b) return;
@@ -495,7 +496,8 @@ const isAff = (u) => !!affRule(u);
 // Two kinds of rule: add a tracking parameter ({ param, value }), or wrap the link in a network deep link ({ template: "https://…?u={url}" }, the form Impact/CJ give you).
 function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) return r.template.replace("{url}", encodeURIComponent(u)); try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
 const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(q)}&tag=${encodeURIComponent(SITE.amazonTag)}`;
-const shopCats = () => (SITE.amazonTag ? SITE.shop[state.season] || [] : []);
+const shopSeason = () => (SITE.shop[state.shopSeason] ? state.shopSeason : state.season);
+const shopCats = () => (SITE.amazonTag ? SITE.shop[shopSeason()] || [] : []);
 // The Shop tab only exists when there is an Amazon tag and shop list for the season.
 function syncShopTab() {
   const on = shopCats().length > 0;
@@ -507,7 +509,7 @@ function openSupport() {
   m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Keep SoCal Lights free</h2><button class="btn ghost" type="button" id="sClose">Close</button></div>
     <p class="blurb">SoCal Lights is built and kept up to date by one small team: checking dates, adding events and fixing links all season long. There are no ads and no paywall. If it helped you find something fun, you can help keep it going.</p>
     ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
-    ${shopCats().length ? `<button class="btn ghost" type="button" id="sShop">🛍️ Browse the ${esc(SEASONS[state.season].short || SEASONS[state.season].label)} shop</button>` : ""}
+    ${shopCats().length ? `<button class="btn ghost" type="button" id="sShop">🛍️ Browse the shop</button>` : ""}
     ${SITE.amazonTag || Object.keys(SITE.ticketAffiliates).length ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
   </div>`;
   m.hidden = false; $("#sClose").onclick = closeForm; $("#sClose").focus();
@@ -669,7 +671,7 @@ $("#themebtn").onclick = () => setTheme(theme() === "dark" ? "light" : "dark");
 if (theme() === "dark") { $("#themebtn").setAttribute("aria-label", "Switch to day mode"); $("#themebtn").title = "Day mode"; document.querySelector('meta[name="theme-color"]').content = "#0b0d12"; }
 function setSeason(k) {
   if (!SEASONS[k] || k === state.season) return;
-  state.season = k; state.shopCat = 0; state.type = ""; state.date = ""; state.sel = null; state.detail = null;
+  state.season = k; state.shopCat = 0; state.shopSeason = ""; state.type = ""; state.date = ""; state.sel = null; state.detail = null;
   try { history.replaceState(null, "", "#" + k); } catch {}
   renderSeasonBar(); applyFilters(); if (mapReady) fitSoCal(true);
 }
