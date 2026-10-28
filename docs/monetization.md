@@ -15,6 +15,8 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
 - To get started: apply to Amazon Associates (needs 3 qualifying sales in 180 days to stay active) and to ticket programs such as Eventbrite, Ticketmaster (via Impact), Groupon (via Impact). Each has its own approval.
 
 ## 3. Feature your event
+**Automatic (Stripe):** see `docs/stripe-setup.md`. Once the two Stripe secrets are set, visitors pick their event and pay on `/feature`, and the placement turns on by itself. The notes below describe the manual Cash App fallback that is used until then.
+
 - Page: `/feature` (plans: Featured pin $5 / 30 days, Top of the list $10 / 30 days, Whole season $15). Edit the copy and prices in `public/feature.html`
   (and the matching `NAMES` in its script).
 - Payment: Cash App links in `featurePay.pin|top|season` (`https://cash.app/$RelaxationMeditation/5`, `/10`, `/15`). The customer puts their event name in
@@ -29,3 +31,6 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
   Placement ends by itself after `featured_until`. Scheduled upkeep and sweep upserts never touch these two columns.
 - Featured must stay honest: the event still has to be real, public and verified, and the badge is always shown.
 - History: built 2026-10-28, removed briefly the same day, then restored with Cash App payments and $5/$10/$15 pricing.
+
+## 4. Add your event (free, public)
+`/add-event` lets organizers add events themselves; page-verified events publish automatically, others go to the admin "Submitted events" tab. Details in `docs/stripe-setup.md`.

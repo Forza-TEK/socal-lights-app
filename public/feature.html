@@ -36,42 +36,51 @@ ol{padding-left:20px} li{margin:6px 0}
 details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin:8px 0}
 summary{font-weight:700;cursor:pointer}
 .meta{color:var(--muted);font-size:14px}
+#pick{display:grid;gap:8px;margin:0 0 8px}
+input[type=search],input[type=text],input[type=email],input[type=url],input[type=date],select,textarea{width:100%;font:inherit;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
+.res{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.res button{width:100%;text-align:left;font:inherit;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);cursor:pointer}
+.res button small{display:block;color:var(--muted)}
+.chosen{background:var(--gold-soft);border:1px solid var(--gold);border-radius:12px;padding:10px 14px}
+.plan.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,89,12,.25)}
+.msg{margin:8px 0 0;color:var(--muted)} .msg.err{color:#c0392b} .ok{background:var(--gold-soft);border-radius:14px;padding:14px 16px;margin:16px 0}
 </style>
 </head>
 <body>
 <main>
 <div class="top"><a class="back" href="/">← Back to the map</a></div>
 <h1>Feature your event on SoCal Lights</h1>
-<p class="lede">Southern Californians use SoCal Lights to decide where to go this weekend. A Featured listing puts your event first, with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin on the map.</p>
+<p class="lede">Southern Californians use SoCal Lights to decide where to go this weekend. A Featured listing stands out, with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin on the map.</p>
 
-<h2>Pick a plan</h2>
+<div id="paid" class="ok" hidden><b>Thank you!</b> Your payment went through. Your event is being featured now; refresh the map in a minute to see the gold badge. A receipt is on its way from Stripe.</div>
+
+<div id="auto">
+<h2>1. Find your event</h2>
+<div id="pick"><input id="q" type="search" placeholder="Type your event's name or city" autocomplete="off" aria-label="Search for your event"><ul class="res" id="res"></ul></div>
+<p class="meta">Not on the map yet? <a href="/add-event">Add your event for free</a> first, then come back here.</p>
+<div id="chosen" class="chosen" hidden></div>
+
+<h2>2. Pick a plan</h2>
 <div class="grid">
-  <section class="plan">
-    <h3>Featured pin</h3>
-    <div class="price">$5 <small>/ 30 days</small></div>
-    <ul><li>Gold-ringed pin on the map</li><li>Featured badge in the list</li></ul>
-    <a class="btn ghost" data-plan="pin" href="#">Get started</a>
-  </section>
-  <section class="plan pop">
-    <h3>Top of the list</h3>
-    <div class="price">$10 <small>/ 30 days</small></div>
-    <ul><li>Everything in Featured pin</li><li>Listed first in your city, county and season</li></ul>
-    <a class="btn" data-plan="top" href="#">Get started</a>
-  </section>
-  <section class="plan">
-    <h3>Whole season</h3>
-    <div class="price">$15 <small>/ season</small></div>
-    <ul><li>Everything in Top of the list</li><li>Featured from now until your event ends</li></ul>
-    <a class="btn ghost" data-plan="season" href="#">Get started</a>
-  </section>
+  <section class="plan" data-p="pin"><h3>Featured pin</h3><div class="price">$5 <small>/ 30 days</small></div><ul><li>Gold-ringed pin on the map</li><li>Featured badge in the list</li></ul><button class="btn ghost" type="button" data-pick="pin">Choose</button></section>
+  <section class="plan pop" data-p="top"><h3>Top of the list</h3><div class="price">$10 <small>/ 30 days</small></div><ul><li>Everything in Featured pin</li><li>Listed first in your city, county and season</li></ul><button class="btn" type="button" data-pick="top">Choose</button></section>
+  <section class="plan" data-p="season"><h3>Whole season</h3><div class="price">$15 <small>/ season</small></div><ul><li>Everything in Top of the list</li><li>Featured from now until your event ends</li></ul><button class="btn ghost" type="button" data-pick="season">Choose</button></section>
+</div>
+<h2>3. Pay securely</h2>
+<p><button class="btn" id="go" type="button" disabled>Continue to payment</button></p>
+<p class="meta" id="gomsg">Choose your event and a plan above. You pay on Stripe's secure page with a card or Cash App Pay; your Featured placement turns on automatically within a minute.</p>
 </div>
 
+<div id="manual" hidden>
+<h2>Pick a plan</h2>
+<div class="grid">
+  <section class="plan"><h3>Featured pin</h3><div class="price">$5 <small>/ 30 days</small></div><ul><li>Gold-ringed pin on the map</li><li>Featured badge in the list</li></ul><a class="btn ghost" data-plan="pin" href="#">Get started</a></section>
+  <section class="plan pop"><h3>Top of the list</h3><div class="price">$10 <small>/ 30 days</small></div><ul><li>Everything in Featured pin</li><li>Listed first in your city, county and season</li></ul><a class="btn" data-plan="top" href="#">Get started</a></section>
+  <section class="plan"><h3>Whole season</h3><div class="price">$15 <small>/ season</small></div><ul><li>Everything in Top of the list</li><li>Featured from now until your event ends</li></ul><a class="btn ghost" data-plan="season" href="#">Get started</a></section>
+</div>
 <h2>How it works</h2>
-<ol>
-  <li>Make sure your event is on the map. Search for it at <a href="/">socallights.app</a>. If it is missing, email us the event page and we will add it (free).</li>
-  <li>Choose a plan above and pay with Cash App. Put your <b>event name</b> in the Cash App note.</li>
-  <li>Email us the link to your event on the map (and your Cash App name if it is different from your event name). We turn on your Featured placement, usually within one business day.</li>
-</ol>
+<ol><li>Make sure your event is on the map. If it is missing, <a href="/add-event">add it for free</a>.</li><li>Choose a plan above and pay with Cash App. Put your <b>event name</b> in the Cash App note.</li><li>Email us the link to your event on the map. We turn on your Featured placement, usually within one business day.</li></ol>
+</div>
 
 <h2>Good to know</h2>
 <details><summary>Is it labeled as an ad?</summary><p>Featured events carry a visible Featured badge, so nobody is misled. We only list real, public events, and a Featured event still has to be accurate: dates, venue and address are checked like every other listing.</p></details>
@@ -85,14 +94,50 @@ summary{font-weight:700;cursor:pointer}
 </main>
 <script type="module">
 import { SITE } from "/site-config.js";
+const $ = (q) => document.querySelector(q);
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const NAMES = { pin: "Featured pin ($5 / 30 days)", top: "Top of the list ($10 / 30 days)", season: "Whole season ($15)" };
 const mail = (plan) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent("Feature my event" + (plan ? " – " + NAMES[plan] : ""))}&body=${encodeURIComponent("Event name:\nLink to my event on socallights.app (or its own web page):\nPlan: " + (plan ? NAMES[plan] : "") + "\nMy name and phone:\n")}`;
 const safe = (u) => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } };
-document.querySelectorAll("[data-plan]").forEach((a) => {
-  const plan = a.dataset.plan, pay = safe(SITE.featurePay[plan]);
-  if (pay) { a.href = pay; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Pay with Cash App"; } else { a.href = mail(plan); a.textContent = "Email to get started"; }
-});
-document.getElementById("mail").href = mail("");
+$("#mail").href = mail("");
+if (new URLSearchParams(location.search).get("paid")) $("#paid").hidden = false;
+
+const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+if (!cfg.featureCheckout) {
+  // Online payment isn't switched on: fall back to the Cash App + email flow.
+  $("#auto").hidden = true; $("#manual").hidden = false;
+  document.querySelectorAll("[data-plan]").forEach((a) => {
+    const plan = a.dataset.plan, pay = safe(SITE.featurePay[plan]);
+    if (pay) { a.href = pay; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Pay with Cash App"; } else { a.href = mail(plan); a.textContent = "Email to get started"; }
+  });
+} else {
+  const events = (await fetch("/api/events").then((r) => r.json()).catch(() => [])).filter((e) => e.e >= new Date().toISOString().slice(0, 10));
+  let ev = null, plan = "";
+  const upd = () => { $("#go").disabled = !(ev && plan); document.querySelectorAll("[data-p]").forEach((p) => p.classList.toggle("sel", p.dataset.p === plan)); };
+  $("#q").addEventListener("input", () => {
+    const q = $("#q").value.trim().toLowerCase();
+    if (q.length < 2) { $("#res").innerHTML = ""; return; }
+    const hits = events.filter((e) => (e.n + " " + e.city).toLowerCase().includes(q)).slice(0, 8);
+    $("#res").innerHTML = hits.map((e) => `<li><button type="button" data-id="${esc(e.id)}">${esc(e.n)}<small>${esc(e.city)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}</small></button></li>`).join("") || `<li class="meta">No match. <a href="/add-event">Add your event</a>.</li>`;
+  });
+  $("#res").addEventListener("click", (x) => {
+    const b = x.target.closest("[data-id]"); if (!b) return;
+    ev = events.find((e) => e.id === b.dataset.id); $("#res").innerHTML = ""; $("#q").value = "";
+    $("#chosen").hidden = false; $("#chosen").innerHTML = `<b>${esc(ev.n)}</b><br><span class="meta">${esc(ev.city)} · ${esc(ev.s)}</span> · <a href="#" id="chg">change</a>`;
+    $("#chg").onclick = (y) => { y.preventDefault(); ev = null; $("#chosen").hidden = true; upd(); };
+    upd();
+  });
+  document.querySelectorAll("[data-pick]").forEach((b) => b.addEventListener("click", () => { plan = b.dataset.pick; upd(); }));
+  $("#go").addEventListener("click", async () => {
+    $("#go").disabled = true; $("#gomsg").className = "msg"; $("#gomsg").textContent = "Opening the secure payment page…";
+    try {
+      const r = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event_id: ev.id, plan }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.url) throw new Error(d.error || "The payment page couldn't be opened.");
+      location.href = d.url;
+    } catch (e) { $("#gomsg").className = "msg err"; $("#gomsg").textContent = e.message + " You can also email " + SITE.contactEmail + "."; upd(); }
+  });
+}
 </script>
 </body>
 </html>
