@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 2026-10-27_
+_Last updated: 2026-10-28_
 
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
@@ -9,6 +9,8 @@ Site is live at https://socallights.app. Event data is being maintained through 
 1. Continue confirming `expected` holiday events per `docs/confirmation-plan.md`.
 
 ## Open questions / blockers
+- **The cloud sandbox cannot reach many event sources.** Riverside County Library, San Bernardino County Library, Pasadena library, San Diego Public, Chula Vista, Carlsbad, Oceanside, Thousand Oaks, Inglewood, Hawthorne and Gardena city sites fail DNS or return 403. Fix: widen Network access in the cloud environment settings (cloud environment menu, Edit, Network access) for the session environment AND the scheduled routines' environment, adding `*.libcal.com`, `rivcolibrary.org`, `sblibrary.org` and the city sites, then re-run the library searches (see `docs/city-sweep.md`).
+- **Leads not yet published (need a manual check or a reachable source):** Cudahy, Paramount and South Gate Halloween events (2026 dates only estimated from 2025); Leimert Park Kwanzaa parade (Dec 26, no loaded 2025 page); LA County Parks Trick or Treat Village and Harvest Festival (flyer images only); LA City Rec & Parks Halloween Activities List PDF (403); Riverside Bryant Park Halloween carnival (Oct 31, snippet only); Covina Woman's Club trunk-or-treat; Cerritos Artesia Park Spooktacular; Whittier Christmas parade; Bellflower tree lighting; Long Beach Aquarium NYE; HB Central Library Nutcracker shows (no fitting christmas type).
 
 ## Scheduled tasks (Claude Routines, unattended, publish directly to `main` after validation; see `docs/updating-events.md`)
 | Routine | Schedule (America/Los_Angeles) | Job |
@@ -22,6 +24,8 @@ No human review step: Rey authorized direct publishing on 2026-10-28. Check the 
 The original three routines (`trig_01H9a1iYVJNgtgzyAi8kNpn5`, `trig_01VBEfN43zRQJwuHf4uqaHD7`, `trig_01Gm1USYSZ7oHRHQTTqkQoo5`) are **disabled**. They had `github.com/forza-tek/socal-lights` as their source, which stopped authenticating after the repo move (the 2026-10-27 12:14 sweep failed at startup). The replacements use the new repo name and clone it themselves. The old ones can be deleted from the Routines page once the new ones have each run once.
 
 ## Recently done
+- 2026-10-28 library/park research push, all merged to `main` and applied: Huntington Beach Central Library (2), South Bay (8), Gateway Cities (5), Orange County libraries (11), San Diego/Ventura/Santa Barbara libraries (24), Long Beach and Southeast LA (15, plus a Santa Fe Springs tree lighting date fix to Nov 21), LA County/Glendale/Burbank/LAPL libraries (20), Inglewood/Gardena/Lawndale (3). Live feed went from 1,019 to roughly 1,100 events. `docs/city-sweep.md` now requires searching library and park calendars.
+- Scheduled routines publish directly to `main` after validation; weekly upkeep and city sweep test runs both landed migrations successfully.
 - City sweep group 21 (region-wide sources), 2026-10-27 evening: regional guides (enjoyorangecounty, lajollamom, sandiego.org, Visit Newport Beach, Secret LA, mommypoppins) are almost fully covered on the map already; added 1 event (Fairmont Grand Del Mar tree lighting, migration 0049). Left out for unverified 2026 dates: Park Hyatt Aviara Stocking Full of Christmas, Night of Lights OC, San Diego Harvest Festival at Dolores Magdaleno Rec Center (Nov 21, cost not listed).
 - Coverage audit: all 210 incorporated cities checked against `docs/coverage-cities.md`; 13 missing cities added to groups and a priority list of 0–1-event cities added (see that file).
 - Recreated the three scheduled routines against `Forza-TEK/socal-lights-app` and disabled the old ones (2026-10-28). Test-fired the city sweep; it cloned the repo and started searching.
