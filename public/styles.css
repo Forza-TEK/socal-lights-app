@@ -357,8 +357,6 @@ button{touch-action:manipulation}
 .shoptx{font-weight:700;font-size:14.5px;line-height:1.25}
 .shopgo{font-size:12px;font-weight:700;color:var(--muted)}
 .ptab[hidden],.bnav button[hidden]{display:none}
-.shopsel{display:flex;align-items:center;gap:8px;font-size:15px}
-.shopsel select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;height:34px;padding:0 12px}
 /* Desktop list tabs share the phone bottom bar's look: icon pill, the active tab shows its label */
 .ptabs{justify-content:center;gap:4px;padding:5px;margin:14px auto 4px;width:max-content;max-width:calc(100% - 28px);background:var(--glass,var(--surface-2));box-shadow:var(--shadow-sm);border:1px solid var(--line)}
 .ptab{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;min-width:52px;padding:0 14px;white-space:nowrap}
@@ -367,3 +365,4 @@ button{touch-action:manipulation}
 .ptab[aria-selected="true"] .lb,.ptab[aria-selected="true"] .n{display:inline}
 .ptab[aria-selected="true"] .n{background:var(--surface);color:var(--ink);margin-left:2px}
 .ptab[hidden]{display:none}
+.phead .chip{background:var(--surface);border-color:var(--line);height:36px}
