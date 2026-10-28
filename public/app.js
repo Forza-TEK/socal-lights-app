@@ -382,10 +382,9 @@ function renderPanel() {
     body.innerHTML = `<div class="cta"><h3>${esc(sc.title)}</h3>
       <p style="margin:0;font-size:14px">${esc(sc.pitch)}</p>
       <ul style="margin:0;padding-left:18px;font-size:13.5px;display:grid;gap:3px"><li>Free to post, up to 8 photos</li><li>Your street address places the pin, so visitors can find the house</li><li>Installers: link your website and phone, free advertising all season</li></ul>
-      <div class="row"><button class="btn ice" type="button" id="openForm">Showcase a house</button></div></div>`
+      </div>`
       + (SHOW.length ? (vis.length ? `<div class="list">${vis.map(instItem).join("")}</div>` : `<div class="empty">No showcased houses in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`)
         : `<div class="empty">No houses showcased yet. Approved houses appear here with their photos and a blue pin on the map.</div>`);
-    $("#openForm").onclick = openForm;
   } else {
     const st = routeStops();
     head.innerHTML = `<span><b>${favs.size}</b> starred</span><label class="toggle">Start from <select id="startFrom" style="border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:2px 4px;max-width:150px"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
