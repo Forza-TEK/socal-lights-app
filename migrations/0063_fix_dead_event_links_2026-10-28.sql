@@ -10,7 +10,7 @@ UPDATE events SET url='https://redlandsbowl.org/', updated_at=datetime('now') WH
 UPDATE events SET url='https://coronadofourthofjuly.com/schedule', updated_at=datetime('now') WHERE id='coronado-july4';
 UPDATE events SET url='https://oceanbeachsandiego.com/', updated_at=datetime('now') WHERE id='ob-street-fair';
 UPDATE events SET url='https://visitcarlsbad.com/events/d%C3%ADa-de-los-muertos-at-leo-carrillo-ranch-historic-park/', updated_at=datetime('now') WHERE id='hw-leo-carrillo-dia';
-UPDATE events SET url='https://www.elsegundorecparks.gov/', hours='3pm-7pm', updated_at=datetime('now') WHERE id='el-segundo-tree-lighting';
+UPDATE events SET url='https://www.elsegundorecparks.gov/', hours='3pm-7pm — check site', updated_at=datetime('now') WHERE id='el-segundo-tree-lighting';
 UPDATE events SET url='https://www.rollinghillsestates.gov/departments/community-services/events/palos-verdes-peninsula-holiday-parade-of-lights', updated_at=datetime('now') WHERE id='peninsula-holiday-parade-of-lights';
 UPDATE events SET url='https://www.lagunabeachchamber.org/events/details/hospitality-night-2026-73134', status='confirmed', updated_at=datetime('now') WHERE id='laguna-beach-hospitality-night';
 UPDATE events SET url='https://rosemeadca.gov/services/parks_recreation/christmas_tree_lighting___treats_with_santa.php', status='confirmed', updated_at=datetime('now') WHERE id='rosemead-tree-lighting-treats-santa';
