@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 2026-10-27_
+_Last updated: 2026-10-28_
 
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
@@ -15,5 +15,6 @@ Site is live at https://socallights.app. Event data is being maintained through 
 - Confirm that GitHub Actions secrets and any other integrations survived the transfer.
 
 ## Recently done
+- Phone list: the half and full-height list now uses the same cards as the collapsed sheet (84px image, dates and tags shown in both).
 - Header logo and browser-tab icon switched to the SoCal Lights badge.
 - Repository moved to `Forza-TEK/socal-lights-app`; project context added (`CLAUDE.md`).
