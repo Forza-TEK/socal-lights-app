@@ -1,7 +1,8 @@
-// POST   /api/admin/posts/<id>  {action: "approve" | "decline"}
+// POST   /api/admin/posts/<id>  {action: "approve" | "decline" | "edit"}
 // DELETE /api/admin/posts/<id>  removes the post and its photos
-import { json, err, clean, safeUrl } from "../../../_lib/util.js";
+import { json, err, clean, safeUrl, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
 import { CITY } from "../../../../public/cities.js";
+import { SEASONS } from "../../../../public/seasons.js";
 
 async function getPost(env, id) {
   return env.DB.prepare("SELECT * FROM posts WHERE id = ?").bind(id).first();
@@ -41,12 +42,24 @@ export async function onRequestPost({ params, request, env }) {
 
   if (body.action === "edit") {
     const city = CITY[body.city] ? body.city : row.city;
-    const [lat, lng] = CITY[city];
-    await env.DB.prepare("UPDATE posts SET biz=?, title=?, city=?, lat=?, lng=?, web=?, phone=?, where_txt=?, descr=? WHERE id=?")
-      .bind(clean(body.biz ?? row.biz, 80), clean(body.title ?? row.title, 90), city, lat, lng,
+    const address = clean(body.address ?? row.address, 160);
+    const season = SEASONS[body.season] ? body.season : row.season;
+    // Move the pin when the address or city changed (or the post has no exact pin yet); otherwise keep it where it is
+    let { lat, lng, county } = row;
+    if (address !== (row.address || "") || city !== row.city) {
+      let pt = address ? await geocodeAddress(address, city, CITY[city]) : null;
+      if (!pt && city !== row.city) pt = CITY[city];
+      if (pt) {
+        [lat, lng] = pt;
+        const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
+        county = nearestCounty(lat, lng, evs);
+      } else if (address) return err(400, "Couldn't find that address. Check the street and city, or fix the pin another way.");
+    }
+    await env.DB.prepare("UPDATE posts SET biz=?, title=?, city=?, county=?, lat=?, lng=?, web=?, phone=?, where_txt=?, descr=?, address=?, show_address=?, season=? WHERE id=?")
+      .bind(clean(body.biz ?? row.biz, 80), clean(body.title ?? row.title, 90), city, county, lat, lng,
         safeUrl(body.web ?? row.web), clean(body.phone ?? row.phone, 80), clean(body.where ?? row.where_txt, 120),
-        clean(body.desc ?? row.descr, 1200), row.id).run();
-    return json({ ok: true });
+        clean(body.desc ?? row.descr, 1200), address, address ? 1 : 0, season, row.id).run();
+    return json({ ok: true, lat, lng });
   }
 
   return err(400, "Unknown action.");
