@@ -348,3 +348,12 @@ button{touch-action:manipulation}
 /* monetization: Featured events and the support button */
 .tag.feat{background:var(--gold-soft);color:var(--gold)} .tag.feat::before{content:"★";font-weight:900}
 .iconbtn.small{width:44px;height:44px}
+
+/* Shop tab */
+.shopgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:4px 14px 10px}
+.shopcard{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);text-decoration:none;transition:border-color .15s,transform .15s}
+.shopcard:hover{border-color:var(--season-ink);transform:translateY(-1px)}
+.shopem{font-size:30px;line-height:1}
+.shoptx{font-weight:700;font-size:14.5px;line-height:1.25}
+.shopgo{font-size:12px;font-weight:700;color:var(--muted)}
+.ptab[hidden],.bnav button[hidden]{display:none}
