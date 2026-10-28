@@ -18,4 +18,8 @@ export const SITE = {
   // Ticket affiliate programs: add a tracking query parameter to links on a matching host,
   // for example { "eventbrite.com": { param: "aff", value: "socallights" } }. Empty = links are left untouched.
   ticketAffiliates: {},
+
+  // "Feature your event" payment links (Stripe Payment Link, Cash App or PayPal). Empty = the page shows an email button instead.
+  featurePay: { pin: "", top: "", season: "" },
+  contactEmail: "rey@forza-tek.com",
 };

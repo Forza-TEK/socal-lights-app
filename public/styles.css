@@ -342,5 +342,6 @@ button{touch-action:manipulation}
   :root,:root[data-theme="dark"]{--glass:var(--surface)}
 }
 
-/* support button */
+/* monetization: Featured events and the support button */
+.tag.feat{background:var(--gold-soft);color:var(--gold)} .tag.feat::before{content:"★";font-weight:900}
 .iconbtn.small{width:44px;height:44px}
