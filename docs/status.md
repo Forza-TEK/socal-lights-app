@@ -15,5 +15,6 @@ Site is live at https://socallights.app. Event data is being maintained through 
 - Confirm that GitHub Actions secrets and any other integrations survived the transfer.
 
 ## Recently done
+- Coverage audit: all 210 incorporated cities checked against `docs/coverage-cities.md`; 13 missing cities added to groups and a priority list of 0–1-event cities added (see that file).
 - Header logo and browser-tab icon switched to the SoCal Lights badge.
 - Repository moved to `Forza-TEK/socal-lights-app`; project context added (`CLAUDE.md`).

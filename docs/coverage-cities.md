@@ -16,10 +16,10 @@ A helper always reports the cities where it found nothing, so gaps are visible i
 ## Los Angeles County
 1. **Central LA & Westside** — Los Angeles (Downtown, Hollywood, Silver Lake/Echo Park, Eastside/Boyle Heights, Highland Park, Griffith Park, Westwood, Venice, Playa Vista, Westchester), Beverly Hills, West Hollywood, Culver City, Santa Monica, Malibu
 2. **Valley & Verdugos** — Burbank, Glendale, La Cañada Flintridge, San Fernando, Encino, Sherman Oaks, Studio City, North Hollywood, Van Nuys, Woodland Hills, Northridge, Granada Hills, Porter Ranch, Chatsworth, Sylmar, Sunland-Tujunga, Calabasas, Agoura Hills, Westlake Village, Hidden Hills
-3. **West San Gabriel Valley** — Pasadena, Altadena, South Pasadena, San Marino, Arcadia, Monrovia, Sierra Madre, Duarte, Temple City, San Gabriel, Alhambra, Monterey Park, Rosemead, El Monte, South El Monte, Montebello
-4. **Pomona Valley & East SGV** — Azusa, Glendora, San Dimas, La Verne, Claremont, Pomona, Diamond Bar, Walnut, West Covina, Covina, Baldwin Park, Irwindale, Rowland Heights, Hacienda Heights, La Puente, City of Industry
-5. **South Bay** — Torrance, Redondo Beach, Hermosa Beach, Manhattan Beach, El Segundo, Palos Verdes Estates, Rancho Palos Verdes, Rolling Hills Estates, San Pedro, Wilmington, Carson, Gardena, Hawthorne, Inglewood, Lawndale, Avalon (Catalina)
-6. **Long Beach & Gateway Cities** — Long Beach, Lakewood, Signal Hill, Downey, Norwalk, Whittier, La Mirada, Cerritos, Artesia, Bellflower, Paramount, Pico Rivera, Santa Fe Springs, South Gate, Lynwood, Compton, Huntington Park, Bell Gardens, Commerce
+3. **West San Gabriel Valley** — Pasadena, Altadena, South Pasadena, San Marino, Arcadia, Monrovia, Sierra Madre, Bradbury, Duarte, Temple City, San Gabriel, Alhambra, Monterey Park, Rosemead, El Monte, South El Monte, Montebello
+4. **Pomona Valley & East SGV** — Azusa, Glendora, San Dimas, La Verne, Claremont, Pomona, Diamond Bar, Walnut, West Covina, Covina, Baldwin Park, Irwindale, Rowland Heights, Hacienda Heights, La Habra Heights, La Puente, City of Industry
+5. **South Bay** — Torrance, Redondo Beach, Hermosa Beach, Manhattan Beach, El Segundo, Palos Verdes Estates, Rancho Palos Verdes, Rolling Hills Estates, San Pedro, Wilmington, Carson, Gardena, Hawthorne, Inglewood, Lawndale, Lomita, Avalon (Catalina)
+6. **Long Beach & Gateway Cities** — Long Beach, Lakewood, Signal Hill, Downey, Norwalk, Whittier, La Mirada, Cerritos, Artesia, Bellflower, Paramount, Pico Rivera, Santa Fe Springs, South Gate, Lynwood, Compton, Huntington Park, Bell Gardens, Commerce, Cudahy, Maywood, Vernon, Hawaiian Gardens
 7. **North LA County** — Santa Clarita (Valencia, Newhall, Saugus, Canyon Country, Stevenson Ranch), Castaic, Acton, Lancaster, Palmdale
 
 ## Orange County
@@ -34,10 +34,10 @@ A helper always reports the cities where it found nothing, so gaps are visible i
 
 ## Riverside & San Bernardino counties
 14. **Western Riverside County** — Riverside, Corona, Norco, Eastvale, Jurupa Valley, Moreno Valley, Perris, Menifee
-15. **Southwest Riverside & the Pass** — Lake Elsinore, Wildomar, Murrieta, Temecula, Hemet, San Jacinto, Beaumont, Banning, Calimesa
-16. **Coachella Valley** — Palm Springs, Cathedral City, Rancho Mirage, Palm Desert, Indian Wells, La Quinta, Indio, Coachella, Desert Hot Springs
-17. **San Bernardino Valley & West End** — San Bernardino, Redlands, Yucaipa, Loma Linda, Highland, Rialto, Fontana, Colton, Rancho Cucamonga, Upland, Ontario, Montclair, Chino, Chino Hills
-18. **High Desert & Mountains** — Victorville, Hesperia, Apple Valley, Big Bear Lake, Lake Arrowhead, Crestline, Running Springs, Oak Glen, Barstow/Yermo, Twentynine Palms, Joshua Tree, Yucca Valley
+15. **Southwest Riverside & the Pass** — Lake Elsinore, Wildomar, Murrieta, Temecula, Hemet, San Jacinto, Beaumont, Banning, Calimesa, Canyon Lake
+16. **Coachella Valley** — Palm Springs, Cathedral City, Rancho Mirage, Palm Desert, Indian Wells, La Quinta, Indio, Coachella, Desert Hot Springs, Blythe (far east, along the Colorado River)
+17. **San Bernardino Valley & West End** — San Bernardino, Redlands, Yucaipa, Loma Linda, Highland, Rialto, Fontana, Colton, Rancho Cucamonga, Upland, Ontario, Montclair, Chino, Chino Hills, Grand Terrace
+18. **High Desert & Mountains** — Victorville, Hesperia, Adelanto, Apple Valley, Big Bear Lake, Lake Arrowhead, Crestline, Running Springs, Oak Glen, Barstow/Yermo, Twentynine Palms, Joshua Tree, Yucca Valley, Needles
 
 ## Ventura & Santa Barbara counties
 19. **Ventura County** — Ventura, Oxnard, Port Hueneme, Camarillo, Thousand Oaks, Newbury Park, Simi Valley, Moorpark, Ojai, Santa Paula, Fillmore
@@ -45,3 +45,17 @@ A helper always reports the cities where it found nothing, so gaps are visible i
 
 ## Region-wide
 21. **Region-wide sources** — county-wide guides and roundups (OC Register, LA Times, San Diego Union-Tribune, Press-Enterprise, VC Star, Noozhawk, Time Out, Secret LA, LAist, mommypoppins, macaronikid editions, Visit [city] tourism sites), theme parks, regional chains (Mr. Jack O' Lanterns, Pumpkin Station, Big Wave Dave's, Mr. Bones), malls run by Westfield/Simon/Irvine Co./Caruso — to catch anything a city-by-city sweep missed.
+
+## Coverage audit (2026-10-27)
+
+All 210 incorporated cities in the seven counties (88 LA, 34 Orange, 18 San Diego, 28 Riverside, 24 San Bernardino, 10 Ventura, 8 Santa Barbara) were compared with this checklist.
+The 13 that were missing are now in a group above: Bradbury, Cudahy, Hawaiian Gardens, La Habra Heights, Lomita, Maywood and Vernon (LA); Blythe and Canyon Lake (Riverside); Adelanto, Grand Terrace and Needles (San Bernardino).
+Unincorporated communities (for example Altadena, Rowland Heights, Hacienda Heights, Acton, Julian) are listed by name inside their groups.
+
+### Priority cities (0–1 events on the map, 2026-10-27)
+Count = events whose city or address names the city. Sweeps should dig into these first, even if the rest of the group is already well covered. Few events may simply mean a quiet town, but each one still needs a real look.
+
+- **0 events:** Artesia, Bell Gardens, Bellflower, Bradbury, Cudahy, Hawaiian Gardens, Hawthorne, Hidden Hills, Huntington Park, Irwindale, La Habra Heights, Lynwood, Maywood, Norwalk, Pico Rivera, Vernon, Westlake Village (LA); Blythe, Canyon Lake, Eastvale, Jurupa Valley (Riverside); Grand Terrace, Loma Linda, Needles (San Bernardino); Guadalupe (Santa Barbara)
+- **1 event:** Agoura Hills, Avalon, Azusa, Bell, Calabasas, Cerritos, Compton, Diamond Bar, Downey, Duarte, Gardena, Inglewood, La Mirada, Lawndale, Lomita, Malibu, Montebello, Paramount, San Dimas, Santa Fe Springs, Signal Hill, South El Monte, South Gate, South Pasadena, Whittier (LA); Garden Grove, Laguna Woods, Los Alamitos, Stanton (Orange); Imperial Beach, Lemon Grove (San Diego); Banning, Desert Hot Springs, Indian Wells, Moreno Valley, Norco (Riverside); Adelanto, Colton, Hesperia, Montclair (San Bernardino); Fillmore, Port Hueneme (Ventura); Buellton, Lompoc (Santa Barbara)
+
+Re-run the count after each round of sweeps (compare each city name with the `city` and `address` fields from `/api/events`) and update this list.
