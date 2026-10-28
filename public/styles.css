@@ -156,6 +156,7 @@ button{touch-action:manipulation}
 .tile .evimg,.hero .evimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .tile.free{background:var(--free-soft)}
 .item .thumb{background:var(--ice-soft)}
+.item .thumb.has-photo::before{display:none}
 .item .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover} /* above the badge icon, which only shows for houses without a photo */
 .tile .when{display:none}
 .ibody{min-width:0}
