@@ -350,7 +350,7 @@ function evItem(ev) {
 }
 function instItem(p) {
   const ph = p.photos || [], k = "i:" + p.id;
-  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : ""}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
+  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : ""}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
