@@ -17,7 +17,7 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
 ## 3. Feature your event
 - Page: `/feature.html` (plans: Featured pin $29/30 days, Top of the list $59/30 days, Whole season $99). Edit the copy and prices in that file.
 - Payment: put a Stripe Payment Link, Cash App or PayPal link in `featurePay.pin|top|season`. Until set, each plan button opens a pre-filled email to `contactEmail`.
-- Database: migration `0059_featured_events.sql` adds `featured` (0/1) and `featured_until` (YYYY-MM-DD, optional) to `events`.
+- Database: migration `0062_featured_events.sql` adds `featured` (0/1) and `featured_until` (YYYY-MM-DD, optional) to `events`.
   Featured events get a gold "Featured" badge, sort to the top of the list, and show a bigger gold-ringed pin. The API exposes it as `f`.
 - To turn a placement on after payment, add a new migration (never edit an old one):
 
