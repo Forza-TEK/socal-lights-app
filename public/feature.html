@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Feature your event · SoCal Lights</title>
+<meta name="description" content="Put your Southern California Halloween, holiday or seasonal event at the top of SoCal Lights with a Featured pin on the map.">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--bg:#f6f4f0;--surface:#fff;--ink:#17181c;--muted:#5d6068;--line:#e4e0d8;--accent:#e8590c;--gold:#9a6700;--gold-soft:#fff3d6;--free:#0f9d6b}
+:root[data-theme="dark"]{--bg:#0b0d12;--surface:#151821;--ink:#f1f2f5;--muted:#a3a7b2;--line:#2a2e3a;--accent:#ff8a3d;--gold:#f5c461;--gold-soft:#2b2412;--free:#3ddc97}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Plus Jakarta Sans",system-ui,sans-serif;padding:0 16px 64px}
+main{max-width:760px;margin:0 auto}
+a{color:var(--accent)}
+.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+.top a.back{font-weight:700;text-decoration:none}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.1;letter-spacing:-.02em;margin:8px 0 12px}
+h2{font-size:20px;margin:36px 0 12px}
+.lede{font-size:18px;color:var(--muted);margin:0 0 20px}
+.grid{display:grid;gap:14px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px;display:grid;gap:10px;align-content:start}
+.plan.pop{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-soft)}
+.plan h3{margin:0;font-size:18px}
+.price{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.price small{font-size:14px;font-weight:600;color:var(--muted)}
+.plan ul{margin:0;padding-left:18px;color:var(--muted);font-size:15px}
+.btn{display:inline-flex;justify-content:center;align-items:center;gap:6px;border:0;border-radius:999px;padding:12px 18px;font:700 15px "Plus Jakarta Sans",system-ui,sans-serif;background:var(--accent);color:#fff;text-decoration:none;cursor:pointer}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--gold-soft);color:var(--gold)}
+.tag::before{content:"★ "}
+ol{padding-left:20px} li{margin:6px 0}
+details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin:8px 0}
+summary{font-weight:700;cursor:pointer}
+.meta{color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><a class="back" href="/">← Back to the map</a></div>
+<h1>Feature your event on SoCal Lights</h1>
+<p class="lede">Southern Californians use SoCal Lights to decide where to go this weekend. A Featured listing puts your event first, with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin on the map.</p>
+
+<h2>Pick a plan</h2>
+<div class="grid">
+  <section class="plan">
+    <h3>Featured pin</h3>
+    <div class="price">$29 <small>/ 30 days</small></div>
+    <ul><li>Gold-ringed pin on the map</li><li>Featured badge in the list</li></ul>
+    <a class="btn ghost" data-plan="pin" href="#">Get started</a>
+  </section>
+  <section class="plan pop">
+    <h3>Top of the list</h3>
+    <div class="price">$59 <small>/ 30 days</small></div>
+    <ul><li>Everything in Featured pin</li><li>Listed first in your city, county and season</li></ul>
+    <a class="btn" data-plan="top" href="#">Get started</a>
+  </section>
+  <section class="plan">
+    <h3>Whole season</h3>
+    <div class="price">$99 <small>/ season</small></div>
+    <ul><li>Everything in Top of the list</li><li>Featured from now until your event ends</li></ul>
+    <a class="btn ghost" data-plan="season" href="#">Get started</a>
+  </section>
+</div>
+
+<h2>How it works</h2>
+<ol>
+  <li>Make sure your event is on the map. Search for it at <a href="/">socallights.app</a>. If it is missing, email us the event page and we will add it (free).</li>
+  <li>Choose a plan above and pay. Use the same email you will write to us from.</li>
+  <li>Email us the link to your event on the map. We turn on your Featured placement, usually within one business day.</li>
+</ol>
+
+<h2>Good to know</h2>
+<details><summary>Is it labeled as an ad?</summary><p>Featured events carry a visible Featured badge, so nobody is misled. We only list real, public events, and a Featured event still has to be accurate: dates, venue and address are checked like every other listing.</p></details>
+<details><summary>What can I feature?</summary><p>Public Halloween, Día de los Muertos, Thanksgiving, Christmas and holiday, New Year's, spring, and summer events in Southern California: haunts, pumpkin patches, tree lightings, light shows, parades, markets and more. We reserve the right to decline events that are not open to the public or that we cannot verify.</p></details>
+<details><summary>Can I get a refund?</summary><p>If we cannot feature your event for any reason, you get a full refund. Once your placement is live, payments are non-refundable, but if your event is cancelled we will move your placement to another event of yours or refund the unused time.</p></details>
+<details><summary>Does Featured change my event's details?</summary><p>No. Your event keeps its dates, hours and link. Send us corrections any time at no charge.</p></details>
+
+<h2>Questions?</h2>
+<p><a class="btn ghost" id="mail" href="#">Email us</a></p>
+<p class="meta">SoCal Lights is a small independent project. Thanks for helping keep it free for everyone.</p>
+</main>
+<script type="module">
+import { SITE } from "/site-config.js";
+const NAMES = { pin: "Featured pin ($29 / 30 days)", top: "Top of the list ($59 / 30 days)", season: "Whole season ($99)" };
+const mail = (plan) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent("Feature my event" + (plan ? " – " + NAMES[plan] : ""))}&body=${encodeURIComponent("Event name:\nLink to my event on socallights.app (or its own web page):\nPlan: " + (plan ? NAMES[plan] : "") + "\nMy name and phone:\n")}`;
+const safe = (u) => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } };
+document.querySelectorAll("[data-plan]").forEach((a) => {
+  const plan = a.dataset.plan, pay = safe(SITE.featurePay[plan]);
+  if (pay) { a.href = pay; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Pay now"; } else { a.href = mail(plan); a.textContent = "Email to get started"; }
+});
+document.getElementById("mail").href = mail("");
+</script>
+</body>
+</html>
