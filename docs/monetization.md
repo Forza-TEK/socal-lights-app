@@ -9,8 +9,9 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
 ## 2. Affiliate links (off until configured)
 - **Shop for the season:** set `amazonTag` to the Amazon Associates tracking id (e.g. `socallights-20`). The support box then shows season-specific
   shop shortcuts (`shop` in the same file; edit the labels and search words freely). Links use `rel="sponsored"`.
-- **Ticket links:** add entries to `ticketAffiliates`, e.g. `{ "eventbrite.com": { param: "aff", value: "socallights" } }`. Event-info links
-  on matching hosts then carry the tracking parameter.
+- **Ticket links:** add entries to `ticketAffiliates`, keyed by the host of the event link. A rule is either `{ param, value }` (adds a tracking
+  parameter) or `{ template: "https://…?u={url}" }` (wraps the link in the network's deep link, which is what Impact/CJ give you). Only event-info links
+  on matching hosts change. As of 2026-10-28 just 22 of 1,302 events link straight to a ticket seller (19 Eventbrite, 3 Fever); the rest link to organizers, venues and city pages, so expect modest returns.
 - A disclosure line ("we may earn a small commission") appears automatically whenever either is configured.
 - To get started: apply to Amazon Associates (needs 3 qualifying sales in 180 days to stay active) and to ticket programs such as Eventbrite, Ticketmaster (via Impact), Groupon (via Impact). Each has its own approval.
 

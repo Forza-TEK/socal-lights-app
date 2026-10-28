@@ -487,7 +487,8 @@ function openForm() {
 // Add the affiliate tracking parameter to ticket links on hosts configured in site-config.js (no-op when none are set).
 function affRule(u) { try { const h = new URL(u).hostname.replace(/^www\./, ""); return SITE.ticketAffiliates[h] || SITE.ticketAffiliates[h.split(".").slice(-2).join(".")] || null; } catch { return null; } }
 const isAff = (u) => !!affRule(u);
-function affUrl(u) { const r = affRule(u); if (!r) return u; try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
+// Two kinds of rule: add a tracking parameter ({ param, value }), or wrap the link in a network deep link ({ template: "https://…?u={url}" }, the form Impact/CJ give you).
+function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) return r.template.replace("{url}", encodeURIComponent(u)); try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
 const shopHtml = () => {
   const items = SITE.amazonTag ? SITE.shop[state.season] || [] : [];
   if (!items.length) return "";
