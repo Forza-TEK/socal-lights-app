@@ -113,10 +113,13 @@ function placeHouses() {
 }
 
 /* ---------- map ---------- */
-const map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false });
+const map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false, clickTolerance: 10 }); // clickTolerance: a tap with a little finger wobble still counts as a tap
 map.touchZoomRotate.disableRotation();
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false }, trackUserLocation: false }), "top-right");
+const geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false }, trackUserLocation: false });
+map.addControl(geo, "top-right");
+// The control only zooms to the (often wide) accuracy circle; fly in close on the user instead
+geo.on("geolocate", (e) => map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }));
 
 function padding() {
   const ph = isPhone();
@@ -170,7 +173,15 @@ function initLayers() {
   }
   map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
   map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
-  map.on("click", (e) => { if (e.defaultPrevented) return; const hit = map.queryRenderedFeatures(e.point, { layers: ["pt", "clusters", "stops"] }); if (!hit.length && state.sel) { state.sel = null; renderPreview(); drawHL(); markItems(); } });
+  map.on("click", (e) => {
+    if (e.defaultPrevented) return;
+    const hit = map.queryRenderedFeatures(e.point, { layers: ["pt", "clusters", "stops"] });
+    if (hit.length || !state.sel) return;
+    // Tapped empty map: deselect (and leave a card's detail if one is open, so the panel matches the map)
+    state.sel = null;
+    if (state.detail) { state.detail = null; renderPanel(); }
+    renderPreview(); drawHL(); markItems();
+  });
   map.on("moveend", scheduleList);
   mapReady = true;
   fitSoCal(false);
