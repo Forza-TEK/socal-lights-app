@@ -1,6 +1,6 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js";
-import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js";
+import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
 import { SITE } from "/site-config.js";
 
@@ -312,7 +312,7 @@ function datetile(ev) {
 const effStart = (e) => (e.s > TODAY ? e.s : TODAY);
 // Photos: the event's own preview image (from its official page) when we have one, otherwise an openly licensed
 // stock photo of that kind of event, served from /img/stock. Credits show on the detail page.
-const STOCK_BY_SEASON = { halloween: { park: "haunt" }, christmas: { park: "xmaspark", tour: "walk" }, newyear: { family: "nye", parade: "roseparade", show: "nye" }, summer: { park: "zoo" } };
+const STOCK_BY_SEASON = { halloween: { park: "haunt" }, christmas: { park: "xmaspark", tour: "walk", show: "tree" }, newyear: { family: "nye", parade: "roseparade", show: "nye" }, summer: { park: "zoo" } };
 function stockKey(ev) {
   if (ev.sn === "christmas" && ev.t === "parade" && /boat|harbou?r|yacht|marina|bay\b|cruise/i.test(ev.n)) return "boatparade";
   return (STOCK_BY_SEASON[ev.sn] || {})[ev.t] || (STOCK[ev.t] ? ev.t : "");

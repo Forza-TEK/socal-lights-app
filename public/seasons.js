@@ -107,6 +107,7 @@ export const SEASONS = {
       park: "Theme parks & zoos",
       tree: "Tree lightings & villages",
       tour: "Tours & rides",
+      show: "Shows & concerts",
     },
     quickDates: [
       ["2026-11-26", "Thanksgiving Day (Nov 26)"],
