@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028z";
+import { SITE } from "/site-config.js?v=20261028za";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -705,7 +705,7 @@ let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { sta
 // Collapsed sheet height on phones: just the grab handle and the quick-picks row, sitting above the tab bar
 // (tab bar 58px + 12px gap, handle ~19px, header row ~48px, a little air); the list tucks behind the tab bar
 // (plus the home-indicator strip on newer iPhones, which the tab bar sits above)
-const PEEK = 160;
+const PEEK = 214;
 let safeBottom = null;
 function peekH() {
   if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
