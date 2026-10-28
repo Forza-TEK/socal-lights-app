@@ -44,7 +44,7 @@ Other docs: `docs/coverage-cities.md` (where to search), `docs/city-sweep.md`, `
 
 ## Rules
 - Do not commit secrets. `CLOUDFLARE_API_TOKEN` is a GitHub Actions repository secret; `TURNSTILE_SECRET` is a Cloudflare Pages secret.
-- The site redeploys on every push to `main`, and migrations apply to the **live** database. Prefer a branch for anything non-trivial.
+- The site redeploys on every push to `main`, and migrations apply to the **live** database. Prefer a branch for anything non-trivial. The scheduled routines are the exception: they publish event migrations straight to `main` after validation (see `docs/updating-events.md`).
 - Update `docs/status.md` at the end of every working session.
 
 ## Current status
