@@ -66,15 +66,19 @@ its city, blurb length, empty address/venue, bad or dead urls, duplicates, reuse
 comment `-- validate: allow-destructive`. The deploy workflow runs the same checks (hard errors only) before it
 applies anything to the live database.
 
-## Staging flow (scheduled and unattended runs)
+## Scheduled and unattended runs (publish directly)
 
-Unattended runs do not push to `main`. They open a pull request, and a human or the main Claude session reviews it:
+As of 2026-10-28 the scheduled Claude Routines (city sweep, weekly upkeep, midweek upkeep) publish **without human review**. Rey authorized this. The safeguards are:
 
-1. `git switch -c staging/<task>-<date>`, add the migration, commit, `git push -u origin HEAD`.
-2. `gh pr create --title "<what>" --body "<which pages you used, what you could not verify>"`.
-3. The "Validate migrations" check runs and comments the findings on the pull request.
-4. Review the comment and spot-check rows against their source pages. Merge only when errors are 0.
-5. Merging pushes to `main`, and the existing workflow applies the migration to the live database.
+1. The run must verify every row against a page it actually loaded and leave out anything it cannot verify.
+2. `npm run validate` must report **0 errors** (warnings are reviewed, and rows that cannot be defended are dropped).
+3. The run fetches `origin/main`, uses the next free migration number, and pushes to `main` (rebasing and renumbering if another run landed first).
+4. The deploy workflow (`d1-migrations.yml`) re-runs the validator's hard-error gate before it touches the live database.
+5. The run checks that the deploy workflow succeeded and reports the failure if not.
+
+If `main` is ever protected, the run falls back to a `staging/<task>-<date>` branch plus a PR and merges it itself once the "Validate migrations" comment shows 0 errors.
+
+To undo a bad publish, add a new migration that corrects or deletes the rows (never edit an existing migration).
 
 ## Checking your work
 
