@@ -302,7 +302,7 @@ button{touch-action:manipulation}
   .panel.dragging{transition:none}
   .grab{display:grid;place-items:center;padding:10px 0 4px;cursor:grab;touch-action:none}
   .grab i{width:40px;height:5px;border-radius:3px;background:var(--line);display:block}
-  .ptabs{margin:2px 12px 2px}
+  .ptabs{display:none}
   .phead{padding:4px 16px 10px;touch-action:none}
   /* the part of the sheet below the screen edge is added as padding, so the end of the list can always be scrolled into view; 84px clears the tab bar */
   .pbody{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(var(--sheet-y,0px) + env(safe-area-inset-bottom,0px) + 96px)}
@@ -323,7 +323,7 @@ button{touch-action:manipulation}
   .panel.peek .empty{padding:14px 16px}
 
   /* floating tab bar */
-  .bnav{display:none;position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);gap:4px;padding:5px;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4)}
+  .bnav{display:flex;position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);gap:4px;padding:5px;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4)}
   .bnav button{position:relative;display:inline-flex;align-items:center;gap:6px;height:48px;min-width:52px;justify-content:center;padding:0 14px;border:0;border-radius:999px;background:none;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer}
   .bnav button span{display:none;white-space:nowrap}
   .bnav button[aria-current]{background:var(--ink);color:var(--surface);padding:0 18px}
