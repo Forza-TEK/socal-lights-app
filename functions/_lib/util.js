@@ -35,12 +35,18 @@ export function rowToPost(r, admin = false) {
   return p;
 }
 
+// Paid "Featured" placement: on while featured=1 and the optional featured_until date (YYYY-MM-DD) has not passed.
+function isFeatured(r) {
+  return !!r.featured && (!r.featured_until || r.featured_until >= new Date().toISOString().slice(0, 10));
+}
+
 export function rowToEvent(r) {
   return {
     id: r.id, n: r.name, c: r.county, city: r.city, t: r.type, s: r.start_date, e: r.end_date,
     st: r.status === "confirmed" ? "c" : "e", free: !!r.free, p: r.price || "", h: r.hours || "",
     lat: r.lat, lng: r.lng, b: r.blurb || "", u: r.url || "", sn: r.season || "christmas",
     v: r.venue || "", a: r.address || "", img: r.image || "",
+    f: isFeatured(r) ? 1 : 0,
   };
 }
 

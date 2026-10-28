@@ -2,6 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js";
 import { STOCK } from "/stock.js";
+import { SITE } from "/site-config.js";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -152,8 +153,8 @@ function initLayers() {
     layout: { "text-field": ["get", "point_count_abbreviated"], "text-font": ["Noto Sans Bold"], "text-size": 13 }, paint: { "text-color": "#ffffff" } });
   map.addLayer({ id: "pt", type: "circle", source: "pts", filter: ["!", ["has", "point_count"]],
     paint: { "circle-color": catColor(C),
-      "circle-radius": ["case", ["==", ["get", "cat"], "inst"], 8, ["==", ["get", "cat"], "fav"], 8, 7],
-      "circle-stroke-width": 2.5, "circle-stroke-color": C.ring } });
+      "circle-radius": ["case", ["==", ["get", "feat"], 1], 10, ["==", ["get", "cat"], "inst"], 8, ["==", ["get", "cat"], "fav"], 8, 7],
+      "circle-stroke-width": ["case", ["==", ["get", "feat"], 1], 3.5, 2.5], "circle-stroke-color": ["case", ["==", ["get", "feat"], 1], C.fav, C.ring] } });
   map.addLayer({ id: "route-line", type: "line", source: "route", paint: { "line-color": C.fav, "line-width": 4, "line-dasharray": [1.5, 1.5] } });
   map.addLayer({ id: "stops", type: "circle", source: "stops", paint: { "circle-color": C.fav, "circle-radius": 12, "circle-stroke-width": 3, "circle-stroke-color": C.ring } });
   map.addLayer({ id: "stops-num", type: "symbol", source: "stops", layout: { "text-field": ["get", "num"], "text-font": ["Noto Sans Bold"], "text-size": 12, "text-allow-overlap": true }, paint: { "text-color": "#ffffff" } });
@@ -198,7 +199,7 @@ function drawMap() {
   if (!mapReady || !map.getSource("pts")) return;
   const feats = [];
   if (state.tab !== "plan") {
-    if (state.layers.events) E.filter(evMatch).forEach((e) => feats.push(pt(e.lng, e.lat, { key: "e:" + e.id, cat: favs.has(e.id) ? "fav" : e.free ? "free" : "paid" })));
+    if (state.layers.events) E.filter(evMatch).forEach((e) => feats.push(pt(e.lng, e.lat, { key: "e:" + e.id, cat: favs.has(e.id) ? "fav" : e.free ? "free" : "paid", feat: e.f ? 1 : 0 })));
     if (state.layers.inst) SHOW.filter(instMatch).forEach((p) => feats.push(pt(p.plng, p.plat, { key: "i:" + p.id, cat: favs.has(hfav(p)) ? "fav" : "inst" })));
   }
   map.getSource("pts").setData(fc(feats));
@@ -346,7 +347,7 @@ function whenShort(ev) {
 const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
 function evItem(ev) {
   const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev);
-  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span></div><div class="ibody"><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}</div><div class="tags"><span class="tag ${ev.free ? "free" : "paid"}">${esc(ev.p)}</span><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Confirmed" : "Expected"}</span></div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
+  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span></div><div class="ibody"><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(ev.p)}</span><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Confirmed" : "Expected"}</span></div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
 }
 function instItem(p) {
   const ph = p.photos || [], k = "i:" + p.id;
@@ -366,7 +367,7 @@ function renderPanel() {
   head.hidden = false;
   const limit = `<label class="toggle"><input type="checkbox" id="inview" ${state.inView ? "checked" : ""}> Limit to map</label>`;
   if (state.tab === "events") {
-    const all = E.filter(evMatch).sort((a, b) => effStart(a).localeCompare(effStart(b)) || a.e.localeCompare(b.e) || a.n.localeCompare(b.n));
+    const all = E.filter(evMatch).sort((a, b) => (b.f ? 1 : 0) - (a.f ? 1 : 0) || effStart(a).localeCompare(effStart(b)) || a.e.localeCompare(b.e) || a.n.localeCompare(b.n));
     const vis = state.layers.events ? all.filter((e) => inView(e.lng, e.lat) || state.sel === "e:" + e.id) : [];
     head.innerHTML = `<div class="hrow"><span><b>${vis.length}</b> ${state.inView ? "in map view" : "events"}${state.date ? " · open " + fmt(state.date) : ""}</span>${limit}</div>${quickPicks()}`;
     body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Layers.</div>`
@@ -428,13 +429,13 @@ function detailHtml(k) {
     <div class="hero${ev.free ? " free" : ""}${ph ? " photo" : ""}">${ph ? photoImg(ph) : ""}<button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
       ${ph ? (cl ? `<a class="credit" href="${esc(cl)}" target="_blank" rel="noopener">${esc(ph.credit)}</a>` : `<span class="credit">${esc(ph.credit)}</span>`) : ""}
       <div class="htext"><div class="kicker">${esc(TYPE_SHORT[ev.t] || "Event")} · ${esc(ev.city)}</div><h2>${esc(ev.n)}</h2></div></div>
-    <div class="tags"><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
+    <div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
     <div class="boxes"><div><span>When</span><b>${whenShort(ev)}</b></div><div><span>Hours</span><b>${esc(ev.h)}</b></div><div><span>Cost</span><b>${esc(ev.p)}</b></div></div>
     <p class="blurb">${esc(ev.b)}</p>
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd></dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
-    <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button>${url ? `<a class="abtn" href="${esc(infoUrl(url, ev.n))}" target="_blank" rel="noopener" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
+    <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button>${url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
   return `<div class="detail"><button class="back plain" type="button" id="back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>Back to results</button>
@@ -480,6 +481,28 @@ function openForm() {
   const d = $("#drop"); d.ondragover = (e) => { e.preventDefault(); d.classList.add("over"); }; d.ondragleave = () => d.classList.remove("over"); d.ondrop = (e) => { e.preventDefault(); d.classList.remove("over"); addFiles([...e.dataTransfer.files]); };
   $("#instForm").onsubmit = submitForm;
   tsWidget = null; loadTurnstile().then((ts) => { if (ts && $("#ts")) tsWidget = ts.render("#ts", { sitekey: CONFIG.turnstileSiteKey }); });
+}
+
+/* ---------- monetization: affiliate links, support box ---------- */
+// Add the affiliate tracking parameter to ticket links on hosts configured in site-config.js (no-op when none are set).
+function affRule(u) { try { const h = new URL(u).hostname.replace(/^www\./, ""); return SITE.ticketAffiliates[h] || SITE.ticketAffiliates[h.split(".").slice(-2).join(".")] || null; } catch { return null; } }
+const isAff = (u) => !!affRule(u);
+function affUrl(u) { const r = affRule(u); if (!r) return u; try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
+const shopHtml = () => {
+  const items = SITE.amazonTag ? SITE.shop[state.season] || [] : [];
+  if (!items.length) return "";
+  return `<div><h3 style="margin:0 0 8px;font-size:15px">Shop for ${esc(SEASONS[state.season].short || SEASONS[state.season].label)}</h3><div class="row" style="flex-wrap:wrap;gap:8px">${items.map(([l, q]) => `<a class="btn ghost" href="https://www.amazon.com/s?k=${encodeURIComponent(q)}&tag=${encodeURIComponent(SITE.amazonTag)}" target="_blank" rel="sponsored noopener">${esc(l)} ↗</a>`).join("")}</div></div>`;
+};
+function openSupport() {
+  const m = $("#modal"), donate = safeUrl(SITE.donateUrl);
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Keep SoCal Lights free</h2><button class="btn ghost" type="button" id="sClose">Close</button></div>
+    <p class="blurb">SoCal Lights is built and kept up to date by one small team: checking dates, adding events and fixing links all season long. There are no ads and no paywall. If it helped you find something fun, you can help keep it going.</p>
+    ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
+    <div><h3 style="margin:0 0 4px;font-size:15px">Run an event or a business?</h3><p class="meta" style="margin:0 0 8px">Get a Featured pin and top spot in the list, right when people are planning.</p><a class="btn ghost" href="/feature.html">Feature your event →</a></div>
+    ${shopHtml()}
+    ${SITE.amazonTag || Object.keys(SITE.ticketAffiliates).length ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
+  </div>`;
+  m.hidden = false; $("#sClose").onclick = closeForm; $("#sClose").focus();
 }
 function closeForm() { pending.forEach((p) => URL.revokeObjectURL(p.url)); pending = []; $("#modal").hidden = true; $("#modal").innerHTML = ""; }
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("#modal").hidden) closeForm(); else if (!$("#pop").hidden) closePop(); } });
@@ -632,6 +655,7 @@ setInterval(() => {
   if (until > Date.now()) return;
   const t = autoTheme(); if (t !== theme()) setTheme(t, false);
 }, 60000);
+$("#supportbtn").onclick = openSupport;
 $("#themebtn").onclick = () => setTheme(theme() === "dark" ? "light" : "dark");
 if (theme() === "dark") { $("#themebtn").setAttribute("aria-label", "Switch to day mode"); $("#themebtn").title = "Day mode"; document.querySelector('meta[name="theme-color"]').content = "#0b0d12"; }
 function setSeason(k) {
