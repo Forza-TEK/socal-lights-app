@@ -38,10 +38,13 @@ export async function onRequestPost({ request, env }) {
   const web = safeUrl(webRaw);
   const phone = clean(form.get("phone"), 80);
   const where = clean(form.get("where"), 120);
+  const address = clean(form.get("address"), 160);
+  const showAddress = form.get("show_address") ? 1 : 0;
   const season = SEASONS[form.get("season")] ? form.get("season") : "christmas";
 
   if (!biz || !title || !descr) return err(400, "Fill in your name or business, display name and description.");
   if (!CITY[city]) return err(400, "Choose a city from the list.");
+  if (address.length < 5) return err(400, "Enter the street address of the house.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err(400, "Enter an email address so the site owner can reach you.");
   if (webRaw && !web) return err(400, "The website needs to start with http:// or https://");
 
@@ -72,9 +75,9 @@ export async function onRequestPost({ request, env }) {
 
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season)
-       VALUES (?,'pending',?,?,?,?,?,?,?,?,?,?,?,?,?)`
-    ).bind(id, biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season),
+      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address)
+       VALUES (?,'pending',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    ).bind(id, biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, showAddress),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);

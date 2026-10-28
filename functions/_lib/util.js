@@ -29,8 +29,9 @@ export function rowToPost(r, admin = false) {
     id: r.id, biz: r.biz, title: r.title, city: r.city, county: r.county,
     lat: r.lat, lng: r.lng, web: r.web || "", phone: r.phone || "", where: r.where_txt || "",
     desc: r.descr, photos: JSON.parse(r.photos || "[]"), created: r.created_at, season: r.season || "christmas",
+    address: admin || r.show_address ? r.address || "" : "", // private unless the submitter chose to show it
   };
-  if (admin) { p.status = r.status; p.contact_email = r.contact_email || ""; p.approved = r.approved_at; }
+  if (admin) { p.status = r.status; p.contact_email = r.contact_email || ""; p.approved = r.approved_at; p.show_address = !!r.show_address; }
   return p;
 }
 

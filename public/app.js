@@ -427,7 +427,7 @@ function detailHtml(k) {
   <span class="tag ice" style="justify-self:start">Showcased house</span>
   <h2>${esc(p.title)}</h2><div class="meta"><b style="color:var(--ink)">${esc(p.biz)}</b> · ${esc(p.city)}</div>
   <p style="margin:0;white-space:pre-line">${esc(p.desc)}</p>
-  <dl class="facts">${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl></div>`;
+  <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}<br><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address + ", " + p.city + ", CA")}" target="_blank" rel="noopener">Directions ↗</a></dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl></div>`;
 }
 function wireDetail() {
   $("#back").onclick = () => { state.detail = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
@@ -451,7 +451,9 @@ function openForm() {
     <div class="two"><label for="fCity">City<select id="fCity" name="city" required><option value="">Choose a city</option>${Object.keys(CITY).sort().map((c) => `<option>${esc(c)}</option>`).join("")}</select></label><label for="fEmail">Your email <span class="hint">private, only the site owner sees it</span><input id="fEmail" name="email" type="email" maxlength="120" required autocomplete="email"></label></div>
     <div class="two"><label for="fWeb">Website <span class="hint">optional</span><input id="fWeb" name="web" type="url" maxlength="200" placeholder="https://"></label><label for="fPhone">Phone for quotes <span class="hint">installers, optional, shown publicly</span><input id="fPhone" name="phone" maxlength="80"></label></div>
     <label for="fSeason">Season<select id="fSeason" name="season">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === state.season ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label>
-    <label for="fWhere">Where to see it <span class="hint">optional. Public spots only, never a client's street address. The map shows the city only.</span><input id="fWhere" name="where" maxlength="120" placeholder="e.g. Visible from Main St on weekend nights"></label>
+    <label for="fAddr">Street address <span class="hint">the house's address. Only the site owner sees it unless you tick the box below.</span><input id="fAddr" name="address" maxlength="160" required autocomplete="street-address" placeholder="e.g. 123 Main St"></label>
+    <label class="opt" for="fShowAddr"><input id="fShowAddr" name="show_address" type="checkbox"> Show this address publicly so visitors can find the house <span class="hint">leave unticked for a client's home</span></label>
+    <label for="fWhere">Where to see it <span class="hint">optional. Viewing tips, like best nights or where to park.</span><input id="fWhere" name="where" maxlength="120" placeholder="e.g. Visible from Main St on weekend nights"></label>
     <label for="fDesc">About this house<textarea id="fDesc" name="desc" maxlength="1200" required placeholder="What you installed, how many lights, what makes it special"></textarea></label>
     <div class="drop" id="drop"><div><b style="color:var(--ink)">Photos</b> · up to 8. The first one is the cover.</div><div class="thumbs" id="thumbs"></div><div><label class="btn ghost" for="fPhotos" style="display:inline-flex">Choose photos</label><input id="fPhotos" type="file" accept="image/*" multiple hidden></div><div class="meta">Photos are resized on your device before upload. You can also drag them here.</div></div>
     <div id="ts"></div>
@@ -493,8 +495,8 @@ let busy = false;
 async function submitForm(e) {
   e.preventDefault(); if (busy) return;
   const m = $("#fMsg"), f = e.target;
-  const need = ["biz", "title", "city", "email", "desc"].filter((n) => !f.elements[n].value.trim());
-  if (need.length) { m.className = "msg err"; m.textContent = "Fill in your name or business, display name, city, your email and description."; return; }
+  const need = ["biz", "title", "city", "address", "email", "desc"].filter((n) => !f.elements[n].value.trim());
+  if (need.length) { m.className = "msg err"; m.textContent = "Fill in your name or business, display name, city, street address, your email and description."; return; }
   const fd = new FormData(f);
   pending.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
   if (window.turnstile && tsWidget != null) fd.append("cf-turnstile-response", window.turnstile.getResponse(tsWidget) || "");
