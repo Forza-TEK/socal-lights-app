@@ -598,15 +598,23 @@ function repaintMap() {
   map.setPaintProperty("pt", "circle-color", catColor(C));
   map.setPaintProperty("hl", "circle-color", catColor(C));
 }
-// Day / night toggle
-function setTheme(t) {
+// Day / night: automatic (dark from 6 pm to 6 am, device time); the toggle overrides it until the next switch
+const autoTheme = () => { const h = new Date().getHours(); return h >= 18 || h < 6 ? "dark" : "light"; };
+function nextSwitch() { const d = new Date(); d.setMinutes(0, 0, 0); const h = d.getHours(); if (h < 6) d.setHours(6); else if (h < 18) d.setHours(18); else { d.setDate(d.getDate() + 1); d.setHours(6); } return d.getTime(); }
+function setTheme(t, manual = true) {
   document.documentElement.dataset.theme = t;
-  try { localStorage.setItem("socal-theme", t); } catch {}
+  if (manual) { try { localStorage.setItem("socal-theme", t); localStorage.setItem("socal-theme-until", String(nextSwitch())); } catch {} }
   const b = $("#themebtn"), night = t === "dark";
   b.setAttribute("aria-label", night ? "Switch to day mode" : "Switch to night mode"); b.title = night ? "Day mode" : "Night mode";
   document.querySelector('meta[name="theme-color"]').content = night ? "#0b0d12" : "#f6f4f0";
   map.setStyle(MAP_STYLES[t], { diff: false });
 }
+// A page left open flips at 6 pm / 6 am unless the toggle is overriding it
+setInterval(() => {
+  let until = 0; try { until = +localStorage.getItem("socal-theme-until") || 0; } catch {}
+  if (until > Date.now()) return;
+  const t = autoTheme(); if (t !== theme()) setTheme(t, false);
+}, 60000);
 $("#themebtn").onclick = () => setTheme(theme() === "dark" ? "light" : "dark");
 if (theme() === "dark") { $("#themebtn").setAttribute("aria-label", "Switch to day mode"); $("#themebtn").title = "Day mode"; document.querySelector('meta[name="theme-color"]').content = "#0b0d12"; }
 function setSeason(k) {
