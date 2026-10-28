@@ -78,6 +78,7 @@ const miles = (a, b) => { const R = 3958.8, r = (x) => x * Math.PI / 180, dLa = 
 let E = [], SHOW = [], CONFIG = {};
 const state = { season: defaultSeason(TODAY), q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
+const hfav = (p) => "h:" + p.id; // houses are starred as "h:<id>"; events by their plain id
 const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify([...favs])); } catch {} };
 
 const CITY_OPTS = { ...CITY };
@@ -102,14 +103,15 @@ function instMatch(p) {
   if (!nearCity(p.lat, p.lng)) return false;
   return true;
 }
-// Houses are placed at city level; spread posts in the same city so pins don't stack
+// Houses with a street address sit exactly on it; older posts without one are placed at city level, spread so pins don't stack
 function placeHouses() {
   const byCity = {};
   SHOW.forEach((p) => { (byCity[p.city] ||= []).push(p); });
-  Object.values(byCity).forEach((list) => list.forEach((p, i) => {
+  Object.values(byCity).forEach((list) => list.filter((p) => !p.address).forEach((p, i) => {
     const a = i * 2.4, r = i ? 0.006 * Math.sqrt(i) : 0;
     p.plat = p.lat + r * Math.sin(a); p.plng = p.lng + r * Math.cos(a);
   }));
+  SHOW.filter((p) => p.address).forEach((p) => { p.plat = p.lat; p.plng = p.lng; }); // pinned on the street address
 }
 
 /* ---------- map ---------- */
@@ -197,7 +199,7 @@ function drawMap() {
   const feats = [];
   if (state.tab !== "plan") {
     if (state.layers.events) E.filter(evMatch).forEach((e) => feats.push(pt(e.lng, e.lat, { key: "e:" + e.id, cat: favs.has(e.id) ? "fav" : e.free ? "free" : "paid" })));
-    if (state.layers.inst) SHOW.filter(instMatch).forEach((p) => feats.push(pt(p.plng, p.plat, { key: "i:" + p.id, cat: "inst" })));
+    if (state.layers.inst) SHOW.filter(instMatch).forEach((p) => feats.push(pt(p.plng, p.plat, { key: "i:" + p.id, cat: favs.has(hfav(p)) ? "fav" : "inst" })));
   }
   map.getSource("pts").setData(fc(feats));
   // planner route
@@ -205,7 +207,7 @@ function drawMap() {
   const og = state.tab === "plan" ? routeOrigin() : null, o = og ? [[og.lng, og.lat]] : [];
   const coords = [...o, ...st.map((e) => [e.lng, e.lat])];
   map.getSource("route").setData(fc(coords.length > 1 ? [{ type: "Feature", geometry: { type: "LineString", coordinates: coords }, properties: {} }] : []));
-  map.getSource("stops").setData(fc(st.map((e, i) => pt(e.lng, e.lat, { key: "e:" + e.id, num: String(i + 1) }))));
+  map.getSource("stops").setData(fc(st.map((e, i) => pt(e.lng, e.lat, { key: e.key || "e:" + e.id, num: String(i + 1) }))));
   drawHL();
 }
 function drawHL() {
@@ -214,7 +216,7 @@ function drawHL() {
   for (const k of new Set([state.sel, state.hot].filter(Boolean))) {
     const it = findKey(k); if (!it) continue;
     if (it.kind === "ev") out.push(pt(it.ev.lng, it.ev.lat, { cat: favs.has(it.ev.id) ? "fav" : it.ev.free ? "free" : "paid", label: it.ev.n }));
-    else out.push(pt(it.p.plng, it.p.plat, { cat: "inst", label: it.p.title }));
+    else out.push(pt(it.p.plng, it.p.plat, { cat: favs.has(hfav(it.p)) ? "fav" : "inst", label: it.p.title }));
   }
   map.getSource("hl").setData(fc(out));
 }
@@ -238,7 +240,9 @@ function locateMe(force) {
     { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
 }
 function routeStops() {
-  const fl = E.filter((e) => favs.has(e.id)); if (!fl.length) return [];
+  // starred events plus starred houses (a house becomes a stop with its pin position and street address)
+  const fl = [...E.filter((e) => favs.has(e.id)), ...SHOW.filter((p) => favs.has(hfav(p))).map((p) => ({ house: true, id: p.id, key: "i:" + p.id, n: p.title, lat: p.plat, lng: p.plng, a: p.address ? p.address + ", " + p.city + ", CA" : "", p }))];
+  if (!fl.length) return [];
   const o = routeOrigin();
   let pool = [...fl], route = [], at = o || pool[0]; if (!o) route.push(pool.shift());
   while (pool.length) { pool.sort((a, b) => miles(at, a) - miles(at, b)); at = pool.shift(); route.push(at); }
@@ -258,7 +262,7 @@ function selectKey(k, from) {
   else {
     // Tapped on the map: show the preview card and bring the event into view in the list (the sheet itself doesn't move)
     renderPreview();
-    const want = it.kind === "ev" ? (state.tab === "plan" && favs.has(it.ev.id) ? "plan" : "events") : "inst";
+    const starred = it.kind === "ev" ? favs.has(it.ev.id) : favs.has(hfav(it.p)), want = state.tab === "plan" && starred ? "plan" : it.kind === "ev" ? "events" : "inst";
     if (state.tab !== want) setTab(want);
     else if (state.detail) { state.detail = null; renderPanel(); }
     else if (!document.querySelector(`.item[data-key="${CSS.escape(k)}"]`)) renderPanel();
@@ -346,7 +350,7 @@ function evItem(ev) {
 }
 function instItem(p) {
   const ph = p.photos || [], k = "i:" + p.id;
-  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : ""}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><span></span></article>`;
+  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : ""}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
@@ -374,7 +378,7 @@ function renderPanel() {
     const sc = SEASONS[state.season].showcase;
     body.innerHTML = `<div class="cta"><h3>${esc(sc.title)}</h3>
       <p style="margin:0;font-size:14px">${esc(sc.pitch)}</p>
-      <ul style="margin:0;padding-left:18px;font-size:13.5px;display:grid;gap:3px"><li>Free to post, up to 8 photos</li><li>Only your city is shown, never your address</li><li>Installers: link your website and phone, free advertising all season</li></ul>
+      <ul style="margin:0;padding-left:18px;font-size:13.5px;display:grid;gap:3px"><li>Free to post, up to 8 photos</li><li>Your street address places the pin, so visitors can find the house</li><li>Installers: link your website and phone, free advertising all season</li></ul>
       <div class="row"><button class="btn ice" type="button" id="openForm">Showcase a house</button></div></div>`
       + (SHOW.length ? (vis.length ? `<div class="list">${vis.map(instItem).join("")}</div>` : `<div class="empty">No showcased houses in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`)
         : `<div class="empty">No houses showcased yet. Approved houses appear here with their photos and a blue pin on the map.</div>`);
@@ -383,16 +387,16 @@ function renderPanel() {
     const st = routeStops();
     head.innerHTML = `<span><b>${favs.size}</b> starred</span><label class="toggle">Start from <select id="startFrom" style="border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:2px 4px;max-width:150px"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
     $("#startFrom").onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
-    if (!st.length) { body.innerHTML = `<div class="empty"><b style="color:var(--ink)">Plan your family's night out</b>Tap the heart on any event to add it. Your stops get a sensible driving order from where you are, a route on the map, and a link for your maps app.</div>`; return; }
+    if (!st.length) { body.innerHTML = `<div class="empty"><b style="color:var(--ink)">Plan your family's night out</b>Tap the heart on any event or showcased house to add it. Your stops get a sensible driving order from where you are, a route on the map, and a link for your maps app.</div>`; return; }
     if (state.start === "me") locateMe(false);
     let html = "", prev = routeOrigin(), total = 0;
     if (state.start === "me") html += `<div class="meta" style="padding:0 0 4px 2px">${state.me ? "📍 Starting from your location" : state.meErr ? esc(state.meErr) : "Finding your location…"}</div>`;
-    st.forEach((ev) => { if (prev) { const m = miles(prev, ev) * 1.3; total += m; html += `<div class="meta leg">↓ about ${Math.round(m)} mi · ~${Math.max(5, Math.round(m * 1.6))} min</div>`; } html += evItem(ev); prev = ev; });
+    st.forEach((ev) => { if (prev) { const m = miles(prev, ev) * 1.3; total += m; html += `<div class="meta leg">↓ about ${Math.round(m)} mi · ~${Math.max(5, Math.round(m * 1.6))} min</div>`; } html += ev.house ? instItem(ev.p) : evItem(ev); prev = ev; });
     // With "My location" we leave out the starting point, so the maps app starts from wherever the phone is right now.
     const pts = st.map(destOf), og = routeOrigin();
     const origin = state.start === "me" ? "" : og ? og.lat + "," + og.lng : pts[0];
-    const url = navUrl(origin && !og ? pts.slice(1) : pts, origin);
-    const nights = st.filter((e) => e.s === e.e).map((e) => fmt(e.s));
+    const url = navUrl(origin && !og && pts.length > 1 ? pts.slice(1) : pts, origin); // with a single stop and "First stop", the stop is also the destination
+    const nights = st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s));
     body.innerHTML = `<div class="list">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Open route in ${MAPS[mapsApp]} ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${mapsPicker()}${mapsApp === "apple" && st.length > 1 ? `<p class="meta" style="margin:6px 0 0">Multi-stop routes need iOS 18.4 or later; older iPhones open with the first stop.</p>` : ""}${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
   }
   const iv = $("#inview"); if (iv) iv.onchange = (e) => { state.inView = e.target.checked; renderPanel(); };
@@ -438,7 +442,8 @@ function detailHtml(k) {
   <span class="tag ice" style="justify-self:start">Showcased house</span>
   <h2>${esc(p.title)}</h2><div class="meta"><b style="color:var(--ink)">${esc(p.biz)}</b> · ${esc(p.city)}</div>
   <p style="margin:0;white-space:pre-line">${esc(p.desc)}</p>
-  <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}<br><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address + ", " + p.city + ", CA")}" target="_blank" rel="noopener">Directions ↗</a></dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl></div>`;
+  <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}<br><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address + ", " + p.city + ", CA")}" target="_blank" rel="noopener">Directions ↗</a></dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
+  <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button></div></div>`;
 }
 function wireDetail() {
   $("#back").onclick = () => { state.detail = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
