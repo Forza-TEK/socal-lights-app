@@ -365,17 +365,19 @@ function renderPanel() {
   document.body.classList.toggle("detail-open", !!state.detail);
   if (state.detail) { head.hidden = true; body.innerHTML = detailHtml(state.detail); wireDetail(); return; }
   head.hidden = false;
-  const limit = `<label class="toggle"><input type="checkbox" id="inview" ${state.inView ? "checked" : ""}> Limit to map</label>`;
+  // The list always follows the map; the header carries an add button instead of a "Limit to map" checkbox.
+  const addEv = `<a class="addbtn" href="/add-event">+ Add event</a>`, addHouse = `<button class="addbtn" type="button" id="addHouse">+ Add house</button>`;
   if (state.tab === "events") {
     const all = E.filter(evMatch).sort((a, b) => (b.f === 2 ? 1 : 0) - (a.f === 2 ? 1 : 0) || effStart(a).localeCompare(effStart(b)) || a.e.localeCompare(b.e) || a.n.localeCompare(b.n));
     const vis = state.layers.events ? all.filter((e) => inView(e.lng, e.lat) || state.sel === "e:" + e.id) : [];
-    head.innerHTML = `<div class="hrow"><span><b>${vis.length}</b> ${state.inView ? "in map view" : "events"}${state.date ? " · open " + fmt(state.date) : ""}</span>${limit}</div>${quickPicks()}`;
+    head.innerHTML = `<div class="hrow"><span><b>${vis.length}</b> in map view${state.date ? " · open " + fmt(state.date) : ""}</span>${addEv}</div>${quickPicks()}`;
     body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Layers.</div>`
       : vis.length ? teaser() + `<div class="list">${vis.map(evItem).join("")}</div>`
-      : `<div class="empty">No events ${state.inView ? "in this part of the map" : "match these filters"}.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
+      : `<div class="empty">No events in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "inst") {
     const vis = SHOW.filter(instMatch).filter((p) => inView(p.plng, p.plat) || state.sel === "i:" + p.id);
-    head.innerHTML = `<span><b>${vis.length}</b> house${vis.length === 1 ? "" : "s"}${state.inView ? " in view" : ""}</span>${limit}`;
+    head.innerHTML = `<span><b>${vis.length}</b> house${vis.length === 1 ? "" : "s"} in view</span>${addHouse}`;
+    $("#addHouse").onclick = openForm;
     const sc = SEASONS[state.season].showcase;
     body.innerHTML = `<div class="cta"><h3>${esc(sc.title)}</h3>
       <p style="margin:0;font-size:14px">${esc(sc.pitch)}</p>
@@ -400,7 +402,6 @@ function renderPanel() {
     const nights = st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s));
     body.innerHTML = `<div class="list">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Open route in ${MAPS[mapsApp]} ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${mapsPicker()}${mapsApp === "apple" && st.length > 1 ? `<p class="meta" style="margin:6px 0 0">Multi-stop routes need iOS 18.4 or later; older iPhones open with the first stop.</p>` : ""}${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
   }
-  const iv = $("#inview"); if (iv) iv.onchange = (e) => { state.inView = e.target.checked; renderPanel(); };
   body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
 }
@@ -498,7 +499,6 @@ function openSupport() {
   m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Keep SoCal Lights free</h2><button class="btn ghost" type="button" id="sClose">Close</button></div>
     <p class="blurb">SoCal Lights is built and kept up to date by one small team: checking dates, adding events and fixing links all season long. There are no ads and no paywall. If it helped you find something fun, you can help keep it going.</p>
     ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
-    <div><h3 style="margin:0 0 4px;font-size:15px">Run an event or a business?</h3><p class="meta" style="margin:0 0 8px">Add your event to the map for free, or get a Featured pin and top spot in the list.</p><div class="row" style="flex-wrap:wrap;gap:8px"><a class="btn ghost" href="/add-event">+ Add your event</a><a class="btn ghost" href="/feature">Feature your event →</a></div></div>
     ${shopHtml()}
     ${SITE.amazonTag || Object.keys(SITE.ticketAffiliates).length ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
   </div>`;

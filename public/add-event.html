@@ -30,6 +30,11 @@ textarea{min-height:84px;resize:vertical}
 .msg{margin:0;color:var(--muted)} .msg.err{color:#c0392b;font-weight:600}
 .done{background:var(--gold-soft);border-radius:16px;padding:18px 20px}
 .meta{color:var(--muted);font-size:14px}
+.boost{border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:0;display:grid;gap:8px}
+.boost legend{font-weight:800;padding:0 6px}
+.opt{display:flex;gap:10px;align-items:flex-start;font-weight:600;cursor:pointer}
+.opt input{width:auto;margin-top:5px}
+.opt small{display:block;font-weight:500;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -62,6 +67,14 @@ textarea{min-height:84px;resize:vertical}
   </div>
   <label for="blurb">Short description <span class="hint">1–2 sentences, in your own words</span><textarea id="blurb" maxlength="200" required></textarea></label>
   <label for="email">Your email <span class="hint">private; only used if something needs fixing</span><input id="email" type="email" maxlength="120" required autocomplete="email"></label>
+  <fieldset class="boost" id="boost" hidden>
+    <legend>Make it stand out <span class="hint">(optional)</span></legend>
+    <label class="opt"><input type="radio" name="plan" value="" checked><span>No thanks, just list it<small>Free</small></span></label>
+    <label class="opt"><input type="radio" name="plan" value="pin"><span>Featured pin: $5<small>Gold-ringed pin and Featured badge for 30 days</small></span></label>
+    <label class="opt"><input type="radio" name="plan" value="top"><span>Top of the list: $10<small>Everything above, plus listed first for 30 days</small></span></label>
+    <label class="opt"><input type="radio" name="plan" value="season"><span>Whole season: $15<small>Everything above, until your event ends</small></span></label>
+    <span class="meta">You'll pay on Stripe's secure page right after your event is added. If it needs a quick review first, your Featured placement turns on as soon as it's approved.</span>
+  </fieldset>
   <div id="ts"></div>
   <p class="msg" id="msg" role="status"></p>
   <div><button class="btn" id="send" type="submit">Add my event</button></div>
@@ -85,6 +98,7 @@ $("#start").addEventListener("change", () => { if (!$("#end").value || $("#end")
 // Cloudflare Turnstile ("I am human"), same as the Showcase a House form
 let widget = null;
 const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+if (cfg.featureCheckout) $("#boost").hidden = false; // paid placement is offered only when online payment is switched on
 if (cfg.turnstileSiteKey) {
   await new Promise((res) => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = res; s.onerror = res; document.head.appendChild(s); });
   if (window.turnstile) widget = window.turnstile.render("#ts", { sitekey: cfg.turnstileSiteKey });
@@ -99,6 +113,18 @@ $("#f").addEventListener("submit", async (x) => {
     const r = await fetch("/api/submit-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || "Something went wrong. Please try again.");
+    const plan = (document.querySelector("input[name=plan]:checked") || {}).value || "";
+    if (plan && cfg.featureCheckout) {
+      // Straight on to Stripe to pay for the placement. A published event is featured by its id; one in review is held until it is approved.
+      msg.textContent = "Taking you to the secure payment page…";
+      const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(d.status === "published" || d.status === "duplicate" ? { event_id: d.id, plan } : { submission_id: d.submission_id, plan }) });
+      const cd = await c.json().catch(() => ({}));
+      if (c.ok && cd.url) { location.href = cd.url; return; }
+      // Payment page didn't open: the event is still added, so say so and point to the Feature page.
+      $("#f").hidden = true; $("#done").hidden = false;
+      $("#done").innerHTML = `<b>${esc(d.message)}</b><p>We couldn't open the payment page just now. You can <a href="/feature">feature your event from here</a> any time.</p>`;
+      return;
+    }
     $("#f").hidden = true; $("#done").hidden = false;
     $("#done").innerHTML = `<b>${esc(d.message)}</b><p>${d.status === "published" ? `<a href="/">See it on the map</a> · ` : ""}<a href="/feature">Feature your event</a> · <a href="/add-event">Add another event</a></p>`;
     window.scrollTo(0, 0);
