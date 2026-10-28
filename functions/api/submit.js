@@ -1,6 +1,6 @@
 // POST /api/submit — public "Showcase a House" form (multipart/form-data).
 // Saves the post as 'pending' and its photos under pending/<id>/ in R2.
-import { json, err, clean, safeUrl, newId, verifyTurnstile, nearestCounty } from "../_lib/util.js";
+import { json, err, clean, safeUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 
@@ -69,7 +69,10 @@ export async function onRequestPost({ request, env }) {
     return err(400, e.message || "A photo couldn't be saved.");
   }
 
-  const [lat, lng] = CITY[city];
+  // The pin goes on the exact address when the submitter chose to show it; otherwise (or if the address can't be found)
+  // it sits at the city center, so a private address never leaks through the map.
+  let [lat, lng] = CITY[city];
+  if (showAddress) { const pt = await geocodeAddress(address, city, [lat, lng]); if (pt) [lat, lng] = pt; }
   const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
   const county = nearestCounty(lat, lng, evs);
 
