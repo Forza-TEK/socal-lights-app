@@ -270,6 +270,17 @@ button{touch-action:manipulation}
 .bnav{display:none}
 
 /* ---------- phone: bottom sheet, floating tab bar, swipeable cards ---------- */
+/* cards: one vertical list of cards at every sheet height */
+.list{gap:10px}
+.panel .list .item{grid-template-columns:1fr;gap:0;padding:0;align-items:stretch;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.panel .list .item.sel{box-shadow:inset 0 0 0 2px var(--season)}
+.panel .list .item:not(.sel):hover,.panel .list .item.hot:not(.sel){box-shadow:inset 0 0 0 1.5px var(--season)} /* desktop hover, and the card whose map pin is hovered */
+.panel .list .tile,.panel .list .item .thumb{width:100%;height:84px;border-radius:0;position:relative}
+.panel .list .tile .when{display:block;position:absolute;z-index:1;left:8px;top:8px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px}
+.panel .list .tile .when.now{background:var(--ink);color:var(--surface)}
+.panel .list .ibody{padding:9px 12px 11px}
+.panel .list .item h3{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panel .list .star{position:absolute;right:6px;top:6px;width:40px;height:40px;background:var(--surface);box-shadow:var(--shadow-sm)}
 @media (max-width:860px){
   :root{--panel-w:0px}
   .topbar{right:max(14px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 10px);gap:8px}
@@ -309,16 +320,6 @@ button{touch-action:manipulation}
   .panel.peek .quick{flex:none;overflow:visible}
   .panel.peek .pbody{overflow:hidden}
   .panel.peek .teaser,.panel.peek .list>.meta,.panel.peek .pbody>.row,.panel.peek .pbody>p,.panel.peek .mapspick,.panel.peek .cta{display:none}
-  /* cards: one vertical list of cards at every sheet height */
-  .list{gap:10px}
-  .panel .list .item{grid-template-columns:1fr;gap:0;padding:0;align-items:stretch;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
-  .panel .list .item.sel{box-shadow:inset 0 0 0 2px var(--season)}
-  .panel .list .tile,.panel .list .item .thumb{width:100%;height:84px;border-radius:0;position:relative}
-  .panel .list .tile .when{display:block;position:absolute;z-index:1;left:8px;top:8px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px}
-  .panel .list .tile .when.now{background:var(--ink);color:var(--surface)}
-  .panel .list .ibody{padding:9px 12px 11px}
-  .panel .list .item h3{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .panel .list .star{position:absolute;right:6px;top:6px;width:40px;height:40px;background:var(--surface);box-shadow:var(--shadow-sm)}
   .panel.peek .empty{padding:14px 16px}
 
   /* floating tab bar */
