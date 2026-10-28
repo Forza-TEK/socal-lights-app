@@ -53,3 +53,8 @@ The original three routines (`trig_01H9a1iYVJNgtgzyAi8kNpn5`, `trig_01VBEfN43zRQ
 
 ## 2026-10-28 city sweep, group 20 (Santa Barbara County)
 Santa Barbara County was already well covered. Added Gobble for Good 5K (Santa Maria, Nov 14). Not confirmed for 2026 and left out: Santa Maria Turkey Trot, Guadalupe Christmas parade, Lompoc parade date, Buellton Winter Fest. Gobble pin is the 101 frontage near the Elks center, so check it. Buellton Holiday Bazaar (Nov 7, River View Park) skipped as no fitting type.
+
+## Shop tab (2026-10-28)
+- New **Shop** tab (last, after My night) on the list: three category buttons styled like the Today/Saturday/Free chips; each shows tappable cards that open an Amazon search with the `socallightsap-20` tag. Content is `SITE.shop` in `public/site-config.js` (3 categories x 6 items per season). The tab hides itself if `amazonTag` is empty.
+- The coffee-mug box now holds the tip link, a "Browse the shop" button that opens the tab, and the affiliate disclosure.
+- Cards link to Amazon search results; real product photos and prices need Amazon's Product Advertising API (available after qualifying sales).
