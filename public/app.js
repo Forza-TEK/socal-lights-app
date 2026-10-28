@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zc";
+import { SITE } from "/site-config.js?v=20261028zd";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -376,7 +376,7 @@ function renderPanel() {
       : `<div class="empty">No events in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
-    head.innerHTML = `<div class="hrow"><label class="shopsel"><b>Shop for</b> <select id="shopSeason" aria-label="Shop season">${Object.keys(SITE.shop).filter((k) => SEASONS[k]).map((k) => `<option value="${k}"${k === shopSeason() ? " selected" : ""}>${esc(SEASONS[k].short || SEASONS[k].label)}</option>`).join("")}</select></label></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
+    head.innerHTML = `<div class="hrow"><button class="chip" type="button" data-pop="shopseason" aria-haspopup="true"><span>Shop for ${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</span><span class="caret">▾</span></button></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
     body.innerHTML = `<div class="shopgrid">${c[1].map(([em, l, q]) => `<a class="shopcard" href="${amzUrl(q)}" target="_blank" rel="sponsored noopener"><span class="shopem" aria-hidden="true">${em}</span><span class="shoptx">${esc(l)}</span><span class="shopgo">Amazon ↗</span></a>`).join("")}</div><p class="meta" style="padding:4px 14px 14px">As an Amazon Associate we earn from qualifying purchases, at no extra cost to you.</p>`;
   } else if (state.tab === "inst") {
     const vis = SHOW.filter(instMatch).filter((p) => inView(p.plng, p.plat) || state.sel === "i:" + p.id);
@@ -414,8 +414,8 @@ $("#pbody").addEventListener("click", (e) => {
   if (f) { e.stopPropagation(); const id = f.dataset.fav; favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); return; }
   const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) selectKey(it.dataset.key, "list");
 });
-$("#phead").addEventListener("change", (e) => { if (e.target.id === "shopSeason") { state.shopSeason = e.target.value; state.shopCat = 0; renderPanel(); $("#pbody").scrollTop = 0; } });
 $("#phead").addEventListener("click", (e) => {
+  const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { popFor === "shopseason" ? closePop() : openPop(sc); return; }
   const sb = e.target.closest("[data-shop]"); if (sb) { state.shopCat = +sb.dataset.shop; renderPanel(); $("#pbody").scrollTop = 0; return; }
   const b = e.target.closest("[data-quick]"); if (!b) return;
   const f = b.dataset.quick, v = b.dataset.v;
@@ -581,6 +581,7 @@ function openPop(chip) {
   if (k === "county") h = `<h4>Counties</h4>${COUNTIES.map((c) => `<label class="opt"><input type="checkbox" value="${c}" ${state.counties.has(c) ? "checked" : ""}> ${c}</label>`).join("")}<button class="linkbtn" id="pAllC">All counties</button>`;
   if (k === "cost") h = `<h4>Cost</h4><div class="seg">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-cost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div>`;
   if (k === "type") h = `<h4>Type</h4><label class="opt"><input type="radio" name="pt" value="" ${!state.type ? "checked" : ""}> All types</label>${Object.entries(SEASONS[state.season].types).map(([v, l]) => `<label class="opt"><input type="radio" name="pt" value="${v}" ${state.type === v ? "checked" : ""}> ${esc(l)}</label>`).join("")}`;
+  if (k === "shopseason") h = `<h4>Shop for</h4>${Object.keys(SITE.shop).filter((x) => SEASONS[x]).map((x) => `<label class="opt"><input type="radio" name="ss" value="${x}" ${x === shopSeason() ? "checked" : ""}> ${esc(SEASONS[x].short || SEASONS[x].label)}</label>`).join("")}`;
   if (k === "layers") h = `<h4>Show on map</h4><label class="opt"><input type="checkbox" id="lEv" ${state.layers.events ? "checked" : ""}> <span class="tag paid">●</span> Events</label><label class="opt"><input type="checkbox" id="lIn" ${state.layers.inst ? "checked" : ""}> <span class="tag ice">●</span> Showcased houses</label>`;
   p.innerHTML = h; p.hidden = false;
   const r = chip.getBoundingClientRect(), pw = p.offsetWidth; p.style.top = r.bottom + 6 + "px"; p.style.left = Math.max(12, Math.min(r.left, innerWidth - pw - 12)) + "px";
@@ -600,6 +601,7 @@ function openPop(chip) {
   p.querySelectorAll("input[type=checkbox][value]").forEach((cb) => (cb.onchange = () => { cb.checked ? state.counties.add(cb.value) : state.counties.delete(cb.value); applyFilters(); }));
   const ac = $("#pAllC"); if (ac) ac.onclick = () => { state.counties.clear(); applyFilters(); closePop(); };
   p.querySelectorAll("[data-cost]").forEach((b) => (b.onclick = () => { state.cost = b.dataset.cost; applyFilters(); closePop(); }));
+  p.querySelectorAll("input[name=ss]").forEach((r) => (r.onchange = () => { state.shopSeason = r.value; state.shopCat = 0; closePop(); renderPanel(); $("#pbody").scrollTop = 0; }));
   p.querySelectorAll("input[name=pt]").forEach((r) => (r.onchange = () => { state.type = r.value; applyFilters(); closePop(); }));
   const le = $("#lEv"), li = $("#lIn"); if (le) le.onchange = () => { state.layers.events = le.checked; applyFilters(); }; if (li) li.onchange = () => { state.layers.inst = li.checked; applyFilters(); };
 }
