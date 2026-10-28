@@ -73,7 +73,11 @@ button{touch-action:manipulation}
 .seasonbar button{position:relative;flex:none;border:0;background:none;height:44px;padding:0 12px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .15s}
 .seasonbar button:hover{color:var(--ink)}
 .seasonbar button[aria-selected="true"]{color:var(--ink);font-weight:800;font-size:15.5px}
-.seasonbar button[aria-selected="true"]::before{content:"";position:absolute;left:12px;right:12px;bottom:6px;height:3px;border-radius:3px;background:var(--season)}
+.seasonbar button.sdrop{display:grid;place-items:center;width:26px;padding:0;margin-left:-8px;margin-right:2px}
+#seasonmenu{position:fixed;z-index:60;min-width:230px;max-height:70vh;overflow-y:auto;padding:6px;border-radius:18px;background:var(--surface);box-shadow:var(--shadow)}
+#seasonmenu button{display:block;width:100%;text-align:left;border:0;background:none;border-radius:12px;padding:11px 14px;font:inherit;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer}
+#seasonmenu button:hover{background:var(--surface-2)}
+#seasonmenu button.on{background:var(--season-soft);font-weight:800}
 .seasonbar button.now::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#e5484d;margin-left:6px;vertical-align:2px;box-shadow:0 0 0 3px rgba(229,72,77,.18)}
 
 /* filter chips: always visible on desktop, behind the filter button on phones */
@@ -290,7 +294,7 @@ button{touch-action:manipulation}
   .actionbar{bottom:calc(var(--sheet-y,0px) + env(safe-area-inset-bottom,0px) + 12px)}
   .hero{height:190px}
 
-  /* collapsed sheet: one compact header row, then a sideways row of cards */
+  /* collapsed sheet: one compact header row */
   .panel.peek .phead{display:flex;align-items:center;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:8px}
   .panel.peek .phead::-webkit-scrollbar{display:none}
   .panel.peek .phead{flex-wrap:nowrap;min-height:0;touch-action:pan-x}
@@ -299,11 +303,9 @@ button{touch-action:manipulation}
   .panel.peek .quick{flex:none;overflow:visible}
   .panel.peek .pbody{overflow:hidden}
   .panel.peek .teaser,.panel.peek .list>.meta,.panel.peek .pbody>.row,.panel.peek .pbody>p,.panel.peek .mapspick,.panel.peek .cta{display:none}
-  .panel.peek .list{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 -16px;padding:2px 16px 4px;scroll-padding:0 16px}
-  .panel.peek .list::-webkit-scrollbar{display:none}
-  /* cards: the same card in the sideways row (collapsed) and the vertical list (half and full) */
+  /* cards: one vertical list of cards at every sheet height */
   .list{gap:10px}
-  .panel .list .item{flex:0 0 min(78%,300px);scroll-snap-align:start;grid-template-columns:1fr;gap:0;padding:0;align-items:stretch;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+  .panel .list .item{grid-template-columns:1fr;gap:0;padding:0;align-items:stretch;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
   .panel .list .item.sel{box-shadow:inset 0 0 0 2px var(--season)}
   .panel .list .tile,.panel .list .item .thumb{width:100%;height:84px;border-radius:0;position:relative}
   .panel .list .tile .when{display:block;position:absolute;z-index:1;left:8px;top:8px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px}
