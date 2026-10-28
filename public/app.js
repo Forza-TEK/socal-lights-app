@@ -259,11 +259,6 @@ function selectKey(k, from) {
 function revealItem(k) {
   const body = $("#pbody"), el = body.querySelector(`.item[data-key="${CSS.escape(k)}"]`);
   if (!el) return;
-  if ($("#panel").classList.contains("peek")) {
-    const list = el.parentElement;
-    list.scrollTo({ left: Math.max(0, el.offsetLeft - list.offsetLeft - 16), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); return;
-  }
   const top = body.scrollTop + el.getBoundingClientRect().top - body.getBoundingClientRect().top - 10;
   body.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
@@ -435,7 +430,7 @@ function detailHtml(k) {
   <dl class="facts">${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl></div>`;
 }
 function wireDetail() {
-  $("#back").onclick = () => { state.detail = null; renderPanel(); renderPreview(); };
+  $("#back").onclick = () => { state.detail = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
   const tr = $("#track"); if (tr) { const n = tr.children.length;
     document.querySelectorAll(".gallery .nav").forEach((b) => (b.onclick = () => tr.scrollBy({ left: tr.clientWidth * Number(b.dataset.g), behavior: "smooth" })));
     tr.onscroll = () => { const c = $("#gcount"); if (c) c.textContent = Math.round(tr.scrollLeft / tr.clientWidth) + 1 + " / " + n; }; }
@@ -665,7 +660,19 @@ function setRowLayout(vis) {
   const panel = $("#panel"), row = isPhone() && vis < innerHeight * 0.5;
   if (row === panel.classList.contains("peek")) return;
   panel.classList.toggle("peek", row);
-  $("#pbody").scrollTop = 0;
+}
+// After the sheet moves, scroll the list just enough to keep the selected card on screen (above the tab bar, below the header)
+let keepT = null;
+function keepSelectedVisible() {
+  clearTimeout(keepT);
+  keepT = setTimeout(() => {
+    if (!isPhone() || state.detail || !state.sel || sheetState === "peek") return;
+    const body = $("#pbody"), el = body.querySelector(`.item[data-key="${CSS.escape(state.sel)}"]`);
+    if (!el) return;
+    const r = el.getBoundingClientRect(), top = body.getBoundingClientRect().top, bottom = $("#bnav").getBoundingClientRect().top - 8;
+    if (r.top >= top && r.bottom <= bottom) return;
+    body.scrollTo({ top: Math.max(0, body.scrollTop + r.top - top - 10), behavior: "auto" });
+  }, 340); // after the sheet's slide transition
 }
 function setSheet(s) {
   sheetState = s; const panel = $("#panel");
@@ -673,6 +680,7 @@ function setSheet(s) {
   if (!isPhone()) { panel.style.removeProperty("--sheet-y"); return; }
   panel.style.setProperty("--sheet-y", panel.offsetHeight - sheetVisible() + "px");
   document.documentElement.style.setProperty("--peek", sheetVisible() + "px");
+  keepSelectedVisible();
 }
 // Drag the sheet from its top (handle, tabs, header) or from the list itself:
 // swiping up on a list that isn't full height expands the sheet; swiping down at the top of the list collapses it.
