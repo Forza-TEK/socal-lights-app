@@ -78,7 +78,7 @@ button{touch-action:manipulation}
 #seasonmenu button{display:block;width:100%;text-align:left;border:0;background:none;border-radius:12px;padding:11px 14px;font:inherit;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer}
 #seasonmenu button:hover{background:var(--surface-2)}
 #seasonmenu button.on{background:var(--season-soft);font-weight:800}
-.seasonbar button.now::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#e5484d;margin-left:6px;vertical-align:2px;box-shadow:0 0 0 3px rgba(229,72,77,.18)}
+.seasonbar button[aria-selected="true"]::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--season);margin-left:6px;vertical-align:2px;box-shadow:0 0 0 3px color-mix(in srgb,var(--season) 20%,transparent)}
 
 /* filter chips: always visible on desktop, behind the filter button on phones */
 .chips{display:flex;gap:8px;max-width:100%;overflow-x:auto;scrollbar-width:none;padding:2px 2px 8px}
