@@ -14,9 +14,18 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
 - A disclosure line ("we may earn a small commission") appears automatically whenever either is configured.
 - To get started: apply to Amazon Associates (needs 3 qualifying sales in 180 days to stay active) and to ticket programs such as Eventbrite, Ticketmaster (via Impact), Groupon (via Impact). Each has its own approval.
 
-## 3. Feature your event (removed 2026-10-28, parked for later)
-Paid "Featured" placement was built and then taken out of the site at the owner's request. The `/feature` page, the Featured badge,
-list sorting and gold map pin, and the `f` field in `/api/events` are gone. The two database columns `featured` (0/1) and
-`featured_until` (migration `0062_featured_events.sql`) remain, unused and harmless; dropping them is not worth the risk on the live database.
-To bring it back, restore the pieces from git history (PR "Monetization: tip button, affiliate plumbing, Feature your event").
-Planned prices were $29 / 30 days (pin), $59 / 30 days (top of list), $99 / season.
+## 3. Feature your event
+- Page: `/feature` (plans: Featured pin $5 / 30 days, Top of the list $10 / 30 days, Whole season $15). Edit the copy and prices in `public/feature.html`
+  (and the matching `NAMES` in its script).
+- Payment: Cash App links in `featurePay.pin|top|season` (`https://cash.app/$RelaxationMeditation/5`, `/10`, `/15`). The customer puts their event name in
+  the Cash App note, then emails the event link to `contactEmail`. Clear a value to fall back to an email button.
+- Database: migration `0062_featured_events.sql` adds `featured` (0/1) and `featured_until` (YYYY-MM-DD, optional) to `events`.
+  Featured events get a gold "Featured" badge, sort to the top of the list, and show a bigger gold-ringed pin. The API exposes it as `f`.
+- To turn a placement on after payment, add a new migration (never edit an old one):
+
+  ```sql
+  UPDATE events SET featured=1, featured_until='2026-12-15', updated_at=datetime('now') WHERE id='the-event-id';
+  ```
+  Placement ends by itself after `featured_until`. Scheduled upkeep and sweep upserts never touch these two columns.
+- Featured must stay honest: the event still has to be real, public and verified, and the badge is always shown.
+- History: built 2026-10-28, removed briefly the same day, then restored with Cash App payments and $5/$10/$15 pricing.

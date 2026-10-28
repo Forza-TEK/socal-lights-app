@@ -18,4 +18,8 @@ export const SITE = {
   // Ticket affiliate programs: add a tracking query parameter to links on a matching host,
   // for example { "eventbrite.com": { param: "aff", value: "socallights" } }. Empty = links are left untouched.
   ticketAffiliates: {},
+
+  // "Feature your event" payment links. Cash App links take the amount at the end ($5 / $10 / $15). Empty = the page shows an email button instead.
+  featurePay: { pin: "https://cash.app/$RelaxationMeditation/5", top: "https://cash.app/$RelaxationMeditation/10", season: "https://cash.app/$RelaxationMeditation/15" },
+  contactEmail: "rey@forza-tek.com",
 };
