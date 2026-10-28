@@ -43,6 +43,7 @@ Read `docs/updating-events.md` before touching events. Key rules:
 Other docs: `docs/coverage-cities.md` (where to search), `docs/city-sweep.md`, `docs/confirmation-plan.md` (turning `expected` events into `confirmed`).
 
 ## Rules
+- Cloudflare serves CSS/JS with a 4-hour browser cache that `_headers` can't override, so whenever you change `public/styles.css` or `public/app.js`, bump the `?v=` value on their tags in `public/index.html` (the HTML is always revalidated), or phones keep the old UI.
 - Do not commit secrets. `CLOUDFLARE_API_TOKEN` is a GitHub Actions repository secret; `TURNSTILE_SECRET` is a Cloudflare Pages secret.
 - The site redeploys on every push to `main`, and migrations apply to the **live** database. Prefer a branch for anything non-trivial. The scheduled routines are the exception: they publish event migrations straight to `main` after validation (see `docs/updating-events.md`).
 - Update `docs/status.md` at the end of every working session.
