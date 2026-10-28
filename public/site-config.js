@@ -5,7 +5,7 @@ export const SITE = {
   donateLabel: "Tip with Cash App",
 
   // Amazon Associates tracking id (looks like "socallights-20"). Leave "" to hide the "Shop for the season" block.
-  amazonTag: "",
+  amazonTag: "socallightsap-20",
   // Shop shortcuts by season: [label, Amazon search words].
   shop: {
     halloween: [["Costumes", "halloween costumes"], ["Decorations", "halloween decorations outdoor"], ["Candy & treats", "halloween candy variety pack"]],
