@@ -30,3 +30,13 @@ Never commit these values to the repo. Use test keys (`sk_test_...`) first if yo
 `/add-event` posts to `POST /api/submit-event`. The server geocodes the address, rejects duplicates, and loads the submitted event page: if it
 mentions the event name and the year, the event is published immediately as confirmed; otherwise it waits in the admin page under
 "Submitted events" (publish as confirmed or expected, or decline). Limits: 5 submissions per hour per connection, 40 auto-publishes per day.
+
+## Featured while adding an event
+The `/add-event` form offers an optional "Make it stand out" choice ($5 / $10 / $15). After the event is added the visitor goes straight to Stripe.
+If the event published instantly the payment attaches to it by id; if it is waiting in the admin "Submitted events" tab, the payment is recorded
+against `sub:<submission id>` and applied the moment you publish it (the pending card shows "Paid Featured"). If you decline a submission that
+has paid, refund it in Stripe. The choice only appears when online payment is switched on (`/api/config` shows `featureCheckout: true`).
+
+## Panel buttons
+The Events and Houses lists always follow the visible map. Their headers carry "+ Add event" (goes to `/add-event`) and "+ Add house" (opens
+Showcase a House). The coffee-mug button now only holds the tip link and the optional shop links.

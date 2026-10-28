@@ -52,7 +52,7 @@ input[type=search],input[type=text],input[type=email],input[type=url],input[type
 <h1>Feature your event on SoCal Lights</h1>
 <p class="lede">Southern Californians use SoCal Lights to decide where to go this weekend. A Featured listing stands out, with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin on the map.</p>
 
-<div id="paid" class="ok" hidden><b>Thank you!</b> Your payment went through. Your event is being featured now; refresh the map in a minute to see the gold badge. A receipt is on its way from Stripe.</div>
+<div id="paid" class="ok" hidden><b>Thank you!</b> <span id="paidmsg">Your payment went through. Your event is being featured now; refresh the map in a minute to see the gold badge.</span> A receipt is on its way from Stripe.</div>
 
 <div id="auto">
 <h2>1. Find your event</h2>
@@ -100,7 +100,7 @@ const NAMES = { pin: "Featured pin ($5 / 30 days)", top: "Top of the list ($10 /
 const mail = (plan) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent("Feature my event" + (plan ? " – " + NAMES[plan] : ""))}&body=${encodeURIComponent("Event name:\nLink to my event on socallights.app (or its own web page):\nPlan: " + (plan ? NAMES[plan] : "") + "\nMy name and phone:\n")}`;
 const safe = (u) => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } };
 $("#mail").href = mail("");
-if (new URLSearchParams(location.search).get("paid")) $("#paid").hidden = false;
+if (new URLSearchParams(location.search).get("paid")) { $("#paid").hidden = false; if (new URLSearchParams(location.search).get("pending")) $("#paidmsg").textContent = "Your payment went through. Your event is waiting for a quick review; its Featured placement turns on the moment it is approved."; }
 
 const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
 if (!cfg.featureCheckout) {

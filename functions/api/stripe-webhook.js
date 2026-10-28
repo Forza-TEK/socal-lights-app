@@ -20,10 +20,19 @@ export async function onRequestPost({ request, env }) {
     .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "").run();
   if (!ins.meta || !ins.meta.changes) return json({ ok: true, duplicate: true });
 
-  const ev = await env.DB.prepare("SELECT id, end_date, featured, featured_until FROM events WHERE id = ?").bind(eventId).first();
+  let targetId = eventId;
+  if (eventId.startsWith("sub:")) {
+    // Paid while the event was still waiting for review: apply now if it has since published, otherwise the admin's approval applies it.
+    const sub = await env.DB.prepare("SELECT event_id FROM event_submissions WHERE id = ?").bind(eventId.slice(4)).first();
+    if (!sub) return json({ ok: true, ignored: "submission not found" });
+    if (!sub.event_id) return json({ ok: true, held: "waiting for the event to be approved" });
+    targetId = sub.event_id;
+    await env.DB.prepare("UPDATE feature_orders SET event_id = ? WHERE session_id = ?").bind(targetId, s.id).run();
+  }
+  const ev = await env.DB.prepare("SELECT id, end_date, featured, featured_until FROM events WHERE id = ?").bind(targetId).first();
   if (!ev) return json({ ok: true, ignored: "event not found" });
   const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
   const nf = applyPlan(ev, plan, today);
-  await env.DB.prepare("UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=?").bind(nf.featured, nf.featured_until, eventId).run();
+  await env.DB.prepare("UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=?").bind(nf.featured, nf.featured_until, targetId).run();
   return json({ ok: true, featured: nf });
 }

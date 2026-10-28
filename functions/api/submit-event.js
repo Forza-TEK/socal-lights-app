@@ -44,7 +44,7 @@ export async function onRequestPost({ request, env }) {
   // Already on the map?
   const dup = await env.DB.prepare("SELECT id FROM events WHERE (lower(name) = lower(?) AND start_date = ?) OR (lower(address) = lower(?) AND start_date = ? AND lower(city) = lower(?)) LIMIT 1")
     .bind(e.name, e.start_date, e.address, e.start_date, e.city).first();
-  if (dup) return json({ ok: true, status: "duplicate", message: "Good news: this event is already on the map." });
+  if (dup) return json({ ok: true, status: "duplicate", id: dup.id, message: "Good news: this event is already on the map." });
 
   // Pin: geocode the street address (rejects a hit more than 30 km from the chosen city)
   let [lat, lng] = CITY[e.city];
@@ -74,7 +74,7 @@ export async function onRequestPost({ request, env }) {
 
   if (auto) {
     await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: "confirmed", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
-    return json({ ok: true, status: "published", id: eventId, message: "Your event is on the map." });
+    return json({ ok: true, status: "published", id: eventId, submission_id: id, message: "Your event is on the map." });
   }
-  return json({ ok: true, status: "pending", message: "Thanks! We'll check your event and add it shortly." });
+  return json({ ok: true, status: "pending", submission_id: id, message: "Thanks! We'll check your event and add it shortly." });
 }

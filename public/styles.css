@@ -133,6 +133,8 @@ button{touch-action:manipulation}
 .phead .quick{flex-basis:100%}
 .phead b{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
 .phead select{font-size:14px;height:36px;border:0!important;border-radius:10px!important;background:var(--surface-2)!important;padding:0 8px!important}
+.addbtn{display:inline-flex;align-items:center;gap:4px;flex:none;min-height:36px;padding:0 14px;border:0;border-radius:999px;background:var(--season,#e8590c);color:#fff;font:700 14px/1 inherit;text-decoration:none;cursor:pointer;white-space:nowrap}
+.addbtn:hover{filter:brightness(1.08)}
 .toggle{display:inline-flex;gap:8px;align-items:center;min-height:40px;font-size:14px;font-weight:600;cursor:pointer}
 .quick{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
 .quick::-webkit-scrollbar{display:none}
