@@ -39,7 +39,6 @@ export async function onRequestPost({ request, env }) {
   const phone = clean(form.get("phone"), 80);
   const where = clean(form.get("where"), 120);
   const address = clean(form.get("address"), 160);
-  const showAddress = form.get("show_address") ? 1 : 0;
   const season = SEASONS[form.get("season")] ? form.get("season") : "christmas";
 
   if (!biz || !title || !descr) return err(400, "Fill in your name or business, display name and description.");
@@ -69,10 +68,9 @@ export async function onRequestPost({ request, env }) {
     return err(400, e.message || "A photo couldn't be saved.");
   }
 
-  // The pin goes on the exact address when the submitter chose to show it; otherwise (or if the address can't be found)
-  // it sits at the city center, so a private address never leaks through the map.
+  // The pin goes on the exact address; if it can't be found it falls back to the city center (the admin can fix it)
   let [lat, lng] = CITY[city];
-  if (showAddress) { const pt = await geocodeAddress(address, city, [lat, lng]); if (pt) [lat, lng] = pt; }
+  const pt = await geocodeAddress(address, city, [lat, lng]); if (pt) [lat, lng] = pt;
   const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
   const county = nearestCounty(lat, lng, evs);
 
@@ -80,7 +78,7 @@ export async function onRequestPost({ request, env }) {
     env.DB.prepare(
       `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address)
        VALUES (?,'pending',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-    ).bind(id, biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, showAddress),
+    ).bind(id, biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);
