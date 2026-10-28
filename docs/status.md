@@ -43,3 +43,6 @@ The original three routines (`trig_01H9a1iYVJNgtgzyAi8kNpn5`, `trig_01VBEfN43zRQ
 - Cloudflare Pages Git connection re-pointed at `Forza-TEK/socal-lights-app` (the dashboard showed a stale-link warning after the rename). The Cloudflare Workers and Pages GitHub app now has access to the repo, the warning is gone, and auto-deploys from `main` work again.
 - Header logo and browser-tab icon switched to the SoCal Lights badge.
 - Repository moved to `Forza-TEK/socal-lights-app`; project context added (`CLAUDE.md`).
+
+## 2026-10-28 city sweep, group 20 (Santa Barbara County)
+Santa Barbara County was already well covered. Added Gobble for Good 5K (Santa Maria, Nov 14). Not confirmed for 2026 and left out: Santa Maria Turkey Trot, Guadalupe Christmas parade, Lompoc parade date, Buellton Winter Fest. Gobble pin is the 101 frontage near the Elks center, so check it. Buellton Holiday Bazaar (Nov 7, River View Park) skipped as no fitting type.
