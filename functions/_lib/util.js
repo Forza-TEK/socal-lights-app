@@ -35,9 +35,11 @@ export function rowToPost(r, admin = false) {
   return p;
 }
 
-// Paid "Featured" placement: on while featured=1 and the optional featured_until date (YYYY-MM-DD) has not passed.
-function isFeatured(r) {
-  return !!r.featured && (!r.featured_until || r.featured_until >= new Date().toISOString().slice(0, 10));
+// Paid "Featured" placement. featured: 0 = off, 1 = gold pin + badge, 2 = also listed first. Ends after featured_until (YYYY-MM-DD, inclusive).
+function featuredLevel(r) {
+  if (!r.featured) return 0;
+  if (r.featured_until && r.featured_until < new Date().toISOString().slice(0, 10)) return 0;
+  return r.featured >= 2 ? 2 : 1;
 }
 
 export function rowToEvent(r) {
@@ -46,7 +48,7 @@ export function rowToEvent(r) {
     st: r.status === "confirmed" ? "c" : "e", free: !!r.free, p: r.price || "", h: r.hours || "",
     lat: r.lat, lng: r.lng, b: r.blurb || "", u: r.url || "", sn: r.season || "christmas",
     v: r.venue || "", a: r.address || "", img: r.image || "",
-    f: isFeatured(r) ? 1 : 0,
+    f: featuredLevel(r),
   };
 }
 

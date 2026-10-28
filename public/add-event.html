@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Add your event · SoCal Lights</title>
+<meta name="description" content="Add your Southern California Halloween, holiday or seasonal event to the SoCal Lights map. It's free.">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--bg:#f6f4f0;--surface:#fff;--ink:#17181c;--muted:#5d6068;--line:#e4e0d8;--accent:#e8590c;--gold-soft:#fff3d6}
+:root[data-theme="dark"]{--bg:#0b0d12;--surface:#151821;--ink:#f1f2f5;--muted:#a3a7b2;--line:#2a2e3a;--accent:#ff8a3d;--gold-soft:#2b2412}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Plus Jakarta Sans",system-ui,sans-serif;padding:0 16px 64px}
+main{max-width:680px;margin:0 auto}
+a{color:var(--accent)}
+.top{padding:20px 0} .top a{font-weight:700;text-decoration:none}
+h1{font-size:clamp(28px,5vw,38px);line-height:1.1;letter-spacing:-.02em;margin:8px 0 10px}
+.lede{font-size:18px;color:var(--muted);margin:0 0 20px}
+form{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px}
+label{display:grid;gap:6px;font-weight:700;font-size:14px}
+.hint{font-weight:500;color:var(--muted)}
+input,select,textarea{width:100%;font:inherit;font-weight:500;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+textarea{min-height:84px;resize:vertical}
+.two{display:grid;gap:14px} @media(min-width:600px){.two{grid-template-columns:1fr 1fr}}
+.chk{display:flex;align-items:center;gap:8px;font-weight:600} .chk input{width:auto}
+.btn{display:inline-flex;justify-content:center;align-items:center;border:0;border-radius:999px;padding:13px 22px;font:700 16px "Plus Jakarta Sans",system-ui,sans-serif;background:var(--accent);color:#fff;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:wait}
+.msg{margin:0;color:var(--muted)} .msg.err{color:#c0392b;font-weight:600}
+.done{background:var(--gold-soft);border-radius:16px;padding:18px 20px}
+.meta{color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><a href="/">← Back to the map</a></div>
+<h1>Add your event</h1>
+<p class="lede">Hosting a Halloween, holiday or seasonal event in Southern California? Put it on the map for free. If your event's web page confirms the details, it goes live right away.</p>
+
+<div id="done" class="done" hidden></div>
+<form id="f" novalidate>
+  <label for="name">Event name<input id="name" maxlength="120" required autocomplete="off"></label>
+  <label for="url">Link to your event's web page <span class="hint">we use it to check the event; it should mention the event and its date</span><input id="url" type="url" maxlength="300" placeholder="https://" required></label>
+  <div class="two">
+    <label for="season">Season<select id="season"></select></label>
+    <label for="type">Type<select id="type"></select></label>
+  </div>
+  <div class="two">
+    <label for="start">First day<input id="start" type="date" required></label>
+    <label for="end">Last day <span class="hint">same day if one day</span><input id="end" type="date" required></label>
+  </div>
+  <label for="hours">Hours <span class="hint">for example 5–9pm</span><input id="hours" maxlength="120"></label>
+  <div class="two">
+    <label for="price">Price <span class="hint">for example Free, or $15 adults</span><input id="price" maxlength="80"></label>
+    <label class="chk" style="padding-top:24px"><input id="free" type="checkbox"> It's free to attend</label>
+  </div>
+  <label for="venue">Venue or place name<input id="venue" maxlength="120" placeholder="e.g. Heritage Park" required></label>
+  <div class="two">
+    <label for="address">Street address <span class="hint">or the cross streets for a parade</span><input id="address" maxlength="160" placeholder="123 Main St" required></label>
+    <label for="city">City<select id="city" required></select></label>
+  </div>
+  <label for="blurb">Short description <span class="hint">1–2 sentences, in your own words</span><textarea id="blurb" maxlength="200" required></textarea></label>
+  <label for="email">Your email <span class="hint">private; only used if something needs fixing</span><input id="email" type="email" maxlength="120" required autocomplete="email"></label>
+  <div id="ts"></div>
+  <p class="msg" id="msg" role="status"></p>
+  <div><button class="btn" id="send" type="submit">Add my event</button></div>
+  <p class="meta">Want more visibility? <a href="/feature">Feature your event</a> for $5 and up.</p>
+</form>
+</main>
+<script type="module">
+import { SEASONS, defaultSeason } from "/seasons.js";
+import { CITY } from "/cities.js";
+const $ = (q) => document.querySelector(q);
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+$("#season").innerHTML = Object.entries(SEASONS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join("");
+const fillTypes = () => { $("#type").innerHTML = Object.entries(SEASONS[$("#season").value].types).map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join(""); };
+$("#season").value = defaultSeason(new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10));
+$("#season").addEventListener("change", fillTypes); fillTypes();
+$("#city").innerHTML = `<option value="">Choose a city</option>` + Object.keys(CITY).sort().map((c) => `<option>${esc(c)}</option>`).join("");
+const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
+$("#start").min = $("#end").min = today;
+$("#start").addEventListener("change", () => { if (!$("#end").value || $("#end").value < $("#start").value) $("#end").value = $("#start").value; });
+
+// Cloudflare Turnstile ("I am human"), same as the Showcase a House form
+let widget = null;
+const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+if (cfg.turnstileSiteKey) {
+  await new Promise((res) => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = res; s.onerror = res; document.head.appendChild(s); });
+  if (window.turnstile) widget = window.turnstile.render("#ts", { sitekey: cfg.turnstileSiteKey });
+}
+
+$("#f").addEventListener("submit", async (x) => {
+  x.preventDefault();
+  const msg = $("#msg"), btn = $("#send"); msg.className = "msg"; msg.textContent = "Checking your event…"; btn.disabled = true;
+  const body = { name: $("#name").value, url: $("#url").value, season: $("#season").value, type: $("#type").value, start: $("#start").value, end: $("#end").value, hours: $("#hours").value, price: $("#price").value, free: $("#free").checked, venue: $("#venue").value, address: $("#address").value, city: $("#city").value, blurb: $("#blurb").value, email: $("#email").value };
+  if (widget != null) body["cf-turnstile-response"] = window.turnstile.getResponse(widget) || "";
+  try {
+    const r = await fetch("/api/submit-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "Something went wrong. Please try again.");
+    $("#f").hidden = true; $("#done").hidden = false;
+    $("#done").innerHTML = `<b>${esc(d.message)}</b><p>${d.status === "published" ? `<a href="/">See it on the map</a> · ` : ""}<a href="/feature">Feature your event</a> · <a href="/add-event">Add another event</a></p>`;
+    window.scrollTo(0, 0);
+  } catch (e) { msg.className = "msg err"; msg.textContent = e.message; btn.disabled = false; if (widget != null) window.turnstile.reset(widget); }
+});
+</script>
+</body>
+</html>

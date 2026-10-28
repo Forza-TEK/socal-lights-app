@@ -24,6 +24,8 @@ No human review step: Rey authorized direct publishing on 2026-10-28. Check the 
 The original three routines (`trig_01H9a1iYVJNgtgzyAi8kNpn5`, `trig_01VBEfN43zRQJwuHf4uqaHD7`, `trig_01Gm1USYSZ7oHRHQTTqkQoo5`) are **disabled**. They had `github.com/forza-tek/socal-lights` as their source, which stopped authenticating after the repo move (the 2026-10-27 12:14 sweep failed at startup). The replacements use the new repo name and clone it themselves. The old ones can be deleted from the Routines page once the new ones have each run once.
 
 ## Recently done
+- Added a public "Add your event" form (`/add-event`, auto-publishes when the event page confirms the name and year, otherwise admin review) and automatic Featured payments via Stripe Checkout + webhook (migration 0065, `docs/stripe-setup.md`). **Featured stays on the Cash App/email fallback until `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set as Cloudflare Pages secrets.**
+- Posted 7 expected (unconfirmed) events held back earlier: Cudahy, Paramount, South Gate, Leimert Park Kwanzaa, Whittier parade, Bellflower tree lighting, Aquarium NYE.
 - Monetization added (see `docs/monetization.md`): support button with Cash App tip link, affiliate-link plumbing (off until Amazon tag / ticket affiliate ids are set in `public/site-config.js`), `/feature.html` plus `featured` flag on events (migration 0062).
 - House cards with a photo now drop the badge icon outright (`.thumb.has-photo::before{display:none}`) instead of relying on the photo painting over it; the earlier stacking fix still showed the badge on an iPhone.
 - Fixed: the badge icon showed on top of a showcased house's photo on its card; it now only appears for houses without a photo.

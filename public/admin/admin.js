@@ -18,13 +18,14 @@ async function api(path, opts = {}) {
   return d;
 }
 
-function setTab(t) { tab = t; ["pending", "approved", "events"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
-["pending", "approved", "events"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
+function setTab(t) { tab = t; ["pending", "approved", "subs", "events"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
+["pending", "approved", "subs", "events"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
 
 async function render() {
   const main = $("#main");
   try {
     if (tab === "events") return renderEvents();
+    if (tab === "subs") return renderSubs();
     const posts = await api("/api/admin/posts?status=" + tab);
     if (tab === "pending") $("#nPending").textContent = posts.length;
     if (!posts.length) { main.innerHTML = `<div class="empty">${tab === "pending" ? "Nothing waiting for review." : "No published houses yet."}</div>`; return; }
@@ -76,6 +77,30 @@ function editPost(p) {
   };
 }
 $("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-editpost]"); if (b) editPost(POSTS.find((x) => x.id === b.dataset.editpost)); });
+
+
+/* ---------- submitted events (public "Add your event" form) ---------- */
+let SUBS = [];
+async function renderSubs() {
+  const main = $("#main");
+  SUBS = await api("/api/admin/submissions?status=pending");
+  $("#nSubs").textContent = SUBS.length;
+  if (!SUBS.length) { main.innerHTML = `<div class="empty">No submitted events waiting. Events whose web page checks out are published automatically.</div>`; return; }
+  main.innerHTML = `<div class="cards">${SUBS.map((x) => `<article class="acard" data-sid="${esc(x.id)}">
+    <div class="row" style="justify-content:space-between"><h3>${esc(x.name)}</h3><span class="meta">${esc((x.created_at || "").slice(0, 16))} UTC</span></div>
+    <dl class="facts"><dt>When</dt><dd>${esc(x.start_date)}${x.end_date !== x.start_date ? " to " + esc(x.end_date) : ""} · ${esc(x.hours || "no hours")}</dd><dt>Where</dt><dd>${esc(x.venue)}<br><span class="meta">${esc(x.address)}, ${esc(x.city)} · ${esc(x.county || "")} (pin ${Number(x.lat).toFixed(4)}, ${Number(x.lng).toFixed(4)})</span></dd>
+    <dt>Type</dt><dd>${esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)} · ${esc(x.price || "")}</dd><dt>About</dt><dd>${esc(x.blurb)}</dd>
+    <dt>Event page</dt><dd><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a></dd><dt>Contact</dt><dd><span style="user-select:all">${esc(x.contact_email)}</span></dd><dt>Why it's here</dt><dd>${esc(x.note || "")}</dd></dl>
+    <div class="row"><button class="btn ice" type="button" data-sact="approve" data-st="confirmed">Publish (confirmed)</button><button class="btn ghost" type="button" data-sact="approve" data-st="expected">Publish (expected)</button><button class="btn ghost" type="button" data-sact="decline">Decline</button><span class="msg"></span></div></article>`).join("")}</div>`;
+}
+$("#main").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-sact]"); if (!b) return;
+  const card = b.closest("[data-sid]"), msg = card.querySelector(".msg");
+  if (b.dataset.sact === "decline" && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to decline"; return; }
+  b.disabled = true; msg.textContent = "Working…";
+  try { await api("/api/admin/submissions/" + card.dataset.sid, { method: "POST", body: JSON.stringify({ action: b.dataset.sact, status: b.dataset.st }) }); card.remove(); $("#nSubs").textContent = document.querySelectorAll("[data-sid]").length; if (!document.querySelector("[data-sid]")) renderSubs(); }
+  catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
+});
 
 /* ---------- events ---------- */
 async function renderEvents() {
@@ -139,6 +164,6 @@ function editEvent(ev) {
 }
 
 (async () => {
-  try { const me = await api("/api/admin/me"); $("#who").textContent = "Signed in as " + me.email; render(); }
+  try { const me = await api("/api/admin/me"); $("#who").textContent = "Signed in as " + me.email; render(); api("/api/admin/submissions?status=pending").then((l) => ($("#nSubs").textContent = l.length)).catch(() => {}); }
   catch (e) { $("#who").textContent = ""; $("#main").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 })();

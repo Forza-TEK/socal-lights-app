@@ -367,7 +367,7 @@ function renderPanel() {
   head.hidden = false;
   const limit = `<label class="toggle"><input type="checkbox" id="inview" ${state.inView ? "checked" : ""}> Limit to map</label>`;
   if (state.tab === "events") {
-    const all = E.filter(evMatch).sort((a, b) => (b.f ? 1 : 0) - (a.f ? 1 : 0) || effStart(a).localeCompare(effStart(b)) || a.e.localeCompare(b.e) || a.n.localeCompare(b.n));
+    const all = E.filter(evMatch).sort((a, b) => (b.f === 2 ? 1 : 0) - (a.f === 2 ? 1 : 0) || effStart(a).localeCompare(effStart(b)) || a.e.localeCompare(b.e) || a.n.localeCompare(b.n));
     const vis = state.layers.events ? all.filter((e) => inView(e.lng, e.lat) || state.sel === "e:" + e.id) : [];
     head.innerHTML = `<div class="hrow"><span><b>${vis.length}</b> ${state.inView ? "in map view" : "events"}${state.date ? " · open " + fmt(state.date) : ""}</span>${limit}</div>${quickPicks()}`;
     body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Layers.</div>`
@@ -498,7 +498,7 @@ function openSupport() {
   m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Keep SoCal Lights free</h2><button class="btn ghost" type="button" id="sClose">Close</button></div>
     <p class="blurb">SoCal Lights is built and kept up to date by one small team: checking dates, adding events and fixing links all season long. There are no ads and no paywall. If it helped you find something fun, you can help keep it going.</p>
     ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
-    <div><h3 style="margin:0 0 4px;font-size:15px">Run an event or a business?</h3><p class="meta" style="margin:0 0 8px">Get a Featured pin and top spot in the list, right when people are planning.</p><a class="btn ghost" href="/feature.html">Feature your event →</a></div>
+    <div><h3 style="margin:0 0 4px;font-size:15px">Run an event or a business?</h3><p class="meta" style="margin:0 0 8px">Add your event to the map for free, or get a Featured pin and top spot in the list.</p><div class="row" style="flex-wrap:wrap;gap:8px"><a class="btn ghost" href="/add-event">+ Add your event</a><a class="btn ghost" href="/feature">Feature your event →</a></div></div>
     ${shopHtml()}
     ${SITE.amazonTag || Object.keys(SITE.ticketAffiliates).length ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
   </div>`;
