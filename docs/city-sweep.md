@@ -14,7 +14,9 @@ Go through **every city in the group, one by one**. For each city check:
   "<city> trunk or treat", "<city> tree lighting", "<city> holiday parade", "<city> turkey trot", "<city> Thanksgiving community dinner", "<city> Día de los Muertos",
   "<city> 4th of July fireworks", "<city> egg hunt", "<city> events calendar" (whichever fit the seasons)
 - the downtown / village association and chamber of commerce
-- shopping centers and malls in that city, community centers, libraries
+- **public library event calendars** (the city's library and its county/regional system: LibCal, LibNet, Beanstack, Communico, `<city>library.org`, `lacountylibrary.org`, `ocpl.org`, `sblibrary.org`, etc.). Libraries host Halloween shows, trick-or-treats, magic/juggling/puppet shows, Día de los Muertos events, holiday concerts and tree lightings. A one-off family show at a library branch counts; only skip routine story times and craft clubs.
+- **park, event-center and Friends-of-the-Library calendars** (for example a city park's own `events` page, theaters at libraries and community centers, and ticket pages like fotcl.org). Many events appear on only one of these and never on roundup sites.
+- shopping centers and malls in that city, community centers
 - local farms, zoos, museums, theaters, colleges; master-planned community events open to the public
 - notable home displays/home haunts that publish their address for the public
 - local news and family sites (Patch, local papers, mommypoppins, macaronikid, enjoyorangecounty,
@@ -23,8 +25,11 @@ Go through **every city in the group, one by one**. For each city check:
 Verify each event's current-year dates on a page you actually loaded. For an annual event whose new dates
 aren't posted yet, add it with status `expected`, dates estimated from last year, and hours ending in
 "check site". Never invent events, dates, prices, addresses or URLs. Skip private/members-only events,
-small library story times, and anything ending before today. Skip events already on the map
+routine library story times and craft clubs, and anything ending before today. Skip events already on the map
 (`https://socallights.app/api/events`).
+
+## When you think you are done
+Re-check each city once more with the library calendar and the parks & recreation calendar specifically. If a city in the group has **no** event for the current season, say so in the report and search for it again by name ("<city> library Halloween 2026", "<city> parks and recreation events October 2026") before giving up. Cities of 50,000+ people almost always have something.
 
 ## Every event needs
 id (lowercase a-z0-9 and hyphens, ≤40 chars, unique), name, county, city, season, type, start, end,
