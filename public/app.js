@@ -568,10 +568,33 @@ function teaser() {
 }
 function renderSeasonBar() {
   const bar = $("#seasonbar"); if (!bar) return;
-  bar.innerHTML = seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="tab" data-season="${k}" aria-selected="${k === state.season}"${k === NOW_SEASON ? ' class="now" title="On now"' : ""}>${esc(SEASONS[k].short)}</button>`).join("");
-  bar.querySelectorAll("[data-season]").forEach((b) => (b.onclick = () => setSeason(b.dataset.season)));
+  bar.innerHTML = seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="tab" data-season="${k}" aria-selected="${k === state.season}"${k === NOW_SEASON ? ' class="now" title="On now"' : ""}>${esc(SEASONS[k].short)}</button>${k === "christmas" ? `<button type="button" class="sdrop" data-sdrop aria-haspopup="menu" aria-expanded="false" aria-label="Holiday types"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>` : ""}`).join("");
+  bar.querySelectorAll("[data-season]").forEach((b) => (b.onclick = () => { closeSeasonMenu(); setSeason(b.dataset.season); }));
+  const dd = bar.querySelector("[data-sdrop]"); if (dd) dd.onclick = () => toggleSeasonMenu(dd);
   document.documentElement.dataset.season = state.season;
   repaintMap();
+}
+// Drop-down under Holidays: pick one of the types that make it up, or all of Holidays
+function closeSeasonMenu() {
+  const m = $("#seasonmenu"); if (m) m.remove();
+  const dd = document.querySelector("[data-sdrop]"); if (dd) dd.setAttribute("aria-expanded", "false");
+}
+function toggleSeasonMenu(btn) {
+  if ($("#seasonmenu")) { closeSeasonMenu(); return; }
+  const types = SEASONS.christmas.types, cur = state.season === "christmas" ? state.type : null;
+  const m = document.createElement("div"); m.id = "seasonmenu"; m.setAttribute("role", "menu");
+  m.innerHTML = `<button type="button" role="menuitem" data-t="" class="${cur === "" ? "on" : ""}">All Holidays</button>` + Object.entries(types).map(([v, l]) => `<button type="button" role="menuitem" data-t="${v}" class="${cur === v ? "on" : ""}">${esc(l)}</button>`).join("");
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect(), w = m.offsetWidth;
+  m.style.top = r.bottom + 8 + "px"; m.style.left = Math.max(8, Math.min(r.left - 40, innerWidth - w - 8)) + "px";
+  btn.setAttribute("aria-expanded", "true");
+  m.onclick = (e) => {
+    const b = e.target.closest("[data-t]"); if (!b) return;
+    const t = b.dataset.t; closeSeasonMenu();
+    if (state.season !== "christmas") setSeason("christmas");
+    state.type = t; applyFilters();
+  };
+  setTimeout(() => document.addEventListener("click", function off(e) { if (!e.target.closest("#seasonmenu,[data-sdrop]")) closeSeasonMenu(); document.removeEventListener("click", off); }, { once: false }), 0);
 }
 function repaintMap() {
   if (!mapReady || !map.getLayer("clusters")) return;
@@ -624,7 +647,7 @@ let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { sta
 
 /* ---------- bottom sheet (phone) ---------- */
 // Collapsed sheet height on phones: just the grab handle and the quick-picks row, sitting above the tab bar
-// (tab bar 58px + 12px gap, handle ~19px, header row ~48px, a little air); the card row tucks behind the tab bar
+// (tab bar 58px + 12px gap, handle ~19px, header row ~48px, a little air); the list tucks behind the tab bar
 // (plus the home-indicator strip on newer iPhones, which the tab bar sits above)
 const PEEK = 160;
 let safeBottom = null;
@@ -633,25 +656,16 @@ function peekH() {
   return PEEK + safeBottom;
 }
 let sheetState = "peek";
-// "cards" stop: just tall enough to show the whole sideways card row above the tab bar.
-// Measured from the card row itself while it's showing; the fallback covers the first call before the list renders.
-let cardsCache = 0;
-function cardsH() {
-  const panel = $("#panel"), item = panel.classList.contains("peek") && panel.querySelector(".list .item");
-  if (item) cardsCache = Math.round(item.getBoundingClientRect().bottom - panel.getBoundingClientRect().top + (innerHeight - $("#bnav").getBoundingClientRect().top) + 16);
-  return cardsCache || peekH() + 150;
-}
-// Half stop sits just above the middle of the screen (and clear of the cards stop on short phones), so it shows the vertical list
+// Half stop sits just above the middle of the screen
 const HALF = 0.55;
-function stopH(s) { const ph = $("#panel").offsetHeight || innerHeight * 0.8; return Math.min(ph, s === "peek" ? peekH() : s === "cards" ? cardsH() : s === "half" ? Math.max(Math.round(innerHeight * HALF), cardsCache + 60) : ph); }
+function stopH(s) { const ph = $("#panel").offsetHeight || innerHeight * 0.8; return Math.min(ph, s === "peek" ? peekH() : s === "half" ? Math.round(innerHeight * HALF) : ph); }
 function sheetVisible() { return isPhone() ? stopH(sheetState) : 0; }
-// Below the middle of the screen (or the cards stop, on very short screens) the list is a sideways row of cards over the map;
-// past that it becomes the vertical scrolling list
+// Below the middle of the screen the header collapses to one compact row; the list itself is always vertical
 function setRowLayout(vis) {
-  const panel = $("#panel"), row = isPhone() && vis < Math.max(innerHeight * 0.5, cardsCache + 20);
+  const panel = $("#panel"), row = isPhone() && vis < innerHeight * 0.5;
   if (row === panel.classList.contains("peek")) return;
   panel.classList.toggle("peek", row);
-  $("#pbody").scrollTop = 0; // the card row can't be scrolled vertically, and the list should start at the top
+  $("#pbody").scrollTop = 0;
 }
 function setSheet(s) {
   sheetState = s; const panel = $("#panel");
@@ -665,7 +679,7 @@ function setSheet(s) {
 (function () {
   const panel = $("#panel"), body = $("#pbody"), g = $("#grab");
   const d = { y0: null, start: 0, moved: false, justDragged: false };
-  const NEXT = { peek: "cards", cards: "half", half: "full", full: "peek" }; // tapping the handle steps up through the stops
+  const NEXT = { peek: "half", half: "full", full: "peek" }; // tapping the handle steps up through the stops
   const clampY = (y) => Math.max(0, Math.min(panel.offsetHeight - 80, y));
   function begin(y) { d.y0 = y; d.start = panel.offsetHeight - sheetVisible(); d.moved = false; }
   function move(y) {
@@ -682,7 +696,7 @@ function setSheet(s) {
     const dy = y - d.y0, moved = d.moved; d.y0 = null; panel.classList.remove("dragging");
     if (!moved) return false;
     const vis = panel.offsetHeight - clampY(d.start + dy);
-    const opts = ["peek", "cards", "half", "full"].map((s) => [s, stopH(s)]);
+    const opts = ["peek", "half", "full"].map((s) => [s, stopH(s)]);
     let pick;
     if (dy < -40) pick = opts.find((o) => o[1] >= vis - 1) || opts[opts.length - 1]; // flicked up: next stop above
     else if (dy > 40) pick = [...opts].reverse().find((o) => o[1] <= vis + 1) || opts[0]; // flicked down: next stop below
@@ -710,7 +724,7 @@ function setSheet(s) {
     const y = e.touches[0].clientY, dy = y - d.y0, dx = e.touches[0].clientX - x0;
     if (!mode) {
       if (Math.abs(dy) < 6 && Math.abs(dx) < 6) return;
-      // sideways swipe through the card row scrolls the cards, not the sheet
+      // a sideways swipe never drags the sheet
       if (Math.abs(dx) > Math.abs(dy)) { mode = "scroll"; d.y0 = null; return; }
       mode = (sheetState !== "full" && dy < 0) || (body.scrollTop <= 0 && dy > 0) ? "sheet" : "scroll";
       if (mode === "scroll") { d.y0 = null; return; }
