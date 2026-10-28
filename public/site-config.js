@@ -21,5 +21,5 @@ export const SITE = {
 
   // "Feature your event" payment links. Cash App links take the amount at the end ($5 / $10 / $15). Empty = the page shows an email button instead.
   featurePay: { pin: "https://cash.app/$RelaxationMeditation/5", top: "https://cash.app/$RelaxationMeditation/10", season: "https://cash.app/$RelaxationMeditation/15" },
-  contactEmail: "rey@forza-tek.com",
+  contactEmail: "info@socallights.app",
 };

@@ -18,7 +18,7 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
 - Page: `/feature` (plans: Featured pin $5 / 30 days, Top of the list $10 / 30 days, Whole season $15). Edit the copy and prices in `public/feature.html`
   (and the matching `NAMES` in its script).
 - Payment: Cash App links in `featurePay.pin|top|season` (`https://cash.app/$RelaxationMeditation/5`, `/10`, `/15`). The customer puts their event name in
-  the Cash App note, then emails the event link to `contactEmail`. Clear a value to fall back to an email button.
+  the Cash App note, then emails the event link to `contactEmail` (info@socallights.app). Clear a value to fall back to an email button.
 - Database: migration `0062_featured_events.sql` adds `featured` (0/1) and `featured_until` (YYYY-MM-DD, optional) to `events`.
   Featured events get a gold "Featured" badge, sort to the top of the list, and show a bigger gold-ringed pin. The API exposes it as `f`.
 - To turn a placement on after payment, add a new migration (never edit an old one):
