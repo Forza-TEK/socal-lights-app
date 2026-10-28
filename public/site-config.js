@@ -1,7 +1,7 @@
 // Monetization settings. Everything is OFF until a value is filled in; no secrets belong here (these are public links).
 export const SITE = {
   // Tip jar. Cash App: "https://cash.app/$yourcashtag". Leave "" to hide the donate button.
-  donateUrl: "",
+  donateUrl: "https://cash.app/$RelaxationMeditation",
   donateLabel: "Tip with Cash App",
 
   // Amazon Associates tracking id (looks like "socallights-20"). Leave "" to hide the "Shop for the season" block.
