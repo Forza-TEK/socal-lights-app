@@ -302,7 +302,7 @@ button{touch-action:manipulation}
   .panel.dragging{transition:none}
   .grab{display:grid;place-items:center;padding:10px 0 4px;cursor:grab;touch-action:none}
   .grab i{width:40px;height:5px;border-radius:3px;background:var(--line);display:block}
-  .ptabs{margin:2px 12px 2px}
+  .ptabs{display:none}
   .phead{padding:4px 16px 10px;touch-action:none}
   /* the part of the sheet below the screen edge is added as padding, so the end of the list can always be scrolled into view; 84px clears the tab bar */
   .pbody{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(var(--sheet-y,0px) + env(safe-area-inset-bottom,0px) + 96px)}
@@ -323,7 +323,7 @@ button{touch-action:manipulation}
   .panel.peek .empty{padding:14px 16px}
 
   /* floating tab bar */
-  .bnav{display:none;position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);gap:4px;padding:5px;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4)}
+  .bnav{display:flex;position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);gap:4px;padding:5px;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4)}
   .bnav button{position:relative;display:inline-flex;align-items:center;gap:6px;height:48px;min-width:52px;justify-content:center;padding:0 14px;border:0;border-radius:999px;background:none;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer}
   .bnav button span{display:none;white-space:nowrap}
   .bnav button[aria-current]{background:var(--ink);color:var(--surface);padding:0 18px}
@@ -357,7 +357,13 @@ button{touch-action:manipulation}
 .shoptx{font-weight:700;font-size:14.5px;line-height:1.25}
 .shopgo{font-size:12px;font-weight:700;color:var(--muted)}
 .ptab[hidden],.bnav button[hidden]{display:none}
-.ptab{white-space:nowrap;padding:0 6px;font-size:13.5px}
-.ptab .n{margin-left:4px;padding:1px 6px}
 .shopsel{display:flex;align-items:center;gap:8px;font-size:15px}
 .shopsel select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;height:34px;padding:0 12px}
+/* Desktop list tabs share the phone bottom bar's look: icon pill, the active tab shows its label */
+.ptabs{justify-content:center;gap:4px;padding:5px;margin:14px auto 4px;width:max-content;max-width:calc(100% - 28px);background:var(--glass,var(--surface-2));box-shadow:var(--shadow-sm);border:1px solid var(--line)}
+.ptab{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;min-width:52px;padding:0 14px;white-space:nowrap}
+.ptab .lb,.ptab .n{display:none}
+.ptab[aria-selected="true"]{background:var(--ink);color:var(--surface);padding:0 18px;box-shadow:none}
+.ptab[aria-selected="true"] .lb,.ptab[aria-selected="true"] .n{display:inline}
+.ptab[aria-selected="true"] .n{background:var(--surface);color:var(--ink);margin-left:2px}
+.ptab[hidden]{display:none}
