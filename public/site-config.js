@@ -15,8 +15,10 @@ export const SITE = {
     summer: [["Fourth of July", "4th of july decorations"], ["Beach & cooler", "beach canopy cooler"]],
   },
 
-  // Ticket affiliate programs: add a tracking query parameter to links on a matching host,
-  // for example { "eventbrite.com": { param: "aff", value: "socallights" } }. Empty = links are left untouched.
+  // Ticket affiliate programs, by the host of the event link. Two kinds of rule:
+  //   { "eventbrite.com": { param: "aff", value: "socallights" } }                       adds a tracking parameter
+  //   { "ticketmaster.com": { template: "https://ticketmaster.evyy.net/c/ID/CAMPAIGN/4272?u={url}" } }  wraps the link in a network deep link ({url} = the event link)
+  // Empty = links are left untouched.
   ticketAffiliates: {},
 
   // "Feature your event" payment links. Cash App links take the amount at the end ($5 / $10 / $15). Empty = the page shows an email button instead.
