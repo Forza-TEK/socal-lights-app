@@ -48,19 +48,19 @@ summary{font-weight:700;cursor:pointer}
 <div class="grid">
   <section class="plan">
     <h3>Featured pin</h3>
-    <div class="price">$29 <small>/ 30 days</small></div>
+    <div class="price">$5 <small>/ 30 days</small></div>
     <ul><li>Gold-ringed pin on the map</li><li>Featured badge in the list</li></ul>
     <a class="btn ghost" data-plan="pin" href="#">Get started</a>
   </section>
   <section class="plan pop">
     <h3>Top of the list</h3>
-    <div class="price">$59 <small>/ 30 days</small></div>
+    <div class="price">$10 <small>/ 30 days</small></div>
     <ul><li>Everything in Featured pin</li><li>Listed first in your city, county and season</li></ul>
     <a class="btn" data-plan="top" href="#">Get started</a>
   </section>
   <section class="plan">
     <h3>Whole season</h3>
-    <div class="price">$99 <small>/ season</small></div>
+    <div class="price">$15 <small>/ season</small></div>
     <ul><li>Everything in Top of the list</li><li>Featured from now until your event ends</li></ul>
     <a class="btn ghost" data-plan="season" href="#">Get started</a>
   </section>
@@ -69,8 +69,8 @@ summary{font-weight:700;cursor:pointer}
 <h2>How it works</h2>
 <ol>
   <li>Make sure your event is on the map. Search for it at <a href="/">socallights.app</a>. If it is missing, email us the event page and we will add it (free).</li>
-  <li>Choose a plan above and pay. Use the same email you will write to us from.</li>
-  <li>Email us the link to your event on the map. We turn on your Featured placement, usually within one business day.</li>
+  <li>Choose a plan above and pay with Cash App. Put your <b>event name</b> in the Cash App note.</li>
+  <li>Email us the link to your event on the map (and your Cash App name if it is different from your event name). We turn on your Featured placement, usually within one business day.</li>
 </ol>
 
 <h2>Good to know</h2>
@@ -85,12 +85,12 @@ summary{font-weight:700;cursor:pointer}
 </main>
 <script type="module">
 import { SITE } from "/site-config.js";
-const NAMES = { pin: "Featured pin ($29 / 30 days)", top: "Top of the list ($59 / 30 days)", season: "Whole season ($99)" };
+const NAMES = { pin: "Featured pin ($5 / 30 days)", top: "Top of the list ($10 / 30 days)", season: "Whole season ($15)" };
 const mail = (plan) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent("Feature my event" + (plan ? " – " + NAMES[plan] : ""))}&body=${encodeURIComponent("Event name:\nLink to my event on socallights.app (or its own web page):\nPlan: " + (plan ? NAMES[plan] : "") + "\nMy name and phone:\n")}`;
 const safe = (u) => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } };
 document.querySelectorAll("[data-plan]").forEach((a) => {
   const plan = a.dataset.plan, pay = safe(SITE.featurePay[plan]);
-  if (pay) { a.href = pay; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Pay now"; } else { a.href = mail(plan); a.textContent = "Email to get started"; }
+  if (pay) { a.href = pay; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Pay with Cash App"; } else { a.href = mail(plan); a.textContent = "Email to get started"; }
 });
 document.getElementById("mail").href = mail("");
 </script>
