@@ -17,12 +17,12 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <!-- day mode is the default; night mode is remembered per device. Set before CSS loads so the page never flashes. -->
-<script>try{if(localStorage.getItem("socal-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+<script>/* night mode: automatic from 6 pm to 6 am local time; the sun/moon button overrides it until the next switch */try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="/styles.css?v=20261028a">
+<link rel="stylesheet" href="/styles.css?v=20261028b">
 </head>
 <body>
 <div id="map" role="region" aria-label="Street map of Southern California"></div>
@@ -79,6 +79,6 @@
 <div class="modal" id="modal" hidden></div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script type="module" src="/app.js?v=20261028a"></script>
+<script type="module" src="/app.js?v=20261028b"></script>
 </body>
 </html>
