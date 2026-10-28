@@ -1,0 +1,22 @@
+-- Repair 21 event source links that returned 404 (each replacement page was loaded and checked 2026-10-28).
+UPDATE events SET url='https://www.lachinesechamber.org/events/2027/parade', updated_at=datetime('now') WHERE id='golden-dragon-parade';
+UPDATE events SET url='https://riversideca.gov/calendar/', updated_at=datetime('now') WHERE id='riverside-lunar-fest';
+UPDATE events SET url='https://www.cityofrc.us/events', updated_at=datetime('now') WHERE id='rancho-lunar-fest';
+UPDATE events SET url='https://www.riversideeasterservice.com/when-how', updated_at=datetime('now') WHERE id='mt-rubidoux-easter';
+UPDATE events SET url='https://www.cityofrc.us/events', updated_at=datetime('now') WHERE id='rc-egg-shellebration';
+UPDATE events SET url='https://visitoxnard.com/events/', updated_at=datetime('now') WHERE id='oxnard-cinco';
+UPDATE events SET url='https://visitdanapoint.com/events/', updated_at=datetime('now') WHERE id='dana-point-fireworks';
+UPDATE events SET url='https://redlandsbowl.org/', updated_at=datetime('now') WHERE id='redlands-bowl';
+UPDATE events SET url='https://coronadofourthofjuly.com/schedule', updated_at=datetime('now') WHERE id='coronado-july4';
+UPDATE events SET url='https://oceanbeachsandiego.com/', updated_at=datetime('now') WHERE id='ob-street-fair';
+UPDATE events SET url='https://visitcarlsbad.com/events/d%C3%ADa-de-los-muertos-at-leo-carrillo-ranch-historic-park/', updated_at=datetime('now') WHERE id='hw-leo-carrillo-dia';
+UPDATE events SET url='https://www.elsegundorecparks.gov/', hours='3pm-7pm — check site', updated_at=datetime('now') WHERE id='el-segundo-tree-lighting';
+UPDATE events SET url='https://www.rollinghillsestates.gov/departments/community-services/events/palos-verdes-peninsula-holiday-parade-of-lights', updated_at=datetime('now') WHERE id='peninsula-holiday-parade-of-lights';
+UPDATE events SET url='https://www.lagunabeachchamber.org/events/details/hospitality-night-2026-73134', status='confirmed', updated_at=datetime('now') WHERE id='laguna-beach-hospitality-night';
+UPDATE events SET url='https://rosemeadca.gov/services/parks_recreation/christmas_tree_lighting___treats_with_santa.php', status='confirmed', updated_at=datetime('now') WHERE id='rosemead-tree-lighting-treats-santa';
+UPDATE events SET url='https://rosemeadca.gov/parks_recreation/trunk_or_treat___haunted_house.php', status='confirmed', updated_at=datetime('now') WHERE id='hw-rosemead-trunk-or-treat';
+UPDATE events SET url='https://www.sanbernardino.gov/Calendar.aspx', updated_at=datetime('now') WHERE id='g17-sb-miracle-on-court-street';
+UPDATE events SET url='https://www.musiccenter.org/tickets-free-events/tmc-arts/l-a-county-holiday-tree-lighting/', updated_at=datetime('now') WHERE id='g21-la-county-tree-lighting';
+UPDATE events SET url='https://www.temeculaonice.com', updated_at=datetime('now') WHERE id='g15-temecula-on-ice';
+UPDATE events SET url='https://www.theriveratranchomirage.com/events', updated_at=datetime('now') WHERE id='g16-the-river-tree-lighting';
+UPDATE events SET url='https://cdmod.org/', updated_at=datetime('now') WHERE id='g16-cdmd-jingle-bell-rock';
