@@ -97,3 +97,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - Phone, night mode only: the list sheet is slightly transparent with a soft blur. Count badges on the tabs have more space from their labels.
 - Pin card: a home display with more than one photo can be swiped through (arrows on desktop hover, a 1 / N counter); swiping does not open the details.
 - Close buttons use a drawn X so it sits dead center in its circle. The pin card's photo arrows are always visible on desktop, with dots, a counter and the left/right arrow keys.
+- Pin card with several photos: the photo area only browses (arrows, clickable dots, swipe, arrow keys); tapping the text below opens the details.
