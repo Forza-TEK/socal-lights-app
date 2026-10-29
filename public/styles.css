@@ -540,7 +540,10 @@ button{touch-action:manipulation}
 .pvnav{position:absolute;z-index:2;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:#17181c;cursor:pointer;display:none;place-items:center;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .pvnav.l{left:8px}.pvnav.r{right:8px}
 @media (hover:hover) and (pointer:fine){.pvnav{display:grid}}
-.pvdots{position:absolute;z-index:2;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:5px;pointer-events:none}
-.pvdots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);transition:background-color .2s,transform .2s}
-.pvdots i.on{background:#fff;transform:scale(1.25)}
+.pvdots{position:absolute;z-index:2;left:50%;bottom:6px;transform:translateX(-50%);display:flex;gap:0}
+.pvdots button{width:18px;height:18px;border:0;background:none;padding:0;cursor:pointer;display:grid;place-items:center}
+.pvdots button::before{content:"";width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);transition:background-color .2s,transform .2s}
+.pvdots button.on::before{background:#fff;transform:scale(1.3)}
 .pvcount{right:auto;left:10px}
+.preview .pv-photo:has(.pvtrack){cursor:default}
+.preview .pv-body{cursor:pointer}
