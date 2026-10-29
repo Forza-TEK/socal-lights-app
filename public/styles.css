@@ -562,3 +562,10 @@ button{touch-action:manipulation}
 .helpbtn{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--muted);background:none;color:var(--muted);font:800 15px/1 var(--f-body);display:inline-grid;place-items:center;padding:0;cursor:pointer;margin-left:8px}
 .helpbtn:hover{color:var(--ink);border-color:var(--ink)}
 .hrow .hcount{display:inline-flex;align-items:center;gap:.28em;white-space:pre-wrap}
+
+/* phone: the back arrow stays put while the details scroll (the sheet is transformed, so "fixed" is relative to the sheet) */
+@media (max-width:860px){
+  .panel #back{position:fixed;top:14px;left:max(14px,env(safe-area-inset-left,0px));z-index:6;box-shadow:var(--shadow)}
+  .panel #back.plain{background:var(--surface);padding:0 14px 0 8px}
+  .panel .detail:has(#back.plain){padding-top:52px}
+}
