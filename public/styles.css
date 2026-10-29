@@ -591,3 +591,7 @@ button{touch-action:manipulation}
 .fseg button{font-weight:500}
 .quick .qgo{font-weight:600}
 .tabs .ptab,.ptab{font-weight:600}
+.phead .chip .caret{flex:none;opacity:1}
+.phead .chip{font-weight:500}
+.phead .chip[aria-expanded="true"] .caret{transform:rotate(180deg)}
+.phead .chip .caret{width:16px;height:16px}
