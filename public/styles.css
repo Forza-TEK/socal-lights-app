@@ -461,7 +461,6 @@ button{touch-action:manipulation}
 #toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,16px);opacity:0;background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;z-index:99;pointer-events:none;transition:opacity .2s,transform .2s}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .price.txt{font-size:15px;font-weight:700}
-.panel .list.route{grid-template-columns:1fr}
 
 /* list cards read like the pin card: name first, then place, dates and tags; share and heart beside the name */
 .panel .list .item .ibody{gap:3px}
@@ -482,3 +481,38 @@ button{touch-action:manipulation}
 /* Places: events and home displays share one list; a blue badge marks the displays */
 .panel .list .thumb .when{background:var(--ice-soft);color:var(--ice)}
 .addbtn .caret{font-size:10px;margin-left:2px;opacity:.85}
+
+/* My night: same cards as Places, with a stop number and the drive from the previous stop */
+.quick .qgo{flex:none;display:inline-flex;align-items:center;height:36px;padding:0 16px;border-radius:999px;background:var(--season);color:var(--on-season);font-weight:800;font-size:14px;text-decoration:none;white-space:nowrap}
+.quick .qgo:hover{filter:brightness(1.08)}
+.qsel{flex:none;display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 6px 0 14px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);font-size:13.5px;font-weight:700;color:var(--muted)}
+.qsel select{border:0;background:transparent;font:inherit;font-weight:800;color:var(--ink);max-width:130px;height:100%;padding:0 4px;cursor:pointer}
+.stopn{position:absolute;z-index:1;right:8px;top:8px;min-width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--surface);font-weight:800;font-size:13px;display:grid;place-items:center;padding:0 6px}
+.legline{font-size:12.5px;font-weight:700;color:var(--season-ink)}
+.routenotes{margin:16px 0 4px;padding-left:18px;font-size:13px;color:var(--muted);display:grid;gap:4px}
+
+/* animated tab selection: the active tab grows its label while the old one folds away */
+.ptab,.bnav button{gap:0;transition:background-color .3s ease,color .3s ease,padding .4s cubic-bezier(.2,.8,.2,1),transform .15s}
+.ptab .lb,.ptab .n,.bnav button>span:not(.bn-n){display:inline-block;max-width:0;opacity:0;overflow:hidden;white-space:nowrap;margin-left:0;transition:max-width .4s cubic-bezier(.2,.8,.2,1),opacity .28s ease,margin-left .4s cubic-bezier(.2,.8,.2,1)}
+.ptab[aria-selected="true"] .lb,.bnav button[aria-current]>span:not(.bn-n){max-width:110px;opacity:1;margin-left:7px}
+.ptab[aria-selected="true"] .n{max-width:56px;opacity:1;margin-left:7px}
+.ptab[aria-selected="true"] svg,.bnav button[aria-current] svg{animation:tabpop .5s cubic-bezier(.3,1.5,.5,1)}
+.ptab:active,.bnav button:active{transform:scale(.94)}
+@keyframes tabpop{0%{transform:scale(.55) rotate(-16deg)}100%{transform:none}}
+.pbody.tabin,.phead.tabin{animation:tabin .4s cubic-bezier(.2,.8,.2,1)}
+@keyframes tabin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* menus and pop-overs spring open, and their rows slide in one after another */
+@keyframes popin{from{opacity:0;transform:translateY(-8px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes rowin{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+@keyframes sheetup{from{opacity:.3;transform:translateY(48px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.menu,.pop{transform-origin:top right;animation:popin .24s cubic-bezier(.2,.9,.3,1.15)}
+#seasonmenu{transform-origin:top left;animation:popin .24s cubic-bezier(.2,.9,.3,1.15)}
+.menu .mrow,#seasonmenu button{animation:rowin .32s cubic-bezier(.2,.8,.2,1) both}
+.menu .mrow:nth-child(2),#seasonmenu button:nth-child(2){animation-delay:.04s}
+.menu .mrow:nth-child(3),#seasonmenu button:nth-child(3){animation-delay:.08s}
+.menu .mrow:nth-child(4),#seasonmenu button:nth-child(4){animation-delay:.12s}
+#seasonmenu button:nth-child(5){animation-delay:.16s}
+.fpanel{transform-origin:top right;animation:popin .26s cubic-bezier(.2,.9,.3,1.1)}
+@media (max-width:860px){.fpanel{transform-origin:bottom center;animation:sheetup .36s cubic-bezier(.2,.8,.2,1)}.fback{animation:fadein .25s ease}}
+@media (prefers-reduced-motion:reduce){.ptab,.bnav button,.ptab .lb,.ptab .n,.bnav button>span,.menu,.pop,#seasonmenu,.fpanel,.menu .mrow,#seasonmenu button,.pbody.tabin,.phead.tabin,.ptab svg,.bnav button svg{animation:none!important;transition-duration:.01ms!important}}
