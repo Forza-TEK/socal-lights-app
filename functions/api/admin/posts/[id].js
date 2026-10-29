@@ -42,7 +42,10 @@ export async function onRequestPost({ params, request, env }) {
 
   if (body.action === "edit") {
     const city = CITY[body.city] ? body.city : row.city;
-    const address = clean(body.address ?? row.address, 160);
+    const kind = body.kind === "installer" ? "installer" : body.kind === "homeowner" ? "homeowner" : row.poster_type || "homeowner";
+    const street = clean(body.street ?? row.street, 120), zip = clean(body.zip ?? row.zip, 10);
+    if (zip && !/^\d{5}$/.test(zip)) return err(400, "The ZIP code needs 5 digits.");
+    const address = body.street !== undefined ? (street ? `${street}, ${city}, CA${zip ? " " + zip : ""}` : "") : clean(body.address ?? row.address, 160);
     const season = SEASONS[body.season] ? body.season : row.season;
     // Move the pin when the address or city changed (or the post has no exact pin yet); otherwise keep it where it is
     let { lat, lng, county } = row;
@@ -55,10 +58,10 @@ export async function onRequestPost({ params, request, env }) {
         county = nearestCounty(lat, lng, evs);
       } else if (address) return err(400, "Couldn't find that address. Check the street and city, or fix the pin another way.");
     }
-    await env.DB.prepare("UPDATE posts SET biz=?, title=?, city=?, county=?, lat=?, lng=?, web=?, phone=?, where_txt=?, descr=?, address=?, show_address=?, season=? WHERE id=?")
+    await env.DB.prepare("UPDATE posts SET biz=?, title=?, city=?, county=?, lat=?, lng=?, web=?, phone=?, where_txt=?, descr=?, address=?, show_address=?, season=?, poster_type=?, street=?, zip=?, service_area=? WHERE id=?")
       .bind(clean(body.biz ?? row.biz, 80), clean(body.title ?? row.title, 90), city, county, lat, lng,
         safeUrl(body.web ?? row.web), clean(body.phone ?? row.phone, 80), clean(body.where ?? row.where_txt, 120),
-        clean(body.desc ?? row.descr, 1200), address, address ? 1 : 0, season, row.id).run();
+        clean(body.desc ?? row.descr, 1200), address, address ? 1 : 0, season, kind, street, zip, clean(body.area ?? row.service_area, 120), row.id).run();
     return json({ ok: true, lat, lng });
   }
 

@@ -39,7 +39,7 @@ function postCard(p) {
     ${p.photos.length ? `<div class="pics">${p.photos.map((k) => `<a href="${photo(k)}" target="_blank" rel="noopener"><img src="${photo(k)}" alt="" loading="lazy"></a>`).join("")}</div>` : `<div class="meta">No photos</div>`}
     <dl class="facts"><dt>Name / business</dt><dd>${esc(p.biz)}</dd><dt>City</dt><dd>${esc(p.city)} · ${esc(p.county || "")}</dd>
     <dt>Contact</dt><dd><span style="user-select:all">${esc(p.contact_email || "—")}</span></dd><dt>Website</dt><dd>${web}</dd>
-    <dt>Public phone</dt><dd>${esc(p.phone || "—")}</dd><dt>Street address</dt><dd>${esc(p.address || "—")} <span class="meta">(${p.show_address ? "public" : "private"})</span></dd><dt>Where</dt><dd>${esc(p.where || "—")}</dd><dt>About</dt><dd style="white-space:pre-line">${esc(p.desc)}</dd></dl>
+    <dt>Posting as</dt><dd>${p.kind === "installer" ? "Professional installer" : "Homeowner"}</dd><dt>Public phone</dt><dd>${esc(p.phone || "—")}</dd><dt>Street address</dt><dd>${esc(p.address || "—")} <span class="meta">(${p.show_address ? "public" : "private"})</span></dd><dt>Where</dt><dd>${esc(p.where || "—")}</dd><dt>About</dt><dd style="white-space:pre-line">${esc(p.desc)}</dd></dl>
     <div class="row"><button class="btn ghost" type="button" data-editpost="${esc(p.id)}">Edit</button>${tab === "pending" ? `<button class="btn ice" type="button" data-act="approve">Approve and publish</button><button class="btn ghost" type="button" data-act="decline">Decline</button>` : `<button class="btn ghost" type="button" data-act="delete">Remove from site</button>`}<span class="msg"></span></div>
   </article>`;
 }
@@ -60,10 +60,13 @@ function editPost(p) {
   const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
   m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="row" style="justify-content:space-between"><h2>Edit house</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
   <form class="f" id="pForm" novalidate>
+    <label for="pKind">Posting as<select id="pKind"><option value="homeowner" ${p.kind !== "installer" ? "selected" : ""}>Homeowner</option><option value="installer" ${p.kind === "installer" ? "selected" : ""}>Professional installer</option></select></label>
     <div class="two"><label for="pBiz">Name or business<input id="pBiz" value="${esc(p.biz)}" maxlength="80"></label><label for="pTitle">Display name<input id="pTitle" value="${esc(p.title)}" maxlength="90"></label></div>
-    <div class="two"><label for="pCity">City<select id="pCity">${Object.keys(CITY).sort().map((c) => `<option ${c === p.city ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label><label for="pSeason">Season<select id="pSeason">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (p.season || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label></div>
-    <label for="pAddr">Street address <span class="hint">saving moves the pin to this address</span><input id="pAddr" value="${esc(p.address || "")}" maxlength="160" placeholder="e.g. 123 Main St"></label>
+    <label for="pStreet">Street address <span class="hint">saving moves the pin to this address</span><input id="pStreet" value="${esc(p.street || (p.address || "").split(",")[0])}" maxlength="120" placeholder="e.g. 123 Main St"></label>
+    <div class="two"><label for="pCity">City<select id="pCity">${Object.keys(CITY).sort().map((c) => `<option ${c === p.city ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label><label for="pZip">ZIP<input id="pZip" value="${esc(p.zip || "")}" inputmode="numeric" maxlength="5" placeholder="92630"></label></div>
+    <label for="pSeason">Season<select id="pSeason">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (p.season || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label>
     <div class="two"><label for="pWeb">Website<input id="pWeb" value="${esc(p.web || "")}" maxlength="200"></label><label for="pPhone">Phone<input id="pPhone" value="${esc(p.phone || "")}" maxlength="80"></label></div>
+    <label for="pArea">Service area <span class="hint">installers</span><input id="pArea" value="${esc(p.area || "")}" maxlength="120"></label>
     <label for="pWhere">Where to see it<input id="pWhere" value="${esc(p.where || "")}" maxlength="120"></label>
     <label for="pDesc">About<textarea id="pDesc" maxlength="1200">${esc(p.desc)}</textarea></label>
     <div class="row"><button class="btn ice" type="submit">Save</button><span class="msg" id="pMsg" role="status"></span></div>
@@ -71,7 +74,7 @@ function editPost(p) {
   m.hidden = false; $("#mClose").onclick = close;
   $("#pForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#pMsg"); msg.className = "msg"; msg.textContent = "Saving…";
-    const body = { action: "edit", biz: $("#pBiz").value, title: $("#pTitle").value, city: $("#pCity").value, season: $("#pSeason").value, address: $("#pAddr").value, web: $("#pWeb").value, phone: $("#pPhone").value, where: $("#pWhere").value, desc: $("#pDesc").value };
+    const body = { action: "edit", biz: $("#pBiz").value, title: $("#pTitle").value, city: $("#pCity").value, season: $("#pSeason").value, kind: $("#pKind").value, street: $("#pStreet").value, zip: $("#pZip").value, area: $("#pArea").value, web: $("#pWeb").value, phone: $("#pPhone").value, where: $("#pWhere").value, desc: $("#pDesc").value };
     try { await api("/api/admin/posts/" + p.id, { method: "POST", body: JSON.stringify(body) }); close(); render(); }
     catch (err) { msg.className = "msg err"; msg.textContent = err.message; }
   };

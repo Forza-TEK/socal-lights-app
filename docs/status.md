@@ -65,3 +65,9 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 ## UI tidy and Shop sorting (2026-10-29)
 - All popup dialogs (Showcase a House, the support box, the admin edit dialogs) now close with a round x in the top right instead of a large Close button.
 - Shop links open Amazon with `s=price-desc-rank` (price, high to low) and the search words get "premium" added, so the highest-priced, high-end products show first. Both are set in `public/site-config.js` (`shopSort`, `shopHighEnd`); blank them to turn off.
+
+## Showcase a House form redesign (2026-10-29)
+- The form has a switch at the top: **A homeowner** or **A professional installer**. Website, phone, service area and the "permission to show this address" checkbox appear only for installers (they need a website or phone). Homeowners enter just their name, email and the display.
+- The address is now separate Street, City, State (CA) and ZIP fields. `posts.address` still holds the full one-line address (pin, directions and routes use it), built as "street, city, CA zip".
+- Migration `0076_showcase_address_fields.sql` adds `poster_type`, `street`, `state`, `zip`, `service_area` and carries the 4 existing houses over, using the city typed in the address (Mission Viejo became Ladera Ranch, Los Angeles became El Segundo). "Holiday Christmas Lighting" (Lights Up Today) is marked as an installer. Ladera Ranch and El Segundo were added to `public/cities.js`.
+- House pages show a "Professional installer" tag and service area for installers, and "Posted by" for homeowners. The admin edit dialog has the same fields.
