@@ -472,3 +472,18 @@ button{touch-action:manipulation}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .price.txt{font-size:15px;font-weight:700}
 .panel .list.route{grid-template-columns:1fr}
+
+/* list cards read like the pin card: name first, then place, dates and tags; share and heart beside the name */
+.panel .list .item .ibody{gap:3px}
+.panel .list .item h3{font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1.25;margin:0}
+.panel .list .item .pv-top{align-items:flex-start}
+.panel .list .item .pv-acts{margin:-4px -6px 0 0}
+.panel .list .item .pv-acts .shr,.panel .list .item .pv-acts .star{position:static;width:36px;height:36px;margin:0;background:none;box-shadow:none;color:var(--ink);border-radius:50%}
+.panel .list .item .pv-acts .shr:hover,.panel .list .item .pv-acts .star:hover{background:var(--surface-2)}
+.panel .list .item .pv-acts .star[aria-pressed="true"]{color:var(--heart)}
+.panel .list .item .tags{margin-top:6px}
+.panel .list .thumb .when{display:block;position:absolute;z-index:1;left:8px;top:8px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px}
+.panel .list .item .pv-acts{margin:-2px -6px 0 0}
+.panel .list .item .pv-acts .shr,.panel .list .item .pv-acts .star{width:32px;height:32px}
+.panel .list .item .dates{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panel .list .item .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
