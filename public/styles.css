@@ -547,3 +547,17 @@ button{touch-action:manipulation}
 .pvcount{right:auto;left:10px}
 .preview .pv-photo:has(.pvtrack){cursor:default}
 .preview .pv-body{cursor:pointer}
+
+/* My night: simple steps that fold into a ? button */
+.nhelp{background:var(--season-soft);border-radius:20px;padding:14px 16px 16px;margin:2px 0 14px;display:grid;gap:10px;animation:popin .3s cubic-bezier(.2,.9,.3,1.1)}
+.nh-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.nh-top b{font-size:16px;font-weight:800;letter-spacing:-.01em}
+.nh-x{flex:none;width:30px;height:30px;border-radius:50%;border:0;background:color-mix(in srgb,var(--ink) 10%,transparent);color:var(--ink);display:grid;place-items:center;padding:0;cursor:pointer}
+.nhelp ol{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.nhelp li{display:flex;gap:12px;align-items:center}
+.nhelp li>span{flex:none;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--surface);font-weight:800;font-size:14px;display:grid;place-items:center}
+.nhelp li.done>span{background:var(--free);color:#fff}
+.nhelp li div{display:grid;line-height:1.3}.nhelp li b{font-size:15px;font-weight:700}.nhelp li small{font-size:13px;color:var(--muted)}
+.helpbtn{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--muted);background:none;color:var(--muted);font:800 15px/1 var(--f-body);display:inline-grid;place-items:center;padding:0;cursor:pointer;margin-left:8px}
+.helpbtn:hover{color:var(--ink);border-color:var(--ink)}
+.hrow .hcount{display:inline-flex;align-items:center;gap:.28em;white-space:pre-wrap}

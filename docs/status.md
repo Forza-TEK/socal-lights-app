@@ -98,3 +98,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - Pin card: a home display with more than one photo can be swiped through (arrows on desktop hover, a 1 / N counter); swiping does not open the details.
 - Close buttons use a drawn X so it sits dead center in its circle. The pin card's photo arrows are always visible on desktop, with dots, a counter and the left/right arrow keys.
 - Pin card with several photos: the photo area only browses (arrows, clickable dots, swipe, arrow keys); tapping the text below opens the details.
+- My night help: three simple steps (tap the heart, check your stops, tap Open route) that fold into a ? button beside the stop count; the choice is remembered on the device.
