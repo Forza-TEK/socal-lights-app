@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261029i";
+import { SITE } from "/site-config.js?v=20261029j";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -774,7 +774,7 @@ function openAdd(btn) {
   closeFilters(); closeMore(); closePop(); closeSeasonMenu();
   let m = $("#addmenu"); if (!m) { m = document.createElement("div"); m.id = "addmenu"; m.className = "menu"; m.setAttribute("role", "menu"); document.body.appendChild(m);
     m.addEventListener("click", (e) => { const b = e.target.closest("[data-add]"); if (!b) { if (e.target.closest("a")) closeAdd(); return; } closeAdd(); if (b.dataset.add === "house") openForm(); }); }
-  m.innerHTML = `<a class="mrow" role="menuitem" href="/add-event"><span class="mi">+</span><span class="mt"><b>Add an event</b><small>Free, takes a minute. We check the event page.</small></span></a><button class="mrow" type="button" role="menuitem" data-add="house"><span class="mi">⌂</span><span class="mt"><b>Showcase your house</b><small>Post your lights. Homeowners and installers.</small></span></button>`;
+  m.innerHTML = `<a class="mrow" role="menuitem" href="/add-event"><span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="mt"><b>Add an event</b><small>Free, takes a minute. We check the event page.</small></span></a><button class="mrow" type="button" role="menuitem" data-add="house"><span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7v9H4z"/><path d="M12 17.5s-2.5-1.5-2.5-3.2a1.3 1.3 0 0 1 2.5-.6 1.3 1.3 0 0 1 2.5.6c0 1.7-2.5 3.2-2.5 3.2z"/></svg></span><span class="mt"><b>Showcase your house</b><small>Post your lights. Homeowners and installers.</small></span></button>`;
   m.hidden = false; btn.setAttribute("aria-expanded", "true");
   const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 10 + "px"; m.style.left = Math.max(10, Math.min(r.right - w, innerWidth - w - 10)) + "px";
 }
@@ -786,8 +786,8 @@ function moreHtml() {
   const dark = theme() === "dark";
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
   return row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us or shop the season" : "Shop the season")
-    + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, "☾", "Night mode", (dark ? "On" : "Off") + " · switches automatically after 6pm", `<span class="sw${dark ? " on" : ""}"><i></i></span>`)
-    + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, "✉", "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
+    + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>`, "Night mode", (dark ? "On" : "Off") + " · switches automatically after 6pm", `<span class="sw${dark ? " on" : ""}"><i></i></span>`)
+    + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
 function openMore() {
   closeFilters(); closePop(); closeSeasonMenu(); closeAdd();
