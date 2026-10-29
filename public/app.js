@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zo";
+import { SITE } from "/site-config.js?v=20261028zp";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -744,12 +744,12 @@ function closeFilters() { fOpen = false; const f = $("#fpanel"); if (f) f.hidden
 document.addEventListener("click", (e) => { if (!e.target.isConnected) return; if (fOpen && !isPhone() && !e.target.closest("#fpanel,[data-openfilters]")) closeFilters(); });
 addEventListener("resize", placeFilters);
 
-/* ⋯ menu: support, night mode, contact (Add event and Add house live in the list header) */
+/* ⋯ menu: keep it free, night mode, contact (Add event and Add house live in the list header) */
 function closeMore() { const m = $("#moremenu"); if (m) m.hidden = true; const b = $("#morebtn"); if (b) b.setAttribute("aria-expanded", "false"); }
 function moreHtml() {
   const dark = theme() === "dark";
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
-  return row("button", 'type="button" data-m="support"', `<span style="color:var(--heart)">♥</span>`, "Support SoCal Lights", SITE.donateUrl ? "Tip us or shop the season" : "Shop the season")
+  return row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us or shop the season" : "Shop the season")
     + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, "☾", "Night mode", (dark ? "On" : "Off") + " · switches automatically after 6pm", `<span class="sw${dark ? " on" : ""}"><i></i></span>`)
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, "✉", "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
