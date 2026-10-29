@@ -108,3 +108,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - The Holidays season is now called Christmas in the season list, the Shop tab and filters and its full name is Thanksgiving & Christmas Lights.
 - 2026-10-29 city sweep group 4 (Pomona Valley & East SGV): added Claremont Turkey Trot, Irwindale Christmas Spectacular (expected), West Covina Children's Christmas Parade (migrations 0077, 0078). Glendora Holiday Stroll and Azusa not added: no official 2026 page found.
 - Menu icons (plus, house, moon, mail) are drawn icons, centered in their circles.
+- Phone: after opening a place's details and tapping back, the list keeps that place listed (the map was being recentered under the open sheet, which pushed it out of view and could leave an empty list).

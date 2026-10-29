@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261029j";
+import { SITE } from "/site-config.js?v=20261029l";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -130,7 +130,7 @@ geo.on("geolocate", (e) => map.easeTo({ center: [e.coords.longitude, e.coords.la
 
 function padding() {
   const ph = isPhone();
-  return { top: ph ? 128 : 100, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? sheetVisible() + 16 : 24 };
+  return { top: ph ? 128 : 100, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? peekH() + 16 : 24 }; // phones: centre things in the map above the collapsed list, even while the sheet is open
 }
 // On phones the list covers the map when expanded, so "in map view" means the map above the collapsed sheet.
 function mapArea() { const p = padding(); if (isPhone()) p.bottom = peekH() + 16; return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
@@ -189,7 +189,7 @@ function initLayers() {
     if (state.detail) { state.detail = null; renderPanel(); }
     renderPreview(); drawHL(); markItems();
   });
-  map.on("moveend", scheduleList); map.on("move", placePin);
+  map.on("dragstart", () => { state.keep = null; }); map.on("moveend", scheduleList); map.on("move", placePin);
   mapReady = true;
   fitSoCal(false);
   drawMap();
@@ -437,7 +437,7 @@ function renderPanel() {
     const lead = (a, b) => b.f - a.f; // paid "top of the list" placements stay first in every order
     const soon = (a, b) => lead(a, b) || a.st.localeCompare(b.st) || a.nm.localeCompare(b.nm);
     items.sort(state.sort === "free" ? (a, b) => lead(a, b) || (b.free ? 1 : 0) - (a.free ? 1 : 0) || soon(a, b) : state.sort === "soon" ? soon : (a, b) => lead(a, b) || dist(a) - dist(b) || soon(a, b));
-    const vis = items.filter((it) => inView(it.lng, it.lat) || state.sel === it.key);
+    const vis = items.filter((it) => inView(it.lng, it.lat) || state.sel === it.key || state.keep === it.key); // keep: the card you just came back from stays listed
     const act = activeFilters();
     head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span><span class="hright"><label class="sortl">Sort <select class="sortsel" id="sortSel" aria-label="Sort places">${SORTS.map(([v, l]) => `<option value="${v}"${state.sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>${addBtn}</span></div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
     body.innerHTML = vis.length ? `<div class="list">${vis.map((it, i) => (it.t === "e" ? evItem(it.o, i) : instItem(it.o))).join("")}</div>${teaser()}<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`
@@ -526,7 +526,7 @@ function detailHtml(k) {
   <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
 }
 function wireDetail() {
-  $("#back").onclick = () => { state.detail = null; if (isPhone()) state.sel = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
+  $("#back").onclick = () => { state.keep = state.detail; state.detail = null; if (isPhone()) state.sel = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
   const tr = $("#track"); if (tr) { const n = tr.children.length;
     document.querySelectorAll(".gallery .nav").forEach((b) => (b.onclick = () => tr.scrollBy({ left: tr.clientWidth * Number(b.dataset.g), behavior: "smooth" })));
     tr.onscroll = () => { const c = $("#gcount"); if (c) c.textContent = Math.round(tr.scrollLeft / tr.clientWidth) + 1 + " / " + n; }; }
@@ -866,7 +866,7 @@ function setSeason(k) {
   renderSeasonBar(); applyFilters(); if (mapReady) fitSoCal(true);
 }
 function applyFilters() {
-  syncShopTab();
+  syncShopTab(); state.keep = null;
   state.detail = null; renderPanel(); drawMap(); renderPreview();
   if (fOpen) { refreshFilters(); placeFilters(); }
 }
