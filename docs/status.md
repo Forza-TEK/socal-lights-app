@@ -109,3 +109,8 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - 2026-10-29 city sweep group 4 (Pomona Valley & East SGV): added Claremont Turkey Trot, Irwindale Christmas Spectacular (expected), West Covina Children's Christmas Parade (migrations 0077, 0078). Glendora Holiday Stroll and Azusa not added: no official 2026 page found.
 - Menu icons (plus, house, moon, mail) are drawn icons, centered in their circles.
 - Phone: after opening a place's details and tapping back, the list keeps that place listed (the map was being recentered under the open sheet, which pushed it out of view and could leave an empty list).
+
+## Installable app (PWA) (2026-10-29)
+- SoCal Lights can now be installed: `public/manifest.webmanifest`, icons in `public/img/` (192, 512 and a maskable 512), `public/sw.js` (network first, offline fallback page `public/offline.html`) and iOS home-screen meta tags in `index.html`. The ⋯ menu has **Get the app**: Android and Windows show the browser's install prompt, iPhone shows a 3-step Add to Home Screen guide. The item is hidden once the app is installed.
+- App shortcuts: My night (`/#night`) and Add an event.
+- Next, if wanted: Google Play (Trusted Web Activity, $25), Microsoft Store (PWABuilder, $19), Apple App Store (Capacitor, $99/yr; needs a Mac and some native features). See the plan in the chat of 2026-10-29.
