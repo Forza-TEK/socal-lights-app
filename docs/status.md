@@ -101,3 +101,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - My night help: three simple steps (tap the heart, check your stops, tap Open route) that fold into a ? button beside the stop count; the choice is remembered on the device.
 - Fixed: the soft fade behind the phone tab bar was covering the lower half of the pin card (a merged CSS rule had lost its hide-when-card-open selector).
 - Phone details page: the back arrow stays fixed at the top of the sheet while the details scroll.
+- Season button: a larger chevron that flips when the list is open; lighter type on the season button, menus and buttons.
