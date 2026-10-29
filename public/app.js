@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261029f";
+import { SITE } from "/site-config.js?v=20261029g";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -522,8 +522,8 @@ function detailHtml(k) {
   <div class="row" style="gap:6px;justify-content:flex-start;flex-wrap:wrap"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}</div>
   <h2>${esc(p.title)}</h2><div class="meta">${p.kind === "installer" ? "" : "Posted by "}<b style="color:var(--ink)">${esc(p.biz)}</b> · ${esc(p.city)}</div>
   <p style="margin:0;white-space:pre-line">${esc(p.desc)}</p>
-  <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}<br><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.zip ? p.address : p.address + ", " + p.city + ", CA")}" target="_blank" rel="noopener">Directions ↗</a></dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.kind === "installer" && p.area ? `<dt>Service area</dt><dd>${esc(p.area)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
-  <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button></div></div>`;
+  <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}</dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.kind === "installer" && p.area ? `<dt>Service area</dt><dd>${esc(p.area)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
+  <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
 }
 function wireDetail() {
   $("#back").onclick = () => { state.detail = null; if (isPhone()) state.sel = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
