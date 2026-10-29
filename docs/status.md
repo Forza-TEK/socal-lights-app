@@ -102,3 +102,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - Fixed: the soft fade behind the phone tab bar was covering the lower half of the pin card (a merged CSS rule had lost its hide-when-card-open selector).
 - Phone details page: the back arrow stays fixed at the top of the sheet while the details scroll.
 - Season button: a larger chevron that flips when the list is open; lighter type on the season button, menus and buttons.
+- Home display details use the same round back arrow as events (over the photo). Menu, button and filter type is one step lighter.
