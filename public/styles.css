@@ -305,7 +305,8 @@ button{touch-action:manipulation}
   .hero{height:190px}
   /* behind the tab bar: the sheet's lower part fades out at Peek and shows through as the sheet rises */
   .navfade{display:block;position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 94px);z-index:35;pointer-events:none;background:linear-gradient(to bottom,transparent 0,var(--surface) 14%);opacity:1;transition:opacity .32s cubic-bezier(.2,.8,.2,1)}
-  body.pin-open .navfade,body.detail-open   body:has(.panel.dragging) .navfade{transition:none}
+  body.pin-open .navfade,body.detail-open .navfade{display:none}
+  body:has(.panel.dragging) .navfade{transition:none}
 
   /* floating tab bar */
   .bnav{display:flex;position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);gap:4px;padding:5px;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4)}

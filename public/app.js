@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261029b";
+import { SITE } from "/site-config.js?v=20261029c";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
