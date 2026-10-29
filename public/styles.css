@@ -516,3 +516,17 @@ button{touch-action:manipulation}
 .fpanel{transform-origin:top right;animation:popin .26s cubic-bezier(.2,.9,.3,1.1)}
 @media (max-width:860px){.fpanel{transform-origin:bottom center;animation:sheetup .36s cubic-bezier(.2,.8,.2,1)}.fback{animation:fadein .25s ease}}
 @media (prefers-reduced-motion:reduce){.ptab,.bnav button,.ptab .lb,.ptab .n,.bnav button>span,.menu,.pop,#seasonmenu,.fpanel,.menu .mrow,#seasonmenu button,.pbody.tabin,.phead.tabin,.ptab svg,.bnav button svg{animation:none!important;transition-duration:.01ms!important}}
+
+/* count badges sit a little apart from their tab label */
+.ptab[aria-selected="true"] .n{margin-left:12px}
+.bnav button[aria-current] .bn-n{margin-left:10px}
+
+/* phone, night mode only: the list sheet is slightly see-through, so the map shows faintly behind it */
+@media (max-width:860px){
+  :root[data-theme="dark"] .panel{background:color-mix(in srgb,var(--surface) 82%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2)}
+  :root[data-theme="dark"] .navfade{background:linear-gradient(to bottom,transparent 0,color-mix(in srgb,var(--surface) 82%,transparent) 14%)}
+}
+@media (prefers-reduced-transparency:reduce){
+  :root[data-theme="dark"] .panel{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}
+  :root[data-theme="dark"] .navfade{background:linear-gradient(to bottom,transparent 0,var(--surface) 14%)}
+}
