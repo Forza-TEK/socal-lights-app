@@ -114,3 +114,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - SoCal Lights can now be installed: `public/manifest.webmanifest`, icons in `public/img/` (192, 512 and a maskable 512), `public/sw.js` (network first, offline fallback page `public/offline.html`) and iOS home-screen meta tags in `index.html`. There is deliberately no "Get the app" link in the site yet; add one only after the store apps exist.
 - App shortcuts: My night (`/#night`) and Add an event.
 - Next, if wanted: Google Play (Trusted Web Activity, $25), Microsoft Store (PWABuilder, $19), Apple App Store (Capacitor, $99/yr; needs a Mac and some native features). See the plan in the chat of 2026-10-29.
+- My night: fixed the steps box (the done step picked up the success-message styling and sat off-center; it now shows a check) and gave the route notes a clean info style.

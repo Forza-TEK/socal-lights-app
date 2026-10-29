@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261029n";
+import { SITE } from "/site-config.js?v=20261029o";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -406,7 +406,7 @@ function evItem(ev, i = 99, x = null) {
 // My night help: three simple steps, which can be folded into a ? button next to the stop count (remembered on this device)
 let nightHelp = true; try { nightHelp = localStorage.getItem("socal-nighthelp") !== "0"; } catch {}
 function setNightHelp(v) { nightHelp = v; try { localStorage.setItem("socal-nighthelp", v ? "1" : "0"); } catch {} renderPanel(); }
-const helpHtml = (n) => `<section class="nhelp" aria-label="How My night works"><div class="nh-top"><b>Plan your night in 3 steps</b><button type="button" class="nh-x" data-nhelp="0" aria-label="Hide these steps" title="Hide"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><ol><li class="${n ? "done" : ""}"><span>1</span><div><b>Tap the heart</b><small>On any place you want to visit.</small></div></li><li class="${n > 1 ? "done" : ""}"><span>2</span><div><b>Check your stops here</b><small>We put them in a sensible driving order.</small></div></li><li><span>3</span><div><b>Tap Open route</b><small>Your maps app takes you there.</small></div></li></ol></section>`;
+const helpHtml = (n) => `<section class="nhelp" aria-label="How My night works"><div class="nh-top"><b>Plan your night in 3 steps</b><button type="button" class="nh-x" data-nhelp="0" aria-label="Hide these steps" title="Hide"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><ol><li class="${n ? "is-done" : ""}"><span>${n ? "✓" : "1"}</span><div><b>Tap the heart</b><small>On any place you want to visit.</small></div></li><li class="${n > 1 ? "is-done" : ""}"><span>${n > 1 ? "✓" : "2"}</span><div><b>Check your stops here</b><small>We put them in a sensible driving order.</small></div></li><li><span>3</span><div><b>Tap Open route</b><small>Your maps app takes you there.</small></div></li></ol></section>`;
 // My night: the stop number and the drive from the previous stop
 const legLine = (x) => `<div class="legline">${x.leg ? `↓ ${x.leg.mi} mi · ~${x.leg.min} min from ${esc(x.leg.from)}` : "Start here"}</div>`;
 function instItem(p, x = null) {
@@ -468,7 +468,7 @@ function renderPanel() {
     const nights = [...new Set(st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s)))];
     if (nights.length) notes.push(`One-night events: ${nights.join(", ")}.`);
     if (mapsApp === "apple" && st.length > 1) notes.push("Multi-stop routes in Apple Maps need iOS 18.4 or later. Older iPhones open with the first stop.");
-    body.innerHTML = (nightHelp ? helpHtml(st.length) : "") + `<div class="list">${st.map((ev, i) => (ev.house ? instItem(ev.p, { n: i + 1, leg: legs[i] }) : evItem(ev, i, { n: i + 1, leg: legs[i] }))).join("")}</div>${notes.length ? `<ul class="routenotes">${notes.map((n) => `<li>${n}</li>`).join("")}</ul>` : ""}`;
+    body.innerHTML = (nightHelp ? helpHtml(st.length) : "") + `<div class="list">${st.map((ev, i) => (ev.house ? instItem(ev.p, { n: i + 1, leg: legs[i] }) : evItem(ev, i, { n: i + 1, leg: legs[i] }))).join("")}</div>${notes.length ? `<div class="routenotes">${notes.map((n) => `<p><span aria-hidden="true">i</span>${n}</p>`).join("")}</div>` : ""}`;
   }
   body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
