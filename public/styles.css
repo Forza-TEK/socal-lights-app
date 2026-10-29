@@ -291,29 +291,17 @@ button{touch-action:manipulation}
   body:has(.topbar.fopen) .maplibregl-ctrl-top-right{top:178px}
   .maplibregl-ctrl-bottom-right{display:none}
 
-  .panel{top:auto;left:0;right:0;bottom:0;width:auto;height:calc(100% - env(safe-area-inset-top,0px) - 112px);border-radius:28px 28px 0 0;transform:translateY(var(--sheet-y,60%));transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+  .panel{top:auto;left:0;right:0;bottom:var(--sheet-b,0px);width:auto;height:var(--sheet-h,156px);border-radius:28px 28px 0 0;transition:height .3s cubic-bezier(.2,.8,.2,1),bottom .3s cubic-bezier(.2,.8,.2,1),transform .3s cubic-bezier(.2,.8,.2,1)}
   .panel.dragging{transition:none}
   .grab{display:grid;place-items:center;padding:10px 0 4px;cursor:grab;touch-action:none}
   .grab i{width:40px;height:5px;border-radius:3px;background:var(--line);display:block}
   .ptabs{display:none}
   .phead{padding:4px 16px 10px;touch-action:none}
-  /* the part of the sheet below the screen edge is added as padding, so the end of the list can always be scrolled into view; 84px clears the tab bar */
-  .pbody{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(var(--sheet-y,0px) + env(safe-area-inset-bottom,0px) + 96px)}
-  body.detail-open .pbody{padding-top:0;padding-bottom:calc(var(--sheet-y,0px) + env(safe-area-inset-bottom,0px) + 16px)}
-  /* the list's scroll area runs below the screen edge by --sheet-y, so lift the action bar by that much to keep it on screen at half height */
-  .actionbar{bottom:calc(var(--sheet-y,0px) + env(safe-area-inset-bottom,0px) + 12px)}
+  .phead .quick{order:-1;flex-basis:100%;touch-action:pan-x}
+  .pbody{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
+  body.detail-open .pbody{padding-top:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
+  .actionbar{bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
   .hero{height:190px}
-
-  /* collapsed sheet: one compact header row */
-  .panel.peek .phead{display:flex;align-items:center;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:8px}
-  .panel.peek .phead::-webkit-scrollbar{display:none}
-  .panel.peek .phead{flex-wrap:nowrap;min-height:0;touch-action:pan-x}
-  .panel.peek .hrow{flex:none;flex-basis:auto;min-height:36px} .panel.peek .toggle{display:none}
-  .panel.peek .phead .quick{flex-basis:auto}
-  .panel.peek .quick{flex:none;overflow:visible}
-  .panel.peek .pbody{display:none}
-  .panel.peek .teaser,.panel.peek .list>.meta,.panel.peek .pbody>.row,.panel.peek .pbody>p,.panel.peek .mapspick,.panel.peek .cta{display:none}
-  .panel.peek .empty{padding:14px 16px}
 
   /* floating tab bar */
   .bnav{display:flex;position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);gap:4px;padding:5px;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4)}
@@ -425,7 +413,6 @@ button{touch-action:manipulation}
 .keepfree{text-align:center;margin:14px 0 4px}.keepfree .linkbtn{color:var(--muted);font-size:14px}
 @media (max-width:860px){
   .quick button.qf{order:-1;margin-left:0}
-  .panel.peek .hrow,.panel.peek .actchips{display:none}
 }
 @media (max-width:1359px) and (min-width:861px){.brand .wm{display:none}.brand{padding:0 8px 0 10px}}
 
@@ -464,7 +451,7 @@ button{touch-action:manipulation}
 @media (max-width:860px){
   .preview{left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
   .preview .pv-photo{height:190px}
-  body.pin-open .panel{transform:translateY(120%)!important}
+  body.pin-open .panel{transform:translateY(calc(100% + 160px))!important}
   body.pin-open .bnav{display:none}
 }
 #toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,16px);opacity:0;background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;z-index:99;pointer-events:none;transition:opacity .2s,transform .2s}
