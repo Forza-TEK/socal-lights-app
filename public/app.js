@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zm";
+import { SITE } from "/site-config.js?v=20261028zn";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -744,15 +744,13 @@ function closeFilters() { fOpen = false; const f = $("#fpanel"); if (f) f.hidden
 document.addEventListener("click", (e) => { if (!e.target.isConnected) return; if (fOpen && !isPhone() && !e.target.closest("#fpanel,[data-openfilters]")) closeFilters(); });
 addEventListener("resize", placeFilters);
 
-/* ⋯ menu: support, night mode, add an event, showcase a house, contact */
+/* ⋯ menu: support, night mode, contact (Add event and Add house live in the list header) */
 function closeMore() { const m = $("#moremenu"); if (m) m.hidden = true; const b = $("#morebtn"); if (b) b.setAttribute("aria-expanded", "false"); }
 function moreHtml() {
   const dark = theme() === "dark";
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
   return row("button", 'type="button" data-m="support"', `<span style="color:var(--heart)">♥</span>`, "Support SoCal Lights", SITE.donateUrl ? "Tip us or shop the season" : "Shop the season")
     + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, "☾", "Night mode", (dark ? "On" : "Off") + " · switches automatically after 6pm", `<span class="sw${dark ? " on" : ""}"><i></i></span>`)
-    + row("a", 'href="/add-event"', "+", "Add an event", "Free, takes a minute")
-    + row("button", 'type="button" data-m="house"', "⌂", "Showcase a house", "Post your lights")
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, "✉", "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
 function openMore() {
@@ -765,7 +763,7 @@ $("#moremenu").addEventListener("click", (e) => {
   const b = e.target.closest("[data-m]"); if (!b) { if (e.target.closest("a")) closeMore(); return; }
   const k = b.dataset.m;
   if (k === "night") { setTheme(theme() === "dark" ? "light" : "dark"); $("#moremenu").innerHTML = moreHtml(); return; }
-  closeMore(); if (k === "support") openSupport(); else if (k === "house") openForm();
+  closeMore(); if (k === "support") openSupport();
 });
 document.addEventListener("click", (e) => { if (!e.target.isConnected) return; const m = $("#moremenu"); if (m && !m.hidden && !e.target.closest("#moremenu,#morebtn")) closeMore(); });
 
