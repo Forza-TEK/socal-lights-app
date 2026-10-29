@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zr";
+import { SITE } from "/site-config.js?v=20261028zt";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -842,29 +842,28 @@ fitHint(); addEventListener("resize", fitHint);
 let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); }, 120); };
 
 /* ---------- bottom sheet (phone) ---------- */
-// The sheet has two positions: Peek (the handle and the buttons row, ending just below them, above the floating tab bar) and Full.
-// Everything inside is always laid out and loaded; resizing only changes the sheet's height and its distance from the screen bottom,
-// so nothing blinks or reloads while it moves.
-const NAVZ = 78;        // screen bottom to the top of the floating tab bar: 12px offset + 58px bar + 8px air
-const PEEK_PANEL = 66;  // the sheet's own height at Peek: handle + buttons row + a few px
-let safeBottom = null, safeTop = null;
-function insets() {
-  if (safeBottom !== null) return;
-  const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px);top:env(safe-area-inset-top,0px)"; document.body.appendChild(t);
-  safeBottom = t.offsetHeight; safeTop = Math.round(t.getBoundingClientRect().top); t.remove();
+// The sheet is one full-height panel that only slides up and down (a GPU transform), so the buttons, the count / sort line and the
+// cards never move relative to the sheet and nothing is rebuilt while it moves. Peek shows the handle and the buttons row above the
+// floating tab bar; a soft fade at the bottom hides the rest of the sheet behind the tab bar and fades away as the sheet rises.
+const PEEK = 153; // visible height at Peek: handle + the buttons row, which end just above the tab bar zone
+let safeBottom = null;
+function peekH() {
+  if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
+  return PEEK + safeBottom;
 }
-const navZ = () => { insets(); return NAVZ + safeBottom; };
-function peekH() { insets(); return NAVZ + PEEK_PANEL + safeBottom; }
-const fullH = () => { insets(); return Math.round(innerHeight - safeTop - 112); };
 let sheetState = "peek";
-const stopH = (s) => (s === "peek" ? peekH() : fullH());
+const fullH = () => $("#panel").offsetHeight || innerHeight * 0.85;
+const stopH = (s) => (s === "peek" ? Math.min(peekH(), fullH()) : fullH());
 function sheetVisible() { return isPhone() ? stopH(sheetState) : 0; }
-// vis = how much of the screen the sheet covers from the bottom, between Peek and Full
-function applySheet(vis) {
-  const panel = $("#panel"), pk = peekH(), fl = fullH(), v = Math.max(pk, Math.min(fl, vis)), pr = (v - pk) / (fl - pk), b = navZ() * (1 - pr);
-  panel.style.setProperty("--sheet-b", b + "px"); panel.style.setProperty("--sheet-h", Math.max(60, v - b) + "px");
+const peekY = () => Math.max(0, fullH() - stopH("peek")); // how far the sheet is pushed down at Peek
+// y = how far down the sheet is (0 = Full); the fade behind the tab bar follows
+function placeSheet(y) {
+  const panel = $("#panel"), py = peekY(), v = Math.max(0, Math.min(py, y));
+  panel.style.transform = `translate3d(0,${v}px,0)`;
+  const f = $("#navfade"); if (f) f.style.opacity = py ? Math.min(1, Math.max(0, v / py)) : 1;
   return v;
 }
+const sheetNow = () => new DOMMatrix(getComputedStyle($("#panel")).transform).m42 || 0;
 // After the sheet moves, scroll the list just enough to keep the selected card on screen (above the tab bar, below the header)
 let keepT = null;
 function keepSelectedVisible() {
@@ -880,8 +879,8 @@ function keepSelectedVisible() {
 }
 function setSheet(s) {
   sheetState = s; const panel = $("#panel");
-  if (!isPhone()) { panel.style.removeProperty("--sheet-b"); panel.style.removeProperty("--sheet-h"); return; }
-  applySheet(stopH(s));
+  if (!isPhone()) { panel.style.removeProperty("transform"); return; }
+  placeSheet(s === "peek" ? peekY() : 0);
   document.documentElement.style.setProperty("--peek", sheetVisible() + "px");
   keepSelectedVisible();
 }
@@ -889,22 +888,21 @@ function setSheet(s) {
 // swiping up on a list that isn't full height expands the sheet; swiping down at the top of the list collapses it.
 (function () {
   const panel = $("#panel"), body = $("#pbody"), g = $("#grab");
-  const d = { y0: null, startVis: 0, vis: 0, moved: false, justDragged: false };
+  const d = { y0: null, startY: 0, y: 0, moved: false, justDragged: false };
   const NEXT = { peek: "full", full: "peek" }; // tapping the handle switches between the two
-  function begin(y) { d.y0 = y; d.startVis = innerHeight - panel.getBoundingClientRect().top; d.vis = d.startVis; d.moved = false; }
+  function begin(y) { d.y0 = y; d.startY = sheetNow(); d.y = d.startY; d.moved = false; }
   function move(y) {
     if (d.y0 === null) return false;
     const dy = y - d.y0;
     if (!d.moved) { if (Math.abs(dy) < 6) return false; d.moved = true; panel.classList.add("dragging"); }
-    d.vis = applySheet(d.startVis - dy); // the sheet follows the finger
+    d.y = placeSheet(d.startY + dy); // the sheet follows the finger
     return true;
   }
   function end(y) {
     if (d.y0 === null) return false;
     const dy = y - d.y0, moved = d.moved; d.y0 = null; panel.classList.remove("dragging");
     if (!moved) return false;
-    const mid = (peekH() + fullH()) / 2;
-    setSheet(dy < -40 ? "full" : dy > 40 ? "peek" : d.vis > mid ? "full" : "peek"); // a flick decides; a slow drag snaps to the nearer position
+    setSheet(dy < -40 ? "full" : dy > 40 ? "peek" : d.y < peekY() / 2 ? "full" : "peek"); // a flick decides; a slow drag snaps to the nearer position
     d.justDragged = true; setTimeout(() => (d.justDragged = false), 50);
     return true;
   }
