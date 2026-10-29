@@ -262,6 +262,7 @@ button{touch-action:manipulation}
 
 /* phone tab bar: hidden on desktop, where the tabs sit at the top of the panel */
 .bnav{display:none}
+.navfade{display:none}
 
 /* ---------- phone: bottom sheet, floating tab bar, swipeable cards ---------- */
 /* cards: one vertical list of cards at every sheet height */
@@ -291,17 +292,20 @@ button{touch-action:manipulation}
   body:has(.topbar.fopen) .maplibregl-ctrl-top-right{top:178px}
   .maplibregl-ctrl-bottom-right{display:none}
 
-  .panel{top:auto;left:0;right:0;bottom:var(--sheet-b,0px);width:auto;height:var(--sheet-h,156px);border-radius:28px 28px 0 0;transition:height .3s cubic-bezier(.2,.8,.2,1),bottom .3s cubic-bezier(.2,.8,.2,1),transform .3s cubic-bezier(.2,.8,.2,1)}
+  .panel{top:auto;left:0;right:0;bottom:0;width:auto;height:calc(100% - env(safe-area-inset-top,0px) - 112px);border-radius:28px 28px 0 0;transform:translate3d(0,100%,0);will-change:transform;transition:transform .32s cubic-bezier(.2,.8,.2,1)}
   .panel.dragging{transition:none}
   .grab{display:grid;place-items:center;padding:10px 0 4px;cursor:grab;touch-action:none}
   .grab i{width:40px;height:5px;border-radius:3px;background:var(--line);display:block}
   .ptabs{display:none}
-  .phead{padding:4px 16px 10px;touch-action:none}
+  .phead{padding:4px 16px 10px;touch-action:none;row-gap:16px}
   .phead .quick{order:-1;flex-basis:100%;touch-action:pan-x}
   .pbody{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
   body.detail-open .pbody{padding-top:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
   .actionbar{bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
   .hero{height:190px}
+  /* behind the tab bar: the sheet's lower part fades out at Peek and shows through as the sheet rises */
+  .navfade{display:block;position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 94px);z-index:35;pointer-events:none;background:linear-gradient(to bottom,transparent 0,var(--surface) 14%);opacity:1;transition:opacity .32s cubic-bezier(.2,.8,.2,1)}
+  body.pin-open .navfade,body.detail-open   body:has(.panel.dragging) .navfade{transition:none}
 
   /* floating tab bar */
   .bnav{display:flex;position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);gap:4px;padding:5px;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4)}
