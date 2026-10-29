@@ -478,3 +478,7 @@ button{touch-action:manipulation}
 .panel .list .item .dates{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .panel .list .item .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .panel .teaser{margin:16px 0 4px}
+
+/* Places: events and home displays share one list; a blue badge marks the displays */
+.panel .list .thumb .when{background:var(--ice-soft);color:var(--ice)}
+.addbtn .caret{font-size:10px;margin-left:2px;opacity:.85}

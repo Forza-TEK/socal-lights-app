@@ -85,3 +85,10 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - The ⋯ menu's support item is now "Keep SoCal Lights Free" with the hand-and-heart icon.
 - Removed the colored dot from the Season button.
 - Phone list sheet: one full-height panel that only slides (a GPU transform), so the buttons, the count / sort / + Add line and the cards never move relative to the sheet and nothing is rebuilt while it moves. Peek shows the handle and the Filters / Tonight / Saturday / Free row; a soft fade behind the tab bar hides the rest of the sheet at Peek and fades out as the sheet rises, so the list shows behind the tab bar at Full. The first 8 event photos load eagerly.
+
+## One list: Places (2026-10-29)
+- The Events and Houses tabs are now one **Places** tab (map-pin icon): events and home displays share one list and one map. Tabs are Places, My night, Shop.
+- Home displays show a blue **Home display** badge where events show a date, "Posted by …", "<Season> display · Free to view", and tags. Same card layout, heart and share.
+- Filters: dates, Confirmed and Ticketed only narrow events (home displays have no dates or prices; they count as Free). Type has a new **Home displays** chip. The "Show on map" switches are gone.
+- Sort: **Nearest** is the default (distance from the map center), then Soonest and Free first. Paid "top of the list" placements stay first in every order.
+- "+ Add event" and "+ Add house" became one **+ Add ▾** button with Add an event and Showcase your house. `#houses` links no longer need a tab; `#h-<id>` and `#showcase` still work.
