@@ -96,3 +96,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - Motion: the active tab grows its label while the old one folds away, tab content slides in, and menus, the season list and the Filters panel spring open with their rows sliding in one by one (all off for reduced-motion).
 - Phone, night mode only: the list sheet is slightly transparent with a soft blur. Count badges on the tabs have more space from their labels.
 - Pin card: a home display with more than one photo can be swiped through (arrows on desktop hover, a 1 / N counter); swiping does not open the details.
+- Close buttons use a drawn X so it sits dead center in its circle. The pin card's photo arrows are always visible on desktop, with dots, a counter and the left/right arrow keys.
