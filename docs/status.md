@@ -105,3 +105,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - Home display details use the same round back arrow as events (over the photo). Menu, button and filter type is one step lighter.
 - Home display details have the same orange Directions button as events (to the street address).
 - The Shop tab's season drop-down has a clear chevron sized to its text, like the main season button.
+- The Holidays season is now called Christmas in the season list, the Shop tab and filters and its full name is Thanksgiving & Christmas Lights.
