@@ -61,3 +61,7 @@ Santa Barbara County was already well covered. Added Gobble for Good 5K (Santa M
 
 ## 2026-10-28 city sweep, group 18 (High Desert & Mountains)
 Already well covered (about 45 events). Added Après in the Pines holiday market and Sunnybrook Harvest Festival (both Big Bear Lake, migration 0075). Left out as unconfirmed or conflicting: Big Bear Santa Paws at the Zoo (page lists Dec 13/20 and Dec 19), Big Bear tree lighting (Nov 27 vs 28 on two Visit Big Bear pages; map keeps Nov 27), Hesperia monthly Intergenerational Dinner (not Thanksgiving-specific), Adelanto, Needles, Barstow parade and Oak Glen 2026 dates not posted yet.
+
+## UI tidy and Shop sorting (2026-10-29)
+- All popup dialogs (Showcase a House, the support box, the admin edit dialogs) now close with a round x in the top right instead of a large Close button.
+- Shop links open Amazon with `s=price-desc-rank` (price, high to low) and the search words get "premium" added, so the highest-priced, high-end products show first. Both are set in `public/site-config.js` (`shopSort`, `shopHighEnd`); blank them to turn off.

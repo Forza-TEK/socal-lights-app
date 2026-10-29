@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zf";
+import { SITE } from "/site-config.js?v=20261028zg";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -468,7 +468,7 @@ function loadTurnstile() {
 }
 function openForm() {
   pending = []; const m = $("#modal");
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="fh"><div class="row" style="justify-content:space-between"><h2 id="fh">Showcase a House</h2><button class="btn ghost" type="button" id="fClose">Close</button></div>
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="fh"><div class="row" style="justify-content:space-between"><h2 id="fh">Showcase a House</h2><button class="xbtn" type="button" id="fClose" aria-label="Close" title="Close">×</button></div>
   <form class="f" id="instForm" novalidate>
     <div class="two"><label for="fBiz">Your name or business<input id="fBiz" name="biz" maxlength="80" required autocomplete="organization" placeholder="e.g. The Garcia family, or Glow Pros"></label><label for="fTitle">Display name<input id="fTitle" name="title" maxlength="90" required placeholder="e.g. Music-synced rooftop show"></label></div>
     <div class="two"><label for="fCity">City<select id="fCity" name="city" required><option value="">Choose a city</option>${Object.keys(CITY).sort().map((c) => `<option>${esc(c)}</option>`).join("")}</select></label><label for="fEmail">Your email <span class="hint">private, only the site owner sees it</span><input id="fEmail" name="email" type="email" maxlength="120" required autocomplete="email"></label></div>
@@ -495,7 +495,8 @@ function affRule(u) { try { const h = new URL(u).hostname.replace(/^www\./, "");
 const isAff = (u) => !!affRule(u);
 // Two kinds of rule: add a tracking parameter ({ param, value }), or wrap the link in a network deep link ({ template: "https://…?u={url}" }, the form Impact/CJ give you).
 function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) return r.template.replace("{url}", encodeURIComponent(u)); try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
-const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(q)}&tag=${encodeURIComponent(SITE.amazonTag)}`;
+// High-end first: the search words get a "premium" nudge and Amazon sorts the results by price, high to low.
+const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(SITE.shopHighEnd ? q + " " + SITE.shopHighEnd : q)}${SITE.shopSort ? "&s=" + encodeURIComponent(SITE.shopSort) : ""}&tag=${encodeURIComponent(SITE.amazonTag)}`;
 const shopSeason = () => (SITE.shop[state.shopSeason] ? state.shopSeason : state.season);
 const shopCats = () => (SITE.amazonTag ? SITE.shop[shopSeason()] || [] : []);
 // The Shop tab only exists when there is an Amazon tag and shop list for the season.
@@ -506,7 +507,7 @@ function syncShopTab() {
 }
 function openSupport() {
   const m = $("#modal"), donate = safeUrl(SITE.donateUrl);
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Keep SoCal Lights free</h2><button class="btn ghost" type="button" id="sClose">Close</button></div>
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Keep SoCal Lights free</h2><button class="xbtn" type="button" id="sClose" aria-label="Close" title="Close">×</button></div>
     <p class="blurb">SoCal Lights is built and kept up to date by one small team: checking dates, adding events and fixing links all season long. There are no ads and no paywall. If it helped you find something fun, you can help keep it going.</p>
     ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
     ${shopCats().length ? `<button class="btn ghost" type="button" id="sShop">🛍️ Browse the shop</button>` : ""}
