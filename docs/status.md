@@ -116,3 +116,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - Next, if wanted: Google Play (Trusted Web Activity, $25), Microsoft Store (PWABuilder, $19), Apple App Store (Capacitor, $99/yr; needs a Mac and some native features). See the plan in the chat of 2026-10-29.
 - My night: fixed the steps box (the done step picked up the success-message styling and sat off-center; it now shows a check) and gave the route notes a clean info style.
 - My night: unfavoriting the last stop returns to Places with the whole map in view.
+- On phones, that return to Places also lowers the list to Peek so the map shows.
