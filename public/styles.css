@@ -107,12 +107,6 @@ button{touch-action:manipulation}
 .citylist .linkbtn:hover{background:var(--surface-2);text-decoration:none}
 
 /* ---------- map preview card (desktop) ---------- */
-.preview{position:fixed;z-index:25;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 40px);width:min(380px,calc(100% - 32px));background:var(--surface);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;display:grid;grid-template-columns:100px minmax(0,1fr);cursor:pointer;min-height:100px}
-.preview strong{font-size:16px;font-weight:700;line-height:1.3}
-.preview .pv-img{background:var(--ice-soft);display:grid;place-items:center}
-.preview .pv-img img{width:100%;height:100%;object-fit:cover;display:block}
-.preview .pv-body{padding:12px 48px 12px 14px;display:grid;gap:3px;min-width:0;align-content:center}
-.preview .x{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:0;background:var(--surface-2);cursor:pointer;font-size:19px;line-height:1;color:var(--muted)}
 .datetile{display:grid;place-items:center;align-content:center;gap:1px;font-variant-numeric:tabular-nums;text-transform:uppercase;color:var(--season-ink);background:var(--season-soft)}
 .datetile b{font-size:26px;font-weight:800;line-height:1;color:var(--ink)}
 .datetile span{font-size:11px;font-weight:800;letter-spacing:.06em}
@@ -181,7 +175,7 @@ button{touch-action:manipulation}
 .mapspick span{margin-right:4px}
 .mapspick button{border:0;background:var(--surface-2);color:var(--muted);border-radius:999px;height:36px;padding:0 14px;font-size:13.5px;font-weight:700;cursor:pointer}
 .mapspick button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
-.leg{padding:0 0 0 88px;font-size:12.5px;font-weight:600}
+.leg{padding:0 0 0 6px;font-size:12.5px;font-weight:600}
 .empty{background:var(--surface-2);border-radius:20px;padding:20px;color:var(--muted);font-size:15px;display:grid;gap:8px}
 .teaser{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 12px;width:100%;margin:4px 0 10px;padding:16px 18px;border-radius:22px;background:color-mix(in srgb,var(--tc,var(--season)) 12%,var(--surface))}
 .teaser:hover{background:color-mix(in srgb,var(--tc,var(--season)) 18%,var(--surface))} .teaser:focus-visible{outline:2.5px solid var(--focus);outline-offset:2px}
@@ -296,7 +290,6 @@ button{touch-action:manipulation}
   .maplibregl-ctrl-top-right{top:128px;right:max(4px,env(safe-area-inset-right,0px))}
   body:has(.topbar.fopen) .maplibregl-ctrl-top-right{top:178px}
   .maplibregl-ctrl-bottom-right{display:none}
-  .preview{display:none!important}
 
   .panel{top:auto;left:0;right:0;bottom:0;width:auto;height:calc(100% - env(safe-area-inset-top,0px) - 112px);border-radius:28px 28px 0 0;transform:translateY(var(--sheet-y,60%));transition:transform .3s cubic-bezier(.2,.8,.2,1)}
   .panel.dragging{transition:none}
@@ -318,7 +311,7 @@ button{touch-action:manipulation}
   .panel.peek .hrow{flex:none;flex-basis:auto;min-height:36px} .panel.peek .toggle{display:none}
   .panel.peek .phead .quick{flex-basis:auto}
   .panel.peek .quick{flex:none;overflow:visible}
-  .panel.peek .pbody{overflow:hidden}
+  .panel.peek .pbody{display:none}
   .panel.peek .teaser,.panel.peek .list>.meta,.panel.peek .pbody>.row,.panel.peek .pbody>p,.panel.peek .mapspick,.panel.peek .cta{display:none}
   .panel.peek .empty{padding:14px 16px}
 
@@ -433,7 +426,49 @@ button{touch-action:manipulation}
 .keepfree{text-align:center;margin:14px 0 4px}.keepfree .linkbtn{color:var(--muted);font-size:14px}
 @media (max-width:860px){
   .quick button.qf{order:-1;margin-left:0}
-  .panel.peek .hright,.panel.peek .hmv,.panel.peek .actchips{display:none}
-  .panel.peek .hrow{order:2}
+  .panel.peek .hrow,.panel.peek .actchips{display:none}
 }
 @media (max-width:1359px) and (min-width:861px){.brand .wm{display:none}.brand{padding:0 8px 0 10px}}
+
+/* ---------- Redfin-style list cards ---------- */
+@media (min-width:1100px){:root{--panel-w:540px}}
+@media (min-width:1360px){:root{--panel-w:700px}}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:30px}
+.price{font-size:19px;font-weight:800;letter-spacing:-.01em;line-height:1.2}.price.free{color:var(--free)}
+.shr{flex:none;width:34px;height:34px;margin-right:-6px;border:0;background:none;border-radius:50%;display:grid;place-items:center;color:var(--ink);cursor:pointer}
+.shr:hover{background:var(--surface-2)}
+.panel .list .ibody{display:grid;gap:3px;padding:10px 13px 13px}
+.panel .list .item h3{white-space:normal;font-size:15px;line-height:1.25;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .dates{font-size:13.5px;font-weight:600}
+.snip{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.snip .st{font-weight:700}.snip .st.conf{color:var(--free)}.snip .st.exp{color:var(--gold)}
+.tile .tag.tl{position:absolute;left:8px;bottom:8px;z-index:1}
+@media (min-width:861px){
+  .panel .list{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .panel .list .tile,.panel .list .item .thumb{height:150px}
+}
+@media (max-width:860px){.panel .list .tile,.panel .list .item .thumb{height:120px}.hmv{display:none}.phead .hrow{flex-wrap:wrap}}
+
+/* ---------- pin card: tap a dot ---------- */
+.preview{position:fixed;z-index:35;width:320px;background:var(--surface);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;cursor:pointer;display:block}
+.preview .pv-photo{width:100%;height:170px;border-radius:0}
+.preview .pv-photo .when{display:block;position:absolute;z-index:1;left:10px;top:10px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px}
+.preview .pv-photo .when.now{background:var(--ink);color:var(--surface)}
+.preview .x{position:absolute;z-index:2;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(14,16,22,.72);color:#fff;font-size:21px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0 0 2px}
+.preview .pv-body{padding:12px 14px 14px;display:grid;gap:3px;min-width:0}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.preview strong{font-size:17px;font-weight:800;line-height:1.25;letter-spacing:-.01em}
+.pv-acts{display:flex;gap:2px;flex:none;margin:-4px -6px 0 0}
+.pv-acts button{width:36px;height:36px;border:0;background:none;border-radius:50%;display:grid;place-items:center;color:var(--ink);cursor:pointer}
+.pv-acts button:hover{background:var(--surface-2)}
+.pv-acts button svg{fill:none}.pv-acts [aria-pressed="true"]{color:var(--heart)}.pv-acts [aria-pressed="true"] svg{fill:currentColor}
+@media (max-width:860px){
+  .preview{left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
+  .preview .pv-photo{height:190px}
+  body.pin-open .panel{transform:translateY(120%)!important}
+  body.pin-open .bnav{display:none}
+}
+#toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,16px);opacity:0;background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;z-index:99;pointer-events:none;transition:opacity .2s,transform .2s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.price.txt{font-size:15px;font-weight:700}
+.panel .list.route{grid-template-columns:1fr}

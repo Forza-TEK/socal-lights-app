@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zi";
+import { SITE } from "/site-config.js?v=20261028zk";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -185,7 +185,7 @@ function initLayers() {
     if (state.detail) { state.detail = null; renderPanel(); }
     renderPreview(); drawHL(); markItems();
   });
-  map.on("moveend", scheduleList);
+  map.on("moveend", scheduleList); map.on("move", placePin);
   mapReady = true;
   fitSoCal(false);
   drawMap();
@@ -269,7 +269,7 @@ function selectKey(k, from) {
     else if (!document.querySelector(`.item[data-key="${CSS.escape(k)}"]`)) renderPanel();
   }
   drawHL(); markItems();
-  if (from !== "list") revealItem(k);
+  if (from !== "list" && !isPhone()) revealItem(k);
 }
 // Scroll the results list so this item sits at the top of the visible part of the list, and flash it
 function revealItem(k) {
@@ -281,18 +281,36 @@ function revealItem(k) {
 }
 function renderPreview() {
   const pv = $("#preview"), it = findKey(state.sel);
-  if (!it || state.detail === state.sel) { pv.hidden = true; return; }
+  if (!it || state.detail === state.sel) { pv.hidden = true; document.body.classList.remove("pin-open"); return; }
+  const k = state.sel, f = it.kind === "ev" ? favs.has(it.ev.id) : favs.has(hfav(it.p));
+  const acts = `<span class="pv-acts"><button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button></span>`;
   if (it.kind === "ev") {
-    const ev = it.ev, [, m, d] = ev.s.split("-").map(Number);
-    pv.innerHTML = `${datetile(ev)}<div class="pv-body"><strong>${esc(ev.n)}</strong><div class="meta">${esc(ev.city)} · ${esc(ev.p)}</div><div class="dates">${range(ev)}</div></div><button class="x" type="button" aria-label="Close">×</button>`;
+    const ev = it.ev, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
+    pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close">×</button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
   } else {
     const p = it.p, ph = p.photos || [];
-    pv.innerHTML = `<div class="pv-img">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="">` : `<span class="meta">No photo</span>`}</div><div class="pv-body"><span class="tag ice" style="justify-self:start">Showcased house</span><strong>${esc(p.title)}</strong><div class="meta">${esc(p.biz)} · ${esc(p.city)}${ph.length > 1 ? ` · ${ph.length} photos` : ""}</div></div><button class="x" type="button" aria-label="Close">×</button>`;
+    pv.innerHTML = `<div class="tile pv-photo has-photo">${ph.length ? `<img class="evimg ld" src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Showcased house</span><button class="x" type="button" aria-label="Close" title="Close">×</button></div><div class="pv-body"><div class="pv-top"><strong>${esc(p.title)}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
   }
-  pv.hidden = false;
-  pv.onclick = (e) => { if (e.target.closest(".x")) { state.sel = null; pv.hidden = true; drawHL(); markItems(); return; } openDetail(state.sel); };
+  pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); placePin();
+  pv.onclick = (e) => {
+    if (e.target.closest(".x")) { closePin(); return; }
+    if (e.target.closest("[data-pvshare]")) { shareItem(k); return; }
+    if (e.target.closest("[data-pvfav]")) { const id = it.kind === "ev" ? it.ev.id : hfav(it.p); favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); renderPreview(); return; }
+    openDetail(k);
+  };
 }
-
+function closePin() { state.sel = null; $("#preview").hidden = true; document.body.classList.remove("pin-open"); drawHL(); markItems(); }
+// Desktop: the card sits next to its dot (below it, or above when there is no room) and follows the map as it moves
+function placePin() {
+  const pv = $("#preview"); if (pv.hidden || isPhone() || !mapReady) return;
+  const it = findKey(state.sel); if (!it) return;
+  const [lng, lat] = it.kind === "ev" ? [it.ev.lng, it.ev.lat] : [it.p.plng, it.p.plat], q = map.project([lng, lat]), c = $("#map").getBoundingClientRect();
+  const W = pv.offsetWidth, H = pv.offsetHeight, right = innerWidth - (parseFloat(cssVar("--panel-w")) || 0) - 30, x0 = c.left + q.x, y0 = c.top + q.y;
+  let x = Math.max(14, Math.min(x0 - W / 2, right - W)), y = y0 + 26;
+  if (y + H > innerHeight - 14) y = y0 - 26 - H;
+  y = Math.max(96, Math.min(y, innerHeight - 14 - H));
+  pv.style.left = x + "px"; pv.style.top = y + "px";
+}
 /* ---------- panel ---------- */
 function setTab(t) { state.tab = t; state.detail = null; ["events", "inst", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
   document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute(); }
@@ -345,13 +363,33 @@ function whenShort(ev) {
   return ev.s === ev.e ? fmt(ev.s) + " only" : "Opens " + fmt(ev.s);
 }
 const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
+let toastT;
+function toast(msg) {
+  let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2200);
+}
+async function shareItem(k) {
+  const it = findKey(k); if (!it) return;
+  const title = it.kind === "ev" ? it.ev.n : it.p.title, url = location.origin + "/#" + (it.kind === "ev" ? "e-" + it.ev.id : "h-" + it.p.id);
+  try { if (navigator.share) { await navigator.share({ title, text: title + " on SoCal Lights", url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
+  try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { toast(url); }
+}
+const SHARE = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>`;
+// "Free", "From $25", or the price text itself
+function priceLine(ev) {
+  if (ev.free) return "Free";
+  const m = String(ev.p || "").match(/\$[\d,.]+/);
+  return m ? "From " + m[0] : String(ev.p || "Price not listed").slice(0, 26);
+}
+const cut = (t, n) => (t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t);
+const hoursOf = (ev) => (ev.h && !/^check/i.test(ev.h) ? cut(ev.h, 30) : "");
 function evItem(ev) {
-  const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev);
-  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span></div><div class="ibody"><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(ev.p)}</span><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Confirmed" : "Expected"}</span></div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
+  const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
+  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${ev.f ? `<span class="tag feat tl">Featured</span>` : ""}</div><div class="ibody"><div class="prow"><b class="price${ev.free ? " free" : ""}${!ev.free && !/\$/.test(ev.p || "") ? " txt" : ""}">${esc(priceLine(ev))}</b><button class="shr" type="button" data-share="${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button></div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="snip"><span class="st ${conf ? "conf" : "exp"}">${conf ? "✓ Confirmed" : "Expected"}</span>${ev.b ? " • " + esc(ev.b) : ""}</div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
 }
 function instItem(p) {
   const ph = p.photos || [], k = "i:" + p.id;
-  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : ""}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
+  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : ""}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${p.kind === "installer" ? `<span class="tag">Installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
@@ -407,7 +445,7 @@ function renderPanel() {
     const origin = state.start === "me" ? "" : og ? og.lat + "," + og.lng : pts[0];
     const url = navUrl(origin && !og && pts.length > 1 ? pts.slice(1) : pts, origin); // with a single stop and "First stop", the stop is also the destination
     const nights = st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s));
-    body.innerHTML = `<div class="list">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Open route in ${MAPS[mapsApp]} ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${mapsPicker()}${mapsApp === "apple" && st.length > 1 ? `<p class="meta" style="margin:6px 0 0">Multi-stop routes need iOS 18.4 or later; older iPhones open with the first stop.</p>` : ""}${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
+    body.innerHTML = `<div class="list route">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Open route in ${MAPS[mapsApp]} ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${mapsPicker()}${mapsApp === "apple" && st.length > 1 ? `<p class="meta" style="margin:6px 0 0">Multi-stop routes need iOS 18.4 or later; older iPhones open with the first stop.</p>` : ""}${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
   }
   body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
@@ -419,7 +457,10 @@ $("#pbody").addEventListener("click", (e) => {
   const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) selectKey(it.dataset.key, "list");
 });
 $("#phead").addEventListener("change", (e) => { if (e.target.id === "sortSel") { state.sort = e.target.value; renderPanel(); $("#pbody").scrollTop = 0; } });
-$("#pbody").addEventListener("click", (e) => { if (e.target.closest("[data-support]")) openSupport(); });
+$("#pbody").addEventListener("click", (e) => {
+  if (e.target.closest("[data-support]")) { openSupport(); return; }
+  const sh = e.target.closest("[data-share]"); if (sh) { e.stopPropagation(); shareItem("e:" + sh.dataset.share); }
+});
 $("#phead").addEventListener("click", (e) => {
   const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
   const cl = e.target.closest("[data-clear]"); if (cl) { clearFilter(cl.dataset.clear); return; }
@@ -461,7 +502,7 @@ function detailHtml(k) {
   <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button></div></div>`;
 }
 function wireDetail() {
-  $("#back").onclick = () => { state.detail = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
+  $("#back").onclick = () => { state.detail = null; if (isPhone()) state.sel = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
   const tr = $("#track"); if (tr) { const n = tr.children.length;
     document.querySelectorAll(".gallery .nav").forEach((b) => (b.onclick = () => tr.scrollBy({ left: tr.clientWidth * Number(b.dataset.g), behavior: "smooth" })));
     tr.onscroll = () => { const c = $("#gcount"); if (c) c.textContent = Math.round(tr.scrollLeft / tr.clientWidth) + 1 + " / " + n; }; }
@@ -539,7 +580,7 @@ function openSupport() {
   if ($("#sShop")) $("#sShop").onclick = () => { closeForm(); setTab("shop"); if (isPhone()) setSheet("full"); };
 }
 function closeForm() { pending.forEach((p) => URL.revokeObjectURL(p.url)); pending = []; $("#modal").hidden = true; $("#modal").innerHTML = ""; }
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("#modal").hidden) closeForm(); else if (fOpen) { closeFilters(); renderPanel(); } else if (!$("#moremenu").hidden) closeMore(); else if (!$("#pop").hidden) closePop(); else if ($("#seasonmenu")) closeSeasonMenu(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("#modal").hidden) closeForm(); else if (fOpen) { closeFilters(); renderPanel(); } else if (!$("#moremenu").hidden) closeMore(); else if (!$("#pop").hidden) closePop(); else if ($("#seasonmenu")) closeSeasonMenu(); else if (!$("#preview").hidden) closePin(); } });
 async function shrink(file) {
   // Resize to at most 1600px on the long side and re-encode as JPEG
   const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
@@ -805,16 +846,15 @@ let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { sta
 // Collapsed sheet height on phones: just the grab handle and the quick-picks row, sitting above the tab bar
 // (tab bar 58px + 12px gap, handle ~19px, header row ~48px, a little air); the list tucks behind the tab bar
 // (plus the home-indicator strip on newer iPhones, which the tab bar sits above)
-const PEEK = 160;
+const PEEK = 152; // the handle and the buttons row, with the sheet ending just below them (the bottom bar floats over the rest)
 let safeBottom = null;
 function peekH() {
   if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
   return PEEK + safeBottom;
 }
 let sheetState = "peek";
-// Half stop sits just above the middle of the screen
-const HALF = 0.55;
-function stopH(s) { const ph = $("#panel").offsetHeight || innerHeight * 0.8; return Math.min(ph, s === "peek" ? peekH() : s === "half" ? Math.round(innerHeight * HALF) : ph); }
+// Two positions only: Peek (just the buttons row) or Full
+function stopH(s) { const ph = $("#panel").offsetHeight || innerHeight * 0.8; return Math.min(ph, s === "peek" ? peekH() : ph); }
 function sheetVisible() { return isPhone() ? stopH(sheetState) : 0; }
 // Below the middle of the screen the header collapses to one compact row; the list itself is always vertical
 function setRowLayout(vis) {
@@ -848,7 +888,7 @@ function setSheet(s) {
 (function () {
   const panel = $("#panel"), body = $("#pbody"), g = $("#grab");
   const d = { y0: null, start: 0, moved: false, justDragged: false };
-  const NEXT = { peek: "half", half: "full", full: "peek" }; // tapping the handle steps up through the stops
+  const NEXT = { peek: "full", full: "peek" }; // tapping the handle switches between the two
   const clampY = (y) => Math.max(0, Math.min(panel.offsetHeight - 80, y));
   function begin(y) { d.y0 = y; d.start = panel.offsetHeight - sheetVisible(); d.moved = false; }
   function move(y) {
@@ -865,11 +905,8 @@ function setSheet(s) {
     const dy = y - d.y0, moved = d.moved; d.y0 = null; panel.classList.remove("dragging");
     if (!moved) return false;
     const vis = panel.offsetHeight - clampY(d.start + dy);
-    const opts = ["peek", "half", "full"].map((s) => [s, stopH(s)]);
-    let pick;
-    if (dy < -40) pick = opts.find((o) => o[1] >= vis - 1) || opts[opts.length - 1]; // flicked up: next stop above
-    else if (dy > 40) pick = [...opts].reverse().find((o) => o[1] <= vis + 1) || opts[0]; // flicked down: next stop below
-    else pick = [...opts].sort((a, b) => Math.abs(a[1] - vis) - Math.abs(b[1] - vis))[0];
+    const mid = (stopH("peek") + stopH("full")) / 2;
+    const pick = [dy < -40 ? "full" : dy > 40 ? "peek" : vis > mid ? "full" : "peek"]; // a flick decides; a slow drag snaps to the nearer position
     setSheet(pick[0]); scheduleList();
     d.justDragged = true; setTimeout(() => (d.justDragged = false), 50);
     return true;
@@ -904,7 +941,7 @@ function setSheet(s) {
   body.addEventListener("touchend", tend); body.addEventListener("touchcancel", tend);
 
   g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSheet(NEXT[sheetState]); } });
-  document.querySelectorAll(".ptab").forEach((t) => t.addEventListener("click", () => { if (isPhone() && sheetState === "peek") setSheet("half"); }));
+  document.querySelectorAll(".ptab").forEach((t) => t.addEventListener("click", () => { if (isPhone() && sheetState === "peek") setSheet("full"); }));
 })();
 
 /* ---------- boot ---------- */
@@ -918,7 +955,12 @@ async function load() {
     $("#pbody").innerHTML = `<div class="empty">Events couldn't load. Check your connection and refresh the page.</div>`; return;
   }
   renderSeasonBar(); applyFilters();
-  const h = location.hash.slice(1);
+  const h = location.hash.slice(1), dl = h.match(/^([eh])-(.+)$/);
+  if (dl) {
+    const ev = dl[1] === "e" ? E.find((x) => x.id === dl[2]) : null, ho = dl[1] === "h" ? SHOW.find((x) => x.id === dl[2]) : null, sn = ev ? ev.sn : ho ? ho.season : "";
+    if (SEASONS[sn]) setSeason(sn);
+    if (ev) selectKey("e:" + ev.id, "list"); else if (ho) { setTab("inst"); selectKey("i:" + ho.id, "list"); }
+  }
   if (SEASONS[h]) setSeason(h);
   if (h === "houses" || h === "showcase") { setTab("inst"); if (h === "showcase") openForm(); }
 }
