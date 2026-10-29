@@ -81,3 +81,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - **Share links:** `#e-<event id>` and `#h-<house id>` open an event or house directly.
 - List cards now use the same layout as the pin card: photo with date badge, then name with share and heart beside it, place, dates and hours, and the price and Confirmed tags (houses too).
 - The ⋯ menu now holds only Support SoCal Lights, Night mode and Contact; Add event and Add house stay in the list header.
+- The "Coming up" banner now sits at the end of the events list, above "Enjoying SoCal Lights? Keep it free".

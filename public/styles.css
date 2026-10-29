@@ -487,3 +487,4 @@ button{touch-action:manipulation}
 .panel .list .item .pv-acts .shr,.panel .list .item .pv-acts .star{width:32px;height:32px}
 .panel .list .item .dates{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .panel .list .item .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panel .teaser{margin:16px 0 4px}
