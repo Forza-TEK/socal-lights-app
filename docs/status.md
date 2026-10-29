@@ -99,3 +99,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - Close buttons use a drawn X so it sits dead center in its circle. The pin card's photo arrows are always visible on desktop, with dots, a counter and the left/right arrow keys.
 - Pin card with several photos: the photo area only browses (arrows, clickable dots, swipe, arrow keys); tapping the text below opens the details.
 - My night help: three simple steps (tap the heart, check your stops, tap Open route) that fold into a ? button beside the stop count; the choice is remembered on the device.
+- Fixed: the soft fade behind the phone tab bar was covering the lower half of the pin card (a merged CSS rule had lost its hide-when-card-open selector).
