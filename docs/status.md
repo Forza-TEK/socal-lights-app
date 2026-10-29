@@ -71,3 +71,11 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - The address is now separate Street, City, State (CA) and ZIP fields. `posts.address` still holds the full one-line address (pin, directions and routes use it), built as "street, city, CA zip".
 - Migration `0076_showcase_address_fields.sql` adds `poster_type`, `street`, `state`, `zip`, `service_area` and carries the 4 existing houses over, using the city typed in the address (Mission Viejo became Ladera Ranch, Los Angeles became El Segundo). "Holiday Christmas Lighting" (Lights Up Today) is marked as an installer. Ladera Ranch and El Segundo were added to `public/cities.js`.
 - House pages show a "Professional installer" tag and service area for installers, and "Posted by" for homeowners. The admin edit dialog has the same fields.
+
+## UI redesign (2026-10-29)
+- **Top bar:** search, one **Season** drop-down (Halloween ▾; under the search on phones) and a **⋯ menu** (Support SoCal Lights, Night mode switch, Add an event, Showcase a house, Contact). The donate and night-mode icons, the season bar and the row of filter chips are gone from the map.
+- **Filters:** one **Filters** button in the list header opens a panel (When, Near, County, Cost, Type, Confirmed dates only, Show on map) with a live "Show N events" button; active filters show as removable chips. Tonight / Saturday / Free stay as shortcuts. New **Sort** menu (Soonest, Free first, Nearest).
+- **List:** Redfin-style cards (photo, price line, dates and hours, name, place, one-line description, heart and share). The right-hand panel is wider on large screens (540 px at 1100 px+, 700 px at 1360 px+) and shows two columns. A "Keep it free" line ends the events list.
+- **Tap a dot:** a card opens next to the dot on desktop (list stays on the right) and docks at the bottom on phones, with heart, share and ×. Esc or an empty-map tap closes it.
+- **Phone list:** two positions only, Peek (handle and the Filters / Tonight / Saturday / Free buttons) and Full; the handle toggles them.
+- **Share links:** `#e-<event id>` and `#h-<house id>` open an event or house directly.

@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zh";
+import { SITE } from "/site-config.js?v=20261028zk";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -77,7 +77,7 @@ const miles = (a, b) => { const R = 3958.8, r = (x) => x * Math.PI / 180, dLa = 
 
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};
-const state = { season: defaultSeason(TODAY), q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
+const state = { season: defaultSeason(TODAY), q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "soon", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
 const hfav = (p) => "h:" + p.id; // houses are starred as "h:<id>"; events by their plain id
 const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify([...favs])); } catch {} };
@@ -126,7 +126,7 @@ geo.on("geolocate", (e) => map.easeTo({ center: [e.coords.longitude, e.coords.la
 
 function padding() {
   const ph = isPhone();
-  return { top: ph ? 120 : 170, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? sheetVisible() + 16 : 24 };
+  return { top: ph ? 128 : 100, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? sheetVisible() + 16 : 24 };
 }
 // On phones the list covers the map when expanded, so "in map view" means the map above the collapsed sheet.
 function mapArea() { const p = padding(); if (isPhone()) p.bottom = peekH() + 16; return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
@@ -185,7 +185,7 @@ function initLayers() {
     if (state.detail) { state.detail = null; renderPanel(); }
     renderPreview(); drawHL(); markItems();
   });
-  map.on("moveend", scheduleList);
+  map.on("moveend", scheduleList); map.on("move", placePin);
   mapReady = true;
   fitSoCal(false);
   drawMap();
@@ -269,7 +269,7 @@ function selectKey(k, from) {
     else if (!document.querySelector(`.item[data-key="${CSS.escape(k)}"]`)) renderPanel();
   }
   drawHL(); markItems();
-  if (from !== "list") revealItem(k);
+  if (from !== "list" && !isPhone()) revealItem(k);
 }
 // Scroll the results list so this item sits at the top of the visible part of the list, and flash it
 function revealItem(k) {
@@ -281,18 +281,36 @@ function revealItem(k) {
 }
 function renderPreview() {
   const pv = $("#preview"), it = findKey(state.sel);
-  if (!it || state.detail === state.sel) { pv.hidden = true; return; }
+  if (!it || state.detail === state.sel) { pv.hidden = true; document.body.classList.remove("pin-open"); return; }
+  const k = state.sel, f = it.kind === "ev" ? favs.has(it.ev.id) : favs.has(hfav(it.p));
+  const acts = `<span class="pv-acts"><button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button></span>`;
   if (it.kind === "ev") {
-    const ev = it.ev, [, m, d] = ev.s.split("-").map(Number);
-    pv.innerHTML = `${datetile(ev)}<div class="pv-body"><strong>${esc(ev.n)}</strong><div class="meta">${esc(ev.city)} · ${esc(ev.p)}</div><div class="dates">${range(ev)}</div></div><button class="x" type="button" aria-label="Close">×</button>`;
+    const ev = it.ev, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
+    pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close">×</button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
   } else {
     const p = it.p, ph = p.photos || [];
-    pv.innerHTML = `<div class="pv-img">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="">` : `<span class="meta">No photo</span>`}</div><div class="pv-body"><span class="tag ice" style="justify-self:start">Showcased house</span><strong>${esc(p.title)}</strong><div class="meta">${esc(p.biz)} · ${esc(p.city)}${ph.length > 1 ? ` · ${ph.length} photos` : ""}</div></div><button class="x" type="button" aria-label="Close">×</button>`;
+    pv.innerHTML = `<div class="tile pv-photo has-photo">${ph.length ? `<img class="evimg ld" src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Showcased house</span><button class="x" type="button" aria-label="Close" title="Close">×</button></div><div class="pv-body"><div class="pv-top"><strong>${esc(p.title)}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
   }
-  pv.hidden = false;
-  pv.onclick = (e) => { if (e.target.closest(".x")) { state.sel = null; pv.hidden = true; drawHL(); markItems(); return; } openDetail(state.sel); };
+  pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); placePin();
+  pv.onclick = (e) => {
+    if (e.target.closest(".x")) { closePin(); return; }
+    if (e.target.closest("[data-pvshare]")) { shareItem(k); return; }
+    if (e.target.closest("[data-pvfav]")) { const id = it.kind === "ev" ? it.ev.id : hfav(it.p); favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); renderPreview(); return; }
+    openDetail(k);
+  };
 }
-
+function closePin() { state.sel = null; $("#preview").hidden = true; document.body.classList.remove("pin-open"); drawHL(); markItems(); }
+// Desktop: the card sits next to its dot (below it, or above when there is no room) and follows the map as it moves
+function placePin() {
+  const pv = $("#preview"); if (pv.hidden || isPhone() || !mapReady) return;
+  const it = findKey(state.sel); if (!it) return;
+  const [lng, lat] = it.kind === "ev" ? [it.ev.lng, it.ev.lat] : [it.p.plng, it.p.plat], q = map.project([lng, lat]), c = $("#map").getBoundingClientRect();
+  const W = pv.offsetWidth, H = pv.offsetHeight, right = innerWidth - (parseFloat(cssVar("--panel-w")) || 0) - 30, x0 = c.left + q.x, y0 = c.top + q.y;
+  let x = Math.max(14, Math.min(x0 - W / 2, right - W)), y = y0 + 26;
+  if (y + H > innerHeight - 14) y = y0 - 26 - H;
+  y = Math.max(96, Math.min(y, innerHeight - 14 - H));
+  pv.style.left = x + "px"; pv.style.top = y + "px";
+}
 /* ---------- panel ---------- */
 function setTab(t) { state.tab = t; state.detail = null; ["events", "inst", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
   document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute(); }
@@ -345,19 +363,40 @@ function whenShort(ev) {
   return ev.s === ev.e ? fmt(ev.s) + " only" : "Opens " + fmt(ev.s);
 }
 const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
+let toastT;
+function toast(msg) {
+  let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2200);
+}
+async function shareItem(k) {
+  const it = findKey(k); if (!it) return;
+  const title = it.kind === "ev" ? it.ev.n : it.p.title, url = location.origin + "/#" + (it.kind === "ev" ? "e-" + it.ev.id : "h-" + it.p.id);
+  try { if (navigator.share) { await navigator.share({ title, text: title + " on SoCal Lights", url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
+  try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { toast(url); }
+}
+const SHARE = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>`;
+// "Free", "From $25", or the price text itself
+function priceLine(ev) {
+  if (ev.free) return "Free";
+  const m = String(ev.p || "").match(/\$[\d,.]+/);
+  return m ? "From " + m[0] : String(ev.p || "Price not listed").slice(0, 26);
+}
+const cut = (t, n) => (t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t);
+const hoursOf = (ev) => (ev.h && !/^check/i.test(ev.h) ? cut(ev.h, 30) : "");
 function evItem(ev) {
-  const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev);
-  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span></div><div class="ibody"><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(ev.p)}</span><span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Confirmed" : "Expected"}</span></div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
+  const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
+  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${ev.f ? `<span class="tag feat tl">Featured</span>` : ""}</div><div class="ibody"><div class="prow"><b class="price${ev.free ? " free" : ""}${!ev.free && !/\$/.test(ev.p || "") ? " txt" : ""}">${esc(priceLine(ev))}</b><button class="shr" type="button" data-share="${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button></div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><h3>${esc(ev.n)}</h3><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="snip"><span class="st ${conf ? "conf" : "exp"}">${conf ? "✓ Confirmed" : "Expected"}</span>${ev.b ? " • " + esc(ev.b) : ""}</div></div><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
 }
 function instItem(p) {
   const ph = p.photos || [], k = "i:" + p.id;
-  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : ""}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
+  return `<article class="item${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="" loading="lazy">` : ""}</div><div class="ibody"><h3>${esc(p.title)}</h3><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Showcased house</span>${p.kind === "installer" ? `<span class="tag">Installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night">${HEART}</button></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
 function quickPicks() {
   const sat = nextSat(), q = [["date", TODAY, "Tonight"], ...(sat !== TODAY ? [["date", sat, "Saturday"]] : []), ["cost", "free", "Free"]];
-  return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${state[f] === v}">${l}</button>`).join("")}</div>`;
+  const nf = activeFilters().length;
+  return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${state[f] === v}">${l}</button>`).join("")}<button type="button" class="qf${fOpen ? " open" : ""}" data-openfilters aria-haspopup="dialog" aria-expanded="${fOpen}">Filters${nf ? ` <span class="fn">${nf}</span>` : ""}</button></div>`;
 }
 function renderPanel() {
   counts();
@@ -368,11 +407,14 @@ function renderPanel() {
   // The list always follows the map; the header carries an add button instead of a "Limit to map" checkbox.
   const addEv = `<a class="addbtn" href="/add-event">+ Add event</a>`, addHouse = `<button class="addbtn" type="button" id="addHouse">+ Add house</button>`;
   if (state.tab === "events") {
-    const all = E.filter(evMatch).sort((a, b) => (b.f === 2 ? 1 : 0) - (a.f === 2 ? 1 : 0) || effStart(a).localeCompare(effStart(b)) || a.e.localeCompare(b.e) || a.n.localeCompare(b.n));
+    const ctr = mapReady ? map.getCenter() : null, dist = (e) => (ctr ? miles({ lat: ctr.lat, lng: ctr.lng }, e) : 0);
+    const soon = (a, b) => (b.f === 2 ? 1 : 0) - (a.f === 2 ? 1 : 0) || effStart(a).localeCompare(effStart(b)) || a.e.localeCompare(b.e) || a.n.localeCompare(b.n);
+    const all = E.filter(evMatch).sort(state.sort === "free" ? (a, b) => (b.free ? 1 : 0) - (a.free ? 1 : 0) || soon(a, b) : state.sort === "near" ? (a, b) => dist(a) - dist(b) || soon(a, b) : soon);
     const vis = state.layers.events ? all.filter((e) => inView(e.lng, e.lat) || state.sel === "e:" + e.id) : [];
-    head.innerHTML = `<div class="hrow"><span><b>${vis.length}</b> in map view${state.date ? " · open " + fmt(state.date) : ""}</span>${addEv}</div>${quickPicks()}`;
-    body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Layers.</div>`
-      : vis.length ? teaser() + `<div class="list">${vis.map(evItem).join("")}</div>`
+    const act = activeFilters();
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> event${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span><span class="hright"><label class="sortl">Sort <select class="sortsel" id="sortSel" aria-label="Sort events">${SORTS.map(([v, l]) => `<option value="${v}"${state.sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>${addEv}</span></div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
+    body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Filters, Show on map.</div>`
+      : vis.length ? teaser() + `<div class="list">${vis.map(evItem).join("")}</div><p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`
       : `<div class="empty">No events in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
@@ -403,7 +445,7 @@ function renderPanel() {
     const origin = state.start === "me" ? "" : og ? og.lat + "," + og.lng : pts[0];
     const url = navUrl(origin && !og && pts.length > 1 ? pts.slice(1) : pts, origin); // with a single stop and "First stop", the stop is also the destination
     const nights = st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s));
-    body.innerHTML = `<div class="list">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Open route in ${MAPS[mapsApp]} ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${mapsPicker()}${mapsApp === "apple" && st.length > 1 ? `<p class="meta" style="margin:6px 0 0">Multi-stop routes need iOS 18.4 or later; older iPhones open with the first stop.</p>` : ""}${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
+    body.innerHTML = `<div class="list route">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Open route in ${MAPS[mapsApp]} ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${mapsPicker()}${mapsApp === "apple" && st.length > 1 ? `<p class="meta" style="margin:6px 0 0">Multi-stop routes need iOS 18.4 or later; older iPhones open with the first stop.</p>` : ""}${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
   }
   body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
@@ -414,7 +456,14 @@ $("#pbody").addEventListener("click", (e) => {
   if (f) { e.stopPropagation(); const id = f.dataset.fav; favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); return; }
   const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) selectKey(it.dataset.key, "list");
 });
+$("#phead").addEventListener("change", (e) => { if (e.target.id === "sortSel") { state.sort = e.target.value; renderPanel(); $("#pbody").scrollTop = 0; } });
+$("#pbody").addEventListener("click", (e) => {
+  if (e.target.closest("[data-support]")) { openSupport(); return; }
+  const sh = e.target.closest("[data-share]"); if (sh) { e.stopPropagation(); shareItem("e:" + sh.dataset.share); }
+});
 $("#phead").addEventListener("click", (e) => {
+  const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
+  const cl = e.target.closest("[data-clear]"); if (cl) { clearFilter(cl.dataset.clear); return; }
   const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { popFor === "shopseason" ? closePop() : openPop(sc); return; }
   const sb = e.target.closest("[data-shop]"); if (sb) { state.shopCat = +sb.dataset.shop; renderPanel(); $("#pbody").scrollTop = 0; return; }
   const b = e.target.closest("[data-quick]"); if (!b) return;
@@ -453,7 +502,7 @@ function detailHtml(k) {
   <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button></div></div>`;
 }
 function wireDetail() {
-  $("#back").onclick = () => { state.detail = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
+  $("#back").onclick = () => { state.detail = null; if (isPhone()) state.sel = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
   const tr = $("#track"); if (tr) { const n = tr.children.length;
     document.querySelectorAll(".gallery .nav").forEach((b) => (b.onclick = () => tr.scrollBy({ left: tr.clientWidth * Number(b.dataset.g), behavior: "smooth" })));
     tr.onscroll = () => { const c = $("#gcount"); if (c) c.textContent = Math.round(tr.scrollLeft / tr.clientWidth) + 1 + " / " + n; }; }
@@ -531,7 +580,7 @@ function openSupport() {
   if ($("#sShop")) $("#sShop").onclick = () => { closeForm(); setTab("shop"); if (isPhone()) setSheet("full"); };
 }
 function closeForm() { pending.forEach((p) => URL.revokeObjectURL(p.url)); pending = []; $("#modal").hidden = true; $("#modal").innerHTML = ""; }
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("#modal").hidden) closeForm(); else if (!$("#pop").hidden) closePop(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("#modal").hidden) closeForm(); else if (fOpen) { closeFilters(); renderPanel(); } else if (!$("#moremenu").hidden) closeMore(); else if (!$("#pop").hidden) closePop(); else if ($("#seasonmenu")) closeSeasonMenu(); else if (!$("#preview").hidden) closePin(); } });
 async function shrink(file) {
   // Resize to at most 1600px on the long side and re-encode as JPEG
   const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
@@ -583,48 +632,142 @@ async function submitForm(e) {
   busy = false; const b = $("#fSubmit"); if (b) b.disabled = false;
 }
 
-/* ---------- filter popovers ---------- */
+/* ---------- popovers, filters panel, menu ---------- */
 let popFor = null;
 function closePop() { $("#pop").hidden = true; popFor = null; }
-document.addEventListener("click", (e) => { const p = $("#pop"); if (!p.hidden && !p.contains(e.target) && !e.target.closest("[data-pop]")) closePop(); });
-$("#chips").addEventListener("click", (e) => { const c = e.target.closest("[data-pop]"); if (!c) return; if (popFor === c.dataset.pop) { closePop(); return; } openPop(c); });
-$("#c-conf").onclick = () => { state.conf = !state.conf; applyFilters(); };
+document.addEventListener("click", (e) => { if (!e.target.isConnected) return; const p = $("#pop"); if (!p.hidden && !p.contains(e.target) && !e.target.closest("[data-pop]")) closePop(); });
 function setCity(n) {
   state.city = n; applyFilters(); const c = CITY_OPTS[n]; if (!c || !mapReady) return;
   const dLat = state.radius / 69, dLng = state.radius / (69 * Math.cos(c[0] * Math.PI / 180));
   map.fitBounds([[c[1] - dLng, c[0] - dLat], [c[1] + dLng, c[0] + dLat]], { padding: padding(), duration: 600 });
 }
+// The small drop-down under the Shop tab's "Shop for" button
 function openPop(chip) {
   const k = chip.dataset.pop, p = $("#pop"); popFor = k; let h = "";
-  if (k === "date") { const S = SEASONS[state.season]; h = `<h4>Open on</h4><input type="date" id="pDate" min="${S.dateRange[0]}" max="${S.dateRange[1]}" value="${state.date}">${S.quickDates.filter(([d]) => d >= TODAY).map(([d, l]) => `<button class="linkbtn" data-d="${d}">${esc(l)}</button>`).join("")}<button class="linkbtn" data-d="${TODAY}">Today</button><button class="linkbtn" data-d="">Any date</button>`; }
-  if (k === "city") h = `<h4>Near a city</h4><input type="search" id="pCityQ" placeholder="Type a city" aria-label="Find a city"><div class="citylist" id="pCityList"></div><h4>Within</h4><div class="seg">${[5, 10, 25].map((r) => `<button type="button" data-rad="${r}" class="${state.radius === r ? "on" : ""}">${r} mi</button>`).join("")}</div><button class="linkbtn" id="pAnyCity">Any city</button>`;
-  if (k === "county") h = `<h4>Counties</h4>${COUNTIES.map((c) => `<label class="opt"><input type="checkbox" value="${c}" ${state.counties.has(c) ? "checked" : ""}> ${c}</label>`).join("")}<button class="linkbtn" id="pAllC">All counties</button>`;
-  if (k === "cost") h = `<h4>Cost</h4><div class="seg">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-cost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div>`;
-  if (k === "type") h = `<h4>Type</h4><label class="opt"><input type="radio" name="pt" value="" ${!state.type ? "checked" : ""}> All types</label>${Object.entries(SEASONS[state.season].types).map(([v, l]) => `<label class="opt"><input type="radio" name="pt" value="${v}" ${state.type === v ? "checked" : ""}> ${esc(l)}</label>`).join("")}`;
   if (k === "shopseason") h = `<h4>Shop for</h4>${Object.keys(SITE.shop).filter((x) => SEASONS[x]).map((x) => `<label class="opt"><input type="radio" name="ss" value="${x}" ${x === shopSeason() ? "checked" : ""}> ${esc(SEASONS[x].short || SEASONS[x].label)}</label>`).join("")}`;
-  if (k === "layers") h = `<h4>Show on map</h4><label class="opt"><input type="checkbox" id="lEv" ${state.layers.events ? "checked" : ""}> <span class="tag paid">●</span> Events</label><label class="opt"><input type="checkbox" id="lIn" ${state.layers.inst ? "checked" : ""}> <span class="tag ice">●</span> Showcased houses</label>`;
   p.innerHTML = h; p.hidden = false;
   const r = chip.getBoundingClientRect(), pw = p.offsetWidth; p.style.top = r.bottom + 6 + "px"; p.style.left = Math.max(12, Math.min(r.left, innerWidth - pw - 12)) + "px";
-  p.querySelectorAll("[data-d]").forEach((b) => (b.onclick = () => { state.date = b.dataset.d; applyFilters(); closePop(); }));
-  const pd = $("#pDate"); if (pd) pd.onchange = (e) => { state.date = e.target.value; applyFilters(); };
-  const cq = $("#pCityQ");
-  if (cq) {
-    const draw = () => {
-      const v = cq.value.trim().toLowerCase(), L = $("#pCityList");
-      L.innerHTML = Object.keys(CITY_OPTS).sort().filter((n) => !v || n.toLowerCase().includes(v)).map((n) => `<button type="button" class="linkbtn" data-city="${esc(n)}" style="${n === state.city ? "color:var(--ink)" : ""}">${esc(n)}</button>`).join("") || `<span class="meta">No matching city</span>`;
-      L.querySelectorAll("[data-city]").forEach((b) => (b.onclick = () => { setCity(b.dataset.city); closePop(); }));
-    };
-    cq.oninput = draw; draw(); if (!isPhone()) cq.focus();
-  }
-  p.querySelectorAll("[data-rad]").forEach((b) => (b.onclick = () => { state.radius = +b.dataset.rad; p.querySelectorAll("[data-rad]").forEach((x) => x.classList.toggle("on", x === b)); state.city ? setCity(state.city) : applyFilters(); }));
-  const anyc = $("#pAnyCity"); if (anyc) anyc.onclick = () => { state.city = ""; applyFilters(); closePop(); fitSoCal(true); };
-  p.querySelectorAll("input[type=checkbox][value]").forEach((cb) => (cb.onchange = () => { cb.checked ? state.counties.add(cb.value) : state.counties.delete(cb.value); applyFilters(); }));
-  const ac = $("#pAllC"); if (ac) ac.onclick = () => { state.counties.clear(); applyFilters(); closePop(); };
-  p.querySelectorAll("[data-cost]").forEach((b) => (b.onclick = () => { state.cost = b.dataset.cost; applyFilters(); closePop(); }));
   p.querySelectorAll("input[name=ss]").forEach((r) => (r.onchange = () => { state.shopSeason = r.value; state.shopCat = 0; closePop(); renderPanel(); $("#pbody").scrollTop = 0; }));
-  p.querySelectorAll("input[name=pt]").forEach((r) => (r.onchange = () => { state.type = r.value; applyFilters(); closePop(); }));
-  const le = $("#lEv"), li = $("#lIn"); if (le) le.onchange = () => { state.layers.events = le.checked; applyFilters(); }; if (li) li.onchange = () => { state.layers.inst = li.checked; applyFilters(); };
 }
+
+/* Filters: one panel for everything that narrows the list (a popover on desktop, a full-height sheet on phones) */
+let fOpen = false, fAnchor = null;
+const SORTS = [["soon", "Soonest"], ["free", "Free first"], ["near", "Nearest"]];
+function activeFilters() {
+  const a = [], sat = nextSat();
+  if (state.date && state.date !== TODAY && state.date !== sat) a.push(["date", "Open " + fmt(state.date)]);
+  if (state.city) a.push(["city", "Near " + state.city + (state.radius !== 10 ? " · " + state.radius + " mi" : "")]);
+  state.counties.forEach((c) => a.push(["county:" + c, c + " County"]));
+  if (state.cost === "paid") a.push(["cost", "Ticketed only"]);
+  if (state.type) a.push(["type", TYPE_SHORT[state.type] || "Type"]);
+  if (state.conf) a.push(["conf", "Confirmed dates"]);
+  return a;
+}
+function clearFilter(k) {
+  if (k === "all") { state.date = ""; state.city = ""; state.counties.clear(); state.cost = "all"; state.type = ""; state.conf = false; }
+  else if (k === "date") state.date = ""; else if (k === "city") state.city = ""; else if (k === "cost") state.cost = "all";
+  else if (k === "type") state.type = ""; else if (k === "conf") state.conf = false; else if (k.startsWith("county:")) state.counties.delete(k.slice(7));
+  applyFilters();
+}
+function filtersHtml() {
+  const S = SEASONS[state.season], sat = nextSat(), nShow = E.filter(evMatch).length;
+  const ch = (on, attrs, label) => `<button type="button" class="fchip${on ? " on" : ""}" aria-pressed="${on}" ${attrs}>${label}</button>`;
+  return `<div class="fhead"><h2>Filters</h2><button class="xbtn" type="button" data-fdone aria-label="Close" title="Close">×</button></div>
+  <div class="fbody">
+    <section><h4>When</h4><div class="fchips">${ch(!state.date, 'data-fwhen="any"', "Any date")}${ch(state.date === TODAY, 'data-fwhen="today"', "Tonight")}${sat !== TODAY ? ch(state.date === sat, 'data-fwhen="sat"', "Saturday") : ""}</div>
+      <label class="fdate">or pick a day<input type="date" id="fDate" min="${S.dateRange[0]}" max="${S.dateRange[1]}" value="${esc(state.date)}"></label></section>
+    <section><h4>Near</h4>${state.city ? `<div class="fchips">${ch(true, 'data-clear="city"', esc(state.city) + " ✕")}</div>` : ""}
+      <input type="search" id="fCityQ" class="fq" placeholder="Type a city" aria-label="Find a city" autocomplete="off"><div class="fcities" id="fCityList"></div>
+      <div class="fseg" role="group" aria-label="Distance">${[5, 10, 25].map((r) => `<button type="button" data-rad="${r}" class="${state.radius === r ? "on" : ""}">${r} mi</button>`).join("")}</div></section>
+    <section><h4>County</h4><div class="fchips">${COUNTIES.map((c) => ch(state.counties.has(c), `data-county="${esc(c)}"`, esc(c.replace(/^Los Angeles$/, "LA")))).join("")}</div></section>
+    <section><h4>Cost</h4><div class="fseg" role="group" aria-label="Cost">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-fcost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div></section>
+    <section><h4>Type</h4><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}</div></section>
+    <section class="frow"><span><b>Confirmed dates only</b></span><button type="button" class="sw${state.conf ? " on" : ""}" role="switch" aria-checked="${state.conf}" data-fconf aria-label="Confirmed dates only"><i></i></button></section>
+    <section><h4>Show on map</h4><label class="opt"><input type="checkbox" data-layer="events" ${state.layers.events ? "checked" : ""}> Events</label><label class="opt"><input type="checkbox" data-layer="inst" ${state.layers.inst ? "checked" : ""}> Showcased houses</label></section>
+  </div>
+  <div class="ffoot"><button type="button" class="linkbtn" data-clear="all">Clear all</button><button type="button" class="btn" data-fdone>Show ${nShow.toLocaleString("en-US")} event${nShow === 1 ? "" : "s"}</button></div>`;
+}
+function fPanel() {
+  let f = $("#fpanel");
+  if (!f) {
+    f = document.createElement("div"); f.id = "fpanel"; f.className = "fpanel"; f.setAttribute("role", "dialog"); f.setAttribute("aria-modal", "true"); f.setAttribute("aria-label", "Filters"); f.hidden = true;
+    const bk = document.createElement("div"); bk.id = "fback"; bk.className = "fback"; bk.hidden = true; bk.onclick = closeFilters;
+    document.body.append(bk, f);
+    f.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-fdone]")) { closeFilters(); return; }
+      let c;
+      if ((c = t.closest("[data-clear]"))) { clearFilter(c.dataset.clear); return; }
+      if ((c = t.closest("[data-fwhen]"))) { const v = c.dataset.fwhen; state.date = v === "any" ? "" : v === "today" ? TODAY : nextSat(); applyFilters(); return; }
+      if ((c = t.closest("[data-county]"))) { const n = c.dataset.county; state.counties.has(n) ? state.counties.delete(n) : state.counties.add(n); applyFilters(); return; }
+      if ((c = t.closest("[data-fcost]"))) { state.cost = c.dataset.fcost; applyFilters(); return; }
+      if ((c = t.closest("[data-ftype]"))) { state.type = c.dataset.ftype; applyFilters(); return; }
+      if ((c = t.closest("[data-rad]"))) { state.radius = +c.dataset.rad; state.city ? setCity(state.city) : applyFilters(); return; }
+      if (t.closest("[data-fconf]")) { state.conf = !state.conf; applyFilters(); return; }
+      if ((c = t.closest("[data-city]"))) { setCity(c.dataset.city); return; }
+    });
+    f.addEventListener("change", (e) => {
+      if (e.target.id === "fDate") { state.date = e.target.value; applyFilters(); }
+      else if (e.target.dataset.layer) { state.layers[e.target.dataset.layer] = e.target.checked; applyFilters(); }
+    });
+    f.addEventListener("input", (e) => { if (e.target.id === "fCityQ") drawCityList(e.target.value); });
+  }
+  return f;
+}
+function drawCityList(q) {
+  const L = $("#fCityList"); if (!L) return; const v = (q || "").trim().toLowerCase();
+  if (!v) { L.innerHTML = ""; return; }
+  const hits = Object.keys(CITY_OPTS).sort().filter((n) => n.toLowerCase().includes(v)).slice(0, 6);
+  L.innerHTML = hits.map((n) => `<button type="button" class="linkbtn" data-city="${esc(n)}">${esc(n)}</button>`).join("") || `<span class="meta">No matching city</span>`;
+}
+function placeFilters() {
+  const f = $("#fpanel"); if (!f || f.hidden) return;
+  if (isPhone()) { f.style.top = f.style.left = f.style.maxHeight = ""; return; }
+  const r = fAnchor.getBoundingClientRect(), w = f.offsetWidth;
+  f.style.left = Math.max(12, Math.min(r.right - w, innerWidth - w - 12)) + "px"; f.style.top = r.bottom + 10 + "px";
+  f.style.maxHeight = Math.max(320, innerHeight - r.bottom - 24) + "px";
+}
+function refreshFilters() {
+  const f = $("#fpanel"); if (!f || f.hidden) return;
+  const sc = f.querySelector(".fbody")?.scrollTop || 0, q = f.querySelector("#fCityQ")?.value || "";
+  f.innerHTML = filtersHtml(); const b = f.querySelector(".fbody"); if (b) b.scrollTop = sc;
+  const qi = f.querySelector("#fCityQ"); if (qi && q) { qi.value = q; drawCityList(q); }
+}
+function openFilters(anchor) {
+  closeMore(); closePop(); closeSeasonMenu();
+  fAnchor = anchor; fOpen = true;
+  const f = fPanel(); f.hidden = false; f.innerHTML = filtersHtml(); $("#fback").hidden = !isPhone();
+  document.body.classList.add("filters-open"); placeFilters();
+}
+function closeFilters() { fOpen = false; const f = $("#fpanel"); if (f) f.hidden = true; const bk = $("#fback"); if (bk) bk.hidden = true; document.body.classList.remove("filters-open"); }
+document.addEventListener("click", (e) => { if (!e.target.isConnected) return; if (fOpen && !isPhone() && !e.target.closest("#fpanel,[data-openfilters]")) closeFilters(); });
+addEventListener("resize", placeFilters);
+
+/* ⋯ menu: support, night mode, add an event, showcase a house, contact */
+function closeMore() { const m = $("#moremenu"); if (m) m.hidden = true; const b = $("#morebtn"); if (b) b.setAttribute("aria-expanded", "false"); }
+function moreHtml() {
+  const dark = theme() === "dark";
+  const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
+  return row("button", 'type="button" data-m="support"', `<span style="color:var(--heart)">♥</span>`, "Support SoCal Lights", SITE.donateUrl ? "Tip us or shop the season" : "Shop the season")
+    + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, "☾", "Night mode", (dark ? "On" : "Off") + " · switches automatically after 6pm", `<span class="sw${dark ? " on" : ""}"><i></i></span>`)
+    + row("a", 'href="/add-event"', "+", "Add an event", "Free, takes a minute")
+    + row("button", 'type="button" data-m="house"', "⌂", "Showcase a house", "Post your lights")
+    + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, "✉", "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
+}
+function openMore() {
+  closeFilters(); closePop(); closeSeasonMenu();
+  const m = $("#moremenu"), b = $("#morebtn"); m.innerHTML = moreHtml(); m.hidden = false; b.setAttribute("aria-expanded", "true");
+  const r = b.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 10 + "px"; m.style.left = Math.max(10, Math.min(r.right - w, innerWidth - w - 10)) + "px";
+}
+$("#morebtn").onclick = () => ($("#moremenu").hidden ? openMore() : closeMore());
+$("#moremenu").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-m]"); if (!b) { if (e.target.closest("a")) closeMore(); return; }
+  const k = b.dataset.m;
+  if (k === "night") { setTheme(theme() === "dark" ? "light" : "dark"); $("#moremenu").innerHTML = moreHtml(); return; }
+  closeMore(); if (k === "support") openSupport(); else if (k === "house") openForm();
+});
+document.addEventListener("click", (e) => { if (!e.target.isConnected) return; const m = $("#moremenu"); if (m && !m.hidden && !e.target.closest("#moremenu,#morebtn")) closeMore(); });
+
 // "Coming up next" card at the top of the events list, or a way back to what's on now
 function teaser() {
   if (state.season !== NOW_SEASON) {
@@ -635,34 +778,27 @@ function teaser() {
   return `<button class="teaser" type="button" data-goseason="${next}" style="--tc:var(--s-${next})"><span>Coming up · from ${fmt(seasonStarts(next, TODAY))}</span><b>${esc(SEASONS[next].label)}</b><em>${n} event${n === 1 ? "" : "s"} already on the map</em><i>→</i></button>`;
 }
 function renderSeasonBar() {
-  const bar = $("#seasonbar"); if (!bar) return;
-  bar.innerHTML = seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="tab" data-season="${k}" aria-selected="${k === state.season}"${k === NOW_SEASON ? ' class="now" title="On now"' : ""}>${esc(SEASONS[k].short)}</button>${k === "christmas" ? `<button type="button" class="sdrop" data-sdrop aria-haspopup="menu" aria-expanded="false" aria-label="Holiday types"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>` : ""}`).join("");
-  bar.querySelectorAll("[data-season]").forEach((b) => (b.onclick = () => { closeSeasonMenu(); setSeason(b.dataset.season); }));
-  const dd = bar.querySelector("[data-sdrop]"); if (dd) dd.onclick = () => toggleSeasonMenu(dd);
   document.documentElement.dataset.season = state.season;
+  const sl = $("#seasonlbl"); if (sl) sl.textContent = SEASONS[state.season].short;
   repaintMap();
 }
-// Drop-down under Holidays: pick one of the types that make it up, or all of Holidays
+// One "Halloween ▾" button lists the five seasons (beside the search on desktop, under it on phones)
+function toggleSeasonPick(btn) {
+  if ($("#seasonmenu")) { closeSeasonMenu(); return; }
+  closeFilters(); closeMore(); closePop();
+  const m = document.createElement("div"); m.id = "seasonmenu"; m.setAttribute("role", "menu");
+  m.innerHTML = seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === state.season}" data-sp="${k}" class="${k === state.season ? "on" : ""}">${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : ""}</button>`).join("");
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 8 + "px"; m.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
+  btn.setAttribute("aria-expanded", "true");
+  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); setSeason(b.dataset.sp); };
+  setTimeout(() => document.addEventListener("click", function off(e) { if (!$("#seasonmenu")) { document.removeEventListener("click", off); return; } if (!e.target.closest("#seasonmenu,#seasonbtn")) { closeSeasonMenu(); document.removeEventListener("click", off); } }), 0);
+}
+$("#seasonbtn").onclick = (e) => toggleSeasonPick(e.currentTarget);
 function closeSeasonMenu() {
   const m = $("#seasonmenu"); if (m) m.remove();
   const dd = document.querySelector("[data-sdrop]"); if (dd) dd.setAttribute("aria-expanded", "false");
-}
-function toggleSeasonMenu(btn) {
-  if ($("#seasonmenu")) { closeSeasonMenu(); return; }
-  const types = SEASONS.christmas.types, cur = state.season === "christmas" ? state.type : null;
-  const m = document.createElement("div"); m.id = "seasonmenu"; m.setAttribute("role", "menu");
-  m.innerHTML = `<button type="button" role="menuitem" data-t="" class="${cur === "" ? "on" : ""}">All Holidays</button>` + Object.entries(types).map(([v, l]) => `<button type="button" role="menuitem" data-t="${v}" class="${cur === v ? "on" : ""}">${esc(l)}</button>`).join("");
-  document.body.appendChild(m);
-  const r = btn.getBoundingClientRect(), w = m.offsetWidth;
-  m.style.top = r.bottom + 8 + "px"; m.style.left = Math.max(8, Math.min(r.left - 40, innerWidth - w - 8)) + "px";
-  btn.setAttribute("aria-expanded", "true");
-  m.onclick = (e) => {
-    const b = e.target.closest("[data-t]"); if (!b) return;
-    const t = b.dataset.t; closeSeasonMenu();
-    if (state.season !== "christmas") setSeason("christmas");
-    state.type = t; applyFilters();
-  };
-  setTimeout(() => document.addEventListener("click", function off(e) { if (!e.target.closest("#seasonmenu,[data-sdrop]")) closeSeasonMenu(); document.removeEventListener("click", off); }, { once: false }), 0);
+  const sb = $("#seasonbtn"); if (sb) sb.setAttribute("aria-expanded", "false");
 }
 function repaintMap() {
   if (!mapReady || !map.getLayer("clusters")) return;
@@ -677,8 +813,7 @@ function nextSwitch() { const d = new Date(); d.setMinutes(0, 0, 0); const h = d
 function setTheme(t, manual = true) {
   document.documentElement.dataset.theme = t;
   if (manual) { try { localStorage.setItem("socal-theme", t); localStorage.setItem("socal-theme-until", String(nextSwitch())); } catch {} }
-  const b = $("#themebtn"), night = t === "dark";
-  b.setAttribute("aria-label", night ? "Switch to day mode" : "Switch to night mode"); b.title = night ? "Day mode" : "Night mode";
+  const night = t === "dark";
   document.querySelector('meta[name="theme-color"]').content = night ? "#0b0d12" : "#f6f4f0";
   map.setStyle(MAP_STYLES[t], { diff: false });
 }
@@ -688,9 +823,7 @@ setInterval(() => {
   if (until > Date.now()) return;
   const t = autoTheme(); if (t !== theme()) setTheme(t, false);
 }, 60000);
-$("#supportbtn").onclick = openSupport;
-$("#themebtn").onclick = () => setTheme(theme() === "dark" ? "light" : "dark");
-if (theme() === "dark") { $("#themebtn").setAttribute("aria-label", "Switch to day mode"); $("#themebtn").title = "Day mode"; document.querySelector('meta[name="theme-color"]').content = "#0b0d12"; }
+if (theme() === "dark") document.querySelector('meta[name="theme-color"]').content = "#0b0d12";
 function setSeason(k) {
   if (!SEASONS[k] || k === state.season) return;
   state.season = k; state.shopCat = 0; state.shopSeason = ""; state.type = ""; state.date = ""; state.sel = null; state.detail = null;
@@ -699,23 +832,9 @@ function setSeason(k) {
 }
 function applyFilters() {
   syncShopTab();
-  $("#c-date").textContent = state.date ? "Open " + fmt(state.date) : "Any date";
-  $("#c-city").textContent = state.city ? "Near " + state.city + (state.radius !== 10 ? ` (${state.radius} mi)` : "") : "Any city";
-  $("#c-county").textContent = state.counties.size === 0 ? "All counties" : state.counties.size === 1 ? [...state.counties][0] : state.counties.size + " counties";
-  $("#c-cost").textContent = { all: "Free or ticketed", free: "Free only", paid: "Ticketed only" }[state.cost];
-  $("#c-type").textContent = state.type ? TYPE_SHORT[state.type] : "All types";
-  document.querySelector('[data-pop="date"]').classList.toggle("on", !!state.date);
-  document.querySelector('[data-pop="city"]').classList.toggle("on", !!state.city);
-  document.querySelector('[data-pop="county"]').classList.toggle("on", state.counties.size > 0);
-  document.querySelector('[data-pop="cost"]').classList.toggle("on", state.cost !== "all");
-  document.querySelector('[data-pop="type"]').classList.toggle("on", !!state.type);
-  $("#c-conf").classList.toggle("on", state.conf);
-  const nf = [state.date, state.city, state.counties.size, state.cost !== "all", state.type, state.conf].filter(Boolean).length;
-  $("#fcount").textContent = nf; $("#fcount").hidden = !nf;
   state.detail = null; renderPanel(); drawMap(); renderPreview();
+  if (fOpen) { refreshFilters(); placeFilters(); }
 }
-// Phone: the filter chips sit behind the filter button in the search bar (desktop always shows them)
-$("#fbtn").onclick = () => { const open = !document.querySelector(".topbar").classList.contains("fopen"); document.querySelector(".topbar").classList.toggle("fopen", open); $("#fbtn").setAttribute("aria-expanded", open); if (!open) closePop(); };
 // Phone: the floating tab bar drives the same three tabs as the panel
 document.querySelectorAll("#bnav [data-tab]").forEach((b) => (b.onclick = () => $("#t-" + b.dataset.tab).click()));
 // the phone's search box shares its row with the logo and night-mode button, so keep the hint short enough to fit
@@ -727,16 +846,15 @@ let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { sta
 // Collapsed sheet height on phones: just the grab handle and the quick-picks row, sitting above the tab bar
 // (tab bar 58px + 12px gap, handle ~19px, header row ~48px, a little air); the list tucks behind the tab bar
 // (plus the home-indicator strip on newer iPhones, which the tab bar sits above)
-const PEEK = 160;
+const PEEK = 152; // the handle and the buttons row, with the sheet ending just below them (the bottom bar floats over the rest)
 let safeBottom = null;
 function peekH() {
   if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
   return PEEK + safeBottom;
 }
 let sheetState = "peek";
-// Half stop sits just above the middle of the screen
-const HALF = 0.55;
-function stopH(s) { const ph = $("#panel").offsetHeight || innerHeight * 0.8; return Math.min(ph, s === "peek" ? peekH() : s === "half" ? Math.round(innerHeight * HALF) : ph); }
+// Two positions only: Peek (just the buttons row) or Full
+function stopH(s) { const ph = $("#panel").offsetHeight || innerHeight * 0.8; return Math.min(ph, s === "peek" ? peekH() : ph); }
 function sheetVisible() { return isPhone() ? stopH(sheetState) : 0; }
 // Below the middle of the screen the header collapses to one compact row; the list itself is always vertical
 function setRowLayout(vis) {
@@ -770,7 +888,7 @@ function setSheet(s) {
 (function () {
   const panel = $("#panel"), body = $("#pbody"), g = $("#grab");
   const d = { y0: null, start: 0, moved: false, justDragged: false };
-  const NEXT = { peek: "half", half: "full", full: "peek" }; // tapping the handle steps up through the stops
+  const NEXT = { peek: "full", full: "peek" }; // tapping the handle switches between the two
   const clampY = (y) => Math.max(0, Math.min(panel.offsetHeight - 80, y));
   function begin(y) { d.y0 = y; d.start = panel.offsetHeight - sheetVisible(); d.moved = false; }
   function move(y) {
@@ -787,11 +905,8 @@ function setSheet(s) {
     const dy = y - d.y0, moved = d.moved; d.y0 = null; panel.classList.remove("dragging");
     if (!moved) return false;
     const vis = panel.offsetHeight - clampY(d.start + dy);
-    const opts = ["peek", "half", "full"].map((s) => [s, stopH(s)]);
-    let pick;
-    if (dy < -40) pick = opts.find((o) => o[1] >= vis - 1) || opts[opts.length - 1]; // flicked up: next stop above
-    else if (dy > 40) pick = [...opts].reverse().find((o) => o[1] <= vis + 1) || opts[0]; // flicked down: next stop below
-    else pick = [...opts].sort((a, b) => Math.abs(a[1] - vis) - Math.abs(b[1] - vis))[0];
+    const mid = (stopH("peek") + stopH("full")) / 2;
+    const pick = [dy < -40 ? "full" : dy > 40 ? "peek" : vis > mid ? "full" : "peek"]; // a flick decides; a slow drag snaps to the nearer position
     setSheet(pick[0]); scheduleList();
     d.justDragged = true; setTimeout(() => (d.justDragged = false), 50);
     return true;
@@ -826,7 +941,7 @@ function setSheet(s) {
   body.addEventListener("touchend", tend); body.addEventListener("touchcancel", tend);
 
   g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSheet(NEXT[sheetState]); } });
-  document.querySelectorAll(".ptab").forEach((t) => t.addEventListener("click", () => { if (isPhone() && sheetState === "peek") setSheet("half"); }));
+  document.querySelectorAll(".ptab").forEach((t) => t.addEventListener("click", () => { if (isPhone() && sheetState === "peek") setSheet("full"); }));
 })();
 
 /* ---------- boot ---------- */
@@ -840,7 +955,12 @@ async function load() {
     $("#pbody").innerHTML = `<div class="empty">Events couldn't load. Check your connection and refresh the page.</div>`; return;
   }
   renderSeasonBar(); applyFilters();
-  const h = location.hash.slice(1);
+  const h = location.hash.slice(1), dl = h.match(/^([eh])-(.+)$/);
+  if (dl) {
+    const ev = dl[1] === "e" ? E.find((x) => x.id === dl[2]) : null, ho = dl[1] === "h" ? SHOW.find((x) => x.id === dl[2]) : null, sn = ev ? ev.sn : ho ? ho.season : "";
+    if (SEASONS[sn]) setSeason(sn);
+    if (ev) selectKey("e:" + ev.id, "list"); else if (ho) { setTab("inst"); selectKey("i:" + ho.id, "list"); }
+  }
   if (SEASONS[h]) setSeason(h);
   if (h === "houses" || h === "showcase") { setTab("inst"); if (h === "showcase") openForm(); }
 }

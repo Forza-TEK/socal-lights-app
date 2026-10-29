@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="/styles.css?v=20261028zh">
+<link rel="stylesheet" href="/styles.css?v=20261028zk">
 </head>
 <body>
 <div id="map" role="region" aria-label="Street map of Southern California"></div>
@@ -33,28 +33,9 @@
     <div class="search">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="Search events or a city" aria-label="Search">
-      <button class="fbtn" id="fbtn" type="button" aria-expanded="false" aria-controls="chips" aria-label="Filters">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
-        <span class="fcount" id="fcount" hidden>0</span>
-      </button>
     </div>
-    <button class="iconbtn small" id="supportbtn" type="button" aria-label="Support SoCal Lights" title="Support SoCal Lights">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" d="M12 11.500s-5.500-3.300-5.500-7a3 3 0 0 1 5.500-1.600 3 3 0 0 1 5.500 1.600c0 3.700-5.500 7-5.500 7z"/><path d="M3 16v5"/><path d="M3 17h4.500l3 1.800h5.500a1.800 1.800 0 0 0 0-3.600h-4"/><path d="m10.500 18.800 7.500-1 3-2.800"/></svg>
-    </button>
-    <button class="iconbtn" id="themebtn" type="button" aria-label="Switch to night mode" title="Night mode">
-      <svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
-      <svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-    </button>
-  </div>
-  <div class="seasonbar" id="seasonbar" role="tablist" aria-label="Season"></div>
-  <div class="chips" id="chips">
-    <button class="chip" type="button" data-pop="date"><span id="c-date">Any date</span><span class="caret">▾</span></button>
-    <button class="chip" type="button" data-pop="city"><span id="c-city">Any city</span><span class="caret">▾</span></button>
-    <button class="chip" type="button" data-pop="county"><span id="c-county">All counties</span><span class="caret">▾</span></button>
-    <button class="chip" type="button" data-pop="cost"><span id="c-cost">Free or ticketed</span><span class="caret">▾</span></button>
-    <button class="chip" type="button" data-pop="type"><span id="c-type">All types</span><span class="caret">▾</span></button>
-    <button class="chip" type="button" id="c-conf">Dates confirmed</button>
-    <button class="chip" type="button" data-pop="layers"><span>Layers</span><span class="caret">▾</span></button>
+    <button class="seasonbtn" id="seasonbtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Season"><span id="seasonlbl">Halloween</span><i class="sdot" aria-hidden="true"></i><span class="caret" aria-hidden="true">▾</span></button>
+    <button class="iconbtn" id="morebtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Menu" title="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
   </div>
 </div>
 
@@ -81,9 +62,10 @@
 </nav>
 
 <div class="pop" id="pop" hidden></div>
+<div class="menu" id="moremenu" role="menu" hidden></div>
 <div class="modal" id="modal" hidden></div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script type="module" src="/app.js?v=20261028zh"></script>
+<script type="module" src="/app.js?v=20261028zk"></script>
 </body>
 </html>
