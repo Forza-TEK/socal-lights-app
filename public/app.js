@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zq";
+import { SITE } from "/site-config.js?v=20261028zr";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -345,7 +345,7 @@ function photoOf(ev, hero) {
   return k ? { src: stock, credit: sc, link: st.src } : null;
 }
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
-const photoImg = (ph) => `<img class="evimg" src="${esc(ph.src)}"${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
+const photoImg = (ph, eager) => `<img class="evimg" src="${esc(ph.src)}"${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt="" loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`;
 document.addEventListener("load", (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains("evimg")) e.target.classList.add("ld"); }, true);
 document.addEventListener("error", (e) => {
   const i = e.target;
@@ -383,10 +383,10 @@ function priceLine(ev) {
 }
 const cut = (t, n) => (t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t);
 const hoursOf = (ev) => (ev.h && !/^check/i.test(ev.h) ? cut(ev.h, 30) : "");
-function evItem(ev) {
+function evItem(ev, i = 99) {
   const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
   // Same layout as the card that opens when you tap a dot on the map
-  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span></div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts"><button class="shr" type="button" data-share="${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
+  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 8) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span></div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts"><button class="shr" type="button" data-share="${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
 }
 function instItem(p) {
   const ph = p.photos || [], k = "i:" + p.id, f = favs.has(hfav(p));
@@ -415,7 +415,7 @@ function renderPanel() {
     const act = activeFilters();
     head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> event${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span><span class="hright"><label class="sortl">Sort <select class="sortsel" id="sortSel" aria-label="Sort events">${SORTS.map(([v, l]) => `<option value="${v}"${state.sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>${addEv}</span></div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
     body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Filters, Show on map.</div>`
-      : vis.length ? `<div class="list">${vis.map(evItem).join("")}</div>${teaser()}<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`
+      : vis.length ? `<div class="list">${vis.map((e, i) => evItem(e, i)).join("")}</div>${teaser()}<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`
       : `<div class="empty">No events in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
@@ -842,24 +842,28 @@ fitHint(); addEventListener("resize", fitHint);
 let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); }, 120); };
 
 /* ---------- bottom sheet (phone) ---------- */
-// Collapsed sheet height on phones: just the grab handle and the quick-picks row, sitting above the tab bar
-// (tab bar 58px + 12px gap, handle ~19px, header row ~48px, a little air); the list tucks behind the tab bar
-// (plus the home-indicator strip on newer iPhones, which the tab bar sits above)
-const PEEK = 152; // the handle and the buttons row, with the sheet ending just below them (the bottom bar floats over the rest)
-let safeBottom = null;
-function peekH() {
-  if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
-  return PEEK + safeBottom;
+// The sheet has two positions: Peek (the handle and the buttons row, ending just below them, above the floating tab bar) and Full.
+// Everything inside is always laid out and loaded; resizing only changes the sheet's height and its distance from the screen bottom,
+// so nothing blinks or reloads while it moves.
+const NAVZ = 78;        // screen bottom to the top of the floating tab bar: 12px offset + 58px bar + 8px air
+const PEEK_PANEL = 66;  // the sheet's own height at Peek: handle + buttons row + a few px
+let safeBottom = null, safeTop = null;
+function insets() {
+  if (safeBottom !== null) return;
+  const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px);top:env(safe-area-inset-top,0px)"; document.body.appendChild(t);
+  safeBottom = t.offsetHeight; safeTop = Math.round(t.getBoundingClientRect().top); t.remove();
 }
+const navZ = () => { insets(); return NAVZ + safeBottom; };
+function peekH() { insets(); return NAVZ + PEEK_PANEL + safeBottom; }
+const fullH = () => { insets(); return Math.round(innerHeight - safeTop - 112); };
 let sheetState = "peek";
-// Two positions only: Peek (just the buttons row) or Full
-function stopH(s) { const ph = $("#panel").offsetHeight || innerHeight * 0.8; return Math.min(ph, s === "peek" ? peekH() : ph); }
+const stopH = (s) => (s === "peek" ? peekH() : fullH());
 function sheetVisible() { return isPhone() ? stopH(sheetState) : 0; }
-// Below the middle of the screen the header collapses to one compact row; the list itself is always vertical
-function setRowLayout(vis) {
-  const panel = $("#panel"), row = isPhone() && vis < innerHeight * 0.5;
-  if (row === panel.classList.contains("peek")) return;
-  panel.classList.toggle("peek", row);
+// vis = how much of the screen the sheet covers from the bottom, between Peek and Full
+function applySheet(vis) {
+  const panel = $("#panel"), pk = peekH(), fl = fullH(), v = Math.max(pk, Math.min(fl, vis)), pr = (v - pk) / (fl - pk), b = navZ() * (1 - pr);
+  panel.style.setProperty("--sheet-b", b + "px"); panel.style.setProperty("--sheet-h", Math.max(60, v - b) + "px");
+  return v;
 }
 // After the sheet moves, scroll the list just enough to keep the selected card on screen (above the tab bar, below the header)
 let keepT = null;
@@ -876,9 +880,8 @@ function keepSelectedVisible() {
 }
 function setSheet(s) {
   sheetState = s; const panel = $("#panel");
-  setRowLayout(sheetVisible());
-  if (!isPhone()) { panel.style.removeProperty("--sheet-y"); return; }
-  panel.style.setProperty("--sheet-y", panel.offsetHeight - sheetVisible() + "px");
+  if (!isPhone()) { panel.style.removeProperty("--sheet-b"); panel.style.removeProperty("--sheet-h"); return; }
+  applySheet(stopH(s));
   document.documentElement.style.setProperty("--peek", sheetVisible() + "px");
   keepSelectedVisible();
 }
@@ -886,27 +889,22 @@ function setSheet(s) {
 // swiping up on a list that isn't full height expands the sheet; swiping down at the top of the list collapses it.
 (function () {
   const panel = $("#panel"), body = $("#pbody"), g = $("#grab");
-  const d = { y0: null, start: 0, moved: false, justDragged: false };
+  const d = { y0: null, startVis: 0, vis: 0, moved: false, justDragged: false };
   const NEXT = { peek: "full", full: "peek" }; // tapping the handle switches between the two
-  const clampY = (y) => Math.max(0, Math.min(panel.offsetHeight - 80, y));
-  function begin(y) { d.y0 = y; d.start = panel.offsetHeight - sheetVisible(); d.moved = false; }
+  function begin(y) { d.y0 = y; d.startVis = innerHeight - panel.getBoundingClientRect().top; d.vis = d.startVis; d.moved = false; }
   function move(y) {
     if (d.y0 === null) return false;
     const dy = y - d.y0;
     if (!d.moved) { if (Math.abs(dy) < 6) return false; d.moved = true; panel.classList.add("dragging"); }
-    const y1 = clampY(d.start + dy);
-    panel.style.setProperty("--sheet-y", y1 + "px");
-    setRowLayout(panel.offsetHeight - y1); // switch between card row and list live as the sheet crosses the middle
+    d.vis = applySheet(d.startVis - dy); // the sheet follows the finger
     return true;
   }
   function end(y) {
     if (d.y0 === null) return false;
     const dy = y - d.y0, moved = d.moved; d.y0 = null; panel.classList.remove("dragging");
     if (!moved) return false;
-    const vis = panel.offsetHeight - clampY(d.start + dy);
-    const mid = (stopH("peek") + stopH("full")) / 2;
-    const pick = [dy < -40 ? "full" : dy > 40 ? "peek" : vis > mid ? "full" : "peek"]; // a flick decides; a slow drag snaps to the nearer position
-    setSheet(pick[0]); scheduleList();
+    const mid = (peekH() + fullH()) / 2;
+    setSheet(dy < -40 ? "full" : dy > 40 ? "peek" : d.vis > mid ? "full" : "peek"); // a flick decides; a slow drag snaps to the nearer position
     d.justDragged = true; setTimeout(() => (d.justDragged = false), 50);
     return true;
   }

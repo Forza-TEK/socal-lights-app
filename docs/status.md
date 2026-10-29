@@ -84,3 +84,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - The "Coming up" banner now sits at the end of the events list, above "Enjoying SoCal Lights? Keep it free".
 - The ⋯ menu's support item is now "Keep SoCal Lights Free" with the hand-and-heart icon.
 - Removed the colored dot from the Season button.
+- Phone list sheet: it now resizes by changing its height (not by hiding and showing content), so the buttons row, the count / sort / + Add line and the cards are always loaded and nothing blinks while it moves. Peek is the handle and the Filters / Tonight / Saturday / Free row with the sheet ending just below it; the first 8 event photos load eagerly so they are ready when the list opens.
