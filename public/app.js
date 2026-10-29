@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zv";
+import { SITE } from "/site-config.js?v=20261028zw";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -317,7 +317,8 @@ function placePin() {
 }
 /* ---------- panel ---------- */
 function setTab(t) { state.tab = t; state.detail = null; ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
-  document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute(); }
+  document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute();
+  for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin"); void el.offsetWidth; el.classList.add("tabin"); } }
 $("#t-events").onclick = () => setTab("events"); $("#t-shop").onclick = () => setTab("shop"); $("#t-plan").onclick = () => setTab("plan");
 function fitRoute() { const st = routeStops(), og = routeOrigin(); if (st.length + (og ? 1 : 0) < 2 || !mapReady) return; const b = new maplibregl.LngLatBounds(); st.forEach((e) => b.extend([e.lng, e.lat])); if (og) b.extend([og.lng, og.lat]); map.fitBounds(b, { padding: padding(), maxZoom: 13, duration: 600 }); }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
@@ -387,14 +388,16 @@ function priceLine(ev) {
 }
 const cut = (t, n) => (t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t);
 const hoursOf = (ev) => (ev.h && !/^check/i.test(ev.h) ? cut(ev.h, 30) : "");
-function evItem(ev, i = 99) {
+function evItem(ev, i = 99, x = null) {
   const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
   // Same layout as the card that opens when you tap a dot on the map
-  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 8) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span></div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts"><button class="shr" type="button" data-share="e:${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
+  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 8) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts"><button class="shr" type="button" data-share="e:${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div>${x ? legLine(x) : ""}<div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
 }
-function instItem(p) {
+// My night: the stop number and the drive from the previous stop
+const legLine = (x) => `<div class="legline">${x.leg ? `↓ ${x.leg.mi} mi · ~${x.leg.min} min from ${esc(x.leg.from)}` : "Start here"}</div>`;
+function instItem(p, x = null) {
   const ph = p.photos || [], k = "i:" + p.id, f = favs.has(hfav(p)), sn = SEASONS[p.season] ? SEASONS[p.season].short : "";
-  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span></div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts"><button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="dates">${esc(sn)} display · Free to view</div><div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
+  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span>${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts"><button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="dates">${esc(sn)} display · Free to view</div>${x ? legLine(x) : ""}<div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
@@ -430,20 +433,28 @@ function renderPanel() {
     head.innerHTML = `<div class="hrow"><button class="chip" type="button" data-pop="shopseason" aria-haspopup="true"><span>Shop for ${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</span><span class="caret">▾</span></button></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
     body.innerHTML = `<div class="shopgrid">${c[1].map(([em, l, q]) => `<a class="shopcard" href="${amzUrl(q)}" target="_blank" rel="sponsored noopener"><span class="shopem" aria-hidden="true">${em}</span><span class="shoptx">${esc(l)}</span><span class="shopgo">Amazon ↗</span></a>`).join("")}</div><p class="meta" style="padding:4px 14px 14px">As an Amazon Associate we earn from qualifying purchases, at no extra cost to you.</p>`;
   } else {
+    // My night uses the same layout as Places: buttons row, count line, then the cards
     const st = routeStops();
-    head.innerHTML = `<span><b>${favs.size}</b> starred</span><label class="toggle">Start from <select id="startFrom" style="border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:2px 4px;max-width:150px"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
-    $("#startFrom").onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
-    if (!st.length) { body.innerHTML = `<div class="empty"><b style="color:var(--ink)">Plan your family's night out</b>Tap the heart on any place to add it. Your stops get a sensible driving order from where you are, a route on the map, and a link for your maps app.</div>`; return; }
-    if (state.start === "me") locateMe(false);
-    let html = "", prev = routeOrigin(), total = 0;
-    if (state.start === "me") html += `<div class="meta" style="padding:0 0 4px 2px">${state.me ? "📍 Starting from your location" : state.meErr ? esc(state.meErr) : "Finding your location…"}</div>`;
-    st.forEach((ev) => { if (prev) { const m = miles(prev, ev) * 1.3; total += m; html += `<div class="meta leg">↓ about ${Math.round(m)} mi · ~${Math.max(5, Math.round(m * 1.6))} min</div>`; } html += ev.house ? instItem(ev.p) : evItem(ev); prev = ev; });
+    if (state.start === "me" && st.length) locateMe(false);
+    let prev = routeOrigin(), total = 0, mins = 0;
+    const legs = st.map((ev, i) => { let l = null; if (prev) { const m = miles(prev, ev) * 1.3, mn = Math.max(5, Math.round(m * 1.6)); total += m; mins += mn; l = { mi: Math.round(m), min: mn, from: i === 0 ? (state.start === "me" ? "your location" : state.start) : "stop " + i }; } prev = ev; return l; });
     // With "My location" we leave out the starting point, so the maps app starts from wherever the phone is right now.
     const pts = st.map(destOf), og = routeOrigin();
     const origin = state.start === "me" ? "" : og ? og.lat + "," + og.lng : pts[0];
-    const url = navUrl(origin && !og && pts.length > 1 ? pts.slice(1) : pts, origin); // with a single stop and "First stop", the stop is also the destination
-    const nights = st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s));
-    body.innerHTML = `<div class="list route">${html}</div><div class="row" style="margin-top:14px"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Open route in ${MAPS[mapsApp]} ↗</a><span class="meta">About ${Math.round(total)} driving miles (estimate)</span></div>${mapsPicker()}${mapsApp === "apple" && st.length > 1 ? `<p class="meta" style="margin:6px 0 0">Multi-stop routes need iOS 18.4 or later; older iPhones open with the first stop.</p>` : ""}${nights.length ? `<p class="meta">One-night events on your list: ${nights.join(", ")}.</p>` : ""}`;
+    const url = st.length ? navUrl(origin && !og && pts.length > 1 ? pts.slice(1) : pts, origin) : ""; // with a single stop and "First stop", the stop is also the destination
+    const dur = mins >= 60 ? Math.floor(mins / 60) + " hr" + (mins % 60 ? " " + (mins % 60) + " min" : "") : mins + " min";
+    const startSel = `<label class="qsel">Start <select id="startFrom" aria-label="Start from"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
+    const mapsSel = `<label class="qsel">Maps <select id="mapsSel" aria-label="Maps app">${Object.entries(MAPS).map(([k, l]) => `<option value="${k}"${k === mapsApp ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span></div>${st.length ? `<div class="quick" role="group" aria-label="Route options"><a class="qgo" href="${esc(url)}" target="_blank" rel="noopener" title="Open route in ${MAPS[mapsApp]}">Open route ↗</a>${startSel}${mapsSel}</div>` : ""}`;
+    const sf = $("#startFrom"); if (sf) sf.onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
+    const ms = $("#mapsSel"); if (ms) ms.onchange = (e) => setMapsApp(e.target.value);
+    if (!st.length) { body.innerHTML = `<div class="empty"><b style="color:var(--ink)">Plan your family's night out</b>Tap the heart on any place to add it. Your stops get a sensible driving order from where you are, a route on the map, and a link for your maps app.</div>`; return; }
+    const notes = [];
+    if (state.start === "me" && !state.me) notes.push(state.meErr ? esc(state.meErr) : "Finding your location…");
+    const nights = [...new Set(st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s)))];
+    if (nights.length) notes.push(`One-night events: ${nights.join(", ")}.`);
+    if (mapsApp === "apple" && st.length > 1) notes.push("Multi-stop routes in Apple Maps need iOS 18.4 or later. Older iPhones open with the first stop.");
+    body.innerHTML = `<div class="list">${st.map((ev, i) => (ev.house ? instItem(ev.p, { n: i + 1, leg: legs[i] }) : evItem(ev, i, { n: i + 1, leg: legs[i] }))).join("")}</div>${notes.length ? `<ul class="routenotes">${notes.map((n) => `<li>${n}</li>`).join("")}</ul>` : ""}`;
   }
   body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
