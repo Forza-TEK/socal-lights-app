@@ -98,7 +98,8 @@ $("#start").addEventListener("change", () => { if (!$("#end").value || $("#end")
 // Cloudflare Turnstile ("I am human"), same as the Showcase a House form
 let widget = null;
 const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
-if (cfg.featureCheckout) $("#boost").hidden = false; // paid placement is offered only when online payment is switched on
+const IN_APP = /SoCalLightsApp/.test(navigator.userAgent); if (IN_APP) document.querySelectorAll(".meta a[href=\"/feature\"]").forEach((x) => x.closest("p").remove());
+if (cfg.featureCheckout && !IN_APP) $("#boost").hidden = false; // paid placement is offered only when online payment is switched on
 if (cfg.turnstileSiteKey) {
   await new Promise((res) => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = res; s.onerror = res; document.head.appendChild(s); });
   if (window.turnstile) widget = window.turnstile.render("#ts", { sitekey: cfg.turnstileSiteKey });
@@ -114,7 +115,7 @@ $("#f").addEventListener("submit", async (x) => {
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || "Something went wrong. Please try again.");
     const plan = (document.querySelector("input[name=plan]:checked") || {}).value || "";
-    if (plan && cfg.featureCheckout) {
+    if (plan && cfg.featureCheckout && !IN_APP) {
       // Straight on to Stripe to pay for the placement. A published event is featured by its id; one in review is held until it is approved.
       msg.textContent = "Taking you to the secure payment page…";
       const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(d.status === "published" || d.status === "duplicate" ? { event_id: d.id, plan } : { submission_id: d.submission_id, plan }) });

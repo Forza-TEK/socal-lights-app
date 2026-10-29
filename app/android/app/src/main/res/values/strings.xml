@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SoCal Lights</string>
+    <string name="title_activity_main">SoCal Lights</string>
+    <string name="package_name">app.socallights.lights</string>
+    <string name="custom_url_scheme">app.socallights.lights</string>
+</resources>
