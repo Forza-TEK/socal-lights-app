@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zx";
+import { SITE } from "/site-config.js?v=20261028zy";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -293,16 +293,24 @@ function renderPreview() {
     pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close">×</button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
   } else {
     const p = it.p, ph = p.photos || [];
-    pv.innerHTML = `<div class="tile pv-photo has-photo">${ph.length ? `<img class="evimg ld" src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close">×</button></div><div class="pv-body"><div class="pv-top"><strong>${esc(p.title)}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
+    const many = ph.length > 1;
+    pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide"><img class="evimg ld" src="${photoUrl(k2)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i < 2 ? "eager" : "lazy"}" draggable="false"></div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo">‹</button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo">›</button><span class="pvcount" id="pvcount">1 / ${ph.length}</span>` : ph.length ? `<img class="evimg ld" src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close">×</button></div><div class="pv-body"><div class="pv-top"><strong>${esc(p.title)}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
   }
   pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); placePin();
+  const tr = $("#pvtrack");
+  if (tr) tr.addEventListener("scroll", () => { const i = Math.round(tr.scrollLeft / tr.clientWidth); $("#pvcount").textContent = i + 1 + " / " + tr.children.length; }, { passive: true });
   pv.onclick = (e) => {
+    const g = e.target.closest("[data-pvg]"); if (g) { e.stopPropagation(); const t = $("#pvtrack"); t.scrollBy({ left: +g.dataset.pvg * t.clientWidth, behavior: "smooth" }); return; }
+    if (e.target.closest("#pvtrack") && pvSwiped) { pvSwiped = false; return; }
     if (e.target.closest(".x")) { closePin(); return; }
     if (e.target.closest("[data-pvshare]")) { shareItem(k); return; }
     if (e.target.closest("[data-pvfav]")) { const id = it.kind === "ev" ? it.ev.id : hfav(it.p); favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); renderPreview(); return; }
     openDetail(k);
   };
 }
+let pvSwiped = false; // a swipe through the photos must not count as a tap that opens the details
+document.addEventListener("touchmove", (e) => { if (e.target.closest && e.target.closest("#pvtrack")) pvSwiped = true; }, { passive: true });
+document.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#pvtrack")) pvSwiped = false; }, { passive: true });
 function closePin() { state.sel = null; $("#preview").hidden = true; document.body.classList.remove("pin-open"); drawHL(); markItems(); }
 // Desktop: the card sits next to its dot (below it, or above when there is no room) and follows the map as it moves
 function placePin() {
