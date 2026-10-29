@@ -365,7 +365,8 @@ button{touch-action:manipulation}
 
 /* ---------- top bar: search, season, menu ---------- */
 .seasonbtn{flex:none;display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 18px;border:0;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);font:800 16px var(--f-body);color:var(--ink);cursor:pointer;white-space:nowrap}
-.seasonbtn .caret{font-size:11px;opacity:.6}
+.seasonbtn .caret{flex:none;margin-right:-4px;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.seasonbtn[aria-expanded="true"] .caret{transform:rotate(180deg)}
 #seasonbar{display:none}
 #seasonmenu .nowtag{font-size:11px;font-weight:800;color:var(--season-ink);background:var(--season-soft);border-radius:999px;padding:2px 8px;margin-left:6px;letter-spacing:.03em}
 .menu{position:fixed;z-index:70;width:min(320px,calc(100vw - 20px));background:var(--surface);border-radius:20px;box-shadow:var(--shadow);padding:8px;display:grid;gap:2px}
@@ -569,3 +570,14 @@ button{touch-action:manipulation}
   .panel #back.plain{background:var(--surface);padding:0 14px 0 8px}
   .panel .detail:has(#back.plain){padding-top:52px}
 }
+
+/* lighter type for the season button, menus and buttons */
+.seasonbtn{font-weight:600}
+#seasonmenu button{font-weight:500}#seasonmenu button.on{font-weight:600}
+.mt b{font-weight:600}
+.addbtn{font-weight:600}.addbtn .caret{margin-left:2px;vertical-align:-2px}
+.quick button{font-weight:600}.quick button.qf{font-weight:700}
+.sortsel,.qsel select{font-weight:600}
+.fchip{font-weight:500}.fchip.on{font-weight:600}
+.fseg button{font-weight:600}
+.quick .qgo{font-weight:700}
