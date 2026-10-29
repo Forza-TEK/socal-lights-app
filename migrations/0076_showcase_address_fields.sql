@@ -1,3 +1,4 @@
+-- validate: allow-destructive (this only adds columns to posts and rewrites the address text of the 4 existing houses; no rows or photos are removed)
 -- Showcase a House: separate street / state / ZIP, and who is posting (homeowner or professional installer).
 -- `address` stays as the full one-line address (the map pin, directions and routes use it), now built from the new parts.
 ALTER TABLE posts ADD COLUMN poster_type TEXT NOT NULL DEFAULT 'homeowner';
