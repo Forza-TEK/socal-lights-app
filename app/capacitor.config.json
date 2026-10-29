@@ -1,0 +1,17 @@
+{
+  "appId": "app.socallights.lights",
+  "appName": "SoCal Lights",
+  "webDir": "www",
+  "server": {
+    "url": "https://socallights.app",
+    "cleartext": false,
+    "allowNavigation": ["socallights.app", "*.socallights.app", "tiles.openfreemap.org", "unpkg.com", "fonts.googleapis.com", "fonts.gstatic.com", "challenges.cloudflare.com"]
+  },
+  "appendUserAgent": "SoCalLightsApp/1.0",
+  "backgroundColor": "#0b0d12",
+  "ios": { "contentInset": "never", "limitsNavigationsToAppBoundDomains": false },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 1200, "backgroundColor": "#0b0d12", "showSpinner": false },
+    "StatusBar": { "style": "DARK", "backgroundColor": "#0b0d12" }
+  }
+}

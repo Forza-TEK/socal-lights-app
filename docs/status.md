@@ -117,3 +117,8 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - My night: fixed the steps box (the done step picked up the success-message styling and sat off-center; it now shows a check) and gave the route notes a clean info style.
 - My night: unfavoriting the last stop returns to Places with the whole map in view.
 - On phones, that return to Places also lowers the list to Peek so the map shows.
+
+## App store work (2026-10-29)
+- Added `public/privacy.html` (https://socallights.app/privacy), `app/` (Capacitor iOS and Android projects wrapping the site, with icons and permissions) and `docs/app-store.md` (steps, listing text, privacy answers, review notes).
+- In the apps (browser string `SoCalLightsApp`) there is no tip item or Featured payment option.
+- Waiting on: Apple Developer account type, a Mac for the iOS build, Google Play and Microsoft Partner accounts.
