@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261029m";
+import { SITE } from "/site-config.js?v=20261029n";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -780,18 +780,6 @@ function openAdd(btn) {
 }
 document.addEventListener("click", (e) => { if (!e.target.isConnected) return; const m = $("#addmenu"); if (m && !m.hidden && !e.target.closest("#addmenu,[data-addmenu]")) closeAdd(); });
 
-/* Install the app: Android and Windows show the browser's own prompt; iPhone gets a short how-to */
-let installEvt = null;
-const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; });
-addEventListener("appinstalled", () => { installEvt = null; closeMore(); });
-function installApp() {
-  if (installEvt) { installEvt.prompt(); installEvt.userChoice.finally(() => { installEvt = null; }); return; }
-  const m = $("#modal"), ios = IS_IOS;
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="ih"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><h2 id="ih">Get the app</h2><button class="xbtn" type="button" id="iClose" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
-    <ol class="nhelp-steps">${ios ? `<li><span>1</span><div><b>Tap the Share button</b><small>The square with an arrow, at the bottom of Safari.</small></div></li><li><span>2</span><div><b>Tap Add to Home Screen</b><small>Scroll down in the share sheet if you don't see it.</small></div></li><li><span>3</span><div><b>Tap Add</b><small>SoCal Lights now opens like any other app.</small></div></li>` : `<li><span>1</span><div><b>Open your browser's menu</b><small>The three dots in Chrome or Edge.</small></div></li><li><span>2</span><div><b>Tap Install app or Add to Home screen</b><small>On a computer, look for the install icon at the right of the address bar.</small></div></li><li><span>3</span><div><b>Open it from your home screen or desktop</b><small>It runs full screen, with no browser bar.</small></div></li>`}</ol></div>`;
-  m.hidden = false; $("#iClose").onclick = closeForm; m.onclick = (e) => { if (e.target === m) closeForm(); };
-}
 /* ⋯ menu: keep it free, night mode, contact (Add event and Add house live in the list header) */
 function closeMore() { const m = $("#moremenu"); if (m) m.hidden = true; const b = $("#morebtn"); if (b) b.setAttribute("aria-expanded", "false"); }
 function moreHtml() {
@@ -799,7 +787,6 @@ function moreHtml() {
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
   return row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us or shop the season" : "Shop the season")
     + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>`, "Night mode", (dark ? "On" : "Off") + " · switches automatically after 6pm", `<span class="sw${dark ? " on" : ""}"><i></i></span>`)
-    + (isStandalone() ? "" : row("button", 'type="button" data-m="install"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 11 12 15.5 16.5 11"/><path d="M5 19h14"/></svg>`, "Get the app", "Add SoCal Lights to your home screen"))
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
 function openMore() {
@@ -812,7 +799,7 @@ $("#moremenu").addEventListener("click", (e) => {
   const b = e.target.closest("[data-m]"); if (!b) { if (e.target.closest("a")) closeMore(); return; }
   const k = b.dataset.m;
   if (k === "night") { setTheme(theme() === "dark" ? "light" : "dark"); $("#moremenu").innerHTML = moreHtml(); return; }
-  closeMore(); if (k === "support") openSupport(); else if (k === "install") installApp();
+  closeMore(); if (k === "support") openSupport();
 });
 document.addEventListener("click", (e) => { if (!e.target.isConnected) return; const m = $("#moremenu"); if (m && !m.hidden && !e.target.closest("#moremenu,#morebtn")) closeMore(); });
 
