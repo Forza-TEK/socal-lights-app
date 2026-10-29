@@ -491,7 +491,7 @@ button{touch-action:manipulation}
 .qsel select{border:0;background:transparent;font:inherit;font-weight:800;color:var(--ink);max-width:130px;height:100%;padding:0 4px;cursor:pointer}
 .stopn{position:absolute;z-index:1;right:8px;top:8px;min-width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--surface);font-weight:800;font-size:13px;display:grid;place-items:center;padding:0 6px}
 .legline{font-size:12.5px;font-weight:700;color:var(--season-ink)}
-.routenotes{margin:16px 0 4px;padding-left:18px;font-size:13px;color:var(--muted);display:grid;gap:4px}
+
 
 /* animated tab selection: the active tab grows its label while the old one folds away */
 .ptab,.bnav button{gap:0;transition:background-color .3s ease,color .3s ease,padding .4s cubic-bezier(.2,.8,.2,1),transform .15s}
@@ -558,7 +558,7 @@ button{touch-action:manipulation}
 .nhelp ol{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .nhelp li{display:flex;gap:12px;align-items:center}
 .nhelp li>span{flex:none;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--surface);font-weight:800;font-size:14px;display:grid;place-items:center}
-.nhelp li.done>span{background:var(--free);color:#fff}
+.nhelp li.is-done>span{background:var(--free);color:#fff}
 .nhelp li div{display:grid;line-height:1.3}.nhelp li b{font-size:15px;font-weight:700}.nhelp li small{font-size:13px;color:var(--muted)}
 .helpbtn{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--muted);background:none;color:var(--muted);font:800 15px/1 var(--f-body);display:inline-grid;place-items:center;padding:0;cursor:pointer;margin-left:8px}
 .helpbtn:hover{color:var(--ink);border-color:var(--ink)}
@@ -595,3 +595,8 @@ button{touch-action:manipulation}
 .phead .chip{font-weight:500}
 .phead .chip[aria-expanded="true"] .caret{transform:rotate(180deg)}
 .phead .chip .caret{width:16px;height:16px}
+.nhelp li{padding:0;text-align:left}
+.nhelp ol{gap:12px}
+.routenotes{margin:16px 0 4px;display:grid;gap:8px}
+.routenotes p{margin:0;display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--muted);background:var(--surface-2);border-radius:14px;padding:10px 12px}
+.routenotes p span{flex:none;width:20px;height:20px;border-radius:50%;background:var(--ice-soft);color:var(--ice);font:800 12px/1 var(--f-body);display:grid;place-items:center;font-style:italic}
