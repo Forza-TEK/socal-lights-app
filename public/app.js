@@ -1,6 +1,6 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js";
-import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029c";
+import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
 import { SITE } from "/site-config.js?v=20261029i";
 

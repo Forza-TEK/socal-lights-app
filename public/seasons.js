@@ -95,7 +95,7 @@ export const SEASONS = {
     },
   },
   christmas: {
-    label: "Thanksgiving & Holiday Lights",
+    label: "Thanksgiving & Christmas Lights",
     short: "Christmas",
     window: ["11-03", "12-26"],
     types: {
