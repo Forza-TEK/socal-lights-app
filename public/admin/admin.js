@@ -58,7 +58,7 @@ $("#main").addEventListener("click", async (e) => {
 
 function editPost(p) {
   const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="row" style="justify-content:space-between"><h2>Edit house</h2><button class="btn ghost" type="button" id="mClose">Close</button></div>
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="row" style="justify-content:space-between"><h2>Edit house</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
   <form class="f" id="pForm" novalidate>
     <div class="two"><label for="pBiz">Name or business<input id="pBiz" value="${esc(p.biz)}" maxlength="80"></label><label for="pTitle">Display name<input id="pTitle" value="${esc(p.title)}" maxlength="90"></label></div>
     <div class="two"><label for="pCity">City<select id="pCity">${Object.keys(CITY).sort().map((c) => `<option ${c === p.city ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label><label for="pSeason">Season<select id="pSeason">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (p.season || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label></div>
@@ -116,7 +116,7 @@ function editEvent(ev) {
   const e = ev || { id: "", n: "", c: "Orange", city: "", t: Object.keys(SEASONS[evSeason].types)[0], s: TODAY, e: TODAY, st: "expected", free: true, p: "Free", h: "", lat: 33.68, lng: -117.83, b: "", u: "", sn: evSeason };
   const typeOpts = (sn, cur) => Object.entries(SEASONS[sn].types).map(([v, l]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${l}</option>`).join("");
   const m = $("#modal");
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="row" style="justify-content:space-between"><h2>${ev ? "Edit event" : "Add an event"}</h2><button class="btn ghost" type="button" id="mClose">Close</button></div>
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="row" style="justify-content:space-between"><h2>${ev ? "Edit event" : "Add an event"}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
   <form class="f" id="evForm" novalidate>
     <label for="eN">Name<input id="eN" value="${esc(e.n)}" maxlength="120" required></label>
     <div class="two"><label for="eCity">City or area<input id="eCity" value="${esc(e.city)}" maxlength="60" required></label><label for="eC">County<select id="eC">${COUNTIES.map((c) => `<option ${c === e.c ? "selected" : ""}>${c}</option>`).join("")}</select></label></div>

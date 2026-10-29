@@ -6,6 +6,9 @@ export const SITE = {
 
   // Amazon Associates tracking id (looks like "socallights-20"). Leave "" to hide the Shop tab.
   amazonTag: "socallightsap-20",
+  // Shop results are sorted by price, high to low ("price-desc-rank"), and the search words get this extra word to favor higher-end products. Blank either one to turn it off.
+  shopSort: "price-desc-rank",
+  shopHighEnd: "premium",
   // Shop tab, by season: three categories, each a list of [emoji, label, Amazon search words]. Links carry the tag above.
   shop: {
     halloween: [
