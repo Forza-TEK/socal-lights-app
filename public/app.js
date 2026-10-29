@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261028v";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261028zn";
+import { SITE } from "/site-config.js?v=20261028zo";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -379,7 +379,7 @@ const SHARE = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" strok
 function priceLine(ev) {
   if (ev.free) return "Free";
   const m = String(ev.p || "").match(/\$[\d,.]+/);
-  return m ? "From " + m[0] : String(ev.p || "Price not listed").slice(0, 26);
+  return m ? "From " + m[0] : cut(String(ev.p || "Price not listed"), 24);
 }
 const cut = (t, n) => (t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t);
 const hoursOf = (ev) => (ev.h && !/^check/i.test(ev.h) ? cut(ev.h, 30) : "");
@@ -415,7 +415,7 @@ function renderPanel() {
     const act = activeFilters();
     head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> event${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span><span class="hright"><label class="sortl">Sort <select class="sortsel" id="sortSel" aria-label="Sort events">${SORTS.map(([v, l]) => `<option value="${v}"${state.sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>${addEv}</span></div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
     body.innerHTML = !state.layers.events ? `<div class="empty">The events layer is off. Turn it on under Filters, Show on map.</div>`
-      : vis.length ? teaser() + `<div class="list">${vis.map(evItem).join("")}</div><p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`
+      : vis.length ? `<div class="list">${vis.map(evItem).join("")}</div>${teaser()}<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`
       : `<div class="empty">No events in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
