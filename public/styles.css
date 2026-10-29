@@ -567,8 +567,6 @@ button{touch-action:manipulation}
 /* phone: the back arrow stays put while the details scroll (the sheet is transformed, so "fixed" is relative to the sheet) */
 @media (max-width:860px){
   .panel #back{position:fixed;top:14px;left:max(14px,env(safe-area-inset-left,0px));z-index:6;box-shadow:var(--shadow)}
-  .panel #back.plain{background:var(--surface);padding:0 14px 0 8px}
-  .panel .detail:has(#back.plain){padding-top:52px}
 }
 
 /* lighter type for the season button, menus and buttons */
@@ -581,3 +579,15 @@ button{touch-action:manipulation}
 .fchip{font-weight:500}.fchip.on{font-weight:600}
 .fseg button{font-weight:600}
 .quick .qgo{font-weight:700}
+.gallery>.back{position:absolute;left:14px;top:14px;z-index:3}
+/* one more step lighter */
+.seasonbtn{font-weight:500}
+#seasonmenu button{font-weight:400}#seasonmenu button.on{font-weight:500}
+.mt b{font-weight:500}
+.addbtn{font-weight:500}
+.quick button{font-weight:500}.quick button.qf{font-weight:600}
+.sortsel,.qsel select{font-weight:500}
+.fchip{font-weight:400}.fchip.on{font-weight:500}
+.fseg button{font-weight:500}
+.quick .qgo{font-weight:600}
+.tabs .ptab,.ptab{font-weight:600}
