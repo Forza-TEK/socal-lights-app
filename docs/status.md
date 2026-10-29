@@ -79,3 +79,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - **Tap a dot:** a card opens next to the dot on desktop (list stays on the right) and docks at the bottom on phones, with heart, share and ×. Esc or an empty-map tap closes it.
 - **Phone list:** two positions only, Peek (handle and the Filters / Tonight / Saturday / Free buttons) and Full; the handle toggles them.
 - **Share links:** `#e-<event id>` and `#h-<house id>` open an event or house directly.
+- List cards now use the same layout as the pin card: photo with date badge, then name with share and heart beside it, place, dates and hours, and the price and Confirmed tags (houses too).
