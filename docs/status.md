@@ -2,6 +2,9 @@
 
 _Last updated: 2026-10-30_
 
+## Contests and accounts (built 2026-10-30, branch `claude/amazing-thompson-wfxqst`, NOT merged)
+Add hub (`/add`), contest wizard (`/add-contest`), contest page and QR (`/c/<slug>`), entry form, organizer dashboard (`/c/<slug>/manage`), one-vote-per-person voting, Google and email-code sign-in, admin Contests tab, migration `0100_accounts_contests.sql`. Tested end to end locally (API 35 checks, browser 20 checks). Pages are unlinked and noindex. Needs `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` and `RESEND_API_KEY` Pages secrets, a privacy-policy review and a decision to merge. See `docs/contests.md` for setup, launch checklist and known gaps.
+
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
 

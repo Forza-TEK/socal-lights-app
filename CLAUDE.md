@@ -40,6 +40,8 @@ Read `docs/updating-events.md` before touching events. Key rules:
 - Only add real events found in public sources. Never invent events, dates or prices.
 - Run `npm run validate` before pushing.
 
+Contests, accounts and sign-in (branch work, not live yet): `docs/contests.md`.
+
 Other docs: `docs/coverage-cities.md` (where to search), `docs/city-sweep.md`, `docs/confirmation-plan.md` (turning `expected` events into `confirmed`).
 
 ## Rules

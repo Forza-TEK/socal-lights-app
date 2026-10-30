@@ -3,6 +3,8 @@
 import { json, err, clean, safeUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
+import { getUser } from "../_lib/auth.js";
+import { getContest, windows, cats } from "../_lib/contests.js";
 
 const MAX_PHOTOS = 8;
 const MAX_BYTES = 6 * 1024 * 1024; // the browser resizes photos first, so real uploads are far smaller
@@ -22,18 +24,29 @@ export async function onRequestPost({ request, env }) {
   let form;
   try { form = await request.formData(); } catch { return err(400, "The form couldn't be read. Please try again."); }
 
-  if (!(await verifyTurnstile(env, form.get("cf-turnstile-response"), ip)))
+  // Entering a contest needs a signed-in account (that replaces the "I am human" check)
+  const contestSlug = clean(form.get("contest"), 60);
+  let contest = null, cu = null;
+  if (contestSlug) {
+    cu = await getUser(request, env);
+    if (!cu) return err(401, "Please sign in to enter this contest.");
+    contest = await getContest(env, contestSlug);
+    if (!contest || contest.status !== "live") return err(404, "This contest isn't available.");
+    if (!windows(contest).entriesOpen) return err(400, "Entries for this contest are closed.");
+  } else if (!(await verifyTurnstile(env, form.get("cf-turnstile-response"), ip)))
     return err(400, "Please complete the 'I am human' check and send again.");
 
   // Throttle: 5 submissions per hour per connection
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM submit_log WHERE ip = ? AND created_at > datetime('now','-1 hour')").bind(ip).first();
-  if (n >= 5) return err(429, "Too many submissions from this connection. Try again in an hour.");
+  // Contest entries are tied to a signed-in account, so a shared network (an event night, a school Wi-Fi) gets a higher limit
+  if (n >= (contest ? 60 : 5)) return err(429, "Too many submissions from this connection. Try again in an hour.");
 
   const biz = clean(form.get("biz"), 80);
-  const title = clean(form.get("title"), 90);
+  const title = clean(form.get("title"), 90) || (contest ? clean(form.get("biz"), 80) : "");
   const city = clean(form.get("city"), 60);
-  const descr = clean(form.get("desc"), 1200);
-  const email = clean(form.get("email"), 120);
+  const category = contest ? clean(form.get("category"), 40) : "";
+  const descr = clean(form.get("desc"), 1200) || (contest ? `${category} entry in ${contest.name}` : "");
+  const email = contest ? cu.email : clean(form.get("email"), 120);
   const webRaw = clean(form.get("web"), 200);
   const kind = form.get("kind") === "installer" ? "installer" : "homeowner";
   const pro = kind === "installer";
@@ -45,7 +58,7 @@ export async function onRequestPost({ request, env }) {
   const zip = clean(form.get("zip"), 10);
   // The one-line address is built from the parts (older cached forms still send a single "address" box)
   const address = street ? `${street}, ${city}, CA ${zip}` : clean(form.get("address"), 160);
-  const season = SEASONS[form.get("season")] ? form.get("season") : "christmas";
+  const season = contest ? contest.season : SEASONS[form.get("season")] ? form.get("season") : "christmas";
 
   if (!biz || !title || !descr) return err(400, "Fill in your name or business, display name and description.");
   if (!CITY[city]) return err(400, "Choose a city from the list.");
@@ -56,6 +69,12 @@ export async function onRequestPost({ request, env }) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err(400, "Enter an email address so the site owner can reach you.");
   if (pro && webRaw && !web) return err(400, "The website needs to start with http:// or https://");
 
+  if (contest) {
+    if (!cats(contest).includes(category)) return err(400, "Choose one of the contest's categories.");
+    const { n: mine } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id = ? AND user_id = ? AND status != 'declined'").bind(contest.id, cu.id).first();
+    if (mine >= 5) return err(400, "You've reached the limit of 5 entries in this contest.");
+  }
+  const autoApprove = !!contest && contest.approval === "auto";
   const files = form.getAll("photos").filter((f) => f && typeof f === "object" && f.size > 0);
   if (files.length > MAX_PHOTOS) return err(400, `Send up to ${MAX_PHOTOS} photos.`);
 
@@ -68,7 +87,7 @@ export async function onRequestPost({ request, env }) {
       const buf = await f.arrayBuffer();
       const kind = sniff(buf);
       if (!kind) throw new Error("Photos must be JPG, PNG or WebP.");
-      const key = `pending/${id}/${i + 1}.${kind.ext}`;
+      const key = `${autoApprove ? "p" : "pending"}/${id}/${i + 1}.${kind.ext}`;
       await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: kind.type } });
       keys.push(key);
     }
@@ -85,9 +104,9 @@ export async function onRequestPost({ request, env }) {
 
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area)
-       VALUES (?,'pending',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'CA',?,?)`
-    ).bind(id, biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area),
+      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,entry_no,approved_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'CA',?,?,?,?,?,${contest ? "(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?)" : "NULL"},${autoApprove ? "datetime('now')" : "NULL"})`
+    ).bind(id, autoApprove ? "approved" : "pending", biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area, contest ? contest.id : null, category, cu ? cu.id : null, ...(contest ? [contest.id] : [])),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);
