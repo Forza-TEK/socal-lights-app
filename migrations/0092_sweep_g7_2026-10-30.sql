@@ -1,0 +1,10 @@
+INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address)
+VALUES
+('castaic-winter-magic-boat-parade','Winter Magic & Lighted Boat Parade at Castaic Lake','Los Angeles','Castaic','parade','2026-12-05','2026-12-05','confirmed',1,'Free (lake entry fees apply)','3–7 PM, boat parade after sunset',34.5062,-118.6171,'Free family holiday celebration at the Castaic Lake lower lagoon with Santa, vendors and decorated boats parading after dark.','https://www.castaiclake.com/wintermagic','christmas','Castaic Lake Lower Lagoon (Paradise Cove)','32132 Castaic Lake Dr, Castaic, CA 91384'),
+('scballet-nutcracker-scpac','The Nutcracker by Santa Clarita Ballet','Los Angeles','Santa Clarita','show','2026-12-19','2026-12-20','confirmed',0,'Tickets required','Sat Dec 19 1 & 7 PM; Sun Dec 20 1 PM',34.4081669,-118.5679169,'Santa Clarita Ballet stages the holiday classic at the College of the Canyons performing arts center.','https://santaclaritaballet.net','christmas','Santa Clarita Performing Arts Center','26455 Rockwell Canyon Rd, Santa Clarita, CA 91355'),
+('valencia-town-center-santa-arrival','Santa''s Arrival at Valencia Town Center','Los Angeles','Santa Clarita','tree','2026-11-14','2026-11-14','expected',1,'Free','1–3 PM, check site',34.4144824,-118.558048,'Santa settles into his holiday home near H&M on the mall''s first floor for free visits and photos.','https://visitsantaclarita.com/inspiration/seasonal-activities/winter-activities/valenciatowncenter/','christmas','Valencia Town Center','24201 Valencia Blvd, Santa Clarita, CA 91355')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city,
+  type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status,
+  free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng,
+  blurb=excluded.blurb, url=excluded.url, season=excluded.season,
+  venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
