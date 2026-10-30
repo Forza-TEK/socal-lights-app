@@ -25,6 +25,8 @@
 <script type="module">
 import { whoBar, noteSigninResult } from "/auth.js?v=20261030a";
 whoBar(document.getElementById("who")); noteSigninResult();
+// Contests need sign-in. Until Google or emailed codes are switched on, hide that choice rather than send people to a dead end.
+fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (!j.methods || (!j.methods.google && !j.methods.email)) document.querySelector('.opt[href="/add-contest"]')?.remove(); }).catch(() => {});
 </script>
 </body>
 </html>
