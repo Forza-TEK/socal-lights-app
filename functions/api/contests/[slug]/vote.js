@@ -2,7 +2,7 @@
 // category; voting again in a category moves that vote.
 import { json, err, newId } from "../../../_lib/util.js";
 import { requireUser, sameOrigin } from "../../../_lib/auth.js";
-import { getContest, windows, cats } from "../../../_lib/contests.js";
+import { getContest, windows, cats, hasPublic, judgeOf } from "../../../_lib/contests.js";
 
 export async function onRequestPost({ params, request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -11,6 +11,8 @@ export async function onRequestPost({ params, request, env }) {
   const c = await getContest(env, params.slug);
   if (!c || c.status !== "live") return err(404, "This contest isn't available.");
   if (!windows(c).votingOpen) return err(400, "Voting isn't open right now.");
+  if (!hasPublic(c)) return err(400, "Voting in this contest is by invited judges only.");
+  if (await judgeOf(env, c, user)) return err(400, "You're a judge in this contest, so you vote on the Judges' ballot, not the public vote.");
   const b = await request.json().catch(() => ({}));
   const category = String(b.category || "");
   if (!cats(c).includes(category)) return err(400, "Choose one of the contest's categories.");

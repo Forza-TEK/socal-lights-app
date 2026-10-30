@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Contest winners · SoCal Lights</title>
+<meta name="description" content="Winners of Southern California home decorating contests, by season and year.">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261031q">
+<link rel="stylesheet" href="/contest.css?v=20261031q">
+<style>.wins{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.win{border:1px solid var(--line);border-radius:12px;overflow:hidden}.win .ph{height:130px;background:var(--tile)}.win img{width:100%;height:100%;object-fit:cover;display:block}.win .b{padding:12px 14px;display:grid;gap:2px}.win .m{color:var(--muted);font-size:14px}.win b{font-weight:500}</style>
+</head>
+<body>
+<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<main class="cmain wide"><div><h1>Contest winners</h1><p class="help" style="margin-top:8px">Every finished contest, kept exactly as it was when the winners were announced.</p></div><div id="app"><p class="loading">Loading…</p></div></main>
+<script type="module">
+import { esc } from "/auth.js?v=20261030a";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261031q";
+const $ = (q) => document.querySelector(q), app = $("#app");
+const CROWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>';
+$("#tb").innerHTML = themeBtn(); mountAcct($("#acct"));
+let ALL = [], sel = "";
+async function load() {
+  ALL = await fetch("/api/archive").then((r) => r.json()).catch(() => []);
+  if (!ALL.length) { app.innerHTML = `<div class="card"><h2>No finished contests yet</h2><p class="muted">When a contest announces its winners, it appears here by season and year.</p></div>`; return; }
+  const labels = [...new Set(ALL.map((c) => c.label))]; sel = labels.includes(sel) ? sel : labels[0]; draw(labels);
+}
+function draw(labels) {
+  const cs = ALL.filter((c) => c.label === sel);
+  app.innerHTML = `<div class="field" style="max-width:340px"><label for="arch">Season | Year</label><select class="in" id="arch">${labels.map((l) => `<option ${l === sel ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>
+  ${cs.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)} · results locked ${esc(c.at)}</p></div><div class="wins">${c.awards.map((a) => a.winners.map((w) => `<div class="win"><div class="ph">${w.photo ? `<img src="/api/photo/${esc(w.photo)}" alt="${esc(w.name)} lights" loading="lazy">` : ""}</div><div class="b"><span class="small" style="display:flex;gap:6px;align-items:center">${CROWN} ${esc(a.category)}</span><span class="m">${esc(a.label)}</span><b>${esc(w.name)}</b><span class="m">${esc(w.address || w.city || "")}</span>${a.prize ? `<span class="m" style="margin-top:6px">Prize: ${esc(a.prize)}</span>` : ""}</div></div>`).join("")).join("")}</div><div><a class="btn ghost sm" href="/c/${esc(c.slug)}">See the full contest</a></div></section>`).join("")}`;
+  $("#arch").onchange = (e) => { sel = e.target.value; draw(labels); };
+}
+load();
+</script>
+</body>
+</html>
