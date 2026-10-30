@@ -171,3 +171,5 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 ## 2026-10-30 — Shop expansion and thinner button type
 - `SITE.shop` now has 10–13 categories per season (6 items each), tabs scroll sideways; button/chip/tab weights lowered in the list view, My night and Shop (end of `styles.css`). Version `20261030r`.
 - Shop follow-up (`20261030s`): 12 items per category; desktop category tabs wrap (no scrolling needed); links sort high-to-low and filter to $40+ (`SITE.shopMinPrice`).
+
+- 2026-10-31 drafts and profile: migration 0111 (`drafts`), `/api/drafts`, `/api/me/overview`, `/profile`. "Save & exit" in the event, house and contest forms asks you to sign in, saves the answers (not photos) to your account and opens your profile, where Continue reopens the form on the step you left. The profile also lists contests you run, your contest entries, and homes and events you posted (matched by the email on the form). Address suggestions now use a hard Southern California filter and no longer cache empty answers. Forms show the SoCal Lights logo and wordmark.

@@ -8,13 +8,13 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031a">
+<link rel="stylesheet" href="/addflow.css?v=20261031c">
 </head>
 <body>
 <div id="app"></div>
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
-import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt } from "/addflow.js?v=20261031a";
+import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt } from "/addflow.js?v=20261031c";
 import { me, signIn } from "/auth.js?v=20261030a";
 import { rulesDefault } from "/rules.js";
 import { CITY } from "/cities.js";
@@ -65,14 +65,14 @@ const steps = [
         <div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/c/${esc(j.slug)}/manage">Open my dashboard</a><a class="btn out" href="/c/${esc(j.slug)}">See the contest page</a></div>`);
     } },
 ];
-const api = run({ steps, data: d, persist: "scl-contest-draft", noPersist: ["newcat"], season: (x) => defaultSeason(x.closes), exit: "/add",
+const api = run({ steps, data: d, persist: "scl-contest-draft", account: { kind: "contest", title: (x) => x.name }, noPersist: ["newcat"], season: (x) => defaultSeason(x.closes), exit: "/add",
   onInput: (k, x) => { if (k === "closes") { if (x.vs <= x.closes) x.vs = addDays(x.closes, 1); if (x.ve <= x.vs) x.ve = addDays(x.vs, 9); for (const f of ["vs", "ve"]) { const el = document.getElementById("f-" + f); if (el) el.value = x[f]; } } },
   actions: {
     typical(_, a) { Object.assign(d, dflt()); a.draw(); },
     cat(c, a) { d.on = d.on.includes(c) ? d.on.filter((x) => x !== c) : [...d.on, c]; a.draw(); },
     addcat(_, a) { const v = d.newcat.trim().slice(0, 30); if (v && !d.cats.includes(v)) { d.cats.push(v); d.on.push(v); } d.newcat = ""; a.draw(); },
   } });
-if (new URLSearchParams(location.search).get("resume")) api.goto("review");
+api.ready.then(() => { if (new URLSearchParams(location.search).get("resume")) api.goto("review"); });
 </script>
 </body>
 </html>

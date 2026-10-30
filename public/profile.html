@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Your profile · SoCal Lights</title>
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261031c">
+</head>
+<body>
+<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><a class="link" href="/add">Add something</a></div>
+<div class="main" id="app"><p class="muted">Loading…</p></div>
+<script type="module">
+import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261030a";
+import { esc } from "/addflow.js?v=20261031c";
+const $ = (q) => document.querySelector(q), app = $("#app");
+const KEYS = { house: "scl-house-draft", event: "scl-event-draft", contest: "scl-contest-draft" }, PAGE = { house: "/add-house", event: "/add-event", contest: "/add-contest" }, LABEL = { house: "Lighting display", event: "Event", contest: "Contest" };
+const when = (s) => { try { return new Date(String(s).replace(" ", "T") + "Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
+const stat = { approved: ["live", "Live"], published: ["live", "Live"], live: ["live", "Live"], pending: ["warn", "In review"], declined: ["", "Declined"], closed: ["", "Ended"] };
+const dot = (s, over) => { const [c, l] = over || stat[s] || ["", s]; return `<span class="dot ${c}"></span>${esc(l)}`; };
+
+// After Google sign-in comes back with ?save=<kind>, move the draft kept on this device into the account
+async function syncLocal() {
+  const kind = new URLSearchParams(location.search).get("save"); if (!KEYS[kind]) return;
+  try {
+    const sv = JSON.parse(localStorage.getItem(KEYS[kind]) || "null");
+    if (sv && sv.d) {
+      const c = { ...sv.d }; delete c._draftId; const id = sv.d._draftId;
+      const r = await fetch("/api/drafts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, kind, title: sv.d.title || sv.d.biz || sv.d.name || "", data: c, step: sv.i || 0 }) });
+      if (r.ok) { localStorage.removeItem(KEYS[kind]); toast("Draft saved to your profile."); }
+    }
+  } catch {}
+  history.replaceState(null, "", "/profile");
+}
+const section = (h, rows, empty) => `<section><h2 style="margin-bottom:6px">${h}</h2>${rows.length ? `<div class="list">${rows.join("")}</div>` : `<p class="muted">${empty}</p>`}</section>`;
+
+async function load() {
+  noteSigninResult();
+  const info = await me(true);
+  if (!info.user) { app.innerHTML = `<h1>Your profile</h1><p class="help">Sign in to see your saved drafts and everything you've added.</p><div><button class="btn" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to your profile", next: "/profile" })) load(); }; return; }
+  await syncLocal();
+  const r = await fetch("/api/me/overview", { cache: "no-store" }); if (!r.ok) { app.innerHTML = `<h1>Your profile</h1><p class="err">Couldn't load your profile. Try again in a moment.</p>`; return; }
+  const o = await r.json(), em = o.user.email;
+  const drafts = o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}</span></div><div class="acts"><a class="btn sm" href="${PAGE[d.kind] || "/add"}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}">Delete</button></div></div>`);
+  const contests = o.contests.map((c) => `<div class="rowi"><div><b>${esc(c.name)}</b><br><span class="small muted">${dot(c.status, c.announced ? ["", "Winners announced"] : c.status === "live" ? ["live", "Live"] : c.status === "pending" ? ["warn", "Waiting for approval"] : ["", "Ended"])}</span></div><div class="acts"><a class="btn sm" href="/c/${esc(c.slug)}/manage">Open dashboard</a><a class="btn out sm" href="/c/${esc(c.slug)}">View</a></div></div>`);
+  const entries = o.entries.map((e) => `<div class="rowi"><div><b>${esc(e.title || e.biz)}</b><br><span class="small muted">${esc(e.contest)} · ${dot(e.status)}</span></div><div class="acts"><a class="btn out sm" href="/c/${esc(e.slug)}">View contest</a></div></div>`);
+  const homes = o.homes.map((h) => `<div class="rowi"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status)}</span></div></div>`);
+  const events = o.events.map((e) => `<div class="rowi"><div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${dot(e.status)}</span></div></div>`);
+  app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${esc(em[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">Your profile</h1><span class="muted">${esc(em)}</span></div></div>
+    ${section("Saved drafts", drafts, "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.")}
+    ${section("Contests you run", contests, "You haven't created a contest.")}
+    ${section("Your contest entries", entries, "You haven't entered a contest.")}
+    ${section("Lighting displays you posted", homes, "None yet.")}
+    ${section("Events you added", events, "None yet.")}
+    <section><h2>Account</h2><div style="margin-top:14px"><button class="btn out" id="so" type="button">Sign out</button></div><p class="small muted" style="margin-top:12px">Homes and events are matched by the email you typed on the form. To delete your account, email info@socallights.app.</p></section>`;
+  $("#so").onclick = async () => { await signOut(); location.href = "/"; };
+  app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to delete"; return; } await fetch("/api/drafts/" + b.dataset.del, { method: "DELETE" }); load(); }));
+}
+load();
+</script>
+</body>
+</html>
