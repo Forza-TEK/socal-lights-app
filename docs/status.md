@@ -166,3 +166,6 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - 2026-10-30 contest fairness: migration 0110 (voided votes, flag-at-close, one-win, rules, frozen results), /api/address (Geoapify), organizer vote review and CSV export, hidden counts by default, rules acceptance. Sample updated (yellow crown icon everywhere, badges on by default). Not merged: branch `claude/amazing-thompson-wfxqst`.
 
 - 2026-10-30 go live: the map's ⋯ menu now opens with "Add" (goes to `/add`, the add hub); the in-list "+ Add" dropdown is gone. On desktop the Sort control sits on the Tonight / Saturday / Free / Filters row; on phones it stays in the count row. The hub hides "A home decorating contest" until Google or emailed-code sign-in is switched on (`/api/auth/me` `methods`).
+
+## 2026-10-30 — Shop expansion and thinner button type
+- `SITE.shop` now has 10–13 categories per season (6 items each), tabs scroll sideways; button/chip/tab weights lowered in the list view, My night and Shop (end of `styles.css`). Version `20261030r`.
