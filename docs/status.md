@@ -6,6 +6,7 @@ _Last updated: 2026-10-30_
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
 
 ## Next steps
+0. Group 16 (Coachella Valley) sweep 2026-10-30 (migration 0093): added Blythe tree lighting and Christmas parade (expected, first weekend of Dec; chamber 2026 dates not posted); fixed Sunnylands pin. No public home-contest/home-display address lists found for any Coachella Valley city (Candy Cane Lane Cathedral City publishes no house addresses). Photo candidates were all logos/flyers/oversized, none set. Pins to re-check: Cathedral City Día de Muertos (31705 Da Vall Dr, 4 km off Nominatim, unsure which is right), Desert Highland carnival (~0.8 km), Indio Tamale Festival (~0.9 km). Leads: Indio DRD Turkey Egg Hunt Nov 21 (no loaded page), The River Desert Arts Festival Nov 27-29.
 0. Group 5 (South Bay) sweep 2026-10-30 added Avalon and Lomita tree lightings (migration 0090). cityofhawthorne.org returns 403, so Hawthorne's Halloween/holiday decorating contests (no public address lists found elsewhere) remain a lead; Lawndale, Gardena, Inglewood 2026 holiday dates were not yet posted in searchable sources.
 1. Continue confirming `expected` holiday events per `docs/confirmation-plan.md`.
 
