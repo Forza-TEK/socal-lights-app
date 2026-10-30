@@ -43,12 +43,14 @@ function featuredLevel(r) {
   return r.featured >= 2 ? 2 : 1;
 }
 
+// extra photos for an event: a JSON array of image URLs in events.images
+function parseImgs(v) { try { const a = JSON.parse(v || "[]"); return Array.isArray(a) ? a.filter((x) => typeof x === "string").slice(0, 12) : []; } catch { return []; } }
 export function rowToEvent(r) {
   return {
     id: r.id, n: r.name, c: r.county, city: r.city, t: r.type, s: r.start_date, e: r.end_date,
     st: r.status === "confirmed" ? "c" : "e", free: !!r.free, p: r.price || "", h: r.hours || "",
     lat: r.lat, lng: r.lng, b: r.blurb || "", u: r.url || "", sn: r.season || "christmas",
-    v: r.venue || "", a: r.address || "", img: r.image || "",
+    v: r.venue || "", a: r.address || "", img: r.image || "", imgs: parseImgs(r.images),
     f: featuredLevel(r),
   };
 }

@@ -2,11 +2,11 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261029s";
+import { SITE } from "/site-config.js?v=20261030b";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
-const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/positron", dark: "https://tiles.openfreemap.org/styles/dark" };
+const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "https://tiles.openfreemap.org/styles/dark" };
 const theme = () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 // Pin and cluster colors: free events are green; ticketed events, clusters and the route take the season's accent
 const SEASON_HEX = { light: { newyear: "#6d3fc0", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
@@ -292,21 +292,20 @@ function renderPreview() {
   const k = state.sel, f = it.kind === "ev" ? favs.has(it.ev.id) : favs.has(hfav(it.p));
   const acts = `<span class="pv-acts"><button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button></span>`;
   if (it.kind === "ev") {
-    const ev = it.ev, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
-    pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${ph ? photoImg(ph) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
+    const ev = it.ev, phs = photosOf(ev), ph = phs[0], conf = ev.st === "c", hrs = hoursOf(ev), manyE = phs.length > 1;
+    pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${manyE ? `<div class="pvtrack" id="pvtrack">${phs.map((q, i) => `<div class="pvslide">${photoImg(q, i < 2)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="pvcount">1 / ${phs.length}</span>` : ph ? photoImg(ph) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
   } else {
     const p = it.p, ph = p.photos || [];
     const many = ph.length > 1;
-    pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide"><img class="evimg ld" src="${photoUrl(k2)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i < 2 ? "eager" : "lazy"}" draggable="false"></div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="pvcount" id="pvcount">1 / ${ph.length}</span><span class="pvdots" id="pvdots">${ph.map((_, i) => `<button type="button" data-pvdot="${i}" aria-label="Photo ${i + 1}"${i ? "" : ' class="on"'}></button>`).join("")}</span>` : ph.length ? `<img class="evimg ld" src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(p.title)}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
+    pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide"><img class="evimg ld" src="${photoUrl(k2)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i < 2 ? "eager" : "lazy"}" draggable="false"></div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="pvcount" id="pvcount">1 / ${ph.length}</span>` : ph.length ? `<img class="evimg ld" src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(p.title)}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
   }
   pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); placePin();
   const tr = $("#pvtrack");
-  if (tr) tr.addEventListener("scroll", () => { const i = Math.round(tr.scrollLeft / tr.clientWidth); $("#pvcount").textContent = i + 1 + " / " + tr.children.length; document.querySelectorAll("#pvdots button").forEach((d, j) => d.classList.toggle("on", j === i)); }, { passive: true });
+  if (tr) tr.addEventListener("scroll", () => { const i = Math.round(tr.scrollLeft / tr.clientWidth); $("#pvcount").textContent = i + 1 + " / " + tr.children.length; }, { passive: true });
   pv.onclick = (e) => {
     const g = e.target.closest("[data-pvg]"); if (g) { e.stopPropagation(); const t = $("#pvtrack"); t.scrollBy({ left: +g.dataset.pvg * t.clientWidth, behavior: "smooth" }); return; }
     // On a card with several photos the photo area only browses; the text below opens the details
     if (e.target.closest("#pvtrack")) { pvSwiped = false; return; }
-    const dt = e.target.closest("[data-pvdot]"); if (dt) { const t = $("#pvtrack"); t.scrollTo({ left: +dt.dataset.pvdot * t.clientWidth, behavior: "smooth" }); return; }
     if (e.target.closest(".x")) { closePin(); return; }
     if (e.target.closest("[data-pvshare]")) { shareItem(k); return; }
     if (e.target.closest("[data-pvfav]")) { const id = it.kind === "ev" ? it.ev.id : hfav(it.p); favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); renderPreview(); return; }
@@ -362,6 +361,14 @@ function photoOf(ev, hero) {
   if (ev.img) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u };
   return k ? { src: stock, credit: sc, link: st.src } : null;
 }
+// A gallery: the main photo first, then any extra photos stored for the event (ev.imgs)
+function photosOf(ev, hero) {
+  const first = photoOf(ev, hero), out = first ? [first] : [];
+  (ev.imgs || []).forEach((u) => { if (u && u !== ev.img) out.push({ src: u, credit: "Photo: " + hostOf(ev.u || u), link: ev.u }); });
+  return out;
+}
+const ARW_L = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>`;
+const ARW_R = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>`;
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
 const photoImg = (ph, eager) => `<img class="evimg" src="${esc(ph.src)}"${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt="" loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`;
 document.addEventListener("load", (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains("evimg")) e.target.classList.add("ld"); }, true);
@@ -380,7 +387,7 @@ function whenShort(ev) {
   if (ev.s <= TODAY && ev.e >= TODAY) return ev.e === TODAY ? "Tonight" : "Thru " + fmt(ev.e);
   return ev.s === ev.e ? fmt(ev.s) + " only" : "Opens " + fmt(ev.s);
 }
-const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
+const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
 let toastT;
 function toast(msg) {
   let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
@@ -392,7 +399,7 @@ async function shareItem(k) {
   try { if (navigator.share) { await navigator.share({ title, text: title + " on SoCal Lights", url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
   try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { toast(url); }
 }
-const SHARE = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>`;
+const SHARE = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>`;
 // "Free", "From $25", or the price text itself
 function priceLine(ev) {
   if (ev.free) return "Free";
@@ -507,10 +514,10 @@ function openDetail(k) { state.detail = k; state.sel = k; renderPanel(); renderP
 function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
   if (it.kind === "ev") {
-    const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u), ph = photoOf(ev, true), cl = ph && safeUrl(ph.link);
+    const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u), phs = photosOf(ev, true), ph = phs[0], cl = ph && safeUrl(ph.link), manyD = phs.length > 1;
     return `<div class="detail">
-    <div class="hero${ev.free ? " free" : ""}${ph ? " photo" : ""}">${ph ? photoImg(ph) : ""}<button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
-      ${ph ? (cl ? `<a class="credit" href="${esc(cl)}" target="_blank" rel="noopener">${esc(ph.credit)}</a>` : `<span class="credit">${esc(ph.credit)}</span>`) : ""}
+    <div class="hero${ev.free ? " free" : ""}${ph ? " photo" : ""}">${manyD ? `<div class="pvtrack" id="track">${phs.map((q, i) => `<div class="pvslide" data-credit="${esc(q.credit || "")}" data-link="${esc(safeUrl(q.link) || "")}">${photoImg(q, i < 2)}</div>`).join("")}</div><button class="pvnav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="gcount">1 / ${phs.length}</span>` : ph ? photoImg(ph) : ""}<button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
+      ${ph ? (cl ? `<a class="credit" id="hcredit" href="${esc(cl)}" target="_blank" rel="noopener">${esc(ph.credit)}</a>` : `<span class="credit" id="hcredit">${esc(ph.credit)}</span>`) : ""}
       <div class="htext"><div class="kicker">${esc(TYPE_SHORT[ev.t] || "Event")} · ${esc(ev.city)}</div><h2>${esc(ev.n)}</h2></div></div>
     <div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
     <div class="boxes"><div><span>When</span><b>${whenShort(ev)}</b></div><div><span>Hours</span><b>${esc(ev.h)}</b></div><div><span>Cost</span><b>${esc(ev.p)}</b></div></div>
@@ -518,10 +525,10 @@ function detailHtml(k) {
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd></dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
-    <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button>${url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
+    <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button>${url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
-  return `<div class="detail">  ${ph.length ? `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">‹</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">›</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="ph-none">No photos yet</div></div>`}
+  return `<div class="detail">  ${ph.length ? `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="ph-none">No photos yet</div></div>`}
   <div class="row" style="gap:6px;justify-content:flex-start;flex-wrap:wrap"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}</div>
   <h2>${esc(p.title)}</h2><div class="meta">${p.kind === "installer" ? "" : "Posted by "}<b style="color:var(--ink)">${esc(p.biz)}</b> · ${esc(p.city)}</div>
   <p style="margin:0;white-space:pre-line">${esc(p.desc)}</p>
@@ -531,8 +538,9 @@ function detailHtml(k) {
 function wireDetail() {
   $("#back").onclick = () => { state.keep = state.detail; state.detail = null; if (isPhone()) state.sel = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
   const tr = $("#track"); if (tr) { const n = tr.children.length;
-    document.querySelectorAll(".gallery .nav").forEach((b) => (b.onclick = () => tr.scrollBy({ left: tr.clientWidth * Number(b.dataset.g), behavior: "smooth" })));
-    tr.onscroll = () => { const c = $("#gcount"); if (c) c.textContent = Math.round(tr.scrollLeft / tr.clientWidth) + 1 + " / " + n; }; }
+    document.querySelectorAll(".gallery .nav, .hero .pvnav").forEach((b) => (b.onclick = () => tr.scrollBy({ left: tr.clientWidth * Number(b.dataset.g), behavior: "smooth" })));
+    tr.onscroll = () => { const i = Math.round(tr.scrollLeft / tr.clientWidth), c = $("#gcount"); if (c) c.textContent = i + 1 + " / " + n;
+      const sl = tr.children[i], cr = $("#hcredit"); if (sl && cr && sl.dataset.credit) { cr.textContent = sl.dataset.credit; if (cr.tagName === "A" && sl.dataset.link) cr.href = sl.dataset.link; } }; }
 }
 
 /* ---------- Showcase a House form ---------- */

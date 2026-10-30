@@ -539,13 +539,9 @@ button{touch-action:manipulation}
 .pvslide{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;position:relative}
 .pvslide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:1;-webkit-user-drag:none;user-select:none}
 .pvcount{position:absolute;z-index:2;right:10px;bottom:10px;background:rgba(14,16,22,.72);color:#fff;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;border-radius:999px;padding:3px 10px;pointer-events:none}
-.pvnav{position:absolute;z-index:2;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:#17181c;cursor:pointer;display:none;place-items:center;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.pvnav{position:absolute;z-index:2;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:#17181c;cursor:pointer;display:grid;place-items:center;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .pvnav.l{left:8px}.pvnav.r{right:8px}
-@media (hover:hover) and (pointer:fine){.pvnav{display:grid}}
-.pvdots{position:absolute;z-index:2;left:50%;bottom:6px;transform:translateX(-50%);display:flex;gap:0}
-.pvdots button{width:18px;height:18px;border:0;background:none;padding:0;cursor:pointer;display:grid;place-items:center}
-.pvdots button::before{content:"";width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);transition:background-color .2s,transform .2s}
-.pvdots button.on::before{background:#fff;transform:scale(1.3)}
+
 .pvcount{right:auto;left:10px}
 .preview .pv-photo:has(.pvtrack){cursor:default}
 .preview .pv-body{cursor:pointer}
@@ -600,3 +596,20 @@ button{touch-action:manipulation}
 .routenotes{margin:16px 0 4px;display:grid;gap:8px}
 .routenotes p{margin:0;display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--muted);background:var(--surface-2);border-radius:14px;padding:10px 12px}
 .routenotes p span{flex:none;width:20px;height:20px;border-radius:50%;background:var(--ice-soft);color:var(--ice);font:800 12px/1 var(--f-body);display:grid;place-items:center;font-style:italic}
+
+/* event photo galleries (details hero) and always-visible arrows */
+.hero .pvtrack{position:absolute;inset:0}
+.hero.photo::after{pointer-events:none}
+.hero .htext{pointer-events:none}
+.hero .pvnav{top:50%}
+.hero .pvcount{right:10px;bottom:10px;left:auto;z-index:2}
+.gallery .nav{display:grid;place-items:center;padding:0;width:34px;height:34px;background:rgba(255,255,255,.92);color:#17181c;font-size:0}
+/* dark round controls on the details photo: back button and photo arrows */
+.hero .back,.hero .pvnav,.gallery>.back,.gallery .nav{background:rgba(17,18,22,.86);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.hero .back:hover,.hero .pvnav:hover,.gallery>.back:hover,.gallery .nav:hover{background:#17181c}
+/* list cards: type matched to the reference card (medium-weight title, light grey place line, medium date line) */
+.panel .list .item h3{font-size:17px;font-weight:500;letter-spacing:0;line-height:1.3}
+.panel .list .item .meta{font-size:15px;font-weight:400;line-height:1.35;color:var(--muted)}
+.panel .list .item .dates{font-size:15px;font-weight:500;line-height:1.35;color:var(--ink)}
+.panel .list .thumb .when,.panel .list .tile .when{font-size:13px;font-weight:500;padding:4px 11px}
+.panel .list .item .tag{font-size:13px;font-weight:500}
