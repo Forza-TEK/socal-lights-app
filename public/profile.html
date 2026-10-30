@@ -8,14 +8,14 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031e">
+<link rel="stylesheet" href="/addflow.css?v=20261031i">
 </head>
 <body>
-<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><a class="link" href="/add">Add something</a></div>
+<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><span></span></div>
 <div class="main" id="app"><p class="muted">Loading…</p></div>
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261030a";
-import { esc } from "/addflow.js?v=20261031e";
+import { esc } from "/addflow.js?v=20261031i";
 const $ = (q) => document.querySelector(q), app = $("#app");
 const KEYS = { house: "scl-house-draft", event: "scl-event-draft", contest: "scl-contest-draft" }, PAGE = { house: "/add-house", event: "/add-event", contest: "/add-contest" }, LABEL = { house: "Lighting display", event: "Event", contest: "Contest" };
 const when = (s) => { try { return new Date(String(s).replace(" ", "T") + "Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
@@ -35,7 +35,7 @@ async function syncLocal() {
   } catch {}
   history.replaceState(null, "", "/profile");
 }
-const section = (h, rows, empty) => `<section><h2 style="margin-bottom:6px">${h}</h2>${rows.length ? `<div class="list">${rows.join("")}</div>` : `<p class="muted">${empty}</p>`}</section>`;
+const section = (h, rows, empty, add) => `<section><div class="sechead"><h2>${h}</h2>${add ? `<a class="btn out sm" href="${add[1]}">${add[0]}</a>` : ""}</div>${rows.length ? `<div class="list">${rows.join("")}</div>` : `<p class="muted">${empty}</p>`}</section>`;
 
 async function load() {
   noteSigninResult();
@@ -51,10 +51,10 @@ async function load() {
   const events = o.events.map((e) => `<div class="rowi"><div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${dot(e.status)}</span></div></div>`);
   app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${esc(em[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">Your profile</h1><span class="muted">${esc(em)}</span></div></div>
     ${section("Saved drafts", drafts, "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.")}
-    ${section("Contests you run", contests, "You haven't created a contest.")}
-    ${section("Your contest entries", entries, "You haven't entered a contest.")}
-    ${section("Lighting displays you posted", homes, "None yet.")}
-    ${section("Events you added", events, "None yet.")}
+    ${section("Contests you run", contests, "You haven't created a contest.", ["+ Create a contest", "/add-contest"])}
+    ${section("Your contest entries", entries, "You haven't entered a contest. Scan a contest's QR code or open its link to enter.", ["Find a contest", "/"])}
+    ${section("Lighting displays you posted", homes, "None yet.", ["+ Add a display", "/add-house"])}
+    ${section("Events you added", events, "None yet.", ["+ Add an event", "/add-event"])}
     <section><h2>Account</h2><div style="margin-top:14px"><button class="btn out" id="so" type="button">Sign out</button></div><p class="small muted" style="margin-top:12px">Homes and events are matched by the email you typed on the form. To delete your account, email info@socallights.app.</p></section>`;
   $("#so").onclick = async () => { await signOut(); location.href = "/"; };
   app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to delete"; return; } await fetch("/api/drafts/" + b.dataset.del, { method: "DELETE" }); load(); }));
