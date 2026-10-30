@@ -604,3 +604,12 @@ button{touch-action:manipulation}
 .hero .pvnav{top:50%}
 .hero .pvcount{right:10px;bottom:10px;left:auto;z-index:2}
 .gallery .nav{display:grid;place-items:center;padding:0;width:34px;height:34px;background:rgba(255,255,255,.92);color:#17181c;font-size:0}
+/* dark round controls on the details photo: back button and photo arrows */
+.hero .back,.hero .pvnav,.gallery>.back,.gallery .nav{background:rgba(17,18,22,.86);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.hero .back:hover,.hero .pvnav:hover,.gallery>.back:hover,.gallery .nav:hover{background:#17181c}
+/* list cards: type matched to the reference card (medium-weight title, light grey place line, medium date line) */
+.panel .list .item h3{font-size:17px;font-weight:500;letter-spacing:0;line-height:1.3}
+.panel .list .item .meta{font-size:15px;font-weight:400;line-height:1.35;color:var(--muted)}
+.panel .list .item .dates{font-size:15px;font-weight:500;line-height:1.35;color:var(--ink)}
+.panel .list .thumb .when,.panel .list .tile .when{font-size:13px;font-weight:500;padding:4px 11px}
+.panel .list .item .tag{font-size:13px;font-weight:500}
