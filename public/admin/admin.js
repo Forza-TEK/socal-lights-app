@@ -18,14 +18,15 @@ async function api(path, opts = {}) {
   return d;
 }
 
-function setTab(t) { tab = t; ["pending", "approved", "subs", "events"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
-["pending", "approved", "subs", "events"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
+function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
+["pending", "approved", "subs", "contests", "events"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
 
 async function render() {
   const main = $("#main");
   try {
     if (tab === "events") return renderEvents();
     if (tab === "subs") return renderSubs();
+    if (tab === "contests") return renderContests();
     const posts = await api("/api/admin/posts?status=" + tab);
     if (tab === "pending") $("#nPending").textContent = posts.length;
     if (!posts.length) { main.innerHTML = `<div class="empty">${tab === "pending" ? "Nothing waiting for review." : "No published houses yet."}</div>`; return; }
@@ -102,6 +103,29 @@ $("#main").addEventListener("click", async (e) => {
   if (b.dataset.sact === "decline" && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to decline"; return; }
   b.disabled = true; msg.textContent = "Working…";
   try { await api("/api/admin/submissions/" + card.dataset.sid, { method: "POST", body: JSON.stringify({ action: b.dataset.sact, status: b.dataset.st }) }); card.remove(); $("#nSubs").textContent = document.querySelectorAll("[data-sid]").length; if (!document.querySelector("[data-sid]")) renderSubs(); }
+  catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
+});
+
+/* ---------- contests (organizers who need a review, e.g. a Gmail address or an email that doesn't match their website) ---------- */
+async function renderContests() {
+  const main = $("#main");
+  const list = await api("/api/admin/contests?status=pending");
+  $("#nContests").textContent = list.length;
+  if (!list.length) { main.innerHTML = `<div class="empty">No contests waiting. A contest goes live by itself when the organizer's email matches their website.</div>`; return; }
+  main.innerHTML = `<div class="cards">${list.map((c) => `<article class="acard" data-cid="${esc(c.id)}">
+    <div class="row" style="justify-content:space-between"><h3>${esc(c.name)}</h3><span class="meta">${esc((c.created_at || "").slice(0, 16))} UTC</span></div>
+    <dl class="facts"><dt>Run by</dt><dd>${esc(c.org)} · ${esc(c.city)}</dd><dt>Organizer email</dt><dd><span style="user-select:all">${esc(c.owner_email || c.contact_email)}</span></dd>
+    <dt>Website</dt><dd>${c.site ? `<a href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site)}</a>` : "none given"}</dd><dt>Why it's here</dt><dd>${esc(c.note || "")}</dd>
+    <dt>Dates</dt><dd>Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}</dd><dt>Welcome message</dt><dd>${esc(c.descr)}</dd>
+    <dt>Public page</dt><dd><a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">/c/${esc(c.slug)}</a></dd></dl>
+    <div class="row"><button class="btn ice" type="button" data-cact="approve">Approve (goes on the map)</button><button class="btn ghost" type="button" data-cact="decline">Decline</button><span class="msg" role="status"></span></div></article>`).join("")}</div>`;
+}
+$("#main").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-cact]"); if (!b) return;
+  const card = b.closest("[data-cid]"), msg = card.querySelector(".msg");
+  if (b.dataset.cact === "decline" && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to decline"; return; }
+  b.disabled = true; msg.textContent = "Working…";
+  try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: b.dataset.cact }) }); card.remove(); $("#nContests").textContent = document.querySelectorAll("[data-cid]").length; if (!document.querySelector("[data-cid]")) render(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
