@@ -613,3 +613,6 @@ button{touch-action:manipulation}
 .panel .list .item .dates{font-size:15px;font-weight:500;line-height:1.35;color:var(--ink)}
 .panel .list .thumb .when,.panel .list .tile .when{font-size:13px;font-weight:500;padding:4px 11px}
 .panel .list .item .tag{font-size:13px;font-weight:500}
+/* map pop-up card: same dark round arrows as the details photo */
+.preview .pvnav{background:rgba(17,18,22,.86);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.preview .pvnav:hover{background:#17181c}
