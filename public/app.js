@@ -2,11 +2,11 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261030n";
+import { SITE } from "/site-config.js?v=20261030o";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
-const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030n" };
+const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030o" };
 const theme = () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 // Pin and cluster colors: free events are green; ticketed events, clusters and the route take the season's accent
 const SEASON_HEX = { light: { newyear: "#6d3fc0", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
@@ -161,11 +161,11 @@ function initLayers() {
   map.addLayer({ id: "pt", type: "circle", source: "pts", filter: ["!", ["has", "point_count"]],
     paint: { "circle-color": catColor(C),
       "circle-radius": ["case", ["==", ["get", "feat"], 1], 10, ["==", ["get", "cat"], "inst"], 8, ["==", ["get", "cat"], "fav"], 8, 7],
-      "circle-stroke-width": 0.5, "circle-stroke-color": ["case", ["==", ["get", "feat"], 1], C.fav, C.ring] } });
+      "circle-stroke-width": 0, "circle-stroke-color": ["case", ["==", ["get", "feat"], 1], C.fav, C.ring] } });
   map.addLayer({ id: "route-line", type: "line", source: "route", paint: { "line-color": C.fav, "line-width": 4, "line-dasharray": [1.5, 1.5] } });
-  map.addLayer({ id: "stops", type: "circle", source: "stops", paint: { "circle-color": C.fav, "circle-radius": 12, "circle-stroke-width": 1, "circle-stroke-color": C.ring } });
+  map.addLayer({ id: "stops", type: "circle", source: "stops", paint: { "circle-color": C.fav, "circle-radius": 12, "circle-stroke-width": 0, "circle-stroke-color": C.ring } });
   map.addLayer({ id: "stops-num", type: "symbol", source: "stops", layout: { "text-field": ["get", "num"], "text-font": ["Noto Sans Bold"], "text-size": 12, "text-allow-overlap": true }, paint: { "text-color": "#ffffff" } });
-  map.addLayer({ id: "hl", type: "circle", source: "hl", paint: { "circle-color": catColor(C), "circle-radius": 11, "circle-stroke-width": 1, "circle-stroke-color": C.ring } });
+  map.addLayer({ id: "hl", type: "circle", source: "hl", paint: { "circle-color": catColor(C), "circle-radius": 11, "circle-stroke-width": 0, "circle-stroke-color": C.ring } });
   map.addLayer({ id: "hl-label", type: "symbol", source: "hl",
     layout: { "text-field": ["get", "label"], "text-font": ["Noto Sans Bold"], "text-size": 13, "text-anchor": "left", "text-offset": [1.2, 0], "text-allow-overlap": true, "text-max-width": 16 },
     paint: { "text-color": C.ink, "text-halo-color": C.ring, "text-halo-width": 2.2 } });
