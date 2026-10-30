@@ -205,3 +205,5 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 ## 2026-10-30 city sweep, group 6 (Long Beach & Gateway Cities)
 Search coverage was thin (most 2026 pages not yet posted). Fixed Cerritos tree lighting (now Santa's Sleigh Day, Nov 28, Cerritos Library). Leads: Lakewood Holiday Home Decoration Showcase (entries close Dec 11, home list later), Norwalk and Bellflower decor contests (no addresses published), Whittier parade time TBA.
 - 2026-10-30 sweep group 20 (Santa Barbara County): added Buellton Winter Fest (Dec 6), fixed Holiday Lights Festival pin. Group already well covered; no 2026 Lompoc/Santa Maria/Carpinteria/Guadalupe contest or event pages posted yet (Lompoc contest nominations usually open ~Nov 17; judging mid-Dec).
+
+- 2026-10-30 city sweep group 8 (South OC): group already dense; added 3 events (Dana Point Santa Paws, Holiday Wine Cruise, Laguna Hills Breakfast with Santa) in migration 0118+. Leads: Laguna Hills Holiday Lights Map (publishes Dec 2), Laguna Niguel contest map (late Dec), Lake Forest Snowfest/Breakfast with Santa dates unconfirmed, Dana Point menorah (Dec 14-22, pier not geocoded).
