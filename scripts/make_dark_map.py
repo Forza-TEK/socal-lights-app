@@ -26,10 +26,9 @@ def tx(c,kind):
     p=parse(c)
     if not p: return c
     r,g,b,a=p;h,l,s=colorsys.rgb_to_hls(r,g,b)
-    if kind=="fill":
-        if s<0.3 or (0.03<h<0.20 and l>0.45): h,l2,s2=222/360,0.07+0.10*l,0.30
-        else: l2=0.07+0.14*l; s2=min(0.70,s*1.15+0.05)
-    elif kind=="line": l2=0.17+0.28*l; s2=min(0.5,s*0.7)
+    # the day map's own colors, just darker: same hues and saturation, lightness scaled down
+    if kind=="fill": l2=0.05+0.24*l; s2=min(1.0,s*0.9)
+    elif kind=="line": l2=0.10+0.30*l; s2=s*0.62
     elif kind=="text": l2=0.86; s2=min(0.45,s)
     elif kind=="halo": l2=0.07; s2=min(0.5,s)
     else: return c
@@ -47,7 +46,7 @@ def darkify(style):
     style["name"]="SoCal dark liberty"
     return style
 if __name__=="__main__":
-    # Regenerates public/map-dark.json: OpenFreeMap's colorful "liberty" style, darkened (navy land, deep blue water, muted greens, amber roads)
+    # Regenerates public/map-dark.json: OpenFreeMap's colorful "liberty" style, darkened (same hues as the day map, just darker)
     import urllib.request
     req=urllib.request.Request("https://tiles.openfreemap.org/styles/liberty",headers={"User-Agent":"SoCalLights-style-build/1.0 (info@socallights.app)"})
     d=darkify(json.load(urllib.request.urlopen(req)))
