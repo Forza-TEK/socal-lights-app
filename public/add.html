@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031c">
+<link rel="stylesheet" href="/addflow.css?v=20261031d">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><a class="link" href="/">Back to the map</a></div>
@@ -18,7 +18,7 @@
   <div class="tiles" id="opts"></div>
 </div>
 <script type="module">
-import { ICON, esc } from "/addflow.js?v=20261031c";
+import { ICON, esc } from "/addflow.js?v=20261031d";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261029d";
 const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
 document.documentElement.dataset.season = defaultSeason(today);
