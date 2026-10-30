@@ -504,6 +504,10 @@ button{touch-action:manipulation}
 @keyframes tabpop{0%{transform:scale(.55) rotate(-16deg)}100%{transform:none}}
 .pbody.tabin,.phead.tabin{animation:tabin .4s cubic-bezier(.2,.8,.2,1)}
 @keyframes tabin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.pbody.tabin-r,.phead.tabin-r{animation:slidein-r .4s cubic-bezier(.22,.9,.28,1)}.pbody.tabin-l,.phead.tabin-l{animation:slidein-l .4s cubic-bezier(.22,.9,.28,1)}
+@keyframes slidein-r{from{opacity:0;transform:translateX(44px)}to{opacity:1;transform:none}}@keyframes slidein-l{from{opacity:0;transform:translateX(-44px)}to{opacity:1;transform:none}}
+.panel{overflow-x:clip}
+@media (prefers-reduced-motion:reduce){.pbody.tabin-r,.phead.tabin-r,.pbody.tabin-l,.phead.tabin-l{animation:none!important}}
 /* menus and pop-overs spring open, and their rows slide in one after another */
 @keyframes popin{from{opacity:0;transform:translateY(-8px) scale(.94)}to{opacity:1;transform:none}}
 @keyframes rowin{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
