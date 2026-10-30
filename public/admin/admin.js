@@ -1,6 +1,7 @@
 // SoCal Lights admin: review houses, manage published posts, edit events.
 import { CITY } from "/cities.js";
 import { SEASONS, defaultSeason } from "/seasons.js";
+import { attachAddress } from "/addflow.js?v=20261031o";
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -9,6 +10,11 @@ const TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles"
 let evSeason = defaultSeason(TODAY);
 const photo = (k) => "/api/admin/photo/" + k.split("/").map(encodeURIComponent).join("/");
 let tab = "pending", EVENTS = [], POSTS = [];
+// Address suggestions on every address box in the edit windows (the house street and the event address)
+attachAddress($("#modal"), { getCity: () => ($("#pCity") || $("#eCity") || {}).value || "", onPick: (s, inp) => {
+  if (inp.id === "pStreet") { inp.value = s.street; if ($("#pCity") && [...$("#pCity").options].some((o) => o.value === s.city)) $("#pCity").value = s.city; if ($("#pZip") && /^\d{5}/.test(s.zip)) $("#pZip").value = s.zip.slice(0, 5); }
+  else { inp.value = `${s.street}, ${s.city}, CA ${s.zip}`; if ($("#eCity")) $("#eCity").value = s.city; }
+} });
 
 async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: "same-origin", headers: opts.body ? { "content-type": "application/json" } : {}, ...opts });
@@ -63,7 +69,7 @@ function editPost(p) {
   <form class="f" id="pForm" novalidate>
     <label for="pKind">Posting as<select id="pKind"><option value="homeowner" ${p.kind !== "installer" ? "selected" : ""}>Homeowner</option><option value="installer" ${p.kind === "installer" ? "selected" : ""}>Professional installer</option></select></label>
     <div class="two"><label for="pBiz">Name or business<input id="pBiz" value="${esc(p.biz)}" maxlength="80"></label><label for="pTitle">Display name<input id="pTitle" value="${esc(p.title)}" maxlength="90"></label></div>
-    <label for="pStreet">Street address <span class="hint">saving moves the pin to this address</span><input id="pStreet" value="${esc(p.street || (p.address || "").split(",")[0])}" maxlength="120" placeholder="e.g. 123 Main St"></label>
+    <label for="pStreet">Street address <span class="hint">saving moves the pin to this address</span><input id="pStreet" data-addr autocomplete="off" value="${esc(p.street || (p.address || "").split(",")[0])}" maxlength="120" placeholder="e.g. 123 Main St"></label>
     <div class="two"><label for="pCity">City<select id="pCity">${Object.keys(CITY).sort().map((c) => `<option ${c === p.city ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label><label for="pZip">ZIP<input id="pZip" value="${esc(p.zip || "")}" inputmode="numeric" maxlength="5" placeholder="92630"></label></div>
     <label for="pSeason">Season<select id="pSeason">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (p.season || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label>
     <div class="two"><label for="pWeb">Website<input id="pWeb" value="${esc(p.web || "")}" maxlength="200"></label><label for="pPhone">Phone<input id="pPhone" value="${esc(p.phone || "")}" maxlength="80"></label></div>
@@ -154,7 +160,7 @@ function editEvent(ev) {
     <label for="eH">Hours<input id="eH" value="${esc(e.h)}" maxlength="200"></label>
     <label for="eB">Description<textarea id="eB" maxlength="600">${esc(e.b)}</textarea></label>
     <label for="eU">Event website<input id="eU" type="url" value="${esc(e.u)}" maxlength="300"></label>
-    <div class="two"><label for="eV">Venue<input id="eV" value="${esc(e.v || "")}" maxlength="120" placeholder="Crown Valley Community Park"></label><label for="eA">Street address<input id="eA" value="${esc(e.a || "")}" maxlength="200" placeholder="29751 Crown Valley Pkwy, Laguna Niguel, CA 92677"></label></div>
+    <div class="two"><label for="eV">Venue<input id="eV" value="${esc(e.v || "")}" maxlength="120" placeholder="Crown Valley Community Park"></label><label for="eA">Street address<input id="eA" data-addr autocomplete="off" value="${esc(e.a || "")}" maxlength="200" placeholder="29751 Crown Valley Pkwy, Laguna Niguel, CA 92677"></label></div>
     <div><div class="row" style="margin-bottom:6px"><button class="btn ghost" type="button" id="eGeo">Place pin from address</button><span class="meta" id="geoMsg">Or click the map / drag the pin. Directions use the street address.</span></div><div id="pick"></div><div class="meta dates" id="ll" style="margin-top:4px"></div></div>
     <div class="row"><button class="btn" type="submit">Save event</button>${ev ? `<button class="btn ghost" type="button" id="eDel">Delete event</button>` : ""}<span class="msg" id="eMsg"></span></div>
   </form></div>`;

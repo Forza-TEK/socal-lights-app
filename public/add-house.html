@@ -8,18 +8,21 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031n">
+<link rel="stylesheet" href="/addflow.css?v=20261031o">
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, today } from "/addflow.js?v=20261031n";
+import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, today } from "/addflow.js?v=20261031o";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261029d";
+import { me } from "/auth.js?v=20261030a";
 import { CITY } from "/cities.js";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
 const d = { kind: "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
 const pro = (x) => x.kind === "installer";
 await ts.init();
+// Signed in with a saved name and address? Start the form with them (all optional on the profile).
+const acct = (await me()).user; if (acct) { d.email = acct.email; if (!d.biz && acct.name) d.biz = acct.name; if (acct.city && cities.includes(acct.city)) { d.city = acct.city; d.street = acct.street || ""; d.zip = acct.zip || ""; } }
 
 const steps = [
   { id: "kind", sec: "About you", title: "Who's posting?", help: "Homeowners and professional installers can both show their lights on the map.", redraw: true,

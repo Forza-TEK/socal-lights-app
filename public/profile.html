@@ -8,20 +8,22 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031n">
+<link rel="stylesheet" href="/addflow.css?v=20261031o">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span></div></div>
 <div class="main" id="app"><p class="muted">Loading…</p></div>
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261030a";
-import { esc, themeBtn } from "/addflow.js?v=20261031n";
+import { esc, themeBtn, input, select, attachAddress, OPT } from "/addflow.js?v=20261031o";
+import { CITY } from "/cities.js";
 document.getElementById("tb").innerHTML = themeBtn();
-const $ = (q) => document.querySelector(q), app = $("#app");
+const $ = (q) => document.querySelector(q), app = $("#app"), cities = Object.keys(CITY).sort();
 const KEYS = { house: "scl-house-draft", event: "scl-event-draft", contest: "scl-contest-draft" }, PAGE = { house: "/add-house", event: "/add-event", contest: "/add-contest" }, LABEL = { house: "Lighting display", event: "Event", contest: "Contest" };
 const when = (s) => { try { return new Date(String(s).replace(" ", "T") + "Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
 const stat = { approved: ["live", "Live"], published: ["live", "Live"], live: ["live", "Live"], pending: ["warn", "In review"], declined: ["", "Declined"], closed: ["", "Ended"] };
 const dot = (s, over) => { const [c, l] = over || stat[s] || ["", s]; return `<span class="dot ${c}"></span>${esc(l)}`; };
+let O = null, tab = (location.hash || "").slice(1) || "drafts";
 
 // After Google sign-in comes back with ?save=<kind>, move the draft kept on this device into the account
 async function syncLocal() {
@@ -36,41 +38,69 @@ async function syncLocal() {
   } catch {}
   history.replaceState(null, "", "/profile");
 }
-const section = (h, rows, empty, add) => `<section><div class="sechead"><h2>${h}</h2>${add ? `<a class="btn out sm" href="${add[1]}">${add[0]}</a>` : ""}</div>${rows.length ? `<div class="list">${rows.join("")}</div>` : `<p class="muted">${empty}</p>`}</section>`;
+const head = (h, add) => `<div class="sechead"><h2>${h}</h2>${add ? `<a class="btn out sm" href="${add[1]}">${add[0]}</a>` : ""}</div>`;
+const list = (rows, empty) => (rows.length ? `<div class="list">${rows.join("")}</div>` : `<p class="muted">${empty}</p>`);
 
-async function load() {
-  noteSigninResult();
-  const info = await me(true);
-  if (!info.user) { app.innerHTML = `<h1>Your profile</h1><p class="help">Sign in to see your saved drafts and everything you've added.</p><div><button class="btn" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to your profile", next: "/profile" })) load(); }; return; }
-  await syncLocal();
-  const r = await fetch("/api/me/overview", { cache: "no-store" }); if (!r.ok) { app.innerHTML = `<h1>Your profile</h1><p class="err">Couldn't load your profile. Try again in a moment.</p>`; return; }
-  const o = await r.json(), em = o.user.email;
-  const drafts = o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}</span></div><div class="acts"><a class="btn sm" href="${PAGE[d.kind] || "/add"}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}">Delete</button></div></div>`);
-  const contests = o.contests.map((c) => `<div class="rowi"><div><b>${esc(c.name)}</b><br><span class="small muted">${dot(c.status, c.announced ? ["", "Winners announced"] : c.status === "live" ? ["live", "Live"] : c.status === "pending" ? ["warn", "Waiting for approval"] : ["", "Ended"])}</span></div><div class="acts"><a class="btn sm" href="/c/${esc(c.slug)}/manage">Open dashboard</a><a class="btn out sm" href="/c/${esc(c.slug)}">View</a></div></div>`);
-  const entries = o.entries.map((e) => `<div class="rowi"><div><b>${esc(e.title || e.biz)}</b><br><span class="small muted">${esc(e.contest)} · ${dot(e.status)}</span></div><div class="acts"><a class="btn out sm" href="/c/${esc(e.slug)}">View contest</a></div></div>`);
-  const homes = o.homes.map((h) => `<div class="rowi"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status)}</span></div></div>`);
-  const events = o.events.map((e) => `<div class="rowi"><div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${dot(e.status)}</span></div></div>`);
-  app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${info.user.avatar ? `<img src="${esc(info.user.avatar)}" alt="">` : esc(em[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">Your profile</h1><span class="muted">${esc(em)}</span><div style="display:flex;gap:14px;margin-top:6px"><label class="link" for="avfile" style="font-size:14px;cursor:pointer">${info.user.avatar ? "Change photo" : "Add a photo"}</label>${info.user.avatar ? '<button class="link" id="avrm" type="button" style="font-size:14px">Remove</button>' : ""}<input id="avfile" type="file" accept="image/*" hidden></div><p class="err" id="averr" role="alert" hidden></p></div></div>
-    ${section("Saved drafts", drafts, "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.")}
-    ${section("Contests you run", contests, "You haven't created a contest.", ["+ Create a contest", "/add-contest"])}
-    ${section("Your contest entries", entries, "You haven't entered a contest. Scan a contest's QR code or open its link to enter.", ["Find a contest", "/"])}
-    ${section("Lighting displays you posted", homes, "None yet.", ["+ Add a display", "/add-house"])}
-    ${section("Events you added", events, "None yet.", ["+ Add an event", "/add-event"])}
-    <section><h2>Account</h2><div style="margin-top:14px"><button class="btn out" id="so" type="button">Sign out</button></div><p class="small muted" style="margin-top:12px">Homes and events are matched by the email you typed on the form. To delete your account, email info@socallights.app.</p></section>`;
+function panel() {
+  const o = O, u = o.user;
+  if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}</span></div><div class="acts"><a class="btn sm" href="${PAGE[d.kind] || "/add"}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
+  if (tab === "contests") return head("Contests you run", ["+ Create a contest", "/add-contest"]) + list(o.contests.map((c) => `<div class="rowi"><div><b>${esc(c.name)}</b><br><span class="small muted">${dot(c.status, c.announced ? ["", "Winners announced"] : c.status === "live" ? ["live", "Live"] : c.status === "pending" ? ["warn", "Waiting for approval"] : ["", "Ended"])}</span></div><div class="acts"><a class="btn sm" href="/c/${esc(c.slug)}/manage">Open dashboard</a><a class="btn out sm" href="/c/${esc(c.slug)}">View</a></div></div>`), "You haven't created a contest.");
+  if (tab === "entries") return head("Your contest entries", ["Find a contest", "/"]) + list(o.entries.map((e) => `<div class="rowi"><div><b>${esc(e.title || e.biz)}</b><br><span class="small muted">${esc(e.contest)} · ${dot(e.status)}</span></div><div class="acts"><a class="btn out sm" href="/c/${esc(e.slug)}">View contest</a></div></div>`), "You haven't entered a contest. Scan a contest's QR code or open its link to enter.");
+  if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + list(o.homes.map((h) => `<div class="rowi"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status)}</span></div></div>`), "None yet.");
+  if (tab === "events") return head("Events you added", ["+ Add an event", "/add-event"]) + list(o.events.map((e) => `<div class="rowi"><div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${dot(e.status)}</span></div></div>`), "None yet.");
+  // account
+  const pf = { name: u.name || "", street: u.street || "", city: u.city || "", zip: u.zip || "" };
+  return head("Account") + `<p class="muted" style="margin-top:-8px">Your name and address are optional. We use them to fill in forms for you; they are never shown publicly.</p>
+    <form id="pform" class="main" style="padding:0;gap:18px;max-width:none" novalidate>${input(pf, "name", { label: "Name", opt: true, max: 80, ac: "name", ph: "Your name" })}${select(pf, "city", cities.map((c) => [c, c]), { label: `City ${OPT}`, blank: "Choose a city", ac: "address-level2" })}${input(pf, "street", { label: "Street address", opt: true, max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}${input(pf, "zip", { label: "ZIP", opt: true, max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}
+    <p class="err" id="perr" role="alert" hidden></p><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn" type="submit">Save</button><span class="muted small" id="pok" role="status"></span></div></form>
+    <div style="margin-top:8px"><button class="btn out" id="so" type="button">Sign out</button></div><p class="small muted">Homes and events are matched by the email you typed on the form. To delete your account, email info@socallights.app.</p>`;
+}
+
+function render() {
+  const o = O, em = o.user.email, n = { drafts: o.drafts.length, contests: o.contests.length, entries: o.entries.length, displays: o.homes.length, events: o.events.length };
+  const T = [["drafts", "Drafts"], ["contests", "Contests"], ["entries", "Entries"], ["displays", "Displays"], ["events", "Events"], ["account", "Account"]];
+  if (!T.some((t) => t[0] === tab)) tab = "drafts";
+  app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${info && info.user && info.user.avatar ? `<img src="${esc(info.user.avatar)}" alt="">` : esc((o.user.name || em)[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">${esc(o.user.name || "Your profile")}</h1><span class="muted">${esc(em)}</span><div style="display:flex;gap:14px;margin-top:6px"><label class="link" for="avfile" style="font-size:14px;cursor:pointer">${info && info.user && info.user.avatar ? "Change photo" : "Add a photo"}</label>${info && info.user && info.user.avatar ? '<button class="link" id="avrm" type="button" style="font-size:14px">Remove</button>' : ""}<input id="avfile" type="file" accept="image/*" hidden></div><p class="err" id="averr" role="alert" hidden></p></div></div>
+    <div class="ptabs2" role="tablist">${T.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}${n[k] ? `<span class="cnt">${n[k]}</span>` : ""}</button>`).join("")}</div>
+    <section id="pp">${panel()}</section>`;
+  wire();
+}
+function wire() {
+  app.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; history.replaceState(null, "", "#" + tab); render(); }));
+  app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to delete"; return; } await fetch("/api/drafts/" + b.dataset.del, { method: "DELETE" }); load(); }));
+  const so = $("#so"); if (so) so.onclick = async () => { await signOut(); location.href = "/"; };
+  const pf = $("#pform"); if (pf) {
+    attachAddress(pf, { getCity: () => $("#f-city").value, onPick: (s) => { $("#f-street").value = s.street; if (cities.includes(s.city)) $("#f-city").value = s.city; if (/^\d{5}/.test(s.zip)) $("#f-zip").value = s.zip.slice(0, 5); } });
+    pf.onsubmit = async (e) => {
+      e.preventDefault(); const er = $("#perr"), ok = $("#pok"); er.hidden = true; ok.textContent = "";
+      const r = await fetch("/api/me/profile", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("#f-name").value, street: $("#f-street").value, city: $("#f-city").value, zip: $("#f-zip").value }) }), j = await r.json().catch(() => ({}));
+      if (!r.ok) { er.textContent = j.error || "Couldn't save that."; er.hidden = false; return; }
+      O.user = { ...O.user, name: $("#f-name").value.trim(), street: $("#f-street").value.trim(), city: $("#f-city").value, zip: $("#f-zip").value.trim() }; ok.textContent = "Saved."; await me(true);
+    };
+  }
   // profile picture: cropped to a 256px square on this device, then uploaded
-  $("#avfile").onchange = async (e) => {
+  const av = $("#avfile"); if (av) av.onchange = async (e) => {
     const f = e.target.files[0]; e.target.value = ""; if (!f) return; const er = $("#averr"); er.hidden = true;
     try {
       const bmp = await createImageBitmap(f, { imageOrientation: "from-image" }), s = Math.min(bmp.width, bmp.height), c = document.createElement("canvas"); c.width = c.height = 256;
       c.getContext("2d").drawImage(bmp, (bmp.width - s) / 2, (bmp.height - s) / 2, s, s, 0, 0, 256, 256);
       const blob = await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej()), "image/jpeg", 0.85));
       const r = await fetch("/api/me/avatar", { method: "POST", headers: { "content-type": "image/jpeg" }, body: blob }), j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "Couldn't save that photo."); await me(true); load();
+      if (!r.ok) throw new Error(j.error || "Couldn't save that photo."); load();
     } catch (x) { er.textContent = x.message || "That photo couldn't be read. Try a JPG or PNG."; er.hidden = false; }
   };
-  const rm = $("#avrm"); if (rm) rm.onclick = async () => { await fetch("/api/me/avatar", { method: "DELETE" }); await me(true); load(); };
-  $("#so").onclick = async () => { await signOut(); location.href = "/"; };
-  app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to delete"; return; } await fetch("/api/drafts/" + b.dataset.del, { method: "DELETE" }); load(); }));
+  const rm = $("#avrm"); if (rm) rm.onclick = async () => { await fetch("/api/me/avatar", { method: "DELETE" }); load(); };
+}
+
+let info = null;
+async function load() {
+  noteSigninResult();
+  const i = await me(true); info = i;
+  if (!i.user) { app.innerHTML = `<h1>Your profile</h1><p class="help">Sign in to see your saved drafts and everything you've added.</p><div><button class="btn" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to your profile", next: "/profile" })) load(); }; return; }
+  await syncLocal();
+  const r = await fetch("/api/me/overview", { cache: "no-store" }); if (!r.ok) { app.innerHTML = `<h1>Your profile</h1><p class="err">Couldn't load your profile. Try again in a moment.</p>`; return; }
+  O = await r.json(); O.user = { ...O.user, street: i.user.street || "", city: i.user.city || "", zip: i.user.zip || "", name: i.user.name || O.user.name || "" };
+  render();
 }
 load();
 </script>
