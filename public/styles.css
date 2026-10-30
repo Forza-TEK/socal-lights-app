@@ -692,3 +692,6 @@ body.lb-open{overflow:hidden}
 .rtlink[aria-disabled="true"]{color:var(--muted);opacity:.65}
 .rtlink[aria-disabled="true"] svg{color:var(--muted)}
 .rtlink[aria-disabled="true"]:hover{background:none}
+
+/* The "Route these" hint: translucent season accent, thin type */
+#toast.accent{background:color-mix(in srgb,var(--season) 78%,transparent);color:var(--on-season);font-weight:300;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid color-mix(in srgb,var(--on-season) 25%,transparent);max-width:calc(100vw - 32px);text-align:center;line-height:1.3}
