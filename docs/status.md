@@ -134,3 +134,7 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - D1 rejected a 187-row INSERT (SQLITE_TOOBIG): migration 0083 was rewritten as small inserts via a one-time validator exception.
 
 - 2026-10-30 sweep group 19 (Ventura County): 3 residential displays added (migration 0090). Search found no published 2026 dates for Port Hueneme, Fillmore, Santa Paula, Ojai or Moorpark holiday events; no Ventura County contest lists found; macaronikid pages blocked (403).
+## 2026-10-30 — City sweep group 3 (West San Gabriel Valley)
+- Searched all 17 cities; the group was already well covered (Halloween, tree lightings, parades, Arcadia/Altadena contest homes). Added San Gabriel Turkey Trot 2026 (Nov 14, migration 0090).
+- No photos set: the candidate og:images were logos, banners or site defaults.
+- Contest leads (no 2026 home lists yet): Alhambra, Monrovia and Temple City holiday home decorating contests (judging early-mid Dec; Temple City page names only a 2025 winner, 4826 Alessandro Ave). Harbeck Lights (1215 Tropical Ave, Pasadena) has no 2026 source. Duarte, Bradbury, Montebello, El Monte, Monterey Park: no new 2026 pages found; city sites (Duarte, Monrovia) returned 403.
