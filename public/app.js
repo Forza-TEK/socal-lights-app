@@ -2,11 +2,11 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261030n";
+import { SITE } from "/site-config.js?v=20261030q";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
-const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030n" };
+const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030q" };
 const theme = () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 // Pin and cluster colors: free events are green; ticketed events, clusters and the route take the season's accent
 const SEASON_HEX = { light: { newyear: "#6d3fc0", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
@@ -133,7 +133,7 @@ geo.on("geolocate", (e) => map.easeTo({ center: [e.coords.longitude, e.coords.la
 
 function padding() {
   const ph = isPhone();
-  return { top: ph ? 128 : 100, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? peekH() + 16 : 24 }; // phones: centre things in the map above the collapsed list, even while the sheet is open
+  return { top: ph ? 128 : 100, left: 24, right: ph ? 24 : panelW() + 48, bottom: ph ? peekH() + 16 : 24 }; // phones: centre things in the map above the collapsed list, even while the sheet is open
 }
 // On phones the list covers the map when expanded, so "in map view" means the map above the collapsed sheet.
 function mapArea() { const p = padding(); if (isPhone()) p.bottom = peekH() + 16; return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
@@ -155,13 +155,13 @@ function initLayers() {
   map.addSource("route", { type: "geojson", data: fc([]) });
   map.addSource("stops", { type: "geojson", data: fc([]) });
   map.addLayer({ id: "clusters", type: "circle", source: "pts", filter: ["has", "point_count"],
-    paint: { "circle-color": C.season, "circle-opacity": 0.92, "circle-radius": ["step", ["get", "point_count"], 16, 8, 20, 20, 25], "circle-stroke-width": 0 } });
+    paint: { "circle-color": C.season, "circle-opacity": 0.92, "circle-radius": ["step", ["get", "point_count"], 16, 8, 20, 20, 25], "circle-stroke-width": 1, "circle-stroke-color": C.ring } });
   map.addLayer({ id: "cluster-count", type: "symbol", source: "pts", filter: ["has", "point_count"],
     layout: { "text-field": ["get", "point_count_abbreviated"], "text-font": ["Noto Sans Bold"], "text-size": 13 }, paint: { "text-color": "#ffffff" } });
   map.addLayer({ id: "pt", type: "circle", source: "pts", filter: ["!", ["has", "point_count"]],
     paint: { "circle-color": catColor(C),
       "circle-radius": ["case", ["==", ["get", "feat"], 1], 10, ["==", ["get", "cat"], "inst"], 8, ["==", ["get", "cat"], "fav"], 8, 7],
-      "circle-stroke-width": 0.5, "circle-stroke-color": ["case", ["==", ["get", "feat"], 1], C.fav, C.ring] } });
+      "circle-stroke-width": 1, "circle-stroke-color": ["case", ["==", ["get", "feat"], 1], C.fav, C.ring] } });
   map.addLayer({ id: "route-line", type: "line", source: "route", paint: { "line-color": C.fav, "line-width": 4, "line-dasharray": [1.5, 1.5] } });
   map.addLayer({ id: "stops", type: "circle", source: "stops", paint: { "circle-color": C.fav, "circle-radius": 12, "circle-stroke-width": 1, "circle-stroke-color": C.ring } });
   map.addLayer({ id: "stops-num", type: "symbol", source: "stops", layout: { "text-field": ["get", "num"], "text-font": ["Noto Sans Bold"], "text-size": 12, "text-allow-overlap": true }, paint: { "text-color": "#ffffff" } });
@@ -323,10 +323,27 @@ function closePin() { state.sel = null; $("#preview").hidden = true; document.bo
 // Desktop: the card sits next to its dot (below it, or above when there is no room) and follows the map as it moves
 // The pop-up card is placed next to its dot. Its size is measured once (and when it changes), so moving the map never forces a layout.
 let pinBox = null, pinRaf = 0, pinRO = null;
+// Desktop: the list can be hidden to give the whole screen to the map (remembered on this device)
+const listHidden = () => document.documentElement.classList.contains("list-hidden") && !isPhone();
+function panelW() { return listHidden() ? 0 : parseFloat(cssVar("--panel-w")) || 0; }
+function setListHidden(v, save = true) {
+  document.documentElement.classList.toggle("list-hidden", v);
+  const b = $("#panelToggle"); if (b) { b.setAttribute("aria-expanded", String(!v)); b.setAttribute("aria-label", v ? "Show list" : "Hide list"); b.title = v ? "Show list" : "Hide list"; }
+  if (save) try { localStorage.setItem("socal-listhidden", v ? "1" : "0"); } catch {}
+  pinBox = null; placePin(); if (!v && save) scheduleList();
+}
+(function initPanelToggle() {
+  const b = document.createElement("button"); b.id = "panelToggle"; b.type = "button"; b.className = "ptoggle"; b.setAttribute("aria-controls", "panel");
+  b.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>`;
+  b.onclick = () => setListHidden(!document.documentElement.classList.contains("list-hidden"));
+  document.body.appendChild(b);
+  let was = false; try { was = localStorage.getItem("socal-listhidden") === "1"; } catch {}
+  setListHidden(was, false);
+})();
 function measurePin() {
   const pv = $("#preview"); if (pv.hidden) { pinBox = null; return; }
   const c = $("#map").getBoundingClientRect();
-  pinBox = { W: pv.offsetWidth, H: pv.offsetHeight, left: c.left, top: c.top, right: innerWidth - (parseFloat(cssVar("--panel-w")) || 0) - 30 };
+  pinBox = { W: pv.offsetWidth, H: pv.offsetHeight, left: c.left, top: c.top, right: innerWidth - panelW() - 30 };
 }
 function placePin() {
   if (pinRaf) return;
