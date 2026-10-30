@@ -1,9 +1,10 @@
-// GET   /api/contests/<slug>  the contest, its approved homes and (when allowed) the vote counts. Personalized, never cached.
+// GET   /api/contests/<slug>  the contest, its approved homes, prizes and (when allowed) the vote counts. Personalized, never cached.
 // PATCH /api/contests/<slug>  organizer controls: pause/resume entries and voting, show counts, start voting now, announce winners.
-// Announcing freezes the results into contests.results; from then on the page and the archive read that snapshot, never the live votes.
+// Announcing freezes the results into contests.results; from then on the page, the archive and the export read that snapshot, never the live votes.
 import { json, err } from "../../_lib/util.js";
 import { getUser, sameOrigin, sendMail } from "../../_lib/auth.js";
-import { getContest, windows, todayPT, ownerOf, computeResults } from "../../_lib/contests.js";
+import { getContest, windows, todayPT, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
+import { judgeProgress } from "../../_lib/judging.js";
 
 export async function onRequestGet({ params, request, env }) {
   const c = await getContest(env, params.slug);
@@ -16,17 +17,27 @@ export async function onRequestGet({ params, request, env }) {
   const showCounts = !!c.show_counts || !!c.announced || isOwner;
   const mine = user ? (await env.DB.prepare("SELECT post_id, category FROM votes WHERE contest_id = ? AND user_id = ?").bind(c.id, user.id).all()).results : [];
   const own = new Set(user ? (await env.DB.prepare("SELECT id FROM posts WHERE contest_id = ? AND user_id = ?").bind(c.id, user.id).all()).results.map((r) => r.id) : []);
+  const jrow = await judgeOf(env, c, user);
   const w = windows(c);
+  const jshow = (id) => { // judges' picks or scores for one home: only the organizer sees them before winners are announced
+    const src = frozen ? frozen.jv && frozen.jv[id] : c.judge_method === "score" ? live.jscore[id] : live.jpick[id];
+    return src ? Object.fromEntries(categories.map((k) => [k, c.judge_method === "score" ? (src[k] ? { avg: Math.round(src[k].avg * 100) / 100, n: src[k].n, tr: !!src[k].tr } : null) : src[k] || 0])) : null;
+  };
   // Every home competes in every category, so each home carries a vote count per category (null when counts are hidden)
   const entries = frozen
     ? frozen.entries.map((e) => ({ ...e, mine: own.has(e.id) }))
     : live.posts.map((p) => ({
         id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no,
-        votes: showCounts ? Object.fromEntries(categories.map((k) => [k, (live.counts[p.id] || {})[k] || 0])) : null, mine: own.has(p.id), flagged: isOwner ? !!p.dq : undefined,
+        votes: showCounts && hasPublic(c) ? Object.fromEntries(categories.map((k) => [k, (live.counts[p.id] || {})[k] || 0])) : null, mine: own.has(p.id), flagged: isOwner ? !!p.dq : undefined,
+        jv: isOwner && hasJudges(c) ? jshow(p.id) : undefined,
       }));
+  const awards = frozen ? frozen.awards : c.announced ? awardList(c, live) : null;
+  // What each award is worth, shown from the start so people know what they are competing for
+  const prizes = categories.flatMap((k) => [hasPublic(c) ? { category: k, kind: "public", label: KIND_LABEL.public, prize: prizeFor(c, k, "public") } : null, hasJudges(c) ? { category: k, kind: "judge", label: KIND_LABEL.judge, prize: prizeFor(c, k, "judge") } : null]).filter((x) => x && x.prize);
   return json({
-    contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
-    entries, winners: frozen ? frozen.winners : c.announced ? live.winners : {}, me: { signedIn: !!user, isOwner, votes: mine },
+    contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
+    entries, winners: frozen ? frozen.winners : c.announced ? live.winners : {}, jwinners: frozen ? frozen.jwinners || {} : c.announced ? live.jwinners : {}, awards, prizes,
+    me: { signedIn: !!user, isOwner, isJudge: !!jrow, votes: mine },
   }, { headers: { "cache-control": "no-store" } });
 }
 
@@ -44,32 +55,39 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
     await env.DB.prepare("UPDATE contests SET vote_start = ?, vote_end = ?, voting_open = 1, updated_at = datetime('now') WHERE id = ?").bind(c.vote_start > t ? t : c.vote_start, end, c.id).run();
   } else if (b.action === "announce") {
     const r = await computeResults(env, c);
-    const snap = { at: todayPT(), categories: r.categories, winners: r.winners,
-      entries: r.posts.map((p) => ({ id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, dq: !!p.dq, votes: Object.fromEntries(r.categories.map((k) => [k, (r.counts[p.id] || {})[k] || 0])) })) };
+    // Judges who haven't finished: ask the organizer to confirm before the results are locked
+    if (hasJudges(c) && !b.force) { const inc = (await judgeProgress(env, c, r)).filter((j) => j.done < j.total); if (inc.length) return json({ ok: false, incomplete: inc.map((j) => j.email) }, { status: 409 }); }
+    const awards = awardList(c, r);
+    const jv = {};
+    if (hasJudges(c)) for (const p of r.posts) jv[p.id] = c.judge_method === "score" ? r.jscore[p.id] || null : r.jpick[p.id] || null;
+    const snap = { at: todayPT(), categories: r.categories, winners: r.winners, jwinners: r.jwinners, awards, jv,
+      entries: r.posts.map((p) => ({ id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, dq: !!p.dq, votes: hasPublic(c) ? Object.fromEntries(r.categories.map((k) => [k, (r.counts[p.id] || {})[k] || 0])) : null,
+        jv: jv[p.id] ? Object.fromEntries(r.categories.map((k) => [k, c.judge_method === "score" ? (jv[p.id][k] ? { avg: Math.round(jv[p.id][k].avg * 100) / 100, n: jv[p.id][k].n, tr: !!jv[p.id][k].tr } : null) : jv[p.id][k] || 0])) : undefined })) };
     await env.DB.prepare("UPDATE contests SET announced = 1, results = ?, updated_at = datetime('now') WHERE id = ?").bind(JSON.stringify(snap), c.id).run();
-    const job = notifyResults(env, c, r);
+    const job = notifyResults(env, c, r, awards);
     if (waitUntil) waitUntil(job);
   } else return err(400, "Unknown action.");
   return json({ ok: true });
 }
 
-// Everyone who entered gets the results; winners get a congratulations. The organizer gets a receipt. Failures are ignored (email may be off).
-async function notifyResults(env, c, r) {
+// Everyone who entered gets the results; winners get a congratulations with their prize. Judges and the organizer are told too.
+async function notifyResults(env, c, r, awards) {
   try {
-    const won = new Map(); // post id -> categories won
-    for (const [k, ids] of Object.entries(r.winners)) for (const id of ids) (won.get(id) || won.set(id, []).get(id)).push(k);
+    const won = new Map(); // post id -> [{ category, label, prize }]
+    for (const a of awards) for (const id of a.ids) (won.get(id) || won.set(id, []).get(id)).push(a);
     const { results: rows } = await env.DB.prepare("SELECT p.id, u.email FROM posts p JOIN users u ON u.id = p.user_id WHERE p.contest_id = ? AND p.status = 'approved'").bind(c.id).all();
     const names = [...new Set([...won.keys()].map((id) => { const p = r.posts.find((x) => x.id === id); return p ? p.title || p.biz : ""; }).filter(Boolean))];
     const page = `https://socallights.app/c/${c.slug}`;
     const byEmail = new Map();
-    for (const row of rows) { const e = byEmail.get(row.email) || { cats: [] }; e.cats.push(...(won.get(row.id) || [])); byEmail.set(row.email, e); }
+    for (const row of rows) { const e = byEmail.get(row.email) || { wins: [] }; e.wins.push(...(won.get(row.id) || [])); byEmail.set(row.email, e); }
     let sent = 0;
     for (const [to, e] of [...byEmail].slice(0, 200)) {
-      const win = e.cats.length > 0;
+      const win = e.wins.length > 0, pz = e.wins.filter((w) => w.prize).map((w) => `${w.category} (${w.label}): ${w.prize}`);
       if (await sendMail(env, { to, subject: win ? `You won: ${c.name}` : `Results are in: ${c.name}`,
-        text: win ? `Congratulations! Your home won ${e.cats.join(", ")} in ${c.name}. ${c.org} will contact you at this email address about any prize. A crown now shows next to your home. See the results: ${page}`
+        text: win ? `Congratulations! Your home won ${e.wins.map((w) => `${w.category} (${w.label})`).join(", ")} in ${c.name}.${pz.length ? ` Prize: ${pz.join("; ")}.` : ""} ${c.org} will contact you at this email address about any prize. A crown now shows on your home, and you can choose where to show your badge in your profile. See the results: ${page}`
                   : `Thank you for entering ${c.name}. Winners: ${names.join(", ") || "to be announced"}. See the full results: ${page}` })) sent++;
     }
+    if (hasJudges(c)) { const { results: js } = await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all(); for (const j of js) await sendMail(env, { to: j.email, subject: `Results are in: ${c.name}`, text: `Thank you for judging ${c.name}. The winners are ${names.join(", ") || "to be announced"}. ${page}` }); }
     await sendMail(env, { to: c.contact_email, subject: `Results sent: ${c.name}`, text: `You announced the winners of ${c.name}. ${sent} of ${byEmail.size} entrants were emailed. The results are locked. Download them from your dashboard: https://socallights.app/c/${c.slug}/manage` });
   } catch {}
 }

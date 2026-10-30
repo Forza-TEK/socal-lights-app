@@ -83,7 +83,7 @@ function wire() {
       e.preventDefault(); const er = $("#perr"), ok = $("#pok"); er.hidden = true; ok.textContent = "";
       const r = await fetch("/api/me/profile", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("#f-name").value, street: $("#f-street").value, city: $("#f-city").value, zip: $("#f-zip").value }) }), j = await r.json().catch(() => ({}));
       if (!r.ok) { er.textContent = j.error || "Couldn't save that."; er.hidden = false; return; }
-      O.user = { ...O.user, name: $("#f-name").value.trim(), street: $("#f-street").value.trim(), city: $("#f-city").value, zip: $("#f-zip").value.trim() }; ok.textContent = "Saved."; await me(true);
+      O.user = { ...O.user, name: $("#f-name").value.trim(), street: $("#f-street").value.trim(), city: $("#f-city").value, zip: $("#f-zip").value.trim() }; ok.textContent = "Saved."; const h = app.querySelector("h1"); if (h) h.textContent = O.user.name || "Your profile"; await me(true);
     };
   }
   // profile picture: cropped to a 256px square on this device, then uploaded

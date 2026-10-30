@@ -6,7 +6,8 @@ import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { CITY } from "../../../public/cities.js";
 import { rulesDefault } from "../../../public/rules.js";
 import { SEASONS } from "../../../public/seasons.js";
-import { trustOf, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest } from "../../_lib/contests.js";
+import { trustOf, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest, KIND_LABEL } from "../../_lib/contests.js";
+import { inviteJudges } from "./[slug]/judges.js";
 
 export async function onRequestGet({ env }) {
   const { results } = await env.DB.prepare("SELECT slug,name,org,city,county,entries_close,vote_start,vote_end FROM contests WHERE status='live' ORDER BY created_at DESC LIMIT 100").all();
@@ -33,6 +34,11 @@ export async function onRequestPost({ request, env }) {
   if (!isDate(vs) || vs <= closes) return err(400, "Voting should start after entries close.");
   if (!isDate(ve) || ve <= vs) return err(400, "Voting should end after it starts.");
   if (!categories.length) return err(400, "Keep at least one category.");
+  // Who votes, how judges vote, and prizes
+  const mode = ["public", "judges", "both"].includes(b.mode) ? b.mode : "public", method = b.judgeMethod === "score" ? "score" : "pick";
+  const judgeEmails = mode === "public" ? [] : (Array.isArray(b.judges) ? b.judges : String(b.judges || "").split(/[\n,;]+/)).map((x) => String(x).trim()).filter(Boolean).slice(0, 15);
+  const prizeMode = ["none", "one", "each"].includes(b.prizeMode) ? b.prizeMode : "none", prize = clean(b.prize, 140), sponsor = clean(b.sponsor, 80);
+  const prizes = {}; if (prizeMode === "each" && b.prizes && typeof b.prizes === "object") for (const [k, v] of Object.entries(b.prizes)) { const [cat, kind] = String(k).split("|"); if (categories.includes(cat) && KIND_LABEL[kind] && clean(v, 100)) prizes[`${cat}|${kind}`] = clean(v, 100); }
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM contests WHERE owner_id = ? AND created_at > datetime('now','-1 day')").bind(user.id).first();
   if (n >= 3) return err(429, "You've created several contests today. Try again tomorrow.");
 
@@ -51,9 +57,10 @@ export async function onRequestPost({ request, env }) {
     note: live ? "" : `email ${trust === "free" ? "is a free-mail address" : trust === "none" ? "given with no website" : "does not match the website"}`,
   };
   await env.DB.prepare(
-    `INSERT INTO contests (id,slug,owner_id,name,org,city,county,descr,site,contact_email,season,status,entries_close,vote_start,vote_end,categories,vote_rule,approval,show_counts,one_win,rules,note)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-  ).bind(c.id, c.slug, c.owner_id, c.name, c.org, c.city, c.county, c.descr, c.site, c.contact_email, c.season, c.status, c.entries_close, c.vote_start, c.vote_end, c.categories, c.vote_rule, c.approval, c.show_counts, c.one_win, rules, c.note).run();
+    `INSERT INTO contests (id,slug,owner_id,name,org,city,county,descr,site,contact_email,season,status,entries_close,vote_start,vote_end,categories,vote_rule,approval,show_counts,one_win,rules,note,mode,judge_method,prize_mode,prize,prizes,sponsor)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+  ).bind(c.id, c.slug, c.owner_id, c.name, c.org, c.city, c.county, c.descr, c.site, c.contact_email, c.season, c.status, c.entries_close, c.vote_start, c.vote_end, c.categories, c.vote_rule, c.approval, c.show_counts, c.one_win, rules, c.note, mode, method, prizeMode, prize, JSON.stringify(prizes), sponsor).run();
   if (live) await listOnMap(env, c);
+  if (judgeEmails.length) await inviteJudges(env, { id: c.id, slug, name, org, judge_method: method }, judgeEmails);
   return json({ ok: true, slug, status: c.status, trust });
 }
