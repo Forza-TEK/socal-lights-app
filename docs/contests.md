@@ -3,7 +3,7 @@
 **Live on `main` but hidden** (pages unlinked and `noindex`; migration `0109` applied). Sign-in is off until the Google and Resend secrets are set. The interactive sample goes further than the shipped pages: judges, award structures and prizes, season archive, profile, badges, avatars, address autocomplete, notifications and frozen result snapshots exist only in the sample so far. See `docs/voting-standards.md` for the voting review.
 
 ## What it does
-- **Add hub** (`/add`): choose an event (`/add-event`), a home decorating contest (`/add-contest`) or a lighting display (`/add-house`). The two existing forms are unchanged.
+- **Add hub** (`/add`): choose an event (`/add-event`), a home decorating contest (`/add-contest`) or a lighting display (`/add-house`). All three use the step-by-step flow in `public/addflow.js`.
 - **Contest wizard** (`/add-contest`): four screens (Basics, Dates, Rules, Review). Signing in happens on the last screen; the draft survives the Google redirect.
 - **Contest page** (`/c/<slug>`): the page the QR code opens. Shows the contest, the approved homes, and Vote buttons.
 - **Entry form** (`/c/<slug>/enter`): photos, address, name. Needs sign-in. Posts to `/api/submit` with a `contest` field. A home does not pick a category: it competes in every category.

@@ -3,166 +3,61 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Showcase your house · SoCal Lights</title>
+<title>Show your lights · SoCal Lights</title>
 <meta name="description" content="Put your Halloween or holiday display on the SoCal Lights map. It's free.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<style>
-:root{--bg:#f6f4f0;--surface:#fff;--ink:#17181c;--muted:#5d6068;--line:#e4e0d8;--accent:#e8590c;--gold-soft:#fff3d6}
-:root[data-theme="dark"]{--bg:#0b0d12;--surface:#151821;--ink:#f1f2f5;--muted:#a3a7b2;--line:#2a2e3a;--accent:#ff8a3d;--gold-soft:#2b2412}
-*{box-sizing:border-box}[hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Plus Jakarta Sans",system-ui,sans-serif;padding:0 16px 64px}
-main{max-width:680px;margin:0 auto}
-a{color:var(--accent)}
-.top{padding:20px 0} .top a{font-weight:700;text-decoration:none}
-h1{font-size:clamp(28px,5vw,38px);line-height:1.1;letter-spacing:-.02em;margin:8px 0 10px}
-.lede{font-size:18px;color:var(--muted);margin:0 0 20px}
-form{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px}
-label{display:grid;gap:6px;font-weight:700;font-size:14px}
-.hint{font-weight:500;color:var(--muted)}
-input,select,textarea{width:100%;font:inherit;font-weight:500;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
-textarea{min-height:84px;resize:vertical}
-.two{display:grid;gap:14px} @media(min-width:600px){.two{grid-template-columns:1fr 1fr}}
-.chk{display:flex;align-items:center;gap:8px;font-weight:600} .chk input{width:auto}
-.btn{display:inline-flex;justify-content:center;align-items:center;border:0;border-radius:999px;padding:13px 22px;font:700 16px "Plus Jakarta Sans",system-ui,sans-serif;background:var(--accent);color:#fff;cursor:pointer}
-.btn:disabled{opacity:.6;cursor:wait}
-.msg{margin:0;color:var(--muted)} .msg.err{color:#c0392b;font-weight:600}
-.done{background:var(--gold-soft);border-radius:16px;padding:18px 20px}
-.meta{color:var(--muted);font-size:14px}
-.boost{border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:0;display:grid;gap:8px}
-.boost legend{font-weight:800;padding:0 6px}
-.opt{display:flex;gap:10px;align-items:flex-start;font-weight:600;cursor:pointer}
-.opt input{width:auto;margin-top:5px}
-.opt small{display:block;font-weight:500;color:var(--muted)}
-
-.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:999px;background:var(--bg)}
-.seg button{border:0;background:none;border-radius:999px;padding:12px 8px;font:700 14px/1.2 "Plus Jakarta Sans",system-ui,sans-serif;color:var(--muted);cursor:pointer}
-.seg button.on{background:var(--ink);color:var(--surface)}
-.pro{border:1.5px solid #2f6fd0;border-radius:16px;padding:14px;margin:0;display:grid;gap:12px;min-width:0}.pro legend{padding:0 6px;font-weight:800;font-size:14px;color:#2f6fd0}.pro[hidden]{display:none}
-.drop{border:2px dashed var(--line);border-radius:16px;padding:16px;display:grid;gap:12px;text-align:center;color:var(--muted);font-size:14px}.drop.over{border-color:var(--accent)}
-.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}.thumbs .t{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--bg)}.thumbs .t img{width:100%;height:100%;object-fit:cover}
-.thumbs .t button{position:absolute;top:4px;right:4px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(11,13,18,.75);color:#fff;cursor:pointer;padding:0}
-.thumbs .cover{position:absolute;left:4px;bottom:4px;font-size:10px;font-weight:800;background:var(--ink);color:var(--surface);border-radius:999px;padding:2px 8px}
-.btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
-.two3{display:grid;gap:14px}@media(min-width:600px){.two3{grid-template-columns:1fr 1fr}}
-</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261031a">
 </head>
 <body>
-<main>
-<div class="top"><a href="/">← Back to the map</a></div>
-<h1>Showcase your house</h1>
-<p class="lede" id="pitch">Built a display you're proud of? Put it on the map so trick-or-treaters and light-seekers can find it. Free to post, up to 8 photos.</p>
-
-<div id="done" class="done" hidden></div>
-<form id="f" novalidate>
-  <div><label style="margin-bottom:6px">I am posting as</label>
-    <div class="seg" role="group" aria-label="Posting as"><button type="button" data-kind="homeowner" class="on" aria-pressed="true">A homeowner</button><button type="button" data-kind="installer" aria-pressed="false">A professional installer</button></div></div>
-  <input type="hidden" id="kind" value="homeowner">
-  <div class="two3">
-    <label for="biz"><span id="bizL">Your name or family <span class="hint">shown as “Posted by”</span></span><input id="biz" maxlength="80" required autocomplete="name" placeholder="e.g. The Garcia family"></label>
-    <label for="email">Your email <span class="hint">private, only the site owner sees it</span><input id="email" type="email" maxlength="120" required autocomplete="email"></label>
-  </div>
-  <fieldset class="pro" id="proBox" hidden disabled><legend>Business details <span class="hint">shown on your listing</span></legend>
-    <div class="two3"><label for="web">Website<input id="web" type="url" maxlength="200" placeholder="https://"></label><label for="phone">Phone for quotes<input id="phone" maxlength="80" autocomplete="tel"></label></div>
-    <label for="area">Service area <span class="hint">optional, e.g. Orange and Los Angeles counties</span><input id="area" maxlength="120"></label>
-    <label class="chk"><input id="perm" type="checkbox"> I have the homeowner’s permission to show this address</label>
-  </fieldset>
-  <div class="two3">
-    <label for="title">Display name<input id="title" maxlength="90" required placeholder="e.g. Music-synced rooftop show"></label>
-    <label for="season">Season<select id="season"></select></label>
-  </div>
-  <label for="street">Street address <span class="hint">the pin goes on this address and visitors see it</span><input id="street" maxlength="120" required autocomplete="address-line1" placeholder="e.g. 123 Main St"></label>
-  <label for="city">City<select id="city" required autocomplete="address-level2"></select></label>
-  <div class="two3"><label for="state">State<select id="state"><option>CA</option></select></label><label for="zip">ZIP<input id="zip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" required autocomplete="postal-code" placeholder="92630"></label></div>
-  <label for="where">Where to see it <span class="hint">optional. Best nights, where to park.</span><input id="where" maxlength="120" placeholder="e.g. Visible from Main St on weekend nights"></label>
-  <label for="desc"><span id="descL">About this house</span><textarea id="desc" maxlength="1200" required placeholder="What you installed, how many lights, what makes it special"></textarea></label>
-  <div class="drop" id="drop"><div><b style="color:var(--ink)">Photos</b> · up to 8. The first one is the cover.</div><div class="thumbs" id="thumbs"></div><div><label class="btn ghost" for="photos" style="display:inline-flex">Choose photos</label><input id="photos" type="file" accept="image/*" multiple hidden></div><div>Photos are resized on your device before upload. You can also drag them here.</div></div>
-  <div id="ts"></div>
-  <p class="msg" id="msg" role="status"></p>
-  <div><button class="btn" id="send" type="submit">Send for review</button></div>
-  <p class="meta">It goes live after a quick review. Want to add an event instead? <a href="/add-event">Add an event</a>.</p>
-</form>
-</main>
+<div id="app"></div>
 <script type="module">
+import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, today } from "/addflow.js?v=20261031a";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261029d";
 import { CITY } from "/cities.js";
-const $ = (q) => document.querySelector(q);
-const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const qs = new URLSearchParams(location.search), today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
-$("#season").innerHTML = Object.entries(SEASONS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join("");
-$("#season").value = SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today);
-const pitch = () => { const sc = SEASONS[$("#season").value].showcase; if (sc && sc.pitch) $("#pitch").textContent = sc.pitch + " Free to post, up to 8 photos."; };
-$("#season").addEventListener("change", pitch); pitch();
-$("#city").innerHTML = `<option value="">Choose a city</option>` + Object.keys(CITY).sort().map((c) => `<option>${esc(c)}</option>`).join("");
+const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
+const d = { kind: "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
+const pro = (x) => x.kind === "installer";
+await ts.init();
 
-document.querySelectorAll("[data-kind]").forEach((b) => (b.onclick = () => {
-  const pro = b.dataset.kind === "installer"; $("#kind").value = b.dataset.kind;
-  document.querySelectorAll("[data-kind]").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); });
-  $("#proBox").hidden = !pro; $("#proBox").disabled = !pro;
-  $("#bizL").innerHTML = pro ? "Business name" : `Your name or family <span class="hint">shown as “Posted by”</span>`;
-  $("#biz").placeholder = pro ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family"; $("#descL").textContent = pro ? "About this installation" : "About this house";
-}));
-
-// photos: resized on the device (at most 1600px, JPEG) before they are uploaded
-let pending = [];
-async function shrink(file) {
-  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
-  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
-  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height); bmp.close?.();
-  return await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("encode"))), "image/jpeg", 0.82));
-}
-function drawThumbs() {
-  $("#thumbs").innerHTML = pending.map((p, i) => `<div class="t"><img src="${p.url}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button>${i === 0 ? `<span class="cover">COVER</span>` : ""}</div>`).join("");
-  $("#thumbs").querySelectorAll("[data-rm]").forEach((b) => (b.onclick = () => { const i = +b.dataset.rm; URL.revokeObjectURL(pending[i].url); pending.splice(i, 1); drawThumbs(); }));
-}
-async function addFiles(list) {
-  const msg = $("#msg"); msg.className = "msg"; msg.textContent = "";
-  for (const f of list) {
-    if (pending.length >= 8) { msg.className = "msg err"; msg.textContent = "That's the limit of 8 photos."; break; }
-    if (!f.type.startsWith("image/")) { msg.className = "msg err"; msg.textContent = "Skipped a file that isn't a photo."; continue; }
-    try { const b = await shrink(f); pending.push({ blob: b, url: URL.createObjectURL(b) }); }
-    catch { msg.className = "msg err"; msg.textContent = "One photo couldn't be read. Try a JPG or PNG."; }
-    drawThumbs();
-  }
-}
-$("#photos").onchange = (e) => { const files = [...e.target.files]; e.target.value = ""; addFiles(files); };
-const d = $("#drop"); d.ondragover = (e) => { e.preventDefault(); d.classList.add("over"); }; d.ondragleave = () => d.classList.remove("over"); d.ondrop = (e) => { e.preventDefault(); d.classList.remove("over"); addFiles([...e.dataTransfer.files]); };
-
-// Cloudflare Turnstile ("I am human")
-let widget = null;
-const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
-if (cfg.turnstileSiteKey) {
-  await new Promise((res) => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = res; s.onerror = res; document.head.appendChild(s); });
-  if (window.turnstile) widget = window.turnstile.render("#ts", { sitekey: cfg.turnstileSiteKey });
-}
-
-let busy = false;
-$("#f").addEventListener("submit", async (x) => {
-  x.preventDefault(); if (busy) return;
-  const msg = $("#msg"), v = (id) => $("#" + id).value.trim(), pro = $("#kind").value === "installer";
-  const err = (t) => { msg.className = "msg err"; msg.textContent = t; };
-  if (["biz", "title", "street", "city", "zip", "email", "desc"].some((n) => !v(n))) return err("Fill in your name, display name, street address, city, ZIP, your email and description.");
-  if (!/^\d{5}$/.test(v("zip"))) return err("The ZIP code needs 5 digits.");
-  if (pro) { if (!v("web") && !v("phone")) return err("Installers: add a website or a phone number for quotes."); if (!$("#perm").checked) return err("Please confirm you have the homeowner's permission to show this address."); }
-  const fd = new FormData();
-  const set = { kind: $("#kind").value, biz: v("biz"), email: v("email"), title: v("title"), season: $("#season").value, street: v("street"), city: v("city"), state: "CA", zip: v("zip"), where: v("where"), desc: v("desc") };
-  if (pro) Object.assign(set, { web: v("web"), phone: v("phone"), area: v("area"), permission: "1" });
-  for (const [k, val] of Object.entries(set)) fd.append(k, val);
-  pending.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
-  if (widget != null) fd.append("cf-turnstile-response", window.turnstile.getResponse(widget) || "");
-  busy = true; $("#send").disabled = true; msg.className = "msg"; msg.textContent = pending.length ? `Uploading ${pending.length} photo${pending.length > 1 ? "s" : ""}…` : "Sending…";
-  try {
-    const r = await fetch("/api/submit", { method: "POST", body: fd });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.error || "Couldn't send that. Try again in a moment.");
-    $("#f").hidden = true; $("#done").hidden = false;
-    $("#done").innerHTML = `<b>Thanks! Your house is in review.</b><p>The site owner will look it over and publish it to the map. They may email you with questions.</p><p><a href="/">Back to the map</a> · <a href="/add-house">Add another house</a></p>`;
-    window.scrollTo(0, 0);
-  } catch (e) { err(e.message); if (widget != null) window.turnstile.reset(widget); }
-  busy = false; $("#send").disabled = false;
-});
+const steps = [
+  { id: "kind", sec: "About you", title: "Who's posting?", help: "Homeowners and professional installers can both show their lights on the map.", redraw: true,
+    body: (x) => `<div class="tiles">${tile(x, "kind", "homeowner", "A homeowner", "It's my house, and I decorated it.")}${tile(x, "kind", "installer", "A professional installer", "I installed this display for a customer, or it's a showcase of my work.")}</div>` },
+  { id: "name", sec: "About you", title: (x) => (pro(x) ? "What's your business called?" : "What name should we show?"),
+    help: (x) => (pro(x) ? "Families will see this with a way to ask for a quote." : "For example, The Garcia family. It appears as “Posted by”."),
+    body: (x) => input(x, "biz", { max: 80, ph: pro(x) ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family", ac: "name" }),
+    check: (x) => (x.biz.trim().length < 2 ? "Add the name to show." : "") },
+  { id: "biz", sec: "About you", skip: (x) => !pro(x), title: "How can people reach you?", help: "A website or a phone number, so families can ask for a quote.",
+    body: (x) => `${input(x, "web", { label: "Website", ph: "yourbusiness.com", max: 200, type: "text", mode: "url", opt: true })}${input(x, "phone", { label: "Phone for quotes", max: 80, ac: "tel", type: "tel", opt: true })}${input(x, "area", { label: "Service area", ph: "e.g. Orange and Los Angeles counties", max: 120, opt: true })}${check(x, "perm", "I have the homeowner's permission to show this address.")}`,
+    check: (x) => (!validSite(x.web) ? "That doesn't look like a website address. Try something like yourbusiness.com." : !x.web.trim() && !x.phone.trim() ? "Add a website or a phone number." : !x.perm ? "Please confirm you have the homeowner's permission to show this address." : "") },
+  { id: "season", sec: "Your display", title: "Which season is this display for?", help: "It shows up under that season on the map.", redraw: true,
+    body: (x) => `<div class="tiles g2">${Object.entries(SEASONS).map(([k, v]) => tile(x, "season", k, esc(v.label), "", true)).join("")}</div>` },
+  { id: "about", sec: "Your display", title: "Tell us about the display", help: "A name for it, and a few sentences about what makes it special.",
+    body: (x) => `${input(x, "title", { label: "Display name", max: 90, ph: "e.g. Music-synced rooftop show" })}${area(x, "desc", { label: pro(x) ? "About this installation" : "About this house", max: 1200, ph: "What you installed, how many lights, what makes it special" })}`,
+    check: (x) => (x.title.trim().length < 3 ? "Give the display a name." : x.desc.trim().length < 10 ? "Add a sentence or two about it." : "") },
+  { id: "addr", sec: "Location", title: "Where is it?", help: "The pin goes on this address and visitors see it, so they can drive by.",
+    body: (x) => `${input(x, "street", { label: "Street address", max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}<div class="row2">${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city", ac: "address-level2" })}${input(x, "zip", { label: "ZIP", max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}</div>`,
+    check: (x) => (!x.street.trim() ? "Add your street address." : !x.city ? "Choose the city." : !/^\d{5}$/.test(x.zip.trim()) ? "The ZIP code needs 5 digits." : "") },
+  { id: "where", sec: "Location", title: "Any tips for visitors?", help: "Best nights to come, where to park.",
+    body: (x) => input(x, "where", { max: 120, ph: "e.g. Visible from Main St on weekend nights", label: "Tips", opt: true }) },
+  { id: "photos", sec: "Photos", title: "Add photos", help: "Photos help families find the right house. You can skip this and add them later by email.", body: (x) => photoField(x) },
+  { id: "review", sec: "Review", title: "Check everything, then send it", help: "It goes live after a quick review.", cta: "Send for review",
+    body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${sumRow("Photos", String(x.photos.length), "photos")}</div>
+      ${input(x, "email", { label: `Your email <small>${PRIV}. Only the site owner sees it.</small>`, type: "email", mode: "email", ac: "email", max: 120 })}<div id="ts"></div>`,
+    check: (x) => (!isEmail(x.email) ? "Enter your email so we can reach you if something needs fixing." : ""),
+    submit: async (x, api) => {
+      const fd = new FormData(), set = { kind: x.kind, biz: x.biz.trim(), email: x.email.trim(), title: x.title.trim(), season: x.season, street: x.street.trim(), city: x.city, state: "CA", zip: x.zip.trim(), where: x.where.trim(), desc: x.desc.trim() };
+      if (pro(x)) Object.assign(set, { web: x.web.trim(), phone: x.phone.trim(), area: x.area.trim(), permission: "1" });
+      for (const [k, v] of Object.entries(set)) fd.append(k, v);
+      x.photos.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
+      fd.append("cf-turnstile-response", ts.token());
+      const r = await fetch("/api/submit", { method: "POST", body: fd }), j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Couldn't send that. Try again in a moment.");
+      api.finish(`<h1>Thanks! You're in review.</h1><p class="help">The site owner will look it over and publish it to the map. They may email you with questions.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/">Back to the map</a><a class="btn out" href="/add-house">Add another</a></div>`);
+    } },
+];
+run({ steps, data: d, persist: "scl-house-draft", noPersist: ["photos", "email"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
 </script>
 </body>
 </html>

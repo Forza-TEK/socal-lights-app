@@ -1,122 +1,78 @@
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
-<title>Create a contest · SoCal Lights</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
+<title>Create a contest · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/flow.css?v=20261030b">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261031a">
 </head>
 <body>
-<main>
-<div class="top"><a href="/add">← Back</a><span id="who"></span></div>
-<div id="app"><p class="loading">Loading…</p></div>
-</main>
+<div id="app"></div>
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
-import { CITY } from "/cities.js";
+import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt } from "/addflow.js?v=20261031a";
+import { me, signIn } from "/auth.js?v=20261030a";
 import { rulesDefault } from "/rules.js";
-import { me, signIn, whoBar, noteSigninResult, esc, toast } from "/auth.js?v=20261030a";
-const $ = (q) => document.querySelector(q), $$ = (q) => [...document.querySelectorAll(q)];
+import { CITY } from "/cities.js";
+import { defaultSeason } from "/seasons.js?v=20261029d";
 const FREE = new Set(["gmail.com","googlemail.com","hotmail.com","outlook.com","live.com","msn.com","yahoo.com","icloud.com","me.com","aol.com","proton.me","protonmail.com"]);
-const DEF = ["Best Overall", "Most Creative", "Best Lights & Music", "Best Traditional"];
-const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-const parse = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
-const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
-const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], fmt = (s) => MON[parse(s).getMonth()] + " " + parse(s).getDate();
-const today = iso(new Date());
+const DEF = ["Best Overall", "Most Creative", "Best Lights & Music", "Best Traditional"], cities = Object.keys(CITY).sort();
 const dflt = () => { let y = new Date().getFullYear(); if (today > y + "-12-10") y++; return { closes: y + "-12-10", vs: y + "-12-11", ve: y + "-12-20" }; };
-const mk = () => ({ step: 1, name: "Holiday Home Lighting Contest " + dflt().closes.slice(0, 4), org: "", city: "", descr: "Show us your best lights! Enter your home, then neighbors vote for their favorites.", site: "", ...dflt(), cats: [...DEF], on: [...DEF], newcat: "", rule: "contest", approval: "manual", counts: "no", oneWin: "no", rules: "", err: {} });
-const KEY = "scl-contest-draft";
-let W = mk(), result = null;
-try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d && d.name) W = { ...mk(), ...d, err: {} }; } catch {}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(W)); } catch {} };
-const STEPS = ["Basics", "Dates", "Rules", "Review"];
+const d = { name: "Holiday Home Lighting Contest " + dflt().closes.slice(0, 4), org: "", city: "", descr: "Show us your best lights! Enter your home, then neighbors vote for their favorites.", site: "", ...dflt(), cats: [...DEF], on: [...DEF], newcat: "", approval: "manual", counts: "no", oneWin: "no", rules: "" };
+let cur = (await me()).user ? await me() : { user: null };
+const hostOf = (s) => { try { return new URL(/^https?:/i.test(s) ? s : "https://" + s).hostname.replace(/^www\./, "").toLowerCase(); } catch { return ""; } };
+function trustNow() { if (!cur.user) return ""; const dom = cur.user.email.split("@")[1]; if (FREE.has(dom)) return "free"; if (!d.site.trim()) return "none"; const h = hostOf(d.site); return h && (h === dom || h.endsWith("." + dom) || dom.endsWith("." + h)) ? "match" : "other"; }
+const TRUST = { match: "Your email matches your website, so your contest goes live right away.", free: "Gmail, Hotmail and similar addresses can't be matched to an organization, so a person checks your contest first, usually within a day. Your link and QR code work right away.", other: "Your email doesn't match your website, so a person checks your contest first, usually within a day. Your link and QR code work right away.", none: "A person checks your contest first, usually within a day, because you didn't add a website. Your link and QR code work right away." };
+const rulesArgs = () => ({ name: d.name, org: d.org, city: d.city, closes: d.closes, vs: d.vs, ve: d.ve, oneWin: d.oneWin === "yes" });
+const catTiles = () => d.cats.map((c) => `<button type="button" class="tile sm" data-a="cat:${esc(c)}" aria-pressed="${d.on.includes(c)}"><b>${esc(c)}</b></button>`).join("");
 
-function view() {
-  const w = W, e = w.err, E = (k) => e[k] ? `<p class="err" id="er-${k}">${e[k]}</p>` : "", inv = (k) => e[k] ? ` aria-invalid="true" aria-describedby="er-${k}"` : "";
-  const rc = (name, val, t, d) => `<label class="rc"><input type="radio" name="${name}" data-w="${name}" value="${val}" ${w[name] === val ? "checked" : ""}><span><b>${t}</b><small>${d}</small></span></label>`;
-  let body = "";
-  if (w.step === 1) body = `<h2>Let's start with the basics</h2>
-    <div><label for="w-name">Name of your contest</label><p class="help">This is the title everyone sees.</p><input id="w-name" data-w="name" type="text" maxlength="90" value="${esc(w.name)}"${inv("name")}>${E("name")}</div>
-    <div><label for="w-org">Who is running it?</label><p class="help">A city, school, neighborhood group, HOA, club or business.</p><input id="w-org" data-w="org" type="text" maxlength="80" placeholder="e.g. Mission Viejo Activities Committee" value="${esc(w.org)}"${inv("org")}>${E("org")}</div>
-    <div><label for="w-city">Which city are the homes in?</label><select id="w-city" data-w="city"${inv("city")}><option value="">Choose a city</option>${Object.keys(CITY).sort().map((c) => `<option ${w.city === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>${E("city")}</div>
-    <div><label for="w-descr">A short welcome message</label><p class="help">Neighbors read this before they enter. We wrote one for you. Change it if you like.</p><textarea id="w-descr" data-w="descr" maxlength="200"${inv("descr")}>${esc(w.descr)}</textarea>${E("descr")}</div>
-    <div><label for="w-site">Your organization's website <span class="help" style="display:inline">(optional)</span></label><p class="help">If you sign in with an email at this same website, your contest goes live right away. Otherwise a person checks it first, usually within a day.</p><input id="w-site" data-w="site" type="text" inputmode="url" placeholder="e.g. cityofmissionviejo.org" value="${esc(w.site)}"${inv("site")}>${E("site")}</div>`;
-  if (w.step === 2) body = `<h2>When does it happen?</h2><p class="muted">Pick three dates. We filled in typical ones, so you can just tap Next.</p>
-    <div class="tl"><div><span>Neighbors can enter</span><b>Now to ${fmt(w.closes)}</b></div><div><span>The community votes</span><b>${fmt(w.vs)} to ${fmt(w.ve)}</b></div></div>
-    <div class="actions"><button class="btn ghost sm" type="button" data-a="typical">Use typical dates</button></div>
-    <div><label for="w-closes">Last day to enter</label><p class="help">Entries close at the end of this day.</p><input id="w-closes" data-w="closes" type="date" min="${today}" value="${w.closes}"${inv("closes")}>${E("closes")}</div>
-    <div class="row2"><div><label for="w-vs">Voting starts</label><input id="w-vs" data-w="vs" type="date" value="${w.vs}"${inv("vs")}>${E("vs")}</div><div><label for="w-ve">Voting ends</label><input id="w-ve" data-w="ve" type="date" value="${w.ve}"${inv("ve")}>${E("ve")}</div></div>`;
-  if (w.step === 3) body = `<h2>How should it work?</h2><p class="muted">Every question has a good answer already selected. Change only what you want.</p>
-    <div><span class="lab">Voting categories</span><p class="help">Every home competes in every category. Voters pick one favorite home in each. Keep at least one.</p><div class="chips">${w.cats.map((c) => `<button type="button" class="chip" aria-pressed="${w.on.includes(c)}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-      <div style="display:flex;gap:8px"><input id="w-newcat" data-w="newcat" type="text" maxlength="30" placeholder="Add your own, like Best Inflatable" value="${esc(w.newcat)}" style="min-width:0"><button class="btn ghost sm" type="button" data-a="addcat" style="margin-top:8px;flex:none">Add</button></div>${E("cats")}</div>
-    <div><span class="lab">What happens when a neighbor enters?</span><div class="radios">${rc("approval","manual","I review each entry first (recommended)","Nothing appears on the map until you approve it.")}${rc("approval","auto","Publish entries right away","Faster, but you can't screen photos first.")}</div></div>
-    <div><span class="lab">Can people see vote counts while voting is open?</span><div class="radios">${rc("counts","no","No, keep them hidden until I announce winners (recommended)","Avoids bandwagon voting, where people just vote for whoever is ahead.")}${rc("counts","yes","Yes, show running totals","Builds excitement, but people can see who's ahead.")}</div></div>
-    <div><span class="lab">Can one home win more than one category?</span><div class="radios">${rc("oneWin","no","Yes, the best home in each category wins","Simple. The same home can win several.")}${rc("oneWin","yes","No, one win per home","A home that wins one category can't win a later one.")}</div><p class="help">Protected for you: one vote per person per category, tied to a verified email. Nobody can vote for their own home. Throwaway emails are blocked. You can void suspicious votes, and a disqualification only takes effect when voting closes. If homes tie, they share the win.</p></div>
-    <div><label for="w-rules">Official rules</label><p class="help">We drafted these for you. Edit anything. People accept them before they enter. If you offer a prize, have a lawyer read them.</p><textarea id="w-rules" data-w="rules" maxlength="4000" rows="12" style="min-height:260px">${esc(w.rules || rulesDefault({ name: w.name, org: w.org, city: w.city, closes: w.closes, vs: w.vs, ve: w.ve, oneWin: w.oneWin === "yes" }))}</textarea></div>`;
-  if (w.step === 4) { const row = (k, v, s) => `<div><span>${k}</span><b>${v}</b><button class="link" type="button" data-a="edit:${s}">Edit</button></div>`;
-    body = `<h2>Check everything, then create it</h2><div class="sum">${row("Contest", esc(w.name), 1)}${row("Run by", esc(w.org) + ", " + esc(w.city), 1)}${row("Entries", "Now to " + fmt(w.closes), 2)}${row("Voting", fmt(w.vs) + " to " + fmt(w.ve), 2)}${row("Categories", w.on.map(esc).join(", "), 3)}${row("Votes", "One per category", 3)}${row("New entries", w.approval === "manual" ? "You review each one" : "Published right away", 3)}${row("Vote counts", w.counts === "yes" ? "Visible while voting" : "Hidden until winners", 3)}${row("Wins", w.oneWin === "yes" ? "One win per home" : "A home can win several categories", 3)}${row("Official rules", w.rules ? "Edited by you" : "Standard rules", 3)}</div>
-    <p class="status ${trustNow() === "match" ? "ok" : "no"}" id="trust">${trustMsg()}</p>${e.api ? `<p class="err">${esc(e.api)}</p>` : ""}`; }
-  const prog = `<div class="prog" aria-label="Progress">${STEPS.map((s, i) => `<div class="${i < w.step ? "on" : ""}"${i === w.step - 1 ? ' aria-current="step"' : ""}><i></i>${s}</div>`).join("")}</div>`;
-  $("#app").innerHTML = `<div class="card">${prog}<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap" class="small muted"><span>Step ${w.step} of 4 · Draft saved on this device</span><button class="link" type="button" data-a="fresh">Start over</button></div>${body}
-    <div class="nav"><button class="btn ghost" type="button" data-a="${w.step === 1 ? "cancel" : "back"}">${w.step === 1 ? "Cancel" : "Back"}</button><button class="btn org" type="button" data-a="next" id="nextbtn">${w.step === 4 ? (cur.user ? "Create my contest" : "Sign in and create my contest") : "Next: " + STEPS[w.step]}</button></div></div>`;
-  $$("[data-w]").forEach((i) => { const k = i.dataset.w; i.oninput = i.onchange = () => { if (i.type === "radio") { if (i.checked) w[k] = i.value; } else w[k] = i.value;
-    if (k === "closes") { if (w.vs <= w.closes) w.vs = addDays(w.closes, 1); if (w.ve <= w.vs) w.ve = addDays(w.vs, 9); }
-    if (w.err[k]) { delete w.err[k]; const x = document.getElementById("er-" + k); if (x) x.remove(); i.removeAttribute("aria-invalid"); }
-    save(); if (k === "closes" && w.step === 2) view(); }; });
-}
-let cur = { user: null };
-// Domain-name format check (RFC 1035/1123): labels of letters, digits and hyphens, a letters-only top-level domain, no IP addresses
-function validSite(s) { s = s.trim(); if (!s) return true; if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = "https://" + s; let u; try { u = new URL(s); } catch { return false; } if (!/^https?:$/.test(u.protocol)) return false;
-  const h = u.hostname.replace(/\.$/, ""), L = h.split("."); return h.length <= 253 && L.length >= 2 && L.every((l) => /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(l)) && /^([a-z]{2,63}|xn--[a-z0-9-]{1,59})$/.test(L[L.length - 1]); }
-function hostOf(s) { try { return new URL(/^https?:/i.test(s) ? s : "https://" + s).hostname.replace(/^www\./, "").toLowerCase(); } catch { return ""; } }
-function trustNow() { if (!cur.user) return ""; const dom = cur.user.email.split("@")[1]; if (FREE.has(dom)) return "free"; const h = hostOf(W.site); if (!W.site.trim()) return "none"; return h && (h === dom || h.endsWith("." + dom) || dom.endsWith("." + h)) ? "match" : "other"; }
-function trustMsg() { const t = trustNow(); if (!t) return "If you sign in with an email at your organization's website, your contest goes live right away. Otherwise a person checks it first, usually within a day. Either way your link and QR code work immediately."; return { match: "Your email matches your website, so your contest goes live right away.", free: "Gmail, Hotmail and similar addresses can't be matched to an organization, so a person checks your contest first, usually within a day. Your link and QR code work right away, so you can start on flyers.", other: "Your email doesn't match the website you gave, so a person checks your contest first, usually within a day.", none: "A person checks your contest first, usually within a day, because you didn't add a website. Your link and QR code work right away." }[t]; }
-function validate(n) { const w = W, e = {};
-  if (n === 1) { if (w.name.trim().length < 4) e.name = "Give your contest a name (at least 4 letters)."; if (w.org.trim().length < 3) e.org = "Tell us who is running it."; if (!w.city) e.city = "Choose the city where the homes are."; if (w.descr.trim().length < 20) e.descr = "Write a sentence or two (at least 20 characters)."; if (!validSite(w.site)) e.site = "Enter a website address like cityofmissionviejo.org, or leave it empty."; }
-  if (n === 2) { if (!w.closes || w.closes < today) e.closes = "Pick a day that hasn't passed yet."; if (!w.vs || w.vs <= w.closes) e.vs = "Voting should start after entries close."; if (!w.ve || w.ve <= w.vs) e.ve = "Voting should end after it starts."; }
-  if (n === 3) { if (!w.on.length) e.cats = "Keep at least one category."; }
-  w.err = e; return !Object.keys(e).length; }
-
-async function create() {
-  if (!cur.user) { const u = await signIn({ title: "Sign in to create your contest", next: "/add-contest?resume=1" }); if (!u) return; cur = await me(true); W.err = {}; view(); }
-  const btn = $("#nextbtn"); if (btn) { btn.disabled = true; btn.textContent = "Creating…"; }
-  const r = await fetch("/api/contests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: W.name, org: W.org, city: W.city, descr: W.descr, site: W.site, closes: W.closes, vs: W.vs, ve: W.ve, cats: W.on, rule: "cat", approval: W.approval, showCounts: W.counts === "yes", oneWin: W.oneWin === "yes", rules: W.rules }) });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) { W.err = { api: j.error || "Couldn't create the contest. Please try again." }; view(); return; }
-  result = j; try { localStorage.removeItem(KEY); } catch {} done();
-}
-function done() {
-  const live = result.status === "live", url = location.origin + "/c/" + result.slug, short = url.replace(/^https?:\/\//, "");
-  let qr = ""; try { const q = qrcode(0, "M"); q.addData(url + "?src=qr"); q.make(); qr = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); } catch {}
-  $("#app").innerHTML = `<div class="card center"><div class="big ${live ? "" : "w"}" aria-hidden="true">${live ? "✓" : "…"}</div><h2>${live ? "Your contest is live" : "Your contest is almost ready"}</h2>
-  <p class="muted" style="max-width:48ch">${live ? "It's on the map and in the list. Share the link or print the poster and neighbors can start entering." : "A person will check it, usually within a day. Your link and QR code already work, so you can start on flyers. It won't be on the map and entries stay paused until it's approved."}</p>
-  <div class="copy" style="width:100%"><span>${esc(short)}</span><button class="btn ghost sm" type="button" data-copy="${esc(url)}">Copy link</button></div>
-  <div class="poster"><b>${esc(W.name)}</b>${qr}<small>Scan to enter your home. Free.</small></div>
-  <div style="width:100%;text-align:left"><h3 style="margin-bottom:10px">What happens next</h3><ul class="next"><li><i>1</i><span><b>Share the link or print the poster.</b><br><span class="muted small">Put it on flyers, your website, Facebook or the city newsletter.</span></span></li><li><i>2</i><span><b>Neighbors enter their homes.</b><br><span class="muted small">${W.approval === "manual" ? "You review each entry on your dashboard before it goes on the map." : "Entries appear on the map right away."}</span></span></li><li><i>3</i><span><b>The community votes ${fmt(W.vs)} to ${fmt(W.ve)}.</b><br><span class="muted small">You announce the winners from your dashboard.</span></span></li></ul></div>
-  <div class="actions" style="justify-content:center"><a class="btn org" href="/c/${result.slug}/manage">Open my dashboard</a><a class="btn ghost" href="/c/${result.slug}">See the contest page</a></div></div>`;
-  window.scrollTo(0, 0);
-}
-document.addEventListener("click", async (ev) => { const t = ev.target.closest("[data-a],[data-cat],[data-copy]"); if (!t) return;
-  if (t.dataset.copy) { const o = t.textContent; try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = "Copied"; } catch { t.textContent = "Select it"; } setTimeout(() => (t.textContent = o), 1500); return; }
-  const w = W;
-  if (t.dataset.cat) { const c = t.dataset.cat; w.on = w.on.includes(c) ? w.on.filter((x) => x !== c) : [...w.on, c]; delete w.err.cats; save(); return view(); }
-  const [a, p] = t.dataset.a.split(/:(.*)/s);
-  if (a === "cancel") return (location.href = "/add");
-  if (a === "fresh") { W = mk(); save(); return view(); }
-  if (a === "typical") { Object.assign(w, dflt()); delete w.err.closes; delete w.err.vs; delete w.err.ve; save(); return view(); }
-  if (a === "addcat") { const v = w.newcat.trim(); if (v && !w.cats.includes(v)) { w.cats.push(v); w.on.push(v); } w.newcat = ""; delete w.err.cats; save(); return view(); }
-  if (a === "edit") { w.step = +p; w.err = {}; save(); return view(); }
-  if (a === "back") { w.step = Math.max(1, w.step - 1); w.err = {}; return view(); }
-  if (a === "next") { if (!validate(w.step)) { view(); const f = document.querySelector(".err"); if (f) { f.scrollIntoView({ block: "center", behavior: "smooth" }); const i = f.parentElement.querySelector("input,select,textarea"); if (i) i.focus({ preventScroll: true }); } return; }
-    if (w.step < 4) { w.step++; save(); view(); window.scrollTo(0, 0); return; } return create(); } });
-(async () => { cur = await me(); whoBar($("#who")); noteSigninResult();
-  if (new URLSearchParams(location.search).get("resume") && W.step < 4) W.step = 4;
-  view(); })();
+const steps = [
+  { id: "name", sec: "Basics", title: "What's your contest called?", help: "This is the title everyone sees.", body: (x) => input(x, "name", { max: 90 }), check: (x) => (x.name.trim().length < 4 ? "Give your contest a name (at least 4 letters)." : "") },
+  { id: "org", sec: "Basics", title: "Who is running it, and where?", help: "A city, school, neighborhood group, HOA, club or business, and the city the homes are in.",
+    body: (x) => `${input(x, "org", { label: "Who is running it?", ph: "e.g. Mission Viejo Activities Committee", max: 80 })}${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city" })}`,
+    check: (x) => (x.org.trim().length < 3 ? "Tell us who is running it." : !x.city ? "Choose the city where the homes are." : "") },
+  { id: "descr", sec: "Basics", title: "Write a short welcome message", help: "Neighbors read this before they enter. We wrote one for you. Change it if you like.", body: (x) => area(x, "descr", { max: 200 }), check: (x) => (x.descr.trim().length < 20 ? "Write a sentence or two (at least 20 characters)." : "") },
+  { id: "site", sec: "Basics", title: "Do you have a website?", help: "If you sign in with an email at this website, your contest goes live right away. Otherwise a person checks it first, usually within a day.",
+    body: (x) => input(x, "site", { label: "Your organization's website", ph: "yourorganization.org", mode: "url", opt: true }), check: (x) => (!validSite(x.site) ? "That doesn't look like a website address. Try something like example.org." : "") },
+  { id: "dates", sec: "Dates", title: "When does it happen?", help: "We filled in typical dates, so you can just tap Next.",
+    body: (x) => `<div class="note">Neighbors can enter now to <b>${fmt(x.closes)}</b>. The community votes <b>${fmt(x.vs)} to ${fmt(x.ve)}</b>.</div>${input(x, "closes", { label: "Last day to enter", type: "date" })}<div class="row2">${input(x, "vs", { label: "Voting starts", type: "date" })}${input(x, "ve", { label: "Voting ends", type: "date" })}</div><div><button class="btn out sm" type="button" data-a="typical">Use typical dates</button></div>`,
+    check: (x) => (!x.closes || x.closes < today ? "Pick an entry deadline that hasn't passed yet." : !x.vs || x.vs <= x.closes ? "Voting should start after entries close." : !x.ve || x.ve <= x.vs ? "Voting should end after it starts." : "") },
+  { id: "cats", sec: "Rules", title: "Pick your voting categories", help: "Every home competes in every category. Voters pick one favorite home in each. “Best Overall” is a category like any other. Keep at least one.",
+    body: (x) => `<div class="tiles g2">${catTiles()}</div><div style="display:flex;gap:10px"><input class="in" id="f-newcat" data-k="newcat" maxlength="30" placeholder="Add your own, like Best Inflatable" value="${esc(x.newcat)}"><button class="btn out" type="button" data-a="addcat">Add</button></div>`, check: (x) => (!x.on.length ? "Keep at least one category." : "") },
+  { id: "approval", sec: "Rules", title: "How should new entries be approved?", redraw: false,
+    body: (x) => `<div class="tiles">${tile(x, "approval", "manual", "I review each entry first", "Recommended. Nothing appears on the map until you approve it.")}${tile(x, "approval", "auto", "Publish entries right away", "Faster, but you can't screen photos first.")}</div>` },
+  { id: "counts", sec: "Rules", title: "Show vote counts while voting?",
+    body: (x) => `<div class="tiles">${tile(x, "counts", "no", "Hide them until I announce winners", "Recommended. Avoids bandwagon voting, where people just vote for whoever is ahead.")}${tile(x, "counts", "yes", "Show running totals", "Builds excitement, but people can see who's ahead.")}</div>` },
+  { id: "fair", sec: "Rules", title: "A few fairness rules", help: "These protect your contest from complaints.",
+    body: (x) => `<div class="tiles">${tile(x, "oneWin", "no", "A home can win several categories", "Simple. The best home in each category wins, even if it's the same home.")}${tile(x, "oneWin", "yes", "One win per home", "Spreads the awards. A home that wins one category can't win a later one.")}</div><div class="hint"><b>Already protected for you</b><br>One vote per person per category, tied to a verified email. Nobody can vote for their own home. Throwaway email addresses can't be used. You can void suspicious votes, and a disqualification only takes effect when you close voting. If homes tie, they share the win.</div>` },
+  { id: "rules", sec: "Rules", title: "Official rules", help: "We drafted these for you. Edit anything. People accept them before they enter. If you offer a prize, have a lawyer read them.",
+    body: (x) => { if (!x.rules) x.rules = rulesDefault(rulesArgs()); return `<div class="field"><label for="f-rules">Rules</label><textarea class="in" id="f-rules" data-k="rules" maxlength="4000" rows="14" style="min-height:300px">${esc(x.rules)}</textarea></div>`; }, check: (x) => (x.rules.trim().length < 40 ? "Add your rules." : "") },
+  { id: "review", sec: "Review", title: "Review your contest", help: "Check everything, then create it. You can change any of this later.", cta: "Create contest", redraw: false,
+    body: (x) => `<div class="sum">${sumRow("Contest", esc(x.name), "name")}${sumRow("Run by", `${esc(x.org)}, ${esc(x.city)}`, "org")}${sumRow("Entries", "Now to " + fmt(x.closes), "dates")}${sumRow("Voting", fmt(x.vs) + " to " + fmt(x.ve), "dates")}${sumRow("Categories", x.on.map(esc).join(", "), "cats")}${sumRow("New entries", x.approval === "manual" ? "You review each one" : "Published right away", "approval")}${sumRow("Vote counts", x.counts === "yes" ? "Visible while voting" : "Hidden until winners", "counts")}${sumRow("Wins", x.oneWin === "yes" ? "One win per home" : "A home can win several categories", "fair")}${sumRow("Rules", "Written. Edit if you like", "rules")}</div><p class="note" id="trust">${trustNow() ? TRUST[trustNow()] : "If you sign in with an email at your organization's website, your contest goes live right away. Otherwise a person checks it first, usually within a day. Either way your link and QR code work immediately."}</p>`,
+    submit: async (x, api) => {
+      if (!cur.user) { const u = await signIn({ title: "Sign in to create your contest", next: "/add-contest?resume=1" }); if (!u) throw new Error("Sign in to create your contest."); cur = await me(true); }
+      const r = await fetch("/api/contests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: x.name, org: x.org, city: x.city, descr: x.descr, site: x.site, closes: x.closes, vs: x.vs, ve: x.ve, cats: x.on, rule: "cat", approval: x.approval, showCounts: x.counts === "yes", oneWin: x.oneWin === "yes", rules: x.rules }) });
+      const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Couldn't create the contest. Please try again.");
+      const live = j.status === "live", url = location.origin + "/c/" + j.slug, short = url.replace(/^https?:\/\//, "");
+      let qr = ""; try { const q = qrcode(0, "M"); q.addData(url + "?src=qr"); q.make(); qr = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); } catch {}
+      api.finish(`<h1>${live ? "Your contest is live" : "Your contest is almost ready"}</h1><p class="help">${live ? "It's on the map and in the list. Share the link or print the poster and neighbors can start entering." : "A person will check it, usually within a day. Your link and QR code already work, so you can start on flyers. It won't be on the map and entries stay paused until it's approved."}</p>
+        <div class="copy"><span>${esc(short)}</span><button class="btn out sm" type="button" data-copy="${esc(url)}">Copy link</button></div><div class="poster"><b>${esc(x.name)}</b>${qr}<small>Scan to enter your home. Free.</small></div>
+        <div><h2 style="margin-bottom:6px">What happens next</h2><div class="list"><div><b style="font-weight:500">Share the link or print the poster.</b><br><span class="muted">Put it on flyers, your website, Facebook or the city newsletter.</span></div><div><b style="font-weight:500">Neighbors enter their homes.</b><br><span class="muted">${x.approval === "manual" ? "You review each entry on your dashboard before it goes on the map." : "Entries appear on the map right away."}</span></div><div><b style="font-weight:500">The community votes ${fmt(x.vs)} to ${fmt(x.ve)}.</b><br><span class="muted">You announce the winners from your dashboard.</span></div></div></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/c/${esc(j.slug)}/manage">Open my dashboard</a><a class="btn out" href="/c/${esc(j.slug)}">See the contest page</a></div>`);
+    } },
+];
+const api = run({ steps, data: d, persist: "scl-contest-draft", noPersist: ["newcat"], season: (x) => defaultSeason(x.closes), exit: "/add",
+  onInput: (k, x) => { if (k === "closes") { if (x.vs <= x.closes) x.vs = addDays(x.closes, 1); if (x.ve <= x.vs) x.ve = addDays(x.vs, 9); for (const f of ["vs", "ve"]) { const el = document.getElementById("f-" + f); if (el) el.value = x[f]; } } },
+  actions: {
+    typical(_, a) { Object.assign(d, dflt()); a.draw(); },
+    cat(c, a) { d.on = d.on.includes(c) ? d.on.filter((x) => x !== c) : [...d.on, c]; a.draw(); },
+    addcat(_, a) { const v = d.newcat.trim().slice(0, 30); if (v && !d.cats.includes(v)) { d.cats.push(v); d.on.push(v); } d.newcat = ""; a.draw(); },
+  } });
+if (new URLSearchParams(location.search).get("resume")) api.goto("review");
 </script>
 </body>
 </html>
