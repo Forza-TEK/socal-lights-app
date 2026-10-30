@@ -1,6 +1,7 @@
 // Step-by-step engine shared by the add forms (event, home display, contest). One question per screen, a segmented
 // progress bar, Back and Next. Each form supplies its steps; this file does the rest (state, validation, photos,
 // address suggestions, "I am human" check, saved drafts).
+import { me, signIn } from "/auth.js?v=20261030a";
 export const $ = (q, r = document) => r.querySelector(q);
 export const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -63,7 +64,7 @@ export const ts = {
 };
 
 /* ---------- the engine ---------- */
-// o: { steps, data, root, exit, season(d), persist (localStorage key), noPersist: [keys], addr: { cities, onPick(d, s) }, actions: { name(arg, api) }, after(step) }
+// o: { steps, data, root, exit, season(d), persist (localStorage key), noPersist: [keys], account: { kind, title(d) }, addr: { cities }, actions: { name(arg, api) }, after(step) }
 // step: { id, sec, title, help, body(d), check(d) -> error text, skip(d), cta, redraw, submit(d, api) }
 export function run(o) {
   const d = o.data, root = o.root || $("#app"), S = { i: 0, err: "", busy: false, done: null };
@@ -73,7 +74,7 @@ export function run(o) {
     if (sv && sv.d) { Object.assign(d, sv.d); S.i = sv.i || 0; }
   } catch {}
   const save = () => { if (!o.persist) return; try { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && typeof v !== "function") c[k] = v; localStorage.setItem(o.persist, JSON.stringify({ d: c, i: S.i })); } catch {} };
-  const hdr = () => `<div class="hdr"><a class="logo" href="/">SoCal Lights</a><a class="link" href="${esc(o.exit || "/add")}">${o.persist ? "Save &amp; exit" : "Exit"}</a></div>`;
+  const hdr = () => `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a>${o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}</div>`;
   function draw(focus) {
     if (S.done !== null) { root.innerHTML = `${hdr()}<div class="main">${S.done}</div>`; window.scrollTo(0, 0); return; }
     const st = steps(); S.i = Math.max(0, Math.min(S.i, st.length - 1)); const s = st[S.i];
@@ -87,7 +88,7 @@ export function run(o) {
     if (o.after) o.after(s, d);
   }
   const showErr = (t) => { S.err = t; const e = $("#err"); if (e) { e.textContent = t; e.hidden = !t; if (t) e.scrollIntoView({ block: "center", behavior: "smooth" }); } };
-  const api = { draw: () => draw(), err: showErr, finish(html) { S.done = html; if (o.persist) try { localStorage.removeItem(o.persist); } catch {} draw(); }, goto(id) { const i = steps().findIndex((x) => x.id === id); if (i > -1) { S.i = i; S.err = ""; save(); draw(true); } }, data: d, step: () => steps()[S.i] };
+  const api = { draw: () => draw(), err: showErr, finish(html) { S.done = html; if (d._draftId) fetch("/api/drafts/" + d._draftId, { method: "DELETE" }).catch(() => {}); if (o.persist) try { localStorage.removeItem(o.persist); } catch {} draw(); }, goto(id) { const i = steps().findIndex((x) => x.id === id); if (i > -1) { S.i = i; S.err = ""; save(); draw(true); } }, data: d, step: () => steps()[S.i] };
   async function next() {
     if (S.busy) return;
     const s = steps()[S.i], e = s.check ? s.check(d) : ""; if (e) return showErr(e); showErr("");
@@ -97,6 +98,19 @@ export function run(o) {
       S.busy = false; return;
     }
     S.i++; save(); draw(true);
+  }
+  // Save & exit: sign in if needed, keep the answers on your account (photos are not saved), and go to your profile
+  const cleanData = () => { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && !k.startsWith("_") && typeof v !== "function") c[k] = v; return c; };
+  async function saveExit() {
+    if (S.busy) return; S.busy = true; save();
+    try {
+      let u = (await me()).user;
+      if (!u) { u = await signIn({ title: "Sign in to save your draft", next: "/profile?save=" + o.account.kind }); if (!u) { S.busy = false; return; } }
+      const r = await fetch("/api/drafts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: d._draftId, kind: o.account.kind, title: o.account.title(d), data: cleanData(), step: S.i }) });
+      const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Couldn't save your draft. Try again.");
+      d._draftId = j.id; save(); location.href = "/profile";
+    } catch (e) { showErr(e.message || "Couldn't save your draft."); }
+    S.busy = false;
   }
   function back() { if (S.i === 0) return (location.href = o.exit || "/add"); S.i--; S.err = ""; save(); draw(true); }
 
@@ -127,7 +141,7 @@ export function run(o) {
     if (t.dataset.rm) { const i = +t.dataset.rm; URL.revokeObjectURL(d.photos[i].url); d.photos.splice(i, 1); $("#thumbs").innerHTML = thumbsHtml(d); return; }
     if (t.dataset.copy) { const old = t.textContent; navigator.clipboard.writeText(t.dataset.copy).then(() => (t.textContent = "Copied"), () => (t.textContent = "Select it")); setTimeout(() => (t.textContent = old), 1500); return; }
     const [a, p] = (t.dataset.a || "").split(/:(.*)/s);
-    if (a === "next") return next(); if (a === "back") return back();
+    if (a === "next") return next(); if (a === "back") return back(); if (a === "saveexit") return saveExit();
     if (o.actions && o.actions[a]) return o.actions[a](p, api);
   });
   const dz = () => $("#drop");
@@ -162,6 +176,11 @@ export function run(o) {
   }
   document.addEventListener("click", (e) => { if (!e.target.closest(".dd,[data-addr]")) { const dd = $(".dd"); if (dd) dd.remove(); } });
 
-  draw(true);
+  // ?draft=<id> reopens a draft saved to your account, on the step you left
+  api.ready = (async () => {
+    const id = new URLSearchParams(location.search).get("draft");
+    if (id) try { const r = await fetch("/api/drafts/" + encodeURIComponent(id), { cache: "no-store" }); if (r.ok) { const j = await r.json(); Object.assign(d, j.data); d._draftId = j.id; S.i = j.step || 0; } } catch {}
+    draw(true);
+  })();
   return api;
 }
