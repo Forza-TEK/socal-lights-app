@@ -1,6 +1,6 @@
 # Accounts and home decorating contests
 
-Built on the branch `claude/amazing-thompson-wfxqst`. **Not merged to `main` yet**, so none of this is on the live site.
+**Live on `main` but hidden** (pages unlinked and `noindex`; migration `0109` applied). Sign-in is off until the Google and Resend secrets are set. The interactive sample goes further than the shipped pages: judges, award structures and prizes, season archive, profile, badges, avatars, address autocomplete, notifications and frozen result snapshots exist only in the sample so far. See `docs/voting-standards.md` for the voting review.
 
 ## What it does
 - **Add hub** (`/add`): choose an event (`/add-event`), a home decorating contest (`/add-contest`) or a lighting display (`/add-house`). The two existing forms are unchanged.
