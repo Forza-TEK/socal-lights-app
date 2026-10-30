@@ -15,8 +15,6 @@
   Content-Type: application/manifest+json
   Cache-Control: public, max-age=3600
 
-/add
-  X-Robots-Tag: noindex
 /add-contest
   X-Robots-Tag: noindex
 /c/*

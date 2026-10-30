@@ -4,133 +4,63 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Add your event · SoCal Lights</title>
-<meta name="description" content="Add your Southern California Halloween, holiday or seasonal event to the SoCal Lights map. It's free.">
+<meta name="description" content="Put your Halloween, holiday or seasonal event on the SoCal Lights map. It's free.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<style>
-:root{--bg:#f6f4f0;--surface:#fff;--ink:#17181c;--muted:#5d6068;--line:#e4e0d8;--accent:#e8590c;--gold-soft:#fff3d6}
-:root[data-theme="dark"]{--bg:#0b0d12;--surface:#151821;--ink:#f1f2f5;--muted:#a3a7b2;--line:#2a2e3a;--accent:#ff8a3d;--gold-soft:#2b2412}
-*{box-sizing:border-box}[hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Plus Jakarta Sans",system-ui,sans-serif;padding:0 16px 64px}
-main{max-width:680px;margin:0 auto}
-a{color:var(--accent)}
-.top{padding:20px 0} .top a{font-weight:700;text-decoration:none}
-h1{font-size:clamp(28px,5vw,38px);line-height:1.1;letter-spacing:-.02em;margin:8px 0 10px}
-.lede{font-size:18px;color:var(--muted);margin:0 0 20px}
-form{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px}
-label{display:grid;gap:6px;font-weight:700;font-size:14px}
-.hint{font-weight:500;color:var(--muted)}
-input,select,textarea{width:100%;font:inherit;font-weight:500;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
-textarea{min-height:84px;resize:vertical}
-.two{display:grid;gap:14px} @media(min-width:600px){.two{grid-template-columns:1fr 1fr}}
-.chk{display:flex;align-items:center;gap:8px;font-weight:600} .chk input{width:auto}
-.btn{display:inline-flex;justify-content:center;align-items:center;border:0;border-radius:999px;padding:13px 22px;font:700 16px "Plus Jakarta Sans",system-ui,sans-serif;background:var(--accent);color:#fff;cursor:pointer}
-.btn:disabled{opacity:.6;cursor:wait}
-.msg{margin:0;color:var(--muted)} .msg.err{color:#c0392b;font-weight:600}
-.done{background:var(--gold-soft);border-radius:16px;padding:18px 20px}
-.meta{color:var(--muted);font-size:14px}
-.boost{border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:0;display:grid;gap:8px}
-.boost legend{font-weight:800;padding:0 6px}
-.opt{display:flex;gap:10px;align-items:flex-start;font-weight:600;cursor:pointer}
-.opt input{width:auto;margin-top:5px}
-.opt small{display:block;font-weight:500;color:var(--muted)}
-</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261031a">
 </head>
 <body>
-<main>
-<div class="top"><a href="/">← Back to the map</a></div>
-<h1>Add your event</h1>
-<p class="lede">Hosting a Halloween, holiday or seasonal event in Southern California? Put it on the map for free. If your event's web page confirms the details, it goes live right away.</p>
-
-<div id="done" class="done" hidden></div>
-<form id="f" novalidate>
-  <label for="name">Event name<input id="name" maxlength="120" required autocomplete="off"></label>
-  <label for="url">Link to your event's web page <span class="hint">we use it to check the event; it should mention the event and its date</span><input id="url" type="url" maxlength="300" placeholder="https://" required></label>
-  <div class="two">
-    <label for="season">Season<select id="season"></select></label>
-    <label for="type">Type<select id="type"></select></label>
-  </div>
-  <div class="two">
-    <label for="start">First day<input id="start" type="date" required></label>
-    <label for="end">Last day <span class="hint">same day if one day</span><input id="end" type="date" required></label>
-  </div>
-  <label for="hours">Hours <span class="hint">for example 5–9pm</span><input id="hours" maxlength="120"></label>
-  <div class="two">
-    <label for="price">Price <span class="hint">for example Free, or $15 adults</span><input id="price" maxlength="80"></label>
-    <label class="chk" style="padding-top:24px"><input id="free" type="checkbox"> It's free to attend</label>
-  </div>
-  <label for="venue">Venue or place name<input id="venue" maxlength="120" placeholder="e.g. Heritage Park" required></label>
-  <div class="two">
-    <label for="address">Street address <span class="hint">or the cross streets for a parade</span><input id="address" maxlength="160" placeholder="123 Main St" required></label>
-    <label for="city">City<select id="city" required></select></label>
-  </div>
-  <label for="blurb">Short description <span class="hint">1–2 sentences, in your own words</span><textarea id="blurb" maxlength="200" required></textarea></label>
-  <label for="email">Your email <span class="hint">private; only used if something needs fixing</span><input id="email" type="email" maxlength="120" required autocomplete="email"></label>
-  <fieldset class="boost" id="boost" hidden>
-    <legend>Make it stand out <span class="hint">(optional)</span></legend>
-    <label class="opt"><input type="radio" name="plan" value="" checked><span>No thanks, just list it<small>Free</small></span></label>
-    <label class="opt"><input type="radio" name="plan" value="pin"><span>Featured pin: $5<small>Gold-ringed pin and Featured badge for 30 days</small></span></label>
-    <label class="opt"><input type="radio" name="plan" value="top"><span>Top of the list: $10<small>Everything above, plus listed first for 30 days</small></span></label>
-    <label class="opt"><input type="radio" name="plan" value="season"><span>Whole season: $15<small>Everything above, until your event ends</small></span></label>
-    <span class="meta">You'll pay on Stripe's secure page right after your event is added. If it needs a quick review first, your Featured placement turns on as soon as it's approved.</span>
-  </fieldset>
-  <div id="ts"></div>
-  <p class="msg" id="msg" role="status"></p>
-  <div><button class="btn" id="send" type="submit">Add my event</button></div>
-  <p class="meta">Want more visibility? <a href="/feature">Feature your event</a> for $5 and up.</p>
-</form>
-</main>
+<div id="app"></div>
 <script type="module">
+import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261031a";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261029d";
 import { CITY } from "/cities.js";
-const $ = (q) => document.querySelector(q);
-const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-$("#season").innerHTML = Object.entries(SEASONS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join("");
-const fillTypes = () => { $("#type").innerHTML = Object.entries(SEASONS[$("#season").value].types).map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join(""); };
-$("#season").value = defaultSeason(new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10));
-$("#season").addEventListener("change", fillTypes); fillTypes();
-$("#city").innerHTML = `<option value="">Choose a city</option>` + Object.keys(CITY).sort().map((c) => `<option>${esc(c)}</option>`).join("");
-const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
-$("#start").min = $("#end").min = today;
-$("#start").addEventListener("change", () => { if (!$("#end").value || $("#end").value < $("#start").value) $("#end").value = $("#start").value; });
+const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
+const cfg = await ts.init(), pay = !!cfg.featureCheckout && !IN_APP; // paid placement is offered only when online payment is on, and never inside the store apps
+const d = { url: "", name: "", season: defaultSeason(today), type: "", start: "", end: "", hours: "", free: "yes", price: "", venue: "", street: "", city: "", blurb: "", email: "", plan: "" };
+const PLANS = [["", "No thanks, just list it", "Free"], ["pin", "Featured pin: $5", "Gold-ringed pin and Featured badge for 30 days"], ["top", "Top of the list: $10", "Everything above, plus listed first for 30 days"], ["season", "Whole season: $15", "Everything above, until your event ends"]];
 
-// Cloudflare Turnstile ("I am human"), same as the Showcase a House form
-let widget = null;
-const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
-const IN_APP = /SoCalLightsApp/.test(navigator.userAgent); if (IN_APP) document.querySelectorAll(".meta a[href=\"/feature\"]").forEach((x) => x.closest("p").remove());
-if (cfg.featureCheckout && !IN_APP) $("#boost").hidden = false; // paid placement is offered only when online payment is switched on
-if (cfg.turnstileSiteKey) {
-  await new Promise((res) => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = res; s.onerror = res; document.head.appendChild(s); });
-  if (window.turnstile) widget = window.turnstile.render("#ts", { sitekey: cfg.turnstileSiteKey });
-}
-
-$("#f").addEventListener("submit", async (x) => {
-  x.preventDefault();
-  const msg = $("#msg"), btn = $("#send"); msg.className = "msg"; msg.textContent = "Checking your event…"; btn.disabled = true;
-  const body = { name: $("#name").value, url: $("#url").value, season: $("#season").value, type: $("#type").value, start: $("#start").value, end: $("#end").value, hours: $("#hours").value, price: $("#price").value, free: $("#free").checked, venue: $("#venue").value, address: $("#address").value, city: $("#city").value, blurb: $("#blurb").value, email: $("#email").value };
-  if (widget != null) body["cf-turnstile-response"] = window.turnstile.getResponse(widget) || "";
-  try {
-    const r = await fetch("/api/submit-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || "Something went wrong. Please try again.");
-    const plan = (document.querySelector("input[name=plan]:checked") || {}).value || "";
-    if (plan && cfg.featureCheckout && !IN_APP) {
-      // Straight on to Stripe to pay for the placement. A published event is featured by its id; one in review is held until it is approved.
-      msg.textContent = "Taking you to the secure payment page…";
-      const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(d.status === "published" || d.status === "duplicate" ? { event_id: d.id, plan } : { submission_id: d.submission_id, plan }) });
-      const cd = await c.json().catch(() => ({}));
-      if (c.ok && cd.url) { location.href = cd.url; return; }
-      // Payment page didn't open: the event is still added, so say so and point to the Feature page.
-      $("#f").hidden = true; $("#done").hidden = false;
-      $("#done").innerHTML = `<b>${esc(d.message)}</b><p>We couldn't open the payment page just now. You can <a href="/feature">feature your event from here</a> any time.</p>`;
-      return;
-    }
-    $("#f").hidden = true; $("#done").hidden = false;
-    $("#done").innerHTML = `<b>${esc(d.message)}</b><p>${d.status === "published" ? `<a href="/">See it on the map</a> · ` : ""}<a href="/feature">Feature your event</a> · <a href="/add-event">Add another event</a></p>`;
-    window.scrollTo(0, 0);
-  } catch (e) { msg.className = "msg err"; msg.textContent = e.message; btn.disabled = false; if (widget != null) window.turnstile.reset(widget); }
-});
+const steps = [
+  { id: "url", sec: "Basics", title: "What's the web page for your event?", help: "We read the page to check the event is real. It should mention the event's name and date. If it matches, your event goes live right away.",
+    body: (x) => input(x, "url", { label: "Event web page", type: "text", mode: "url", ph: "yourevent.org/lights", max: 300 }),
+    check: (x) => (!x.url.trim() || !validSite(x.url) ? "Add a valid link to your event's web page, like example.org/event." : "") },
+  { id: "name", sec: "Basics", title: "What's the event called?", help: "Choose its season and type too, so people can find it.", redraw: true,
+    body: (x) => `${input(x, "name", { label: "Event name", max: 120 })}${select(x, "season", Object.entries(SEASONS).map(([k, v]) => [k, v.label]), { label: "Season" })}${select(x, "type", Object.entries(SEASONS[x.season].types).map(([k, l]) => [k, l]), { label: "Type", blank: "Choose a type" })}`,
+    check: (x) => (x.name.trim().length < 4 ? "Enter the event's name." : !SEASONS[x.season].types[x.type] ? "Choose the type of event." : "") },
+  { id: "dates", sec: "When", title: "When is it?", help: "Pick the first and last day. For a one-day event use the same day twice.", redraw: false,
+    body: (x) => `<div class="row2">${input(x, "start", { label: "First day", type: "date" })}${input(x, "end", { label: "Last day", type: "date" })}</div>${input(x, "hours", { label: "Hours", ph: "for example 5–9pm", max: 120, opt: true })}`,
+    check: (x) => (!x.start || !x.end ? "Pick the first and last day." : x.end < x.start ? "The last day can't be before the first day." : x.end < today ? "That event has already ended." : "") },
+  { id: "price", sec: "When", title: "Is it free to attend?", redraw: true,
+    body: (x) => `<div class="tiles g2">${tile(x, "free", "yes", "Free", "", true)}${tile(x, "free", "no", "Paid", "", true)}</div>${x.free === "no" ? input(x, "price", { label: "Price", ph: "for example $15 adults, kids free", max: 80 }) : ""}`,
+    check: (x) => (x.free === "no" && !x.price.trim() ? "Add the price, for example $15 adults." : "") },
+  { id: "where", sec: "Where", title: "Where is it?", help: "The pin goes on this address. For a parade, use the cross streets.",
+    body: (x) => `${input(x, "venue", { label: "Venue or place name", ph: "e.g. Heritage Park", max: 120 })}${input(x, "street", { label: "Street address", ph: "123 Main St", max: 160, ac: "address-line1", addr: true })}${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city", ac: "address-level2" })}`,
+    check: (x) => (x.venue.trim().length < 3 ? "Enter the venue or place name." : x.street.trim().length < 6 ? "Enter the street address (or the two cross streets for a parade)." : !x.city ? "Choose the city." : "") },
+  { id: "blurb", sec: "About", title: "Describe it in a sentence or two", help: "In your own words. It shows on the map card.",
+    body: (x) => area(x, "blurb", { max: 200, ph: "What families will see and do" }), check: (x) => (x.blurb.trim().length < 20 ? "Add a sentence or two (at least 20 characters)." : "") },
+  { id: "review", sec: "Review", title: "Check everything, then add it", cta: "Add my event", redraw: false,
+    body: (x) => `<div class="sum">${sumRow("Event", esc(x.name), "name")}${sumRow("Page", esc(x.url), "url")}${sumRow("When", fmt(x.start) + (x.end !== x.start ? " to " + fmt(x.end) : ""), "dates")}${sumRow("Price", x.free === "yes" ? "Free" : esc(x.price), "price")}${sumRow("Where", `${esc(x.venue)}, ${esc(x.city)}`, "where")}</div>
+      ${input(x, "email", { label: `Your email <small>${PRIV}. Only used if something needs fixing.</small>`, type: "email", mode: "email", ac: "email", max: 120 })}
+      ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div class="tiles">${PLANS.map(([v, t, s]) => tile(x, "plan", v, t, s, false)).join("")}</div><p class="small muted">You'll pay on Stripe's secure page right after your event is added. If it needs a quick review first, your Featured placement turns on as soon as it's approved.</p></div>` : ""}<div id="ts"></div>`,
+    check: (x) => (!isEmail(x.email) ? "Enter your email so we can reach you if something needs fixing." : ""),
+    submit: async (x, api) => {
+      const body = { name: x.name, url: x.url, season: x.season, type: x.type, start: x.start, end: x.end, hours: x.hours, price: x.free === "yes" ? "" : x.price, free: x.free === "yes", venue: x.venue, address: x.street, city: x.city, blurb: x.blurb, email: x.email, "cf-turnstile-response": ts.token() };
+      const r = await fetch("/api/submit-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
+      if (x.plan && pay) {
+        // Straight on to Stripe. A published event is featured by its id; one in review is held until it is approved.
+        const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(j.status === "published" || j.status === "duplicate" ? { event_id: j.id, plan: x.plan } : { submission_id: j.submission_id, plan: x.plan }) });
+        const cd = await c.json().catch(() => ({}));
+        if (c.ok && cd.url) { location.href = cd.url; return; }
+        api.finish(`<h1>${esc(j.message)}</h1><p class="help">We couldn't open the payment page just now. You can <a href="/feature">feature your event from here</a> any time.</p>`); return;
+      }
+      api.finish(`<h1>${esc(j.message)}</h1><p class="help">${j.status === "published" ? "It's on the map now." : "A person will take a quick look, usually within a day."}</p><div style="display:flex;gap:12px;flex-wrap:wrap">${j.status === "published" || j.status === "duplicate" ? '<a class="btn" href="/">See it on the map</a>' : ""}${IN_APP ? "" : '<a class="btn out" href="/feature">Feature your event</a>'}<a class="btn out" href="/add-event">Add another event</a></div>`);
+    } },
+];
+run({ steps, data: d, persist: "scl-event-draft", noPersist: ["email", "plan"], season: (x) => x.season, addr: { cities },
+  onInput: (k, x) => { if (k === "start" && (!x.end || x.end < x.start)) { x.end = x.start; const e = document.getElementById("f-end"); if (e) e.value = x.end; } if (k === "season") { x.type = ""; const t = document.getElementById("f-type"); if (t) t.innerHTML = '<option value="">Choose a type</option>' + Object.entries(SEASONS[x.season].types).map(([a, l]) => `<option value="${esc(a)}">${esc(l)}</option>`).join(""); } },
+  after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });
 </script>
 </body>
 </html>

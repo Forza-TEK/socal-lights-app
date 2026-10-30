@@ -7,107 +7,50 @@
 <title>Enter your home · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/flow.css?v=20261030b">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261031a">
 </head>
 <body>
-<main>
-<div class="top"><a id="back" href="/">← Back</a><span id="who"></span></div>
-<div id="app"><p class="loading">Loading…</p></div>
-</main>
+<div id="app"></div>
 <script type="module">
+import { run, esc, input, area, select, check, photoField, sumRow } from "/addflow.js?v=20261031a";
+import { me, signIn } from "/auth.js?v=20261030a";
 import { CITY } from "/cities.js";
-import { me, signIn, whoBar, noteSigninResult, esc, toast } from "/auth.js?v=20261030a";
-const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
-const initials = (o) => (o.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("") || "EN").toUpperCase();
-let C = null, user = null, pending = [], err = "", busy = false;
-$("#back").href = "/c/" + slug;
-
-// Photos are resized on the device (at most 1600px, JPEG) before they are uploaded
-async function shrink(file) {
-  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height)), c = document.createElement("canvas");
-  c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
-  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height); bmp.close?.();
-  return await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("encode"))), "image/jpeg", 0.82));
-}
-
-async function start() {
-  const r = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" });
-  if (!r.ok) { $("#app").innerHTML = `<div class="card center"><h2>We can't find that contest</h2><a class="btn" href="/">Back to the map</a></div>`; return; }
-  const D = await r.json(); C = D.contest; document.title = "Enter: " + C.name;
-  if (!C.entriesOpen) { $("#app").innerHTML = `<div class="card center"><h2>Entries are closed</h2><p class="muted">${esc(C.name)} isn't taking new entries right now.</p><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`; return; }
-  user = (await me()).user;
-  if (!user) return gate();
-  form();
-}
-function gate() {
-  $("#app").innerHTML = `<div class="card center"><div class="banner" style="width:100%;text-align:left"><div class="logo" aria-hidden="true">${esc(initials(C.org))}</div><div><b>${esc(C.name)}</b><span>${esc(C.org)}</span></div></div><h2>Sign in to enter your home</h2><p class="muted" style="max-width:44ch">We use your sign-in so you can come back to check on your entry, and so nobody enters on your behalf.</p><button class="btn org" id="go" type="button">Sign in</button></div>`;
-  $("#go").onclick = async () => { const u = await signIn({ title: "Sign in to enter", next: location.pathname }); if (u) { user = u; whoBar($("#who")); form(); } };
-}
-function thumbs() {
-  $("#thumbs").innerHTML = pending.map((p, i) => `<div class="t"><img src="${p.url}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button>${i === 0 ? "<em>COVER</em>" : ""}</div>`).join("");
-  document.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = () => { URL.revokeObjectURL(pending[+b.dataset.rm].url); pending.splice(+b.dataset.rm, 1); thumbs(); }));
-}
-async function addFiles(list) {
-  for (const f of list) {
-    if (pending.length >= 8) { setErr("That's the limit of 8 photos."); break; }
-    if (!f.type.startsWith("image/")) { setErr("Skipped a file that isn't a photo."); continue; }
-    try { const b = await shrink(f); pending.push({ blob: b, url: URL.createObjectURL(b) }); } catch { setErr("One photo couldn't be read. Try a JPG or PNG."); }
-    thumbs();
+import { defaultSeason } from "/seasons.js?v=20261029d";
+const slug = location.pathname.split("/")[2] || "", cities = Object.keys(CITY).sort(), app = document.getElementById("app");
+const plain = (h, t, p, btn) => { app.innerHTML = `<div class="hdr"><a class="logo" href="/">SoCal Lights</a><a class="link" href="/c/${esc(slug)}">Back</a></div><div class="main"><h1>${h}</h1><p class="help">${p}</p>${btn || ""}</div>`; };
+const r0 = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" });
+if (!r0.ok) { plain("We can't find that contest", "The link may be mistyped, or the contest may not be public yet.", '<div><a class="btn" href="/">Back to the map</a></div>'); }
+else {
+  const C = (await r0.json()).contest; document.title = "Enter: " + C.name; document.documentElement.dataset.season = defaultSeason(C.entriesClose);
+  if (!C.entriesOpen) plain("Entries are closed", `${esc(C.name)} isn't taking new entries right now.`, `<div><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`);
+  else {
+    let user = (await me()).user;
+    const d = { photos: [], street: "", city: C.city || "", zip: "", name: "", desc: "", rules: false };
+    const steps = [
+      { id: "gate", sec: "Sign in", skip: () => !!user, title: "Sign in to enter your home", help: "We use your sign-in so you can come back to check on your entry, and so nobody enters on your behalf.",
+        body: () => `<div><button class="btn" type="button" data-a="signin">Sign in</button></div>`, check: () => (user ? "" : "Sign in to continue.") },
+      { id: "photos", sec: "Your home", title: "Add photos of your home", help: "Take one now or pick from your gallery. Your home competes in every category, and voters pick a favorite in each one.", body: (x) => photoField(x), check: (x) => (!x.photos.length ? "Add at least one photo. It's how people recognize your house." : "") },
+      { id: "addr", sec: "Your home", title: "What's your address?", help: "The pin goes on this address and visitors see it.",
+        body: (x) => `${input(x, "street", { label: "Street address", ph: "e.g. 27 Via Alicia", max: 120, ac: "address-line1", addr: true })}<div class="row2">${select(x, "city", cities.map((c) => [c, c]), { label: "City", ac: "address-level2" })}${input(x, "zip", { label: "ZIP", max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}</div>`,
+        check: (x) => (!x.street.trim() ? "Add your street address." : !/^\d{5}$/.test(x.zip.trim()) ? "The ZIP code needs 5 digits." : "") },
+      { id: "name", sec: "Your home", title: "What name should we show?", help: "For example, The Lopez family.", body: (x) => `${input(x, "name", { label: "Name on the entry", max: 80, ac: "name", ph: "The Lopez family" })}${area(x, "desc", { label: "One line about your display", ph: "12,000 lights synced to music. Tune to 88.1 FM.", max: 300, opt: true })}`, check: (x) => (!x.name.trim() ? "Add the name for the entry." : "") },
+      { id: "review", sec: "Review", title: "Ready to enter?", cta: "Submit my entry",
+        body: (x) => `<div class="sum">${sumRow("Contest", esc(C.name), "photos")}${sumRow("Home", `${esc(x.name)}, ${esc(x.street)}`, "name")}${sumRow("Photos", String(x.photos.length), "photos")}</div>${check(x, "rules", "I agree to the official rules and that judges may visit.")}${C.rules ? `<details><summary class="link" style="display:inline">Read the official rules</summary><div class="hint" style="white-space:pre-wrap;margin-top:10px">${esc(C.rules)}</div></details>` : ""}<p class="small muted">You're signed in as ${esc(user ? user.email : "")}. ${C.approval === "manual" ? "The organizer reviews each entry before it goes on the map." : "Your entry goes on the map right away."}</p>`,
+        check: (x) => (!x.rules ? "Tick the box to agree to the rules." : ""),
+        submit: async (x, api, retry) => {
+          const fd = new FormData();
+          for (const [k, v] of Object.entries({ contest: slug, rules: "1", biz: x.name.trim(), title: x.name.trim(), street: x.street.trim(), city: x.city, state: "CA", zip: x.zip.trim(), desc: x.desc.trim() })) fd.append(k, v);
+          x.photos.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
+          const r = await fetch("/api/submit", { method: "POST", body: fd }), j = await r.json().catch(() => ({}));
+          if (r.status === 401 && !retry) { const u = await signIn({ title: "Sign in again to submit", next: location.pathname }); if (u) { user = u; return steps[4].submit(x, api, true); } throw new Error("Sign in to submit your entry."); }
+          if (!r.ok) throw new Error(j.error || "Couldn't send that. Try again in a moment.");
+          api.finish(`<h1>You're entered!</h1><p class="help">${C.approval === "manual" ? "The organizer will review your entry before it goes on the map." : "Your entry is on the contest page and the map now."} Sign in with ${esc(user.email)} any time to come back.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/c/${esc(slug)}">See the contest</a><a class="btn out" href="/c/${esc(slug)}/enter">Enter another home</a></div>`);
+        } },
+    ];
+    run({ steps, data: d, exit: "/c/" + slug, addr: { cities }, actions: { async signin(_, a) { const u = await signIn({ title: "Sign in to enter", next: location.pathname }); if (u) { user = u; a.draw(); } } } });
   }
 }
-// Address suggestions (Geoapify through our server). Waits for 5+ characters and a pause in typing to keep lookups low.
-function suggest() {
-  const inp = $("#street"); let t = 0, seq = 0; const box = document.createElement("div");
-  box.setAttribute("role", "listbox"); box.style.cssText = "display:none;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);margin-top:6px;overflow:hidden"; inp.after(box);
-  const hide = () => { box.style.display = "none"; };
-  inp.addEventListener("input", () => { clearTimeout(t); const q = inp.value.trim(); if (q.length < 5 || !/\d/.test(q)) return hide();
-    t = setTimeout(async () => { const me = ++seq; let j = { suggestions: [] }; try { j = await (await fetch("/api/address?q=" + encodeURIComponent(q))).json(); } catch {} if (me !== seq || !j.suggestions.length) return hide();
-      box.innerHTML = j.suggestions.map((s, i) => `<button type="button" role="option" data-i="${i}" style="display:block;width:100%;text-align:left;padding:12px 14px;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer;min-height:44px">${esc(s.street)}, ${esc(s.city)} ${esc(s.zip)}</button>`).join("") + `<div class="small muted" style="padding:6px 14px">Powered by Geoapify</div>`; box.style.display = "block";
-      box.onclick = (e) => { const b = e.target.closest("[data-i]"); if (!b) return; const s = j.suggestions[+b.dataset.i]; inp.value = s.street; if ([...$("#city").options].some((o) => o.value === s.city)) $("#city").value = s.city; if (/^\d{5}/.test(s.zip)) $("#zip").value = s.zip.slice(0, 5); hide(); }; }, 350); });
-  inp.addEventListener("blur", () => setTimeout(hide, 200));
-}
-const setErr = (t) => { err = t; const e = $("#err"); if (e) { e.textContent = t; e.hidden = !t; } };
-function form() {
-  $("#app").innerHTML = `<div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(C.org))}</div><div><b>Entering: ${esc(C.name)}</b><span>Your home competes in every category. Voters choose a favorite in each one.</span></div></div>
-  <div><span class="lab">1. Photos</span><p class="help">Take one now or pick from your gallery. They shrink on your phone, so uploads are quick. The first photo is the cover.</p><div class="drop" id="drop" style="margin-top:10px"><label class="btn ghost" for="ph" style="margin:0">Add photos</label><input id="ph" type="file" accept="image/*" multiple hidden><span>You can also drag photos here. Up to 8.</span></div><div class="thumbs" id="thumbs"></div></div>
-  <div><label for="street">2. Street address</label><p class="help">The pin goes on this address and visitors see it.</p><input id="street" type="text" maxlength="120" autocomplete="address-line1" placeholder="e.g. 27 Via Alicia"></div>
-  <div class="row2"><div><label for="city">City</label><select id="city" autocomplete="address-level2">${Object.keys(CITY).sort().map((c) => `<option ${c === C.city ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div><div><label for="zip">ZIP</label><input id="zip" type="text" inputmode="numeric" maxlength="5" autocomplete="postal-code" placeholder="92692"></div></div>
-  <div><label for="name">3. Name on the entry</label><input id="name" type="text" maxlength="80" autocomplete="name" placeholder="The Lopez family"></div>
-  <div><label for="desc">One line about your display <span class="help" style="display:inline">(optional)</span></label><textarea id="desc" maxlength="300" placeholder="12,000 lights synced to music. Tune to 88.1 FM."></textarea></div>
-  <label style="display:flex;gap:10px;align-items:flex-start;font-weight:600"><input type="checkbox" id="rules" style="width:22px;height:22px;margin:2px 0 0;accent-color:var(--org)"> <span>I agree to the official rules and that judges may visit.</span></label>
-  ${C.rules ? `<details><summary style="cursor:pointer;font-weight:600">Read the official rules</summary><div class="small muted" style="white-space:pre-wrap;margin-top:10px">${esc(C.rules)}</div></details>` : ""}
-  <p class="err" id="err" role="alert" hidden></p><p class="help">You're signed in as ${esc(user.email)}. ${C.approval === "manual" ? "The organizer reviews each entry before it goes on the map." : "Your entry goes on the map right away."}</p>
-  <div class="nav"><a class="btn ghost" href="/c/${esc(slug)}">Cancel</a><button class="btn org" id="send" type="button">Submit my entry</button></div></div>`;
-  $("#ph").onchange = (e) => { const f = [...e.target.files]; e.target.value = ""; addFiles(f); };
-  const d = $("#drop"); d.ondragover = (e) => { e.preventDefault(); d.classList.add("over"); }; d.ondragleave = () => d.classList.remove("over"); d.ondrop = (e) => { e.preventDefault(); d.classList.remove("over"); addFiles([...e.dataTransfer.files]); };
-  suggest();
-  thumbs(); $("#send").onclick = submit;
-}
-async function submit(retry) {
-  if (busy) return; const v = (id) => $("#" + id).value.trim();
-  if (!pending.length) return setErr("Add at least one photo. It's how people recognize your house.");
-  if (!v("street")) return setErr("Add your street address.");
-  if (!/^\d{5}$/.test(v("zip"))) return setErr("The ZIP code needs 5 digits.");
-  if (!v("name")) return setErr("Add the name for the entry.");
-  if (!$("#rules").checked) return setErr("Tick the box to agree to the rules.");
-  setErr(""); busy = true; $("#send").disabled = true; $("#send").textContent = "Sending…";
-  const fd = new FormData();
-  for (const [k, val] of Object.entries({ contest: slug, biz: v("name"), title: v("name"), street: v("street"), city: v("city"), state: "CA", zip: v("zip"), desc: v("desc") })) fd.append(k, val);
-  fd.append("rules", "1");
-  pending.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
-  try {
-    const r = await fetch("/api/submit", { method: "POST", body: fd });
-    const j = await r.json().catch(() => ({}));
-    if (r.status === 401 && retry !== true) { busy = false; const u = await signIn({ title: "Sign in again to submit", next: location.pathname }); if (u) { user = u; return submit(true); } return; }
-    if (!r.ok) throw new Error(j.error || "Couldn't send that. Try again in a moment.");
-    $("#app").innerHTML = `<div class="card center"><div class="big" aria-hidden="true">✓</div><h2>You're entered!</h2><p class="muted" style="max-width:46ch">${C.approval === "manual" ? "The organizer will review your entry before it goes on the map." : "Your entry is on the contest page and the map now."} Sign in with ${esc(user.email)} any time to come back.</p><div class="actions" style="justify-content:center"><a class="btn org" href="/c/${esc(slug)}">See the contest</a><a class="btn ghost" href="/c/${esc(slug)}/enter">Enter another home</a></div></div>`;
-    window.scrollTo(0, 0);
-  } catch (e) { setErr(e.message); }
-  busy = false; const s = $("#send"); if (s) { s.disabled = false; s.textContent = "Submit my entry"; }
-}
-whoBar($("#who")); noteSigninResult(); start();
 </script>
 </body>
 </html>
