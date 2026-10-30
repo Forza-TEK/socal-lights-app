@@ -644,3 +644,19 @@ body.lb-open{overflow:hidden}
 /* desktop: Sort sits on the quick-pick row, after Filters */
 .quick .sortl{flex:none;margin-left:auto;align-self:center;white-space:nowrap}
 .quick button.qf{margin-left:0}
+
+/* desktop: hide and bring back the list */
+.ptoggle{display:none}
+@media (min-width:861px){
+  .ptoggle{display:grid;place-items:center;position:fixed;z-index:31;top:50%;transform:translateY(-50%);right:calc(var(--panel-w) + 14px);width:26px;height:64px;border:0;border-radius:14px 0 0 14px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;transition:right .28s cubic-bezier(.3,.8,.3,1)}
+  .ptoggle:hover{color:var(--season)}
+  .ptoggle svg{transition:transform .28s}
+  .list-hidden .ptoggle{right:0;border-radius:14px 0 0 14px}
+  .list-hidden .ptoggle svg{transform:rotate(180deg)}
+  .panel{transition:transform .28s cubic-bezier(.3,.8,.3,1),opacity .2s,visibility 0s}
+  .list-hidden .panel{transform:translateX(calc(100% + 30px));opacity:0;visibility:hidden;pointer-events:none;transition:transform .28s cubic-bezier(.3,.8,.3,1),opacity .2s,visibility 0s .28s}
+  .maplibregl-ctrl-top-right,.maplibregl-ctrl-bottom-right{transition:right .28s cubic-bezier(.3,.8,.3,1)}
+  .list-hidden .maplibregl-ctrl-top-right,.list-hidden .maplibregl-ctrl-bottom-right{right:24px}
+  .list-hidden .topbar{right:auto;width:min(760px,calc(100vw - 100px))}
+  .list-hidden .ptoggle{right:0}
+}
