@@ -1,0 +1,13 @@
+-- City sweep group 18 (High Desert & Mountains) 2026-10-30. Dates for the three annual tree lightings are estimated from the 2025 pattern (bosd1.sbcounty.gov 2025-12-03 roundup).
+INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address)
+VALUES
+('g18-adelanto-tree-lighting','Adelanto Christmas Tree Lighting Ceremony','San Bernardino','Adelanto','tree','2026-12-03','2026-12-03','expected',1,'Free','Early evening (2025 ran 5-7 pm); check site',34.5725316,-117.411267,'Annual tree lighting at Adelanto City Hall with Santa and carolers; 2026 date estimated from the 2025 event, so confirm with the city.','https://bosd1.sbcounty.gov/2025/12/03/christmas-magic-across-the-first-district-whats-happening-this-week/','christmas','Adelanto City Hall','11600 Air Expressway, Adelanto, CA 92301'),
+('g18-phelan-tree-lighting','Phelan Pinon Hills CSD Christmas Tree Lighting','San Bernardino','Phelan','tree','2026-12-04','2026-12-04','expected',1,'Free','Evening (2025: 5:30 pm, Santa arrives 6 pm); check site',34.4225567,-117.571267,'Community tree lighting with Santa''s arrival, hot chocolate and a toy drive; 2026 date estimated from the 2025 event, so confirm with the district.','https://bosd1.sbcounty.gov/2025/12/03/christmas-magic-across-the-first-district-whats-happening-this-week/','christmas','Phelan Park','4176 Warbler Rd, Phelan, CA 92371'),
+('g18-silver-lakes-tree-lighting','Silver Lakes Association Christmas Tree Lighting','San Bernardino','Helendale','tree','2026-12-04','2026-12-04','expected',1,'Free','Evening (2025: 6 pm); check site',34.7548879,-117.3419376,'Silver Lakes community tree lighting at the association clubhouse in Helendale; 2026 date estimated from the 2025 event, so confirm with the association.','https://bosd1.sbcounty.gov/2025/12/03/christmas-magic-across-the-first-district-whats-happening-this-week/','christmas','Silver Lakes Association Clubhouse','14818 Clubhouse Dr, Helendale, CA 92342')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city,
+  type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status,
+  free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng,
+  blurb=excluded.blurb, url=excluded.url, season=excluded.season,
+  venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
+
+UPDATE events SET url='https://hesperiaparks.gov/christmas-tree-lighting/', status='confirmed', updated_at=datetime('now') WHERE id='hesperia-tree-lighting';
