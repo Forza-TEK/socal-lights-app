@@ -149,7 +149,7 @@ export function run(o) {
   function suggest(inp) {
     if (!o.addr) return; clearTimeout(sugT); const q = inp.value.trim(); const old = $(".dd"); if (q.length < 5 || !/\d/.test(q)) { if (old) old.remove(); return; }
     sugT = setTimeout(async () => {
-      const me = ++sugN; let j = { suggestions: [] }; try { j = await (await fetch("/api/address?q=" + encodeURIComponent(q))).json(); } catch {}
+      const me = ++sugN; let j = { suggestions: [] }; try { j = await (await fetch("/api/address?q=" + encodeURIComponent(d.city && !q.toLowerCase().includes(d.city.toLowerCase()) ? q + " " + d.city : q))).json(); } catch {}
       const o2 = $(".dd"); if (o2) o2.remove(); if (me !== sugN || !j.suggestions.length || !inp.isConnected) return;
       sugList = j.suggestions; const ul = document.createElement("ul"); ul.className = "dd"; ul.setAttribute("role", "listbox");
       ul.innerHTML = sugList.map((s, i) => `<li><button type="button" role="option" data-i="${i}">${esc(s.street)}<small>${esc(s.city)}, CA ${esc(s.zip)}</small></button></li>`).join("") + `<li class="foot">Powered by Geoapify</li>`; inp.parentElement.appendChild(ul);
