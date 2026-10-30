@@ -9,7 +9,7 @@ Most holiday home contests publish their entrant or winner map **after judging**
 | San Dimas (LA) | Holiday Extravaganza house decor | judging Dec 15-17, winner Dec 18 | no addresses published so far |
 | Lakewood (LA) | Holiday Home Decoration Showcase | entries Dec 11, home list for self-guided tour | 2024/25 pages blocked |
 | Signal Hill (LA) | Holiday Contest | entries Nov 16-Dec 10, may publish map | |
-| Burbank (LA) | OurBurbank decorating contests | 2026 Halloween "Destination Guide" (50 addresses); winter edition likely | burbankca.gov blocks automated fetches |
+| Burbank (LA) | OurBurbank decorating contests | SKIP: owner decided not to add Burbank contest homes (2026-10-30); the city publishes only a flyer image, so leave it for outreach | |
 | Paramount (LA) | Spooky Homes map / holiday contest | map on social media | |
 | Hawthorne (LA) | Halloween and resident holiday contests | | cityofhawthorne.org blocks fetches |
 | Santa Maria (SB) | Christmas tour map | Dec 4 | |
