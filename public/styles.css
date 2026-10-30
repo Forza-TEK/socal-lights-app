@@ -296,7 +296,7 @@ button{touch-action:manipulation}
   .panel.dragging{transition:none}
   .grab{display:grid;place-items:center;padding:10px 0 4px;cursor:grab;touch-action:none}
   .grab i{width:40px;height:5px;border-radius:3px;background:var(--line);display:block}
-  :root[data-theme="dark"] .grab i{background:rgba(255,255,255,.6)}
+  :root[data-theme="dark"] .grab i{width:48px;height:6px;background:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.25),0 0 8px rgba(255,255,255,.35)}
   .ptabs{display:none}
   .phead{padding:4px 16px 10px;touch-action:none;row-gap:16px}
   .phead .quick{order:-1;flex-basis:100%;touch-action:pan-x}
