@@ -1,11 +1,12 @@
 # Status
 
-_Last updated: 2026-10-28_
+_Last updated: 2026-10-30_
 
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
 
 ## Next steps
+0. Group 5 (South Bay) sweep 2026-10-30 added Avalon and Lomita tree lightings (migration 0090). cityofhawthorne.org returns 403, so Hawthorne's Halloween/holiday decorating contests (no public address lists found elsewhere) remain a lead; Lawndale, Gardena, Inglewood 2026 holiday dates were not yet posted in searchable sources.
 1. Continue confirming `expected` holiday events per `docs/confirmation-plan.md`.
 
 ## Open questions / blockers
