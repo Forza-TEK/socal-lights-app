@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031q">
+<link rel="stylesheet" href="/addflow.css?v=20261031r">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span></div></div>
@@ -18,7 +18,7 @@
   <div class="tiles" id="opts"></div>
 </div>
 <script type="module">
-import { ICON, esc, themeBtn, mountAcct } from "/addflow.js?v=20261031q";
+import { ICON, esc, themeBtn, mountAcct } from "/addflow.js?v=20261031r";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261029d";
 document.getElementById("tb").innerHTML = themeBtn() + '<span id="acct"></span>'; mountAcct(document.getElementById("acct"));
 const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);

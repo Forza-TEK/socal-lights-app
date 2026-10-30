@@ -8,14 +8,14 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031q">
+<link rel="stylesheet" href="/addflow.css?v=20261031r">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span></div></div>
 <div class="main" id="app"><p class="muted">Loading…</p></div>
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261030a";
-import { esc, themeBtn, input, select, attachAddress, OPT } from "/addflow.js?v=20261031q";
+import { esc, themeBtn, input, select, attachAddress, OPT } from "/addflow.js?v=20261031r";
 import { CITY } from "/cities.js";
 document.getElementById("tb").innerHTML = themeBtn();
 const $ = (q) => document.querySelector(q), app = $("#app"), cities = Object.keys(CITY).sort();
@@ -23,7 +23,7 @@ const KEYS = { house: "scl-house-draft", event: "scl-event-draft", contest: "scl
 const when = (s) => { try { return new Date(String(s).replace(" ", "T") + "Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
 const stat = { approved: ["live", "Live"], published: ["live", "Live"], live: ["live", "Live"], pending: ["warn", "In review"], declined: ["", "Declined"], closed: ["", "Ended"] };
 const dot = (s, over) => { const [c, l] = over || stat[s] || ["", s]; return `<span class="dot ${c}"></span>${esc(l)}`; };
-let O = null, tab = (location.hash || "").slice(1) || "drafts";
+let O = null, BD = { badges: [], master: true, off: {} }, tab = (location.hash || "").slice(1) || "drafts";
 
 // After Google sign-in comes back with ?save=<kind>, move the draft kept on this device into the account
 async function syncLocal() {
@@ -48,6 +48,17 @@ function panel() {
   if (tab === "entries") return head("Your contest entries", ["Find a contest", "/"]) + list(o.entries.map((e) => `<div class="rowi"><div><b>${esc(e.title || e.biz)}</b><br><span class="small muted">${esc(e.contest)} · ${dot(e.status)}</span></div><div class="acts"><a class="btn out sm" href="/c/${esc(e.slug)}">View contest</a></div></div>`), "You haven't entered a contest. Scan a contest's QR code or open its link to enter.");
   if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + list(o.homes.map((h) => `<div class="rowi"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status)}</span></div></div>`), "None yet.");
   if (tab === "events") return head("Events you added", ["+ Add an event", "/add-event"]) + list(o.events.map((e) => `<div class="rowi"><div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${dot(e.status)}</span></div></div>`), "None yet.");
+  if (tab === "badges") {
+    const bs = BD.badges, on = (id, s) => BD.master && !BD.off[id + "|" + s];
+    const CR = (n) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;flex:none"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`;
+    const sh = (s) => bs.filter((b) => on(b.id, s)), l = sh("list"), pp = sh("popup"), d = sh("detail"), t = esc(O.user.name || "Your home");
+    return head("Badges") + `<p class="muted" style="margin-top:-8px">Winners keep a crown. Choose where your badges show on your listings. They are on everywhere by default.</p>
+      <label class="chk"><input type="checkbox" data-bpm ${BD.master ? "checked" : ""}> <span>Show my badges on my listings</span></label>
+      <div class="list">${bs.map((b) => `<div><div style="display:flex;gap:10px;align-items:flex-start">${CR(18)}<div><b style="font-weight:500">${esc(b.a)} · ${esc(b.k)}</b><br><span class="muted small">${esc(b.s)} · ${esc(b.c)}</span></div></div><div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:10px">${[["list", "List card"], ["popup", "Map pop-up"], ["detail", "Details page"]].map(([k, lb]) => `<label class="chk" style="font-size:14px"><input type="checkbox" data-bp="${esc(b.id)}|${k}" ${on(b.id, k) ? "checked" : ""} ${BD.master ? "" : "disabled"}> <span>${lb}</span></label>`).join("")}</div></div>`).join("")}</div>
+      <h3 style="margin-top:8px">How it looks</h3><div class="surfs"><div><span class="muted small">List card</span><div class="bcard"><div class="ph">${l.length ? `<span class="bpill" role="img" aria-label="Past contest winner">${CR(18)}</span>` : ""}</div><div class="b"><b>${t}</b><span class="muted small">Your address</span></div></div></div>
+      <div><span class="muted small">Map pop-up</span><div class="popc"><div class="pi"></div><div><b>${pp.length ? CR(15) + " " : ""}${t}</b>${pp.length ? `<span class="m">${esc(pp[0].a)} · ${esc(pp[0].s)}${pp.length > 1 ? " +" + (pp.length - 1) : ""}</span>` : ""}</div></div></div>
+      <div><span class="muted small">Details page</span><div class="detc"><b>${t}</b>${d.map((b) => `<div class="bline">${CR(18)}<div><b>${esc(b.a)} · ${esc(b.k)}</b><span class="m">${esc(b.s)} · ${esc(b.c)}</span></div></div>`).join("") || '<span class="muted small">No badge shown here.</span>'}</div></div></div>`;
+  }
   // account
   const pf = { name: u.name || "", street: u.street || "", city: u.city || "", zip: u.zip || "" };
   return head("Account") + `<p class="muted" style="margin-top:-8px">Your name and address are optional. We use them to fill in forms for you; they are never shown publicly.</p>
@@ -58,8 +69,8 @@ function panel() {
 }
 
 function render() {
-  const o = O, em = o.user.email, n = { drafts: o.drafts.length, contests: o.contests.length, entries: o.entries.length, displays: o.homes.length, events: o.events.length };
-  const T = [["drafts", "Drafts"], ["contests", "Contests"], ["entries", "Entries"], ["displays", "Displays"], ["events", "Events"], ["account", "Account"]];
+  const o = O, em = o.user.email, n = { badges: BD.badges.length, drafts: o.drafts.length, contests: o.contests.length, entries: o.entries.length, displays: o.homes.length, events: o.events.length };
+  const T = [["drafts", "Drafts"], ["contests", "Contests"], ["entries", "Entries"], ["displays", "Displays"], ["events", "Events"], ...(BD.badges.length ? [["badges", "Badges"]] : []), ["account", "Account"]];
   if (!T.some((t) => t[0] === tab)) tab = "drafts";
   app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${info && info.user && info.user.avatar ? `<img src="${esc(info.user.avatar)}" alt="">` : esc((o.user.name || em)[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">${esc(o.user.name || "Your profile")}</h1><span class="muted">${esc(em)}</span><div style="display:flex;gap:14px;margin-top:6px"><label class="link" for="avfile" style="font-size:14px;cursor:pointer">${info && info.user && info.user.avatar ? "Change photo" : "Add a photo"}</label>${info && info.user && info.user.avatar ? '<button class="link" id="avrm" type="button" style="font-size:14px">Remove</button>' : ""}<input id="avfile" type="file" accept="image/*" hidden></div><div style="margin-top:8px"><button class="link" id="editprof" type="button" style="font-size:14px">Edit name &amp; address</button></div><p class="err" id="averr" role="alert" hidden></p></div></div>
     <div class="ptabs2" role="tablist">${T.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}${n[k] ? `<span class="cnt">${n[k]}</span>` : ""}</button>`).join("")}</div>
@@ -76,6 +87,9 @@ function wire() {
     if (!r.ok) { const j = await r.json().catch(() => ({})); const er = $("#delerr"); er.textContent = j.error || "Couldn't delete your account. Try again."; er.hidden = false; da.disabled = false; return; }
     location.href = "/?deleted=1";
   };
+  const save = () => fetch("/api/me/badges", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ master: BD.master, off: BD.off }) });
+  const bm = app.querySelector("[data-bpm]"); if (bm) bm.onchange = async () => { BD.master = bm.checked; await save(); render(); };
+  app.querySelectorAll("[data-bp]").forEach((c) => (c.onchange = async () => { if (c.checked) delete BD.off[c.dataset.bp]; else BD.off[c.dataset.bp] = true; await save(); render(); }));
   const so = $("#so"); if (so) so.onclick = async () => { await signOut(); location.href = "/"; };
   const pf = $("#pform"); if (pf) {
     attachAddress(pf, { getCity: () => $("#f-city").value, onPick: (s) => { $("#f-street").value = s.street; if (cities.includes(s.city)) $("#f-city").value = s.city; if (/^\d{5}/.test(s.zip)) $("#f-zip").value = s.zip.slice(0, 5); } });
@@ -108,6 +122,7 @@ async function load() {
   if (!i.user) { app.innerHTML = `<h1>Your profile</h1><p class="help">Sign in to see your saved drafts and everything you've added.</p><div><button class="btn" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to your profile", next: "/profile" })) load(); }; return; }
   await syncLocal();
   const r = await fetch("/api/me/overview", { cache: "no-store" }); if (!r.ok) { app.innerHTML = `<h1>Your profile</h1><p class="err">Couldn't load your profile. Try again in a moment.</p>`; return; }
+  BD = await fetch("/api/me/badges", { cache: "no-store" }).then((x) => (x.ok ? x.json() : BD)).catch(() => BD);
   O = await r.json(); O.user = { ...O.user, street: i.user.street || "", city: i.user.city || "", zip: i.user.zip || "", name: i.user.name || O.user.name || "" };
   render();
 }

@@ -27,7 +27,7 @@ Based on `docs/voting-standards.md`.
 - Organizer tools: review every vote (burst voters are flagged), void or restore a vote, flag a home to disqualify at close (it stays on the ballot and can't win), download results as CSV.
 - Official rules: drafted from `public/rules.js`, editable in the wizard, shown on the contest and entry pages. Entering requires accepting them (`rules=1` on `/api/submit`).
 - Announcing writes a frozen snapshot to `contests.results`. The contest page, archive and export read it, never the live votes, and votes and flags are locked afterwards. Every entrant is emailed (winners get a congratulations). Needs `RESEND_API_KEY`.
-- Judges, rubric scoring, trimmed mean, conflict declarations, prizes, season archive, badges and profile pictures are still sample-only.
+- Judges (pick or score, trimmed mean at 5+, recusal), prizes per award, the Season | Year archive (`/archive`) and winner badges are live (migration 0116). A winner keeps a crown on every listing they own (entries by account, houses by the email on the form); each person can hide badges entirely or per place (list card, map pop-up, details page) on the profile Badges tab.
 
 ## Address suggestions
 `GET /api/address?q=` proxies Geoapify (free plan, 3,000 credits a day, no card, "Powered by Geoapify" attribution required). Set the Pages secret `GEOAPIFY_KEY` (sign up at geoapify.com, create a project, copy the API key). Without it the street box is plain text. The entry form asks only after 5+ characters and a pause, and identical queries are cached for a day.
