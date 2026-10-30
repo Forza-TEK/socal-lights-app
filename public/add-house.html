@@ -8,12 +8,12 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031c">
+<link rel="stylesheet" href="/addflow.css?v=20261031d">
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, today } from "/addflow.js?v=20261031c";
+import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, today } from "/addflow.js?v=20261031d";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261029d";
 import { CITY } from "/cities.js";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
@@ -37,7 +37,7 @@ const steps = [
     body: (x) => `${input(x, "title", { label: "Display name", max: 90, ph: "e.g. Music-synced rooftop show" })}${area(x, "desc", { label: pro(x) ? "About this installation" : "About this house", max: 1200, ph: "What you installed, how many lights, what makes it special" })}`,
     check: (x) => (x.title.trim().length < 3 ? "Give the display a name." : x.desc.trim().length < 10 ? "Add a sentence or two about it." : "") },
   { id: "addr", sec: "Location", title: "Where is it?", help: "The pin goes on this address and visitors see it, so they can drive by.",
-    body: (x) => `${input(x, "street", { label: "Street address", max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}<div class="row2">${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city", ac: "address-level2" })}${input(x, "zip", { label: "ZIP", max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}</div>`,
+    body: (x) => `${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city", ac: "address-level2" })}${input(x, "street", { label: "Street address", max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}${input(x, "zip", { label: "ZIP", max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}`,
     check: (x) => (!x.street.trim() ? "Add your street address." : !x.city ? "Choose the city." : !/^\d{5}$/.test(x.zip.trim()) ? "The ZIP code needs 5 digits." : "") },
   { id: "where", sec: "Location", title: "Any tips for visitors?", help: "Best nights to come, where to park.",
     body: (x) => input(x, "where", { max: 120, ph: "e.g. Visible from Main St on weekend nights", label: "Tips", opt: true }) },

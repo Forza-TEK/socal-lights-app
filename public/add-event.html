@@ -8,12 +8,12 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031c">
+<link rel="stylesheet" href="/addflow.css?v=20261031d">
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261031c";
+import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261031d";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261029d";
 import { CITY } from "/cities.js";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
@@ -35,7 +35,7 @@ const steps = [
     body: (x) => `<div class="tiles g2">${tile(x, "free", "yes", "Free", "", true)}${tile(x, "free", "no", "Paid", "", true)}</div>${x.free === "no" ? input(x, "price", { label: "Price", ph: "for example $15 adults, kids free", max: 80 }) : ""}`,
     check: (x) => (x.free === "no" && !x.price.trim() ? "Add the price, for example $15 adults." : "") },
   { id: "where", sec: "Where", title: "Where is it?", help: "The pin goes on this address. For a parade, use the cross streets.",
-    body: (x) => `${input(x, "venue", { label: "Venue or place name", ph: "e.g. Heritage Park", max: 120 })}${input(x, "street", { label: "Street address", ph: "123 Main St", max: 160, ac: "address-line1", addr: true })}${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city", ac: "address-level2" })}`,
+    body: (x) => `${input(x, "venue", { label: "Venue or place name", ph: "e.g. Heritage Park", max: 120 })}${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city", ac: "address-level2" })}${input(x, "street", { label: "Street address", ph: "123 Main St", max: 160, ac: "address-line1", addr: true })}`,
     check: (x) => (x.venue.trim().length < 3 ? "Enter the venue or place name." : x.street.trim().length < 6 ? "Enter the street address (or the two cross streets for a parade)." : !x.city ? "Choose the city." : "") },
   { id: "blurb", sec: "About", title: "Describe it in a sentence or two", help: "In your own words. It shows on the map card.",
     body: (x) => area(x, "blurb", { max: 200, ph: "What families will see and do" }), check: (x) => (x.blurb.trim().length < 20 ? "Add a sentence or two (at least 20 characters)." : "") },
