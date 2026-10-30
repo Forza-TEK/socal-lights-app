@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="/styles.css?v=20261030u">
+<link rel="stylesheet" href="/styles.css?v=20261031f">
 </head>
 <body>
 <div id="map" role="region" aria-label="Street map of Southern California"></div>
@@ -40,6 +40,7 @@
       <input id="q" type="search" placeholder="Search events or a city" aria-label="Search">
     </div>
     <button class="seasonbtn" id="seasonbtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Season"><span id="seasonlbl">Halloween</span><svg class="caret" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button>
+    <a class="iconbtn" id="acctbtn" href="/profile" aria-label="Sign in or your profile" title="Sign in"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></a>
     <button class="iconbtn" id="morebtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Menu" title="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
   </div>
 </div>
@@ -70,7 +71,7 @@
 <div class="modal" id="modal" hidden></div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script type="module" src="/app.js?v=20261030u"></script>
+<script type="module" src="/app.js?v=20261031f"></script>
 <script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script>
 </body>
 </html>

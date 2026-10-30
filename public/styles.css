@@ -402,8 +402,8 @@ button{touch-action:manipulation}
 .ffoot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 18px;border-top:1px solid var(--line);padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
 @media (max-width:860px){
   .fpanel{left:0;right:0;bottom:0;top:calc(env(safe-area-inset-top,0px) + 36px);width:auto;max-height:none;border-radius:24px 24px 0 0}
-  .searchrow{display:grid;grid-template-columns:50px minmax(0,1fr) 50px;grid-template-areas:"brand search more" "season season season";gap:8px 10px}
-  .searchrow .brand{grid-area:brand}.searchrow .search{grid-area:search}.searchrow #morebtn{grid-area:more}
+  .searchrow{display:grid;grid-template-columns:50px minmax(0,1fr) 50px 50px;grid-template-areas:"brand search acct more" "season season season season";gap:8px 10px}
+  .searchrow .brand{grid-area:brand}.searchrow .search{grid-area:search}.searchrow #acctbtn{grid-area:acct}.searchrow #morebtn{grid-area:more}
   .seasonbtn{grid-area:season;justify-self:start;height:44px;padding:0 16px;font-size:15px}
 }
 /* list header: count, sort, add; shortcuts and the Filters button */
@@ -681,3 +681,5 @@ body.lb-open{overflow:hidden}
 @media (min-width:861px){
   .quick[aria-label="Shop categories"]{flex-wrap:wrap;overflow:visible}
 }
+
+#acctbtn{text-decoration:none;font-weight:600;font-size:18px}

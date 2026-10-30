@@ -808,6 +808,8 @@ function openMore() {
   const m = $("#moremenu"), b = $("#morebtn"); m.innerHTML = moreHtml(); m.hidden = false; b.setAttribute("aria-expanded", "true");
   const r = b.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 10 + "px"; m.style.left = Math.max(10, Math.min(r.right - w, innerWidth - w - 10)) + "px";
 }
+// Account circle: the person icon until you are signed in, then the first letter of your email. Both open /profile (which asks you to sign in).
+fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).then((j) => { const b = $("#acctbtn"); if (b && j.user) { b.textContent = j.user.email[0].toUpperCase(); b.title = "Your profile"; b.setAttribute("aria-label", "Your profile"); } }).catch(() => {});
 $("#morebtn").onclick = () => ($("#moremenu").hidden ? openMore() : closeMore());
 $("#moremenu").addEventListener("click", (e) => {
   const b = e.target.closest("[data-m]"); if (!b) { if (e.target.closest("a")) closeMore(); return; }
