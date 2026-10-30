@@ -1,0 +1,38 @@
+/* Admin follows the add forms' look: black and white, light type, hairline borders, the season color as the only accent.
+   It keeps the site's shared stylesheet for the controls the admin script builds, and re-skins them here. */
+:root{--bg:#fff;--ink:#222;--muted:#6a6a6a;--line:#ddd;--line2:#b0b0b0;--tile:#f7f7f7;--surface:#fff;--surface-2:#f7f7f7;--btn:#222;--btn-ink:#fff;--bad:#c13515;--ok:#1a7f4b;
+--s-halloween:#e8590c;--s-christmas:#d1343f;--s-newyear:#6d3fc0;--s-spring:#c0306f;--s-summer:#1e63c4;--season:var(--s-christmas);--font:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--shadow:none}
+:root[data-theme="dark"]{--bg:#121212;--ink:#f4f4f4;--muted:#a3a3a3;--line:#2e2e2e;--line2:#5a5a5a;--tile:#1b1b1b;--surface:#121212;--surface-2:#1b1b1b;--btn:#f4f4f4;--btn-ink:#121212;--bad:#ff8a73;--ok:#4cc58a;--s-halloween:#ff8a3d;--s-christmas:#ff6b6b;--s-newyear:#a98bf0;--s-spring:#f07cb2;--s-summer:#6fa8f2;color-scheme:dark}
+:root[data-season="halloween"]{--season:var(--s-halloween)}:root[data-season="christmas"]{--season:var(--s-christmas)}:root[data-season="newyear"]{--season:var(--s-newyear)}:root[data-season="spring"]{--season:var(--s-spring)}:root[data-season="summer"]{--season:var(--s-summer)}
+body.admin{background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--font);-webkit-font-smoothing:antialiased}
+body.admin h1,body.admin h2,body.admin h3{font-family:var(--font);color:var(--ink)}
+body.admin h1{font-weight:300;font-size:clamp(28px,5vw,40px);letter-spacing:-.025em;line-height:1.12}body.admin h2{font-weight:400;font-size:24px;letter-spacing:-.015em}body.admin h3{font-weight:500;font-size:17px}
+body.admin :focus-visible{outline:2px solid var(--season);outline-offset:3px}
+.ahead{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.abrand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.02em;white-space:nowrap;color:var(--ink);text-decoration:none}.abrand img{display:block;width:40px;height:40px;border-radius:50%}.abrand b{font-weight:800;background:linear-gradient(90deg,#f08a1c,var(--s-halloween) 45%,var(--s-christmas));-webkit-background-clip:text;background-clip:text;color:transparent}
+.aright{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.tbtn{box-sizing:border-box;width:38px;height:38px;border-radius:50%;border:1px solid var(--ink);background:transparent;color:var(--ink);display:inline-grid;place-items:center;cursor:pointer;padding:0}.tbtn:hover{background:var(--tile)}.tbtn .sun{display:none}:root[data-theme="dark"] .tbtn .sun{display:block}:root[data-theme="dark"] .tbtn .moon{display:none}
+body.admin .tabs{border-bottom:1px solid var(--line);gap:2px;overflow-x:auto;scrollbar-width:none}body.admin .tabs::-webkit-scrollbar{display:none}
+body.admin .tabs button{font:500 15px var(--font);color:var(--muted);padding:12px 14px;border-bottom:2px solid transparent;white-space:nowrap}
+body.admin .tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--season)}
+body.admin .tag{background:transparent;border:1px solid var(--line2);color:var(--muted);font-weight:500;border-radius:999px;padding:2px 9px}
+body.admin .tag.conf,body.admin .tag.free{color:var(--ok);border-color:var(--ok);background:transparent}body.admin .tag.exp,body.admin .tag.paid{color:var(--season);border-color:var(--season);background:transparent}
+body.admin .acard,body.admin .card{background:transparent;border:1px solid var(--line);border-radius:12px;box-shadow:none}
+body.admin .acard{padding:18px;gap:10px}
+body.admin .facts dt{font-weight:500;letter-spacing:.04em;color:var(--muted)}
+body.admin table{background:transparent;border:1px solid var(--line);border-radius:12px}body.admin th{font-weight:500;color:var(--muted)}body.admin th,body.admin td{border-bottom:1px solid var(--line)}
+body.admin .meta,body.admin .hint{color:var(--muted)}
+body.admin .empty{background:transparent;border:1px solid var(--line);border-radius:12px;color:var(--muted)}
+body.admin .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 20px;border-radius:8px;border:1px solid var(--btn);background:var(--btn);color:var(--btn-ink);font:500 15px var(--font);cursor:pointer;text-decoration:none;box-shadow:none}
+body.admin .btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}body.admin .btn.ice{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+body.admin .btn:hover:not(:disabled){opacity:.88}body.admin .btn:disabled{opacity:.35;cursor:not-allowed}
+body.admin input,body.admin select,body.admin textarea{font:400 16px/1.4 var(--font);color:var(--ink);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:12px 14px;min-height:48px}
+body.admin input:focus,body.admin select:focus,body.admin textarea:focus{outline:0;border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+body.admin input[type=checkbox],body.admin input[type=radio]{min-height:0;accent-color:var(--ink)}
+body.admin label{font-weight:500;font-size:14px;color:var(--ink)}body.admin label .hint{font-weight:400}
+body.admin .modal{background:rgba(10,12,18,.55)}body.admin .modal .card{background:var(--bg);border:1px solid var(--line);border-radius:12px;box-shadow:none;padding:24px}
+body.admin .modal h2{font-weight:400;font-size:24px;letter-spacing:-.015em}
+body.admin .xbtn{border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:50%;width:38px;height:38px}
+body.admin .msg.err{color:var(--bad)}body.admin .msg.ok{color:var(--ok)}
+body.admin #pick{border-radius:8px}
+body.admin a:not(.btn):not(.abrand):not(.tab){color:var(--ink);text-underline-offset:3px}
