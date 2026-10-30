@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261030c";
+import { SITE } from "/site-config.js?v=20261030d";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -304,8 +304,11 @@ function renderPreview() {
   if (tr) tr.addEventListener("scroll", () => { const i = Math.round(tr.scrollLeft / tr.clientWidth); $("#pvcount").textContent = i + 1 + " / " + tr.children.length; }, { passive: true });
   pv.onclick = (e) => {
     const g = e.target.closest("[data-pvg]"); if (g) { e.stopPropagation(); const t = $("#pvtrack"); t.scrollBy({ left: +g.dataset.pvg * t.clientWidth, behavior: "smooth" }); return; }
-    // On a card with several photos the photo area only browses; the text below opens the details
-    if (e.target.closest("#pvtrack")) { pvSwiped = false; return; }
+    // A tap on the photo opens it full size; the text below opens the details
+    if (e.target.closest(".pv-photo") && !e.target.closest(".x,.pvnav,.when")) {
+      if (pvSwiped) { pvSwiped = false; return; }
+      const items = lbItems(it); if (items.length) { const t = $("#pvtrack"); openLightbox(items, t ? Math.round(t.scrollLeft / t.clientWidth) : 0, it.kind === "ev" ? it.ev.n : it.p.title); return; }
+    }
     if (e.target.closest(".x")) { closePin(); return; }
     if (e.target.closest("[data-pvshare]")) { shareItem(k); return; }
     if (e.target.closest("[data-pvfav]")) { const id = it.kind === "ev" ? it.ev.id : hfav(it.p); favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); renderPreview(); return; }
@@ -488,7 +491,7 @@ $("#pbody").addEventListener("click", (e) => {
   const mp = e.target.closest("[data-maps]"); if (mp) { e.stopPropagation(); setMapsApp(mp.dataset.maps); return; }
   const f = e.target.closest("[data-fav]");
   if (f) { e.stopPropagation(); const id = f.dataset.fav; favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); if (state.tab === "plan" && !favs.size) { setTab("events"); if (isPhone()) setSheet("peek"); fitSoCal(true); return; } renderPanel(); drawMap(); return; }
-  const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) selectKey(it.dataset.key, "list");
+  const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) { selectKey(it.dataset.key, "list"); if (e.target.closest(".tile,.thumb") && state.detail !== it.dataset.key) openDetail(it.dataset.key); }
 });
 $("#phead").addEventListener("change", (e) => { if (e.target.id === "sortSel") { state.sort = e.target.value; renderPanel(); $("#pbody").scrollTop = 0; } });
 $("#pbody").addEventListener("click", (e) => {
@@ -510,6 +513,47 @@ $("#pbody").addEventListener("mouseover", (e) => { const it = e.target.closest("
 $("#pbody").addEventListener("mouseleave", () => setHot(null));
 function markItems() { document.querySelectorAll(".item").forEach((el) => el.classList.toggle("sel", el.dataset.key === state.sel)); }
 
+/* ---------- full-size photo viewer ---------- */
+function lbItems(it) {
+  if (!it) return [];
+  if (it.kind === "ev") return photosOf(it.ev, true).map((q) => ({ src: q.src, fb: q.fb || "", credit: q.credit || "", link: safeUrl(q.link) || "" }));
+  return (it.p.photos || []).map((k) => ({ src: photoUrl(k), fb: "", credit: "", link: "" }));
+}
+let lbEl = null, lbBack = null;
+function closeLightbox() {
+  if (!lbEl) return;
+  document.removeEventListener("keydown", lbKey, true); lbEl.remove(); lbEl = null; document.body.classList.remove("lb-open");
+  if (lbBack && lbBack.isConnected) lbBack.focus({ preventScroll: true }); lbBack = null;
+}
+function lbKey(e) {
+  if (!lbEl) return;
+  const tr = lbEl.querySelector(".lbtrack");
+  if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); closeLightbox(); }
+  else if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); e.stopImmediatePropagation(); tr.scrollBy({ left: (e.key === "ArrowRight" ? 1 : -1) * tr.clientWidth, behavior: "smooth" }); }
+}
+function openLightbox(items, start = 0, title = "") {
+  if (!items.length) return;
+  closeLightbox(); lbBack = document.activeElement;
+  const many = items.length > 1;
+  lbEl = document.createElement("div"); lbEl.id = "lightbox"; lbEl.setAttribute("role", "dialog"); lbEl.setAttribute("aria-modal", "true"); lbEl.setAttribute("aria-label", (title || "Photos") + ", full size");
+  lbEl.innerHTML = `<div class="lbtrack">${items.map((q, i) => `<div class="lbslide" data-credit="${esc(q.credit)}" data-link="${esc(q.link)}"><img src="${esc(q.src)}"${q.fb ? ` data-fb="${esc(q.fb)}"` : ""} alt="${esc(title)}${many ? `, photo ${i + 1} of ${items.length}` : ""}" referrerpolicy="no-referrer" draggable="false"></div>`).join("")}</div>
+    <button class="lbx" type="button" aria-label="Close photos">${`<svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg>`}</button>
+    ${many ? `<button class="lbn l" type="button" data-lb="-1" aria-label="Previous photo">${ARW_L}</button><button class="lbn r" type="button" data-lb="1" aria-label="Next photo">${ARW_R}</button><span class="lbcount">${start + 1} / ${items.length}</span>` : ""}
+    <a class="lbcredit" target="_blank" rel="noopener" hidden></a>`;
+  document.body.appendChild(lbEl); document.body.classList.add("lb-open");
+  const tr = lbEl.querySelector(".lbtrack"), cr = lbEl.querySelector(".lbcredit"), cnt = lbEl.querySelector(".lbcount");
+  const show = () => { const i = Math.round(tr.scrollLeft / tr.clientWidth), sl = tr.children[i]; if (cnt) cnt.textContent = i + 1 + " / " + items.length;
+    if (sl && sl.dataset.credit) { cr.hidden = false; cr.textContent = sl.dataset.credit; if (sl.dataset.link) { cr.href = sl.dataset.link; cr.removeAttribute("aria-disabled"); } else cr.removeAttribute("href"); } else cr.hidden = true; };
+  tr.addEventListener("scroll", show, { passive: true });
+  tr.scrollLeft = start * tr.clientWidth; show();
+  lbEl.addEventListener("click", (e) => {
+    const g = e.target.closest("[data-lb]"); if (g) { tr.scrollBy({ left: +g.dataset.lb * tr.clientWidth, behavior: "smooth" }); return; }
+    if (e.target.closest(".lbx") || !e.target.closest("img,.lbn,.lbcredit")) closeLightbox();
+  });
+  lbEl.addEventListener("error", (e) => { const i = e.target; if (i instanceof HTMLImageElement && i.dataset.fb) { i.src = i.dataset.fb; i.removeAttribute("data-fb"); } }, true);
+  document.addEventListener("keydown", lbKey, true);
+  lbEl.querySelector(".lbx").focus({ preventScroll: true });
+}
 function openDetail(k) { state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
 function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
@@ -536,6 +580,12 @@ function detailHtml(k) {
   <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
 }
 function wireDetail() {
+  const area = document.querySelector(".detail .hero.photo, .detail .gallery:has(.track)");
+  if (area) area.addEventListener("click", (e) => {
+    if (e.target.closest("button,a")) return;
+    const it = findKey(state.detail), items = lbItems(it), t = area.querySelector(".pvtrack,.track");
+    if (items.length) openLightbox(items, t ? Math.round(t.scrollLeft / t.clientWidth) : 0, it.kind === "ev" ? it.ev.n : it.p.title);
+  });
   $("#back").onclick = () => { state.keep = state.detail; state.detail = null; if (isPhone()) state.sel = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
   const tr = $("#track"); if (tr) { const n = tr.children.length;
     document.querySelectorAll(".gallery .nav, .hero .pvnav").forEach((b) => (b.onclick = () => tr.scrollBy({ left: tr.clientWidth * Number(b.dataset.g), behavior: "smooth" })));
