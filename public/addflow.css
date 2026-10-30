@@ -77,3 +77,5 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 .bpill{position:absolute;right:10px;top:10px;background:var(--bg);border-radius:999px;padding:6px;line-height:0;display:inline-flex;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .popc{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;max-width:340px;background:var(--bg)}.popc .pi{width:56px;height:56px;border-radius:8px;background:var(--tile);flex:none}.popc b{font-weight:500}.popc .m{display:block;color:var(--muted);font-size:13px}
 .detc{border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:8px;max-width:340px}.detc b{font-weight:500}.bline{display:flex;gap:10px;align-items:flex-start;border-top:1px solid var(--line);padding-top:10px}.bline .m{display:block;color:var(--muted);font-size:13px}
+/* the toggle and the signed-in circle share one center line: their wrapper spans must not add inline line-box height */
+.hright>span{display:inline-flex;align-items:center;line-height:0}.hright>.tbtn,.hright>span>.tbtn,.hright>span>.acct{margin:0;vertical-align:top}

@@ -1,0 +1,7 @@
+-- City sweep group 20 (Santa Barbara County) 2026-10-30
+INSERT INTO events (id,name,county,city,season,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,venue,address)
+VALUES ('g20-buellton-winter-fest','Buellton Winter Fest','Santa Barbara','Buellton','christmas','tree','2026-12-06','2026-12-06','confirmed',1,'Free Holiday Village','Check site for times',34.6154,-120.2077,'Buellton''s free holiday village with 20 tons of snow, vendors, live entertainment, a community tree lighting and a new drone show.','https://discoverbuellton.com/buellton-winter-fest/','River View Park and Buellton Rec Center','151 Sycamore Dr, Buellton, CA 93427')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city, type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status, free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng, blurb=excluded.blurb, url=excluded.url, season=excluded.season, venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
+UPDATE events SET image='https://discoverbuellton.com/wp-content/uploads/2024/08/buellton-winter-fest2.webp', updated_at=datetime('now') WHERE id='g20-buellton-winter-fest' AND (image IS NULL OR image='');
+-- pin audit: Holiday Lights Festival pin was ~2 km from River View Park
+UPDATE events SET lat=34.6154, lng=-120.2077, updated_at=datetime('now') WHERE id='syv-holiday-lights-festival';
