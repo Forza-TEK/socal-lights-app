@@ -22,7 +22,7 @@ def parse(c):
     return None
 def fmt(r,g,b,a):
     return f"rgba({round(r*255)},{round(g*255)},{round(b*255)},{round(a,3)})" if a<1 else "#%02x%02x%02x"%(round(r*255),round(g*255),round(b*255))
-DIM=0.50  # night map = the day map with every color multiplied by this (same hues, just dimmed)
+DIM=0.60  # night map = the day map with every color multiplied by this (same hues, just dimmed)
 def tx(c,kind):
     p=parse(c)
     if not p: return c
@@ -41,7 +41,7 @@ def darkify(style):
     style["name"]="SoCal dark liberty"
     return style
 if __name__=="__main__":
-    # Regenerates public/map-dark.json: OpenFreeMap's colorful "liberty" style, darkened (every color of the day map multiplied by 0.5: same hues, just dimmed)
+    # Regenerates public/map-dark.json: OpenFreeMap's colorful "liberty" style, darkened (every color of the day map multiplied by 0.6: same hues, just dimmed)
     import urllib.request
     req=urllib.request.Request("https://tiles.openfreemap.org/styles/liberty",headers={"User-Agent":"SoCalLights-style-build/1.0 (info@socallights.app)"})
     d=darkify(json.load(urllib.request.urlopen(req)))
