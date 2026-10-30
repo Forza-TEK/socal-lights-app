@@ -123,3 +123,8 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - In the apps (browser string `SoCalLightsApp`) there is no tip item or Featured payment option.
 - Waiting on: Apple Developer account type, a Mac for the iOS build, Google Play and Microsoft Partner accounts.
 - Showcase a House is now its own page, /add-house (the ?s= value presets the season), matching Add an event. The pop-up form is gone from the map. #showcase links redirect to the page. Both pages hide their form properly after a successful send.
+
+## 2026-10-30 — Decorating-contest homes in the sweeps
+- Rey noticed homes entered in Halloween/Christmas/holiday decorating contests weren't on the map.
+- Added a "Home decorating contests" pass to `docs/city-sweep.md` (search terms, sources, how to represent homes: Christmas `drive`, Halloween `haunt`/`family`, public addresses only), and pointers in `docs/coverage-cities.md` and `docs/updating-events.md`.
+- The scheduled city sweep routine prompt now requires that pass for every city in every run.
