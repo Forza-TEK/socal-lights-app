@@ -2,11 +2,11 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261030s";
+import { SITE } from "/site-config.js?v=20261030u";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
-const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030s" };
+const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030u" };
 const theme = () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 // Pin and cluster colors: free events are green; ticketed events, clusters and the route take the season's accent
 const SEASON_HEX = { light: { newyear: "#6d3fc0", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
@@ -364,7 +364,20 @@ function placePin() {
 /* ---------- panel ---------- */
 function setTab(t) { state.tab = t; state.detail = null; ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
   document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute();
-  for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin"); void el.offsetWidth; el.classList.add("tabin"); } }
+  for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin"); void el.offsetWidth; el.classList.add("tabin"); }
+  if (t === "shop") nudgeShopTabs(); }
+// On phones the category row swipes sideways; slide it out and back once when Shop opens so people notice.
+function nudgeShopTabs() {
+  if (!isPhone() || matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  setTimeout(() => {
+    const q = document.querySelector('.quick[aria-label="Shop categories"]');
+    if (!q || q.scrollWidth <= q.clientWidth + 20 || q.scrollLeft > 0) return;
+    const dist = Math.min(110, q.scrollWidth - q.clientWidth), dur = 1100; let t0 = 0, stop = false;
+    const halt = () => (stop = true); q.addEventListener("touchstart", halt, { once: true, passive: true });
+    const step = (now) => { if (stop || !q.isConnected) return; if (!t0) t0 = now; const k = Math.min(1, (now - t0) / dur); q.scrollLeft = dist * Math.sin(Math.PI * k) ** 2; if (k < 1) requestAnimationFrame(step); else q.scrollLeft = 0; };
+    requestAnimationFrame(step);
+  }, 450);
+}
 $("#t-events").onclick = () => setTab("events"); $("#t-shop").onclick = () => setTab("shop"); $("#t-plan").onclick = () => setTab("plan");
 function fitRoute() { const st = routeStops(), og = routeOrigin(); if (st.length + (og ? 1 : 0) < 2 || !mapReady) return; const b = new maplibregl.LngLatBounds(); st.forEach((e) => b.extend([e.lng, e.lat])); if (og) b.extend([og.lng, og.lat]); map.fitBounds(b, { padding: padding(), maxZoom: 13, duration: 600 }); }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
@@ -644,7 +657,7 @@ const isAff = (u) => !!affRule(u);
 // Two kinds of rule: add a tracking parameter ({ param, value }), or wrap the link in a network deep link ({ template: "https://…?u={url}" }, the form Impact/CJ give you).
 function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) return r.template.replace("{url}", encodeURIComponent(u)); try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
 // High-end first: the search words get a "premium" nudge and Amazon sorts the results by price, high to low.
-const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(SITE.shopHighEnd ? q + " " + SITE.shopHighEnd : q)}${SITE.shopSort ? "&s=" + encodeURIComponent(SITE.shopSort) : ""}${SITE.shopMinPrice ? "&rh=" + encodeURIComponent("p_36:" + SITE.shopMinPrice * 100 + "-") : ""}&tag=${encodeURIComponent(SITE.amazonTag)}`;
+const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(SITE.shopHighEnd ? q + " " + SITE.shopHighEnd : q)}${SITE.shopSort ? "&s=" + encodeURIComponent(SITE.shopSort) : ""}&tag=${encodeURIComponent(SITE.amazonTag)}`;
 const shopSeason = () => (SITE.shop[state.shopSeason] ? state.shopSeason : state.season);
 const shopCats = () => (SITE.amazonTag ? SITE.shop[shopSeason()] || [] : []);
 // The Shop tab only exists when there is an Amazon tag and shop list for the season.
