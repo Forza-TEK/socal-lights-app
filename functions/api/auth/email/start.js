@@ -1,12 +1,13 @@
 // POST /api/auth/email/start { email } — emails a 6-digit sign-in code (valid 10 minutes).
 import { json, err, verifyTurnstile } from "../../../_lib/util.js";
-import { normEmail, okEmail, sha256, sendMail, sameOrigin } from "../../../_lib/auth.js";
+import { normEmail, okEmail, isDisposable, sha256, sendMail, sameOrigin } from "../../../_lib/auth.js";
 
 export async function onRequestPost({ request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   const b = await request.json().catch(() => null);
   if (!b || !okEmail(b.email)) return err(400, "Enter a valid email address.");
+  if (isDisposable(b.email)) return err(400, "Throwaway email addresses can't be used here. Use your own email, or continue with Google.");
   if (!(await verifyTurnstile(env, b["cf-turnstile-response"], ip))) return err(400, "Please complete the 'I am human' check and try again.");
   if (!env.RESEND_API_KEY && env.DEV_AUTH !== "1") return err(503, "Email sign-in isn't switched on yet. Use Google for now.");
 

@@ -13,6 +13,9 @@ export function normEmail(e) {
   if (d === "gmail.com" || d === "googlemail.com") { u = u.replace(/\./g, ""); d = "gmail.com"; }
   return `${u}@${d}`;
 }
+// Throwaway-mail services. Voting accounts need a real, lasting inbox, so these can't sign in with an emailed code.
+const DISPOSABLE = new Set(["mailinator.com", "guerrillamail.com", "guerrillamail.net", "10minutemail.com", "tempmail.com", "temp-mail.org", "yopmail.com", "trashmail.com", "throwawaymail.com", "sharklasers.com", "getnada.com", "maildrop.cc", "dispostable.com", "fakeinbox.com", "mailnesia.com", "mintemail.com", "tempr.email", "emailondeck.com"]);
+export const isDisposable = (e) => DISPOSABLE.has(String(e || "").trim().toLowerCase().split("@")[1] || "");
 export const okEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || "").trim()) && String(e).length <= 120;
 
 export async function sha256(s) {

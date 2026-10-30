@@ -18,12 +18,27 @@
 - **Voting is per category**: the organizer defines voting categories (for example Best Overall, Most Creative). Every approved home is listed in every category, and each voter picks one favorite home in each category. `votes` has `UNIQUE(contest_id, user_id, category)`, which is what guarantees one vote per person per category; voting again in a category moves that vote. Nobody can vote for their own home. Voting needs the dates (or the organizer's "Start now") and stops when winners are announced. Winners are the top home in each category. For a single overall winner, use one category.
 - **Dates and overrides**: entries and voting follow the dates; the organizer can pause either, or start voting early.
 
+## Fairness rules (migration 0110)
+Based on `docs/voting-standards.md`.
+- "Best Overall" is an ordinary category. There is no computed overall winner.
+- Vote counts are hidden until winners are announced unless the organizer chooses to show them.
+- One-win-per-home is optional. Tied homes share the win.
+- Throwaway email domains can't sign in with a code. Google sign-in is unaffected.
+- Organizer tools: review every vote (burst voters are flagged), void or restore a vote, flag a home to disqualify at close (it stays on the ballot and can't win), download results as CSV.
+- Official rules: drafted from `public/rules.js`, editable in the wizard, shown on the contest and entry pages. Entering requires accepting them (`rules=1` on `/api/submit`).
+- Announcing writes a frozen snapshot to `contests.results`. The contest page, archive and export read it, never the live votes, and votes and flags are locked afterwards. Every entrant is emailed (winners get a congratulations). Needs `RESEND_API_KEY`.
+- Judges, rubric scoring, trimmed mean, conflict declarations, prizes, season archive, badges and profile pictures are still sample-only.
+
+## Address suggestions
+`GET /api/address?q=` proxies Geoapify (free plan, 3,000 credits a day, no card, "Powered by Geoapify" attribution required). Set the Pages secret `GEOAPIFY_KEY` (sign up at geoapify.com, create a project, copy the API key). Without it the street box is plain text. The entry form asks only after 5+ characters and a pause, and identical queries are cached for a day.
+
 ## Turning it on (one-time setup)
 Set these as **Cloudflare Pages secrets** (Settings, Variables and Secrets). Never put them in the repo.
 
 | Secret | For |
 |---|---|
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | "Continue with Google" |
+| `GEOAPIFY_KEY` | street-address suggestions (optional) |
 | `RESEND_API_KEY` (and optional `MAIL_FROM`, default `SoCal Lights <login@socallights.app>`) | emailed sign-in codes |
 
 A method with no secrets is simply hidden from the sign-in sheet (`GET /api/auth/me` reports `methods`).
