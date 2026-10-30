@@ -49,6 +49,9 @@ parades/street events), blurb (one sentence in your own words, ≤180 chars), ur
 when one exists), and lat/lng geocoded from the address as described in
 [updating-events.md](updating-events.md) — never a city center.
 
+## More methods
+Photos, the public-web/social search, house-number geocoding, dedupe by address, the pin audit and the 30-rows-per-INSERT limit are in [sweep-methods.md](sweep-methods.md). Follow them on every run.
+
 ## Publishing
 Follow [updating-events.md](updating-events.md): write one new migration file named
 `migrations/<next number>_sweep_g<group>_<YYYY-MM-DD>.sql` using `INSERT … ON CONFLICT(id) DO UPDATE`.
