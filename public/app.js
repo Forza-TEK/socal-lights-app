@@ -365,9 +365,9 @@ function placePin() {
   });
 }
 /* ---------- panel ---------- */
-function setTab(t) { state.tab = t; state.detail = null; ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
+function setTab(t) { const order = ["events", "plan", "shop"], dir = order.indexOf(t) - order.indexOf(state.tab), anim = dir > 0 ? "tabin-r" : dir < 0 ? "tabin-l" : "tabin"; state.tab = t; state.detail = null; ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
   document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute();
-  for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin"); void el.offsetWidth; el.classList.add("tabin"); }
+  for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin", "tabin-r", "tabin-l"); void el.offsetWidth; el.classList.add(anim); } // the new tab slides in from the side it sits on: Places, My night, Shop
   if (t === "shop") nudgeShopTabs(); }
 // On phones the category row swipes sideways; slide it out and back once when Shop opens so people notice.
 function nudgeShopTabs() {
