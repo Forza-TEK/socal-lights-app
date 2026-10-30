@@ -7,16 +7,18 @@
 <title>Home decorating contest · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/flow.css?v=20261030b">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261031n">
+<link rel="stylesheet" href="/contest.css?v=20261031n">
 </head>
 <body>
-<main>
-<div class="top"><a href="/">← Back to the map</a><span id="who"></span></div>
+<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<main class="cmain">
 <div id="app"><p class="loading">Loading the contest…</p></div>
 </main>
 <script type="module">
-import { signIn, whoBar, noteSigninResult, esc, toast } from "/auth.js?v=20261030a";
+import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261030a";
+import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261031n";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };
@@ -63,14 +65,14 @@ function render() {
 }
 
 async function vote(id, category) {
-  if (!D.me.signedIn) { const u = await signIn({ title: "Sign in to vote", next: location.pathname }); if (!u) return; await load(); whoBar($("#who")); }
+  if (!D.me.signedIn) { const u = await signIn({ title: "Sign in to vote", next: location.pathname }); if (!u) return; await load(); refreshAcct($("#acct")); }
   const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/vote`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ post_id: id, category }) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) return toast(j.error || "Couldn't record your vote.");
   toast(j.same ? "That's already your vote." : j.moved ? `${category}: vote moved to ${j.name}` : `${category}: vote recorded for ${j.name}`);
   await load();
 }
-whoBar($("#who")); noteSigninResult(); load();
+$("#tb").innerHTML = themeBtn(); mountAcct($("#acct")); noteSigninResult(); load();
 </script>
 </body>
 </html>

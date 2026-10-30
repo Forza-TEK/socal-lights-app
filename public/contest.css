@@ -1,0 +1,31 @@
+/* Contest page and organizer dashboard, in the add forms' look (loaded after addflow.css). */
+body{padding-bottom:60px}
+.cmain{max-width:760px;margin:0 auto;padding:2vh 0 20px;display:grid;gap:22px}.cmain.wide{max-width:960px}
+#app{display:grid;gap:20px;min-width:0}
+.crumb{max-width:760px;margin:0 auto}.crumb a{color:var(--ink);font-weight:500;font-size:15px;text-underline-offset:3px}
+.card{background:transparent;border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:18px;min-width:0}
+.card h2{font-weight:400;font-size:24px;letter-spacing:-.015em}.card h3{font-weight:500;font-size:17px}
+.banner{display:flex;gap:14px;align-items:center}.banner b{display:block;font-weight:500;font-size:19px;line-height:1.25}.banner span{font-size:14px;color:var(--muted)}
+.logo{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-weight:500;font-size:15px;color:var(--ink)}
+.pill{display:inline-block;font-size:13px;font-weight:500;padding:3px 11px;border-radius:999px;white-space:nowrap;border:1px solid var(--line2);color:var(--muted)}
+.p-ok{color:var(--ok);border-color:var(--ok)}.p-wait{color:var(--season);border-color:var(--season)}.p-no{color:var(--bad);border-color:var(--bad)}
+.status{border-left:2px solid var(--season);padding:2px 0 2px 14px;font-size:15px;color:var(--muted)}.status.no{border-color:var(--season)}.status.ok{border-color:var(--ok)}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn.org{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}.btn.bad{background:transparent;color:var(--bad);border-color:var(--bad)}
+.btn.sm{min-height:38px;padding:7px 16px;font-size:14px}
+.btn[aria-disabled="true"]{opacity:.35;pointer-events:none}
+.vrow{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}.vrow:first-of-type{border-top:0}
+.vrow img,.vrow .ph{width:72px;height:54px;object-fit:cover;border-radius:8px;background:var(--tile);display:block}.vrow b{display:block;font-weight:500;line-height:1.3;overflow-wrap:anywhere}.vrow .meta{font-size:14px;color:var(--muted);display:block}
+.vrow.mine{border-left:2px solid var(--season);padding-left:12px}
+@media(max-width:480px){.vrow{grid-template-columns:64px minmax(0,1fr)}.vrow .btn{grid-column:1/-1}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.stat b{display:block;font-weight:300;font-size:40px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.stat span{color:var(--muted);font-size:14px}
+.grid2{display:grid;gap:18px}@media(min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+.sw{display:flex;gap:14px;align-items:center;justify-content:space-between;font-size:15px;padding:14px 0;border-top:1px solid var(--line)}.sw small{display:block;color:var(--muted);font-size:13px}
+.tbl{overflow-x:auto}.card table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px}.card th,.card td{text-align:left;padding:14px 10px 14px 0;border-top:1px solid var(--line);vertical-align:middle}.card th{font-weight:500;font-size:13px;color:var(--muted);border-top:0}
+.rbar{height:4px;border-radius:2px;background:var(--line);overflow:hidden}.rbar i{display:block;height:100%;background:var(--ink)}
+.center{text-align:center;justify-items:center}.big{width:64px;height:64px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-size:28px}.big.w{border-color:var(--season);color:var(--season)}
+.loading{color:var(--muted);padding:40px 0;text-align:center}
+.next{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.thumb{width:56px;height:42px;object-fit:cover;border-radius:6px;background:var(--tile);display:block}
+.err{color:var(--bad)}
+.crumb.wide{max-width:960px}
