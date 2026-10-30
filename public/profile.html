@@ -53,7 +53,8 @@ function panel() {
   return head("Account") + `<p class="muted" style="margin-top:-8px">Your name and address are optional. We use them to fill in forms for you; they are never shown publicly.</p>
     <form id="pform" class="main" style="padding:0;gap:18px;max-width:none" novalidate>${input(pf, "name", { label: "Name", opt: true, max: 80, ac: "name", ph: "Your name" })}${select(pf, "city", cities.map((c) => [c, c]), { label: `City ${OPT}`, blank: "Choose a city", ac: "address-level2" })}${input(pf, "street", { label: "Street address", opt: true, max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}${input(pf, "zip", { label: "ZIP", opt: true, max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}
     <p class="err" id="perr" role="alert" hidden></p><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn" type="submit">Save</button><span class="muted small" id="pok" role="status"></span></div></form>
-    <div style="margin-top:8px"><button class="btn out" id="so" type="button">Sign out</button></div><p class="small muted">Homes and events are matched by the email you typed on the form. To delete your account, email info@socallights.app.</p>`;
+    <div style="margin-top:8px"><button class="btn out" id="so" type="button">Sign out</button></div>
+    <section style="margin-top:12px"><h2>Delete my account</h2><p class="muted small" id="delmsg">Deletes your account, saved drafts, profile picture, contest entries and votes, closes contests you run, and removes your email from homes and events you posted. This can't be undone.</p><p class="err" id="delerr" role="alert" hidden></p><div style="margin-top:10px"><button class="btn out" id="delacct" type="button" style="color:var(--bad);border-color:var(--bad)">Delete my account</button></div></section><p class="small muted">Homes and events are matched by the email you typed on the form.</p>`;
 }
 
 function render() {
@@ -69,6 +70,12 @@ function wire() {
   app.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; history.replaceState(null, "", "#" + tab); render(); }));
   app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to delete"; return; } await fetch("/api/drafts/" + b.dataset.del, { method: "DELETE" }); load(); }));
   const ep = $("#editprof"); if (ep) ep.onclick = () => { tab = "account"; history.replaceState(null, "", "#account"); render(); window.scrollTo(0, 0); };
+  const da = $("#delacct"); if (da) da.onclick = async () => {
+    if (!da.dataset.sure) { da.dataset.sure = "1"; da.textContent = "Tap again to permanently delete"; return; }
+    da.disabled = true; const r = await fetch("/api/me", { method: "DELETE" });
+    if (!r.ok) { const j = await r.json().catch(() => ({})); const er = $("#delerr"); er.textContent = j.error || "Couldn't delete your account. Try again."; er.hidden = false; da.disabled = false; return; }
+    location.href = "/?deleted=1";
+  };
   const so = $("#so"); if (so) so.onclick = async () => { await signOut(); location.href = "/"; };
   const pf = $("#pform"); if (pf) {
     attachAddress(pf, { getCity: () => $("#f-city").value, onPick: (s) => { $("#f-street").value = s.street; if (cities.includes(s.city)) $("#f-city").value = s.city; if (/^\d{5}/.test(s.zip)) $("#f-zip").value = s.zip.slice(0, 5); } });
@@ -93,6 +100,7 @@ function wire() {
   const rm = $("#avrm"); if (rm) rm.onclick = async () => { await fetch("/api/me/avatar", { method: "DELETE" }); load(); };
 }
 
+addEventListener("hashchange", () => { tab = (location.hash || "").slice(1) || "drafts"; if (O) render(); });
 let info = null;
 async function load() {
   noteSigninResult();

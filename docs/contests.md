@@ -57,7 +57,7 @@ A method with no secrets is simply hidden from the sign-in sheet (`GET /api/auth
 5. App stores: the store text says "Free, no sign-up". Change it to "no sign-up to browse". Google sign-in does not work inside an embedded web view, so the Capacitor apps need the sign-in opened in the system browser before contests are offered there. Apple requires in-app account deletion for any app with accounts; deletion is currently by email (`info@socallights.app`).
 
 ## Known gaps
-- No self-serve account deletion yet.
+- Account deletion is self-serve (Profile, Account tab, `DELETE /api/me`): it removes sign-ins, drafts, picture, entries and votes, closes contests the person runs and blanks their email on homes and events. Contest entries by other people stay (the contest is closed).
 - Contest owners are a single account (no staff accounts).
 - Facebook and Apple sign-in were considered and dropped.
 - Entries do not geocode-check on the contest page; the address is geocoded by `/api/submit` as for any home (falls back to the city center if not found, and the admin can fix the pin).

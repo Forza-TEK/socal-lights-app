@@ -1,26 +1,19 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Privacy Policy · SoCal Lights</title>
 <meta name="description" content="How SoCal Lights handles your information.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<style>
-:root{--bg:#f6f4f0;--surface:#fff;--ink:#17181c;--muted:#5d6068;--line:#e4e0d8;--accent:#e8590c}
-@media(prefers-color-scheme:dark){:root{--bg:#0b0d12;--surface:#151821;--ink:#f1f2f5;--muted:#a3a7b2;--line:#2a2e3a;--accent:#ff8a3d}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Plus Jakarta Sans",system-ui,sans-serif;padding:0 16px 80px}
-main{max-width:720px;margin:0 auto}a{color:var(--accent)}
-.top{padding:20px 0;font-weight:700}.top a{text-decoration:none}
-h1{font-size:clamp(28px,5vw,38px);line-height:1.1;letter-spacing:-.02em;margin:8px 0 6px}
-h2{font-size:20px;margin:34px 0 6px}p,li{color:var(--muted)}p{margin:0 0 12px}ul{padding-left:20px;margin:0 0 12px;display:grid;gap:6px}
-b,strong{color:var(--ink)}.meta{font-size:14px}
-</style>
+<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261031q">
+<link rel="stylesheet" href="/info.css?v=20261031q">
 </head>
 <body>
+<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
 <main>
-<div class="top"><a href="/">← SoCal Lights</a></div>
 <h1>Privacy Policy</h1>
 <p class="meta">SoCal Lights (socallights.app), operated by Forza-TEK. Effective October 30, 2026.</p>
 <p>SoCal Lights is a free map of Halloween, Christmas and other seasonal events and neighbor-decorated homes in Southern California. You do not need an account to browse the map or add an event; you only sign in to run, enter or vote in a home decorating contest. This page explains what information the website and the SoCal Lights apps handle, and what they do not.</p>
@@ -51,7 +44,8 @@ b,strong{color:var(--ink)}.meta{font-size:14px}
 <li><b>Sign-in cookie:</b> a cookie keeps you signed in on your device for up to 30 days. Signing out removes it.</li>
 <li><b>Contest organizers</b> can see the name, email address, street address and photos of people who enter their contest, so they can run it.</li>
 <li><b>Votes</b> are stored with your account so that each person can vote once. They are not shown publicly with your name, and organizers see vote totals, not who voted for whom.</li>
-<li><b>Deleting your account:</b> email <a href="mailto:info@socallights.app">info@socallights.app</a> from the address you signed in with and we will delete your account, entries and votes.</li>
+<li><b>Deleting your account:</b> open your profile, choose the Account tab and tap Delete my account. We delete your account, saved drafts, profile picture, contest entries and votes, close any contests you run, and remove your email from homes and events you posted. You can also email <a href="mailto:info@socallights.app">info@socallights.app</a> from the address you signed in with.</li>
+<li><b>Optional profile details:</b> you can add a name, a home address and a profile picture to your profile. They are used only to fill in forms for you and to show your picture to you, and are never shown publicly. If you sign in with Google we save the picture Google provides until you upload your own.</li>
 </ul>
 
 <h2>Spam protection and technical data</h2>
@@ -75,5 +69,9 @@ b,strong{color:var(--ink)}.meta{font-size:14px}
 <h2>Contact</h2>
 <p>Questions or requests: <a href="mailto:info@socallights.app">info@socallights.app</a>.</p>
 </main>
+<script type="module">
+import { themeBtn, mountAcct } from "/addflow.js?v=20261031q";
+document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+</script>
 </body>
 </html>
