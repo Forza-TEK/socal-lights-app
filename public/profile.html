@@ -8,14 +8,14 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031o">
+<link rel="stylesheet" href="/addflow.css?v=20261031q">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span></div></div>
 <div class="main" id="app"><p class="muted">Loading…</p></div>
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261030a";
-import { esc, themeBtn, input, select, attachAddress, OPT } from "/addflow.js?v=20261031o";
+import { esc, themeBtn, input, select, attachAddress, OPT } from "/addflow.js?v=20261031q";
 import { CITY } from "/cities.js";
 document.getElementById("tb").innerHTML = themeBtn();
 const $ = (q) => document.querySelector(q), app = $("#app"), cities = Object.keys(CITY).sort();
@@ -60,7 +60,7 @@ function render() {
   const o = O, em = o.user.email, n = { drafts: o.drafts.length, contests: o.contests.length, entries: o.entries.length, displays: o.homes.length, events: o.events.length };
   const T = [["drafts", "Drafts"], ["contests", "Contests"], ["entries", "Entries"], ["displays", "Displays"], ["events", "Events"], ["account", "Account"]];
   if (!T.some((t) => t[0] === tab)) tab = "drafts";
-  app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${info && info.user && info.user.avatar ? `<img src="${esc(info.user.avatar)}" alt="">` : esc((o.user.name || em)[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">${esc(o.user.name || "Your profile")}</h1><span class="muted">${esc(em)}</span><div style="display:flex;gap:14px;margin-top:6px"><label class="link" for="avfile" style="font-size:14px;cursor:pointer">${info && info.user && info.user.avatar ? "Change photo" : "Add a photo"}</label>${info && info.user && info.user.avatar ? '<button class="link" id="avrm" type="button" style="font-size:14px">Remove</button>' : ""}<input id="avfile" type="file" accept="image/*" hidden></div><p class="err" id="averr" role="alert" hidden></p></div></div>
+  app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${info && info.user && info.user.avatar ? `<img src="${esc(info.user.avatar)}" alt="">` : esc((o.user.name || em)[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">${esc(o.user.name || "Your profile")}</h1><span class="muted">${esc(em)}</span><div style="display:flex;gap:14px;margin-top:6px"><label class="link" for="avfile" style="font-size:14px;cursor:pointer">${info && info.user && info.user.avatar ? "Change photo" : "Add a photo"}</label>${info && info.user && info.user.avatar ? '<button class="link" id="avrm" type="button" style="font-size:14px">Remove</button>' : ""}<input id="avfile" type="file" accept="image/*" hidden></div><div style="margin-top:8px"><button class="link" id="editprof" type="button" style="font-size:14px">Edit name &amp; address</button></div><p class="err" id="averr" role="alert" hidden></p></div></div>
     <div class="ptabs2" role="tablist">${T.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}${n[k] ? `<span class="cnt">${n[k]}</span>` : ""}</button>`).join("")}</div>
     <section id="pp">${panel()}</section>`;
   wire();
@@ -68,6 +68,7 @@ function render() {
 function wire() {
   app.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; history.replaceState(null, "", "#" + tab); render(); }));
   app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to delete"; return; } await fetch("/api/drafts/" + b.dataset.del, { method: "DELETE" }); load(); }));
+  const ep = $("#editprof"); if (ep) ep.onclick = () => { tab = "account"; history.replaceState(null, "", "#account"); render(); window.scrollTo(0, 0); };
   const so = $("#so"); if (so) so.onclick = async () => { await signOut(); location.href = "/"; };
   const pf = $("#pform"); if (pf) {
     attachAddress(pf, { getCity: () => $("#f-city").value, onPick: (s) => { $("#f-street").value = s.street; if (cities.includes(s.city)) $("#f-city").value = s.city; if (/^\d{5}/.test(s.zip)) $("#f-zip").value = s.zip.slice(0, 5); } });
