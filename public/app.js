@@ -2,11 +2,11 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261030u";
+import { SITE } from "/site-config.js?v=20261031i";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
-const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030u" };
+const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261031i" };
 const theme = () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 // Pin and cluster colors: free events are green; ticketed events, clusters and the route take the season's accent
 const SEASON_HEX = { light: { newyear: "#6d3fc0", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
@@ -95,11 +95,14 @@ function evMatch(ev) {
   if (!nearCity(ev.lat, ev.lng)) return false;
   if (state.cost === "free" && !ev.free) return false;
   if (state.cost === "paid" && ev.free) return false;
-  if (state.type && ev.t !== state.type) return false;
+  if (state.type === "contest" ? !isContest(ev) : state.type && ev.t !== state.type) return false;
   if (state.conf && ev.st !== "c") return false;
   if (state.date && (state.date < ev.s || state.date > ev.e)) return false;
   return true;
 }
+// "Contests" is not a stored type: it picks every event whose name or description is a contest or competition (decorating, costume, parade entries...).
+const CONTEST_RE = /\b(contests?|competitions?)\b/i;
+const isContest = (ev) => ev._ct ?? (ev._ct = CONTEST_RE.test(ev.n + " " + (ev.b || "")));
 // Home displays have no dates or ticket prices, so the date, cost and confirmed filters pass them (they only narrow events);
 // a Type other than "Home displays" leaves them out.
 function instMatch(p) {
@@ -487,6 +490,28 @@ function moreCards(upTo) {
   list.insertAdjacentHTML("beforeend", listVis.slice(listShown, to).map((it, i) => listCard(it, listShown + i)).join("")); listShown = to;
   const sen = $("#listmore"); if (sen && listShown >= listVis.length) sen.remove();
 }
+// "Route these": a driving route through the places in view, for when the map is zoomed in far enough that no number circles
+// are left (clusters stop above clusterMaxZoom) and there are few enough places for a maps link (Google and Apple take about 9 stops).
+const ROUTE_MAX = 9, CLUSTER_ZOOM = 11;
+const ROUTE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8.2 19H15a3.5 3.5 0 000-7H9a3.5 3.5 0 010-7h6.8"/></svg>';
+function routeHint(vis) {
+  if (!mapReady || map.getZoom() <= CLUSTER_ZOOM) return "Zoom in until the number circles are gone to route these places";
+  if (vis.length > ROUTE_MAX) return `Zoom in to ${ROUTE_MAX} or fewer places to route them (${vis.length} in view)`;
+  if (!vis.length) return "No places in view to route";
+  return "";
+}
+function routeLink(vis) {
+  const hint = routeHint(vis);
+  return `<button type="button" class="rtlink" data-route aria-disabled="${hint ? "true" : "false"}" title="${esc(hint || "Open a driving route through these places")}" data-hint="${esc(hint)}">${ROUTE_ICON}<span>Route these</span></button>`;
+}
+function routeFromView() {
+  const items = listVis.slice(); if (routeHint(items) || !items.length) return "";
+  const stops = items.map((it) => it.t === "e" ? it.o : { lat: it.lat, lng: it.lng, a: it.o.address ? it.o.address + ", " + it.o.city + ", CA" : "" });
+  const c = map.getCenter(), og = state.start === "me" && state.me ? state.me : { lat: c.lat, lng: c.lng };
+  let at = og; const pool = stops.slice(), ord = [];
+  while (pool.length) { pool.sort((a, b) => miles(at, a) - miles(at, b)); at = pool.shift(); ord.push(at); }
+  return navUrl(ord.map(destOf), ""); // no origin: the maps app starts from wherever the phone is
+}
 function renderPanel(opts) {
   counts();
   const head = $("#phead"), body = $("#pbody");
@@ -505,7 +530,7 @@ function renderPanel(opts) {
     items.sort(state.sort === "free" ? (a, b) => lead(a, b) || (b.free ? 1 : 0) - (a.free ? 1 : 0) || soon(a, b) : state.sort === "soon" ? soon : (a, b) => lead(a, b) || dist(a) - dist(b) || soon(a, b));
     const vis = items.filter((it) => inView(it.lng, it.lat) || state.sel === it.key || state.keep === it.key); // keep: the card you just came back from stays listed
     const act = activeFilters();
-    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span>${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span>${routeLink(vis)}${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
     const sig = vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort;
     if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
     listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE);
@@ -556,6 +581,8 @@ $("#pbody").addEventListener("click", (e) => {
   const sh = e.target.closest("[data-share]"); if (sh) { e.stopPropagation(); shareItem(sh.dataset.share); }
 });
 $("#phead").addEventListener("click", (e) => {
+  const rt = e.target.closest("[data-route]");
+  if (rt) { if (rt.dataset.hint) { toast(rt.dataset.hint); return; } const u = routeFromView(); if (u) window.open(u, "_blank", "noopener"); return; }
   const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
   const cl = e.target.closest("[data-clear]"); if (cl) { clearFilter(cl.dataset.clear); return; }
   const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { popFor === "shopseason" ? closePop() : openPop(sc); return; }
@@ -707,7 +734,7 @@ function activeFilters() {
   if (state.city) a.push(["city", "Near " + state.city + (state.radius !== 10 ? " · " + state.radius + " mi" : "")]);
   state.counties.forEach((c) => a.push(["county:" + c, c + " County"]));
   if (state.cost === "paid") a.push(["cost", "Ticketed only"]);
-  if (state.type) a.push(["type", state.type === "house" ? "Home displays" : TYPE_SHORT[state.type] || "Type"]);
+  if (state.type) a.push(["type", state.type === "house" ? "Home displays" : state.type === "contest" ? "Contests" : TYPE_SHORT[state.type] || "Type"]);
   if (state.conf) a.push(["conf", "Confirmed dates"]);
   return a;
 }
@@ -729,7 +756,7 @@ function filtersHtml() {
       <div class="fseg" role="group" aria-label="Distance">${[5, 10, 25].map((r) => `<button type="button" data-rad="${r}" class="${state.radius === r ? "on" : ""}">${r} mi</button>`).join("")}</div></section>
     <section><h4>County</h4><div class="fchips">${COUNTIES.map((c) => ch(state.counties.has(c), `data-county="${esc(c)}"`, esc(c.replace(/^Los Angeles$/, "LA")))).join("")}</div></section>
     <section><h4>Cost</h4><div class="fseg" role="group" aria-label="Cost">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-fcost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div></section>
-    <section><h4>Type</h4><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}</div></section>
+    <section><h4>Type</h4><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}</div></section>
     <section class="frow"><span><b>Confirmed dates only</b></span><button type="button" class="sw${state.conf ? " on" : ""}" role="switch" aria-checked="${state.conf}" data-fconf aria-label="Confirmed dates only"><i></i></button></section>
   </div>
   <div class="ffoot"><button type="button" class="linkbtn" data-clear="all">Clear all</button><button type="button" class="btn" data-fdone>Show ${nShow.toLocaleString("en-US")} place${nShow === 1 ? "" : "s"}</button></div>`;
