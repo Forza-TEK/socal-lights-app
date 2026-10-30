@@ -57,6 +57,17 @@ async function addFiles(list) {
     thumbs();
   }
 }
+// Address suggestions (Geoapify through our server). Waits for 5+ characters and a pause in typing to keep lookups low.
+function suggest() {
+  const inp = $("#street"); let t = 0, seq = 0; const box = document.createElement("div");
+  box.setAttribute("role", "listbox"); box.style.cssText = "display:none;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);margin-top:6px;overflow:hidden"; inp.after(box);
+  const hide = () => { box.style.display = "none"; };
+  inp.addEventListener("input", () => { clearTimeout(t); const q = inp.value.trim(); if (q.length < 5 || !/\d/.test(q)) return hide();
+    t = setTimeout(async () => { const me = ++seq; let j = { suggestions: [] }; try { j = await (await fetch("/api/address?q=" + encodeURIComponent(q))).json(); } catch {} if (me !== seq || !j.suggestions.length) return hide();
+      box.innerHTML = j.suggestions.map((s, i) => `<button type="button" role="option" data-i="${i}" style="display:block;width:100%;text-align:left;padding:12px 14px;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer;min-height:44px">${esc(s.street)}, ${esc(s.city)} ${esc(s.zip)}</button>`).join("") + `<div class="small muted" style="padding:6px 14px">Powered by Geoapify</div>`; box.style.display = "block";
+      box.onclick = (e) => { const b = e.target.closest("[data-i]"); if (!b) return; const s = j.suggestions[+b.dataset.i]; inp.value = s.street; if ([...$("#city").options].some((o) => o.value === s.city)) $("#city").value = s.city; if (/^\d{5}/.test(s.zip)) $("#zip").value = s.zip.slice(0, 5); hide(); }; }, 350); });
+  inp.addEventListener("blur", () => setTimeout(hide, 200));
+}
 const setErr = (t) => { err = t; const e = $("#err"); if (e) { e.textContent = t; e.hidden = !t; } };
 function form() {
   $("#app").innerHTML = `<div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(C.org))}</div><div><b>Entering: ${esc(C.name)}</b><span>Your home competes in every category. Voters choose a favorite in each one.</span></div></div>
@@ -65,11 +76,13 @@ function form() {
   <div class="row2"><div><label for="city">City</label><select id="city" autocomplete="address-level2">${Object.keys(CITY).sort().map((c) => `<option ${c === C.city ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div><div><label for="zip">ZIP</label><input id="zip" type="text" inputmode="numeric" maxlength="5" autocomplete="postal-code" placeholder="92692"></div></div>
   <div><label for="name">3. Name on the entry</label><input id="name" type="text" maxlength="80" autocomplete="name" placeholder="The Lopez family"></div>
   <div><label for="desc">One line about your display <span class="help" style="display:inline">(optional)</span></label><textarea id="desc" maxlength="300" placeholder="12,000 lights synced to music. Tune to 88.1 FM."></textarea></div>
-  <label style="display:flex;gap:10px;align-items:flex-start;font-weight:600"><input type="checkbox" id="rules" style="width:22px;height:22px;margin:2px 0 0;accent-color:var(--org)"> <span>I agree to the contest rules and that judges may visit.</span></label>
+  <label style="display:flex;gap:10px;align-items:flex-start;font-weight:600"><input type="checkbox" id="rules" style="width:22px;height:22px;margin:2px 0 0;accent-color:var(--org)"> <span>I agree to the official rules and that judges may visit.</span></label>
+  ${C.rules ? `<details><summary style="cursor:pointer;font-weight:600">Read the official rules</summary><div class="small muted" style="white-space:pre-wrap;margin-top:10px">${esc(C.rules)}</div></details>` : ""}
   <p class="err" id="err" role="alert" hidden></p><p class="help">You're signed in as ${esc(user.email)}. ${C.approval === "manual" ? "The organizer reviews each entry before it goes on the map." : "Your entry goes on the map right away."}</p>
   <div class="nav"><a class="btn ghost" href="/c/${esc(slug)}">Cancel</a><button class="btn org" id="send" type="button">Submit my entry</button></div></div>`;
   $("#ph").onchange = (e) => { const f = [...e.target.files]; e.target.value = ""; addFiles(f); };
   const d = $("#drop"); d.ondragover = (e) => { e.preventDefault(); d.classList.add("over"); }; d.ondragleave = () => d.classList.remove("over"); d.ondrop = (e) => { e.preventDefault(); d.classList.remove("over"); addFiles([...e.dataTransfer.files]); };
+  suggest();
   thumbs(); $("#send").onclick = submit;
 }
 async function submit(retry) {
@@ -82,6 +95,7 @@ async function submit(retry) {
   setErr(""); busy = true; $("#send").disabled = true; $("#send").textContent = "Sending…";
   const fd = new FormData();
   for (const [k, val] of Object.entries({ contest: slug, biz: v("name"), title: v("name"), street: v("street"), city: v("city"), state: "CA", zip: v("zip"), desc: v("desc") })) fd.append(k, val);
+  fd.append("rules", "1");
   pending.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
   try {
     const r = await fetch("/api/submit", { method: "POST", body: fd });

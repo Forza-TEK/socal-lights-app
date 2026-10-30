@@ -74,3 +74,20 @@ export async function ownerOf(request, env, slug, getUser) {
 }
 export const cats = (c) => { try { return JSON.parse(c.categories || "[]"); } catch { return []; } };
 export { clean };
+
+// Live tally for a contest: approved homes, counted votes (voided ones don't count) and the winner(s) of each category.
+// A flagged (dq) home stays on the ballot but can't win. With one_win a home that wins a category can't win a later one.
+// Tied homes share the win.
+export async function computeResults(env, c) {
+  const categories = cats(c);
+  const { results: posts } = await env.DB.prepare("SELECT id,title,biz,address,city,lat,lng,photos,entry_no,user_id,dq FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
+  const counts = {};
+  for (const r of (await env.DB.prepare("SELECT post_id, category, COUNT(*) AS n FROM votes WHERE contest_id = ? AND voided = 0 GROUP BY post_id, category").bind(c.id).all()).results) (counts[r.post_id] ||= {})[r.category] = r.n;
+  const winners = {}, taken = new Set();
+  for (const k of categories) {
+    const pool = posts.filter((p) => !p.dq && !taken.has(p.id)), top = Math.max(0, ...pool.map((p) => (counts[p.id] || {})[k] || 0));
+    winners[k] = top > 0 ? pool.filter((p) => ((counts[p.id] || {})[k] || 0) === top).map((p) => p.id) : [];
+    if (c.one_win) winners[k].forEach((id) => taken.add(id));
+  }
+  return { categories, posts, counts, winners };
+}

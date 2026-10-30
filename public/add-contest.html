@@ -18,6 +18,7 @@
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
 import { CITY } from "/cities.js";
+import { rulesDefault } from "/rules.js";
 import { me, signIn, whoBar, noteSigninResult, esc, toast } from "/auth.js?v=20261030a";
 const $ = (q) => document.querySelector(q), $$ = (q) => [...document.querySelectorAll(q)];
 const FREE = new Set(["gmail.com","googlemail.com","hotmail.com","outlook.com","live.com","msn.com","yahoo.com","icloud.com","me.com","aol.com","proton.me","protonmail.com"]);
@@ -28,7 +29,7 @@ const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); retu
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], fmt = (s) => MON[parse(s).getMonth()] + " " + parse(s).getDate();
 const today = iso(new Date());
 const dflt = () => { let y = new Date().getFullYear(); if (today > y + "-12-10") y++; return { closes: y + "-12-10", vs: y + "-12-11", ve: y + "-12-20" }; };
-const mk = () => ({ step: 1, name: "Holiday Home Lighting Contest " + dflt().closes.slice(0, 4), org: "", city: "", descr: "Show us your best lights! Enter your home, then neighbors vote for their favorites.", site: "", ...dflt(), cats: [...DEF], on: [...DEF], newcat: "", rule: "contest", approval: "manual", counts: "yes", err: {} });
+const mk = () => ({ step: 1, name: "Holiday Home Lighting Contest " + dflt().closes.slice(0, 4), org: "", city: "", descr: "Show us your best lights! Enter your home, then neighbors vote for their favorites.", site: "", ...dflt(), cats: [...DEF], on: [...DEF], newcat: "", rule: "contest", approval: "manual", counts: "no", oneWin: "no", rules: "", err: {} });
 const KEY = "scl-contest-draft";
 let W = mk(), result = null;
 try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d && d.name) W = { ...mk(), ...d, err: {} }; } catch {}
@@ -54,9 +55,11 @@ function view() {
     <div><span class="lab">Voting categories</span><p class="help">Every home competes in every category. Voters pick one favorite home in each. Keep at least one.</p><div class="chips">${w.cats.map((c) => `<button type="button" class="chip" aria-pressed="${w.on.includes(c)}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
       <div style="display:flex;gap:8px"><input id="w-newcat" data-w="newcat" type="text" maxlength="30" placeholder="Add your own, like Best Inflatable" value="${esc(w.newcat)}" style="min-width:0"><button class="btn ghost sm" type="button" data-a="addcat" style="margin-top:8px;flex:none">Add</button></div>${E("cats")}</div>
     <div><span class="lab">What happens when a neighbor enters?</span><div class="radios">${rc("approval","manual","I review each entry first (recommended)","Nothing appears on the map until you approve it.")}${rc("approval","auto","Publish entries right away","Faster, but you can't screen photos first.")}</div></div>
-    <div><span class="lab">Can people see vote counts while voting is open?</span><div class="radios">${rc("counts","yes","Yes, show running totals","Builds excitement. People can see who's ahead.")}${rc("counts","no","No, keep them hidden until I announce winners","Avoids bandwagon voting.")}</div></div>`;
+    <div><span class="lab">Can people see vote counts while voting is open?</span><div class="radios">${rc("counts","no","No, keep them hidden until I announce winners (recommended)","Avoids bandwagon voting, where people just vote for whoever is ahead.")}${rc("counts","yes","Yes, show running totals","Builds excitement, but people can see who's ahead.")}</div></div>
+    <div><span class="lab">Can one home win more than one category?</span><div class="radios">${rc("oneWin","no","Yes, the best home in each category wins","Simple. The same home can win several.")}${rc("oneWin","yes","No, one win per home","A home that wins one category can't win a later one.")}</div><p class="help">Protected for you: one vote per person per category, tied to a verified email. Nobody can vote for their own home. Throwaway emails are blocked. You can void suspicious votes, and a disqualification only takes effect when voting closes. If homes tie, they share the win.</p></div>
+    <div><label for="w-rules">Official rules</label><p class="help">We drafted these for you. Edit anything. People accept them before they enter. If you offer a prize, have a lawyer read them.</p><textarea id="w-rules" data-w="rules" maxlength="4000" rows="12" style="min-height:260px">${esc(w.rules || rulesDefault({ name: w.name, org: w.org, city: w.city, closes: w.closes, vs: w.vs, ve: w.ve, oneWin: w.oneWin === "yes" }))}</textarea></div>`;
   if (w.step === 4) { const row = (k, v, s) => `<div><span>${k}</span><b>${v}</b><button class="link" type="button" data-a="edit:${s}">Edit</button></div>`;
-    body = `<h2>Check everything, then create it</h2><div class="sum">${row("Contest", esc(w.name), 1)}${row("Run by", esc(w.org) + ", " + esc(w.city), 1)}${row("Entries", "Now to " + fmt(w.closes), 2)}${row("Voting", fmt(w.vs) + " to " + fmt(w.ve), 2)}${row("Categories", w.on.map(esc).join(", "), 3)}${row("Votes", "One per category", 3)}${row("New entries", w.approval === "manual" ? "You review each one" : "Published right away", 3)}${row("Vote counts", w.counts === "yes" ? "Visible while voting" : "Hidden until winners", 3)}</div>
+    body = `<h2>Check everything, then create it</h2><div class="sum">${row("Contest", esc(w.name), 1)}${row("Run by", esc(w.org) + ", " + esc(w.city), 1)}${row("Entries", "Now to " + fmt(w.closes), 2)}${row("Voting", fmt(w.vs) + " to " + fmt(w.ve), 2)}${row("Categories", w.on.map(esc).join(", "), 3)}${row("Votes", "One per category", 3)}${row("New entries", w.approval === "manual" ? "You review each one" : "Published right away", 3)}${row("Vote counts", w.counts === "yes" ? "Visible while voting" : "Hidden until winners", 3)}${row("Wins", w.oneWin === "yes" ? "One win per home" : "A home can win several categories", 3)}${row("Official rules", w.rules ? "Edited by you" : "Standard rules", 3)}</div>
     <p class="status ${trustNow() === "match" ? "ok" : "no"}" id="trust">${trustMsg()}</p>${e.api ? `<p class="err">${esc(e.api)}</p>` : ""}`; }
   const prog = `<div class="prog" aria-label="Progress">${STEPS.map((s, i) => `<div class="${i < w.step ? "on" : ""}"${i === w.step - 1 ? ' aria-current="step"' : ""}><i></i>${s}</div>`).join("")}</div>`;
   $("#app").innerHTML = `<div class="card">${prog}<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap" class="small muted"><span>Step ${w.step} of 4 · Draft saved on this device</span><button class="link" type="button" data-a="fresh">Start over</button></div>${body}
@@ -82,7 +85,7 @@ function validate(n) { const w = W, e = {};
 async function create() {
   if (!cur.user) { const u = await signIn({ title: "Sign in to create your contest", next: "/add-contest?resume=1" }); if (!u) return; cur = await me(true); W.err = {}; view(); }
   const btn = $("#nextbtn"); if (btn) { btn.disabled = true; btn.textContent = "Creating…"; }
-  const r = await fetch("/api/contests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: W.name, org: W.org, city: W.city, descr: W.descr, site: W.site, closes: W.closes, vs: W.vs, ve: W.ve, cats: W.on, rule: "cat", approval: W.approval, showCounts: W.counts === "yes" }) });
+  const r = await fetch("/api/contests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: W.name, org: W.org, city: W.city, descr: W.descr, site: W.site, closes: W.closes, vs: W.vs, ve: W.ve, cats: W.on, rule: "cat", approval: W.approval, showCounts: W.counts === "yes", oneWin: W.oneWin === "yes", rules: W.rules }) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) { W.err = { api: j.error || "Couldn't create the contest. Please try again." }; view(); return; }
   result = j; try { localStorage.removeItem(KEY); } catch {} done();

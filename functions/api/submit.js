@@ -33,6 +33,7 @@ export async function onRequestPost({ request, env }) {
     contest = await getContest(env, contestSlug);
     if (!contest || contest.status !== "live") return err(404, "This contest isn't available.");
     if (!windows(contest).entriesOpen) return err(400, "Entries for this contest are closed.");
+    if (form.get("rules") !== "1") return err(400, "Please accept the official rules to enter.");
   } else if (!(await verifyTurnstile(env, form.get("cf-turnstile-response"), ip)))
     return err(400, "Please complete the 'I am human' check and send again.");
 

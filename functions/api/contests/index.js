@@ -4,6 +4,7 @@ import { json, err, clean, webUrl, newId } from "../../_lib/util.js";
 import { slug as slugify } from "../../_lib/events.js";
 import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { CITY } from "../../../public/cities.js";
+import { rulesDefault } from "../../../public/rules.js";
 import { SEASONS } from "../../../public/seasons.js";
 import { trustOf, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest } from "../../_lib/contests.js";
 
@@ -39,18 +40,20 @@ export async function onRequestPost({ request, env }) {
   let slug = slugify(name).slice(0, 40) || "contest";
   if (await getContest(env, slug)) slug = `${slug.slice(0, 34)}-${newId().slice(0, 5)}`;
   const season = seasonFor(closes);
+  const oneWin = b.oneWin === true, typed = String(b.rules || "").replace(/\r/g, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, 4000);
+  const rules = typed.length >= 40 ? typed : rulesDefault({ name, org, city, closes, vs, ve, oneWin });
   if (!SEASONS[season]) return err(400, "That date isn't in a season we cover.");
   // Every home competes in every category, and each voter gets one vote per category, so vote_rule is always "cat"
   const c = {
     id: newId(), slug, owner_id: user.id, name, org, city, county: await countyFor(env, city), descr, site, contact_email: user.email, season,
     status: live ? "live" : "pending", entries_close: closes, vote_start: vs, vote_end: ve, categories: JSON.stringify(categories),
-    vote_rule: "cat", approval: b.approval === "auto" ? "auto" : "manual", show_counts: b.showCounts === false ? 0 : 1,
+    vote_rule: "cat", approval: b.approval === "auto" ? "auto" : "manual", show_counts: b.showCounts === true ? 1 : 0, one_win: b.oneWin === true ? 1 : 0,
     note: live ? "" : `email ${trust === "free" ? "is a free-mail address" : trust === "none" ? "given with no website" : "does not match the website"}`,
   };
   await env.DB.prepare(
-    `INSERT INTO contests (id,slug,owner_id,name,org,city,county,descr,site,contact_email,season,status,entries_close,vote_start,vote_end,categories,vote_rule,approval,show_counts,note)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-  ).bind(c.id, c.slug, c.owner_id, c.name, c.org, c.city, c.county, c.descr, c.site, c.contact_email, c.season, c.status, c.entries_close, c.vote_start, c.vote_end, c.categories, c.vote_rule, c.approval, c.show_counts, c.note).run();
+    `INSERT INTO contests (id,slug,owner_id,name,org,city,county,descr,site,contact_email,season,status,entries_close,vote_start,vote_end,categories,vote_rule,approval,show_counts,one_win,rules,note)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+  ).bind(c.id, c.slug, c.owner_id, c.name, c.org, c.city, c.county, c.descr, c.site, c.contact_email, c.season, c.status, c.entries_close, c.vote_start, c.vote_end, c.categories, c.vote_rule, c.approval, c.show_counts, c.one_win, rules, c.note).run();
   if (live) await listOnMap(env, c);
   return json({ ok: true, slug, status: c.status, trust });
 }

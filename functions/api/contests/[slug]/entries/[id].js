@@ -1,4 +1,4 @@
-// POST /api/contests/<slug>/entries/<id> { action: "approve" | "decline" } — organizer reviews one entry.
+// POST /api/contests/<slug>/entries/<id> { action: "approve" | "decline" | "flag" | "unflag" } — organizer reviews one entry.
 import { json, err } from "../../../../_lib/util.js";
 import { getUser, sameOrigin } from "../../../../_lib/auth.js";
 import { ownerOf, approveEntry } from "../../../../_lib/contests.js";
@@ -11,6 +11,12 @@ export async function onRequestPost({ params, request, env }) {
   if (!row) return err(404, "That entry doesn't exist.");
   const b = await request.json().catch(() => ({}));
   if (b.action === "approve") { await approveEntry(env, row); return json({ ok: true }); }
+  if (b.action === "flag" || b.action === "unflag") {
+    // Disqualification is held until voting closes: the home stays on the ballot but can't win once winners are announced.
+    if (c.announced) return err(400, "The winners are announced and the results are locked.");
+    await env.DB.prepare("UPDATE posts SET dq = ? WHERE id = ?").bind(b.action === "flag" ? 1 : 0, row.id).run();
+    return json({ ok: true });
+  }
   if (b.action === "decline") {
     await Promise.all(JSON.parse(row.photos || "[]").map((k) => env.PHOTOS.delete(k)));
     await env.DB.batch([env.DB.prepare("UPDATE posts SET status='declined', photos='[]' WHERE id = ?").bind(row.id), env.DB.prepare("DELETE FROM votes WHERE post_id = ?").bind(row.id)]);
