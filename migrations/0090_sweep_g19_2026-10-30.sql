@@ -1,0 +1,11 @@
+-- City sweep group 19 (Ventura County) 2026-10-30: residential displays from the Conejo Valley Guide list (addresses published for visitors; 2026 dates expected)
+INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address)
+VALUES
+('lg-highland-rd-lights-simi','Highland Road Holiday Lights (Simi Valley)','Ventura','Simi Valley','drive','2026-12-01','2026-12-26','expected',1,'Free','Evenings; check site',34.2500245,-118.7882092,'A Simi Valley home that decorates for the holidays and is listed publicly for drive-by visitors.','https://www.conejovalleyguide.com/welcome/residential-holiday-light-displays-in-the-conejo-valley-and-surrounding-areas','christmas','Highland Road display','469 Highland Rd, Simi Valley, CA 93065'),
+('lg-lang-ranch-pkwy-lights-to','Lang Ranch Parkway Holiday Lights','Ventura','Thousand Oaks','drive','2026-12-01','2026-12-26','expected',1,'Free','Evenings; check site',34.2133530,-118.8146900,'A Thousand Oaks home holiday light display listed publicly for neighbors and visitors to drive by.','https://www.conejovalleyguide.com/welcome/residential-holiday-light-displays-in-the-conejo-valley-and-surrounding-areas','christmas','Lang Ranch Pkwy display','3337 Lang Ranch Pkwy, Thousand Oaks, CA 91362'),
+('lg-earlham-ct-lights-oak-park','Earlham Court Holiday Lights (Oak Park)','Ventura','Oak Park','drive','2026-12-01','2026-12-26','expected',1,'Free','Evenings; check site',34.1921067,-118.7834878,'An Oak Park home holiday light display listed publicly for drive-by visitors.','https://www.conejovalleyguide.com/welcome/residential-holiday-light-displays-in-the-conejo-valley-and-surrounding-areas','christmas','Earlham Court display','1170 Earlham Ct, Oak Park, CA 91377')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city,
+  type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status,
+  free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng,
+  blurb=excluded.blurb, url=excluded.url, season=excluded.season,
+  venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
