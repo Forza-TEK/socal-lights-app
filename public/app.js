@@ -2,11 +2,11 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261031i";
+import { SITE } from "/site-config.js?v=20261031j";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
-const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261031i" };
+const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261031j" };
 const theme = () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 // Pin and cluster colors: free events are green; ticketed events, clusters and the route take the season's accent
 const SEASON_HEX = { light: { newyear: "#6d3fc0", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
@@ -439,9 +439,9 @@ function whenShort(ev) {
 }
 const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
 let toastT;
-function toast(msg) {
+function toast(msg, accent) {
   let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
-  t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2200);
+  t.textContent = msg; t.classList.toggle("accent", !!accent); t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2200);
 }
 async function shareItem(k) {
   const it = findKey(k); if (!it) return;
@@ -582,7 +582,7 @@ $("#pbody").addEventListener("click", (e) => {
 });
 $("#phead").addEventListener("click", (e) => {
   const rt = e.target.closest("[data-route]");
-  if (rt) { if (rt.dataset.hint) { toast(rt.dataset.hint); return; } const u = routeFromView(); if (u) window.open(u, "_blank", "noopener"); return; }
+  if (rt) { if (rt.dataset.hint) { toast(rt.dataset.hint, true); return; } const u = routeFromView(); if (u) window.open(u, "_blank", "noopener"); return; }
   const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
   const cl = e.target.closest("[data-clear]"); if (cl) { clearFilter(cl.dataset.clear); return; }
   const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { popFor === "shopseason" ? closePop() : openPop(sc); return; }
