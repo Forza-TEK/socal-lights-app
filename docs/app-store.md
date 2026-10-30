@@ -34,7 +34,7 @@ Use https://www.pwabuilder.com with https://socallights.app (the manifest, icons
 ## Store listing text
 **Name:** SoCal Lights
 **Subtitle (iOS, 30 chars):** Holiday lights & events map
-**Promotional text:** Find Halloween haunts, Christmas lights, tree lightings and neighbor-decorated homes across Southern California. Free, no sign-up.
+**Promotional text:** Find Halloween haunts, Christmas lights, tree lightings and neighbor-decorated homes across Southern California. Free to browse; sign in only to enter a contest.
 **Short description (Google, 80 chars):** Halloween, Christmas and seasonal events and home displays across SoCal.
 **Full description:**
 SoCal Lights puts holiday and seasonal fun across Southern California on one map.

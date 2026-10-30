@@ -7,48 +7,13 @@
 <meta name="description" content="Put your Southern California Halloween, holiday or seasonal event at the top of SoCal Lights with a Featured pin on the map.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<style>
-:root{--bg:#f6f4f0;--surface:#fff;--ink:#17181c;--muted:#5d6068;--line:#e4e0d8;--accent:#e8590c;--gold:#9a6700;--gold-soft:#fff3d6;--free:#0f9d6b}
-:root[data-theme="dark"]{--bg:#0b0d12;--surface:#151821;--ink:#f1f2f5;--muted:#a3a7b2;--line:#2a2e3a;--accent:#ff8a3d;--gold:#f5c461;--gold-soft:#2b2412;--free:#3ddc97}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Plus Jakarta Sans",system-ui,sans-serif;padding:0 16px 64px}
-main{max-width:760px;margin:0 auto}
-a{color:var(--accent)}
-.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
-.top a.back{font-weight:700;text-decoration:none}
-h1{font-size:clamp(28px,5vw,40px);line-height:1.1;letter-spacing:-.02em;margin:8px 0 12px}
-h2{font-size:20px;margin:36px 0 12px}
-.lede{font-size:18px;color:var(--muted);margin:0 0 20px}
-.grid{display:grid;gap:14px}
-@media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}}
-.plan{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px;display:grid;gap:10px;align-content:start}
-.plan.pop{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-soft)}
-.plan h3{margin:0;font-size:18px}
-.price{font-size:30px;font-weight:800;letter-spacing:-.02em}
-.price small{font-size:14px;font-weight:600;color:var(--muted)}
-.plan ul{margin:0;padding-left:18px;color:var(--muted);font-size:15px}
-.btn{display:inline-flex;justify-content:center;align-items:center;gap:6px;border:0;border-radius:999px;padding:12px 18px;font:700 15px "Plus Jakarta Sans",system-ui,sans-serif;background:var(--accent);color:#fff;text-decoration:none;cursor:pointer}
-.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
-.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--gold-soft);color:var(--gold)}
-.tag::before{content:"★ "}
-ol{padding-left:20px} li{margin:6px 0}
-details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin:8px 0}
-summary{font-weight:700;cursor:pointer}
-.meta{color:var(--muted);font-size:14px}
-#pick{display:grid;gap:8px;margin:0 0 8px}
-input[type=search],input[type=text],input[type=email],input[type=url],input[type=date],select,textarea{width:100%;font:inherit;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
-.res{display:grid;gap:6px;margin:0;padding:0;list-style:none}
-.res button{width:100%;text-align:left;font:inherit;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);cursor:pointer}
-.res button small{display:block;color:var(--muted)}
-.chosen{background:var(--gold-soft);border:1px solid var(--gold);border-radius:12px;padding:10px 14px}
-.plan.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,89,12,.25)}
-.msg{margin:8px 0 0;color:var(--muted)} .msg.err{color:#c0392b} .ok{background:var(--gold-soft);border-radius:14px;padding:14px 16px;margin:16px 0}
-</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261031q">
+<link rel="stylesheet" href="/info.css?v=20261031q">
 </head>
 <body>
+<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
 <main>
-<div class="top"><a class="back" href="/">← Back to the map</a></div>
 <h1>Feature your event on SoCal Lights</h1>
 <p class="lede">Southern Californians use SoCal Lights to decide where to go this weekend. A Featured listing stands out, with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin on the map.</p>
 
@@ -138,6 +103,10 @@ if (!cfg.featureCheckout) {
     } catch (e) { $("#gomsg").className = "msg err"; $("#gomsg").textContent = e.message + " You can also email " + SITE.contactEmail + "."; upd(); }
   });
 }
+</script>
+<script type="module">
+import { themeBtn, mountAcct } from "/addflow.js?v=20261031q";
+document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 </script>
 </body>
 </html>
