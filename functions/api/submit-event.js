@@ -1,7 +1,7 @@
 // POST /api/submit-event — public "Add your event" form (JSON).
 // The event is geocoded and its web page is checked. If the page really mentions the event and its year, the event
 // is published straight away; otherwise it waits in the admin's "Submitted events" tab. Either way it is logged.
-import { json, err, clean, safeUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
 import { isDate, slug, upsertEvent, verifyEventPage } from "../_lib/events.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
@@ -21,7 +21,7 @@ export async function onRequestPost({ request, env }) {
   const e = {
     name: clean(b.name, 120), city: clean(b.city, 60), season: SEASONS[b.season] ? b.season : "", type: clean(b.type, 10),
     start_date: clean(b.start, 10), end_date: clean(b.end || b.start, 10), hours: clean(b.hours, 120),
-    free: b.free ? 1 : 0, price: clean(b.price, 80), blurb: clean(b.blurb, 200), url: safeUrl(clean(b.url, 300)),
+    free: b.free ? 1 : 0, price: clean(b.price, 80), blurb: clean(b.blurb, 200), url: webUrl(clean(b.url, 300)),
     venue: clean(b.venue, 120), address: clean(b.address, 160), email: clean(b.email, 120),
   };
   if (e.name.length < 4) return err(400, "Enter the event's name.");
@@ -32,7 +32,7 @@ export async function onRequestPost({ request, env }) {
   const limit = new Date(Date.now() + 500 * 86400_000).toISOString().slice(0, 10);
   if (e.end_date < today) return err(400, "That event has already ended.");
   if (e.start_date > limit) return err(400, "That date is too far in the future.");
-  if (!e.url) return err(400, "Add the link to your event's web page (it must start with https://). We use it to check the event.");
+  if (!e.url) return err(400, "Add a valid link to your event's web page, like https://example.org/event. We use it to check the event.");
   if (e.venue.length < 3) return err(400, "Enter the venue or place name.");
   if (e.address.length < 6) return err(400, "Enter the street address (or the two cross streets for a parade).");
   if (e.blurb.length < 20) return err(400, "Add a one- or two-sentence description (at least 20 characters).");

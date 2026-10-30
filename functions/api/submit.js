@@ -1,6 +1,6 @@
 // POST /api/submit — public "Showcase a House" form (multipart/form-data).
 // Saves the post as 'pending' and its photos under pending/<id>/ in R2.
-import { json, err, clean, safeUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 import { getUser } from "../_lib/auth.js";
@@ -49,7 +49,7 @@ export async function onRequestPost({ request, env }) {
   const webRaw = clean(form.get("web"), 200);
   const kind = form.get("kind") === "installer" ? "installer" : "homeowner";
   const pro = kind === "installer";
-  const web = pro ? safeUrl(webRaw) : ""; // website, phone and service area belong to professional installers only
+  const web = pro ? webUrl(webRaw) : ""; // website, phone and service area belong to professional installers only
   const phone = pro ? clean(form.get("phone"), 80) : "";
   const area = pro ? clean(form.get("area"), 120) : "";
   const where = clean(form.get("where"), 120);
@@ -66,7 +66,7 @@ export async function onRequestPost({ request, env }) {
   if (pro && !web && !phone) return err(400, "Installers: add a website or a phone number for quotes.");
   if (pro && !form.get("permission")) return err(400, "Confirm you have the homeowner's permission to show this address.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err(400, "Enter an email address so the site owner can reach you.");
-  if (pro && webRaw && !web) return err(400, "The website needs to start with http:// or https://");
+  if (pro && webRaw && !web) return err(400, "Enter a valid website address, like example.com.");
 
   if (contest) {
     const { n: mine } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id = ? AND user_id = ? AND status != 'declined'").bind(contest.id, cu.id).first();

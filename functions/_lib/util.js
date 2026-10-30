@@ -20,6 +20,27 @@ export function safeUrl(u) {
   }
 }
 
+// A host name that follows the standard domain-name format (RFC 1035/1123): dot-separated labels of letters, digits and
+// hyphens (1-63 characters, not starting or ending with a hyphen), at most 253 characters in all, and a real-looking
+// top-level domain (letters only, or xn-- for international ones). Rejects IP addresses, "localhost" and bare words.
+export function validHost(h) {
+  h = String(h || "").toLowerCase().replace(/\.$/, "");
+  if (!h || h.length > 253) return false;
+  const labels = h.split(".");
+  if (labels.length < 2) return false;
+  if (!labels.every((l) => l.length >= 1 && l.length <= 63 && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(l))) return false;
+  return /^([a-z]{2,63}|xn--[a-z0-9-]{1,59})$/.test(labels[labels.length - 1]);
+}
+// Like safeUrl, but the host must be a valid domain name. Adds https:// when the person typed just "example.com".
+export function webUrl(u) {
+  let s = String(u || "").trim();
+  if (!s) return "";
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = "https://" + s;
+  const ok = safeUrl(s);
+  if (!ok) return "";
+  try { return validHost(new URL(ok).hostname) ? ok : ""; } catch { return ""; }
+}
+
 export const clean = (v, max) => String(v ?? "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, max);
 
 export const newId = () => crypto.randomUUID().replace(/-/g, "").slice(0, 16);

@@ -35,7 +35,7 @@ A method with no secrets is simply hidden from the sign-in sheet (`GET /api/auth
 **Local development**: put `DEV_AUTH=1` and `ADMIN_DEV_BYPASS=1` in `.dev.vars` (gitignored). The sign-in code is then returned on screen instead of emailed, only on `localhost`. **Never set `DEV_AUTH` as a Pages secret.**
 
 ## Launch checklist
-1. Merge to `main`. The `Apply database migrations` workflow applies `0100_accounts_contests.sql` to the live database. It only adds tables and columns, so existing events and houses are untouched.
+1. Merge to `main`. The `Apply database migrations` workflow applies `0109_accounts_contests.sql` to the live database. It only adds tables and columns, so existing events and houses are untouched.
 2. Add the secrets above. Until then email and Google sign-in report "not switched on" and the rest of the site is unaffected.
 3. The new pages are **not linked** from the map and are `noindex` (meta tag and `_headers`). To open them up: point the map's Add menu (`openAdd` in `public/app.js`) at `/add`, bump the `?v=` on `app.js` in `public/index.html`, and remove `noindex` from `/c/*` if you want contests found by search.
 4. Update the **Effective** date in `public/privacy.html` (the accounts section was added on this branch). Review the wording yourself.

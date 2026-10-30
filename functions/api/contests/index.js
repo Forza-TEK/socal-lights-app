@@ -1,6 +1,6 @@
 // POST /api/contests — an organizer creates a contest (signed in). It goes live straight away when their email matches
 // the website they gave; otherwise it waits for the site owner. GET lists the live contests.
-import { json, err, clean, safeUrl, newId } from "../../_lib/util.js";
+import { json, err, clean, webUrl, newId } from "../../_lib/util.js";
 import { slug as slugify } from "../../_lib/events.js";
 import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { CITY } from "../../../public/cities.js";
@@ -20,14 +20,14 @@ export async function onRequestPost({ request, env }) {
   if (!b) return err(400, "The form couldn't be read. Please try again.");
 
   const name = clean(b.name, 90), org = clean(b.org, 80), city = clean(b.city, 60), descr = clean(b.descr, 200), siteRaw = clean(b.site, 200);
-  const site = siteRaw ? safeUrl(/^https?:/i.test(siteRaw) ? siteRaw : "https://" + siteRaw) : "";
+  const site = siteRaw ? webUrl(siteRaw) : "";
   const closes = clean(b.closes, 10), vs = clean(b.vs, 10), ve = clean(b.ve, 10), today = todayPT();
   const categories = [...new Set((Array.isArray(b.cats) ? b.cats : []).map((c) => clean(c, 30)).filter(Boolean))].slice(0, 8);
   if (name.length < 4) return err(400, "Give your contest a name (at least 4 letters).");
   if (org.length < 3) return err(400, "Tell us who is running the contest.");
   if (!CITY[city]) return err(400, "Choose the city where the homes are.");
   if (descr.length < 20) return err(400, "Write a sentence or two for the welcome message (at least 20 characters).");
-  if (siteRaw && !site) return err(400, "That website address doesn't look right.");
+  if (siteRaw && !site) return err(400, "Enter a valid website address, like example.com.");
   if (!isDate(closes) || closes < today) return err(400, "Pick an entry deadline that hasn't passed yet.");
   if (!isDate(vs) || vs <= closes) return err(400, "Voting should start after entries close.");
   if (!isDate(ve) || ve <= vs) return err(400, "Voting should end after it starts.");
