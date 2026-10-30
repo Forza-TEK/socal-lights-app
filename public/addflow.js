@@ -31,6 +31,10 @@ export function toggleTheme() {
 }
 export const themeBtn = () => '<button class="tbtn" type="button" data-theme-toggle aria-label="Switch between light and dark mode" title="Light / dark"><svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg></button>';
 document.addEventListener("click", (e) => { if (e.target.closest("[data-theme-toggle]")) toggleTheme(); });
+// The signed-in circle: your picture, or the first letter of your email. It opens your profile. Nothing is shown when signed out.
+let acctUser = null; const acctReady = me().then((i) => (acctUser = i.user)).catch(() => {});
+export const acctHtml = () => (acctUser ? `<a class="acct" href="/profile" aria-label="Your profile" title="Your profile">${acctUser.avatar ? `<img src="${esc(acctUser.avatar)}" alt="">` : esc(acctUser.email[0].toUpperCase())}</a>` : "");
+export async function mountAcct(el) { await acctReady; if (el) el.innerHTML = acctHtml(); }
 
 /* ---------- field builders ---------- */
 export const input = (d, k, { label = "", ph = "", max = 200, type = "text", opt = false, ac = "", mode = "", addr = false } = {}) =>
@@ -84,8 +88,9 @@ export function run(o) {
     const sv = JSON.parse(localStorage.getItem(o.persist) || "null");
     if (sv && sv.d) { Object.assign(d, sv.d); S.i = sv.i || 0; }
   } catch {}
+  let dirty = false;
   const save = () => { if (!o.persist) return; try { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && typeof v !== "function") c[k] = v; localStorage.setItem(o.persist, JSON.stringify({ d: c, i: S.i })); } catch {} };
-  const hdr = (done) => `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${themeBtn()}${done ? '<a class="link" href="/">Back to the map</a>' : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}</div></div>`;
+  const hdr = (done) => `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? '<a class="link" href="/">Back to the map</a>' : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
   function draw(focus) {
     if (S.done !== null) { root.innerHTML = `${hdr(true)}<div class="main">${S.done}</div>`; window.scrollTo(0, 0); return; }
     const st = steps(); S.i = Math.max(0, Math.min(S.i, st.length - 1)); const s = st[S.i];
@@ -99,7 +104,7 @@ export function run(o) {
     if (o.after) o.after(s, d);
   }
   const showErr = (t) => { S.err = t; const e = $("#err"); if (e) { e.textContent = t; e.hidden = !t; if (t) e.scrollIntoView({ block: "center", behavior: "smooth" }); } };
-  const api = { draw: () => draw(), err: showErr, finish(html) { S.done = html; if (d._draftId) fetch("/api/drafts/" + d._draftId, { method: "DELETE" }).catch(() => {}); if (o.persist) try { localStorage.removeItem(o.persist); } catch {} draw(); }, goto(id) { const i = steps().findIndex((x) => x.id === id); if (i > -1) { S.i = i; S.err = ""; save(); draw(true); } }, data: d, step: () => steps()[S.i] };
+  const api = { next: () => next(), draw: () => draw(), err: showErr, finish(html) { S.done = html; if (d._draftId) fetch("/api/drafts/" + d._draftId, { method: "DELETE" }).catch(() => {}); if (o.persist) try { localStorage.removeItem(o.persist); } catch {} draw(); }, goto(id) { const i = steps().findIndex((x) => x.id === id); if (i > -1) { S.i = i; S.err = ""; save(); draw(true); } }, data: d, step: () => steps()[S.i] };
   async function next() {
     if (S.busy) return;
     const s = steps()[S.i], e = s.check ? s.check(d) : ""; if (e) return showErr(e); showErr("");
@@ -112,6 +117,7 @@ export function run(o) {
   }
   // Save & exit: sign in if needed, keep the answers on your account (photos are not saved), and go to your profile
   const cleanData = () => { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && !k.startsWith("_") && typeof v !== "function") c[k] = v; return c; };
+  let leaveTo = "";
   async function saveExit() {
     if (S.busy) return; S.busy = true; save();
     try {
@@ -119,15 +125,30 @@ export function run(o) {
       if (!u) { u = await signIn({ title: "Sign in to save your draft", next: "/profile?save=" + o.account.kind }); if (!u) { S.busy = false; return; } }
       const r = await fetch("/api/drafts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: d._draftId, kind: o.account.kind, title: o.account.title(d), data: cleanData(), step: S.i }) });
       const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Couldn't save your draft. Try again.");
-      d._draftId = j.id; save(); location.href = "/profile";
+      d._draftId = j.id; save(); dirty = false; leaving = true; location.href = leaveTo || "/profile";
     } catch (e) { showErr(e.message || "Couldn't save your draft."); }
     S.busy = false;
   }
-  function back() { if (S.i === 0) return (location.href = o.exit || "/add"); S.i--; S.err = ""; save(); draw(true); }
+  // Leaving with unsaved changes: offer to save the draft first (links in the header, Back on the first step, and the browser's own tab close or reload)
+  let leaving = false;
+  function ask(href) {
+    const host = document.createElement("div");
+    host.innerHTML = `<div class="scrim"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="lv-t"><h2 id="lv-t">Save your progress?</h2><p class="help">Save this draft to your profile so you can finish it later.</p><button class="btn" type="button" data-lv="save">Save &amp; exit</button><button class="btn out" type="button" data-lv="leave">Leave without saving</button><button class="link" type="button" data-lv="stay">Keep editing</button></div></div>`;
+    document.body.appendChild(host); const done = () => host.remove();
+    host.querySelector("[data-lv=save]").focus();
+    host.addEventListener("click", (e) => { const b = e.target.closest("[data-lv]"); if (!b) return; const k = b.dataset.lv; if (k === "stay") return done(); if (k === "leave") { leaving = true; location.href = href; return; } done(); leaveTo = href; saveExit(); });
+    host.addEventListener("keydown", (e) => { if (e.key === "Escape") done(); });
+  }
+  document.addEventListener("click", (e) => {
+    if (!o.account || !dirty || S.done !== null) return; const a = e.target.closest("a[href]"); if (!a || !root.contains(a) || a.target === "_blank") return;
+    const href = a.getAttribute("href"); if (!href || href.startsWith("#")) return; e.preventDefault(); ask(href);
+  }, true);
+  window.addEventListener("beforeunload", (e) => { if (o.account && dirty && S.done === null && !leaving) { e.preventDefault(); e.returnValue = ""; } });
+  function back() { if (S.i === 0) { if (o.account && dirty) return ask(o.exit || "/add"); return (location.href = o.exit || "/add"); } S.i--; S.err = ""; save(); draw(true); }
 
   // typing, choosing, clicking
   const onValue = (t) => {
-    const k = t.dataset.k; d[k] = t.type === "checkbox" ? t.checked : t.value; if (t.getAttribute("aria-invalid")) t.removeAttribute("aria-invalid");
+    const k = t.dataset.k; dirty = true; d[k] = t.type === "checkbox" ? t.checked : t.value; if (t.getAttribute("aria-invalid")) t.removeAttribute("aria-invalid");
     save(); if (o.onInput) o.onInput(k, d, api);
     if (t.hasAttribute("data-addr")) suggest(t);
     const s = steps()[S.i]; if (s && s.redraw && (t.type === "checkbox" || t.tagName === "SELECT")) { draw(); }
@@ -143,7 +164,7 @@ export function run(o) {
     const t = e.target.closest("[data-tile],[data-a],[data-goto],[data-rm],[data-copy],.dd button"); if (!t || !root.contains(t) && !t.closest(".dd")) return;
     if (t.matches(".dd button")) { pick(+t.dataset.i); return; }
     if (t.dataset.tile) {
-      const [k, ...v] = t.dataset.tile.split("|"); d[k] = v.join("|"); save();
+      const [k, ...v] = t.dataset.tile.split("|"); dirty = true; d[k] = v.join("|"); save();
       const s = steps()[S.i];
       if (s && s.redraw) draw(); else root.querySelectorAll(`[data-tile^="${k}|"]`).forEach((x) => x.setAttribute("aria-pressed", x === t));
       if (o.onInput) o.onInput(k, d, api); return;
@@ -164,7 +185,7 @@ export function run(o) {
     for (const f of list) {
       if (d.photos.length >= 8) { say("That's the limit of 8 photos."); break; }
       if (!f.type.startsWith("image/")) { say("Skipped a file that isn't a photo."); continue; }
-      try { const b = await shrink(f); d.photos.push({ blob: b, url: URL.createObjectURL(b) }); } catch { say("One photo couldn't be read. Try a JPG or PNG."); }
+      try { const b = await shrink(f); dirty = true; d.photos.push({ blob: b, url: URL.createObjectURL(b) }); } catch { say("One photo couldn't be read. Try a JPG or PNG."); }
       const th = $("#thumbs"); if (th) th.innerHTML = thumbsHtml(d);
     }
   }
@@ -187,6 +208,7 @@ export function run(o) {
   }
   document.addEventListener("click", (e) => { if (!e.target.closest(".dd,[data-addr]")) { const dd = $(".dd"); if (dd) dd.remove(); } });
 
+  acctReady.then(() => { const el = $("#acct"); if (el) el.innerHTML = acctHtml(); });
   // ?draft=<id> reopens a draft saved to your account, on the step you left
   api.ready = (async () => {
     const id = new URLSearchParams(location.search).get("draft");
