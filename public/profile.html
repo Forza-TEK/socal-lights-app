@@ -8,14 +8,14 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031d">
+<link rel="stylesheet" href="/addflow.css?v=20261031e">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><a class="link" href="/add">Add something</a></div>
 <div class="main" id="app"><p class="muted">Loading…</p></div>
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261030a";
-import { esc } from "/addflow.js?v=20261031d";
+import { esc } from "/addflow.js?v=20261031e";
 const $ = (q) => document.querySelector(q), app = $("#app");
 const KEYS = { house: "scl-house-draft", event: "scl-event-draft", contest: "scl-contest-draft" }, PAGE = { house: "/add-house", event: "/add-event", contest: "/add-contest" }, LABEL = { house: "Lighting display", event: "Event", contest: "Contest" };
 const when = (s) => { try { return new Date(String(s).replace(" ", "T") + "Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };

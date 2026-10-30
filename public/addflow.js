@@ -75,9 +75,9 @@ export function run(o) {
     if (sv && sv.d) { Object.assign(d, sv.d); S.i = sv.i || 0; }
   } catch {}
   const save = () => { if (!o.persist) return; try { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && typeof v !== "function") c[k] = v; localStorage.setItem(o.persist, JSON.stringify({ d: c, i: S.i })); } catch {} };
-  const hdr = () => `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a>${o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}</div>`;
+  const hdr = (done) => `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a>${done ? '<a class="link" href="/">Back to the map</a>' : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}</div>`;
   function draw(focus) {
-    if (S.done !== null) { root.innerHTML = `${hdr()}<div class="main">${S.done}</div>`; window.scrollTo(0, 0); return; }
+    if (S.done !== null) { root.innerHTML = `${hdr(true)}<div class="main">${S.done}</div>`; window.scrollTo(0, 0); return; }
     const st = steps(); S.i = Math.max(0, Math.min(S.i, st.length - 1)); const s = st[S.i];
     if (o.season) document.documentElement.dataset.season = o.season(d);
     const secs = [...new Set(st.map((x) => x.sec))], cur = secs.indexOf(s.sec);
