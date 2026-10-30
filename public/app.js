@@ -2,11 +2,11 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261030p";
+import { SITE } from "/site-config.js?v=20261030q";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
-const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030p" };
+const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030q" };
 const theme = () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 // Pin and cluster colors: free events are green; ticketed events, clusters and the route take the season's accent
 const SEASON_HEX = { light: { newyear: "#6d3fc0", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
@@ -133,7 +133,7 @@ geo.on("geolocate", (e) => map.easeTo({ center: [e.coords.longitude, e.coords.la
 
 function padding() {
   const ph = isPhone();
-  return { top: ph ? 128 : 100, left: 24, right: ph ? 24 : (parseFloat(cssVar("--panel-w")) || 0) + 48, bottom: ph ? peekH() + 16 : 24 }; // phones: centre things in the map above the collapsed list, even while the sheet is open
+  return { top: ph ? 128 : 100, left: 24, right: ph ? 24 : panelW() + 48, bottom: ph ? peekH() + 16 : 24 }; // phones: centre things in the map above the collapsed list, even while the sheet is open
 }
 // On phones the list covers the map when expanded, so "in map view" means the map above the collapsed sheet.
 function mapArea() { const p = padding(); if (isPhone()) p.bottom = peekH() + 16; return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
@@ -323,10 +323,27 @@ function closePin() { state.sel = null; $("#preview").hidden = true; document.bo
 // Desktop: the card sits next to its dot (below it, or above when there is no room) and follows the map as it moves
 // The pop-up card is placed next to its dot. Its size is measured once (and when it changes), so moving the map never forces a layout.
 let pinBox = null, pinRaf = 0, pinRO = null;
+// Desktop: the list can be hidden to give the whole screen to the map (remembered on this device)
+const listHidden = () => document.documentElement.classList.contains("list-hidden") && !isPhone();
+function panelW() { return listHidden() ? 0 : parseFloat(cssVar("--panel-w")) || 0; }
+function setListHidden(v, save = true) {
+  document.documentElement.classList.toggle("list-hidden", v);
+  const b = $("#panelToggle"); if (b) { b.setAttribute("aria-expanded", String(!v)); b.setAttribute("aria-label", v ? "Show list" : "Hide list"); b.title = v ? "Show list" : "Hide list"; }
+  if (save) try { localStorage.setItem("socal-listhidden", v ? "1" : "0"); } catch {}
+  pinBox = null; placePin(); if (!v && save) scheduleList();
+}
+(function initPanelToggle() {
+  const b = document.createElement("button"); b.id = "panelToggle"; b.type = "button"; b.className = "ptoggle"; b.setAttribute("aria-controls", "panel");
+  b.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>`;
+  b.onclick = () => setListHidden(!document.documentElement.classList.contains("list-hidden"));
+  document.body.appendChild(b);
+  let was = false; try { was = localStorage.getItem("socal-listhidden") === "1"; } catch {}
+  setListHidden(was, false);
+})();
 function measurePin() {
   const pv = $("#preview"); if (pv.hidden) { pinBox = null; return; }
   const c = $("#map").getBoundingClientRect();
-  pinBox = { W: pv.offsetWidth, H: pv.offsetHeight, left: c.left, top: c.top, right: innerWidth - (parseFloat(cssVar("--panel-w")) || 0) - 30 };
+  pinBox = { W: pv.offsetWidth, H: pv.offsetHeight, left: c.left, top: c.top, right: innerWidth - panelW() - 30 };
 }
 function placePin() {
   if (pinRaf) return;
