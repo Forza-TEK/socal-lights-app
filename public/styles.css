@@ -660,3 +660,19 @@ body.lb-open{overflow:hidden}
   .list-hidden .topbar{right:auto;width:min(760px,calc(100vw - 100px))}
   .list-hidden .ptoggle{right:0}
 }
+
+/* Thinner button type: list view, My night, Shop */
+.chip,.chip.on{font-weight:400}
+.chip.on::before{font-weight:600}
+.addbtn{font-weight:500}
+.quick button,.quick button.qf,.quick .qgo{font-weight:400}
+.quick .qgo{font-weight:500}
+.ptab,.tabs .ptab{font-weight:500}
+.ptab .n{font-weight:600}
+.sortsel,.qsel,.qsel select{font-weight:400}
+.fchip,.fchip.on,.achip{font-weight:400}
+.fseg button,.pop .seg button,.kindseg button{font-weight:400}
+.btn{font-weight:500}
+.shoptx{font-weight:500}.shopgo{font-weight:500}
+.linkbtn{font-weight:400}
+.quick button[aria-pressed="true"],.fseg button[aria-pressed="true"],.pop .seg button[aria-pressed="true"],.kindseg button[aria-pressed="true"]{font-weight:500}
