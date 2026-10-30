@@ -684,3 +684,11 @@ body.lb-open{overflow:hidden}
 }
 
 #acctbtn{text-decoration:none;font-weight:600;font-size:18px}
+
+/* "Route these" link next to the place count: season accent when it can run, grey with a hint when it can't */
+.rtlink{display:inline-flex;align-items:center;gap:5px;margin:0 auto 0 4px;padding:6px 8px;border:0;background:none;font:inherit;font-size:14px;font-weight:500;color:var(--season-ink);cursor:pointer;white-space:nowrap;border-radius:999px}
+.rtlink svg{color:var(--season)}
+.rtlink:hover{background:var(--season-soft)}
+.rtlink[aria-disabled="true"]{color:var(--muted);opacity:.65}
+.rtlink[aria-disabled="true"] svg{color:var(--muted)}
+.rtlink[aria-disabled="true"]:hover{background:none}
