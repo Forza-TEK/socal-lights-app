@@ -1,0 +1,38 @@
+# Builds the SoCal Lights Android app (a signed .aab for Google Play) on GitHub.
+# Run it by hand: Actions > "Android app" > Run workflow. Needs the four secrets listed in docs/app-store.md.
+name: Android app
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: "Version code (must be higher than the last upload)"
+        required: true
+        default: "1"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - name: Install and sync
+        working-directory: app
+        run: npm ci && npx cap sync android
+      - name: Set the version code
+        working-directory: app/android/app
+        run: sed -i "s/versionCode [0-9]*/versionCode ${{ inputs.version_code }}/" build.gradle
+      - name: Build the bundle
+        working-directory: app/android
+        run: ./gradlew bundleRelease
+      - name: Sign it
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_B64 }}" | base64 -d > $RUNNER_TEMP/upload.jks
+          jarsigner -keystore $RUNNER_TEMP/upload.jks -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            app/android/app/build/outputs/bundle/release/app-release.aab "${{ secrets.ANDROID_KEY_ALIAS }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: socal-lights-android-aab
+          path: app/android/app/build/outputs/bundle/release/app-release.aab
