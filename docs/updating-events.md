@@ -48,6 +48,8 @@ Only add real events found in public sources. Never invent events, dates or pric
 
 **Contest homes:** homes entered in or winning a decorating contest are added as events (Christmas `drive`; Halloween `haunt`/`family`) with the published street address and the contest page as `url`. Only use addresses a public page published for visitors or judging. Details in [city-sweep.md](city-sweep.md).
 
+See [sweep-methods.md](sweep-methods.md) for the photo, pin-audit and migration-size rules that every run follows (never more than 30 rows per INSERT: D1 rejects larger statements).
+
 ## Rolling a season into next year
 
 When a season's events have all ended, re-add them for next year with the **same ids** (upsert), new
