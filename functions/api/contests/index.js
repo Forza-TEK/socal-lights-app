@@ -40,10 +40,11 @@ export async function onRequestPost({ request, env }) {
   if (await getContest(env, slug)) slug = `${slug.slice(0, 34)}-${newId().slice(0, 5)}`;
   const season = seasonFor(closes);
   if (!SEASONS[season]) return err(400, "That date isn't in a season we cover.");
+  // Every home competes in every category, and each voter gets one vote per category, so vote_rule is always "cat"
   const c = {
     id: newId(), slug, owner_id: user.id, name, org, city, county: await countyFor(env, city), descr, site, contact_email: user.email, season,
     status: live ? "live" : "pending", entries_close: closes, vote_start: vs, vote_end: ve, categories: JSON.stringify(categories),
-    vote_rule: b.rule === "cat" ? "cat" : "contest", approval: b.approval === "auto" ? "auto" : "manual", show_counts: b.showCounts === false ? 0 : 1,
+    vote_rule: "cat", approval: b.approval === "auto" ? "auto" : "manual", show_counts: b.showCounts === false ? 0 : 1,
     note: live ? "" : `email ${trust === "free" ? "is a free-mail address" : trust === "none" ? "given with no website" : "does not match the website"}`,
   };
   await env.DB.prepare(

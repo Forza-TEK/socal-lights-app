@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/flow.css?v=20261030a">
+<link rel="stylesheet" href="/flow.css?v=20261030b">
 </head>
 <body>
 <main>
@@ -20,7 +20,7 @@ import { CITY } from "/cities.js";
 import { me, signIn, whoBar, noteSigninResult, esc, toast } from "/auth.js?v=20261030a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const initials = (o) => (o.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("") || "EN").toUpperCase();
-let C = null, user = null, cat = "", pending = [], err = "", busy = false;
+let C = null, user = null, pending = [], err = "", busy = false;
 $("#back").href = "/c/" + slug;
 
 // Photos are resized on the device (at most 1600px, JPEG) before they are uploaded
@@ -35,7 +35,7 @@ async function shrink(file) {
 async function start() {
   const r = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" });
   if (!r.ok) { $("#app").innerHTML = `<div class="card center"><h2>We can't find that contest</h2><a class="btn" href="/">Back to the map</a></div>`; return; }
-  const D = await r.json(); C = D.contest; cat = C.categories[0]; document.title = "Enter: " + C.name;
+  const D = await r.json(); C = D.contest; document.title = "Enter: " + C.name;
   if (!C.entriesOpen) { $("#app").innerHTML = `<div class="card center"><h2>Entries are closed</h2><p class="muted">${esc(C.name)} isn't taking new entries right now.</p><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`; return; }
   user = (await me()).user;
   if (!user) return gate();
@@ -59,17 +59,15 @@ async function addFiles(list) {
 }
 const setErr = (t) => { err = t; const e = $("#err"); if (e) { e.textContent = t; e.hidden = !t; } };
 function form() {
-  $("#app").innerHTML = `<div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(C.org))}</div><div><b>Entering: ${esc(C.name)}</b><span>The contest and its categories are already set.</span></div></div>
+  $("#app").innerHTML = `<div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(C.org))}</div><div><b>Entering: ${esc(C.name)}</b><span>Your home competes in every category. Voters choose a favorite in each one.</span></div></div>
   <div><span class="lab">1. Photos</span><p class="help">Take one now or pick from your gallery. They shrink on your phone, so uploads are quick. The first photo is the cover.</p><div class="drop" id="drop" style="margin-top:10px"><label class="btn ghost" for="ph" style="margin:0">Add photos</label><input id="ph" type="file" accept="image/*" multiple hidden><span>You can also drag photos here. Up to 8.</span></div><div class="thumbs" id="thumbs"></div></div>
   <div><label for="street">2. Street address</label><p class="help">The pin goes on this address and visitors see it.</p><input id="street" type="text" maxlength="120" autocomplete="address-line1" placeholder="e.g. 27 Via Alicia"></div>
   <div class="row2"><div><label for="city">City</label><select id="city" autocomplete="address-level2">${Object.keys(CITY).sort().map((c) => `<option ${c === C.city ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div><div><label for="zip">ZIP</label><input id="zip" type="text" inputmode="numeric" maxlength="5" autocomplete="postal-code" placeholder="92692"></div></div>
-  <div><span class="lab">3. Category</span><div class="chips" role="group" aria-label="Category">${C.categories.map((k) => `<button type="button" class="chip" aria-pressed="${k === cat}" data-cat="${esc(k)}">${esc(k)}</button>`).join("")}</div></div>
-  <div><label for="name">4. Name on the entry</label><input id="name" type="text" maxlength="80" autocomplete="name" placeholder="The Lopez family"></div>
+  <div><label for="name">3. Name on the entry</label><input id="name" type="text" maxlength="80" autocomplete="name" placeholder="The Lopez family"></div>
   <div><label for="desc">One line about your display <span class="help" style="display:inline">(optional)</span></label><textarea id="desc" maxlength="300" placeholder="12,000 lights synced to music. Tune to 88.1 FM."></textarea></div>
   <label style="display:flex;gap:10px;align-items:flex-start;font-weight:600"><input type="checkbox" id="rules" style="width:22px;height:22px;margin:2px 0 0;accent-color:var(--org)"> <span>I agree to the contest rules and that judges may visit.</span></label>
   <p class="err" id="err" role="alert" hidden></p><p class="help">You're signed in as ${esc(user.email)}. ${C.approval === "manual" ? "The organizer reviews each entry before it goes on the map." : "Your entry goes on the map right away."}</p>
   <div class="nav"><a class="btn ghost" href="/c/${esc(slug)}">Cancel</a><button class="btn org" id="send" type="button">Submit my entry</button></div></div>`;
-  document.querySelectorAll("[data-cat]").forEach((b) => (b.onclick = () => { cat = b.dataset.cat; document.querySelectorAll("[data-cat]").forEach((x) => x.setAttribute("aria-pressed", x === b)); }));
   $("#ph").onchange = (e) => { const f = [...e.target.files]; e.target.value = ""; addFiles(f); };
   const d = $("#drop"); d.ondragover = (e) => { e.preventDefault(); d.classList.add("over"); }; d.ondragleave = () => d.classList.remove("over"); d.ondrop = (e) => { e.preventDefault(); d.classList.remove("over"); addFiles([...e.dataTransfer.files]); };
   thumbs(); $("#send").onclick = submit;
@@ -83,7 +81,7 @@ async function submit(retry) {
   if (!$("#rules").checked) return setErr("Tick the box to agree to the rules.");
   setErr(""); busy = true; $("#send").disabled = true; $("#send").textContent = "Sending…";
   const fd = new FormData();
-  for (const [k, val] of Object.entries({ contest: slug, category: cat, biz: v("name"), title: v("name"), street: v("street"), city: v("city"), state: "CA", zip: v("zip"), desc: v("desc") })) fd.append(k, val);
+  for (const [k, val] of Object.entries({ contest: slug, biz: v("name"), title: v("name"), street: v("street"), city: v("city"), state: "CA", zip: v("zip"), desc: v("desc") })) fd.append(k, val);
   pending.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
   try {
     const r = await fetch("/api/submit", { method: "POST", body: fd });

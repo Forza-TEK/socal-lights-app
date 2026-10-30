@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/flow.css?v=20261030a">
+<link rel="stylesheet" href="/flow.css?v=20261030b">
 </head>
 <body>
 <main>
@@ -30,7 +30,7 @@ async function load() {
 }
 
 function render() {
-  const c = D.contest, me = D.me, mineVotes = me.votes || [];
+  const c = D.contest, me = D.me, mine = me.votes || [];
   const pills = [];
   if (c.status !== "live") pills.push(`<span class="pill p-wait">Waiting for approval</span>`);
   else if (c.announced) pills.push(`<span class="pill p-ok">Winners announced</span>`);
@@ -38,31 +38,35 @@ function render() {
     pills.push(c.entriesOpen ? `<span class="pill p-ok">Entries open until ${fmt(c.entriesClose)}</span>` : `<span class="pill p-wait">Entries closed</span>`);
     pills.push(c.votingOpen ? `<span class="pill p-ok">Voting is open</span>` : new Date().toISOString().slice(0, 10) < c.voteStart ? `<span class="pill p-wait">Voting opens ${fmt(c.voteStart)}</span>` : `<span class="pill p-wait">Voting not open</span>`);
   }
-  const winSet = new Set(D.winners);
-  const cards = D.entries.map((e) => {
-    const voted = mineVotes.some((v) => v.post_id === e.id);
-    const has = mineVotes.find((v) => (c.rule === "cat" ? v.category === e.category : true));
-    const label = e.mine ? "This is your home" : voted ? "Your vote ✓" : !c.votingOpen ? (c.announced ? "Voting is over" : "Voting not open") : has ? (c.rule === "cat" ? `Move my ${esc(e.category)} vote here` : "Move my vote here") : "Vote for this home";
-    const ph = e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<img alt="" style="aspect-ratio:16/10">`;
-    return `<div class="hc">${ph}<div class="b"><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="badge">${esc(e.category)}</span>${winSet.has(e.id) ? '<span class="pill p-ok">Winner</span>' : ""}</div><h3>${esc(e.name)}</h3><p>${esc(e.address || e.city)}</p>${e.votes !== null ? `<p><b style="color:var(--ink)">${e.votes}</b> vote${e.votes === 1 ? "" : "s"}</p>` : `<p>Vote counts are hidden until winners are announced.</p>`}
-      <button class="btn ${voted ? "ghost" : "org"} sm" data-vote="${esc(e.id)}" type="button" ${c.votingOpen && !e.mine && !voted ? "" : "disabled"}>${label}</button></div></div>`;
+  const voteIn = (cat) => mine.find((v) => v.category === cat), done = c.categories.filter(voteIn).length;
+  // One ballot per category: every home is listed in every category, and a voter picks one favorite in each
+  const sections = c.categories.map((cat) => {
+    const my = voteIn(cat), win = new Set(D.winners[cat] || []);
+    const rows = D.entries.map((e) => {
+      const isMy = !!my && my.post_id === e.id;
+      const label = e.mine ? "Your home" : isMy ? "Your vote ✓" : !c.votingOpen ? (c.announced ? "Voting is over" : "Voting not open") : my ? "Move my vote here" : "Vote";
+      const n = e.votes ? e.votes[cat] : null;
+      return `<div class="vrow${isMy ? " mine" : ""}">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"></span>`}
+        <div><b>${esc(e.name)} ${win.has(e.id) ? '<span class="pill p-ok">Winner</span>' : ""}</b><span class="meta">${esc(e.address || e.city)}${n !== null ? ` · ${n} vote${n === 1 ? "" : "s"}` : ""}</span></div>
+        <button class="btn ${isMy ? "ghost" : "org"} sm" data-vote="${esc(e.id)}" data-cat="${esc(cat)}" type="button" ${c.votingOpen && !e.mine && !isMy ? "" : "disabled"} aria-label="${esc(label)}: ${esc(e.name)}, ${esc(cat)}">${label}</button></div>`;
+    }).join("");
+    return `<section class="card" aria-labelledby="cat-${esc(cat.replace(/\W+/g, "-"))}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h2 id="cat-${esc(cat.replace(/\W+/g, "-"))}">${esc(cat)}</h2>${my ? `<span class="pill p-ok">You voted</span>` : c.votingOpen ? `<span class="pill p-wait">Pick one favorite</span>` : ""}</div>${D.entries.length ? `<div>${rows}</div>` : `<p class="muted small">No homes yet.</p>`}</section>`;
   }).join("");
   $("#app").innerHTML = `${c.status !== "live" ? `<div class="status no">This contest is waiting for approval, so only you can see it. A person usually checks within a day.</div>` : ""}
   <div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(c.org))}</div><div><b>${esc(c.name)}</b><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
   <p>${esc(c.descr)}</p><div style="display:flex;gap:8px;flex-wrap:wrap">${pills.join("")}</div>
-  <p class="small muted">Voting runs ${fmt(c.voteStart)} to ${fmt(c.voteEnd)}. ${c.rule === "cat" ? "You can vote once in each category." : "Each person gets one vote."}</p>
+  <p class="small muted">Voting runs ${fmt(c.voteStart)} to ${fmt(c.voteEnd)}. Every home is in every category. You get one vote in each category.${c.votingOpen && me.signedIn ? ` You've voted in ${done} of ${c.categories.length}.` : ""}</p>
   <div class="actions">${c.status === "live" ? `<a class="btn org" href="/c/${esc(c.slug)}/enter" ${c.entriesOpen ? "" : 'aria-disabled="true" style="opacity:.55;pointer-events:none"'}>${c.entriesOpen ? "Enter my home" : "Entries are closed"}</a>` : ""}${me.isOwner ? `<a class="btn ghost" href="/c/${esc(c.slug)}/manage">Manage this contest</a>` : ""}<a class="btn ghost" href="/">See it on the map</a></div></div>
-  <h2 style="margin-top:8px">${D.entries.length ? `Homes in the contest (${D.entries.length})` : "No homes yet"}</h2>
-  ${D.entries.length ? `<div class="cards">${cards}</div>` : `<p class="muted">Be the first to enter. Approved homes show up here and on the map.</p>`}`;
-  document.querySelectorAll("[data-vote]").forEach((b) => (b.onclick = () => vote(b.dataset.vote)));
+  ${D.entries.length ? sections : `<div class="card"><h2>No homes yet</h2><p class="muted">Be the first to enter. Approved homes appear here, in every category, and on the map.</p></div>`}`;
+  document.querySelectorAll("[data-vote]").forEach((b) => (b.onclick = () => vote(b.dataset.vote, b.dataset.cat)));
 }
 
-async function vote(id) {
+async function vote(id, category) {
   if (!D.me.signedIn) { const u = await signIn({ title: "Sign in to vote", next: location.pathname }); if (!u) return; await load(); whoBar($("#who")); }
-  const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/vote`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ post_id: id }) });
+  const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/vote`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ post_id: id, category }) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) return toast(j.error || "Couldn't record your vote.");
-  toast(j.same ? "That's already your vote." : j.moved ? "Vote moved to " + j.name : "Vote recorded for " + j.name);
+  toast(j.same ? "That's already your vote." : j.moved ? `${category}: vote moved to ${j.name}` : `${category}: vote recorded for ${j.name}`);
   await load();
 }
 whoBar($("#who")); noteSigninResult(); load();

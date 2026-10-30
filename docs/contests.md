@@ -6,7 +6,7 @@ Built on the branch `claude/amazing-thompson-wfxqst`. **Not merged to `main` yet
 - **Add hub** (`/add`): choose an event (`/add-event`), a home decorating contest (`/add-contest`) or a lighting display (`/add-house`). The two existing forms are unchanged.
 - **Contest wizard** (`/add-contest`): four screens (Basics, Dates, Rules, Review). Signing in happens on the last screen; the draft survives the Google redirect.
 - **Contest page** (`/c/<slug>`): the page the QR code opens. Shows the contest, the approved homes, and Vote buttons.
-- **Entry form** (`/c/<slug>/enter`): photos, address, category, name. Needs sign-in. Posts to `/api/submit` with a `contest` field.
+- **Entry form** (`/c/<slug>/enter`): photos, address, name. Needs sign-in. Posts to `/api/submit` with a `contest` field. A home does not pick a category: it competes in every category.
 - **Organizer dashboard** (`/c/<slug>/manage`): approve or decline entries, pause/start voting, hide counts, announce winners, copy link, QR poster.
 - **Admin** (`/admin/`, Contests tab): approve or decline contests that were held for review.
 
@@ -15,7 +15,7 @@ Built on the branch `claude/amazing-thompson-wfxqst`. **Not merged to `main` yet
 - **Contest goes live** when the organizer's email domain matches the website they entered. A free-mail address (Gmail, Hotmail, ...) or a mismatch holds it as `pending` for the admin. The link and QR work meanwhile, but the contest is not public and entries are paused.
 - **Live contests** are listed on the map as an event (`events.id = c-<slug>`). Approved entries are ordinary `posts` rows (with `contest_id`, `category`, `entry_no`, `user_id`), so they appear on the map and in the list like any home.
 - **Entries**: `manual` approval keeps photos under `pending/` until the organizer approves (same promotion as the admin's approve). `auto` stores them under `p/` straight away.
-- **One vote per person**: `votes` has `UNIQUE(contest_id, user_id, category)`. `category` is empty for "one vote total" and the entry's category for "one per category". Voting again moves the vote. Nobody can vote for their own home. Voting needs the dates (or the organizer's "Start now") and stops when winners are announced.
+- **Voting is per category**: the organizer defines voting categories (for example Best Overall, Most Creative). Every approved home is listed in every category, and each voter picks one favorite home in each category. `votes` has `UNIQUE(contest_id, user_id, category)`, which is what guarantees one vote per person per category; voting again in a category moves that vote. Nobody can vote for their own home. Voting needs the dates (or the organizer's "Start now") and stops when winners are announced. Winners are the top home in each category. For a single overall winner, use one category.
 - **Dates and overrides**: entries and voting follow the dates; the organizer can pause either, or start voting early.
 
 ## Turning it on (one-time setup)

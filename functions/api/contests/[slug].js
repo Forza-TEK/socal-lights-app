@@ -9,28 +9,25 @@ export async function onRequestGet({ params, request, env }) {
   const user = await getUser(request, env);
   const isOwner = !!(user && c && user.id === c.owner_id);
   if (!c || (c.status !== "live" && !isOwner)) return err(404, "This contest isn't available.");
-  const { results: posts } = await env.DB.prepare("SELECT id,title,biz,category,address,city,lat,lng,photos,entry_no,user_id FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
+  const { results: posts } = await env.DB.prepare("SELECT id,title,biz,address,city,lat,lng,photos,entry_no,user_id FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
   const showCounts = !!c.show_counts || !!c.announced || isOwner;
-  const counts = {};
-  if (showCounts) for (const r of (await env.DB.prepare("SELECT post_id, COUNT(*) AS n FROM votes WHERE contest_id = ? GROUP BY post_id").bind(c.id).all()).results) counts[r.post_id] = r.n;
+  const categories = cats(c), counts = {}; // counts[post_id][category] = votes
+  if (showCounts) for (const r of (await env.DB.prepare("SELECT post_id, category, COUNT(*) AS n FROM votes WHERE contest_id = ? GROUP BY post_id, category").bind(c.id).all()).results) (counts[r.post_id] ||= {})[r.category] = r.n;
   const mine = user ? (await env.DB.prepare("SELECT post_id, category FROM votes WHERE contest_id = ? AND user_id = ?").bind(c.id, user.id).all()).results : [];
   const w = windows(c);
-  const entries = posts.map((p) => {
-    const votes = showCounts ? counts[p.id] || 0 : null;
-    return { id: p.id, name: p.title || p.biz, biz: p.biz, category: p.category, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, votes, mine: !!(user && p.user_id === user.id) };
-  });
-  // winners: the home with the most votes overall (one vote total) or in each category
-  let winners = [];
-  if (c.announced) {
-    const groups = c.vote_rule === "cat" ? cats(c) : [""];
-    for (const g of groups) {
-      const pool = entries.filter((e) => !g || e.category === g);
-      const top = Math.max(0, ...pool.map((e) => e.votes || 0));
-      if (top > 0) winners.push(...pool.filter((e) => e.votes === top).map((e) => e.id));
-    }
+  // Every home competes in every category, so each home carries a vote count per category (null when counts are hidden)
+  const entries = posts.map((p) => ({
+    id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no,
+    votes: showCounts ? Object.fromEntries(categories.map((k) => [k, (counts[p.id] || {})[k] || 0])) : null, mine: !!(user && p.user_id === user.id),
+  }));
+  // winners: for each category, the home(s) with the most votes
+  const winners = {};
+  if (c.announced) for (const k of categories) {
+    const top = Math.max(0, ...entries.map((e) => e.votes[k]));
+    winners[k] = top > 0 ? entries.filter((e) => e.votes[k] === top).map((e) => e.id) : [];
   }
   return json({
-    contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories: cats(c), rule: c.vote_rule, approval: c.approval, showCounts: !!c.show_counts, announced: !!c.announced, status: c.status, entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
+    contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, announced: !!c.announced, status: c.status, entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
     entries, winners, me: { signedIn: !!user, isOwner, votes: mine },
   }, { headers: { "cache-control": "no-store" } });
 }

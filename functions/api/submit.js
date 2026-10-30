@@ -4,7 +4,7 @@ import { json, err, clean, safeUrl, newId, verifyTurnstile, nearestCounty, geoco
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 import { getUser } from "../_lib/auth.js";
-import { getContest, windows, cats } from "../_lib/contests.js";
+import { getContest, windows } from "../_lib/contests.js";
 
 const MAX_PHOTOS = 8;
 const MAX_BYTES = 6 * 1024 * 1024; // the browser resizes photos first, so real uploads are far smaller
@@ -44,8 +44,7 @@ export async function onRequestPost({ request, env }) {
   const biz = clean(form.get("biz"), 80);
   const title = clean(form.get("title"), 90) || (contest ? clean(form.get("biz"), 80) : "");
   const city = clean(form.get("city"), 60);
-  const category = contest ? clean(form.get("category"), 40) : "";
-  const descr = clean(form.get("desc"), 1200) || (contest ? `${category} entry in ${contest.name}` : "");
+  const descr = clean(form.get("desc"), 1200) || (contest ? `Entry in ${contest.name}` : "");
   const email = contest ? cu.email : clean(form.get("email"), 120);
   const webRaw = clean(form.get("web"), 200);
   const kind = form.get("kind") === "installer" ? "installer" : "homeowner";
@@ -70,7 +69,6 @@ export async function onRequestPost({ request, env }) {
   if (pro && webRaw && !web) return err(400, "The website needs to start with http:// or https://");
 
   if (contest) {
-    if (!cats(contest).includes(category)) return err(400, "Choose one of the contest's categories.");
     const { n: mine } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id = ? AND user_id = ? AND status != 'declined'").bind(contest.id, cu.id).first();
     if (mine >= 5) return err(400, "You've reached the limit of 5 entries in this contest.");
   }
@@ -106,7 +104,7 @@ export async function onRequestPost({ request, env }) {
     env.DB.prepare(
       `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,entry_no,approved_at)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'CA',?,?,?,?,?,${contest ? "(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?)" : "NULL"},${autoApprove ? "datetime('now')" : "NULL"})`
-    ).bind(id, autoApprove ? "approved" : "pending", biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area, contest ? contest.id : null, category, cu ? cu.id : null, ...(contest ? [contest.id] : [])),
+    ).bind(id, autoApprove ? "approved" : "pending", biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area, contest ? contest.id : null, "", cu ? cu.id : null, ...(contest ? [contest.id] : [])),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);
