@@ -60,7 +60,7 @@ const warn = (rule, where, msg) => add("warn", false, rule, where, msg);
 // One-time exception (2026-10-30): 0083 never applied (D1 rejected one 106 KB INSERT with SQLITE_TOOBIG), so it may be
 // rewritten as several smaller INSERTs. Nothing live changes. Remove this entry once the fixed 0083 has been applied.
 const NEVER_APPLIED = new Set(["0083_contest_homes_christmas_2026-10-30.sql"]);
-for (const t of touchedOld.filter((t) => !NEVER_APPLIED.has(t.split("/").pop()))) err("existing-migration-edited", t, "Existing migrations must never be edited, renamed or deleted. Add a new file instead.", true);
+for (const t of touchedOld.filter((t) => !NEVER_APPLIED.has(t.split(" ").pop()))) err("existing-migration-edited", t, "Existing migrations must never be edited, renamed or deleted. Add a new file instead.", true);
 
 // ---------- SQL safety (per new file) ----------
 function stripSql(sql) { return sql.replace(/--[^\n]*/g, " ").replace(/'(?:[^']|'')*'/g, "''"); }
