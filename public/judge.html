@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031r">
-<link rel="stylesheet" href="/contest.css?v=20261031r">
+<link rel="stylesheet" href="/addflow.css?v=20261031t">
+<link rel="stylesheet" href="/contest.css?v=20261031t">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
@@ -17,7 +17,7 @@
 <main class="cmain"><div id="app"><p class="loading">Loading the ballot…</p></div></main>
 <script type="module">
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261030a";
-import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261031r";
+import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261031t";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 $("#back").href = "/c/" + slug;
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };

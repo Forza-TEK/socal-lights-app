@@ -1,7 +1,7 @@
 // SoCal Lights admin: review houses, manage published posts, edit events.
 import { CITY } from "/cities.js";
 import { SEASONS, defaultSeason } from "/seasons.js";
-import { attachAddress } from "/addflow.js?v=20261031r";
+import { attachAddress } from "/addflow.js?v=20261031t";
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
