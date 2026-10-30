@@ -636,3 +636,7 @@ body.lb-open{overflow:hidden}
 .preview .pv-photo:has(img),.detail .hero.photo,.detail .gallery:has(.track){cursor:zoom-in}
 .item .tile,.item .thumb{cursor:pointer}
 .lbx:focus:not(:focus-visible),.lbn:focus:not(:focus-visible){outline:none}
+
+/* the desktop pop-up card is positioned with a transform (no layout reads while the map moves) */
+@media (min-width:861px){.preview{left:0;top:0;will-change:transform}}
+.listmore{height:1px}

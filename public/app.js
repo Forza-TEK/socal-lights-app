@@ -2,11 +2,11 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261030f";
+import { SITE } from "/site-config.js?v=20261030m";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
-const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030f" };
+const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261030m" };
 const theme = () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 // Pin and cluster colors: free events are green; ticketed events, clusters and the route take the season's accent
 const SEASON_HEX = { light: { newyear: "#6d3fc0", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
@@ -155,17 +155,17 @@ function initLayers() {
   map.addSource("route", { type: "geojson", data: fc([]) });
   map.addSource("stops", { type: "geojson", data: fc([]) });
   map.addLayer({ id: "clusters", type: "circle", source: "pts", filter: ["has", "point_count"],
-    paint: { "circle-color": C.season, "circle-opacity": 0.92, "circle-radius": ["step", ["get", "point_count"], 16, 8, 20, 20, 25], "circle-stroke-width": 4, "circle-stroke-color": C.ring, "circle-stroke-opacity": 0.9 } });
+    paint: { "circle-color": C.season, "circle-opacity": 0.92, "circle-radius": ["step", ["get", "point_count"], 16, 8, 20, 20, 25], "circle-stroke-width": 0 } });
   map.addLayer({ id: "cluster-count", type: "symbol", source: "pts", filter: ["has", "point_count"],
     layout: { "text-field": ["get", "point_count_abbreviated"], "text-font": ["Noto Sans Bold"], "text-size": 13 }, paint: { "text-color": "#ffffff" } });
   map.addLayer({ id: "pt", type: "circle", source: "pts", filter: ["!", ["has", "point_count"]],
     paint: { "circle-color": catColor(C),
       "circle-radius": ["case", ["==", ["get", "feat"], 1], 10, ["==", ["get", "cat"], "inst"], 8, ["==", ["get", "cat"], "fav"], 8, 7],
-      "circle-stroke-width": ["case", ["==", ["get", "feat"], 1], 3.5, 2.5], "circle-stroke-color": ["case", ["==", ["get", "feat"], 1], C.fav, C.ring] } });
+      "circle-stroke-width": 0.5, "circle-stroke-color": ["case", ["==", ["get", "feat"], 1], C.fav, C.ring] } });
   map.addLayer({ id: "route-line", type: "line", source: "route", paint: { "line-color": C.fav, "line-width": 4, "line-dasharray": [1.5, 1.5] } });
-  map.addLayer({ id: "stops", type: "circle", source: "stops", paint: { "circle-color": C.fav, "circle-radius": 12, "circle-stroke-width": 3, "circle-stroke-color": C.ring } });
+  map.addLayer({ id: "stops", type: "circle", source: "stops", paint: { "circle-color": C.fav, "circle-radius": 12, "circle-stroke-width": 1, "circle-stroke-color": C.ring } });
   map.addLayer({ id: "stops-num", type: "symbol", source: "stops", layout: { "text-field": ["get", "num"], "text-font": ["Noto Sans Bold"], "text-size": 12, "text-allow-overlap": true }, paint: { "text-color": "#ffffff" } });
-  map.addLayer({ id: "hl", type: "circle", source: "hl", paint: { "circle-color": catColor(C), "circle-radius": 11, "circle-stroke-width": 4, "circle-stroke-color": C.ring } });
+  map.addLayer({ id: "hl", type: "circle", source: "hl", paint: { "circle-color": catColor(C), "circle-radius": 11, "circle-stroke-width": 1, "circle-stroke-color": C.ring } });
   map.addLayer({ id: "hl-label", type: "symbol", source: "hl",
     layout: { "text-field": ["get", "label"], "text-font": ["Noto Sans Bold"], "text-size": 13, "text-anchor": "left", "text-offset": [1.2, 0], "text-allow-overlap": true, "text-max-width": 16 },
     paint: { "text-color": C.ink, "text-halo-color": C.ring, "text-halo-width": 2.2 } });
@@ -273,14 +273,15 @@ function selectKey(k, from) {
     const starred = it.kind === "ev" ? favs.has(it.ev.id) : favs.has(hfav(it.p)), want = state.tab === "plan" && starred ? "plan" : "events";
     if (state.tab !== want) setTab(want);
     else if (state.detail) { state.detail = null; renderPanel(); }
-    else if (!document.querySelector(`.item[data-key="${CSS.escape(k)}"]`)) renderPanel();
+    else if (!document.querySelector(`.item[data-key="${CSS.escape(k)}"]`) && !listVis.some((x) => x.key === k)) renderPanel();
   }
   drawHL(); markItems();
   if (from !== "list" && !isPhone()) revealItem(k);
 }
 // Scroll the results list so this item sits at the top of the visible part of the list, and flash it
 function revealItem(k) {
-  const body = $("#pbody"), el = body.querySelector(`.item[data-key="${CSS.escape(k)}"]`);
+  const body = $("#pbody"); let el = body.querySelector(`.item[data-key="${CSS.escape(k)}"]`);
+  if (!el) { const ix = listVis.findIndex((x) => x.key === k); if (ix >= 0) { moreCards(ix + 12); el = body.querySelector(`.item[data-key="${CSS.escape(k)}"]`); } }
   if (!el) return;
   const top = body.scrollTop + el.getBoundingClientRect().top - body.getBoundingClientRect().top - 10;
   body.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
@@ -299,7 +300,7 @@ function renderPreview() {
     const many = ph.length > 1;
     pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide"><img class="evimg ld" src="${photoUrl(k2)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i < 2 ? "eager" : "lazy"}" draggable="false"></div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="pvcount" id="pvcount">1 / ${ph.length}</span>` : ph.length ? `<img class="evimg ld" src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(p.title)}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
   }
-  pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); placePin();
+  pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); pinBox = null; if (!pinRO && window.ResizeObserver) { pinRO = new ResizeObserver(() => { pinBox = null; placePin(); }); pinRO.observe(pv); } placePin();
   const tr = $("#pvtrack");
   if (tr) tr.addEventListener("scroll", () => { const i = Math.round(tr.scrollLeft / tr.clientWidth); $("#pvcount").textContent = i + 1 + " / " + tr.children.length; }, { passive: true });
   pv.onclick = (e) => {
@@ -320,15 +321,28 @@ document.addEventListener("touchmove", (e) => { if (e.target.closest && e.target
 document.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#pvtrack")) pvSwiped = false; }, { passive: true });
 function closePin() { state.sel = null; $("#preview").hidden = true; document.body.classList.remove("pin-open"); drawHL(); markItems(); }
 // Desktop: the card sits next to its dot (below it, or above when there is no room) and follows the map as it moves
+// The pop-up card is placed next to its dot. Its size is measured once (and when it changes), so moving the map never forces a layout.
+let pinBox = null, pinRaf = 0, pinRO = null;
+function measurePin() {
+  const pv = $("#preview"); if (pv.hidden) { pinBox = null; return; }
+  const c = $("#map").getBoundingClientRect();
+  pinBox = { W: pv.offsetWidth, H: pv.offsetHeight, left: c.left, top: c.top, right: innerWidth - (parseFloat(cssVar("--panel-w")) || 0) - 30 };
+}
 function placePin() {
-  const pv = $("#preview"); if (pv.hidden || isPhone() || !mapReady) return;
-  const it = findKey(state.sel); if (!it) return;
-  const [lng, lat] = it.kind === "ev" ? [it.ev.lng, it.ev.lat] : [it.p.plng, it.p.plat], q = map.project([lng, lat]), c = $("#map").getBoundingClientRect();
-  const W = pv.offsetWidth, H = pv.offsetHeight, right = innerWidth - (parseFloat(cssVar("--panel-w")) || 0) - 30, x0 = c.left + q.x, y0 = c.top + q.y;
-  let x = Math.max(14, Math.min(x0 - W / 2, right - W)), y = y0 + 26;
-  if (y + H > innerHeight - 14) y = y0 - 26 - H;
-  y = Math.max(96, Math.min(y, innerHeight - 14 - H));
-  pv.style.left = x + "px"; pv.style.top = y + "px";
+  if (pinRaf) return;
+  pinRaf = requestAnimationFrame(() => {
+    pinRaf = 0;
+    const pv = $("#preview"); if (pv.hidden || !mapReady) return;
+    if (isPhone()) { pv.style.transform = ""; return; }
+    const it = findKey(state.sel); if (!it) return;
+    if (!pinBox) measurePin(); if (!pinBox) return;
+    const { W, H, right } = pinBox, [lng, lat] = it.kind === "ev" ? [it.ev.lng, it.ev.lat] : [it.p.plng, it.p.plat], q = map.project([lng, lat]);
+    const x0 = pinBox.left + q.x, y0 = pinBox.top + q.y;
+    let x = Math.max(14, Math.min(x0 - W / 2, right - W)), y = y0 + 26;
+    if (y + H > innerHeight - 14) y = y0 - 26 - H;
+    y = Math.max(96, Math.min(y, innerHeight - 14 - H));
+    pv.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`;
+  });
 }
 /* ---------- panel ---------- */
 function setTab(t) { state.tab = t; state.detail = null; ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
@@ -337,7 +351,7 @@ function setTab(t) { state.tab = t; state.detail = null; ["events", "plan", "sho
 $("#t-events").onclick = () => setTab("events"); $("#t-shop").onclick = () => setTab("shop"); $("#t-plan").onclick = () => setTab("plan");
 function fitRoute() { const st = routeStops(), og = routeOrigin(); if (st.length + (og ? 1 : 0) < 2 || !mapReady) return; const b = new maplibregl.LngLatBounds(); st.forEach((e) => b.extend([e.lng, e.lat])); if (og) b.extend([og.lng, og.lat]); map.fitBounds(b, { padding: padding(), maxZoom: 13, duration: 600 }); }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
-let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel(); }, 80); }
+let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel({ quiet: true }); }, 80); }
 function counts() { $("#n-events").textContent = E.filter(evMatch).length + SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; }
 function datetile(ev) {
   // Running now: "THRU 31 OCT". One night: "OCT 31 1 night". Upcoming: "NOV 27 opens".
@@ -433,7 +447,16 @@ function quickPicks() {
   const nf = activeFilters().length;
   return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${state[f] === v}">${l}</button>`).join("")}<button type="button" class="qf${fOpen ? " open" : ""}" data-openfilters aria-haspopup="dialog" aria-expanded="${fOpen}">Filters${nf ? ` <span class="fn">${nf}</span>` : ""}</button></div>`;
 }
-function renderPanel() {
+const LIST_PAGE = 60; let listVis = [], listShown = 0, listSig = "", listIO = null;
+function listCard(it, i) { return it.t === "e" ? evItem(it.o, i) : instItem(it.o); }
+// the next page of cards is added when the end of the list scrolls into view
+function moreCards(upTo) {
+  const list = document.querySelector("#pbody .list"); if (!list || listShown >= listVis.length) return;
+  const to = Math.min(listVis.length, Math.max(upTo || 0, listShown + LIST_PAGE));
+  list.insertAdjacentHTML("beforeend", listVis.slice(listShown, to).map((it, i) => listCard(it, listShown + i)).join("")); listShown = to;
+  const sen = $("#listmore"); if (sen && listShown >= listVis.length) sen.remove();
+}
+function renderPanel(opts) {
   counts();
   const head = $("#phead"), body = $("#pbody");
   document.body.classList.toggle("detail-open", !!state.detail);
@@ -453,7 +476,10 @@ function renderPanel() {
     const vis = items.filter((it) => inView(it.lng, it.lat) || state.sel === it.key || state.keep === it.key); // keep: the card you just came back from stays listed
     const act = activeFilters();
     head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span><span class="hright"><label class="sortl">Sort <select class="sortsel" id="sortSel" aria-label="Sort places">${SORTS.map(([v, l]) => `<option value="${v}"${state.sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>${addBtn}</span></div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
-    body.innerHTML = vis.length ? `<div class="list">${vis.map((it, i) => (it.t === "e" ? evItem(it.o, i) : instItem(it.o))).join("")}</div>${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}`
+    const sig = vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort;
+    if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
+    listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE);
+    body.innerHTML = vis.length ? `<div class="list">${vis.slice(0, listShown).map((it, i) => listCard(it, i)).join("")}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}`
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
@@ -483,6 +509,7 @@ function renderPanel() {
     if (mapsApp === "apple" && st.length > 1) notes.push("Multi-stop routes in Apple Maps need iOS 18.4 or later. Older iPhones open with the first stop.");
     body.innerHTML = (nightHelp ? helpHtml(st.length) : "") + `<div class="list">${st.map((ev, i) => (ev.house ? instItem(ev.p, { n: i + 1, leg: legs[i] }) : evItem(ev, i, { n: i + 1, leg: legs[i] }))).join("")}</div>${notes.length ? `<div class="routenotes">${notes.map((n) => `<p><span aria-hidden="true">i</span>${n}</p>`).join("")}</div>` : ""}`;
   }
+  if (listIO) listIO.disconnect(); const sen = $("#listmore"); if (sen && window.IntersectionObserver) { listIO = new IntersectionObserver((en) => { if (en.some((e) => e.isIntersecting)) moreCards(); }, { root: body, rootMargin: "600px" }); listIO.observe(sen); }
   body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
 }
@@ -752,7 +779,9 @@ function moreHtml() {
   const dark = theme() === "dark";
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
   return (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us or shop the season" : "Shop the season"))
-    + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>`, "Night mode", (dark ? "On" : "Off") + " · switches automatically after 6pm", `<span class="sw${dark ? " on" : ""}"><i></i></span>`)
+    + (dark
+      ? row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="false"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>`, "Day mode", "Night mode is on", `<span class="sw"><i></i></span>`)
+      : row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="false"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>`, "Night mode", "Off · switches automatically after 6pm", `<span class="sw"><i></i></span>`))
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
 function openMore() {
@@ -977,5 +1006,5 @@ async function refreshData() {
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - loadedAt > 5 * 60000) refreshData(); });
 setInterval(() => { if (document.visibilityState === "visible") refreshData(); }, 15 * 60000);
 setSheet("peek");
-let rT; addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); renderPanel(); }, 120); });
+let rT; addEventListener("resize", () => { pinBox = null; clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); renderPanel(); }, 120); });
 load();
