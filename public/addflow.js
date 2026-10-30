@@ -22,6 +22,16 @@ export function validSite(s) {
   return h.length <= 253 && L.length >= 2 && L.every((l) => /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(l)) && /^([a-z]{2,63}|xn--[a-z0-9-]{1,59})$/.test(L[L.length - 1]);
 }
 
+/* ---------- light / dark toggle (same switch and same remembered choice as the map) ---------- */
+const nextSwitch = () => { const d = new Date(); d.setMinutes(0, 0, 0); const h = d.getHours(); if (h < 6) d.setHours(6); else if (h < 18) d.setHours(18); else { d.setDate(d.getDate() + 1); d.setHours(6); } return d.getTime(); };
+export function toggleTheme() {
+  const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = t;
+  try { localStorage.setItem("socal-theme", t); localStorage.setItem("socal-theme-until", String(nextSwitch())); } catch {}
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t === "dark" ? "#0b0d12" : "#f6f4f0";
+}
+export const themeBtn = () => '<button class="tbtn" type="button" data-theme-toggle aria-label="Switch between light and dark mode" title="Light / dark"><svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg></button>';
+document.addEventListener("click", (e) => { if (e.target.closest("[data-theme-toggle]")) toggleTheme(); });
+
 /* ---------- field builders ---------- */
 export const input = (d, k, { label = "", ph = "", max = 200, type = "text", opt = false, ac = "", mode = "", addr = false } = {}) =>
   `<div class="field${addr ? " combo" : ""}">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<input class="in" id="f-${k}" data-k="${k}" ${addr ? "data-addr" : ""} type="${type}" maxlength="${max}" ${ac ? `autocomplete="${ac}"` : 'autocomplete="off"'} ${mode ? `inputmode="${mode}"` : ""} placeholder="${esc(ph)}" value="${esc(d[k] ?? "")}"></div>`;
@@ -75,7 +85,7 @@ export function run(o) {
     if (sv && sv.d) { Object.assign(d, sv.d); S.i = sv.i || 0; }
   } catch {}
   const save = () => { if (!o.persist) return; try { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && typeof v !== "function") c[k] = v; localStorage.setItem(o.persist, JSON.stringify({ d: c, i: S.i })); } catch {} };
-  const hdr = (done) => `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a>${done ? '<a class="link" href="/">Back to the map</a>' : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}</div>`;
+  const hdr = (done) => `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${themeBtn()}${done ? '<a class="link" href="/">Back to the map</a>' : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}</div></div>`;
   function draw(focus) {
     if (S.done !== null) { root.innerHTML = `${hdr(true)}<div class="main">${S.done}</div>`; window.scrollTo(0, 0); return; }
     const st = steps(); S.i = Math.max(0, Math.min(S.i, st.length - 1)); const s = st[S.i];
