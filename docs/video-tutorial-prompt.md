@@ -4,7 +4,12 @@ Paste this into Claude Code (or any agent with a browser, ffmpeg and a text-to-s
 
 ---
 
-Make a short tutorial video for **[FEATURE, e.g. "Route these" / "My night" / "Add an event"]** on SoCalLights.app.
+Make a short tutorial video for **[FEATURE]** on SoCalLights.app. The four video types are:
+1. **Add** (a lighting display, an event, and a home decorating contest)
+2. **Route these** (find homes to visit and drive to them in order)
+3. **My night, then Shop** (plan the evening, then browse the shop back home)
+4. **Run a city contest** (create, enter, review, judge, vote, announce, archives)
+Make each type as its own video unless told otherwise.
 
 **Who it is for:** families and everyday visitors, not technical people. They should understand it the first time, on a phone or on a computer, without reading anything else.
 
@@ -13,6 +18,13 @@ Make a short tutorial video for **[FEATURE, e.g. "Route these" / "My night" / "A
 2. Show the feature **twice, back to back**: first on a phone-sized screen (about 390 x 760), then on a desktop-sized screen (about 1280 x 720). Say "on your phone" and "on a computer" in the chapter titles.
 3. Keep each video to one idea, under about 3 minutes in total. If a second idea is needed (for example "My night", then "Shop"), put it in the same video as the next part, in the order a family would use it.
 4. Use only real features. Never invent events, prices, winners or screens. If something cannot be shown truthfully (for example live map tiles), say so in your report.
+
+**Pacing (important)**
+- Give the viewer time to see everything. After every tap, hold the result on screen for at least 1.5 seconds before the next move. After every scroll or page change, hold for at least 2 seconds.
+- Move the cursor slowly and in a smooth line so the eye can follow it. Scroll slowly, never jump.
+- Do not narrate and click at the same instant: say what is about to happen, then do it, then pause.
+- If narration needs more time than the recording gives, slow the recording down rather than cut the narration.
+- Whole recordings are slowed to about 70 percent speed by default, so no action feels rushed.
 
 **Structure**
 - A title card with the logo and the topic.
