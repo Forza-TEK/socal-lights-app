@@ -28,6 +28,16 @@ aren't posted yet, add it with status `expected`, dates estimated from last year
 routine library story times and craft clubs, and anything ending before today. Skip events already on the map
 (`https://socallights.app/api/events`).
 
+## Home decorating contests (every sweep, every city)
+Homes entered in decorating contests are the most-requested thing people look for, so each city gets a dedicated pass for them (Halloween, Thanksgiving/Christmas and other holiday seasons):
+- search "<city> Christmas lights contest 2026", "<city> holiday decorating contest", "<city> best decorated house", "<city> Halloween decorating contest", "<city> home decorating contest winners", "<city> lighting contest", "<city> Christmas lights tour map"
+- check the sources that run them: city parks & recreation and city council pages, HOA and master-planned community newsletters, chambers of commerce, Rotary/Lions/Kiwanis, local newspapers and Patch, local radio stations, school/PTA fundraisers, neighborhood Facebook/Nextdoor posts that are public, and tours such as "Christmas Tree Lane", "Candy Cane Lane", "Santa's Wonderland" streets
+- contest pages usually publish a **list or map of entered or winning homes with street addresses**, plus the judging night or tour dates. Every home with a publicly published street address is a candidate entry
+- add each such home (or each street, when the contest only names the street) as its own event: Christmas season type `drive` (Drive-by / neighborhood); Halloween season type `haunt` for home haunts or `family` for open-house trick-or-treat streets. `venue` = "<name or family surname> display" or the street name; `address` = the published street address (or the street with the cross street); `url` = the contest page that lists it; blurb says it is a contest entry/winner. Name the contest and year in the blurb or name
+- dates: the contest's judging or display period; if the entries list is published but dates are not, use status `expected` and the season window with hours ending in "check site"
+- **never publish a private home's address unless a public page published it for visitors or judging.** Skip contests that say addresses are private. If a contest only publishes a ballot or photo gallery with no addresses, report it as a lead and skip it
+- report in the final message which cities had contests, how many homes were added per contest, and the contest pages that had no addresses
+
 ## When you think you are done
 Re-check each city once more with the library calendar and the parks & recreation calendar specifically. If a city in the group has **no** event for the current season, say so in the report and search for it again by name ("<city> library Halloween 2026", "<city> parks and recreation events October 2026") before giving up. Cities of 50,000+ people almost always have something.
 
