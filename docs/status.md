@@ -202,3 +202,5 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - 2026-10-31 winner badges: `/api/posts` adds `b` (badges with list/popup/detail flags after the owner's choices) to homes owned by past winners; `/api/me/badges` (GET/POST) and a profile Badges tab with a preview; one yellow crown icon on the list card (top-right chip), the map pop-up and the details page. On by default.
 
 - 2026-10-31 the archive is now "Contest archives" (`/archive`, map menu): each finished contest lists its winners and every contestant with their votes, judges' picks or scores and awards won, all from the frozen results (`/api/archive` returns `entries`).
+## 2026-10-30 city sweep, group 6 (Long Beach & Gateway Cities)
+Search coverage was thin (most 2026 pages not yet posted). Fixed Cerritos tree lighting (now Santa's Sleigh Day, Nov 28, Cerritos Library). Leads: Lakewood Holiday Home Decoration Showcase (entries close Dec 11, home list later), Norwalk and Bellflower decor contests (no addresses published), Whittier parade time TBA.
