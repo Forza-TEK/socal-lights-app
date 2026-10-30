@@ -9,8 +9,6 @@ export const SITE = {
   // Shop results are sorted by price, high to low ("price-desc-rank"), and the search words get this extra word to favor higher-end products. Blank either one to turn it off.
   shopSort: "price-desc-rank",
   shopHighEnd: "premium",
-  // Only show products at or above this price in dollars (0 = no minimum).
-  shopMinPrice: 40,
   // Shop tab, by season: categories (more than three; the tab row scrolls), each a list of [emoji, label, Amazon search words]. Links carry the tag above.
   shop: {
     halloween: [
