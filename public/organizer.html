@@ -7,18 +7,21 @@
 <title>Contest dashboard · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/flow.css?v=20261030b">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261031n">
+<link rel="stylesheet" href="/contest.css?v=20261031n">
 <style>main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
 </head>
 <body>
-<main>
-<div class="top"><a id="back" href="/">← Contest page</a><span id="who"></span></div>
+<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<div class="crumb wide"><a id="back" href="/">← Contest page</a></div>
+<main class="cmain wide">
 <div id="app"><p class="loading">Loading your dashboard…</p></div>
 </main>
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
-import { me, signIn, whoBar, noteSigninResult, esc, toast } from "/auth.js?v=20261030a";
+import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261030a";
+import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261031n";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };
@@ -30,7 +33,7 @@ const photoUrl = (k) => (k.startsWith("p/") ? "/api/photo/" + k : `/api/contests
 
 async function load() {
   const i = await me(true);
-  if (!i.user) { $("#app").innerHTML = `<div class="card center"><h2>Organizer sign-in</h2><p class="muted" style="max-width:44ch">Only the person who created this contest can see its entries and results.</p><button class="btn org" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to manage your contest", next: location.pathname })) { whoBar($("#who")); load(); } }; return; }
+  if (!i.user) { $("#app").innerHTML = `<div class="card center"><h2>Organizer sign-in</h2><p class="muted" style="max-width:44ch">Only the person who created this contest can see its entries and results.</p><button class="btn org" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to manage your contest", next: location.pathname })) { refreshAcct($("#acct")); load(); } }; return; }
   const [a, b, vv] = await Promise.all([fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/manage`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/votes`, { cache: "no-store" })]);
   if (!a.ok || !b.ok || !(D = await a.json()).me.isOwner) { $("#app").innerHTML = `<div class="card center"><h2>This isn't your contest</h2><p class="muted">You're signed in as ${esc(i.user.email)}. Sign in with the email you used to create the contest.</p><a class="btn" href="/">Back to the map</a></div>`; return; }
   M = await b.json(); V = vv.ok ? await vv.json() : { votes: [], locked: false }; document.title = "Dashboard: " + D.contest.name; render();
@@ -50,7 +53,7 @@ function render() {
   let qr = ""; try { const q = qrcode(0, "M"); q.addData(url + "?src=qr"); q.make(); qr = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); } catch {}
   const sw = (label, sub, on, action, onLabel, offLabel) => `<div class="sw"><span>${label}<small>${sub}</small></span><button class="btn ghost sm" type="button" data-act="${action}">${on ? offLabel : onLabel}</button></div>`;
   const results = c.categories.map((g) => { const L = live.slice().sort((a, b) => (b.votes?.[g] || 0) - (a.votes?.[g] || 0)), mx = Math.max(1, ...L.map((e) => e.votes?.[g] || 0)), win = new Set(D.winners[g] || []);
-    return `<div style="display:grid;gap:8px"><h3>${esc(g)}</h3>${L.length ? L.map((e) => `<div style="display:grid;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;font-weight:600;font-size:14px"><span>${esc(e.name)}</span><span>${e.votes?.[g] ?? 0}${win.has(e.id) ? " " + CROWN + ' <span class="pill p-ok">Winner</span>' : ""}</span></div><div class="bar"><i style="width:${(e.votes?.[g] || 0) / mx * 100}%"></i></div></div>`).join("") : '<p class="muted small">No approved homes yet.</p>'}</div>`; }).join("");
+    return `<div style="display:grid;gap:8px"><h3>${esc(g)}</h3>${L.length ? L.map((e) => `<div style="display:grid;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;font-weight:600;font-size:14px"><span>${esc(e.name)}</span><span>${e.votes?.[g] ?? 0}${win.has(e.id) ? " " + CROWN + ' <span class="pill p-ok">Winner</span>' : ""}</span></div><div class="rbar"><i style="width:${(e.votes?.[g] || 0) / mx * 100}%"></i></div></div>`).join("") : '<p class="muted small">No approved homes yet.</p>'}</div>`; }).join("");
   $("#app").innerHTML = `${c.status !== "live" ? `<div class="status no"><span><b>Waiting for approval.</b> A person checks new contests, usually within a day. Your link and QR code already work, but the contest isn't on the map and entries are paused until then.</span></div>` : ""}
   <div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(c.org))}</div><div><b>${esc(c.name)}</b><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
   <div class="stats"><div class="stat"><b>${entries.length}</b><span>Entries</span></div><div class="stat"><b>${waiting}</b><span>Waiting for you</span></div><div class="stat"><b>${votes}</b><span>Votes</span></div></div>
@@ -69,7 +72,7 @@ function render() {
   document.querySelectorAll("[data-void]").forEach((b) => (b.onclick = () => { const [id, v] = b.dataset.void.split(":"); act(`/api/contests/${encodeURIComponent(slug)}/votes`, { vote_id: id, voided: v === "1" }, v === "1" ? "Vote voided. It no longer counts." : "Vote restored."); }));
   document.querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => { const o = b.textContent; try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; } catch { b.textContent = "Select it"; } setTimeout(() => (b.textContent = o), 1500); }));
 }
-whoBar($("#who")); noteSigninResult(); load();
+$("#tb").innerHTML = themeBtn(); mountAcct($("#acct")); noteSigninResult(); load();
 </script>
 </body>
 </html>

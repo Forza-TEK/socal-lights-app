@@ -34,6 +34,7 @@ document.addEventListener("click", (e) => { if (e.target.closest("[data-theme-to
 // The signed-in circle: your picture, or the first letter of your email. It opens your profile. Nothing is shown when signed out.
 let acctUser = null; const acctReady = me().then((i) => (acctUser = i.user)).catch(() => {});
 export const acctHtml = () => (acctUser ? `<a class="acct" href="/profile" aria-label="Your profile" title="Your profile">${acctUser.avatar ? `<img src="${esc(acctUser.avatar)}" alt="">` : esc(acctUser.email[0].toUpperCase())}</a>` : "");
+export async function refreshAcct(el) { const i = await me(true); acctUser = i.user; if (el) el.innerHTML = acctHtml(); }
 export async function mountAcct(el) { await acctReady; if (el) el.innerHTML = acctHtml(); }
 
 /* ---------- field builders ---------- */

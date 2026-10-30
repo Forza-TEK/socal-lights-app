@@ -190,3 +190,5 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - 2026-10-31 add forms: the event web page is optional ("Do you have a web page for your event?" with a "No... Next" link; without a page the event waits for a person to review it). Save & exit sits left of the day/night toggle, and a signed-in circle (picture or initial, opens the profile) shows on the forms and hub. Leaving a form with unsaved changes (header links, Back on the first step, closing the tab) offers to save the draft first.
 
 - 2026-10-31 admin restyled to the forms theme (`public/admin/admin.css`: black and white, light type, hairline borders, season-color tab underline, logo, light/dark toggle); every page now has a favicon (admin and offline pages added, plus `/favicon.ico`).
+
+- 2026-10-31 contest page, organizer dashboard restyled to the forms look (`public/contest.css` on top of `public/addflow.css`): logo header, day/night toggle, signed-in circle, hairline cards, outlined pills, black buttons. Behavior unchanged.
