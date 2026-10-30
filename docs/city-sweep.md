@@ -36,6 +36,7 @@ Homes entered in decorating contests are the most-requested thing people look fo
 - add each such home (or each street, when the contest only names the street) as its own event: Christmas season type `drive` (Drive-by / neighborhood); Halloween season type `haunt` for home haunts or `family` for open-house trick-or-treat streets. `venue` = "<name or family surname> display" or the street name; `address` = the published street address (or the street with the cross street); `url` = the contest page that lists it; blurb says it is a contest entry/winner. Name the contest and year in the blurb or name
 - dates: the contest's judging or display period; if the entries list is published but dates are not, use status `expected` and the season window with hours ending in "check site"
 - **never publish a private home's address unless a public page published it for visitors or judging.** Skip contests that say addresses are private. If a contest only publishes a ballot or photo gallery with no addresses, report it as a lead and skip it
+- **Christmas/holiday contests are part of every Nov-Dec run**: also re-check the dated list in [contest-leads.md](contest-leads.md) (entries and winner maps appear in December after judging) and add newly published homes
 - report in the final message which cities had contests, how many homes were added per contest, and the contest pages that had no addresses
 
 ## When you think you are done

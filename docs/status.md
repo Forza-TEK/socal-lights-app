@@ -128,3 +128,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - Rey noticed homes entered in Halloween/Christmas/holiday decorating contests weren't on the map.
 - Added a "Home decorating contests" pass to `docs/city-sweep.md` (search terms, sources, how to represent homes: Christmas `drive`, Halloween `haunt`/`family`, public addresses only), and pointers in `docs/coverage-cities.md` and `docs/updating-events.md`.
 - The scheduled city sweep routine prompt now requires that pass for every city in every run.
+- Halloween contest homes added (98): Mission Viejo MVAC (winners + honorable mentions), Murrieta, Temecula, Yorba Linda, Buena Park (PR 101). Contest pass also covers Christmas; `docs/contest-leads.md` lists contests whose home lists appear in December, and the midweek upkeep re-checks it.
