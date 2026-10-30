@@ -442,10 +442,11 @@ function instItem(p, x = null) {
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
+const sortHtml = () => `<label class="sortl">Sort <select class="sortsel" id="sortSel" aria-label="Sort places">${SORTS.map(([v, l]) => `<option value="${v}"${state.sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
 function quickPicks() {
   const sat = nextSat(), q = [["date", TODAY, "Tonight"], ...(sat !== TODAY ? [["date", sat, "Saturday"]] : []), ["cost", "free", "Free"]];
   const nf = activeFilters().length;
-  return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${state[f] === v}">${l}</button>`).join("")}<button type="button" class="qf${fOpen ? " open" : ""}" data-openfilters aria-haspopup="dialog" aria-expanded="${fOpen}">Filters${nf ? ` <span class="fn">${nf}</span>` : ""}</button></div>`;
+  return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${state[f] === v}">${l}</button>`).join("")}<button type="button" class="qf${fOpen ? " open" : ""}" data-openfilters aria-haspopup="dialog" aria-expanded="${fOpen}">Filters${nf ? ` <span class="fn">${nf}</span>` : ""}</button>${isPhone() ? "" : sortHtml()}</div>`;
 }
 const LIST_PAGE = 60; let listVis = [], listShown = 0, listSig = "", listIO = null;
 function listCard(it, i) { return it.t === "e" ? evItem(it.o, i) : instItem(it.o); }
@@ -463,7 +464,6 @@ function renderPanel(opts) {
   if (state.detail) { head.hidden = true; body.innerHTML = detailHtml(state.detail); wireDetail(); return; }
   head.hidden = false;
   // One list of places: events and home displays together
-  const addBtn = `<button class="addbtn" type="button" id="addBtn" data-addmenu aria-haspopup="true" aria-expanded="false">+ Add <svg class="caret" width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button>`;
   if (state.tab === "events") {
     const ctr = mapReady ? map.getCenter() : null, dist = (o) => (ctr ? miles({ lat: ctr.lat, lng: ctr.lng }, { lat: o.lat, lng: o.lng }) : 0);
     const items = [
@@ -475,7 +475,7 @@ function renderPanel(opts) {
     items.sort(state.sort === "free" ? (a, b) => lead(a, b) || (b.free ? 1 : 0) - (a.free ? 1 : 0) || soon(a, b) : state.sort === "soon" ? soon : (a, b) => lead(a, b) || dist(a) - dist(b) || soon(a, b));
     const vis = items.filter((it) => inView(it.lng, it.lat) || state.sel === it.key || state.keep === it.key); // keep: the card you just came back from stays listed
     const act = activeFilters();
-    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span><span class="hright"><label class="sortl">Sort <select class="sortsel" id="sortSel" aria-label="Sort places">${SORTS.map(([v, l]) => `<option value="${v}"${state.sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>${addBtn}</span></div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span>${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
     const sig = vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort;
     if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
     listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE);
@@ -526,7 +526,6 @@ $("#pbody").addEventListener("click", (e) => {
   const sh = e.target.closest("[data-share]"); if (sh) { e.stopPropagation(); shareItem(sh.dataset.share); }
 });
 $("#phead").addEventListener("click", (e) => {
-  const am = e.target.closest("[data-addmenu]"); if (am) { const m = $("#addmenu"); m && !m.hidden ? closeAdd() : openAdd(am); return; }
   const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
   const cl = e.target.closest("[data-clear]"); if (cl) { clearFilter(cl.dataset.clear); return; }
   const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { popFor === "shopseason" ? closePop() : openPop(sc); return; }
@@ -650,7 +649,7 @@ function openSupport() {
 }
 function closeForm() { $("#modal").hidden = true; $("#modal").innerHTML = ""; }
 document.addEventListener("keydown", (e) => { if ((e.key === "ArrowRight" || e.key === "ArrowLeft") && $("#pvtrack") && !e.target.closest("input,select,textarea") && $("#modal").hidden) { const t = $("#pvtrack"); t.scrollBy({ left: (e.key === "ArrowRight" ? 1 : -1) * t.clientWidth, behavior: "smooth" }); return; }
-  if (e.key === "Escape") { if (!$("#modal").hidden) closeForm(); else if (fOpen) { closeFilters(); renderPanel(); } else if ($("#addmenu") && !$("#addmenu").hidden) closeAdd(); else if (!$("#moremenu").hidden) closeMore(); else if (!$("#pop").hidden) closePop(); else if ($("#seasonmenu")) closeSeasonMenu(); else if (!$("#preview").hidden) closePin(); } });
+  if (e.key === "Escape") { if (!$("#modal").hidden) closeForm(); else if (fOpen) { closeFilters(); renderPanel(); } else if (!$("#moremenu").hidden) closeMore(); else if (!$("#pop").hidden) closePop(); else if ($("#seasonmenu")) closeSeasonMenu(); else if (!$("#preview").hidden) closePin(); } });
 /* ---------- popovers, filters panel, menu ---------- */
 let popFor = null;
 function closePop() { $("#pop").hidden = true; popFor = null; }
@@ -752,7 +751,7 @@ function refreshFilters() {
   const qi = f.querySelector("#fCityQ"); if (qi && q) { qi.value = q; drawCityList(q); }
 }
 function openFilters(anchor) {
-  closeMore(); closePop(); closeSeasonMenu(); closeAdd();
+  closeMore(); closePop(); closeSeasonMenu();
   fAnchor = anchor; fOpen = true;
   const f = fPanel(); f.hidden = false; f.innerHTML = filtersHtml(); $("#fback").hidden = !isPhone();
   document.body.classList.add("filters-open"); placeFilters();
@@ -761,24 +760,13 @@ function closeFilters() { fOpen = false; const f = $("#fpanel"); if (f) f.hidden
 document.addEventListener("click", (e) => { if (!e.target.isConnected) return; if (fOpen && !isPhone() && !e.target.closest("#fpanel,[data-openfilters]")) closeFilters(); });
 addEventListener("resize", placeFilters);
 
-/* + Add menu in the list header: an event or a house */
-function closeAdd() { const m = $("#addmenu"); if (m) m.hidden = true; const b = $("#addBtn"); if (b) b.setAttribute("aria-expanded", "false"); }
-function openAdd(btn) {
-  closeFilters(); closeMore(); closePop(); closeSeasonMenu();
-  let m = $("#addmenu"); if (!m) { m = document.createElement("div"); m.id = "addmenu"; m.className = "menu"; m.setAttribute("role", "menu"); document.body.appendChild(m);
-    m.addEventListener("click", (e) => { const b = e.target.closest("[data-add]"); if (!b) { if (e.target.closest("a")) closeAdd(); return; } closeAdd(); }); }
-  m.innerHTML = `<a class="mrow" role="menuitem" href="/add-event"><span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="mt"><b>Add an event</b><small>Free, takes a minute. We check the event page.</small></span></a><a class="mrow" role="menuitem" href="/add-house?s=${state.season}"><span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7v9H4z"/><path d="M12 17.5s-2.5-1.5-2.5-3.2a1.3 1.3 0 0 1 2.5-.6 1.3 1.3 0 0 1 2.5.6c0 1.7-2.5 3.2-2.5 3.2z"/></svg></span><span class="mt"><b>Showcase your house</b><small>Post your lights. Homeowners and installers.</small></span></a>`;
-  m.hidden = false; btn.setAttribute("aria-expanded", "true");
-  const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 10 + "px"; m.style.left = Math.max(10, Math.min(r.right - w, innerWidth - w - 10)) + "px";
-}
-document.addEventListener("click", (e) => { if (!e.target.isConnected) return; const m = $("#addmenu"); if (m && !m.hidden && !e.target.closest("#addmenu,[data-addmenu]")) closeAdd(); });
-
 /* ⋯ menu: keep it free, night mode, contact (Add event and Add house live in the list header) */
 function closeMore() { const m = $("#moremenu"); if (m) m.hidden = true; const b = $("#morebtn"); if (b) b.setAttribute("aria-expanded", "false"); }
 function moreHtml() {
   const dark = theme() === "dark";
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
-  return (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us or shop the season" : "Shop the season"))
+  return row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home display")
+    + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us or shop the season" : "Shop the season"))
     + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, dark
       ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>`
       : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>`,
@@ -786,7 +774,7 @@ function moreHtml() {
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
 function openMore() {
-  closeFilters(); closePop(); closeSeasonMenu(); closeAdd();
+  closeFilters(); closePop(); closeSeasonMenu();
   const m = $("#moremenu"), b = $("#morebtn"); m.innerHTML = moreHtml(); m.hidden = false; b.setAttribute("aria-expanded", "true");
   const r = b.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 10 + "px"; m.style.left = Math.max(10, Math.min(r.right - w, innerWidth - w - 10)) + "px";
 }
@@ -1014,5 +1002,6 @@ async function refreshData() {
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - loadedAt > 5 * 60000) refreshData(); });
 setInterval(() => { if (document.visibilityState === "visible") refreshData(); }, 15 * 60000);
 setSheet("peek");
+let wasPhone = isPhone(); matchMedia("(max-width:860px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); renderPanel(); } });
 let rT; addEventListener("resize", () => { pinBox = null; clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); renderPanel(); }, 120); });
 load();

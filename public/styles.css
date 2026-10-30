@@ -640,3 +640,7 @@ body.lb-open{overflow:hidden}
 /* the desktop pop-up card is positioned with a transform (no layout reads while the map moves) */
 @media (min-width:861px){.preview{left:0;top:0;will-change:transform}}
 .listmore{height:1px}
+
+/* desktop: Sort sits on the quick-pick row, after Filters */
+.quick .sortl{flex:none;margin-left:auto;align-self:center;white-space:nowrap}
+.quick button.qf{margin-left:0}
