@@ -38,7 +38,7 @@ A helper always reports the cities where it found nothing, so gaps are visible i
 15. **Southwest Riverside & the Pass** — Lake Elsinore, Wildomar, Murrieta, Temecula, Hemet, San Jacinto, Beaumont, Banning, Calimesa, Canyon Lake
 16. **Coachella Valley** — Palm Springs, Cathedral City, Rancho Mirage, Palm Desert, Indian Wells, La Quinta, Indio, Coachella, Desert Hot Springs, Blythe (far east, along the Colorado River)
 17. **San Bernardino Valley & West End** — San Bernardino, Redlands, Yucaipa, Loma Linda, Highland, Rialto, Fontana, Colton, Rancho Cucamonga, Upland, Ontario, Montclair, Chino, Chino Hills, Grand Terrace
-18. **High Desert & Mountains** — Victorville, Hesperia, Adelanto, Apple Valley, Big Bear Lake, Lake Arrowhead, Crestline, Running Springs, Oak Glen, Barstow/Yermo, Twentynine Palms, Joshua Tree, Yucca Valley, Needles
+18. **High Desert & Mountains** — Victorville, Hesperia (including Oak Hills, Summit Valley, Mojave River Valley), Adelanto, Apple Valley, Oro Grande, Spring Valley Lake, Helendale, Phelan, Pinon Hills, Wrightwood, Lucerne Valley, Big Bear Lake, Lake Arrowhead, Crestline, Running Springs, Oak Glen, Barstow/Yermo, Twentynine Palms, Joshua Tree, Yucca Valley, Needles
 
 ## Ventura & Santa Barbara counties
 19. **Ventura County** — Ventura, Oxnard, Port Hueneme, Camarillo, Thousand Oaks, Newbury Park, Simi Valley, Moorpark, Ojai, Santa Paula, Fillmore
