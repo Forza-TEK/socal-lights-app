@@ -22,22 +22,17 @@ def parse(c):
     return None
 def fmt(r,g,b,a):
     return f"rgba({round(r*255)},{round(g*255)},{round(b*255)},{round(a,3)})" if a<1 else "#%02x%02x%02x"%(round(r*255),round(g*255),round(b*255))
+DIM=0.50  # night map = the day map with every color multiplied by this (same hues, just dimmed)
 def tx(c,kind):
     p=parse(c)
     if not p: return c
-    r,g,b,a=p;h,l,s=colorsys.rgb_to_hls(r,g,b)
-    # the day map's own colors, just darker: same hues and saturation, lightness scaled down
-    if kind=="fill": l2=0.05+0.24*l; s2=min(1.0,s*0.9)
-    elif kind=="line": l2=0.10+0.30*l; s2=s*0.62
-    elif kind=="text": l2=0.86; s2=min(0.45,s)
-    elif kind=="halo": l2=0.07; s2=min(0.5,s)
-    else: return c
-    r2,g2,b2=colorsys.hls_to_rgb(h,l2,s2);return fmt(r2,g2,b2,a)
+    r,g,b,a=p
+    return fmt(r*DIM,g*DIM,b*DIM,a)
 def walk(v,kind):
     if isinstance(v,str): return tx(v,kind)
     if isinstance(v,list): return [walk(x,kind) if not (isinstance(x,str) and not parse(x)) else x for x in v]
     return v
-KIND={"background-color":"fill","fill-color":"fill","fill-extrusion-color":"fill","line-color":"line","fill-outline-color":"line","text-color":"text","text-halo-color":"halo","icon-halo-color":"halo"}
+KIND={"background-color":"fill","fill-color":"fill","fill-extrusion-color":"fill","line-color":"line","fill-outline-color":"line","text-color":"text","text-halo-color":"halo","icon-halo-color":"halo","icon-color":"icon","circle-color":"icon","circle-stroke-color":"icon"}
 def darkify(style):
     for L in style["layers"]:
         pt=L.get("paint",{})
@@ -46,7 +41,7 @@ def darkify(style):
     style["name"]="SoCal dark liberty"
     return style
 if __name__=="__main__":
-    # Regenerates public/map-dark.json: OpenFreeMap's colorful "liberty" style, darkened (same hues as the day map, just darker)
+    # Regenerates public/map-dark.json: OpenFreeMap's colorful "liberty" style, darkened (every color of the day map multiplied by 0.5: same hues, just dimmed)
     import urllib.request
     req=urllib.request.Request("https://tiles.openfreemap.org/styles/liberty",headers={"User-Agent":"SoCalLights-style-build/1.0 (info@socallights.app)"})
     d=darkify(json.load(urllib.request.urlopen(req)))
