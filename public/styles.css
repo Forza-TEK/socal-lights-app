@@ -676,3 +676,8 @@ body.lb-open{overflow:hidden}
 .shoptx{font-weight:500}.shopgo{font-weight:500}
 .linkbtn{font-weight:400}
 .quick button[aria-pressed="true"],.fseg button[aria-pressed="true"],.pop .seg button[aria-pressed="true"],.kindseg button[aria-pressed="true"]{font-weight:500}
+
+/* Shop category tabs: on desktop (mouse) wrap onto rows so every category is visible; phones keep the swipe row */
+@media (hover:hover) and (pointer:fine){
+  .quick[aria-label="Shop categories"]{flex-wrap:wrap;overflow:visible}
+}
