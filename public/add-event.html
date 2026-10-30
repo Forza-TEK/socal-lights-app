@@ -8,12 +8,12 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031j">
+<link rel="stylesheet" href="/addflow.css?v=20261031m">
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261031j";
+import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261031m";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261029d";
 import { CITY } from "/cities.js";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
@@ -22,9 +22,9 @@ const d = { url: "", name: "", season: defaultSeason(today), type: "", start: ""
 const PLANS = [["", "No thanks, just list it", "Free"], ["pin", "Featured pin: $5", "Gold-ringed pin and Featured badge for 30 days"], ["top", "Top of the list: $10", "Everything above, plus listed first for 30 days"], ["season", "Whole season: $15", "Everything above, until your event ends"]];
 
 const steps = [
-  { id: "url", sec: "Basics", title: "What's the web page for your event?", help: "We read the page to check the event is real. It should mention the event's name and date. If it matches, your event goes live right away.",
-    body: (x) => input(x, "url", { label: "Event web page", type: "text", mode: "url", ph: "yourevent.org/lights", max: 300 }),
-    check: (x) => (!x.url.trim() || !validSite(x.url) ? "Add a valid link to your event's web page, like example.org/event." : "") },
+  { id: "url", sec: "Basics", title: "Do you have a web page for your event?", help: "If the page mentions your event's name and date, it goes live right away. Without one, a person checks it first, usually within a day.",
+    body: (x) => `${input(x, "url", { label: "Event web page", type: "text", mode: "url", ph: "yourevent.org/lights", max: 300, opt: true })}<div style="text-align:right;margin-top:-12px"><button class="link" type="button" data-a="skipurl" style="display:inline-flex;align-items:center;gap:6px">No... Next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>`,
+    check: (x) => (x.url.trim() && !validSite(x.url) ? "That doesn't look like a web address. Try something like example.org/event, or tap No... Next." : "") },
   { id: "name", sec: "Basics", title: "What's the event called?", help: "Choose its season and type too, so people can find it.", redraw: true,
     body: (x) => `${input(x, "name", { label: "Event name", max: 120 })}${select(x, "season", Object.entries(SEASONS).map(([k, v]) => [k, v.label]), { label: "Season" })}${select(x, "type", Object.entries(SEASONS[x.season].types).map(([k, l]) => [k, l]), { label: "Type", blank: "Choose a type" })}`,
     check: (x) => (x.name.trim().length < 4 ? "Enter the event's name." : !SEASONS[x.season].types[x.type] ? "Choose the type of event." : "") },
@@ -40,7 +40,7 @@ const steps = [
   { id: "blurb", sec: "About", title: "Describe it in a sentence or two", help: "In your own words. It shows on the map card.",
     body: (x) => area(x, "blurb", { max: 200, ph: "What families will see and do" }), check: (x) => (x.blurb.trim().length < 20 ? "Add a sentence or two (at least 20 characters)." : "") },
   { id: "review", sec: "Review", title: "Check everything, then add it", cta: "Add my event", redraw: false,
-    body: (x) => `<div class="sum">${sumRow("Event", esc(x.name), "name")}${sumRow("Page", esc(x.url), "url")}${sumRow("When", fmt(x.start) + (x.end !== x.start ? " to " + fmt(x.end) : ""), "dates")}${sumRow("Price", x.free === "yes" ? "Free" : esc(x.price), "price")}${sumRow("Where", `${esc(x.venue)}, ${esc(x.city)}`, "where")}</div>
+    body: (x) => `<div class="sum">${sumRow("Event", esc(x.name), "name")}${sumRow("Page", x.url.trim() ? esc(x.url) : "None. A person will check it", "url")}${sumRow("When", fmt(x.start) + (x.end !== x.start ? " to " + fmt(x.end) : ""), "dates")}${sumRow("Price", x.free === "yes" ? "Free" : esc(x.price), "price")}${sumRow("Where", `${esc(x.venue)}, ${esc(x.city)}`, "where")}</div>
       ${input(x, "email", { label: `Your email <small>${PRIV}. Only used if something needs fixing.</small>`, type: "email", mode: "email", ac: "email", max: 120 })}
       ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div class="tiles">${PLANS.map(([v, t, s]) => tile(x, "plan", v, t, s, false)).join("")}</div><p class="small muted">You'll pay on Stripe's secure page right after your event is added. If it needs a quick review first, your Featured placement turns on as soon as it's approved.</p></div>` : ""}<div id="ts"></div>`,
     check: (x) => (!isEmail(x.email) ? "Enter your email so we can reach you if something needs fixing." : ""),
@@ -60,6 +60,7 @@ const steps = [
 ];
 run({ steps, data: d, persist: "scl-event-draft", account: { kind: "event", title: (x) => x.name }, noPersist: ["email", "plan"], season: (x) => x.season, addr: { cities },
   onInput: (k, x) => { if (k === "start" && (!x.end || x.end < x.start)) { x.end = x.start; const e = document.getElementById("f-end"); if (e) e.value = x.end; } if (k === "season") { x.type = ""; const t = document.getElementById("f-type"); if (t) t.innerHTML = '<option value="">Choose a type</option>' + Object.entries(SEASONS[x.season].types).map(([a, l]) => `<option value="${esc(a)}">${esc(l)}</option>`).join(""); } },
+  actions: { skipurl(_, a) { d.url = ""; a.next(); } },
   after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });
 </script>
 </body>
