@@ -122,3 +122,4 @@ Already well covered (about 45 events). Added Après in the Pines holiday market
 - Added `public/privacy.html` (https://socallights.app/privacy), `app/` (Capacitor iOS and Android projects wrapping the site, with icons and permissions) and `docs/app-store.md` (steps, listing text, privacy answers, review notes).
 - In the apps (browser string `SoCalLightsApp`) there is no tip item or Featured payment option.
 - Waiting on: Apple Developer account type, a Mac for the iOS build, Google Play and Microsoft Partner accounts.
+- Showcase a House is now its own page, /add-house (the ?s= value presets the season), matching Add an event. The pop-up form is gone from the map. #showcase links redirect to the page. Both pages hide their form properly after a successful send.

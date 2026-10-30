@@ -2,7 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
 import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261029r";
+import { SITE } from "/site-config.js?v=20261029s";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -536,50 +536,6 @@ function wireDetail() {
 }
 
 /* ---------- Showcase a House form ---------- */
-let pending = [], tsWidget = null;
-function loadTurnstile() {
-  if (!CONFIG.turnstileSiteKey) return Promise.resolve(null);
-  if (window.turnstile) return Promise.resolve(window.turnstile);
-  return new Promise((res) => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = () => res(window.turnstile); s.onerror = () => res(null); document.head.appendChild(s); });
-}
-function openForm() {
-  pending = []; const m = $("#modal");
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="fh"><div class="row" style="justify-content:space-between"><h2 id="fh">Showcase a House</h2><button class="xbtn" type="button" id="fClose" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
-  <p class="meta" style="margin:0">${esc(SEASONS[state.season].showcase ? SEASONS[state.season].showcase.pitch : "")} Free to post, up to 8 photos.</p>
-  <form class="f" id="instForm" novalidate>
-    <input type="hidden" name="kind" id="fKind" value="homeowner">
-    <div class="kindrow"><span class="kl">I am posting as</span><div class="kindseg" role="group" aria-label="Posting as"><button type="button" data-kind="homeowner" class="on" aria-pressed="true">A homeowner</button><button type="button" data-kind="installer" aria-pressed="false">A professional installer</button></div></div>
-    <div class="two"><label for="fBiz"><span id="fBizL">Your name or family <span class="hint">shown as “Posted by”</span></span><input id="fBiz" name="biz" maxlength="80" required autocomplete="name" placeholder="e.g. The Garcia family"></label><label for="fEmail">Your email <span class="hint">private, only the site owner sees it</span><input id="fEmail" name="email" type="email" maxlength="120" required autocomplete="email"></label></div>
-    <fieldset class="probox" id="fPro" hidden disabled><legend>Business details <span class="hint">shown on your listing</span></legend>
-      <div class="two"><label for="fWeb">Website<input id="fWeb" name="web" type="url" maxlength="200" placeholder="https://"></label><label for="fPhone">Phone for quotes<input id="fPhone" name="phone" maxlength="80" autocomplete="tel"></label></div>
-      <label for="fArea">Service area <span class="hint">optional, e.g. Orange and Los Angeles counties</span><input id="fArea" name="area" maxlength="120"></label>
-      <label class="chk"><input type="checkbox" name="permission" id="fPerm" value="1"> I have the homeowner’s permission to show this address</label>
-    </fieldset>
-    <div class="two"><label for="fTitle">Display name<input id="fTitle" name="title" maxlength="90" required placeholder="e.g. Music-synced rooftop show"></label><label for="fSeason">Season<select id="fSeason" name="season">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === state.season ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label></div>
-    <label for="fStreet">Street address <span class="hint">the pin goes on this address and visitors see it</span><input id="fStreet" name="street" maxlength="120" required autocomplete="address-line1" placeholder="e.g. 123 Main St"></label>
-    <label for="fCity">City<select id="fCity" name="city" required autocomplete="address-level2"><option value="">Choose a city</option>${Object.keys(CITY).sort().map((c) => `<option>${esc(c)}</option>`).join("")}</select></label>
-    <div class="two"><label for="fState">State<select id="fState" name="state"><option value="CA">CA</option></select></label><label for="fZip">ZIP<input id="fZip" name="zip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" required autocomplete="postal-code" placeholder="92630"></label></div>
-    <label for="fWhere">Where to see it <span class="hint">optional. Viewing tips, like best nights or where to park.</span><input id="fWhere" name="where" maxlength="120" placeholder="e.g. Visible from Main St on weekend nights"></label>
-    <label for="fDesc"><span id="fDescL">About this house</span><textarea id="fDesc" name="desc" maxlength="1200" required placeholder="What you installed, how many lights, what makes it special"></textarea></label>
-    <div class="drop" id="drop"><div><b style="color:var(--ink)">Photos</b> · up to 8. The first one is the cover.</div><div class="thumbs" id="thumbs"></div><div><label class="btn ghost" for="fPhotos" style="display:inline-flex">Choose photos</label><input id="fPhotos" type="file" accept="image/*" multiple hidden></div><div class="meta">Photos are resized on your device before upload. You can also drag them here.</div></div>
-    <div id="ts"></div>
-    <div class="row"><button class="btn ice" type="submit" id="fSubmit">Send for review</button><span class="msg" id="fMsg" role="status"></span></div>
-  </form></div>`;
-  m.hidden = false; $("#fBiz").focus();
-  m.querySelectorAll("[data-kind]").forEach((b) => (b.onclick = () => {
-    const pro = b.dataset.kind === "installer"; $("#fKind").value = b.dataset.kind;
-    m.querySelectorAll("[data-kind]").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); });
-    $("#fPro").hidden = !pro; $("#fPro").disabled = !pro; // a disabled fieldset is left out of the submission
-    $("#fBizL").innerHTML = pro ? "Business name" : `Your name or family <span class="hint">shown as “Posted by”</span>`;
-    $("#fBiz").placeholder = pro ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family"; $("#fDescL").textContent = pro ? "About this installation" : "About this house";
-  }));
-  $("#fClose").onclick = closeForm; m.onclick = (e) => { if (e.target === m) closeForm(); };
-  $("#fPhotos").onchange = (e) => { const files = [...e.target.files]; e.target.value = ""; addFiles(files); };
-  const d = $("#drop"); d.ondragover = (e) => { e.preventDefault(); d.classList.add("over"); }; d.ondragleave = () => d.classList.remove("over"); d.ondrop = (e) => { e.preventDefault(); d.classList.remove("over"); addFiles([...e.dataTransfer.files]); };
-  $("#instForm").onsubmit = submitForm;
-  tsWidget = null; loadTurnstile().then((ts) => { if (ts && $("#ts")) tsWidget = ts.render("#ts", { sitekey: CONFIG.turnstileSiteKey }); });
-}
-
 /* ---------- monetization: affiliate links, support box ---------- */
 // Add the affiliate tracking parameter to ticket links on hosts configured in site-config.js (no-op when none are set).
 function affRule(u) { try { const h = new URL(u).hostname.replace(/^www\./, ""); return SITE.ticketAffiliates[h] || SITE.ticketAffiliates[h.split(".").slice(-2).join(".")] || null; } catch { return null; } }
@@ -607,60 +563,9 @@ function openSupport() {
   m.hidden = false; $("#sClose").onclick = closeForm; $("#sClose").focus();
   if ($("#sShop")) $("#sShop").onclick = () => { closeForm(); setTab("shop"); if (isPhone()) setSheet("full"); };
 }
-function closeForm() { pending.forEach((p) => URL.revokeObjectURL(p.url)); pending = []; $("#modal").hidden = true; $("#modal").innerHTML = ""; }
+function closeForm() { $("#modal").hidden = true; $("#modal").innerHTML = ""; }
 document.addEventListener("keydown", (e) => { if ((e.key === "ArrowRight" || e.key === "ArrowLeft") && $("#pvtrack") && !e.target.closest("input,select,textarea") && $("#modal").hidden) { const t = $("#pvtrack"); t.scrollBy({ left: (e.key === "ArrowRight" ? 1 : -1) * t.clientWidth, behavior: "smooth" }); return; }
   if (e.key === "Escape") { if (!$("#modal").hidden) closeForm(); else if (fOpen) { closeFilters(); renderPanel(); } else if ($("#addmenu") && !$("#addmenu").hidden) closeAdd(); else if (!$("#moremenu").hidden) closeMore(); else if (!$("#pop").hidden) closePop(); else if ($("#seasonmenu")) closeSeasonMenu(); else if (!$("#preview").hidden) closePin(); } });
-async function shrink(file) {
-  // Resize to at most 1600px on the long side and re-encode as JPEG
-  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
-  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
-  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height); bmp.close?.();
-  return await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("encode"))), "image/jpeg", 0.82));
-}
-async function addFiles(list) {
-  const msg = $("#fMsg"); msg.className = "msg"; msg.textContent = "";
-  for (const f of list) {
-    if (pending.length >= 8) { msg.className = "msg err"; msg.textContent = "That's the limit of 8 photos."; break; }
-    if (!f.type.startsWith("image/")) { msg.className = "msg err"; msg.textContent = "Skipped a file that isn't a photo."; continue; }
-    try { const b = await shrink(f); pending.push({ blob: b, url: URL.createObjectURL(b) }); }
-    catch { msg.className = "msg err"; msg.textContent = "One photo couldn't be read. Try a JPG or PNG."; }
-    drawThumbs();
-  }
-}
-function drawThumbs() {
-  const t = $("#thumbs"); if (!t) return;
-  t.innerHTML = pending.map((p, i) => `<div class="t"><img src="${p.url}" alt="Photo ${i + 1}"><button type="button" data-rmph="${i}" aria-label="Remove photo ${i + 1}">×</button>${i === 0 ? `<span class="cover">COVER</span>` : ""}</div>`).join("");
-  t.querySelectorAll("[data-rmph]").forEach((b) => (b.onclick = () => { const i = +b.dataset.rmph; URL.revokeObjectURL(pending[i].url); pending.splice(i, 1); drawThumbs(); }));
-}
-let busy = false;
-async function submitForm(e) {
-  e.preventDefault(); if (busy) return;
-  const m = $("#fMsg"), f = e.target;
-  const need = ["biz", "title", "street", "city", "zip", "email", "desc"].filter((n) => !f.elements[n].value.trim());
-  if (need.length) { m.className = "msg err"; m.textContent = "Fill in your name, display name, street address, city, ZIP, your email and description."; return; }
-  if (!/^\d{5}$/.test(f.elements.zip.value.trim())) { m.className = "msg err"; m.textContent = "The ZIP code needs 5 digits."; return; }
-  if (f.elements.kind.value === "installer") {
-    if (!f.elements.web.value.trim() && !f.elements.phone.value.trim()) { m.className = "msg err"; m.textContent = "Installers: add a website or a phone number for quotes."; return; }
-    if (!f.elements.permission.checked) { m.className = "msg err"; m.textContent = "Please confirm you have the homeowner's permission to show this address."; return; }
-  }
-  const fd = new FormData(f);
-  pending.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
-  if (window.turnstile && tsWidget != null) fd.append("cf-turnstile-response", window.turnstile.getResponse(tsWidget) || "");
-  busy = true; $("#fSubmit").disabled = true; m.className = "msg"; m.textContent = pending.length ? `Uploading ${pending.length} photo${pending.length > 1 ? "s" : ""}…` : "Sending…";
-  try {
-    const r = await fetch("/api/submit", { method: "POST", body: fd });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || "Couldn't send that. Try again in a moment.");
-    $("#modal .card").innerHTML = `<div class="done"><h2>Thanks! Your house is in review.</h2><p class="meta">The site owner will look it over and publish it to the map. They may email you with questions.</p><div class="row" style="justify-content:center"><button class="btn" type="button" id="fDone">Back to the map</button></div></div>`;
-    $("#fDone").onclick = closeForm;
-  } catch (err) {
-    m.className = "msg err"; m.textContent = err.message;
-    if (window.turnstile && tsWidget != null) window.turnstile.reset(tsWidget);
-  }
-  busy = false; const b = $("#fSubmit"); if (b) b.disabled = false;
-}
-
 /* ---------- popovers, filters panel, menu ---------- */
 let popFor = null;
 function closePop() { $("#pop").hidden = true; popFor = null; }
@@ -776,8 +681,8 @@ function closeAdd() { const m = $("#addmenu"); if (m) m.hidden = true; const b =
 function openAdd(btn) {
   closeFilters(); closeMore(); closePop(); closeSeasonMenu();
   let m = $("#addmenu"); if (!m) { m = document.createElement("div"); m.id = "addmenu"; m.className = "menu"; m.setAttribute("role", "menu"); document.body.appendChild(m);
-    m.addEventListener("click", (e) => { const b = e.target.closest("[data-add]"); if (!b) { if (e.target.closest("a")) closeAdd(); return; } closeAdd(); if (b.dataset.add === "house") openForm(); }); }
-  m.innerHTML = `<a class="mrow" role="menuitem" href="/add-event"><span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="mt"><b>Add an event</b><small>Free, takes a minute. We check the event page.</small></span></a><button class="mrow" type="button" role="menuitem" data-add="house"><span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7v9H4z"/><path d="M12 17.5s-2.5-1.5-2.5-3.2a1.3 1.3 0 0 1 2.5-.6 1.3 1.3 0 0 1 2.5.6c0 1.7-2.5 3.2-2.5 3.2z"/></svg></span><span class="mt"><b>Showcase your house</b><small>Post your lights. Homeowners and installers.</small></span></button>`;
+    m.addEventListener("click", (e) => { const b = e.target.closest("[data-add]"); if (!b) { if (e.target.closest("a")) closeAdd(); return; } closeAdd(); }); }
+  m.innerHTML = `<a class="mrow" role="menuitem" href="/add-event"><span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="mt"><b>Add an event</b><small>Free, takes a minute. We check the event page.</small></span></a><a class="mrow" role="menuitem" href="/add-house?s=${state.season}"><span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7v9H4z"/><path d="M12 17.5s-2.5-1.5-2.5-3.2a1.3 1.3 0 0 1 2.5-.6 1.3 1.3 0 0 1 2.5.6c0 1.7-2.5 3.2-2.5 3.2z"/></svg></span><span class="mt"><b>Showcase your house</b><small>Post your lights. Homeowners and installers.</small></span></a>`;
   m.hidden = false; btn.setAttribute("aria-expanded", "true");
   const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 10 + "px"; m.style.left = Math.max(10, Math.min(r.right - w, innerWidth - w - 10)) + "px";
 }
@@ -996,7 +901,7 @@ async function load() {
     if (ev) selectKey("e:" + ev.id, "list"); else if (ho) selectKey("i:" + ho.id, "list");
   }
   if (SEASONS[h]) setSeason(h);
-  if (h === "showcase") openForm(); if (h === "night") setTab("plan");
+  if (h === "showcase") location.replace("/add-house?s=" + state.season); if (h === "night") setTab("plan");
 }
 // Keep an open page fresh: when you come back to the tab (or every 15 minutes while it's open),
 // quietly reload the event list so newly added events appear without a manual refresh.
