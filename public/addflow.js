@@ -79,6 +79,30 @@ export const ts = {
   reset() { if (this.widget != null && window.turnstile) window.turnstile.reset(this.widget); },
 };
 
+/* ---------- street-address suggestions ---------- */
+// Wire any <input data-addr> inside `root` to the suggestion list (Geoapify through /api/address). Waits for 5+ characters and a pause
+// in typing, ranks results nearest the chosen city, and calls onPick(suggestion, input) when one is chosen. Used by every address field.
+export function attachAddress(root, { getCity = () => "", onPick = () => {} } = {}) {
+  let t = 0, n = 0, list = [], from = null;
+  const close = () => { const dd = document.querySelector(".dd"); if (dd) dd.remove(); };
+  root.addEventListener("input", (e) => {
+    const inp = e.target; if (!inp.matches || !inp.matches("[data-addr]")) return; clearTimeout(t); const q = inp.value.trim(); close();
+    if (q.length < 5 || !/\d/.test(q)) return;
+    t = setTimeout(async () => {
+      const me2 = ++n, city = getCity() || "", near = CITY[city] ? "&near=" + CITY[city].join(",") : ""; let j = { suggestions: [] };
+      try { j = await (await fetch("/api/address?q=" + encodeURIComponent(city && !q.toLowerCase().includes(city.toLowerCase()) ? q + " " + city : q) + near)).json(); } catch {}
+      close(); if (me2 !== n || !j.suggestions.length || !inp.isConnected) return;
+      list = j.suggestions; from = inp; const ul = document.createElement("ul"); ul.className = "dd"; ul.setAttribute("role", "listbox");
+      ul.innerHTML = list.map((s, i) => `<li><button type="button" role="option" data-i="${i}">${esc(s.street)}<small>${esc(s.city)}, CA ${esc(s.zip)}</small></button></li>`).join("") + '<li class="foot">Powered by Geoapify</li>';
+      if (getComputedStyle(inp.parentElement).position === "static") inp.parentElement.style.position = "relative"; inp.parentElement.appendChild(ul);
+    }, 350);
+  });
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".dd button[data-i]"); if (b && from && root.contains(from)) { const sg = list[+b.dataset.i]; close(); if (sg) onPick(sg, from); return; }
+    if (!e.target.closest(".dd,[data-addr]")) close();
+  });
+}
+
 /* ---------- the engine ---------- */
 // o: { steps, data, root, exit, season(d), persist (localStorage key), noPersist: [keys], account: { kind, title(d) }, addr: { cities }, actions: { name(arg, api) }, after(step) }
 // step: { id, sec, title, help, body(d), check(d) -> error text, skip(d), cta, redraw, submit(d, api) }
@@ -151,7 +175,6 @@ export function run(o) {
   const onValue = (t) => {
     const k = t.dataset.k; dirty = true; d[k] = t.type === "checkbox" ? t.checked : t.value; if (t.getAttribute("aria-invalid")) t.removeAttribute("aria-invalid");
     save(); if (o.onInput) o.onInput(k, d, api);
-    if (t.hasAttribute("data-addr")) suggest(t);
     const s = steps()[S.i]; if (s && s.redraw && (t.type === "checkbox" || t.tagName === "SELECT")) { draw(); }
   };
   document.addEventListener("input", (e) => { if (root.contains(e.target) && e.target.matches("[data-k]") && e.target.type !== "checkbox" && e.target.tagName !== "SELECT") onValue(e.target); });
@@ -162,8 +185,7 @@ export function run(o) {
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Enter" && root.contains(e.target) && e.target.tagName === "INPUT" && !["checkbox", "file"].includes(e.target.type)) { e.preventDefault(); const dd = $(".dd"); if (dd) dd.remove(); next(); } });
   document.addEventListener("click", (e) => {
-    const t = e.target.closest("[data-tile],[data-a],[data-goto],[data-rm],[data-copy],.dd button"); if (!t || !root.contains(t) && !t.closest(".dd")) return;
-    if (t.matches(".dd button")) { pick(+t.dataset.i); return; }
+    const t = e.target.closest("[data-tile],[data-a],[data-goto],[data-rm],[data-copy]"); if (!t || !root.contains(t)) return;
     if (t.dataset.tile) {
       const [k, ...v] = t.dataset.tile.split("|"); dirty = true; d[k] = v.join("|"); save();
       const s = steps()[S.i];
@@ -191,23 +213,12 @@ export function run(o) {
     }
   }
 
-  // street-address suggestions (Geoapify through our server). Waits for 5+ characters and a pause in typing.
-  let sugT = 0, sugN = 0, sugList = [];
-  function suggest(inp) {
-    if (!o.addr) return; clearTimeout(sugT); const q = inp.value.trim(); const old = $(".dd"); if (q.length < 5 || !/\d/.test(q)) { if (old) old.remove(); return; }
-    sugT = setTimeout(async () => {
-      const me = ++sugN; let j = { suggestions: [] }; try { const near = CITY[d.city] ? "&near=" + CITY[d.city].join(",") : ""; j = await (await fetch("/api/address?q=" + encodeURIComponent(d.city && !q.toLowerCase().includes(d.city.toLowerCase()) ? q + " " + d.city : q) + near)).json(); } catch {}
-      const o2 = $(".dd"); if (o2) o2.remove(); if (me !== sugN || !j.suggestions.length || !inp.isConnected) return;
-      sugList = j.suggestions; const ul = document.createElement("ul"); ul.className = "dd"; ul.setAttribute("role", "listbox");
-      ul.innerHTML = sugList.map((s, i) => `<li><button type="button" role="option" data-i="${i}">${esc(s.street)}<small>${esc(s.city)}, CA ${esc(s.zip)}</small></button></li>`).join("") + `<li class="foot">Powered by Geoapify</li>`; inp.parentElement.appendChild(ul);
-    }, 350);
-  }
-  function pick(i) {
-    const s = sugList[i]; if (!s) return; d.street = s.street; if (o.addr.cities && o.addr.cities.includes(s.city)) d.city = s.city; if (/^\d{5}/.test(s.zip)) d.zip = s.zip.slice(0, 5);
+  // street-address suggestions on any [data-addr] input
+  if (o.addr) attachAddress(root, { getCity: () => d.city, onPick: (sg) => {
+    d.street = sg.street; if (o.addr.cities && o.addr.cities.includes(sg.city)) d.city = sg.city; if (/^\d{5}/.test(sg.zip)) d.zip = sg.zip.slice(0, 5);
     for (const k of ["street", "city", "zip"]) { const el = $("#f-" + k); if (el && d[k] != null) el.value = d[k]; }
-    const dd = $(".dd"); if (dd) dd.remove(); save();
-  }
-  document.addEventListener("click", (e) => { if (!e.target.closest(".dd,[data-addr]")) { const dd = $(".dd"); if (dd) dd.remove(); } });
+    save();
+  } });
 
   acctReady.then(() => { const el = $("#acct"); if (el) el.innerHTML = acctHtml(); });
   // ?draft=<id> reopens a draft saved to your account, on the step you left
