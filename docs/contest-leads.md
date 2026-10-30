@@ -22,3 +22,5 @@ Most holiday home contests publish their entrant or winner map **after judging**
 | Coronado (SD) | Floral Association Holiday Home Front | judging mid-Dec | 2025 winners collected |
 | Chino, Montclair (SB) | holiday home contests | | 2025 winners collected |
 | Twentynine Palms, Big Bear (SB) | holiday home tour lists | | site blocked / names only |
+| Orange (OC) | OTPA Old Towne Holiday Decorating Contest | winners post around Dec | otpa.org/otpa-events/holiday-contest/; Halloween winners image already collected 2026-10-30 |
+| Costa Mesa (OC) | Holiday Lights Display Contest | entries about Dec 8 | city page blocks fetches |
