@@ -704,3 +704,6 @@ body.lb-open{overflow:hidden}
 .thumb .bpill{position:absolute;right:10px;top:10px;background:var(--surface,#fff);border-radius:999px;padding:6px;line-height:0;display:inline-flex;box-shadow:0 1px 4px rgba(0,0,0,.25);z-index:2}
 .bsub{display:block;font-weight:400;font-size:12.5px;color:var(--muted);margin-top:1px}
 .bline{display:flex;gap:10px;align-items:flex-start;border-top:1px solid var(--line);padding-top:10px;margin-top:6px}.bline b{font-weight:600;display:block}.bline .m{display:block;color:var(--muted);font-size:13px}
+
+/* distance tag, left of the share and heart icons on cards */
+.pv-acts .away{align-self:center;margin-right:4px;font-size:14px;font-weight:400;line-height:1;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
