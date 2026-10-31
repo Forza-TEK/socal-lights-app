@@ -17,5 +17,11 @@ export async function onRequestGet({ request, env }) {
       for (const x of near) (by.get(x.post.id).nearby ||= []).push({ id: x.event.id, name: x.event.name, address: x.event.address });
     } catch {}
   }
+  if (status === "approved" && out.length) {
+    try {
+      const chosen = (await env.DB.prepare("SELECT id, city, address FROM events WHERE keep_listed = 2 AND address != ''").all()).results;
+      if (chosen.length) { const ids = new Set(pairs(results.filter((r) => !r.contest_id), chosen).exact.map((x) => x.post.id)); for (const p of out) if (ids.has(p.id)) p.hiddenBySweep = true; }
+    } catch {}
+  }
   return json(out);
 }

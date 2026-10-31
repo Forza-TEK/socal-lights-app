@@ -235,3 +235,6 @@ Count on the map before this check: Ontario 4 events, Fontana 6 (Rancho Cucamong
 - Tested locally: exact match hides after approval (not before), near match stays, override, decline restores, log entries, counts.
 - Not done: the Add form does not warn the person at submit time that a sweep record exists at their address (the admin sees it at review).
 
+## Choose which record visitors see (branch)
+- On the Replaced records tab, each address has a three-way choice: their record (default), both, or the sweep record. Choosing the sweep record hides the person's post from `/api/posts` (still approved; flagged "Not on the map" in Published houses). `events.keep_listed` 0/1/2, no new migration. Tested locally; default behaviour unchanged.
+
