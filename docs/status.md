@@ -249,3 +249,6 @@ Count on the map before this check: Ontario 4 events, Fontana 6 (Rancho Cucamong
 ## Home addresses are always public (branch)
 - `/api/posts` now always returns a home's street address (`rowToPost` ignores the old `show_address` flag), so address search finds every home and every pin sits on its street address. New posts were already public (`show_address = 1`); the admin edit window already saved them as public. Checked live before the change: all 4 published homes already had a public address. The admin card now says "(shown on the map)" instead of public/private. No migration.
 
+## Save & exit on the contest entry form (branch)
+- `/c/<slug>/enter` now has Save & exit, the leave-page prompt and the keep-your-place draft like the other forms. The draft is saved to the account as kind `entry` (photos are not saved) and shows on the profile Drafts tab as "Contest entry", with Continue going back to that contest's form on the step they left (`drafts.data.contestSlug`, listed by `/api/drafts` and `/api/me/overview` as `slug`). Same-device draft also kept per contest (`scl-entry-draft-<slug>`). `addflow.js` bumped to `?v=20261031u` on every page. Tested locally: save, profile row, Continue restores the answers and step. No migration.
+

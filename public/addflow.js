@@ -147,7 +147,7 @@ export function run(o) {
     if (S.busy) return; S.busy = true; save();
     try {
       let u = (await me()).user;
-      if (!u) { u = await signIn({ title: "Sign in to save your draft", next: "/profile?save=" + o.account.kind }); if (!u) { S.busy = false; return; } }
+      if (!u) { u = await signIn({ title: "Sign in to save your draft", next: "/profile?save=" + (o.account.q || o.account.kind) }); if (!u) { S.busy = false; return; } }
       const r = await fetch("/api/drafts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: d._draftId, kind: o.account.kind, title: o.account.title(d), data: cleanData(), step: S.i }) });
       const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Couldn't save your draft. Try again.");
       d._draftId = j.id; save(); dirty = false; leaving = true; location.href = leaveTo || "/profile";

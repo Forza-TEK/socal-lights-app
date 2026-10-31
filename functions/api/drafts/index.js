@@ -3,13 +3,16 @@
 import { json, err, clean, newId } from "../../_lib/util.js";
 import { requireUser, sameOrigin } from "../../_lib/auth.js";
 
-const KINDS = ["event", "house", "contest"], MAX_DRAFTS = 10, MAX_BYTES = 30_000;
+const KINDS = ["event", "house", "contest", "entry"], MAX_DRAFTS = 10, MAX_BYTES = 30_000;
+
+// A contest entry draft remembers which contest it belongs to, so the profile can link back to that entry form
+export const cleanSlug = (r) => ({ ...r, slug: /^[a-z0-9-]{1,80}$/.test(r.slug || "") ? r.slug : "" });
 
 export async function onRequestGet({ request, env }) {
   const { user, res } = await requireUser(request, env);
   if (res) return res;
-  const { results } = await env.DB.prepare("SELECT id,kind,title,step,updated_at FROM drafts WHERE user_id = ? ORDER BY updated_at DESC").bind(user.id).all();
-  return json(results, { headers: { "cache-control": "no-store" } });
+  const { results } = await env.DB.prepare("SELECT id,kind,title,step,updated_at, json_extract(data, '$.contestSlug') AS slug FROM drafts WHERE user_id = ? ORDER BY updated_at DESC").bind(user.id).all();
+  return json(results.map(cleanSlug), { headers: { "cache-control": "no-store" } });
 }
 
 export async function onRequestPost({ request, env }) {
