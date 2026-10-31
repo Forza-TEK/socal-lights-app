@@ -52,7 +52,7 @@ export async function startSession(env, request, userId) {
 export async function getUser(request, env) {
   const t = readCookie(request, COOKIE);
   if (!t) return null;
-  const u = await env.DB.prepare("SELECT u.id,u.email,u.name FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ? AND s.expires_at > datetime('now')").bind(await sha256(t)).first();
+  const u = await env.DB.prepare("SELECT u.id,u.email,u.name FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ? AND s.expires_at > datetime('now') AND u.status != 'suspended'").bind(await sha256(t)).first();
   return u || null;
 }
 export async function requireUser(request, env) {
@@ -63,7 +63,7 @@ export async function requireUser(request, env) {
 // Finds or creates the account for a verified email.
 export async function upsertUser(env, email, name = "", googleSub = null) {
   const e = normEmail(email);
-  let u = await env.DB.prepare("SELECT id,email,name FROM users WHERE email = ?").bind(e).first();
+  let u = await env.DB.prepare("SELECT id,email,name,status FROM users WHERE email = ?").bind(e).first();
   if (!u) {
     const id = newId();
     await env.DB.prepare("INSERT INTO users (id,email,name,google_sub,last_login) VALUES (?,?,?,?,datetime('now'))").bind(id, e, name.slice(0, 80), googleSub).run();
@@ -71,6 +71,12 @@ export async function upsertUser(env, email, name = "", googleSub = null) {
   }
   await env.DB.prepare("UPDATE users SET last_login = datetime('now'), name = CASE WHEN name = '' THEN ? ELSE name END, google_sub = COALESCE(google_sub, ?) WHERE id = ?").bind(name.slice(0, 80), googleSub, u.id).run();
   return u;
+}
+
+export const SUSPENDED_MSG = "This account has been suspended. Email info@socallights.app if you think that's a mistake.";
+export async function isSuspended(env, email) {
+  const r = await env.DB.prepare("SELECT status FROM users WHERE email = ?").bind(normEmail(email)).first();
+  return !!r && r.status === "suspended";
 }
 
 // Sends one email through Resend. Without RESEND_API_KEY it fails, unless local dev mode (DEV_AUTH=1) is on.
