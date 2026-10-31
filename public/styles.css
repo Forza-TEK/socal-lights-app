@@ -707,3 +707,12 @@ body.lb-open{overflow:hidden}
 
 /* distance tag, left of the share and heart icons on cards */
 .pv-acts .away{align-self:center;margin-right:4px;font-size:14px;font-weight:400;line-height:1;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* sliding selection pill for the tab bars (see initSlidePill in app.js): no per-tab background, no bounce */
+.ptabs{position:relative}
+.slidepill{position:absolute;left:0;top:0;width:0;height:0;border-radius:999px;background:var(--ink);pointer-events:none;z-index:0;will-change:transform,width}
+.ptab,.bnav button{position:relative;z-index:1}
+.ptab[aria-selected="true"],.bnav button[aria-current]{background:none!important;box-shadow:none}
+.ptab[aria-selected="true"] svg,.bnav button[aria-current] svg{animation:none}
+.ptab,.bnav button{transition:color .25s ease .1s}
+.ptab .lb,.ptab .n,.bnav button>span:not(.bn-n){transition:opacity .3s ease .12s}
