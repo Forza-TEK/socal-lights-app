@@ -24,15 +24,20 @@ async function api(path, opts = {}) {
   return d;
 }
 
-function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events", "users", "log"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
-["pending", "approved", "subs", "contests", "events", "users", "log"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
+function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events", "overlaps", "users", "log"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
+["pending", "approved", "subs", "contests", "events", "overlaps", "users", "log"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
 
+// The numbers on the tabs, from one request, so they are right on arrival and after every change
+const COUNT_IDS = { pending: "nPending", approved: "nApproved", subs: "nSubs", contests: "nContests", events: "nEvents", overlaps: "nOverlaps", users: "nUsers" };
+async function refreshCounts() { try { const c = await api("/api/admin/counts"); for (const [k, id] of Object.entries(COUNT_IDS)) if ($("#" + id)) $("#" + id).textContent = c[k]; } catch {} }
 async function render() {
   const main = $("#main");
+  refreshCounts();
   try {
     if (tab === "events") return renderEvents();
     if (tab === "subs") return renderSubs();
     if (tab === "contests") return renderContests();
+    if (tab === "overlaps") return renderOverlaps();
     if (tab === "users") return renderUsers();
     if (tab === "log") return renderLog();
     const posts = await api("/api/admin/posts?status=" + tab);
@@ -49,6 +54,7 @@ function postCard(p) {
     <dl class="facts"><dt>Name / business</dt><dd>${esc(p.biz)}</dd><dt>City</dt><dd>${esc(p.city)} · ${esc(p.county || "")}</dd>
     <dt>Contact</dt><dd><span style="user-select:all">${esc(p.contact_email || "—")}</span></dd><dt>Website</dt><dd>${web}</dd>
     <dt>Posting as</dt><dd>${p.kind === "installer" ? "Professional installer" : "Homeowner"}</dd><dt>Public phone</dt><dd>${esc(p.phone || "—")}</dd><dt>Street address</dt><dd>${esc(p.address || "—")} <span class="meta">(${p.show_address ? "public" : "private"})</span></dd><dt>Where</dt><dd>${esc(p.where || "—")}</dd><dt>About</dt><dd style="white-space:pre-line">${esc(p.desc)}</dd></dl>
+    ${p.replaces ? `<p class="meta" style="margin:8px 0;color:var(--ink)"><b>Replaces a sweep record.</b> When you approve this, the automatic listing at the same address is hidden: ${p.replaces.map((r) => esc(r.name)).join("; ")}.</p>` : ""}${p.nearby ? `<p class="meta" style="margin:8px 0">Same street, different number (both stay listed): ${p.nearby.map((r) => esc(r.name + " (" + (r.address || "").split(",")[0] + ")")).join("; ")}.</p>` : ""}
     <div class="row"><button class="btn ghost" type="button" data-editpost="${esc(p.id)}">Edit</button>${tab === "pending" ? `<button class="btn ice" type="button" data-act="approve">Approve and publish</button><button class="btn ghost" type="button" data-act="decline">Decline</button>` : `<button class="btn ghost" type="button" data-act="delete">Remove from site</button>`}<span class="msg"></span></div>
   </article>`;
 }
@@ -60,7 +66,7 @@ $("#main").addEventListener("click", async (e) => {
   try {
     if (act === "delete") await api("/api/admin/posts/" + id, { method: "DELETE" });
     else await api("/api/admin/posts/" + id, { method: "POST", body: JSON.stringify({ action: act }) });
-    card.remove(); if (!document.querySelector(".acard")) render();
+    card.remove(); refreshCounts(); if (!document.querySelector(".acard")) render();
     if (tab === "pending") $("#nPending").textContent = document.querySelectorAll(".acard").length;
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
@@ -110,7 +116,7 @@ $("#main").addEventListener("click", async (e) => {
   const card = b.closest("[data-sid]"), msg = card.querySelector(".msg");
   if (b.dataset.sact === "decline" && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to decline"; return; }
   b.disabled = true; msg.textContent = "Working…";
-  try { await api("/api/admin/submissions/" + card.dataset.sid, { method: "POST", body: JSON.stringify({ action: b.dataset.sact, status: b.dataset.st }) }); card.remove(); $("#nSubs").textContent = document.querySelectorAll("[data-sid]").length; if (!document.querySelector("[data-sid]")) renderSubs(); }
+  try { await api("/api/admin/submissions/" + card.dataset.sid, { method: "POST", body: JSON.stringify({ action: b.dataset.sact, status: b.dataset.st }) }); card.remove(); refreshCounts(); $("#nSubs").textContent = document.querySelectorAll("[data-sid]").length; if (!document.querySelector("[data-sid]")) renderSubs(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
@@ -133,13 +139,13 @@ $("#main").addEventListener("click", async (e) => {
   const card = b.closest("[data-cid]"), msg = card.querySelector(".msg");
   if (b.dataset.cact === "decline" && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to decline"; return; }
   b.disabled = true; msg.textContent = "Working…";
-  try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: b.dataset.cact }) }); card.remove(); $("#nContests").textContent = document.querySelectorAll("[data-cid]").length; if (!document.querySelector("[data-cid]")) render(); }
+  try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: b.dataset.cact }) }); card.remove(); refreshCounts(); $("#nContests").textContent = document.querySelectorAll("[data-cid]").length; if (!document.querySelector("[data-cid]")) render(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
 /* ---------- events ---------- */
 async function renderEvents() {
-  EVENTS = await (await fetch("/api/events", { cache: "no-store" })).json();
+  EVENTS = await (await fetch("/api/events?all=1", { cache: "no-store" })).json();
   const list = EVENTS.filter((e) => (e.sn || "christmas") === evSeason);
   $("#main").innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:12px"><div class="row"><select id="evSeason" aria-label="Season" style="border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface)">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === evSeason ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select><span class="meta">${list.length} events</span></div><button class="btn" type="button" id="addEv">Add an event</button></div>
   <div class="tablewrap"><table><thead><tr><th>Event</th><th>City</th><th>Dates</th><th>Status</th><th></th></tr></thead><tbody>${list.map((e) => `<tr${e.e < TODAY ? ' style="opacity:.55"' : ""}><td><b>${esc(e.n)}</b><div class="meta">${esc(e.p)}${e.e < TODAY ? " · ended" : ""}</div></td><td>${esc(e.city)}<div class="meta">${esc(e.c)}</div></td><td class="dates">${esc(e.s)}<br>${esc(e.e)}</td><td><span class="tag ${e.st === "c" ? "conf" : "exp"}">${e.st === "c" ? "Confirmed" : "Expected"}</span></td><td><button class="btn ghost" type="button" data-edit="${esc(e.id)}">Edit</button></td></tr>`).join("")}</tbody></table></div>`;
@@ -264,8 +270,8 @@ async function openUser(id) {
 
 
 /* ---------- activity log (what the admin tools were used for) ---------- */
-const VERB = { approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on" };
-const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event" };
+const VERB = { approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "kept listed", hide: "let be replaced:" };
+const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record" };
 let LOG = { area: "", offset: 0 };
 async function renderLog() {
   const main = $("#main");
@@ -278,4 +284,20 @@ async function renderLog() {
   $("#lga").onchange = (e) => { LOG.area = e.target.value; LOG.offset = 0; renderLog(); };
   if ($("#lgPrev")) $("#lgPrev").onclick = () => { LOG.offset = Math.max(0, LOG.offset - d.page); renderLog(); };
   if ($("#lgNext")) $("#lgNext").onclick = () => { LOG.offset += d.page; renderLog(); };
+}
+
+
+/* ---------- replaced records: a house or installer post replaces the sweep-made listing at the same address ---------- */
+async function renderOverlaps() {
+  const main = $("#main"), d = await api("/api/admin/overlaps");
+  const active = d.replaced.filter((r) => !r.event.keep).length;
+  $("#nOverlaps").textContent = active;
+  const who = (p) => `<a href="#" data-gopost="${esc(p.id)}">${esc(p.title)}</a> <span class="meta">(${p.kind === "installer" ? "installer" : "homeowner"}, ${esc(p.biz)})</span>`;
+  main.innerHTML = `<p class="meta" style="margin:0 0 12px;max-width:720px">When an approved house or installer post has the same street address as a record the sweeps made, the post replaces it: the sweep record stops showing on the map and in the list. It is only hidden, never deleted. Unpublish the post, or use the button below, and the sweep record comes back.</p>
+    <h3 style="margin:0 0 8px">Replaced (${d.replaced.length})</h3>
+    ${d.replaced.length ? `<div class="tablewrap"><table><thead><tr><th>Sweep record</th><th>Replaced by</th><th></th></tr></thead><tbody>${d.replaced.map((r) => `<tr><td><b>${esc(r.event.name)}</b><br><span class="meta">${esc(r.event.address)}</span></td><td>${who(r.post)}</td><td>${r.event.keep ? `<span class="meta">Kept listed</span> <button class="btn ghost" type="button" data-ov="hide" data-eid="${esc(r.event.id)}">Replace again</button>` : `<button class="btn ghost" type="button" data-ov="keep" data-eid="${esc(r.event.id)}">Show the sweep record anyway</button>`}</td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">Nothing replaced yet.</div>'}
+    <h3 style="margin:20px 0 8px">Same street, different number (${d.near.length}) <span class="meta" style="font-weight:400">both stay listed</span></h3>
+    ${d.near.length ? `<div class="tablewrap"><table><thead><tr><th>Sweep record</th><th>Post</th></tr></thead><tbody>${d.near.map((r) => `<tr><td><b>${esc(r.event.name)}</b><br><span class="meta">${esc(r.event.address)}</span></td><td>${who(r.post)}<br><span class="meta">${esc(r.post.street)}, ${esc(r.post.city)}</span></td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">None.</div>'}`;
+  main.querySelectorAll("[data-ov]").forEach((b) => (b.onclick = async () => { b.disabled = true; try { await api("/api/admin/overlaps", { method: "POST", body: JSON.stringify({ action: b.dataset.ov, event_id: b.dataset.eid }) }); renderOverlaps(); } catch (e) { b.disabled = false; alert(e.message); } }));
+  main.querySelectorAll("[data-gopost]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); setTab("approved"); }));
 }

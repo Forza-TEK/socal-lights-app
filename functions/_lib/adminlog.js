@@ -5,6 +5,7 @@ const AREAS = {
   events: ["events", "name"],
   contests: ["contests", "name"],
   submissions: ["event_submissions", "name"],
+  overlaps: ["events", "name"],
 };
 
 // "/api/admin/posts/abc" -> { area: "posts", id: "abc" }; null for anything that isn't a logged area

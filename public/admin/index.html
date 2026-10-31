@@ -16,7 +16,7 @@
   .wrap{max-width:1000px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
   header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
   header h1{font-family:var(--f-display);font-weight:400;font-size:28px;margin:0}
-  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+  .tabs{display:flex;flex-wrap:wrap;gap:0 4px;border-bottom:1px solid var(--line);margin-bottom:16px}
   .tabs button{border:0;background:none;border-bottom:2.5px solid transparent;padding:10px 12px;font-weight:700;color:var(--muted);cursor:pointer}
   .tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--bulb)}
   .cards{display:grid;gap:14px}
@@ -40,10 +40,11 @@
   <h1 style="margin-bottom:18px">Admin</h1>
   <div class="tabs" role="tablist">
     <button type="button" role="tab" id="tab-pending" aria-selected="true">Waiting for review <span class="tag" id="nPending">0</span></button>
-    <button type="button" role="tab" id="tab-approved" aria-selected="false">Published houses</button>
+    <button type="button" role="tab" id="tab-approved" aria-selected="false">Published houses <span class="tag" id="nApproved">0</span></button>
     <button type="button" role="tab" id="tab-subs" aria-selected="false">Submitted events <span class="tag" id="nSubs">0</span></button>
     <button type="button" role="tab" id="tab-contests" aria-selected="false">Contests <span class="tag" id="nContests">0</span></button>
-    <button type="button" role="tab" id="tab-events" aria-selected="false">Events</button>
+    <button type="button" role="tab" id="tab-events" aria-selected="false">Events <span class="tag" id="nEvents">0</span></button>
+    <button type="button" role="tab" id="tab-overlaps" aria-selected="false">Replaced records <span class="tag" id="nOverlaps">0</span></button>
     <button type="button" role="tab" id="tab-users" aria-selected="false">Users <span class="tag" id="nUsers">0</span></button>
     <button type="button" role="tab" id="tab-log" aria-selected="false">Activity log</button>
   </div>
@@ -57,6 +58,6 @@ import { defaultSeason } from "/seasons.js?v=20261029d";
 document.getElementById("tb").innerHTML = themeBtn();
 document.documentElement.dataset.season = defaultSeason(new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10));
 </script>
-<script type="module" src="/admin/admin.js?v=20261031v"></script>
+<script type="module" src="/admin/admin.js?v=20261031y"></script>
 </body>
 </html>

@@ -228,3 +228,10 @@ Count on the map before this check: Ontario 4 events, Fontana 6 (Rancho Cucamong
 - Tested locally: list/search, detail, rename, note, suspend (session dies, code not sent, verify refused), reactivate, CSV, delete with email confirmation.
 - Not yet done: block a suspended person's anonymous form posts by email.
 - **Activity log** (migration `0127_admin_log.sql`): the admin middleware records every successful admin change (who, when, what, which item) in `admin_log`; new **Activity log** tab with an area filter, plus "Admin history" in each person's window. Tested for accounts and events.
+
+## Person's own record replaces the sweep record (branch, not live yet)
+- An approved house/installer post at the same street address as a sweep event hides that event (matched in `functions/_lib/addrkey.js`; hidden, never deleted; declining the post restores it). Same street, different number: both stay. See `docs/superseding.md`.
+- Admin: note on pending houses, **Replaced records** tab with a "show anyway" override (`events.keep_listed`, migration `0128`), counts on every tab (`/api/admin/counts`), tabs wrap on narrow screens.
+- Tested locally: exact match hides after approval (not before), near match stays, override, decline restores, log entries, counts.
+- Not done: the Add form does not warn the person at submit time that a sweep record exists at their address (the admin sees it at review).
+
