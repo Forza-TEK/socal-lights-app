@@ -24,8 +24,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events", "users"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
-["pending", "approved", "subs", "contests", "events", "users"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
+function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events", "users", "log"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
+["pending", "approved", "subs", "contests", "events", "users", "log"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
 
 async function render() {
   const main = $("#main");
@@ -34,6 +34,7 @@ async function render() {
     if (tab === "subs") return renderSubs();
     if (tab === "contests") return renderContests();
     if (tab === "users") return renderUsers();
+    if (tab === "log") return renderLog();
     const posts = await api("/api/admin/posts?status=" + tab);
     if (tab === "pending") $("#nPending").textContent = posts.length;
     if (!posts.length) { main.innerHTML = `<div class="empty">${tab === "pending" ? "Nothing waiting for review." : "No published houses yet."}</div>`; return; }
@@ -240,6 +241,7 @@ async function openUser(id) {
     <dt>Address</dt><dd>${esc([u.street, u.city, u.zip].filter(Boolean).join(", ")) || "not given"}</dd><dt>Votes cast</dt><dd>${d.votes}</dd></dl>
     <h3 style="margin:14px 0 6px">Homes, events and entries (${d.posts.length})</h3>
     ${d.posts.length ? `<ul class="meta" style="margin:0;padding-left:18px">${d.posts.map((p) => `<li>${esc(p.title || p.biz)} · ${esc(p.city)} · ${p.contest_id ? "contest entry" : esc(p.season)} · ${esc(p.status)}</li>`).join("")}</ul>` : '<p class="meta">None.</p>'}
+    ${d.history.length ? `<h3 style="margin:14px 0 6px">Admin history</h3><ul class="meta" style="margin:0;padding-left:18px">${d.history.map((h) => `<li>${when(h.at)} · ${esc(h.admin || "admin")} ${esc(VERB[h.action] || h.action)}</li>`).join("")}</ul>` : ""}
     <h3 style="margin:14px 0 6px">Contests they run (${d.contests.length})</h3>
     ${d.contests.length ? `<ul class="meta" style="margin:0;padding-left:18px">${d.contests.map((c) => `<li><a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a> · ${esc(c.city)} · ${esc(c.status)}${c.announced ? " · announced" : ""}</li>`).join("")}</ul>` : '<p class="meta">None.</p>'}
     <form class="f" id="uForm" novalidate style="margin-top:14px"><label for="uName">Name<input id="uName" maxlength="80" value="${esc(u.name)}"></label>
@@ -258,4 +260,22 @@ async function openUser(id) {
     if (a === "suspend" && b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "Click again to suspend"; return; }
     try { await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: a, confirm: a === "delete" ? $("#uDel").value : undefined }) }); if (a === "delete") { close(); renderUsers(); } else if (a === "signout") { msg("Signed out on every device."); } else { await openUser(id); renderUsers(); } } catch (er) { msg(er.message, true); }
   }));
+}
+
+
+/* ---------- activity log (what the admin tools were used for) ---------- */
+const VERB = { approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on" };
+const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event" };
+let LOG = { area: "", offset: 0 };
+async function renderLog() {
+  const main = $("#main");
+  const d = await api("/api/admin/log?" + new URLSearchParams(LOG));
+  const opt = (v, l) => `<option value="${v}" ${LOG.area === v ? "selected" : ""}>${l}</option>`;
+  main.innerHTML = `<div class="row" style="gap:10px;margin-bottom:12px"><select id="lga" style="padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit">${opt("", "Everything")}${opt("users", "Accounts")}${opt("posts", "Houses")}${opt("events", "Events")}${opt("submissions", "Submitted events")}${opt("contests", "Contests")}</select><span class="meta">${d.total} action${d.total === 1 ? "" : "s"} recorded</span></div>
+    ${d.entries.length ? `<div class="tablewrap"><table><thead><tr><th>When</th><th>Who</th><th>What they did</th></tr></thead><tbody>${d.entries.map((e) => `<tr><td>${when(e.at)}</td><td>${esc(e.admin || "admin")}</td><td>${esc(VERB[e.action] || e.action)} ${esc(AREA[e.area] || e.area)} <b>${esc(e.label || e.target_id || "")}</b></td></tr>`).join("")}</tbody></table></div>
+    <div class="row" style="justify-content:space-between;margin-top:12px"><span class="meta">${d.offset + 1}–${d.offset + d.entries.length} of ${d.total}</span><span class="row" style="gap:8px"><button class="btn ghost" type="button" id="lgPrev" ${d.offset ? "" : "disabled"}>Newer</button><button class="btn ghost" type="button" id="lgNext" ${d.offset + d.page < d.total ? "" : "disabled"}>Older</button></span></div>`
+    : `<div class="empty">Nothing recorded yet. Approving, declining, editing, deleting, suspending and similar actions will show up here.</div>`}`;
+  $("#lga").onchange = (e) => { LOG.area = e.target.value; LOG.offset = 0; renderLog(); };
+  if ($("#lgPrev")) $("#lgPrev").onclick = () => { LOG.offset = Math.max(0, LOG.offset - d.page); renderLog(); };
+  if ($("#lgNext")) $("#lgNext").onclick = () => { LOG.offset += d.page; renderLog(); };
 }

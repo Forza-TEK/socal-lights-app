@@ -226,5 +226,5 @@ Count on the map before this check: Ontario 4 events, Fontana 6 (Rancho Cucamong
 - Migration `0126_user_admin.sql` adds `users.status`, `suspended_at`, `admin_note`. Suspended people are blocked at sign-in (code and Google) and their sessions end.
 - `DELETE /api/me` and the admin delete now share `functions/_lib/account.js`.
 - Tested locally: list/search, detail, rename, note, suspend (session dies, code not sent, verify refused), reactivate, CSV, delete with email confirmation.
-- Not yet done: block a suspended person's anonymous form posts by email; audit log of admin actions.
-
+- Not yet done: block a suspended person's anonymous form posts by email.
+- **Activity log** (migration `0127_admin_log.sql`): the admin middleware records every successful admin change (who, when, what, which item) in `admin_log`; new **Activity log** tab with an area filter, plus "Admin history" in each person's window. Tested for accounts and events.
