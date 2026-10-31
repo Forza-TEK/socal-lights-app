@@ -24,3 +24,4 @@ Most holiday home contests publish their entrant or winner map **after judging**
 | Twentynine Palms, Big Bear (SB) | holiday home tour lists | | site blocked / names only |
 | Orange (OC) | OTPA Old Towne Holiday Decorating Contest | winners post around Dec | otpa.org/otpa-events/holiday-contest/; Halloween winners image already collected 2026-10-30 |
 | Costa Mesa (OC) | Holiday Lights Display Contest | entries about Dec 8 | city page blocks fetches |
+| Norwalk (LA) | Slay the Decor Holiday Competition (residential) | entries Nov 20-Dec 4, judging Dec 14; winners shared on city social media, addresses may be shared if they win | norwalkca.gov/government/commissions_and_advisory_bodies/community_promotion_commission/holiday_home_and_business_decor_contest.php |

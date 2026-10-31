@@ -1,0 +1,11 @@
+INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address)
+VALUES
+('g17-fontana-santa-jessie-turner','Pictures with Santa at Jessie Turner Center (Fontana)','San Bernardino','Fontana','tree','2026-12-04','2026-12-04','confirmed',1,'Free','5:00–7:00 PM',34.1504715,-117.4654624,'Free photos with Santa at the Jessie Turner Center, one of three city Pictures with Santa sessions.','https://www.fontanaca.gov/387/Holiday-Events','christmas','Jessie Turner Center','15556 Summit Ave, Fontana, CA 92336'),
+('g17-fontana-santa-heritage','Pictures with Santa at Heritage Center (Fontana)','San Bernardino','Fontana','tree','2026-12-05','2026-12-05','confirmed',1,'Free','10:00 AM–12:00 PM',34.1178181,-117.5105475,'Free photos with Santa at the Heritage Center, one of three city Pictures with Santa sessions.','https://www.fontanaca.gov/387/Holiday-Events','christmas','Heritage Center','7350 W Liberty Pkwy, Fontana, CA 92336'),
+('g17-fontana-santa-don-day','Pictures with Santa at Don Day Center (Fontana)','San Bernardino','Fontana','tree','2026-12-05','2026-12-05','confirmed',1,'Free','10:00 AM–12:00 PM',34.039707,-117.490278,'Free photos with Santa at the Don Day Center, one of three city Pictures with Santa sessions.','https://www.fontanaca.gov/387/Holiday-Events','christmas','Don Day Center','14501 Live Oak Ave, Fontana, CA 92337'),
+('g17-ontario-reindeer-run','Ontario 5K Reindeer Run & Rudolph''s Dash','San Bernardino','Ontario','trot','2026-12-12','2026-12-12','confirmed',0,'Not listed','7:00 AM–12:00 PM',34.06495,-117.65076,'Holiday 5K run with a kids'' Rudolph''s Dash on Euclid Ave at C St; packet pick-up is Dec 10 (time and place not listed).','https://www.ontarioca.gov/CommunityLife/recreation-community-services/ontario-5k-reindeer-run','christmas','Euclid Ave & C St','Euclid Ave & C St, Ontario, CA 91764')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city,
+  type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status,
+  free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng,
+  blurb=excluded.blurb, url=excluded.url, season=excluded.season,
+  venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
