@@ -10,6 +10,8 @@ Search the open web for posts and pages that publish addresses: public Facebook 
 
 **Inclusion rule (owner, 2026-10-31):** if a public listing gives a date, a time and a location, and its title fits the season, add it, even when the listing has no description. Use a plain blurb that says only what the listing says (never invent details or prices; set free=0 and price "Not listed" when the cost is blank). County library feeds that work: `rivlib.libcal.com` (`/ajax/calendar/list?c=-1&date=YYYY-MM-DD&daily=true&perpage=200&page=1&inc=0`, header `X-Requested-With: XMLHttpRequest`) and `library.sbcounty.gov/wp-json/tribe/events/v1/events?per_page=50&start_date=…&end_date=…&search=holiday`.
 
+**Blocked pages (403):** do not retry, spoof a browser or use a proxy. Look the host up in [blocked-sites.md](blocked-sites.md), use its alternate routes (partner pages, search snippets, last year's pattern as `expected`), add any new blocked host to that table, and list it in your report.
+
 ## 3. Geocoding rule
 Geocode with Nominatim (`format=jsonv2&addressdetails=1`, 1 request/second, User-Agent header) and **accept only a result whose `house_number` equals the address number**; otherwise drop the home and list it as a lead. Take the ZIP from the result. Murrieta-style city GIS layers are even better.
 
