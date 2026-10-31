@@ -246,3 +246,6 @@ Count on the map before this check: Ontario 4 events, Fontana 6 (Rancho Cucamong
 ## Contest wins carry over to the replacing record (branch)
 - A contest win stated on a replaced sweep record now shows as a crown line on the person's listing (card chip, pop-up, details with Source link); display only, person's text untouched. Rule and limits in `docs/superseding.md`. Tested locally for all three choices. Nothing for wins stated only in the title and not recognised beyond the "(... contest winner)" pattern.
 
+## Home addresses are always public (branch)
+- `/api/posts` now always returns a home's street address (`rowToPost` ignores the old `show_address` flag), so address search finds every home and every pin sits on its street address. New posts were already public (`show_address = 1`); the admin edit window already saved them as public. Checked live before the change: all 4 published homes already had a public address. The admin card now says "(shown on the map)" instead of public/private. No migration.
+
