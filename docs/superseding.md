@@ -11,6 +11,10 @@ Installers and homeowners add their displays through the Add form. The sweeps ma
 
 **Admin**
 - A house waiting for review shows "Replaces a sweep record: …" (and any same-street near misses) before you approve.
-- **Replaced records** tab: every replaced sweep record and the post that replaced it, plus the near misses. "Show the sweep record anyway" sets `events.keep_listed = 1` (migration `0128_events_keep_listed.sql`) for a wrong match; "Replace again" undoes it. Both are written to the Activity log.
+- **Replaced records** tab: every address that has both a sweep record and a person's post, plus the near misses. For each one you choose what visitors see:
+  - **Their record** (the default, the rule above): the sweep record is hidden.
+  - **Both**: both records show.
+  - **Sweep record**: the sweep record shows and the person's post is hidden from the map. The post stays approved and the person is not told; switch back at any time.
+  Stored in `events.keep_listed` (migration `0128`): 0 = their record, 1 = both, 2 = sweep record. Each change is written to the Activity log. A post hidden this way is marked "Not on the map" in Published houses.
 - The Events tab and its count still include hidden sweep records, so they can be edited. The public map shows `/api/events`; the admin uses `/api/events?all=1`.
 - The tab counts (Waiting for review, Published houses, Submitted events, Contests, Events, Replaced records, Users) come from `/api/admin/counts`.

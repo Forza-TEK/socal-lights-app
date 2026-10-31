@@ -14,6 +14,6 @@ export async function onRequestGet({ env }) {
     safe(n("SELECT COUNT(*) AS n FROM users")),
     env.DB.prepare("SELECT id, city, address, keep_listed FROM events WHERE address != ''").all().then((r) => r.results).catch(() => []),
   ]);
-  const overlaps = pairs(await approvedPosts(env), evs).exact.filter((x) => !x.event.keep_listed).length;
+  const overlaps = pairs(await approvedPosts(env), evs).exact.length;
   return json({ pending, approved, subs, contests, events, users, overlaps });
 }

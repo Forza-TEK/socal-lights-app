@@ -54,7 +54,7 @@ function postCard(p) {
     <dl class="facts"><dt>Name / business</dt><dd>${esc(p.biz)}</dd><dt>City</dt><dd>${esc(p.city)} · ${esc(p.county || "")}</dd>
     <dt>Contact</dt><dd><span style="user-select:all">${esc(p.contact_email || "—")}</span></dd><dt>Website</dt><dd>${web}</dd>
     <dt>Posting as</dt><dd>${p.kind === "installer" ? "Professional installer" : "Homeowner"}</dd><dt>Public phone</dt><dd>${esc(p.phone || "—")}</dd><dt>Street address</dt><dd>${esc(p.address || "—")} <span class="meta">(${p.show_address ? "public" : "private"})</span></dd><dt>Where</dt><dd>${esc(p.where || "—")}</dd><dt>About</dt><dd style="white-space:pre-line">${esc(p.desc)}</dd></dl>
-    ${p.replaces ? `<p class="meta" style="margin:8px 0;color:var(--ink)"><b>Replaces a sweep record.</b> When you approve this, the automatic listing at the same address is hidden: ${p.replaces.map((r) => esc(r.name)).join("; ")}.</p>` : ""}${p.nearby ? `<p class="meta" style="margin:8px 0">Same street, different number (both stay listed): ${p.nearby.map((r) => esc(r.name + " (" + (r.address || "").split(",")[0] + ")")).join("; ")}.</p>` : ""}
+    ${p.hiddenBySweep ? `<p class="meta" style="margin:8px 0;color:var(--ink)"><b>Not on the map.</b> You chose the sweep record for this address (Replaced records tab).</p>` : ""}${p.replaces ? `<p class="meta" style="margin:8px 0;color:var(--ink)"><b>Replaces a sweep record.</b> When you approve this, the automatic listing at the same address is hidden: ${p.replaces.map((r) => esc(r.name)).join("; ")}.</p>` : ""}${p.nearby ? `<p class="meta" style="margin:8px 0">Same street, different number (both stay listed): ${p.nearby.map((r) => esc(r.name + " (" + (r.address || "").split(",")[0] + ")")).join("; ")}.</p>` : ""}
     <div class="row"><button class="btn ghost" type="button" data-editpost="${esc(p.id)}">Edit</button>${tab === "pending" ? `<button class="btn ice" type="button" data-act="approve">Approve and publish</button><button class="btn ghost" type="button" data-act="decline">Decline</button>` : `<button class="btn ghost" type="button" data-act="delete">Remove from site</button>`}<span class="msg"></span></div>
   </article>`;
 }
@@ -270,7 +270,7 @@ async function openUser(id) {
 
 
 /* ---------- activity log (what the admin tools were used for) ---------- */
-const VERB = { approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "kept listed", hide: "let be replaced:" };
+const VERB = { approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for" };
 const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record" };
 let LOG = { area: "", offset: 0 };
 async function renderLog() {
@@ -288,16 +288,18 @@ async function renderLog() {
 
 
 /* ---------- replaced records: a house or installer post replaces the sweep-made listing at the same address ---------- */
+const CHOICES = [["pick_post", "post", "Their record"], ["pick_both", "both", "Both"], ["pick_sweep", "sweep", "Sweep record"]];
+const choiceButtons = (r) => `<div class="row" style="gap:0;flex-wrap:nowrap" role="group" aria-label="Which record visitors see">${CHOICES.map(([a, c, l], i) => `<button type="button" data-ov="${a}" data-eid="${esc(r.event.id)}" aria-pressed="${r.event.choice === c}" class="btn ${r.event.choice === c ? "ice" : "ghost"}" style="border-radius:${i === 0 ? "10px 0 0 10px" : i === 2 ? "0 10px 10px 0" : "0"};padding-inline:12px;white-space:nowrap">${l}</button>`).join("")}</div>`;
 async function renderOverlaps() {
   const main = $("#main"), d = await api("/api/admin/overlaps");
-  const active = d.replaced.filter((r) => !r.event.keep).length;
+  const active = d.replaced.length;
   $("#nOverlaps").textContent = active;
   const who = (p) => `<a href="#" data-gopost="${esc(p.id)}">${esc(p.title)}</a> <span class="meta">(${p.kind === "installer" ? "installer" : "homeowner"}, ${esc(p.biz)})</span>`;
-  main.innerHTML = `<p class="meta" style="margin:0 0 12px;max-width:720px">When an approved house or installer post has the same street address as a record the sweeps made, the post replaces it: the sweep record stops showing on the map and in the list. It is only hidden, never deleted. Unpublish the post, or use the button below, and the sweep record comes back.</p>
+  main.innerHTML = `<p class="meta" style="margin:0 0 12px;max-width:720px">When an approved house or installer post has the same street address as a record the sweeps made, the person's own record is shown and the sweep record is hidden. You can switch any address to the sweep record, or show both. Nothing is deleted, and the person's post stays approved.</p>
     <h3 style="margin:0 0 8px">Replaced (${d.replaced.length})</h3>
-    ${d.replaced.length ? `<div class="tablewrap"><table><thead><tr><th>Sweep record</th><th>Replaced by</th><th></th></tr></thead><tbody>${d.replaced.map((r) => `<tr><td><b>${esc(r.event.name)}</b><br><span class="meta">${esc(r.event.address)}</span></td><td>${who(r.post)}</td><td>${r.event.keep ? `<span class="meta">Kept listed</span> <button class="btn ghost" type="button" data-ov="hide" data-eid="${esc(r.event.id)}">Replace again</button>` : `<button class="btn ghost" type="button" data-ov="keep" data-eid="${esc(r.event.id)}">Show the sweep record anyway</button>`}</td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">Nothing replaced yet.</div>'}
+    ${d.replaced.length ? `<div class="tablewrap"><table><thead><tr><th>Sweep record</th><th>The person's record</th><th>Visitors see</th></tr></thead><tbody>${d.replaced.map((r) => `<tr><td><b>${esc(r.event.name)}</b><br><span class="meta">${esc(r.event.address)}</span></td><td>${who(r.post)}</td><td>${choiceButtons(r)}</td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">Nothing replaced yet.</div>'}
     <h3 style="margin:20px 0 8px">Same street, different number (${d.near.length}) <span class="meta" style="font-weight:400">both stay listed</span></h3>
     ${d.near.length ? `<div class="tablewrap"><table><thead><tr><th>Sweep record</th><th>Post</th></tr></thead><tbody>${d.near.map((r) => `<tr><td><b>${esc(r.event.name)}</b><br><span class="meta">${esc(r.event.address)}</span></td><td>${who(r.post)}<br><span class="meta">${esc(r.post.street)}, ${esc(r.post.city)}</span></td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">None.</div>'}`;
-  main.querySelectorAll("[data-ov]").forEach((b) => (b.onclick = async () => { b.disabled = true; try { await api("/api/admin/overlaps", { method: "POST", body: JSON.stringify({ action: b.dataset.ov, event_id: b.dataset.eid }) }); renderOverlaps(); } catch (e) { b.disabled = false; alert(e.message); } }));
+  main.querySelectorAll("[data-ov]").forEach((b) => (b.onclick = async () => { main.querySelectorAll("[data-ov]").forEach((x) => (x.disabled = true)); try { await api("/api/admin/overlaps", { method: "POST", body: JSON.stringify({ action: b.dataset.ov, event_id: b.dataset.eid }) }); renderOverlaps(); refreshCounts(); } catch (e) { renderOverlaps(); alert(e.message); } }));
   main.querySelectorAll("[data-gopost]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); setTab("approved"); }));
 }
