@@ -17,11 +17,22 @@ Checked 2026-10-31. These sites answer **403 Access Denied** to our honest bot r
 > Hello, I run SoCalLights.app, a free public map of holiday, Halloween and community events across Southern California. We would like to list your city's events (tree lighting, parades, Halloween and holiday events) and link back to your pages. Your website currently blocks our automated reader (403 Access Denied, Akamai), so we cannot see your calendar. Could you either (1) send us an iCal/RSS feed or a monthly events list, or (2) allow our reader, identified as "SoCalLightsBot (+https://socallights.app)", through your site protection? Either would help your events reach more people. Thank you! Rey D'Angelo, info@socallights.app
 
 ## Blocked hosts
-| Host | Block | Alternate sources | Ask sent? |
-|---|---|---|---|
-| cityofwhittier.org, whittierprcs.org | Akamai 403 (also robots.txt) | whittierchamber.com events, whittiermuseum.org, Macaroni Kid Norwalk, Patch; last year's page ("Holidays in Whittier": City Hall tree lighting, Uptown parade, Community Holiday Celebration at Vic Lopez Auditorium) | no |
-| cityofhawthorne.org, weho.org, santamonica.com, carlsbadca.gov, cityofinglewood.org, eastvaleca.gov, cityofperris.org, chulavistaca.gov, culvercity.gov (some pages) | 403 | chambers, local papers, Patch | no |
-| lacounty.gov, parks.lacounty.gov, cityoflahabra.org | 403 or no connection | LA County Parks flyers via news; Brea/La Habra papers | no |
-| Axios, Macaroni Kid (some editions) | 403 | same event on the organizer's own page | n/a |
+Bot = our scheduled, unattended cloud runs. Chrome = the owner's own Chrome driven by Claude in Chrome (checked 2026-10-30; see `docs/browser-pass.md`).
+
+| Host | Bot | Chrome (2026-10-30) | Alternate sources | Ask sent? |
+|---|---|---|---|---|
+| cityofwhittier.org, whittierprcs.org | Akamai 403 (also robots.txt) | loads; 2026 events found (tree lighting Dec 1, Cookies with Santa Dec 5); no 2026 parade page | whittierchamber.com events, whittiermuseum.org, Macaroni Kid Norwalk, Patch | no |
+| santamonica.com | 403 | loads (search `?mySearch=<word>&page-num=1`, event pages `/event/<slug>/`) | chambers, local papers, Patch | no |
+| cityofhawthorne.org | 403 | loads; calendar has no seasonal events Nov-Jan | chambers, local papers | no |
+| weho.org | 403 | loads; Halloween Carnaval page under `/community/events-in-the-city/`; no Nov-Jan calendar page found | chambers, local papers | no |
+| culvercity.gov | 403 (some pages) | loads; events directory shows only the Veterans flag display | chambers, local papers | no |
+| cityofinglewood.org | 403 | loads (`/calendar.aspx?view=list&year=2026&month=11`) | chambers, local papers | no |
+| carlsbadca.gov | 403 | loads (Parks & Recreation special events pages list Dec 5 Holiday at the Rancho) | carlsbad-village.com, visitcarlsbad.com | no |
+| chulavistaca.gov | 403 | loads (`/residents/advanced-components/site-content/city-calendar/-curm-12/-cury-2026`) | chambers, local papers | no |
+| cityofperris.org | 403 | home page loads; full calendar page not found; Veterans Celebration Nov 7 lists only "Downtown D Street" | local papers | no |
+| eastvaleca.gov | 403 | home page loads; "Full Calendar" opens a calendarwiz.com RSS feed that Chrome needs a site permission to read (not granted yet) | local papers | no |
+| lacounty.gov, parks.lacounty.gov | 403 or no connection | home loads; events page errors (eventON setting), no events found | LA County Parks flyers via news | no |
+| cityoflahabra.org / lahabraca.gov | no connection | lahabraca.gov home loads; no events page found | Brea/La Habra papers | no |
+| Axios, Macaroni Kid (some editions) | 403 | not tried | same event on the organizer's own page | n/a |
 
 Sites that **do** load: rivlib.libcal.com, library.sbcounty.gov (see `docs/sweep-methods.md`), santafesprings.gov, pico-rivera.org, norwalkca.gov, cityoflamirada.org, lahabraheights.org, whittierchamber.com, whittiermuseum.org.
