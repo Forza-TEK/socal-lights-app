@@ -1,6 +1,6 @@
 // POST /api/auth/email/verify { email, code } — checks the code and signs the person in.
 import { json, err } from "../../../_lib/util.js";
-import { normEmail, okEmail, sha256, upsertUser, startSession, sameOrigin } from "../../../_lib/auth.js";
+import { normEmail, okEmail, sha256, upsertUser, startSession, sameOrigin, SUSPENDED_MSG } from "../../../_lib/auth.js";
 
 export async function onRequestPost({ request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -15,5 +15,6 @@ export async function onRequestPost({ request, env }) {
   }
   await env.DB.prepare("DELETE FROM login_codes WHERE email = ?").bind(email).run();
   const user = await upsertUser(env, email);
+  if (user.status === "suspended") return err(403, SUSPENDED_MSG);
   return json({ ok: true, user: { id: user.id, email: user.email, name: user.name } }, { headers: { "set-cookie": await startSession(env, request, user.id) } });
 }

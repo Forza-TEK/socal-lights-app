@@ -21,6 +21,7 @@ export async function onRequestGet({ request, env }) {
     const p = await fetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { authorization: `Bearer ${t.access_token}` } }).then((r) => r.json());
     if (!p.sub || !p.email || p.email_verified !== true) return back(request, next, [clear], "failed");
     const user = await upsertUser(env, p.email, p.name || "", p.sub);
+    if (user.status === "suspended") return back(request, next, [clear], "suspended");
     if (/^https:\/\/[a-z0-9.-]+\.googleusercontent\.com\//.test(p.picture || "")) await env.DB.prepare("UPDATE users SET picture = ? WHERE id = ?").bind(p.picture, user.id).run().catch(() => {}); // used until you upload your own
     return back(request, next, [clear, await startSession(env, request, user.id)]);
   } catch {

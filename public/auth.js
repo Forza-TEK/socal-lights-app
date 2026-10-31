@@ -20,7 +20,7 @@ export function noteSigninResult() {
   const u = new URL(location.href), s = u.searchParams.get("signin");
   if (!s) return;
   u.searchParams.delete("signin"); history.replaceState(null, "", u.pathname + u.search + u.hash);
-  toast(s === "cancelled" ? "Sign-in was cancelled." : "Google sign-in didn't work. Try again, or use your email.");
+  toast(s === "cancelled" ? "Sign-in was cancelled." : s === "suspended" ? "This account has been suspended. Email info@socallights.app if you think that is a mistake." : "Google sign-in didn't work. Try again, or use your email.");
 }
 
 // Shows the sign-in sheet. Resolves with the user once signed in by email code, or null if cancelled.

@@ -24,8 +24,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
-["pending", "approved", "subs", "contests", "events"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
+function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events", "users"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
+["pending", "approved", "subs", "contests", "events", "users"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
 
 async function render() {
   const main = $("#main");
@@ -33,6 +33,7 @@ async function render() {
     if (tab === "events") return renderEvents();
     if (tab === "subs") return renderSubs();
     if (tab === "contests") return renderContests();
+    if (tab === "users") return renderUsers();
     const posts = await api("/api/admin/posts?status=" + tab);
     if (tab === "pending") $("#nPending").textContent = posts.length;
     if (!posts.length) { main.innerHTML = `<div class="empty">${tab === "pending" ? "Nothing waiting for review." : "No published houses yet."}</div>`; return; }
@@ -200,3 +201,61 @@ function editEvent(ev) {
   try { const me = await api("/api/admin/me"); $("#who").textContent = "Signed in as " + me.email; render(); api("/api/admin/submissions?status=pending").then((l) => ($("#nSubs").textContent = l.length)).catch(() => {}); }
   catch (e) { $("#who").textContent = ""; $("#main").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 })();
+
+
+/* ---------- users (everyone who made a profile) ---------- */
+let USERS = { q: "", status: "", offset: 0 };
+const when = (s) => (s ? esc(String(s).slice(0, 16).replace("T", " ")) + " UTC" : "never");
+const ago = (s) => { if (!s) return "never"; const d = Math.floor((Date.now() - new Date(String(s).replace(" ", "T") + "Z")) / 86400000); return d <= 0 ? "today" : d === 1 ? "yesterday" : d + " days ago"; };
+async function renderUsers() {
+  const main = $("#main");
+  const qs = new URLSearchParams({ q: USERS.q, status: USERS.status, offset: USERS.offset });
+  const d = await api("/api/admin/users?" + qs);
+  $("#nUsers").textContent = d.all;
+  const sel = (v, l) => `<option value="${v}" ${USERS.status === v ? "selected" : ""}>${l}</option>`;
+  main.innerHTML = `<div class="row" style="gap:10px;margin-bottom:12px;flex-wrap:wrap">
+    <input id="uq" type="search" placeholder="Search name or email" value="${esc(USERS.q)}" style="flex:1;min-width:200px;padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit">
+    <select id="ust" style="padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit">${sel("", "All people (" + d.all + ")")}${sel("active", "Active")}${sel("suspended", "Suspended (" + d.suspended + ")")}</select>
+    <a class="btn ghost" href="/api/admin/users?format=csv&q=${encodeURIComponent(USERS.q)}&status=${USERS.status}" download>Download CSV</a></div>
+    ${d.users.length ? `<div class="tablewrap"><table><thead><tr><th>Person</th><th>Joined</th><th>Last sign-in</th><th>Homes &amp; events</th><th>Contests</th><th>Votes</th><th></th></tr></thead><tbody>${d.users.map((u) => `<tr data-uid="${esc(u.id)}" style="cursor:pointer">
+      <td><b>${esc(u.name || "(no name)")}</b>${u.status === "suspended" ? ' <span class="tag" style="border-color:#c0392b;color:#c0392b">Suspended</span>' : ""}<br><span class="meta">${esc(u.email)}${u.google ? " · Google" : ""}</span></td>
+      <td>${esc((u.created_at || "").slice(0, 10))}</td><td>${ago(u.last_login)}</td><td>${u.homes + u.entries}${u.entries ? ` <span class="meta">(${u.entries} contest)</span>` : ""}</td><td>${u.contests}</td><td>${u.votes}</td><td><button class="btn ghost" type="button" data-open="${esc(u.id)}">Manage</button></td></tr>`).join("")}</tbody></table></div>
+    <div class="row" style="justify-content:space-between;margin-top:12px"><span class="meta">${d.offset + 1}–${d.offset + d.users.length} of ${d.total}</span><span class="row" style="gap:8px"><button class="btn ghost" type="button" id="uPrev" ${d.offset ? "" : "disabled"}>Previous</button><button class="btn ghost" type="button" id="uNext" ${d.offset + d.page < d.total ? "" : "disabled"}>Next</button></span></div>`
+    : `<div class="empty">${USERS.q || USERS.status ? "Nobody matches that." : "Nobody has made a profile yet."}</div>`}`;
+  let t; $("#uq").oninput = (e) => { clearTimeout(t); t = setTimeout(() => { USERS.q = e.target.value.trim(); USERS.offset = 0; renderUsers().then(() => { const i = $("#uq"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); }, 300); };
+  $("#ust").onchange = (e) => { USERS.status = e.target.value; USERS.offset = 0; renderUsers(); };
+  if ($("#uPrev")) $("#uPrev").onclick = () => { USERS.offset = Math.max(0, USERS.offset - d.page); renderUsers(); };
+  if ($("#uNext")) $("#uNext").onclick = () => { USERS.offset += d.page; renderUsers(); };
+  main.querySelectorAll("tr[data-uid]").forEach((r) => (r.onclick = () => openUser(r.dataset.uid)));
+}
+async function openUser(id) {
+  const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
+  m.hidden = false; m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="empty">Loading…</div></div>`;
+  let d; try { d = await api("/api/admin/users/" + id); } catch (e) { m.innerHTML = `<div class="card"><p>${esc(e.message)}</p><button class="btn ghost" type="button" id="mClose">Close</button></div>`; $("#mClose").onclick = close; return; }
+  const u = d.user, sus = u.status === "suspended";
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="row" style="justify-content:space-between"><h2>${esc(u.name || u.email)}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
+    ${sus ? `<p class="msg err" style="margin:6px 0">Suspended ${when(u.suspended_at)}. They can't sign in, vote or enter contests.</p>` : ""}
+    <dl class="facts"><dt>Email</dt><dd><span style="user-select:all">${esc(u.email)}</span></dd><dt>Signs in with</dt><dd>${u.google ? "Google or an emailed code" : "An emailed code"}</dd>
+    <dt>Joined</dt><dd>${when(u.created_at)}</dd><dt>Last sign-in</dt><dd>${when(u.last_login)} · ${d.sessions} signed-in device${d.sessions === 1 ? "" : "s"}</dd>
+    <dt>Address</dt><dd>${esc([u.street, u.city, u.zip].filter(Boolean).join(", ")) || "not given"}</dd><dt>Votes cast</dt><dd>${d.votes}</dd></dl>
+    <h3 style="margin:14px 0 6px">Homes, events and entries (${d.posts.length})</h3>
+    ${d.posts.length ? `<ul class="meta" style="margin:0;padding-left:18px">${d.posts.map((p) => `<li>${esc(p.title || p.biz)} · ${esc(p.city)} · ${p.contest_id ? "contest entry" : esc(p.season)} · ${esc(p.status)}</li>`).join("")}</ul>` : '<p class="meta">None.</p>'}
+    <h3 style="margin:14px 0 6px">Contests they run (${d.contests.length})</h3>
+    ${d.contests.length ? `<ul class="meta" style="margin:0;padding-left:18px">${d.contests.map((c) => `<li><a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a> · ${esc(c.city)} · ${esc(c.status)}${c.announced ? " · announced" : ""}</li>`).join("")}</ul>` : '<p class="meta">None.</p>'}
+    <form class="f" id="uForm" novalidate style="margin-top:14px"><label for="uName">Name<input id="uName" maxlength="80" value="${esc(u.name)}"></label>
+    <label for="uNote">Private note (only you see this)<textarea id="uNote" rows="2" maxlength="1000">${esc(u.admin_note)}</textarea></label>
+    <div class="row"><button class="btn ice" type="submit">Save name and note</button><span class="msg" id="uMsg" role="status"></span></div></form>
+    <div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" data-ua="signout">Sign out everywhere</button>
+    <button class="btn ghost" type="button" data-ua="${sus ? "unsuspend" : "suspend"}">${sus ? "Reactivate" : "Suspend account"}</button></div>
+    <details style="margin-top:14px"><summary style="cursor:pointer;color:#c0392b;font-weight:700">Delete this account</summary>
+    <p class="meta" style="margin:8px 0">This permanently removes their sign-ins, drafts, picture, contest entries and votes, closes the contests they run, and clears their email from homes and events they posted. It can't be undone. Type their email to confirm.</p>
+    <div class="row"><input id="uDel" placeholder="${esc(u.email)}" style="flex:1;padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit"><button class="btn ghost" type="button" data-ua="delete" style="color:#c0392b">Delete</button></div></details></div>`;
+  $("#mClose").onclick = close;
+  const msg = (t, bad) => { const e = $("#uMsg"); e.className = bad ? "msg err" : "msg"; e.textContent = t; };
+  $("#uForm").onsubmit = async (e) => { e.preventDefault(); try { await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: "rename", name: $("#uName").value }) }); await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: "note", note: $("#uNote").value }) }); msg("Saved."); renderUsers(); } catch (er) { msg(er.message, true); } };
+  m.querySelectorAll("[data-ua]").forEach((b) => (b.onclick = async () => {
+    const a = b.dataset.ua;
+    if (a === "suspend" && b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "Click again to suspend"; return; }
+    try { await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: a, confirm: a === "delete" ? $("#uDel").value : undefined }) }); if (a === "delete") { close(); renderUsers(); } else if (a === "signout") { msg("Signed out on every device."); } else { await openUser(id); renderUsers(); } } catch (er) { msg(er.message, true); }
+  }));
+}

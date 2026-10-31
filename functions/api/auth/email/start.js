@@ -1,6 +1,6 @@
 // POST /api/auth/email/start { email } — emails a 6-digit sign-in code (valid 10 minutes).
 import { json, err, verifyTurnstile } from "../../../_lib/util.js";
-import { normEmail, okEmail, isDisposable, sha256, sendMail, sameOrigin } from "../../../_lib/auth.js";
+import { normEmail, okEmail, isDisposable, sha256, sendMail, sameOrigin, isSuspended, SUSPENDED_MSG } from "../../../_lib/auth.js";
 
 export async function onRequestPost({ request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -12,6 +12,7 @@ export async function onRequestPost({ request, env }) {
   if (!env.RESEND_API_KEY && env.DEV_AUTH !== "1") return err(503, "Email sign-in isn't switched on yet. Use Google for now.");
 
   const email = normEmail(b.email);
+  if (await isSuspended(env, email)) return err(403, SUSPENDED_MSG);
   const { n: perEmail } = await env.DB.prepare("SELECT COUNT(*) AS n FROM login_codes WHERE email = ? AND created_at > datetime('now','-1 hour')").bind(email).first();
   const { n: perIp } = await env.DB.prepare("SELECT COUNT(*) AS n FROM login_codes WHERE ip = ? AND created_at > datetime('now','-1 hour')").bind(ip).first();
   if (perEmail >= 4 || perIp >= 12) return err(429, "Too many codes requested. Try again in an hour.");

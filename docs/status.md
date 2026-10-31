@@ -220,3 +220,11 @@ Why the Whittier area looks thin: (1) the city of Whittier and its parks site (c
 
 ## 2026-10-31 — Ontario and Fontana check
 Count on the map before this check: Ontario 4 events, Fontana 6 (Rancho Cucamonga 11, Chino 10, Upland 3, Montclair 4). Why they look light: (1) the city pages for Ontario and Fontana draw their calendars with scripts, so our reader gets an empty shell (ontarioca.gov/events, fontana.org/Calendar.aspx); (2) neither city has posted 2026 dates for its parades and tree lightings (already on the map as expected from prior years); (3) private home displays in the two cities (Santa's Workshop at 9697 Locust Ave and a Bon View Disney-style show in Fontana/Ontario, Pirate Ship House on Hellman in Rancho Cucamonga) appear only in old roundups with no 2026 dates, so they are not added yet; (4) both cities are in coverage group 17 with about 15 other cities in one sweep slot. Added 5 holiday shows at the Lewis Family Playhouse, Rancho Cucamonga, from the venue's own page (migration 0125). Next: have the browser pass (docs/browser-pass.md) open ontarioca.gov/events and fontanaca.gov calendars in Chrome, and re-check mid-November.
+
+## Admin: manage users (branch claude/amazing-thompson-wfxqst, not live yet)
+- New **Users** tab in `/admin/`: list and search everyone with a profile, filter active/suspended, CSV export, and per person: sign out everywhere, suspend/reactivate, edit name, private note, delete account. See `docs/admin-users.md`.
+- Migration `0126_user_admin.sql` adds `users.status`, `suspended_at`, `admin_note`. Suspended people are blocked at sign-in (code and Google) and their sessions end.
+- `DELETE /api/me` and the admin delete now share `functions/_lib/account.js`.
+- Tested locally: list/search, detail, rename, note, suspend (session dies, code not sent, verify refused), reactivate, CSV, delete with email confirmation.
+- Not yet done: block a suspended person's anonymous form posts by email; audit log of admin actions.
+
