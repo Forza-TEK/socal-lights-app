@@ -6,15 +6,16 @@
 // (events.keep_listed: 0 = post, 1 = both, 2 = sweep. Older "keep" / "hide" still work.)
 import { json, err } from "../../_lib/util.js";
 import { pairs, approvedPosts } from "../../_lib/addrkey.js";
+import { winText } from "../../_lib/wins.js";
 
 const CHOICE = { 0: "post", 1: "both", 2: "sweep" };
 const VALUE = { pick_post: 0, pick_both: 1, pick_sweep: 2, hide: 0, keep: 1 };
 
 export async function onRequestGet({ env }) {
-  const events = (await env.DB.prepare("SELECT id, name, city, address, keep_listed, start_date, end_date FROM events WHERE address != ''").all()).results;
+  const events = (await env.DB.prepare("SELECT id, name, city, address, blurb, keep_listed, start_date, end_date FROM events WHERE address != ''").all()).results;
   const { exact, near } = pairs(await approvedPosts(env), events);
   const post = (p) => ({ id: p.id, title: p.title, biz: p.biz, kind: p.poster_type === "installer" ? "installer" : "homeowner", street: p.street, city: p.city });
-  const ev = (e) => ({ id: e.id, name: e.name, city: e.city, address: e.address, choice: CHOICE[e.keep_listed] || "post", start: e.start_date, end: e.end_date });
+  const ev = (e) => ({ id: e.id, name: e.name, city: e.city, address: e.address, choice: CHOICE[e.keep_listed] || "post", win: winText(e), start: e.start_date, end: e.end_date });
   return json({ replaced: exact.map((x) => ({ post: post(x.post), event: ev(x.event) })), near: near.map((x) => ({ post: post(x.post), event: ev(x.event) })) });
 }
 

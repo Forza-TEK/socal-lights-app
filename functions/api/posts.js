@@ -2,6 +2,7 @@
 // they chose to show (list card l, map pop-up p, details page d).
 import { json, rowToPost } from "../_lib/util.js";
 import { pairs } from "../_lib/addrkey.js";
+import { winsFor } from "../_lib/wins.js";
 import { winnerBadges, parsePrefs, shown, emailKey } from "../_lib/badges.js";
 
 export async function onRequestGet({ env }) {
@@ -14,6 +15,7 @@ export async function onRequestGet({ env }) {
     const chosen = (await env.DB.prepare("SELECT id, city, address FROM events WHERE keep_listed = 2 AND address != ''").all()).results;
     if (chosen.length) hide = new Set(pairs(results.filter((r) => !r.contest_id), chosen).exact.map((x) => x.post.id));
   } catch {}
+  const wins = await winsFor(env, results.filter((r) => !r.contest_id), pairs); // contest wins stated on the sweep record this post replaces
   let byUser = new Map(), users = new Map(); // userId -> badges; userId -> { email, prefs }
   try {
     byUser = await winnerBadges(env);
@@ -27,6 +29,7 @@ export async function onRequestGet({ env }) {
     const p = rowToPost(r);
     const uid = r.user_id && users.has(r.user_id) ? r.user_id : idByEmail.get(emailKey(r.contact_email));
     if (uid && byUser.has(uid)) { const u = users.get(uid), b = byUser.get(uid).map((x) => shown(x, u.prefs)).filter((x) => x.l || x.p || x.d); if (b.length) p.b = b; }
+    if (wins.has(r.id)) p.b = [...(p.b || []), ...wins.get(r.id)];
     return p;
   });
   return json(out, { headers: { "cache-control": "public, max-age=60" } });
