@@ -533,7 +533,7 @@ function renderPanel(opts) {
   head.hidden = false;
   // One list of places: events and home displays together
   if (state.tab === "events") {
-    const ctr = mapReady ? map.getCenter() : null, dist = (o) => (ctr ? miles({ lat: ctr.lat, lng: ctr.lng }, { lat: o.lat, lng: o.lng }) : 0);
+    const ctr = state.me || (mapReady ? map.getCenter() : null), dist = (o) => (ctr ? miles({ lat: ctr.lat, lng: ctr.lng }, { lat: o.lat, lng: o.lng }) : 0);
     const items = [
       ...E.filter(evMatch).map((e) => ({ t: "e", o: e, lat: e.lat, lng: e.lng, free: !!e.free, f: e.f === 2 ? 1 : 0, st: effStart(e), nm: e.n, key: "e:" + e.id })),
       ...SHOW.filter(instMatch).map((h) => ({ t: "i", o: h, lat: h.plat, lng: h.plng, free: true, f: 0, st: TODAY, nm: h.title, key: "i:" + h.id })),
