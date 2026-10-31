@@ -87,10 +87,13 @@ const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify
 
 const CITY_OPTS = { ...CITY };
 const nearCity = (lat, lng) => { if (!state.city) return true; const c = CITY_OPTS[state.city]; return !c || miles({ lat, lng }, { lat: c[0], lng: c[1] }) <= state.radius; };
+// Search text: lowercase, with street words shortened the same way on both sides, so "22 Tuberose Street" finds "22 Tuberose St, Ladera Ranch"
+const SUFFIX = { street: "st", avenue: "ave", drive: "dr", road: "rd", lane: "ln", court: "ct", circle: "cir", place: "pl", boulevard: "blvd", terrace: "ter", parkway: "pkwy", highway: "hwy", north: "n", south: "s", east: "e", west: "w" };
+const hay = (t) => String(t || "").toLowerCase().replace(/[.,#]/g, " ").replace(/\b[a-z]+\b/g, (w) => SUFFIX[w] || w).replace(/\s+/g, " ");
 function evMatch(ev) {
   if ((ev.sn || "christmas") !== state.season) return false;
   if (ev.e < TODAY) return false; // past events drop off automatically
-  if (state.q && !(ev.n + " " + ev.city + " " + ev.c).toLowerCase().includes(state.q)) return false;
+  if (state.q && !hay(ev.n + " " + ev.city + " " + ev.c + " " + (ev.a || "")).includes(hay(state.q))) return false;
   if (state.counties.size && !state.counties.has(ev.c)) return false;
   if (!nearCity(ev.lat, ev.lng)) return false;
   if (state.cost === "free" && !ev.free) return false;
@@ -109,7 +112,7 @@ function instMatch(p) {
   if ((p.season || "christmas") !== state.season) return false;
   if (state.type && state.type !== "house") return false;
   if (state.cost === "paid") return false;
-  if (state.q && !(p.biz + " " + p.title + " " + p.city + " " + p.desc).toLowerCase().includes(state.q)) return false;
+  if (state.q && !hay(p.biz + " " + p.title + " " + p.city + " " + p.desc + " " + (p.address || "")).includes(hay(state.q))) return false;
   if (state.counties.size && !state.counties.has(p.county)) return false;
   if (!nearCity(p.lat, p.lng)) return false;
   return true;
