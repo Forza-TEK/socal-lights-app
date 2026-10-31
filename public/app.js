@@ -391,7 +391,32 @@ function nudgeShopTabs() {
   }, 450);
 }
 $("#t-events").onclick = () => setTab("events"); $("#t-shop").onclick = () => setTab("shop"); $("#t-plan").onclick = () => setTab("plan");
-function fitRoute() { const st = routeStops(), og = routeOrigin(); if (st.length + (og ? 1 : 0) < 2 || !mapReady) return; const b = new maplibregl.LngLatBounds(); st.forEach((e) => b.extend([e.lng, e.lat])); if (og) b.extend([og.lng, og.lat]); map.fitBounds(b, { padding: padding(), maxZoom: 13, duration: 600 }); }
+
+// One pill that glides to the selected tab (top tabs on desktop, bottom bar on phones), instead of each tab fading its own background
+function initSlidePill(box, selector) {
+  if (!box) return;
+  const pill = document.createElement("span"); pill.className = "slidepill"; pill.setAttribute("aria-hidden", "true"); box.prepend(pill);
+  const still = matchMedia("(prefers-reduced-motion: reduce)");
+  let cur = null, raf = 0, until = 0;
+  const target = () => { const b = box.querySelector(selector); return b && !b.hidden && box.getClientRects().length ? { x: b.offsetLeft, y: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight } : null; };
+  const step = () => {
+    raf = 0; const t = target();
+    if (!t) { pill.style.opacity = "0"; cur = null; return; }
+    pill.style.opacity = "1";
+    let moving = false;
+    if (!cur || still.matches) cur = { ...t };
+    else for (const k of ["x", "y", "w", "h"]) { const d = t[k] - cur[k]; if (Math.abs(d) > 0.4) { cur[k] += d * 0.2; moving = true; } else cur[k] = t[k]; }
+    pill.style.width = cur.w + "px"; pill.style.height = cur.h + "px"; pill.style.transform = `translate(${cur.x}px,${cur.y}px)`;
+    if (moving || performance.now() < until) raf = requestAnimationFrame(step);
+  };
+  const kick = () => { until = performance.now() + 600; if (!raf) raf = requestAnimationFrame(step); };
+  new MutationObserver(kick).observe(box, { attributes: true, subtree: true, attributeFilter: ["aria-current", "aria-selected", "hidden"] });
+  addEventListener("resize", () => { cur = null; kick(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { cur = null; kick(); });
+  kick();
+}
+initSlidePill(document.querySelector(".ptabs"), '.ptab[aria-selected="true"]');
+initSlidePill(document.getElementById("bnav"), "button[aria-current]");function fitRoute() { const st = routeStops(), og = routeOrigin(); if (st.length + (og ? 1 : 0) < 2 || !mapReady) return; const b = new maplibregl.LngLatBounds(); st.forEach((e) => b.extend([e.lng, e.lat])); if (og) b.extend([og.lng, og.lat]); map.fitBounds(b, { padding: padding(), maxZoom: 13, duration: 600 }); }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
 let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel({ quiet: true }); }, 80); }
 function counts() { $("#n-events").textContent = E.filter(evMatch).length + SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; }
