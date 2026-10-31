@@ -238,3 +238,6 @@ Count on the map before this check: Ontario 4 events, Fontana 6 (Rancho Cucamong
 ## Choose which record visitors see (branch)
 - On the Replaced records tab, each address has a three-way choice: their record (default), both, or the sweep record. Choosing the sweep record hides the person's post from `/api/posts` (still approved; flagged "Not on the map" in Published houses). `events.keep_listed` 0/1/2, no new migration. Tested locally; default behaviour unchanged.
 
+## Search finds street addresses (branch)
+- The map search now matches a street address: homes whose address is public (`address` in `/api/posts`) and every event's address (`a`), with street words shortened on both sides, so "22 Tuberose Street" finds "22 Tuberose St, Ladera Ranch". Homes whose owner chose not to show their address are still not searchable by address. `public/app.js` (`hay`), `?v=20261031u` in `index.html`.
+
