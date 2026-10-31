@@ -242,3 +242,13 @@ Count on the map before this check: Ontario 4 events, Fontana 6 (Rancho Cucamong
 - The map search now matches a street address: homes whose address is public (`address` in `/api/posts`) and every event's address (`a`), with street words shortened on both sides, so "22 Tuberose Street" finds "22 Tuberose St, Ladera Ranch". Homes whose owner chose not to show their address are still not searchable by address. `public/app.js` (`hay`), `?v=20261031u` in `index.html`.
 
 - 2026-10-31 distance on cards (`20261031v`): list cards, map popup card and details show "· 3.2 mi away" (straight-line, from the user's own location). Nothing is asked up front: if location is already allowed for the site it is read quietly; otherwise it starts when the locate button (or My night) is tapped. Browser pass reminders (phone + email) are scheduled for Nov 16, Dec 1 and Dec 14 10:07am PT. Emailed PKS@cityofwhittier.org on 2026-10-31 asking for an events feed or bot allow-listing.
+
+## Contest wins carry over to the replacing record (branch)
+- A contest win stated on a replaced sweep record now shows as a crown line on the person's listing (card chip, pop-up, details with Source link); display only, person's text untouched. Rule and limits in `docs/superseding.md`. Tested locally for all three choices. Nothing for wins stated only in the title and not recognised beyond the "(... contest winner)" pattern.
+
+## Home addresses are always public (branch)
+- `/api/posts` now always returns a home's street address (`rowToPost` ignores the old `show_address` flag), so address search finds every home and every pin sits on its street address. New posts were already public (`show_address = 1`); the admin edit window already saved them as public. Checked live before the change: all 4 published homes already had a public address. The admin card now says "(shown on the map)" instead of public/private. No migration.
+
+## Save & exit on the contest entry form (branch)
+- `/c/<slug>/enter` now has Save & exit, the leave-page prompt and the keep-your-place draft like the other forms. The draft is saved to the account as kind `entry` (photos are not saved) and shows on the profile Drafts tab as "Contest entry", with Continue going back to that contest's form on the step they left (`drafts.data.contestSlug`, listed by `/api/drafts` and `/api/me/overview` as `slug`). Same-device draft also kept per contest (`scl-entry-draft-<slug>`). `addflow.js` bumped to `?v=20261031u` on every page. Tested locally: save, profile row, Continue restores the answers and step. No migration.
+

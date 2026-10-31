@@ -13,7 +13,7 @@
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, esc, input, area, select, check, photoField, sumRow } from "/addflow.js?v=20261031t";
+import { run, esc, input, area, select, check, photoField, sumRow } from "/addflow.js?v=20261031u";
 import { me, signIn } from "/auth.js?v=20261030a";
 import { CITY } from "/cities.js";
 import { defaultSeason } from "/seasons.js?v=20261029d";
@@ -26,7 +26,7 @@ else {
   if (!C.entriesOpen) plain("Entries are closed", `${esc(C.name)} isn't taking new entries right now.`, `<div><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`);
   else {
     let user = (await me()).user;
-    const d = { photos: [], street: "", city: C.city || "", zip: "", name: "", desc: "", rules: false };
+    const d = { photos: [], street: "", city: C.city || "", zip: "", name: "", desc: "", rules: false, contestSlug: slug };
     if (user) { if (user.name) d.name = user.name; if (user.city && cities.includes(user.city)) { d.city = user.city; d.street = user.street || ""; d.zip = user.zip || ""; } }
     const steps = [
       { id: "gate", sec: "Sign in", skip: () => !!user, title: "Sign in to enter your home", help: "We use your sign-in so you can come back to check on your entry, and so nobody enters on your behalf.",
@@ -49,7 +49,7 @@ else {
           api.finish(`<h1>You're entered!</h1><p class="help">${C.approval === "manual" ? "The organizer will review your entry before it goes on the map." : "Your entry is on the contest page and the map now."} Sign in with ${esc(user.email)} any time to come back.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/c/${esc(slug)}">See the contest</a><a class="btn out" href="/c/${esc(slug)}/enter">Enter another home</a></div>`);
         } },
     ];
-    run({ steps, data: d, exit: "/c/" + slug, addr: { cities }, actions: { async signin(_, a) { const u = await signIn({ title: "Sign in to enter", next: location.pathname }); if (u) { user = u; a.draw(); } } } });
+    run({ steps, data: d, exit: "/c/" + slug, persist: "scl-entry-draft-" + slug, noPersist: ["photos"], account: { kind: "entry", q: "entry&c=" + encodeURIComponent(slug), title: (x) => (x.name || "My entry") + " · " + C.name }, addr: { cities }, actions: { async signin(_, a) { const u = await signIn({ title: "Sign in to enter", next: location.pathname }); if (u) { user = u; a.draw(); } } } });
   }
 }
 </script>
