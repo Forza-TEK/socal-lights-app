@@ -50,5 +50,8 @@ Other docs: `docs/coverage-cities.md` (where to search), `docs/city-sweep.md`, `
 - The site redeploys on every push to `main`, and migrations apply to the **live** database. Prefer a branch for anything non-trivial. The scheduled routines are the exception: they publish event migrations straight to `main` after validation (see `docs/updating-events.md`).
 - Update `docs/status.md` at the end of every working session.
 
+## Where work happens and what runs on its own
+See `docs/operating-guide.md` (one Claude Code session with this repo attached; table of the scheduled `[SCL]` tasks).
+
 ## Current status
 See `docs/status.md`.
