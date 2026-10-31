@@ -26,10 +26,11 @@ Site is live at https://socallights.app. Event data is being maintained through 
 | SoCal Lights weekly upkeep (Forza-TEK) (`trig_01ALNHRk62UWcy9KRCZmHagW`) | Mondays 6:47 | Confirm dates, fix details, remove dead or duplicate events, season roll-overs; validates and publishes |
 | SoCal Lights midweek upkeep, Nov-Dec (Forza-TEK) (`trig_016jHPtnoVU8ZMroW1hNSRFa`) | Wed and Sat 6:52, November and December only | Date confirmation for events starting in the next 6 weeks; validates and publishes |
 | SoCal Lights browser pass (Chrome) (`trig_016DYwZoHWWJyZVcXELvX6fe`) | Tue and Fri 10:23 | Runs `docs/browser-pass.md` in Claude in Chrome on the owner's work computer (it must be on, with the Claude desktop app and Chrome open); adds events from the city calendars that block the bot, confirms others, opens a PR and merges it after the validate check |
+| SoCal Lights monthly photo refresh (`trig_01LHgBdTPJVtyFo9iZB6gFp6`) | 1st of the month 2:37 | Fills in missing event photos and replaces dead ones; validates and publishes |
 
 No human review step: Rey authorized direct publishing on 2026-10-28. Check the Actions tab ("Apply database migrations") if something looks off.
 
-The original three routines (`trig_01H9a1iYVJNgtgzyAi8kNpn5`, `trig_01VBEfN43zRQJwuHf4uqaHD7`, `trig_01Gm1USYSZ7oHRHQTTqkQoo5`) are **disabled**. They had `github.com/forza-tek/socal-lights` as their source, which stopped authenticating after the repo move (the 2026-10-27 12:14 sweep failed at startup). The replacements use the new repo name and clone it themselves. The old ones can be deleted from the Routines page once the new ones have each run once.
+The three original routines (old `forza-tek/socal-lights` repo) were deleted on 2026-10-30, and the prompts of the remaining routines now point at `https://socallights.app` instead of `socal-lights.pages.dev`.
 
 ## Recently done
 - Amazon Associates tracking ID `socallightsap-20` is set in `public/site-config.js`; the "Shop for the season" links in the mug box are live. Amazon reviews the account after 3 qualifying sales within 180 days. Ticket-affiliate programs (Impact etc.) still to be applied for.
