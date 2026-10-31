@@ -30,5 +30,13 @@ For every event you add or touch, confirm the pin is on the address: geocode the
 ## 7. Migration size limit (important)
 Cloudflare D1 rejects a statement over about 100 KB (`SQLITE_TOOBIG`), and a failed migration blocks every later migration. **Never put more than 30 rows in one `INSERT … VALUES`**; write several INSERT statements in the same file. Many `UPDATE` statements are fine.
 
-## 8. Report
+## 8. Per-city search pass (every city in the group, in addition to everything above)
+Search the open web for each city one at a time, using the web search tool (never scrape google.com result pages; the search tool is the sanctioned way to run Google-style searches). For each city, run these queries with the city, its county and the year, and read the result snippets and any page that loads:
+- `"<city> CA holiday events 2026"`, `"<city> tree lighting 2026"`, `"<city> Christmas parade 2026"`, `"<city> Christmas lights homes address"`, `"<city> decorating contest 2026"`
+- Before Nov 2: `"<city> trunk or treat 2026"`, `"<city> Halloween events 2026"`, `"<city> Dia de los Muertos 2026"`
+- From mid-November: `"<city> New Year's Eve 2026"`, `"<city> Santa 2026"`, `"<city> menorah lighting OR Kwanzaa OR posada 2026"`
+- Venue and organizer angle: `"<city> chamber of commerce events"`, `"<city> library OR parks and recreation events December 2026"`, `"<city> Patch OR local news holiday events"`
+Budget about 6–10 searches per city (the web search allowance is shared within a run); put the most likely queries first and stop for a city once its results repeat. Accept a result only when it gives a date, a time and a place for 2026 (see the inclusion rule above); treat last year's pages as `expected` patterns only. Log each city's queries that found something and each city where nothing turned up, so the next run can try different words.
+
+## 9. Report
 List contests found, homes added/matched, photos set, pins fixed, and the pages that were blocked or had no addresses.
