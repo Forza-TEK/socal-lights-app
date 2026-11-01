@@ -163,3 +163,19 @@ export function seasonStarts(k, isoDate) {
   const d = `${y}-${start}`;
   return d >= isoDate ? d : `${y + 1}-${start}`;
 }
+
+// What is actually going on inside a season, by date: an icon and a short name for the season button
+// ([start, end, icon, name], month-day). Dates are the usual windows; Easter moves, so its window is wide.
+const PHASES = {
+  halloween: [["09-01", "10-31", "🎃", "Halloween"], ["11-01", "11-02", "💀", "Día de los Muertos"]],
+  christmas: [["11-03", "11-26", "🦃", "Thanksgiving"], ["11-27", "12-26", "🎄", "Christmas Lights"]],
+  newyear: [["12-27", "01-01", "🎆", "New Year's Eve"], ["01-02", "02-19", "🏮", "Lunar New Year"]],
+  spring: [["02-20", "03-14", "🌷", "Spring Blooms"], ["03-15", "04-25", "🐣", "Easter"], ["04-26", "05-15", "🌮", "Cinco de Mayo"]],
+  summer: [["05-16", "06-24", "☀️", "Summer"], ["06-25", "07-05", "🎇", "Fourth of July"], ["07-06", "08-31", "🏖️", "Summer"]],
+};
+// The phase for a season on a date: the one happening now if the date is inside the season, otherwise the first one coming up.
+export function phaseFor(k, isoDate) {
+  const md = isoDate.slice(5), list = PHASES[k] || [];
+  const hit = list.find((p) => inWin([p[0], p[1]], md)) || list[0];
+  return hit ? { icon: hit[2], name: hit[3] } : { icon: "✨", name: SEASONS[k].short };
+}

@@ -732,3 +732,13 @@ body.lb-open{overflow:hidden}
 .panel .list .item .pv-acts .shr,.panel .list .item .pv-acts .star{width:44px;height:44px;margin:-4px -4px -4px -4px}
 .panel .list .item .pv-acts{margin:-6px -8px 0 0;gap:0}
 @media (max-width:860px){.grab{padding:14px 0 8px}}
+
+/* season button: icon + name for a few seconds, then just the icon (it grows back on touch) */
+.seasonbtn .sico{flex:none;font-size:21px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.seasonbtn #seasonlbl,.seasonbtn .caret{overflow:hidden;max-width:240px;opacity:1;transition:max-width .5s cubic-bezier(.25,.1,.25,1),opacity .3s ease,margin .5s cubic-bezier(.25,.1,.25,1)}
+.seasonbtn,.seasonbtn.mini{transition:padding .5s cubic-bezier(.25,.1,.25,1),gap .5s cubic-bezier(.25,.1,.25,1)}
+.seasonbtn.mini{gap:0;padding:0 15px}
+.seasonbtn.mini #seasonlbl,.seasonbtn.mini .caret{max-width:0;opacity:0;margin:0}
+@media (max-width:860px){.seasonbtn.mini{padding:0 11px}}
+#seasonmenu .sico{display:inline-block;width:26px;font-size:18px;vertical-align:-1px}
+@media (prefers-reduced-motion:reduce){.seasonbtn #seasonlbl,.seasonbtn .caret,.seasonbtn{transition:none}}
