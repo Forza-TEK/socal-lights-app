@@ -643,7 +643,7 @@ function renderPanel(opts) {
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
-    head.innerHTML = `<div class="hrow"><span class="hcount">Shop for <b>${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</b></span></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
+    head.innerHTML = `<div class="hrow"><button class="chip" type="button" data-pop="shopseason" aria-haspopup="true" aria-label="Choose a season to shop for"><span class="sico" aria-hidden="true">${SHOP_ICON[shopSeason()] || "🛍️"}</span><span>Shop for ${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</span><svg class="caret" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
     body.innerHTML = `<div class="shopgrid">${c[1].map(([em, l, q]) => `<a class="shopcard" href="${amzUrl(q)}" target="_blank" rel="sponsored noopener"><span class="shopem" aria-hidden="true">${em}</span><span class="shoptx">${esc(l)}</span><span class="shopgo">Amazon ↗</span></a>`).join("")}</div><p class="meta" style="padding:4px 14px 14px">As an Amazon Associate we earn from qualifying purchases, at no extra cost to you.</p>`;
   } else {
     // My night uses the same layout as Places: buttons row, count line, then the cards
@@ -798,7 +798,8 @@ const isAff = (u) => !!affRule(u);
 function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) return r.template.replace("{url}", encodeURIComponent(u)); try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
 // High-end first: the search words get a "premium" nudge and Amazon sorts the results by price, high to low.
 const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(SITE.shopHighEnd ? q + " " + SITE.shopHighEnd : q)}${SITE.shopSort ? "&s=" + encodeURIComponent(SITE.shopSort) : ""}&tag=${encodeURIComponent(SITE.amazonTag)}`;
-const shopSeason = () => state.season; // the Shop follows the season button at the top
+const SHOP_ICON = { halloween: "🎃", christmas: "🎄", newyear: "🎆", spring: "🌷", summer: "☀️" };
+const shopSeason = () => (SITE.shop[state.shopSeason] ? state.shopSeason : state.season); // follows the season button at the top until you pick another here
 const shopCats = () => (SITE.amazonTag ? SITE.shop[shopSeason()] || [] : []);
 // The Shop tab only exists when there is an Amazon tag and shop list for the season.
 function syncShopTab() {
@@ -832,7 +833,7 @@ function setCity(n) {
 // The small drop-down under the Shop tab's "Shop for" button
 function openPop(chip) {
   const k = chip.dataset.pop, p = $("#pop"); popFor = k; let h = "";
-  if (k === "shopseason") h = `<h4>Shop for</h4>${Object.keys(SITE.shop).filter((x) => SEASONS[x]).map((x) => `<label class="opt"><input type="radio" name="ss" value="${x}" ${x === shopSeason() ? "checked" : ""}> ${esc(SEASONS[x].short || SEASONS[x].label)}</label>`).join("")}`;
+  if (k === "shopseason") h = `<h4>Shop for</h4>${Object.keys(SITE.shop).filter((x) => SEASONS[x]).map((x) => `<label class="opt"><input type="radio" name="ss" value="${x}" ${x === shopSeason() ? "checked" : ""}> ${SHOP_ICON[x] || ""} ${esc(SEASONS[x].short || SEASONS[x].label)}</label>`).join("")}`;
   p.innerHTML = h; p.hidden = false;
   const r = chip.getBoundingClientRect(), pw = p.offsetWidth; p.style.top = r.bottom + 6 + "px"; p.style.left = Math.max(12, Math.min(r.left, innerWidth - pw - 12)) + "px";
   p.querySelectorAll("input[name=ss]").forEach((r) => (r.onchange = () => { state.shopSeason = r.value; state.shopCat = 0; closePop(); renderPanel(); $("#pbody").scrollTop = 0; }));
