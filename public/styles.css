@@ -752,3 +752,15 @@ body.lb-open{overflow:hidden}
 #sugg b{display:block;font-weight:500;font-size:15px;line-height:1.25}
 #sugg small{display:block;color:var(--muted);font-size:13px;font-weight:400;margin-top:1px}
 @media (max-width:860px){#sugg{max-height:55vh}}
+
+/* first-visit location offer, shared-night bar, share button, city link line */
+#welcome{position:fixed;z-index:30;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 118px);display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 14px;border-radius:18px;background:var(--surface);box-shadow:var(--shadow);border:1px solid var(--line);color:var(--ink);font-size:14.5px}
+#welcome span{flex:1 1 200px}
+#welcome button{border:0;border-radius:999px;padding:9px 15px;background:var(--season);color:var(--on-season);font:inherit;font-weight:500;cursor:pointer}
+#welcome button.no{background:none;color:var(--muted);padding:9px 6px}
+@media (min-width:861px){#welcome{left:20px;right:auto;top:96px;width:330px}}
+.sharedbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 0;padding:10px 12px;border-radius:16px;background:var(--season-soft);font-size:14.5px}
+.sharedbar span{flex:1 1 150px;font-weight:500}
+.sharedbar button{border:0;border-radius:999px;padding:8px 14px;background:var(--ink);color:var(--surface);font:inherit;font-weight:500;cursor:pointer}
+.sharedbar button:last-child{background:none;color:var(--muted)}
+.quick .qshare{flex:none;height:36px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:14px;font-weight:400;cursor:pointer}

@@ -118,7 +118,8 @@ function addToCalendar(id) {
   toast("Calendar file ready");
 }
 // one-line "report a problem" link on details pages: opens an email with the event already named
-const reportLink = (name, key) => `<p class="reportline"><a href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Something wrong? Tell us</a></p>`;
+const citySlug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+const reportLink = (name, key, city) => `<p class="reportline">${city ? `<a href="/in/${citySlug(city)}">More in ${esc(city)}</a> · ` : ""}<a href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Something wrong? Tell us</a></p>`;
 
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};
@@ -187,7 +188,7 @@ map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-ri
 const geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false }, trackUserLocation: false });
 map.addControl(geo, "top-right");
 // The control only zooms to the (often wide) accuracy circle; fly in close on the user instead
-geo.on("geolocate", (e) => { state.me = { lat: e.coords.latitude, lng: e.coords.longitude }; state.meErr = ""; scheduleList(); map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }); });
+geo.on("geolocate", (e) => { const wel = document.getElementById("welcome"); if (wel) wel.remove(); state.me = { lat: e.coords.latitude, lng: e.coords.longitude }; state.meErr = ""; scheduleList(); map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }); });
 
 function padding() {
   const ph = isPhone();
@@ -301,7 +302,7 @@ function locateMe(force) {
   if (!navigator.geolocation) { state.meErr = "Your browser can't share its location."; renderPanel(); return; }
   locating = true;
   navigator.geolocation.getCurrentPosition(
-    (pos) => { locating = false; state.me = { lat: pos.coords.latitude, lng: pos.coords.longitude }; state.meErr = ""; if (state.tab === "plan") { renderPanel(); drawMap(); fitRoute(); } else scheduleList(); },
+    (pos) => { locating = false; state.me = { lat: pos.coords.latitude, lng: pos.coords.longitude }; state.meErr = ""; if (state.tab === "plan") { renderPanel(); drawMap(); fitRoute(); } else scheduleList(); const wel = document.getElementById("welcome"); if (wel) wel.remove(); },
     (err) => { locating = false; state.meErr = err.code === 1 ? "Location is blocked for this site, so the route starts at your first stop. Google Maps will still start from where you are." : "Couldn't find your location right now."; if (state.tab === "plan") renderPanel(); },
     { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
 }
@@ -309,7 +310,8 @@ function locateMe(force) {
 try { navigator.permissions && navigator.permissions.query({ name: "geolocation" }).then((r) => { if (r.state === "granted") locateMe(false); }).catch(() => {}); } catch {}
 function routeStops() {
   // starred events plus starred houses (a house becomes a stop with its pin position and street address)
-  const fl = [...E.filter((e) => favs.has(e.id)), ...SHOW.filter((p) => favs.has(hfav(p))).map((p) => ({ house: true, id: p.id, key: "i:" + p.id, n: p.title, lat: p.plat, lng: p.plng, a: p.address ? p.address + ", " + p.city + ", CA" : "", p }))];
+  const ids = state.shared || favs; // a plan someone shared, until it is added to My night or closed
+  const fl = [...E.filter((e) => ids.has(e.id)), ...SHOW.filter((p) => ids.has(hfav(p))).map((p) => ({ house: true, id: p.id, key: "i:" + p.id, n: p.title, lat: p.plat, lng: p.plng, a: p.address ? p.address + ", " + p.city + ", CA" : "", p }))];
   if (!fl.length) return [];
   const o = routeOrigin();
   let pool = [...fl], route = [], at = o || pool[0]; if (!o) route.push(pool.shift());
@@ -600,6 +602,20 @@ function routeFromView() {
   while (pool.length) { pool.sort((a, b) => miles(at, a) - miles(at, b)); at = pool.shift(); ord.push(at); }
   return navUrl(ord.map(destOf), ""); // no origin: the maps app starts from wherever the phone is
 }
+async function shareNight() {
+  if (!favs.size) return;
+  const url = location.origin + "/#night-" + [...favs].map(encodeURIComponent).join(","), title = "My night on SoCal Lights";
+  try { if (navigator.share) { await navigator.share({ title, text: `${favs.size} stops for a night of lights`, url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
+  try { await navigator.clipboard.writeText(url); toast("Link to your night copied"); } catch { toast(url); }
+}
+// First visit: offer to use the location so distances and Nearest work; asked once, never up front
+function showWelcome() {
+  let seen = false; try { seen = !!localStorage.getItem("socal-welcomed"); } catch {}
+  if (seen || state.me || $("#welcome")) return;
+  const w = document.createElement("div"); w.id = "welcome"; w.setAttribute("role", "region"); w.setAttribute("aria-label", "Use your location");
+  w.innerHTML = `<span>See what is close to you and how far it is.</span><button type="button" data-welcome="go">Use my location</button><button type="button" class="no" data-welcome="no" aria-label="No thanks">No thanks</button>`;
+  document.body.appendChild(w);
+}
 function renderPanel(opts) {
   counts();
   const head = $("#phead"), body = $("#pbody");
@@ -627,7 +643,7 @@ function renderPanel(opts) {
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
-    head.innerHTML = `<div class="hrow"><button class="chip" type="button" data-pop="shopseason" aria-haspopup="true"><span>Shop for ${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</span><svg class="caret" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
+    head.innerHTML = `<div class="hrow"><span class="hcount">Shop for <b>${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</b></span></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
     body.innerHTML = `<div class="shopgrid">${c[1].map(([em, l, q]) => `<a class="shopcard" href="${amzUrl(q)}" target="_blank" rel="sponsored noopener"><span class="shopem" aria-hidden="true">${em}</span><span class="shoptx">${esc(l)}</span><span class="shopgo">Amazon ↗</span></a>`).join("")}</div><p class="meta" style="padding:4px 14px 14px">As an Amazon Associate we earn from qualifying purchases, at no extra cost to you.</p>`;
   } else {
     // My night uses the same layout as Places: buttons row, count line, then the cards
@@ -645,7 +661,7 @@ function renderPanel(opts) {
     const dur = mins >= 60 ? Math.floor(mins / 60) + " hr" + (mins % 60 ? " " + (mins % 60) + " min" : "") : mins + " min";
     const startSel = `<label class="qsel">Start <select id="startFrom" aria-label="Start from"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
     const mapsSel = `<label class="qsel">Maps <select id="mapsSel" aria-label="Maps app">${Object.entries(MAPS).map(([k, l]) => `<option value="${k}"${k === mapsApp ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
-    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How My night works" title="How My night works">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options">${parts.map((u, i) => `<a class="qgo" href="${esc(u)}" target="_blank" rel="noopener" title="Open route${parts.length > 1 ? " part " + (i + 1) + " of " + parts.length : ""} in ${MAPS[mapsApp]}">${parts.length > 1 ? "Route " + (i + 1) + " of " + parts.length : "Open route"} ↗</a>`).join("")}${startSel}${mapsSel}</div>` : ""}`;
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How My night works" title="How My night works">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options">${parts.map((u, i) => `<a class="qgo" href="${esc(u)}" target="_blank" rel="noopener" title="Open route${parts.length > 1 ? " part " + (i + 1) + " of " + parts.length : ""} in ${MAPS[mapsApp]}">${parts.length > 1 ? "Route " + (i + 1) + " of " + parts.length : "Open route"} ↗</a>`).join("")}${startSel}${mapsSel}${state.shared ? "" : `<button type="button" class="qshare" data-nshare>Share</button>`}</div>` : ""}${state.shared ? `<div class="sharedbar"><span>A night shared with you</span><button type="button" data-nsave>Add to my night</button><button type="button" data-nclose>Close</button></div>` : ""}`;
     const sf = $("#startFrom"); if (sf) sf.onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
     const ms = $("#mapsSel"); if (ms) ms.onchange = (e) => setMapsApp(e.target.value);
     if (!st.length) { body.innerHTML = nightHelp ? helpHtml(0) : `<div class="empty">No stops yet. Tap the heart on any place to add it.</div>`; return; }
@@ -675,6 +691,9 @@ $("#pbody").addEventListener("click", (e) => {
   const sh = e.target.closest("[data-share]"); if (sh) { e.stopPropagation(); shareItem(sh.dataset.share); }
 });
 $("#phead").addEventListener("click", (e) => {
+  const ns = e.target.closest("[data-nshare]"); if (ns) { shareNight(); return; }
+  if (e.target.closest("[data-nsave]")) { state.shared.forEach((id) => favs.add(id)); state.shared = null; saveFavs(); counts(); renderPanel(); drawMap(); toast("Added to your night"); return; }
+  if (e.target.closest("[data-nclose]")) { state.shared = null; renderPanel(); drawMap(); return; }
   const rt = e.target.closest("[data-route]");
   if (rt) { if (rt.dataset.hint) { toast(rt.dataset.hint, true); return; } const u = routeFromView(); if (u) window.open(u, "_blank", "noopener"); return; }
   const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
@@ -746,7 +765,7 @@ function detailHtml(k) {
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd></dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
-    ${reportLink(ev.n, "e-" + ev.id)}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
+    ${reportLink(ev.n, "e-" + ev.id, ev.city)}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
   return `<div class="detail">  ${ph.length ? `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="ph-none">No photos yet</div></div>`}
@@ -754,7 +773,7 @@ function detailHtml(k) {
   <h2>${esc(p.title)}</h2><div class="meta">${p.kind === "installer" ? "" : "Posted by "}<b style="color:var(--ink)">${esc(p.biz)}</b> · ${esc(p.city)}${away({ lat: p.plat, lng: p.plng })}</div>${bLines(p)}
   <p style="margin:0;white-space:pre-line">${esc(p.desc)}</p>
   <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}</dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.kind === "installer" && p.area ? `<dt>Service area</dt><dd>${esc(p.area)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
-  ${reportLink(p.title, "h-" + p.id)}<div class="actionbar"><button class="abtn" type="button" data-share="i:${esc(p.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
+  ${reportLink(p.title, "h-" + p.id, p.city)}<div class="actionbar"><button class="abtn" type="button" data-share="i:${esc(p.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
 }
 function wireDetail() {
   const area = document.querySelector(".detail .hero.photo, .detail .gallery:has(.track)");
@@ -779,7 +798,7 @@ const isAff = (u) => !!affRule(u);
 function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) return r.template.replace("{url}", encodeURIComponent(u)); try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
 // High-end first: the search words get a "premium" nudge and Amazon sorts the results by price, high to low.
 const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(SITE.shopHighEnd ? q + " " + SITE.shopHighEnd : q)}${SITE.shopSort ? "&s=" + encodeURIComponent(SITE.shopSort) : ""}&tag=${encodeURIComponent(SITE.amazonTag)}`;
-const shopSeason = () => (SITE.shop[state.shopSeason] ? state.shopSeason : state.season);
+const shopSeason = () => state.season; // the Shop follows the season button at the top
 const shopCats = () => (SITE.amazonTag ? SITE.shop[shopSeason()] || [] : []);
 // The Shop tab only exists when there is an Amazon tag and shop list for the season.
 function syncShopTab() {
@@ -1048,6 +1067,7 @@ function showSuggestions() {
     + places.map((e) => `<button type="button" role="option" data-se="${esc(e.id)}"><span class="si">${esc(phaseFor(e.sn && SEASONS[e.sn] ? e.sn : state.season, TODAY).icon)}</span><span><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(whenShort(e))}</small></span></button>`).join("");
 }
 document.addEventListener("click", (e) => {
+  const wl = e.target.closest("[data-welcome]"); if (wl) { try { localStorage.setItem("socal-welcomed", "1"); } catch {} const w = $("#welcome"); if (w) w.remove(); if (wl.dataset.welcome === "go") geo.trigger(); return; }
   const sc = e.target.closest("[data-sc]"), se = e.target.closest("[data-se]");
   if (sc) { const c = CITY_OPTS[sc.dataset.sc]; $("#q").value = ""; state.q = ""; closeSuggestions(); applyFilters(); if (c && mapReady) map.easeTo({ center: [c[1], c[0]], zoom: 11.5, duration: 700 }); return; }
   if (se) { const id = se.dataset.se, ev = E.find((x) => x.id === id); $("#q").value = ""; state.q = ""; closeSuggestions(); applyFilters(); if (ev) { if (ev.sn && SEASONS[ev.sn] && ev.sn !== state.season) setSeason(ev.sn); selectKey("e:" + id, "list"); } return; }
@@ -1175,6 +1195,8 @@ async function load() {
     if (SEASONS[sn]) setSeason(sn);
     if (ev) selectKey("e:" + ev.id, "list"); else if (ho) selectKey("i:" + ho.id, "list");
   }
+  setTimeout(showWelcome, 1500);
+  const nm = h.match(/^night-(.+)$/); if (nm) { state.shared = new Set(nm[1].split(",").map((x) => { try { return decodeURIComponent(x); } catch { return ""; } }).filter(Boolean)); setTab("plan"); }
   if (SEASONS[h]) setSeason(h);
   if (h === "showcase") location.replace("/add-house?s=" + state.season); if (h === "night") setTab("plan");
 }
