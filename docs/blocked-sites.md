@@ -36,3 +36,5 @@ Bot = our scheduled, unattended cloud runs. Chrome = the owner's own Chrome driv
 | Axios, Macaroni Kid (some editions) | 403 | not tried | same event on the organizer's own page | n/a |
 
 Sites that **do** load: rivlib.libcal.com, library.sbcounty.gov (see `docs/sweep-methods.md`), santafesprings.gov, pico-rivera.org, norwalkca.gov, cityoflamirada.org, lahabraheights.org, whittierchamber.com, whittiermuseum.org.
+
+Added 2026-11-01 (group 17 sweep): montclairca.gov (WebFetch 403; cityofmontclair.org pages load via search).
