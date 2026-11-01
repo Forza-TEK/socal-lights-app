@@ -54,7 +54,7 @@ const steps = [
   { id: "where", sec: "Location", title: "Any tips for visitors?", help: "Best nights to come, where to park.",
     body: (x) => input(x, "where", { max: 120, ph: "e.g. Visible from Main St on weekend nights", label: "Tips", opt: true }) },
   { id: "photos", sec: "Photos", title: "Add photos", help: "Photos help families find the right house. You can skip this and add them later by email.", body: (x) => photoField(x) },
-  { id: "review", sec: "Review", title: "Check everything, then send it", help: "It goes live after a quick review.", cta: "Send for review",
+  { id: "review", sec: "Review", title: "Check everything, then send it", help: "It goes on the map right away. You can ask us to change or remove it any time.", cta: "Put it on the map",
     body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${!pro(x) && x.hadPro === "yes" ? sumRow("Installed by", esc(x.instName), "installer") : ""}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${sumRow("Photos", String(x.photos.length), "photos")}</div>
       ${input(x, "email", { label: `Your email <small>${PRIV}. Only the site owner sees it.</small>`, type: "email", mode: "email", ac: "email", max: 120 })}<div id="ts"></div>`,
     check: (x) => (!isEmail(x.email) ? "Enter your email so we can reach you if something needs fixing." : ""),
