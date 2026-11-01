@@ -615,6 +615,7 @@ function showWelcome() {
   const w = document.createElement("div"); w.id = "welcome"; w.setAttribute("role", "region"); w.setAttribute("aria-label", "Use your location");
   w.innerHTML = `<span>See what is close to you and how far it is.</span><button type="button" data-welcome="go">Use my location</button><button type="button" class="no" data-welcome="no" aria-label="No thanks">No thanks</button>`;
   document.body.appendChild(w);
+  setTimeout(() => { if (w.isConnected) { w.remove(); try { localStorage.setItem("socal-welcomed", "1"); } catch {} } }, 15000); // offered once; ignored for 15 seconds counts as "no thanks"
 }
 function renderPanel(opts) {
   counts();
@@ -698,7 +699,7 @@ $("#phead").addEventListener("click", (e) => {
   if (rt) { if (rt.dataset.hint) { toast(rt.dataset.hint, true); return; } const u = routeFromView(); if (u) window.open(u, "_blank", "noopener"); return; }
   const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
   const cl = e.target.closest("[data-clear]"); if (cl) { clearFilter(cl.dataset.clear); return; }
-  const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { popFor === "shopseason" ? closePop() : openPop(sc); return; }
+  const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { toggleSeasonPick(sc, "shop"); return; }
   const sb = e.target.closest("[data-shop]"); if (sb) { state.shopCat = +sb.dataset.shop; renderPanel(); $("#pbody").scrollTop = 0; return; }
   const b = e.target.closest("[data-quick]"); if (!b) return;
   const f = b.dataset.quick, v = b.dataset.v;
@@ -994,21 +995,22 @@ function seasonPeek(ms) {
 }
 { const sb = $("#seasonbtn"); if (sb) { sb.addEventListener("mouseenter", () => { clearTimeout(seasonMiniT); sb.classList.remove("mini"); }); sb.addEventListener("mouseleave", () => seasonPeek(1800)); sb.addEventListener("focus", () => { clearTimeout(seasonMiniT); sb.classList.remove("mini"); }); } }
 // One "Halloween ▾" button lists the five seasons (beside the search on desktop, under it on phones)
-function toggleSeasonPick(btn) {
+function toggleSeasonPick(btn, mode) {
+  const shop = mode === "shop", cur = shop ? shopSeason() : state.season; // the Shop tab uses this same menu to choose what to shop for
   if ($("#seasonmenu")) { closeSeasonMenu(); return; }
   closeFilters(); closeMore(); closePop();
   const m = document.createElement("div"); m.id = "seasonmenu"; m.setAttribute("role", "menu");
-  m.innerHTML = seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === state.season}" data-sp="${k}" class="${k === state.season ? "on" : ""}"><span class="sico" aria-hidden="true">${phaseFor(k, TODAY).icon}</span> ${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : ""}</button>`).join("");
+  m.innerHTML = seasonsFrom(NOW_SEASON).filter((k) => !shop || SITE.shop[k]).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === cur}" data-sp="${k}" class="${k === cur ? "on" : ""}"><span class="sico" aria-hidden="true">${phaseFor(k, TODAY).icon}</span> ${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : ""}</button>`).join("");
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 8 + "px"; m.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
   btn.setAttribute("aria-expanded", "true");
-  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); setSeason(b.dataset.sp); };
-  setTimeout(() => document.addEventListener("click", function off(e) { if (!$("#seasonmenu")) { document.removeEventListener("click", off); return; } if (!e.target.closest("#seasonmenu,#seasonbtn")) { closeSeasonMenu(); document.removeEventListener("click", off); } }), 0);
+  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); if (shop) { state.shopSeason = b.dataset.sp; state.shopCat = 0; renderPanel(); $("#pbody").scrollTop = 0; } else setSeason(b.dataset.sp); };
+  setTimeout(() => document.addEventListener("click", function off(e) { if (!$("#seasonmenu")) { document.removeEventListener("click", off); return; } if (!e.target.closest("#seasonmenu,#seasonbtn,[data-pop=shopseason]")) { closeSeasonMenu(); document.removeEventListener("click", off); } }), 0);
 }
 $("#seasonbtn").onclick = (e) => toggleSeasonPick(e.currentTarget);
 function closeSeasonMenu() {
   const m = $("#seasonmenu"); if (m) m.remove();
-  const dd = document.querySelector("[data-sdrop]"); if (dd) dd.setAttribute("aria-expanded", "false");
+  const dd = document.querySelector("[data-sdrop],[data-pop=shopseason]"); if (dd) dd.setAttribute("aria-expanded", "false");
   const sb = $("#seasonbtn"); if (sb) { sb.setAttribute("aria-expanded", "false"); seasonPeek(2500); }
 }
 function repaintMap() {
