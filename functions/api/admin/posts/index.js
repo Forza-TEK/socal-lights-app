@@ -5,7 +5,7 @@ import { pairs } from "../../../_lib/addrkey.js";
 export async function onRequestGet({ request, env }) {
   const status = new URL(request.url).searchParams.get("status") || "pending";
   if (!["pending", "approved", "declined"].includes(status)) return json([]);
-  const { results } = await env.DB.prepare("SELECT * FROM posts WHERE status = ? ORDER BY created_at DESC LIMIT 500").bind(status).all();
+  const { results } = await env.DB.prepare("SELECT p.*, i.slug AS inst_slug, i.name AS inst_name FROM posts p LEFT JOIN installers i ON i.id = p.installer_id WHERE p.status = ? ORDER BY p.created_at DESC LIMIT 500").bind(status).all();
   const out = results.map((r) => rowToPost(r, true));
   // For houses waiting for review: which sweep records would this replace (same address), and which are close (same street, other number)?
   if (status === "pending" && out.length) {
