@@ -10,7 +10,9 @@ export async function onRequestGet({ request, env }) {
   const q = (sql, ...b) => env.DB.prepare(sql).bind(...b).all().then((r) => r.results);
   const [drafts, contests, entries, homes, events] = await Promise.all([
     q("SELECT id,kind,title,step,updated_at, json_extract(data, '$.contestSlug') AS slug FROM drafts WHERE user_id = ? ORDER BY updated_at DESC", user.id).then((r) => r.map(cleanSlug)),
-    q("SELECT slug,name,status,announced,entries_close,vote_start,vote_end FROM contests WHERE owner_id = ? ORDER BY created_at DESC", user.id),
+    q(`SELECT slug,name,status,announced,entries_close,vote_start,vote_end, CASE WHEN owner_id = ?1 THEN 'owner' ELSE 'staff' END AS role,
+         (SELECT COUNT(*) FROM posts p WHERE p.contest_id = contests.id AND p.status = 'pending') AS waiting
+       FROM contests WHERE owner_id = ?1 OR id IN (SELECT contest_id FROM contest_staff WHERE email = ?2) ORDER BY created_at DESC`, user.id, String(user.email || "").toLowerCase()),
     q("SELECT p.id,p.title,p.biz,p.status,c.name AS contest,c.slug FROM posts p JOIN contests c ON c.id = p.contest_id WHERE p.user_id = ? ORDER BY p.created_at DESC", user.id),
     q("SELECT id,title,biz,status,city,created_at FROM posts WHERE contest_id IS NULL AND lower(contact_email) = lower(?) ORDER BY created_at DESC LIMIT 50", user.email),
     q("SELECT id,name,status,city,start_date,created_at FROM event_submissions WHERE lower(contact_email) = lower(?) ORDER BY created_at DESC LIMIT 50", user.email),
