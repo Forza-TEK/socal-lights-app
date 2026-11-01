@@ -1,0 +1,25 @@
+name: Send weekly lights email
+
+# Thursdays at 10:00 Pacific (17:00 UTC in winter, 18:00 UTC in summer; one run at 17:30 UTC keeps it close enough). Needs the repository
+# secret ALERT_CRON_KEY, the same value as the Cloudflare Pages secret of that name. It can also be run by hand from the Actions tab.
+on:
+  schedule:
+    - cron: "30 17 * * 4"
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send in batches until the list is done
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+        run: |
+          if [ -z "$ALERT_CRON_KEY" ]; then echo "ALERT_CRON_KEY is not set in the repository secrets"; exit 1; fi
+          for i in $(seq 1 30); do
+            out=$(curl -sS -X POST https://socallights.app/api/alerts/send -H "x-alert-key: $ALERT_CRON_KEY")
+            echo "batch $i: $out"
+            echo "$out" | grep -q '"remaining":0' && exit 0
+            echo "$out" | grep -q '"remaining"' || exit 1
+            sleep 2
+          done

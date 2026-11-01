@@ -356,7 +356,7 @@ function renderPreview() {
   const acts = `<span class="pv-acts">${awayTag(it.kind === "ev" ? it.ev : { lat: it.p.plat, lng: it.p.plng })}<button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button></span>`;
   if (it.kind === "ev") {
     const ev = it.ev, phs = photosOf(ev), ph = phs[0], conf = ev.st === "c", hrs = hoursOf(ev), manyE = phs.length > 1;
-    pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${manyE ? `<div class="pvtrack" id="pvtrack">${phs.map((q, i) => `<div class="pvslide">${photoImg(q, i < 2)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="pvcount">1 / ${phs.length}</span>` : ph ? photoImg(ph) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
+    pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${manyE ? `<div class="pvtrack" id="pvtrack">${phs.map((q, i) => `<div class="pvslide">${photoImg(q, i < 2, 900)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="pvcount">1 / ${phs.length}</span>` : ph ? photoImg(ph, false, 800) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
   } else {
     const p = it.p, ph = p.photos || [];
     const many = ph.length > 1;
@@ -504,11 +504,16 @@ function photosOf(ev, hero) {
 const ARW_L = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>`;
 const ARW_R = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>`;
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
-const photoImg = (ph, eager) => `<img class="evimg" src="${esc(ph.src)}"${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt="" loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`;
+// Smaller copies of photos for the list and popup, made by Cloudflare image resizing (/cdn-cgi/image). It is used only once a quick test shows it works on this site (and is remembered), otherwise the original photo loads, and a failed copy falls back to the original.
+let THUMBS = false; try { THUMBS = localStorage.getItem("socal-thumbs") === "1"; } catch {}
+fetch("/cdn-cgi/image/width=16/" + location.origin + "/img/badge-160.webp", { method: "HEAD" }).then((r) => { THUMBS = r.ok && /^image\//.test(r.headers.get("content-type") || ""); try { localStorage.setItem("socal-thumbs", THUMBS ? "1" : "0"); } catch {} }).catch(() => {});
+const thumbOf = (u, w) => (THUMBS && /^(https?:\/\/|\/img\/events\/)/.test(u || "") ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : u);
+const photoImg = (ph, eager, w = 640) => `<img class="evimg" src="${esc(thumbOf(ph.src, w))}"${thumbOf(ph.src, w) !== ph.src ? ` data-orig="${esc(ph.src)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt="" loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`;
 document.addEventListener("load", (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains("evimg")) e.target.classList.add("ld"); }, true);
 document.addEventListener("error", (e) => {
   const i = e.target;
   if (!(i instanceof HTMLImageElement) || !i.classList.contains("evimg")) return;
+  if (i.dataset.orig) { const o = i.dataset.orig; i.removeAttribute("data-orig"); i.src = o; return; } // the resized copy failed: use the original
   if (i.dataset.fb) {
     i.src = i.dataset.fb; i.removeAttribute("data-fb");
     const c = i.closest(".hero")?.querySelector(".credit"); // the detail header credits the stock photo instead
@@ -757,7 +762,7 @@ function detailHtml(k) {
   if (it.kind === "ev") {
     const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u), phs = photosOf(ev, true), ph = phs[0], cl = ph && safeUrl(ph.link), manyD = phs.length > 1;
     return `<div class="detail">
-    <div class="hero${ev.free ? " free" : ""}${ph ? " photo" : ""}">${manyD ? `<div class="pvtrack" id="track">${phs.map((q, i) => `<div class="pvslide" data-credit="${esc(q.credit || "")}" data-link="${esc(safeUrl(q.link) || "")}">${photoImg(q, i < 2)}</div>`).join("")}</div><button class="pvnav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="gcount">1 / ${phs.length}</span>` : ph ? photoImg(ph) : ""}<button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
+    <div class="hero${ev.free ? " free" : ""}${ph ? " photo" : ""}">${manyD ? `<div class="pvtrack" id="track">${phs.map((q, i) => `<div class="pvslide" data-credit="${esc(q.credit || "")}" data-link="${esc(safeUrl(q.link) || "")}">${photoImg(q, i < 2, 900)}</div>`).join("")}</div><button class="pvnav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="gcount">1 / ${phs.length}</span>` : ph ? photoImg(ph, false, 1200) : ""}<button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
       ${ph ? (cl ? `<a class="credit" id="hcredit" href="${esc(cl)}" target="_blank" rel="noopener">${esc(ph.credit)}</a>` : `<span class="credit" id="hcredit">${esc(ph.credit)}</span>`) : ""}
       <div class="htext"><div class="kicker">${esc(TYPE_SHORT[ev.t] || "Event")} · ${esc(ev.city)}${away(ev)}</div><h2>${esc(ev.n)}</h2></div></div>
     <div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
@@ -938,6 +943,7 @@ function moreHtml() {
   const dark = theme() === "dark";
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
   return row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home display")
+    + row("button", 'type="button" data-m="alerts"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>`, "Weekly lights email", "Lights and events near a city, once a week")
     + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us on Cash App" : "Shop the season"))
     + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, dark
       ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>`
@@ -946,6 +952,36 @@ function moreHtml() {
     + row("a", 'href="/archive"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`, "Contest archives", "Every contestant and result, by season and year")
     + row("a", 'href="/privacy"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>`, "Privacy & terms", "How accounts and your data are handled")
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
+}
+// Weekly email: pick an email, a city and a distance; a confirmation link comes by email before anything is sent
+async function openAlerts() {
+  if ($("#alerts")) return;
+  const names = Object.keys(CITY_OPTS).sort(), near = state.me ? names.map((c) => [miles(state.me, { lat: CITY_OPTS[c][0], lng: CITY_OPTS[c][1] }), c]).sort((a, b) => a[0] - b[0])[0] : null;
+  const w = document.createElement("div"); w.id = "alerts"; w.setAttribute("role", "dialog"); w.setAttribute("aria-modal", "true"); w.setAttribute("aria-labelledby", "altitle");
+  w.innerHTML = `<div class="abox"><button type="button" class="ax" aria-label="Close" data-alclose>×</button><h2 id="altitle">Weekly lights email</h2><p>Once a week, the lights and events happening near a city you choose. Free, and you can stop it with one tap.</p>
+    <form id="alform" novalidate><label>Email<input type="email" id="alEmail" autocomplete="email" required></label>
+    <label>City<input id="alCity" list="alCities" autocomplete="off" value="${esc(state.city || (near ? near[1] : ""))}" required><datalist id="alCities">${names.map((c) => `<option value="${esc(c)}">`).join("")}</datalist></label>
+    <label>Distance<select id="alRad"><option value="5">Within 5 miles</option><option value="10" selected>Within 10 miles</option><option value="25">Within 25 miles</option></select></label>
+    <input class="hp" id="alWeb" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <label class="chk"><input type="checkbox" id="alOk"><span>Yes, email me this once a week. <a href="/privacy" target="_blank" rel="noopener">Privacy</a></span></label>
+    <div id="alTs"></div><button type="submit" class="alsend">Sign up</button><p id="alMsg" role="status"></p></form></div>`;
+  document.body.appendChild(w);
+  const close = () => { w.remove(); document.removeEventListener("keydown", esc2); }, esc2 = (e) => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", esc2); w.addEventListener("click", (e) => { if (e.target === w || e.target.closest("[data-alclose]")) close(); });
+  let widget = null; const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+  if (cfg.turnstileSiteKey) { await new Promise((res) => { if (window.turnstile) return res(); const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.onload = res; s.onerror = res; document.head.appendChild(s); }); if (window.turnstile && $("#alTs")) widget = window.turnstile.render("#alTs", { sitekey: cfg.turnstileSiteKey }); }
+  $("#alEmail").focus();
+  $("#alform").onsubmit = async (e) => {
+    e.preventDefault(); const msg = $("#alMsg"), btn = e.target.querySelector(".alsend"); msg.textContent = "";
+    btn.disabled = true;
+    try {
+      const r = await fetch("/api/alerts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: $("#alEmail").value.trim(), city: $("#alCity").value.trim(), radius: $("#alRad").value, consent: $("#alOk").checked, website: $("#alWeb").value, "cf-turnstile-response": widget != null ? window.turnstile.getResponse(widget) : "" }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) { $("#alform").innerHTML = `<p class="alok">${j.already ? "You are already signed up. We updated your city and distance." : "Almost done. Check your email and tap the link to confirm."}</p><button type="button" class="alsend" data-alclose>Close</button>`; return; }
+      msg.textContent = j.error || "That did not work. Please try again."; if (widget != null) window.turnstile.reset(widget);
+    } catch { msg.textContent = "No connection. Please try again."; }
+    btn.disabled = false;
+  };
 }
 function openMore() {
   closeFilters(); closePop(); closeSeasonMenu();
@@ -958,6 +994,7 @@ $("#morebtn").onclick = () => ($("#moremenu").hidden ? openMore() : closeMore())
 $("#moremenu").addEventListener("click", (e) => {
   const b = e.target.closest("[data-m]"); if (!b) { if (e.target.closest("a")) closeMore(); return; }
   const k = b.dataset.m;
+  if (k === "alerts") { closeMore(); openAlerts(); return; }
   if (k === "night") {
     setTheme(theme() === "dark" ? "light" : "dark");
     // update the row in place so the switch slides and the icon swaps
