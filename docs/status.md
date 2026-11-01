@@ -14,6 +14,9 @@ Audit in `docs/contest-audit.md`; tracked in the Contest Checklist artifact. Don
 ## Auto-publish, unpublish, daily digest, installer admin (2026-11-01)
 New homes and events publish immediately (spam words and daily caps hold them); Unpublish in the admin for homes and submitted events; three-a-day "new submissions" email (workflow `submission-digest.yml`, migration 0141); admin Installers tab (edit, hide, merge); "Professionally installed" filter. See `docs/submissions.md` and `docs/installers.md`.
 
+## Server-written pages match the app (2026-11-01)
+`functions/_lib/shell.js` holds the app's look (Plus Jakarta Sans, colors, tags, photo header, sticky action bar, light and night by time of day). Installer profiles, city pages (`/in/<city>`) and the installer confirmation page use it. Persona audit: `docs/audit-2026-11-01-personas.md`; its tasks are on the SoCal Lights Checklist.
+
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
 
