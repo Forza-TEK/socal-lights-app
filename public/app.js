@@ -1051,9 +1051,10 @@ function toggleSeasonPick(btn, mode) {
 }
 $("#seasonbtn").onclick = (e) => toggleSeasonPick(e.currentTarget);
 function closeSeasonMenu() {
-  const m = $("#seasonmenu"); if (m) m.remove();
+  const m = $("#seasonmenu"), was = !!m; if (m) m.remove();
   const dd = document.querySelector("[data-sdrop],[data-pop=shopseason]"); if (dd) dd.setAttribute("aria-expanded", "false");
-  const sb = $("#seasonbtn"); if (sb) { sb.setAttribute("aria-expanded", "false"); seasonPeek(2500); }
+  // Only grow the season button back when its own menu was open; closing it as a side effect of another button must not
+  const sb = $("#seasonbtn"); if (sb) { sb.setAttribute("aria-expanded", "false"); if (was) seasonPeek(2500); }
 }
 function repaintMap() {
   if (!mapReady || !map.getLayer("clusters")) return;
