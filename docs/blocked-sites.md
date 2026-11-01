@@ -33,6 +33,7 @@ Bot = our scheduled, unattended cloud runs. Chrome = the owner's own Chrome driv
 | eastvaleca.gov | 403 | home page loads; "Full Calendar" opens a calendarwiz.com RSS feed that Chrome needs a site permission to read (not granted yet) | local papers | no |
 | lacounty.gov, parks.lacounty.gov | 403 or no connection | home loads; events page errors (eventON setting), no events found | LA County Parks flyers via news | no |
 | cityoflahabra.org / lahabraca.gov | no connection | lahabraca.gov home loads; no events page found | Brea/La Habra papers | no |
+| westminster-ca.gov, cityoffullerton.com | 403 (2026-11-01 sweep, bot fetch) | not tried | search snippets, Sun News/Fullerton Observer, chambers | no |
 | Axios, Macaroni Kid (some editions) | 403 | not tried | same event on the organizer's own page | n/a |
 
 Sites that **do** load: rivlib.libcal.com, library.sbcounty.gov (see `docs/sweep-methods.md`), santafesprings.gov, pico-rivera.org, norwalkca.gov, cityoflamirada.org, lahabraheights.org, whittierchamber.com, whittiermuseum.org.
