@@ -25,7 +25,7 @@ if (acct) d.email = acct.email;
 const PLANS = [["", "No thanks, just list it", "Free"], ["pin", "Featured pin: $5", "Gold-ringed pin and Featured badge for 30 days"], ["top", "Top of the list: $10", "Everything above, plus listed first for 30 days"], ["season", "Whole season: $15", "Everything above, until your event ends"]];
 
 const steps = [
-  { id: "url", sec: "Basics", title: "Do you have a web page for your event?", help: "If the page mentions your event's name and date, it goes live right away. Without one, a person checks it first, usually within a day.",
+  { id: "url", sec: "Basics", title: "Do you have a web page for your event?", help: "If the page mentions your event's name and date, it shows as Confirmed. Without one, it still goes on the map right away, marked Expected until the dates are checked.",
     body: (x) => `${input(x, "url", { label: "Event web page", type: "text", mode: "url", ph: "yourevent.org/lights", max: 300, opt: true })}<div style="text-align:right;margin-top:-12px"><button class="link" type="button" data-a="skipurl" style="display:inline-flex;align-items:center;gap:6px">No... Next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>`,
     check: (x) => (x.url.trim() && !validSite(x.url) ? "That doesn't look like a web address. Try something like example.org/event, or tap No... Next." : "") },
   { id: "name", sec: "Basics", title: "What's the event called?", help: "Choose its season and type too, so people can find it.", redraw: true,
@@ -58,7 +58,7 @@ const steps = [
         if (c.ok && cd.url) { location.href = cd.url; return; }
         api.finish(`<h1>${esc(j.message)}</h1><p class="help">We couldn't open the payment page just now. You can <a href="/feature">feature your event from here</a> any time.</p>`); return;
       }
-      api.finish(`<h1>${esc(j.message)}</h1><p class="help">${j.status === "published" ? "It's on the map now." : "A person will take a quick look, usually within a day."}</p><div style="display:flex;gap:12px;flex-wrap:wrap">${j.status === "published" || j.status === "duplicate" ? '<a class="btn" href="/">See it on the map</a>' : ""}${IN_APP ? "" : '<a class="btn out" href="/feature">Feature your event</a>'}<a class="btn out" href="/add-event">Add another event</a></div>`);
+      api.finish(`<h1>${esc(j.message)}</h1><p class="help">${j.status === "published" ? "It's on the map now." : "It is on the map shortly."}</p><div style="display:flex;gap:12px;flex-wrap:wrap">${j.status === "published" || j.status === "duplicate" ? '<a class="btn" href="/">See it on the map</a>' : ""}${IN_APP ? "" : '<a class="btn out" href="/feature">Feature your event</a>'}<a class="btn out" href="/add-event">Add another event</a></div>`);
     } },
 ];
 run({ steps, data: d, persist: "scl-event-draft", account: { kind: "event", title: (x) => x.name }, noPersist: ["email", "plan"], season: (x) => x.season, addr: { cities },
