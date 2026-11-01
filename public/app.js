@@ -1,6 +1,6 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js";
-import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261101e";
+import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261101e";
 import { STOCK } from "/stock.js";
 import { SITE } from "/site-config.js?v=20261031j";
 
@@ -123,7 +123,7 @@ const reportLink = (name, key, city) => `<p class="reportline">${city ? `<a href
 
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};
-const state = { season: defaultSeason(TODAY), q: "", date: "", weekend: false, city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
+const state = { season: defaultSeason(TODAY), all: false, q: "", date: "", weekend: false, city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
 const hfav = (p) => "h:" + p.id; // houses are starred as "h:<id>"; events by their plain id
 const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify([...favs])); } catch {} };
@@ -134,7 +134,7 @@ const nearCity = (lat, lng) => { if (!state.city) return true; const c = CITY_OP
 const SUFFIX = { street: "st", avenue: "ave", drive: "dr", road: "rd", lane: "ln", court: "ct", circle: "cir", place: "pl", boulevard: "blvd", terrace: "ter", parkway: "pkwy", highway: "hwy", north: "n", south: "s", east: "e", west: "w" };
 const hay = (t) => String(t || "").toLowerCase().replace(/[.,#]/g, " ").replace(/\b[a-z]+\b/g, (w) => SUFFIX[w] || w).replace(/\s+/g, " ");
 function evMatch(ev) {
-  if ((ev.sn || "christmas") !== state.season) return false;
+  if (!state.all && (ev.sn || "christmas") !== state.season) return false;
   if (ev.e < TODAY) return false; // past events drop off automatically
   if (state.q && !hay(ev.n + " " + ev.city + " " + ev.c + " " + (ev.a || "")).includes(hay(state.q))) return false;
   if (state.counties.size && !state.counties.has(ev.c)) return false;
@@ -162,7 +162,7 @@ const isContest = (ev) => ev._ct ?? (ev._ct = CONTEST_RE.test(ev.n + " " + (ev.b
 // Home displays have no dates or ticket prices, so the date, cost and confirmed filters pass them (they only narrow events);
 // a Type other than "Home displays" leaves them out.
 function instMatch(p) {
-  if ((p.season || "christmas") !== state.season) return false;
+  if (!state.all && (p.season || "christmas") !== state.season) return false;
   if (state.type && state.type !== "house") return false;
   if (state.cost === "paid") return false;
   if (state.q && !hay(p.biz + " " + p.title + " " + p.city + " " + p.desc + " " + (p.address || "")).includes(hay(state.q))) return false;
@@ -253,7 +253,7 @@ function initLayers() {
   });
   map.on("dragstart", () => { state.keep = null; }); map.on("moveend", scheduleList); map.on("move", placePin);
   mapReady = true;
-  fitSoCal(false);
+  if (state.city) fitCity(state.city, false); else fitSoCal(false); // a city link (#city-...) opens zoomed on the city
   drawMap();
 }
 
@@ -834,11 +834,12 @@ document.addEventListener("keydown", (e) => { if ((e.key === "ArrowRight" || e.k
 let popFor = null;
 function closePop() { $("#pop").hidden = true; popFor = null; }
 document.addEventListener("click", (e) => { if (!e.target.isConnected) return; const p = $("#pop"); if (!p.hidden && !p.contains(e.target) && !e.target.closest("[data-pop]")) closePop(); });
-function setCity(n) {
-  state.city = n; applyFilters(); const c = CITY_OPTS[n]; if (!c || !mapReady) return;
+function fitCity(n, animate) {
+  const c = CITY_OPTS[n]; if (!c || !mapReady) return;
   const dLat = state.radius / 69, dLng = state.radius / (69 * Math.cos(c[0] * Math.PI / 180));
-  map.fitBounds([[c[1] - dLng, c[0] - dLat], [c[1] + dLng, c[0] + dLat]], { padding: padding(), duration: 600 });
+  map.fitBounds([[c[1] - dLng, c[0] - dLat], [c[1] + dLng, c[0] + dLat]], { padding: padding(), duration: animate ? 600 : 0 });
 }
+function setCity(n) { state.city = n; applyFilters(); fitCity(n, true); }
 // The small drop-down under the Shop tab's "Shop for" button
 function openPop(chip) {
   const k = chip.dataset.pop, p = $("#pop"); popFor = k; let h = "";
@@ -868,7 +869,7 @@ function clearFilter(k) {
   applyFilters();
 }
 function filtersHtml() {
-  const S = SEASONS[state.season], sat = nextSat(), nShow = E.filter(evMatch).length + SHOW.filter(instMatch).length;
+  const S0 = SEASONS[state.season], S = state.all ? { ...S0, types: Object.assign({}, ...SEASON_KEYS.map((k) => SEASONS[k].types)), dateRange: [TODAY, SEASON_KEYS.map((k) => SEASONS[k].dateRange[1]).sort().pop()] } : S0, sat = nextSat(), nShow = E.filter(evMatch).length + SHOW.filter(instMatch).length;
   const ch = (on, attrs, label) => `<button type="button" class="fchip${on ? " on" : ""}" aria-pressed="${on}" ${attrs}>${label}</button>`;
   return `<div class="fhead"><h2>Filters</h2><button class="xbtn" type="button" data-fdone aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
   <div class="fbody">
@@ -1012,6 +1013,7 @@ document.addEventListener("click", (e) => { if (!e.target.isConnected) return; c
 
 // "Coming up next" card at the top of the events list, or a way back to what's on now
 function teaser() {
+  if (state.all) return "";
   if (state.season !== NOW_SEASON) {
     return `<button class="teaser now" type="button" data-goseason="${NOW_SEASON}" style="--tc:var(--s-${NOW_SEASON})"><span>On now</span><b>${esc(SEASONS[NOW_SEASON].label)}</b><i>→</i></button>`;
   }
@@ -1021,7 +1023,7 @@ function teaser() {
 }
 function renderSeasonBar() {
   document.documentElement.dataset.season = state.season;
-  const ph = phaseFor(state.season, TODAY), sl = $("#seasonlbl"), si = $("#seasonico"), sb = $("#seasonbtn");
+  const ph = state.all ? { icon: "🗓️", name: "All seasons" } : phaseFor(state.season, TODAY), sl = $("#seasonlbl"), si = $("#seasonico"), sb = $("#seasonbtn");
   if (sl) sl.textContent = ph.name; if (si) si.textContent = ph.icon; if (sb) sb.setAttribute("aria-label", "Season: " + ph.name);
   seasonPeek(4000);
   repaintMap();
@@ -1036,15 +1038,15 @@ function seasonPeek(ms) {
 { const sb = $("#seasonbtn"); if (sb) { sb.addEventListener("mouseenter", () => { clearTimeout(seasonMiniT); sb.classList.remove("mini"); }); sb.addEventListener("mouseleave", () => seasonPeek(1800)); sb.addEventListener("focus", () => { clearTimeout(seasonMiniT); sb.classList.remove("mini"); }); } }
 // One "Halloween ▾" button lists the five seasons (beside the search on desktop, under it on phones)
 function toggleSeasonPick(btn, mode) {
-  const shop = mode === "shop", cur = shop ? shopSeason() : state.season; // the Shop tab uses this same menu to choose what to shop for
+  const shop = mode === "shop", cur = shop ? shopSeason() : state.all ? "all" : state.season; // the Shop tab uses this same menu to choose what to shop for
   if ($("#seasonmenu")) { closeSeasonMenu(); return; }
   closeFilters(); closeMore(); closePop();
   const m = document.createElement("div"); m.id = "seasonmenu"; m.setAttribute("role", "menu");
-  m.innerHTML = seasonsFrom(NOW_SEASON).filter((k) => !shop || SITE.shop[k]).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === cur}" data-sp="${k}" class="${k === cur ? "on" : ""}"><span class="sico" aria-hidden="true">${phaseFor(k, TODAY).icon}</span> ${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : ""}</button>`).join("");
+  m.innerHTML = (!shop && (state.city || state.all) ? `<button type="button" role="menuitemradio" aria-checked="${cur === "all"}" data-sp="all" class="${cur === "all" ? "on" : ""}"><span class="sico" aria-hidden="true">🗓️</span> All seasons${state.city ? " in " + esc(state.city) : ""}</button>` : "") + seasonsFrom(NOW_SEASON).filter((k) => !shop || SITE.shop[k]).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === cur}" data-sp="${k}" class="${k === cur ? "on" : ""}"><span class="sico" aria-hidden="true">${phaseFor(k, TODAY).icon}</span> ${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : ""}</button>`).join("");
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 8 + "px"; m.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
   btn.setAttribute("aria-expanded", "true");
-  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); if (shop) { state.shopSeason = b.dataset.sp; state.shopCat = 0; renderPanel(); $("#pbody").scrollTop = 0; } else setSeason(b.dataset.sp); };
+  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); if (shop) { state.shopSeason = b.dataset.sp; state.shopCat = 0; renderPanel(); $("#pbody").scrollTop = 0; } else if (b.dataset.sp === "all") showAllSeasons(); else setSeason(b.dataset.sp); };
   setTimeout(() => document.addEventListener("click", function off(e) { if (!$("#seasonmenu")) { document.removeEventListener("click", off); return; } if (!e.target.closest("#seasonmenu,#seasonbtn,[data-pop=shopseason]")) { closeSeasonMenu(); document.removeEventListener("click", off); } }), 0);
 }
 $("#seasonbtn").onclick = (e) => toggleSeasonPick(e.currentTarget);
@@ -1077,11 +1079,17 @@ setInterval(() => {
   const t = autoTheme(); if (t !== theme()) setTheme(t, false);
 }, 60000);
 if (theme() === "dark") document.querySelector('meta[name="theme-color"]').content = "#0b0d12";
+// "All seasons": every upcoming event, not just the season in view (used with a city, from a city page link)
+function showAllSeasons() {
+  state.all = true; state.type = ""; state.date = ""; state.weekend = false; state.sel = null; state.detail = null;
+  try { history.replaceState(null, "", state.city ? "#city-" + citySlug(state.city) : "#all"); } catch {}
+  renderSeasonBar(); applyFilters();
+}
 function setSeason(k) {
-  if (!SEASONS[k] || k === state.season) return;
-  state.season = k; state.shopCat = 0; state.shopSeason = ""; state.type = ""; state.date = ""; state.sel = null; state.detail = null;
+  if (!SEASONS[k] || (k === state.season && !state.all)) return;
+  state.all = false; state.season = k; state.shopCat = 0; state.shopSeason = ""; state.type = ""; state.date = ""; state.sel = null; state.detail = null;
   try { history.replaceState(null, "", "#" + k); } catch {}
-  renderSeasonBar(); applyFilters(); if (mapReady) fitSoCal(true);
+  renderSeasonBar(); applyFilters(); if (mapReady) { if (state.city) fitCity(state.city, true); else fitSoCal(true); }
 }
 function applyFilters() {
   syncShopTab(); state.keep = null;
@@ -1239,6 +1247,9 @@ async function load() {
     if (ev) selectKey("e:" + ev.id, "list"); else if (ho) selectKey("i:" + ho.id, "list");
   }
   setTimeout(showWelcome, 1500);
+  const cm = h.match(/^city-(.+)$/);
+  if (cm) { const c = Object.keys(CITY_OPTS).find((x) => citySlug(x) === cm[1]); if (c) { state.all = true; renderSeasonBar(); setCity(c); } }
+  if (h === "all") { state.all = true; renderSeasonBar(); applyFilters(); }
   const nm = h.match(/^night-(.+)$/); if (nm) { state.shared = new Set(nm[1].split(",").map((x) => { try { return decodeURIComponent(x); } catch { return ""; } }).filter(Boolean)); setTab("plan"); }
   if (SEASONS[h]) setSeason(h);
   if (h === "showcase") location.replace("/add-house?s=" + state.season); if (h === "night") setTab("plan");
