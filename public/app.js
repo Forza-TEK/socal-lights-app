@@ -505,9 +505,12 @@ const ARW_L = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" strok
 const ARW_R = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>`;
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
 // Smaller copies of photos for the list and popup, made by Cloudflare image resizing (/cdn-cgi/image). It is used only once a quick test shows it works on this site (and is remembered), otherwise the original photo loads, and a failed copy falls back to the original.
-let THUMBS = false; try { THUMBS = localStorage.getItem("socal-thumbs") === "1"; } catch {}
-fetch("/cdn-cgi/image/width=16/" + location.origin + "/img/badge-160.webp", { method: "HEAD" }).then((r) => { THUMBS = r.ok && /^image\//.test(r.headers.get("content-type") || ""); try { localStorage.setItem("socal-thumbs", THUMBS ? "1" : "0"); } catch {} }).catch(() => {});
-const thumbOf = (u, w) => (THUMBS && /^(https?:\/\/|\/img\/events\/)/.test(u || "") ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : u);
+let THUMBS = false, THUMBS_REMOTE = false; try { THUMBS = localStorage.getItem("socal-thumbs") === "1"; THUMBS_REMOTE = localStorage.getItem("socal-thumbs-remote") === "1"; } catch {}
+const thumbProbe = (u) => fetch("/cdn-cgi/image/width=16/" + u, { method: "HEAD" }).then((r) => r.ok && /^image\//.test(r.headers.get("content-type") || "")).catch(() => false);
+thumbProbe(location.origin + "/img/badge-160.webp").then((ok) => { THUMBS = ok; try { localStorage.setItem("socal-thumbs", ok ? "1" : "0"); } catch {} });
+// photos hosted on other sites can only be resized when Cloudflare is set to resize from any origin: test one of them once the events are loaded
+function probeRemoteThumbs() { const e = E.find((x) => /^https?:/.test(x.img || "")); if (e) thumbProbe(e.img).then((ok) => { THUMBS_REMOTE = ok; try { localStorage.setItem("socal-thumbs-remote", ok ? "1" : "0"); } catch {} }); }
+const thumbOf = (u, w) => ((THUMBS && /^\/img\/events\//.test(u || "")) || (THUMBS_REMOTE && /^https?:\/\//.test(u || "")) ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : u);
 const photoImg = (ph, eager, w = 640) => `<img class="evimg" src="${esc(thumbOf(ph.src, w))}"${thumbOf(ph.src, w) !== ph.src ? ` data-orig="${esc(ph.src)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt="" loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`;
 document.addEventListener("load", (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains("evimg")) e.target.classList.add("ld"); }, true);
 document.addEventListener("error", (e) => {
@@ -1222,7 +1225,7 @@ function setSheet(s) {
 async function load() {
   try {
     const [ev, posts, cfg] = await Promise.all([fetch("/api/events").then((r) => r.json()), fetch("/api/posts").then((r) => r.json()), fetch("/api/config").then((r) => r.json()).catch(() => ({}))]);
-    E = Array.isArray(ev) ? ev : []; SHOW = Array.isArray(posts) ? posts : []; CONFIG = cfg || {};
+    E = Array.isArray(ev) ? ev : []; setTimeout(probeRemoteThumbs, 1500); SHOW = Array.isArray(posts) ? posts : []; CONFIG = cfg || {};
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses();
   } catch {
