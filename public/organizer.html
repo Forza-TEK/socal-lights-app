@@ -46,6 +46,29 @@ async function act(path, body, okMsg) {
   if (okMsg) toast(okMsg); await load();
 }
 
+// Edit the contest's details. Dates, text, prizes and rules until winners are announced; categories only before the first vote.
+function editCard() {
+  const c = D.contest; if (c.announced) return "";
+  const locked = V.votes.length > 0, fld = (l, h) => `<label style="display:grid;gap:4px;font-size:14px;font-weight:600">${l}${h}</label>`;
+  const inp = (id, v, extra = "") => `<input id="${id}" value="${esc(v)}" ${extra} style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px;min-width:0">`;
+  const per = c.prizeMode === "each" ? (D.prizes || []).map((p) => `<div class="small muted">${esc(p.category)}${c.mode === "both" ? " · " + esc(p.label) : ""}: ${esc(p.prize)}</div>`).join("") : "";
+  return `<details class="card" id="editcard"><summary style="cursor:pointer;font-size:19px;font-weight:600">Edit contest details</summary>
+   <p class="muted small">Change the name, dates, welcome message, prize or rules any time before winners are announced. Entrants see changes right away.</p>
+   <form id="editform" style="display:grid;gap:12px;max-width:640px">
+    ${fld("Contest name", inp("e-name", c.name, 'maxlength="90"'))}${fld("Run by", inp("e-org", c.org, 'maxlength="80"'))}
+    ${fld("Welcome message", `<textarea id="e-descr" maxlength="200" rows="3" style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px">${esc(c.descr)}</textarea>`)}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">${fld("Entries close", inp("e-closes", c.entriesClose, 'type="date"'))}${fld("Voting starts", inp("e-vs", c.voteStart, 'type="date"'))}${fld("Voting ends", inp("e-ve", c.voteEnd, 'type="date"'))}</div>
+    ${fld("Voting categories (one per line)", `<textarea id="e-cats" rows="4" ${locked ? "disabled" : ""} style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px">${esc(c.categories.join("\n"))}</textarea>`)}${locked ? `<p class="small muted" style="margin:-6px 0 0">Locked: votes already belong to these categories.</p>` : ""}
+    ${fld("Approving entries", `<select id="e-approval" style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px"><option value="manual" ${c.approval === "manual" ? "selected" : ""}>I approve each entry first</option><option value="auto" ${c.approval === "auto" ? "selected" : ""}>Entries go on the map right away</option></select>`)}
+    ${fld("Prize", `<select id="e-pmode" style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px"><option value="none" ${c.prizeMode === "none" ? "selected" : ""}>No prize</option><option value="one" ${c.prizeMode === "one" ? "selected" : ""}>One prize for every winner</option><option value="each" ${c.prizeMode === "each" ? "selected" : ""}>A different prize for each award</option></select>`)}
+    <div id="e-onewrap" ${c.prizeMode === "one" ? "" : "hidden"}>${fld("Prize text", inp("e-prize", c.prize, 'maxlength="140"'))}</div>
+    <div id="e-eachwrap" ${c.prizeMode === "each" ? "" : "hidden"}>${(D.prizes || []).length ? "" : ""}<div style="display:grid;gap:8px">${c.categories.flatMap((g) => [c.mode !== "judges" ? [g, "public", "People's Choice"] : null, c.mode !== "public" ? [g, "judge", "Judges' Choice"] : null]).filter(Boolean).map(([g, k, l]) => { const p = (D.prizes || []).find((x) => x.category === g && x.kind === k); return fld(esc(g) + (c.mode === "both" ? " · " + l : ""), inp("", p ? p.prize : "", `data-eprize="${esc(g + "|" + k)}" maxlength="100"`)); }).join("")}</div></div>
+    ${fld("Prize provided by (optional)", inp("e-sponsor", c.sponsor, 'maxlength="80"'))}
+    ${fld("Official rules", `<textarea id="e-rules" rows="10" maxlength="4000" style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px">${esc(c.rules)}</textarea>`)}
+    <p class="err" id="e-err" role="alert" hidden></p>
+    <div><button class="btn org" type="submit">Save changes</button></div></form></details>`;
+}
+
 function render() {
   const c = D.contest, url = location.origin + "/c/" + c.slug, short = url.replace(/^https?:\/\//, "");
   const entries = M.entries, waiting = entries.filter((e) => e.status === "pending").length, live = D.entries;
@@ -72,10 +95,24 @@ function render() {
     ${c.votingOpen || c.announced ? "" : `<div class="sw"><span>Start voting now<small>Don't wait for ${fmt(c.voteStart)}</small></span><button class="btn org sm" type="button" data-act="start_voting">Start now</button></div>`}
     ${sw("Vote counts", c.showCounts ? "Visible to everyone" : "Hidden until winners", c.showCounts, c.showCounts ? "hide_counts" : "show_counts", "Show counts", "Hide counts")}</div></div>
    <div class="card"><h2 style="font-size:19px">Share it</h2><div class="copy"><span>${esc(short)}</span><button class="btn ghost sm" type="button" data-copy="${esc(url)}">Copy link</button></div><div class="poster"><b>${esc(c.name)}</b>${qr}<small>Scan to enter your home. Free.</small></div></div></div>
+  ${editCard()}
   <div class="card"><h2 style="font-size:19px">Entries</h2>${entries.length ? `<div class="tbl"><table><thead><tr><th>Photo</th><th>No.</th><th>Entry</th><th>Address</th><th>Contact</th><th>Status</th><th></th></tr></thead><tbody>${entries.map((e) => `<tr><td>${e.photos[0] ? `<img class="thumb" src="${esc(photoUrl(e.photos[0]))}" alt="">` : ""}</td><td><b>${e.entry_no}</b></td><td>${esc(e.title || e.biz)}</td><td>${esc(e.address)}</td><td>${esc(e.contact || "")}</td><td>${e.status === "approved" ? '<span class="pill p-ok">On the map</span>' : e.status === "declined" ? '<span class="pill p-no">Declined</span>' : '<span class="pill p-wait">Needs your OK</span>'}</td><td>${e.dq ? '<span class="pill p-wait">Removed at close</span> ' : ""}${e.status === "approved" && !c.announced ? `<button class="btn ghost sm" data-entry="${e.dq ? "unflag" : "flag"}:${e.id}" type="button">${e.dq ? "Undo flag" : "Disqualify at close"}</button>` : ""}${e.status === "pending" ? `<div class="actions"><button class="btn org sm" data-entry="approve:${e.id}" type="button">Approve</button><button class="btn bad sm" data-entry="decline:${e.id}" type="button">Decline</button></div>` : ""}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">No entries yet. Share the link or print the poster to get started.</p>`}</div>
   ${judgesCard()}
   ${pub ? `<div class="card"><h2 style="font-size:19px">Review votes</h2><p class="muted small">Throwaway emails can't sign in. Suspicious patterns are flagged here, and you can void any vote. A voided vote stops counting right away and you can restore it${V.locked ? ". Results are locked now" : ""}.</p>${V.votes.length ? `<div class="tbl"><table><thead><tr><th>Voter</th><th>Vote</th><th>When</th><th></th></tr></thead><tbody>${V.votes.map((v) => `<tr><td${v.voided ? ' style="text-decoration:line-through"' : ""}>${esc(v.email)}</td><td>${esc(v.category)} → ${esc(v.entry)}${v.flags.length ? `<br><span class="pill p-wait">Flagged</span> <span class="small muted">${esc(v.flags[0])}</span>` : ""}${v.voided ? ' <span class="pill p-no">Voided</span>' : ""}</td><td class="small muted">${esc(v.at)}</td><td>${V.locked ? "" : `<button class="btn ghost sm" data-void="${esc(v.id)}:${v.voided ? 0 : 1}" type="button">${v.voided ? "Restore" : "Void"}</button>`}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">No votes yet.</p>`}</div>` : ""}
   <div class="card"><h2 style="font-size:19px">Results${c.announced ? " (announced)" : " so far"}</h2>${results}<div class="actions"><a class="btn ghost" href="/api/contests/${encodeURIComponent(slug)}/export">Download results (spreadsheet)</a><button class="btn org" type="button" data-act="announce" ${c.announced || c.status !== "live" ? "disabled" : ""}>${c.announced ? "Winners announced" : "Close voting and announce winners"}</button></div><p class="small muted">You always see the full tally, even when it is hidden from the public. Announcing ends voting, locks the final results exactly as they are, shows everyone the winners and emails every entrant. Tied homes share the win.</p></div>`;
+  const ef = $("#editform");
+  if (ef) {
+    const pm = $("#e-pmode"); pm.onchange = () => { $("#e-onewrap").hidden = pm.value !== "one"; $("#e-eachwrap").hidden = pm.value !== "each"; };
+    ef.onsubmit = async (ev) => {
+      ev.preventDefault(); const er = $("#e-err"); er.hidden = true;
+      const prizes = {}; document.querySelectorAll("[data-eprize]").forEach((i) => { if (i.value.trim()) prizes[i.dataset.eprize] = i.value.trim(); });
+      const body = { action: "edit", name: $("#e-name").value, org: $("#e-org").value, descr: $("#e-descr").value, closes: $("#e-closes").value, vs: $("#e-vs").value, ve: $("#e-ve").value, approval: $("#e-approval").value, prizeMode: pm.value, prize: $("#e-prize").value, prizes, sponsor: $("#e-sponsor").value, rules: $("#e-rules").value };
+      if (!$("#e-cats").disabled) body.cats = $("#e-cats").value.split("\n").map((x) => x.trim()).filter(Boolean);
+      const r = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
+      if (!r.ok) { er.textContent = j.error || "That didn't save. Try again."; er.hidden = false; return; }
+      toast("Saved."); await load();
+    };
+  }
   document.querySelectorAll("[data-act]").forEach((b) => (b.onclick = async () => {
     if (b.dataset.act === "announce") {
       if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to confirm. This ends voting."; return; }

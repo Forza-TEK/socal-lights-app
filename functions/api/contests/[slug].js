@@ -1,9 +1,9 @@
 // GET   /api/contests/<slug>  the contest, its approved homes, prizes and (when allowed) the vote counts. Personalized, never cached.
 // PATCH /api/contests/<slug>  organizer controls: pause/resume entries and voting, show counts, start voting now, announce winners.
 // Announcing freezes the results into contests.results; from then on the page, the archive and the export read that snapshot, never the live votes.
-import { json, err } from "../../_lib/util.js";
+import { json, err, clean } from "../../_lib/util.js";
 import { getUser, sameOrigin, sendMail } from "../../_lib/auth.js";
-import { getContest, windows, todayPT, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
+import { getContest, windows, todayPT, isDate, listOnMap, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { judgeProgress } from "../../_lib/judging.js";
 
 export async function onRequestGet({ params, request, env }) {
@@ -45,8 +45,9 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
   const { c, res } = await ownerOf(request, env, params.slug, getUser);
   if (res) return res;
-  if (c.status !== "live") return err(400, "This contest isn't live yet.");
   const b = await request.json().catch(() => ({}));
+  if (b.action === "edit") return editContest(env, c, b);
+  if (c.status !== "live") return err(400, "This contest isn't live yet.");
   if (c.announced) return err(400, "The winners are announced and the results are locked.");
   const sets = { close_entries: ["entries_open", 0], open_entries: ["entries_open", 1], pause_voting: ["voting_open", 0], resume_voting: ["voting_open", 1], show_counts: ["show_counts", 1], hide_counts: ["show_counts", 0] }[b.action];
   if (sets) await env.DB.prepare(`UPDATE contests SET ${sets[0]} = ?, updated_at = datetime('now') WHERE id = ?`).bind(sets[1], c.id).run();
@@ -67,6 +68,40 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
     const job = notifyResults(env, c, r, awards);
     if (waitUntil) waitUntil(job);
   } else return err(400, "Unknown action.");
+  return json({ ok: true });
+}
+
+// The organizer changes the contest's details. Dates, text, prizes and rules can change until winners are announced;
+// the categories only while nobody has voted yet, because a vote belongs to a category.
+async function editContest(env, c, b) {
+  if (c.announced) return err(400, "The winners are announced and the results are locked.");
+  const today = todayPT(), name = clean(b.name, 90), org = clean(b.org, 80), descr = clean(b.descr, 200);
+  const closes = clean(b.closes, 10), vs = clean(b.vs, 10), ve = clean(b.ve, 10);
+  if (name.length < 4) return err(400, "Give your contest a name (at least 4 letters).");
+  if (org.length < 3) return err(400, "Tell us who is running the contest.");
+  if (descr.length < 20) return err(400, "Write a sentence or two for the welcome message (at least 20 characters).");
+  if (!isDate(closes) || !isDate(vs) || !isDate(ve)) return err(400, "Check the dates.");
+  if (vs <= closes) return err(400, "Voting should start after entries close.");
+  if (ve <= vs) return err(400, "Voting should end after it starts.");
+  if (ve < today) return err(400, "The voting end date has already passed.");
+  let categories = cats(c);
+  if (Array.isArray(b.cats)) {
+    const next = [...new Set(b.cats.map((x) => clean(x, 30)).filter(Boolean))].slice(0, 8);
+    if (!next.length) return err(400, "Keep at least one category.");
+    if (JSON.stringify(next) !== JSON.stringify(categories)) {
+      const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE contest_id = ?").bind(c.id).first();
+      if (n) return err(400, "Categories can't change after voting has started, because votes belong to a category.");
+      categories = next;
+    }
+  }
+  const prizeMode = ["none", "one", "each"].includes(b.prizeMode) ? b.prizeMode : "none", prize = clean(b.prize, 140), sponsor = clean(b.sponsor, 80);
+  const prizes = {}; if (prizeMode === "each" && b.prizes && typeof b.prizes === "object") for (const [k, v] of Object.entries(b.prizes)) { const [cat, kind] = String(k).split("|"); if (categories.includes(cat) && KIND_LABEL[kind] && clean(v, 100)) prizes[`${cat}|${kind}`] = clean(v, 100); }
+  const rules = String(b.rules || "").replace(/\r/g, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, 4000);
+  if (rules.length < 40) return err(400, "The official rules need at least a few sentences.");
+  const approval = b.approval === "auto" ? "auto" : "manual";
+  await env.DB.prepare("UPDATE contests SET name=?, org=?, descr=?, entries_close=?, vote_start=?, vote_end=?, categories=?, rules=?, prize_mode=?, prize=?, prizes=?, sponsor=?, approval=?, updated_at=datetime('now') WHERE id=?")
+    .bind(name, org, descr, closes, vs, ve, JSON.stringify(categories), rules, prizeMode, prize, JSON.stringify(prizes), sponsor, approval, c.id).run();
+  if (c.status === "live") await listOnMap(env, { ...c, name, org, descr, vote_end: ve });
   return json({ ok: true });
 }
 
