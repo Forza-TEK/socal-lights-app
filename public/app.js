@@ -1087,7 +1087,7 @@ function showAllSeasons() {
 }
 function setSeason(k) {
   if (!SEASONS[k] || (k === state.season && !state.all)) return;
-  state.all = false; state.season = k; state.shopCat = 0; state.shopSeason = ""; state.type = ""; state.date = ""; state.sel = null; state.detail = null;
+  state.all = false; state.season = k; state.shopCat = 0; state.shopSeason = ""; state.type = ""; state.date = ""; state.weekend = false; state.city = ""; // choosing a season starts that season fresh, without the city filter state.sel = null; state.detail = null;
   try { history.replaceState(null, "", "#" + k); } catch {}
   renderSeasonBar(); applyFilters(); if (mapReady) { if (state.city) fitCity(state.city, true); else fitSoCal(true); }
 }
