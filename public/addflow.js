@@ -1,7 +1,7 @@
 // Step-by-step engine shared by the add forms (event, home display, contest). One question per screen, a segmented
 // progress bar, Back and Next. Each form supplies its steps; this file does the rest (state, validation, photos,
 // address suggestions, "I am human" check, saved drafts).
-import { me, signIn } from "/auth.js?v=20261030a";
+import { me, signIn } from "/auth.js?v=20261101a";
 import { CITY } from "/cities.js";
 export const $ = (q, r = document) => r.querySelector(q);
 export const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

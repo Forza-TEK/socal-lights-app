@@ -12,7 +12,7 @@ The default template in `public/rules.js` now covers each point below. Existing 
 |---|---|
 | No age or eligibility limit | 18 or older; sponsor staff, judges and households can't win |
 | No statement of when winners are determined | Determined when voting closes, announced on the page and by email |
-| No photo license or ownership warranty | Entrant keeps ownership, allows display on the page and map, and confirms the right to do so; photos must not show identifiable people or children |
+| Photos | Decision 2026-11-01: no photo license or ownership warranty (keep entry simple). Rule 9 only says photos, name and street address are shown on the page and map and can be withdrawn; photos should not show identifiable people or children |
 | Address is public with no warning | Rule 9 says the street address is shown |
 | Judging visits with no safety language | Rule 10: view from the street, no entering private property |
 | Prize obligations unclear | Sponsor (not SoCal Lights) provides the prize; no cash value; substitution; winner pays taxes; unclaimed after 14 days may pass on |
@@ -22,10 +22,10 @@ The default template in `public/rules.js` now covers each point below. Existing 
 | Sponsors and fairness | Prize sponsors don't vote or influence the result |
 
 ## Still needs a lawyer or a decision from you
-1. **Terms of use for SoCal Lights.** There is no `terms` page. Organizers and entrants should accept platform terms (your role, takedowns, no liability for prizes, indemnity, limitation of liability, governing law). This is the largest gap.
-2. **Sponsor identity.** The rules name the organizer but not a mailing address. Many states expect a sponsor name and address in official rules. Add an optional address field to the wizard, or accept the organizer's email as the contact.
+1. **Terms of use for SoCal Lights.** Drafted 2026-11-01 at `/terms` (linked from the sign-in sheet and the privacy page); needs a lawyer's read. Previously there was no `terms` page. Organizers and entrants should accept platform terms (your role, takedowns, no liability for prizes, indemnity, limitation of liability, governing law). This is the largest gap.
+2. **Sponsor identity.** Decision 2026-11-01: no mailing address. The rules name the organizer and winners are contacted by email.
 3. **Prize tax reporting.** A sponsor giving a winner $600 or more in a year generally issues a Form 1099. That is the organizer's job; say so in the organizer guide.
-4. **Children.** The rules say 18 or older and no identifiable children in photos. COPPA and California's rules on minors' data mean you should not let anyone under 13 sign in. Add an age line to the sign-in screen or terms.
+4. **Children.** The rules say 18 or older and no identifiable children in photos. COPPA and California's rules on minors' data mean you should not let anyone under 13 sign in. Done 2026-11-01: the sign-in sheet says 13 or older to sign in, 18 or older to enter a contest, as plain text (no checkbox).
 5. **Judges' conflict of interest.** Recusal is built in; the rules now forbid judges and their households from winning. A lawyer may want a written conflict declaration.
 6. **Sponsor logos and the installer quote slot.** Label sponsors clearly (the page does). FTC endorsement and disclosure rules apply if a sponsor pays you. The quote request requires an opt-in tick box and shares details only with the named installer; have the privacy policy mention it.
 7. **Apple and Google.** Apple needs the developer to sponsor contests that appear in an iOS app, and the in-app rules to say Apple is not a sponsor (included). Google Play has similar contest policies. Keep contests web-only in the store apps until reviewed.

@@ -49,7 +49,7 @@ export function signIn({ title = "Sign in to continue", next = location.pathname
           <div><label for="si-code">6-digit code</label><input id="si-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"${err ? ' aria-invalid="true"' : ""}>${err ? `<p class="err">${esc(err)}</p>` : ""}</div>
           <button class="btn org" id="si-verify" type="button">Continue</button><button class="link" id="si-back" type="button">Use a different email</button>`;
       }
-      host.innerHTML = `<div class="scrim"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="si-t"><div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><h2 id="si-t">${esc(stage === "choose" ? title : "Enter your code")}</h2><button class="link" id="si-x" type="button" aria-label="Close">Close</button></div>${body}</div></div>`;
+      host.innerHTML = `<div class="scrim"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="si-t"><div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><h2 id="si-t">${esc(stage === "choose" ? title : "Enter your code")}</h2><button class="link" id="si-x" type="button" aria-label="Close">Close</button></div>${body}${stage === "choose" ? `<p class="small muted" style="margin:12px 0 0">You need to be 13 or older to sign in (18 or older to enter a contest). By continuing you agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>` : ""}</div></div>`;
       $("#si-x", host).onclick = () => close(null);
       const f = $("#si-email", host) || $("#si-code", host); if (f) f.focus();
       const send = $("#si-send", host);
