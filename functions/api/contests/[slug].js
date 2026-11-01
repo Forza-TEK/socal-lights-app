@@ -27,7 +27,7 @@ export async function onRequestGet({ params, request, env }) {
   const entries = frozen
     ? frozen.entries.map((e) => ({ ...e, mine: own.has(e.id) }))
     : live.posts.map((p) => ({
-        id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no,
+        id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, descr: /^Entry in /.test(p.descr || "") ? "" : (p.descr || "").slice(0, 300),
         votes: showCounts && hasPublic(c) ? Object.fromEntries(categories.map((k) => [k, (live.counts[p.id] || {})[k] || 0])) : null, mine: own.has(p.id), flagged: isOwner ? !!p.dq : undefined,
         jv: isOwner && hasJudges(c) ? jshow(p.id) : undefined,
       }));

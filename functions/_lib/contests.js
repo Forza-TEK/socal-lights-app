@@ -95,7 +95,7 @@ export function trimmedAvg(vals) {
 // a category can't win a later one. Tied homes share the win; a tied public vote is broken by the judges when both vote.
 export async function computeResults(env, c) {
   const categories = cats(c), mode = modeOf(c), method = c.judge_method === "score" ? "score" : "pick";
-  const { results: posts } = await env.DB.prepare("SELECT id,title,biz,address,city,lat,lng,photos,entry_no,user_id,dq FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
+  const { results: posts } = await env.DB.prepare("SELECT id,title,biz,address,city,lat,lng,photos,descr,entry_no,user_id,dq FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
   const counts = {};
   for (const r of (await env.DB.prepare("SELECT post_id, category, COUNT(*) AS n FROM votes WHERE contest_id = ? AND voided = 0 GROUP BY post_id, category").bind(c.id).all()).results) (counts[r.post_id] ||= {})[r.category] = r.n;
   // judges: picks (count per home per category) or scores (trimmed average per home per category)
