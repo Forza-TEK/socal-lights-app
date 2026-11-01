@@ -1031,7 +1031,34 @@ document.querySelectorAll("#bnav [data-tab]").forEach((b) => (b.onclick = () => 
 // the phone's search box shares its row with the logo and night-mode button, so keep the hint short enough to fit
 const fitHint = () => { $("#q").placeholder = innerWidth > 860 ? "Search places or a city" : innerWidth > 380 ? "Search places" : "Search"; };
 fitHint(); addEventListener("resize", fitHint);
-let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); }, 120); };
+let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); showSuggestions(); }, 120); };
+// Suggestions under the search box: cities (move the map there) and places (open their details)
+let suggIdx = -1;
+function closeSuggestions() { const s = $("#sugg"); if (s) s.remove(); suggIdx = -1; $("#q").setAttribute("aria-expanded", "false"); }
+function showSuggestions() {
+  const q = hay($("#q").value.trim()), box = document.querySelector(".search");
+  if (q.length < 2) { closeSuggestions(); return; }
+  const cities = Object.keys(CITY_OPTS).filter((c) => hay(c).startsWith(q) || hay(c).split(" ").some((w, i) => i && w.startsWith(q))).sort().slice(0, 4);
+  const places = E.filter((e) => e.e >= TODAY && hay(e.n + " " + e.city).includes(q)).sort((a, b) => a.s.localeCompare(b.s)).slice(0, 4);
+  if (!cities.length && !places.length) { closeSuggestions(); return; }
+  let s = $("#sugg"); if (!s) { s = document.createElement("div"); s.id = "sugg"; s.setAttribute("role", "listbox"); document.body.appendChild(s); }
+  { const r = box.getBoundingClientRect(), wide = innerWidth <= 860; s.style.top = r.bottom + 8 + "px"; s.style.left = (wide ? 12 : r.left) + "px"; s.style.width = (wide ? innerWidth - 24 : r.width) + "px"; }
+  $("#q").setAttribute("aria-expanded", "true"); suggIdx = -1;
+  s.innerHTML = cities.map((c) => `<button type="button" role="option" data-sc="${esc(c)}"><span class="si">📍</span><span><b>${esc(c)}</b><small>Show this city on the map</small></span></button>`).join("")
+    + places.map((e) => `<button type="button" role="option" data-se="${esc(e.id)}"><span class="si">${esc(phaseFor(e.sn && SEASONS[e.sn] ? e.sn : state.season, TODAY).icon)}</span><span><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(whenShort(e))}</small></span></button>`).join("");
+}
+document.addEventListener("click", (e) => {
+  const sc = e.target.closest("[data-sc]"), se = e.target.closest("[data-se]");
+  if (sc) { const c = CITY_OPTS[sc.dataset.sc]; $("#q").value = ""; state.q = ""; closeSuggestions(); applyFilters(); if (c && mapReady) map.easeTo({ center: [c[1], c[0]], zoom: 11.5, duration: 700 }); return; }
+  if (se) { const id = se.dataset.se, ev = E.find((x) => x.id === id); $("#q").value = ""; state.q = ""; closeSuggestions(); applyFilters(); if (ev) { if (ev.sn && SEASONS[ev.sn] && ev.sn !== state.season) setSeason(ev.sn); selectKey("e:" + id, "list"); } return; }
+  if (!e.target.closest(".search,#sugg")) closeSuggestions();
+});
+$("#q").addEventListener("keydown", (e) => {
+  const s = $("#sugg"); if (!s) return; const items = [...s.querySelectorAll("button")];
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); suggIdx = (suggIdx + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; items.forEach((b, i) => b.classList.toggle("on", i === suggIdx)); }
+  else if (e.key === "Enter" && suggIdx >= 0) { e.preventDefault(); items[suggIdx].click(); }
+  else if (e.key === "Escape") closeSuggestions();
+});
 
 /* ---------- bottom sheet (phone) ---------- */
 // The sheet is one full-height panel that only slides up and down (a GPU transform), so the buttons, the count / sort line and the
