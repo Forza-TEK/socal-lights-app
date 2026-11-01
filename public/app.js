@@ -1,6 +1,6 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js";
-import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts } from "/seasons.js?v=20261029d";
+import { SEASONS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261101e";
 import { STOCK } from "/stock.js";
 import { SITE } from "/site-config.js?v=20261031j";
 
@@ -960,15 +960,25 @@ function teaser() {
 }
 function renderSeasonBar() {
   document.documentElement.dataset.season = state.season;
-  const sl = $("#seasonlbl"); if (sl) sl.textContent = SEASONS[state.season].short;
+  const ph = phaseFor(state.season, TODAY), sl = $("#seasonlbl"), si = $("#seasonico"), sb = $("#seasonbtn");
+  if (sl) sl.textContent = ph.name; if (si) si.textContent = ph.icon; if (sb) sb.setAttribute("aria-label", "Season: " + ph.name);
+  seasonPeek(4000);
   repaintMap();
 }
+// The season button shows its icon and name for a few seconds, then shrinks to just the icon; it grows back when touched or used
+let seasonMiniT = 0;
+function seasonPeek(ms) {
+  const sb = $("#seasonbtn"); if (!sb) return;
+  clearTimeout(seasonMiniT); sb.classList.remove("mini");
+  seasonMiniT = setTimeout(() => { if (!$("#seasonmenu")) sb.classList.add("mini"); }, ms);
+}
+{ const sb = $("#seasonbtn"); if (sb) { sb.addEventListener("mouseenter", () => { clearTimeout(seasonMiniT); sb.classList.remove("mini"); }); sb.addEventListener("mouseleave", () => seasonPeek(1800)); sb.addEventListener("focus", () => { clearTimeout(seasonMiniT); sb.classList.remove("mini"); }); } }
 // One "Halloween ▾" button lists the five seasons (beside the search on desktop, under it on phones)
 function toggleSeasonPick(btn) {
   if ($("#seasonmenu")) { closeSeasonMenu(); return; }
   closeFilters(); closeMore(); closePop();
   const m = document.createElement("div"); m.id = "seasonmenu"; m.setAttribute("role", "menu");
-  m.innerHTML = seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === state.season}" data-sp="${k}" class="${k === state.season ? "on" : ""}">${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : ""}</button>`).join("");
+  m.innerHTML = seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === state.season}" data-sp="${k}" class="${k === state.season ? "on" : ""}"><span class="sico" aria-hidden="true">${phaseFor(k, TODAY).icon}</span> ${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : ""}</button>`).join("");
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 8 + "px"; m.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
   btn.setAttribute("aria-expanded", "true");
@@ -979,7 +989,7 @@ $("#seasonbtn").onclick = (e) => toggleSeasonPick(e.currentTarget);
 function closeSeasonMenu() {
   const m = $("#seasonmenu"); if (m) m.remove();
   const dd = document.querySelector("[data-sdrop]"); if (dd) dd.setAttribute("aria-expanded", "false");
-  const sb = $("#seasonbtn"); if (sb) sb.setAttribute("aria-expanded", "false");
+  const sb = $("#seasonbtn"); if (sb) { sb.setAttribute("aria-expanded", "false"); seasonPeek(2500); }
 }
 function repaintMap() {
   if (!mapReady || !map.getLayer("clusters")) return;

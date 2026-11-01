@@ -16,7 +16,7 @@
 import { run, esc, input, area, select, check, photoField, sumRow } from "/addflow.js?v=20261031z";
 import { me, signIn } from "/auth.js?v=20261030a";
 import { CITY } from "/cities.js";
-import { defaultSeason } from "/seasons.js?v=20261029d";
+import { defaultSeason } from "/seasons.js?v=20261101e";
 const slug = location.pathname.split("/")[2] || "", cities = Object.keys(CITY).sort(), app = document.getElementById("app");
 const plain = (h, t, p, btn) => { app.innerHTML = `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><a class="link" href="/c/${esc(slug)}">Back</a></div><div class="main"><h1>${h}</h1><p class="help">${p}</p>${btn || ""}</div>`; };
 const r0 = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" });

@@ -18,7 +18,7 @@ import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays,
 import { me, signIn } from "/auth.js?v=20261030a";
 import { rulesDefault } from "/rules.js";
 import { CITY } from "/cities.js";
-import { defaultSeason } from "/seasons.js?v=20261029d";
+import { defaultSeason } from "/seasons.js?v=20261101e";
 const FREE = new Set(["gmail.com","googlemail.com","hotmail.com","outlook.com","live.com","msn.com","yahoo.com","icloud.com","me.com","aol.com","proton.me","protonmail.com"]);
 const DEF = ["Best Overall", "Most Creative", "Best Lights & Music", "Best Traditional"], cities = Object.keys(CITY).sort();
 const dflt = () => { let y = new Date().getFullYear(); if (today > y + "-12-10") y++; return { closes: y + "-12-10", vs: y + "-12-11", ve: y + "-12-20" }; };
