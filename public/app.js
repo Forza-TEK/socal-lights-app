@@ -954,6 +954,7 @@ function moreHtml() {
       : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>`,
       "Night mode", dark ? "On · tap to go back to day" : "Off · switches automatically after 6pm", `<span class="sw${dark ? " on" : ""}"><i></i></span>`)
     + row("a", 'href="/contests"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`, "Contests", "Vote, enter, run one, and past results")
+    + row("a", 'href="/tutorials"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>`, "Tutorials", "Short how-to videos")
     + row("a", 'href="/privacy"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>`, "Privacy & terms", "How accounts and your data are handled")
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
@@ -1051,9 +1052,10 @@ function toggleSeasonPick(btn, mode) {
 }
 $("#seasonbtn").onclick = (e) => toggleSeasonPick(e.currentTarget);
 function closeSeasonMenu() {
-  const m = $("#seasonmenu"); if (m) m.remove();
+  const m = $("#seasonmenu"), was = !!m; if (m) m.remove();
   const dd = document.querySelector("[data-sdrop],[data-pop=shopseason]"); if (dd) dd.setAttribute("aria-expanded", "false");
-  const sb = $("#seasonbtn"); if (sb) { sb.setAttribute("aria-expanded", "false"); seasonPeek(2500); }
+  // Only grow the season button back when its own menu was open; closing it as a side effect of another button must not
+  const sb = $("#seasonbtn"); if (sb) { sb.setAttribute("aria-expanded", "false"); if (was) seasonPeek(2500); }
 }
 function repaintMap() {
   if (!mapReady || !map.getLayer("clusters")) return;
