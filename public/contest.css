@@ -50,3 +50,13 @@ body{padding-bottom:60px}
  .ent td[data-l]::before{content:attr(data-l);flex:none;width:64px;font-size:12px;opacity:.65}
  .ent td:last-child{display:block;padding-top:8px}
 }
+
+/* Print: only the poster, big, on one page (organizer.html clones it into #printsheet) */
+#printsheet{display:none}
+@media print{
+ body.printing>*:not(#printsheet){display:none!important}
+ body.printing #printsheet{display:block;padding:40px 30px;text-align:center;background:#fff;color:#000}
+ #printsheet b{font-size:40px;display:block;margin-bottom:24px}
+ #printsheet svg{width:70%;height:auto;max-width:520px}
+ #printsheet small{display:block;font-size:26px;margin-top:24px}
+}
