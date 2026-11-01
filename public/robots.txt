@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /add
+Disallow: /profile
+Disallow: /c/
+
+Sitemap: https://socallights.app/sitemap.xml

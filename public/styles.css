@@ -742,3 +742,13 @@ body.lb-open{overflow:hidden}
 @media (max-width:860px){.seasonbtn.mini{padding:0 11px}}
 #seasonmenu .sico{display:inline-block;width:26px;font-size:18px;vertical-align:-1px}
 @media (prefers-reduced-motion:reduce){.seasonbtn #seasonlbl,.seasonbtn .caret,.seasonbtn{transition:none}}
+
+/* search suggestions */
+.search{position:relative}
+#sugg{position:fixed;z-index:60;max-height:min(52vh,420px);overflow:auto;padding:6px;border-radius:22px;background:var(--surface);box-shadow:var(--shadow);border:1px solid var(--line)}
+#sugg button{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:0;border-radius:16px;background:none;text-align:left;cursor:pointer;color:var(--ink);font:inherit}
+#sugg button:hover,#sugg button.on{background:var(--surface-2)}
+#sugg .si{flex:none;width:28px;text-align:center;font-size:18px}
+#sugg b{display:block;font-weight:500;font-size:15px;line-height:1.25}
+#sugg small{display:block;color:var(--muted);font-size:13px;font-weight:400;margin-top:1px}
+@media (max-width:860px){#sugg{max-height:55vh}}
