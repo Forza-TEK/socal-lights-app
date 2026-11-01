@@ -79,3 +79,8 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 .detc{border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:8px;max-width:340px}.detc b{font-weight:500}.bline{display:flex;gap:10px;align-items:flex-start;border-top:1px solid var(--line);padding-top:10px}.bline .m{display:block;color:var(--muted);font-size:13px}
 /* the toggle and the signed-in circle share one center line: their wrapper spans must not add inline line-box height */
 .hright>span{display:inline-flex;align-items:center;line-height:0}.hright>.tbtn,.hright>span>.tbtn,.hright>span>.acct{margin:0;vertical-align:top}
+
+/* Bigger tap area for text-style buttons (Save & exit, Cancel) without moving anything */
+button.link{padding-block:11px;margin-block:-11px}
+.hdr .link,.hdr .wm{white-space:nowrap}
+@media(max-width:400px){.hright{gap:10px}.brand{font-size:17px;gap:8px}.hdr .link{font-size:14px}}

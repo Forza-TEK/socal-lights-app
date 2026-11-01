@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031t">
-<link rel="stylesheet" href="/contest.css?v=20261101f">
+<link rel="stylesheet" href="/addflow.css?v=20261101c">
+<link rel="stylesheet" href="/contest.css?v=20261101h">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
@@ -26,8 +26,8 @@ const api = (b) => fetch(`/api/contests/${encodeURIComponent(slug)}/judge`, { me
 
 async function load() {
   const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/judge`, { cache: "no-store" });
-  if (r.status === 401) { $("#app").innerHTML = `<div class="card center"><h2>Sign in to judge</h2><p class="muted" style="max-width:44ch">Sign in with the email address your invitation was sent to.</p><button class="btn org" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to judge", next: location.pathname })) { refreshAcct($("#acct")); load(); } }; return; }
-  if (!r.ok) { const j = await r.json().catch(() => ({})); $("#app").innerHTML = `<div class="card center"><h2>${r.status === 403 ? "This email isn't a judge here" : "We can't open this ballot"}</h2><p class="muted">${esc(j.error || "The link may be mistyped.")}</p><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`; return; }
+  if (r.status === 401) { $("#app").innerHTML = `<div class="card center"><h1>Sign in to judge</h1><p class="muted" style="max-width:44ch">Sign in with the email address your invitation was sent to.</p><button class="btn org" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to judge", next: location.pathname })) { refreshAcct($("#acct")); load(); } }; return; }
+  if (!r.ok) { const j = await r.json().catch(() => ({})); $("#app").innerHTML = `<div class="card center"><h1>${r.status === 403 ? "This email isn't a judge here" : "We can't open this ballot"}</h1><p class="muted">${esc(j.error || "The link may be mistyped.")}</p><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`; return; }
   D = await r.json(); document.title = "Judge: " + D.contest.name; render();
 }
 function render() {
@@ -39,7 +39,7 @@ function render() {
   const sections = c.categories.map((k) => `<section class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap"><h2>${esc(k)}</h2><span class="pill">${score ? "Score each home" : "Pick one favorite"}</span></div>${D.entries.map((e) => {
     const cf = conf.has(e.id), blocked = e.mine || cf, isPick = pickOf(k) === e.id;
     const ctl = score
-      ? `<select class="in" data-score="${esc(e.id)}|${esc(k)}" ${open && !blocked ? "" : "disabled"} aria-label="Score for ${esc(e.name)}, ${esc(k)}" style="width:96px;min-height:44px;padding:8px 30px 8px 12px"><option value="">${e.mine ? "Yours" : cf ? "Recused" : "–"}</option>${[1,2,3,4,5,6,7,8,9,10].map((n) => `<option value="${n}" ${scoreOf(e.id, k) === n ? "selected" : ""}>${n}</option>`).join("")}</select>`
+      ? `<select class="in" data-score="${esc(e.id)}|${esc(k)}" ${open && !blocked ? "" : "disabled"} aria-label="Score for ${esc(e.name)}, ${esc(k)}" style="width:140px;min-height:44px;padding:8px 30px 8px 12px"><option value="">${e.mine ? "Your home" : cf ? "Recused" : "Score 1-10"}</option>${[1,2,3,4,5,6,7,8,9,10].map((n) => `<option value="${n}" ${scoreOf(e.id, k) === n ? "selected" : ""}>${n}</option>`).join("")}</select>`
       : `<button class="btn ${isPick ? "ghost" : "org"} sm" type="button" data-pick="${esc(e.id)}|${esc(k)}" ${open && !blocked && !isPick ? "" : "disabled"}>${e.mine ? "Your home" : cf ? "Recused" : isPick ? "Picked" : pickOf(k) ? "Move my pick" : "Pick"}</button>`;
     return `<div class="vrow${isPick ? " mine" : ""}">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"></span>`}<div><b>${esc(e.name)}</b><span class="meta">${esc(e.address || e.city)}</span>${e.mine || !open ? "" : `<button class="link" type="button" data-conf="${esc(e.id)}" style="font-size:14px;margin-top:4px">${cf ? "Conflict declared. Undo" : "I know this household"}</button>`}</div>${ctl}</div>`;
   }).join("")}</section>`).join("");

@@ -62,3 +62,10 @@ body{padding-bottom:60px}
 }
 #printsheet .big{font-size:120px;font-weight:700;line-height:1;margin-bottom:10px}
 @media print{#printsheet.sign b{font-size:34px}#printsheet.sign svg{width:55%}}
+
+/* One look for headings and controls inside contest pages */
+.banner h1{display:block;margin:0;font-weight:500;font-size:19px;line-height:1.25;letter-spacing:0}
+.card.center h1{font-weight:400;font-size:24px;letter-spacing:-.015em}
+.cmain input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]),.cmain select,.cmain textarea{font:inherit;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;max-width:100%}
+.cmain textarea{min-height:88px}
+.cmain input:focus-visible,.cmain select:focus-visible,.cmain textarea:focus-visible{outline:2px solid var(--season);outline-offset:1px}
