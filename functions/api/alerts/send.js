@@ -11,7 +11,7 @@ const fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month
 export async function onRequestPost({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
   if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
-  const origin = new URL(request.url).origin, today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+  const origin = "https://socallights.app", today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
   const until = new Date(Date.now() + DAYS * 86400000).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
   const subs = (await env.DB.prepare("SELECT * FROM alert_subs WHERE confirmed = 1 AND (last_sent IS NULL OR last_sent < date('now','-6 days')) ORDER BY created_at LIMIT ?").bind(BATCH).all()).results;
   if (!subs.length) return json({ sent: 0, skipped: 0, remaining: 0 });
