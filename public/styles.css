@@ -716,3 +716,8 @@ body.lb-open{overflow:hidden}
 .ptab[aria-selected="true"] svg,.bnav button[aria-current] svg{animation:none}
 .ptab,.bnav button{transition:color .25s ease .1s}
 .ptab .lb,.ptab .n,.bnav button>span:not(.bn-n){transition:opacity .3s ease .12s}
+
+/* details page: report line and a five-button action bar */
+.reportline{margin:14px 2px 4px;font-size:13.5px;font-weight:400;color:var(--muted)}
+.reportline a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.actionbar .abtn{width:46px;height:46px}

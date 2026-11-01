@@ -82,6 +82,44 @@ const away = (o) => { if (!state.me || o.lat == null || o.lng == null) return ""
 // the short "3.5 mi" tag that sits left of the share and heart icons on cards
 const awayTag = (o) => { const a = away(o); return a ? `<span class="away">${a.replace(" · ", "").replace(" away", "")}</span>` : ""; };
 
+const awayShort = (o) => { const a = away(o); return a ? a.replace(" · ", "").replace(" away", "") : ""; };
+const CAL_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>`;
+// "Add to calendar": a Google Calendar link when Google Maps is the chosen maps app, otherwise a calendar file (.ics) that Apple Calendar and Outlook open
+const ymd = (s) => s.replace(/-/g, "");
+const nextDay = (s) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); };
+function timeRange(ev) {
+  if (ev.s !== ev.e) return null;
+  const m = String(hoursOf(ev) || ev.h || "").match(/^\D{0,12}?(\d{1,2})(?::(\d{2}))?\s*([ap])?\.?m?\.?\s*(?:–|-|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?/i);
+  if (!m) return null;
+  const to24 = (h, mi, ap) => { h = +h % 12; if (/p/i.test(ap)) h += 12; return h * 60 + (+mi || 0); };
+  const endAp = m[6], startAp = m[3] || endAp;
+  let s = to24(m[1], m[2], startAp), e = to24(m[4], m[5], endAp);
+  if (!m[3] && s >= e) s -= 12 * 60; // "11–1 pm": the start is in the morning
+  if (s < 0 || e <= s) return null;
+  const f = (x) => String(Math.floor(x / 60)).padStart(2, "0") + String(x % 60).padStart(2, "0") + "00";
+  return [f(s), f(e)];
+}
+function calParts(ev) {
+  const tr = timeRange(ev), desc = [hoursOf(ev) || "", ev.u || "", "Found on SoCal Lights: " + location.origin + "/#e-" + ev.id].filter(Boolean).join("\n");
+  return { tr, desc, loc: [ev.v, ev.a].filter(Boolean).join(", ") };
+}
+function addToCalendar(id) {
+  const ev = E.find((x) => x.id === id); if (!ev) return;
+  const { tr, desc, loc } = calParts(ev);
+  if (mapsApp === "google") {
+    const dates = tr ? `${ymd(ev.s)}T${tr[0]}/${ymd(ev.e)}T${tr[1]}` : `${ymd(ev.s)}/${ymd(nextDay(ev.e))}`;
+    window.open("https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(ev.n) + "&dates=" + dates + "&details=" + encodeURIComponent(desc) + "&location=" + encodeURIComponent(loc), "_blank", "noopener");
+    return;
+  }
+  const esc2 = (s) => String(s).replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  const when = tr ? `DTSTART:${ymd(ev.s)}T${tr[0]}\r\nDTEND:${ymd(ev.e)}T${tr[1]}` : `DTSTART;VALUE=DATE:${ymd(ev.s)}\r\nDTEND;VALUE=DATE:${ymd(nextDay(ev.e))}`;
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//SoCal Lights//EN", "BEGIN:VEVENT", "UID:" + ev.id + "@socallights.app", "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z", when, "SUMMARY:" + esc2(ev.n), "LOCATION:" + esc2(loc), "DESCRIPTION:" + esc2(desc), "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" })); a.download = ev.id + ".ics"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast("Calendar file ready");
+}
+// one-line "report a problem" link on details pages: opens an email with the event already named
+const reportLink = (name, key) => `<p class="reportline"><a href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Something wrong? Tell us</a></p>`;
+
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};
 const state = { season: defaultSeason(TODAY), q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
@@ -589,15 +627,19 @@ function renderPanel(opts) {
     // With "My location" we leave out the starting point, so the maps app starts from wherever the phone is right now.
     const pts = st.map(destOf), og = routeOrigin();
     const origin = state.start === "me" ? "" : og ? og.lat + "," + og.lng : pts[0];
-    const url = st.length ? navUrl(origin && !og && pts.length > 1 ? pts.slice(1) : pts, origin) : ""; // with a single stop and "First stop", the stop is also the destination
+    // with a single stop and "First stop", the stop is also the destination. Maps links hold about 10 stops, so a longer night is split into parts that each start where the last ended.
+    const dests = origin && !og && pts.length > 1 ? pts.slice(1) : pts, parts = [];
+    for (let i = 0; i < dests.length; i += 10) parts.push(navUrl(dests.slice(i, i + 10), i === 0 ? origin : dests[i - 1]));
+    const url = parts[0] || "";
     const dur = mins >= 60 ? Math.floor(mins / 60) + " hr" + (mins % 60 ? " " + (mins % 60) + " min" : "") : mins + " min";
     const startSel = `<label class="qsel">Start <select id="startFrom" aria-label="Start from"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
     const mapsSel = `<label class="qsel">Maps <select id="mapsSel" aria-label="Maps app">${Object.entries(MAPS).map(([k, l]) => `<option value="${k}"${k === mapsApp ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
-    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How My night works" title="How My night works">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options"><a class="qgo" href="${esc(url)}" target="_blank" rel="noopener" title="Open route in ${MAPS[mapsApp]}">Open route ↗</a>${startSel}${mapsSel}</div>` : ""}`;
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How My night works" title="How My night works">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options">${parts.map((u, i) => `<a class="qgo" href="${esc(u)}" target="_blank" rel="noopener" title="Open route${parts.length > 1 ? " part " + (i + 1) + " of " + parts.length : ""} in ${MAPS[mapsApp]}">${parts.length > 1 ? "Route " + (i + 1) + " of " + parts.length : "Open route"} ↗</a>`).join("")}${startSel}${mapsSel}</div>` : ""}`;
     const sf = $("#startFrom"); if (sf) sf.onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
     const ms = $("#mapsSel"); if (ms) ms.onchange = (e) => setMapsApp(e.target.value);
     if (!st.length) { body.innerHTML = nightHelp ? helpHtml(0) : `<div class="empty">No stops yet. Tap the heart on any place to add it.</div>`; return; }
     const notes = [];
+    if (parts.length > 1) notes.push(`Maps apps take about 10 stops per route, so this night opens in ${parts.length} parts. Each part starts where the last one ends.`);
     if (state.start === "me" && !state.me) notes.push(state.meErr ? esc(state.meErr) : "Finding your location…");
     const nights = [...new Set(st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s)))];
     if (nights.length) notes.push(`One-night events: ${nights.join(", ")}.`);
@@ -618,6 +660,7 @@ $("#pbody").addEventListener("click", (e) => {
 $("#phead").addEventListener("change", (e) => { if (e.target.id === "sortSel") { state.sort = e.target.value; renderPanel(); $("#pbody").scrollTop = 0; } });
 $("#pbody").addEventListener("click", (e) => {
   if (e.target.closest("[data-support]")) { openSupport(); return; }
+  const cl = e.target.closest("[data-cal]"); if (cl) { e.stopPropagation(); addToCalendar(cl.dataset.cal); return; }
   const sh = e.target.closest("[data-share]"); if (sh) { e.stopPropagation(); shareItem(sh.dataset.share); }
 });
 $("#phead").addEventListener("click", (e) => {
@@ -692,7 +735,7 @@ function detailHtml(k) {
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd></dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
-    <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button>${url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
+    ${reportLink(ev.n, "e-" + ev.id)}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
   return `<div class="detail">  ${ph.length ? `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="ph-none">No photos yet</div></div>`}
@@ -700,7 +743,7 @@ function detailHtml(k) {
   <h2>${esc(p.title)}</h2><div class="meta">${p.kind === "installer" ? "" : "Posted by "}<b style="color:var(--ink)">${esc(p.biz)}</b> · ${esc(p.city)}${away({ lat: p.plat, lng: p.plng })}</div>${bLines(p)}
   <p style="margin:0;white-space:pre-line">${esc(p.desc)}</p>
   <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}</dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.kind === "installer" && p.area ? `<dt>Service area</dt><dd>${esc(p.area)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
-  <div class="actionbar"><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
+  ${reportLink(p.title, "h-" + p.id)}<div class="actionbar"><button class="abtn" type="button" data-share="i:${esc(p.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
 }
 function wireDetail() {
   const area = document.querySelector(".detail .hero.photo, .detail .gallery:has(.track)");
