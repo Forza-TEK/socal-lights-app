@@ -721,3 +721,14 @@ body.lb-open{overflow:hidden}
 .reportline{margin:14px 2px 4px;font-size:13.5px;font-weight:400;color:var(--muted)}
 .reportline a{color:inherit;text-decoration:underline;text-underline-offset:3px}
 .actionbar .abtn{width:46px;height:46px}
+
+/* accessibility helpers, filter hints, bigger tap targets */
+.sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:absolute;left:12px;top:-60px;z-index:200;padding:10px 14px;border-radius:12px;background:var(--ink);color:var(--surface);font-weight:500;text-decoration:none}
+.skip:focus{top:12px}
+.fhint{margin:6px 2px 8px;font-size:13.5px;color:var(--muted)}
+.fseg.off{opacity:.45}.fseg.off button{cursor:not-allowed}
+/* card share and heart: 44px touch area with the same look (negative margins keep the layout) */
+.panel .list .item .pv-acts .shr,.panel .list .item .pv-acts .star{width:44px;height:44px;margin:-4px -4px -4px -4px}
+.panel .list .item .pv-acts{margin:-6px -8px 0 0;gap:0}
+@media (max-width:860px){.grab{padding:14px 0 8px}}

@@ -122,7 +122,7 @@ const reportLink = (name, key) => `<p class="reportline"><a href="mailto:info@so
 
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};
-const state = { season: defaultSeason(TODAY), q: "", date: "", city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
+const state = { season: defaultSeason(TODAY), q: "", date: "", weekend: false, city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
 const hfav = (p) => "h:" + p.id; // houses are starred as "h:<id>"; events by their plain id
 const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify([...favs])); } catch {} };
@@ -140,13 +140,23 @@ function evMatch(ev) {
   if (!nearCity(ev.lat, ev.lng)) return false;
   if (state.cost === "free" && !ev.free) return false;
   if (state.cost === "paid" && ev.free) return false;
-  if (state.type === "contest" ? !isContest(ev) : state.type && ev.t !== state.type) return false;
+  if (state.type === "contest" ? !isContest(ev) : state.type === "house" ? !isHome(ev) : state.type && ev.t !== state.type) return false;
   if (state.conf && ev.st !== "c") return false;
   if (state.date && (state.date < ev.s || state.date > ev.e)) return false;
+  if (state.weekend) { const [a, b] = weekendRange(); if (ev.e < a || ev.s > b) return false; }
   return true;
 }
 // "Contests" is not a stored type: it picks every event whose name or description is a contest or competition (decorating, costume, parade entries...).
 const CONTEST_RE = /\b(contests?|competitions?)\b/i;
+// a "home display" for filtering: a drive-by event or a contest-home listing, the same thing an owner-submitted house is
+const isHome = (ev) => ev.t === "drive" || String(ev.id).startsWith("hcontest-");
+// this weekend: Saturday and Sunday, or what is left of it if it is already Saturday or Sunday
+function weekendRange() {
+  const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(), f = (x) => x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0");
+  if (wd === 0) return [TODAY, TODAY];
+  const sat = new Date(y, m - 1, d + (wd === 6 ? 0 : 6 - wd)), sun = new Date(sat.getFullYear(), sat.getMonth(), sat.getDate() + 1);
+  return [f(sat), f(sun)];
+}
 const isContest = (ev) => ev._ct ?? (ev._ct = CONTEST_RE.test(ev.n + " " + (ev.b || "")));
 // Home displays have no dates or ticket prices, so the date, cost and confirmed filters pass them (they only narrow events);
 // a Type other than "Home displays" leaves them out.
@@ -555,9 +565,9 @@ function instItem(p, x = null) {
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
 const sortHtml = () => `<label class="sortl">Sort <select class="sortsel" id="sortSel" aria-label="Sort places">${SORTS.map(([v, l]) => `<option value="${v}"${state.sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
 function quickPicks() {
-  const sat = nextSat(), q = [["date", TODAY, "Tonight"], ...(sat !== TODAY ? [["date", sat, "Saturday"]] : []), ["cost", "free", "Free"]];
+  const q = [["date", TODAY, "Tonight"], ["weekend", "1", "This weekend"], ["cost", "free", "Free"]];
   const nf = activeFilters().length;
-  return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${state[f] === v}">${l}</button>`).join("")}<button type="button" class="qf${fOpen ? " open" : ""}" data-openfilters aria-haspopup="dialog" aria-expanded="${fOpen}">Filters${nf ? ` <span class="fn">${nf}</span>` : ""}</button>${isPhone() ? "" : sortHtml()}</div>`;
+  return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${f === "weekend" ? state.weekend : state[f] === v}">${l}</button>`).join("")}<button type="button" class="qf${fOpen ? " open" : ""}" data-openfilters aria-haspopup="dialog" aria-expanded="${fOpen}">Filters${nf ? ` <span class="fn">${nf}</span>` : ""}</button>${isPhone() ? "" : sortHtml()}</div>`;
 }
 const LIST_PAGE = 60; let listVis = [], listShown = 0, listSig = "", listIO = null;
 function listCard(it, i) { return it.t === "e" ? evItem(it.o, i) : instItem(it.o); }
@@ -607,6 +617,7 @@ function renderPanel(opts) {
     const soon = (a, b) => lead(a, b) || a.st.localeCompare(b.st) || a.nm.localeCompare(b.nm);
     items.sort(state.sort === "free" ? (a, b) => lead(a, b) || (b.free ? 1 : 0) - (a.free ? 1 : 0) || soon(a, b) : state.sort === "soon" ? soon : (a, b) => lead(a, b) || dist(a) - dist(b) || soon(a, b));
     const vis = items.filter((it) => inView(it.lng, it.lat) || state.sel === it.key || state.keep === it.key); // keep: the card you just came back from stays listed
+    const liveEl = $("#live"); if (liveEl) { const msg = vis.length + (vis.length === 1 ? " place" : " places") + " in view"; if (liveEl.textContent !== msg) liveEl.textContent = msg; }
     const act = activeFilters();
     head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span>${routeLink(vis)}${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
     const sig = vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
@@ -672,7 +683,7 @@ $("#phead").addEventListener("click", (e) => {
   const sb = e.target.closest("[data-shop]"); if (sb) { state.shopCat = +sb.dataset.shop; renderPanel(); $("#pbody").scrollTop = 0; return; }
   const b = e.target.closest("[data-quick]"); if (!b) return;
   const f = b.dataset.quick, v = b.dataset.v;
-  if (f === "date") state.date = state.date === v ? "" : v; else state.cost = state.cost === v ? "all" : v;
+  if (f === "date") { state.date = state.date === v ? "" : v; if (state.date) state.weekend = false; } else if (f === "weekend") { state.weekend = !state.weekend; if (state.weekend) state.date = ""; } else state.cost = state.cost === v ? "all" : v;
   applyFilters();
 });
 $("#pbody").addEventListener("mouseover", (e) => { const it = e.target.closest(".item"); setHot(it ? it.dataset.key : null); });
@@ -822,7 +833,7 @@ function activeFilters() {
   return a;
 }
 function clearFilter(k) {
-  if (k === "all") { state.date = ""; state.city = ""; state.counties.clear(); state.cost = "all"; state.type = ""; state.conf = false; }
+  if (k === "all") { state.date = ""; state.weekend = false; state.city = ""; state.counties.clear(); state.cost = "all"; state.type = ""; state.conf = false; }
   else if (k === "date") state.date = ""; else if (k === "city") state.city = ""; else if (k === "cost") state.cost = "all";
   else if (k === "type") state.type = ""; else if (k === "conf") state.conf = false; else if (k.startsWith("county:")) state.counties.delete(k.slice(7));
   applyFilters();
@@ -832,14 +843,14 @@ function filtersHtml() {
   const ch = (on, attrs, label) => `<button type="button" class="fchip${on ? " on" : ""}" aria-pressed="${on}" ${attrs}>${label}</button>`;
   return `<div class="fhead"><h2>Filters</h2><button class="xbtn" type="button" data-fdone aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
   <div class="fbody">
-    <section><h4>When</h4><div class="fchips">${ch(!state.date, 'data-fwhen="any"', "Any date")}${ch(state.date === TODAY, 'data-fwhen="today"', "Tonight")}${sat !== TODAY ? ch(state.date === sat, 'data-fwhen="sat"', "Saturday") : ""}</div>
+    <section><h4>When</h4><div class="fchips">${ch(!state.date && !state.weekend, 'data-fwhen="any"', "Any date")}${ch(state.date === TODAY, 'data-fwhen="today"', "Tonight")}${ch(state.weekend, 'data-fwhen="weekend"', "This weekend")}</div>
       <label class="fdate">or pick a day<input type="date" id="fDate" min="${S.dateRange[0]}" max="${S.dateRange[1]}" value="${esc(state.date)}"></label></section>
     <section><h4>Near</h4>${state.city ? `<div class="fchips">${ch(true, 'data-clear="city"', esc(state.city) + " ✕")}</div>` : ""}
       <input type="search" id="fCityQ" class="fq" placeholder="Type a city" aria-label="Find a city" autocomplete="off"><div class="fcities" id="fCityList"></div>
-      <div class="fseg" role="group" aria-label="Distance">${[5, 10, 25].map((r) => `<button type="button" data-rad="${r}" class="${state.radius === r ? "on" : ""}">${r} mi</button>`).join("")}</div></section>
+      ${state.city ? "" : `<p class="fhint">Pick a city, then choose how far from it to look.</p>`}<div class="fseg${state.city ? "" : " off"}" role="group" aria-label="Distance from the city">${[5, 10, 25].map((r) => `<button type="button" data-rad="${r}" ${state.city ? "" : "disabled"} class="${state.radius === r ? "on" : ""}">${r} mi</button>`).join("")}</div></section>
     <section><h4>County</h4><div class="fchips">${COUNTIES.map((c) => ch(state.counties.has(c), `data-county="${esc(c)}"`, esc(c.replace(/^Los Angeles$/, "LA")))).join("")}</div></section>
     <section><h4>Cost</h4><div class="fseg" role="group" aria-label="Cost">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-fcost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div></section>
-    <section><h4>Type</h4><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}</div></section>
+    <section><h4>Type</h4><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).filter(([v]) => v !== "drive").map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}</div></section>
     <section class="frow"><span><b>Confirmed dates only</b></span><button type="button" class="sw${state.conf ? " on" : ""}" role="switch" aria-checked="${state.conf}" data-fconf aria-label="Confirmed dates only"><i></i></button></section>
   </div>
   <div class="ffoot"><button type="button" class="linkbtn" data-clear="all">Clear all</button><button type="button" class="btn" data-fdone>Show ${nShow.toLocaleString("en-US")} place${nShow === 1 ? "" : "s"}</button></div>`;
@@ -855,7 +866,7 @@ function fPanel() {
       if (t.closest("[data-fdone]")) { closeFilters(); return; }
       let c;
       if ((c = t.closest("[data-clear]"))) { clearFilter(c.dataset.clear); return; }
-      if ((c = t.closest("[data-fwhen]"))) { const v = c.dataset.fwhen; state.date = v === "any" ? "" : v === "today" ? TODAY : nextSat(); applyFilters(); return; }
+      if ((c = t.closest("[data-fwhen]"))) { const v = c.dataset.fwhen; state.weekend = v === "weekend"; state.date = v === "today" ? TODAY : ""; applyFilters(); return; }
       if ((c = t.closest("[data-county]"))) { const n = c.dataset.county; state.counties.has(n) ? state.counties.delete(n) : state.counties.add(n); applyFilters(); return; }
       if ((c = t.closest("[data-fcost]"))) { state.cost = c.dataset.fcost; applyFilters(); return; }
       if ((c = t.closest("[data-ftype]"))) { state.type = c.dataset.ftype; applyFilters(); return; }
@@ -906,12 +917,13 @@ function moreHtml() {
   const dark = theme() === "dark";
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
   return row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home display")
-    + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us or shop the season" : "Shop the season"))
+    + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us on Cash App" : "Shop the season"))
     + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, dark
       ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>`
       : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>`,
       "Night mode", dark ? "On · tap to go back to day" : "Off · switches automatically after 6pm", `<span class="sw${dark ? " on" : ""}"><i></i></span>`)
     + row("a", 'href="/archive"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`, "Contest archives", "Every contestant and result, by season and year")
+    + row("a", 'href="/privacy"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>`, "Privacy & terms", "How accounts and your data are handled")
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
 function openMore() {
