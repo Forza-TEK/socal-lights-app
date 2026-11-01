@@ -4,6 +4,7 @@ import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocod
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 import { getUser, sendMail } from "../_lib/auth.js";
+import { findOrCreateInstaller } from "../_lib/installers.js";
 import { getContest, windows } from "../_lib/contests.js";
 
 const MAX_PHOTOS = 8;
@@ -110,6 +111,27 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);
 
+  // Installer profile: an installer's own post makes (or joins) their profile; a homeowner can name the company that installed their lights
+  try {
+    if (pro) {
+      const inst = await findOrCreateInstaller(env, { name: biz, web, phone, area, email, trusted: true });
+      if (inst) await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 1 WHERE id = ?").bind(inst.id, id).run();
+    } else {
+      const iname = clean(form.get("installer_name"), 80), iwebRaw = clean(form.get("installer_web"), 200);
+      if (iname.length >= 2) {
+        const inst = await findOrCreateInstaller(env, { name: iname, web: iwebRaw ? webUrl(iwebRaw) || "" : "" });
+        if (inst) {
+          const token = newId() + newId();
+          await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 0, installer_token = ? WHERE id = ?").bind(inst.id, token, id).run();
+          // If we know how to reach the installer, ask them to confirm. The claim shows on the card right away either way.
+          if (inst.email) {
+            const job = sendMail(env, { to: inst.email, subject: `${title} lists you as the installer`, text: `${biz} says ${inst.name} installed the lights at "${title}" in ${city}. It shows on SoCal Lights as "Installed by ${inst.name}" and links to your profile.\n\nIf that is right, confirm it (it adds a check mark): https://socallights.app/api/installers/confirm?t=${token}\n\nIf it is not right, reply to this email and we will remove it.` }).catch(() => {});
+            if (waitUntil) waitUntil(job);
+          }
+        }
+      }
+    }
+  } catch {}
   // Manual approval: tell the organizer there is something waiting for them
   if (contest && !autoApprove && contest.contact_email) {
     const job = sendMail(env, { to: contest.contact_email, subject: `New entry waiting: ${contest.name}`, text: `${title} (${street}, ${city}) entered ${contest.name} and is waiting for your OK. Photos are held privately until you approve.\n\nReview it: https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});

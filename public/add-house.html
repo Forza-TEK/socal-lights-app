@@ -18,12 +18,17 @@ import { SEASONS, defaultSeason } from "/seasons.js?v=20261101e";
 import { me } from "/auth.js?v=20261101a";
 import { CITY } from "/cities.js";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
-const d = { kind: "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
+const d = { kind: "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", hadPro: "no", instName: "", instWeb: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
 const pro = (x) => x.kind === "installer";
 await ts.init();
 // Signed in with a saved name and address? Start the form with them (all optional on the profile).
 const acct = (await me()).user; if (acct) { d.email = acct.email; if (!d.biz && acct.name) d.biz = acct.name; if (acct.city && cities.includes(acct.city)) { d.city = acct.city; d.street = acct.street || ""; d.zip = acct.zip || ""; } }
 
+// Suggest installers already on the site while typing a company name
+document.addEventListener("input", async (e) => {
+  if (!e.target.matches || !e.target.matches('[data-k="instName"]')) return; const q = e.target.value.trim(), dl = document.getElementById("instlist"); if (!dl || q.length < 2) return;
+  try { const r = await (await fetch("/api/installers?q=" + encodeURIComponent(q))).json(); dl.innerHTML = r.map((i) => `<option value="${esc(i.name)}"></option>`).join(""); } catch {}
+});
 const steps = [
   { id: "kind", sec: "About you", title: "Who's posting?", help: "Homeowners and professional installers can both show their lights on the map.", redraw: true,
     body: (x) => `<div class="tiles">${tile(x, "kind", "homeowner", "A homeowner", "It's my house, and I decorated it.")}${tile(x, "kind", "installer", "A professional installer", "I installed this display for a customer, or it's a showcase of my work.")}</div>` },
@@ -31,6 +36,10 @@ const steps = [
     help: (x) => (pro(x) ? "Families will see this with a way to ask for a quote." : "For example, The Garcia family. It appears as “Posted by”."),
     body: (x) => input(x, "biz", { max: 80, ph: pro(x) ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family", ac: "name" }),
     check: (x) => (x.biz.trim().length < 2 ? "Add the name to show." : "") },
+  { id: "installer", sec: "About you", skip: (x) => pro(x), redraw: true, title: "Did a professional install your lights?",
+    help: "If a company installed them, tell us. Their name shows on your listing and links to their profile. This is optional.",
+    body: (x) => `<div class="tiles">${tile(x, "hadPro", "no", "No", "I put them up myself.")}${tile(x, "hadPro", "yes", "Yes, a company did", "Name the company that installed them.")}</div>${x.hadPro === "yes" ? input(x, "instName", { label: "Installer company", ph: "e.g. Glow Pros Lighting", max: 80 }).replace('data-k="instName"', 'data-k="instName" list="instlist"') + '<datalist id="instlist"></datalist>' + input(x, "instWeb", { label: "Their website", ph: "glowpros.com", max: 200, mode: "url", opt: true }) : ""}`,
+    check: (x) => (x.hadPro === "yes" && x.instName.trim().length < 2 ? "Add the installer's name, or choose No." : x.hadPro === "yes" && !validSite(x.instWeb) ? "That doesn't look like a website address. Try something like glowpros.com." : "") },
   { id: "biz", sec: "About you", skip: (x) => !pro(x), title: "How can people reach you?", help: "A website or a phone number, so families can ask for a quote.",
     body: (x) => `${input(x, "web", { label: "Website", ph: "yourbusiness.com", max: 200, type: "text", mode: "url", opt: true })}${input(x, "phone", { label: "Phone for quotes", max: 80, ac: "tel", type: "tel", opt: true })}${input(x, "area", { label: "Service area", ph: "e.g. Orange and Los Angeles counties", max: 120, opt: true })}${check(x, "perm", "I have the homeowner's permission to show this address.")}`,
     check: (x) => (!validSite(x.web) ? "That doesn't look like a website address. Try something like yourbusiness.com." : !x.web.trim() && !x.phone.trim() ? "Add a website or a phone number." : !x.perm ? "Please confirm you have the homeowner's permission to show this address." : "") },
@@ -46,12 +55,13 @@ const steps = [
     body: (x) => input(x, "where", { max: 120, ph: "e.g. Visible from Main St on weekend nights", label: "Tips", opt: true }) },
   { id: "photos", sec: "Photos", title: "Add photos", help: "Photos help families find the right house. You can skip this and add them later by email.", body: (x) => photoField(x) },
   { id: "review", sec: "Review", title: "Check everything, then send it", help: "It goes live after a quick review.", cta: "Send for review",
-    body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${sumRow("Photos", String(x.photos.length), "photos")}</div>
+    body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${!pro(x) && x.hadPro === "yes" ? sumRow("Installed by", esc(x.instName), "installer") : ""}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${sumRow("Photos", String(x.photos.length), "photos")}</div>
       ${input(x, "email", { label: `Your email <small>${PRIV}. Only the site owner sees it.</small>`, type: "email", mode: "email", ac: "email", max: 120 })}<div id="ts"></div>`,
     check: (x) => (!isEmail(x.email) ? "Enter your email so we can reach you if something needs fixing." : ""),
     submit: async (x, api) => {
       const fd = new FormData(), set = { kind: x.kind, biz: x.biz.trim(), email: x.email.trim(), title: x.title.trim(), season: x.season, street: x.street.trim(), city: x.city, state: "CA", zip: x.zip.trim(), where: x.where.trim(), desc: x.desc.trim() };
       if (pro(x)) Object.assign(set, { web: x.web.trim(), phone: x.phone.trim(), area: x.area.trim(), permission: "1" });
+      if (!pro(x) && x.hadPro === "yes") Object.assign(set, { installer_name: x.instName.trim(), installer_web: x.instWeb.trim() });
       for (const [k, v] of Object.entries(set)) fd.append(k, v);
       x.photos.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
       fd.append("cf-turnstile-response", ts.token());

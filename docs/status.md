@@ -8,6 +8,9 @@ Add hub (`/add`), contest wizard (`/add-contest`), contest page and QR (`/c/<slu
 ## Contest audit fixes (2026-11-01, branch `claude/affectionate-faraday-0w156h`, not merged)
 Audit in `docs/contest-audit.md`; tracked in the Contest Checklist artifact. Done: edit contest after creating, emails (new entry to organizer, approved/declined with reason to entrant), undo decline, contest page with category tabs and sticky ballot, photo zoom, home descriptions, share after voting, map card button to the contest, organizer next steps, schedule line, merged vote review, winners preview, phone-friendly entries, print poster. Also done: co-organizers, activity stats, sponsors, installer quote button, voting reminders (daily workflow, needs migration 0139 on merge), entrant edit/withdraw, Quick start wizard, yard sign, rules template rewrite (`docs/rules-review.md`), privacy policy corrections. Contests hub at `/contests` (Live now, Mine, Past results; `/archive` redirects; menu row is now "Contests"; profile Entries tab removed). Terms of Use at `/terms`, age line on sign-in. Still open: real attorney review of rules, privacy and terms, then tutorial videos (separate checklist).
 
+## Installer profiles (2026-11-01)
+`/installer/<slug>` pages and "Installed by <company>" on home cards and details (claims show right away; installers can confirm by email for a check mark). Showcase wizard asks "Did a professional install your lights?". Migration 0140. See `docs/installers.md`. Not built: editing profiles or merging duplicates (database only).
+
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
 

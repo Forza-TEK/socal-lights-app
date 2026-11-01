@@ -37,7 +37,7 @@ export async function onRequestGet({ params, request, env }) {
   const sponsors = (await env.DB.prepare("SELECT id,name,tier,url,logo FROM contest_sponsors WHERE contest_id = ? ORDER BY CASE tier WHEN 'presenting' THEN 0 WHEN 'gold' THEN 1 WHEN 'silver' THEN 2 ELSE 3 END, created_at").bind(c.id).all()).results;
   return json({
     sponsors: sponsors.map((x) => ({ id: x.id, name: x.name, tier: x.tier, url: x.url, logo: !!x.logo })),
-    installer: c.installer_name ? { name: c.installer_name, url: c.installer_url || "" } : null,
+    installer: c.installer_name ? { name: c.installer_name, url: c.installer_url || "", slug: (await env.DB.prepare("SELECT slug FROM installers WHERE lower(name) = lower(?) AND status = 'active'").bind(c.installer_name).first())?.slug || "" } : null,
     ...(isOwner ? { installerEmail: c.installer_email || "" } : {}),
     contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
     entries, winners: frozen ? frozen.winners : c.announced ? live.winners : {}, jwinners: frozen ? frozen.jwinners || {} : c.announced ? live.jwinners : {}, awards, prizes,
