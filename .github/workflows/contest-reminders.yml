@@ -1,0 +1,22 @@
+name: Send contest reminders
+
+# Once a day. Emails entrants when voting opens, and entrants plus voters two days before it closes (each once per contest).
+# Calls the pages.dev address because socallights.app puts a bot check in front of GitHub's servers. Uses the same
+# repository secret as the weekly email (ALERT_CRON_KEY). It can also be run by hand from the Actions tab.
+on:
+  schedule:
+    - cron: "15 17 * * *"
+  workflow_dispatch:
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send reminders
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+        run: |
+          if [ -z "$ALERT_CRON_KEY" ]; then echo "ALERT_CRON_KEY is not set in the repository secrets"; exit 1; fi
+          out=$(curl -sS -X POST https://socal-lights.pages.dev/api/contest-remind -H "x-alert-key: $ALERT_CRON_KEY")
+          echo "$out" | head -c 400
+          echo "$out" | grep -q '"contests"' || exit 1

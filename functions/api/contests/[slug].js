@@ -1,15 +1,15 @@
 // GET   /api/contests/<slug>  the contest, its approved homes, prizes and (when allowed) the vote counts. Personalized, never cached.
 // PATCH /api/contests/<slug>  organizer controls: pause/resume entries and voting, show counts, start voting now, announce winners.
 // Announcing freezes the results into contests.results; from then on the page, the archive and the export read that snapshot, never the live votes.
-import { json, err, clean } from "../../_lib/util.js";
-import { getUser, sameOrigin, sendMail } from "../../_lib/auth.js";
-import { getContest, windows, todayPT, isDate, listOnMap, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
+import { json, err, clean, webUrl } from "../../_lib/util.js";
+import { getUser, sameOrigin, sendMail, okEmail } from "../../_lib/auth.js";
+import { getContest, windows, todayPT, isDate, listOnMap, isStaff, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { judgeProgress } from "../../_lib/judging.js";
 
 export async function onRequestGet({ params, request, env }) {
   const c = await getContest(env, params.slug);
   const user = await getUser(request, env);
-  const isOwner = !!(user && c && user.id === c.owner_id);
+  const isOwner = await isStaff(env, c, user);
   if (!c || (c.status !== "live" && !isOwner)) return err(404, "This contest isn't available.");
   const frozen = c.announced && c.results ? JSON.parse(c.results) : null;
   const live = frozen ? null : await computeResults(env, c);
@@ -34,7 +34,11 @@ export async function onRequestGet({ params, request, env }) {
   const awards = frozen ? frozen.awards : c.announced ? awardList(c, live) : null;
   // What each award is worth, shown from the start so people know what they are competing for
   const prizes = categories.flatMap((k) => [hasPublic(c) ? { category: k, kind: "public", label: KIND_LABEL.public, prize: prizeFor(c, k, "public") } : null, hasJudges(c) ? { category: k, kind: "judge", label: KIND_LABEL.judge, prize: prizeFor(c, k, "judge") } : null]).filter((x) => x && x.prize);
+  const sponsors = (await env.DB.prepare("SELECT id,name,tier,url,logo FROM contest_sponsors WHERE contest_id = ? ORDER BY CASE tier WHEN 'presenting' THEN 0 WHEN 'gold' THEN 1 WHEN 'silver' THEN 2 ELSE 3 END, created_at").bind(c.id).all()).results;
   return json({
+    sponsors: sponsors.map((x) => ({ id: x.id, name: x.name, tier: x.tier, url: x.url, logo: !!x.logo })),
+    installer: c.installer_name ? { name: c.installer_name, url: c.installer_url || "" } : null,
+    ...(isOwner ? { installerEmail: c.installer_email || "" } : {}),
     contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
     entries, winners: frozen ? frozen.winners : c.announced ? live.winners : {}, jwinners: frozen ? frozen.jwinners || {} : c.announced ? live.jwinners : {}, awards, prizes,
     me: { signedIn: !!user, isOwner, isJudge: !!jrow, votes: mine },
@@ -99,6 +103,9 @@ async function editContest(env, c, b) {
   const rules = String(b.rules || "").replace(/\r/g, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, 4000);
   if (rules.length < 40) return err(400, "The official rules need at least a few sentences.");
   const approval = b.approval === "auto" ? "auto" : "manual";
+  const iname = clean(b.installerName, 80), iemail = clean(b.installerEmail, 120).toLowerCase(), iurl = clean(b.installerUrl, 200) ? webUrl(clean(b.installerUrl, 200)) : "";
+  if (iname && !okEmail(iemail)) return err(400, "Enter the email where quote requests should go.");
+  await env.DB.prepare("UPDATE contests SET installer_name=?, installer_email=?, installer_url=? WHERE id=?").bind(iname, iname ? iemail : "", iurl || "", c.id).run();
   await env.DB.prepare("UPDATE contests SET name=?, org=?, descr=?, entries_close=?, vote_start=?, vote_end=?, categories=?, rules=?, prize_mode=?, prize=?, prizes=?, sponsor=?, approval=?, updated_at=datetime('now') WHERE id=?")
     .bind(name, org, descr, closes, vs, ve, JSON.stringify(categories), rules, prizeMode, prize, JSON.stringify(prizes), sponsor, approval, c.id).run();
   if (c.status === "live") await listOnMap(env, { ...c, name, org, descr, vote_end: ve });

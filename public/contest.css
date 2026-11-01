@@ -60,3 +60,5 @@ body{padding-bottom:60px}
  #printsheet svg{width:70%;height:auto;max-width:520px}
  #printsheet small{display:block;font-size:26px;margin-top:24px}
 }
+#printsheet .big{font-size:120px;font-weight:700;line-height:1;margin-bottom:10px}
+@media print{#printsheet.sign b{font-size:34px}#printsheet.sign svg{width:55%}}
