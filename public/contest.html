@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031t">
-<link rel="stylesheet" href="/contest.css?v=20261101f">
+<link rel="stylesheet" href="/addflow.css?v=20261101a">
+<link rel="stylesheet" href="/contest.css?v=20261101g">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
@@ -29,7 +29,7 @@ let counted = false;
 function countVisit() { if (counted) return; counted = true; const q = new URLSearchParams(location.search).get("src"); try { fetch(`/api/contests/${encodeURIComponent(slug)}/hit`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ src: q }), keepalive: true }); } catch {} }
 async function load() {
   const r = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" });
-  if (!r.ok) { $("#app").innerHTML = `<div class="card center"><h2>We can't find that contest</h2><p class="muted">The link may be mistyped, or the contest may not be public yet.</p><a class="btn" href="/">Back to the map</a></div>`; return; }
+  if (!r.ok) { $("#app").innerHTML = `<div class="card center"><h1>We can't find that contest</h1><p class="muted">The link may be mistyped, or the contest may not be public yet.</p><a class="btn" href="/">Back to the map</a></div>`; return; }
   countVisit(); D = await r.json(); document.title = D.contest.name + " · SoCal Lights"; const y = scrollY; render(); scrollTo(0, y);
 }
 
@@ -71,7 +71,7 @@ function render() {
   const myHomes = D.entries.filter((e) => e.mine && !c.announced), mineBox = () => !myHomes.length ? "" : `<section class="card"><h2>Your home${myHomes.length > 1 ? "s" : ""}</h2>${myHomes.map((e) => `<div class="rowmine" style="display:grid;gap:8px;margin:8px 0"><b style="font-weight:500">${esc(e.name)}</b><div class="actions"><button class="btn ghost sm" type="button" data-edit="${esc(e.id)}">Edit name and description</button><button class="btn ghost sm" type="button" data-withdraw="${esc(e.id)}">Withdraw</button></div><form data-editform="${esc(e.id)}" style="display:none;gap:8px;max-width:480px"><input name="name" value="${esc(e.name)}" maxlength="80" aria-label="Name on the entry"><textarea name="desc" rows="2" maxlength="300" aria-label="About your display">${esc(e.descr || "")}</textarea><p class="small muted">To change photos or the address, withdraw this entry and enter again.</p><div><button class="btn org sm" type="submit">Save</button></div></form></div>`).join("")}</section>`;
   const thanks = pub && c.votingOpen && me.signedIn && !amJudge && done === c.categories.length ? `<section class="card center"><h2>Thanks for voting!</h2><p class="muted">Know a neighbor who should enter or vote? Send them the link.</p><button class="btn org" type="button" id="sharec">Share this contest</button></section>` : "";
   $("#app").innerHTML = `${c.status !== "live" ? `<div class="status no">This contest is waiting for approval, so only you can see it. A person usually checks within a day.</div>` : ""}
-  <div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(c.org))}</div><div><b>${esc(c.name)}</b><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
+  <div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(c.org))}</div><div><h1>${esc(c.name)}</h1><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
   <p>${esc(c.descr)}</p><div style="display:flex;gap:8px;flex-wrap:wrap">${pills.join("")}</div>
   <p class="small muted">Voting runs ${fmt(c.voteStart)} to ${fmt(c.voteEnd)}. ${pub ? `Every home is in every category. You get one vote in each category.${c.votingOpen && me.signedIn && !amJudge ? ` You've voted in ${done} of ${c.categories.length}.` : ""}` : "Voting in this contest is by invited judges only."}${both ? " A separate panel of judges also votes for Judges' Choice." : ""}</p>
   ${amJudge ? `<div class="status ok">You're a judge in this contest. <a href="/c/${esc(c.slug)}/judge">Open the judges' ballot</a>.</div>` : ""}

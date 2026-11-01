@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261031t">
-<link rel="stylesheet" href="/contest.css?v=20261101f">
+<link rel="stylesheet" href="/addflow.css?v=20261101a">
+<link rel="stylesheet" href="/contest.css?v=20261101g">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
@@ -26,8 +26,8 @@ const api = (b) => fetch(`/api/contests/${encodeURIComponent(slug)}/judge`, { me
 
 async function load() {
   const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/judge`, { cache: "no-store" });
-  if (r.status === 401) { $("#app").innerHTML = `<div class="card center"><h2>Sign in to judge</h2><p class="muted" style="max-width:44ch">Sign in with the email address your invitation was sent to.</p><button class="btn org" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to judge", next: location.pathname })) { refreshAcct($("#acct")); load(); } }; return; }
-  if (!r.ok) { const j = await r.json().catch(() => ({})); $("#app").innerHTML = `<div class="card center"><h2>${r.status === 403 ? "This email isn't a judge here" : "We can't open this ballot"}</h2><p class="muted">${esc(j.error || "The link may be mistyped.")}</p><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`; return; }
+  if (r.status === 401) { $("#app").innerHTML = `<div class="card center"><h1>Sign in to judge</h1><p class="muted" style="max-width:44ch">Sign in with the email address your invitation was sent to.</p><button class="btn org" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to judge", next: location.pathname })) { refreshAcct($("#acct")); load(); } }; return; }
+  if (!r.ok) { const j = await r.json().catch(() => ({})); $("#app").innerHTML = `<div class="card center"><h1>${r.status === 403 ? "This email isn't a judge here" : "We can't open this ballot"}</h1><p class="muted">${esc(j.error || "The link may be mistyped.")}</p><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`; return; }
   D = await r.json(); document.title = "Judge: " + D.contest.name; render();
 }
 function render() {
