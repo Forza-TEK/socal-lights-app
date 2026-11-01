@@ -781,3 +781,7 @@ body.lb-open{overflow:hidden}
 #alerts .ax{position:absolute;top:10px;right:10px;width:38px;height:38px;border:0;border-radius:50%;background:var(--surface-2);color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
 #alerts #alMsg{margin:10px 0 0;color:var(--heart);min-height:1.2em}
 #alerts .alok{color:var(--ink);font-size:16px}
+
+/* Contest events: a plain way from the card to the contest page */
+.contestgo{display:inline-flex;align-items:center;min-height:44px;margin:6px 0 2px;padding:0 16px;border-radius:12px;background:var(--season,#d9480f);color:var(--on-season,#fff);font-weight:600;text-decoration:none}
+.contestgo:hover{filter:brightness(1.08)}

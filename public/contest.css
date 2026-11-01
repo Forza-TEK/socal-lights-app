@@ -29,3 +29,36 @@ body{padding-bottom:60px}
 .thumb{width:56px;height:42px;object-fit:cover;border-radius:6px;background:var(--tile);display:block}
 .err{color:var(--bad)}
 .crumb.wide{max-width:960px}
+
+/* Ballot strip: one category at a time, with progress */
+.ballot{position:sticky;top:0;z-index:5;padding:8px 4px;margin:0 0 8px;background:var(--bg,#fff);border-bottom:1px solid var(--line,#e8e3dc)}
+.ballot .cat{flex:none;min-height:44px;padding:0 14px;border-radius:99px;border:1px solid var(--line,#ddd);background:transparent;color:inherit;font:inherit;font-weight:500;cursor:pointer}
+.ballot .cat.on{background:var(--season,#d9480f);border-color:var(--season,#d9480f);color:var(--on-season,#fff)}
+.ballot .tabs{display:flex;gap:8px;overflow-x:auto}.ballot .count{font-size:.85rem;opacity:.8;margin:0 0 6px 2px}
+.zoom{border:0;background:none;padding:0;cursor:zoom-in;display:block}
+.lightbox{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.88);display:grid;place-items:center;padding:16px}
+.lightbox img{max-width:100%;max-height:92vh;border-radius:12px}
+.lightbox button{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:0;background:#fff;color:#000;font-size:26px;cursor:pointer}
+
+/* Organizer: next steps, and the entries table as cards on phones */
+.steps{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:4px;font-size:14px}
+.steps li{opacity:.75}.steps li.done{opacity:1;color:var(--ok,#2f7d4f)}
+@media(max-width:640px){
+ .ent table,.ent tbody,.ent tr,.ent td{display:block;width:100%}.ent thead{display:none}
+ .ent tr{border:1px solid var(--line,#e8e3dc);border-radius:12px;padding:10px;margin:0 0 10px}
+ .ent td{border:0;padding:3px 0;display:flex;gap:10px;align-items:center}
+ .ent td[data-l]::before{content:attr(data-l);flex:none;width:64px;font-size:12px;opacity:.65}
+ .ent td:last-child{display:block;padding-top:8px}
+}
+
+/* Print: only the poster, big, on one page (organizer.html clones it into #printsheet) */
+#printsheet{display:none}
+@media print{
+ body.printing>*:not(#printsheet){display:none!important}
+ body.printing #printsheet{display:block;padding:40px 30px;text-align:center;background:#fff;color:#000}
+ #printsheet b{font-size:40px;display:block;margin-bottom:24px}
+ #printsheet svg{width:70%;height:auto;max-width:520px}
+ #printsheet small{display:block;font-size:26px;margin-top:24px}
+}
+#printsheet .big{font-size:120px;font-weight:700;line-height:1;margin-bottom:10px}
+@media print{#printsheet.sign b{font-size:34px}#printsheet.sign svg{width:55%}}

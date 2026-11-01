@@ -15,7 +15,7 @@
 <script type="module">
 import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, today } from "/addflow.js?v=20261031z";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261101e";
-import { me } from "/auth.js?v=20261030a";
+import { me } from "/auth.js?v=20261101a";
 import { CITY } from "/cities.js";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
 const d = { kind: "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };

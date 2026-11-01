@@ -1,15 +1,15 @@
 // GET   /api/contests/<slug>  the contest, its approved homes, prizes and (when allowed) the vote counts. Personalized, never cached.
 // PATCH /api/contests/<slug>  organizer controls: pause/resume entries and voting, show counts, start voting now, announce winners.
 // Announcing freezes the results into contests.results; from then on the page, the archive and the export read that snapshot, never the live votes.
-import { json, err } from "../../_lib/util.js";
-import { getUser, sameOrigin, sendMail } from "../../_lib/auth.js";
-import { getContest, windows, todayPT, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
+import { json, err, clean, webUrl } from "../../_lib/util.js";
+import { getUser, sameOrigin, sendMail, okEmail } from "../../_lib/auth.js";
+import { getContest, windows, todayPT, isDate, listOnMap, isStaff, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { judgeProgress } from "../../_lib/judging.js";
 
 export async function onRequestGet({ params, request, env }) {
   const c = await getContest(env, params.slug);
   const user = await getUser(request, env);
-  const isOwner = !!(user && c && user.id === c.owner_id);
+  const isOwner = await isStaff(env, c, user);
   if (!c || (c.status !== "live" && !isOwner)) return err(404, "This contest isn't available.");
   const frozen = c.announced && c.results ? JSON.parse(c.results) : null;
   const live = frozen ? null : await computeResults(env, c);
@@ -27,14 +27,18 @@ export async function onRequestGet({ params, request, env }) {
   const entries = frozen
     ? frozen.entries.map((e) => ({ ...e, mine: own.has(e.id) }))
     : live.posts.map((p) => ({
-        id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no,
+        id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, descr: /^Entry in /.test(p.descr || "") ? "" : (p.descr || "").slice(0, 300),
         votes: showCounts && hasPublic(c) ? Object.fromEntries(categories.map((k) => [k, (live.counts[p.id] || {})[k] || 0])) : null, mine: own.has(p.id), flagged: isOwner ? !!p.dq : undefined,
         jv: isOwner && hasJudges(c) ? jshow(p.id) : undefined,
       }));
   const awards = frozen ? frozen.awards : c.announced ? awardList(c, live) : null;
   // What each award is worth, shown from the start so people know what they are competing for
   const prizes = categories.flatMap((k) => [hasPublic(c) ? { category: k, kind: "public", label: KIND_LABEL.public, prize: prizeFor(c, k, "public") } : null, hasJudges(c) ? { category: k, kind: "judge", label: KIND_LABEL.judge, prize: prizeFor(c, k, "judge") } : null]).filter((x) => x && x.prize);
+  const sponsors = (await env.DB.prepare("SELECT id,name,tier,url,logo FROM contest_sponsors WHERE contest_id = ? ORDER BY CASE tier WHEN 'presenting' THEN 0 WHEN 'gold' THEN 1 WHEN 'silver' THEN 2 ELSE 3 END, created_at").bind(c.id).all()).results;
   return json({
+    sponsors: sponsors.map((x) => ({ id: x.id, name: x.name, tier: x.tier, url: x.url, logo: !!x.logo })),
+    installer: c.installer_name ? { name: c.installer_name, url: c.installer_url || "" } : null,
+    ...(isOwner ? { installerEmail: c.installer_email || "" } : {}),
     contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
     entries, winners: frozen ? frozen.winners : c.announced ? live.winners : {}, jwinners: frozen ? frozen.jwinners || {} : c.announced ? live.jwinners : {}, awards, prizes,
     me: { signedIn: !!user, isOwner, isJudge: !!jrow, votes: mine },
@@ -45,8 +49,9 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
   const { c, res } = await ownerOf(request, env, params.slug, getUser);
   if (res) return res;
-  if (c.status !== "live") return err(400, "This contest isn't live yet.");
   const b = await request.json().catch(() => ({}));
+  if (b.action === "edit") return editContest(env, c, b);
+  if (c.status !== "live") return err(400, "This contest isn't live yet.");
   if (c.announced) return err(400, "The winners are announced and the results are locked.");
   const sets = { close_entries: ["entries_open", 0], open_entries: ["entries_open", 1], pause_voting: ["voting_open", 0], resume_voting: ["voting_open", 1], show_counts: ["show_counts", 1], hide_counts: ["show_counts", 0] }[b.action];
   if (sets) await env.DB.prepare(`UPDATE contests SET ${sets[0]} = ?, updated_at = datetime('now') WHERE id = ?`).bind(sets[1], c.id).run();
@@ -67,6 +72,43 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
     const job = notifyResults(env, c, r, awards);
     if (waitUntil) waitUntil(job);
   } else return err(400, "Unknown action.");
+  return json({ ok: true });
+}
+
+// The organizer changes the contest's details. Dates, text, prizes and rules can change until winners are announced;
+// the categories only while nobody has voted yet, because a vote belongs to a category.
+async function editContest(env, c, b) {
+  if (c.announced) return err(400, "The winners are announced and the results are locked.");
+  const today = todayPT(), name = clean(b.name, 90), org = clean(b.org, 80), descr = clean(b.descr, 200);
+  const closes = clean(b.closes, 10), vs = clean(b.vs, 10), ve = clean(b.ve, 10);
+  if (name.length < 4) return err(400, "Give your contest a name (at least 4 letters).");
+  if (org.length < 3) return err(400, "Tell us who is running the contest.");
+  if (descr.length < 20) return err(400, "Write a sentence or two for the welcome message (at least 20 characters).");
+  if (!isDate(closes) || !isDate(vs) || !isDate(ve)) return err(400, "Check the dates.");
+  if (vs <= closes) return err(400, "Voting should start after entries close.");
+  if (ve <= vs) return err(400, "Voting should end after it starts.");
+  if (ve < today) return err(400, "The voting end date has already passed.");
+  let categories = cats(c);
+  if (Array.isArray(b.cats)) {
+    const next = [...new Set(b.cats.map((x) => clean(x, 30)).filter(Boolean))].slice(0, 8);
+    if (!next.length) return err(400, "Keep at least one category.");
+    if (JSON.stringify(next) !== JSON.stringify(categories)) {
+      const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE contest_id = ?").bind(c.id).first();
+      if (n) return err(400, "Categories can't change after voting has started, because votes belong to a category.");
+      categories = next;
+    }
+  }
+  const prizeMode = ["none", "one", "each"].includes(b.prizeMode) ? b.prizeMode : "none", prize = clean(b.prize, 140), sponsor = clean(b.sponsor, 80);
+  const prizes = {}; if (prizeMode === "each" && b.prizes && typeof b.prizes === "object") for (const [k, v] of Object.entries(b.prizes)) { const [cat, kind] = String(k).split("|"); if (categories.includes(cat) && KIND_LABEL[kind] && clean(v, 100)) prizes[`${cat}|${kind}`] = clean(v, 100); }
+  const rules = String(b.rules || "").replace(/\r/g, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, 4000);
+  if (rules.length < 40) return err(400, "The official rules need at least a few sentences.");
+  const approval = b.approval === "auto" ? "auto" : "manual";
+  const iname = clean(b.installerName, 80), iemail = clean(b.installerEmail, 120).toLowerCase(), iurl = clean(b.installerUrl, 200) ? webUrl(clean(b.installerUrl, 200)) : "";
+  if (iname && !okEmail(iemail)) return err(400, "Enter the email where quote requests should go.");
+  await env.DB.prepare("UPDATE contests SET installer_name=?, installer_email=?, installer_url=? WHERE id=?").bind(iname, iname ? iemail : "", iurl || "", c.id).run();
+  await env.DB.prepare("UPDATE contests SET name=?, org=?, descr=?, entries_close=?, vote_start=?, vote_end=?, categories=?, rules=?, prize_mode=?, prize=?, prizes=?, sponsor=?, approval=?, updated_at=datetime('now') WHERE id=?")
+    .bind(name, org, descr, closes, vs, ve, JSON.stringify(categories), rules, prizeMode, prize, JSON.stringify(prizes), sponsor, approval, c.id).run();
+  if (c.status === "live") await listOnMap(env, { ...c, name, org, descr, vote_end: ve });
   return json({ ok: true });
 }
 

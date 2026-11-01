@@ -64,12 +64,19 @@ export async function approveEntry(env, row) {
   await Promise.all(keys.filter((k) => k.startsWith("pending/")).map((k) => env.PHOTOS.delete(k)));
 }
 
-// Gate for owner-only routes. Returns { c } or { res }.
-export async function ownerOf(request, env, slug, getUser) {
+// The organizer's co-organizers (invited by email) can run the contest too.
+export async function isStaff(env, c, user) {
+  if (!c || !user) return false;
+  if (c.owner_id === user.id) return true;
+  return !!(await env.DB.prepare("SELECT 1 AS x FROM contest_staff WHERE contest_id = ? AND email = ?").bind(c.id, String(user.email || "").toLowerCase()).first());
+}
+
+// Gate for organizer-only routes (the owner or a co-organizer). `ownerOnly` is for things only the creator may do. Returns { c } or { res }.
+export async function ownerOf(request, env, slug, getUser, ownerOnly = false) {
   const user = await getUser(request, env);
   if (!user) return { res: err(401, "Please sign in first.") };
   const c = await getContest(env, slug);
-  if (!c || c.owner_id !== user.id) return { res: err(404, "That contest isn't yours or doesn't exist.") };
+  if (!c || !(ownerOnly ? c.owner_id === user.id : await isStaff(env, c, user))) return { res: err(404, "That contest isn't yours or doesn't exist.") };
   return { c, user };
 }
 export const cats = (c) => { try { return JSON.parse(c.categories || "[]"); } catch { return []; } };
@@ -95,7 +102,7 @@ export function trimmedAvg(vals) {
 // a category can't win a later one. Tied homes share the win; a tied public vote is broken by the judges when both vote.
 export async function computeResults(env, c) {
   const categories = cats(c), mode = modeOf(c), method = c.judge_method === "score" ? "score" : "pick";
-  const { results: posts } = await env.DB.prepare("SELECT id,title,biz,address,city,lat,lng,photos,entry_no,user_id,dq FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
+  const { results: posts } = await env.DB.prepare("SELECT id,title,biz,address,city,lat,lng,photos,descr,entry_no,user_id,dq FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
   const counts = {};
   for (const r of (await env.DB.prepare("SELECT post_id, category, COUNT(*) AS n FROM votes WHERE contest_id = ? AND voided = 0 GROUP BY post_id, category").bind(c.id).all()).results) (counts[r.post_id] ||= {})[r.category] = r.n;
   // judges: picks (count per home per category) or scores (trimmed average per home per category)

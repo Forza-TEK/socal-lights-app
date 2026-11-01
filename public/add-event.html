@@ -16,7 +16,7 @@
 import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261031z";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261101e";
 import { CITY } from "/cities.js";
-import { me } from "/auth.js?v=20261030a";
+import { me } from "/auth.js?v=20261101a";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
 const acct = (await me()).user;
 const cfg = await ts.init(), pay = !!cfg.featureCheckout && !IN_APP; // paid placement is offered only when online payment is on, and never inside the store apps

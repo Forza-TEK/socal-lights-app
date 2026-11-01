@@ -14,7 +14,7 @@
 <div id="app"></div>
 <script type="module">
 import { run, esc, input, area, select, check, photoField, sumRow } from "/addflow.js?v=20261031z";
-import { me, signIn } from "/auth.js?v=20261030a";
+import { me, signIn } from "/auth.js?v=20261101a";
 import { CITY } from "/cities.js";
 import { defaultSeason } from "/seasons.js?v=20261101e";
 const slug = location.pathname.split("/")[2] || "", cities = Object.keys(CITY).sort(), app = document.getElementById("app");
@@ -33,7 +33,7 @@ else {
         body: () => `<div><button class="btn" type="button" data-a="signin">Sign in</button></div>`, check: () => (user ? "" : "Sign in to continue.") },
       { id: "photos", sec: "Your home", title: "Add photos of your home", help: "Take one now or pick from your gallery. Your home competes in every category, and voters pick a favorite in each one.", body: (x) => photoField(x), check: (x) => (!x.photos.length ? "Add at least one photo. It's how people recognize your house." : "") },
       { id: "addr", sec: "Your home", title: "What's your address?", help: "The pin goes on this address and visitors see it.",
-        body: (x) => `${select(x, "city", cities.map((c) => [c, c]), { label: "City", ac: "address-level2" })}${input(x, "street", { label: "Street address", ph: "e.g. 27 Via Alicia", max: 120, ac: "address-line1", addr: true })}${input(x, "zip", { label: "ZIP", max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}`,
+        body: (x) => `${x.city === C.city ? `<p class="help" style="margin:0 0 6px">This contest is for homes in <b>${esc(C.city)}</b>.</p><details ${x.city !== C.city ? "open" : ""}><summary class="link" style="display:inline">My home is in a different city</summary><div style="margin-top:8px">` : "<div>"}${select(x, "city", cities.map((c) => [c, c]), { label: "City", ac: "address-level2" })}</div>${x.city === C.city ? "</details>" : ""}${input(x, "street", { label: "Street address", ph: "e.g. 27 Via Alicia", max: 120, ac: "address-line1", addr: true })}${input(x, "zip", { label: "ZIP", max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}`,
         check: (x) => (!x.street.trim() ? "Add your street address." : !/^\d{5}$/.test(x.zip.trim()) ? "The ZIP code needs 5 digits." : "") },
       { id: "name", sec: "Your home", title: "What name should we show?", help: "For example, The Lopez family.", body: (x) => `${input(x, "name", { label: "Name on the entry", max: 80, ac: "name", ph: "The Lopez family" })}${area(x, "desc", { label: "One line about your display", ph: "12,000 lights synced to music. Tune to 88.1 FM.", max: 300, opt: true })}`, check: (x) => (!x.name.trim() ? "Add the name for the entry." : "") },
       { id: "review", sec: "Review", title: "Ready to enter?", cta: "Submit my entry",

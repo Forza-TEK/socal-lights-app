@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261031t">
-<link rel="stylesheet" href="/contest.css?v=20261031t">
+<link rel="stylesheet" href="/contest.css?v=20261101f">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
@@ -17,18 +17,20 @@
 <div id="app"><p class="loading">Loading the contest…</p></div>
 </main>
 <script type="module">
-import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261030a";
+import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261101a";
 import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261031z";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };
 const initials = (o) => (o.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("") || "EN").toUpperCase();
-let D = null;
+let D = null, ACT = null;
 
+let counted = false;
+function countVisit() { if (counted) return; counted = true; const q = new URLSearchParams(location.search).get("src"); try { fetch(`/api/contests/${encodeURIComponent(slug)}/hit`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ src: q }), keepalive: true }); } catch {} }
 async function load() {
   const r = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" });
   if (!r.ok) { $("#app").innerHTML = `<div class="card center"><h2>We can't find that contest</h2><p class="muted">The link may be mistyped, or the contest may not be public yet.</p><a class="btn" href="/">Back to the map</a></div>`; return; }
-  D = await r.json(); document.title = D.contest.name + " · SoCal Lights"; render();
+  countVisit(); D = await r.json(); document.title = D.contest.name + " · SoCal Lights"; const y = scrollY; render(); scrollTo(0, y);
 }
 
 const CROWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>';
@@ -48,27 +50,50 @@ function render() {
   const prizeBox = () => { if (c.announced) return ""; const ps = D.prizes || []; if (!ps.length && !c.sponsor) return ""; return `<section class="card"><h2>Prizes</h2>${c.prizeMode === "one" && c.prize ? `<p>${esc(c.prize)} for each winner.</p>` : `<div class="list">${ps.map((p) => `<div><b style="font-weight:500">${esc(p.category)}${both ? " · " + esc(p.label) : ""}</b><br><span class="muted">${esc(p.prize)}</span></div>`).join("")}</div>`}${c.sponsor ? `<p class="small muted">Provided by ${esc(c.sponsor)}</p>` : ""}</section>`; };
   const winnersBox = () => { const aw = (D.awards || []).filter((a) => a.ids.length); if (!c.announced || !aw.length) return ""; const byId = Object.fromEntries(D.entries.map((e) => [e.id, e])); return `<section class="card"><h2>${CROWN} Winners</h2><p class="small muted">Final results${c.frozenAt ? ", locked " + fmt(c.frozenAt) : ""}. Winners keep their crown.</p><div class="list">${aw.map((a) => `<div><span class="small muted">${esc(a.category)}${c.mode === "both" ? " · " + esc(a.label) : ""}</span><br><b style="font-weight:500">${CROWN} ${a.ids.map((id) => esc((byId[id] || {}).name || "")).join(", ")}</b>${a.prize ? `<br><span class="small muted">Prize: ${esc(a.prize)}</span>` : ""}</div>`).join("")}</div>${c.sponsor ? `<p class="small muted">Prizes provided by ${esc(c.sponsor)}</p>` : ""}</section>`; };
   // One ballot per category: every home is listed in every category, and a voter picks one favorite in each
-  const sections = c.categories.map((cat) => {
+  const cur = c.categories.includes(ACT) ? ACT : c.categories[0];
+  const sections = [cur].map((cat) => {
     const my = voteIn(cat), win = new Set(D.winners[cat] || []), jwin = new Set((D.jwinners || {})[cat] || []);
     const rows = D.entries.map((e) => {
       const isMy = !!my && my.post_id === e.id;
       const label = e.mine ? "Your home" : amJudge ? "Judges vote on their ballot" : isMy ? "Your vote ✓" : !c.votingOpen ? (c.announced ? "Voting is over" : "Voting not open") : my ? "Move my vote here" : "Vote";
       const n = e.votes ? e.votes[cat] : null;
-      return `<div class="vrow${isMy ? " mine" : ""}">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"></span>`}
-        <div><b>${win.has(e.id) || jwin.has(e.id) ? CROWN + " " : ""}${esc(e.name)} ${win.has(e.id) ? `<span class="pill p-ok">${both ? "People's Choice" : "Winner"}</span>` : ""}${jwin.has(e.id) ? `<span class="pill p-ok">${both ? "Judges' Choice" : "Winner"}</span>` : ""}</b><span class="meta">${esc(e.address || e.city)}${n !== null ? ` · ${n} vote${n === 1 ? "" : "s"}` : ""}</span></div>
+      return `<div class="vrow${isMy ? " mine" : ""}">${e.photos[0] ? `<button type="button" class="zoom" data-zoom="${esc(e.photos[0])}" data-cap="${esc(e.name)}" aria-label="Enlarge photo of ${esc(e.name)}"><img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy"></button>` : `<span class="ph"></span>`}
+        <div><b>${win.has(e.id) || jwin.has(e.id) ? CROWN + " " : ""}${esc(e.name)} ${win.has(e.id) ? `<span class="pill p-ok">${both ? "People's Choice" : "Winner"}</span>` : ""}${jwin.has(e.id) ? `<span class="pill p-ok">${both ? "Judges' Choice" : "Winner"}</span>` : ""}</b><span class="meta">${esc(e.address || e.city)}${n !== null ? ` · ${n} vote${n === 1 ? "" : "s"}` : ""}</span>${e.descr ? `<span class="meta">${esc(e.descr)}</span>` : ""}</div>
         <button class="btn ${isMy ? "ghost" : "org"} sm" data-vote="${esc(e.id)}" data-cat="${esc(cat)}" type="button" ${c.votingOpen && !e.mine && !isMy && !amJudge ? "" : "disabled"} aria-label="${esc(label)}: ${esc(e.name)}, ${esc(cat)}">${label}</button></div>`;
     }).join("");
     return `<section class="card" aria-labelledby="cat-${esc(cat.replace(/\W+/g, "-"))}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h2 id="cat-${esc(cat.replace(/\W+/g, "-"))}">${esc(cat)}${both ? ' <span class="small muted">People\'s Choice</span>' : ""}</h2>${my ? `<span class="pill p-ok">You voted</span>` : c.votingOpen ? `<span class="pill p-wait">Pick one favorite</span>` : ""}</div>${D.entries.length ? `<div>${rows}</div>` : `<p class="muted small">No homes yet.</p>`}</section>`;
   }).join("");
+  const ballot = pub && D.entries.length && c.categories.length > 1 ? `<div class="ballot">${c.votingOpen && me.signedIn && !amJudge ? `<div class="count">Your ballot: voted in ${done} of ${c.categories.length}</div>` : ""}<div class="tabs" role="tablist" aria-label="Categories">${c.categories.map((g) => `<button type="button" role="tab" class="cat${g === cur ? " on" : ""}" aria-selected="${g === cur}" data-tab="${esc(g)}">${voteIn(g) ? "✓ " : ""}${esc(g)}</button>`).join("")}</div></div>` : "";
+  const TIER = { presenting: "Presented by", gold: "Gold sponsors", silver: "Silver sponsors", prize: "Prize sponsors" };
+  const sp = D.sponsors || [], sponsorsBox = () => { if (!sp.length) return ""; const groups = ["presenting", "gold", "silver", "prize"].map((t) => [t, sp.filter((x) => x.tier === t)]).filter(([, l]) => l.length);
+    return `<section class="card"><h2>Sponsors</h2>${groups.map(([t, l]) => `<div style="margin:8px 0"><div class="small muted">${TIER[t]}</div><div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:6px">${l.map((x) => { const inner = x.logo ? `<img src="/api/contests/${esc(c.slug)}/sponsors?id=${esc(x.id)}" alt="${esc(x.name)}" style="height:${t === "presenting" ? 56 : 40}px;max-width:160px;object-fit:contain">` : `<b style="font-weight:500">${esc(x.name)}</b>`; return x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener sponsored" aria-label="${esc(x.name)}">${inner}</a>` : `<span>${inner}</span>`; }).join("")}</div></div>`).join("")}</section>`; };
+  const quoteBox = () => !D.installer || c.status !== "live" ? "" : `<section class="card"><h2>Want lights like these?</h2><p class="muted">${esc(D.installer.name)} is the presenting installer. Ask for a free quote and they'll contact you. Your details are shared only with them, and only if you tick the box.</p><div class="actions"><button class="btn org" type="button" id="quotebtn">Get a quote</button></div><form id="quoteform" hidden style="display:none;gap:10px;margin-top:10px;max-width:480px"><input id="q-name" placeholder="Your name" maxlength="80" aria-label="Your name"><input id="q-phone" placeholder="Phone (optional)" maxlength="30" inputmode="tel" aria-label="Phone"><textarea id="q-note" placeholder="What would you like done? (optional)" maxlength="400" rows="3" aria-label="Note"></textarea><label class="small"><input id="q-ok" type="checkbox"> I agree to share my name, email${""} and phone with ${esc(D.installer.name)} so they can contact me.</label><p class="err" id="q-err" role="alert" hidden></p><div><button class="btn org" type="submit">Send request</button></div></form></section>`;
+  const myHomes = D.entries.filter((e) => e.mine && !c.announced), mineBox = () => !myHomes.length ? "" : `<section class="card"><h2>Your home${myHomes.length > 1 ? "s" : ""}</h2>${myHomes.map((e) => `<div class="rowmine" style="display:grid;gap:8px;margin:8px 0"><b style="font-weight:500">${esc(e.name)}</b><div class="actions"><button class="btn ghost sm" type="button" data-edit="${esc(e.id)}">Edit name and description</button><button class="btn ghost sm" type="button" data-withdraw="${esc(e.id)}">Withdraw</button></div><form data-editform="${esc(e.id)}" style="display:none;gap:8px;max-width:480px"><input name="name" value="${esc(e.name)}" maxlength="80" aria-label="Name on the entry"><textarea name="desc" rows="2" maxlength="300" aria-label="About your display">${esc(e.descr || "")}</textarea><p class="small muted">To change photos or the address, withdraw this entry and enter again.</p><div><button class="btn org sm" type="submit">Save</button></div></form></div>`).join("")}</section>`;
+  const thanks = pub && c.votingOpen && me.signedIn && !amJudge && done === c.categories.length ? `<section class="card center"><h2>Thanks for voting!</h2><p class="muted">Know a neighbor who should enter or vote? Send them the link.</p><button class="btn org" type="button" id="sharec">Share this contest</button></section>` : "";
   $("#app").innerHTML = `${c.status !== "live" ? `<div class="status no">This contest is waiting for approval, so only you can see it. A person usually checks within a day.</div>` : ""}
   <div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(c.org))}</div><div><b>${esc(c.name)}</b><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
   <p>${esc(c.descr)}</p><div style="display:flex;gap:8px;flex-wrap:wrap">${pills.join("")}</div>
   <p class="small muted">Voting runs ${fmt(c.voteStart)} to ${fmt(c.voteEnd)}. ${pub ? `Every home is in every category. You get one vote in each category.${c.votingOpen && me.signedIn && !amJudge ? ` You've voted in ${done} of ${c.categories.length}.` : ""}` : "Voting in this contest is by invited judges only."}${both ? " A separate panel of judges also votes for Judges' Choice." : ""}</p>
   ${amJudge ? `<div class="status ok">You're a judge in this contest. <a href="/c/${esc(c.slug)}/judge">Open the judges' ballot</a>.</div>` : ""}
-  <div class="actions">${c.status === "live" ? `<a class="btn org" href="/c/${esc(c.slug)}/enter" ${c.entriesOpen ? "" : 'aria-disabled="true" style="opacity:.55;pointer-events:none"'}>${c.entriesOpen ? "Enter my home" : "Entries are closed"}</a>` : ""}${me.isOwner ? `<a class="btn ghost" href="/c/${esc(c.slug)}/manage">Manage this contest</a>` : ""}<a class="btn ghost" href="/">See it on the map</a></div>${c.rules ? `<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600">Official rules</summary><div class="small muted" style="white-space:pre-wrap;margin-top:10px">${esc(c.rules)}</div></details>` : ""}${c.announced && c.frozenAt ? `<p class="small muted">Final results, locked ${fmt(c.frozenAt)}. Winners keep their crown.</p>` : ""}</div>
-  ${winnersBox()}${prizeBox()}
-  ${!pub ? gallery() : D.entries.length ? sections : `<div class="card"><h2>No homes yet</h2><p class="muted">Be the first to enter. Approved homes appear here, in every category, and on the map.</p></div>`}`;
+  <div class="actions">${c.status === "live" ? `<a class="btn org" href="/c/${esc(c.slug)}/enter" ${c.entriesOpen ? "" : 'aria-disabled="true" style="opacity:.55;pointer-events:none"'}>${c.entriesOpen ? "Enter my home" : "Entries are closed"}</a>` : ""}${me.isOwner ? `<a class="btn ghost" href="/c/${esc(c.slug)}/manage">Manage this contest</a>` : ""}</div>${c.rules ? `<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600">Official rules</summary><div class="small muted" style="white-space:pre-wrap;margin-top:10px">${esc(c.rules)}</div></details>` : ""}${c.announced && c.frozenAt ? `<p class="small muted">Final results, locked ${fmt(c.frozenAt)}. Winners keep their crown.</p>` : ""}</div>
+  ${winnersBox()}${prizeBox()}${sponsorsBox()}${mineBox()}
+  ${!pub ? gallery() : D.entries.length ? ballot + sections + thanks : `<div class="card"><h2>No homes yet</h2><p class="muted">Be the first to enter. Approved homes appear here, in every category, and on the map.</p></div>`}${quoteBox()}`;
+  const qb = $("#quotebtn"); if (qb) qb.onclick = async () => { if (!D.me.signedIn) { const u = await signIn({ title: "Sign in to ask for a quote", next: location.pathname }); if (!u) return; await load(); refreshAcct($("#acct")); return; } const f = $("#quoteform"); f.hidden = false; f.style.display = "grid"; qb.hidden = true; $("#q-name").focus(); };
+  const qf = $("#quoteform"); if (qf) qf.onsubmit = async (ev) => { ev.preventDefault(); const er = $("#q-err"); er.hidden = true; const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/quote`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("#q-name").value, phone: $("#q-phone").value, note: $("#q-note").value, consent: $("#q-ok").checked }) }), j = await r.json().catch(() => ({})); if (!r.ok) { er.textContent = j.error || "That didn't send."; er.hidden = false; return; } qf.outerHTML = `<p class="status ok">Sent. ${esc(D.installer.name)} will be in touch.</p>`; };
+  document.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => { const f = document.querySelector(`[data-editform="${b.dataset.edit}"]`); f.style.display = f.style.display === "grid" ? "none" : "grid"; }));
+  document.querySelectorAll("[data-editform]").forEach((f) => (f.onsubmit = async (ev) => { ev.preventDefault(); const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/mine`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: f.dataset.editform, name: f.elements.name.value, desc: f.elements.desc.value }) }), j = await r.json().catch(() => ({})); if (!r.ok) return toast(j.error || "That didn't save."); toast("Saved."); load(); }));
+  document.querySelectorAll("[data-withdraw]").forEach((b) => (b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to withdraw"; return; } const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/mine?id=${encodeURIComponent(b.dataset.withdraw)}`, { method: "DELETE" }), j = await r.json().catch(() => ({})); if (!r.ok) return toast(j.error || "That didn't work."); toast("Your entry was withdrawn."); load(); }));
+  document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { ACT = b.dataset.tab; const y = scrollY; render(); scrollTo(0, y); }));
+  document.querySelectorAll("[data-zoom]").forEach((b) => (b.onclick = () => zoom(b.dataset.zoom, b.dataset.cap)));
+  const sh = $("#sharec"); if (sh) sh.onclick = async () => { const u = location.origin + "/c/" + c.slug, t = c.name + ": enter your home or vote"; try { if (navigator.share) await navigator.share({ title: c.name, text: t, url: u }); else { await navigator.clipboard.writeText(u); toast("Link copied."); } } catch {} };
   document.querySelectorAll("[data-vote]").forEach((b) => (b.onclick = () => vote(b.dataset.vote, b.dataset.cat)));
+}
+
+function zoom(key, cap) {
+  const o = document.createElement("div"); o.className = "lightbox"; o.setAttribute("role", "dialog"); o.setAttribute("aria-label", cap);
+  o.innerHTML = `<img src="/api/photo/${esc(key)}" alt="${esc(cap)} lights"><button type="button" aria-label="Close">×</button>`;
+  const close = () => { o.remove(); document.removeEventListener("keydown", k); }, k = (e) => { if (e.key === "Escape") close(); };
+  o.onclick = close; document.addEventListener("keydown", k); document.body.appendChild(o); o.querySelector("button").focus();
 }
 
 async function vote(id, category) {
@@ -77,7 +102,7 @@ async function vote(id, category) {
   const j = await r.json().catch(() => ({}));
   if (!r.ok) return toast(j.error || "Couldn't record your vote.");
   toast(j.same ? "That's already your vote." : j.moved ? `${category}: vote moved to ${j.name}` : `${category}: vote recorded for ${j.name}`);
-  await load();
+  const nx = D.contest.categories; ACT = category; await load(); const next = D.contest.categories.find((g) => !(D.me.votes || []).some((v) => v.category === g)); if (next && nx.length > 1) { ACT = next; const y = scrollY; render(); scrollTo(0, y); }
 }
 $("#tb").innerHTML = themeBtn(); mountAcct($("#acct")); noteSigninResult(); load();
 </script>

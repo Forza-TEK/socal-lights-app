@@ -6,12 +6,12 @@ import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { CITY } from "../../../public/cities.js";
 import { rulesDefault } from "../../../public/rules.js";
 import { SEASONS } from "../../../public/seasons.js";
-import { trustOf, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest, KIND_LABEL } from "../../_lib/contests.js";
+import { trustOf, windows, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest, KIND_LABEL } from "../../_lib/contests.js";
 import { inviteJudges } from "./[slug]/judges.js";
 
 export async function onRequestGet({ env }) {
-  const { results } = await env.DB.prepare("SELECT slug,name,org,city,county,entries_close,vote_start,vote_end FROM contests WHERE status='live' ORDER BY created_at DESC LIMIT 100").all();
-  return json(results, { headers: { "cache-control": "public, max-age=60" } });
+  const { results } = await env.DB.prepare("SELECT slug,name,org,city,county,entries_close,vote_start,vote_end,announced,status,entries_open,voting_open FROM contests WHERE status='live' ORDER BY created_at DESC LIMIT 100").all();
+  return json(results.map((c) => ({ slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, entries_close: c.entries_close, vote_start: c.vote_start, vote_end: c.vote_end, announced: !!c.announced, ...windows(c) })), { headers: { "cache-control": "public, max-age=60" } });
 }
 
 export async function onRequestPost({ request, env }) {
