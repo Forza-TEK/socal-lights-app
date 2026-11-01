@@ -72,7 +72,7 @@ export function rowToEvent(r) {
     st: r.status === "confirmed" ? "c" : "e", free: !!r.free, p: r.price || "", h: r.hours || "",
     lat: r.lat, lng: r.lng, b: r.blurb || "", u: r.url || "", sn: r.season || "christmas",
     v: r.venue || "", a: r.address || "", img: r.image || "", imgs: parseImgs(r.images),
-    f: featuredLevel(r),
+    f: featuredLevel(r), lc: String(r.updated_at || "").slice(0, 10),
   };
 }
 
