@@ -1,9 +1,12 @@
 # Status
 
-_Last updated: 2026-10-30_
+_Last updated: 2026-11-01_
 
 ## Contests and accounts (built 2026-10-30, branch `claude/amazing-thompson-wfxqst`, NOT merged)
 Add hub (`/add`), contest wizard (`/add-contest`), contest page and QR (`/c/<slug>`), entry form, organizer dashboard (`/c/<slug>/manage`), one-vote-per-category voting (every home is in every category, voters pick a favorite in each), Google and email-code sign-in, admin Contests tab, migration `0109_accounts_contests.sql`. Tested end to end locally (API 40 checks, browser 24 checks). Pages are unlinked and noindex. Needs `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` and `RESEND_API_KEY` Pages secrets, a privacy-policy review and a decision to merge. See `docs/contests.md` for setup, launch checklist and known gaps.
+
+## Contest audit fixes (2026-11-01, branch `claude/affectionate-faraday-0w156h`, not merged)
+Audit in `docs/contest-audit.md`; tracked in the Contest Checklist artifact. Done: edit contest after creating, emails (new entry to organizer, approved/declined with reason to entrant), undo decline, contest page with category tabs and sticky ballot, photo zoom, home descriptions, share after voting, map card button to the contest, organizer next steps, schedule line, merged vote review, winners preview, phone-friendly entries, print poster. Still open: co-organizers, organizer stats, voting reminders, entrant edit/withdraw, wizard Quick start, sponsor logos, installer quote slot, yard-sign size.
 
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
