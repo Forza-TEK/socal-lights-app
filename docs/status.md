@@ -252,3 +252,6 @@ Count on the map before this check: Ontario 4 events, Fontana 6 (Rancho Cucamong
 ## Save & exit on the contest entry form (branch)
 - `/c/<slug>/enter` now has Save & exit, the leave-page prompt and the keep-your-place draft like the other forms. The draft is saved to the account as kind `entry` (photos are not saved) and shows on the profile Drafts tab as "Contest entry", with Continue going back to that contest's form on the step they left (`drafts.data.contestSlug`, listed by `/api/drafts` and `/api/me/overview` as `slug`). Same-device draft also kept per contest (`scl-entry-draft-<slug>`). `addflow.js` bumped to `?v=20261031u` on every page. Tested locally: save, profile row, Continue restores the answers and step. No migration.
 
+
+## City sweep group 13, 2026-11-01 (East County & South Bay)
+- Nothing added. Group already well covered (about 35 Christmas/New Year events). Searches for home displays (Jingle Bell Hill, Starlight Circle already on map; 1838 El Pico Dr El Cajon, 6266 De Camp Dr La Mesa, 9435 Saint Andrews Dr and 9773 Roe Dr Santee, 1234 Napa Ave Chula Vista) found only undated or older-year listings, so left out as leads. No 2026 listings found for Borrego Springs holidays or East County turkey trots (Santee Waddle & Trot is 2013-15 only). No contest leads for this group.
