@@ -1,0 +1,22 @@
+name: Submission digest
+
+# Three times a day (about 7am, 1pm and 7pm Pacific; 03:00, 15:00 and 21:00 UTC in winter, an hour early in summer).
+# Emails the site owner how many homes, events and contest entries came in since the last email. Always sends (a "nothing new" note when quiet), with the day's totals.
+# Uses the same repository secret as the weekly email (ALERT_CRON_KEY) and the pages.dev address (socallights.app challenges GitHub's servers).
+on:
+  schedule:
+    - cron: "0 3,15,21 * * *"
+  workflow_dispatch:
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send the digest
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+        run: |
+          if [ -z "$ALERT_CRON_KEY" ]; then echo "ALERT_CRON_KEY is not set in the repository secrets"; exit 1; fi
+          out=$(curl -sS -X POST https://socal-lights.pages.dev/api/admin-digest -H "x-alert-key: $ALERT_CRON_KEY")
+          echo "$out" | head -c 400
+          echo "$out" | grep -q '"new"' || exit 1

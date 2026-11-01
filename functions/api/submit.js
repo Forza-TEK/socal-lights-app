@@ -5,6 +5,10 @@ import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 import { getUser, sendMail } from "../_lib/auth.js";
 import { findOrCreateInstaller } from "../_lib/installers.js";
+import { approveEntry } from "../_lib/contests.js";
+
+const AUTO_HOMES_PER_DAY = 60; // safety valve: past this many in a day, new homes wait for review
+const BAD = /\b(viagra|casino|porn|xxx|escort|crypto|bitcoin|loan|forex|cbd|betting)\b/i;
 import { getContest, windows } from "../_lib/contests.js";
 
 const MAX_PHOTOS = 8;
@@ -132,10 +136,18 @@ export async function onRequestPost({ request, env, waitUntil }) {
       }
     }
   } catch {}
+  // Homes and installer displays go live right away; they can be unpublished from the admin. Spammy text or a busy day holds them for review.
+  let published = !!contest && autoApprove;
+  if (!contest) {
+    try {
+      const { n: today } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NULL AND status = 'approved' AND created_at > datetime('now','-1 day')").first();
+      if (!BAD.test(`${biz} ${title} ${descr}`) && today < AUTO_HOMES_PER_DAY) { await approveEntry(env, { id, photos: JSON.stringify(keys) }); published = true; }
+    } catch {}
+  }
   // Manual approval: tell the organizer there is something waiting for them
   if (contest && !autoApprove && contest.contact_email) {
     const job = sendMail(env, { to: contest.contact_email, subject: `New entry waiting: ${contest.name}`, text: `${title} (${street}, ${city}) entered ${contest.name} and is waiting for your OK. Photos are held privately until you approve.\n\nReview it: https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});
     if (waitUntil) waitUntil(job);
   }
-  return json({ ok: true, id });
+  return json({ ok: true, id, status: published ? "published" : "pending" });
 }

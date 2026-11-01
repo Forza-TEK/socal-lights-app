@@ -34,6 +34,23 @@ export async function onRequestPost({ params, request, env }) {
     return json({ ok: true });
   }
 
+  if (body.action === "unpublish") {
+    // Takes a live home off the site without deleting anything; it waits in "Waiting for review" and can be published again
+    // The photos go back to the private pending/ folder too, so the public photo address stops working
+    const moved = [];
+    for (const k of keys) {
+      if (!k.startsWith("p/")) { moved.push(k); continue; }
+      const obj = await env.PHOTOS.get(k);
+      if (!obj) continue;
+      const nk = k.replace(/^p\//, "pending/");
+      await env.PHOTOS.put(nk, obj.body, { httpMetadata: obj.httpMetadata });
+      moved.push(nk);
+    }
+    await env.DB.prepare("UPDATE posts SET status='pending', approved_at=NULL, photos=? WHERE id=?").bind(JSON.stringify(moved), row.id).run();
+    await deletePhotos(env, keys.filter((k) => k.startsWith("p/")));
+    return json({ ok: true });
+  }
+
   if (body.action === "decline") {
     await deletePhotos(env, keys);
     await env.DB.prepare("UPDATE posts SET status='declined', photos='[]' WHERE id=?").bind(row.id).run();

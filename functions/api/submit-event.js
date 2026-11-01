@@ -6,7 +6,7 @@ import { isDate, slug, upsertEvent, verifyEventPage } from "../_lib/events.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 
-const AUTO_PUBLISH_PER_DAY = 40; // safety valve: past this, everything waits for review
+const AUTO_PUBLISH_PER_DAY = 100; // safety valve: past this, everything waits for review
 const BAD = /\b(viagra|casino|porn|xxx|escort|crypto|bitcoin|loan|forex|cbd|betting)\b/i;
 
 export async function onRequestPost({ request, env }) {
@@ -56,11 +56,13 @@ export async function onRequestPost({ request, env }) {
   // The event web page is optional. With one, we check it mentions the event and its year (then the event goes live right away); without one, a person reviews it.
   const check = e.url ? await verifyEventPage(e.url, e.name, e.start_date) : { ok: false, note: "no event web page given" };
   const { c: today24 } = await env.DB.prepare("SELECT COUNT(*) AS c FROM event_submissions WHERE status = 'published' AND created_at > datetime('now','-1 day')").first();
+  // Every event goes live right away (it can be unpublished from the admin). Only a busy day holds new ones for review.
+  // A web page that mentions the event and its year makes it "confirmed"; otherwise it goes up as "expected".
   const reasons = [];
-  if (!located) reasons.push("address could not be located");
+  if (!located) reasons.push("pin is at the city center (address not found)");
   if (!check.ok) reasons.push(check.note);
-  if (today24 >= AUTO_PUBLISH_PER_DAY) reasons.push("daily auto-publish limit reached");
-  const auto = reasons.length === 0;
+  const auto = today24 < AUTO_PUBLISH_PER_DAY;
+  if (!auto) reasons.push("daily auto-publish limit reached");
 
   const id = newId();
   const eventId = auto ? `u-${slug(e.name).slice(0, 24)}-${newId().slice(0, 6)}` : null;
@@ -68,13 +70,13 @@ export async function onRequestPost({ request, env }) {
     env.DB.prepare(
       `INSERT INTO event_submissions (id,status,name,county,city,season,type,start_date,end_date,free,price,hours,lat,lng,blurb,url,venue,address,contact_email,verified,note,event_id)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-    ).bind(id, auto ? "published" : "pending", e.name, county, e.city, e.season, e.type, e.start_date, e.end_date, e.free, e.price, e.hours, lat, lng, e.blurb, e.url, e.venue, e.address, e.email, check.ok ? 1 : 0, auto ? check.note : reasons.join("; "), eventId),
+    ).bind(id, auto ? "published" : "pending", e.name, county, e.city, e.season, e.type, e.start_date, e.end_date, e.free, e.price, e.hours, lat, lng, e.blurb, e.url, e.venue, e.address, e.email, check.ok ? 1 : 0, reasons.join("; ") || check.note, eventId),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);
 
   if (auto) {
-    await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: "confirmed", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
+    await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: check.ok ? "confirmed" : "expected", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
     return json({ ok: true, status: "published", id: eventId, submission_id: id, message: "Your event is on the map." });
   }
   return json({ ok: true, status: "pending", submission_id: id, message: "Thanks! We'll check your event and add it shortly." });
