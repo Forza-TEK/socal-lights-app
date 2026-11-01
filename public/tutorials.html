@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/addflow.css?v=20261101c">
 <link rel="stylesheet" href="/info.css?v=20261031t">
 <style>
-.tnav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px}.tnav a{min-height:44px;display:inline-flex;align-items:center;padding:0 16px;border-radius:99px;border:1px solid var(--line);color:inherit;text-decoration:none;font-weight:500}.tnav a:hover{border-color:var(--season)}
+.tnav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px}.tnav button{min-height:44px;display:inline-flex;align-items:center;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-weight:500;cursor:pointer}.tnav button:hover{border-color:var(--season)}.tnav button[aria-selected=true]{background:var(--season);border-color:var(--season);color:var(--on-season,#fff)}.tgroup[hidden]{display:none}
 .tgroup{margin:30px 0 0;scroll-margin-top:16px}.tgroup>p{margin:4px 0 12px;color:var(--muted)}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .tcard{border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;scroll-margin-top:16px}
@@ -28,7 +28,7 @@
 <main>
 <h1>Tutorials</h1>
 <p class="tsub">Short how-to videos, grouped by what you want to do. New ones are added as they are finished.</p>
-<nav class="tnav" id="tnav" aria-label="Tutorial groups"></nav>
+<div class="tnav" id="tnav" role="tablist" aria-label="Tutorial groups"></div>
 <div id="tut"><p class="tsub">Loading…</p></div>
 <noscript><p>Turn on JavaScript to see the tutorial list.</p></noscript>
 </main>
@@ -50,11 +50,25 @@ function player(url) {
 }
 const data = await fetch("/tutorials.json", { cache: "no-cache" }).then((r) => r.json()).catch(() => ({ groups: [] }));
 const groups = data.groups.filter((g) => g.videos && g.videos.length);
-$("#tnav").innerHTML = groups.map((g) => `<a href="#${esc(g.id)}">${esc(g.title)}</a>`).join("");
-$("#tut").innerHTML = groups.map((g) => `<section class="tgroup" id="${esc(g.id)}"><h2>${esc(g.title)}</h2><p>${esc(g.blurb || "")}</p><div class="tgrid">${g.videos.map((v) => { const can = v.url && player(v.url);
+$("#tnav").innerHTML = groups.map((g) => `<button type="button" role="tab" id="tab-${esc(g.id)}" data-g="${esc(g.id)}" aria-controls="${esc(g.id)}">${esc(g.title)}</button>`).join("");
+$("#tut").innerHTML = groups.map((g) => `<section class="tgroup" id="${esc(g.id)}" role="tabpanel" aria-labelledby="tab-${esc(g.id)}" hidden><h2>${esc(g.title)}</h2><p>${esc(g.blurb || "")}</p><div class="tgrid">${g.videos.map((v) => { const can = v.url && player(v.url);
   return `<article class="tcard" id="v-${esc(v.id)}"><div class="th">${can ? `<button class="play" type="button" data-url="${esc(v.url)}" aria-label="Play: ${esc(v.title)}">&#9654;</button>` : `<span class="soon">Coming soon</span>`}</div><div class="tb"><h3>${esc(v.title)}</h3><p>${esc(v.desc || "")}${v.length ? ` · ${esc(v.length)}` : ""}</p></div></article>`; }).join("")}</div></section>`).join("") || `<p class="tsub">No tutorials yet.</p>`;
 document.addEventListener("click", (e) => { const b = e.target.closest(".play"); if (!b) return; const th = b.parentElement; th.innerHTML = player(b.dataset.url); });
-if (location.hash.startsWith("#v-")) { const c = document.getElementById(location.hash.slice(1)); if (c) { c.scrollIntoView(); const b = c.querySelector(".play"); if (b) b.click(); } }
+// Tabs: one group at a time. The link /tutorials#run opens a group; /tutorials#v-vote opens the group that holds that video and plays it.
+function show(id, push) {
+  if (!groups.some((g) => g.id === id)) id = groups[0] && groups[0].id; if (!id) return;
+  document.querySelectorAll(".tgroup").forEach((el) => (el.hidden = el.id !== id));
+  document.querySelectorAll("#tnav [data-g]").forEach((b) => { const on = b.dataset.g === id; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; });
+  if (push) history.replaceState(null, "", "#" + id);
+}
+$("#tnav").addEventListener("click", (e) => { const b = e.target.closest("[data-g]"); if (b) show(b.dataset.g, true); });
+$("#tnav").addEventListener("keydown", (e) => { if (!["ArrowRight", "ArrowLeft"].includes(e.key)) return; const t = [...document.querySelectorAll("#tnav [data-g]")], i = t.indexOf(document.activeElement); if (i < 0) return; const n = t[(i + (e.key === "ArrowRight" ? 1 : t.length - 1)) % t.length]; n.focus(); show(n.dataset.g, true); });
+function fromHash() {
+  const h = location.hash.slice(1);
+  if (h.startsWith("v-")) { const c = document.getElementById(h); if (c) { show(c.closest(".tgroup").id); c.scrollIntoView(); const b = c.querySelector(".play"); if (b) b.click(); return; } }
+  show(h);
+}
+addEventListener("hashchange", fromHash); fromHash();
 </script>
 </body>
 </html>
