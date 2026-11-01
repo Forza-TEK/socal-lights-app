@@ -1,0 +1,207 @@
+{
+ "groups": [
+  {
+   "id": "find",
+   "title": "Find and plan",
+   "blurb": "For visitors looking for lights and events.",
+   "videos": [
+    {
+     "id": "map",
+     "title": "Find lights near me",
+     "desc": "Use the map, filters, seasons and All seasons to find what is on near you.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "night",
+     "title": "Plan a night",
+     "desc": "Save favorites, build a route, share it and add it to your calendar.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "email",
+     "title": "Weekly lights email",
+     "desc": "Sign up for the weekly email and unsubscribe any time.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "app",
+     "title": "Install the app and use it offline",
+     "desc": "Add SoCal Lights to your phone and use it without a connection.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "contests",
+     "title": "Find contests: the Contests page",
+     "desc": "Live now, Mine and Past results, and the Enter or vote button on a map card.",
+     "url": "",
+     "length": ""
+    }
+   ]
+  },
+  {
+   "id": "enter",
+   "title": "Enter a home",
+   "blurb": "For people who want their home in a contest.",
+   "videos": [
+    {
+     "id": "enter",
+     "title": "Enter your home in a contest",
+     "desc": "Sign in, add photos, your address and agree to the rules.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "edit-entry",
+     "title": "Edit or withdraw your entry",
+     "desc": "Change your entry's name and description, or take it out.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "profile",
+     "title": "Your profile",
+     "desc": "Badges, saved drafts and deleting your account.",
+     "url": "",
+     "length": ""
+    }
+   ]
+  },
+  {
+   "id": "vote",
+   "title": "Vote and judge",
+   "blurb": "For neighbors who vote and invited judges.",
+   "videos": [
+    {
+     "id": "vote",
+     "title": "Vote in a contest",
+     "desc": "Use the category tabs, pick one favorite in each, and share the contest.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "judge",
+     "title": "Judge a contest",
+     "desc": "Open your judge link, score each home, and recuse yourself when you know the household.",
+     "url": "",
+     "length": ""
+    }
+   ]
+  },
+  {
+   "id": "run",
+   "title": "Run a contest",
+   "blurb": "For organizers.",
+   "videos": [
+    {
+     "id": "quick",
+     "title": "Create a contest with Quick start",
+     "desc": "The short setup: seven screens.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "custom",
+     "title": "Create a contest with Customize",
+     "desc": "Judges, prizes, categories, vote counts and your own rules.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "share",
+     "title": "Share your contest",
+     "desc": "Link, QR code, entry poster and yard sign.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "approve",
+     "title": "Approve and decline entries",
+     "desc": "Approve, decline with a reason, and undo a decline.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "edit",
+     "title": "Edit your contest and change the dates",
+     "desc": "Change the details any time before winners are announced.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "voting",
+     "title": "Run voting",
+     "desc": "Start now, pause, review votes and void a vote.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "team",
+     "title": "Add co-organizers and judges",
+     "desc": "Invite people to help run the contest.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "announce",
+     "title": "Announce winners",
+     "desc": "Close voting, announce, export results and see the archive.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "activity",
+     "title": "Read your contest activity",
+     "desc": "Visits, QR scans, voters and votes per day.",
+     "url": "",
+     "length": ""
+    }
+   ]
+  },
+  {
+   "id": "sponsors",
+   "title": "Sponsors and installers",
+   "blurb": "For businesses that back a contest.",
+   "videos": [
+    {
+     "id": "sponsors",
+     "title": "Add sponsors and logos",
+     "desc": "Show sponsors by tier on the contest page.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "installer",
+     "title": "Presenting installer and quote requests",
+     "desc": "How the Get a quote button works.",
+     "url": "",
+     "length": ""
+    }
+   ]
+  },
+  {
+   "id": "post",
+   "title": "Post events and homes",
+   "blurb": "For anyone adding to the map.",
+   "videos": [
+    {
+     "id": "add-event",
+     "title": "Add an event to the map",
+     "desc": "Share a tree lighting, market, parade or haunted house.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "showcase",
+     "title": "Show off your house",
+     "desc": "Put your lights on the map with Showcase a House.",
+     "url": "",
+     "length": ""
+    }
+   ]
+  }
+ ]
+}
