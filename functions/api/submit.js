@@ -3,7 +3,7 @@
 import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
-import { getUser } from "../_lib/auth.js";
+import { getUser, sendMail } from "../_lib/auth.js";
 import { getContest, windows } from "../_lib/contests.js";
 
 const MAX_PHOTOS = 8;
@@ -18,7 +18,7 @@ function sniff(bytes) {
   return null;
 }
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, waitUntil }) {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
 
   let form;
@@ -110,5 +110,10 @@ export async function onRequestPost({ request, env }) {
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);
 
+  // Manual approval: tell the organizer there is something waiting for them
+  if (contest && !autoApprove && contest.contact_email) {
+    const job = sendMail(env, { to: contest.contact_email, subject: `New entry waiting: ${contest.name}`, text: `${title} (${street}, ${city}) entered ${contest.name} and is waiting for your OK. Photos are held privately until you approve.\n\nReview it: https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});
+    if (waitUntil) waitUntil(job);
+  }
   return json({ ok: true, id });
 }
