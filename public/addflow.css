@@ -82,3 +82,5 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 
 /* Bigger tap area for text-style buttons (Save & exit, Cancel) without moving anything */
 button.link{padding-block:11px;margin-block:-11px}
+.hdr .link,.hdr .wm{white-space:nowrap}
+@media(max-width:400px){.hright{gap:10px}.brand{font-size:17px;gap:8px}.hdr .link{font-size:14px}}

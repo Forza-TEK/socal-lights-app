@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261101a">
-<link rel="stylesheet" href="/contest.css?v=20261101g">
+<link rel="stylesheet" href="/addflow.css?v=20261101c">
+<link rel="stylesheet" href="/contest.css?v=20261101h">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
@@ -75,7 +75,7 @@ function render() {
   <p>${esc(c.descr)}</p><div style="display:flex;gap:8px;flex-wrap:wrap">${pills.join("")}</div>
   <p class="small muted">Voting runs ${fmt(c.voteStart)} to ${fmt(c.voteEnd)}. ${pub ? `Every home is in every category. You get one vote in each category.${c.votingOpen && me.signedIn && !amJudge ? ` You've voted in ${done} of ${c.categories.length}.` : ""}` : "Voting in this contest is by invited judges only."}${both ? " A separate panel of judges also votes for Judges' Choice." : ""}</p>
   ${amJudge ? `<div class="status ok">You're a judge in this contest. <a href="/c/${esc(c.slug)}/judge">Open the judges' ballot</a>.</div>` : ""}
-  <div class="actions">${c.status === "live" ? `<a class="btn org" href="/c/${esc(c.slug)}/enter" ${c.entriesOpen ? "" : 'aria-disabled="true" style="opacity:.55;pointer-events:none"'}>${c.entriesOpen ? "Enter my home" : "Entries are closed"}</a>` : ""}${me.isOwner ? `<a class="btn ghost" href="/c/${esc(c.slug)}/manage">Manage this contest</a>` : ""}</div>${c.rules ? `<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600">Official rules</summary><div class="small muted" style="white-space:pre-wrap;margin-top:10px">${esc(c.rules)}</div></details>` : ""}${c.announced && c.frozenAt ? `<p class="small muted">Final results, locked ${fmt(c.frozenAt)}. Winners keep their crown.</p>` : ""}</div>
+  <div class="actions">${c.status === "live" && !c.announced ? `<a class="btn org" href="/c/${esc(c.slug)}/enter" ${c.entriesOpen ? "" : 'aria-disabled="true" style="opacity:.55;pointer-events:none"'}>${c.entriesOpen ? "Enter my home" : "Entries are closed"}</a>` : ""}${me.isOwner ? `<a class="btn ghost" href="/c/${esc(c.slug)}/manage">Manage this contest</a>` : ""}</div>${c.rules ? `<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600">Official rules</summary><div class="small muted" style="white-space:pre-wrap;margin-top:10px">${esc(c.rules)}</div></details>` : ""}</div>
   ${winnersBox()}${prizeBox()}${sponsorsBox()}${mineBox()}
   ${!pub ? gallery() : D.entries.length ? ballot + sections + thanks : `<div class="card"><h2>No homes yet</h2><p class="muted">Be the first to enter. Approved homes appear here, in every category, and on the map.</p></div>`}${quoteBox()}`;
   const qb = $("#quotebtn"); if (qb) qb.onclick = async () => { if (!D.me.signedIn) { const u = await signIn({ title: "Sign in to ask for a quote", next: location.pathname }); if (!u) return; await load(); refreshAcct($("#acct")); return; } const f = $("#quoteform"); f.hidden = false; f.style.display = "grid"; qb.hidden = true; $("#q-name").focus(); };
