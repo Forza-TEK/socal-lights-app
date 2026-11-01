@@ -13,7 +13,7 @@ Homes, installer displays and events people submit are published immediately. Ta
 - The public event list is cached for about two minutes, so an unpublished event can linger that long.
 
 ## Three-a-day email
-`.github/workflows/submission-digest.yml` runs at about 7am, 1pm and 7pm Pacific (03:00, 15:00, 21:00 UTC; an hour early in summer) and calls `/api/admin-digest` with the shared `ALERT_CRON_KEY`. It emails how many homes, events and contest entries came in since the last email, lists the newest, and says how many are waiting for review. It sends nothing when nothing is new. It goes to `ADMIN_NOTIFY_EMAIL` (Pages variable), default `rey@forza-tek.com`. The last-sent time is kept in `admin_digest` (migration 0141).
+`.github/workflows/submission-digest.yml` runs at about 7am, 1pm and 7pm Pacific (03:00, 15:00, 21:00 UTC; an hour early in summer) and calls `/api/admin-digest` with the shared `ALERT_CRON_KEY`. It emails how many homes, events and contest entries came in since the last email, lists the newest, gives today's totals (Pacific time) and the live count, and says how many are waiting for review. It always sends: when nothing is new the email says so. It goes to `ADMIN_NOTIFY_EMAIL` (Pages variable), default `rey@forza-tek.com`. The last-sent time is kept in `admin_digest` (migration 0141).
 
 ## Filter
 The filter panel's Type section has "Professionally installed": homes posted by an installer or installed by one. It hides events, which carry no installer.
