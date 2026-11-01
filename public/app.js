@@ -141,6 +141,7 @@ function evMatch(ev) {
   if (!nearCity(ev.lat, ev.lng)) return false;
   if (state.cost === "free" && !ev.free) return false;
   if (state.cost === "paid" && ev.free) return false;
+  if (state.type === "pro") return false; // "Professionally installed" is about posted homes only; events carry no installer
   if (state.type === "contest" ? !isContest(ev) : state.type === "house" ? !isHome(ev) : state.type && ev.t !== state.type) return false;
   if (state.conf && ev.st !== "c") return false;
   if (state.date && (state.date < ev.s || state.date > ev.e)) return false;
@@ -163,7 +164,8 @@ const isContest = (ev) => ev._ct ?? (ev._ct = CONTEST_RE.test(ev.n + " " + (ev.b
 // a Type other than "Home displays" leaves them out.
 function instMatch(p) {
   if (!state.all && (p.season || "christmas") !== state.season) return false;
-  if (state.type && state.type !== "house") return false;
+  if (state.type && state.type !== "house" && state.type !== "pro") return false;
+  if (state.type === "pro" && !(p.kind === "installer" || p.inst)) return false; // installed by a company, or posted by one
   if (state.cost === "paid") return false;
   if (state.q && !hay(p.biz + " " + p.title + " " + p.city + " " + p.desc + " " + (p.address || "")).includes(hay(state.q))) return false;
   if (state.counties.size && !state.counties.has(p.county)) return false;
@@ -862,7 +864,7 @@ function activeFilters() {
   if (state.city) a.push(["city", "Near " + state.city + (state.radius !== 10 ? " · " + state.radius + " mi" : "")]);
   state.counties.forEach((c) => a.push(["county:" + c, c + " County"]));
   if (state.cost === "paid") a.push(["cost", "Ticketed only"]);
-  if (state.type) a.push(["type", state.type === "house" ? "Home displays" : state.type === "contest" ? "Contests" : TYPE_SHORT[state.type] || "Type"]);
+  if (state.type) a.push(["type", state.type === "house" ? "Home displays" : state.type === "pro" ? "Professionally installed" : state.type === "contest" ? "Contests" : TYPE_SHORT[state.type] || "Type"]);
   if (state.conf) a.push(["conf", "Confirmed dates"]);
   return a;
 }
@@ -884,7 +886,7 @@ function filtersHtml() {
       ${state.city ? "" : `<p class="fhint">Pick a city, then choose how far from it to look.</p>`}<div class="fseg${state.city ? "" : " off"}" role="group" aria-label="Distance from the city">${[5, 10, 25].map((r) => `<button type="button" data-rad="${r}" ${state.city ? "" : "disabled"} class="${state.radius === r ? "on" : ""}">${r} mi</button>`).join("")}</div></section>
     <section><h4>County</h4><div class="fchips">${COUNTIES.map((c) => ch(state.counties.has(c), `data-county="${esc(c)}"`, esc(c.replace(/^Los Angeles$/, "LA")))).join("")}</div></section>
     <section><h4>Cost</h4><div class="fseg" role="group" aria-label="Cost">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-fcost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div></section>
-    <section><h4>Type</h4><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).filter(([v]) => v !== "drive").map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}</div></section>
+    <section><h4>Type</h4><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).filter(([v]) => v !== "drive").map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}${ch(state.type === "pro", 'data-ftype="pro"', "Professionally installed")}</div></section>
     <section class="frow"><span><b>Confirmed dates only</b></span><button type="button" class="sw${state.conf ? " on" : ""}" role="switch" aria-checked="${state.conf}" data-fconf aria-label="Confirmed dates only"><i></i></button></section>
   </div>
   <div class="ffoot"><button type="button" class="linkbtn" data-clear="all">Clear all</button><button type="button" class="btn" data-fdone>Show ${nShow.toLocaleString("en-US")} place${nShow === 1 ? "" : "s"}</button></div>`;

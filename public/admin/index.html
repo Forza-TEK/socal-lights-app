@@ -45,6 +45,7 @@
     <button type="button" role="tab" id="tab-contests" aria-selected="false">Contests <span class="tag" id="nContests">0</span></button>
     <button type="button" role="tab" id="tab-events" aria-selected="false">Events <span class="tag" id="nEvents">0</span></button>
     <button type="button" role="tab" id="tab-overlaps" aria-selected="false">Replaced records <span class="tag" id="nOverlaps">0</span></button>
+    <button type="button" role="tab" id="tab-installers" aria-selected="false">Installers <span class="tag" id="nInstallers">0</span></button>
     <button type="button" role="tab" id="tab-users" aria-selected="false">Users <span class="tag" id="nUsers">0</span></button>
     <button type="button" role="tab" id="tab-log" aria-selected="false">Activity log</button>
   </div>
@@ -58,6 +59,6 @@ import { defaultSeason } from "/seasons.js?v=20261029d";
 document.getElementById("tb").innerHTML = themeBtn();
 document.documentElement.dataset.season = defaultSeason(new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10));
 </script>
-<script type="module" src="/admin/admin.js?v=20261031zc"></script>
+<script type="module" src="/admin/admin.js?v=20261101b"></script>
 </body>
 </html>

@@ -8,6 +8,12 @@ export async function onRequestPost({ request, env, params }) {
   const b = await request.json().catch(() => ({}));
   const s = await env.DB.prepare("SELECT * FROM event_submissions WHERE id = ?").bind(params.id).first();
   if (!s) return err(404, "That submission no longer exists.");
+  if (b.action === "unpublish") {
+    // Takes a published event off the map; the submission goes back to "waiting" with the same event id, so publishing it again restores it
+    if (s.event_id) await env.DB.prepare("DELETE FROM events WHERE id = ?").bind(s.event_id).run();
+    await env.DB.prepare("UPDATE event_submissions SET status='pending' WHERE id = ?").bind(s.id).run();
+    return json({ ok: true });
+  }
   if (b.action === "decline") {
     await env.DB.prepare("UPDATE event_submissions SET status='declined' WHERE id = ?").bind(s.id).run();
     return json({ ok: true });

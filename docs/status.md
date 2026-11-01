@@ -11,6 +11,9 @@ Audit in `docs/contest-audit.md`; tracked in the Contest Checklist artifact. Don
 ## Installer profiles (2026-11-01)
 `/installer/<slug>` pages and "Installed by <company>" on home cards and details (claims show right away; installers can confirm by email for a check mark). Showcase wizard asks "Did a professional install your lights?". Migration 0140. See `docs/installers.md`. Not built: editing profiles or merging duplicates (database only).
 
+## Auto-publish, unpublish, daily digest, installer admin (2026-11-01)
+New homes and events publish immediately (spam words and daily caps hold them); Unpublish in the admin for homes and submitted events; three-a-day "new submissions" email (workflow `submission-digest.yml`, migration 0141); admin Installers tab (edit, hide, merge); "Professionally installed" filter. See `docs/submissions.md` and `docs/installers.md`.
+
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
 

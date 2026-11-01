@@ -24,11 +24,11 @@ async function api(path, opts = {}) {
   return d;
 }
 
-function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events", "overlaps", "users", "log"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
-["pending", "approved", "subs", "contests", "events", "overlaps", "users", "log"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
+function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events", "overlaps", "installers", "users", "log"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
+["pending", "approved", "subs", "contests", "events", "overlaps", "installers", "users", "log"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
 
 // The numbers on the tabs, from one request, so they are right on arrival and after every change
-const COUNT_IDS = { pending: "nPending", approved: "nApproved", subs: "nSubs", contests: "nContests", events: "nEvents", overlaps: "nOverlaps", users: "nUsers" };
+const COUNT_IDS = { pending: "nPending", approved: "nApproved", subs: "nSubs", contests: "nContests", events: "nEvents", overlaps: "nOverlaps", users: "nUsers", installers: "nInstallers" };
 async function refreshCounts() { try { const c = await api("/api/admin/counts"); for (const [k, id] of Object.entries(COUNT_IDS)) if ($("#" + id)) $("#" + id).textContent = c[k]; } catch {} }
 async function render() {
   const main = $("#main");
@@ -38,6 +38,7 @@ async function render() {
     if (tab === "subs") return renderSubs();
     if (tab === "contests") return renderContests();
     if (tab === "overlaps") return renderOverlaps();
+    if (tab === "installers") return renderInstallers();
     if (tab === "users") return renderUsers();
     if (tab === "log") return renderLog();
     const posts = await api("/api/admin/posts?status=" + tab);
@@ -55,13 +56,13 @@ function postCard(p) {
     <dt>Contact</dt><dd><span style="user-select:all">${esc(p.contact_email || "—")}</span></dd><dt>Website</dt><dd>${web}</dd>
     <dt>Posting as</dt><dd>${p.kind === "installer" ? "Professional installer" : "Homeowner"}</dd>${p.inst && p.kind !== "installer" ? `<dt>Installed by</dt><dd>${esc(p.inst.name)} ${p.inst.ok ? "(confirmed)" : "(claimed by the homeowner, not confirmed)"}</dd>` : ""}<dt>Public phone</dt><dd>${esc(p.phone || "—")}</dd><dt>Street address</dt><dd>${esc(p.address || "—")} <span class="meta">(shown on the map)</span></dd><dt>Where</dt><dd>${esc(p.where || "—")}</dd><dt>About</dt><dd style="white-space:pre-line">${esc(p.desc)}</dd></dl>
     ${p.hiddenBySweep ? `<p class="meta" style="margin:8px 0;color:var(--ink)"><b>Not on the map.</b> You chose the sweep record for this address (Replaced records tab).</p>` : ""}${p.replaces ? `<p class="meta" style="margin:8px 0;color:var(--ink)"><b>Replaces a sweep record.</b> When you approve this, the automatic listing at the same address is hidden: ${p.replaces.map((r) => esc(r.name)).join("; ")}.</p>` : ""}${p.nearby ? `<p class="meta" style="margin:8px 0">Same street, different number (both stay listed): ${p.nearby.map((r) => esc(r.name + " (" + (r.address || "").split(",")[0] + ")")).join("; ")}.</p>` : ""}
-    <div class="row"><button class="btn ghost" type="button" data-editpost="${esc(p.id)}">Edit</button>${tab === "pending" ? `<button class="btn ice" type="button" data-act="approve">Approve and publish</button><button class="btn ghost" type="button" data-act="decline">Decline</button>` : `<button class="btn ghost" type="button" data-act="delete">Remove from site</button>`}<span class="msg"></span></div>
+    <div class="row"><button class="btn ghost" type="button" data-editpost="${esc(p.id)}">Edit</button>${tab === "pending" ? `<button class="btn ice" type="button" data-act="approve">Approve and publish</button><button class="btn ghost" type="button" data-act="decline">Decline</button>` : `<button class="btn ghost" type="button" data-act="unpublish">Unpublish</button><button class="btn ghost" type="button" data-act="delete">Remove from site</button>`}<span class="msg"></span></div>
   </article>`;
 }
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-act]"); if (!b) return;
   const card = b.closest("[data-id]"), id = card.dataset.id, act = b.dataset.act, msg = card.querySelector(".msg");
-  if ((act === "decline" || act === "delete") && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = act === "decline" ? "Click again to decline" : "Click again to remove"; return; }
+  if ((act === "decline" || act === "delete" || act === "unpublish") && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = act === "decline" ? "Click again to decline" : act === "unpublish" ? "Click again to unpublish" : "Click again to remove"; return; }
   b.disabled = true; msg.className = "msg"; msg.textContent = act === "approve" ? "Publishing…" : "Working…";
   try {
     if (act === "delete") await api("/api/admin/posts/" + id, { method: "DELETE" });
@@ -98,25 +99,28 @@ $("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-
 
 
 /* ---------- submitted events (public "Add your event" form) ---------- */
-let SUBS = [];
+let SUBS = [], SUBVIEW = "pending";
 async function renderSubs() {
   const main = $("#main");
-  SUBS = await api("/api/admin/submissions?status=pending");
-  $("#nSubs").textContent = SUBS.length;
-  if (!SUBS.length) { main.innerHTML = `<div class="empty">No submitted events waiting. Events whose web page checks out are published automatically.</div>`; return; }
-  main.innerHTML = `<div class="cards">${SUBS.map((x) => `<article class="acard" data-sid="${esc(x.id)}">
+  const [waiting, live] = await Promise.all([api("/api/admin/submissions?status=pending"), api("/api/admin/submissions?status=published")]);
+  SUBS = SUBVIEW === "pending" ? waiting : live;
+  $("#nSubs").textContent = waiting.length;
+  const sw = `<div class="row" style="gap:8px;margin-bottom:12px"><button class="btn ${SUBVIEW === "pending" ? "ice" : "ghost"}" type="button" data-subview="pending">Waiting (${waiting.length})</button><button class="btn ${SUBVIEW === "published" ? "ice" : "ghost"}" type="button" data-subview="published">Live, newest first (${live.length})</button></div>`;
+  if (!SUBS.length) { main.innerHTML = sw + `<div class="empty">${SUBVIEW === "pending" ? "Nothing waiting. New events go live right away; look under Live to review or unpublish them." : "No submitted events are live."}</div>`; return; }
+  main.innerHTML = sw + `<div class="cards">${SUBS.map((x) => `<article class="acard" data-sid="${esc(x.id)}">
     <div class="row" style="justify-content:space-between"><h3>${esc(x.name)}</h3><span class="meta">${esc((x.created_at || "").slice(0, 16))} UTC</span></div>
     <dl class="facts"><dt>When</dt><dd>${esc(x.start_date)}${x.end_date !== x.start_date ? " to " + esc(x.end_date) : ""} · ${esc(x.hours || "no hours")}</dd><dt>Where</dt><dd>${esc(x.venue)}<br><span class="meta">${esc(x.address)}, ${esc(x.city)} · ${esc(x.county || "")} (pin ${Number(x.lat).toFixed(4)}, ${Number(x.lng).toFixed(4)})</span></dd>
     <dt>Type</dt><dd>${esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)} · ${esc(x.price || "")}</dd><dt>About</dt><dd>${esc(x.blurb)}</dd>
-    <dt>Event page</dt><dd><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a></dd><dt>Contact</dt><dd><span style="user-select:all">${esc(x.contact_email)}</span></dd><dt>Why it's here</dt><dd>${esc(x.note || "")}</dd>${x.paid_plans ? `<dt>Paid Featured</dt><dd><b>${esc(x.paid_plans)}</b> <span class="meta">(turns on when you publish; if you decline, refund it in Stripe)</span></dd>` : ""}</dl>
-    <div class="row"><button class="btn ice" type="button" data-sact="approve" data-st="confirmed">Publish (confirmed)</button><button class="btn ghost" type="button" data-sact="approve" data-st="expected">Publish (expected)</button><button class="btn ghost" type="button" data-sact="decline">Decline</button><span class="msg"></span></div></article>`).join("")}</div>`;
+    <dt>Event page</dt><dd><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a></dd><dt>Contact</dt><dd><span style="user-select:all">${esc(x.contact_email)}</span></dd><dt>Notes</dt><dd>${esc(x.note || "")}</dd>${x.paid_plans ? `<dt>Paid Featured</dt><dd><b>${esc(x.paid_plans)}</b></dd>` : ""}</dl>
+    <div class="row">${SUBVIEW === "pending" ? `<button class="btn ice" type="button" data-sact="approve" data-st="confirmed">Publish (confirmed)</button><button class="btn ghost" type="button" data-sact="approve" data-st="expected">Publish (expected)</button><button class="btn ghost" type="button" data-sact="decline">Decline</button>` : `<button class="btn ghost" type="button" data-sact="unpublish">Unpublish</button>`}<span class="msg"></span></div></article>`).join("")}</div>`;
 }
+$("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-subview]"); if (b) { SUBVIEW = b.dataset.subview; renderSubs(); } });
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-sact]"); if (!b) return;
   const card = b.closest("[data-sid]"), msg = card.querySelector(".msg");
-  if (b.dataset.sact === "decline" && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to decline"; return; }
+  if ((b.dataset.sact === "decline" || b.dataset.sact === "unpublish") && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to " + b.dataset.sact; return; }
   b.disabled = true; msg.textContent = "Working…";
-  try { await api("/api/admin/submissions/" + card.dataset.sid, { method: "POST", body: JSON.stringify({ action: b.dataset.sact, status: b.dataset.st }) }); card.remove(); refreshCounts(); $("#nSubs").textContent = document.querySelectorAll("[data-sid]").length; if (!document.querySelector("[data-sid]")) renderSubs(); }
+  try { await api("/api/admin/submissions/" + card.dataset.sid, { method: "POST", body: JSON.stringify({ action: b.dataset.sact, status: b.dataset.st }) }); renderSubs(); refreshCounts(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
@@ -303,3 +307,30 @@ async function renderOverlaps() {
   main.querySelectorAll("[data-ov]").forEach((b) => (b.onclick = async () => { main.querySelectorAll("[data-ov]").forEach((x) => (x.disabled = true)); try { await api("/api/admin/overlaps", { method: "POST", body: JSON.stringify({ action: b.dataset.ov, event_id: b.dataset.eid }) }); renderOverlaps(); refreshCounts(); } catch (e) { renderOverlaps(); alert(e.message); } }));
   main.querySelectorAll("[data-gopost]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); setTab("approved"); }));
 }
+
+
+/* ---------- installers: edit a profile, hide it, or merge two spellings of one company ---------- */
+let INST = [];
+async function renderInstallers() {
+  const main = $("#main");
+  INST = await api("/api/admin/installers");
+  $("#nInstallers").textContent = INST.length;
+  if (!INST.length) { main.innerHTML = `<div class="empty">No installer profiles yet. One appears when an installer posts a display or a homeowner names the company that installed their lights.</div>`; return; }
+  const f = (id, l, v, ex = "") => `<label>${l}<input data-f="${id}" value="${esc(v || "")}" ${ex}></label>`;
+  main.innerHTML = `<p class="meta">Merging moves every home to the profile you keep and removes the other one. Hiding keeps the profile but removes its link from cards and the sitemap.</p><div class="cards">${INST.map((i) => `<article class="acard" data-iid="${esc(i.id)}">
+    <div class="row" style="justify-content:space-between"><h3>${esc(i.name)}${i.status === "hidden" ? ' <span class="tag">Hidden</span>' : ""}</h3><span class="meta">${i.homes} home${i.homes === 1 ? "" : "s"}${i.unconfirmed ? ` · ${i.unconfirmed} not confirmed` : ""} · <a href="/installer/${esc(i.slug)}" target="_blank" rel="noopener">view page</a></span></div>
+    <div class="grid2">${f("name", "Company name", i.name, 'maxlength="80"')}${f("web", "Website", i.web, 'maxlength="200"')}${f("phone", "Phone", i.phone, 'maxlength="80"')}${f("area", "Service area", i.area, 'maxlength="120"')}${f("email", "Email for confirmations (private)", i.email, 'maxlength="120" type="email"')}</div>
+    <label>About (shown on the profile)<textarea data-f="blurb" rows="2" maxlength="600">${esc(i.blurb || "")}</textarea></label>
+    <div class="row"><button class="btn ice" type="button" data-iact="edit">Save</button><button class="btn ghost" type="button" data-iact="${i.status === "hidden" ? "show" : "hide"}">${i.status === "hidden" ? "Show" : "Hide"}</button>
+      <select data-merge aria-label="Merge ${esc(i.name)} into"><option value="">Merge into…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost" type="button" data-iact="merge">Merge</button><span class="msg"></span></div></article>`).join("")}</div>`;
+}
+$("#main").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-iact]"); if (!b) return;
+  const card = b.closest("[data-iid]"), id = card.dataset.iid, act = b.dataset.iact, msg = card.querySelector(".msg");
+  const body = { action: act };
+  if (act === "edit") card.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value));
+  if (act === "merge") { body.into = card.querySelector("[data-merge]").value; if (!body.into) { msg.className = "msg err"; msg.textContent = "Choose the profile to merge into."; return; } if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to merge"; return; } }
+  b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
+  try { await api("/api/admin/installers/" + id, { method: "POST", body: JSON.stringify(body) }); if (act === "edit") { msg.textContent = "Saved."; b.disabled = false; refreshCounts(); } else { renderInstallers(); refreshCounts(); } }
+  catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
+});

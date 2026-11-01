@@ -39,6 +39,13 @@
      "desc": "Live now, Mine and Past results, and the Enter or vote button on a map card.",
      "url": "",
      "length": ""
+    },
+    {
+     "id": "pro-filter",
+     "title": "Find professionally installed displays",
+     "desc": "Use the Professionally installed filter, then open an installer's profile.",
+     "url": "",
+     "length": ""
     }
    ]
   },
@@ -177,6 +184,13 @@
      "id": "installer",
      "title": "Presenting installer and quote requests",
      "desc": "How the Get a quote button works.",
+     "url": "",
+     "length": ""
+    },
+    {
+     "id": "installer-profile",
+     "title": "Installer profiles and \"Installed by\"",
+     "desc": "How a company gets a profile, how a home links to it, and how to confirm or claim yours.",
      "url": "",
      "length": ""
     }
