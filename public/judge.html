@@ -16,7 +16,7 @@
 <script type="module">
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261101a";
 import { refreshAcct } from "/addflow.js?v=20261102c";
-import { mountShell } from "/appshell.js?v=20261102b";
+import { mountShell } from "/appshell.js?v=20261103a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 let panel = "ballot";
 const shell = mountShell({ page: "judge", title: "Judging", active: panel, extra: [["contest", "Contest page", "/c/" + slug, "play"]], items: [{ k: "ballot", label: "Ballot", icon: "check" }],
