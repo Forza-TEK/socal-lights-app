@@ -37,8 +37,8 @@ const showcase = {
     { cap: "Address", say: "Add the address. The pin goes here, so visitors can drive by.", do: async (p, h) => { await h.move("#f-city"); await p.selectOption("#f-city", "Irvine"); await h.unring(); await sleep(1000); await h.type("#f-street", "460 Maple Street"); await h.type("#f-zip", "92602"); }, post: (p, h) => next(p, h) },
     { cap: "Help families plan", say: "Tell families when the lights are on, and how they can see them. All of this is optional.", do: async (p, h) => { await h.type("#f-lightsOn", "5 to 10 pm nightly"); await h.click('[data-tile="visit|both"]', { after: 1600 }); }, post: (p, h) => next(p, h) },
     { cap: "Add photos", say: "Add photos of the display. Photos help families find the right house. You can skip this and add them later.", do: async (p, h) => { const [fc] = await Promise.all([p.waitForEvent("filechooser"), h.click("label[for=f-photos]", { after: 300 })]); await fc.setFiles(["public/img/stock/tree-3.jpg", "public/img/stock/walk-2.jpg"]); await sleep(2600); }, post: (p, h) => next(p, h) },
-    { cap: "Check and send", say: "Check everything, then send it. A person looks at each new display before it goes on the map.", do: async (p, h) => { await h.hover(".sum", 2200); }, poster: true, post: (p, h) => h.click(NEXT, { after: 3200 }) },
-    { cap: "Sent", say: "That is it. Your display is sent, and you will hear from us if anything needs fixing.", do: async (p, h) => { await sleep(1500); } },
+    { cap: "Check and put it on the map", say: "Check everything, then tap Put it on the map. The site owner may look it over later.", do: async (p, h) => { await h.hover(".sum", 2200); }, poster: true, post: (p, h) => h.click(NEXT, { after: 3200 }) },
+    { cap: "You are on the map", say: "That is it. Your display is live on the map, and we will email you if anything needs fixing.", do: async (p, h) => { await sleep(1500); } },
     end("Find lights near me", "Use the map, filters, seasons and All seasons to find what is on near you"),
   ],
 };
