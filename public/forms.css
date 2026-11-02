@@ -1,0 +1,37 @@
+/* Edit forms on Profile, the installer and contest dashboards: the same look as the Admin edit windows.
+   Titled sections, labels above fields, hints under, a 6-column grid, a Save bar that stays in view. */
+.f{display:grid;gap:22px}
+.fsec{border:0;margin:0;padding:0;min-width:0;display:grid;gap:10px}
+.fsec>legend{padding:0;margin:0 0 2px;font:600 12px/1 var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);float:left;width:100%}
+.fsec>legend+*{clear:both}
+.fdesc{margin:0;color:var(--muted);font-size:13.5px}
+.fgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px}
+.ff{display:grid;gap:6px;align-content:start;min-width:0}.ff[hidden]{display:none}
+.ff.c6,.fgrid>.fdesc{grid-column:1/-1}.ff.c4{grid-column:span 4}.ff.c3{grid-column:span 3}.ff.c2{grid-column:span 2}
+.f .ff>label,.f .ffl{display:grid;gap:6px;font:600 13px/1.3 var(--font);color:var(--ink)}
+.f .ffl .lt{font:600 13px/1.3 var(--font)}
+.fhint{color:var(--muted);font-size:12.5px;line-height:1.4;font-weight:400}
+.f input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not(.ain),.f select,.f textarea{font:400 16px/1.4 var(--font);width:100%;box-sizing:border-box;min-height:46px;padding:10px 14px;border:1px solid var(--line2);border-radius:10px;background:transparent;color:var(--ink);max-width:100%}
+.f textarea{resize:vertical;min-height:96px}
+.f input:focus,.f select:focus,.f textarea:focus{outline:0;border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.f label.chk{display:flex;align-items:center;gap:10px;min-height:46px;font:500 15px var(--font);cursor:pointer}
+.f label.chk input{width:20px;height:20px;margin:0;accent-color:var(--ink)}
+.f .err{color:var(--bad);margin:0}
+.mfoot{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.mfoot.sticky{position:sticky;bottom:0;margin:6px -24px -24px;padding:14px 24px calc(14px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line);z-index:2}
+/* The edit window */
+.fwin{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;background:rgba(10,12,18,.55);padding:16px}
+.fwin .card{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:24px;width:100%;max-width:680px;max-height:calc(100dvh - 32px);overflow:auto;box-sizing:border-box}
+.fwin .mh{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.fwin .mh h2{margin:0;font:400 24px/1.2 var(--font);letter-spacing:-.015em}
+.fwin .xbtn{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0}
+.fwin .xbtn svg{width:20px;height:20px}.fwin .xbtn:hover{background:var(--tile);border-color:var(--ink)}.fwin .xbtn:focus-visible{outline:2px solid var(--season);outline-offset:2px}
+.fwin .mform{display:grid;max-width:none;margin:0}
+.fwin .mfoot.sticky{bottom:-24px}
+@media (max-width:699px){
+  .fwin .mfoot.sticky{bottom:-18px}
+  .fgrid{gap:12px}.ff.c2,.ff.c3,.ff.c4{grid-column:1/-1}
+  .fwin{align-items:flex-end;padding:0}.fwin .card{border-radius:16px 16px 0 0;max-width:none;max-height:92dvh;padding:18px}
+  .mfoot.sticky{margin:6px -18px -18px;padding-inline:18px}
+}
+.fgrid>p{grid-column:1/-1;margin:0}
+#editcard>p{margin:0 0 18px}

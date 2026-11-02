@@ -61,3 +61,6 @@ All Admin edit windows share one form layout (`fsec` / `ff` in `admin.js`, `.fse
 
 ## Areas served picker
 "Areas served" is a multi-select (`public/areapick.js`, `areapick.css`): type two letters, pick a city or county from the same dropdown used for street addresses (`/api/address?kind=area`), and each choice becomes a removable chip (Backspace removes the last one, arrow keys + Enter pick). The list is the site's own cities and the seven counties first, then Geoapify cities and counties when `GEOAPIFY_KEY` is set. Stored as "Orange County, Irvine, San Diego County" (up to 240 characters). Used in the Admin house and installer windows and on the installer's own Details page; the add-house wizard still has a plain text box.
+
+## Edit forms outside Admin
+`public/forms.js` + `forms.css` give the same sectioned form to the public side: Your profile (Displays and Events: **Edit** opens a window like Admin's, with Listing / Plan a visit / How people reach you, and Event / When / Where and price / Details), the installer page (shared-home edit window and the Details form, with the Areas served picker) and the contest dashboard's "Edit contest details" (Contest / Schedule / Voting / Prize / Presenting installer / Official rules). The step-by-step add flows keep their one-question screens, but fields now use the same labels, 46px inputs and hints (`addflow.css`).
