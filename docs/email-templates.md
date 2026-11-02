@@ -14,4 +14,4 @@ The admin edits them in **Admin > Settings > Email templates** (`/admin/#emails`
 Add an entry to `TEMPLATES` (id, group, name, to, when, vars with a label, an example and whether it is required, subject, text), then send it with `sendTemplate`. It appears in the admin list automatically.
 
 ## Not in this list yet
-The judge invitation, co-organizer invitation and contest invitation emails are being built with their own HTML in a separate piece of work, so they still send from their own code (`functions/api/contests/[slug]/judges.js`, `staff.js`, `invite.js`). Add them to `TEMPLATES` once that work is merged.
+The judge invitation, co-organizer invitation and contest (neighbor) invitation emails have their own designed HTML in `functions/_lib/email-html.js` (judgeInvite, coOrganizerInvite, neighborInvite) and send from `functions/api/contests/[slug]/judges.js`, `staff.js` and `invite.js`. They are not editable in Admin yet. To make them editable, move their wording into `TEMPLATES` and keep the layout from `email-html.js`.

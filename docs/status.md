@@ -2,6 +2,11 @@
 
 _Last updated: 2026-11-02_
 
+## Tutorials and invitation emails (2026-11-04, branch `claude/sharp-keller-zmygil`)
+- **HTML invitation emails are on:** judge, neighbor and co-organizer invitations now send a branded HTML email with a plain-text fallback (`functions/_lib/email-html.js`; `sendMail` takes an `html` field). Not yet changed: sign-in code, weekly lights email, installer and quote emails (still plain text).
+- **Tutorial videos re-recorded** with a new look: every video starts on the map (numbered "Step 1, Step 2" captions, an orange ring on what to tap) or from an example email; day mode; 1920 x 1080; captions move away from the pointer. First batch on the page: Create with Quick start, Create with Customize, Approve and decline, Edit and change dates, Run voting, Read your contest activity, Add sponsors and logos. The rest of the 25 are being recorded and are added group by group.
+- **Recording scripts** are in `scripts/tutorials/` (see `docs/tutorials.md`): `seed-demo.mjs` (demo data, local only), `record.mjs` (recorder, mock inbox, captions), one spec file per group, and `install.mjs` (puts finished videos on the Tutorials page).
+
 ## Visit the homes + email templates (2026-11-02)
 - Contest page and judge menu: "Visit the homes" builds driving routes of 9 stops or fewer in Google or Apple Maps (`public/tour.js`). Merged.
 - Admin > Settings > Email templates: all 31 automatic emails now come from `functions/_lib/mailtpl.js`, are sent as HTML plus plain text, and can be edited, previewed, test-sent and reset by the admin. Migration 0148 (`email_templates`). See `docs/email-templates.md`.

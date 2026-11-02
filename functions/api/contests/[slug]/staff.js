@@ -3,6 +3,7 @@ import { json, err } from "../../../_lib/util.js";
 import { getUser, sameOrigin, normEmail, okEmail, sendMail } from "../../../_lib/auth.js";
 import { ownerOf } from "../../../_lib/contests.js";
 import { teamChanged } from "../../../_lib/changes.js";
+import { coOrganizerInvite } from "../../../_lib/email-html.js";
 
 export async function onRequestGet({ params, request, env }) {
   const { c, res } = await ownerOf(request, env, params.slug, getUser);
@@ -20,7 +21,8 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM contest_staff WHERE contest_id = ?").bind(c.id).first();
   if (n >= 8) return err(400, "That's the most co-organizers a contest can have.");
   await env.DB.prepare("INSERT OR IGNORE INTO contest_staff (contest_id, email) VALUES (?, ?)").bind(c.id, email).run();
-  await sendMail(env, { to: String(b.email).trim(), subject: `You can help run ${c.name}`, text: `${c.org} added you as a co-organizer of ${c.name}. Sign in with this email address to approve entries and manage the contest: https://socallights.app/c/${c.slug}/manage` });
+  const mail = coOrganizerInvite(c);
+  await sendMail(env, { to: String(b.email).trim(), subject: mail.subject, text: mail.text, html: mail.html });
   await teamChanged(env, c, user, [{ label: "Co-organizers", old: "", new: `Added ${email}` }], waitUntil);
   return json({ ok: true });
 }
