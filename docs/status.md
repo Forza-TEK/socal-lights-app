@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-02_
 
+## City sweep group 17 (San Bernardino Valley & West End) 2026-11-02: nothing new
+Searched all 15 cities (Loma Linda, Highland, Grand Terrace, Colton, Rialto, San Bernardino, Fontana, Upland, Ontario, Chino, Chino Hills, Montclair, Yucaipa, Redlands, Rancho Cucamonga). No new verifiable 2026 events, no migration. Loma Linda, Highland and Grand Terrace: only old pages (Loma Linda tree lighting Patch 2011, Grand Terrace Light Up page undated); the "Highland Chamber" Lighted Parade jotform is Highland, Illinois (do not add). Colton parade date unverified (IECN says Dec 13, not official). San Bernardino Hernandez CC Holiday Party Dec 4 (active.com) has no time or price: lead only. Chino contest page is still the 2025 list; Frostburg, Edinboro, Shorthorn, Voyager fail the house-number geocode (13526 Garcia geocodes, but the page prints "113526": left out). No contest with 2026 addresses in Upland, Ontario, Chino Hills, Rialto, Colton. Photos: none usable (Upland turkey trot og:image is the city seal, Redlands 382 px, Ontario/Montclair are logo/flyer; RC, Yucaipa and Chino Hills pages block or give no og:image).
+
 ## Tutorials: Vote and judge (2026-11-02, branch `claude/sharp-keller-zmygil`)
 Two new videos on the Tutorials page: "Vote in a contest" (1:29, phone-sized screen) and "Judge a contest" (1:08, computer screen), `hfc_female` voice, recorded on a local copy with made-up demo data (nothing on the live database). 11 of 25 tutorial videos are done; still "Coming soon": Find and plan (6), Enter a home (3), Sponsors and installers (3), Post events and homes (2). The recording setup is now in `scripts/tutorials/` (see `docs/tutorials.md`). The sign-in step in the voting video is narrated, not shown (the local sign-in shows a test code).
 
