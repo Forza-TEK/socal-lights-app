@@ -107,8 +107,9 @@
      "id": "quick",
      "title": "Create a contest with Quick start",
      "desc": "The short setup: seven screens.",
-     "url": "",
-     "length": ""
+     "url": "/tutorials/run-quick.mp4",
+     "poster": "/tutorials/run-quick.jpg",
+     "length": "1:24"
     },
     {
      "id": "custom",

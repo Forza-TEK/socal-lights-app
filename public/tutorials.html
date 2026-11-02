@@ -37,25 +37,25 @@ import { mountShell } from "/appshell.js?v=20261102b";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (q) => document.querySelector(q);
 // Turns a pasted video link into something we can play: YouTube, Vimeo, Cloudflare Stream, or a direct video file
-function player(url) {
-  let u; try { u = new URL(url); } catch { return ""; }
+function player(url, poster) {
+  let u; try { u = new URL(url, location.origin); } catch { return ""; }
   const h = u.hostname.replace(/^www\./, "");
   if (h === "youtu.be") return `<iframe src="https://www.youtube-nocookie.com/embed/${esc(u.pathname.slice(1))}?autoplay=1&rel=0" title="Tutorial video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   if (h.endsWith("youtube.com")) { const id = u.searchParams.get("v") || u.pathname.split("/").pop(); return `<iframe src="https://www.youtube-nocookie.com/embed/${esc(id)}?autoplay=1&rel=0" title="Tutorial video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`; }
   if (h === "vimeo.com") return `<iframe src="https://player.vimeo.com/video/${esc(u.pathname.split("/").filter(Boolean)[0])}?autoplay=1" title="Tutorial video" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
   if (h.endsWith("cloudflarestream.com") || h === "iframe.videodelivery.net") return `<iframe src="${esc(url)}${url.includes("?") ? "&" : "?"}autoplay=true" title="Tutorial video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
-  if (/\.(mp4|webm|mov)$/i.test(u.pathname)) return `<video src="${esc(url)}" controls autoplay playsinline></video>`;
+  if (/\.(mp4|webm|mov)$/i.test(u.pathname)) return `<video src="${esc(url)}" ${poster ? `poster="${esc(poster)}"` : ""} controls autoplay playsinline></video>`;
   return "";
 }
 const data = await fetch("/tutorials.json", { cache: "no-cache" }).then((r) => r.json()).catch(() => ({ groups: [] }));
 const groups = data.groups.filter((g) => g.videos && g.videos.length);
 const IC = {"find": "map", "enter": "pencil", "vote": "check", "run": "trophy", "sponsors": "star", "post": "homeplus"};
 const shell = mountShell({ page: "tut", title: "Tutorials", items: groups.map((g) => ({ k: g.id, label: g.title, icon: IC[g.id] || "play" })), active: (groups[0] || {}).id, onPick: (k) => show(k, true) });
-const card = (v) => `<article class="tcard" id="v-${esc(v.id)}"><div class="th"><button class="play" type="button" data-url="${esc(v.url)}" aria-label="Play: ${esc(v.title)}">&#9654;</button></div><div class="tb"><h3>${esc(v.title)}</h3><p>${esc(v.desc || "")}${v.length ? ` · ${esc(v.length)}` : ""}</p></div></article>`;
+const card = (v) => `<article class="tcard" id="v-${esc(v.id)}"><div class="th"${v.poster ? ` style="background:#000 url('${esc(v.poster)}') center/cover"` : ""}><button class="play" type="button" data-url="${esc(v.url)}" data-poster="${esc(v.poster || "")}" aria-label="Play: ${esc(v.title)}">&#9654;</button></div><div class="tb"><h3>${esc(v.title)}</h3><p>${esc(v.desc || "")}${v.length ? ` · ${esc(v.length)}` : ""}</p></div></article>`;
 const row = (v) => `<div class="trow" id="v-${esc(v.id)}"><div><h3>${esc(v.title)}</h3><p>${esc(v.desc || "")}</p></div><span class="soon">Coming soon</span></div>`;
 $("#tut").innerHTML = groups.map((g) => { const ready = g.videos.filter((v) => v.url && player(v.url)), soon = g.videos.filter((v) => !(v.url && player(v.url)));
   return `<section class="tgroup" id="${esc(g.id)}" role="tabpanel" aria-labelledby="tab-${esc(g.id)}" hidden><h2>${esc(g.title)}</h2><p>${esc(g.blurb || "")}</p>${ready.length ? `<div class="tgrid">${ready.map(card).join("")}</div>` : ""}${soon.length ? `<div class="tlist">${soon.map(row).join("")}</div>` : ""}</section>`; }).join("") || `<p class="tsub">No tutorials yet.</p>`;
-document.addEventListener("click", (e) => { const b = e.target.closest(".play"); if (!b) return; const th = b.parentElement; th.innerHTML = player(b.dataset.url); });
+document.addEventListener("click", (e) => { const b = e.target.closest(".play"); if (!b) return; const th = b.parentElement; th.innerHTML = player(b.dataset.url, b.dataset.poster); });
 // Tabs: one group at a time. The link /tutorials#run opens a group; /tutorials#v-vote opens the group that holds that video and plays it.
 function show(id, push) {
   if (!groups.some((g) => g.id === id)) id = groups[0] && groups[0].id; if (!id) return;
