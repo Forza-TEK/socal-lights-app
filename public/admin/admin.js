@@ -3,7 +3,7 @@ import { CITY } from "/cities.js";
 import { SEASONS, defaultSeason } from "/seasons.js";
 import { attachAddress } from "/addflow.js?v=20261102c";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
-import { renderEmails } from "/admin/emails.js?v=20261104b";
+import { renderEmails } from "/admin/emails.js?v=20261104c";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261103a";
 
 const $ = (s) => document.querySelector(s);
