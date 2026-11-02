@@ -67,3 +67,6 @@ All Admin edit windows share one form layout (`fsec` / `ff` in `admin.js`, `.fse
 
 ## Your profile layout
 `public/profile.css`: the page is centred like Admin and Tutorials (content up to 1120px), with a header card (bigger avatar, name, email, pill buttons), the section heading with its Add button, and records as cards in a two-column grid (one column on phones). Empty lists get a dashed empty-state card; the Account form is a two-column form limited to 760px.
+
+## Who can create and change a contest
+Creating a contest needs a signed-in account: the Add a contest page asks you to sign in first, and the server refuses a create without one. The contest is stored with the creating account (`owner_id`), shows under that person's Contests, and shows the organizer's email in Admin. Only that person and Admin can change the contest itself (details, dates, open/close entries, pause voting, announce winners, run again). Co-organizers still run the day-to-day (approve entries, review votes, judges, sponsors) and see a note where the creator-only controls would be.

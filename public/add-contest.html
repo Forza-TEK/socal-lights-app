@@ -24,6 +24,14 @@ const DEF = ["Best Overall", "Most Creative", "Best Lights & Music", "Best Tradi
 const dflt = () => { let y = new Date().getFullYear(); if (today > y + "-12-10") y++; return { closes: y + "-12-10", vs: y + "-12-11", ve: y + "-12-20" }; };
 const d = { name: "Holiday Home Lighting Contest " + dflt().closes.slice(0, 4), org: "", city: "", descr: "Show us your best lights! Enter your home, then neighbors vote for their favorites.", site: "", ...dflt(), cats: [...DEF], on: [...DEF], newcat: "", approval: "manual", counts: "no", oneWin: "no", rules: "", mode: "public", judges: "", method: "pick", prizeMode: "none", prize: "", prizes: {}, sponsor: "", quick: "yes" };
 let cur = (await me()).user ? await me() : { user: null };
+// A contest belongs to the account that creates it, so sign in before anything else
+if (!cur.user) {
+  document.getElementById("app").innerHTML = `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+    <div class="main"><div><p class="eyebrow">Create a contest</p><h1>Sign in to create a contest</h1><p class="help">Your contest is saved to your account, and only you (and the site owner) can change it. Sign in with Google or an emailed code. It takes a few seconds.</p></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></div>`;
+  await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to create a contest", next: location.pathname })) go(); }; });
+  location.reload(); await new Promise(() => {});
+}
 const hostOf = (s) => { try { return new URL(/^https?:/i.test(s) ? s : "https://" + s).hostname.replace(/^www\./, "").toLowerCase(); } catch { return ""; } };
 function trustNow() { if (!cur.user) return ""; const dom = cur.user.email.split("@")[1]; if (FREE.has(dom)) return "free"; if (!d.site.trim()) return "none"; const h = hostOf(d.site); return h && (h === dom || h.endsWith("." + dom) || dom.endsWith("." + h)) ? "match" : "other"; }
 const TRUST = { match: "Your email matches your website, so your contest goes live right away.", free: "Gmail, Hotmail and similar addresses can't be matched to an organization, so a person checks your contest first, usually within a day. Your link and QR code work right away.", other: "Your email doesn't match your website, so a person checks your contest first, usually within a day. Your link and QR code work right away.", none: "A person checks your contest first, usually within a day, because you didn't add a website. Your link and QR code work right away." };
