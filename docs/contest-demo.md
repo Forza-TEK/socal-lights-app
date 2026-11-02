@@ -13,7 +13,7 @@ Chapters in the video: 0:10 Create the contest · 1:46 A neighbor enters their h
 6. **Turn on the light or dark mode** you prefer (circle at the top right of every page).
 
 ## The demo, step by step (about 12 minutes live)
-1. **Create the contest (3 min).** `socallights.app/add`, choose "A home decorating contest." Name it, pick the city, dates, categories ("Best Overall" is just a category), who votes (everyone / judges / both), invite judges, prizes, and read the official rules. Sign in at the end. Show the QR poster.
+1. **Create the contest (3 min).** `socallights.app/add`, choose "A contest." Name it, pick the city, dates, categories ("Best Overall" is just a category), who votes (everyone / judges / both), invite judges, prizes, and read the official rules. Sign in at the end. Show the QR poster.
 2. **Neighbor enters (2 min).** Scan the QR code on the phone. Sign in, add photos, address (use the suggestions), name, accept the rules.
 3. **Review and start voting (2 min).** Dashboard: approve entries, "Start now" for voting, copy link, show the judges card.
 4. **Judges (1 min).** Phone B opens the invitation link, scores homes 1 to 10 (or picks a favorite), and shows "I know this household."
