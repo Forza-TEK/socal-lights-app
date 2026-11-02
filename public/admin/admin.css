@@ -182,11 +182,34 @@ a.dli{text-decoration:none}
 @media (max-width:699px){.pstats{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 .modal .rt{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 
-/* Photo manager in the house window */
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:6px}
-.pph{margin:0;position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid}
-.pph img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--tile)}
-.pph .cover{position:absolute;top:8px;left:8px;padding:2px 9px;border-radius:99px;background:var(--btn);color:var(--btn-ink);font:600 11px var(--font);letter-spacing:.04em;text-transform:uppercase}
-.pph figcaption{display:flex;gap:6px;padding:6px}
-.pph figcaption .btn{min-height:44px;padding:0 10px;flex:0 0 auto}.pph figcaption .btn.danger{flex:1}
-@media (max-width:699px){.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Photo manager in the house window: one large photo, arrows to browse, a strip of thumbnails */
+.pview{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--tile);display:grid;place-items:center}
+.pview>img{display:block;width:100%;max-height:min(48vh,520px);aspect-ratio:4/3;object-fit:contain}
+.pview .cover{position:absolute;top:10px;left:10px;padding:3px 10px;border-radius:99px;background:var(--btn);color:var(--btn-ink);font:600 11px var(--font);letter-spacing:.04em;text-transform:uppercase}
+.pview .pcount{position:absolute;bottom:10px;right:10px;padding:3px 10px;border-radius:99px;background:rgba(0,0,0,.6);color:#fff;font:500 12px var(--font)}
+.pnav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:28px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0 0 3px}
+.pnav.prev{left:10px}.pnav.next{right:10px}.pnav:hover{background:rgba(0,0,0,.75)}.pnav:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.pstrip{display:flex;gap:8px;overflow-x:auto;padding:10px 2px 4px;scrollbar-width:thin}
+.pstrip button{all:unset;box-sizing:border-box;flex:none;width:72px;height:56px;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;opacity:.7}
+.pstrip button[aria-pressed="true"]{border-color:var(--ink);opacity:1}.pstrip button:focus-visible{outline:2px solid var(--season);outline-offset:2px}
+.pstrip img{display:block;width:100%;height:100%;object-fit:cover}
+.pact{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}.pact .sp{flex:1 1 0}
+@media (max-width:699px){.pact .btn{flex:1 1 auto}.pact .sp{display:none}.pnav{width:44px;height:44px}}
+/* ===== Edit forms: sections, a 6-column grid, labels above, hints under, Save always in view ===== */
+body.admin .f{display:grid;gap:22px}
+.fsec{border:0;margin:0;padding:0;min-width:0;display:grid;gap:10px}
+.fsec>legend{padding:0;margin:0 0 2px;font:600 12px/1 var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);float:left;width:100%}
+.fsec>legend+*{clear:both}
+.fdesc{margin:0;color:var(--muted);font-size:13.5px}
+.fgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px 14px}
+.ff{display:grid;gap:6px;align-content:start;min-width:0}.ff[hidden]{display:none}
+.ff.c6{grid-column:1/-1}.ff.c4{grid-column:span 4}.ff.c3{grid-column:span 3}.ff.c2{grid-column:span 2}
+body.admin .ff>label,body.admin .f>label{font:600 13px/1.3 var(--font);color:var(--ink)}
+.fhint{color:var(--muted);font-size:12.5px;line-height:1.4}
+body.admin .ff input:not([type=checkbox]),body.admin .ff select,body.admin .ff textarea{width:100%;box-sizing:border-box;min-height:46px;border-radius:10px}
+body.admin .ff textarea{resize:vertical}
+body.admin label.chk{display:flex;align-items:center;gap:10px;min-height:46px;margin-top:19px;font-weight:500;cursor:pointer}
+body.admin label.chk input{width:20px;height:20px;margin:0}
+.ff .seg{width:100%}.ff .seg button{flex:1;justify-content:center}
+.mfoot.sticky{position:sticky;bottom:-24px;margin:6px -24px -24px;padding:14px 24px calc(14px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line);z-index:2}
+@media (max-width:699px){.fgrid{gap:12px}.ff.c2,.ff.c3,.ff.c4{grid-column:1/-1}body.admin .modal .card{padding:18px}.mfoot.sticky{bottom:-18px;margin:6px -18px -18px;padding-inline:18px}}

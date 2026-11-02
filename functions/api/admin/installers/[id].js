@@ -42,7 +42,7 @@ export async function onRequestPost({ params, request, env }) {
     const owner = clean(b.owner, 120).toLowerCase();
     if (owner && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(owner)) return err(400, "That owner email doesn't look right.");
     await env.DB.batch([
-      env.DB.prepare("UPDATE installers SET name=?, web=?, phone=?, area=?, blurb=?, email=?, owner_email=? WHERE id=?").bind(name, web || "", ph.value, line(b.area, 120), normText(clean(b.blurb, 600)), email, owner, inst.id),
+      env.DB.prepare("UPDATE installers SET name=?, web=?, phone=?, area=?, blurb=?, email=?, owner_email=? WHERE id=?").bind(name, web || "", ph.value, line(b.area, 240), normText(clean(b.blurb, 600)), email, owner, inst.id),
       // keep the presenting-installer name on contests in step with the profile
       env.DB.prepare("UPDATE contests SET installer_name = ? WHERE lower(installer_name) = lower(?)").bind(name, inst.name),
     ]);

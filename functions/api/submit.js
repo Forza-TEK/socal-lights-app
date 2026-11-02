@@ -60,7 +60,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const ph = pro ? phoneField(form.get("phone")) : { value: "" };
   if (ph.error) return err(400, ph.error);
   const phone = ph.value;
-  const area = pro ? line(form.get("area"), 120) : "";
+  const area = pro ? line(form.get("area"), 240) : "";
   const where = line(form.get("where"), 120);
   const street = normStreet(clean(form.get("street"), 120));
   const zip = normZip(clean(form.get("zip"), 12)) || clean(form.get("zip"), 10);

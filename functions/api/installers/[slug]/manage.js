@@ -36,7 +36,7 @@ export async function onRequestPost({ params, request, env }) {
     const webRaw = clean(b.web, 200), web = webRaw ? webUrl(webRaw) : "";
     if (webRaw && !web) return err(400, "That website address doesn't look right.");
     const ph = phoneField(b.phone); if (ph.error) return err(400, ph.error);
-    await env.DB.prepare("UPDATE installers SET web=?, phone=?, area=?, blurb=? WHERE id=?").bind(web || "", ph.value, line(b.area, 120), normText(clean(b.blurb, 600)), inst.id).run();
+    await env.DB.prepare("UPDATE installers SET web=?, phone=?, area=?, blurb=? WHERE id=?").bind(web || "", ph.value, line(b.area, 240), normText(clean(b.blurb, 600)), inst.id).run();
     return json({ ok: true });
   }
   if (b.action === "confirm" || b.action === "remove") {
