@@ -790,3 +790,12 @@ body.lb-open{overflow:hidden}
 .instlink{color:inherit;font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .instok{color:var(--free,#2f7d4f);font-weight:700}
 .instby{margin-top:2px}
+
+/* Cancelled and postponed events */
+.tag.cancel{background:#fde2e2;color:#b42318}
+:root[data-theme="dark"] .tag.cancel{background:#3b1717;color:#ff8f86}
+.item.noticed .tile,.item.noticed .ibody h3{opacity:.6}
+
+/* "I saw it lit tonight" */
+.onbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin-top:4px;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);font-weight:700;cursor:pointer}
+.onbtn b{font-weight:800;color:var(--free)}.onbtn.done{background:var(--free-soft);border-color:transparent;color:var(--free);cursor:default}

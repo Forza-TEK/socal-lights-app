@@ -14,8 +14,8 @@ export async function onRequestGet({ request, env }) {
          (SELECT COUNT(*) FROM posts p WHERE p.contest_id = contests.id AND p.status = 'pending') AS waiting
        FROM contests WHERE owner_id = ?1 OR id IN (SELECT contest_id FROM contest_staff WHERE email = ?2) ORDER BY created_at DESC`, user.id, String(user.email || "").toLowerCase()),
     q("SELECT p.id,p.title,p.biz,p.status,c.name AS contest,c.slug FROM posts p JOIN contests c ON c.id = p.contest_id WHERE p.user_id = ? ORDER BY p.created_at DESC", user.id),
-    q("SELECT id,title,biz,status,city,created_at FROM posts WHERE contest_id IS NULL AND lower(contact_email) = lower(?) ORDER BY created_at DESC LIMIT 50", user.email),
-    q("SELECT id,name,status,city,start_date,created_at FROM event_submissions WHERE lower(contact_email) = lower(?) ORDER BY created_at DESC LIMIT 50", user.email),
+    q("SELECT id,title,biz,status,city,created_at,descr,where_txt,season,lights_on,visit,parking,accessible,radio,poster_type,web,phone,service_area FROM posts WHERE contest_id IS NULL AND (user_id = ?1 OR lower(contact_email) = lower(?2)) ORDER BY created_at DESC LIMIT 50", user.id, user.email),
+    q("SELECT s.id,s.name,s.status,s.city,s.start_date,s.end_date,s.created_at,s.hours,s.blurb,s.venue,s.url,s.free,s.price,s.event_id,e.notice FROM event_submissions s LEFT JOIN events e ON e.id = s.event_id WHERE lower(s.contact_email) = lower(?) ORDER BY s.created_at DESC LIMIT 50", user.email),
   ]);
   return json({ user: { email: user.email, name: user.name || "" }, drafts, contests, entries, homes, events }, { headers: { "cache-control": "no-store" } });
 }

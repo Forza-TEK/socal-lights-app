@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261101c">
+<link rel="stylesheet" href="/addflow.css?v=20261102a">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span></div></div>
@@ -39,14 +39,37 @@ async function syncLocal() {
   history.replaceState(null, "", "/profile");
 }
 const head = (h, add) => `<div class="sechead"><h2>${h}</h2>${add ? `<a class="btn out sm" href="${add[1]}">${add[0]}</a>` : ""}</div>`;
+const fld = (k, l, v, ex = "") => `<label class="mf"><span>${l}</span><input data-k="${k}" value="${esc(v ?? "")}" ${ex}></label>`;
+const sel = (k, l, v, opts) => `<label class="mf"><span>${l}</span><select data-k="${k}">${opts.map(([a, b]) => `<option value="${a}" ${String(v) === a ? "selected" : ""}>${b}</option>`).join("")}</select></label>`;
+// A home you posted: edit, take down for the season, put back
+function homeRow(h) {
+  const st = h.status === "approved" ? ["live", "On the map"] : h.status === "paused" ? ["", "Taken down for the season"] : h.status === "pending" ? ["warn", "In review"] : ["", h.status];
+  const pro = h.poster_type === "installer";
+  return `<div class="rowi mrow" data-home="${esc(h.id)}"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status, st)}</span></div>
+   <div class="acts">${h.status === "approved" || h.status === "paused" ? `<button class="btn out sm" type="button" data-medit>Edit</button><button class="btn out sm" type="button" data-hact="${h.status === "paused" ? "resume" : "pause"}">${h.status === "paused" ? "Put back on the map" : "Take down for the season"}</button>` : ""}</div>
+   <form class="mform" hidden>${fld("title", "Display name", h.title, 'maxlength="90"')}<label class="mf"><span>About it</span><textarea data-k="desc" rows="3" maxlength="1200">${esc(h.descr || "")}</textarea></label>${fld("where", "Tips for visitors", h.where_txt, 'maxlength="120"')}
+    ${fld("lights_on", "Lights are on", h.lights_on, 'maxlength="60" placeholder="e.g. 5 to 10 pm nightly"')}${sel("visit", "How to see it", h.visit || "", [["", "Not sure"], ["drive", "Drive by"], ["walk", "Walk by"], ["both", "Drive or walk"]])}${sel("parking", "Parking", h.parking || "", [["", "Not listed"], ["free", "Free parking nearby"], ["street", "Street parking"], ["none", "Hard to park"]])}
+    <label class="mf chk"><input type="checkbox" data-k="accessible" ${h.accessible ? "checked" : ""}> <span>Stroller and wheelchair friendly</span></label>${fld("radio", "Radio station for the music", h.radio, 'maxlength="40" placeholder="e.g. 88.1 FM"')}
+    ${pro ? fld("web", "Website", h.web, 'maxlength="200"') + fld("phone", "Phone for quotes", h.phone, 'maxlength="80"') + fld("area", "Service area", h.service_area, 'maxlength="120"') : ""}
+    <p class="err" role="alert" hidden></p><div class="acts"><button class="btn sm" type="submit">Save</button><button class="btn out sm" type="button" data-mcancel>Cancel</button></div></form></div>`;
+}
+// An event you added: edit, cancelled or postponed tag, run again next year
+function eventRow(e) {
+  const live = e.status === "published" && e.event_id;
+  const st = live ? ["live", e.notice === "cancelled" ? "Cancelled" : e.notice === "postponed" ? "Postponed" : "On the map"] : e.status === "pending" ? ["warn", "In review"] : ["", e.status];
+  return `<div class="rowi mrow" data-ev="${esc(e.id)}"><div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${esc(e.start_date)}${e.end_date !== e.start_date ? " to " + esc(e.end_date) : ""} · ${dot(e.status, st)}</span></div>
+   <div class="acts">${live ? `<button class="btn out sm" type="button" data-medit>Edit</button><select class="btn out sm" data-notice aria-label="Event notice"><option value="">No notice</option><option value="cancelled" ${e.notice === "cancelled" ? "selected" : ""}>Cancelled</option><option value="postponed" ${e.notice === "postponed" ? "selected" : ""}>Postponed</option></select>` : ""}${e.status === "published" || e.status === "pending" ? `<button class="btn out sm" type="button" data-ecopy>Run again next year</button>` : ""}</div>
+   <form class="mform" hidden>${fld("name", "Event name", e.name, 'maxlength="120"')}${fld("start", "Starts", e.start_date, 'type="date"')}${fld("end", "Ends", e.end_date, 'type="date"')}${fld("hours", "Hours", e.hours, 'maxlength="120"')}${fld("venue", "Venue", e.venue, 'maxlength="120"')}${fld("price", "Price (or Free)", e.price, 'maxlength="80"')}${fld("url", "Event web page", e.url, 'maxlength="300"')}
+    <label class="mf"><span>Description</span><textarea data-k="blurb" rows="3" maxlength="200">${esc(e.blurb || "")}</textarea></label><p class="err" role="alert" hidden></p><div class="acts"><button class="btn sm" type="submit">Save</button><button class="btn out sm" type="button" data-mcancel>Cancel</button></div></form></div>`;
+}
 const list = (rows, empty) => (rows.length ? `<div class="list">${rows.join("")}</div>` : `<p class="muted">${empty}</p>`);
 
 function panel() {
   const o = O, u = o.user;
   if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}</span></div><div class="acts"><a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
   if (tab === "contests") return head("Contests") + `<section class="card"><p class="muted">The contests you run, help run or entered are on the Contests page.</p><div class="actions"><a class="btn org" href="/contests#mine">Open my contests</a></div></section>`;
-  if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + list(o.homes.map((h) => `<div class="rowi"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status)}</span></div></div>`), "None yet.");
-  if (tab === "events") return head("Events you added", ["+ Add an event", "/add-event"]) + list(o.events.map((e) => `<div class="rowi"><div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${dot(e.status)}</span></div></div>`), "None yet.");
+  if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + list(o.homes.map(homeRow), "None yet.");
+  if (tab === "events") return head("Events you added", ["+ Add an event", "/add-event"]) + list(o.events.map(eventRow), "None yet.");
   if (tab === "badges") {
     const bs = BD.badges, on = (id, s) => BD.master && !BD.off[id + "|" + s];
     const CR = (n) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;flex:none"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`;
@@ -89,6 +112,22 @@ function wire() {
   const save = () => fetch("/api/me/badges", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ master: BD.master, off: BD.off }) });
   const bm = app.querySelector("[data-bpm]"); if (bm) bm.onchange = async () => { BD.master = bm.checked; await save(); render(); };
   app.querySelectorAll("[data-bp]").forEach((c) => (c.onchange = async () => { if (c.checked) delete BD.off[c.dataset.bp]; else BD.off[c.dataset.bp] = true; await save(); render(); }));
+  // manage my displays and events
+  const post = async (url, body) => { const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "That didn't work."); return j; };
+  app.querySelectorAll(".mrow").forEach((row) => {
+    const f = row.querySelector(".mform"), er = f && f.querySelector(".err");
+    const openF = row.querySelector("[data-medit]"); if (openF) openF.onclick = () => { f.hidden = !f.hidden; };
+    const cl = row.querySelector("[data-mcancel]"); if (cl) cl.onclick = () => { f.hidden = true; };
+    const collect = () => { const o = {}; f.querySelectorAll("[data-k]").forEach((el) => (o[el.dataset.k] = el.type === "checkbox" ? el.checked : el.value)); return o; };
+    if (row.dataset.home) {
+      f.onsubmit = async (e) => { e.preventDefault(); er.hidden = true; try { await post("/api/me/homes/" + row.dataset.home, { action: "edit", ...collect() }); toast("Saved."); load(); } catch (x) { er.textContent = x.message; er.hidden = false; } };
+      row.querySelectorAll("[data-hact]").forEach((b) => (b.onclick = async () => { try { await post("/api/me/homes/" + row.dataset.home, { action: b.dataset.hact }); toast(b.dataset.hact === "pause" ? "Taken down. Put it back any time." : "Back on the map."); load(); } catch (x) { toast(x.message); } }));
+    } else {
+      f.onsubmit = async (e) => { e.preventDefault(); er.hidden = true; try { await post("/api/me/events/" + row.dataset.ev, { action: "edit", ...collect() }); toast("Saved."); load(); } catch (x) { er.textContent = x.message; er.hidden = false; } };
+      const nt = row.querySelector("[data-notice]"); if (nt) nt.onchange = async () => { try { await post("/api/me/events/" + row.dataset.ev, { action: "notice", notice: nt.value }); toast(nt.value ? "Tag added to the event." : "Tag removed."); load(); } catch (x) { toast(x.message); } };
+      const cp = row.querySelector("[data-ecopy]"); if (cp) cp.onclick = async () => { if (!cp.dataset.sure) { cp.dataset.sure = "1"; cp.textContent = "Tap again: copy to next year"; return; } try { await post("/api/me/events/" + row.dataset.ev, { action: "copy" }); toast("Copied. Edit the new dates when you know them."); load(); } catch (x) { toast(x.message); } };
+    }
+  });
   const so = $("#so"); if (so) so.onclick = async () => { await signOut(); location.href = "/"; };
   const pf = $("#pform"); if (pf) {
     attachAddress(pf, { getCity: () => $("#f-city").value, onPick: (s) => { $("#f-street").value = s.street; if (cities.includes(s.city)) $("#f-city").value = s.city; if (/^\d{5}/.test(s.zip)) $("#f-zip").value = s.zip.slice(0, 5); } });

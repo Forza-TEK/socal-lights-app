@@ -115,6 +115,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);
 
+  // Visiting details for families (all optional)
+  try {
+    const visit = ["drive", "walk", "both"].includes(form.get("visit")) ? form.get("visit") : "", parking = ["free", "street", "none"].includes(form.get("parking")) ? form.get("parking") : "";
+    await env.DB.prepare("UPDATE posts SET lights_on = ?, visit = ?, parking = ?, accessible = ?, radio = ? WHERE id = ?").bind(clean(form.get("lights_on"), 60), visit, parking, form.get("accessible") ? 1 : 0, clean(form.get("radio"), 40), id).run();
+  } catch {}
   // Installer profile: an installer's own post makes (or joins) their profile; a homeowner can name the company that installed their lights
   try {
     if (pro) {

@@ -23,6 +23,7 @@ main{max-width:760px;margin:0 auto;padding:0 16px 40px}
 .tags{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 4px}
 .tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--surface-2);color:var(--muted)}
 .tag.free,.tag.conf{background:var(--free-soft);color:var(--free)}.tag.paid{background:var(--paid-soft);color:var(--paid)}.tag.exp{background:var(--gold-soft);color:var(--gold)}.tag.ice{background:var(--ice-soft);color:var(--ice)}
+.tag.cancel{background:#fde2e2;color:#b42318}:root[data-theme=dark] .tag.cancel{background:#3b1717;color:#ff8f86}
 .tag.conf::before{content:"✓";font-weight:900}.tag.exp::before{content:"≈";font-weight:900}
 h1{font-size:clamp(26px,5vw,36px);line-height:1.15;letter-spacing:-.02em;font-weight:800;margin:6px 0 2px;text-wrap:balance}
 h2{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:30px 0 12px}

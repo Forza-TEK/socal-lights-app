@@ -84,3 +84,9 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 button.link{padding-block:11px;margin-block:-11px}
 .hdr .link,.hdr .wm{white-space:nowrap}
 @media(max-width:400px){.hright{gap:10px}.brand{font-size:17px;gap:8px}.hdr .link{font-size:14px}}
+
+/* Manage my listings (profile) */
+.mrow{flex-wrap:wrap}.mform{flex-basis:100%;display:grid;gap:10px;margin-top:8px;max-width:640px}.mform[hidden]{display:none}
+.mf{display:grid;gap:4px;font-size:14px}.mf span{color:var(--muted)}.mf.chk{display:flex;align-items:center;gap:8px}.mf.chk span{color:inherit}
+.mf input:not([type=checkbox]),.mf select,.mf textarea{font:inherit;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;max-width:100%}
+.mf input[type=checkbox]{width:22px;height:22px}

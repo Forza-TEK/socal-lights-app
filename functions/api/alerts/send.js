@@ -15,7 +15,7 @@ export async function onRequestPost({ request, env }) {
   const until = new Date(Date.now() + DAYS * 86400000).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
   const subs = (await env.DB.prepare("SELECT * FROM alert_subs WHERE confirmed = 1 AND (last_sent IS NULL OR last_sent < date('now','-6 days')) ORDER BY created_at LIMIT ?").bind(BATCH).all()).results;
   if (!subs.length) return json({ sent: 0, skipped: 0, remaining: 0 });
-  const evs = (await env.DB.prepare("SELECT * FROM events WHERE end_date >= ? AND start_date <= ? ORDER BY start_date, name").bind(today, until).all()).results.map(rowToEvent);
+  const evs = (await env.DB.prepare("SELECT * FROM events WHERE end_date >= ? AND start_date <= ? ORDER BY start_date, name").bind(today, until).all()).results.map(rowToEvent).filter((e) => e.nt !== "cancelled");
   let sent = 0, skipped = 0; const done = [];
   for (const s of subs) {
     const near = evs.filter((e) => miles(s.lat, s.lng, e.lat, e.lng) <= s.radius).sort((a, b) => a.s.localeCompare(b.s));
