@@ -75,3 +75,18 @@ body{padding-bottom:60px}
 .chgbox{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}.chgbox b{font-weight:600}
 .chg{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}.chg .who{font-weight:600}.chg .was{text-decoration:line-through;opacity:.7}
 .mform .mf{display:grid;gap:4px;font-size:14px}.mform .mf.chk{display:flex;gap:8px;align-items:center}.mform .mf.chk input{width:22px;height:22px}
+
+/* Contest dashboard panels: cards keep the page rhythm (the panels wrap them in sections), and every card title looks the same */
+#app>section[data-p]{display:grid;gap:20px;align-content:start;min-width:0}
+#app details.card>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;font-size:24px!important;font-weight:400!important;letter-spacing:-.015em;line-height:1.2}
+#app details.card>summary::-webkit-details-marker{display:none}
+#app details.card>summary::before{content:"";flex:none;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
+#app details.card[open]>summary::before{transform:rotate(45deg)}
+#app details.card>summary .small{font-size:14px;letter-spacing:0}
+#app .card>h2{font-size:24px!important}
+#app details.card:not([open]){gap:0}
+#app details.card[open]>summary{margin-bottom:2px}
+#editcard>p.muted{margin:0}
+#editform{gap:28px}
+#app .card>.muted.small{margin:0}
+#app a:not(.btn){color:inherit;text-underline-offset:3px}

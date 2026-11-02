@@ -1,11 +1,12 @@
 # Tutorials page
 
-`/tutorials` lists short how-to videos grouped by process (find and plan, enter a home, vote and judge, run a contest, sponsors and installers, post events and homes). The site only hosts the list and plays the videos; it does not produce them.
+`/tutorials` lists short how-to videos grouped by process (find and plan, enter a home, vote and judge, run a contest, sponsors and installers, post events and homes). Finished videos are MP4 files in `public/tutorials/` (with a `.jpg` thumbnail) and play on the page; links to YouTube, Vimeo or Cloudflare Stream work too.
 
 ## Add a video
 Open `public/tutorials.json`, find the video by its `id`, and paste its link into `url` (optionally add `length`, like `"1:30"`). A video with an empty `url` shows "Coming soon". Push to `main`; the page updates on its own (no version bump needed).
 
-Links that play on the page:
+Add `"poster": "/tutorials/<name>.jpg"` next to `url` to show a thumbnail. Links that play on the page:
+- A file in this repo, for example `/tutorials/run-quick.mp4`
 - YouTube (`https://youtu.be/...` or `https://www.youtube.com/watch?v=...`)
 - Vimeo (`https://vimeo.com/123456`)
 - Cloudflare Stream (the iframe or watch link from the Stream dashboard)

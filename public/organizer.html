@@ -9,8 +9,8 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261102i">
-<link rel="stylesheet" href="/contest.css?v=20261102b">
-<link rel="stylesheet" href="/forms.css?v=20261102d">
+<link rel="stylesheet" href="/contest.css?v=20261102e">
+<link rel="stylesheet" href="/forms.css?v=20261102e">
 <style>main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
 </head>
 <body class="sh-page">
@@ -22,6 +22,7 @@
 import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261101a";
 import { refreshAcct } from "/addflow.js?v=20261102c";
 import { mountShell } from "/appshell.js?v=20261102b";
+import { fsec, ff } from "/forms.js?v=20261102b";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };
@@ -92,16 +93,15 @@ function staffCard() {
   const isOwner = ME && ME === (SF.owner || "").toLowerCase();
   return `<div class="card"><h2 style="font-size:19px">Co-organizers</h2><p class="muted small">People you add sign in with their own email and get this same dashboard. You can add up to 8.</p>
    <div class="list"><div class="rowi"><div><b>${esc(SF.owner || "You")}</b><br><span class="small muted">Creator</span></div></div>${SF.staff.map((x) => `<div class="rowi"><div><b>${esc(x.email)}</b><br><span class="small muted">Co-organizer</span></div>${isOwner ? `<div class="acts"><button class="btn ghost sm" type="button" data-rmstaff="${esc(x.email)}">Remove</button></div>` : ""}</div>`).join("")}</div>
-   ${isOwner ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px"><input id="newstaff" type="email" inputmode="email" placeholder="name@example.com" style="min-width:0;flex:1 1 200px" aria-label="Co-organizer's email"><button class="btn ghost" type="button" id="addstaff">Add co-organizer</button></div><p class="err" id="serr" role="alert" hidden></p>` : `<p class="small muted">Only the creator can add or remove co-organizers.</p>`}</div>`;
+   ${isOwner ? `<div class="f">${fsec("Add a co-organizer", "", ff("Their email", `<input id="newstaff" type="email" inputmode="email" placeholder="name@example.com">`, { hint: "They sign in with this email." }))}<p class="err" id="serr" role="alert" hidden></p><div class="mfoot"><button class="btn org" type="button" id="addstaff">Add co-organizer</button></div></div>` : `<p class="small muted">Only the creator can add or remove co-organizers.</p>`}</div>`;
 }
 const TIERS = { presenting: "Presenting sponsor", gold: "Gold", silver: "Silver", prize: "Prize sponsor" };
 function sponsorsCard() {
   const L = D.sponsors || [];
   return `<div class="card"><h2 style="font-size:19px">Sponsors</h2><p class="muted small">Logos and names appear on the contest page, largest tier first. Sponsors can pay you directly; payment never affects who wins.</p>
    ${L.length ? `<div class="list">${L.map((x) => `<div class="rowi"><div style="display:flex;gap:10px;align-items:center">${x.logo ? `<img src="/api/contests/${encodeURIComponent(slug)}/sponsors?id=${esc(x.id)}" alt="" style="width:48px;height:36px;object-fit:contain">` : ""}<div><b>${esc(x.name)}</b><br><span class="small muted">${esc(TIERS[x.tier] || "Sponsor")}</span></div></div>${c_sp(x)}</div>`).join("")}</div>` : `<p class="muted">No sponsors yet.</p>`}
-   <form id="spform" style="display:grid;gap:10px;margin-top:10px;max-width:520px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px"><input id="sp-name" placeholder="Sponsor name" maxlength="80" aria-label="Sponsor name" style="min-width:0"><select id="sp-tier" aria-label="Tier">${Object.entries(TIERS).map(([k, v]) => `<option value="${k}" ${k === "prize" ? "selected" : ""}>${v}</option>`).join("")}</select></div>
-   <input id="sp-url" placeholder="Website (optional)" maxlength="200" aria-label="Sponsor website"><label class="small muted">Logo (optional, JPG, PNG or WebP under 600 KB)<input id="sp-logo" type="file" accept="image/jpeg,image/png,image/webp"></label>
-   <p class="err" id="sp-err" role="alert" hidden></p><div><button class="btn ghost" type="submit">Add sponsor</button></div></form></div>`;
+   <form id="spform" class="f" novalidate style="margin-top:6px">${fsec("Add a sponsor", "", ff("Sponsor name", `<input id="sp-name" maxlength="80">`, { c: "c3" }) + ff("Tier", `<select id="sp-tier">${Object.entries(TIERS).map(([k, v]) => `<option value="${k}" ${k === "prize" ? "selected" : ""}>${v}</option>`).join("")}</select>`, { c: "c3" }) + ff("Website (optional)", `<input id="sp-url" maxlength="200" type="url" placeholder="https://">`) + ff("Logo (optional)", `<input id="sp-logo" type="file" accept="image/jpeg,image/png,image/webp">`, { hint: "JPG, PNG or WebP under 600 KB." }))}
+   <p class="err" id="sp-err" role="alert" hidden></p><div class="mfoot"><button class="btn org" type="submit">Add sponsor</button></div></form></div>`;
 }
 const c_sp = (x) => `<div class="acts"><button class="btn ghost sm" type="button" data-rmsp="${esc(x.id)}">Remove</button></div>`;
 function statsCard() {
@@ -115,12 +115,23 @@ function statsCard() {
 function inviteCard() {
   const c = D.contest; if (c.announced || c.status !== "live") return "";
   return `<details class="card" id="invitecard"><summary style="cursor:pointer;font-size:19px;font-weight:600">Invite neighbors by email</summary><p class="muted small">Paste email addresses, one per line (up to 50 at a time). Each person gets a link to enter their home or vote. Only invite people who would expect to hear from you.</p>
-   <form id="inviteform" style="display:grid;gap:10px;max-width:560px"><textarea id="iv-list" rows="5" placeholder="neighbor@example.com" aria-label="Email addresses"></textarea><input id="iv-note" maxlength="300" placeholder="Add a short note (optional)" aria-label="Note"><p class="err" id="iv-err" role="alert" hidden></p><div><button class="btn org" type="submit">Send invitations</button></div></form></details>`;
+   <form id="inviteform" class="f" novalidate>${fsec("Who to invite", "", ff("Email addresses", `<textarea id="iv-list" rows="5" placeholder="neighbor@example.com"></textarea>`, { hint: "One per line, up to 50 at a time." }) + ff("Note (optional)", `<input id="iv-note" maxlength="300" placeholder="Add a short note">`))}<p class="err" id="iv-err" role="alert" hidden></p><div class="mfoot"><button class="btn org" type="submit">Send invitations</button></div></form></details>`;
 }
 function againCard() {
   return `<div class="card"><h2 style="font-size:19px">Run it again</h2><p class="muted small">Starts a new contest with the same rules, categories, prizes, sponsors and judges, and every date a year later. You can edit it before it opens.</p><div><button class="btn ghost" type="button" id="runagain">Run this contest again next year</button></div></div>`;
 }
 
+// A small in-page window for the optional decline reason (a browser prompt box does not work in every app)
+const askReason = () => new Promise((done) => {
+  const w = document.createElement("div"); w.className = "fwin";
+  w.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-label="Decline this entry"><div class="mh"><h2>Decline this entry</h2><button class="xbtn" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="f"><div class="ff c6"><label class="ffl"><span class="lt">Why? (optional)</span><textarea id="rsn" rows="3" maxlength="300" placeholder="For example: the photo is too dark to see the lights"></textarea></label><small class="fhint">This is emailed to the entrant. Leave it blank to send no reason.</small></div>
+    <div class="mfoot"><button class="btn org" id="rs-go" type="button">Decline entry</button><button class="btn out" id="rs-no" type="button">Cancel</button></div></div></div>`;
+  document.body.appendChild(w);
+  const end = (v) => { document.removeEventListener("keydown", key); w.remove(); done(v); }, key = (e) => { if (e.key === "Escape") end(null); };
+  w.querySelector("#rs-go").onclick = () => end(w.querySelector("#rsn").value.trim()); w.querySelector("#rs-no").onclick = () => end(null); w.querySelector(".xbtn").onclick = () => end(null);
+  w.addEventListener("click", (e) => { if (e.target === w) end(null); }); document.addEventListener("keydown", key); w.querySelector("#rsn").focus();
+});
 function render() {
   const c = D.contest, url = location.origin + "/c/" + c.slug, short = url.replace(/^https?:\/\//, "");
   const entries = M.entries, waiting = entries.filter((e) => e.status === "pending").length, live = D.entries;
@@ -138,7 +149,7 @@ function render() {
   const preview = c.announced || !pub ? "" : `<div class="status ok" style="display:block"><b>If you announced today</b>${c.categories.map((g) => { const ok = live.filter((e) => !e.flagged), top = Math.max(0, ...ok.map((e) => e.votes?.[g] || 0)), w = top ? ok.filter((e) => (e.votes?.[g] || 0) === top).map((e) => e.name) : []; return `<div class="small">${esc(g)}: ${w.length ? esc(w.join(" and ")) + (w.length > 1 ? " (tied, they share the win)" : "") : "no votes yet"}</div>`; }).join("")}<div class="small muted">Ties are shared. Disqualified homes can't win.</div></div>`;
   const judgesCard = () => !hasJ ? "" : `<div class="card"><h2 style="font-size:19px">Judges</h2><p class="muted small">${score ? "Judges score every home 1 to 10 in each category." : "Judges pick a favorite in each category."} They vote separately from the public and can't judge their own home. Invitations are emailed; you can also copy each judge's link.</p>
     ${(J.judges || []).length ? `<div class="list">${J.judges.map((j) => `<div class="rowi"><div><b>${esc(j.email)}</b><br><span class="small muted">${j.joined ? "Signed in" : "Invited"} · ${j.done} of ${j.total} done</span></div><div class="acts"><button class="btn ghost sm" type="button" data-copy="${esc(location.origin + "/c/" + c.slug + "/judge")}">Copy link</button>${c.announced ? "" : `<button class="btn ghost sm" type="button" data-rmjudge="${esc(j.id)}">Remove</button>`}</div></div>`).join("")}</div>` : `<p class="muted">No judges yet.</p>`}
-    ${!c.announced && (J.judges || []).some((j) => j.done < j.total) ? `<div style="margin-top:6px"><button class="btn ghost sm" type="button" id="nudgejudges">Remind the judges who have not finished</button></div>` : ""}${c.announced ? "" : `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px"><input id="newjudge" type="email" inputmode="email" placeholder="judge@example.com" style="min-width:0;flex:1 1 200px" aria-label="Judge's email"><button class="btn ghost" type="button" id="addjudge">Add judge</button></div><p class="err" id="jerr" role="alert" hidden></p>`}</div>`;
+    ${!c.announced && (J.judges || []).some((j) => j.done < j.total) ? `<div style="margin-top:6px"><button class="btn ghost sm" type="button" id="nudgejudges">Remind the judges who have not finished</button></div>` : ""}${c.announced ? "" : `<div class="f">${fsec("Add a judge", "", ff("Their email", `<input id="newjudge" type="email" inputmode="email" placeholder="judge@example.com">`, { hint: "They get an invitation with a link to their ballot." }))}<p class="err" id="jerr" role="alert" hidden></p><div class="mfoot"><button class="btn org" type="button" id="addjudge">Add judge</button></div></div>`}</div>`;
   $("#app").innerHTML = `<section data-p="overview">${c.status !== "live" ? `<div class="status no"><span><b>${c.status === "pending" ? "Waiting for approval." : c.status === "declined" ? "This contest is not showing." : "This contest has ended."}</b> ${c.status === "pending" ? "A person is checking it." : c.status === "declined" ? "It was taken off the map. Contact us if you think that is a mistake." : ""} Your link and QR code still work, but the contest is not on the map and new entries are paused.</span></div>` : ""}
   <div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(c.org))}</div><div><h1>${esc(c.name)}</h1><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
   <div class="stats"><div class="stat"><b>${entries.length}</b><span>Entries</span></div><div class="stat"><b>${waiting}</b><span>Waiting for you</span></div><div class="stat"><b>${votes}</b><span>Votes</span></div></div>
@@ -201,7 +212,7 @@ function render() {
   }));
   const aj = $("#addjudge"); if (aj) aj.onclick = async () => { const v = $("#newjudge").value.trim(), er = $("#jerr"); er.hidden = true; if (!v) return; const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/judges`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ emails: v }) }), j = await r.json().catch(() => ({})); if (!r.ok || !j.added) { er.textContent = j.error || "That email is invalid or already a judge."; er.hidden = false; return; } toast("Judge invited."); load(); };
   document.querySelectorAll("[data-rmjudge]").forEach((b) => (b.onclick = async () => { await fetch(`/api/contests/${encodeURIComponent(slug)}/judges?id=${encodeURIComponent(b.dataset.rmjudge)}`, { method: "DELETE" }); toast("Judge removed."); load(); }));
-  document.querySelectorAll("[data-entry]").forEach((b) => (b.onclick = () => { const [a, id] = b.dataset.entry.split(":"); let reason = ""; if (a === "decline") { reason = prompt("Why? This is emailed to the entrant (optional). Leave blank to send no reason.", ""); if (reason === null) return; } act(`/api/contests/${encodeURIComponent(slug)}/entries/${id}`, { action: a, reason }, ({ approve: "Approved. It's on the map, and the entrant was emailed.", restore: "Back in the review list.", decline: "Declined. The entrant was emailed.", flag: "Flagged. It stays on the ballot and is removed from the winners when you announce.", unflag: "Flag removed." })[a]); }));
+  document.querySelectorAll("[data-entry]").forEach((b) => (b.onclick = async () => { const [a, id] = b.dataset.entry.split(":"); let reason = ""; if (a === "decline") { reason = await askReason(); if (reason === null) return; } act(`/api/contests/${encodeURIComponent(slug)}/entries/${id}`, { action: a, reason }, ({ approve: "Approved. It's on the map, and the entrant was emailed.", restore: "Back in the review list.", decline: "Declined. The entrant was emailed.", flag: "Flagged. It stays on the ballot and is removed from the winners when you announce.", unflag: "Flag removed." })[a]); }));
   document.querySelectorAll("[data-void]").forEach((b) => (b.onclick = () => { const [id, v] = b.dataset.void.split(":"); act(`/api/contests/${encodeURIComponent(slug)}/votes`, { vote_id: id, voided: v === "1" }, v === "1" ? "Vote voided. It no longer counts." : "Vote restored."); }));
   document.querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => { const o = b.textContent; try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; } catch { b.textContent = "Select it"; } setTimeout(() => (b.textContent = o), 1500); }));
 }
