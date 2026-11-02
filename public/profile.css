@@ -1,0 +1,31 @@
+/* Your profile: centred like Admin and Tutorials, a header card, records as cards in a grid */
+body.prof .sh-content,body.prof .sh-content.main{max-width:1120px;margin:0 auto;padding:22px clamp(16px,3vw,32px) 72px}
+@media (max-width:699px){body.prof .sh-content,body.prof .sh-content.main{padding:16px 16px calc(92px + env(safe-area-inset-bottom,0px))}}
+.prof .sh-content>.main{max-width:none;margin:0;padding:0}
+.prof #app{display:grid;gap:24px;padding:0;max-width:none}
+.prof .who{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center;padding:20px 24px;border:1px solid var(--line);border-radius:14px}
+.prof .who .avatar{width:88px;height:88px;font-size:34px}
+.prof .who h1{margin:0;font-size:clamp(24px,3vw,32px);line-height:1.15}
+.prof .who>div>div{display:flex!important;flex-wrap:wrap;gap:8px!important;margin-top:10px!important}
+.prof .who .link{box-sizing:border-box;height:36px;line-height:1;display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1px solid var(--line2);border-radius:99px;background:transparent;color:var(--ink);font:500 14px var(--font)!important;text-decoration:none;cursor:pointer}
+.prof .who .link:hover{background:var(--tile);border-color:var(--ink)}
+.prof #pp{display:grid;gap:16px;align-content:start}
+.prof .sechead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border:0;padding:0;margin:0}
+.prof .sechead h2{margin:0;font-size:clamp(20px,2.4vw,24px)}
+.prof .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:14px}
+.prof .list>*{padding:18px;border:1px solid var(--line)!important;border-radius:14px;align-content:start}
+.prof .list .rowi{display:grid;gap:12px}.prof .list .acts{display:flex;flex-wrap:wrap;gap:8px}
+.prof #pp>.card,.prof #pform,.prof #pp>section{max-width:760px}
+.prof #pp>.card{padding:22px;border:1px solid var(--line);border-radius:14px}
+@media (max-width:699px){.prof .who{grid-template-columns:1fr;justify-items:start;padding:16px}.prof .who .avatar{width:72px;height:72px;font-size:28px}.prof .list{grid-template-columns:1fr}.prof .list .acts .btn{flex:1 1 auto}}
+body.prof .sh-content,body.prof .sh-content.main{display:block}
+.prof #app{width:100%}
+.prof #pp>p.pempty{margin:0;padding:32px 20px;border:1px dashed var(--line2);border-radius:14px;text-align:center}
+.prof #pform{max-width:760px;padding:0;margin:0;gap:18px}
+.prof #pform .field,.prof #pform>*{max-width:none}
+.prof #pp>p.muted:not(.pempty){margin:0;max-width:760px}
+.prof .who>div>div{align-items:center}
+.prof #pform{max-width:760px!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 18px!important}
+.prof #pform>.err,.prof #pform>div:last-of-type{grid-column:1/-1}
+.prof #pform>.field:nth-of-type(3){grid-column:1/-1}
+@media (max-width:699px){.prof #pform{grid-template-columns:1fr}}

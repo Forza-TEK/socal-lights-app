@@ -1,6 +1,6 @@
 /* Frame for Profile and Tutorials: the same side menu, icon rail and phone bottom bar as Admin. Loaded by appshell.js. */
 body.sh-page{padding:0}
-.sh-page .sh-content{max-width:1120px}.sh-page .sh-content>.main,.sh-page .sh-content.main{max-width:760px;margin:0;padding:22px clamp(16px,3vw,32px) 72px}
+.sh-page .sh-content{max-width:1120px}.sh-page .sh-content>.main,.sh-page .sh-content.main{max-width:760px;margin:0 auto;padding:22px clamp(16px,3vw,32px) 72px}
 .sh-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.02em;white-space:nowrap;color:var(--ink);text-decoration:none}.sh-brand img{display:block;width:40px;height:40px;border-radius:50%}.sh-brand b{font-weight:800;background:linear-gradient(90deg,#f08a1c,var(--s-halloween) 45%,var(--s-christmas));-webkit-background-clip:text;background-clip:text;color:transparent}
 .sh-top .tbtn,.sh-top .acct{width:44px;height:44px}
 /* ===== App shell: side menu on desktop, icon rail on tablet, bottom bar + sheet on phone ===== */
