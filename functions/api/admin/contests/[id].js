@@ -2,8 +2,9 @@
 // DELETE /api/admin/contests/<id> — removes the contest and everything in it.
 import { json, err } from "../../../_lib/util.js";
 import { listOnMap, unlistFromMap, deleteContest } from "../../../_lib/contests.js";
+import { tell, contestUnpublished, contestLive } from "../../../_lib/notify.js";
 
-export async function onRequestPost({ params, request, env }) {
+export async function onRequestPost({ params, request, env, waitUntil }) {
   const c = await env.DB.prepare("SELECT * FROM contests WHERE id = ?").bind(params.id).first();
   if (!c) return err(404, "That contest no longer exists.");
   const b = await request.json().catch(() => ({}));
@@ -22,11 +23,13 @@ export async function onRequestPost({ params, request, env }) {
   if (b.action === "approve") {
     await env.DB.prepare("UPDATE contests SET status='live', note='', updated_at=datetime('now') WHERE id=?").bind(c.id).run();
     await listOnMap(env, { ...c, status: "live" });
+    if (c.status === "declined" && b.notify !== false) { const m = contestLive(c.name, c.slug); tell(env, waitUntil, c.contact_email, m.subject, m.text); }
     return json({ ok: true });
   }
   if (b.action === "decline") {
     await env.DB.prepare("UPDATE contests SET status='declined', updated_at=datetime('now') WHERE id=?").bind(c.id).run();
     await unlistFromMap(env, c);
+    const m = contestUnpublished(c.name, String(b.reason || "").trim().slice(0, 400)); tell(env, waitUntil, c.contact_email, m.subject, m.text);
     return json({ ok: true });
   }
   return err(400, "Unknown action.");

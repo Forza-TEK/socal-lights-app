@@ -6,8 +6,8 @@ export async function onRequestGet({ env }) {
   const n = async (sql) => (await env.DB.prepare(sql).first()).n;
   const safe = (p) => p.catch(() => 0);
   const [pending, approved, subs, contests, events, users, installers, reports, evs] = await Promise.all([
-    safe(n("SELECT COUNT(*) AS n FROM posts WHERE status = 'pending'")),
-    safe(n("SELECT COUNT(*) AS n FROM posts WHERE status = 'approved'")),
+    safe(n("SELECT COUNT(*) AS n FROM posts WHERE status = 'pending' AND contest_id IS NULL")),
+    safe(n("SELECT COUNT(*) AS n FROM posts WHERE status = 'approved' AND contest_id IS NULL")),
     safe(n("SELECT COUNT(*) AS n FROM event_submissions WHERE status = 'pending'")),
     safe(n("SELECT COUNT(*) AS n FROM contests WHERE status = 'pending' OR (status = 'live' AND note != '')")),
     safe(n("SELECT COUNT(*) AS n FROM events")),
