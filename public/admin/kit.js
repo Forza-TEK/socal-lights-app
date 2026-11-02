@@ -48,9 +48,12 @@ export function tap(b, verb) {
 }
 
 let tt;
-export function toast(text, bad) {
+// opts.undo: a function; the message gets an Undo button for a few seconds
+export function toast(text, bad, opts = {}) {
   let el = document.getElementById("toast"); if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
-  el.textContent = text; el.className = "show" + (bad ? " bad" : ""); clearTimeout(tt); tt = setTimeout(() => (el.className = ""), bad ? 5000 : 2600);
+  el.textContent = text; el.className = "show" + (bad ? " bad" : "");
+  if (opts.undo) { const b = document.createElement("button"); b.type = "button"; b.className = "tundo"; b.textContent = "Undo"; b.onclick = () => { clearTimeout(tt); el.className = ""; opts.undo(); }; el.appendChild(b); }
+  clearTimeout(tt); tt = setTimeout(() => (el.className = ""), opts.undo ? 9000 : bad ? 5000 : 2600);
 }
 export const pager = ({ offset, shown, total, page, idPrev = "pgPrev", idNext = "pgNext" }) =>
   `<div class="pager"><span class="meta">${total ? `${offset + 1}–${offset + shown} of ${total}` : "0"}</span><span class="row" style="gap:8px"><button class="btn ghost" type="button" id="${idPrev}" ${offset ? "" : "disabled"}>Newer</button><button class="btn ghost" type="button" id="${idNext}" ${offset + page < total ? "" : "disabled"}>Older</button></span></div>`;

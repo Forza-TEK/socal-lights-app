@@ -2,9 +2,10 @@
 import { json, err } from "../../../_lib/util.js";
 import { upsertEvent, slug } from "../../../_lib/events.js";
 import { applyPlan } from "../../../_lib/featured.js";
-import { newId } from "../../../_lib/util.js";
+import { newId, clean } from "../../../_lib/util.js";
+import { tell, eventApproved, eventDeclined } from "../../../_lib/notify.js";
 
-export async function onRequestPost({ request, env, params }) {
+export async function onRequestPost({ request, env, params, waitUntil }) {
   const b = await request.json().catch(() => ({}));
   const s = await env.DB.prepare("SELECT * FROM event_submissions WHERE id = ?").bind(params.id).first();
   if (!s) return err(404, "That submission no longer exists.");
@@ -29,6 +30,12 @@ export async function onRequestPost({ request, env, params }) {
   }
   if (b.action === "decline") {
     await env.DB.prepare("UPDATE event_submissions SET status='declined' WHERE id = ?").bind(s.id).run();
+    const m = eventDeclined(s.name, clean(b.reason, 400)); tell(env, waitUntil, s.contact_email, m.subject, m.text);
+    return json({ ok: true });
+  }
+  if (b.action === "restore") {
+    if (s.status !== "declined") return err(400, "Only a declined event can be restored.");
+    await env.DB.prepare("UPDATE event_submissions SET status='pending' WHERE id = ?").bind(s.id).run();
     return json({ ok: true });
   }
   if (b.action !== "approve") return err(400, "Unknown action.");
@@ -48,5 +55,6 @@ export async function onRequestPost({ request, env, params }) {
       env.DB.prepare("UPDATE feature_orders SET event_id=? WHERE event_id=?").bind(eventId, "sub:" + s.id),
     ]);
   }
+  if (b.notify !== false) { const m = eventApproved(s.name); tell(env, waitUntil, s.contact_email, m.subject, m.text); }
   return json({ ok: true, id: eventId, featured: orders.length });
 }

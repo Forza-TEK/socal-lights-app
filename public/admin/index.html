@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;800&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/admin/admin.css?v=20261102q">
+<link rel="stylesheet" href="/admin/admin.css?v=20261103e">
 <style>
   body{overflow:auto;background:var(--bg)}
   .cards{display:grid;gap:14px}
@@ -35,7 +35,7 @@
   </nav>
   <div class="scrim" id="scrim"></div>
   <div class="col">
-    <header class="top"><a class="tbrand" href="/" aria-label="SoCal Lights home"><img src="/img/badge-160.webp" width="36" height="36" alt=""></a><h1 id="ptitle">Dashboard</h1><span class="grow"></span><span id="tb"></span></header>
+    <header class="top"><a class="tbrand" href="/" aria-label="SoCal Lights home"><img src="/img/badge-160.webp" width="36" height="36" alt=""></a><h1 id="ptitle">Dashboard</h1><span class="grow"></span><div class="gs" id="gs" role="search"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gsq" type="search" placeholder="Search everything" autocomplete="off" aria-label="Search houses, events, people, installers and contests" aria-controls="gsr" aria-expanded="false"><kbd aria-hidden="true">/</kbd><div class="gsr" id="gsr" role="listbox" hidden></div></div><button type="button" class="tbtn gsb" id="gsb" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button><span id="tb"></span></header>
     <main id="main" tabindex="-1"><div class="empty">Loading…</div></main>
   </div>
 </div>
@@ -43,11 +43,11 @@
 <div class="modal" id="modal" hidden></div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script type="module">
-import { themeBtn } from "/chrome.js?v=20261102b";
+import { themeBtn } from "/chrome.js?v=20261103a";
 import { defaultSeason } from "/seasons.js?v=20261029d";
 document.getElementById("tb").innerHTML = themeBtn();
 document.documentElement.dataset.season = defaultSeason(new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10));
 </script>
-<script type="module" src="/admin/admin.js?v=20261102p"></script>
+<script type="module" src="/admin/admin.js?v=20261103e"></script>
 </body>
 </html>
