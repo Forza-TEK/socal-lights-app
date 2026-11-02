@@ -1,5 +1,6 @@
 // POST /api/installers/<slug>/quote { name, phone, note, consent } — a signed-in visitor asks this installer for a quote.
 import { json, err, clean, newId } from "../../../_lib/util.js";
+import { phoneField, normName, line } from "../../../_lib/fields.js";
 import { getUser, sameOrigin, sendMail } from "../../../_lib/auth.js";
 
 export async function onRequestPost({ params, request, env }) {
@@ -11,7 +12,9 @@ export async function onRequestPost({ params, request, env }) {
   if (!inst || !to) return err(404, "This company isn't taking quote requests here yet. Use the phone number or website on its page.");
   const b = await request.json().catch(() => ({}));
   if (b.consent !== true) return err(400, "Tick the box to share your details with the installer.");
-  const name = clean(b.name, 80), phone = clean(b.phone, 30), note = clean(b.note, 400);
+  const name = normName(clean(b.name, 80)), ph = phoneField(b.phone), note = line(b.note, 400);
+  if (ph.error) return err(400, ph.error);
+  const phone = ph.value;
   if (name.length < 2) return err(400, "Enter your name.");
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM installer_leads WHERE installer_id = ? AND user_id = ? AND created_at > datetime('now','-1 day')").bind(inst.id, user.id).first();
   if (n >= 2) return err(429, "You've already sent a request. The installer will be in touch.");

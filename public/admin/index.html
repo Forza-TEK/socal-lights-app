@@ -47,6 +47,7 @@
     <button type="button" role="tab" id="tab-overlaps" aria-selected="false">Replaced records <span class="tag" id="nOverlaps">0</span></button>
     <button type="button" role="tab" id="tab-installers" aria-selected="false">Installers <span class="tag" id="nInstallers">0</span></button>
     <button type="button" role="tab" id="tab-users" aria-selected="false">Users <span class="tag" id="nUsers">0</span></button>
+    <button type="button" role="tab" id="tab-data" aria-selected="false">Data check</button>
     <button type="button" role="tab" id="tab-log" aria-selected="false">Activity log</button>
   </div>
   <main id="main"><div class="empty">Loading…</div></main>
@@ -54,7 +55,7 @@
 <div class="modal" id="modal" hidden></div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script type="module">
-import { themeBtn } from "/addflow.js?v=20261031u";
+import { themeBtn } from "/addflow.js?v=20261102b";
 import { defaultSeason } from "/seasons.js?v=20261029d";
 document.getElementById("tb").innerHTML = themeBtn();
 document.documentElement.dataset.season = defaultSeason(new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10));

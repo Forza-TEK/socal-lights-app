@@ -13,8 +13,9 @@
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, OPT, today } from "/addflow.js?v=20261031z";
+import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, OPT, today } from "/addflow.js?v=20261102b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261101e";
+import { normPhone, PHONE_HELP } from "/norm.js?v=20261102b";
 import { me } from "/auth.js?v=20261101a";
 import { CITY } from "/cities.js";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
@@ -43,7 +44,7 @@ const steps = [
     check: (x) => (x.hadPro === "yes" && x.instName.trim().length < 2 ? "Add the installer's name, or choose No." : x.hadPro === "yes" && !validSite(x.instWeb) ? "That doesn't look like a website address. Try something like glowpros.com." : "") },
   { id: "biz", sec: "About you", skip: (x) => !pro(x), title: "How can people reach you?", help: "A website or a phone number, so families can ask for a quote.",
     body: (x) => `${input(x, "web", { label: "Website", ph: "yourbusiness.com", max: 200, type: "text", mode: "url", opt: true })}${input(x, "phone", { label: "Phone for quotes", max: 80, ac: "tel", type: "tel", opt: true })}${input(x, "area", { label: "Service area", ph: "e.g. Orange and Los Angeles counties", max: 120, opt: true })}${check(x, "perm", "I have the homeowner's permission to show this address.")}`,
-    check: (x) => (!validSite(x.web) ? "That doesn't look like a website address. Try something like yourbusiness.com." : !x.web.trim() && !x.phone.trim() ? "Add a website or a phone number." : !x.perm ? "Please confirm you have the homeowner's permission to show this address." : "") },
+    check: (x) => (!validSite(x.web) ? "That doesn't look like a website address. Try something like yourbusiness.com." : x.phone.trim() && !normPhone(x.phone) ? PHONE_HELP : !x.web.trim() && !x.phone.trim() ? "Add a website or a phone number." : !x.perm ? "Please confirm you have the homeowner's permission to show this address." : "") },
   { id: "season", sec: "Your display", title: "Which season is this display for?", help: "It shows up under that season on the map.", redraw: true,
     body: (x) => `<div class="tiles g2">${Object.entries(SEASONS).map(([k, v]) => tile(x, "season", k, esc(v.label), "", true)).join("")}</div>` },
   { id: "about", sec: "Your display", title: "Tell us about the display", help: "A name for it, and a few sentences about what makes it special.",

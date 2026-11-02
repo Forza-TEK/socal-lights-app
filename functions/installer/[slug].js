@@ -1,6 +1,7 @@
 // GET /installer/<slug> — a company's profile, styled like the app's details card: a swipeable photo header, tags, facts,
 // a sticky "Call for a quote" bar, and every home on the map they installed. Plain, indexable HTML (like /in/<city>).
 import { esc, header, hero, page, SHARE } from "../_lib/shell.js";
+import { fmtPhone, telHref } from "../../public/norm.js";
 
 export async function onRequestGet({ request, env, params }) {
   const origin = new URL(request.url).origin;
@@ -8,7 +9,7 @@ export async function onRequestGet({ request, env, params }) {
   if (!inst) return new Response(page({ title: "Installer not found | SoCal Lights", noindex: true, origin, body: `${header()}<main><div class="note"><h1>We can't find that installer</h1><p class="sub">The link may be mistyped, or the profile may have been removed.</p><p><a class="btn go" href="/">Back to the map</a></p></div></main>` }), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
   const { results: homes } = await env.DB.prepare("SELECT id, title, biz, city, photos, installer_confirmed, poster_type FROM posts WHERE installer_id = ? AND status = 'approved' ORDER BY approved_at DESC LIMIT 100").bind(inst.id).all();
   const web = /^https?:\/\//i.test(inst.web) ? inst.web : "";
-  const tel = inst.phone ? inst.phone.replace(/[^0-9+]/g, "") : "";
+  const telUrl = telHref(inst.phone), phoneShown = fmtPhone(inst.phone);
   const photoOf = (h) => JSON.parse(h.photos || "[]")[0];
   const slides = homes.filter(photoOf).slice(0, 8).map((h) => ({ href: `/#h-${h.id}`, img: `/api/photo/${photoOf(h)}`, cap: `${h.title} · ${h.city}` }));
   const title = `${inst.name}: professional holiday lighting installer | SoCal Lights`;
@@ -23,10 +24,11 @@ export async function onRequestGet({ request, env, params }) {
     <div class="tags"><span class="tag">Professional installer</span><span class="tag ice">${homes.length} display${homes.length === 1 ? "" : "s"} on the map</span>${confirmed ? `<span class="tag conf">${confirmed} confirmed</span>` : ""}</div>
     <div class="idrow">${logoUrl && slides.length ? `<img class="lg" src="${esc(logoUrl)}" alt="">` : ""}<div><h1>${esc(inst.name)}</h1>${inst.area ? `<p class="sub">Serving ${esc(inst.area)}</p>` : ""}</div></div>
     ${inst.blurb ? `<p class="lead">${esc(inst.blurb)}</p>` : ""}
-    <dl class="facts">${inst.area ? `<dt>Service area</dt><dd>${esc(inst.area)}</dd>` : ""}${inst.phone ? `<dt>Quotes</dt><dd><a href="tel:${esc(tel)}">${esc(inst.phone)}</a></dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener nofollow">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
-    <div class="bar">${tel ? `<a class="btn go" href="tel:${esc(tel)}">Call for a quote</a>` : web ? `<a class="btn go" href="${esc(web)}" target="_blank" rel="noopener nofollow">Visit website</a>` : `<span class="btn go" aria-disabled="true">No contact details yet</span>`}${tel && web ? `<a class="btn" href="${esc(web)}" target="_blank" rel="noopener nofollow">Website</a>` : ""}${canQuote ? `<button class="btn" type="button" id="quotebtn">Request a quote</button>` : ""}<button class="btn ic" type="button" data-share aria-label="Share this page">${SHARE}</button></div>
+    <dl class="facts">${inst.area ? `<dt>Service area</dt><dd>${esc(inst.area)}</dd>` : ""}${inst.phone ? `<dt>Call for Quotes</dt><dd>${telUrl ? `<a href="${esc(telUrl)}">${esc(phoneShown)}</a>` : esc(phoneShown)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener nofollow">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
+    <div class="bar">${telUrl ? `<a class="btn go" href="${esc(telUrl)}">Call for a quote</a>` : web ? `<a class="btn go" href="${esc(web)}" target="_blank" rel="noopener nofollow">Visit website</a>` : `<span class="btn go" aria-disabled="true">No contact details yet</span>`}${telUrl && web ? `<a class="btn" href="${esc(web)}" target="_blank" rel="noopener nofollow">Website</a>` : ""}${canQuote ? `<button class="btn" type="button" id="quotebtn">Request a quote</button>` : ""}<button class="btn ic" type="button" data-share aria-label="Share this page">${SHARE}</button></div>
     <h2>Displays on the map</h2>${homes.length ? `<div class="grid">${cards}</div>` : `<div class="note"><p class="sub" style="margin:0">No displays are on the map yet.</p></div>`}
     <div class="foot"><a href="/">All of Southern California</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>${inst.owner_email ? "" : `<button class="linkbtn" type="button" id="claimbtn">Is this your company? Claim this profile</button>`}</div></main>
+    <script type="module" src="/norm-ui.js?v=20261102b"></script>
     <script type="module">
     const slug = ${JSON.stringify(inst.slug)}, name = ${JSON.stringify(inst.name)}, $ = (q) => document.querySelector(q);
     try { fetch("/api/installers/" + slug + "/hit", { method: "POST", keepalive: true }); } catch {}

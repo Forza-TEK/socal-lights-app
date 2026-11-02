@@ -35,7 +35,7 @@
 <noscript><p>Turn on JavaScript to see the tutorial list.</p></noscript>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261031z";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261102b";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (q) => document.querySelector(q);

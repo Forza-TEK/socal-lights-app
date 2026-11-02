@@ -1,7 +1,7 @@
 // SoCal Lights admin: review houses, manage published posts, edit events.
 import { CITY } from "/cities.js";
 import { SEASONS, defaultSeason } from "/seasons.js";
-import { attachAddress } from "/addflow.js?v=20261031u";
+import { attachAddress } from "/addflow.js?v=20261102b";
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -24,8 +24,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events", "overlaps", "installers", "users", "log"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
-["pending", "approved", "subs", "contests", "events", "overlaps", "installers", "users", "log"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
+function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events", "overlaps", "installers", "users", "data", "log"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
+["pending", "approved", "subs", "contests", "events", "overlaps", "installers", "users", "data", "log"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
 
 // The numbers on the tabs, from one request, so they are right on arrival and after every change
 const COUNT_IDS = { pending: "nPending", approved: "nApproved", subs: "nSubs", contests: "nContests", events: "nEvents", overlaps: "nOverlaps", users: "nUsers", installers: "nInstallers" };
@@ -39,6 +39,7 @@ async function render() {
     if (tab === "contests") return renderContests();
     if (tab === "overlaps") return renderOverlaps();
     if (tab === "installers") return renderInstallers();
+    if (tab === "data") return renderData();
     if (tab === "users") return renderUsers();
     if (tab === "log") return renderLog();
     const posts = await api("/api/admin/posts?status=" + tab);
@@ -334,3 +335,19 @@ $("#main").addEventListener("click", async (e) => {
   try { await api("/api/admin/installers/" + id, { method: "POST", body: JSON.stringify(body) }); if (act === "edit") { msg.textContent = "Saved."; b.disabled = false; refreshCounts(); } else { renderInstallers(); refreshCounts(); } }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
+
+
+/* ---------- data check: tidy every stored phone, website, email, ZIP, street and name ---------- */
+async function renderData(res) {
+  const main = $("#main");
+  main.innerHTML = `<p class="loading">Checking every saved record…</p>`;
+  const d = res || (await api("/api/admin/normalize"));
+  const rows = d.fields.map((f) => `<tr><td>${esc(f.table)}</td><td>${esc(f.field)}</td><td>${f.changed}</td><td>${f.attention}</td><td class="small">${f.examples.map((x) => `<div><span class="meta">${esc(x.record)}:</span> <s>${esc(x.old)}</s> &rarr; ${esc(x.new)}</div>`).join("")}</td></tr>`).join("");
+  main.innerHTML = `<p class="meta">Phones become (310) 555-0123, websites https://example.com/, emails lowercase, ZIPs five digits, streets "123 Main St", names tidy capitals. Anything that can't be fixed automatically is left alone and listed below. New entries are tidied as they are typed, so this only cleans up older records.</p>
+   <div class="row" style="gap:10px;margin:10px 0"><span class="meta">${d.dry ? "Check only: nothing has been changed." : "Done."}</span><b>${d.changed} value${d.changed === 1 ? "" : "s"} ${d.dry ? "would change" : "changed"}</b>${d.needsPerson ? `<span class="meta">· ${d.needsPerson} need a person</span>` : ""}</div>
+   ${d.fields.length ? `<div class="tablewrap"><table><thead><tr><th>Table</th><th>Field</th><th>${d.dry ? "Would change" : "Changed"}</th><th>Needs a person</th><th>Examples</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty">Everything is already tidy.</div>`}
+   ${d.attention.length ? `<h3 style="margin-top:16px">Needs a person (left as they are)</h3><div class="tablewrap"><table><thead><tr><th>Table</th><th>Field</th><th>Record</th><th>Value</th></tr></thead><tbody>${d.attention.map((a) => `<tr><td>${esc(a.table)}</td><td>${esc(a.field)}</td><td>${esc(a.record)}</td><td>${esc(a.value)}</td></tr>`).join("")}</tbody></table></div>` : ""}
+   <div class="row" style="gap:10px;margin-top:14px"><button class="btn ghost" type="button" id="dc-check">Check again</button>${d.dry && d.changed ? `<button class="btn ice" type="button" id="dc-fix">Tidy ${d.changed} value${d.changed === 1 ? "" : "s"}</button>` : ""}<span class="msg" id="dc-msg"></span></div>`;
+  $("#dc-check").onclick = () => renderData();
+  const fx = $("#dc-fix"); if (fx) fx.onclick = async () => { if (!fx.dataset.sure) { fx.dataset.sure = "1"; fx.textContent = "Click again to change " + d.changed + " values"; return; } fx.disabled = true; $("#dc-msg").textContent = "Working…"; try { renderData(await api("/api/admin/normalize", { method: "POST", body: JSON.stringify({ apply: true }) })); } catch (e) { fx.disabled = false; $("#dc-msg").className = "msg err"; $("#dc-msg").textContent = e.message; } };
+}

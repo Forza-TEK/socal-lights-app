@@ -6,6 +6,7 @@ import { SEASONS } from "../../public/seasons.js";
 import { getUser, sendMail } from "../_lib/auth.js";
 import { findOrCreateInstaller } from "../_lib/installers.js";
 import { approveEntry } from "../_lib/contests.js";
+import { normZip, phoneField, normName, normStreet, normText, normEmailText, normRadio, line } from "../_lib/fields.js";
 
 const AUTO_HOMES_PER_DAY = 60; // safety valve: past this many in a day, new homes wait for review
 const BAD = /\b(viagra|casino|porn|xxx|escort|crypto|bitcoin|loan|forex|cbd|betting)\b/i;
@@ -47,20 +48,22 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // Contest entries are tied to a signed-in account, so a shared network (an event night, a school Wi-Fi) gets a higher limit
   if (n >= (contest ? 60 : 5)) return err(429, "Too many submissions from this connection. Try again in an hour.");
 
-  const biz = clean(form.get("biz"), 80);
-  const title = clean(form.get("title"), 90) || (contest ? clean(form.get("biz"), 80) : "");
+  const biz = normName(clean(form.get("biz"), 80));
+  const title = normName(clean(form.get("title"), 90)) || (contest ? biz : "");
   const city = clean(form.get("city"), 60);
-  const descr = clean(form.get("desc"), 1200) || (contest ? `Entry in ${contest.name}` : "");
-  const email = contest ? cu.email : clean(form.get("email"), 120);
+  const descr = normText(clean(form.get("desc"), 1200)) || (contest ? `Entry in ${contest.name}` : "");
+  const email = contest ? cu.email : normEmailText(clean(form.get("email"), 120));
   const webRaw = clean(form.get("web"), 200);
   const kind = form.get("kind") === "installer" ? "installer" : "homeowner";
   const pro = kind === "installer";
   const web = pro ? webUrl(webRaw) : ""; // website, phone and service area belong to professional installers only
-  const phone = pro ? clean(form.get("phone"), 80) : "";
-  const area = pro ? clean(form.get("area"), 120) : "";
-  const where = clean(form.get("where"), 120);
-  const street = clean(form.get("street"), 120);
-  const zip = clean(form.get("zip"), 10);
+  const ph = pro ? phoneField(form.get("phone")) : { value: "" };
+  if (ph.error) return err(400, ph.error);
+  const phone = ph.value;
+  const area = pro ? line(form.get("area"), 120) : "";
+  const where = line(form.get("where"), 120);
+  const street = normStreet(clean(form.get("street"), 120));
+  const zip = normZip(clean(form.get("zip"), 12)) || clean(form.get("zip"), 10);
   // The one-line address is built from the parts (older cached forms still send a single "address" box)
   const address = street ? `${street}, ${city}, CA ${zip}` : clean(form.get("address"), 160);
   const season = contest ? contest.season : SEASONS[form.get("season")] ? form.get("season") : "christmas";
@@ -122,7 +125,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // Visiting details for families (all optional)
   try {
     const visit = ["drive", "walk", "both"].includes(form.get("visit")) ? form.get("visit") : "", parking = ["free", "street", "none"].includes(form.get("parking")) ? form.get("parking") : "";
-    await env.DB.prepare("UPDATE posts SET lights_on = ?, visit = ?, parking = ?, accessible = ?, radio = ? WHERE id = ?").bind(clean(form.get("lights_on"), 60), visit, parking, form.get("accessible") ? 1 : 0, clean(form.get("radio"), 40), id).run();
+    await env.DB.prepare("UPDATE posts SET lights_on = ?, visit = ?, parking = ?, accessible = ?, radio = ? WHERE id = ?").bind(line(form.get("lights_on"), 60), visit, parking, form.get("accessible") ? 1 : 0, normRadio(clean(form.get("radio"), 40)), id).run();
   } catch {}
   // Installer profile: an installer's own post makes (or joins) their profile; a homeowner can name the company that installed their lights
   try {
@@ -130,7 +133,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
       const inst = await findOrCreateInstaller(env, { name: biz, web, phone, area, email, trusted: true });
       if (inst) await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 1 WHERE id = ?").bind(inst.id, id).run();
     } else {
-      const iname = clean(form.get("installer_name"), 80), iwebRaw = clean(form.get("installer_web"), 200);
+      const iname = normName(clean(form.get("installer_name"), 80)), iwebRaw = clean(form.get("installer_web"), 200);
       if (iname.length >= 2) {
         const inst = await findOrCreateInstaller(env, { name: iname, web: iwebRaw ? webUrl(iwebRaw) || "" : "" });
         if (inst) {

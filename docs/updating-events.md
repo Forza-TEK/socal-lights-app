@@ -29,7 +29,8 @@ live database (the site itself redeploys on every push through Cloudflare Pages)
    `UPDATE events SET notice='' WHERE id='…';`. A normal upsert never touches `notice`, so a sweep that refreshes an event's dates leaves an
    organizer's or an earlier sweep's tag in place; clearing it is always an explicit statement like the one above. Cancelled events stay on the map
    with a red tag and are left out of the weekly email. When a postponed event gets new dates, update the dates **and** clear the notice in the same file.
-4. **Removing an event:** `DELETE FROM events WHERE id='…';` — only when it's cancelled for good.
+4. **Price wording:** use `Free`, a real price or range (`$12`, `From $10`, `$10-$25`), `Price not listed` (no price anywhere), or `Check listing` (the source says to see its page). Do not invent other phrases such as "Not listed" or "Check site".
+5. **Removing an event:** `DELETE FROM events WHERE id='…';` — only when it's cancelled for good.
 4. Events that have ended disappear from the site automatically; don't delete them.
 
 ## Field rules
