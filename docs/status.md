@@ -2,6 +2,11 @@
 
 _Last updated: 2026-11-02_
 
+## Tutorials and invitation emails (2026-11-04, branch `claude/sharp-keller-zmygil`)
+- **HTML invitation emails are on:** judge, neighbor and co-organizer invitations now send a branded HTML email with a plain-text fallback (`functions/_lib/email-html.js`; `sendMail` takes an `html` field). Not yet changed: sign-in code, weekly lights email, installer and quote emails (still plain text).
+- **Tutorial videos re-recorded** with a new look: every video starts on the map (numbered "Step 1, Step 2" captions, an orange ring on what to tap) or from an example email; day mode; 1920 x 1080; captions move away from the pointer. First batch on the page: Create with Quick start, Create with Customize, Approve and decline, Edit and change dates, Run voting, Read your contest activity, Add sponsors and logos. The rest of the 25 are being recorded and are added group by group.
+- **Recording scripts** are in `scripts/tutorials/` (see `docs/tutorials.md`): `seed-demo.mjs` (demo data, local only), `record.mjs` (recorder, mock inbox, captions), one spec file per group, and `install.mjs` (puts finished videos on the Tutorials page).
+
 ## Tutorials: Vote and judge (2026-11-02, branch `claude/sharp-keller-zmygil`)
 Two new videos on the Tutorials page: "Vote in a contest" (1:29, phone-sized screen) and "Judge a contest" (1:08, computer screen), `hfc_female` voice, recorded on a local copy with made-up demo data (nothing on the live database). 11 of 25 tutorial videos are done; still "Coming soon": Find and plan (6), Enter a home (3), Sponsors and installers (3), Post events and homes (2). The recording setup is now in `scripts/tutorials/` (see `docs/tutorials.md`). The sign-in step in the voting video is narrated, not shown (the local sign-in shows a test code).
 
