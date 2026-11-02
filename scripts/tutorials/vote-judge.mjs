@@ -2,14 +2,17 @@
 // Usage: VOICE=<hfc_female.onnx> COOKIES=<cookies.json> node scripts/tutorials/vote-judge.mjs [vote|judge]
 import { readFileSync } from "node:fs";
 import { record, sleep } from "./record.mjs";
+import { end as endCard, fromMap } from "./steps.mjs";
 const ck = JSON.parse(readFileSync(process.env.COOKIES, "utf8")), SLUG = "maple-street-holiday-lights-2026", EY = "Vote and judge";
-const end = (t, s) => ({ card: { ey: EY, title: "Next: " + t, sub: s }, say: "", pad: 3.2 });
+const end = (t, s) => endCard(EY, t, s);
+const CONTEST = `a[href="/c/${SLUG}"]`;
 const vis = (k) => `[data-k="${k}"] >> visible=true`;
 const vote = {
-  id: "vote", file: "vote", phone: true, cookie: ck.u_voter, start: "/c/" + SLUG,
+  id: "vote", file: "vote", phone: true, capTop: true, cookie: ck.u_voter, start: "/",
   steps: [
     { card: { ey: EY, title: "Vote in a contest", sub: "Pick one favorite in each category" }, say: "Vote in a contest. In this video, you pick your favorite homes in a neighborhood contest. It takes about a minute.", pad: 1.2 },
-    { cap: "Open the contest link", say: "Open the contest link that a neighbor or the city sent you. You see the contest name, and a note that voting is open.", poster: false },
+    ...fromMap("contests"),
+    { cap: "Contests > Vote", say: "Under Live now, find the contest and tap Vote. You can also open the link a neighbor sent you, or scan the contest's QR code. You see the contest name, and a note that voting is open.", do: async (p, h) => { await h.click(`${CONTEST}:has-text("Vote")`, { after: 2600 }); } },
     { cap: "Sign in once to vote", say: "The first time you tap Vote, the site asks you to sign in with Google or your email. That keeps it to one vote per person in each category. This video starts after sign in.", do: async (p, h) => { await h.scroll(160); } },
     { cap: "Category tabs", say: "Every home is in every category. Use the category tabs to move between them. You get one vote in each.", do: async (p, h) => { await h.scrollTo(".tabs", 40); await h.hover(`[data-tab="Most Creative"]`, 700); await h.hover(`[data-tab="Best Traditional"]`, 600); } },
     { cap: "Best Traditional > Vote", say: "In Best Traditional, scroll through the homes. Tap a photo to see it larger, or tap Vote on your favorite.", do: async (p, h) => { await h.scrollTo(".vrow", 120); await h.click(`[data-vote="p_garcia"]`, { after: 2200 }); }, poster: true },
@@ -22,10 +25,12 @@ const vote = {
   ],
 };
 const judge = {
-  id: "judge", file: "judge", cookie: ck.u_judge, start: `/c/${SLUG}/judge`,
+  id: "judge", file: "judge", cookie: ck.u_judge, start: "/",
   steps: [
     { card: { ey: EY, title: "Judge a contest", sub: "Score each home, and recuse yourself when you know the household" }, say: "Judge a contest. In this video, you score the homes as a judge, and skip a home you know.", pad: 1.2 },
-    { cap: "Your judge link", say: "Judges get an email invitation with a personal link. Open it and sign in with the invited email address. This is your ballot.", poster: false },
+    ...fromMap("contests", " Your invitation email also has a direct link to the ballot."),
+    { cap: "Contests > Vote", say: "Find the contest and tap Vote. Because you are a judge, the contest page shows a green note with a link to the judges' ballot.", do: async (p, h) => { await h.click(`${CONTEST}:has-text("Vote")`, { after: 2600 }); await h.scrollTo(".status.ok", 200); } },
+    { cap: "Open the judges' ballot", say: "Tap Open the judges' ballot. This is your ballot.", do: async (p, h) => { await h.click(`a[href="/c/${SLUG}/judge"]`, { after: 2600 }); } },
     { cap: "Judges' ballot", say: "The ballot says what to look for, and when voting closes. The counter shows how many scores you have given.", do: async (p, h) => { await h.hover(".status", 1400); } },
     { cap: "Best Traditional", say: "Choose a category from the list on the left. Every home is listed in every category.", do: async (p, h) => { await h.click(vis("c0")); } },
     { cap: "I know this household", say: "If you know a household, tap I know this household. That home is skipped, and your score for it does not count.", do: async (p, h) => { await h.click(`[data-conf="p_okafor"]`, { after: 2200 }); }, poster: true },
