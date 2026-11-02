@@ -475,16 +475,22 @@ const CHOICES = [["pick_post", "post", "Their record"], ["pick_both", "both", "B
 const choiceButtons = (r) => `<div class="row" style="gap:0;flex-wrap:nowrap" role="group" aria-label="Which record visitors see">${CHOICES.map(([a, c, l], i) => `<button type="button" data-ov="${a}" data-eid="${esc(r.event.id)}" aria-pressed="${r.event.choice === c}" class="btn ${r.event.choice === c ? "ice" : "ghost"}" style="border-radius:${i === 0 ? "10px 0 0 10px" : i === 2 ? "0 10px 10px 0" : "0"};padding-inline:12px;white-space:nowrap">${l}</button>`).join("")}</div>`;
 async function renderOverlaps() {
   const main = $("#main"), d = await api("/api/admin/overlaps");
-  const active = d.replaced.length;
-  setCount("overlaps", active);
-  const who = (p) => `<a href="#" data-gopost="${esc(p.id)}">${esc(p.title)}</a> <span class="meta">(${p.kind === "installer" ? "installer" : "homeowner"}, ${esc(p.biz)})</span>`;
-  main.innerHTML = `<p class="meta" style="margin:0 0 12px;max-width:720px">When an approved house or installer post has the same street address as a record the sweeps made, the person's own record is shown and the sweep record is hidden. You can switch any address to the sweep record, or show both. Nothing is deleted, and the person's post stays approved.</p>
-    <h3 style="margin:0 0 8px">Replaced (${d.replaced.length})</h3>
-    ${d.replaced.length ? `<div class="tablewrap"><table><thead><tr><th>Sweep record</th><th>The person's record</th><th>Visitors see</th></tr></thead><tbody>${d.replaced.map((r) => `<tr><td><b>${esc(r.event.name)}</b><br><span class="meta">${esc(r.event.address)}</span></td><td>${who(r.post)}${r.event.win ? `<br><span class="meta">Win shown on their listing: ${esc(r.event.win)}</span>` : ""}</td><td>${choiceButtons(r)}</td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">Nothing replaced yet.</div>'}
-    <h3 style="margin:20px 0 8px">Same street, different number (${d.near.length}) <span class="meta" style="font-weight:400">both stay listed</span></h3>
-    ${d.near.length ? `<div class="tablewrap"><table><thead><tr><th>Sweep record</th><th>Post</th></tr></thead><tbody>${d.near.map((r) => `<tr><td><b>${esc(r.event.name)}</b><br><span class="meta">${esc(r.event.address)}</span></td><td>${who(r.post)}<br><span class="meta">${esc(r.post.street)}, ${esc(r.post.city)}</span></td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">None.</div>'}`;
-  main.querySelectorAll("[data-ov]").forEach((b) => (b.onclick = async () => { main.querySelectorAll("[data-ov]").forEach((x) => (x.disabled = true)); try { await api("/api/admin/overlaps", { method: "POST", body: JSON.stringify({ action: b.dataset.ov, event_id: b.dataset.eid }) }); renderOverlaps(); refreshCounts(); } catch (e) { renderOverlaps(); alert(e.message); } }));
-  main.querySelectorAll("[data-gopost]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); setTab("approved"); }));
+  setCount("overlaps", d.replaced.length);
+  const who = (p) => `<a href="#" data-gopost="${esc(p.id)}" data-name="${esc(p.title)}">${esc(p.title)}</a> <span class="meta">(${p.kind === "installer" ? "installer" : "homeowner"}, ${esc(p.biz)})</span>`;
+  const note = '<p class="meta" style="margin:0 0 14px;max-width:760px">When an approved house or installer post has the same street address as a record the sweeps made, the person\'s own record is shown and the sweep record is hidden. Choose which one visitors see for each address. Nothing is deleted, and the person\'s post stays approved.</p>';
+  const replaced = d.replaced.length ? `<div class="cards">${d.replaced.map((r) => rec({
+    attrs: `data-ovid="${esc(r.event.id)}"`, title: esc(r.event.name), tags: [[r.event.choice === "sweep" ? "Sweep record shown" : r.event.choice === "both" ? "Both shown" : "Their record shown", r.event.choice === "post" ? "ok" : ""]],
+    facts: fact("Address", esc(r.event.address)) + fact("The person's record", who(r.post)) + fact("Win on their listing", esc(r.event.win || "")),
+    body: `<div class="ovchoice"><span class="meta">Visitors see:</span>${choiceButtons(r)}</div>`,
+  })).join("")}</div>` : '<div class="empty">Nothing replaced yet.</div>';
+  const near = d.near.length ? `<div class="cards">${d.near.map((r) => rec({
+    compact: true, title: esc(r.event.name), tags: [["Both listed"]],
+    body: `<span class="sub">${esc(r.event.address)}</span><span class="sub">Post: ${who(r.post)} · ${esc(r.post.street)}, ${esc(r.post.city)}</span>`,
+  })).join("")}</div>` : '<div class="empty">None.</div>';
+  main.innerHTML = note + toolbar({ search: { placeholder: "Search replaced records" }, count: String(d.replaced.length) }) + `<h2 class="dh">Replaced (${d.replaced.length})</h2>${replaced}<h2 class="dh" style="margin-top:28px">Same street, different number (${d.near.length})</h2><p class="meta" style="margin:-4px 0 10px">Both stay listed.</p>${near}`;
+  wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
+  main.querySelectorAll("[data-ov]").forEach((b) => (b.onclick = async () => { main.querySelectorAll("[data-ov]").forEach((x) => (x.disabled = true)); try { await api("/api/admin/overlaps", { method: "POST", body: JSON.stringify({ action: b.dataset.ov, event_id: b.dataset.eid }) }); toast("Saved"); renderOverlaps(); refreshCounts(); } catch (e) { renderOverlaps(); toast(e.message, true); } }));
+  main.querySelectorAll("[data-gopost]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); PRESET = a.dataset.name; setTab("approved"); }));
 }
 
 
@@ -564,14 +570,18 @@ async function renderData(res) {
   const main = $("#main");
   main.innerHTML = `<p class="loading">Checking every saved record…</p>`;
   const d = res || (await api("/api/admin/normalize"));
-  const rows = d.fields.map((f) => `<tr><td>${esc(f.table)}</td><td>${esc(f.field)}</td><td>${f.changed}</td><td>${f.attention}</td><td class="small">${f.examples.map((x) => `<div><span class="meta">${esc(x.record)}:</span> <s>${esc(x.old)}</s> &rarr; ${esc(x.new)}</div>`).join("")}</td></tr>`).join("");
-  main.innerHTML = `<p class="meta">Phones become (310) 555-0123, websites https://example.com/, emails lowercase, ZIPs five digits, streets "123 Main St", names tidy capitals. Anything that can't be fixed automatically is left alone and listed below. New entries are tidied as they are typed, so this only cleans up older records.</p>
-   <div class="row" style="gap:10px;margin:10px 0"><span class="meta">${d.dry ? "Check only: nothing has been changed." : "Done."}</span><b>${d.changed} value${d.changed === 1 ? "" : "s"} ${d.dry ? "would change" : "changed"}</b>${d.needsPerson ? `<span class="meta">· ${d.needsPerson} need a person</span>` : ""}</div>
-   ${d.fields.length ? `<div class="tablewrap"><table><thead><tr><th>Table</th><th>Field</th><th>${d.dry ? "Would change" : "Changed"}</th><th>Needs a person</th><th>Examples</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty">Everything is already tidy.</div>`}
-   ${d.attention.length ? `<h3 style="margin-top:16px">Needs a person (left as they are)</h3><div class="tablewrap"><table><thead><tr><th>Table</th><th>Field</th><th>Record</th><th>Value</th></tr></thead><tbody>${d.attention.map((a) => `<tr><td>${esc(a.table)}</td><td>${esc(a.field)}</td><td>${esc(a.record)}</td><td>${esc(a.value)}</td></tr>`).join("")}</tbody></table></div>` : ""}
-   <div class="row" style="gap:10px;margin-top:14px"><button class="btn ghost" type="button" id="dc-check">Check again</button>${d.dry && d.changed ? `<button class="btn ice" type="button" id="dc-fix">Tidy ${d.changed} value${d.changed === 1 ? "" : "s"}</button>` : ""}<span class="msg" id="dc-msg"></span></div>`;
+  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const fields = d.fields.map((f) => rec({
+    compact: true, title: `${esc(f.table)} · ${esc(f.field)}`, tags: [[d.dry ? `${plural(f.changed, "value")} would change` : `${plural(f.changed, "value")} changed`, f.changed ? "warn" : "ok"], ...(f.attention ? [[`${f.attention} need a person`, "bad"]] : [])],
+    body: f.examples.map((x) => `<span class="sub"><b>${esc(x.record)}</b>: <s>${esc(x.old)}</s> &rarr; ${esc(x.new)}</span>`).join(""),
+  })).join("");
+  const attention = d.attention.map((a) => rec({ compact: true, title: `${esc(a.table)} · ${esc(a.field)}`, tags: [["Needs a person", "bad"]], body: `<span class="sub"><b>${esc(a.record)}</b>: ${esc(a.value)}</span>` })).join("");
+  main.innerHTML = `<p class="meta" style="margin:0 0 14px;max-width:760px">Phones become (310) 555-0123, websites https://example.com/, emails lowercase, ZIPs five digits, streets "123 Main St", names tidy capitals. Anything that can't be fixed automatically is left alone and listed below. New entries are tidied as they are typed, so this only cleans up older records.</p>
+   <div class="dcsum"><div class="stat"><b>${d.changed}</b><span>${d.dry ? "values would change" : "values changed"}</span></div><div class="stat"><b>${d.needsPerson || 0}</b><span>need a person</span></div><div class="dcact"><span class="meta">${d.dry ? "Check only: nothing has been changed." : "Done."}</span><div class="row" style="gap:8px"><button class="btn ghost" type="button" id="dc-check">Check again</button>${d.dry && d.changed ? `<button class="btn ice" type="button" id="dc-fix">Tidy ${plural(d.changed, "value")}</button>` : ""}</div><span class="msg" id="dc-msg" role="status"></span></div></div>
+   <h2 class="dh">Fields</h2>${d.fields.length ? `<div class="cards">${fields}</div>` : `<div class="empty">Everything is already tidy.</div>`}
+   ${d.attention.length ? `<h2 class="dh" style="margin-top:28px">Needs a person (left as they are)</h2><div class="cards">${attention}</div>` : ""}`;
   $("#dc-check").onclick = () => renderData();
-  const fx = $("#dc-fix"); if (fx) fx.onclick = async () => { if (!tap(fx, "change " + d.changed + " value" + (d.changed === 1 ? "" : "s"))) return; fx.disabled = true; $("#dc-msg").textContent = "Working…"; try { renderData(await api("/api/admin/normalize", { method: "POST", body: JSON.stringify({ apply: true }) })); } catch (e) { fx.disabled = false; $("#dc-msg").className = "msg err"; $("#dc-msg").textContent = e.message; } };
+  const fx = $("#dc-fix"); if (fx) fx.onclick = async () => { if (!tap(fx, "change " + plural(d.changed, "value"))) return; fx.disabled = true; $("#dc-msg").textContent = "Working…"; try { const r = await api("/api/admin/normalize", { method: "POST", body: JSON.stringify({ apply: true }) }); toast("Records tidied"); renderData(r); } catch (e) { fx.disabled = false; $("#dc-msg").className = "msg err"; $("#dc-msg").textContent = e.message; } };
 }
 
 

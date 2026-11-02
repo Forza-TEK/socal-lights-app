@@ -75,3 +75,13 @@ Creating a contest needs a signed-in account: the Add a contest page asks you to
 
 ## Events and displays need an account too
 Adding an event or a lights display now asks you to sign in first (the page shows a sign-in screen, and the server refuses a create without an account, replacing the "I am human" check). The contact email is always the account's email, which is how a listing is tied to the person who made it. The creator can edit, take down for the season, and delete it from Your profile (Delete asks for a second tap); a confirmed installer who shares a display can still edit it, but only the creator can delete it. Admin can do everything from the Admin tab. Anonymous writes remain only for harmless things: email alert sign-ups, "something wrong" reports and visit counters.
+
+## Next to build (all done)
+- **Decline with a reason, and the person is emailed.** Houses, submitted events and contests (Unpublish) ask for an optional reason in a window; it is emailed to whoever added the record (`functions/_lib/notify.js`). Declined houses keep their photos privately so a decline can be undone.
+- **Approval emails.** Approving a house or an event emails the person with a link to manage it from Your profile.
+- **Undo.** After Decline or Unpublish a toast offers **Undo** for 9 seconds (restores the record without sending another email). Houses waiting and Submitted events also have a **Declined** view with Restore to waiting.
+- **Bulk approve.** Houses waiting has checkboxes, Select all, and Approve N houses (tap twice).
+- **Search everything.** A search box in the Admin top bar (press `/`; a magnifier button on phones) finds houses, events, submitted events, installers, people and contests, and jumps to the right tab or opens the profile window.
+- **Replaced records and Data check** use cards like every other tab.
+- **Contests from Admin** (done earlier): see, edit, unpublish and delete every contest.
+- Houses waiting and Published houses no longer list contest entries (organizers run those); the counts match.
