@@ -305,7 +305,7 @@ button{touch-action:manipulation}
   .actionbar{bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
   .hero{height:190px}
   /* behind the tab bar: the sheet's lower part fades out at Peek and shows through as the sheet rises */
-  .navfade{display:block;position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 94px);z-index:35;pointer-events:none;background:linear-gradient(to bottom,transparent 0,var(--surface) 14%);opacity:1;transition:opacity .32s cubic-bezier(.2,.8,.2,1)}
+  .navfade{display:block;position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 72px);z-index:35;pointer-events:none;background:linear-gradient(to bottom,transparent 0,var(--surface) 14%);opacity:1;transition:opacity .32s cubic-bezier(.2,.8,.2,1)}
   body.pin-open .navfade,body.detail-open .navfade{display:none}
   body:has(.panel.dragging) .navfade{transition:none}
 
@@ -831,3 +831,10 @@ body.lb-open{overflow:hidden}
 .onbtn{flex-wrap:wrap;text-align:center;line-height:1.3;padding:8px 16px}
 
 .onhint{margin:4px 2px 0;font-size:12.5px;color:var(--muted);line-height:1.4}
+
+/* The floating tab bar (Places, Route, Shop) casts its shadow downward only, so it never dims the filter buttons above it in the peeking list */
+@media (max-width:700px){
+  .bnav{box-shadow:0 10px 22px -10px rgba(20,22,27,.38),0 2px 5px rgba(20,22,27,.14)}
+  :root[data-theme="dark"] .bnav{box-shadow:0 10px 22px -10px rgba(0,0,0,.7),0 2px 5px rgba(0,0,0,.4)}
+}
+
