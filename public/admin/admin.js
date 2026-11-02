@@ -104,10 +104,11 @@ async function shrink(f) {
   if (!/^image\/(jpeg|png|webp)$/.test(f.type) || f.size < 700 * 1024) return f;
   try { const bmp = await createImageBitmap(f), k = Math.min(1, 1800 / Math.max(bmp.width, bmp.height)), c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height); const b = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.85)); return b ? new File([b], f.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : f; } catch { return f; }
 }
-function editPost(p) {
+function editPost(p, startTab = "details") {
   const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="mh"><h2>Edit house</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
-  <h3 class="psec" id="pPhotosH" style="margin-top:4px">Photos <span class="meta" id="pPhotosN"></span></h3><div id="pPhotos"></div>
+  m.innerHTML = `<div class="card wide" role="dialog" aria-modal="true"><div class="mh"><h2>Edit house</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
+  <div class="seg" id="pTabs" role="group" aria-label="Show" style="margin-bottom:14px"><button type="button" data-ptab="details" aria-pressed="true">Details</button><button type="button" data-ptab="photos" aria-pressed="false">Photos <span id="pPhotosN"></span></button></div>
+  <div id="pPhotos" hidden></div>
   <form class="f" id="pForm" novalidate>
     <label for="pKind">Posting as<select id="pKind"><option value="homeowner" ${p.kind !== "installer" ? "selected" : ""}>Homeowner</option><option value="installer" ${p.kind === "installer" ? "selected" : ""}>Professional installer</option></select></label>
     <div class="two"><label for="pBiz">Name or business<input id="pBiz" value="${esc(p.biz)}" maxlength="80"></label><label for="pTitle">Display name<input id="pTitle" value="${esc(p.title)}" maxlength="90"></label></div>
@@ -122,24 +123,36 @@ function editPost(p) {
   </form></div>`;
   m.hidden = false; $("#mClose").onclick = () => { close(); if (photosChanged) render(); };
   let photosChanged = false;
+  let cur = 0;
+  const showTab = (t) => { $("#pForm").hidden = t !== "details"; $("#pPhotos").hidden = t !== "photos"; $("#pTabs").querySelectorAll("[data-ptab]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ptab === t))); };
+  $("#pTabs").onclick = (ev) => { const b = ev.target.closest("[data-ptab]"); if (b) showTab(b.dataset.ptab); };
   const paint = () => {
-    $("#pPhotosN").textContent = `(${p.photos.length} of 8)`;
-    $("#pPhotos").innerHTML = `<div class="pgrid">${p.photos.map((k, i) => `<figure class="pph"><a href="${photo(k)}" target="_blank" rel="noopener"><img src="${photo(k)}" alt="Photo ${i + 1}" loading="lazy"></a>${i === 0 ? '<span class="cover">Cover</span>' : ""}<figcaption><button type="button" class="btn ghost" data-pmv="${esc(k)}" data-to="${i - 1}" ${i === 0 ? "disabled" : ""} aria-label="Move photo ${i + 1} earlier">‹</button><button type="button" class="btn ghost" data-pmv="${esc(k)}" data-to="${i + 1}" ${i === p.photos.length - 1 ? "disabled" : ""} aria-label="Move photo ${i + 1} later">›</button><button type="button" class="btn ghost danger" data-prm="${esc(k)}" aria-label="Remove photo ${i + 1}">Remove</button></figcaption></figure>`).join("")}</div>
-      ${p.photos.length ? "" : '<p class="meta" style="margin:0 0 8px">No photos yet.</p>'}<div class="mfoot" style="margin-top:8px"><label class="btn ghost" style="cursor:pointer;margin:0"><input id="pAdd" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden ${p.photos.length >= 8 ? "disabled" : ""}>Add photos</label><span class="meta">The first photo is the cover. JPG, PNG or WebP.</span><span class="msg" id="pPhMsg" role="status"></span></div>`;
+    const n = p.photos.length; cur = Math.max(0, Math.min(cur, n - 1));
+    $("#pPhotosN").textContent = `(${n})`;
+    const k = p.photos[cur];
+    $("#pPhotos").innerHTML = `${n ? `<div class="pview"><img src="${photo(k)}" alt="Photo ${cur + 1} of ${n}">${cur === 0 ? '<span class="cover">Cover</span>' : ""}<button type="button" class="pnav prev" data-pgo="-1" aria-label="Previous photo" ${n < 2 ? "hidden" : ""}>‹</button><button type="button" class="pnav next" data-pgo="1" aria-label="Next photo" ${n < 2 ? "hidden" : ""}>›</button><span class="pcount">${cur + 1} of ${n}</span></div>
+      <div class="pstrip" role="group" aria-label="All photos">${p.photos.map((x, i) => `<button type="button" data-pat="${i}" aria-pressed="${i === cur}" aria-label="Show photo ${i + 1}"><img src="${photo(x)}" alt=""></button>`).join("")}</div>
+      <div class="pact">${cur > 0 ? `<button type="button" class="btn ghost" data-pmv="${esc(k)}" data-to="0">Make cover</button><button type="button" class="btn ghost" data-pmv="${esc(k)}" data-to="${cur - 1}">Move earlier</button>` : ""}${cur < n - 1 ? `<button type="button" class="btn ghost" data-pmv="${esc(k)}" data-to="${cur + 1}">Move later</button>` : ""}<span class="sp"></span><button type="button" class="btn ghost danger" data-prm="${esc(k)}">Remove photo</button></div>` : '<p class="meta" style="margin:0 0 10px">No photos yet.</p>'}
+      <div class="mfoot" style="margin-top:10px"><label class="btn ice" style="cursor:pointer;margin:0"><input id="pAdd" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden ${n >= 8 ? "disabled" : ""}>Add photos</label><span class="meta">Up to 8. The first photo is the cover. JPG, PNG or WebP.</span><span class="msg" id="pPhMsg" role="status"></span></div>`;
     $("#pAdd").onchange = async (ev) => {
       const files = [...ev.target.files]; ev.target.value = ""; if (!files.length) return;
       const msg = $("#pPhMsg"); msg.className = "msg"; msg.textContent = "Uploading…";
-      try { const fd = new FormData(); for (const f of files) fd.append("photos", await shrink(f)); const r = await fetch("/api/admin/posts/" + p.id, { method: "POST", body: fd, credentials: "same-origin" }), d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "The upload didn't work."); p.photos = d.photos; photosChanged = true; toast(files.length === 1 ? "Photo added" : "Photos added"); paint(); }
+      try { const fd = new FormData(); for (const f of files) fd.append("photos", await shrink(f)); const r = await fetch("/api/admin/posts/" + p.id, { method: "POST", body: fd, credentials: "same-origin" }), d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "The upload didn't work."); cur = p.photos.length; p.photos = d.photos; photosChanged = true; toast(files.length === 1 ? "Photo added" : "Photos added"); paint(); }
       catch (er) { msg.className = "msg err"; msg.textContent = er.message; }
     };
   };
   $("#pPhotos").onclick = async (ev) => {
+    const go = ev.target.closest("[data-pgo]"), at = ev.target.closest("[data-pat]");
+    if (go) { cur = (cur + Number(go.dataset.pgo) + p.photos.length) % p.photos.length; return paint(); }
+    if (at) { cur = Number(at.dataset.pat); return paint(); }
     const mv = ev.target.closest("[data-pmv]"), rm = ev.target.closest("[data-prm]"); if (!mv && !rm) return;
     if (rm && !tap(rm, "remove")) return;
-    try { const d = await api("/api/admin/posts/" + p.id, { method: "POST", body: JSON.stringify(mv ? { action: "photo_move", key: mv.dataset.pmv, to: Number(mv.dataset.to) } : { action: "photo_remove", key: rm.dataset.prm }) }); p.photos = d.photos; photosChanged = true; if (rm) toast("Photo removed"); paint(); }
+    try { const d = await api("/api/admin/posts/" + p.id, { method: "POST", body: JSON.stringify(mv ? { action: "photo_move", key: mv.dataset.pmv, to: Number(mv.dataset.to) } : { action: "photo_remove", key: rm.dataset.prm }) }); if (mv) cur = Number(mv.dataset.to); p.photos = d.photos; photosChanged = true; toast(rm ? "Photo removed" : "Photo moved"); paint(); }
     catch (er) { toast(er.message, true); }
   };
-  paint();
+  // Left and right arrow keys browse the photos
+  photoKey = (ev) => { if (m.hidden) { photoKey = null; return; } if (!$("#pPhotos").hidden && p.photos.length > 1 && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && (ev.key === "ArrowLeft" || ev.key === "ArrowRight")) { cur = (cur + (ev.key === "ArrowRight" ? 1 : -1) + p.photos.length) % p.photos.length; paint(); } };
+  paint(); showTab(startTab);
   $("#pForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#pMsg"); msg.className = "msg"; msg.textContent = "Saving…";
     const body = { action: "edit", biz: $("#pBiz").value, title: $("#pTitle").value, city: $("#pCity").value, season: $("#pSeason").value, kind: $("#pKind").value, street: $("#pStreet").value, zip: $("#pZip").value, area: $("#pArea").value, web: $("#pWeb").value, phone: $("#pPhone").value, where: $("#pWhere").value, desc: $("#pDesc").value };
@@ -147,7 +160,7 @@ function editPost(p) {
     catch (err) { msg.className = "msg err"; msg.textContent = err.message; }
   };
 }
-$("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-editpost]"); if (b) { editPost(POSTS.find((x) => x.id === b.dataset.editpost)); if (b.dataset.focus === "photos") { const h = $("#pPhotosH"); if (h) h.scrollIntoView({ block: "start" }); } } });
+$("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-editpost]"); if (b) editPost(POSTS.find((x) => x.id === b.dataset.editpost), b.dataset.focus === "photos" ? "photos" : "details"); });
 
 
 /* ---------- submitted events (public "Add your event" form) ---------- */
@@ -172,6 +185,8 @@ async function renderSubs() {
   })).join("")}</div>`;
   go();
 }
+let photoKey = null;
+document.addEventListener("keydown", (e) => photoKey && photoKey(e));
 // A small edit window for records with a few plain fields (submitted events, waiting contests)
 function editSimple({ title, fields, values, save }) {
   const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
