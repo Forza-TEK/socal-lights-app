@@ -86,15 +86,17 @@
           "id": "vote",
           "title": "Vote in a contest",
           "desc": "Use the category tabs, pick one favorite in each, and share the contest.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/vote.mp4",
+          "poster": "/tutorials/vote.jpg",
+          "length": "1:29"
         },
         {
           "id": "judge",
           "title": "Judge a contest",
           "desc": "Open your judge link, score each home, and recuse yourself when you know the household.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/judge.mp4",
+          "poster": "/tutorials/judge.jpg",
+          "length": "1:08"
         }
       ]
     },

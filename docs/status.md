@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-02_
 
+## Tutorials: Vote and judge (2026-11-02, branch `claude/sharp-keller-zmygil`)
+Two new videos on the Tutorials page: "Vote in a contest" (1:29, phone-sized screen) and "Judge a contest" (1:08, computer screen), `hfc_female` voice, recorded on a local copy with made-up demo data (nothing on the live database). 11 of 25 tutorial videos are done; still "Coming soon": Find and plan (6), Enter a home (3), Sponsors and installers (3), Post events and homes (2). The recording setup is now in `scripts/tutorials/` (see `docs/tutorials.md`). The sign-in step in the voting video is narrated, not shown (the local sign-in shows a test code).
+
 ## Profiles and management pages (2026-11-02, branch `claude/affectionate-faraday-0w156h`)
 Admin Installers and Users open a Profile window with all linked records; contest management, judging and installer management use the side menu / rail / bottom bar frame (`public/appshell.js`). No migration. See the end of `docs/admin-audit.md`.
 
