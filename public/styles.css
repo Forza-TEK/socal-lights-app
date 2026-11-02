@@ -825,3 +825,7 @@ body.lb-open{overflow:hidden}
 .quick button{height:44px}
 .rtlink,.sortsel{min-height:44px}
 .sortl{min-height:44px}
+#welcome button,#welcome button.no{min-height:44px}
+#panelToggle{min-width:32px}
+
+.onbtn{flex-wrap:wrap;text-align:center;line-height:1.3;padding:8px 16px}

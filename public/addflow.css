@@ -26,7 +26,7 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 .tile.sm{padding:14px 18px;min-height:52px;align-content:center}
 .tile.opt{grid-template-columns:auto 1fr;column-gap:20px;row-gap:2px;align-items:start}.tile.opt .ico{grid-row:1/4;width:36px;height:36px;color:var(--season);margin-top:2px}.tile.opt>b{color:var(--ink);font-weight:500}.tile.opt .ico svg{display:block}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--btn);background:var(--btn);color:var(--btn-ink);font:500 16px var(--font);padding:14px 26px;min-height:50px;border-radius:8px;cursor:pointer;text-decoration:none}
-.btn.out{background:transparent;color:var(--ink);border-color:var(--ink)}.btn.sm{min-height:38px;padding:7px 14px;font-size:14px}.btn:disabled{opacity:.35;cursor:not-allowed}.btn:hover:not(:disabled){opacity:.88}
+.btn.out{background:transparent;color:var(--ink);border-color:var(--ink)}.btn.sm{min-height:44px;padding:7px 14px;font-size:14px}.btn:disabled{opacity:.35;cursor:not-allowed}.btn:hover:not(:disabled){opacity:.88}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:0 max(24px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));z-index:5}
 .segs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;margin:0 -24px;padding:0 24px}.seg{height:4px;background:var(--line);position:relative;margin-top:-2px;border-radius:2px;overflow:hidden}.seg i{position:absolute;inset:0 auto 0 0;background:var(--season);display:block}
 .nav{max-width:640px;margin:14px auto 0;display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -65,7 +65,7 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 .dlg .btn.out{background:transparent;color:var(--ink);border-color:var(--ink)}
 .acct{width:34px;height:34px;border-radius:50%;border:1px solid var(--ink);color:var(--ink);display:inline-grid;place-items:center;overflow:hidden;font-weight:500;font-size:14px;text-decoration:none}.acct img{width:100%;height:100%;object-fit:cover;display:block}
 /* the day/night circle and the signed-in circle are one size and one outline everywhere they sit together */
-.tbtn,.acct{box-sizing:border-box;flex:none;width:38px;height:38px;min-width:38px;min-height:38px;border:1px solid var(--ink);border-radius:50%;padding:0;margin:0;background:transparent;color:var(--ink);display:inline-grid;place-items:center;line-height:1;overflow:hidden}
+.tbtn,.acct{box-sizing:border-box;flex:none;width:44px;height:44px;min-width:44px;min-height:44px;border:1px solid var(--ink);border-radius:50%;padding:0;margin:0;background:transparent;color:var(--ink);display:inline-grid;place-items:center;line-height:1;overflow:hidden}
 .tbtn:hover,.acct:hover{background:var(--tile)}
 .ptabs2{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;margin-bottom:-4px}.ptabs2::-webkit-scrollbar{display:none}
 .ptabs2 button{border:0;background:none;border-bottom:2px solid transparent;padding:12px 14px;font:500 15px var(--font);color:var(--muted);cursor:pointer;white-space:nowrap}.ptabs2 button[aria-selected="true"]{color:var(--ink);border-color:var(--season)}

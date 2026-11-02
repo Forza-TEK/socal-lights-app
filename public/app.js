@@ -595,7 +595,7 @@ const homeChips = (p) => [p.lon && "Lights on " + p.lon, VISIT[p.visit], p.radio
 const homeTags = (p, n = 3) => { const c = homeChips(p).slice(0, n); return c.length || p.tonight ? `<div class="tags">${p.tonight ? `<span class="tag conf">Lit tonight · ${p.tonight}</span>` : ""}${c.map((t) => `<span class="tag ice">${esc(t)}</span>`).join("")}</div>` : ""; };
 // "Lights are on tonight": one tap from a visitor, counted per night
 const nightKey = (p) => "scl-on-" + p.id + "-" + new Date().toLocaleDateString("en-CA");
-const onButton = (p) => { let done = false; try { done = !!localStorage.getItem(nightKey(p)); } catch {} return `<button class="onbtn${done ? " done" : ""}" type="button" data-lightson="${esc(p.id)}" ${done ? "disabled" : ""}><span aria-hidden="true">💡</span> ${done ? "Thanks, you reported it lit tonight" : "I saw it lit tonight"}${p.tonight ? ` <b>· ${p.tonight} tonight</b>` : ""}</button>`; };
+const onButton = (p) => { let done = false; try { done = !!localStorage.getItem(nightKey(p)); } catch {} return `<button class="onbtn${done ? " done" : ""}" type="button" data-lightson="${esc(p.id)}" ${done ? "disabled" : ""}><span aria-hidden="true">💡</span> ${done ? "Thanks, noted as lit" : "I saw it lit tonight"}${p.tonight ? ` <b>${p.tonight} tonight</b>` : ""}</button>`; };
 // Installer attribution: a home installed by a professional links to that company's profile page
 const instLink = (p) => (p.inst ? `<a class="instlink" href="/installer/${esc(p.inst.slug)}">${esc(p.inst.name)}</a>` : "");
 const byLine = (p) => (p.kind === "installer" ? (p.inst ? instLink(p) : esc(p.biz)) : "Posted by " + esc(p.biz));
@@ -735,7 +735,7 @@ $("#pbody").addEventListener("click", (e) => {
     e.stopPropagation(); const id = lo.dataset.lightson; lo.disabled = true;
     fetch("/api/posts/" + encodeURIComponent(id) + "/on", { method: "POST" }).then((r) => r.json()).then((j) => {
       try { const p = SHOW.find((x) => x.id === id); if (p) { try { localStorage.setItem(nightKey(p), "1"); } catch {} p.tonight = j.n || 1; } } catch {}
-      lo.classList.add("done"); lo.innerHTML = `<span aria-hidden="true">💡</span> Thanks, you reported it lit tonight <b>· ${j.n || 1} tonight</b>`; toast("Thanks. Other families will see it's lit.");
+      lo.classList.add("done"); lo.innerHTML = `<span aria-hidden="true">💡</span> Thanks, noted as lit <b>${j.n || 1} tonight</b>`; toast("Thanks. Other families will see it's lit.");
     }).catch(() => { lo.disabled = false; toast("Couldn't send that. Try again."); });
   }
 });
