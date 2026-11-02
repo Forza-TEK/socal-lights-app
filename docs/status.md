@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-02_
 
+## Profiles and management pages (2026-11-02, branch `claude/affectionate-faraday-0w156h`)
+Admin Installers and Users open a Profile window with all linked records; contest management, judging and installer management use the side menu / rail / bottom bar frame (`public/appshell.js`). No migration. See the end of `docs/admin-audit.md`.
+
 ## Admin rebuild and every-page day/night + sign-in (2026-11-02, branch `claude/affectionate-faraday-0w156h`, not merged)
 Audit in `docs/admin-audit.md`. Day/night and the account control are now on every page (`public/chrome.js`/`chrome.css`; server-written pages via `functions/_lib/shell.js`; map top bar has its own day/night button; offline page too). Admin has a new shell (desktop side menu, tablet icon rail, phone bottom bar + More sheet), a Dashboard, a Reports tab, and one record standard (`public/admin/kit.js`) used by every tab: toolbar with search, one action row (Edit, main, danger last), two-tap destructive confirm, toast, shared edit window and pager. No migration. Your profile and Tutorials now use the same side menu / rail / bottom bar frame (`public/appshell.js`). Submitted events and waiting contests have an Edit window. Open items are listed in the Admin Checklist artifact and the end of `docs/admin-audit.md`.
 

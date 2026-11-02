@@ -47,3 +47,8 @@ Method: read every Admin file (`public/admin/*`, `functions/api/admin/*`, `admin
 
 ## Profile and Tutorials use the same frame
 `public/appshell.js` + `appshell.css` give Your profile and Tutorials the same side menu (desktop), icon rail (tablet) and bottom bar + More sheet (phone) as Admin. Profile tabs and tutorial categories became the menu items; the site links (Map, Add, Tutorials, Your profile) sit under them.
+
+## Profile records and management pages (follow-up)
+- **Installer and person profile windows** (Admin > Installers / Users, button "Profile"): who they are, counts, then every linked record as a tappable row: homes (opens the house's edit window), contest entries, submitted events (jumps to that event in Submitted events), contests they run, installer profiles they own, an installer's owner account and recent quote requests, admin history, then the edit form. Rows link both ways (person to installer to owner).
+- **Management pages use the same frame** as Admin, Profile and Tutorials: contest management (`/c/<slug>/manage`: Overview, Entries, Results, Judges, Details, Promote, Team, Sponsors), judging (`/c/<slug>/judge`: Ballot plus one item per category) and installer management (`/installer/<slug>/manage`: Overview, Homes, Details, Activity).
+- Logo wordmark is one line ("SoCal Lights", with an Admin tag) in Admin and in the Profile frame.

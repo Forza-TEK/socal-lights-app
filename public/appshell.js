@@ -12,14 +12,14 @@ const P = {
 };
 const svg = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.file}</svg>`;
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261102a"; document.head.appendChild(l); }
+if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261102b"; document.head.appendChild(l); }
 const SITE = [["map", "Map", "/", "map"], ["add", "Add", "/add", "add"], ["tut", "Tutorials", "/tutorials", "play"], ["prof", "Your profile", "/profile", "user"]];
 
-// opts: { page: "tut"|"prof", title, items: [{k,label,icon,count?}], active, onPick(k) }
-export function mountShell({ page, title, items, active, onPick }) {
+// opts: { page: "tut"|"prof"|"contest"..., extra: [[key,label,href,icon]], title, items: [{k,label,icon,count?}], active, onPick(k) }
+export function mountShell({ page, title, items, active, onPick, extra = [] }) {
   const content = document.getElementById("content");
   const item = (i) => `<button type="button" class="sh-nv" data-k="${esc(i.k)}" ${i.hidden ? "hidden" : ""} aria-current="${i.k === active}" title="${esc(i.label)}">${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span><span class="sh-cnt" data-cnt="${esc(i.k)}" ${i.count ? "" : "hidden"}>${i.count || ""}</span></button>`;
-  const site = SITE.filter((s) => s[0] !== page).map(([, l, h, ic]) => `<a class="sh-nv" href="${h}" title="${l}">${svg(ic)}<span class="sh-lb">${l}</span></a>`).join("");
+  const site = [...extra, ...SITE.filter((s) => s[0] !== page)].map(([, l, h, ic]) => `<a class="sh-nv" href="${h}" title="${l}">${svg(ic)}<span class="sh-lb">${l}</span></a>`).join("");
   const bottom = items.slice(0, 4).map((i) => `<button type="button" class="sh-bb sh-own" data-k="${esc(i.k)}" aria-current="${i.k === active}">${svg(i.icon)}<span>${esc(i.label)}</span></button>`).join("");
   const root = document.createElement("div"); root.className = "sh-app";
   root.innerHTML = `<a class="sh-skip" href="#content">Skip to content</a>
@@ -36,6 +36,13 @@ export function mountShell({ page, title, items, active, onPick }) {
   root.querySelector("#sh-scrim").onclick = close; document.addEventListener("keydown", (e) => e.key === "Escape" && close());
   root.addEventListener("click", (e) => { const b = e.target.closest("button[data-k]"); if (!b) return; api.setActive(b.dataset.k); close(); onPick && onPick(b.dataset.k); });
   const api = {
+    // Replace the menu items (for pages whose sections are known only after loading)
+    setItems(next, act) {
+      items = next; if (act) active = act;
+      root.querySelector(".sh-grp.sh-own").innerHTML = items.map(item).join("");
+      root.querySelectorAll(".sh-bbar .sh-bb[data-k]").forEach((b) => b.remove());
+      const more = root.querySelector("#sh-more"); items.slice(0, 4).forEach((i) => more.insertAdjacentHTML("beforebegin", `<button type="button" class="sh-bb sh-own" data-k="${esc(i.k)}" aria-current="${i.k === active}">${svg(i.icon)}<span>${esc(i.label)}</span></button>`));
+    },
     setActive(k) { root.querySelectorAll("[data-k]").forEach((b) => b.setAttribute("aria-current", String(b.dataset.k === k)));  },
     setCount(k, n) { root.querySelectorAll(`[data-cnt="${k}"]`).forEach((el) => { el.textContent = n || ""; el.hidden = !n; }); },
     setHidden(k, h) { root.querySelectorAll(`.sh-nv[data-k="${k}"]`).forEach((b) => (b.hidden = h)); },
