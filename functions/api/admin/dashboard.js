@@ -31,7 +31,7 @@ export async function onRequestGet({ env }) {
     rows("SELECT id, title AS name, city, status, created_at, poster_type FROM posts WHERE contest_id IS NULL ORDER BY created_at DESC LIMIT 8"),
     rows("SELECT id, name, city, status, created_at, event_id FROM event_submissions ORDER BY created_at DESC LIMIT 8"),
     rows("SELECT slug, name, city, entries_close, vote_start, vote_end, (SELECT COUNT(*) FROM posts p WHERE p.contest_id = contests.id AND p.status = 'approved') AS entries, (SELECT COUNT(*) FROM votes v WHERE v.contest_id = contests.id) AS votes FROM contests WHERE status = 'live' AND announced = 0 ORDER BY vote_end LIMIT 6"),
-    rows("SELECT at, admin, area, action, label FROM admin_log ORDER BY id DESC LIMIT 8"),
+    rows("SELECT at, admin, area, action, label FROM admin_log ORDER BY id DESC LIMIT 40"),
   ]);
   const recent = [...recentHomes.map((r) => ({ kind: "home", id: r.id, name: r.name, city: r.city, status: r.status, at: r.created_at, pro: r.poster_type === "installer" })), ...recentEvents.map((r) => ({ kind: "event", id: r.id, eid: r.event_id || "", name: r.name, city: r.city, status: r.status, at: r.created_at }))].sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 10);
   return json({
