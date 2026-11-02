@@ -2,6 +2,7 @@
 import { json, err } from "../../../_lib/util.js";
 import { getUser, sameOrigin, okEmail, sendMail } from "../../../_lib/auth.js";
 import { ownerOf } from "../../../_lib/contests.js";
+import { neighborInvite } from "../../../_lib/email-html.js";
 
 export async function onRequestPost({ params, request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -13,6 +14,7 @@ export async function onRequestPost({ params, request, env }) {
   if (!list.length) return err(400, "Add at least one email address.");
   const note = String(b.note || "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").slice(0, 300).trim();
   let sent = 0;
-  for (const to of list) if (await sendMail(env, { to, subject: `You're invited: ${c.name}`, text: `${c.org} invites you to ${c.name} in ${c.city}.${note ? `\n\n${note}` : ""}\n\nEnter your home or vote for your favorites: https://socallights.app/c/${c.slug}\n\n(You got this because ${c.org} entered your address. Reply to ${c.contact_email} to be left off future invitations.)` })) sent++;
+  const mail = neighborInvite(c, note);
+  for (const to of list) if (await sendMail(env, { to, subject: mail.subject, text: mail.text, html: mail.html })) sent++;
   return json({ ok: true, count: list.length, sent });
 }

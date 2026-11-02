@@ -2,7 +2,7 @@
 // Usage: VOICE=... COOKIES=... PLAYWRIGHT_PATH=... node scripts/tutorials/find-plan.mjs [map|night|email|app|contests|pro-filter]
 import { readFileSync } from "node:fs";
 import { record, sleep } from "./record.mjs";
-import { end as endCard, fromMap } from "./steps.mjs";
+import { end as endCard, fromMap, navSteps } from "./steps.mjs";
 const ck = JSON.parse(readFileSync(process.env.COOKIES, "utf8")), EY = "Find and plan";
 const end = (t, s) => endCard(EY, t, s), card = (t, s) => ({ card: { ey: EY, title: t, sub: s } });
 const IRVINE = { latitude: 33.6846, longitude: -117.8265 };
@@ -33,15 +33,32 @@ const night = {
     end("Weekly lights email", "Sign up for the weekly email and unsubscribe any time"),
   ],
 };
+const BASE = process.env.BASE || "http://localhost:8788";
+// The weekly email as the app writes it (see functions/api/alerts/send.js), filled with real events near Irvine from the local copy of the data
+async function weeklyText() {
+  const fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }), mi = (a, b, c, d) => { const r = Math.PI / 180, x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2; return 3958.8 * 2 * Math.asin(Math.sqrt(x)); };
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" }), until = new Date(Date.now() + 14 * 864e5).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+  const all = await fetch(BASE + "/api/events").then((r) => r.json()), L = (Array.isArray(all) ? all : all.events).filter((e) => e.e >= today && e.s <= until && mi(33.6846, -117.8265, e.lat, e.lng) <= 10 && !String(e.id).startsWith("c-")).sort((a, b) => a.s.localeCompare(b.s)).slice(0, 4);
+  const list = L.map((e) => `- ${e.n}\n  ${e.s === e.e ? fmt(e.s) : fmt(e.s) + " to " + fmt(e.e)}${e.h ? ", " + e.h : ""} \u00b7 ${e.v || e.city}\n  https://socallights.app/#e-${e.id}`).join("\n\n");
+  return `Lights and events within 10 miles of Irvine in the next 14 days:\n\n${list}\n\nSee everything: https://socallights.app/in/irvine\n\nYou asked for this weekly email on socallights.app. Stop it any time: https://socallights.app/api/alerts/unsubscribe?t=demo-unsub-token`;
+}
+const confirmText = "Confirm that you want a weekly email of lights and events within 10 miles of Irvine:\n\nhttps://socallights.app/api/alerts/confirm?t=demo-confirm-token\n\nIf you did not ask for this, ignore this email and nothing will be sent.\n\nSoCal Lights \u00b7 socallights.app";
+const weekly = await weeklyText();
 const email = {
-  id: "email", file: "find-email", start: "/", route: { url: "**/api/config", json: {} },
+  id: "email", file: "find-email", start: "/", routes: [{ url: "**/api/config", json: {} }, { url: "**/api/alerts", json: { ok: true } }],
   steps: [
     { ...card("Weekly lights email", "Sign up for the weekly email and unsubscribe any time"), say: "Weekly lights email. In this video, you sign up for one email a week with the lights near you.", pad: 1.2 },
-    ...fromMap("add").slice(0, 1),
-    { cap: "Three dots > Weekly lights email", say: "Choose Weekly lights email.", do: async (p, h) => { await h.click('[data-m="alerts"]', { after: 2200 }); } },
-    { cap: "Your email", say: "Type your email address, and choose your city and how far to look.", do: async (p, h) => { await h.type("#alEmail", "neighbor@example.com"); await h.type("#alCity", "Irvine"); await h.move("#alRad"); await p.selectOption("#alRad", "10"); await sleep(1200); }, poster: true },
-    { cap: "Agree and sign up", say: "Tick the box to agree, and tap Sign up.", do: async (p, h) => { await h.click("#alOk", { after: 1400 }); await h.click(".alsend", { after: 2600 }); } },
-    { cap: "Confirm by email", say: "We email you a link to confirm. Nothing is sent until you tap it. Every email has an unsubscribe link at the bottom, so you can stop with one tap.", do: async (p, h) => { await sleep(1500); } },
+    ...navSteps([
+      { cap: "Tap the three dots", say: "You start on the map. Tap the three dots at the top.", do: async (p, h) => { await h.click("#morebtn", { after: 1800 }); } },
+      { cap: "Tap Weekly lights email", say: "Then tap Weekly lights email.", do: async (p, h) => { await h.click('[data-m="alerts"]', { after: 2200 }); } },
+    ]),
+    { cap: "Your email and city", say: "Type your email address, and choose your city and how far to look.", do: async (p, h) => { await h.type("#alEmail", "neighbor@example.com"); await h.type("#alCity", "Irvine"); await h.move("#alRad"); await p.selectOption("#alRad", "10"); await h.unring(); await sleep(1200); }, poster: true },
+    { cap: "Agree and sign up", say: "Tick the box to agree, and tap Sign up.", do: async (p, h) => { await h.click("#alOk", { after: 1400 }); await h.click(".alsend", { after: 2800 }); } },
+    { cap: "Check your email", say: "We send you an email to confirm. Nothing else is sent until you do. This is an example of that email.", mail: { subject: "Confirm your SoCal Lights alerts", text: confirmText, to: "neighbor@example.com", note: "Example email" }, pad: 1.4 },
+    { cap: "Tap the link", say: "Tap the link in the email.", mail: "keep", do: async (p, h) => { await h.click('#__mail a[href*="alerts/confirm"]', { after: 3000 }); } },
+    { cap: "You are signed up", say: "That confirms it. Each week you get the lights and events within your distance, when there are any.", do: async (p, h) => { await sleep(2000); } },
+    { cap: "The weekly email", say: "Here is what the weekly email looks like. It lists what is on near you, with a link for each.", mail: { subject: "Lights near Irvine this week", text: weekly, to: "neighbor@example.com", note: "Example email" }, pad: 1.2 },
+    { cap: "Stop it any time", say: "Every email ends with a link to stop. Tap it, and your address is deleted.", mail: "keep", do: async (p, h) => { await h.scroll(400, 1400); await h.click('#__mail a[href*="alerts/unsubscribe"]', { after: 3000 }); } },
     end("Install the app and use it offline", "Add SoCal Lights to your phone and use it without a connection"),
   ],
 };

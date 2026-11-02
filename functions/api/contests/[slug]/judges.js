@@ -7,6 +7,7 @@ import { getUser, sameOrigin, normEmail, okEmail, sendMail } from "../../../_lib
 import { ownerOf, computeResults, hasJudges } from "../../../_lib/contests.js";
 import { judgeProgress } from "../../../_lib/judging.js";
 import { teamChanged } from "../../../_lib/changes.js";
+import { judgeInvite } from "../../../_lib/email-html.js";
 
 export async function inviteJudges(env, c, emails, origin = "https://socallights.app") {
   const have = new Set((await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all()).results.map((r) => r.email));
@@ -17,7 +18,8 @@ export async function inviteJudges(env, c, emails, origin = "https://socallights
     await env.DB.prepare("INSERT INTO judges (id,contest_id,email,token) VALUES (?,?,?,?)").bind(j.id, c.id, email, j.token).run();
     out.push({ ...j, to: String(raw).trim() });
   }
-  for (const j of out) await sendMail(env, { to: j.to, subject: `You're invited to judge ${c.name}`, text: `${c.org} invited you to be a judge for ${c.name}.\n\nOpen your judges' ballot (sign in with this email address):\n${origin}/c/${c.slug}/judge\n\nJudges vote separately from the public. ${c.judge_method === "score" ? "Score every home from 1 to 10 in each category." : "Pick one favorite home in each category."} Judge on first impression, creativity, theme, craftsmanship and variety of lights. If you know a household, mark it so your vote for it doesn't count.` }).catch(() => {});
+  const mail = judgeInvite(c, origin);
+  for (const j of out) await sendMail(env, { to: j.to, subject: mail.subject, text: mail.text, html: mail.html }).catch(() => {});
   return out.length;
 }
 
