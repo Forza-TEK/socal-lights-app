@@ -1,7 +1,8 @@
 // POST /api/submit-event — public "Add your event" form (JSON).
 // The event is geocoded and its web page is checked. If the page really mentions the event and its year, the event
 // is published straight away; otherwise it waits in the admin's "Submitted events" tab. Either way it is logged.
-import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { json, err, clean, webUrl, newId, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { requireUser, sameOrigin } from "../_lib/auth.js";
 import { isDate, slug, upsertEvent, verifyEventPage } from "../_lib/events.js";
 import { normName, line, normEmailText } from "../_lib/fields.js";
 import { CITY } from "../../public/cities.js";
@@ -12,10 +13,13 @@ const BAD = /\b(viagra|casino|porn|xxx|escort|crypto|bitcoin|loan|forex|cbd|bett
 
 export async function onRequestPost({ request, env }) {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  // An event belongs to the account that adds it: sign in first (this replaces the "I am human" check)
+  if (!sameOrigin(request)) return err(403, "Not allowed.");
+  const { user, res } = await requireUser(request, env);
+  if (res) return res;
   const b = await request.json().catch(() => null);
   if (!b) return err(400, "The form couldn't be read. Please try again.");
 
-  if (!(await verifyTurnstile(env, b["cf-turnstile-response"], ip))) return err(400, "Please complete the 'I am human' check and send again.");
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM submit_log WHERE ip = ? AND created_at > datetime('now','-1 hour')").bind(ip).first();
   if (n >= 5) return err(429, "Too many submissions from this connection. Try again in an hour.");
 
@@ -23,7 +27,7 @@ export async function onRequestPost({ request, env }) {
     name: normName(clean(b.name, 120)), city: clean(b.city, 60), season: SEASONS[b.season] ? b.season : "", type: clean(b.type, 10),
     start_date: clean(b.start, 10), end_date: clean(b.end || b.start, 10), hours: line(b.hours, 120),
     free: b.free ? 1 : 0, price: line(b.price, 80), blurb: line(b.blurb, 200), url: webUrl(clean(b.url, 300)),
-    venue: normName(clean(b.venue, 120)), address: line(b.address, 160), email: normEmailText(clean(b.email, 120)),
+    venue: normName(clean(b.venue, 120)), address: line(b.address, 160), email: String(user.email || "").toLowerCase(), // always the account email, which is how the event is tied to its owner
   };
   if (e.name.length < 4) return err(400, "Enter the event's name.");
   if (!CITY[e.city]) return err(400, "Choose a city from the list.");

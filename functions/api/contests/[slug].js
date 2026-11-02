@@ -45,14 +45,15 @@ export async function onRequestGet({ params, request, env }) {
     ...(isOwner ? { installerEmail: c.installer_email || "" } : {}),
     contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
     entries, winners: frozen ? frozen.winners : c.announced ? live.winners : {}, jwinners: frozen ? frozen.jwinners || {} : c.announced ? live.jwinners : {}, awards, prizes,
-    me: { signedIn: !!user, isOwner, isJudge: !!jrow, votes: mine },
+    me: { signedIn: !!user, isOwner, isCreator: !!user && !!c.owner_id && c.owner_id === user.id, isJudge: !!jrow, votes: mine },
   }, { headers: { "cache-control": "no-store" } });
 }
 
 export async function onRequestPatch({ params, request, env, waitUntil }) {
   const W = waitUntil;
   if (!sameOrigin(request)) return err(403, "Not allowed.");
-  const { c, res, user } = await ownerOf(request, env, params.slug, getUser);
+  // Changing the contest itself (details, dates, open/close, announcing winners) is for the person who created it. Admin does it from the Admin tab.
+  const { c, res, user } = await ownerOf(request, env, params.slug, getUser, true);
   if (res) return res;
   const b = await request.json().catch(() => ({}));
   if (b.action === "edit") return editContest(env, c, b, user, W);

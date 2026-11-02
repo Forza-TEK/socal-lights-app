@@ -32,16 +32,15 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   // Entering a contest needs a signed-in account (that replaces the "I am human" check)
   const contestSlug = clean(form.get("contest"), 60);
-  let contest = null, cu = null;
+  // Every listing belongs to the signed-in account that adds it (this replaces the "I am human" check)
+  let contest = null, cu = await getUser(request, env);
+  if (!cu) return err(401, contestSlug ? "Please sign in to enter this contest." : "Please sign in to add your lights display.");
   if (contestSlug) {
-    cu = await getUser(request, env);
-    if (!cu) return err(401, "Please sign in to enter this contest.");
     contest = await getContest(env, contestSlug);
     if (!contest || contest.status !== "live") return err(404, "This contest isn't available.");
     if (!windows(contest).entriesOpen) return err(400, "Entries for this contest are closed.");
     if (form.get("rules") !== "1") return err(400, "Please accept the official rules to enter.");
-  } else if (!(await verifyTurnstile(env, form.get("cf-turnstile-response"), ip)))
-    return err(400, "Please complete the 'I am human' check and send again.");
+  }
 
   // Throttle: 5 submissions per hour per connection
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM submit_log WHERE ip = ? AND created_at > datetime('now','-1 hour')").bind(ip).first();
@@ -52,7 +51,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const title = normName(clean(form.get("title"), 90)) || (contest ? biz : "");
   const city = clean(form.get("city"), 60);
   const descr = normText(clean(form.get("desc"), 1200)) || (contest ? `Entry in ${contest.name}` : "");
-  const email = contest ? cu.email : normEmailText(clean(form.get("email"), 120));
+  const email = String(cu.email || "").toLowerCase(); // always the account email: it ties the listing to its owner
   const webRaw = clean(form.get("web"), 200);
   const kind = form.get("kind") === "installer" ? "installer" : "homeowner";
   const pro = kind === "installer";
@@ -117,7 +116,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare(
       `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,entry_no,approved_at)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'CA',?,?,?,?,?,${contest ? "(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?)" : "NULL"},${autoApprove ? "datetime('now')" : "NULL"})`
-    ).bind(id, autoApprove ? "approved" : "pending", biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area, contest ? contest.id : null, "", cu ? cu.id : null, ...(contest ? [contest.id] : [])),
+    ).bind(id, autoApprove ? "approved" : "pending", biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area, contest ? contest.id : null, "", cu.id, ...(contest ? [contest.id] : [])),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);

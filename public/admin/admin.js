@@ -239,26 +239,41 @@ $("#main").addEventListener("click", async (e) => {
 });
 
 /* ---------- contests (organizers who need a review, e.g. a Gmail address or an email that doesn't match their website) ---------- */
-let CONTESTS = [];
+let CONTESTS = [], CVIEW = "", CSEARCH = "";
+const flagged = (c) => c.status === "live" && !!c.note;
+const cview = (c) => (c.status === "pending" || flagged(c) ? "look" : c.status === "live" ? "live" : c.status === "declined" ? "declined" : "ended");
 async function renderContests() {
   const main = $("#main");
-  const list = await api("/api/admin/contests?status=pending");
-  setCount("contests", list.length); CONTESTS = list;
-  if (!list.length) { main.innerHTML = `<div class="empty">No contests waiting. A contest goes live by itself when the organizer's email matches their website.</div>`; return; }
-  main.innerHTML = toolbar({ search: { placeholder: "Search contests, organizers" }, count: String(list.length) }) + `<div class="cards">${list.map((c) => rec({
-    attrs: `data-cid="${esc(c.id)}"`, title: esc(c.name), tags: [["Waiting", "warn"]], meta: esc((c.created_at || "").slice(0, 16)) + " UTC",
-    facts: fact("Run by", esc(c.org) + " · " + esc(c.city)) + fact("Organizer email", `<span style="user-select:all">${esc(c.owner_email || c.contact_email)}</span>`) + fact("Website", c.site ? `<a href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site)}</a>` : "none given") + fact("Why it's here", esc(c.note || ""))
-      + fact("Dates", `Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}`) + fact("Welcome message", esc(c.descr)) + fact("Public page", `<a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">/c/${esc(c.slug)}</a>`),
-    edit: btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`), main: btn("main", "Approve (goes on the map)", 'data-cact="approve"'), danger: btn("danger", "Decline", 'data-cact="decline"'),
-  })).join("")}</div>`;
-  wireToolbar(main, { onSearch: (q) => filterCards(main, q) }); applyPreset(main);
+  CONTESTS = await api("/api/admin/contests");
+  const g = (k) => CONTESTS.filter((c) => cview(c) === k), n = { look: g("look").length, live: g("live").length, ended: g("ended").length, declined: g("declined").length };
+  setCount("contests", n.look);
+  if (!CVIEW || (CVIEW === "look" && !n.look)) CVIEW = n.look ? "look" : n.live ? "live" : n.ended ? "ended" : "declined";
+  const list = g(CVIEW);
+  const bar = toolbar({ views: [{ k: "look", label: "Needs a look", n: n.look }, { k: "live", label: "Live", n: n.live }, { k: "ended", label: "Ended", n: n.ended }, { k: "declined", label: "Unpublished", n: n.declined }], active: CVIEW, search: { placeholder: "Search contests, organizers", value: CSEARCH }, count: String(list.length) });
+  const wire = () => { wireToolbar(main, { onView: (v) => { CVIEW = v; renderContests(); }, onSearch: (q) => { CSEARCH = q; filterCards(main, q); } }); if (CSEARCH) filterCards(main, CSEARCH); applyPreset(main); };
+  if (!list.length) { main.innerHTML = bar + `<div class="empty">${CVIEW === "look" ? "Nothing needs a look. New contests go live right away. One shows here when the organizer's email could not be matched to a website." : "No contests here."}</div>`; wire(); return; }
+  main.innerHTML = bar + `<div class="cards">${list.map((c) => {
+    const tone = c.status === "live" ? "ok" : c.status === "declined" ? "bad" : c.status === "pending" ? "warn" : "";
+    const label = c.status === "live" ? (c.announced ? "Winners announced" : "Live") : c.status === "declined" ? "Unpublished" : c.status === "pending" ? "Waiting" : "Ended";
+    return rec({
+      attrs: `data-cid="${esc(c.id)}"`, title: esc(c.name), tags: [[label, tone], ...(flagged(c) ? [["Needs a look", "warn"]] : [])], meta: esc((c.created_at || "").slice(0, 16)) + " UTC",
+      facts: fact("Run by", esc(c.org) + " · " + esc(c.city)) + fact("Organizer", `<span style="user-select:all">${esc(c.owner_email || c.contact_email || "no owner")}</span>`) + fact("Website", c.site ? `<a href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site)}</a>` : "none given") + fact("Why it needs a look", esc(c.note || ""))
+        + fact("Dates", `Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}`) + fact("Activity", `${fmt(c.entries)} ${c.entries === 1 ? "entry" : "entries"} · ${fmt(c.votes)} ${c.votes === 1 ? "vote" : "votes"}`)
+        + fact("Pages", `<a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">Public page</a> · <a href="/c/${esc(c.slug)}/manage" target="_blank" rel="noopener">Organizer dashboard</a>`),
+      edit: btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`),
+      main: (c.status === "live" ? (flagged(c) ? btn("main", "Looks fine", 'data-cact="approve"') : "") + btn("ghost", "Unpublish", 'data-cact="decline"') : c.status === "closed" ? "" : btn("main", c.status === "pending" ? "Approve (goes on the map)" : "Make live again", 'data-cact="approve"')),
+      danger: btn("danger", c.entries ? `Delete with ${c.entries} ${c.entries === 1 ? "entry" : "entries"}` : "Delete", 'data-cact="delete"'),
+    });
+  }).join("")}</div>`;
+  wire();
 }
+const CDONE = { approve: "Contest is live", decline: "Contest unpublished", delete: "Contest deleted" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-cact]"); if (!b) return;
-  const card = b.closest("[data-cid]"), msg = card.querySelector(".msg");
-  if (b.dataset.cact === "decline" && !tap(b, "decline")) return;
+  const card = b.closest("[data-cid]"), msg = card.querySelector(".msg"), act = b.dataset.cact;
+  if ((act === "decline" || act === "delete") && !tap(b, act === "delete" ? "delete for good" : "unpublish")) return;
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
-  try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: b.dataset.cact }) }); card.remove(); toast(b.dataset.cact === "approve" ? "Contest approved" : "Contest declined"); refreshCounts(); if (!document.querySelector(".rec")) render(); }
+  try { await api("/api/admin/contests/" + card.dataset.cid, act === "delete" ? { method: "DELETE" } : { method: "POST", body: JSON.stringify({ action: act }) }); toast(CDONE[act]); renderContests(); refreshCounts(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 

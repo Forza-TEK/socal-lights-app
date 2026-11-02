@@ -148,3 +148,16 @@ export async function judgeOf(env, c, user) {
   if (!user || !hasJudges(c)) return null;
   try { return await env.DB.prepare("SELECT * FROM judges WHERE contest_id = ? AND email = ?").bind(c.id, user.email).first(); } catch { return null; }
 }
+
+// Removes a contest and everything that belongs to it: entries and their photos, votes, judges and their picks, sponsors and logos,
+// co-organizers, visit counts, quote requests, the change log and the listing on the map. Used by the admin Contests tab.
+export async function deleteContest(env, c) {
+  const all = (sql) => env.DB.prepare(sql).bind(c.id).all().then((r) => r.results).catch(() => []);
+  for (const e of await all("SELECT photos FROM posts WHERE contest_id = ?")) for (const k of JSON.parse(e.photos || "[]")) await env.PHOTOS.delete(k).catch(() => {});
+  for (const x of await all("SELECT logo FROM contest_sponsors WHERE contest_id = ?")) if (x.logo) await env.PHOTOS.delete(x.logo).catch(() => {});
+  const stmts = ["votes", "judge_picks", "judge_scores", "judge_conflicts", "judges", "contest_staff", "contest_hits", "contest_sponsors", "contest_leads", "contest_changes"]
+    .map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE contest_id = ?`).bind(c.id));
+  stmts.push(env.DB.prepare("DELETE FROM posts WHERE contest_id = ?").bind(c.id), env.DB.prepare("DELETE FROM contests WHERE id = ?").bind(c.id));
+  if (c.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id));
+  await env.DB.batch(stmts);
+}
