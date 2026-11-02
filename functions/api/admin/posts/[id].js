@@ -1,10 +1,19 @@
 // POST   /api/admin/posts/<id>  {action: "approve" | "decline" | "edit"}
+// POST   /api/admin/posts/<id>  {action: "photo_remove" | "photo_move", key, to}  or multipart "photos" files: manage the house's photos (first = cover)
 // DELETE /api/admin/posts/<id>  removes the post and its photos
 import { phoneField, line, normText, normName, normStreet, normZip } from "../../../_lib/fields.js";
 import { json, err, clean, safeUrl, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
 import { CITY } from "../../../../public/cities.js";
 import { SEASONS } from "../../../../public/seasons.js";
 
+const MAX_PHOTOS = 8, MAX_BYTES = 6 * 1024 * 1024;
+function sniff(bytes) {
+  const b = new Uint8Array(bytes.slice(0, 12));
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return { ext: "jpg", type: "image/jpeg" };
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return { ext: "png", type: "image/png" };
+  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return { ext: "webp", type: "image/webp" };
+  return null;
+}
 async function getPost(env, id) {
   return env.DB.prepare("SELECT * FROM posts WHERE id = ?").bind(id).first();
 }
@@ -15,8 +24,47 @@ async function deletePhotos(env, keys) {
 export async function onRequestPost({ params, request, env }) {
   const row = await getPost(env, params.id);
   if (!row) return err(404, "That post no longer exists.");
-  const body = await request.json().catch(() => ({}));
   const keys = JSON.parse(row.photos || "[]");
+  const save = (list) => env.DB.prepare("UPDATE posts SET photos=? WHERE id=?").bind(JSON.stringify(list), row.id).run();
+
+  // Add photos (multipart). Live houses keep them in the public folder, waiting ones in the private pending folder.
+  if ((request.headers.get("content-type") || "").includes("multipart/form-data")) {
+    let form; try { form = await request.formData(); } catch { return err(400, "The photos couldn't be read. Try again."); }
+    const files = form.getAll("photos").filter((f) => f && typeof f === "object" && f.size > 0);
+    if (!files.length) return err(400, "Choose at least one photo.");
+    if (keys.length + files.length > MAX_PHOTOS) return err(400, `A house can have ${MAX_PHOTOS} photos. It has ${keys.length}; remove one first.`);
+    const dir = row.status === "approved" ? "p" : "pending", added = [];
+    // Photo files are numbered (1.jpg, 2.png ...), which is what the photo routes accept. Use the next number up so a cached older photo is never reused.
+    const nums = keys.map((k) => Number((k.match(/\/(\d+)\.\w+$/) || [])[1]) || 0);
+    const nextNum = () => { let n = Math.max(0, ...nums) + 1; if (n > 99) { n = 1; while (nums.includes(n)) n++; } nums.push(n); return n; };
+    try {
+      for (const f of files) {
+        if (f.size > MAX_BYTES) throw new Error("A photo is too large. Use photos under 6 MB.");
+        const buf = await f.arrayBuffer(), kind = sniff(buf);
+        if (!kind) throw new Error("Photos must be JPG, PNG or WebP.");
+        const key = `${dir}/${row.id}/${nextNum()}.${kind.ext}`;
+        await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: kind.type } });
+        added.push(key);
+      }
+    } catch (e) { await deletePhotos(env, added); return err(400, e.message || "A photo couldn't be saved."); }
+    const list = [...keys, ...added]; await save(list);
+    return json({ ok: true, photos: list });
+  }
+
+  const body = await request.json().catch(() => ({}));
+
+  if (body.action === "photo_remove") {
+    if (!keys.includes(body.key)) return err(404, "That photo is already gone.");
+    await deletePhotos(env, [body.key]);
+    const list = keys.filter((k) => k !== body.key); await save(list);
+    return json({ ok: true, photos: list });
+  }
+  if (body.action === "photo_move") {
+    const i = keys.indexOf(body.key), to = Math.max(0, Math.min(keys.length - 1, Number(body.to) || 0));
+    if (i < 0) return err(404, "That photo is already gone.");
+    const list = keys.slice(); list.splice(i, 1); list.splice(to, 0, body.key); await save(list);
+    return json({ ok: true, photos: list });
+  }
 
   if (body.action === "approve") {
     // Move photos from pending/ to p/ so the public photo route can serve them
