@@ -27,7 +27,7 @@ let cur = (await me()).user ? await me() : { user: null };
 // A contest belongs to the account that creates it, so sign in before anything else
 if (!cur.user) {
   document.getElementById("app").innerHTML = `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
-    <div class="main"><div><p class="eyebrow">Create a contest</p><h1>Sign in to create a contest</h1><p class="help">Your contest is saved to your account, and only you (and the site owner) can change it. Sign in with Google or an emailed code. It takes a few seconds.</p></div>
+    <div class="main"><h1>Sign in to create a contest</h1><p class="help">Your contest is saved to your account, and only you (and the site owner) can change it. Sign in with Google or an emailed code. It takes a few seconds.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></div>`;
   await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to create a contest", next: location.pathname })) go(); }; });
   location.reload(); await new Promise(() => {});
