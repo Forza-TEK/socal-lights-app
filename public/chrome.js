@@ -5,7 +5,7 @@
 import { me, signIn, signOut, esc } from "/auth.js?v=20261101a";
 
 // styles for the account menu and the signed-out button, added once (pages without our main stylesheet get them too)
-if (!document.getElementById("chrome-css")) { const l = document.createElement("link"); l.id = "chrome-css"; l.rel = "stylesheet"; l.href = "/chrome.css?v=20261103a"; document.head.appendChild(l); }
+if (!document.getElementById("chrome-css")) { const l = document.createElement("link"); l.id = "chrome-css"; l.rel = "stylesheet"; l.href = "/chrome.css?v=20261103b"; document.head.appendChild(l); }
 
 /* ---------- light / night (same switch and same remembered choice as the map) ---------- */
 const nextSwitch = () => { const d = new Date(); d.setMinutes(0, 0, 0); const h = d.getHours(); if (h < 6) d.setHours(6); else if (h < 18) d.setHours(18); else { d.setDate(d.getDate() + 1); d.setHours(6); } return d.getTime(); };
