@@ -17,6 +17,16 @@ New homes and events publish immediately (spam words and daily caps hold them); 
 ## Server-written pages match the app (2026-11-01)
 `functions/_lib/shell.js` holds the app's look (Plus Jakarta Sans, colors, tags, photo header, sticky action bar, light and night by time of day). Installer profiles, city pages (`/in/<city>`) and the installer confirmation page use it. Persona audit: `docs/audit-2026-11-01-personas.md`; its tasks are on the SoCal Lights Checklist.
 
+## Persona audit items built (2026-11-02, from `docs/audit-2026-11-01-personas.md`)
+- **Own listings:** Profile > Displays and Events: edit, "Take down for the season" / "Put back", event Cancelled or Postponed tag, "Run again next year" (migration 0142). Cancelled events are left out of the weekly email.
+- **Family details:** lights-on hours, drive/walk, parking, stroller access and radio station on homes (wizard, cards, details) with a "Visiting a home" filter; "I saw it lit tonight" reports (`lights_on` table).
+- **Installers:** claim a profile (email at the company's website, or you approve it in admin > Installers > Owner email), manage page at `/installer/<slug>/manage` (details, logo, confirm or remove claims, views, quote requests), quote form on the profile, add-house prefill.
+- **Contests:** share previews for `/c/<slug>` (title, description, photo), run again next year, invite neighbors by email, remind judges.
+- **Reports:** "Something wrong? Tell us" is now a short form (`/api/report`); the three-a-day email lists them. Limits: 5 homes a day per email, 8 events a day per email.
+- **Layout:** side panel from 701 px wide (tablets, landscape phones), two-row top bar there, 44 px tap targets, wider desktop search.
+- **Tutorials page:** videos in a grid, coming-soon items as compact rows.
+- Still needs a person: test Google sign-in inside the Android app (checklist item).
+
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
 

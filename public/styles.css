@@ -276,7 +276,7 @@ button{touch-action:manipulation}
 .panel .list .ibody{padding:9px 12px 11px}
 .panel .list .item h3{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .panel .list .star{position:absolute;right:6px;top:6px;width:40px;height:40px;background:var(--surface);box-shadow:var(--shadow-sm)}
-@media (max-width:860px){
+@media (max-width:700px){
   :root{--panel-w:0px}
   .topbar{right:max(14px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 10px);gap:8px}
   .brand{display:block;flex:none;width:50px;height:50px;padding:0;border-radius:50%;background:none;box-shadow:var(--shadow)}
@@ -401,7 +401,7 @@ button{touch-action:manipulation}
 .fbody .opt{display:flex;gap:10px;align-items:center;min-height:40px;font-size:15px;font-weight:500;cursor:pointer}
 .fbody input[type=checkbox]{width:20px;height:20px;accent-color:var(--season)}
 .ffoot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 18px;border-top:1px solid var(--line);padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
-@media (max-width:860px){
+@media (max-width:700px){
   .fpanel{left:0;right:0;bottom:0;top:calc(env(safe-area-inset-top,0px) + 36px);width:auto;max-height:none;border-radius:24px 24px 0 0}
   .searchrow{display:grid;grid-template-columns:50px minmax(0,1fr) 50px 50px;grid-template-areas:"brand search acct more" "season season season season";gap:8px 10px}
   .searchrow .brand{grid-area:brand}.searchrow .search{grid-area:search}.searchrow #acctbtn{grid-area:acct}.searchrow #morebtn{grid-area:more}
@@ -418,10 +418,10 @@ button{touch-action:manipulation}
 .actchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex-basis:100%}
 .achip{border:1.5px solid var(--season);background:var(--season-soft);color:var(--ink);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer}
 .keepfree{text-align:center;margin:14px 0 4px}.keepfree .linkbtn{color:var(--muted);font-size:14px}
-@media (max-width:860px){
+@media (max-width:700px){
   .quick button.qf{order:-1;margin-left:0}
 }
-@media (max-width:1359px) and (min-width:861px){.brand .wm{display:none}.brand{padding:0 8px 0 10px}}
+@media (max-width:1499px) and (min-width:701px){.brand .wm{display:none}.brand{padding:0 8px 0 10px}}
 
 /* ---------- Redfin-style list cards ---------- */
 @media (min-width:1100px){:root{--panel-w:540px}}
@@ -436,11 +436,11 @@ button{touch-action:manipulation}
 .snip{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .snip .st{font-weight:700}.snip .st.conf{color:var(--free)}.snip .st.exp{color:var(--gold)}
 .tile .tag.tl{position:absolute;left:8px;bottom:8px;z-index:1}
-@media (min-width:861px){
+@media (min-width:701px){
   .panel .list{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
   .panel .list .tile,.panel .list .item .thumb{height:150px}
 }
-@media (max-width:860px){.panel .list .tile,.panel .list .item .thumb{height:120px}.hmv{display:none}.phead .hrow{flex-wrap:wrap}}
+@media (max-width:700px){.panel .list .tile,.panel .list .item .thumb{height:120px}.hmv{display:none}.phead .hrow{flex-wrap:wrap}}
 
 /* ---------- pin card: tap a dot ---------- */
 .preview{position:fixed;z-index:35;width:320px;background:var(--surface);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;cursor:pointer;display:block}
@@ -455,7 +455,7 @@ button{touch-action:manipulation}
 .pv-acts button{width:36px;height:36px;border:0;background:none;border-radius:50%;display:grid;place-items:center;color:var(--ink);cursor:pointer}
 .pv-acts button:hover{background:var(--surface-2)}
 .pv-acts button svg{fill:none}.pv-acts [aria-pressed="true"]{color:var(--heart)}.pv-acts [aria-pressed="true"] svg{fill:currentColor}
-@media (max-width:860px){
+@media (max-width:700px){
   .preview{left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
   .preview .pv-photo{height:190px}
   body.pin-open .panel{transform:translateY(calc(100% + 160px))!important}
@@ -521,7 +521,7 @@ button{touch-action:manipulation}
 .menu .mrow:nth-child(4),#seasonmenu button:nth-child(4){animation-delay:.12s}
 #seasonmenu button:nth-child(5){animation-delay:.16s}
 .fpanel{transform-origin:top right;animation:popin .26s cubic-bezier(.2,.9,.3,1.1)}
-@media (max-width:860px){.fpanel{transform-origin:bottom center;animation:sheetup .36s cubic-bezier(.2,.8,.2,1)}.fback{animation:fadein .25s ease}}
+@media (max-width:700px){.fpanel{transform-origin:bottom center;animation:sheetup .36s cubic-bezier(.2,.8,.2,1)}.fback{animation:fadein .25s ease}}
 @media (prefers-reduced-motion:reduce){.ptab,.bnav button,.ptab .lb,.ptab .n,.bnav button>span,.menu,.pop,#seasonmenu,.fpanel,.menu .mrow,#seasonmenu button,.pbody.tabin,.phead.tabin,.ptab svg,.bnav button svg{animation:none!important;transition-duration:.01ms!important}}
 
 /* count badges sit a little apart from their tab label */
@@ -529,7 +529,7 @@ button{touch-action:manipulation}
 .bnav button[aria-current] .bn-n{margin-left:10px}
 
 /* phone, night mode only: the list sheet is slightly see-through, so the map shows faintly behind it */
-@media (max-width:860px){
+@media (max-width:700px){
   :root[data-theme="dark"] .panel{background:color-mix(in srgb,var(--surface) 82%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2)}
   :root[data-theme="dark"] .navfade{background:linear-gradient(to bottom,transparent 0,color-mix(in srgb,var(--surface) 82%,transparent) 14%)}
 }
@@ -566,7 +566,7 @@ button{touch-action:manipulation}
 .hrow .hcount{display:inline-flex;align-items:center;gap:.28em;white-space:pre-wrap}
 
 /* phone: the back arrow stays put while the details scroll (the sheet is transformed, so "fixed" is relative to the sheet) */
-@media (max-width:860px){
+@media (max-width:700px){
   .panel #back{position:fixed;top:14px;left:max(14px,env(safe-area-inset-left,0px));z-index:6;box-shadow:var(--shadow)}
 }
 
@@ -643,7 +643,7 @@ body.lb-open{overflow:hidden}
 .lbx:focus:not(:focus-visible),.lbn:focus:not(:focus-visible){outline:none}
 
 /* the desktop pop-up card is positioned with a transform (no layout reads while the map moves) */
-@media (min-width:861px){.preview{left:0;top:0;will-change:transform}}
+@media (min-width:701px){.preview{left:0;top:0;will-change:transform}}
 .listmore{height:1px}
 
 /* desktop: Sort sits on the quick-pick row, after Filters */
@@ -652,7 +652,7 @@ body.lb-open{overflow:hidden}
 
 /* desktop: hide and bring back the list */
 .ptoggle{display:none}
-@media (min-width:861px){
+@media (min-width:701px){
   .ptoggle{display:grid;place-items:center;position:fixed;z-index:31;top:50%;transform:translateY(-50%);right:calc(var(--panel-w) + 14px);width:26px;height:64px;border:0;border-radius:14px 0 0 14px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;transition:right .28s cubic-bezier(.3,.8,.3,1)}
   .ptoggle:hover{color:var(--season)}
   .ptoggle svg{transition:transform .28s}
@@ -683,7 +683,7 @@ body.lb-open{overflow:hidden}
 .quick button[aria-pressed="true"],.fseg button[aria-pressed="true"],.pop .seg button[aria-pressed="true"],.kindseg button[aria-pressed="true"]{font-weight:500}
 
 /* Shop category tabs: on desktop (mouse) wrap onto rows so every category is visible; phones keep the swipe row */
-@media (min-width:861px){
+@media (min-width:701px){
   .quick[aria-label="Shop categories"]{flex-wrap:wrap;overflow:visible}
 }
 
@@ -731,7 +731,7 @@ body.lb-open{overflow:hidden}
 /* card share and heart: 44px touch area with the same look (negative margins keep the layout) */
 .panel .list .item .pv-acts .shr,.panel .list .item .pv-acts .star{width:44px;height:44px;margin:-4px -4px -4px -4px}
 .panel .list .item .pv-acts{margin:-6px -8px 0 0;gap:0}
-@media (max-width:860px){.grab{padding:14px 0 8px}}
+@media (max-width:700px){.grab{padding:14px 0 8px}}
 
 /* season button: icon + name for a few seconds, then just the icon (it grows back on touch) */
 .seasonbtn .sico{flex:none;font-size:21px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
@@ -739,7 +739,7 @@ body.lb-open{overflow:hidden}
 .seasonbtn,.seasonbtn.mini{transition:padding .5s cubic-bezier(.25,.1,.25,1),gap .5s cubic-bezier(.25,.1,.25,1)}
 .seasonbtn.mini{gap:0;padding:0 15px}
 .seasonbtn.mini #seasonlbl,.seasonbtn.mini .caret{max-width:0;opacity:0;margin:0}
-@media (max-width:860px){.seasonbtn.mini{padding:0 11px}}
+@media (max-width:700px){.seasonbtn.mini{padding:0 11px}}
 #seasonmenu .sico{display:inline-block;width:26px;font-size:18px;vertical-align:-1px}
 @media (prefers-reduced-motion:reduce){.seasonbtn #seasonlbl,.seasonbtn .caret,.seasonbtn{transition:none}}
 
@@ -751,14 +751,14 @@ body.lb-open{overflow:hidden}
 #sugg .si{flex:none;width:28px;text-align:center;font-size:18px}
 #sugg b{display:block;font-weight:500;font-size:15px;line-height:1.25}
 #sugg small{display:block;color:var(--muted);font-size:13px;font-weight:400;margin-top:1px}
-@media (max-width:860px){#sugg{max-height:55vh}}
+@media (max-width:700px){#sugg{max-height:55vh}}
 
 /* first-visit location offer, shared-night bar, share button, city link line */
 #welcome{position:fixed;z-index:30;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 118px);display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 14px;border-radius:18px;background:var(--surface);box-shadow:var(--shadow);border:1px solid var(--line);color:var(--ink);font-size:14.5px}
 #welcome span{flex:1 1 200px}
 #welcome button{border:0;border-radius:999px;padding:9px 15px;background:var(--season);color:var(--on-season);font:inherit;font-weight:500;cursor:pointer}
 #welcome button.no{background:none;color:var(--muted);padding:9px 6px}
-@media (min-width:861px){#welcome{left:20px;right:auto;top:96px;width:330px}}
+@media (min-width:701px){#welcome{left:20px;right:auto;top:96px;width:330px}}
 .sharedbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 0;padding:10px 12px;border-radius:16px;background:var(--season-soft);font-size:14.5px}
 .sharedbar span{flex:1 1 150px;font-weight:500}
 .sharedbar button{border:0;border-radius:999px;padding:8px 14px;background:var(--ink);color:var(--surface);font:inherit;font-weight:500;cursor:pointer}
@@ -808,3 +808,20 @@ body.lb-open{overflow:hidden}
 .rptdlg textarea,.rptdlg input{font:inherit;min-height:48px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--ink)}
 .rpterr{color:#b42318!important;font-size:14px}.rptrow{display:flex;gap:10px;flex-wrap:wrap}
 .rptgo,.rptx{min-height:48px;padding:0 22px;border-radius:999px;border:0;font:700 16px var(--f-body);cursor:pointer}.rptgo{background:var(--season);color:var(--on-season)}.rptx{background:var(--surface-2);color:var(--ink)}
+
+/* Tablets and phones turned sideways: the list sits beside the map, so the top bar uses two rows in the space that is left */
+@media (min-width:701px) and (max-width:1099px){
+  :root{--panel-w:360px}
+  .brand{width:52px;padding:0;background:none;box-shadow:var(--shadow);justify-content:center;border-radius:50%}
+  .brand .mark{margin:0;width:52px;height:52px}
+  .searchrow{display:grid;grid-template-columns:52px minmax(0,1fr) 52px 52px;grid-template-areas:"brand search acct more" "season season season season";gap:8px 10px}
+  .searchrow .brand{grid-area:brand}.searchrow .search{grid-area:search;max-width:none}.searchrow #acctbtn{grid-area:acct}.searchrow #morebtn{grid-area:more}
+  .seasonbtn{grid-area:season;justify-self:start;height:44px;padding:0 16px;font-size:15px}
+  .iconbtn{width:52px;height:52px}
+  #welcome{top:136px;width:min(330px,calc(100vw - var(--panel-w) - 40px))}
+}
+
+/* Comfortable touch targets: 44 px for the shortcuts, Route these, Sort and the theme toggle */
+.quick button{height:44px}
+.rtlink,.sortsel{min-height:44px}
+.sortl{min-height:44px}
