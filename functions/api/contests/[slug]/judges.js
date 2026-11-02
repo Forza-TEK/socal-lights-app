@@ -3,8 +3,7 @@
 // POST   /api/contests/<slug>/judges { emails }   invite judges (one per line or comma separated); each gets an email with a private link
 // DELETE /api/contests/<slug>/judges?id=<judge>   remove a judge and their picks, scores and conflicts
 import { json, err, newId } from "../../../_lib/util.js";
-import { sendTemplate } from "../../../_lib/mailtpl.js";
-import { getUser, sameOrigin, normEmail, okEmail } from "../../../_lib/auth.js";
+import { getUser, sameOrigin, normEmail, okEmail, sendMail } from "../../../_lib/auth.js";
 import { ownerOf, computeResults, hasJudges } from "../../../_lib/contests.js";
 import { judgeProgress } from "../../../_lib/judging.js";
 import { teamChanged } from "../../../_lib/changes.js";
@@ -18,7 +17,7 @@ export async function inviteJudges(env, c, emails, origin = "https://socallights
     await env.DB.prepare("INSERT INTO judges (id,contest_id,email,token) VALUES (?,?,?,?)").bind(j.id, c.id, email, j.token).run();
     out.push({ ...j, to: String(raw).trim() });
   }
-  for (const j of out) await sendTemplate(env, "judge_invite", j.to, { org: c.org, contest: c.name, link: `${origin}/c/${c.slug}/judge`, how: c.judge_method === "score" ? "Score every home from 1 to 10 in each category." : "Pick one favorite home in each category." }).catch(() => {});
+  for (const j of out) await sendMail(env, { to: j.to, subject: `You're invited to judge ${c.name}`, text: `${c.org} invited you to be a judge for ${c.name}.\n\nOpen your judges' ballot (sign in with this email address):\n${origin}/c/${c.slug}/judge\n\nJudges vote separately from the public. ${c.judge_method === "score" ? "Score every home from 1 to 10 in each category." : "Pick one favorite home in each category."} Judge on first impression, creativity, theme, craftsmanship and variety of lights. If you know a household, mark it so your vote for it doesn't count.` }).catch(() => {});
   return out.length;
 }
 

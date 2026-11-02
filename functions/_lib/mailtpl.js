@@ -104,14 +104,6 @@ export const TEMPLATES = [
     vars: { who: ["Who did it", "Dana Lee"], contest: ["Contest name", "Maple Street Holiday Lights"], changes: ["The list of changes (built by the site)", "- Voting ends: Dec 20 -> Dec 22", true], link: ["Manage page", `${SITE}/c/maple-street/manage`] },
     subject: "{{who}} updated {{contest}}",
     text: "{{who}} changed:\n\n{{changes}}\n\nSee everything the team changed: {{link}}" },
-  { id: "contest_staff", group: "contest", name: "Added as co-organizer", to: "The new co-organizer", when: "An organizer adds a co-organizer.",
-    vars: { org: ["Organizer", "Maple Street Neighbors"], contest: ["Contest name", "Maple Street Holiday Lights"], link: ["Manage page", `${SITE}/c/maple-street/manage`, true] },
-    subject: "You can help run {{contest}}",
-    text: "{{org}} added you as a co-organizer of {{contest}}. Sign in with this email address to approve entries and manage the contest: {{link}}" },
-  { id: "contest_invite", group: "contest", name: "Contest invitation", to: "People the organizer invites", when: "An organizer sends invitations.",
-    vars: { org: ["Organizer", "Maple Street Neighbors"], contest: ["Contest name", "Maple Street Holiday Lights"], city: ["City", "Pasadena"], note: ["Organizer's note (blank if none)", "Hope to see you there!"], link: ["Contest page", `${SITE}/c/maple-street`, true], reply_to: ["Organizer's email", "organizer@example.com"] },
-    subject: "You're invited: {{contest}}",
-    text: "{{org}} invites you to {{contest}} in {{city}}.{{#note}}\n\n{{note}}{{/note}}\n\nEnter your home or vote for your favorites: {{link}}\n\n(You got this because {{org}} entered your address. Reply to {{reply_to}} to be left off future invitations.)" },
   { id: "contest_quote_sent", group: "contest", name: "Quote request sent (to organizer)", to: "The contest organizer", when: "Someone asks the contest's installer for a quote.",
     vars: { name: ["Requester's name", "Dana Lee"], contest: ["Contest name", "Maple Street Holiday Lights"], installer: ["Installer name", "Bright Nights"], link: ["Manage page", `${SITE}/c/maple-street/manage`, true] },
     subject: "Quote request sent: {{contest}}",
@@ -142,10 +134,6 @@ export const TEMPLATES = [
     vars: { contest: ["Contest name", "Maple Street Holiday Lights"], vote_end: ["Voting closes", "Dec 20"], link: ["Contest page", `${SITE}/c/maple-street`, true] },
     subject: "Last days to vote: {{contest}}",
     text: "Voting for {{contest}} closes {{vote_end}}. Make sure you've voted in every category: {{link}}" },
-  { id: "judge_invite", group: "entrant", name: "Invitation to judge", to: "The judge", when: "An organizer adds a judge.",
-    vars: { org: ["Organizer", "Maple Street Neighbors"], contest: ["Contest name", "Maple Street Holiday Lights"], link: ["Judge ballot link", `${SITE}/c/maple-street/judge`, true], how: ["How to vote (set by the contest's judging method)", "Score every home from 1 to 10 in each category."] },
-    subject: "You're invited to judge {{contest}}",
-    text: "{{org}} invited you to be a judge for {{contest}}.\n\nOpen your judges' ballot (sign in with this email address):\n{{link}}\n\nJudges vote separately from the public. {{how}} Judge on first impression, creativity, theme, craftsmanship and variety of lights. If you know a household, mark it so your vote for it doesn't count." },
   { id: "judge_nudge", group: "entrant", name: "Judge reminder", to: "Judges who haven't finished", when: "The organizer sends a reminder.",
     vars: { org: ["Organizer", "Maple Street Neighbors"], contest: ["Contest name", "Maple Street Holiday Lights"], done: ["Homes scored so far", "4"], total: ["Homes to score", "12"], link: ["Judge ballot link", `${SITE}/c/maple-street/judge`, true], vote_end: ["Voting ends", "Dec 20"] },
     subject: "Reminder: your judging for {{contest}}",
@@ -187,7 +175,7 @@ export function checkTemplate(t, subject, body) {
   if (!body || body.length > 6000) return "Write the email text (up to 6,000 characters).";
   const ok = new Set(Object.keys(t.vars));
   const bad = usedVars(subject + "\n" + body).filter((v) => !ok.has(v));
-  if (bad.length) return "Unknown placeholder: " + bad.map((v) => `{{${v}}}`).join(", ") + ". Use the values listed under "Insert a value".";
+  if (bad.length) return "Unknown placeholder: " + bad.map((v) => `{{${v}}}`).join(", ") + '. Use the values listed under "Insert a value".';
   const used = new Set(usedVars(subject + "\n" + body));
   const miss = Object.entries(t.vars).filter(([k, v]) => v[2] && !used.has(k)).map(([k]) => `{{${k}}}`);
   if (miss.length) return "This email has to include " + miss.join(", ") + " or it won't work.";

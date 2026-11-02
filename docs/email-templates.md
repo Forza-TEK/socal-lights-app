@@ -1,6 +1,6 @@
 # Email templates
 
-Every automatic email the site sends is defined in `functions/_lib/mailtpl.js` (34 of them: sign-in code, weekly alerts, approvals and declines, installer confirmations and quotes, contest invitations, reminders and results, and the admin summary).
+Every automatic email the site sends is defined in `functions/_lib/mailtpl.js` (31 of them: sign-in code, weekly alerts, approvals and declines, installer confirmations and quotes, contest invitations, reminders and results, and the admin summary).
 
 The admin edits them in **Admin > Settings > Email templates** (`/admin/#emails`). Each email has a subject and a plain-text body. The HTML version is built from the same text (paragraphs, "- " lists, clickable links, SoCal Lights header and footer), so the two always match. The screen shows both versions with example values, can send a test to the signed-in admin, and can reset an email to its default.
 
@@ -12,3 +12,6 @@ The admin edits them in **Admin > Settings > Email templates** (`/admin/#emails`
 
 ## Add a new email
 Add an entry to `TEMPLATES` (id, group, name, to, when, vars with a label, an example and whether it is required, subject, text), then send it with `sendTemplate`. It appears in the admin list automatically.
+
+## Not in this list yet
+The judge invitation, co-organizer invitation and contest invitation emails are being built with their own HTML in a separate piece of work, so they still send from their own code (`functions/api/contests/[slug]/judges.js`, `staff.js`, `invite.js`). Add them to `TEMPLATES` once that work is merged.
