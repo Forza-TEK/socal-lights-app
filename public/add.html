@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Add to SoCal Lights</title>
-<meta name="description" content="Add an event, a home decorating contest or your lights display to the SoCal Lights map. It's free.">
+<meta name="description" content="Add an event, a contest or your lights display to the SoCal Lights map. It's free.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
@@ -27,7 +27,7 @@ const row = (id, href, t, d, tm) => `<a class="tile opt" ${id ? `id="${id}"` : "
 const qs = new URLSearchParams(location.search).get("s"), s = SEASONS[qs] ? "?s=" + esc(qs) : "";
 document.getElementById("opts").innerHTML =
   row("o-event", "/add-event", "An event", "A tree lighting, parade, market, haunted house or other seasonal event.", "Free · about 1 minute") +
-  row("o-contest", "/add-contest", "A home decorating contest", "Neighbors enter their homes and the community votes. You get a link and a QR code to share.", "Free · about 3 minutes") +
+  row("o-contest", "/add-contest", "A contest", "Neighbors enter their homes and the community votes. You get a link and a QR code to share.", "Free · about 3 minutes") +
   row("o-house", "/add-house" + s, "A lighting display", "Homeowners and professional installers: show your lights on the map so families can drive by.", "Free · about 2 minutes");
 // Contests need sign-in. Until Google or emailed codes are switched on, hide that choice rather than send people to a dead end.
 fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (!j.methods || (!j.methods.google && !j.methods.email)) document.getElementById("o-contest")?.remove(); }).catch(() => {});
