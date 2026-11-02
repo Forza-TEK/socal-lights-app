@@ -181,3 +181,12 @@ a.dli{text-decoration:none}
 .modal .dl{max-height:none}
 @media (max-width:699px){.pstats{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 .modal .rt{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* Photo manager in the house window */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:6px}
+.pph{margin:0;position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid}
+.pph img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--tile)}
+.pph .cover{position:absolute;top:8px;left:8px;padding:2px 9px;border-radius:99px;background:var(--btn);color:var(--btn-ink);font:600 11px var(--font);letter-spacing:.04em;text-transform:uppercase}
+.pph figcaption{display:flex;gap:6px;padding:6px}
+.pph figcaption .btn{min-height:44px;padding:0 10px;flex:0 0 auto}.pph figcaption .btn.danger{flex:1}
+@media (max-width:699px){.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}

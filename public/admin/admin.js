@@ -81,7 +81,7 @@ function postCard(p) {
     facts: fact("Name / business", esc(p.biz)) + fact("City", esc(p.city) + " · " + esc(p.county || "")) + fact("Contact", `<span style="user-select:all">${esc(p.contact_email || "—")}</span>`) + fact("Website", web || "—")
       + (p.inst && p.kind !== "installer" ? fact("Installed by", esc(p.inst.name) + (p.inst.ok ? " (confirmed)" : " (claimed by the homeowner, not confirmed)")) : "") + fact("Public phone", esc(p.phone || "—")) + fact("Street address", esc(p.address || "—") + ' <span class="meta">(shown on the map)</span>') + fact("Where", esc(p.where || "—")) + fact("About", `<span style="white-space:pre-line">${esc(p.desc)}</span>`),
     body: (p.hiddenBySweep ? note(0, "<b>Not on the map.</b> You chose the sweep record for this address (Replaced records).") : "") + (p.replaces ? note(0, `<b>Replaces a sweep record.</b> When you approve this, the automatic listing at the same address is hidden: ${p.replaces.map((r) => esc(r.name)).join("; ")}.`) : "") + (p.nearby ? `<p class="meta" style="margin:0">Same street, different number (both stay listed): ${p.nearby.map((r) => esc(r.name + " (" + (r.address || "").split(",")[0] + ")")).join("; ")}.</p>` : ""),
-    edit: btn("ghost", "Edit", `data-editpost="${esc(p.id)}"`),
+    edit: btn("ghost", "Edit", `data-editpost="${esc(p.id)}"`) + btn("ghost", `Photos (${p.photos.length})`, `data-editpost="${esc(p.id)}" data-focus="photos"`),
     main: pending ? btn("main", "Approve and publish", 'data-act="approve"') : btn("ghost", "Unpublish", 'data-act="unpublish"'),
     danger: pending ? btn("danger", "Decline", 'data-act="decline"') : btn("danger", "Remove from site", 'data-act="delete"'),
   });
@@ -99,9 +99,15 @@ $("#main").addEventListener("click", async (e) => {
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
+// Resize a photo in the browser before uploading (long side 1800px, JPEG), like the add forms do
+async function shrink(f) {
+  if (!/^image\/(jpeg|png|webp)$/.test(f.type) || f.size < 700 * 1024) return f;
+  try { const bmp = await createImageBitmap(f), k = Math.min(1, 1800 / Math.max(bmp.width, bmp.height)), c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height); const b = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.85)); return b ? new File([b], f.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : f; } catch { return f; }
+}
 function editPost(p) {
   const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
   m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="mh"><h2>Edit house</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
+  <h3 class="psec" id="pPhotosH" style="margin-top:4px">Photos <span class="meta" id="pPhotosN"></span></h3><div id="pPhotos"></div>
   <form class="f" id="pForm" novalidate>
     <label for="pKind">Posting as<select id="pKind"><option value="homeowner" ${p.kind !== "installer" ? "selected" : ""}>Homeowner</option><option value="installer" ${p.kind === "installer" ? "selected" : ""}>Professional installer</option></select></label>
     <div class="two"><label for="pBiz">Name or business<input id="pBiz" value="${esc(p.biz)}" maxlength="80"></label><label for="pTitle">Display name<input id="pTitle" value="${esc(p.title)}" maxlength="90"></label></div>
@@ -114,7 +120,26 @@ function editPost(p) {
     <label for="pDesc">About<textarea id="pDesc" maxlength="1200">${esc(p.desc)}</textarea></label>
     <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="pMsg" role="status"></span></div>
   </form></div>`;
-  m.hidden = false; $("#mClose").onclick = close;
+  m.hidden = false; $("#mClose").onclick = () => { close(); if (photosChanged) render(); };
+  let photosChanged = false;
+  const paint = () => {
+    $("#pPhotosN").textContent = `(${p.photos.length} of 8)`;
+    $("#pPhotos").innerHTML = `<div class="pgrid">${p.photos.map((k, i) => `<figure class="pph"><a href="${photo(k)}" target="_blank" rel="noopener"><img src="${photo(k)}" alt="Photo ${i + 1}" loading="lazy"></a>${i === 0 ? '<span class="cover">Cover</span>' : ""}<figcaption><button type="button" class="btn ghost" data-pmv="${esc(k)}" data-to="${i - 1}" ${i === 0 ? "disabled" : ""} aria-label="Move photo ${i + 1} earlier">‹</button><button type="button" class="btn ghost" data-pmv="${esc(k)}" data-to="${i + 1}" ${i === p.photos.length - 1 ? "disabled" : ""} aria-label="Move photo ${i + 1} later">›</button><button type="button" class="btn ghost danger" data-prm="${esc(k)}" aria-label="Remove photo ${i + 1}">Remove</button></figcaption></figure>`).join("")}</div>
+      ${p.photos.length ? "" : '<p class="meta" style="margin:0 0 8px">No photos yet.</p>'}<div class="mfoot" style="margin-top:8px"><label class="btn ghost" style="cursor:pointer;margin:0"><input id="pAdd" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden ${p.photos.length >= 8 ? "disabled" : ""}>Add photos</label><span class="meta">The first photo is the cover. JPG, PNG or WebP.</span><span class="msg" id="pPhMsg" role="status"></span></div>`;
+    $("#pAdd").onchange = async (ev) => {
+      const files = [...ev.target.files]; ev.target.value = ""; if (!files.length) return;
+      const msg = $("#pPhMsg"); msg.className = "msg"; msg.textContent = "Uploading…";
+      try { const fd = new FormData(); for (const f of files) fd.append("photos", await shrink(f)); const r = await fetch("/api/admin/posts/" + p.id, { method: "POST", body: fd, credentials: "same-origin" }), d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "The upload didn't work."); p.photos = d.photos; photosChanged = true; toast(files.length === 1 ? "Photo added" : "Photos added"); paint(); }
+      catch (er) { msg.className = "msg err"; msg.textContent = er.message; }
+    };
+  };
+  $("#pPhotos").onclick = async (ev) => {
+    const mv = ev.target.closest("[data-pmv]"), rm = ev.target.closest("[data-prm]"); if (!mv && !rm) return;
+    if (rm && !tap(rm, "remove")) return;
+    try { const d = await api("/api/admin/posts/" + p.id, { method: "POST", body: JSON.stringify(mv ? { action: "photo_move", key: mv.dataset.pmv, to: Number(mv.dataset.to) } : { action: "photo_remove", key: rm.dataset.prm }) }); p.photos = d.photos; photosChanged = true; if (rm) toast("Photo removed"); paint(); }
+    catch (er) { toast(er.message, true); }
+  };
+  paint();
   $("#pForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#pMsg"); msg.className = "msg"; msg.textContent = "Saving…";
     const body = { action: "edit", biz: $("#pBiz").value, title: $("#pTitle").value, city: $("#pCity").value, season: $("#pSeason").value, kind: $("#pKind").value, street: $("#pStreet").value, zip: $("#pZip").value, area: $("#pArea").value, web: $("#pWeb").value, phone: $("#pPhone").value, where: $("#pWhere").value, desc: $("#pDesc").value };
@@ -122,7 +147,7 @@ function editPost(p) {
     catch (err) { msg.className = "msg err"; msg.textContent = err.message; }
   };
 }
-$("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-editpost]"); if (b) editPost(POSTS.find((x) => x.id === b.dataset.editpost)); });
+$("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-editpost]"); if (b) { editPost(POSTS.find((x) => x.id === b.dataset.editpost)); if (b.dataset.focus === "photos") { const h = $("#pPhotosH"); if (h) h.scrollIntoView({ block: "start" }); } } });
 
 
 /* ---------- submitted events (public "Add your event" form) ---------- */
@@ -333,7 +358,7 @@ async function openUser(id) {
 
 
 /* ---------- activity log (what the admin tools were used for) ---------- */
-const VERB = { dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for" };
+const VERB = { photo_remove: "removed a photo from", photo_move: "reordered the photos of", dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for" };
 const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", normalize: "data check" };
 let LOG = { area: "", offset: 0 };
 async function renderLog() {
