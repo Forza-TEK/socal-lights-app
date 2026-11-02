@@ -22,7 +22,8 @@ const d = { kind: "homeowner", biz: "", web: "", phone: "", area: "", perm: fals
 const pro = (x) => x.kind === "installer";
 await ts.init();
 // Signed in with a saved name and address? Start the form with them (all optional on the profile).
-const acct = (await me()).user; if (acct) { d.email = acct.email; if (!d.biz && acct.name) d.biz = acct.name; if (acct.city && cities.includes(acct.city)) { d.city = acct.city; d.street = acct.street || ""; d.zip = acct.zip || ""; } }
+const acct = (await me()).user; if (acct) { try { const ov = await (await fetch("/api/me/overview")).json(); const mine = (ov.installers || [])[0]; if (mine) d.mine = mine; } catch {} }
+if (acct) { d.email = acct.email; if (!d.biz && acct.name) d.biz = acct.name; if (acct.city && cities.includes(acct.city)) { d.city = acct.city; d.street = acct.street || ""; d.zip = acct.zip || ""; } }
 
 // Suggest installers already on the site while typing a company name
 document.addEventListener("input", async (e) => {
@@ -34,7 +35,7 @@ const steps = [
     body: (x) => `<div class="tiles">${tile(x, "kind", "homeowner", "A homeowner", "It's my house, and I decorated it.")}${tile(x, "kind", "installer", "A professional installer", "I installed this display for a customer, or it's a showcase of my work.")}</div>` },
   { id: "name", sec: "About you", title: (x) => (pro(x) ? "What's your business called?" : "What name should we show?"),
     help: (x) => (pro(x) ? "Families will see this with a way to ask for a quote." : "For example, The Garcia family. It appears as “Posted by”."),
-    body: (x) => input(x, "biz", { max: 80, ph: pro(x) ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family", ac: "name" }),
+    body: (x) => { if (pro(x) && x.mine && !x._pre) { Object.assign(x, { biz: x.mine.name, web: x.mine.web || "", phone: x.mine.phone || "", area: x.mine.area || "", _pre: true }); } return input(x, "biz", { max: 80, ph: pro(x) ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family", ac: "name" }); },
     check: (x) => (x.biz.trim().length < 2 ? "Add the name to show." : "") },
   { id: "installer", sec: "About you", skip: (x) => pro(x), redraw: true, title: "Did a professional install your lights?",
     help: "If a company installed them, tell us. Their name shows on your listing and links to their profile. This is optional.",

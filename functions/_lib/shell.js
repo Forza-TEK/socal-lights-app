@@ -43,6 +43,15 @@ h2{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:30px 0 12px}
 .ev .ph{width:96px;height:96px;border-radius:12px;overflow:hidden;background:var(--surface-2)}.ev .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .ev h3{margin:0;font-size:16px;font-weight:800;line-height:1.3}.ev p{margin:2px 0 0;color:var(--muted);font-size:14px}.ev .tags{margin:6px 0 0}
 .foot{margin-top:36px;color:var(--muted);font-size:14px;display:flex;gap:6px 14px;flex-wrap:wrap}.foot a{min-height:32px;display:inline-flex;align-items:center}
+.idrow{display:flex;gap:14px;align-items:center}.idrow img.lg{width:64px;height:64px;border-radius:16px;object-fit:contain;background:var(--surface);box-shadow:0 2px 10px rgba(20,22,27,.08);flex:none}
+.logoimg{width:100%;height:100%;object-fit:contain;padding:12%;background:var(--surface)}
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:grid;place-items:end center}
+.dlg{width:min(480px,100%);max-height:92vh;overflow:auto;background:var(--surface);border-radius:24px 24px 0 0;padding:22px 20px 26px;box-shadow:var(--shadow)}
+@media(min-width:600px){.scrim{place-items:center}.dlg{border-radius:24px}}
+.dlg h2{margin:0 0 6px}.dlg label{display:grid;gap:4px;font-size:14px;color:var(--muted);margin:10px 0}.dlg input,.dlg textarea{font:inherit;min-height:48px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--ink)}
+.dlg .chk{display:flex;gap:10px;align-items:flex-start;color:var(--ink)}.dlg .chk input{min-height:0;width:22px;height:22px;flex:none}
+.dlg .err{color:#b42318;margin:8px 0 0;font-size:14px}.dlg .row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:32px}
 .note{padding:18px;border-radius:18px;background:var(--surface);box-shadow:0 2px 10px rgba(20,22,27,.08)}
 @media(min-width:760px){.hero{aspect-ratio:16/9}.ev{grid-template-columns:120px minmax(0,1fr)}.ev .ph{width:120px;height:120px}}
 `;

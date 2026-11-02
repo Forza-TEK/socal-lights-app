@@ -68,7 +68,7 @@ function panel() {
   const o = O, u = o.user;
   if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}</span></div><div class="acts"><a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
   if (tab === "contests") return head("Contests") + `<section class="card"><p class="muted">The contests you run, help run or entered are on the Contests page.</p><div class="actions"><a class="btn org" href="/contests#mine">Open my contests</a></div></section>`;
-  if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + list(o.homes.map(homeRow), "None yet.");
+  if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + (o.installers || []).map((i) => `<p class="small"><a class="btn out sm" href="/installer/${esc(i.slug)}/manage">Manage the ${esc(i.name)} profile</a></p>`).join("") + list(o.homes.map(homeRow), "None yet.");
   if (tab === "events") return head("Events you added", ["+ Add an event", "/add-event"]) + list(o.events.map(eventRow), "None yet.");
   if (tab === "badges") {
     const bs = BD.badges, on = (id, s) => BD.master && !BD.off[id + "|" + s];
