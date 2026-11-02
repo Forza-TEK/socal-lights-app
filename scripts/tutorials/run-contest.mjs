@@ -2,7 +2,7 @@
 // Usage: VOICE=... COOKIES=... PLAYWRIGHT_PATH=... node scripts/tutorials/run-contest.mjs [quick|custom|share|approve|edit|voting|team|announce|activity]
 import { readFileSync } from "node:fs";
 import { record, sleep } from "./record.mjs";
-import { end as endCard, fromMap } from "./steps.mjs";
+import { end as endCard, fromMap, navSteps } from "./steps.mjs";
 const ck = JSON.parse(readFileSync(process.env.COOKIES, "utf8")), SLUG = "maple-street-holiday-lights-2026", EY = "Run a contest";
 const end = (t, s) => endCard(EY, t, s), card = (t, s) => ({ card: { ey: EY, title: t, sub: s } });
 const nav = (k) => `[data-k="${k}"] >> visible=true`;
@@ -60,7 +60,7 @@ const custom = {
   ],
 };
 // Shows what the print button would print, on screen: print layout for a few seconds, then back to the dashboard
-const preview = async (p, h, sel, ms) => { await p.evaluate(() => { window.print = () => {}; }); await h.click(sel, { after: 300 }); await p.emulateMedia({ media: "print" }); await sleep(ms); await p.emulateMedia({ media: null }); await p.evaluate(() => dispatchEvent(new Event("afterprint"))); await sleep(900); };
+const preview = async (p, h, sel, ms) => { await p.evaluate(() => { window.print = () => {}; }); const y = await p.evaluate(() => scrollY); await h.click(sel, { after: 300 }); await p.emulateMedia({ media: "print" }); await p.evaluate(() => scrollTo(0, 0)); await sleep(ms / 2); await h.scroll(260, ms / 2); await sleep(400); await p.evaluate((y) => scrollTo(0, y), y); await p.emulateMedia({ media: null }); await p.evaluate(() => dispatchEvent(new Event("afterprint"))); await sleep(900); };
 const share = {
   id: "share", file: "run-share", cookie: ck.u_org, start: "/",
   steps: [
@@ -95,7 +95,7 @@ const edit = {
     ...toDash(),
     { cap: "Change dates", say: "On the Overview, the Schedule line shows your dates. Tap Change dates.", do: async (p, h) => { await h.click("#editdates", { after: 2200 }); } },
     { cap: "Tap Details", say: "That opens the Details tab, with a form for everything about your contest.", do: async (p, h) => { await h.hover("#editcard summary", 1400); } },
-    { cap: "Change the dates", say: "Change the date that entries close, or when voting starts and ends.", do: async (p, h) => { await h.scrollTo("#e-closes", 220); await h.type("#e-closes", "2026-12-12"); }, poster: true },
+    { cap: "Change the dates", say: "Change the date that entries close, or when voting starts and ends.", do: async (p, h) => { await h.scrollTo("#e-closes", 220); await h.type("#e-closes", "2026-12-12", { fill: true }); }, poster: true },
     { cap: "Name, message, prize, rules", say: "You can also change the name, the welcome message, the prize and the official rules. Entrants see changes right away.", do: async (p, h) => { await h.scrollTo("#e-name", 120); await h.hover("#e-descr", 1600); } },
     { cap: "Save changes", say: "Tap Save changes when you are done. The team is emailed about changes, so nobody is surprised.", do: async (p, h) => { await h.click('#editform button[type="submit"]', { after: 2600 }); } },
     end("Run voting", "Start now, pause, review votes and void a vote"),
@@ -134,9 +134,15 @@ const announce = {
     ...toDash(),
     panel("results", "Results", "Open the Results tab. It shows who would win if you announced today."),
     { cap: "Download results", say: "Tap Download results to save a spreadsheet of the final tally.", do: async (p, h) => { await h.scrollTo("text=Download results", 300); await h.hover("text=Download results", 1800); } },
-    { cap: "Close voting and announce winners", say: "When voting is over, tap Close voting and announce winners. This locks the results, shows everyone the winners, and emails every entrant. Tied homes share the win.", do: async (p, h) => { await h.click('[data-act="announce"]', { after: 3000 }); }, poster: true },
-    { cap: "Winners announced", say: "The winners now keep a crown on the contest page and the map.", do: async (p, h) => { await h.hover(".status", 1600); } },
-    { cap: "Menu > Contests > Past results", say: "Finished contests move to Past results, on the Contests page, sorted by season and year. Winners keep a badge on their profile.", do: async (p, h) => { await h.click('a:has-text("All contests")', { after: 1800 }); await h.click("[data-tab=past]", { after: 2800 }); } },
+    { cap: "Close voting and announce winners", say: "When voting is over, tap Close voting and announce winners. The button asks you to tap again to confirm, because this ends voting and cannot be undone.", do: async (p, h) => { await h.click('[data-act="announce"]', { after: 2800 }); }, poster: true },
+    { cap: "Tap again to confirm", say: "Tap it again. This locks the results, shows everyone the winners, and emails every entrant. Tied homes share the win.", do: async (p, h) => { await h.click('[data-act="announce"]', { after: 3200 }); } },
+    { cap: "See it as voters do", say: "To see what everyone sees, tap See it as voters do. The winners now keep a crown on the contest page.", do: async (p, h) => { await h.click('a:has-text("See it as voters do")', { after: 2600 }); await h.scrollTo("h2:has-text('Winners')", 140); await h.hover("h2:has-text('Winners')", 1800); } },
+    { cap: "Back to the map", say: "To find finished contests later, tap the SoCal Lights logo to go back to the map.", do: async (p, h) => { await h.click("a.brand", { after: 4200 }); } },
+    ...navSteps([
+      { cap: "Tap the three dots", say: "Tap the three dots at the top.", do: async (p, h) => { await h.click("#morebtn", { after: 1800 }); } },
+      { cap: "Tap Contests", say: "Tap Contests.", do: async (p, h) => { await h.click('#moremenu a[href="/contests"]', { after: 2200 }); } },
+      { cap: "Tap Past results", say: "Then tap Past results. Finished contests are listed by season and year, and winners keep a badge on their profile.", do: async (p, h) => { await h.click("[data-tab=past]", { after: 3000 }); } },
+    ]),
     end("Read your contest activity", "Visits, QR scans, voters and votes per day"),
   ],
 };

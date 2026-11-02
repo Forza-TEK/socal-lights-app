@@ -35,7 +35,7 @@ class Helper {
   async click(sel, opt = {}) { await this.move(sel, opt); await sleep(500); await this.page.mouse.down(); await sleep(70); await this.page.mouse.up(); await this.unring(); await sleep(opt.after ?? 1500); }
   async scroll(dy, ms = 1400) { const n = Math.round(ms / 25); for (let i = 0; i < n; i++) { await this.page.mouse.wheel(0, dy / n); await sleep(25); } await sleep(1200); }
   async scrollTo(sel, off = 120) { const y = await this.page.locator(sel).first().evaluate((el, o) => el.getBoundingClientRect().top + scrollY - o, off); const cur = await this.page.evaluate(() => scrollY); await this.scroll(y - cur); }
-  async type(sel, text, opt = {}) { await this.click(sel, { after: 300 }); if (opt.clear !== false) await this.page.fill(sel, ""); await this.page.type(sel, text, { delay: 85 }); await sleep(opt.after ?? 900); }
+  async type(sel, text, opt = {}) { await this.click(sel, { after: 300 }); if (opt.fill) await this.page.fill(sel, text); else { if (opt.clear !== false) await this.page.fill(sel, ""); await this.page.type(sel, text, { delay: 85 }); } await sleep(opt.after ?? 900); }
   async hover(sel, ms = 1200) { await this.move(sel); await sleep(ms); await this.unring(); }
 }
 export async function record(spec) {
