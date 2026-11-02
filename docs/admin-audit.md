@@ -64,3 +64,6 @@ All Admin edit windows share one form layout (`fsec` / `ff` in `admin.js`, `.fse
 
 ## Edit forms outside Admin
 `public/forms.js` + `forms.css` give the same sectioned form to the public side: Your profile (Displays and Events: **Edit** opens a window like Admin's, with Listing / Plan a visit / How people reach you, and Event / When / Where and price / Details), the installer page (shared-home edit window and the Details form, with the Areas served picker) and the contest dashboard's "Edit contest details" (Contest / Schedule / Voting / Prize / Presenting installer / Official rules). The step-by-step add flows keep their one-question screens, but fields now use the same labels, 46px inputs and hints (`addflow.css`).
+
+## Your profile layout
+`public/profile.css`: the page is centred like Admin and Tutorials (content up to 1120px), with a header card (bigger avatar, name, email, pill buttons), the section heading with its Add button, and records as cards in a two-column grid (one column on phones). Empty lists get a dashed empty-state card; the Account form is a two-column form limited to 760px.
