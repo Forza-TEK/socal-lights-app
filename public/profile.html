@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261102i">
 <link rel="stylesheet" href="/forms.css?v=20261102e">
-<link rel="stylesheet" href="/profile.css?v=20261103a">
+<link rel="stylesheet" href="/profile.css?v=20261104a">
 <script src="/hit.js" defer></script>
 </head>
 <body class="sh-page prof">
@@ -98,7 +98,7 @@ function render() {
   const T = [["drafts", "Drafts"], ["contests", "Contests"], ["displays", "Displays"], ["events", "Events"], ...(BD.badges.length ? [["badges", "Badges"]] : []), ["account", "Account"]];
   if (!T.some((t) => t[0] === tab)) tab = "drafts";
   shell.own(true); shell.setHidden("badges", !BD.badges.length); shell.setActive(tab); for (const [k] of T) shell.setCount(k, n[k]);
-  app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${info && info.user && info.user.avatar ? `<img src="${esc(info.user.avatar)}" alt="">` : esc((o.user.name || em)[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">${esc(o.user.name || "Your profile")}</h1><span class="muted">${esc(em)}</span><div style="display:flex;gap:14px;margin-top:6px"><label class="link" for="avfile" style="font-size:14px;cursor:pointer">${info && info.user && info.user.avatar ? "Change photo" : "Add a photo"}</label>${info && info.user && info.user.avatar ? '<button class="link" id="avrm" type="button" style="font-size:14px">Remove</button>' : ""}<input id="avfile" type="file" accept="image/*" hidden><button class="link" id="editprof" type="button" style="font-size:14px">Edit name &amp; address</button></div><p class="err" id="averr" role="alert" hidden></p></div></div>
+  app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${info && info.user && info.user.avatar ? `<img src="${esc(info.user.avatar)}" alt="">` : esc((o.user.name || em)[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">${esc(o.user.name || "Welcome")}</h1><span class="muted">${esc(em)}</span><div style="display:flex;gap:14px;margin-top:6px"><label class="link" for="avfile" style="font-size:14px;cursor:pointer">${info && info.user && info.user.avatar ? "Change photo" : "Add a photo"}</label>${info && info.user && info.user.avatar ? '<button class="link" id="avrm" type="button" style="font-size:14px">Remove</button>' : ""}<input id="avfile" type="file" accept="image/*" hidden><button class="link" id="editprof" type="button" style="font-size:14px">Edit name &amp; address</button></div><p class="err" id="averr" role="alert" hidden></p></div></div>
     <section id="pp">${panel()}</section>`;
   wire();
 }
