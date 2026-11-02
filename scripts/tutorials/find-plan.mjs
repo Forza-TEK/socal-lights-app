@@ -96,7 +96,7 @@ const proFilter = {
     { ...card("Find professionally installed displays", "Use the Professionally installed filter, then open an installer's profile"), say: "Find professionally installed displays. In this video, you find displays that a lighting company installed.", pad: 1.2 },
     { cap: "Choose Christmas", say: "Start on the map. Choose Thanksgiving and Christmas Lights from the season button.", do: season("Christmas") },
     { cap: "Filters", say: "Tap Filters.", do: async (p, h) => { await h.click("text=Filters >> visible=true", { after: 2000 }); } },
-    { cap: "Professionally installed", say: "Under Type, choose Professionally installed. Then tap the button at the bottom to show the places.", do: async (p, h) => { await h.scrollTo('[data-ftype="pro"]', 300).catch(() => {}); await h.click('[data-ftype="pro"]', { after: 1800 }); await h.click("button:has-text('Show')", { after: 2600 }); }, poster: true },
+    { cap: "Professionally installed", say: "Under Type, choose Professionally installed. Then tap the button at the bottom to show the places.", do: async (p, h) => { await h.click('[data-ftype="pro"]', { after: 1800 }); await h.click("button:has-text('Show')", { after: 2600 }); }, poster: true },
     { cap: "Installed by", say: "Each display shows the company that installed it. Open one.", do: async (p, h) => { await h.click("#pbody .item.home >> nth=0", { after: 2600 }); } },
     { cap: "Installer profile", say: "Tap the company's name to open its profile, with its area, phone, website and the displays it has installed.", do: async (p, h) => { await h.click("a.instlink >> nth=0", { after: 3200 }); } },
     end("Enter your home in a contest", "Sign in, add photos, your address and agree to the rules"),
