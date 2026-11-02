@@ -7,16 +7,15 @@ const ck = JSON.parse(readFileSync(process.env.COOKIES, "utf8")), SLUG = "maple-
 const end = (t, s) => endCard(EY, t, s), card = (t, s) => ({ card: { ey: EY, title: t, sub: s } });
 const nav = (k) => `[data-k="${k}"] >> visible=true`;
 // map -> three dots -> Contests -> Mine -> Manage
-const toDash = () => [
-  ...fromMap("contests"),
-  { cap: "Contests > Mine > Manage", say: "Tap the Mine tab, then tap Manage next to your contest. This opens your dashboard.", do: async (p, h) => { await h.click("[data-tab=mine]", { after: 1600 }); await h.click(`a[href="/c/${SLUG}/manage"]`, { after: 2600 }); } },
-];
-const panel = (k, label, say) => ({ cap: "Dashboard > " + label, say, do: async (p, h) => { await h.click(nav(k), { after: 2200 }); } });
+const toDash = () => fromMap("contests", "", [
+  { cap: "Tap Mine", say: "Then tap the Mine tab. It lists the contests you run.", do: async (p, h) => { await h.click("[data-tab=mine]", { after: 1800 }); } },
+  { cap: "Tap Manage", say: "Last, tap Manage next to your contest. This opens your dashboard.", do: async (p, h) => { await h.click(`a[href="/c/${SLUG}/manage"]`, { after: 2600 }); } },
+]);
+const panel = (k, label, say) => ({ cap: "Tap " + label, say, do: async (p, h) => { await h.click(nav(k), { after: 2200 }); } });
 // map -> Add -> A contest
-const toWizard = () => [
-  ...fromMap("add"),
-  { cap: "Add > A contest", say: "Choose A contest.", do: async (p, h) => { await h.click('a[href="/add-contest"]', { after: 2200 }); } },
-];
+const toWizard = () => fromMap("add", "", [
+  { cap: "Tap A contest", say: "Last, tap A contest.", do: async (p, h) => { await h.click('a[href="/add-contest"]', { after: 2200 }); } },
+]);
 const NEXT = "#nextbtn";
 const next = async (p, h, after = 1800) => h.click(NEXT, { after });
 const startScreens = (nm) => [
@@ -72,7 +71,7 @@ const share = {
     { cap: "QR code", say: "The QR code opens your contest page when someone scans it with a phone. Put it on flyers and signs.", do: async (p, h) => { await h.hover(".poster", 2200); } },
     { cap: "Print entry poster", say: "Print entry poster makes a page for a bulletin board or a shop window. Here is a sample. It has the contest name, the QR code, and an invitation to enter.", do: async (p, h) => { await preview(p, h, "#printposter", 4200); }, poster: false },
     { cap: "Print yard sign", say: "Print yard sign makes a big sign for a lawn, with a QR code that opens the voting page. Here is a sample.", do: async (p, h) => { await preview(p, h, "#printsign", 4200); } },
-    { cap: "Dashboard > Promote", say: "On the Promote tab, you can also email an invitation to neighbors.", do: async (p, h) => { await h.click(nav("promote"), { after: 1600 }); await h.click("#invitecard summary", { after: 2200 }); } },
+    { cap: "Tap Promote", say: "On the Promote tab, you can also email an invitation to neighbors.", do: async (p, h) => { await h.click(nav("promote"), { after: 1600 }); await h.click("#invitecard summary", { after: 2200 }); } },
     end("Approve and decline entries", "Approve, decline with a reason, and undo a decline"),
   ],
 };
@@ -95,7 +94,7 @@ const edit = {
     { ...card("Edit your contest and change the dates", "Change the details any time before winners are announced"), say: "Edit your contest and change the dates. You can change the details any time before winners are announced.", pad: 1.2 },
     ...toDash(),
     { cap: "Change dates", say: "On the Overview, the Schedule line shows your dates. Tap Change dates.", do: async (p, h) => { await h.click("#editdates", { after: 2200 }); } },
-    { cap: "Dashboard > Details", say: "That opens the Details tab, with a form for everything about your contest.", do: async (p, h) => { await h.hover("#editcard summary", 1400); } },
+    { cap: "Tap Details", say: "That opens the Details tab, with a form for everything about your contest.", do: async (p, h) => { await h.hover("#editcard summary", 1400); } },
     { cap: "Change the dates", say: "Change the date that entries close, or when voting starts and ends.", do: async (p, h) => { await h.scrollTo("#e-closes", 220); await h.type("#e-closes", "2026-12-12"); }, poster: true },
     { cap: "Name, message, prize, rules", say: "You can also change the name, the welcome message, the prize and the official rules. Entrants see changes right away.", do: async (p, h) => { await h.scrollTo("#e-name", 120); await h.hover("#e-descr", 1600); } },
     { cap: "Save changes", say: "Tap Save changes when you are done. The team is emailed about changes, so nobody is surprised.", do: async (p, h) => { await h.click('#editform button[type="submit"]', { after: 2600 }); } },
