@@ -832,9 +832,8 @@ body.lb-open{overflow:hidden}
 
 .onhint{margin:4px 2px 0;font-size:12.5px;color:var(--muted);line-height:1.4}
 
-/* The floating tab bar (Places, Route, Shop) casts its shadow downward only, so it never dims the filter buttons above it in the peeking list */
-@media (max-width:700px){
-  .bnav{box-shadow:0 10px 22px -10px rgba(20,22,27,.38),0 2px 5px rgba(20,22,27,.14)}
-  :root[data-theme="dark"] .bnav{box-shadow:0 10px 22px -10px rgba(0,0,0,.7),0 2px 5px rgba(0,0,0,.4)}
-}
-
+/* The floating tab bar (Places, Route, Shop) has no shadow and no fade behind it: just a thin outline so it still reads as a bar */
+/* behind the bar: a flat strip the colour of the sheet, so list text never shows around the pill (no gradient, no shadow) */
+.navfade,:root[data-theme="dark"] .navfade{background:var(--surface)!important;height:calc(env(safe-area-inset-bottom,0px) + 74px)}
+.bnav,:root[data-theme="dark"] .bnav{box-shadow:none!important;border:1px solid var(--line);background:var(--surface)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+@media (max-width:700px){.panel{background:var(--surface)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}}
