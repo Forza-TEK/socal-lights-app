@@ -1,7 +1,7 @@
 /* Account menu and the signed-out sign-in button (the shared look of the header controls) */
 .acct-in{cursor:pointer}
 .acct[data-acct-menu]{cursor:pointer;font:inherit;font-weight:600}
-.acctmenu{position:fixed;z-index:200;min-width:236px;max-width:calc(100vw - 16px);padding:8px;border-radius:18px;background:var(--surface,#fff);color:var(--ink,#14161b);border:1px solid var(--line,#e7e3dc);box-shadow:0 14px 36px rgba(20,22,27,.18);display:grid;gap:2px;font:500 15px/1.3 var(--f-body,var(--f,system-ui,sans-serif))}
+.acctmenu{position:fixed;z-index:200;min-width:236px;max-width:calc(100vw - 16px);padding:8px;border-radius:18px;background:var(--surface,var(--bg,#fff));color:var(--ink,#14161b);border:1px solid var(--line,#e7e3dc);box-shadow:0 14px 36px rgba(20,22,27,.18);display:grid;gap:2px;font:500 15px/1.3 var(--f-body,var(--f,system-ui,sans-serif))}
 :root[data-theme="dark"] .acctmenu{box-shadow:0 14px 36px rgba(0,0,0,.6)}
 .acctmenu .who{display:grid;gap:2px;padding:8px 12px 10px;border-bottom:1px solid var(--line,#e7e3dc);margin-bottom:4px}
 .acctmenu .who b{font-weight:700;font-size:15px}.acctmenu .who span{color:var(--muted,#646a7a);font-size:13px;overflow-wrap:anywhere}
@@ -9,3 +9,7 @@
 .acctmenu a:hover,.acctmenu button:hover,.acctmenu a:focus-visible,.acctmenu button:focus-visible{background:var(--surface-2,var(--tile,#f3f1ec));outline:none}
 .acctmenu button[data-signout]{border-top:1px solid var(--line,#e7e3dc);border-radius:0 0 12px 12px;margin-top:4px;color:#b42318}
 :root[data-theme="dark"] .acctmenu button[data-signout]{color:#ff8f86}
+:root[data-theme="dark"] .acctmenu{background:var(--surface,var(--bg,#1b1b1b));color:var(--ink,#f4f4f4);border-color:var(--line,#2e2e2e)}
+:root[data-theme="dark"] .acctmenu .who,:root[data-theme="dark"] .acctmenu button[data-signout]{border-color:var(--line,#2e2e2e)}
+:root[data-theme="dark"] .acctmenu .who span{color:var(--muted,#a3a3a3)}
+:root[data-theme="dark"] .acctmenu a:hover,:root[data-theme="dark"] .acctmenu button:hover,:root[data-theme="dark"] .acctmenu a:focus-visible,:root[data-theme="dark"] .acctmenu button:focus-visible{background:var(--surface-2,var(--tile,#2a2a2a))}
