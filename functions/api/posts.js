@@ -7,8 +7,8 @@ import { winnerBadges, parsePrefs, shown, emailKey } from "../_lib/badges.js";
 
 export async function onRequestGet({ env }) {
   const { results } = await env.DB.prepare(
-    "SELECT p.*, i.slug AS inst_slug, i.name AS inst_name FROM posts p LEFT JOIN installers i ON i.id = p.installer_id AND i.status = 'active' WHERE p.status = 'approved' ORDER BY p.approved_at DESC LIMIT 500"
-  ).all();
+    "SELECT p.*, i.slug AS inst_slug, i.name AS inst_name, (SELECT COUNT(*) FROM lights_on l WHERE l.post_id = p.id AND l.day = ?) AS on_n FROM posts p LEFT JOIN installers i ON i.id = p.installer_id AND i.status = 'active' WHERE p.status = 'approved' ORDER BY p.approved_at DESC LIMIT 500"
+  ).bind(new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" })).all();
   // Where the admin chose the sweep record for an address, the post at that address is not shown on the map
   let hide = new Set();
   try {

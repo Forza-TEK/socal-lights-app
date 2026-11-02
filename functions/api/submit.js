@@ -102,6 +102,10 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   // The pin goes on the exact address; if it can't be found it falls back to the city center (the admin can fix it)
   let [lat, lng] = CITY[city];
+  if (!contest) {
+    const { n: mine } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NULL AND lower(contact_email) = lower(?) AND created_at > datetime('now','-1 day')").bind(email).first();
+    if (mine >= 5) return err(429, "You've posted several displays today. Try again tomorrow, or email info@socallights.app if you need more.");
+  }
   const pt = await geocodeAddress(address, city, [lat, lng]); if (pt) [lat, lng] = pt;
   const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
   const county = nearestCounty(lat, lng, evs);
@@ -115,6 +119,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
   ]);
 
+  // Visiting details for families (all optional)
+  try {
+    const visit = ["drive", "walk", "both"].includes(form.get("visit")) ? form.get("visit") : "", parking = ["free", "street", "none"].includes(form.get("parking")) ? form.get("parking") : "";
+    await env.DB.prepare("UPDATE posts SET lights_on = ?, visit = ?, parking = ?, accessible = ?, radio = ? WHERE id = ?").bind(clean(form.get("lights_on"), 60), visit, parking, form.get("accessible") ? 1 : 0, clean(form.get("radio"), 40), id).run();
+  } catch {}
   // Installer profile: an installer's own post makes (or joins) their profile; a homeowner can name the company that installed their lights
   try {
     if (pro) {

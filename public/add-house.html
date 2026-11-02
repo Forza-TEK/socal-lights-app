@@ -8,21 +8,22 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261101c">
+<link rel="stylesheet" href="/addflow.css?v=20261102c">
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, today } from "/addflow.js?v=20261031z";
+import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, OPT, today } from "/addflow.js?v=20261031z";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261101e";
 import { me } from "/auth.js?v=20261101a";
 import { CITY } from "/cities.js";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
-const d = { kind: "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", hadPro: "no", instName: "", instWeb: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
+const d = { kind: "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", lightsOn: "", visit: "", parking: "", accessible: false, radio: "", hadPro: "no", instName: "", instWeb: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
 const pro = (x) => x.kind === "installer";
 await ts.init();
 // Signed in with a saved name and address? Start the form with them (all optional on the profile).
-const acct = (await me()).user; if (acct) { d.email = acct.email; if (!d.biz && acct.name) d.biz = acct.name; if (acct.city && cities.includes(acct.city)) { d.city = acct.city; d.street = acct.street || ""; d.zip = acct.zip || ""; } }
+const acct = (await me()).user; if (acct) { try { const ov = await (await fetch("/api/me/overview")).json(); const mine = (ov.installers || [])[0]; if (mine) d.mine = mine; } catch {} }
+if (acct) { d.email = acct.email; if (!d.biz && acct.name) d.biz = acct.name; if (acct.city && cities.includes(acct.city)) { d.city = acct.city; d.street = acct.street || ""; d.zip = acct.zip || ""; } }
 
 // Suggest installers already on the site while typing a company name
 document.addEventListener("input", async (e) => {
@@ -34,7 +35,7 @@ const steps = [
     body: (x) => `<div class="tiles">${tile(x, "kind", "homeowner", "A homeowner", "It's my house, and I decorated it.")}${tile(x, "kind", "installer", "A professional installer", "I installed this display for a customer, or it's a showcase of my work.")}</div>` },
   { id: "name", sec: "About you", title: (x) => (pro(x) ? "What's your business called?" : "What name should we show?"),
     help: (x) => (pro(x) ? "Families will see this with a way to ask for a quote." : "For example, The Garcia family. It appears as “Posted by”."),
-    body: (x) => input(x, "biz", { max: 80, ph: pro(x) ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family", ac: "name" }),
+    body: (x) => { if (pro(x) && x.mine && !x._pre) { Object.assign(x, { biz: x.mine.name, web: x.mine.web || "", phone: x.mine.phone || "", area: x.mine.area || "", _pre: true }); } return input(x, "biz", { max: 80, ph: pro(x) ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family", ac: "name" }); },
     check: (x) => (x.biz.trim().length < 2 ? "Add the name to show." : "") },
   { id: "installer", sec: "About you", skip: (x) => pro(x), redraw: true, title: "Did a professional install your lights?",
     help: "If a company installed them, tell us. Their name shows on your listing and links to their profile. This is optional.",
@@ -51,15 +52,15 @@ const steps = [
   { id: "addr", sec: "Location", title: "Where is it?", help: "The pin goes on this address and visitors see it, so they can drive by.",
     body: (x) => `${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city", ac: "address-level2" })}${input(x, "street", { label: "Street address", max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}${input(x, "zip", { label: "ZIP", max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}`,
     check: (x) => (!x.street.trim() ? "Add your street address." : !x.city ? "Choose the city." : !/^\d{5}$/.test(x.zip.trim()) ? "The ZIP code needs 5 digits." : "") },
-  { id: "where", sec: "Location", title: "Any tips for visitors?", help: "Best nights to come, where to park.",
-    body: (x) => input(x, "where", { max: 120, ph: "e.g. Visible from Main St on weekend nights", label: "Tips", opt: true }) },
+  { id: "where", sec: "Location", title: "Help families plan their visit", help: "All optional. It shows on your listing and lets people filter for what they need.", redraw: true,
+    body: (x) => `${input(x, "lightsOn", { max: 60, ph: "e.g. 5 to 10 pm nightly", label: "Lights are on", opt: true })}<div class="field"><span class="lab">How can people see it? ${OPT}</span><div class="tiles g2">${tile(x, "visit", "drive", "Drive by", "", true)}${tile(x, "visit", "walk", "Walk by", "", true)}${tile(x, "visit", "both", "Drive or walk", "", true)}</div></div><div class="field"><span class="lab">Parking ${OPT}</span><div class="tiles g2">${tile(x, "parking", "free", "Free parking nearby", "", true)}${tile(x, "parking", "street", "Street parking", "", true)}${tile(x, "parking", "none", "Hard to park", "", true)}</div></div>${check(x, "accessible", "Stroller and wheelchair friendly")}${input(x, "radio", { max: 40, ph: "e.g. 88.1 FM", label: "Radio station for the music", opt: true })}${input(x, "where", { max: 120, ph: "e.g. Visible from Main St on weekend nights", label: "Other tips", opt: true })}` },
   { id: "photos", sec: "Photos", title: "Add photos", help: "Photos help families find the right house. You can skip this and add them later by email.", body: (x) => photoField(x) },
   { id: "review", sec: "Review", title: "Check everything, then send it", help: "It goes on the map right away. You can ask us to change or remove it any time.", cta: "Put it on the map",
     body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${!pro(x) && x.hadPro === "yes" ? sumRow("Installed by", esc(x.instName), "installer") : ""}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${sumRow("Photos", String(x.photos.length), "photos")}</div>
       ${input(x, "email", { label: `Your email <small>${PRIV}. Only the site owner sees it.</small>`, type: "email", mode: "email", ac: "email", max: 120 })}<div id="ts"></div>`,
     check: (x) => (!isEmail(x.email) ? "Enter your email so we can reach you if something needs fixing." : ""),
     submit: async (x, api) => {
-      const fd = new FormData(), set = { kind: x.kind, biz: x.biz.trim(), email: x.email.trim(), title: x.title.trim(), season: x.season, street: x.street.trim(), city: x.city, state: "CA", zip: x.zip.trim(), where: x.where.trim(), desc: x.desc.trim() };
+      const fd = new FormData(), set = { kind: x.kind, biz: x.biz.trim(), email: x.email.trim(), title: x.title.trim(), season: x.season, lights_on: x.lightsOn.trim(), visit: x.visit, parking: x.parking, radio: x.radio.trim(), ...(x.accessible ? { accessible: "1" } : {}), street: x.street.trim(), city: x.city, state: "CA", zip: x.zip.trim(), where: x.where.trim(), desc: x.desc.trim() };
       if (pro(x)) Object.assign(set, { web: x.web.trim(), phone: x.phone.trim(), area: x.area.trim(), permission: "1" });
       if (!pro(x) && x.hadPro === "yes") Object.assign(set, { installer_name: x.instName.trim(), installer_web: x.instWeb.trim() });
       for (const [k, v] of Object.entries(set)) fd.append(k, v);

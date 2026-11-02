@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Tutorials · SoCal Lights</title>
 <meta name="description" content="Short how-to videos for SoCal Lights: finding lights, entering and voting in contests, and running one.">
+<meta property="og:title" content="Tutorials · SoCal Lights"><meta property="og:description" content="Short how-to videos for SoCal Lights: finding lights, entering and voting in contests, and running one."><meta property="og:image" content="https://socallights.app/img/share.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261101c">
+<link rel="stylesheet" href="/addflow.css?v=20261102c">
 <link rel="stylesheet" href="/info.css?v=20261031t">
 <style>
 .tnav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px}.tnav button{min-height:44px;display:inline-flex;align-items:center;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-weight:500;cursor:pointer}.tnav button:hover{border-color:var(--season)}.tnav button[aria-selected=true]{background:var(--season);border-color:var(--season);color:var(--on-season,#fff)}.tgroup[hidden]{display:none}
@@ -21,6 +22,7 @@
 .tcard .tb{padding:12px 14px 14px;display:grid;gap:4px}.tcard h3{margin:0;font-size:17px;font-weight:500;line-height:1.3}.tcard p{margin:0;font-size:14px;color:var(--muted)}
 .tcard iframe,.tcard video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
 .tsub{color:var(--muted)}
+.tlist{display:grid;gap:8px;margin-top:12px}.trow{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;scroll-margin-top:16px}.trow h3{margin:0;font-size:16px;font-weight:500}.trow p{margin:2px 0 0;font-size:14px;color:var(--muted)}.trow .soon{flex:none;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
 </style>
 </head>
 <body>
@@ -51,8 +53,10 @@ function player(url) {
 const data = await fetch("/tutorials.json", { cache: "no-cache" }).then((r) => r.json()).catch(() => ({ groups: [] }));
 const groups = data.groups.filter((g) => g.videos && g.videos.length);
 $("#tnav").innerHTML = groups.map((g) => `<button type="button" role="tab" id="tab-${esc(g.id)}" data-g="${esc(g.id)}" aria-controls="${esc(g.id)}">${esc(g.title)}</button>`).join("");
-$("#tut").innerHTML = groups.map((g) => `<section class="tgroup" id="${esc(g.id)}" role="tabpanel" aria-labelledby="tab-${esc(g.id)}" hidden><h2>${esc(g.title)}</h2><p>${esc(g.blurb || "")}</p><div class="tgrid">${g.videos.map((v) => { const can = v.url && player(v.url);
-  return `<article class="tcard" id="v-${esc(v.id)}"><div class="th">${can ? `<button class="play" type="button" data-url="${esc(v.url)}" aria-label="Play: ${esc(v.title)}">&#9654;</button>` : `<span class="soon">Coming soon</span>`}</div><div class="tb"><h3>${esc(v.title)}</h3><p>${esc(v.desc || "")}${v.length ? ` · ${esc(v.length)}` : ""}</p></div></article>`; }).join("")}</div></section>`).join("") || `<p class="tsub">No tutorials yet.</p>`;
+const card = (v) => `<article class="tcard" id="v-${esc(v.id)}"><div class="th"><button class="play" type="button" data-url="${esc(v.url)}" aria-label="Play: ${esc(v.title)}">&#9654;</button></div><div class="tb"><h3>${esc(v.title)}</h3><p>${esc(v.desc || "")}${v.length ? ` · ${esc(v.length)}` : ""}</p></div></article>`;
+const row = (v) => `<div class="trow" id="v-${esc(v.id)}"><div><h3>${esc(v.title)}</h3><p>${esc(v.desc || "")}</p></div><span class="soon">Coming soon</span></div>`;
+$("#tut").innerHTML = groups.map((g) => { const ready = g.videos.filter((v) => v.url && player(v.url)), soon = g.videos.filter((v) => !(v.url && player(v.url)));
+  return `<section class="tgroup" id="${esc(g.id)}" role="tabpanel" aria-labelledby="tab-${esc(g.id)}" hidden><h2>${esc(g.title)}</h2><p>${esc(g.blurb || "")}</p>${ready.length ? `<div class="tgrid">${ready.map(card).join("")}</div>` : ""}${soon.length ? `<div class="tlist">${soon.map(row).join("")}</div>` : ""}</section>`; }).join("") || `<p class="tsub">No tutorials yet.</p>`;
 document.addEventListener("click", (e) => { const b = e.target.closest(".play"); if (!b) return; const th = b.parentElement; th.innerHTML = player(b.dataset.url); });
 // Tabs: one group at a time. The link /tutorials#run opens a group; /tutorials#v-vote opens the group that holds that video and plays it.
 function show(id, push) {

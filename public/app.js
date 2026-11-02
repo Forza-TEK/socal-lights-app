@@ -25,7 +25,7 @@ const M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (d) => { const [, m, dd] = d.split("-").map(Number); return M[m - 1] + " " + dd; };
-const isPhone = () => matchMedia("(max-width:860px)").matches;
+const isPhone = () => matchMedia("(max-width:700px)").matches;
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const photoUrl = (k) => "/api/photo/" + k.split("/").map(encodeURIComponent).join("/");
 function range(ev) {
@@ -119,11 +119,25 @@ function addToCalendar(id) {
 }
 // one-line "report a problem" link on details pages: opens an email with the event already named
 const citySlug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-const reportLink = (name, key, city) => `<p class="reportline">${city ? `<a href="/in/${citySlug(city)}">More in ${esc(city)}</a> · ` : ""}<a href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Something wrong? Tell us</a></p>`;
+const reportLink = (name, key, city) => `<p class="reportline">${city ? `<a href="/in/${citySlug(city)}">More in ${esc(city)}</a> · ` : ""}<a data-report="${esc(key)}|${esc(name)}" href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Something wrong? Tell us</a></p>`;
+
+// "Something wrong? Tell us": a short form instead of an email app; falls back to the email link if scripts are off
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-report]"); if (!a) return; e.preventDefault();
+  const [ref, ...rest] = a.dataset.report.split("|"), name = rest.join("|");
+  const o = document.createElement("div"); o.className = "rptscrim";
+  o.innerHTML = `<form class="rptdlg" role="dialog" aria-modal="true" aria-label="Report a problem"><h3>Something wrong?</h3><p>${esc(name)}</p><label>What should we fix?<textarea name="m" rows="4" maxlength="600" placeholder="e.g. The date has changed, the pin is on the wrong street, it is closed."></textarea></label><label>Your email, if you want a reply <span>(optional)</span><input name="c" type="email" maxlength="120" autocomplete="email"></label><p class="rpterr" role="alert" hidden></p><div class="rptrow"><button class="rptgo" type="submit">Send</button><button class="rptx" type="button">Cancel</button></div></form>`;
+  document.body.appendChild(o); const f = o.querySelector("form"); f.m.focus();
+  const close = () => o.remove(); o.onclick = (ev) => { if (ev.target === o) close(); }; o.querySelector(".rptx").onclick = close;
+  f.onsubmit = async (ev) => { ev.preventDefault(); const er = o.querySelector(".rpterr"); er.hidden = true;
+    const r = await fetch("/api/report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ref, name, message: f.m.value, contact: f.c.value }) }).catch(() => null), j = r ? await r.json().catch(() => ({})) : {};
+    if (!r || !r.ok) { er.textContent = (j && j.error) || "That didn't send. Try again."; er.hidden = false; return; }
+    close(); toast("Thanks. We'll look into it."); };
+});
 
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};
-const state = { season: defaultSeason(TODAY), all: false, q: "", date: "", weekend: false, city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
+const state = { vis: new Set(), season: defaultSeason(TODAY), all: false, q: "", date: "", weekend: false, city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
 const hfav = (p) => "h:" + p.id; // houses are starred as "h:<id>"; events by their plain id
 const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify([...favs])); } catch {} };
@@ -141,6 +155,7 @@ function evMatch(ev) {
   if (!nearCity(ev.lat, ev.lng)) return false;
   if (state.cost === "free" && !ev.free) return false;
   if (state.cost === "paid" && ev.free) return false;
+  if (state.vis.size) return false; // visiting filters are about posted homes only
   if (state.type === "pro") return false; // "Professionally installed" is about posted homes only; events carry no installer
   if (state.type === "contest" ? !isContest(ev) : state.type === "house" ? !isHome(ev) : state.type && ev.t !== state.type) return false;
   if (state.conf && ev.st !== "c") return false;
@@ -165,7 +180,11 @@ const isContest = (ev) => ev._ct ?? (ev._ct = CONTEST_RE.test(ev.n + " " + (ev.b
 function instMatch(p) {
   if (!state.all && (p.season || "christmas") !== state.season) return false;
   if (state.type && state.type !== "house" && state.type !== "pro") return false;
-  if (state.type === "pro" && !(p.kind === "installer" || p.inst)) return false; // installed by a company, or posted by one
+  if (state.type === "pro" && !(p.kind === "installer" || p.inst)) return false;
+  if (state.vis.has("drive") && !["drive", "both"].includes(p.visit)) return false;
+  if (state.vis.has("walk") && !["walk", "both"].includes(p.visit)) return false;
+  if (state.vis.has("free") && p.parking !== "free") return false;
+  if (state.vis.has("acc") && !p.acc) return false; // installed by a company, or posted by one
   if (state.cost === "paid") return false;
   if (state.q && !hay(p.biz + " " + p.title + " " + p.city + " " + p.desc + " " + (p.address || "")).includes(hay(state.q))) return false;
   if (state.counties.size && !state.counties.has(p.county)) return false;
@@ -358,7 +377,7 @@ function renderPreview() {
   const acts = `<span class="pv-acts">${awayTag(it.kind === "ev" ? it.ev : { lat: it.p.plat, lng: it.p.plng })}<button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button></span>`;
   if (it.kind === "ev") {
     const ev = it.ev, phs = photosOf(ev), ph = phs[0], conf = ev.st === "c", hrs = hoursOf(ev), manyE = phs.length > 1;
-    pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${manyE ? `<div class="pvtrack" id="pvtrack">${phs.map((q, i) => `<div class="pvslide">${photoImg(q, i < 2, 900)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="pvcount">1 / ${phs.length}</span>` : ph ? photoImg(ph, false, 800) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
+    pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${manyE ? `<div class="pvtrack" id="pvtrack">${phs.map((q, i) => `<div class="pvslide">${photoImg(q, i < 2, 900)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="pvcount">1 / ${phs.length}</span>` : ph ? photoImg(ph, false, 800) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
   } else {
     const p = it.p, ph = p.photos || [];
     const many = ph.length > 1;
@@ -555,7 +574,7 @@ const hoursOf = (ev) => (ev.h && !/^check/i.test(ev.h) ? cut(ev.h, 30) : "");
 function evItem(ev, i = 99, x = null) {
   const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
   // Same layout as the card that opens when you tap a dot on the map
-  return `<article class="item ev${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 8) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts">${awayTag(ev)}<button class="shr" type="button" data-share="e:${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div>${x ? legLine(x) : ""}<div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
+  return `<article class="item ev${ev.nt ? " noticed" : ""}${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 8) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts">${awayTag(ev)}<button class="shr" type="button" data-share="e:${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div>${x ? legLine(x) : ""}<div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
 }
 // My night help: three simple steps, which can be folded into a ? button next to the stop count (remembered on this device)
 let nightHelp = true; try { nightHelp = localStorage.getItem("socal-nighthelp") !== "0"; } catch {}
@@ -569,13 +588,21 @@ const bOn = (p, k) => (p.b || []).filter((b) => b[k]);
 const bChip = (p) => (bOn(p, "l").length ? `<span class="bpill" role="img" aria-label="Past contest winner" title="Past contest winner">${CROWN_B(18)}</span>` : "");
 const bPop = (p) => { const b = bOn(p, "p"); return b.length ? { icon: CROWN_B(15) + " ", sub: `<span class="bsub">${b[0].t ? esc(b[0].t.length > 70 ? b[0].t.slice(0, 67) + "…" : b[0].t) : esc(b[0].a) + " · " + esc(b[0].s)}${b.length > 1 ? " +" + (b.length - 1) : ""}</span>` } : { icon: "", sub: "" }; };
 const bLines = (p) => bOn(p, "d").map((b) => b.t ? `<div class="bline">${CROWN_B(18)}<div><b>${esc(b.t)}</b>${b.u ? `<span class="m"><a href="${esc(b.u)}" target="_blank" rel="noopener">Source</a></span>` : ""}</div></div>` : `<div class="bline">${CROWN_B(18)}<div><b>${esc(b.a)} · ${esc(b.k)}</b><span class="m">${esc(b.s)} · ${esc(b.c)}</span></div></div>`).join("");
+const noticeTag = (ev) => (ev.nt ? `<span class="tag cancel">${ev.nt === "cancelled" ? "Cancelled" : "Postponed"}</span>` : "");
+// What families need to know about a home: when it is lit, how to see it, parking, access, the radio station
+const VISIT = { drive: "Drive by", walk: "Walk by", both: "Drive or walk" }, PARK = { free: "Free parking nearby", street: "Street parking", none: "Hard to park" };
+const homeChips = (p) => [p.lon && "Lights on " + p.lon, VISIT[p.visit], p.radio && "Tune to " + p.radio, p.acc && "Stroller friendly", PARK[p.parking]].filter(Boolean);
+const homeTags = (p, n = 3) => { const c = homeChips(p).slice(0, n); return c.length || p.tonight ? `<div class="tags">${p.tonight ? `<span class="tag conf">Lit tonight · ${p.tonight}</span>` : ""}${c.map((t) => `<span class="tag ice">${esc(t)}</span>`).join("")}</div>` : ""; };
+// "Lights are on tonight": one tap from a visitor, counted per night
+const nightKey = (p) => "scl-on-" + p.id + "-" + new Date().toLocaleDateString("en-CA");
+const onButton = (p) => { let done = false; try { done = !!localStorage.getItem(nightKey(p)); } catch {} return `<button class="onbtn${done ? " done" : ""}" type="button" data-lightson="${esc(p.id)}" ${done ? "disabled" : ""}><span aria-hidden="true">💡</span> ${done ? "Thanks, noted as lit" : "I saw it lit tonight"}${p.tonight ? ` <b>${p.tonight} tonight</b>` : ""}</button>`; };
 // Installer attribution: a home installed by a professional links to that company's profile page
 const instLink = (p) => (p.inst ? `<a class="instlink" href="/installer/${esc(p.inst.slug)}">${esc(p.inst.name)}</a>` : "");
 const byLine = (p) => (p.kind === "installer" ? (p.inst ? instLink(p) : esc(p.biz)) : "Posted by " + esc(p.biz));
 const instLine = (p) => (p.kind !== "installer" && p.inst ? `<div class="meta instby">Installed by ${instLink(p)}${p.inst.ok ? ` <span class="instok" title="Confirmed by the installer" aria-label="Confirmed by the installer">&#10003;</span>` : ""}</div>` : "");
 function instItem(p, x = null) {
   const ph = p.photos || [], k = "i:" + p.id, f = favs.has(hfav(p)), sn = SEASONS[p.season] ? SEASONS[p.season].short : "";
-  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span>${bChip(p)}${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts">${awayTag({ lat: p.plat, lng: p.plng })}<button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${byLine(p)} · ${esc(p.city)}</div>${instLine(p)}<div class="dates">${esc(sn)} display · Free to view</div>${x ? legLine(x) : ""}<div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
+  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span>${bChip(p)}${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts">${awayTag({ lat: p.plat, lng: p.plng })}<button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${byLine(p)} · ${esc(p.city)}</div>${instLine(p)}<div class="dates">${esc(sn)} display · Free to view</div>${homeTags(p)}${x ? legLine(x) : ""}<div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
@@ -704,6 +731,13 @@ $("#pbody").addEventListener("click", (e) => {
   if (e.target.closest("[data-support]")) { openSupport(); return; }
   const cl = e.target.closest("[data-cal]"); if (cl) { e.stopPropagation(); addToCalendar(cl.dataset.cal); return; }
   const sh = e.target.closest("[data-share]"); if (sh) { e.stopPropagation(); shareItem(sh.dataset.share); }
+  const lo = e.target.closest("[data-lightson]"); if (lo && !lo.disabled) {
+    e.stopPropagation(); const id = lo.dataset.lightson; lo.disabled = true;
+    fetch("/api/posts/" + encodeURIComponent(id) + "/on", { method: "POST" }).then((r) => r.json()).then((j) => {
+      try { const p = SHOW.find((x) => x.id === id); if (p) { try { localStorage.setItem(nightKey(p), "1"); } catch {} p.tonight = j.n || 1; } } catch {}
+      lo.classList.add("done"); lo.innerHTML = `<span aria-hidden="true">💡</span> Thanks, noted as lit <b>${j.n || 1} tonight</b>`; toast("Thanks. Other families will see it's lit.");
+    }).catch(() => { lo.disabled = false; toast("Couldn't send that. Try again."); });
+  }
 });
 $("#phead").addEventListener("click", (e) => {
   const ns = e.target.closest("[data-nshare]"); if (ns) { shareNight(); return; }
@@ -774,7 +808,7 @@ function detailHtml(k) {
     <div class="hero${ev.free ? " free" : ""}${ph ? " photo" : ""}">${manyD ? `<div class="pvtrack" id="track">${phs.map((q, i) => `<div class="pvslide" data-credit="${esc(q.credit || "")}" data-link="${esc(safeUrl(q.link) || "")}">${photoImg(q, i < 2, 900)}</div>`).join("")}</div><button class="pvnav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="gcount">1 / ${phs.length}</span>` : ph ? photoImg(ph, false, 1200) : ""}<button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
       ${ph ? (cl ? `<a class="credit" id="hcredit" href="${esc(cl)}" target="_blank" rel="noopener">${esc(ph.credit)}</a>` : `<span class="credit" id="hcredit">${esc(ph.credit)}</span>`) : ""}
       <div class="htext"><div class="kicker">${esc(TYPE_SHORT[ev.t] || "Event")} · ${esc(ev.city)}${away(ev)}</div><h2>${esc(ev.n)}</h2></div></div>
-    <div class="tags">${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
+    <div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
     <div class="boxes"><div><span>When</span><b>${whenShort(ev)}</b></div><div><span>Hours</span><b>${esc(ev.h)}</b></div><div><span>Cost</span><b>${esc(ev.p)}</b></div></div>
     <p class="blurb">${esc(ev.b)}</p>
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd>${ev.lc ? `<dt>Updated</dt><dd class="meta">${esc(fmt(ev.lc))}</dd>` : ""}</dl>
@@ -787,8 +821,8 @@ function detailHtml(k) {
   <div class="row" style="gap:6px;justify-content:flex-start;flex-wrap:wrap"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}</div>
   <h2>${esc(p.title)}</h2><div class="meta">${p.kind === "installer" ? "" : "Posted by "}<b style="color:var(--ink)">${p.kind === "installer" && p.inst ? instLink(p) : esc(p.biz)}</b> · ${esc(p.city)}${away({ lat: p.plat, lng: p.plng })}</div>${instLine(p)}${bLines(p)}
   <p style="margin:0;white-space:pre-line">${esc(p.desc)}</p>
-  <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}</dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.kind === "installer" && p.area ? `<dt>Service area</dt><dd>${esc(p.area)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
-  ${reportLink(p.title, "h-" + p.id, p.city)}<div class="actionbar"><button class="abtn" type="button" data-share="i:${esc(p.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
+  <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}</dd>` : ""}${p.lon ? `<dt>Lights on</dt><dd>${esc(p.lon)}</dd>` : ""}${VISIT[p.visit] ? `<dt>Visit</dt><dd>${VISIT[p.visit]}${PARK[p.parking] ? " · " + PARK[p.parking] : ""}${p.acc ? " · Stroller and wheelchair friendly" : ""}</dd>` : p.acc || PARK[p.parking] ? `<dt>Visit</dt><dd>${[PARK[p.parking], p.acc && "Stroller and wheelchair friendly"].filter(Boolean).join(" · ")}</dd>` : ""}${p.radio ? `<dt>Tune in</dt><dd>${esc(p.radio)}</dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.kind === "installer" && p.area ? `<dt>Service area</dt><dd>${esc(p.area)}</dd>` : ""}${p.phone ? `<dt>Quotes</dt><dd style="user-select:all">${esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
+  ${onButton(p)}${reportLink(p.title, "h-" + p.id, p.city)}<div class="actionbar"><button class="abtn" type="button" data-share="i:${esc(p.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
 }
 function wireDetail() {
   const area = document.querySelector(".detail .hero.photo, .detail .gallery:has(.track)");
@@ -866,10 +900,12 @@ function activeFilters() {
   if (state.cost === "paid") a.push(["cost", "Ticketed only"]);
   if (state.type) a.push(["type", state.type === "house" ? "Home displays" : state.type === "pro" ? "Professionally installed" : state.type === "contest" ? "Contests" : TYPE_SHORT[state.type] || "Type"]);
   if (state.conf) a.push(["conf", "Confirmed dates"]);
+  state.vis.forEach((v) => a.push(["vis:" + v, { drive: "Drive by", walk: "Walk by", free: "Free parking", acc: "Stroller friendly" }[v]]));
   return a;
 }
 function clearFilter(k) {
-  if (k === "all") { state.date = ""; state.weekend = false; state.city = ""; state.counties.clear(); state.cost = "all"; state.type = ""; state.conf = false; }
+  if (k === "all") { state.date = ""; state.weekend = false; state.city = ""; state.counties.clear(); state.cost = "all"; state.type = ""; state.conf = false; state.vis.clear(); }
+  else if (k.startsWith("vis:")) state.vis.delete(k.slice(4));
   else if (k === "date") state.date = ""; else if (k === "city") state.city = ""; else if (k === "cost") state.cost = "all";
   else if (k === "type") state.type = ""; else if (k === "conf") state.conf = false; else if (k.startsWith("county:")) state.counties.delete(k.slice(7));
   applyFilters();
@@ -887,6 +923,7 @@ function filtersHtml() {
     <section><h4>County</h4><div class="fchips">${COUNTIES.map((c) => ch(state.counties.has(c), `data-county="${esc(c)}"`, esc(c.replace(/^Los Angeles$/, "LA")))).join("")}</div></section>
     <section><h4>Cost</h4><div class="fseg" role="group" aria-label="Cost">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-fcost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div></section>
     <section><h4>Type</h4><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).filter(([v]) => v !== "drive").map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}${ch(state.type === "pro", 'data-ftype="pro"', "Professionally installed")}</div></section>
+    <section><h4>Visiting a home</h4><div class="fchips">${[["drive", "Drive by"], ["walk", "Walk by"], ["free", "Free parking"], ["acc", "Stroller friendly"]].map(([v, l]) => ch(state.vis.has(v), `data-fvis="${v}"`, l)).join("")}</div></section>
     <section class="frow"><span><b>Confirmed dates only</b></span><button type="button" class="sw${state.conf ? " on" : ""}" role="switch" aria-checked="${state.conf}" data-fconf aria-label="Confirmed dates only"><i></i></button></section>
   </div>
   <div class="ffoot"><button type="button" class="linkbtn" data-clear="all">Clear all</button><button type="button" class="btn" data-fdone>Show ${nShow.toLocaleString("en-US")} place${nShow === 1 ? "" : "s"}</button></div>`;
@@ -905,6 +942,7 @@ function fPanel() {
       if ((c = t.closest("[data-fwhen]"))) { const v = c.dataset.fwhen; state.weekend = v === "weekend"; state.date = v === "today" ? TODAY : ""; applyFilters(); return; }
       if ((c = t.closest("[data-county]"))) { const n = c.dataset.county; state.counties.has(n) ? state.counties.delete(n) : state.counties.add(n); applyFilters(); return; }
       if ((c = t.closest("[data-fcost]"))) { state.cost = c.dataset.fcost; applyFilters(); return; }
+      if ((c = t.closest("[data-fvis]"))) { const v = c.dataset.fvis; state.vis.has(v) ? state.vis.delete(v) : state.vis.add(v); applyFilters(); return; }
       if ((c = t.closest("[data-ftype]"))) { state.type = c.dataset.ftype; applyFilters(); return; }
       if ((c = t.closest("[data-rad]"))) { state.radius = +c.dataset.rad; state.city ? setCity(state.city) : applyFilters(); return; }
       if (t.closest("[data-fconf]")) { state.conf = !state.conf; applyFilters(); return; }
@@ -1278,6 +1316,6 @@ async function refreshData() {
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - loadedAt > 5 * 60000) refreshData(); });
 setInterval(() => { if (document.visibilityState === "visible") refreshData(); }, 15 * 60000);
 setSheet("peek");
-let wasPhone = isPhone(); matchMedia("(max-width:860px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); renderPanel(); } });
+let wasPhone = isPhone(); matchMedia("(max-width:700px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); renderPanel(); } });
 let rT; addEventListener("resize", () => { pinBox = null; clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); renderPanel(); }, 120); });
 load();
