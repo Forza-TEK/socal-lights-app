@@ -2,6 +2,7 @@
 import { CITY } from "/cities.js";
 import { SEASONS, defaultSeason } from "/seasons.js";
 import { attachAddress } from "/addflow.js?v=20261102c";
+import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261102b";
 
 const $ = (s) => document.querySelector(s);
@@ -119,7 +120,7 @@ function editPost(p, startTab = "details") {
     ${fsec("Address", "Saving a new address moves the pin on the map.", ff("pStreet", "Street address", `<input id="pStreet" data-addr autocomplete="off" value="${esc(p.street || (p.address || "").split(",")[0])}" maxlength="120" placeholder="123 Main St">`)
       + ff("pCity", "City", `<select id="pCity">${Object.keys(CITY).sort().map((c) => `<option ${c === p.city ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>`, { c: "c4" }) + ff("pZip", "ZIP", `<input id="pZip" value="${esc(p.zip || "")}" inputmode="numeric" maxlength="5" placeholder="92630">`, { c: "c2" }))}
     ${fsec("How people reach them", "Shown on the public page so families can ask for a quote.", ff("pPhone", "Phone", `<input id="pPhone" type="tel" value="${esc(p.phone || "")}" maxlength="80">`, { c: "c3" }) + ff("pWeb", "Website", `<input id="pWeb" type="url" value="${esc(p.web || "")}" maxlength="200" placeholder="https://">`, { c: "c3" })
-      + ff("pArea", "Areas served", `<input id="pArea" value="${esc(p.area || "")}" maxlength="120" placeholder="Orange County and Los Angeles">`, { hint: AREAS_HINT }), { id: "pProSec", hide: p.kind !== "installer" })}
+      + ff("pArea", "Areas served", areaHtml({ id: "pArea", value: p.area }), { hint: AREAS_HINT }), { id: "pProSec", hide: p.kind !== "installer" })}
     ${fsec("About", "", ff("pSeason", "Season", `<select id="pSeason">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (p.season || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`, { c: "c3" })
       + ff("pDesc", "Description", `<textarea id="pDesc" maxlength="1200" rows="4">${esc(p.desc)}</textarea>`, { hint: "Shown on the listing." }))}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="pMsg" role="status"></span></div>
@@ -160,6 +161,7 @@ function editPost(p, startTab = "details") {
     $("#pKind").value = b.dataset.kind; $("#pKindSeg").querySelectorAll("[data-kind]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
     $("#pProSec").hidden = !pro; const lb = $("#pBiz").closest(".ff"); lb.querySelector("label").textContent = pro ? "Business name" : "Name shown as Posted by"; lb.querySelector(".fhint").textContent = pro ? "Families see this with a way to ask for a quote." : "For example, The Garcia family.";
   };
+  wireAreas(m);
   paint(); showTab(startTab);
   $("#pForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#pMsg"); msg.className = "msg"; msg.textContent = "Saving…";
@@ -463,13 +465,13 @@ async function openInstaller(id) {
     <h3 class="psec">Edit details</h3>
     <form class="f" id="iForm" novalidate>
     ${fsec("Company", "", ff("if-name", "Company name", `<input id="if-name" data-f="name" value="${esc(i.name)}" maxlength="80">`) + ff("if-web", "Website", `<input id="if-web" data-f="web" type="url" value="${esc(i.web || "")}" maxlength="200" placeholder="https://">`, { c: "c3" }) + ff("if-phone", "Phone", `<input id="if-phone" data-f="phone" type="tel" value="${esc(i.phone || "")}" maxlength="80">`, { c: "c3" })
-      + ff("if-area", "Areas served", `<input id="if-area" data-f="area" value="${esc(i.area || "")}" maxlength="120" placeholder="Orange County and Los Angeles">`, { hint: AREAS_HINT }) + ff("if-blurb", "About", `<textarea id="if-blurb" data-f="blurb" rows="3" maxlength="600">${esc(i.blurb || "")}</textarea>`, { hint: "Shown on the public profile page." }))}
+      + ff("if-area", "Areas served", areaHtml({ id: "if-area", value: i.area, extra: 'data-f="area"' }), { hint: AREAS_HINT }) + ff("if-blurb", "About", `<textarea id="if-blurb" data-f="blurb" rows="3" maxlength="600">${esc(i.blurb || "")}</textarea>`, { hint: "Shown on the public profile page." }))}
     ${fsec("Contacts", "These are private. They never appear on the public page.", ff("if-email", "Email for confirmations", `<input id="if-email" data-f="email" type="email" value="${esc(i.email || "")}" maxlength="120">`, { c: "c3", hint: "Where we send requests to confirm a home." }) + ff("if-owner", "Owner email", `<input id="if-owner" data-f="owner" type="email" value="${esc(i.owner_email || "")}" maxlength="120">`, { c: "c3", hint: "This person can edit the profile after signing in." }))}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="iMsg" role="status"></span></div></form>
     <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Merge into another profile</summary>
     <p class="meta" style="margin:8px 0">Moves every home to the profile you keep and removes this one. Use it when one company was typed two ways.</p>
     <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>`, true);
-  $("#mClose").onclick = close;
+  wireAreas(m); $("#mClose").onclick = close;
   const msg = (t, bad) => { const e = $("#iMsg"); e.className = bad ? "msg err" : "msg"; e.textContent = t; };
   $("#iForm").onsubmit = async (e) => { e.preventDefault(); const body = { action: "edit" }; m.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value)); try { await instAct(i.id, body); toast("Saved"); await openInstaller(i.id); if (tab === "installers") renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
   $("#iMergeGo").onclick = async (e) => { const into = $("#iMerge").value; if (!into) return msg("Choose the profile to keep.", true); if (!tap(e.target, "merge")) return; try { await instAct(i.id, { action: "merge", into }); close(); toast("Merged"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };

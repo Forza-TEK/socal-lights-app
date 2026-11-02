@@ -82,7 +82,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
       title, descr: desc, where_txt: line(b.where ?? row.where_txt, 120), season: SEASONS[b.season] ? b.season : row.season,
       lights_on: line(b.lights_on ?? row.lights_on, 60), visit: ["drive", "walk", "both", ""].includes(b.visit) ? b.visit : row.visit,
       parking: ["free", "street", "none", ""].includes(b.parking) ? b.parking : row.parking, accessible: b.accessible === undefined ? row.accessible : b.accessible ? 1 : 0,
-      radio: normRadio(clean(b.radio ?? row.radio, 40)), web: pro ? web || "" : row.web, phone: pro ? phoneNew.value : row.phone, service_area: pro ? line(b.area ?? row.service_area, 120) : row.service_area,
+      radio: normRadio(clean(b.radio ?? row.radio, 40)), web: pro ? web || "" : row.web, phone: pro ? phoneNew.value : row.phone, service_area: pro ? line(b.area ?? row.service_area, 240) : row.service_area,
     };
     const changes = diff(row, next, HOME_FIELDS);
     if (!changes.length) return json({ ok: true, changed: 0 });

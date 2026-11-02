@@ -1,0 +1,11 @@
+.areas{position:relative;display:grid;gap:4px}
+.areas .abox{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-height:46px;padding:6px 10px;border:1px solid var(--line2,#b0b0b0);border-radius:10px;background:var(--bg,#fff);cursor:text}
+.areas .abox:focus-within{border-color:var(--ink,#222);box-shadow:0 0 0 1px var(--ink,#222)}
+.areas .atags{display:contents}
+.areas .atag{display:inline-flex;align-items:center;gap:2px;min-height:32px;padding:0 4px 0 12px;border:1px solid var(--line2,#b0b0b0);border-radius:99px;background:var(--tile,#f7f7f7);color:var(--ink,#222);font:500 14px var(--font,system-ui)}
+.areas .atag button{all:unset;box-sizing:border-box;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--muted,#6a6a6a);font-size:18px;line-height:1}
+.areas .atag button:hover{background:var(--line,#ddd);color:var(--ink,#222)}.areas .atag button:focus-visible{outline:2px solid var(--season,#c13515)}
+.areas .ain{flex:1 1 140px;min-width:120px;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;font:400 16px var(--font,system-ui);color:var(--ink,#222);min-height:32px!important;padding:0 4px!important}
+.areas .dd small{display:inline-block;margin:0 0 0 8px;color:var(--muted,#6a6a6a);font-size:12px}
+.areas .dd button.on{background:var(--tile,#f7f7f7)}
+.areas .amsg{color:var(--bad,#c13515);font-size:12.5px}.areas .amsg:empty{display:none}

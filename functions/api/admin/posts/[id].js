@@ -128,7 +128,7 @@ export async function onRequestPost({ params, request, env }) {
     await env.DB.prepare("UPDATE posts SET biz=?, title=?, city=?, county=?, lat=?, lng=?, web=?, phone=?, where_txt=?, descr=?, address=?, show_address=?, season=?, poster_type=?, street=?, zip=?, service_area=? WHERE id=?")
       .bind(normName(clean(body.biz ?? row.biz, 80)), normName(clean(body.title ?? row.title, 90)), city, county, lat, lng,
         safeUrl(body.web ?? row.web), ph.value, line(body.where ?? row.where_txt, 120),
-        normText(clean(body.desc ?? row.descr, 1200)), address, address ? 1 : 0, season, kind, street, zip, line(body.area ?? row.service_area, 120), row.id).run();
+        normText(clean(body.desc ?? row.descr, 1200)), address, address ? 1 : 0, season, kind, street, zip, line(body.area ?? row.service_area, 240), row.id).run();
     return json({ ok: true, lat, lng });
   }
 
