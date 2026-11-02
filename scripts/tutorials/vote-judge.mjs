@@ -30,7 +30,7 @@ const vote = {
 };
 const inv = judgeInvite(DEMO);
 const judge = {
-  id: "judge", file: "vote-judge", cookie: ck.u_judge, start: "/offline.html",
+  id: "judge", file: "judge", cookie: ck.u_judge, start: "/offline.html",
   steps: [
     { card: { ey: EY, title: "Judge a contest", sub: "Score each home, and recuse yourself when you know the household" }, say: "Judge a contest. In this video, you score the homes as a judge, and skip a home you know.", pad: 1.2 },
     { cap: "Your invitation email", say: "A contest organizer invites you by email. The email says which contest it is, how judging works, and has one button. This is an example.", mail: { subject: inv.subject, html: inv.html, to: "dana@demo.example", note: "Example email" }, pad: 1.4 },
