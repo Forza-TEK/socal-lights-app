@@ -1011,7 +1011,7 @@ async function openAlerts() {
   if ($("#alerts")) return;
   const names = Object.keys(CITY_OPTS).sort(), near = state.me ? names.map((c) => [miles(state.me, { lat: CITY_OPTS[c][0], lng: CITY_OPTS[c][1] }), c]).sort((a, b) => a[0] - b[0])[0] : null;
   const w = document.createElement("div"); w.id = "alerts"; w.setAttribute("role", "dialog"); w.setAttribute("aria-modal", "true"); w.setAttribute("aria-labelledby", "altitle");
-  w.innerHTML = `<div class="abox"><button type="button" class="ax" aria-label="Close" data-alclose>×</button><h2 id="altitle">Weekly lights email</h2><p>Once a week, the lights and events happening near a city you choose. Free, and you can stop it with one tap.</p>
+  w.innerHTML = `<div class="abox"><button type="button" class="ax" aria-label="Close" data-alclose><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><h2 id="altitle">Weekly lights email</h2><p>Once a week, the lights and events happening near a city you choose. Free, and you can stop it with one tap.</p>
     <form id="alform" novalidate><label>Email<input type="email" id="alEmail" autocomplete="email" required></label>
     <label>City<input id="alCity" list="alCities" autocomplete="off" value="${esc(state.city || (near ? near[1] : ""))}" required><datalist id="alCities">${names.map((c) => `<option value="${esc(c)}">`).join("")}</datalist></label>
     <label>Distance<select id="alRad"><option value="5">Within 5 miles</option><option value="10" selected>Within 10 miles</option><option value="25">Within 25 miles</option></select></label>
