@@ -2,7 +2,7 @@
 import { json } from "../../_lib/util.js";
 
 export async function onRequestGet({ request, env }) {
-  const u = new URL(request.url), area = ["users", "posts", "events", "contests", "submissions"].includes(u.searchParams.get("area")) ? u.searchParams.get("area") : "";
+  const u = new URL(request.url), area = ["users", "posts", "events", "contests", "submissions", "installers", "reports", "normalize"].includes(u.searchParams.get("area")) ? u.searchParams.get("area") : "";
   const offset = Math.max(0, parseInt(u.searchParams.get("offset") || "0", 10) || 0), PAGE = 50;
   const W = area ? " WHERE area = ?" : "", b = area ? [area] : [];
   const { n: total } = await env.DB.prepare(`SELECT COUNT(*) AS n FROM admin_log${W}`).bind(...b).first();

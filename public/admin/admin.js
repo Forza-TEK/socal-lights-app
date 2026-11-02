@@ -1,7 +1,8 @@
 // SoCal Lights admin: review houses, manage published posts, edit events.
 import { CITY } from "/cities.js";
 import { SEASONS, defaultSeason } from "/seasons.js";
-import { attachAddress } from "/addflow.js?v=20261102b";
+import { attachAddress } from "/addflow.js?v=20261102c";
+import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261102b";
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -9,7 +10,7 @@ const COUNTIES = ["Los Angeles", "Orange", "Riverside", "San Bernardino", "San D
 const TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
 let evSeason = defaultSeason(TODAY);
 const photo = (k) => "/api/admin/photo/" + k.split("/").map(encodeURIComponent).join("/");
-let tab = "pending", EVENTS = [], POSTS = [];
+let tab = "dashboard", EVENTS = [], POSTS = [];
 // Address suggestions on every address box in the edit windows (the house street and the event address)
 attachAddress($("#modal"), { getCity: () => ($("#pCity") || $("#eCity") || {}).value || "", onPick: (s, inp) => {
   if (inp.id === "pStreet") { inp.value = s.street; if ($("#pCity") && [...$("#pCity").options].some((o) => o.value === s.city)) $("#pCity").value = s.city; if ($("#pZip") && /^\d{5}/.test(s.zip)) $("#pZip").value = s.zip.slice(0, 5); }
@@ -24,16 +25,37 @@ async function api(path, opts = {}) {
   return d;
 }
 
-function setTab(t) { tab = t; ["pending", "approved", "subs", "contests", "events", "overlaps", "installers", "users", "data", "log"].forEach((k) => $("#tab-" + k).setAttribute("aria-selected", k === t)); render(); }
-["pending", "approved", "subs", "contests", "events", "overlaps", "installers", "users", "data", "log"].forEach((k) => ($("#tab-" + k).onclick = () => setTab(k)));
+const TABS = ["dashboard", "pending", "subs", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log" };
+const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
+const COUNTS = {};
+// The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
+function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; }
+function setTab(t, push = true) {
+  tab = t;
+  document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
+  $("#ptitle").textContent = TITLES[t] || "";
+  closeSheet(); window.scrollTo(0, 0);
+  if (push && location.hash !== "#" + t) history.replaceState(null, "", "#" + t);
+  render();
+}
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) setTab(b.dataset.tab); });
+const sheet = $("#side");
+function openSheet() { document.body.classList.add("sheet-open"); $("#moreBtn") && $("#moreBtn").setAttribute("aria-expanded", "true"); }
+function closeSheet() { document.body.classList.remove("sheet-open"); $("#moreBtn") && $("#moreBtn").setAttribute("aria-expanded", "false"); }
+$("#moreBtn").onclick = () => (document.body.classList.contains("sheet-open") ? closeSheet() : openSheet());
+$("#scrim").onclick = closeSheet;
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (TABS.includes(h) && h !== tab) setTab(h, false); });
 
-// The numbers on the tabs, from one request, so they are right on arrival and after every change
-const COUNT_IDS = { pending: "nPending", approved: "nApproved", subs: "nSubs", contests: "nContests", events: "nEvents", overlaps: "nOverlaps", users: "nUsers", installers: "nInstallers" };
-async function refreshCounts() { try { const c = await api("/api/admin/counts"); for (const [k, id] of Object.entries(COUNT_IDS)) if ($("#" + id)) $("#" + id).textContent = c[k]; } catch {} }
+// The numbers on the menu, from one request, so they are right on arrival and after every change
+async function refreshCounts() { try { const c = await api("/api/admin/counts"); for (const k of Object.keys(c)) setCount(k, c[k]); } catch {} }
 async function render() {
   const main = $("#main");
   refreshCounts();
   try {
+    if (tab === "dashboard") return renderDashboard();
+    if (tab === "reports") return renderReports();
     if (tab === "events") return renderEvents();
     if (tab === "subs") return renderSubs();
     if (tab === "contests") return renderContests();
@@ -43,39 +65,43 @@ async function render() {
     if (tab === "users") return renderUsers();
     if (tab === "log") return renderLog();
     const posts = await api("/api/admin/posts?status=" + tab);
-    if (tab === "pending") $("#nPending").textContent = posts.length;
+    if (tab === "pending") setCount("pending", posts.length);
     if (!posts.length) { main.innerHTML = `<div class="empty">${tab === "pending" ? "Nothing waiting for review." : "No published houses yet."}</div>`; return; }
-    POSTS = posts; main.innerHTML = `<div class="cards">${posts.map(postCard).join("")}</div>`;
+    POSTS = posts; main.innerHTML = toolbar({ search: { placeholder: "Search houses, people, cities" }, count: String(posts.length) }) + `<div class="cards">${posts.map(postCard).join("")}</div>`;
+    wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
   } catch (e) { main.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 function postCard(p) {
-  const web = p.web ? `<a href="${esc(p.web)}" target="_blank" rel="noopener">${esc(p.web)}</a>` : "—";
-  return `<article class="acard" data-id="${esc(p.id)}">
-    <div class="row" style="justify-content:space-between"><h3>${esc(p.title)}</h3><span class="meta">${esc((p.created || "").slice(0, 16))} UTC</span></div>
-    ${p.photos.length ? `<div class="pics">${p.photos.map((k) => `<a href="${photo(k)}" target="_blank" rel="noopener"><img src="${photo(k)}" alt="" loading="lazy"></a>`).join("")}</div>` : `<div class="meta">No photos</div>`}
-    <dl class="facts"><dt>Name / business</dt><dd>${esc(p.biz)}</dd><dt>City</dt><dd>${esc(p.city)} · ${esc(p.county || "")}</dd>
-    <dt>Contact</dt><dd><span style="user-select:all">${esc(p.contact_email || "—")}</span></dd><dt>Website</dt><dd>${web}</dd>
-    <dt>Posting as</dt><dd>${p.kind === "installer" ? "Professional installer" : "Homeowner"}</dd>${p.inst && p.kind !== "installer" ? `<dt>Installed by</dt><dd>${esc(p.inst.name)} ${p.inst.ok ? "(confirmed)" : "(claimed by the homeowner, not confirmed)"}</dd>` : ""}<dt>Public phone</dt><dd>${esc(p.phone || "—")}</dd><dt>Street address</dt><dd>${esc(p.address || "—")} <span class="meta">(shown on the map)</span></dd><dt>Where</dt><dd>${esc(p.where || "—")}</dd><dt>About</dt><dd style="white-space:pre-line">${esc(p.desc)}</dd></dl>
-    ${p.hiddenBySweep ? `<p class="meta" style="margin:8px 0;color:var(--ink)"><b>Not on the map.</b> You chose the sweep record for this address (Replaced records tab).</p>` : ""}${p.replaces ? `<p class="meta" style="margin:8px 0;color:var(--ink)"><b>Replaces a sweep record.</b> When you approve this, the automatic listing at the same address is hidden: ${p.replaces.map((r) => esc(r.name)).join("; ")}.</p>` : ""}${p.nearby ? `<p class="meta" style="margin:8px 0">Same street, different number (both stay listed): ${p.nearby.map((r) => esc(r.name + " (" + (r.address || "").split(",")[0] + ")")).join("; ")}.</p>` : ""}
-    <div class="row"><button class="btn ghost" type="button" data-editpost="${esc(p.id)}">Edit</button>${tab === "pending" ? `<button class="btn ice" type="button" data-act="approve">Approve and publish</button><button class="btn ghost" type="button" data-act="decline">Decline</button>` : `<button class="btn ghost" type="button" data-act="unpublish">Unpublish</button><button class="btn ghost" type="button" data-act="delete">Remove from site</button>`}<span class="msg"></span></div>
-  </article>`;
+  const web = p.web ? `<a href="${esc(p.web)}" target="_blank" rel="noopener">${esc(p.web)}</a>` : "";
+  const note = (c, t) => `<p class="meta" style="margin:0;color:var(--ink)">${t}</p>`;
+  const pending = tab === "pending";
+  return rec({
+    attrs: `data-id="${esc(p.id)}"`, title: esc(p.title), tags: [[p.kind === "installer" ? "Installer" : "Homeowner"], [pending ? "Waiting" : "Published", pending ? "warn" : "ok"]], meta: esc((p.created || "").slice(0, 16)) + " UTC",
+    lead: p.photos.length ? `<div class="pics">${p.photos.map((k) => `<a href="${photo(k)}" target="_blank" rel="noopener"><img src="${photo(k)}" alt="" loading="lazy"></a>`).join("")}</div>` : `<div class="meta">No photos</div>`,
+    facts: fact("Name / business", esc(p.biz)) + fact("City", esc(p.city) + " · " + esc(p.county || "")) + fact("Contact", `<span style="user-select:all">${esc(p.contact_email || "—")}</span>`) + fact("Website", web || "—")
+      + (p.inst && p.kind !== "installer" ? fact("Installed by", esc(p.inst.name) + (p.inst.ok ? " (confirmed)" : " (claimed by the homeowner, not confirmed)")) : "") + fact("Public phone", esc(p.phone || "—")) + fact("Street address", esc(p.address || "—") + ' <span class="meta">(shown on the map)</span>') + fact("Where", esc(p.where || "—")) + fact("About", `<span style="white-space:pre-line">${esc(p.desc)}</span>`),
+    body: (p.hiddenBySweep ? note(0, "<b>Not on the map.</b> You chose the sweep record for this address (Replaced records).") : "") + (p.replaces ? note(0, `<b>Replaces a sweep record.</b> When you approve this, the automatic listing at the same address is hidden: ${p.replaces.map((r) => esc(r.name)).join("; ")}.`) : "") + (p.nearby ? `<p class="meta" style="margin:0">Same street, different number (both stay listed): ${p.nearby.map((r) => esc(r.name + " (" + (r.address || "").split(",")[0] + ")")).join("; ")}.</p>` : ""),
+    edit: btn("ghost", "Edit", `data-editpost="${esc(p.id)}"`),
+    main: pending ? btn("main", "Approve and publish", 'data-act="approve"') : btn("ghost", "Unpublish", 'data-act="unpublish"'),
+    danger: pending ? btn("danger", "Decline", 'data-act="decline"') : btn("danger", "Remove from site", 'data-act="delete"'),
+  });
 }
+const DONE = { approve: "Published", decline: "Declined", unpublish: "Unpublished", delete: "Removed" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-act]"); if (!b) return;
   const card = b.closest("[data-id]"), id = card.dataset.id, act = b.dataset.act, msg = card.querySelector(".msg");
-  if ((act === "decline" || act === "delete" || act === "unpublish") && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = act === "decline" ? "Click again to decline" : act === "unpublish" ? "Click again to unpublish" : "Click again to remove"; return; }
+  if ((act === "decline" || act === "delete" || act === "unpublish") && !tap(b, act === "delete" ? "remove" : act)) return;
   b.disabled = true; msg.className = "msg"; msg.textContent = act === "approve" ? "Publishing…" : "Working…";
   try {
     if (act === "delete") await api("/api/admin/posts/" + id, { method: "DELETE" });
     else await api("/api/admin/posts/" + id, { method: "POST", body: JSON.stringify({ action: act }) });
-    card.remove(); refreshCounts(); if (!document.querySelector(".acard")) render();
-    if (tab === "pending") $("#nPending").textContent = document.querySelectorAll(".acard").length;
+    card.remove(); toast(DONE[act] || "Done"); refreshCounts(); if (!document.querySelector(".rec")) render();
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
 function editPost(p) {
   const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="row" style="justify-content:space-between"><h2>Edit house</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="mh"><h2>Edit house</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
   <form class="f" id="pForm" novalidate>
     <label for="pKind">Posting as<select id="pKind"><option value="homeowner" ${p.kind !== "installer" ? "selected" : ""}>Homeowner</option><option value="installer" ${p.kind === "installer" ? "selected" : ""}>Professional installer</option></select></label>
     <div class="two"><label for="pBiz">Name or business<input id="pBiz" value="${esc(p.biz)}" maxlength="80"></label><label for="pTitle">Display name<input id="pTitle" value="${esc(p.title)}" maxlength="90"></label></div>
@@ -86,7 +112,7 @@ function editPost(p) {
     <label for="pArea">Service area <span class="hint">installers</span><input id="pArea" value="${esc(p.area || "")}" maxlength="120"></label>
     <label for="pWhere">Where to see it<input id="pWhere" value="${esc(p.where || "")}" maxlength="120"></label>
     <label for="pDesc">About<textarea id="pDesc" maxlength="1200">${esc(p.desc)}</textarea></label>
-    <div class="row"><button class="btn ice" type="submit">Save</button><span class="msg" id="pMsg" role="status"></span></div>
+    <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="pMsg" role="status"></span></div>
   </form></div>`;
   m.hidden = false; $("#mClose").onclick = close;
   $("#pForm").onsubmit = async (x) => {
@@ -105,23 +131,28 @@ async function renderSubs() {
   const main = $("#main");
   const [waiting, live] = await Promise.all([api("/api/admin/submissions?status=pending"), api("/api/admin/submissions?status=published")]);
   SUBS = SUBVIEW === "pending" ? waiting : live;
-  $("#nSubs").textContent = waiting.length;
-  const sw = `<div class="row" style="gap:8px;margin-bottom:12px"><button class="btn ${SUBVIEW === "pending" ? "ice" : "ghost"}" type="button" data-subview="pending">Waiting (${waiting.length})</button><button class="btn ${SUBVIEW === "published" ? "ice" : "ghost"}" type="button" data-subview="published">Live, newest first (${live.length})</button></div>`;
-  if (!SUBS.length) { main.innerHTML = sw + `<div class="empty">${SUBVIEW === "pending" ? "Nothing waiting. New events go live right away; look under Live to review or unpublish them." : "No submitted events are live."}</div>`; return; }
-  main.innerHTML = sw + `<div class="cards">${SUBS.map((x) => `<article class="acard" data-sid="${esc(x.id)}">
-    <div class="row" style="justify-content:space-between"><h3>${esc(x.name)}</h3><span class="meta">${esc((x.created_at || "").slice(0, 16))} UTC</span></div>
-    <dl class="facts"><dt>When</dt><dd>${esc(x.start_date)}${x.end_date !== x.start_date ? " to " + esc(x.end_date) : ""} · ${esc(x.hours || "no hours")}</dd><dt>Where</dt><dd>${esc(x.venue)}<br><span class="meta">${esc(x.address)}, ${esc(x.city)} · ${esc(x.county || "")} (pin ${Number(x.lat).toFixed(4)}, ${Number(x.lng).toFixed(4)})</span></dd>
-    <dt>Type</dt><dd>${esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)} · ${esc(x.price || "")}</dd><dt>About</dt><dd>${esc(x.blurb)}</dd>
-    <dt>Event page</dt><dd><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a></dd><dt>Contact</dt><dd><span style="user-select:all">${esc(x.contact_email)}</span></dd><dt>Notes</dt><dd>${esc(x.note || "")}</dd>${x.paid_plans ? `<dt>Paid Featured</dt><dd><b>${esc(x.paid_plans)}</b></dd>` : ""}</dl>
-    <div class="row">${SUBVIEW === "pending" ? `<button class="btn ice" type="button" data-sact="approve" data-st="confirmed">Publish (confirmed)</button><button class="btn ghost" type="button" data-sact="approve" data-st="expected">Publish (expected)</button><button class="btn ghost" type="button" data-sact="decline">Decline</button>` : `<button class="btn ghost" type="button" data-sact="unpublish">Unpublish</button>`}<span class="msg"></span></div></article>`).join("")}</div>`;
+  setCount("subs", waiting.length);
+  const bar = toolbar({ views: [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "published", label: "Live", n: live.length }], active: SUBVIEW, search: { placeholder: "Search events, cities" }, count: String(SUBS.length) });
+  const go = () => wireToolbar(main, { onView: (v) => { SUBVIEW = v; renderSubs(); }, onSearch: (q) => filterCards(main, q) });
+  if (!SUBS.length) { main.innerHTML = bar + `<div class="empty">${SUBVIEW === "pending" ? "Nothing waiting. New events go live right away; look under Live to review or unpublish them." : "No submitted events are live."}</div>`; go(); return; }
+  const pend = SUBVIEW === "pending";
+  main.innerHTML = bar + `<div class="cards">${SUBS.map((x) => rec({
+    attrs: `data-sid="${esc(x.id)}"`, title: esc(x.name), tags: [[pend ? "Waiting" : "Published", pend ? "warn" : "ok"]], meta: esc((x.created_at || "").slice(0, 16)) + " UTC",
+    facts: fact("When", esc(x.start_date) + (x.end_date !== x.start_date ? " to " + esc(x.end_date) : "") + " · " + esc(x.hours || "no hours")) + fact("Where", `${esc(x.venue)}<br><span class="meta">${esc(x.address)}, ${esc(x.city)} · ${esc(x.county || "")} (pin ${Number(x.lat).toFixed(4)}, ${Number(x.lng).toFixed(4)})</span>`)
+      + fact("Type", `${esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)} · ${esc(x.price || "")}`) + fact("About", esc(x.blurb)) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "")
+      + fact("Contact", `<span style="user-select:all">${esc(x.contact_email)}</span>`) + fact("Notes", esc(x.note || "")) + (x.paid_plans ? fact("Paid Featured", `<b>${esc(x.paid_plans)}</b>`) : ""),
+    main: pend ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : btn("ghost", "Unpublish", 'data-sact="unpublish"'),
+    danger: pend ? btn("danger", "Decline", 'data-sact="decline"') : "",
+  })).join("")}</div>`;
+  go();
 }
-$("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-subview]"); if (b) { SUBVIEW = b.dataset.subview; renderSubs(); } });
+const SDONE = { approve: "Published", decline: "Declined", unpublish: "Unpublished" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-sact]"); if (!b) return;
   const card = b.closest("[data-sid]"), msg = card.querySelector(".msg");
-  if ((b.dataset.sact === "decline" || b.dataset.sact === "unpublish") && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to " + b.dataset.sact; return; }
-  b.disabled = true; msg.textContent = "Working…";
-  try { await api("/api/admin/submissions/" + card.dataset.sid, { method: "POST", body: JSON.stringify({ action: b.dataset.sact, status: b.dataset.st }) }); renderSubs(); refreshCounts(); }
+  if ((b.dataset.sact === "decline" || b.dataset.sact === "unpublish") && !tap(b, b.dataset.sact)) return;
+  b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
+  try { await api("/api/admin/submissions/" + card.dataset.sid, { method: "POST", body: JSON.stringify({ action: b.dataset.sact, status: b.dataset.st }) }); toast(SDONE[b.dataset.sact] || "Done"); renderSubs(); refreshCounts(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
@@ -129,40 +160,55 @@ $("#main").addEventListener("click", async (e) => {
 async function renderContests() {
   const main = $("#main");
   const list = await api("/api/admin/contests?status=pending");
-  $("#nContests").textContent = list.length;
+  setCount("contests", list.length);
   if (!list.length) { main.innerHTML = `<div class="empty">No contests waiting. A contest goes live by itself when the organizer's email matches their website.</div>`; return; }
-  main.innerHTML = `<div class="cards">${list.map((c) => `<article class="acard" data-cid="${esc(c.id)}">
-    <div class="row" style="justify-content:space-between"><h3>${esc(c.name)}</h3><span class="meta">${esc((c.created_at || "").slice(0, 16))} UTC</span></div>
-    <dl class="facts"><dt>Run by</dt><dd>${esc(c.org)} · ${esc(c.city)}</dd><dt>Organizer email</dt><dd><span style="user-select:all">${esc(c.owner_email || c.contact_email)}</span></dd>
-    <dt>Website</dt><dd>${c.site ? `<a href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site)}</a>` : "none given"}</dd><dt>Why it's here</dt><dd>${esc(c.note || "")}</dd>
-    <dt>Dates</dt><dd>Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}</dd><dt>Welcome message</dt><dd>${esc(c.descr)}</dd>
-    <dt>Public page</dt><dd><a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">/c/${esc(c.slug)}</a></dd></dl>
-    <div class="row"><button class="btn ice" type="button" data-cact="approve">Approve (goes on the map)</button><button class="btn ghost" type="button" data-cact="decline">Decline</button><span class="msg" role="status"></span></div></article>`).join("")}</div>`;
+  main.innerHTML = toolbar({ search: { placeholder: "Search contests, organizers" }, count: String(list.length) }) + `<div class="cards">${list.map((c) => rec({
+    attrs: `data-cid="${esc(c.id)}"`, title: esc(c.name), tags: [["Waiting", "warn"]], meta: esc((c.created_at || "").slice(0, 16)) + " UTC",
+    facts: fact("Run by", esc(c.org) + " · " + esc(c.city)) + fact("Organizer email", `<span style="user-select:all">${esc(c.owner_email || c.contact_email)}</span>`) + fact("Website", c.site ? `<a href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site)}</a>` : "none given") + fact("Why it's here", esc(c.note || ""))
+      + fact("Dates", `Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}`) + fact("Welcome message", esc(c.descr)) + fact("Public page", `<a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">/c/${esc(c.slug)}</a>`),
+    main: btn("main", "Approve (goes on the map)", 'data-cact="approve"'), danger: btn("danger", "Decline", 'data-cact="decline"'),
+  })).join("")}</div>`;
+  wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
 }
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-cact]"); if (!b) return;
   const card = b.closest("[data-cid]"), msg = card.querySelector(".msg");
-  if (b.dataset.cact === "decline" && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to decline"; return; }
-  b.disabled = true; msg.textContent = "Working…";
-  try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: b.dataset.cact }) }); card.remove(); refreshCounts(); $("#nContests").textContent = document.querySelectorAll("[data-cid]").length; if (!document.querySelector("[data-cid]")) render(); }
+  if (b.dataset.cact === "decline" && !tap(b, "decline")) return;
+  b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
+  try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: b.dataset.cact }) }); card.remove(); toast(b.dataset.cact === "approve" ? "Contest approved" : "Contest declined"); refreshCounts(); if (!document.querySelector(".rec")) render(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
 /* ---------- events ---------- */
+let EVQ = "", EVLIMIT = 60;
 async function renderEvents() {
   EVENTS = await (await fetch("/api/events?all=1", { cache: "no-store" })).json();
-  const list = EVENTS.filter((e) => (e.sn || "christmas") === evSeason);
-  $("#main").innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:12px"><div class="row"><select id="evSeason" aria-label="Season" style="border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface)">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === evSeason ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select><span class="meta">${list.length} events</span></div><button class="btn" type="button" id="addEv">Add an event</button></div>
-  <div class="tablewrap"><table><thead><tr><th>Event</th><th>City</th><th>Dates</th><th>Status</th><th></th></tr></thead><tbody>${list.map((e) => `<tr${e.e < TODAY ? ' style="opacity:.55"' : ""}><td><b>${esc(e.n)}</b><div class="meta">${esc(e.p)}${e.e < TODAY ? " · ended" : ""}</div></td><td>${esc(e.city)}<div class="meta">${esc(e.c)}</div></td><td class="dates">${esc(e.s)}<br>${esc(e.e)}</td><td><span class="tag ${e.st === "c" ? "conf" : "exp"}">${e.st === "c" ? "Confirmed" : "Expected"}</span></td><td><button class="btn ghost" type="button" data-edit="${esc(e.id)}">Edit</button></td></tr>`).join("")}</tbody></table></div>`;
-  $("#evSeason").onchange = (x) => { evSeason = x.target.value; renderEvents(); };
+  const main = $("#main");
+  const seasonSel = `<select id="evSeason" aria-label="Season">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === evSeason ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`;
+  main.innerHTML = toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: seasonSel, add: { id: "addEv", label: "Add an event" }, count: "" }) + `<div id="evlist"></div>`;
+  const paint = () => {
+    const w = EVQ.toLowerCase().split(/\s+/).filter(Boolean);
+    const all = EVENTS.filter((e) => (e.sn || "christmas") === evSeason && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x)));
+    const list = all.slice(0, EVLIMIT);
+    main.querySelector("[data-tcount]") ? 0 : main.querySelector(".tbar .grow").insertAdjacentHTML("afterend", '<span class="meta tcount" data-tcount></span>');
+    main.querySelector("[data-tcount]").textContent = `${all.length} event${all.length === 1 ? "" : "s"}`;
+    $("#evlist").innerHTML = all.length ? `<div class="cards">${list.map((e) => rec({
+      compact: true, cls: e.e < TODAY ? "past" : "", attrs: `data-eid="${esc(e.id)}"`, title: esc(e.n), tags: [[e.st === "c" ? "Confirmed" : "Expected", e.st === "c" ? "ok" : "warn"], ...(e.e < TODAY ? [["Ended"]] : [])],
+      meta: "", body: `<span class="sub">${esc(e.city)}, ${esc(e.c)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""} · ${esc(e.p || "")}</span>`, edit: btn("ghost", "Edit", `data-edit="${esc(e.id)}"`),
+    })).join("")}</div>${all.length > list.length ? `<div class="pager"><span class="meta">Showing ${list.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show 60 more</button></div>` : ""}` : `<div class="empty">No events match.</div>`;
+    $("#evlist").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => editEvent(EVENTS.find((x) => x.id === b.dataset.edit))));
+    if ($("#evMore")) $("#evMore").onclick = () => { EVLIMIT += 60; paint(); };
+  };
+  paint();
+  wireToolbar(main, { onSearch: (q) => { EVQ = q; EVLIMIT = 60; paint(); } });
+  $("#evSeason").onchange = (x) => { evSeason = x.target.value; EVLIMIT = 60; paint(); };
   $("#addEv").onclick = () => editEvent(null);
-  document.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => editEvent(EVENTS.find((x) => x.id === b.dataset.edit))));
 }
 function editEvent(ev) {
   const e = ev || { id: "", n: "", c: "Orange", city: "", t: Object.keys(SEASONS[evSeason].types)[0], s: TODAY, e: TODAY, st: "expected", free: true, p: "Free", h: "", lat: 33.68, lng: -117.83, b: "", u: "", sn: evSeason };
   const typeOpts = (sn, cur) => Object.entries(SEASONS[sn].types).map(([v, l]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${l}</option>`).join("");
   const m = $("#modal");
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="row" style="justify-content:space-between"><h2>${ev ? "Edit event" : "Add an event"}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="mh"><h2>${ev ? "Edit event" : "Add an event"}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
   <form class="f" id="evForm" novalidate>
     <label for="eN">Name<input id="eN" value="${esc(e.n)}" maxlength="120" required></label>
     <div class="two"><label for="eCity">City or area<input id="eCity" value="${esc(e.city)}" maxlength="60" required></label><label for="eC">County<select id="eC">${COUNTIES.map((c) => `<option ${c === e.c ? "selected" : ""}>${c}</option>`).join("")}</select></label></div>
@@ -175,7 +221,7 @@ function editEvent(ev) {
     <label for="eU">Event website<input id="eU" type="url" value="${esc(e.u)}" maxlength="300"></label>
     <div class="two"><label for="eV">Venue<input id="eV" value="${esc(e.v || "")}" maxlength="120" placeholder="Crown Valley Community Park"></label><label for="eA">Street address<input id="eA" data-addr autocomplete="off" value="${esc(e.a || "")}" maxlength="200" placeholder="29751 Crown Valley Pkwy, Laguna Niguel, CA 92677"></label></div>
     <div><div class="row" style="margin-bottom:6px"><button class="btn ghost" type="button" id="eGeo">Place pin from address</button><span class="meta" id="geoMsg">Or click the map / drag the pin. Directions use the street address.</span></div><div id="pick"></div><div class="meta dates" id="ll" style="margin-top:4px"></div></div>
-    <div class="row"><button class="btn" type="submit">Save event</button>${ev ? `<button class="btn ghost" type="button" id="eDel">Delete event</button>` : ""}<span class="msg" id="eMsg"></span></div>
+    <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="grow"></span>${ev ? `<button class="btn ghost danger" type="button" id="eDel">Delete event</button>` : ""}<span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
   </form></div>`;
   m.hidden = false;
   let lat = e.lat, lng = e.lng;
@@ -199,7 +245,7 @@ function editEvent(ev) {
   };
   const close = () => { pm.remove(); m.hidden = true; m.innerHTML = ""; };
   $("#mClose").onclick = close;
-  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to delete"; return; } await api("/api/admin/events/" + encodeURIComponent(ev.id), { method: "DELETE" }); close(); renderEvents(); };
+  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; await api("/api/admin/events/" + encodeURIComponent(ev.id), { method: "DELETE" }); close(); toast("Event deleted"); renderEvents(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");
     const id = ev ? ev.id : $("#eN").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) + "-" + Math.random().toString(36).slice(2, 6);
@@ -210,7 +256,7 @@ function editEvent(ev) {
 }
 
 (async () => {
-  try { const me = await api("/api/admin/me"); $("#who").textContent = "Signed in as " + me.email; render(); api("/api/admin/submissions?status=pending").then((l) => ($("#nSubs").textContent = l.length)).catch(() => {}); }
+  try { const me = await api("/api/admin/me"); $("#who").textContent = me.email; $("#whoi").textContent = (me.email || "?")[0].toUpperCase(); const h = location.hash.slice(1); setTab(TABS.includes(h) ? h : "dashboard", false); }
   catch (e) { $("#who").textContent = ""; $("#main").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 })();
 
@@ -223,29 +269,24 @@ async function renderUsers() {
   const main = $("#main");
   const qs = new URLSearchParams({ q: USERS.q, status: USERS.status, offset: USERS.offset });
   const d = await api("/api/admin/users?" + qs);
-  $("#nUsers").textContent = d.all;
-  const sel = (v, l) => `<option value="${v}" ${USERS.status === v ? "selected" : ""}>${l}</option>`;
-  main.innerHTML = `<div class="row" style="gap:10px;margin-bottom:12px;flex-wrap:wrap">
-    <input id="uq" type="search" placeholder="Search name or email" value="${esc(USERS.q)}" style="flex:1;min-width:200px;padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit">
-    <select id="ust" style="padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit">${sel("", "All people (" + d.all + ")")}${sel("active", "Active")}${sel("suspended", "Suspended (" + d.suspended + ")")}</select>
-    <a class="btn ghost" href="/api/admin/users?format=csv&q=${encodeURIComponent(USERS.q)}&status=${USERS.status}" download>Download CSV</a></div>
-    ${d.users.length ? `<div class="tablewrap"><table><thead><tr><th>Person</th><th>Joined</th><th>Last sign-in</th><th>Homes &amp; events</th><th>Contests</th><th>Votes</th><th></th></tr></thead><tbody>${d.users.map((u) => `<tr data-uid="${esc(u.id)}" style="cursor:pointer">
-      <td><b>${esc(u.name || "(no name)")}</b>${u.status === "suspended" ? ' <span class="tag" style="border-color:#c0392b;color:#c0392b">Suspended</span>' : ""}<br><span class="meta">${esc(u.email)}${u.google ? " · Google" : ""}</span></td>
-      <td>${esc((u.created_at || "").slice(0, 10))}</td><td>${ago(u.last_login)}</td><td>${u.homes + u.entries}${u.entries ? ` <span class="meta">(${u.entries} contest)</span>` : ""}</td><td>${u.contests}</td><td>${u.votes}</td><td><button class="btn ghost" type="button" data-open="${esc(u.id)}">Manage</button></td></tr>`).join("")}</tbody></table></div>
-    <div class="row" style="justify-content:space-between;margin-top:12px"><span class="meta">${d.offset + 1}–${d.offset + d.users.length} of ${d.total}</span><span class="row" style="gap:8px"><button class="btn ghost" type="button" id="uPrev" ${d.offset ? "" : "disabled"}>Previous</button><button class="btn ghost" type="button" id="uNext" ${d.offset + d.page < d.total ? "" : "disabled"}>Next</button></span></div>`
-    : `<div class="empty">${USERS.q || USERS.status ? "Nobody matches that." : "Nobody has made a profile yet."}</div>`}`;
-  let t; $("#uq").oninput = (e) => { clearTimeout(t); t = setTimeout(() => { USERS.q = e.target.value.trim(); USERS.offset = 0; renderUsers().then(() => { const i = $("#uq"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); }, 300); };
-  $("#ust").onchange = (e) => { USERS.status = e.target.value; USERS.offset = 0; renderUsers(); };
+  setCount("users", d.all);
+  const bar = toolbar({ views: [{ k: "", label: "All", n: d.all }, { k: "active", label: "Active" }, { k: "suspended", label: "Suspended", n: d.suspended }], active: USERS.status, search: { placeholder: "Search name or email", value: USERS.q }, right: `<a class="btn ghost" href="/api/admin/users?format=csv&q=${encodeURIComponent(USERS.q)}&status=${USERS.status}" download>Download CSV</a>`, count: `${d.total}` });
+  main.innerHTML = bar + (d.users.length ? `<div class="cards">${d.users.map((u) => rec({
+    compact: true, attrs: `data-uid="${esc(u.id)}"`, title: esc(u.name || "(no name)"), tags: u.status === "suspended" ? [["Suspended", "bad"]] : [],
+    body: `<span class="sub">${esc(u.email)}${u.google ? " · Google" : ""} · joined ${esc((u.created_at || "").slice(0, 10))} · last sign-in ${ago(u.last_login)}</span><span class="sub">${u.homes + u.entries} home${u.homes + u.entries === 1 ? "" : "s"}/entr${u.homes + u.entries === 1 ? "y" : "ies"} · ${u.contests} contest${u.contests === 1 ? "" : "s"} run · ${u.votes} vote${u.votes === 1 ? "" : "s"}</span>`,
+    edit: btn("ghost", "Edit", `data-open="${esc(u.id)}"`),
+  })).join("")}</div>` + pager({ offset: d.offset, shown: d.users.length, total: d.total, page: d.page, idPrev: "uPrev", idNext: "uNext" }) : `<div class="empty">${USERS.q || USERS.status ? "Nobody matches that." : "Nobody has made a profile yet."}</div>`);
+  wireToolbar(main, { onView: (v) => { USERS.status = v; USERS.offset = 0; renderUsers(); }, onSearch: (q) => { USERS.q = q; USERS.offset = 0; renderUsers().then(() => { const i = $("[data-search]"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); } });
   if ($("#uPrev")) $("#uPrev").onclick = () => { USERS.offset = Math.max(0, USERS.offset - d.page); renderUsers(); };
   if ($("#uNext")) $("#uNext").onclick = () => { USERS.offset += d.page; renderUsers(); };
-  main.querySelectorAll("tr[data-uid]").forEach((r) => (r.onclick = () => openUser(r.dataset.uid)));
+  main.querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openUser(b.dataset.open)));
 }
 async function openUser(id) {
   const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
   m.hidden = false; m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="empty">Loading…</div></div>`;
   let d; try { d = await api("/api/admin/users/" + id); } catch (e) { m.innerHTML = `<div class="card"><p>${esc(e.message)}</p><button class="btn ghost" type="button" id="mClose">Close</button></div>`; $("#mClose").onclick = close; return; }
   const u = d.user, sus = u.status === "suspended";
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="row" style="justify-content:space-between"><h2>${esc(u.name || u.email)}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="mh"><h2>${esc(u.name || u.email)}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
     ${sus ? `<p class="msg err" style="margin:6px 0">Suspended ${when(u.suspended_at)}. They can't sign in, vote or enter contests.</p>` : ""}
     <dl class="facts"><dt>Email</dt><dd><span style="user-select:all">${esc(u.email)}</span></dd><dt>Signs in with</dt><dd>${u.google ? "Google or an emailed code" : "An emailed code"}</dd>
     <dt>Joined</dt><dd>${when(u.created_at)}</dd><dt>Last sign-in</dt><dd>${when(u.last_login)} · ${d.sessions} signed-in device${d.sessions === 1 ? "" : "s"}</dd>
@@ -257,7 +298,7 @@ async function openUser(id) {
     ${d.contests.length ? `<ul class="meta" style="margin:0;padding-left:18px">${d.contests.map((c) => `<li><a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a> · ${esc(c.city)} · ${esc(c.status)}${c.announced ? " · announced" : ""}</li>`).join("")}</ul>` : '<p class="meta">None.</p>'}
     <form class="f" id="uForm" novalidate style="margin-top:14px"><label for="uName">Name<input id="uName" maxlength="80" value="${esc(u.name)}"></label>
     <label for="uNote">Private note (only you see this)<textarea id="uNote" rows="2" maxlength="1000">${esc(u.admin_note)}</textarea></label>
-    <div class="row"><button class="btn ice" type="submit">Save name and note</button><span class="msg" id="uMsg" role="status"></span></div></form>
+    <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="uMsg" role="status"></span></div></form>
     <div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" data-ua="signout">Sign out everywhere</button>
     <button class="btn ghost" type="button" data-ua="${sus ? "unsuspend" : "suspend"}">${sus ? "Reactivate" : "Suspend account"}</button></div>
     <details style="margin-top:14px"><summary style="cursor:pointer;color:#c0392b;font-weight:700">Delete this account</summary>
@@ -268,24 +309,23 @@ async function openUser(id) {
   $("#uForm").onsubmit = async (e) => { e.preventDefault(); try { await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: "rename", name: $("#uName").value }) }); await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: "note", note: $("#uNote").value }) }); msg("Saved."); renderUsers(); } catch (er) { msg(er.message, true); } };
   m.querySelectorAll("[data-ua]").forEach((b) => (b.onclick = async () => {
     const a = b.dataset.ua;
-    if (a === "suspend" && b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "Click again to suspend"; return; }
+    if (a === "suspend" && !tap(b, "suspend")) return;
     try { await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: a, confirm: a === "delete" ? $("#uDel").value : undefined }) }); if (a === "delete") { close(); renderUsers(); } else if (a === "signout") { msg("Signed out on every device."); } else { await openUser(id); renderUsers(); } } catch (er) { msg(er.message, true); }
   }));
 }
 
 
 /* ---------- activity log (what the admin tools were used for) ---------- */
-const VERB = { approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for" };
-const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record" };
+const VERB = { dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for" };
+const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", normalize: "data check" };
 let LOG = { area: "", offset: 0 };
 async function renderLog() {
   const main = $("#main");
   const d = await api("/api/admin/log?" + new URLSearchParams(LOG));
   const opt = (v, l) => `<option value="${v}" ${LOG.area === v ? "selected" : ""}>${l}</option>`;
-  main.innerHTML = `<div class="row" style="gap:10px;margin-bottom:12px"><select id="lga" style="padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit">${opt("", "Everything")}${opt("users", "Accounts")}${opt("posts", "Houses")}${opt("events", "Events")}${opt("submissions", "Submitted events")}${opt("contests", "Contests")}</select><span class="meta">${d.total} action${d.total === 1 ? "" : "s"} recorded</span></div>
-    ${d.entries.length ? `<div class="tablewrap"><table><thead><tr><th>When</th><th>Who</th><th>What they did</th></tr></thead><tbody>${d.entries.map((e) => `<tr><td>${when(e.at)}</td><td>${esc(e.admin || "admin")}</td><td>${esc(VERB[e.action] || e.action)} ${esc(AREA[e.area] || e.area)} <b>${esc(e.label || e.target_id || "")}</b></td></tr>`).join("")}</tbody></table></div>
-    <div class="row" style="justify-content:space-between;margin-top:12px"><span class="meta">${d.offset + 1}–${d.offset + d.entries.length} of ${d.total}</span><span class="row" style="gap:8px"><button class="btn ghost" type="button" id="lgPrev" ${d.offset ? "" : "disabled"}>Newer</button><button class="btn ghost" type="button" id="lgNext" ${d.offset + d.page < d.total ? "" : "disabled"}>Older</button></span></div>`
-    : `<div class="empty">Nothing recorded yet. Approving, declining, editing, deleting, suspending and similar actions will show up here.</div>`}`;
+  main.innerHTML = toolbar({ right: `<select id="lga" aria-label="Show">${opt("", "Everything")}${opt("users", "Accounts")}${opt("posts", "Houses")}${opt("events", "Events")}${opt("submissions", "Submitted events")}${opt("contests", "Contests")}${opt("installers", "Installers")}${opt("reports", "Reports")}</select>`, count: `${d.total} action${d.total === 1 ? "" : "s"} recorded` })
+    + (d.entries.length ? `<div class="tablewrap"><table><thead><tr><th>When</th><th>Who</th><th>What they did</th></tr></thead><tbody>${d.entries.map((e) => `<tr><td>${when(e.at)}</td><td>${esc(e.admin || "admin")}</td><td>${esc(VERB[e.action] || e.action)} ${esc(AREA[e.area] || e.area)} <b>${esc(e.label || e.target_id || "")}</b></td></tr>`).join("")}</tbody></table></div>` + pager({ offset: d.offset, shown: d.entries.length, total: d.total, page: d.page, idPrev: "lgPrev", idNext: "lgNext" })
+    : `<div class="empty">Nothing recorded yet. Approving, declining, editing, deleting, suspending and similar actions will show up here.</div>`);
   $("#lga").onchange = (e) => { LOG.area = e.target.value; LOG.offset = 0; renderLog(); };
   if ($("#lgPrev")) $("#lgPrev").onclick = () => { LOG.offset = Math.max(0, LOG.offset - d.page); renderLog(); };
   if ($("#lgNext")) $("#lgNext").onclick = () => { LOG.offset += d.page; renderLog(); };
@@ -298,7 +338,7 @@ const choiceButtons = (r) => `<div class="row" style="gap:0;flex-wrap:nowrap" ro
 async function renderOverlaps() {
   const main = $("#main"), d = await api("/api/admin/overlaps");
   const active = d.replaced.length;
-  $("#nOverlaps").textContent = active;
+  setCount("overlaps", active);
   const who = (p) => `<a href="#" data-gopost="${esc(p.id)}">${esc(p.title)}</a> <span class="meta">(${p.kind === "installer" ? "installer" : "homeowner"}, ${esc(p.biz)})</span>`;
   main.innerHTML = `<p class="meta" style="margin:0 0 12px;max-width:720px">When an approved house or installer post has the same street address as a record the sweeps made, the person's own record is shown and the sweep record is hidden. You can switch any address to the sweep record, or show both. Nothing is deleted, and the person's post stays approved.</p>
     <h3 style="margin:0 0 8px">Replaced (${d.replaced.length})</h3>
@@ -315,24 +355,41 @@ let INST = [];
 async function renderInstallers() {
   const main = $("#main");
   INST = await api("/api/admin/installers");
-  $("#nInstallers").textContent = INST.length;
+  setCount("installers", INST.length);
   if (!INST.length) { main.innerHTML = `<div class="empty">No installer profiles yet. One appears when an installer posts a display or a homeowner names the company that installed their lights.</div>`; return; }
+  main.innerHTML = toolbar({ search: { placeholder: "Search installers" }, count: String(INST.length) }) + `<div class="cards">${INST.map((i) => rec({
+    attrs: `data-iid="${esc(i.id)}"`, title: esc(i.name), tags: [i.status === "hidden" ? ["Hidden", "bad"] : ["Active", "ok"], ...(i.unconfirmed ? [[i.unconfirmed + " not confirmed", "warn"]] : [])],
+    meta: `${i.homes} home${i.homes === 1 ? "" : "s"} · <a href="/installer/${esc(i.slug)}" target="_blank" rel="noopener">view page</a>`,
+    facts: fact("Website", esc(i.web)) + fact("Phone", esc(i.phone)) + fact("Service area", esc(i.area)) + fact("Confirmation email", esc(i.email)) + fact("Owner", esc(i.owner_email)),
+    edit: btn("ghost", "Edit", `data-iedit="${esc(i.id)}"`), main: btn("ghost", i.status === "hidden" ? "Show" : "Hide", `data-iact="${i.status === "hidden" ? "show" : "hide"}"`),
+  })).join("")}</div>`;
+  wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
+}
+const instAct = async (id, body) => api("/api/admin/installers/" + id, { method: "POST", body: JSON.stringify(body) });
+function editInstaller(i) {
+  const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
   const f = (id, l, v, ex = "") => `<label>${l}<input data-f="${id}" value="${esc(v || "")}" ${ex}></label>`;
-  main.innerHTML = `<p class="meta">Merging moves every home to the profile you keep and removes the other one. Hiding keeps the profile but removes its link from cards and the sitemap.</p><div class="cards">${INST.map((i) => `<article class="acard" data-iid="${esc(i.id)}">
-    <div class="row" style="justify-content:space-between"><h3>${esc(i.name)}${i.status === "hidden" ? ' <span class="tag">Hidden</span>' : ""}</h3><span class="meta">${i.homes} home${i.homes === 1 ? "" : "s"}${i.unconfirmed ? ` · ${i.unconfirmed} not confirmed` : ""} · <a href="/installer/${esc(i.slug)}" target="_blank" rel="noopener">view page</a></span></div>
-    <div class="grid2">${f("name", "Company name", i.name, 'maxlength="80"')}${f("web", "Website", i.web, 'maxlength="200"')}${f("phone", "Phone", i.phone, 'maxlength="80"')}${f("area", "Service area", i.area, 'maxlength="120"')}${f("email", "Email for confirmations (private)", i.email, 'maxlength="120" type="email"')}${f("owner", "Owner email (can edit this profile)", i.owner_email, 'maxlength="120" type="email"')}</div>
-    <label>About (shown on the profile)<textarea data-f="blurb" rows="2" maxlength="600">${esc(i.blurb || "")}</textarea></label>
-    <div class="row"><button class="btn ice" type="button" data-iact="edit">Save</button><button class="btn ghost" type="button" data-iact="${i.status === "hidden" ? "show" : "hide"}">${i.status === "hidden" ? "Show" : "Hide"}</button>
-      <select data-merge aria-label="Merge ${esc(i.name)} into"><option value="">Merge into…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost" type="button" data-iact="merge">Merge</button><span class="msg"></span></div></article>`).join("")}</div>`;
+  m.hidden = false;
+  m.innerHTML = modalFrame("Edit installer", `<form class="f" id="iForm" novalidate>
+    ${f("name", "Company name", i.name, 'maxlength="80"')}<div class="two">${f("web", "Website", i.web, 'maxlength="200"')}${f("phone", "Phone", i.phone, 'maxlength="80"')}</div>
+    <div class="two">${f("area", "Service area", i.area, 'maxlength="120"')}${f("email", "Email for confirmations (private)", i.email, 'maxlength="120" type="email"')}</div>
+    ${f("owner", "Owner email (can edit this profile)", i.owner_email, 'maxlength="120" type="email"')}
+    <label>About (shown on the profile)<textarea data-f="blurb" rows="3" maxlength="600">${esc(i.blurb || "")}</textarea></label>
+    <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="iMsg" role="status"></span></div></form>
+    <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Merge into another profile</summary>
+    <p class="meta" style="margin:8px 0">Moves every home to the profile you keep and removes this one. Use it when one company was typed two ways.</p>
+    <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>`);
+  $("#mClose").onclick = close;
+  const msg = (t, bad) => { const e = $("#iMsg"); e.className = bad ? "msg err" : "msg"; e.textContent = t; };
+  $("#iForm").onsubmit = async (e) => { e.preventDefault(); const body = { action: "edit" }; m.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value)); try { await instAct(i.id, body); close(); toast("Saved"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
+  $("#iMergeGo").onclick = async (e) => { const into = $("#iMerge").value; if (!into) return msg("Choose the profile to keep.", true); if (!tap(e.target, "merge")) return; try { await instAct(i.id, { action: "merge", into }); close(); toast("Merged"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
 }
 $("#main").addEventListener("click", async (e) => {
+  const ed = e.target.closest("[data-iedit]"); if (ed) return editInstaller(INST.find((x) => x.id === ed.dataset.iedit));
   const b = e.target.closest("[data-iact]"); if (!b) return;
-  const card = b.closest("[data-iid]"), id = card.dataset.iid, act = b.dataset.iact, msg = card.querySelector(".msg");
-  const body = { action: act };
-  if (act === "edit") card.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value));
-  if (act === "merge") { body.into = card.querySelector("[data-merge]").value; if (!body.into) { msg.className = "msg err"; msg.textContent = "Choose the profile to merge into."; return; } if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Click again to merge"; return; } }
-  b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
-  try { await api("/api/admin/installers/" + id, { method: "POST", body: JSON.stringify(body) }); if (act === "edit") { msg.textContent = "Saved."; b.disabled = false; refreshCounts(); } else { renderInstallers(); refreshCounts(); } }
+  const card = b.closest("[data-iid]"), msg = card.querySelector(".msg");
+  b.disabled = true;
+  try { await instAct(card.dataset.iid, { action: b.dataset.iact }); toast(b.dataset.iact === "hide" ? "Hidden from the site" : "Shown on the site"); renderInstallers(); refreshCounts(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
@@ -349,5 +406,59 @@ async function renderData(res) {
    ${d.attention.length ? `<h3 style="margin-top:16px">Needs a person (left as they are)</h3><div class="tablewrap"><table><thead><tr><th>Table</th><th>Field</th><th>Record</th><th>Value</th></tr></thead><tbody>${d.attention.map((a) => `<tr><td>${esc(a.table)}</td><td>${esc(a.field)}</td><td>${esc(a.record)}</td><td>${esc(a.value)}</td></tr>`).join("")}</tbody></table></div>` : ""}
    <div class="row" style="gap:10px;margin-top:14px"><button class="btn ghost" type="button" id="dc-check">Check again</button>${d.dry && d.changed ? `<button class="btn ice" type="button" id="dc-fix">Tidy ${d.changed} value${d.changed === 1 ? "" : "s"}</button>` : ""}<span class="msg" id="dc-msg"></span></div>`;
   $("#dc-check").onclick = () => renderData();
-  const fx = $("#dc-fix"); if (fx) fx.onclick = async () => { if (!fx.dataset.sure) { fx.dataset.sure = "1"; fx.textContent = "Click again to change " + d.changed + " values"; return; } fx.disabled = true; $("#dc-msg").textContent = "Working…"; try { renderData(await api("/api/admin/normalize", { method: "POST", body: JSON.stringify({ apply: true }) })); } catch (e) { fx.disabled = false; $("#dc-msg").className = "msg err"; $("#dc-msg").textContent = e.message; } };
+  const fx = $("#dc-fix"); if (fx) fx.onclick = async () => { if (!tap(fx, "change " + d.changed + " value" + (d.changed === 1 ? "" : "s"))) return; fx.disabled = true; $("#dc-msg").textContent = "Working…"; try { renderData(await api("/api/admin/normalize", { method: "POST", body: JSON.stringify({ apply: true }) })); } catch (e) { fx.disabled = false; $("#dc-msg").className = "msg err"; $("#dc-msg").textContent = e.message; } };
 }
+
+
+/* ---------- dashboard: what needs you, today's numbers, what is live, what just happened ---------- */
+const fmt = (n) => Number(n || 0).toLocaleString("en-US");
+const agoShort = (s) => { const t = Date.parse(String(s || "").replace(" ", "T") + (/Z|\+/.test(String(s)) ? "" : "Z")); if (!t) return ""; const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " hr ago" : Math.round(m / 1440) + " d ago"; };
+const shortDate = (d) => (d ? new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "");
+const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hour: "numeric", hour12: false }).format(new Date()));
+async function renderDashboard() {
+  const main = $("#main"), d = await api("/api/admin/dashboard");
+  const a = d.attention, todo = [
+    ["pending", a.waitHomes, "house", "waiting for your review"], ["subs", a.waitEvents, "event", "submitted, waiting for review"], ["contests", a.waitContests, "contest", "waiting for approval"],
+    ["reports", a.reports, "report", "from visitors this week"], ["installers", a.claims, "installer claim", "to confirm"],
+  ].filter((t) => t[1] > 0);
+  const tile = (k, n, l) => `<div class="stat"><b>${fmt(n)}</b><span>${l}</span></div>`;
+  const kindTab = { home: "pending", event: "subs" };
+  main.innerHTML = `
+    <p class="hello">${hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}. ${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p>
+    <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l]) => `<button type="button" class="tcard" data-tab="${k}"><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true">›</i></button>`).join("")}</div>` : `<div class="calm"><span aria-hidden="true">✓</span><div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests or reports are waiting.</p></div></div>`}</section>
+    <h2 class="dh">Today</h2>
+    <div class="stats">${tile("h", d.today.homes, "new houses")}${tile("e", d.today.events, "events submitted")}${tile("c", d.today.entries, "contest entries")}${tile("l", d.people.litToday, "lights switched on")}</div>
+    <h2 class="dh">On the site now</h2>
+    <div class="stats">${tile("h", d.live.homes, "published houses")}${tile("e", d.live.events, "map events")}${tile("c", d.live.contests, "contests running")}${tile("i", d.live.installers, "installers")}</div>
+    <h2 class="dh">People, last 7 days</h2>
+    <div class="stats">${tile("u", d.people.users, "accounts in total")}${tile("n", d.people.newUsers, "new accounts")}${tile("v", d.people.votesWeek, "contest votes")}${tile("p", d.people.hits, "installer profile views")}</div>
+    <div class="dcols">
+      <section class="dbox"><h2 class="dh">Newest submissions</h2>${d.recent.length ? `<ul class="dl">${d.recent.map((r) => `<li><button type="button" class="dli" data-tab="${r.kind === "event" ? "subs" : r.status === "pending" ? "pending" : "approved"}"><span class="ico" aria-hidden="true">${r.kind === "event" ? "◷" : "⌂"}</span><span class="dt"><b>${esc(r.name)}</b><small>${esc(r.city || "")} · ${r.kind === "event" ? "event" : r.pro ? "installer post" : "house"} · ${agoShort(r.at)}</small></span><span class="tag ${r.status === "pending" ? "exp" : ""}">${esc(r.status)}</span></button></li>`).join("")}</ul>` : `<div class="empty">Nothing submitted yet.</div>`}</section>
+      <section class="dbox"><h2 class="dh">Contests running</h2>${d.contests.length ? `<ul class="dl">${d.contests.map((c) => `<li><button type="button" class="dli" data-tab="contests"><span class="ico" aria-hidden="true">★</span><span class="dt"><b>${esc(c.name)}</b><small>${esc(c.city)} · ${fmt(c.entries)} entries · ${fmt(c.votes)} votes · voting ends ${shortDate(c.vote_end)}</small></span></button></li>`).join("")}</ul>` : `<div class="empty">No contest is running right now.</div>`}
+      <h2 class="dh">Your recent activity</h2>${d.activity.length ? `<ul class="dl">${d.activity.map((e) => `<li><button type="button" class="dli" data-tab="log"><span class="ico" aria-hidden="true">✎</span><span class="dt"><b>${esc(VERB[e.action] || e.action)} ${esc(AREA[e.area] || e.area)} ${esc(e.label || "")}</b><small>${esc(e.admin || "admin")} · ${agoShort(e.at)}</small></span></button></li>`).join("")}</ul>` : `<div class="empty">Nothing yet. Approvals and edits will show here.</div>`}</section>
+    </div>`;
+}
+
+/* ---------- reports: "Something wrong? Tell us" from visitors ---------- */
+async function renderReports() {
+  const main = $("#main"), list = await api("/api/admin/reports");
+  setCount("reports", list.length);
+  main.innerHTML = list.length ? toolbar({ search: { placeholder: "Search reports" }, count: String(list.length) }) + `<p class="meta" style="margin:0 0 12px">From the "Something wrong? Tell us" link on events and houses. Fix the event or house, then dismiss the report.</p><div class="cards">${list.map((r) => rec({
+    attrs: `data-rid="${esc(r.id)}"`, title: esc(r.name || r.ref), tags: [["New", "warn"]], meta: when(r.created_at),
+    body: `<p style="margin:0;white-space:pre-line">${esc(r.message)}</p>`, facts: fact("About", `<code>${esc(r.ref)}</code>`) + fact("Reply to", r.contact ? `<a href="mailto:${esc(r.contact)}">${esc(r.contact)}</a>` : "They left no email"),
+    edit: btn("ghost", "Open Events", 'data-tab="events"'), danger: btn("danger", "Dismiss", "data-rdismiss"),
+  })).join("")}</div>` : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`;
+  wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
+}
+$("#main").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-rdismiss]"); if (!b) return;
+  if (!tap(b, "dismiss")) return;
+  const card = b.closest("[data-rid]"); b.disabled = true;
+  try { await api("/api/admin/reports", { method: "POST", body: JSON.stringify({ id: card.dataset.rid, action: "dismiss" }) }); card.remove(); toast("Dismissed"); refreshCounts(); if (!document.querySelector("[data-rid]")) renderReports(); }
+  catch (err) { b.disabled = false; card.querySelector(".msg").className = "msg err"; card.querySelector(".msg").textContent = err.message; }
+});
+
+// Every edit window closes the same way: the X, Cancel, Escape, or a tap outside it
+const closeModal = () => { const m = $("#modal"); if (m && !m.hidden) { const x = m.querySelector("#mClose"); if (x) x.click(); else { m.hidden = true; m.innerHTML = ""; } } };
+document.addEventListener("click", (e) => { if (e.target.closest("[data-mcancel]") || e.target === $("#modal")) closeModal(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });

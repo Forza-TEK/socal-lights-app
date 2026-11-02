@@ -1,6 +1,9 @@
 # Status
 
-_Last updated: 2026-11-01_
+_Last updated: 2026-11-02_
+
+## Admin rebuild and every-page day/night + sign-in (2026-11-02, branch `claude/affectionate-faraday-0w156h`, not merged)
+Audit in `docs/admin-audit.md`. Day/night and the account control are now on every page (`public/chrome.js`/`chrome.css`; server-written pages via `functions/_lib/shell.js`; map top bar has its own day/night button; offline page too). Admin has a new shell (desktop side menu, tablet icon rail, phone bottom bar + More sheet), a Dashboard, a Reports tab, and one record standard (`public/admin/kit.js`) used by every tab: toolbar with search, one action row (Edit, main, danger last), two-tap destructive confirm, toast, shared edit window and pager. No migration. Open items are listed in the Admin Checklist artifact and the end of `docs/admin-audit.md`.
 
 ## Contests and accounts (built 2026-10-30, branch `claude/amazing-thompson-wfxqst`, NOT merged)
 Add hub (`/add`), contest wizard (`/add-contest`), contest page and QR (`/c/<slug>`), entry form, organizer dashboard (`/c/<slug>/manage`), one-vote-per-category voting (every home is in every category, voters pick a favorite in each), Google and email-code sign-in, admin Contests tab, migration `0109_accounts_contests.sql`. Tested end to end locally (API 40 checks, browser 24 checks). Pages are unlinked and noindex. Needs `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` and `RESEND_API_KEY` Pages secrets, a privacy-policy review and a decision to merge. See `docs/contests.md` for setup, launch checklist and known gaps.
