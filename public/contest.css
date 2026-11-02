@@ -38,7 +38,7 @@ body{padding-bottom:60px}
 .zoom{border:0;background:none;padding:0;cursor:zoom-in;display:block}
 .lightbox{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.88);display:grid;place-items:center;padding:16px}
 .lightbox img{max-width:100%;max-height:92vh;border-radius:12px}
-.lightbox button{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:0;background:#fff;color:#000;font-size:26px;cursor:pointer}
+.lightbox button{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:0;background:#fff;color:#000;cursor:pointer;display:grid;place-items:center;padding:0}.lightbox button svg{width:20px;height:20px}
 
 /* Organizer: next steps, and the entries table as cards on phones */
 .steps{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:4px;font-size:14px}

@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261102h">
-<link rel="stylesheet" href="/contest.css?v=20261102a">
+<link rel="stylesheet" href="/contest.css?v=20261102b">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
@@ -91,7 +91,7 @@ function render() {
 
 function zoom(key, cap) {
   const o = document.createElement("div"); o.className = "lightbox"; o.setAttribute("role", "dialog"); o.setAttribute("aria-label", cap);
-  o.innerHTML = `<img src="/api/photo/${esc(key)}" alt="${esc(cap)} lights"><button type="button" aria-label="Close">×</button>`;
+  o.innerHTML = `<img src="/api/photo/${esc(key)}" alt="${esc(cap)} lights"><button type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
   const close = () => { o.remove(); document.removeEventListener("keydown", k); }, k = (e) => { if (e.key === "Escape") close(); };
   o.onclick = close; document.addEventListener("keydown", k); document.body.appendChild(o); o.querySelector("button").focus();
 }
