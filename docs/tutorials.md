@@ -16,3 +16,10 @@ Each card has a link of its own, `/tutorials#v-<id>` (for example `/tutorials#v-
 
 ## Add a group or a video
 Add an entry to `public/tutorials.json` (`groups[].videos[]`, with `id`, `title`, `desc`, `url`, `length`). Groups with no videos are hidden.
+
+## Record a video
+`scripts/tutorials/` holds the recording setup (used for the Vote and judge videos; the Run a contest videos were made with an earlier, uncommitted version of it).
+- `seed-demo.mjs <dir>` writes SQL, cookies and photo lists for a made-up "Maple Street Holiday Lights 2026" contest (organizer, voter, judge, six homes). Load it into the **local** database only: `wrangler d1 execute socal-lights --local --file <dir>/seed.sql`, then upload the photos with `wrangler r2 object put ... --local`.
+- `record.mjs` records a spec with Playwright against `npx wrangler pages dev public` (needs `DEV_AUTH=1` in `.dev.vars`), with a visible cursor, tap ripples, captions, a title card and an end card. The `hfc_female` Piper voice (`tts.py`, softened with ffmpeg) is timed to each step.
+- `vote-judge.mjs` is the spec for the two Vote and judge videos. Narration is the `say` text of each step, so changing a line means editing it and re-recording that one video (about two minutes).
+- Environment: `VOICE` (the `en_US-hfc_female-medium.onnx` file), `COOKIES`, `WORK`, `OUT`, `PLAYWRIGHT_PATH`.

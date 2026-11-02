@@ -1,0 +1,71 @@
+// Records one narrated tutorial video against a LOCAL dev server (never the live site).
+// A spec is { id, group, title, sub, next:{title,sub}, phone, cookie, steps:[{say, cap, card, do(page,h), poster}] }.
+import { createRequire } from "node:module";
+const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_PATH || "playwright");
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdirSync, writeFileSync, readFileSync, existsSync, copyFileSync } from "node:fs";
+const BASE = process.env.BASE || "http://localhost:8788";
+const VOICE = process.env.VOICE, WORK = process.env.WORK || "/tmp/tut", OUT = process.env.OUT || "public/tutorials";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const dur = (f) => parseFloat(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", f]).toString());
+const OVERLAY = `(() => {
+  const st = document.createElement("style"); st.textContent = "#__cur{position:fixed;z-index:2147483647;left:0;top:0;width:22px;height:22px;pointer-events:none;transition:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}#__rip{position:fixed;z-index:2147483646;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:3px solid rgba(232,90,10,.9);pointer-events:none;animation:__rip .6s ease-out forwards}@keyframes __rip{to{transform:scale(3.6);opacity:0}}#__cap{position:fixed;z-index:2147483645;left:50%;bottom:22px;transform:translateX(-50%);max-width:92vw;background:rgba(28,28,34,.94);color:#fff;font:600 22px/1.25 'Plus Jakarta Sans',system-ui,sans-serif;padding:12px 22px;border-radius:12px;text-align:center;pointer-events:none}#__card{position:fixed;inset:0;z-index:2147483644;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:24px;background:radial-gradient(ellipse at 30% 25%,#fbf1e6 0,#fffaf5 38%,#fff 75%);font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1f1d1a}#__card img{width:96px;height:96px;border-radius:50%;margin-bottom:12px}#__card .wm{font-weight:600;font-size:26px;margin-bottom:22px}#__card .wm b{color:#e0560a;font-weight:600}#__card .ey{font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:#c8324f;font-weight:500}#__card h1{font-weight:300;font-size:60px;line-height:1.12;margin:10px 0;max-width:1000px}#__card p{font-size:23px;color:#6b6760;margin:0;max-width:900px}";
+  const add = () => { if (!document.head) return setTimeout(add, 20); document.head.appendChild(st); };
+  add();
+  const mk = () => { if (!document.body) return setTimeout(mk, 20); if (document.getElementById("__cur")) return; const c = document.createElement("div"); c.id = "__cur"; c.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2l14 9-6 1.5L8 19z" fill="#111" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>'; c.style.left = "-40px"; document.body.appendChild(c); };
+  mk();
+  addEventListener("mousemove", (e) => { const c = document.getElementById("__cur"); if (c) { c.style.left = e.clientX - 3 + "px"; c.style.top = e.clientY - 2 + "px"; } }, true);
+  addEventListener("mousedown", (e) => { const r = document.createElement("div"); r.id = "__rip"; r.style.left = e.clientX + "px"; r.style.top = e.clientY + "px"; document.body.appendChild(r); setTimeout(() => r.remove(), 700); }, true);
+})();`;
+class Helper {
+  constructor(page) { this.page = page; this.x = 200; this.y = 200; }
+  async move(sel, opt = {}) { const loc = typeof sel === "string" ? this.page.locator(sel).first() : sel; await loc.scrollIntoViewIfNeeded().catch(() => {}); const b = await loc.boundingBox(); if (!b) throw new Error("no box for " + sel);
+    const tx = b.x + (opt.fx ?? 0.5) * b.width, ty = b.y + (opt.fy ?? 0.5) * b.height, n = 38; const sx = this.x, sy = this.y;
+    for (let i = 1; i <= n; i++) { const t = i / n, e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; await this.page.mouse.move(sx + (tx - sx) * e, sy + (ty - sy) * e); await sleep(16); }
+    this.x = tx; this.y = ty; await sleep(350); }
+  async click(sel, opt = {}) { await this.move(sel, opt); await this.page.mouse.down(); await sleep(70); await this.page.mouse.up(); await sleep(opt.after ?? 1500); }
+  async scroll(dy, ms = 1400) { const n = Math.round(ms / 25); for (let i = 0; i < n; i++) { await this.page.mouse.wheel(0, dy / n); await sleep(25); } await sleep(1200); }
+  async scrollTo(sel, off = 120) { const y = await this.page.locator(sel).first().evaluate((el, o) => el.getBoundingClientRect().top + scrollY - o, off); const cur = await this.page.evaluate(() => scrollY); await this.scroll(y - cur); }
+  async hover(sel, ms = 1200) { await this.move(sel); await sleep(ms); }
+}
+export async function record(spec) {
+  const w = `${WORK}/${spec.id}`; mkdirSync(w + "/wav", { recursive: true });
+  const say = spec.steps.map((s) => s.say || ""); writeFileSync(w + "/texts.json", JSON.stringify(say));
+  const need = say.filter(Boolean).length;
+  if (need) { const r = spawnSync("python3", [new URL("./tts.py", import.meta.url).pathname, VOICE, w + "/texts.json", w + "/wav"], { stdio: "inherit" }); if (r.status) throw new Error("tts failed"); }
+  const soft = "highpass=f=70,lowpass=f=7000,equalizer=f=250:t=q:w=1:g=2.5,equalizer=f=5000:t=q:w=1:g=-2,aecho=0.8:0.4:35:0.1,loudnorm=I=-17:TP=-2:LRA=9";
+  const audio = say.map((t, i) => { if (!t) return null; const o = `${w}/wav/s${i}.wav`; execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${w}/wav/${i}.wav`, "-af", soft, "-ar", "44100", o]); return { f: o, d: dur(o) }; });
+  const vp = spec.phone ? { width: 390, height: 680 } : { width: 1280, height: 720 };
+  const br = await chromium.launch({ args: ["--force-device-scale-factor=1"] });
+  const ctx = await br.newContext({ viewport: vp, recordVideo: { dir: w + "/rec", size: vp }, colorScheme: "light", hasTouch: false, isMobile: false, permissions: ["clipboard-read", "clipboard-write"] });
+  const until = Date.now() + 864e5;
+  await ctx.addInitScript(`try{localStorage.setItem("socal-theme","light");localStorage.setItem("socal-theme-until","${until}")}catch(e){}`);
+  await ctx.addInitScript(OVERLAY);
+  if (spec.cookie) await ctx.addCookies([{ name: "scl_session", value: spec.cookie, url: BASE }]);
+  const t00 = Date.now(); const page = await ctx.newPage(); const T = () => (Date.now() - t00) / 1000;
+  const h = new Helper(page); const marks = []; let poster = null;
+  const card = (c) => page.evaluate((c) => { const o = document.getElementById("__card"); if (o) o.remove(); if (!c) return; const d = document.createElement("div"); d.id = "__card"; d.innerHTML = `<img src="/img/badge-160.webp" alt=""><div class="wm">SoCal <b>Lights</b></div><div class="ey">${c.ey}</div><h1>${c.title}</h1><p>${c.sub || ""}</p>`; document.body.appendChild(d); }, c);
+  await page.goto(BASE + (spec.start || "/"), { waitUntil: "networkidle" }); await sleep(600);
+  for (let i = 0; i < spec.steps.length; i++) {
+    const s = spec.steps[i]; const t0 = T();
+    await card(s.card || null);
+    await page.evaluate((c) => { let e = document.getElementById("__cap"); if (!c) { if (e) e.remove(); return; } if (!e) { e = document.createElement("div"); e.id = "__cap"; document.body.appendChild(e); } e.textContent = c; }, s.card ? "" : s.cap || "");
+    if (audio[i]) marks.push({ i, t: t0 + 0.4, f: audio[i].f });
+    const end = t0 + 0.4 + (audio[i]?.d || 0) + (s.pad ?? 0.9);
+    await sleep(900);
+    if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
+    if (s.poster) poster = T();
+    const left = end - T(); if (left > 0) await sleep(left * 1000);
+  }
+  const total = T() + 0.3; await sleep(300);
+  const vid = page.video(); await page.close(); await ctx.close(); const webm = await vid.path(); await br.close();
+  const inputs = marks.flatMap((m) => ["-i", m.f]);
+  const fc = marks.map((m, k) => `[${k + 1}:a]adelay=${Math.round(m.t * 1000)}|${Math.round(m.t * 1000)}[a${k}]`).join(";") + (marks.length ? ";" : "") + marks.map((_, k) => `[a${k}]`).join("") + `amix=inputs=${marks.length}:normalize=0[aout]`;
+  const vf = spec.phone ? "scale=390:680,pad=1280:720:445:20:color=#fbf3ea" : "scale=1280:720";
+  const mp4 = `${OUT}/${spec.file}.mp4`;
+  execFileSync("ffmpeg", ["-v", "error", "-y", "-i", webm, ...inputs, "-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-vf", vf, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "24", "-preset", "medium", "-r", "30", "-c:a", "aac", "-b:a", "128k", "-t", String(total), "-movflags", "+faststart", mp4], { stdio: "inherit" });
+  if (poster !== null) execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", String(poster), "-i", mp4, "-frames:v", "1", "-q:v", "4", `${OUT}/${spec.file}.jpg`]);
+  const L = dur(mp4); console.log(spec.file, "length", Math.floor(L / 60) + ":" + String(Math.round(L % 60)).padStart(2, "0"));
+  writeFileSync(`${w}/script.txt`, say.filter(Boolean).join("\n\n"));
+}
+export { sleep };
