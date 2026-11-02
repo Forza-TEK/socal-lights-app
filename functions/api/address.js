@@ -12,10 +12,11 @@ async function areas(q, env) {
   for (const [n, k] of names) if (n.toLowerCase().startsWith(w)) add(n, k);
   for (const [n, k] of names) if (n.toLowerCase().includes(w)) add(n, k);
   if (env.GEOAPIFY_KEY && out.length < 8 && q.length >= 3) {
-    const one = async (type) => { try { const u = new URL("https://api.geoapify.com/v1/geocode/autocomplete"); u.search = new URLSearchParams({ text: q, type, format: "json", limit: "5", lang: "en", filter: "rect:-121.5,32.4,-114.0,35.9", apiKey: env.GEOAPIFY_KEY }); const r = await fetch(u, { cf: { cacheTtl: 86400, cacheEverything: true } }); const j = r.ok ? await r.json() : {}; return (j.results || []).filter((x) => (!x.country_code || x.country_code === "us") && (!x.state_code || x.state_code === "CA")); } catch { return []; } };
+    const one = async (type) => { try { const u = new URL("https://api.geoapify.com/v1/geocode/autocomplete"); u.search = new URLSearchParams({ text: q, type, format: "json", limit: "5", lang: "en", filter: "rect:-121.5,32.4,-114.0,35.9", apiKey: env.GEOAPIFY_KEY }); const r = await fetch(u, { cf: { cacheTtl: 86400, cacheEverything: true } }); const j = r.ok ? await r.json() : {}; return (j.results || []).filter((x) => (!x.country_code || x.country_code === "us") && (!x.state_code || x.state_code === "CA") && (!x.result_type || x.result_type === type)); } catch { return []; } };
     const [cities, counties] = await Promise.all([one("city"), one("county")]);
-    for (const x of counties) { const n = (x.county || x.name || "").replace(/\s+County$/i, ""); if (n) add(n + " County", "county"); }
-    for (const x of cities) { const n = x.city || x.name; if (n) add(n, "city"); }
+    const has = (n) => n.toLowerCase().includes(w); // the service also returns fuzzy matches; keep only names that contain what was typed
+    for (const x of counties) { const n = (x.county || x.name || "").replace(/\s+County$/i, ""); if (n && has(n)) add(n + " County", "county"); }
+    for (const x of cities) { const n = x.city || x.name; if (n && has(n)) add(n, "city"); }
   }
   return out.slice(0, 8);
 }
