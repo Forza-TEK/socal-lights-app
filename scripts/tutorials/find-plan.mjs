@@ -63,7 +63,7 @@ const email = {
   ],
 };
 const app = {
-  id: "app", file: "find-app", phone: true, start: "/",
+  id: "app", file: "find-app", phone: true, start: "/", warm: true,
   steps: [
     { ...card("Install the app and use it offline", "Add SoCal Lights to your phone and use it without a connection"), say: "Install the app and use it offline. In this video, you add SoCal Lights to your phone, and see what still works with no signal.", pad: 1.2 },
     { cap: "Open SoCalLights.app", say: "Open socallights dot app in your phone's browser. There is nothing to download from an app store.", do: async (p, h) => { await h.hover("#q", 1200); } },
