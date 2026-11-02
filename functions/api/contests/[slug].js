@@ -2,9 +2,10 @@
 // PATCH /api/contests/<slug>  organizer controls: pause/resume entries and voting, show counts, start voting now, announce winners.
 // Announcing freezes the results into contests.results; from then on the page, the archive and the export read that snapshot, never the live votes.
 import { json, err, clean, webUrl, newId } from "../../_lib/util.js";
+import { sendTemplate } from "../../_lib/mailtpl.js";
 import { slug as slugify } from "../../_lib/events.js";
 import { inviteJudges } from "./[slug]/judges.js";
-import { getUser, sameOrigin, sendMail, okEmail } from "../../_lib/auth.js";
+import { getUser, sameOrigin, okEmail } from "../../_lib/auth.js";
 import { getContest, windows, todayPT, isDate, listOnMap, isStaff, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { judgeProgress } from "../../_lib/judging.js";
 import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
@@ -161,11 +162,9 @@ async function notifyResults(env, c, r, awards) {
     let sent = 0;
     for (const [to, e] of [...byEmail].slice(0, 200)) {
       const win = e.wins.length > 0, pz = e.wins.filter((w) => w.prize).map((w) => `${w.category} (${w.label}): ${w.prize}`);
-      if (await sendMail(env, { to, subject: win ? `You won: ${c.name}` : `Results are in: ${c.name}`,
-        text: win ? `Congratulations! Your home won ${e.wins.map((w) => `${w.category} (${w.label})`).join(", ")} in ${c.name}.${pz.length ? ` Prize: ${pz.join("; ")}.` : ""} ${c.org} will contact you at this email address about any prize. A crown now shows on your home, and you can choose where to show your badge in your profile. See the results: ${page}`
-                  : `Thank you for entering ${c.name}. Winners: ${names.join(", ") || "to be announced"}. See the full results: ${page}` })) sent++;
+      if (await sendTemplate(env, win ? "results_winner" : "results_entrant", to, win ? { contest: c.name, wins: e.wins.map((w) => `${w.category} (${w.label})`).join(", "), prize: pz.join("; "), org: c.org, link: page } : { contest: c.name, winners: names.join(", ") || "to be announced", link: page })) sent++;
     }
-    if (hasJudges(c)) { const { results: js } = await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all(); for (const j of js) await sendMail(env, { to: j.email, subject: `Results are in: ${c.name}`, text: `Thank you for judging ${c.name}. The winners are ${names.join(", ") || "to be announced"}. ${page}` }); }
-    await sendMail(env, { to: c.contact_email, subject: `Results sent: ${c.name}`, text: `You announced the winners of ${c.name}. ${sent} of ${byEmail.size} entrants were emailed. The results are locked. Download them from your dashboard: https://socallights.app/c/${c.slug}/manage` });
+    if (hasJudges(c)) { const { results: js } = await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all(); for (const j of js) await sendTemplate(env, "results_judge", j.email, { contest: c.name, winners: names.join(", ") || "to be announced", link: page }); }
+    await sendTemplate(env, "results_organizer", c.contact_email, { contest: c.name, sent, total: byEmail.size, link: `https://socallights.app/c/${c.slug}/manage` });
   } catch {}
 }

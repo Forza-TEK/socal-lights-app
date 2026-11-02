@@ -66,7 +66,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     const who = { email: user.email, name: user.name || row.biz || user.email, role };
     const ch = [{ label: "Listing", old: b.action === "pause" ? "On the map" : "Taken down for the season", new: b.action === "pause" ? "Taken down for the season" : "Back on the map" }];
     await logHome(env, row.id, who, ch);
-    const job = notify(env, everyone(row, inst, who), `${who.name} ${b.action === "pause" ? "took down" : "put back"} "${row.title}" on SoCal Lights`, `${who.name} ${b.action === "pause" ? "took this listing down for the season" : "put this listing back on the map"}: "${row.title}".\n\nSee the listing and the full list of changes: ${where(row, inst, "homeowner")}`);
+    const job = notify(env, everyone(row, inst, who), b.action === "pause" ? "listing_paused" : "listing_resumed", { who: who.name, title: row.title, link: where(row, inst, "homeowner") });
     if (waitUntil) waitUntil(job);
     return json({ ok: true });
   }
@@ -92,7 +92,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     const who = { email: user.email, name: (role === "installer" && inst ? inst.name : user.name || row.biz) || user.email, role };
     await logHome(env, row.id, who, changes);
     // Everyone who shares the listing is told, including the person who made the change
-    const job = notify(env, everyone(row, inst, who), `${who.name} updated "${next.title}" on SoCal Lights`, `${who.name} changed these on "${next.title}":\n\n${lines(changes)}\n\nSee the listing and the full list of changes: ${where(row, inst, "homeowner")}\n(If you are the installer, open your manage page: ${inst ? "https://socallights.app/installer/" + inst.slug + "/manage" : "n/a"}.)`);
+    const job = notify(env, everyone(row, inst, who), "listing_updated", { who: who.name, title: next.title, changes: lines(changes), link: where(row, inst, "homeowner"), manage: inst ? "https://socallights.app/installer/" + inst.slug + "/manage" : "" });
     if (waitUntil) waitUntil(job);
     return json({ ok: true, changed: changes.length });
   }

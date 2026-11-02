@@ -1,6 +1,6 @@
 // POST /api/alerts — ask for the weekly "lights near you" email. Sends a confirmation link; nothing is sent until it is clicked.
 import { json, err, clean, newId, verifyTurnstile } from "../../_lib/util.js";
-import { sendMail } from "../../_lib/auth.js";
+import { sendTemplate } from "../../_lib/mailtpl.js";
 import { CITY } from "../../../public/cities.js";
 
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
@@ -25,7 +25,7 @@ export async function onRequestPost({ request, env }) {
   else await env.DB.prepare("INSERT INTO alert_subs (id, email, city, lat, lng, radius, token) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(newId(), email, city, at.lat, at.lng, radius, token).run();
   const origin = new URL(request.url).origin;
   if (!old || !old.confirmed) {
-    const ok = await sendMail(env, { to: email, subject: "Confirm your SoCal Lights alerts", text: `Confirm that you want a weekly email of lights and events within ${radius} miles of ${city}:\n\n${origin}/api/alerts/confirm?t=${token}\n\nIf you did not ask for this, ignore this email and nothing will be sent.\n\nSoCal Lights · socallights.app` });
+    const ok = await sendTemplate(env, "alerts_confirm", email, { radius, city, link: `${origin}/api/alerts/confirm?t=${token}` });
     if (!ok) return err(503, "The confirmation email could not be sent. Please try again later.");
   }
   return json({ ok: true, already: !!(old && old.confirmed) });

@@ -1,6 +1,7 @@
 // POST /api/contests/<slug>/entries/<id> { action: "approve" | "decline" | "flag" | "unflag" } — organizer reviews one entry.
 import { json, err, clean } from "../../../../_lib/util.js";
-import { getUser, sameOrigin, sendMail } from "../../../../_lib/auth.js";
+import { sendTemplate } from "../../../../_lib/mailtpl.js";
+import { getUser, sameOrigin } from "../../../../_lib/auth.js";
 import { ownerOf, approveEntry } from "../../../../_lib/contests.js";
 
 export async function onRequestPost({ params, request, env, waitUntil }) {
@@ -10,11 +11,11 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   const row = await env.DB.prepare("SELECT * FROM posts WHERE id = ? AND contest_id = ?").bind(params.id, c.id).first();
   if (!row) return err(404, "That entry doesn't exist.");
   const b = await request.json().catch(() => ({}));
-  const page = `https://socallights.app/c/${c.slug}`, tell = (subject, text) => { if (!row.contact_email) return; const job = sendMail(env, { to: row.contact_email, subject, text }).catch(() => {}); if (waitUntil) waitUntil(job); };
+  const page = `https://socallights.app/c/${c.slug}`, tell = (id, vars) => { if (!row.contact_email) return; const job = sendTemplate(env, id, row.contact_email, vars).catch(() => {}); if (waitUntil) waitUntil(job); };
   const name = row.title || row.biz;
   if (b.action === "approve") {
     await approveEntry(env, row);
-    tell(`Your entry is in: ${c.name}`, `${name} was approved and is now in ${c.name}, on the contest page and on the map. Voting runs ${c.vote_start} to ${c.vote_end}. Share the link so neighbors can vote: ${page}`);
+    tell("entry_approved", { name, contest: c.name, vote_start: c.vote_start, vote_end: c.vote_end, link: page });
     return json({ ok: true });
   }
   if (b.action === "restore") {
@@ -34,7 +35,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     // Pending photos are private and stay so the organizer can undo; photos of an approved entry are public, so they are removed
     if (!wasPending) await Promise.all(JSON.parse(row.photos || "[]").map((k) => env.PHOTOS.delete(k)));
     await env.DB.batch([env.DB.prepare(`UPDATE posts SET status='declined'${wasPending ? "" : ", photos='[]'"} WHERE id = ?`).bind(row.id), env.DB.prepare("DELETE FROM votes WHERE post_id = ?").bind(row.id)]);
-    tell(`About your entry: ${c.name}`, `${c.org} couldn't include ${name} in ${c.name}.${reason ? ` Reason: ${reason}` : ""}\n\nYou can enter again with new photos or details while entries are open: ${page}/enter`);
+    tell("entry_declined", { name, contest: c.name, org: c.org, reason, link: `${page}/enter` });
     return json({ ok: true });
   }
   return err(400, "Unknown action.");

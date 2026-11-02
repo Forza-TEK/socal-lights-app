@@ -2,7 +2,7 @@
 // Emails the site owner how many homes, events and contest entries came in since the last email, today's totals, and what is waiting for review.
 // It always sends (a "nothing new" note when quiet) and includes the day's totals. Set ADMIN_NOTIFY_EMAIL to change where it goes (default rey@forza-tek.com).
 import { json, err } from "../_lib/util.js";
-import { sendMail } from "../_lib/auth.js";
+import { sendTemplate } from "../_lib/mailtpl.js";
 
 export async function onRequestPost({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
@@ -29,8 +29,8 @@ export async function onRequestPost({ request, env }) {
   const total = homes.length + events.length + entries[0].n + reports.length, dayTotal = dayHomes[0].n + dayEvents[0].n + dayEntries[0].n;
   const line = (label, rows, name) => rows.length ? `${label} (${rows.length}):\n${rows.slice(0, 10).map((r) => `- ${r[name]} · ${r.city}${r.status === "pending" ? " · WAITING" : r.poster_type === "installer" ? " · installer" : ""}`).join("\n")}${rows.length > 10 ? `\n...and ${rows.length - 10} more` : ""}\n\n` : "";
   const head = total ? `${total} new submission${total === 1 ? "" : "s"} since the last update.\n\n${line("Homes and installer displays", homes, "title")}${line("Events", events, "name")}${entries[0].n ? `Contest entries: ${entries[0].n} (organizers review these)\n\n` : ""}${reports.length ? `"Something wrong?" reports (${reports.length}):\n${reports.slice(0, 8).map((r) => `- ${r.name || r.ref}: ${r.message}`).join("\n")}${reports.length > 8 ? `\n...and ${reports.length - 8} more` : ""}\n\n` : ""}` : "Nothing new since the last update.\n\n";
-  const text = `${head}Today so far: ${dayTotal} submission${dayTotal === 1 ? "" : "s"} (${dayHomes[0].n} home${dayHomes[0].n === 1 ? "" : "s"}, ${dayEvents[0].n} event${dayEvents[0].n === 1 ? "" : "s"}, ${dayEntries[0].n} contest entr${dayEntries[0].n === 1 ? "y" : "ies"}).\nLive from submissions: ${live[0].homes} homes, ${live[0].events} events.\nWaiting for your review: ${held[0].n}\n\nEverything new is already live. To take something down, open the admin and use Unpublish: https://socallights.app/admin/`;
-  const ok = await sendMail(env, { to: env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", subject: total ? `SoCal Lights: ${total} new submission${total === 1 ? "" : "s"} (${dayTotal} today)` : `SoCal Lights: no new submissions (${dayTotal} today)`, text });
+  const todayLine = `${dayTotal} submission${dayTotal === 1 ? "" : "s"} (${dayHomes[0].n} home${dayHomes[0].n === 1 ? "" : "s"}, ${dayEvents[0].n} event${dayEvents[0].n === 1 ? "" : "s"}, ${dayEntries[0].n} contest entr${dayEntries[0].n === 1 ? "y" : "ies"}).`;
+  const ok = await sendTemplate(env, "admin_digest", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { headline: total ? `${total} new submission${total === 1 ? "" : "s"}` : "no new submissions", day_total: dayTotal, summary: head, today_line: todayLine, live_line: `${live[0].homes} homes, ${live[0].events} events.`, held: held[0].n });
   if (ok) await env.DB.prepare("INSERT INTO admin_digest (id, last_at) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET last_at = excluded.last_at").bind(now).run();
   return json({ sent: ok, new: total, today: dayTotal });
 }

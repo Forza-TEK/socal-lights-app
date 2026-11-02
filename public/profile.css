@@ -17,7 +17,7 @@ body.prof .sh-content,body.prof .sh-content.main{max-width:1120px;margin:0 auto;
 .prof .list .rowi{display:grid;gap:12px}.prof .list .acts{display:flex;flex-wrap:wrap;gap:8px}
 .prof #pp>.card,.prof #pform,.prof #pp>section{max-width:760px}
 .prof #pp>.card{padding:22px;border:1px solid var(--line);border-radius:14px}
-@media (max-width:699px){.prof .who{grid-template-columns:1fr;justify-items:start;padding:16px}.prof .who .avatar{width:72px;height:72px;font-size:28px}.prof .list{grid-template-columns:1fr}.prof .list .acts .btn{flex:1 1 auto}}
+@media (max-width:699px){.prof .sh-content .who{grid-template-columns:auto minmax(0,1fr);gap:16px;padding:16px}.prof .sh-content .who .avatar{width:64px;height:64px;font-size:26px}.prof .sh-content .who h1{font-size:24px;overflow-wrap:anywhere}.prof .sh-content .who .muted{display:block;overflow-wrap:anywhere;font-size:14px}.prof .sh-content .who>div>div{margin-top:12px!important}.prof .list{grid-template-columns:1fr}.prof .list .acts .btn{flex:1 1 auto}}
 body.prof .sh-content,body.prof .sh-content.main{display:block}
 .prof #app{width:100%}
 .prof #pp>p.pempty{margin:0;padding:32px 20px;border:1px dashed var(--line2);border-radius:14px;text-align:center}
@@ -29,3 +29,6 @@ body.prof .sh-content,body.prof .sh-content.main{display:block}
 .prof #pform>.err,.prof #pform>div:last-of-type{grid-column:1/-1}
 .prof #pform>.field:nth-of-type(3){grid-column:1/-1}
 @media (max-width:699px){.prof #pform{grid-template-columns:1fr}}
+
+.prof .sh-content .who>div>div>*{flex:0 0 auto;margin:0!important;position:static}
+.prof .sh-content .who>div>div{row-gap:8px!important}

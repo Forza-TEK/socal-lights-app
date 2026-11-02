@@ -3,7 +3,7 @@
 // DELETE /api/admin/posts/<id>  removes the post and its photos
 import { phoneField, line, normText, normName, normStreet, normZip } from "../../../_lib/fields.js";
 import { json, err, clean, safeUrl, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
-import { tell, houseApproved, houseDeclined } from "../../../_lib/notify.js";
+import { tell } from "../../../_lib/notify.js";
 import { CITY } from "../../../../public/cities.js";
 import { SEASONS } from "../../../../public/seasons.js";
 
@@ -81,7 +81,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     await env.DB.prepare("UPDATE posts SET status='approved', photos=?, approved_at=datetime('now') WHERE id=?")
       .bind(JSON.stringify(moved), row.id).run();
     await deletePhotos(env, keys.filter((k) => k.startsWith("pending/")));
-    if (!row.contest_id && body.notify !== false) { const m = houseApproved(row.title || row.biz); tell(env, waitUntil, row.contact_email, m.subject, m.text); }
+    if (!row.contest_id && body.notify !== false) { tell(env, waitUntil, row.contact_email, "house_approved", { name: row.title || row.biz }); }
     return json({ ok: true });
   }
 
@@ -105,7 +105,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   if (body.action === "decline") {
     // The photos stay in the private pending/ folder so a decline can be undone. The person is emailed the reason, if you wrote one.
     await env.DB.prepare("UPDATE posts SET status='declined' WHERE id=?").bind(row.id).run();
-    const m = houseDeclined(row.title || row.biz, clean(body.reason, 400)); tell(env, waitUntil, row.contact_email, m.subject, m.text);
+    tell(env, waitUntil, row.contact_email, "house_declined", { name: row.title || row.biz, reason: clean(body.reason, 400) });
     return json({ ok: true });
   }
   if (body.action === "restore") {
