@@ -41,6 +41,8 @@ export async function onRequestPost({ request, env }) {
   if (!e.free && !e.price) e.price = "Price not listed";
   if (e.free && !e.price) e.price = "Free";
 
+  const { n: mineToday } = await env.DB.prepare("SELECT COUNT(*) AS n FROM event_submissions WHERE lower(contact_email) = lower(?) AND created_at > datetime('now','-1 day')").bind(e.email).first();
+  if (mineToday >= 8) return err(429, "You've added several events today. Try again tomorrow, or email info@socallights.app if you have more.");
   // Already on the map?
   const dup = await env.DB.prepare("SELECT id FROM events WHERE (lower(name) = lower(?) AND start_date = ?) OR (lower(address) = lower(?) AND start_date = ? AND lower(city) = lower(?)) LIMIT 1")
     .bind(e.name, e.start_date, e.address, e.start_date, e.city).first();

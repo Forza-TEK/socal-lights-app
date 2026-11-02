@@ -119,7 +119,21 @@ function addToCalendar(id) {
 }
 // one-line "report a problem" link on details pages: opens an email with the event already named
 const citySlug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-const reportLink = (name, key, city) => `<p class="reportline">${city ? `<a href="/in/${citySlug(city)}">More in ${esc(city)}</a> · ` : ""}<a href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Something wrong? Tell us</a></p>`;
+const reportLink = (name, key, city) => `<p class="reportline">${city ? `<a href="/in/${citySlug(city)}">More in ${esc(city)}</a> · ` : ""}<a data-report="${esc(key)}|${esc(name)}" href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Something wrong? Tell us</a></p>`;
+
+// "Something wrong? Tell us": a short form instead of an email app; falls back to the email link if scripts are off
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-report]"); if (!a) return; e.preventDefault();
+  const [ref, ...rest] = a.dataset.report.split("|"), name = rest.join("|");
+  const o = document.createElement("div"); o.className = "rptscrim";
+  o.innerHTML = `<form class="rptdlg" role="dialog" aria-modal="true" aria-label="Report a problem"><h3>Something wrong?</h3><p>${esc(name)}</p><label>What should we fix?<textarea name="m" rows="4" maxlength="600" placeholder="e.g. The date has changed, the pin is on the wrong street, it is closed."></textarea></label><label>Your email, if you want a reply <span>(optional)</span><input name="c" type="email" maxlength="120" autocomplete="email"></label><p class="rpterr" role="alert" hidden></p><div class="rptrow"><button class="rptgo" type="submit">Send</button><button class="rptx" type="button">Cancel</button></div></form>`;
+  document.body.appendChild(o); const f = o.querySelector("form"); f.m.focus();
+  const close = () => o.remove(); o.onclick = (ev) => { if (ev.target === o) close(); }; o.querySelector(".rptx").onclick = close;
+  f.onsubmit = async (ev) => { ev.preventDefault(); const er = o.querySelector(".rpterr"); er.hidden = true;
+    const r = await fetch("/api/report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ref, name, message: f.m.value, contact: f.c.value }) }).catch(() => null), j = r ? await r.json().catch(() => ({})) : {};
+    if (!r || !r.ok) { er.textContent = (j && j.error) || "That didn't send. Try again."; er.hidden = false; return; }
+    close(); toast("Thanks. We'll look into it."); };
+});
 
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};

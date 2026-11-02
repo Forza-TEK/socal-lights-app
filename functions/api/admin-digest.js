@@ -15,7 +15,7 @@ export async function onRequestPost({ request, env }) {
   const ptDate = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
   const dst = /PDT/.test(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles", timeZoneName: "short" }));
   const dayStart = new Date(`${ptDate}T00:00:00${dst ? "-07:00" : "-08:00"}`).toISOString().slice(0, 19).replace("T", " ");
-  const [homes, events, entries, held, dayHomes, dayEvents, dayEntries, live] = await Promise.all([
+  const [homes, events, entries, held, dayHomes, dayEvents, dayEntries, live, reports] = await Promise.all([
     q("SELECT id, title, city, status, poster_type FROM posts WHERE contest_id IS NULL AND created_at > ? ORDER BY created_at DESC LIMIT 50", since),
     q("SELECT id, name, city, status FROM event_submissions WHERE created_at > ? ORDER BY created_at DESC LIMIT 50", since),
     q("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NOT NULL AND created_at > ?", since),
@@ -24,10 +24,11 @@ export async function onRequestPost({ request, env }) {
     q("SELECT COUNT(*) AS n FROM event_submissions WHERE created_at >= ?", dayStart),
     q("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NOT NULL AND created_at >= ?", dayStart),
     q("SELECT (SELECT COUNT(*) FROM posts WHERE status = 'approved' AND contest_id IS NULL) AS homes, (SELECT COUNT(*) FROM event_submissions WHERE status = 'published') AS events"),
+    q("SELECT name, message, ref FROM reports WHERE created_at > ? ORDER BY created_at DESC LIMIT 20", since).catch(() => []),
   ]);
-  const total = homes.length + events.length + entries[0].n, dayTotal = dayHomes[0].n + dayEvents[0].n + dayEntries[0].n;
+  const total = homes.length + events.length + entries[0].n + reports.length, dayTotal = dayHomes[0].n + dayEvents[0].n + dayEntries[0].n;
   const line = (label, rows, name) => rows.length ? `${label} (${rows.length}):\n${rows.slice(0, 10).map((r) => `- ${r[name]} · ${r.city}${r.status === "pending" ? " · WAITING" : r.poster_type === "installer" ? " · installer" : ""}`).join("\n")}${rows.length > 10 ? `\n...and ${rows.length - 10} more` : ""}\n\n` : "";
-  const head = total ? `${total} new submission${total === 1 ? "" : "s"} since the last update.\n\n${line("Homes and installer displays", homes, "title")}${line("Events", events, "name")}${entries[0].n ? `Contest entries: ${entries[0].n} (organizers review these)\n\n` : ""}` : "Nothing new since the last update.\n\n";
+  const head = total ? `${total} new submission${total === 1 ? "" : "s"} since the last update.\n\n${line("Homes and installer displays", homes, "title")}${line("Events", events, "name")}${entries[0].n ? `Contest entries: ${entries[0].n} (organizers review these)\n\n` : ""}${reports.length ? `"Something wrong?" reports (${reports.length}):\n${reports.slice(0, 8).map((r) => `- ${r.name || r.ref}: ${r.message}`).join("\n")}${reports.length > 8 ? `\n...and ${reports.length - 8} more` : ""}\n\n` : ""}` : "Nothing new since the last update.\n\n";
   const text = `${head}Today so far: ${dayTotal} submission${dayTotal === 1 ? "" : "s"} (${dayHomes[0].n} home${dayHomes[0].n === 1 ? "" : "s"}, ${dayEvents[0].n} event${dayEvents[0].n === 1 ? "" : "s"}, ${dayEntries[0].n} contest entr${dayEntries[0].n === 1 ? "y" : "ies"}).\nLive from submissions: ${live[0].homes} homes, ${live[0].events} events.\nWaiting for your review: ${held[0].n}\n\nEverything new is already live. To take something down, open the admin and use Unpublish: https://socallights.app/admin/`;
   const ok = await sendMail(env, { to: env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", subject: total ? `SoCal Lights: ${total} new submission${total === 1 ? "" : "s"} (${dayTotal} today)` : `SoCal Lights: no new submissions (${dayTotal} today)`, text });
   if (ok) await env.DB.prepare("INSERT INTO admin_digest (id, last_at) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET last_at = excluded.last_at").bind(now).run();

@@ -1,9 +1,11 @@
 // GET   /api/contests/<slug>  the contest, its approved homes, prizes and (when allowed) the vote counts. Personalized, never cached.
 // PATCH /api/contests/<slug>  organizer controls: pause/resume entries and voting, show counts, start voting now, announce winners.
 // Announcing freezes the results into contests.results; from then on the page, the archive and the export read that snapshot, never the live votes.
-import { json, err, clean, webUrl } from "../../_lib/util.js";
+import { json, err, clean, webUrl, newId } from "../../_lib/util.js";
+import { slug as slugify } from "../../_lib/events.js";
+import { inviteJudges } from "./[slug]/judges.js";
 import { getUser, sameOrigin, sendMail, okEmail } from "../../_lib/auth.js";
-import { getContest, windows, todayPT, isDate, listOnMap, isStaff, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
+import { getContest, windows, todayPT, isDate, listOnMap, isStaff, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { judgeProgress } from "../../_lib/judging.js";
 
 export async function onRequestGet({ params, request, env }) {
@@ -47,10 +49,11 @@ export async function onRequestGet({ params, request, env }) {
 
 export async function onRequestPatch({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
-  const { c, res } = await ownerOf(request, env, params.slug, getUser);
+  const { c, res, user } = await ownerOf(request, env, params.slug, getUser);
   if (res) return res;
   const b = await request.json().catch(() => ({}));
   if (b.action === "edit") return editContest(env, c, b);
+  if (b.action === "clone") return cloneContest(env, c, user);
   if (c.status !== "live") return err(400, "This contest isn't live yet.");
   if (c.announced) return err(400, "The winners are announced and the results are locked.");
   const sets = { close_entries: ["entries_open", 0], open_entries: ["entries_open", 1], pause_voting: ["voting_open", 0], resume_voting: ["voting_open", 1], show_counts: ["show_counts", 1], hide_counts: ["show_counts", 0] }[b.action];
@@ -73,6 +76,32 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
     if (waitUntil) waitUntil(job);
   } else return err(400, "Unknown action.");
   return json({ ok: true });
+}
+
+// "Run it again next year": a new contest with the same settings, rules, prizes, sponsors and judges, and every date a year later.
+const plusYear = (d) => { const x = new Date(d + "T12:00:00Z"); x.setUTCFullYear(x.getUTCFullYear() + 1); return x.toISOString().slice(0, 10); };
+async function cloneContest(env, c, user) {
+  const closes = plusYear(c.entries_close); let vs = plusYear(c.vote_start), ve = plusYear(c.vote_end);
+  if (vs <= closes) vs = addDays(closes, 1); // an organizer may have started voting early; the copy keeps the normal order
+  if (ve <= vs) ve = addDays(vs, 14);
+  const name = /\b20\d\d\b/.test(c.name) ? c.name.replace(/\b(20\d\d)\b/, (y) => String(+y + 1)) : `${c.name} ${closes.slice(0, 4)}`;
+  let slug = slugify(name).slice(0, 40) || "contest";
+  if (await getContest(env, slug)) slug = `${slug.slice(0, 34)}-${newId().slice(0, 5)}`;
+  const skip = new Set(["id", "slug", "name", "announced", "results", "event_id", "note", "created_at", "updated_at", "remind_open", "remind_close", "entries_close", "vote_start", "vote_end", "season", "status", "entries_open", "voting_open"]);
+  const row = { ...Object.fromEntries(Object.entries(c).filter(([k]) => !skip.has(k))), id: newId(), slug, name, entries_close: closes, vote_start: vs, vote_end: ve, season: seasonFor(closes), status: c.status === "pending" ? "pending" : "live", owner_id: c.owner_id };
+  const cols = Object.keys(row);
+  await env.DB.prepare(`INSERT INTO contests (${cols.join(",")}) VALUES (${cols.map(() => "?").join(",")})`).bind(...cols.map((k) => row[k])).run();
+  // sponsors (their logos are copied so removing one contest's logo never affects the other) and judges
+  const sp = (await env.DB.prepare("SELECT * FROM contest_sponsors WHERE contest_id = ?").bind(c.id).all()).results;
+  for (const x of sp) {
+    const id = newId(); let logo = "";
+    if (x.logo) { const obj = await env.PHOTOS.get(x.logo); if (obj) { logo = x.logo.replace(c.id, row.id).replace(/[^/]+(\.\w+)$/, id + "$1"); await env.PHOTOS.put(logo, obj.body, { httpMetadata: obj.httpMetadata }); } }
+    await env.DB.prepare("INSERT INTO contest_sponsors (id,contest_id,name,tier,url,logo) VALUES (?,?,?,?,?,?)").bind(id, row.id, x.name, x.tier, x.url, logo).run();
+  }
+  const js = (await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all()).results;
+  if (js.length) await inviteJudges(env, { id: row.id, slug, name, org: c.org, judge_method: c.judge_method }, js.map((j) => j.email));
+  if (row.status === "live") await listOnMap(env, row);
+  return json({ ok: true, slug });
 }
 
 // The organizer changes the contest's details. Dates, text, prizes and rules can change until winners are announced;
