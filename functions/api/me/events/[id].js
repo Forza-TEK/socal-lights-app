@@ -1,4 +1,5 @@
-// POST /api/me/events/<submission id> { action: "edit" | "notice" | "copy" } — the person who submitted an event manages it.
+// POST   /api/me/events/<submission id> { action: "edit" | "notice" | "copy" } — the person who submitted an event manages it.
+// DELETE /api/me/events/<submission id> — removes the event from the map and the list (only the person who added it).
 //   edit   : name, hours, price, free, blurb, url, venue, start, end
 //   notice : "cancelled" | "postponed" | "" shows a tag on the event
 //   copy   : "Run again next year": a new event with every date moved forward a year, marked Expected
@@ -49,4 +50,16 @@ export async function onRequestPost({ params, request, env }) {
     return json({ ok: true, id: eventId });
   }
   return err(400, "Unknown action.");
+}
+
+export async function onRequestDelete({ params, request, env }) {
+  if (!sameOrigin(request)) return err(403, "Not allowed.");
+  const { user, res } = await requireUser(request, env);
+  if (res) return res;
+  const s = await env.DB.prepare("SELECT * FROM event_submissions WHERE id = ?").bind(params.id).first();
+  if (!s || normEmail(s.contact_email) !== user.email) return err(404, "That event isn't yours.");
+  const stmts = [env.DB.prepare("DELETE FROM event_submissions WHERE id = ?").bind(s.id)];
+  if (s.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(s.event_id));
+  await env.DB.batch(stmts);
+  return json({ ok: true });
 }

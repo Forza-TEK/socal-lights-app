@@ -139,6 +139,6 @@ export async function onRequestDelete({ params, env }) {
   const row = await getPost(env, params.id);
   if (!row) return json({ ok: true });
   await deletePhotos(env, JSON.parse(row.photos || "[]"));
-  await env.DB.prepare("DELETE FROM posts WHERE id=?").bind(row.id).run();
+  await env.DB.batch([env.DB.prepare("DELETE FROM lights_on WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM listing_changes WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM posts WHERE id=?").bind(row.id)]);
   return json({ ok: true });
 }

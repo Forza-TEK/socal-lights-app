@@ -35,3 +35,4 @@
 }
 .fgrid>p{grid-column:1/-1;margin:0}
 #editcard>p{margin:0 0 18px}
+.btn.danger,.btn.out.danger{color:var(--bad,#c13515);border-color:var(--bad,#c13515)}

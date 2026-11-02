@@ -16,14 +16,23 @@
 import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, OPT, today } from "/addflow.js?v=20261102c";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261101e";
 import { normPhone, PHONE_HELP } from "/norm.js?v=20261102b";
-import { me } from "/auth.js?v=20261101a";
+import { me, signIn } from "/auth.js?v=20261101a";
 import { CITY } from "/cities.js";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
 const d = { kind: "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", lightsOn: "", visit: "", parking: "", accessible: false, radio: "", hadPro: "no", instName: "", instWeb: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
 const pro = (x) => x.kind === "installer";
-await ts.init();
+
 // Signed in with a saved name and address? Start the form with them (all optional on the profile).
 const acct = (await me()).user; if (acct) { try { const ov = await (await fetch("/api/me/overview")).json(); const mine = (ov.installers || [])[0]; if (mine) d.mine = mine; } catch {} }
+
+// your display belongs to the account that adds it, so sign in before anything else
+if (!acct) {
+  document.getElementById("app").innerHTML = `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+    <div class="main"><div><p class="eyebrow">Add a display</p><h1>Sign in to add your lights display</h1><p class="help">Your display is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></div>`;
+  await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add your lights display", next: location.pathname })) go(); }; });
+  location.reload(); await new Promise(() => {});
+}
 if (acct) { d.email = acct.email; if (!d.biz && acct.name) d.biz = acct.name; if (acct.city && cities.includes(acct.city)) { d.city = acct.city; d.street = acct.street || ""; d.zip = acct.zip || ""; } }
 
 // Suggest installers already on the site while typing a company name
@@ -58,15 +67,14 @@ const steps = [
   { id: "photos", sec: "Photos", title: "Add photos", help: "Photos help families find the right house. You can skip this and add them later by email.", body: (x) => photoField(x) },
   { id: "review", sec: "Review", title: "Check everything, then send it", help: "It goes on the map right away. You can ask us to change or remove it any time.", cta: "Put it on the map",
     body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${!pro(x) && x.hadPro === "yes" ? sumRow("Installed by", esc(x.instName), "installer") : ""}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${sumRow("Photos", String(x.photos.length), "photos")}</div>
-      ${input(x, "email", { label: `Your email <small>${PRIV}. Only the site owner sees it.</small>`, type: "email", mode: "email", ac: "email", max: 120 })}<div id="ts"></div>`,
-    check: (x) => (!isEmail(x.email) ? "Enter your email so we can reach you if something needs fixing." : ""),
+      <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). Only the site owner sees it.</p></div>`,
     submit: async (x, api) => {
       const fd = new FormData(), set = { kind: x.kind, biz: x.biz.trim(), email: x.email.trim(), title: x.title.trim(), season: x.season, lights_on: x.lightsOn.trim(), visit: x.visit, parking: x.parking, radio: x.radio.trim(), ...(x.accessible ? { accessible: "1" } : {}), street: x.street.trim(), city: x.city, state: "CA", zip: x.zip.trim(), where: x.where.trim(), desc: x.desc.trim() };
       if (pro(x)) Object.assign(set, { web: x.web.trim(), phone: x.phone.trim(), area: x.area.trim(), permission: "1" });
       if (!pro(x) && x.hadPro === "yes") Object.assign(set, { installer_name: x.instName.trim(), installer_web: x.instWeb.trim() });
       for (const [k, v] of Object.entries(set)) fd.append(k, v);
       x.photos.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
-      fd.append("cf-turnstile-response", ts.token());
+      
       const r = await fetch("/api/submit", { method: "POST", body: fd }), j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Couldn't send that. Try again in a moment.");
       api.finish(j.status === "published" ? `<h1>You're on the map!</h1><p class="help">Your display is live now. The site owner may look it over and email you if anything needs fixing.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/#h-${esc(j.id)}">See it on the map</a><a class="btn out" href="/add-house">Add another</a></div>` : `<h1>Thanks! You're in review.</h1><p class="help">The site owner will look it over and publish it to the map. They may email you with questions.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/">Back to the map</a><a class="btn out" href="/add-house">Add another</a></div>`);

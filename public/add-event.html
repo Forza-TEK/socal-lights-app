@@ -16,12 +16,21 @@
 import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261102c";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261101e";
 import { CITY } from "/cities.js";
-import { me } from "/auth.js?v=20261101a";
+import { me, signIn } from "/auth.js?v=20261101a";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
 const acct = (await me()).user;
+// your event belongs to the account that adds it, so sign in before anything else
+if (!acct) {
+  document.getElementById("app").innerHTML = `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+    <div class="main"><div><p class="eyebrow">Add an event</p><h1>Sign in to add an event</h1><p class="help">Your event is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></div>`;
+  await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add an event", next: location.pathname })) go(); }; });
+  location.reload(); await new Promise(() => {});
+}
+
 const cfg = await ts.init(), pay = !!cfg.featureCheckout && !IN_APP; // paid placement is offered only when online payment is on, and never inside the store apps
 const d = { url: "", name: "", season: defaultSeason(today), type: "", start: "", end: "", hours: "", free: "yes", price: "", venue: "", street: "", city: "", blurb: "", email: "", plan: "" };
-if (acct) d.email = acct.email;
+d.email = acct.email;
 const PLANS = [["", "No thanks, just list it", "Free"], ["pin", "Featured pin: $5", "Gold-ringed pin and Featured badge for 30 days"], ["top", "Top of the list: $10", "Everything above, plus listed first for 30 days"], ["season", "Whole season: $15", "Everything above, until your event ends"]];
 
 const steps = [
@@ -44,9 +53,8 @@ const steps = [
     body: (x) => area(x, "blurb", { max: 200, ph: "What families will see and do" }), check: (x) => (x.blurb.trim().length < 20 ? "Add a sentence or two (at least 20 characters)." : "") },
   { id: "review", sec: "Review", title: "Check everything, then add it", cta: "Add my event", redraw: false,
     body: (x) => `<div class="sum">${sumRow("Event", esc(x.name), "name")}${sumRow("Page", x.url.trim() ? esc(x.url) : "None. A person will check it", "url")}${sumRow("When", fmt(x.start) + (x.end !== x.start ? " to " + fmt(x.end) : ""), "dates")}${sumRow("Price", x.free === "yes" ? "Free" : esc(x.price), "price")}${sumRow("Where", `${esc(x.venue)}, ${esc(x.city)}`, "where")}</div>
-      ${input(x, "email", { label: `Your email <small>${PRIV}. Only used if something needs fixing.</small>`, type: "email", mode: "email", ac: "email", max: 120 })}
+      <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). It is only used if something needs fixing and it is never shown publicly.</p></div>
       ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div class="tiles">${PLANS.map(([v, t, s]) => tile(x, "plan", v, t, s, false)).join("")}</div><p class="small muted">You'll pay on Stripe's secure page right after your event is added. If it needs a quick review first, your Featured placement turns on as soon as it's approved.</p></div>` : ""}<div id="ts"></div>`,
-    check: (x) => (!isEmail(x.email) ? "Enter your email so we can reach you if something needs fixing." : ""),
     submit: async (x, api) => {
       const body = { name: x.name, url: x.url, season: x.season, type: x.type, start: x.start, end: x.end, hours: x.hours, price: x.free === "yes" ? "" : x.price, free: x.free === "yes", venue: x.venue, address: x.street, city: x.city, blurb: x.blurb, email: x.email, "cf-turnstile-response": ts.token() };
       const r = await fetch("/api/submit-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));

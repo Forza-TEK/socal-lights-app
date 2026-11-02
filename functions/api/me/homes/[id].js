@@ -3,6 +3,7 @@
 //     edit   : title, desc, where, season, lights_on, visit, parking, accessible, radio (installer listings: web, phone, area too)
 //     pause  : "Taken down for the season" (the homeowner only)
 //     resume : puts it back on the map (the homeowner only)
+//   DELETE  : removes the listing and its photos (only the person who posted it)
 //   GET     : the recent changes (who changed which field, and when)
 // Who can open it: the person who posted it, and the installer's profile owner once the installer has confirmed they installed it
 // (or when the listing is the installer's own). Each side is emailed what the other changed.
@@ -96,4 +97,18 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     return json({ ok: true, changed: changes.length });
   }
   return err(400, "Unknown action.");
+}
+
+// Deleting is for the person who posted the listing (or Admin from the Admin tab); a confirmed installer can edit it but not delete it.
+export async function onRequestDelete({ params, request, env }) {
+  if (!sameOrigin(request)) return err(403, "Not allowed.");
+  const { user, res } = await requireUser(request, env);
+  if (res) return res;
+  const a = await access(env, user, params.id);
+  if (a.res) return a.res;
+  const { row } = a;
+  if (!(row.user_id === user.id || normEmail(row.contact_email) === user.email)) return err(403, "Only the person who posted this listing can delete it.");
+  for (const k of JSON.parse(row.photos || "[]")) await env.PHOTOS.delete(k).catch(() => {});
+  await env.DB.batch([env.DB.prepare("DELETE FROM lights_on WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM listing_changes WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(row.id)]);
+  return json({ ok: true });
 }
