@@ -95,3 +95,20 @@ button.link{padding-block:11px;margin-block:-11px}
 .chgnote{margin-top:2px;color:var(--muted)}
 .chgbox{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}.chgbox b{font-weight:600}
 .chg{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}.chg .who{font-weight:600}.chg .was{text-decoration:line-through;opacity:.7}
+
+/* Short fix-it note under a box */
+.fixnote{display:block;margin-top:4px;color:#b42318;font-size:13px}
+input[aria-invalid=true],textarea[aria-invalid=true]{border-color:#b42318!important}
+
+/* Header controls: the light/night toggle and the account button are one matched pair.
+   Same size, same ring, same spacing; a profile photo sits inside its ring with a small gap so it never looks bigger than the toggle. */
+:root{--hbtn:44px}
+.hdr .hright{display:flex;align-items:center;gap:12px}
+.hdr .hright>span{display:inline-flex;align-items:center;justify-content:center;width:var(--hbtn);height:var(--hbtn);line-height:0}
+.hdr .tbtn,.hdr .acct{box-sizing:border-box;flex:none;width:var(--hbtn);height:var(--hbtn);min-width:var(--hbtn);min-height:var(--hbtn);margin:0;padding:0;border:1.5px solid var(--ink);border-radius:50%;background:transparent;color:var(--ink);display:inline-grid;place-items:center;overflow:hidden;line-height:1;text-decoration:none;transition:background .15s ease}
+.hdr .acct{padding:2px;font-size:16px;font-weight:600}
+.hdr .acct img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover}
+.hdr .tbtn svg{width:20px;height:20px}
+.hdr .tbtn:hover,.hdr .acct:hover{background:var(--tile)}
+.hdr .tbtn:focus-visible,.hdr .acct:focus-visible{outline:2.5px solid var(--ink);outline-offset:2px}
+@media(max-width:340px){.hdr .brand .wm{display:none}}

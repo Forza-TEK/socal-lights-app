@@ -5,6 +5,7 @@
 import { json, err, clean, webUrl, newId } from "../../../_lib/util.js";
 import { requireUser, sameOrigin, normEmail } from "../../../_lib/auth.js";
 import { isDate, slug, upsertEvent } from "../../../_lib/events.js";
+import { normName, line } from "../../../_lib/fields.js";
 
 const plusYear = (d) => { const x = new Date(d + "T12:00:00Z"); x.setUTCFullYear(x.getUTCFullYear() + 1); return x.toISOString().slice(0, 10); };
 
@@ -24,9 +25,9 @@ export async function onRequestPost({ params, request, env }) {
     return json({ ok: true });
   }
   if (b.action === "edit") {
-    const name = clean(b.name ?? s.name, 120), blurb = clean(b.blurb ?? s.blurb, 200), venue = clean(b.venue ?? s.venue, 120);
-    const start = clean(b.start ?? s.start_date, 10), end = clean(b.end ?? s.end_date, 10), hours = clean(b.hours ?? s.hours, 120);
-    const free = b.free === undefined ? s.free : b.free ? 1 : 0, price = clean(b.price ?? s.price, 80) || (free ? "Free" : "Price not listed");
+    const name = normName(clean(b.name ?? s.name, 120)), blurb = line(b.blurb ?? s.blurb, 200), venue = normName(clean(b.venue ?? s.venue, 120));
+    const start = clean(b.start ?? s.start_date, 10), end = clean(b.end ?? s.end_date, 10), hours = line(b.hours ?? s.hours, 120);
+    const free = b.free === undefined ? s.free : b.free ? 1 : 0, price = line(b.price ?? s.price, 80) || (free ? "Free" : "Price not listed");
     const urlRaw = clean(b.url ?? s.url, 300), url = urlRaw ? webUrl(urlRaw) : "";
     if (name.length < 4) return err(400, "Enter the event's name.");
     if (blurb.length < 20) return err(400, "Add a one- or two-sentence description (at least 20 characters).");

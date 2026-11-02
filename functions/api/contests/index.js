@@ -8,6 +8,7 @@ import { rulesDefault } from "../../../public/rules.js";
 import { SEASONS } from "../../../public/seasons.js";
 import { trustOf, windows, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest, KIND_LABEL } from "../../_lib/contests.js";
 import { inviteJudges } from "./[slug]/judges.js";
+import { normName, normText } from "../../_lib/fields.js";
 
 export async function onRequestGet({ env }) {
   const { results } = await env.DB.prepare("SELECT slug,name,org,city,county,entries_close,vote_start,vote_end,announced,status,entries_open,voting_open FROM contests WHERE status='live' ORDER BY created_at DESC LIMIT 100").all();
@@ -21,7 +22,7 @@ export async function onRequestPost({ request, env }) {
   const b = await request.json().catch(() => null);
   if (!b) return err(400, "The form couldn't be read. Please try again.");
 
-  const name = clean(b.name, 90), org = clean(b.org, 80), city = clean(b.city, 60), descr = clean(b.descr, 200), siteRaw = clean(b.site, 200);
+  const name = normName(clean(b.name, 90)), org = normName(clean(b.org, 80)), city = clean(b.city, 60), descr = normText(clean(b.descr, 200)), siteRaw = clean(b.site, 200);
   const site = siteRaw ? webUrl(siteRaw) : "";
   const closes = clean(b.closes, 10), vs = clean(b.vs, 10), ve = clean(b.ve, 10), today = todayPT();
   const categories = [...new Set((Array.isArray(b.cats) ? b.cats : []).map((c) => clean(c, 30)).filter(Boolean))].slice(0, 8);

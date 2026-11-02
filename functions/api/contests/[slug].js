@@ -8,6 +8,7 @@ import { getUser, sameOrigin, sendMail, okEmail } from "../../_lib/auth.js";
 import { getContest, windows, todayPT, isDate, listOnMap, isStaff, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { judgeProgress } from "../../_lib/judging.js";
 import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
+import { normName, normText } from "../../_lib/fields.js";
 
 export async function onRequestGet({ params, request, env }) {
   const c = await getContest(env, params.slug);
@@ -112,7 +113,7 @@ async function cloneContest(env, c, user) {
 // the categories only while nobody has voted yet, because a vote belongs to a category.
 async function editContest(env, c, b, user, waitUntil) {
   if (c.announced) return err(400, "The winners are announced and the results are locked.");
-  const today = todayPT(), name = clean(b.name, 90), org = clean(b.org, 80), descr = clean(b.descr, 200);
+  const today = todayPT(), name = normName(clean(b.name, 90)), org = normName(clean(b.org, 80)), descr = normText(clean(b.descr, 200));
   const closes = clean(b.closes, 10), vs = clean(b.vs, 10), ve = clean(b.ve, 10);
   if (name.length < 4) return err(400, "Give your contest a name (at least 4 letters).");
   if (org.length < 3) return err(400, "Tell us who is running the contest.");

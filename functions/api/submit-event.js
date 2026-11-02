@@ -3,6 +3,7 @@
 // is published straight away; otherwise it waits in the admin's "Submitted events" tab. Either way it is logged.
 import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
 import { isDate, slug, upsertEvent, verifyEventPage } from "../_lib/events.js";
+import { normName, line, normEmailText } from "../_lib/fields.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 
@@ -19,10 +20,10 @@ export async function onRequestPost({ request, env }) {
   if (n >= 5) return err(429, "Too many submissions from this connection. Try again in an hour.");
 
   const e = {
-    name: clean(b.name, 120), city: clean(b.city, 60), season: SEASONS[b.season] ? b.season : "", type: clean(b.type, 10),
-    start_date: clean(b.start, 10), end_date: clean(b.end || b.start, 10), hours: clean(b.hours, 120),
-    free: b.free ? 1 : 0, price: clean(b.price, 80), blurb: clean(b.blurb, 200), url: webUrl(clean(b.url, 300)),
-    venue: clean(b.venue, 120), address: clean(b.address, 160), email: clean(b.email, 120),
+    name: normName(clean(b.name, 120)), city: clean(b.city, 60), season: SEASONS[b.season] ? b.season : "", type: clean(b.type, 10),
+    start_date: clean(b.start, 10), end_date: clean(b.end || b.start, 10), hours: line(b.hours, 120),
+    free: b.free ? 1 : 0, price: line(b.price, 80), blurb: line(b.blurb, 200), url: webUrl(clean(b.url, 300)),
+    venue: normName(clean(b.venue, 120)), address: line(b.address, 160), email: normEmailText(clean(b.email, 120)),
   };
   if (e.name.length < 4) return err(400, "Enter the event's name.");
   if (!CITY[e.city]) return err(400, "Choose a city from the list.");

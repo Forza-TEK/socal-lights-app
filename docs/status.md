@@ -33,6 +33,9 @@ New homes and events publish immediately (spam words and daily caps hold them); 
 - **Cancellations in sweeps.** Sweeps set `notice` with an UPDATE (rules in `docs/updating-events.md` rule 3 and `docs/sweep-methods.md`); upserts never touch it.
 - **"I saw it lit tonight"** is self-reported. If the visitor allows location and is within about a quarter mile of the home it counts as "seen lit on site"; the card says Reported or Seen on site.
 
+## Data normalization (2026-11-02, migration 0144)
+Phones, websites, emails, ZIPs, streets and names are tidied as people type (`public/norm-ui.js`) and again on the server (`public/norm.js`, `functions/_lib/fields.js`); phones show as (310) 555-0123 everywhere and the installer label reads "Call for Quotes". Admin > Data check audits and tidies older records. Event price wording unified (0144). Full notes: `docs/data-audit.md`.
+
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
 

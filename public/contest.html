@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102d">
+<link rel="stylesheet" href="/addflow.css?v=20261102g">
 <link rel="stylesheet" href="/contest.css?v=20261102a">
 </head>
 <body>
@@ -18,7 +18,7 @@
 </main>
 <script type="module">
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261101a";
-import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261031z";
+import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261102b";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };

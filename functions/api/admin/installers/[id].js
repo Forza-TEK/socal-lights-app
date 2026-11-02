@@ -2,6 +2,7 @@
 //   edit  : name, web, phone, area, blurb, email (a new name must not belong to another profile: merge them instead)
 //   merge : into = the profile to keep. Homes, contests and the profile's page move to it, and this profile is removed.
 import { json, err, clean, webUrl } from "../../../_lib/util.js";
+import { phoneField, line, normText, normName } from "../../../_lib/fields.js";
 
 export async function onRequestPost({ params, request, env }) {
   const inst = await env.DB.prepare("SELECT * FROM installers WHERE id = ?").bind(params.id).first();
@@ -14,7 +15,7 @@ export async function onRequestPost({ params, request, env }) {
   }
 
   if (b.action === "edit") {
-    const name = clean(b.name, 80);
+    const name = normName(clean(b.name, 80));
     if (name.length < 2) return err(400, "The company needs a name.");
     const clash = await env.DB.prepare("SELECT id, name FROM installers WHERE lower(name) = lower(?) AND id != ?").bind(name, inst.id).first();
     if (clash) return err(400, `"${clash.name}" is already a profile. Use Merge to combine them.`);
@@ -22,10 +23,11 @@ export async function onRequestPost({ params, request, env }) {
     if (webRaw && !web) return err(400, "That website address doesn't look right.");
     const email = clean(b.email, 120).toLowerCase();
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err(400, "That email address doesn't look right.");
+    const ph = phoneField(b.phone); if (ph.error) return err(400, ph.error);
     const owner = clean(b.owner, 120).toLowerCase();
     if (owner && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(owner)) return err(400, "That owner email doesn't look right.");
     await env.DB.batch([
-      env.DB.prepare("UPDATE installers SET name=?, web=?, phone=?, area=?, blurb=?, email=?, owner_email=? WHERE id=?").bind(name, web || "", clean(b.phone, 80), clean(b.area, 120), clean(b.blurb, 600), email, owner, inst.id),
+      env.DB.prepare("UPDATE installers SET name=?, web=?, phone=?, area=?, blurb=?, email=?, owner_email=? WHERE id=?").bind(name, web || "", ph.value, line(b.area, 120), normText(clean(b.blurb, 600)), email, owner, inst.id),
       // keep the presenting-installer name on contests in step with the profile
       env.DB.prepare("UPDATE contests SET installer_name = ? WHERE lower(installer_name) = lower(?)").bind(name, inst.name),
     ]);
