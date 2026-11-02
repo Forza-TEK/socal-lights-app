@@ -50,6 +50,9 @@ sql.push(`UPDATE posts SET installer_id='i_bright', installer_confirmed=0 WHERE 
 for (let v = 0; v < 8; v++) cats.forEach((c, ci) => sql.push(`INSERT INTO votes (id,contest_id,user_id,post_id,category) VALUES ('vt${v}_${ci}','c_demo','u_v${v}',${q(homes[(v + ci * 2) % 6][0])},${q(c)});`));
 for (let v = 0; v < 8; v++) sql.push(`UPDATE votes SET created_at = datetime('now','-${v % 5} days') WHERE user_id = 'u_v${v}';`);
 for (const [d, src, n] of [[0, "", 31], [1, "", 24], [2, "", 12], [0, "qr", 9], [1, "qr", 14], [2, "qr", 6], [0, "share", 5]]) sql.push(`INSERT INTO contest_hits (contest_id,day,src,n) VALUES ('c_demo',date('now','-${d} days'),${q(src)},${n});`);
+// optional extra for the "Announce winners" video: the judge has finished scoring every home, so announcing needs no "tap again to announce anyway"
+const judged = []; [...homes, mine].forEach(([id], i) => cats.forEach((c, ci) => judged.push(`INSERT INTO judge_scores (contest_id,judge_id,post_id,category,score) VALUES ('c_demo','j_dana',${q(id)},${q(c)},${5 + ((i * 3 + ci * 2) % 6)});`)));
+writeFileSync(out + "/judged.sql", judged.join("\n") + "\n");
 writeFileSync(out + "/seed.sql", sql.join("\n") + "\n"); writeFileSync(out + "/cookies.json", JSON.stringify(cookies));
 writeFileSync(out + "/photos.json", JSON.stringify([...homes, mine, ...pending].map(([id, , , , ph]) => ({ key: `p/${id.replace("_", "")}xx/1.jpg`, file: `public/img/stock/${ph}.jpg` }))));
 console.log("wrote", out);
