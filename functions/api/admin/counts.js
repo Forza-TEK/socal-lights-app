@@ -9,7 +9,7 @@ export async function onRequestGet({ env }) {
     safe(n("SELECT COUNT(*) AS n FROM posts WHERE status = 'pending'")),
     safe(n("SELECT COUNT(*) AS n FROM posts WHERE status = 'approved'")),
     safe(n("SELECT COUNT(*) AS n FROM event_submissions WHERE status = 'pending'")),
-    safe(n("SELECT COUNT(*) AS n FROM contests WHERE status = 'pending'")),
+    safe(n("SELECT COUNT(*) AS n FROM contests WHERE status = 'pending' OR (status = 'live' AND note != '')")),
     safe(n("SELECT COUNT(*) AS n FROM events")),
     safe(n("SELECT COUNT(*) AS n FROM users")),
     safe(n("SELECT COUNT(*) AS n FROM installers")),

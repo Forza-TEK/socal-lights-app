@@ -43,7 +43,8 @@ export async function onRequestPost({ request, env }) {
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM contests WHERE owner_id = ? AND created_at > datetime('now','-1 day')").bind(user.id).first();
   if (n >= 3) return err(429, "You've created several contests today. Try again tomorrow.");
 
-  const trust = trustOf(user.email, site), live = trust === "match";
+  // Every contest goes live right away. When we could not match the organizer to a website, a note is kept so Admin can take a look.
+  const trust = trustOf(user.email, site), live = true;
   let slug = slugify(name).slice(0, 40) || "contest";
   if (await getContest(env, slug)) slug = `${slug.slice(0, 34)}-${newId().slice(0, 5)}`;
   const season = seasonFor(closes);
@@ -55,7 +56,7 @@ export async function onRequestPost({ request, env }) {
     id: newId(), slug, owner_id: user.id, name, org, city, county: await countyFor(env, city), descr, site, contact_email: user.email, season,
     status: live ? "live" : "pending", entries_close: closes, vote_start: vs, vote_end: ve, categories: JSON.stringify(categories),
     vote_rule: "cat", approval: b.approval === "auto" ? "auto" : "manual", show_counts: b.showCounts === true ? 1 : 0, one_win: b.oneWin === true ? 1 : 0,
-    note: live ? "" : `email ${trust === "free" ? "is a free-mail address" : trust === "none" ? "given with no website" : "does not match the website"}`,
+    note: trust === "match" ? "" : `email ${trust === "free" ? "is a free-mail address" : trust === "none" ? "given with no website" : "does not match the website"}`,
   };
   await env.DB.prepare(
     `INSERT INTO contests (id,slug,owner_id,name,org,city,county,descr,site,contact_email,season,status,entries_close,vote_start,vote_end,categories,vote_rule,approval,show_counts,one_win,rules,note,mode,judge_method,prize_mode,prize,prizes,sponsor)

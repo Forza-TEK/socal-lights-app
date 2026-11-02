@@ -1,13 +1,13 @@
-// POST /api/admin/contests/<id> { action: "approve" | "decline" | "edit", ...fields for edit } — the site owner reviews a contest.
+// POST   /api/admin/contests/<id> { action: "approve" | "decline" | "edit", ...fields for edit } — approve = live and on the map (and clears the review note), decline = take it off the map.
+// DELETE /api/admin/contests/<id> — removes the contest and everything in it.
 import { json, err } from "../../../_lib/util.js";
-import { listOnMap, unlistFromMap } from "../../../_lib/contests.js";
+import { listOnMap, unlistFromMap, deleteContest } from "../../../_lib/contests.js";
 
 export async function onRequestPost({ params, request, env }) {
   const c = await env.DB.prepare("SELECT * FROM contests WHERE id = ?").bind(params.id).first();
   if (!c) return err(404, "That contest no longer exists.");
   const b = await request.json().catch(() => ({}));
   if (b.action === "edit") {
-    if (c.status !== "pending") return err(400, "Only contests waiting for approval can be edited here. The organizer edits a live one.");
     const t = (v, n) => String(v ?? "").trim().replace(/\s+/g, " ").slice(0, n), d = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || "")) ? String(v) : "");
     const f = { name: t(b.name, 90), org: t(b.org, 90), city: t(b.city, 60), descr: String(b.descr ?? "").trim().slice(0, 1000), site: t(b.site, 200), contact_email: t(b.contact_email, 120).toLowerCase(), entries_close: d(b.entries_close), vote_start: d(b.vote_start), vote_end: d(b.vote_end) };
     if (!f.name || !f.org || !f.city) return err(400, "A contest needs a name, an organizer and a city.");
@@ -16,6 +16,7 @@ export async function onRequestPost({ params, request, env }) {
     if (f.site && !/^https?:\/\//i.test(f.site)) return err(400, "The website must start with http:// or https://.");
     await env.DB.prepare("UPDATE contests SET name=?, org=?, city=?, descr=?, site=?, contact_email=?, entries_close=?, vote_start=?, vote_end=?, updated_at=datetime('now') WHERE id=?")
       .bind(f.name, f.org, f.city, f.descr, f.site, f.contact_email, f.entries_close, f.vote_start, f.vote_end, c.id).run();
+    if (c.status === "live") await listOnMap(env, { ...c, name: f.name, org: f.org, city: f.city, descr: f.descr, vote_end: f.vote_end });
     return json({ ok: true });
   }
   if (b.action === "approve") {
@@ -29,4 +30,11 @@ export async function onRequestPost({ params, request, env }) {
     return json({ ok: true });
   }
   return err(400, "Unknown action.");
+}
+
+export async function onRequestDelete({ params, env }) {
+  const c = await env.DB.prepare("SELECT * FROM contests WHERE id = ?").bind(params.id).first();
+  if (!c) return json({ ok: true });
+  await deleteContest(env, c);
+  return json({ ok: true });
 }
