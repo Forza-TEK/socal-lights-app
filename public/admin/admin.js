@@ -211,8 +211,22 @@ function editSimple({ title, fields, values, save }) {
 const SUBF = [{ k: "name", label: "Event name", wide: true }, { k: "venue", label: "Venue" }, { k: "address", label: "Address" }, { k: "city", label: "City" }, { k: "start_date", label: "Starts (YYYY-MM-DD)", max: 10 }, { k: "end_date", label: "Ends (YYYY-MM-DD)", max: 10 }, { k: "hours", label: "Hours" }, { k: "price", label: "Price" }, { k: "url", label: "Event page", type: "url", max: 300, wide: true }, { k: "contact_email", label: "Contact email", type: "email" }, { k: "blurb", label: "About", area: true, wide: true }];
 const CONF = [{ k: "name", label: "Contest name", wide: true }, { k: "org", label: "Run by" }, { k: "city", label: "City" }, { k: "contact_email", label: "Organizer email", type: "email" }, { k: "site", label: "Website", type: "url", max: 200 }, { k: "entries_close", label: "Entries close (YYYY-MM-DD)", max: 10 }, { k: "vote_start", label: "Voting starts", max: 10 }, { k: "vote_end", label: "Voting ends", max: 10 }, { k: "descr", label: "Welcome message", area: true, wide: true, max: 1000 }];
 $("#main").addEventListener("click", (e) => {
-  const sb = e.target.closest("[data-sedit]"); if (sb) { const x = SUBS.find((r) => r.id === sb.dataset.sedit); return editSimple({ title: "Edit event", fields: SUBF, values: x, save: async (b) => { await api("/api/admin/submissions/" + x.id, { method: "POST", body: JSON.stringify({ action: "edit", ...b }) }); renderSubs(); } }); }
+  const sb = e.target.closest("[data-sedit]"); if (sb) return editSubmission(SUBS.find((r) => r.id === sb.dataset.sedit));
   const cb = e.target.closest("[data-cedit]"); if (cb) { const x = CONTESTS.find((r) => r.id === cb.dataset.cedit); return editSimple({ title: "Edit contest", fields: CONF, values: { ...x, contact_email: x.contact_email || x.owner_email }, save: async (b) => { await api("/api/admin/contests/" + x.id, { method: "POST", body: JSON.stringify({ action: "edit", ...b }) }); renderContests(); } }); }
+});
+const editSubmission = (x) => editSimple({ title: "Edit event", fields: SUBF, values: x, save: async (b) => { await api("/api/admin/submissions/" + x.id, { method: "POST", body: JSON.stringify({ action: "edit", ...b }) }); if (tab === "subs") renderSubs(); else if (tab === "dashboard") renderDashboard(); } });
+// A row on the dashboard goes to that record: the right tab, already narrowed to it, so its card (with every action) is the first thing you see
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-recent]"); if (!b) return;
+  try {
+    PRESET = b.dataset.name;
+    if (b.dataset.recent === "home") return setTab(b.dataset.st === "pending" ? "pending" : "approved");
+    if (b.dataset.st === "published" && b.dataset.eid) {
+      const all = await (await fetch("/api/events?all=1", { cache: "no-store" })).json(), ev = all.find((r) => r.id === b.dataset.eid);
+      if (ev) { evSeason = ev.sn || "christmas"; EVQ = b.dataset.name; PRESET = ""; return setTab("events"); }
+    }
+    SUBVIEW = b.dataset.st === "published" ? "published" : b.dataset.st === "pending" ? "pending" : "published"; setTab("subs");
+  } catch (er) { toast(er.message, true); }
 });
 const SDONE = { approve: "Published", decline: "Declined", unpublish: "Unpublished" };
 $("#main").addEventListener("click", async (e) => {
@@ -312,12 +326,12 @@ function editEvent(ev) {
   };
   const close = () => { pm.remove(); m.hidden = true; m.innerHTML = ""; };
   $("#mClose").onclick = close;
-  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; await api("/api/admin/events/" + encodeURIComponent(ev.id), { method: "DELETE" }); close(); toast("Event deleted"); renderEvents(); };
+  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; await api("/api/admin/events/" + encodeURIComponent(ev.id), { method: "DELETE" }); close(); toast("Event deleted"); if (tab === "events") renderEvents(); else render(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");
     const id = ev ? ev.id : $("#eN").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) + "-" + Math.random().toString(36).slice(2, 6);
     const body = { id, season: $("#eSn").value, name: $("#eN").value, county: $("#eC").value, city: $("#eCity").value, type: $("#eT").value, start: $("#eS").value, end: $("#eE").value, status: $("#eSt").value, free: $("#eF").checked, price: $("#eP").value, hours: $("#eH").value, lat, lng, blurb: $("#eB").value, url: $("#eU").value, venue: $("#eV").value, address: $("#eA").value };
-    try { await api("/api/admin/events", { method: "POST", body: JSON.stringify(body) }); close(); renderEvents(); }
+    try { await api("/api/admin/events", { method: "POST", body: JSON.stringify(body) }); close(); toast("Saved"); if (tab === "events") renderEvents(); else render(); }
     catch (err) { msg.className = "msg err"; msg.textContent = err.message; }
   };
 }
@@ -435,7 +449,7 @@ const instAct = async (id, body) => api("/api/admin/installers/" + id, { method:
 // ---- shared pieces of the Installer and User profile windows
 const psec = (title, n, rows, empty = "None.") => `<h3 class="psec">${esc(title)} <span class="meta">(${n})</span></h3>` + (n ? `<ul class="dl">${rows}</ul>` : `<p class="meta" style="margin:0">${empty}</p>`);
 const GL = { "⌂": "home", "★": "trophy", "◷": "event", "⚒": "pro", "☺": "user", "✉": "mail" };
-const prow = (attrs, ico, title, sub, tag) => `<li><button type="button" class="dli" ${attrs}>${dico(GL[ico] || "home")}<span class="dt"><b>${esc(title)}</b><small>${esc(sub)}</small></span>${tag ? `<span class="tag ${tag[1] || ""}">${esc(tag[0])}</span>` : ""}<span aria-hidden="true" class="chev">›</span></button></li>`;
+const prow = (attrs, ico, title, sub, tag) => `<li><button type="button" class="dli" ${attrs}>${dico(GL[ico] || "home")}<span class="dt"><b>${esc(title)}</b><small>${esc(sub)}</small></span>${tag ? `<span class="tag ${tag[1] || ""}">${esc(tag[0])}</span>` : ""}<span aria-hidden="true" class="chev">›</span></a></li>`;
 let PRESET = "";
 const applyPreset = (root) => { if (!PRESET) return; const i = root.querySelector("[data-search]"); if (i) { i.value = PRESET; filterCards(root, PRESET); } PRESET = ""; };
 async function openPostById(id) { const [p] = await api("/api/admin/posts?id=" + encodeURIComponent(id)); if (!p) return toast("That record no longer exists.", true); POSTS = [p]; editPost(p); }
@@ -532,8 +546,8 @@ async function renderDashboard() {
     <h2 class="dh">People, last 7 days</h2>
     <div class="stats">${tile("u", d.people.users, "accounts in total")}${tile("n", d.people.newUsers, "new accounts")}${tile("v", d.people.votesWeek, "contest votes")}${tile("p", d.people.hits, "installer profile views")}</div>
     <div class="dcols">
-      <section class="dbox"><h2 class="dh">Newest submissions</h2>${d.recent.length ? `<ul class="dl">${d.recent.map((r) => `<li><button type="button" class="dli" data-tab="${r.kind === "event" ? "subs" : r.status === "pending" ? "pending" : "approved"}">${dico(r.kind === "event" ? "event" : r.pro ? "pro" : "home")}<span class="dt"><b>${esc(r.name)}</b><small>${esc(r.city || "")} · ${r.kind === "event" ? "event" : r.pro ? "installer post" : "house"} · ${agoShort(r.at)}</small></span><span class="tag ${r.status === "pending" ? "exp" : ""}">${esc(r.status)}</span></button></li>`).join("")}</ul>` : `<div class="empty">Nothing submitted yet.</div>`}</section>
-      <section class="dbox"><h2 class="dh">Contests running</h2>${d.contests.length ? `<ul class="dl">${d.contests.map((c) => `<li><button type="button" class="dli" data-tab="contests">${dico("trophy")}<span class="dt"><b>${esc(c.name)}</b><small>${esc(c.city)} · ${fmt(c.entries)} entries · ${fmt(c.votes)} votes · voting ends ${shortDate(c.vote_end)}</small></span></button></li>`).join("")}</ul>` : `<div class="empty">No contest is running right now.</div>`}
+      <section class="dbox"><h2 class="dh">Newest submissions</h2>${d.recent.length ? `<ul class="dl">${d.recent.map((r) => `<li><button type="button" class="dli" data-recent="${esc(r.kind)}" data-id="${esc(r.id)}" data-eid="${esc(r.eid || "")}" data-st="${esc(r.status)}" data-name="${esc(r.name)}">${dico(r.kind === "event" ? "event" : r.pro ? "pro" : "home")}<span class="dt"><b>${esc(r.name)}</b><small>${esc(r.city || "")} · ${r.kind === "event" ? "event" : r.pro ? "installer post" : "house"} · ${agoShort(r.at)}</small></span><span class="tag ${r.status === "pending" ? "exp" : ""}">${esc(r.status)}</span></button></li>`).join("")}</ul>` : `<div class="empty">Nothing submitted yet.</div>`}</section>
+      <section class="dbox"><h2 class="dh">Contests running</h2>${d.contests.length ? `<ul class="dl">${d.contests.map((c) => `<li><a class="dli" href="/c/${esc(c.slug)}" target="_blank" rel="noopener">${dico("trophy")}<span class="dt"><b>${esc(c.name)}</b><small>${esc(c.city)} · ${fmt(c.entries)} entries · ${fmt(c.votes)} votes · voting ends ${shortDate(c.vote_end)}</small></span></button></li>`).join("")}</ul>` : `<div class="empty">No contest is running right now.</div>`}
       <h2 class="dh">Your recent activity</h2>${d.activity.length ? `<ul class="dl">${d.activity.map((e) => `<li><button type="button" class="dli" data-tab="log">${dico("edit")}<span class="dt"><b>${esc(VERB[e.action] || e.action)} ${esc(AREA[e.area] || e.area)} ${esc(e.label || "")}</b><small>${esc(e.admin || "admin")} · ${agoShort(e.at)}</small></span></button></li>`).join("")}</ul>` : `<div class="empty">Nothing yet. Approvals and edits will show here.</div>`}</section>
     </div>`;
 }
