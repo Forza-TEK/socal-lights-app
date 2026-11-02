@@ -85,3 +85,8 @@ Adding an event or a lights display now asks you to sign in first (the page show
 - **Replaced records and Data check** use cards like every other tab.
 - **Contests from Admin** (done earlier): see, edit, unpublish and delete every contest.
 - Houses waiting and Published houses no longer list contest entries (organizers run those); the counts match.
+
+## Later ideas (done)
+- **Dashboard trends.** "Last 14 days" shows small charts for new houses, contest votes, new accounts and page views, each with a total and the change against the 7 days before.
+- **Page views.** A tiny script (`public/hit.js`, `POST /api/visit`) adds one to a per-page, per-day counter (`site_hits`, migration 0147). It stores no IP address, cookie or account, skips Admin and automated browsers, and counts once per tab session. The dashboard also lists the most visited pages. The privacy page says so.
+- **CSV downloads.** Download CSV buttons on Houses (waiting, declined or published), Events (the season shown), Installers and Contests; Users already had one. Cells starting with = + - @ are protected so a spreadsheet won't run them.

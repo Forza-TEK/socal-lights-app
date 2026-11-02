@@ -19,12 +19,12 @@ async function gate(request, env, slug) {
 export async function onRequestGet({ params, request, env }) {
   const { c, user, j, res } = await gate(request, env, params.slug);
   if (res) return res;
-  const { results: posts } = await env.DB.prepare("SELECT id,title,biz,address,city,photos,entry_no,user_id FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
+  const { results: posts } = await env.DB.prepare("SELECT id,title,biz,address,city,lat,lng,photos,entry_no,user_id FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
   const q = (sql) => env.DB.prepare(sql).bind(c.id, j.id).all().then((r) => r.results);
   const [picks, scores, conflicts] = await Promise.all([q("SELECT category, post_id FROM judge_picks WHERE contest_id = ? AND judge_id = ?"), q("SELECT category, post_id, score FROM judge_scores WHERE contest_id = ? AND judge_id = ?"), q("SELECT post_id FROM judge_conflicts WHERE contest_id = ? AND judge_id = ?")]);
   return json({
     contest: { slug: c.slug, name: c.name, org: c.org, categories: cats(c), method: c.judge_method === "score" ? "score" : "pick", mode: modeOf(c), votingOpen: windows(c).votingOpen, announced: !!c.announced, voteStart: c.vote_start, voteEnd: c.vote_end },
-    entries: posts.map((p) => ({ id: p.id, name: p.title || p.biz, address: p.address, city: p.city, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, mine: p.user_id === user.id })),
+    entries: posts.map((p) => ({ id: p.id, name: p.title || p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, mine: p.user_id === user.id })),
     picks, scores, conflicts: conflicts.map((x) => x.post_id),
   }, { headers: { "cache-control": "no-store" } });
 }

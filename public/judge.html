@@ -9,7 +9,8 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261102i">
-<link rel="stylesheet" href="/contest.css?v=20261102e">
+<link rel="stylesheet" href="/contest.css?v=20261104c">
+<script src="/hit.js" defer></script>
 </head>
 <body class="sh-page">
 <main class="cmain" id="content"><div id="app"><p class="loading">Loading the ballot…</p></div></main>
@@ -17,6 +18,7 @@
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261101a";
 import { refreshAcct } from "/addflow.js?v=20261103a";
 import { mountShell } from "/appshell.js?v=20261103a";
+import { tourHtml, wireTour } from "/tour.js?v=20261103a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 let panel = "ballot";
 const shell = mountShell({ page: "judge", title: "Judging", active: panel, extra: [["contest", "Contest page", "/c/" + slug, "play"]], items: [{ k: "ballot", label: "Ballot", icon: "check" }],
@@ -48,9 +50,10 @@ function render() {
   $("#app").innerHTML = `<section data-p="ballot"><div class="card"><h1 style="font-size:clamp(26px,5vw,34px)">${esc(c.name)}</h1><p class="muted">${esc(c.org)} · Judges' ballot</p>
     <p>${score ? "Score every home from 1 to 10 in each category." : "Pick one favorite home in each category."} Judge on first impression, creativity, theme, craftsmanship and variety of lights. Your ${score ? "scores are" : "picks are"} private until winners are announced, and you can change them until voting closes.</p>
     <p class="small muted">If you know a household, tap “I know this household”. Your vote for it won't count.</p>
-    <div class="status ${open ? "ok" : "no"}">${c.announced ? "Winners are announced. This ballot is closed." : open ? `Voting is open until ${fmt(c.voteEnd)}.` : `Voting opens ${fmt(c.voteStart)}.`} <b style="font-weight:500">${done} of ${total} done.</b></div></div></section>${sections}`;
+    <div class="status ${open ? "ok" : "no"}">${c.announced ? "Winners are announced. This ballot is closed." : open ? `Voting is open until ${fmt(c.voteEnd)}.` : `Voting opens ${fmt(c.voteStart)}.`} <b style="font-weight:500">${done} of ${total} done.</b></div></div></section><section data-p="tour">${tourHtml({ slug, title: "Visit the homes", intro: "Drive past every home you will judge, in as few routes as possible. Your maps app takes up to 9 stops at a time, so a long list is split into routes of 9 or fewer, and each route starts where the last one ended. Tick each home as you see it. Homes you know or own are left out." })}</section>${sections}`;
+  wireTour(document, { slug, entries: homes });
   const mine = (k) => (score ? homes.filter((e) => scoreOf(e.id, k)).length : pickOf(k) ? 1 : 0), need = score ? homes.length : 1;
-  shell.setItems([{ k: "ballot", label: "Ballot", icon: "check" }, ...c.categories.map((k, ci) => ({ k: "c" + ci, label: k, icon: mine(k) >= need ? "star" : "trophy" }))]);
+  shell.setItems([{ k: "ballot", label: "Ballot", icon: "check" }, { k: "tour", label: "Visit the homes", icon: "map" }, ...c.categories.map((k, ci) => ({ k: "c" + ci, label: k, icon: mine(k) >= need ? "star" : "trophy" }))]);
   if (!document.querySelector(`#app [data-p="${panel}"]`)) panel = "ballot";
   shell.setTitle(c.name); shell.own(true); showPanel();
   document.querySelectorAll("[data-pick]").forEach((b) => (b.onclick = async () => { const [id, k] = b.dataset.pick.split("|"); const r = await api({ action: "pick", post_id: id, category: k }); if (!r.ok) return toast(r.j.error || "Couldn't save that."); toast(k + ": picked"); load(); }));
