@@ -8,16 +8,16 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102g">
+<link rel="stylesheet" href="/addflow.css?v=20261102h">
 </head>
-<body>
-<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span></div></div>
-<div class="main" id="app"><p class="muted">Loading…</p></div>
+<body class="sh-page">
+<div class="main" id="content"><div id="app" class="main" style="padding:0;max-width:none"><p class="muted">Loading…</p></div></div>
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261101a";
-import { esc, themeBtn, input, select, attachAddress, OPT } from "/addflow.js?v=20261102b";
+import { mountShell } from "/appshell.js?v=20261102a";
+import { esc, input, select, attachAddress, OPT } from "/addflow.js?v=20261102c";
 import { CITY } from "/cities.js";
-document.getElementById("tb").innerHTML = themeBtn();
+const shell = mountShell({ page: "prof", title: "Your profile", active: (location.hash || "").slice(1) || "drafts", items: [{ k: "drafts", label: "Drafts", icon: "file" }, { k: "contests", label: "Contests", icon: "trophy" }, { k: "displays", label: "Displays", icon: "home" }, { k: "events", label: "Events", icon: "cal" }, { k: "badges", label: "Badges", icon: "star", hidden: true }, { k: "account", label: "Account", icon: "user" }], onPick: (k) => { tab = k; history.replaceState(null, "", "#" + k); render(); window.scrollTo(0, 0); } });
 const $ = (q) => document.querySelector(q), app = $("#app"), cities = Object.keys(CITY).sort();
 const KEYS = { house: "scl-house-draft", event: "scl-event-draft", contest: "scl-contest-draft" }, PAGE = { house: "/add-house", event: "/add-event", contest: "/add-contest" }, LABEL = { house: "Lighting display", event: "Event", contest: "Contest", entry: "Contest entry" }, dpage = (d) => (d.kind === "entry" ? (d.slug ? `/c/${d.slug}/enter` : "/add") : PAGE[d.kind] || "/add");
 const when = (s) => { try { return new Date(String(s).replace(" ", "T") + "Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
@@ -98,8 +98,8 @@ function render() {
   const o = O, em = o.user.email, n = { badges: BD.badges.length, drafts: o.drafts.length, contests: o.contests.length, entries: o.entries.length, displays: o.homes.length, events: o.events.length };
   const T = [["drafts", "Drafts"], ["contests", "Contests"], ["displays", "Displays"], ["events", "Events"], ...(BD.badges.length ? [["badges", "Badges"]] : []), ["account", "Account"]];
   if (!T.some((t) => t[0] === tab)) tab = "drafts";
+  shell.own(true); shell.setHidden("badges", !BD.badges.length); shell.setActive(tab); for (const [k] of T) shell.setCount(k, n[k]);
   app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${info && info.user && info.user.avatar ? `<img src="${esc(info.user.avatar)}" alt="">` : esc((o.user.name || em)[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">${esc(o.user.name || "Your profile")}</h1><span class="muted">${esc(em)}</span><div style="display:flex;gap:14px;margin-top:6px"><label class="link" for="avfile" style="font-size:14px;cursor:pointer">${info && info.user && info.user.avatar ? "Change photo" : "Add a photo"}</label>${info && info.user && info.user.avatar ? '<button class="link" id="avrm" type="button" style="font-size:14px">Remove</button>' : ""}<input id="avfile" type="file" accept="image/*" hidden></div><div style="margin-top:8px"><button class="link" id="editprof" type="button" style="font-size:14px">Edit name &amp; address</button></div><p class="err" id="averr" role="alert" hidden></p></div></div>
-    <div class="ptabs2" role="tablist">${T.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}${n[k] ? `<span class="cnt">${n[k]}</span>` : ""}</button>`).join("")}</div>
     <section id="pp">${panel()}</section>`;
   wire();
 }
@@ -161,7 +161,7 @@ let info = null;
 async function load() {
   noteSigninResult();
   const i = await me(true); info = i;
-  if (!i.user) { app.innerHTML = `<h1>Your profile</h1><p class="help">Sign in to see your saved drafts and everything you've added.</p><div><button class="btn" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to your profile", next: "/profile" })) load(); }; return; }
+  if (!i.user) { shell.own(false); app.innerHTML = `<h1>Your profile</h1><p class="help">Sign in to see your saved drafts and everything you've added.</p><div><button class="btn" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to your profile", next: "/profile" })) load(); }; return; }
   await syncLocal();
   const r = await fetch("/api/me/overview", { cache: "no-store" }); if (!r.ok) { app.innerHTML = `<h1>Your profile</h1><p class="err">Couldn't load your profile. Try again in a moment.</p>`; return; }
   BD = await fetch("/api/me/badges", { cache: "no-store" }).then((x) => (x.ok ? x.json() : BD)).catch(() => BD);

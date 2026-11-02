@@ -1001,10 +1001,6 @@ function moreHtml() {
   return row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home display")
     + row("button", 'type="button" data-m="alerts"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>`, "Weekly lights email", "Lights and events near a city, once a week")
     + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us on Cash App" : "Shop the season"))
-    + row("button", `type="button" data-m="night" role="menuitemcheckbox" aria-checked="${dark}"`, dark
-      ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>`
-      : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>`,
-      "Night mode", dark ? "On · tap to go back to day" : "Off · switches automatically after 6pm", `<span class="sw${dark ? " on" : ""}"><i></i></span>`)
     + row("a", 'href="/contests"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`, "Contests", "Vote, enter, run one, and past results")
     + row("a", 'href="/tutorials"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>`, "Tutorials", "Short how-to videos")
     + row("a", 'href="/privacy"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>`, "Privacy & terms", "How accounts and your data are handled")
@@ -1117,6 +1113,8 @@ function repaintMap() {
   map.setPaintProperty("hl", "circle-color", catColor(C));
 }
 // Day / night: automatic (dark from 6 pm to 6 am, device time); the toggle overrides it until the next switch
+// The day / night button in the top bar (the same switch every other page has)
+{ const tb = document.getElementById("themebtn"); if (tb) tb.addEventListener("click", () => setTheme(theme() === "dark" ? "light" : "dark")); }
 const autoTheme = () => { const h = new Date().getHours(); return h >= 18 || h < 6 ? "dark" : "light"; };
 function nextSwitch() { const d = new Date(); d.setMinutes(0, 0, 0); const h = d.getHours(); if (h < 6) d.setHours(6); else if (h < 18) d.setHours(18); else { d.setDate(d.getDate() + 1); d.setHours(6); } return d.getTime(); }
 function setTheme(t, manual = true) {
