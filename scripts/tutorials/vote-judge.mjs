@@ -3,10 +3,9 @@
 import { readFileSync } from "node:fs";
 import { record, sleep } from "./record.mjs";
 import { end as endCard, fromMap } from "./steps.mjs";
-import { judgeInvite } from "../../functions/_lib/email-html.js";
+import { renderTemplate } from "../../functions/_lib/mailtpl.js";
 const ck = JSON.parse(readFileSync(process.env.COOKIES, "utf8")), SLUG = "maple-street-holiday-lights-2026", EY = "Vote and judge";
 const end = (t, s) => endCard(EY, t, s);
-const DEMO = { slug: SLUG, name: "Maple Street Holiday Lights 2026", org: "Maple Street Neighbors", city: "Irvine", contact_email: "maria@demo.example", judge_method: "score" };
 const vis = (k) => `[data-k="${k}"] >> visible=true`;
 const tourSteps = (say) => ({ cap: "Visit the homes", say, do: async (p, h) => { await h.scrollTo("[data-tour]", 90); await h.hover("[data-tour] .leg", 1600); await h.click("[data-tmaps=apple]", { after: 1400 }); await h.click("[data-tmaps=google]", { after: 1400 }); await h.click("[data-tvis] >> nth=0", { after: 1600 }); } });
 const vote = {
@@ -28,7 +27,7 @@ const vote = {
     end("Judge a contest", "Open your judge link, score each home, and recuse yourself when you know the household"),
   ],
 };
-const inv = judgeInvite(DEMO);
+const inv = await renderTemplate({}, "judge_invite", { contest: "Maple Street Holiday Lights 2026", org: "Maple Street Neighbors", how: "Score every home from 1 to 10 in each category.", link: `https://socallights.app/c/${SLUG}/judge` });
 const judge = {
   id: "judge", file: "judge", cookie: ck.u_judge, start: "/offline.html",
   steps: [

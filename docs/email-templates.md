@@ -13,5 +13,5 @@ The admin edits them in **Admin > Settings > Email templates** (`/admin/#emails`
 ## Add a new email
 Add an entry to `TEMPLATES` (id, group, name, to, when, vars with a label, an example and whether it is required, subject, text), then send it with `sendTemplate`. It appears in the admin list automatically.
 
-## Not in this list yet
-The judge invitation, co-organizer invitation and contest (neighbor) invitation emails have their own designed HTML in `functions/_lib/email-html.js` (judgeInvite, coOrganizerInvite, neighborInvite) and send from `functions/api/contests/[slug]/judges.js`, `staff.js` and `invite.js`. They are not editable in Admin yet. To make them editable, move their wording into `TEMPLATES` and keep the layout from `email-html.js`.
+## Invitations with the designed layout
+The judge invitation, contest (neighbor) invitation and co-organizer invitation are in this list too (`judge_invite`, `contest_invite`, `coorg_invite`). They use `layout: "invite"`, a richer HTML design (centered title, orange button, boxed tips) built by `toInviteHtml` in `mailtpl.js`. In the editor, the wording uses a few markers: `~ ` small heading above the title, `# ` title, `[Button text](link)` for the button, `## ` plus `- ` lines for a boxed list, `> ` for a quoted note, `* ` for the small print, and `**bold**`. The plain-text version strips the markers. The editor shows these notes under the text box.
