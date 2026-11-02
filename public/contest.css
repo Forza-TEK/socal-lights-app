@@ -69,3 +69,9 @@ body{padding-bottom:60px}
 .cmain input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]),.cmain select,.cmain textarea{font:inherit;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;max-width:100%}
 .cmain textarea{min-height:88px}
 .cmain input:focus-visible,.cmain select:focus-visible,.cmain textarea:focus-visible{outline:2px solid var(--season);outline-offset:1px}
+
+/* Who changed what */
+.chgnote{margin-top:2px;color:var(--muted)}
+.chgbox{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}.chgbox b{font-weight:600}
+.chg{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}.chg .who{font-weight:600}.chg .was{text-decoration:line-through;opacity:.7}
+.mform .mf{display:grid;gap:4px;font-size:14px}.mform .mf.chk{display:flex;gap:8px;align-items:center}.mform .mf.chk input{width:22px;height:22px}

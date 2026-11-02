@@ -7,6 +7,7 @@ import { inviteJudges } from "./[slug]/judges.js";
 import { getUser, sameOrigin, sendMail, okEmail } from "../../_lib/auth.js";
 import { getContest, windows, todayPT, isDate, listOnMap, isStaff, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { judgeProgress } from "../../_lib/judging.js";
+import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
 
 export async function onRequestGet({ params, request, env }) {
   const c = await getContest(env, params.slug);
@@ -48,19 +49,21 @@ export async function onRequestGet({ params, request, env }) {
 }
 
 export async function onRequestPatch({ params, request, env, waitUntil }) {
+  const W = waitUntil;
   if (!sameOrigin(request)) return err(403, "Not allowed.");
   const { c, res, user } = await ownerOf(request, env, params.slug, getUser);
   if (res) return res;
   const b = await request.json().catch(() => ({}));
-  if (b.action === "edit") return editContest(env, c, b);
+  if (b.action === "edit") return editContest(env, c, b, user, W);
   if (b.action === "clone") return cloneContest(env, c, user);
   if (c.status !== "live") return err(400, "This contest isn't live yet.");
   if (c.announced) return err(400, "The winners are announced and the results are locked.");
   const sets = { close_entries: ["entries_open", 0], open_entries: ["entries_open", 1], pause_voting: ["voting_open", 0], resume_voting: ["voting_open", 1], show_counts: ["show_counts", 1], hide_counts: ["show_counts", 0] }[b.action];
-  if (sets) await env.DB.prepare(`UPDATE contests SET ${sets[0]} = ?, updated_at = datetime('now') WHERE id = ?`).bind(sets[1], c.id).run();
+  if (sets) { await env.DB.prepare(`UPDATE contests SET ${sets[0]} = ?, updated_at = datetime('now') WHERE id = ?`).bind(sets[1], c.id).run(); await teamChanged(env, c, user, diff(c, { [sets[0]]: sets[1] }, CONTEST_FIELDS), W); }
   else if (b.action === "start_voting") {
     const t = todayPT(), end = c.vote_end < t ? t : c.vote_end;
     await env.DB.prepare("UPDATE contests SET vote_start = ?, vote_end = ?, voting_open = 1, updated_at = datetime('now') WHERE id = ?").bind(c.vote_start > t ? t : c.vote_start, end, c.id).run();
+    await teamChanged(env, c, user, diff(c, { vote_start: c.vote_start > t ? t : c.vote_start, vote_end: end, voting_open: 1 }, CONTEST_FIELDS), W);
   } else if (b.action === "announce") {
     const r = await computeResults(env, c);
     // Judges who haven't finished: ask the organizer to confirm before the results are locked
@@ -72,6 +75,7 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
       entries: r.posts.map((p) => ({ id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, dq: !!p.dq, votes: hasPublic(c) ? Object.fromEntries(r.categories.map((k) => [k, (r.counts[p.id] || {})[k] || 0])) : null,
         jv: jv[p.id] ? Object.fromEntries(r.categories.map((k) => [k, c.judge_method === "score" ? (jv[p.id][k] ? { avg: Math.round(jv[p.id][k].avg * 100) / 100, n: jv[p.id][k].n, tr: !!jv[p.id][k].tr } : null) : jv[p.id][k] || 0])) : undefined })) };
     await env.DB.prepare("UPDATE contests SET announced = 1, results = ?, updated_at = datetime('now') WHERE id = ?").bind(JSON.stringify(snap), c.id).run();
+    await teamChanged(env, c, user, [{ label: "Winners", old: "Not announced", new: "Announced and locked" }], W);
     const job = notifyResults(env, c, r, awards);
     if (waitUntil) waitUntil(job);
   } else return err(400, "Unknown action.");
@@ -106,7 +110,7 @@ async function cloneContest(env, c, user) {
 
 // The organizer changes the contest's details. Dates, text, prizes and rules can change until winners are announced;
 // the categories only while nobody has voted yet, because a vote belongs to a category.
-async function editContest(env, c, b) {
+async function editContest(env, c, b, user, waitUntil) {
   if (c.announced) return err(400, "The winners are announced and the results are locked.");
   const today = todayPT(), name = clean(b.name, 90), org = clean(b.org, 80), descr = clean(b.descr, 200);
   const closes = clean(b.closes, 10), vs = clean(b.vs, 10), ve = clean(b.ve, 10);
@@ -138,6 +142,7 @@ async function editContest(env, c, b) {
   await env.DB.prepare("UPDATE contests SET name=?, org=?, descr=?, entries_close=?, vote_start=?, vote_end=?, categories=?, rules=?, prize_mode=?, prize=?, prizes=?, sponsor=?, approval=?, updated_at=datetime('now') WHERE id=?")
     .bind(name, org, descr, closes, vs, ve, JSON.stringify(categories), rules, prizeMode, prize, JSON.stringify(prizes), sponsor, approval, c.id).run();
   if (c.status === "live") await listOnMap(env, { ...c, name, org, descr, vote_end: ve });
+  await teamChanged(env, c, user, diff(c, { name, org, descr, entries_close: closes, vote_start: vs, vote_end: ve, categories: JSON.stringify(categories), rules, prize_mode: prizeMode, prize, prizes: JSON.stringify(prizes), sponsor, approval, installer_name: iname, installer_email: iname ? iemail : "", installer_url: iurl || "" }, CONTEST_FIELDS), waitUntil);
   return json({ ok: true });
 }
 

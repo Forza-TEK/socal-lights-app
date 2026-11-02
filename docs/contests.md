@@ -62,3 +62,6 @@ A method with no secrets is simply hidden from the sign-in sheet (`GET /api/auth
 - Facebook and Apple sign-in were considered and dropped.
 - Entries do not geocode-check on the contest page; the address is geocoded by `/api/submit` as for any home (falls back to the city center if not found, and the admin can fix the pin).
 - Tests ran locally only (`wrangler pages dev`, local D1/R2). Google sign-in and email delivery have not been exercised because they need the secrets above.
+
+## Team change log (2026-11-02)
+Everyone who runs a contest (creator and co-organizers) sees "What the team changed" on the dashboard: who changed which setting, from what to what, and when. A banner shows the latest change by someone else. The others on the team are emailed on each change. Logged: edits to the details, the entries/voting/counts switches, Start voting, announcing, sponsors, judges and co-organizers (not individual entry approvals). Table `contest_changes`.
