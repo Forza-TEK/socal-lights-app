@@ -111,3 +111,4 @@ input[aria-invalid=true],textarea[aria-invalid=true]{border-color:#b42318!import
 .hdr .tbtn svg{width:20px;height:20px}
 .hdr .tbtn:hover,.hdr .acct:hover{background:var(--tile)}
 .hdr .tbtn:focus-visible,.hdr .acct:focus-visible{outline:2.5px solid var(--ink);outline-offset:2px}
+@media(max-width:340px){.hdr .brand .wm{display:none}}
