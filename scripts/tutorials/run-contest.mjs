@@ -3,8 +3,14 @@
 import { readFileSync } from "node:fs";
 import { record, sleep } from "./record.mjs";
 import { end as endCard, fromMap, navSteps } from "./steps.mjs";
-import { neighborInvite, coOrganizerInvite, judgeInvite } from "../../functions/_lib/email-html.js";
-const DEMO = { slug: "maple-street-holiday-lights-2026", name: "Maple Street Holiday Lights 2026", org: "Maple Street Neighbors", city: "Irvine", contact_email: "maria@demo.example", judge_method: "score" };
+import { renderTemplate } from "../../functions/_lib/mailtpl.js";
+// The app's real invitation emails (the wording comes from the template list that Admin edits), filled with demo names
+const PAGE = "https://socallights.app/c/maple-street-holiday-lights-2026", NOTE = "Hi neighbors! Come enter your house, or vote for your favorites. Cocoa on the corner Saturday at 6.", BASE_VARS = { contest: "Maple Street Holiday Lights 2026", org: "Maple Street Neighbors" };
+const MAILS = {
+  neighbor: await renderTemplate({}, "contest_invite", { ...BASE_VARS, city: "Irvine", link: PAGE, note: NOTE, contact: "maria@demo.example" }),
+  coorg: await renderTemplate({}, "coorg_invite", { ...BASE_VARS, link: PAGE + "/manage" }),
+  judge: await renderTemplate({}, "judge_invite", { ...BASE_VARS, how: "Score every home from 1 to 10 in each category.", link: PAGE + "/judge" }),
+};
 const ck = JSON.parse(readFileSync(process.env.COOKIES, "utf8")), SLUG = "maple-street-holiday-lights-2026", EY = "Run a contest";
 const end = (t, s) => endCard(EY, t, s), card = (t, s) => ({ card: { ey: EY, title: t, sub: s } });
 const nav = (k) => `[data-k="${k}"] >> visible=true`;
@@ -75,7 +81,7 @@ const share = {
     { cap: "Print yard sign", say: "Print yard sign makes a big sign for a lawn, with a QR code that opens the voting page. Here is a sample.", do: async (p, h) => { await preview(p, h, "#printsign", 4200); } },
     { cap: "Tap Promote", say: "On the Promote tab, you can also email an invitation to neighbors. Open Invite neighbors by email.", do: async (p, h) => { await h.click(nav("promote"), { after: 1600 }); await h.click("#invitecard summary", { after: 2200 }); } },
     { cap: "Invite neighbors by email", say: "Type one email address on each line, add a short note if you like, and tap Send invitations.", do: async (p, h) => { await h.type("#iv-list", "neighbor@example.com"); await h.type("#iv-note", "Hi neighbors! Come enter your house, or vote for your favorites. Cocoa on the corner Saturday at 6."); } },
-    { cap: "What your neighbors receive", say: "Each neighbor gets an invitation email like this one, with your note and one button. This is an example.", mail: { ...(() => { const m = neighborInvite(DEMO, "Hi neighbors! Come enter your house, or vote for your favorites. Cocoa on the corner Saturday at 6."); return { subject: m.subject, html: m.html }; })(), to: "neighbor@example.com", note: "Example email" }, pad: 2.6 },
+    { cap: "What your neighbors receive", say: "Each neighbor gets an invitation email like this one, with your note and one button. This is an example.", mail: { subject: MAILS.neighbor.subject, html: MAILS.neighbor.html, to: "neighbor@example.com", note: "Example email" }, pad: 2.6 },
     end("Approve and decline entries", "Approve, decline with a reason, and undo a decline"),
   ],
 };
@@ -126,10 +132,10 @@ const team = {
     ...toDash(),
     panel("team", "Team", "Open the Team tab. Co-organizers sign in with their own email, and get the same dashboard as you."),
     { cap: "Add a co-organizer", say: "Type their email address, and tap Add co-organizer. You can add up to eight.", do: async (p, h) => { await h.scrollTo("#newstaff", 260); await h.type("#newstaff", "helper@example.com"); await h.click("#addstaff", { after: 2600 }); }, poster: true },
-    { cap: "What they receive", say: "They get an email with one button. Signing in with that address opens the same dashboard. This is an example.", mail: { ...(() => { const m = coOrganizerInvite(DEMO); return { subject: m.subject, html: m.html }; })(), to: "helper@example.com", note: "Example email" }, pad: 2.4 },
+    { cap: "What they receive", say: "They get an email with one button. Signing in with that address opens the same dashboard. This is an example.", mail: { subject: MAILS.coorg.subject, html: MAILS.coorg.html, to: "helper@example.com", note: "Example email" }, pad: 2.4 },
     panel("judges", "Judges", "Open the Judges tab. Here you invite judges, and see who has finished voting."),
     { cap: "Add a judge", say: "Type a judge's email address, and tap Add judge. They get an invitation with a private link, and you can copy the link too.", do: async (p, h) => { await h.scrollTo("#newjudge", 260); await h.type("#newjudge", "judge4@example.com"); await h.click("button:has-text('Add judge')", { after: 2600 }); } },
-    { cap: "What your judge receives", say: "Your judge gets an invitation email with a button that opens their ballot. This is an example.", mail: { ...(() => { const m = judgeInvite(DEMO); return { subject: m.subject, html: m.html }; })(), to: "judge4@example.com", note: "Example email" }, pad: 2.6 },
+    { cap: "What your judge receives", say: "Your judge gets an invitation email with a button that opens their ballot. This is an example.", mail: { subject: MAILS.judge.subject, html: MAILS.judge.html, to: "judge4@example.com", note: "Example email" }, pad: 2.6 },
     end("Announce winners", "Close voting, announce, export results and see the archive"),
   ],
 };
