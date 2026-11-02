@@ -1,7 +1,7 @@
 // POST /api/alerts/send — sends the weekly email, called by the scheduled GitHub workflow with the shared key.
 // Works through the list in small batches (a request can only make so many outgoing calls); call it again while `remaining` > 0.
 import { json, err, rowToEvent } from "../../_lib/util.js";
-import { sendMail } from "../../_lib/auth.js";
+import { sendTemplate } from "../../_lib/mailtpl.js";
 import { slugOf } from "../../in/[city].js";
 
 const BATCH = 20, DAYS = 14, MAX_ITEMS = 8;
@@ -23,7 +23,7 @@ export async function onRequestPost({ request, env }) {
     if (!near.length) { skipped++; continue; }
     const list = near.slice(0, MAX_ITEMS).map((e) => `- ${e.n}\n  ${e.s === e.e ? fmt(e.s) : fmt(e.s) + " to " + fmt(e.e)}${e.h ? ", " + e.h : ""} · ${e.v || e.city}\n  ${origin}/#e-${e.id}`).join("\n\n");
     const text = `Lights and events within ${s.radius} miles of ${s.city} in the next ${DAYS} days:\n\n${list}\n\n${near.length > MAX_ITEMS ? `And ${near.length - MAX_ITEMS} more. ` : ""}See everything: ${origin}/in/${slugOf(s.city)}\n\nYou asked for this weekly email on socallights.app. Stop it any time: ${origin}/api/alerts/unsubscribe?t=${s.token}${env.ALERT_FOOTER ? "\n" + env.ALERT_FOOTER : ""}`;
-    if (await sendMail(env, { to: s.email, subject: `Lights near ${s.city} this week`, text })) sent++; else skipped++;
+    if (await sendTemplate(env, "alerts_weekly", s.email, { radius: s.radius, city: s.city, days: DAYS, list, more: near.length > MAX_ITEMS ? near.length - MAX_ITEMS : "", see_url: `${origin}/in/${slugOf(s.city)}`, unsub_url: `${origin}/api/alerts/unsubscribe?t=${s.token}`, footer: env.ALERT_FOOTER || "" })) sent++; else skipped++;
   }
   await env.DB.batch(done.map((id) => env.DB.prepare("UPDATE alert_subs SET last_sent = date('now') WHERE id = ?").bind(id)));
   const rest = await env.DB.prepare("SELECT COUNT(*) AS n FROM alert_subs WHERE confirmed = 1 AND (last_sent IS NULL OR last_sent < date('now','-6 days'))").first();

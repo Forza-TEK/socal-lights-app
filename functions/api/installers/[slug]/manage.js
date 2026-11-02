@@ -1,7 +1,8 @@
 // GET /api/installers/<slug>/manage — the owner's dashboard data: details, homes that name them (to confirm or remove), page views, quote requests.
 // POST { action: "edit" | "confirm" | "remove" } — edit details (web, phone, area, blurb), confirm a homeowner's claim, or take it off.
 import { json, err, clean, webUrl } from "../../../_lib/util.js";
-import { getUser, sameOrigin, sendMail } from "../../../_lib/auth.js";
+import { sendTemplate } from "../../../_lib/mailtpl.js";
+import { getUser, sameOrigin } from "../../../_lib/auth.js";
 import { phoneField, line, normText } from "../../../_lib/fields.js";
 
 async function owner(request, env, slug) {
@@ -44,7 +45,7 @@ export async function onRequestPost({ params, request, env }) {
     if (!post) return err(404, "That home doesn't name your company.");
     if (b.action === "confirm") await env.DB.prepare("UPDATE posts SET installer_confirmed = 1, installer_token = '' WHERE id = ?").bind(post.id).run();
     else await env.DB.prepare("UPDATE posts SET installer_id = NULL, installer_confirmed = 0, installer_token = '' WHERE id = ?").bind(post.id).run();
-    if (post.contact_email) await sendMail(env, { to: post.contact_email, subject: `${inst.name} ${b.action === "confirm" ? "confirmed" : "removed"} the installer note on "${post.title}"`, text: b.action === "confirm" ? `${inst.name} confirmed they installed "${post.title}". It now shows a check mark, and you can both edit the listing from your profiles. Every change is listed with who made it, and you are emailed when the other changes something.\n\nhttps://socallights.app/profile#displays` : `${inst.name} says they did not install "${post.title}", so the "Installed by" line was removed. Reply to this email if that's a mistake.\n\nhttps://socallights.app/profile#displays` }).catch(() => {});
+    if (post.contact_email) await sendTemplate(env, b.action === "confirm" ? "installer_confirmed" : "installer_removed", post.contact_email, { installer: inst.name, title: post.title }).catch(() => {});
     return json({ ok: true });
   }
   return err(400, "Unknown action.");

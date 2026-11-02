@@ -1,6 +1,7 @@
 // POST /api/auth/email/start { email } — emails a 6-digit sign-in code (valid 10 minutes).
 import { json, err, verifyTurnstile } from "../../../_lib/util.js";
-import { normEmail, okEmail, isDisposable, sha256, sendMail, sameOrigin, isSuspended, SUSPENDED_MSG } from "../../../_lib/auth.js";
+import { sendTemplate } from "../../../_lib/mailtpl.js";
+import { normEmail, okEmail, isDisposable, sha256, sameOrigin, isSuspended, SUSPENDED_MSG } from "../../../_lib/auth.js";
 
 export async function onRequestPost({ request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -25,7 +26,7 @@ export async function onRequestPost({ request, env }) {
   ]);
   // Local development only (DEV_AUTH=1 in .dev.vars, localhost): hand the code back instead of emailing it.
   if (env.DEV_AUTH === "1" && new URL(request.url).hostname === "localhost" && !env.RESEND_API_KEY) return json({ ok: true, devCode: code });
-  const sent = await sendMail(env, { to: String(b.email).trim(), subject: `Your SoCal Lights code: ${code}`, text: `Your SoCal Lights sign-in code is ${code}.\n\nIt works for 10 minutes. If you didn't ask for it, you can ignore this email.` });
+  const sent = await sendTemplate(env, "signin_code", String(b.email).trim(), { code });
   if (!sent) return err(502, "We couldn't send the email. Please try again in a moment.");
   return json({ ok: true });
 }

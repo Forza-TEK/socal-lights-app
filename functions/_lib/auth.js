@@ -80,12 +80,12 @@ export async function isSuspended(env, email) {
 }
 
 // Sends one email through Resend. Without RESEND_API_KEY it fails, unless local dev mode (DEV_AUTH=1) is on.
-export async function sendMail(env, { to, subject, text }) {
+export async function sendMail(env, { to, subject, text, html }) {
   if (!env.RESEND_API_KEY) { if (env.DEV_AUTH === "1") console.log("[dev mail] to=" + to + " subject=" + subject); return false; } // local testing only: say what would have been sent
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({ from: env.MAIL_FROM || "SoCal Lights <login@socallights.app>", to: [to], subject, text }),
+    body: JSON.stringify({ from: env.MAIL_FROM || "SoCal Lights <login@socallights.app>", to: [to], subject, text, ...(html ? { html } : {}) }),
   });
   return r.ok;
 }

@@ -2,6 +2,10 @@
 
 _Last updated: 2026-11-02_
 
+## Visit the homes + email templates (2026-11-02)
+- Contest page and judge menu: "Visit the homes" builds driving routes of 9 stops or fewer in Google or Apple Maps (`public/tour.js`). Merged.
+- Admin > Settings > Email templates: all 34 automatic emails now come from `functions/_lib/mailtpl.js`, are sent as HTML plus plain text, and can be edited, previewed, test-sent and reset by the admin. Migration 0148 (`email_templates`). See `docs/email-templates.md`.
+
 ## Tutorials: Vote and judge (2026-11-02, branch `claude/sharp-keller-zmygil`)
 Two new videos on the Tutorials page: "Vote in a contest" (1:29, phone-sized screen) and "Judge a contest" (1:08, computer screen), `hfc_female` voice, recorded on a local copy with made-up demo data (nothing on the live database). 11 of 25 tutorial videos are done; still "Coming soon": Find and plan (6), Enter a home (3), Sponsors and installers (3), Post events and homes (2). The recording setup is now in `scripts/tutorials/` (see `docs/tutorials.md`). The sign-in step in the voting video is narrated, not shown (the local sign-in shows a test code).
 
