@@ -8,8 +8,9 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102h">
+<link rel="stylesheet" href="/addflow.css?v=20261102i">
 <link rel="stylesheet" href="/contest.css?v=20261102b">
+<link rel="stylesheet" href="/forms.css?v=20261102c">
 <style>main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
 </head>
 <body class="sh-page">
@@ -53,27 +54,27 @@ async function act(path, body, okMsg) {
 // Edit the contest's details. Dates, text, prizes and rules until winners are announced; categories only before the first vote.
 function editCard() {
   const c = D.contest; if (c.announced) return "";
-  const locked = V.votes.length > 0, fld = (l, h) => `<label style="display:grid;gap:4px;font-size:14px;font-weight:600">${l}${h}</label>`;
-  const inp = (id, v, extra = "") => `<input ${id ? `id="${id}"` : ""} value="${esc(v)}" ${extra} style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px;min-width:0">`;
+  const locked = V.votes.length > 0, fld = (l, h, c = "c6") => `<div class="ff ${c}"><label class="ffl"><span class="lt">${l}</span>${h}</label></div>`;
+  const inp = (id, v, extra = "") => `<input ${id ? `id="${id}"` : ""} value="${esc(v)}" ${extra}>`;
   const per = c.prizeMode === "each" ? (D.prizes || []).map((p) => `<div class="small muted">${esc(p.category)}${c.mode === "both" ? " · " + esc(p.label) : ""}: ${esc(p.prize)}</div>`).join("") : "";
   return `<details class="card" id="editcard" open><summary style="cursor:pointer;font-size:19px;font-weight:600">Edit contest details</summary>
    <p class="muted small">Change the name, dates, welcome message, prize or rules any time before winners are announced. Entrants see changes right away.</p>
-   <form id="editform" style="display:grid;gap:12px;max-width:640px">
-    ${fld("Contest name", inp("e-name", c.name, 'maxlength="90"'))}${fld("Run by", inp("e-org", c.org, 'maxlength="80"'))}
-    ${fld("Welcome message", `<textarea id="e-descr" maxlength="200" rows="3" style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px">${esc(c.descr)}</textarea>`)}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">${fld("Entries close", inp("e-closes", c.entriesClose, 'type="date"'))}${fld("Voting starts", inp("e-vs", c.voteStart, 'type="date"'))}${fld("Voting ends", inp("e-ve", c.voteEnd, 'type="date"'))}</div>
-    ${fld("Voting categories (one per line)", `<textarea id="e-cats" rows="4" ${locked ? "disabled" : ""} style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px">${esc(c.categories.join("\n"))}</textarea>`)}${locked ? `<p class="small muted" style="margin:-6px 0 0">Locked: votes already belong to these categories.</p>` : ""}
-    ${fld("Approving entries", `<select id="e-approval" style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px"><option value="manual" ${c.approval === "manual" ? "selected" : ""}>I approve each entry first</option><option value="auto" ${c.approval === "auto" ? "selected" : ""}>Entries go on the map right away</option></select>`)}
-    ${fld("Prize", `<select id="e-pmode" style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px"><option value="none" ${c.prizeMode === "none" ? "selected" : ""}>No prize</option><option value="one" ${c.prizeMode === "one" ? "selected" : ""}>One prize for every winner</option><option value="each" ${c.prizeMode === "each" ? "selected" : ""}>A different prize for each award</option></select>`)}
+   <form id="editform" class="f" novalidate><fieldset class="fsec"><legend>Contest</legend><div class="fgrid">
+    ${fld("Contest name", inp("e-name", c.name, 'maxlength="90"'), "c3")}${fld("Run by", inp("e-org", c.org, 'maxlength="80"'), "c3")}
+    ${fld("Welcome message", `<textarea id="e-descr" maxlength="200" rows="3">${esc(c.descr)}</textarea>`)}
+    </div></fieldset><fieldset class="fsec"><legend>Schedule</legend><p class="fdesc">Entries and voting open and close on these dates by themselves.</p><div class="fgrid">${fld("Entries close", inp("e-closes", c.entriesClose, 'type="date"'), "c2")}${fld("Voting starts", inp("e-vs", c.voteStart, 'type="date"'), "c2")}${fld("Voting ends", inp("e-ve", c.voteEnd, 'type="date"'), "c2")}</div></fieldset><fieldset class="fsec"><legend>Voting</legend><div class="fgrid">
+    ${fld("Voting categories (one per line)", `<textarea id="e-cats" rows="4" ${locked ? "disabled" : ""}>${esc(c.categories.join("\n"))}</textarea>`)}${locked ? `<p class="small muted" style="margin:-6px 0 0">Locked: votes already belong to these categories.</p>` : ""}
+    ${fld("Approving entries", `<select id="e-approval"><option value="manual" ${c.approval === "manual" ? "selected" : ""}>I approve each entry first</option><option value="auto" ${c.approval === "auto" ? "selected" : ""}>Entries go on the map right away</option></select>`)}
+    </div></fieldset><fieldset class="fsec"><legend>Prize</legend><div class="fgrid">
+    ${fld("Prize", `<select id="e-pmode"><option value="none" ${c.prizeMode === "none" ? "selected" : ""}>No prize</option><option value="one" ${c.prizeMode === "one" ? "selected" : ""}>One prize for every winner</option><option value="each" ${c.prizeMode === "each" ? "selected" : ""}>A different prize for each award</option></select>`)}
     <div id="e-onewrap" ${c.prizeMode === "one" ? "" : "hidden"}>${fld("Prize text", inp("e-prize", c.prize, 'maxlength="140"'))}</div>
     <div id="e-eachwrap" ${c.prizeMode === "each" ? "" : "hidden"}>${(D.prizes || []).length ? "" : ""}<div style="display:grid;gap:8px">${c.categories.flatMap((g) => [c.mode !== "judges" ? [g, "public", "People's Choice"] : null, c.mode !== "public" ? [g, "judge", "Judges' Choice"] : null]).filter(Boolean).map(([g, k, l]) => { const p = (D.prizes || []).find((x) => x.category === g && x.kind === k); return fld(esc(g) + (c.mode === "both" ? " · " + l : ""), inp("", p ? p.prize : "", `data-eprize="${esc(g + "|" + k)}" maxlength="100"`)); }).join("")}</div></div>
     ${fld("Prize provided by (optional)", inp("e-sponsor", c.sponsor, 'maxlength="80"'))}
-    <fieldset style="border:1px solid var(--line,#ddd);border-radius:12px;padding:12px;display:grid;gap:10px"><legend style="font-weight:600;font-size:14px">Presenting installer (optional)</legend>
-     <p class="small muted" style="margin:0">Adds a "Get a quote" button to the contest page. Visitors who ask must agree to share their details; the request is emailed to the installer and to you.</p>
-     ${fld("Installer name", inp("e-iname", (D.installer || {}).name || "", 'maxlength="80"'))}${fld("Where quote requests go (email)", inp("e-iemail", D.installerEmail || "", 'type="email" maxlength="120"'))}${fld("Installer website", inp("e-iurl", (D.installer || {}).url || "", 'maxlength="200"'))}</fieldset>
-    ${fld("Official rules", `<textarea id="e-rules" rows="10" maxlength="4000" style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px">${esc(c.rules)}</textarea>`)}
+    </div></fieldset><fieldset class="fsec"><legend>Presenting installer (optional)</legend><div class="fgrid"><p class="fdesc ff c6">Adds a "Get a quote" button to the contest page. Visitors who ask must agree to share their details; the request is emailed to the installer and to you.</p>
+     ${fld("Installer name", inp("e-iname", (D.installer || {}).name || "", 'maxlength="80"'))}${fld("Where quote requests go (email)", inp("e-iemail", D.installerEmail || "", 'type="email" maxlength="120"'))}${fld("Installer website", inp("e-iurl", (D.installer || {}).url || "", 'maxlength="200"'))}</div></fieldset>
+    <fieldset class="fsec"><legend>Official rules</legend><div class="fgrid">${fld("Rules", `<textarea id="e-rules" rows="10" maxlength="4000">${esc(c.rules)}</textarea>`)}</div></fieldset>
     <p class="err" id="e-err" role="alert" hidden></p>
-    <div><button class="btn org" type="submit">Save changes</button></div></form></details>`;
+    <div class="mfoot sticky"><button class="btn org" type="submit">Save changes</button></div></form></details>`;
 }
 
 const ago = (at) => { const t = new Date(String(at || "").replace(" ", "T") + "Z").getTime(), m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " days ago"; };
