@@ -55,3 +55,6 @@ Method: read every Admin file (`public/admin/*`, `functions/api/admin/*`, `admin
 
 ## Photos per house
 The house Edit window has two tabs: **Details** and **Photos**. The card's Edit button opens Details; its **Photos (n)** button opens Photos. Photos shows one large photo with ‹ › (and the keyboard arrows) to browse, a thumbnail strip, and actions for the photo on screen: Make cover, Move earlier/later, Remove photo (tap twice); Add photos (up to 8, JPG/PNG/WebP, resized in the browser). Changes save at once. Server: `functions/api/admin/posts/[id].js` (`photo_remove`, `photo_move`, multipart upload); photos keep the numbered names the photo routes accept.
+
+## Edit forms
+All Admin edit windows share one form layout (`fsec` / `ff` in `admin.js`, `.fsec .fgrid .ff` in `admin.css`): titled sections, labels above fields, a hint under any field that needs one, a six-column grid that stacks on phones, and a Save bar that stays in view. "Where to see it" was removed from the house form (the stored value is untouched). "Service area" is now **Areas served** with a hint. The house form shows only what belongs to **Posting as**: a homeowner sees name, title, address, season and description; a professional installer also sees phone, website and areas served (switching the choice shows or hides them at once; saving a homeowner never overwrites those three values).

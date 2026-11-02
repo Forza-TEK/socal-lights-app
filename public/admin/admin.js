@@ -99,6 +99,10 @@ $("#main").addEventListener("click", async (e) => {
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
+// Edit-form building blocks: sections with a heading, fields on a 6-column grid (c2 c3 c4 c6 = how many columns wide)
+const fsec = (title, desc, inner, o = {}) => `<fieldset class="fsec"${o.id ? ` id="${o.id}"` : ""}${o.hide ? " hidden" : ""}><legend>${title}</legend>${desc ? `<p class="fdesc">${desc}</p>` : ""}<div class="fgrid">${inner}</div></fieldset>`;
+const ff = (id, label, control, o = {}) => `<div class="ff ${o.c || "c6"}"${o.id ? ` id="${o.id}"` : ""}${o.hide ? " hidden" : ""}><label for="${id}">${label}</label>${control}${o.hint ? `<small class="fhint">${o.hint}</small>` : ""}</div>`;
+const AREAS_HINT = "The cities or counties this company works in, such as Orange County and Los Angeles.";
 // Resize a photo in the browser before uploading (long side 1800px, JPEG), like the add forms do
 async function shrink(f) {
   if (!/^image\/(jpeg|png|webp)$/.test(f.type) || f.size < 700 * 1024) return f;
@@ -110,16 +114,15 @@ function editPost(p, startTab = "details") {
   <div class="seg" id="pTabs" role="group" aria-label="Show" style="margin-bottom:14px"><button type="button" data-ptab="details" aria-pressed="true">Details</button><button type="button" data-ptab="photos" aria-pressed="false">Photos <span id="pPhotosN"></span></button></div>
   <div id="pPhotos" hidden></div>
   <form class="f" id="pForm" novalidate>
-    <label for="pKind">Posting as<select id="pKind"><option value="homeowner" ${p.kind !== "installer" ? "selected" : ""}>Homeowner</option><option value="installer" ${p.kind === "installer" ? "selected" : ""}>Professional installer</option></select></label>
-    <div class="two"><label for="pBiz">Name or business<input id="pBiz" value="${esc(p.biz)}" maxlength="80"></label><label for="pTitle">Display name<input id="pTitle" value="${esc(p.title)}" maxlength="90"></label></div>
-    <label for="pStreet">Street address <span class="hint">saving moves the pin to this address</span><input id="pStreet" data-addr autocomplete="off" value="${esc(p.street || (p.address || "").split(",")[0])}" maxlength="120" placeholder="e.g. 123 Main St"></label>
-    <div class="two"><label for="pCity">City<select id="pCity">${Object.keys(CITY).sort().map((c) => `<option ${c === p.city ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label><label for="pZip">ZIP<input id="pZip" value="${esc(p.zip || "")}" inputmode="numeric" maxlength="5" placeholder="92630"></label></div>
-    <label for="pSeason">Season<select id="pSeason">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (p.season || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label>
-    <div class="two"><label for="pWeb">Website<input id="pWeb" value="${esc(p.web || "")}" maxlength="200"></label><label for="pPhone">Phone<input id="pPhone" value="${esc(p.phone || "")}" maxlength="80"></label></div>
-    <label for="pArea">Service area <span class="hint">installers</span><input id="pArea" value="${esc(p.area || "")}" maxlength="120"></label>
-    <label for="pWhere">Where to see it<input id="pWhere" value="${esc(p.where || "")}" maxlength="120"></label>
-    <label for="pDesc">About<textarea id="pDesc" maxlength="1200">${esc(p.desc)}</textarea></label>
-    <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="pMsg" role="status"></span></div>
+    ${fsec("Listing", "", ff("pKindSeg", "Posting as", `<div class="seg" id="pKindSeg" role="group" aria-label="Posting as"><button type="button" data-kind="homeowner" aria-pressed="${p.kind !== "installer"}">Homeowner</button><button type="button" data-kind="installer" aria-pressed="${p.kind === "installer"}">Professional installer</button></div><input type="hidden" id="pKind" value="${p.kind === "installer" ? "installer" : "homeowner"}">`)
+      + ff("pBiz", p.kind === "installer" ? "Business name" : "Name shown as Posted by", `<input id="pBiz" value="${esc(p.biz)}" maxlength="80">`, { c: "c3", hint: p.kind === "installer" ? "Families see this with a way to ask for a quote." : "For example, The Garcia family." }) + ff("pTitle", "Listing title", `<input id="pTitle" value="${esc(p.title)}" maxlength="90">`, { c: "c3", hint: "The name shown on the map card." }))}
+    ${fsec("Address", "Saving a new address moves the pin on the map.", ff("pStreet", "Street address", `<input id="pStreet" data-addr autocomplete="off" value="${esc(p.street || (p.address || "").split(",")[0])}" maxlength="120" placeholder="123 Main St">`)
+      + ff("pCity", "City", `<select id="pCity">${Object.keys(CITY).sort().map((c) => `<option ${c === p.city ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>`, { c: "c4" }) + ff("pZip", "ZIP", `<input id="pZip" value="${esc(p.zip || "")}" inputmode="numeric" maxlength="5" placeholder="92630">`, { c: "c2" }))}
+    ${fsec("How people reach them", "Shown on the public page so families can ask for a quote.", ff("pPhone", "Phone", `<input id="pPhone" type="tel" value="${esc(p.phone || "")}" maxlength="80">`, { c: "c3" }) + ff("pWeb", "Website", `<input id="pWeb" type="url" value="${esc(p.web || "")}" maxlength="200" placeholder="https://">`, { c: "c3" })
+      + ff("pArea", "Areas served", `<input id="pArea" value="${esc(p.area || "")}" maxlength="120" placeholder="Orange County and Los Angeles">`, { hint: AREAS_HINT }), { id: "pProSec", hide: p.kind !== "installer" })}
+    ${fsec("About", "", ff("pSeason", "Season", `<select id="pSeason">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (p.season || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`, { c: "c3" })
+      + ff("pDesc", "Description", `<textarea id="pDesc" maxlength="1200" rows="4">${esc(p.desc)}</textarea>`, { hint: "Shown on the listing." }))}
+    <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="pMsg" role="status"></span></div>
   </form></div>`;
   m.hidden = false; $("#mClose").onclick = () => { close(); if (photosChanged) render(); };
   let photosChanged = false;
@@ -152,10 +155,17 @@ function editPost(p, startTab = "details") {
   };
   // Left and right arrow keys browse the photos
   photoKey = (ev) => { if (m.hidden) { photoKey = null; return; } if (!$("#pPhotos").hidden && p.photos.length > 1 && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && (ev.key === "ArrowLeft" || ev.key === "ArrowRight")) { cur = (cur + (ev.key === "ArrowRight" ? 1 : -1) + p.photos.length) % p.photos.length; paint(); } };
+  $("#pKindSeg").onclick = (ev) => {
+    const b = ev.target.closest("[data-kind]"); if (!b) return; const pro = b.dataset.kind === "installer";
+    $("#pKind").value = b.dataset.kind; $("#pKindSeg").querySelectorAll("[data-kind]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    $("#pProSec").hidden = !pro; const lb = $("#pBiz").closest(".ff"); lb.querySelector("label").textContent = pro ? "Business name" : "Name shown as Posted by"; lb.querySelector(".fhint").textContent = pro ? "Families see this with a way to ask for a quote." : "For example, The Garcia family.";
+  };
   paint(); showTab(startTab);
   $("#pForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#pMsg"); msg.className = "msg"; msg.textContent = "Saving…";
-    const body = { action: "edit", biz: $("#pBiz").value, title: $("#pTitle").value, city: $("#pCity").value, season: $("#pSeason").value, kind: $("#pKind").value, street: $("#pStreet").value, zip: $("#pZip").value, area: $("#pArea").value, web: $("#pWeb").value, phone: $("#pPhone").value, where: $("#pWhere").value, desc: $("#pDesc").value };
+    const body = { action: "edit", biz: $("#pBiz").value, title: $("#pTitle").value, city: $("#pCity").value, season: $("#pSeason").value, kind: $("#pKind").value, street: $("#pStreet").value, zip: $("#pZip").value, desc: $("#pDesc").value };
+    // Phone, website and areas served belong to installers only; a homeowner listing leaves them as they are
+    if ($("#pKind").value === "installer") Object.assign(body, { area: $("#pArea").value, web: $("#pWeb").value, phone: $("#pPhone").value });
     try { await api("/api/admin/posts/" + p.id, { method: "POST", body: JSON.stringify(body) }); close(); render(); }
     catch (err) { msg.className = "msg err"; msg.textContent = err.message; }
   };
@@ -191,8 +201,8 @@ document.addEventListener("keydown", (e) => photoKey && photoKey(e));
 function editSimple({ title, fields, values, save }) {
   const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
   m.hidden = false;
-  const fld = (f) => `<label for="es-${f.k}" ${f.wide ? 'style="grid-column:1/-1"' : ""}>${esc(f.label)}${f.area ? `<textarea id="es-${f.k}" rows="3" maxlength="${f.max || 600}">${esc(values[f.k] || "")}</textarea>` : `<input id="es-${f.k}" type="${f.type || "text"}" maxlength="${f.max || 120}" value="${esc(values[f.k] || "")}" ${f.ph ? `placeholder="${esc(f.ph)}"` : ""}>`}</label>`;
-  m.innerHTML = modalFrame(title, `<form class="f" id="esForm" novalidate><div class="grid2">${fields.map(fld).join("")}</div><div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="esMsg" role="status"></span></div></form>`);
+  const fld = (f) => ff("es-" + f.k, f.label, f.area ? `<textarea id="es-${f.k}" rows="3" maxlength="${f.max || 600}">${esc(values[f.k] || "")}</textarea>` : `<input id="es-${f.k}" type="${f.type || "text"}" maxlength="${f.max || 120}" value="${esc(values[f.k] || "")}" ${f.ph ? `placeholder="${esc(f.ph)}"` : ""}>`, { c: f.wide ? "c6" : "c3" });
+  m.innerHTML = modalFrame(title, `<form class="f" id="esForm" novalidate>${fsec("Details", "", fields.map(fld).join(""))}<div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="esMsg" role="status"></span></div></form>`, true);
   $("#mClose").onclick = close;
   $("#esForm").onsubmit = async (e) => { e.preventDefault(); const body = {}; fields.forEach((f) => (body[f.k] = $("#es-" + f.k).value)); try { await save(body); close(); toast("Saved"); } catch (er) { const x = $("#esMsg"); x.className = "msg err"; x.textContent = er.message; } };
 }
@@ -265,20 +275,18 @@ function editEvent(ev) {
   const e = ev || { id: "", n: "", c: "Orange", city: "", t: Object.keys(SEASONS[evSeason].types)[0], s: TODAY, e: TODAY, st: "expected", free: true, p: "Free", h: "", lat: 33.68, lng: -117.83, b: "", u: "", sn: evSeason };
   const typeOpts = (sn, cur) => Object.entries(SEASONS[sn].types).map(([v, l]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${l}</option>`).join("");
   const m = $("#modal");
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="mh"><h2>${ev ? "Edit event" : "Add an event"}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
+  m.innerHTML = `<div class="card wide" role="dialog" aria-modal="true"><div class="mh"><h2>${ev ? "Edit event" : "Add an event"}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
   <form class="f" id="evForm" novalidate>
-    <label for="eN">Name<input id="eN" value="${esc(e.n)}" maxlength="120" required></label>
-    <div class="two"><label for="eCity">City or area<input id="eCity" value="${esc(e.city)}" maxlength="60" required></label><label for="eC">County<select id="eC">${COUNTIES.map((c) => `<option ${c === e.c ? "selected" : ""}>${c}</option>`).join("")}</select></label></div>
-    <label for="eSn">Season<select id="eSn">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (e.sn || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label>
-    <div class="two"><label for="eT">Type<select id="eT">${typeOpts(e.sn || "christmas", e.t)}</select></label><label for="eSt">Dates are<select id="eSt"><option value="confirmed" ${e.st === "c" ? "selected" : ""}>Confirmed for this season</option><option value="expected" ${e.st !== "c" ? "selected" : ""}>Expected (based on last year)</option></select></label></div>
-    <div class="two"><label for="eS">Starts<input id="eS" type="date" value="${esc(e.s)}"></label><label for="eE">Ends<input id="eE" type="date" value="${esc(e.e)}"></label></div>
-    <div class="two"><label for="eP">Price shown<input id="eP" value="${esc(e.p)}" maxlength="80" placeholder="Free, From $19…"></label><label class="opt" style="display:flex;gap:8px;align-items:center;padding-top:20px"><input type="checkbox" id="eF" style="width:auto" ${e.free ? "checked" : ""}> Free event</label></div>
-    <label for="eH">Hours<input id="eH" value="${esc(e.h)}" maxlength="200"></label>
-    <label for="eB">Description<textarea id="eB" maxlength="600">${esc(e.b)}</textarea></label>
-    <label for="eU">Event website<input id="eU" type="url" value="${esc(e.u)}" maxlength="300"></label>
-    <div class="two"><label for="eV">Venue<input id="eV" value="${esc(e.v || "")}" maxlength="120" placeholder="Crown Valley Community Park"></label><label for="eA">Street address<input id="eA" data-addr autocomplete="off" value="${esc(e.a || "")}" maxlength="200" placeholder="29751 Crown Valley Pkwy, Laguna Niguel, CA 92677"></label></div>
-    <div><div class="row" style="margin-bottom:6px"><button class="btn ghost" type="button" id="eGeo">Place pin from address</button><span class="meta" id="geoMsg">Or click the map / drag the pin. Directions use the street address.</span></div><div id="pick"></div><div class="meta dates" id="ll" style="margin-top:4px"></div></div>
-    <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="grow"></span>${ev ? `<button class="btn ghost danger" type="button" id="eDel">Delete event</button>` : ""}<span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
+    ${fsec("Event", "", ff("eN", "Name", `<input id="eN" value="${esc(e.n)}" maxlength="120" required>`)
+      + ff("eSn", "Season", `<select id="eSn">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (e.sn || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`, { c: "c3" }) + ff("eT", "Type", `<select id="eT">${typeOpts(e.sn || "christmas", e.t)}</select>`, { c: "c3" })
+      + ff("eSt", "Dates are", `<select id="eSt"><option value="confirmed" ${e.st === "c" ? "selected" : ""}>Confirmed for this season</option><option value="expected" ${e.st !== "c" ? "selected" : ""}>Expected (based on last year)</option></select>`, { hint: "Expected events show a note that visitors should check the event's website." }))}
+    ${fsec("When and price", "", ff("eS", "Starts", `<input id="eS" type="date" value="${esc(e.s)}">`, { c: "c3" }) + ff("eE", "Ends", `<input id="eE" type="date" value="${esc(e.e)}">`, { c: "c3" }) + ff("eH", "Hours", `<input id="eH" value="${esc(e.h)}" maxlength="200" placeholder="6 to 10 pm nightly">`)
+      + ff("eP", "Price shown", `<input id="eP" value="${esc(e.p)}" maxlength="80" placeholder="Free, From $19…">`, { c: "c4" }) + `<div class="ff c2"><label class="chk" for="eF"><input type="checkbox" id="eF" ${e.free ? "checked" : ""}> Free event</label></div>`)}
+    ${fsec("Where", "Directions use the street address. The pin sets where the event appears on the map.", ff("eCity", "City or area", `<input id="eCity" value="${esc(e.city)}" maxlength="60" required>`, { c: "c4" }) + ff("eC", "County", `<select id="eC">${COUNTIES.map((c) => `<option ${c === e.c ? "selected" : ""}>${c}</option>`).join("")}</select>`, { c: "c2" })
+      + ff("eV", "Venue", `<input id="eV" value="${esc(e.v || "")}" maxlength="120" placeholder="Crown Valley Community Park">`, { c: "c3" }) + ff("eA", "Street address", `<input id="eA" data-addr autocomplete="off" value="${esc(e.a || "")}" maxlength="200" placeholder="29751 Crown Valley Pkwy, Laguna Niguel, CA 92677">`, { c: "c3" })
+      + `<div class="ff c6"><div class="row" style="margin-bottom:8px"><button class="btn ghost" type="button" id="eGeo">Place pin from address</button><span class="meta" id="geoMsg">Or click the map, or drag the pin.</span></div><div id="pick"></div><div class="meta dates" id="ll" style="margin-top:4px"></div></div>`)}
+    ${fsec("Details", "", ff("eB", "Description", `<textarea id="eB" maxlength="600" rows="4">${esc(e.b)}</textarea>`) + ff("eU", "Event website", `<input id="eU" type="url" value="${esc(e.u)}" maxlength="300" placeholder="https://">`))}
+    <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="grow"></span>${ev ? `<button class="btn ghost danger" type="button" id="eDel">Delete event</button>` : ""}<span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
   </form></div>`;
   m.hidden = false;
   let lat = e.lat, lng = e.lng;
@@ -353,9 +361,8 @@ async function openUser(id) {
     ${psec("Events they submitted", d.events.length, d.events.map((e) => prow(`data-pf-sub="${esc(e.name)}" data-pf-view="${e.status === "published" ? "published" : "pending"}"`, "◷", e.name, `${e.city || ""} · ${e.start_date || ""}`, [e.status === "published" ? "Live" : e.status === "pending" ? "Waiting" : e.status, e.status === "published" ? "ok" : e.status === "pending" ? "warn" : ""])).join(""))}
     ${psec("Contests they run", d.contests.length, d.contests.map((c) => `<li><a class="dli" href="/c/${esc(c.slug)}" target="_blank" rel="noopener"><span class="ico" aria-hidden="true">★</span><span class="dt"><b>${esc(c.name)}</b><small>${esc(c.city)}${c.announced ? " · winners announced" : ""}</small></span><span class="tag ${c.status === "live" ? "ok" : c.status === "pending" ? "warn" : ""}">${esc(c.status)}</span><span aria-hidden="true" class="chev">↗</span></a></li>`).join(""))}
     ${d.history.length ? `<h3 class="psec">Admin history</h3><ul class="meta" style="margin:0;padding-left:18px">${d.history.map((h) => `<li>${when(h.at)} · ${esc(h.admin || "admin")} ${esc(VERB[h.action] || h.action)}</li>`).join("")}</ul>` : ""}
-    <form class="f" id="uForm" novalidate style="margin-top:14px"><label for="uName">Name<input id="uName" maxlength="80" value="${esc(u.name)}"></label>
-    <label for="uNote">Private note (only you see this)<textarea id="uNote" rows="2" maxlength="1000">${esc(u.admin_note)}</textarea></label>
-    <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="uMsg" role="status"></span></div></form>
+    <form class="f" id="uForm" novalidate style="margin-top:6px">${fsec("Edit person", "", ff("uName", "Name", `<input id="uName" maxlength="80" value="${esc(u.name)}">`, { hint: "Shown on their entries and in emails to them." }) + ff("uNote", "Private note", `<textarea id="uNote" rows="3" maxlength="1000">${esc(u.admin_note)}</textarea>`, { hint: "Only you see this." }))}
+    <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="uMsg" role="status"></span></div></form>
     <div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" data-ua="signout">Sign out everywhere</button>
     <button class="btn ghost" type="button" data-ua="${sus ? "unsuspend" : "suspend"}">${sus ? "Reactivate" : "Suspend account"}</button></div>
     <details style="margin-top:14px"><summary style="cursor:pointer;color:#c0392b;font-weight:700">Delete this account</summary>
@@ -454,11 +461,11 @@ async function openInstaller(id) {
     ${psec("Recent quote requests", d.leads.length, d.leads.map((l) => `<li><div class="dli" style="cursor:default"><span class="ico" aria-hidden="true">✉</span><span class="dt"><b>${esc(l.name)}</b><small>${esc(l.email)}${l.phone ? " · " + esc(l.phone) : ""} · ${ago(l.created_at)}</small></span></div></li>`).join(""))}
     ${d.history.length ? `<h3 class="psec">Admin history</h3><ul class="meta" style="margin:0;padding-left:18px">${d.history.map((h) => `<li>${when(h.at)} · ${esc(h.admin || "admin")} ${esc(VERB[h.action] || h.action)}</li>`).join("")}</ul>` : ""}
     <h3 class="psec">Edit details</h3>
-    <form class="f" id="iForm" novalidate>${f("name", "Company name", i.name, 'maxlength="80"')}<div class="two">${f("web", "Website", i.web, 'maxlength="200"')}${f("phone", "Phone", i.phone, 'maxlength="80"')}</div>
-    <div class="two">${f("area", "Service area", i.area, 'maxlength="120"')}${f("email", "Email for confirmations (private)", i.email, 'maxlength="120" type="email"')}</div>
-    ${f("owner", "Owner email (can edit this profile)", i.owner_email, 'maxlength="120" type="email"')}
-    <label>About (shown on the profile)<textarea data-f="blurb" rows="3" maxlength="600">${esc(i.blurb || "")}</textarea></label>
-    <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="iMsg" role="status"></span></div></form>
+    <form class="f" id="iForm" novalidate>
+    ${fsec("Company", "", ff("if-name", "Company name", `<input id="if-name" data-f="name" value="${esc(i.name)}" maxlength="80">`) + ff("if-web", "Website", `<input id="if-web" data-f="web" type="url" value="${esc(i.web || "")}" maxlength="200" placeholder="https://">`, { c: "c3" }) + ff("if-phone", "Phone", `<input id="if-phone" data-f="phone" type="tel" value="${esc(i.phone || "")}" maxlength="80">`, { c: "c3" })
+      + ff("if-area", "Areas served", `<input id="if-area" data-f="area" value="${esc(i.area || "")}" maxlength="120" placeholder="Orange County and Los Angeles">`, { hint: AREAS_HINT }) + ff("if-blurb", "About", `<textarea id="if-blurb" data-f="blurb" rows="3" maxlength="600">${esc(i.blurb || "")}</textarea>`, { hint: "Shown on the public profile page." }))}
+    ${fsec("Contacts", "These are private. They never appear on the public page.", ff("if-email", "Email for confirmations", `<input id="if-email" data-f="email" type="email" value="${esc(i.email || "")}" maxlength="120">`, { c: "c3", hint: "Where we send requests to confirm a home." }) + ff("if-owner", "Owner email", `<input id="if-owner" data-f="owner" type="email" value="${esc(i.owner_email || "")}" maxlength="120">`, { c: "c3", hint: "This person can edit the profile after signing in." }))}
+    <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="iMsg" role="status"></span></div></form>
     <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Merge into another profile</summary>
     <p class="meta" style="margin:8px 0">Moves every home to the profile you keep and removes this one. Use it when one company was typed two ways.</p>
     <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>`, true);
