@@ -220,3 +220,9 @@ body.admin label.chk input{width:20px;height:20px;margin:0}
 .tcard i{display:grid;place-items:center;font-style:normal}
 .calm .okic{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--ok);color:var(--ok)}.calm .okic svg{width:24px;height:24px}
 .dli .chev{font-size:22px}
+.dli.wrap .dt b{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.dli .rep{display:inline-block;margin-left:6px;padding:0 8px;border:1px solid var(--line2);border-radius:99px;font:600 12px/20px var(--font);color:var(--muted);vertical-align:1px}
+body.admin .tag.warn{color:var(--season);border-color:var(--season);background:transparent}
+body.admin .tag.ok{color:var(--ok);border-color:var(--ok);background:transparent}
+body.admin .tag.bad{color:var(--bad);border-color:var(--bad);background:transparent}
+body.admin .tag.warn::before,body.admin .tag.ok::before,body.admin .tag.bad::before{content:none}
