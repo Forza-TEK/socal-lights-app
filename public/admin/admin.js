@@ -141,11 +141,27 @@ async function renderSubs() {
     facts: fact("When", esc(x.start_date) + (x.end_date !== x.start_date ? " to " + esc(x.end_date) : "") + " · " + esc(x.hours || "no hours")) + fact("Where", `${esc(x.venue)}<br><span class="meta">${esc(x.address)}, ${esc(x.city)} · ${esc(x.county || "")} (pin ${Number(x.lat).toFixed(4)}, ${Number(x.lng).toFixed(4)})</span>`)
       + fact("Type", `${esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)} · ${esc(x.price || "")}`) + fact("About", esc(x.blurb)) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "")
       + fact("Contact", `<span style="user-select:all">${esc(x.contact_email)}</span>`) + fact("Notes", esc(x.note || "")) + (x.paid_plans ? fact("Paid Featured", `<b>${esc(x.paid_plans)}</b>`) : ""),
+    edit: pend ? btn("ghost", "Edit", `data-sedit="${esc(x.id)}"`) : "",
     main: pend ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : btn("ghost", "Unpublish", 'data-sact="unpublish"'),
     danger: pend ? btn("danger", "Decline", 'data-sact="decline"') : "",
   })).join("")}</div>`;
   go();
 }
+// A small edit window for records with a few plain fields (submitted events, waiting contests)
+function editSimple({ title, fields, values, save }) {
+  const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
+  m.hidden = false;
+  const fld = (f) => `<label for="es-${f.k}" ${f.wide ? 'style="grid-column:1/-1"' : ""}>${esc(f.label)}${f.area ? `<textarea id="es-${f.k}" rows="3" maxlength="${f.max || 600}">${esc(values[f.k] || "")}</textarea>` : `<input id="es-${f.k}" type="${f.type || "text"}" maxlength="${f.max || 120}" value="${esc(values[f.k] || "")}" ${f.ph ? `placeholder="${esc(f.ph)}"` : ""}>`}</label>`;
+  m.innerHTML = modalFrame(title, `<form class="f" id="esForm" novalidate><div class="grid2">${fields.map(fld).join("")}</div><div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="esMsg" role="status"></span></div></form>`);
+  $("#mClose").onclick = close;
+  $("#esForm").onsubmit = async (e) => { e.preventDefault(); const body = {}; fields.forEach((f) => (body[f.k] = $("#es-" + f.k).value)); try { await save(body); close(); toast("Saved"); } catch (er) { const x = $("#esMsg"); x.className = "msg err"; x.textContent = er.message; } };
+}
+const SUBF = [{ k: "name", label: "Event name", wide: true }, { k: "venue", label: "Venue" }, { k: "address", label: "Address" }, { k: "city", label: "City" }, { k: "start_date", label: "Starts (YYYY-MM-DD)", max: 10 }, { k: "end_date", label: "Ends (YYYY-MM-DD)", max: 10 }, { k: "hours", label: "Hours" }, { k: "price", label: "Price" }, { k: "url", label: "Event page", type: "url", max: 300, wide: true }, { k: "contact_email", label: "Contact email", type: "email" }, { k: "blurb", label: "About", area: true, wide: true }];
+const CONF = [{ k: "name", label: "Contest name", wide: true }, { k: "org", label: "Run by" }, { k: "city", label: "City" }, { k: "contact_email", label: "Organizer email", type: "email" }, { k: "site", label: "Website", type: "url", max: 200 }, { k: "entries_close", label: "Entries close (YYYY-MM-DD)", max: 10 }, { k: "vote_start", label: "Voting starts", max: 10 }, { k: "vote_end", label: "Voting ends", max: 10 }, { k: "descr", label: "Welcome message", area: true, wide: true, max: 1000 }];
+$("#main").addEventListener("click", (e) => {
+  const sb = e.target.closest("[data-sedit]"); if (sb) { const x = SUBS.find((r) => r.id === sb.dataset.sedit); return editSimple({ title: "Edit event", fields: SUBF, values: x, save: async (b) => { await api("/api/admin/submissions/" + x.id, { method: "POST", body: JSON.stringify({ action: "edit", ...b }) }); renderSubs(); } }); }
+  const cb = e.target.closest("[data-cedit]"); if (cb) { const x = CONTESTS.find((r) => r.id === cb.dataset.cedit); return editSimple({ title: "Edit contest", fields: CONF, values: { ...x, contact_email: x.contact_email || x.owner_email }, save: async (b) => { await api("/api/admin/contests/" + x.id, { method: "POST", body: JSON.stringify({ action: "edit", ...b }) }); renderContests(); } }); }
+});
 const SDONE = { approve: "Published", decline: "Declined", unpublish: "Unpublished" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-sact]"); if (!b) return;
@@ -157,16 +173,17 @@ $("#main").addEventListener("click", async (e) => {
 });
 
 /* ---------- contests (organizers who need a review, e.g. a Gmail address or an email that doesn't match their website) ---------- */
+let CONTESTS = [];
 async function renderContests() {
   const main = $("#main");
   const list = await api("/api/admin/contests?status=pending");
-  setCount("contests", list.length);
+  setCount("contests", list.length); CONTESTS = list;
   if (!list.length) { main.innerHTML = `<div class="empty">No contests waiting. A contest goes live by itself when the organizer's email matches their website.</div>`; return; }
   main.innerHTML = toolbar({ search: { placeholder: "Search contests, organizers" }, count: String(list.length) }) + `<div class="cards">${list.map((c) => rec({
     attrs: `data-cid="${esc(c.id)}"`, title: esc(c.name), tags: [["Waiting", "warn"]], meta: esc((c.created_at || "").slice(0, 16)) + " UTC",
     facts: fact("Run by", esc(c.org) + " · " + esc(c.city)) + fact("Organizer email", `<span style="user-select:all">${esc(c.owner_email || c.contact_email)}</span>`) + fact("Website", c.site ? `<a href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site)}</a>` : "none given") + fact("Why it's here", esc(c.note || ""))
       + fact("Dates", `Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}`) + fact("Welcome message", esc(c.descr)) + fact("Public page", `<a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">/c/${esc(c.slug)}</a>`),
-    main: btn("main", "Approve (goes on the map)", 'data-cact="approve"'), danger: btn("danger", "Decline", 'data-cact="decline"'),
+    edit: btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`), main: btn("main", "Approve (goes on the map)", 'data-cact="approve"'), danger: btn("danger", "Decline", 'data-cact="decline"'),
   })).join("")}</div>`;
   wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
 }

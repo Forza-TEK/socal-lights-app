@@ -29,15 +29,14 @@ Method: read every Admin file (`public/admin/*`, `functions/api/admin/*`, `admin
 |---|---|---|---|
 | Houses waiting | Edit window | Approve and publish | Decline |
 | Published houses | Edit window | Unpublish | Remove from site |
-| Submitted events | none yet | Publish (confirmed/expected) / Unpublish | Decline |
-| Contests (waiting) | none yet | Approve | Decline |
+| Submitted events | Edit window (waiting ones) | Publish (confirmed/expected) / Unpublish | Decline |
+| Contests (waiting) | Edit window | Approve | Decline |
 | Events | Edit window | | Delete (inside the window) |
 | Installers | Edit window | Hide / Show | Merge (inside the window) |
 | Users | Edit window (name, note, suspend, delete) | | Delete account (inside the window) |
 | Reports | | Open Events | Dismiss |
 
 ## Still open (see the Admin checklist)
-- Edit for submitted events and waiting contests (needs API support).
 - Replaced records and Data check are decision tools, not record lists; still tables.
 - Decline reasons (and an email to the person), approve/decline emails to homeowners.
 - Bulk select (approve several), undo for decline.
@@ -45,3 +44,6 @@ Method: read every Admin file (`public/admin/*`, `functions/api/admin/*`, `admin
 - Search across everything (one box in the top bar).
 - Dashboard trends (daily lines), page views (needs analytics source).
 - Contest management from Admin beyond approval (pause, edit, remove).
+
+## Profile and Tutorials use the same frame
+`public/appshell.js` + `appshell.css` give Your profile and Tutorials the same side menu (desktop), icon rail (tablet) and bottom bar + More sheet (phone) as Admin. Profile tabs and tutorial categories became the menu items; the site links (Map, Add, Tutorials, Your profile) sit under them.
