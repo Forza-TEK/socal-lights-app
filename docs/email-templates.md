@@ -2,7 +2,7 @@
 
 Every automatic email the site sends is defined in `functions/_lib/mailtpl.js` (31 of them: sign-in code, weekly alerts, approvals and declines, installer confirmations and quotes, contest invitations, reminders and results, and the admin summary).
 
-The admin edits them in **Admin > Settings > Email templates** (`/admin/#emails`). Each email has a subject and a plain-text body. The HTML version is built from the same text (paragraphs, "- " lists, clickable links, SoCal Lights header and footer), so the two always match. The screen shows both versions with example values, can send a test to the signed-in admin, and can reset an email to its default.
+The admin edits them in **Admin > Settings > Email templates** (`/admin/#emails`). Each email has a subject and a plain-text body. The HTML version is built from the same text (paragraphs, "- " lists, clickable links, the round SoCal Lights logo beside the wordmark in the header, and a footer), so the two always match. The screen shows both versions with example values, can send a test to the signed-in admin, and can reset an email to its default.
 
 ## How it works
 - The default wording lives in `TEMPLATES` in `mailtpl.js`. A row in `email_templates` (migration 0148) exists only for an email the admin changed; delete the row (or press Reset) to go back to the default.
