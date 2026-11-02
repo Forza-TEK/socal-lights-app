@@ -1,7 +1,7 @@
 // Shared edit-form pieces for Profile, the installer page and the contest dashboard (the same layout the Admin edit windows use).
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 export { wireAreas };
-if (!document.getElementById("forms-css")) { const l = document.createElement("link"); l.id = "forms-css"; l.rel = "stylesheet"; l.href = "/forms.css?v=20261102d"; document.head.appendChild(l); }
+if (!document.getElementById("forms-css")) { const l = document.createElement("link"); l.id = "forms-css"; l.rel = "stylesheet"; l.href = "/forms.css?v=20261102e"; document.head.appendChild(l); }
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const fsec = (title, desc, inner, o = {}) => `<fieldset class="fsec"${o.hide ? " hidden" : ""}><legend>${title}</legend>${desc ? `<p class="fdesc">${desc}</p>` : ""}<div class="fgrid">${inner}</div></fieldset>`;
 export const ff = (label, control, o = {}) => `<div class="ff ${o.c || "c6"}"><label>${label}${control}</label>${o.hint ? `<small class="fhint">${o.hint}</small>` : ""}</div>`;
