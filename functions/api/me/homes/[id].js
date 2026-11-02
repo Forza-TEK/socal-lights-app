@@ -23,6 +23,14 @@ export async function access(env, user, id) {
   return { res: err(404, "That listing isn't yours.") };
 }
 
+// Everyone who shares this listing gets told about a change, including the person who made it (as a receipt).
+function everyone(row, inst, actor) {
+  const list = [row.contact_email, actor.email];
+  if (inst && inst.owner_email && (row.installer_confirmed || row.poster_type === "installer")) list.push(inst.owner_email);
+  const seen = new Set(); return list.filter((e) => { const k = e && normEmail(e); if (!k || seen.has(k)) return false; seen.add(k); return true; });
+}
+const where = (row, inst, role) => `https://socallights.app/${role === "installer" && inst ? "installer/" + inst.slug + "/manage" : "profile#displays"}`;
+
 export async function onRequestGet({ params, request, env }) {
   const { user, res } = await requireUser(request, env);
   if (res) return res;
@@ -53,6 +61,11 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
       const photos = await movePhotos(env, row, "pending/", "p/");
       await env.DB.prepare("UPDATE posts SET status='approved', approved_at=datetime('now'), photos=? WHERE id=?").bind(JSON.stringify(photos), row.id).run();
     }
+    const who = { email: user.email, name: user.name || row.biz || user.email, role };
+    const ch = [{ label: "Listing", old: b.action === "pause" ? "On the map" : "Taken down for the season", new: b.action === "pause" ? "Taken down for the season" : "Back on the map" }];
+    await logHome(env, row.id, who, ch);
+    const job = notify(env, everyone(row, inst, who), `${who.name} ${b.action === "pause" ? "took down" : "put back"} "${row.title}" on SoCal Lights`, `${who.name} ${b.action === "pause" ? "took this listing down for the season" : "put this listing back on the map"}: "${row.title}".\n\nSee the listing and the full list of changes: ${where(row, inst, "homeowner")}`);
+    if (waitUntil) waitUntil(job);
     return json({ ok: true });
   }
   if (b.action === "edit") {
@@ -74,9 +87,8 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
       .bind(next.title, next.descr, next.where_txt, next.season, next.lights_on, next.visit, next.parking, next.accessible, next.radio, next.web, next.phone, next.service_area, row.id).run();
     const who = { email: user.email, name: (role === "installer" && inst ? inst.name : user.name || row.biz) || user.email, role };
     await logHome(env, row.id, who, changes);
-    // Tell the other side: the installer's profile owner (if they have confirmed) and the person who posted it
-    const other = role === "installer" ? [row.contact_email] : inst && inst.owner_email && row.installer_confirmed ? [inst.owner_email] : [];
-    const job = notify(env, other.filter((e) => e && normEmail(e) !== user.email), `${who.name} updated "${next.title}" on SoCal Lights`, `${who.name} changed these on "${next.title}":\n\n${lines(changes)}\n\nSee the listing and the full list of changes: https://socallights.app/${role === "installer" ? "profile#displays" : (inst ? "installer/" + inst.slug + "/manage" : "profile#displays")}`);
+    // Everyone who shares the listing is told, including the person who made the change
+    const job = notify(env, everyone(row, inst, who), `${who.name} updated "${next.title}" on SoCal Lights`, `${who.name} changed these on "${next.title}":\n\n${lines(changes)}\n\nSee the listing and the full list of changes: ${where(row, inst, "homeowner")}\n(If you are the installer, open your manage page: ${inst ? "https://socallights.app/installer/" + inst.slug + "/manage" : "n/a"}.)`);
     if (waitUntil) waitUntil(job);
     return json({ ok: true, changed: changes.length });
   }
