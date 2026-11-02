@@ -3,6 +3,7 @@ import { CITY } from "/cities.js";
 import { SEASONS, defaultSeason } from "/seasons.js";
 import { attachAddress } from "/addflow.js?v=20261102c";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
+import { renderEmails } from "/admin/emails.js?v=20261104b";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261103a";
 
 const $ = (s) => document.querySelector(s);
@@ -26,8 +27,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log" };
+const TABS = ["dashboard", "pending", "subs", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "emails"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", emails: "Email templates" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
@@ -66,6 +67,7 @@ async function render() {
     if (tab === "data") return renderData();
     if (tab === "users") return renderUsers();
     if (tab === "log") return renderLog();
+    if (tab === "emails") return renderEmails(main);
     const waiting = await api("/api/admin/posts?status=" + tab), declined = tab === "pending" ? await api("/api/admin/posts?status=declined") : [];
     if (tab === "pending") setCount("pending", waiting.length);
     const showing = tab === "pending" && PVIEW === "declined" ? declined : waiting;
@@ -456,8 +458,8 @@ async function openUser(id) {
 
 
 /* ---------- activity log (what the admin tools were used for) ---------- */
-const VERB = { restore: "restored", photo_remove: "removed a photo from", photo_move: "reordered the photos of", dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for" };
-const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", normalize: "data check" };
+const VERB = { restore: "restored", photo_remove: "removed a photo from", photo_move: "reordered the photos of", dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for", reset: "reset to default" };
+const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", normalize: "data check", emails: "email template" };
 let LOG = { area: "", offset: 0 };
 async function renderLog() {
   const main = $("#main");

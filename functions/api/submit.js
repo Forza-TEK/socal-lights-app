@@ -1,9 +1,10 @@
 // POST /api/submit — public "Showcase a House" form (multipart/form-data).
 // Saves the post as 'pending' and its photos under pending/<id>/ in R2.
 import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { sendTemplate } from "../_lib/mailtpl.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
-import { getUser, sendMail } from "../_lib/auth.js";
+import { getUser } from "../_lib/auth.js";
 import { findOrCreateInstaller } from "../_lib/installers.js";
 import { approveEntry } from "../_lib/contests.js";
 import { normZip, phoneField, normName, normStreet, normText, normEmailText, normRadio, line } from "../_lib/fields.js";
@@ -140,7 +141,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
           await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 0, installer_token = ? WHERE id = ?").bind(inst.id, token, id).run();
           // If we know how to reach the installer, ask them to confirm. The claim shows on the card right away either way.
           if (inst.email) {
-            const job = sendMail(env, { to: inst.email, subject: `${title} lists you as the installer`, text: `${biz} says ${inst.name} installed the lights at "${title}" in ${city}. It shows on SoCal Lights as "Installed by ${inst.name}" and links to your profile.\n\nIf that is right, confirm it (it adds a check mark): https://socallights.app/api/installers/confirm?t=${token}\n\nIf it is not right, reply to this email and we will remove it.` }).catch(() => {});
+            const job = sendTemplate(env, "installer_listed", inst.email, { title, biz, installer: inst.name, city, confirm: `https://socallights.app/api/installers/confirm?t=${token}` }).catch(() => {});
             if (waitUntil) waitUntil(job);
           }
         }
@@ -157,7 +158,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   }
   // Manual approval: tell the organizer there is something waiting for them
   if (contest && !autoApprove && contest.contact_email) {
-    const job = sendMail(env, { to: contest.contact_email, subject: `New entry waiting: ${contest.name}`, text: `${title} (${street}, ${city}) entered ${contest.name} and is waiting for your OK. Photos are held privately until you approve.\n\nReview it: https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});
+    const job = sendTemplate(env, "entry_new", contest.contact_email, { title, street, city, contest: contest.name, link: `https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});
     if (waitUntil) waitUntil(job);
   }
   return json({ ok: true, id, status: published ? "published" : "pending" });

@@ -271,3 +271,13 @@ body.admin .gs input{border:0!important;padding:0!important;min-height:0!importa
 .toppg .dli{justify-content:space-between}
 @media (max-width:1099px){.trends{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:699px){.trends{grid-template-columns:1fr}}
+
+/* Settings > Email templates */
+.emx{margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:70ch}
+.emchips{display:flex;flex-wrap:wrap;gap:8px}
+.emchip{all:unset;box-sizing:border-box;cursor:pointer;min-height:36px;padding:0 12px;display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:99px;font:500 13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink)}
+.emchip:hover{background:var(--surface)}.emchip:focus-visible{outline:2px solid var(--season);outline-offset:2px}
+.emsub{font-size:14px;margin:0 0 8px;color:var(--ink)}
+.empre{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:10px;white-space:pre-wrap;word-break:break-word;font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);background:var(--surface);max-height:340px;overflow:auto}
+.emfr{width:100%;height:420px;border:1px solid var(--line);border-radius:10px;background:#f4f1ec}
+body.admin #em-b{min-height:150px}

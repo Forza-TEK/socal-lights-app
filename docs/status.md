@@ -2,6 +2,10 @@
 
 _Last updated: 2026-11-02_
 
+## Visit the homes + email templates (2026-11-02)
+- Contest page and judge menu: "Visit the homes" builds driving routes of 9 stops or fewer in Google or Apple Maps (`public/tour.js`). Merged.
+- Admin > Settings > Email templates: all 31 automatic emails now come from `functions/_lib/mailtpl.js`, are sent as HTML plus plain text, and can be edited, previewed, test-sent and reset by the admin. Migration 0148 (`email_templates`). See `docs/email-templates.md`.
+
 ## City sweep group 17 (San Bernardino Valley & West End) 2026-11-02: nothing new
 Searched all 15 cities (Loma Linda, Highland, Grand Terrace, Colton, Rialto, San Bernardino, Fontana, Upland, Ontario, Chino, Chino Hills, Montclair, Yucaipa, Redlands, Rancho Cucamonga). No new verifiable 2026 events, no migration. Loma Linda, Highland and Grand Terrace: only old pages (Loma Linda tree lighting Patch 2011, Grand Terrace Light Up page undated); the "Highland Chamber" Lighted Parade jotform is Highland, Illinois (do not add). Colton parade date unverified (IECN says Dec 13, not official). San Bernardino Hernandez CC Holiday Party Dec 4 (active.com) has no time or price: lead only. Chino contest page is still the 2025 list; Frostburg, Edinboro, Shorthorn, Voyager fail the house-number geocode (13526 Garcia geocodes, but the page prints "113526": left out). No contest with 2026 addresses in Upland, Ontario, Chino Hills, Rialto, Colton. Photos: none usable (Upland turkey trot og:image is the city seal, Redlands 382 px, Ontario/Montclair are logo/flyer; RC, Yucaipa and Chino Hills pages block or give no og:image).
 

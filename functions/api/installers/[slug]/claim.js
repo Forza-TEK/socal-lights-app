@@ -1,7 +1,8 @@
 // POST /api/installers/<slug>/claim — a signed-in person says they run this company.
 // An email at the company's website domain claims it straight away (the same rule as contests); anything else asks the site owner.
 import { json, err } from "../../../_lib/util.js";
-import { getUser, sameOrigin, sendMail } from "../../../_lib/auth.js";
+import { sendTemplate } from "../../../_lib/mailtpl.js";
+import { getUser, sameOrigin } from "../../../_lib/auth.js";
 import { trustOf } from "../../../_lib/contests.js";
 
 export async function onRequestPost({ params, request, env }) {
@@ -16,6 +17,6 @@ export async function onRequestPost({ params, request, env }) {
     await env.DB.prepare("UPDATE installers SET owner_email = ? WHERE id = ?").bind(user.email, inst.id).run();
     return json({ ok: true, claimed: true });
   }
-  await sendMail(env, { to: env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", subject: `Installer profile claim: ${inst.name}`, text: `${user.email} says they run ${inst.name} (${inst.web || "no website on file"}). Their email isn't at the company's website, so it needs your OK.\n\nTo approve, open the admin, Installers tab, and put ${user.email} in "Owner email" for ${inst.name}: https://socallights.app/admin/` }).catch(() => {});
+  await sendTemplate(env, "installer_claim", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { email: user.email, installer: inst.name, web: inst.web || "no website on file" }).catch(() => {});
   return json({ ok: true, claimed: false, message: "Thanks. Because your email isn't at the company's website, a person will check and confirm by email." });
 }

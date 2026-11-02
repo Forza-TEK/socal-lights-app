@@ -9,6 +9,7 @@ const AREAS = {
   installers: ["installers", "name"],
   reports: ["reports", "name"],
   normalize: ["users", "email"],
+  emails: ["email_templates", "id"],
 };
 
 // "/api/admin/posts/abc" -> { area: "posts", id: "abc" }; null for anything that isn't a logged area
