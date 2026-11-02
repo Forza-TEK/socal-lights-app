@@ -1,8 +1,23 @@
+// GET  /api/admin/installers/<id> — the profile: details, every home linked to it, quote requests, views, owner account, admin history.
 // POST /api/admin/installers/<id> { action: "edit" | "merge" | "hide" | "show" }
 //   edit  : name, web, phone, area, blurb, email (a new name must not belong to another profile: merge them instead)
 //   merge : into = the profile to keep. Homes, contests and the profile's page move to it, and this profile is removed.
 import { json, err, clean, webUrl } from "../../../_lib/util.js";
 import { phoneField, line, normText, normName } from "../../../_lib/fields.js";
+
+export async function onRequestGet({ params, env }) {
+  const installer = await env.DB.prepare("SELECT * FROM installers WHERE id = ?").bind(params.id).first();
+  if (!installer) return err(404, "That installer no longer exists.");
+  const all = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then((r) => r.results).catch(() => []);
+  const [homes, leads, hits, owner, history] = await Promise.all([
+    all("SELECT id, title, city, status, installer_confirmed, poster_type, created_at FROM posts WHERE installer_id = ? ORDER BY created_at DESC LIMIT 100", installer.id),
+    all("SELECT name, email, phone, note, created_at FROM installer_leads WHERE installer_id = ? ORDER BY created_at DESC LIMIT 20", installer.id),
+    env.DB.prepare("SELECT COALESCE(SUM(n),0) AS n FROM installer_hits WHERE installer_id = ? AND day >= date('now','-6 days')").bind(installer.id).first().catch(() => ({ n: 0 })),
+    installer.owner_email ? env.DB.prepare("SELECT id, name, email FROM users WHERE lower(email) = lower(?)").bind(installer.owner_email).first().catch(() => null) : null,
+    all("SELECT at, admin, action FROM admin_log WHERE area = 'installers' AND target_id = ? ORDER BY id DESC LIMIT 10", installer.id),
+  ]);
+  return json({ installer, homes, leads, views7: (hits && hits.n) || 0, owner, history }, { headers: { "cache-control": "no-store" } });
+}
 
 export async function onRequestPost({ params, request, env }) {
   const inst = await env.DB.prepare("SELECT * FROM installers WHERE id = ?").bind(params.id).first();

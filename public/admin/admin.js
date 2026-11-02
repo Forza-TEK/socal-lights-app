@@ -68,7 +68,7 @@ async function render() {
     if (tab === "pending") setCount("pending", posts.length);
     if (!posts.length) { main.innerHTML = `<div class="empty">${tab === "pending" ? "Nothing waiting for review." : "No published houses yet."}</div>`; return; }
     POSTS = posts; main.innerHTML = toolbar({ search: { placeholder: "Search houses, people, cities" }, count: String(posts.length) }) + `<div class="cards">${posts.map(postCard).join("")}</div>`;
-    wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
+    wireToolbar(main, { onSearch: (q) => filterCards(main, q) }); applyPreset(main);
   } catch (e) { main.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 function postCard(p) {
@@ -133,7 +133,7 @@ async function renderSubs() {
   SUBS = SUBVIEW === "pending" ? waiting : live;
   setCount("subs", waiting.length);
   const bar = toolbar({ views: [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "published", label: "Live", n: live.length }], active: SUBVIEW, search: { placeholder: "Search events, cities" }, count: String(SUBS.length) });
-  const go = () => wireToolbar(main, { onView: (v) => { SUBVIEW = v; renderSubs(); }, onSearch: (q) => filterCards(main, q) });
+  const go = () => { wireToolbar(main, { onView: (v) => { SUBVIEW = v; renderSubs(); }, onSearch: (q) => filterCards(main, q) }); applyPreset(main); };
   if (!SUBS.length) { main.innerHTML = bar + `<div class="empty">${SUBVIEW === "pending" ? "Nothing waiting. New events go live right away; look under Live to review or unpublish them." : "No submitted events are live."}</div>`; go(); return; }
   const pend = SUBVIEW === "pending";
   main.innerHTML = bar + `<div class="cards">${SUBS.map((x) => rec({
@@ -185,7 +185,7 @@ async function renderContests() {
       + fact("Dates", `Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}`) + fact("Welcome message", esc(c.descr)) + fact("Public page", `<a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">/c/${esc(c.slug)}</a>`),
     edit: btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`), main: btn("main", "Approve (goes on the map)", 'data-cact="approve"'), danger: btn("danger", "Decline", 'data-cact="decline"'),
   })).join("")}</div>`;
-  wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
+  wireToolbar(main, { onSearch: (q) => filterCards(main, q) }); applyPreset(main);
 }
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-cact]"); if (!b) return;
@@ -291,7 +291,7 @@ async function renderUsers() {
   main.innerHTML = bar + (d.users.length ? `<div class="cards">${d.users.map((u) => rec({
     compact: true, attrs: `data-uid="${esc(u.id)}"`, title: esc(u.name || "(no name)"), tags: u.status === "suspended" ? [["Suspended", "bad"]] : [],
     body: `<span class="sub">${esc(u.email)}${u.google ? " · Google" : ""} · joined ${esc((u.created_at || "").slice(0, 10))} · last sign-in ${ago(u.last_login)}</span><span class="sub">${u.homes + u.entries} home${u.homes + u.entries === 1 ? "" : "s"}/entr${u.homes + u.entries === 1 ? "y" : "ies"} · ${u.contests} contest${u.contests === 1 ? "" : "s"} run · ${u.votes} vote${u.votes === 1 ? "" : "s"}</span>`,
-    edit: btn("ghost", "Edit", `data-open="${esc(u.id)}"`),
+    edit: btn("ghost", "Profile", `data-open="${esc(u.id)}"`),
   })).join("")}</div>` + pager({ offset: d.offset, shown: d.users.length, total: d.total, page: d.page, idPrev: "uPrev", idNext: "uNext" }) : `<div class="empty">${USERS.q || USERS.status ? "Nobody matches that." : "Nobody has made a profile yet."}</div>`);
   wireToolbar(main, { onView: (v) => { USERS.status = v; USERS.offset = 0; renderUsers(); }, onSearch: (q) => { USERS.q = q; USERS.offset = 0; renderUsers().then(() => { const i = $("[data-search]"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); } });
   if ($("#uPrev")) $("#uPrev").onclick = () => { USERS.offset = Math.max(0, USERS.offset - d.page); renderUsers(); };
@@ -303,16 +303,16 @@ async function openUser(id) {
   m.hidden = false; m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="empty">Loading…</div></div>`;
   let d; try { d = await api("/api/admin/users/" + id); } catch (e) { m.innerHTML = `<div class="card"><p>${esc(e.message)}</p><button class="btn ghost" type="button" id="mClose">Close</button></div>`; $("#mClose").onclick = close; return; }
   const u = d.user, sus = u.status === "suspended";
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="mh"><h2>${esc(u.name || u.email)}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
+  m.innerHTML = `<div class="card wide" role="dialog" aria-modal="true"><div class="mh"><h2>${esc(u.name || u.email)}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close">×</button></div>
     ${sus ? `<p class="msg err" style="margin:6px 0">Suspended ${when(u.suspended_at)}. They can't sign in, vote or enter contests.</p>` : ""}
     <dl class="facts"><dt>Email</dt><dd><span style="user-select:all">${esc(u.email)}</span></dd><dt>Signs in with</dt><dd>${u.google ? "Google or an emailed code" : "An emailed code"}</dd>
     <dt>Joined</dt><dd>${when(u.created_at)}</dd><dt>Last sign-in</dt><dd>${when(u.last_login)} · ${d.sessions} signed-in device${d.sessions === 1 ? "" : "s"}</dd>
     <dt>Address</dt><dd>${esc([u.street, u.city, u.zip].filter(Boolean).join(", ")) || "not given"}</dd><dt>Votes cast</dt><dd>${d.votes}</dd></dl>
-    <h3 style="margin:14px 0 6px">Homes, events and entries (${d.posts.length})</h3>
-    ${d.posts.length ? `<ul class="meta" style="margin:0;padding-left:18px">${d.posts.map((p) => `<li>${esc(p.title || p.biz)} · ${esc(p.city)} · ${p.contest_id ? "contest entry" : esc(p.season)} · ${esc(p.status)}</li>`).join("")}</ul>` : '<p class="meta">None.</p>'}
-    ${d.history.length ? `<h3 style="margin:14px 0 6px">Admin history</h3><ul class="meta" style="margin:0;padding-left:18px">${d.history.map((h) => `<li>${when(h.at)} · ${esc(h.admin || "admin")} ${esc(VERB[h.action] || h.action)}</li>`).join("")}</ul>` : ""}
-    <h3 style="margin:14px 0 6px">Contests they run (${d.contests.length})</h3>
-    ${d.contests.length ? `<ul class="meta" style="margin:0;padding-left:18px">${d.contests.map((c) => `<li><a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a> · ${esc(c.city)} · ${esc(c.status)}${c.announced ? " · announced" : ""}</li>`).join("")}</ul>` : '<p class="meta">None.</p>'}
+    ${d.installers.length ? psec("Installer profiles they own", d.installers.length, d.installers.map((i) => prow(`data-pf-inst="${esc(i.id)}"`, "⚒", i.name, "Installer profile", [i.status === "hidden" ? "Hidden" : "Active", i.status === "hidden" ? "bad" : "ok"])).join("")) : ""}
+    ${psec("Homes and contest entries", d.posts.length, d.posts.map((p) => prow(`data-pf-post="${esc(p.id)}"`, p.contest_id ? "★" : "⌂", p.title || p.biz, `${p.city || ""} · ${p.contest_id ? "contest entry" : p.season} · ${ago(p.created_at)}`, [p.status === "approved" ? "Live" : p.status === "pending" ? "Waiting" : p.status, p.status === "approved" ? "ok" : p.status === "pending" ? "warn" : ""])).join(""))}
+    ${psec("Events they submitted", d.events.length, d.events.map((e) => prow(`data-pf-sub="${esc(e.name)}" data-pf-view="${e.status === "published" ? "published" : "pending"}"`, "◷", e.name, `${e.city || ""} · ${e.start_date || ""}`, [e.status === "published" ? "Live" : e.status === "pending" ? "Waiting" : e.status, e.status === "published" ? "ok" : e.status === "pending" ? "warn" : ""])).join(""))}
+    ${psec("Contests they run", d.contests.length, d.contests.map((c) => `<li><a class="dli" href="/c/${esc(c.slug)}" target="_blank" rel="noopener"><span class="ico" aria-hidden="true">★</span><span class="dt"><b>${esc(c.name)}</b><small>${esc(c.city)}${c.announced ? " · winners announced" : ""}</small></span><span class="tag ${c.status === "live" ? "ok" : c.status === "pending" ? "warn" : ""}">${esc(c.status)}</span><span aria-hidden="true" class="chev">↗</span></a></li>`).join(""))}
+    ${d.history.length ? `<h3 class="psec">Admin history</h3><ul class="meta" style="margin:0;padding-left:18px">${d.history.map((h) => `<li>${when(h.at)} · ${esc(h.admin || "admin")} ${esc(VERB[h.action] || h.action)}</li>`).join("")}</ul>` : ""}
     <form class="f" id="uForm" novalidate style="margin-top:14px"><label for="uName">Name<input id="uName" maxlength="80" value="${esc(u.name)}"></label>
     <label for="uNote">Private note (only you see this)<textarea id="uNote" rows="2" maxlength="1000">${esc(u.admin_note)}</textarea></label>
     <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="uMsg" role="status"></span></div></form>
@@ -378,31 +378,57 @@ async function renderInstallers() {
     attrs: `data-iid="${esc(i.id)}"`, title: esc(i.name), tags: [i.status === "hidden" ? ["Hidden", "bad"] : ["Active", "ok"], ...(i.unconfirmed ? [[i.unconfirmed + " not confirmed", "warn"]] : [])],
     meta: `${i.homes} home${i.homes === 1 ? "" : "s"} · <a href="/installer/${esc(i.slug)}" target="_blank" rel="noopener">view page</a>`,
     facts: fact("Website", esc(i.web)) + fact("Phone", esc(i.phone)) + fact("Service area", esc(i.area)) + fact("Confirmation email", esc(i.email)) + fact("Owner", esc(i.owner_email)),
-    edit: btn("ghost", "Edit", `data-iedit="${esc(i.id)}"`), main: btn("ghost", i.status === "hidden" ? "Show" : "Hide", `data-iact="${i.status === "hidden" ? "show" : "hide"}"`),
+    edit: btn("ghost", "Profile", `data-iedit="${esc(i.id)}"`), main: btn("ghost", i.status === "hidden" ? "Show" : "Hide", `data-iact="${i.status === "hidden" ? "show" : "hide"}"`),
   })).join("")}</div>`;
-  wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
+  wireToolbar(main, { onSearch: (q) => filterCards(main, q) }); applyPreset(main);
 }
 const instAct = async (id, body) => api("/api/admin/installers/" + id, { method: "POST", body: JSON.stringify(body) });
-function editInstaller(i) {
+// ---- shared pieces of the Installer and User profile windows
+const psec = (title, n, rows, empty = "None.") => `<h3 class="psec">${esc(title)} <span class="meta">(${n})</span></h3>` + (n ? `<ul class="dl">${rows}</ul>` : `<p class="meta" style="margin:0">${empty}</p>`);
+const prow = (attrs, ico, title, sub, tag) => `<li><button type="button" class="dli" ${attrs}><span class="ico" aria-hidden="true">${ico}</span><span class="dt"><b>${esc(title)}</b><small>${esc(sub)}</small></span>${tag ? `<span class="tag ${tag[1] || ""}">${esc(tag[0])}</span>` : ""}<span aria-hidden="true" class="chev">›</span></button></li>`;
+let PRESET = "";
+const applyPreset = (root) => { if (!PRESET) return; const i = root.querySelector("[data-search]"); if (i) { i.value = PRESET; filterCards(root, PRESET); } PRESET = ""; };
+async function openPostById(id) { const [p] = await api("/api/admin/posts?id=" + encodeURIComponent(id)); if (!p) return toast("That record no longer exists.", true); POSTS = [p]; editPost(p); }
+document.addEventListener("click", (e) => {
+  const q = (sel) => e.target.closest(sel);
+  let b;
+  if ((b = q("[data-pf-post]"))) openPostById(b.dataset.pfPost).catch((er) => toast(er.message, true));
+  else if ((b = q("[data-pf-inst]"))) openInstaller(b.dataset.pfInst);
+  else if ((b = q("[data-pf-user]"))) openUser(b.dataset.pfUser);
+  else if ((b = q("[data-pf-sub]"))) { $("#modal").hidden = true; $("#modal").innerHTML = ""; PRESET = b.dataset.pfSub; SUBVIEW = b.dataset.pfView || "pending"; setTab("subs"); }
+});
+
+// The installer's profile: who they are, everything linked to them, then the edit form
+async function openInstaller(id) {
   const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
-  const f = (id, l, v, ex = "") => `<label>${l}<input data-f="${id}" value="${esc(v || "")}" ${ex}></label>`;
-  m.hidden = false;
-  m.innerHTML = modalFrame("Edit installer", `<form class="f" id="iForm" novalidate>
-    ${f("name", "Company name", i.name, 'maxlength="80"')}<div class="two">${f("web", "Website", i.web, 'maxlength="200"')}${f("phone", "Phone", i.phone, 'maxlength="80"')}</div>
+  m.hidden = false; m.innerHTML = `<div class="card wide"><div class="empty">Loading…</div></div>`;
+  if (!INST.length) INST = await api("/api/admin/installers").catch(() => []);
+  let d; try { d = await api("/api/admin/installers/" + id); } catch (e) { toast(e.message, true); return close(); }
+  const i = d.installer, f = (k, l, v, ex = "") => `<label>${l}<input data-f="${k}" value="${esc(v || "")}" ${ex}></label>`;
+  const conf = d.homes.filter((h) => h.installer_confirmed || h.poster_type === "installer").length;
+  m.innerHTML = modalFrame(i.name, `
+    <div class="rt" style="margin:-4px 0 10px"><span class="tag ${i.status === "hidden" ? "bad" : "ok"}">${i.status === "hidden" ? "Hidden" : "Active"}</span><a class="meta" href="/installer/${esc(i.slug)}" target="_blank" rel="noopener">View public page ↗</a></div>
+    <div class="stats pstats"><div class="stat"><b>${d.homes.length}</b><span>homes linked</span></div><div class="stat"><b>${conf}</b><span>confirmed</span></div><div class="stat"><b>${d.views7}</b><span>page views, 7 days</span></div><div class="stat"><b>${d.leads.length}</b><span>quote requests</span></div></div>
+    ${d.owner ? psec("Owner account", 1, prow(`data-pf-user="${esc(d.owner.id)}"`, "☺", d.owner.name || d.owner.email, d.owner.email)) : `<h3 class="psec">Owner account</h3><p class="meta" style="margin:0">${i.owner_email ? esc(i.owner_email) + " has no account yet." : "Nobody has claimed this profile."}</p>`}
+    ${psec("Homes linked to this installer", d.homes.length, d.homes.map((h) => prow(`data-pf-post="${esc(h.id)}"`, "⌂", h.title, `${h.city || ""} · ${h.poster_type === "installer" ? "posted by the installer" : h.installer_confirmed ? "confirmed" : "claimed by the homeowner, not confirmed"} · ${ago(h.created_at)}`, [h.status === "approved" ? "Live" : h.status === "pending" ? "Waiting" : h.status, h.status === "approved" ? "ok" : h.status === "pending" ? "warn" : ""])).join(""))}
+    ${psec("Recent quote requests", d.leads.length, d.leads.map((l) => `<li><div class="dli" style="cursor:default"><span class="ico" aria-hidden="true">✉</span><span class="dt"><b>${esc(l.name)}</b><small>${esc(l.email)}${l.phone ? " · " + esc(l.phone) : ""} · ${ago(l.created_at)}</small></span></div></li>`).join(""))}
+    ${d.history.length ? `<h3 class="psec">Admin history</h3><ul class="meta" style="margin:0;padding-left:18px">${d.history.map((h) => `<li>${when(h.at)} · ${esc(h.admin || "admin")} ${esc(VERB[h.action] || h.action)}</li>`).join("")}</ul>` : ""}
+    <h3 class="psec">Edit details</h3>
+    <form class="f" id="iForm" novalidate>${f("name", "Company name", i.name, 'maxlength="80"')}<div class="two">${f("web", "Website", i.web, 'maxlength="200"')}${f("phone", "Phone", i.phone, 'maxlength="80"')}</div>
     <div class="two">${f("area", "Service area", i.area, 'maxlength="120"')}${f("email", "Email for confirmations (private)", i.email, 'maxlength="120" type="email"')}</div>
     ${f("owner", "Owner email (can edit this profile)", i.owner_email, 'maxlength="120" type="email"')}
     <label>About (shown on the profile)<textarea data-f="blurb" rows="3" maxlength="600">${esc(i.blurb || "")}</textarea></label>
     <div class="mfoot"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="iMsg" role="status"></span></div></form>
     <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Merge into another profile</summary>
     <p class="meta" style="margin:8px 0">Moves every home to the profile you keep and removes this one. Use it when one company was typed two ways.</p>
-    <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>`);
+    <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>`, true);
   $("#mClose").onclick = close;
   const msg = (t, bad) => { const e = $("#iMsg"); e.className = bad ? "msg err" : "msg"; e.textContent = t; };
-  $("#iForm").onsubmit = async (e) => { e.preventDefault(); const body = { action: "edit" }; m.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value)); try { await instAct(i.id, body); close(); toast("Saved"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
+  $("#iForm").onsubmit = async (e) => { e.preventDefault(); const body = { action: "edit" }; m.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value)); try { await instAct(i.id, body); toast("Saved"); await openInstaller(i.id); if (tab === "installers") renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
   $("#iMergeGo").onclick = async (e) => { const into = $("#iMerge").value; if (!into) return msg("Choose the profile to keep.", true); if (!tap(e.target, "merge")) return; try { await instAct(i.id, { action: "merge", into }); close(); toast("Merged"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
 }
 $("#main").addEventListener("click", async (e) => {
-  const ed = e.target.closest("[data-iedit]"); if (ed) return editInstaller(INST.find((x) => x.id === ed.dataset.iedit));
+  const ed = e.target.closest("[data-iedit]"); if (ed) return openInstaller(ed.dataset.iedit);
   const b = e.target.closest("[data-iact]"); if (!b) return;
   const card = b.closest("[data-iid]"), msg = card.querySelector(".msg");
   b.disabled = true;
@@ -465,7 +491,7 @@ async function renderReports() {
     body: `<p style="margin:0;white-space:pre-line">${esc(r.message)}</p>`, facts: fact("About", `<code>${esc(r.ref)}</code>`) + fact("Reply to", r.contact ? `<a href="mailto:${esc(r.contact)}">${esc(r.contact)}</a>` : "They left no email"),
     edit: btn("ghost", "Open Events", 'data-tab="events"'), danger: btn("danger", "Dismiss", "data-rdismiss"),
   })).join("")}</div>` : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`;
-  wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
+  wireToolbar(main, { onSearch: (q) => filterCards(main, q) }); applyPreset(main);
 }
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-rdismiss]"); if (!b) return;

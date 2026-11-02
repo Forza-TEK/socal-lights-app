@@ -3,7 +3,12 @@ import { json, rowToPost } from "../../../_lib/util.js";
 import { pairs } from "../../../_lib/addrkey.js";
 
 export async function onRequestGet({ request, env }) {
-  const status = new URL(request.url).searchParams.get("status") || "pending";
+  const qs = new URL(request.url).searchParams, status = qs.get("status") || "pending";
+  // One record by id, whatever its status (used when a profile links to a house)
+  if (qs.get("id")) {
+    const r = await env.DB.prepare("SELECT p.*, i.slug AS inst_slug, i.name AS inst_name FROM posts p LEFT JOIN installers i ON i.id = p.installer_id WHERE p.id = ?").bind(qs.get("id")).first();
+    return json(r ? [rowToPost(r, true)] : []);
+  }
   if (!["pending", "approved", "declined"].includes(status)) return json([]);
   const { results } = await env.DB.prepare("SELECT p.*, i.slug AS inst_slug, i.name AS inst_name FROM posts p LEFT JOIN installers i ON i.id = p.installer_id WHERE p.status = ? ORDER BY p.created_at DESC LIMIT 500").bind(status).all();
   const out = results.map((r) => rowToPost(r, true));
