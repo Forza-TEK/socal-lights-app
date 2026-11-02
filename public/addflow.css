@@ -90,3 +90,8 @@ button.link{padding-block:11px;margin-block:-11px}
 .mf{display:grid;gap:4px;font-size:14px}.mf span{color:var(--muted)}.mf.chk{display:flex;align-items:center;gap:8px}.mf.chk span{color:inherit}
 .mf input:not([type=checkbox]),.mf select,.mf textarea{font:inherit;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;max-width:100%}
 .mf input[type=checkbox]{width:22px;height:22px}
+
+/* Who changed what */
+.chgnote{margin-top:2px;color:var(--muted)}
+.chgbox{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}.chgbox b{font-weight:600}
+.chg{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}.chg .who{font-weight:600}.chg .was{text-decoration:line-through;opacity:.7}

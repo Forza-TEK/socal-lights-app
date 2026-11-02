@@ -6,6 +6,7 @@ import { json, err, newId } from "../../../_lib/util.js";
 import { getUser, sameOrigin, normEmail, okEmail, sendMail } from "../../../_lib/auth.js";
 import { ownerOf, computeResults, hasJudges } from "../../../_lib/contests.js";
 import { judgeProgress } from "../../../_lib/judging.js";
+import { teamChanged } from "../../../_lib/changes.js";
 
 export async function inviteJudges(env, c, emails, origin = "https://socallights.app") {
   const have = new Set((await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all()).results.map((r) => r.email));
@@ -28,9 +29,9 @@ export async function onRequestGet({ params, request, env }) {
   return json({ judges: await judgeProgress(env, c, r), method: c.judge_method === "score" ? "score" : "pick" }, { headers: { "cache-control": "no-store" } });
 }
 
-export async function onRequestPost({ params, request, env }) {
+export async function onRequestPost({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
-  const { c, res } = await ownerOf(request, env, params.slug, getUser);
+  const { c, res, user } = await ownerOf(request, env, params.slug, getUser);
   if (res) return res;
   if (!hasJudges(c)) return err(400, "This contest has no judges. Judges are chosen when you create a contest.");
   if (c.announced) return err(400, "The winners are announced and the results are locked.");
@@ -39,15 +40,17 @@ export async function onRequestPost({ params, request, env }) {
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM judges WHERE contest_id = ?").bind(c.id).first();
   if (n + emails.length > 15) return err(400, "A contest can have up to 15 judges.");
   const added = await inviteJudges(env, c, emails);
+  if (added) await teamChanged(env, c, user, [{ label: "Judges", old: "", new: `Invited ${added} judge${added === 1 ? "" : "s"}` }], waitUntil);
   return json({ ok: true, added });
 }
 
-export async function onRequestDelete({ params, request, env }) {
+export async function onRequestDelete({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
-  const { c, res } = await ownerOf(request, env, params.slug, getUser);
+  const { c, res, user } = await ownerOf(request, env, params.slug, getUser);
   if (res) return res;
   if (c.announced) return err(400, "The winners are announced and the results are locked.");
   const id = new URL(request.url).searchParams.get("id") || "";
   await env.DB.batch(["judge_picks", "judge_scores", "judge_conflicts"].map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE contest_id = ? AND judge_id = ?`).bind(c.id, id)).concat(env.DB.prepare("DELETE FROM judges WHERE contest_id = ? AND id = ?").bind(c.id, id)));
+  await teamChanged(env, c, user, [{ label: "Judges", old: "", new: "Removed a judge" }], waitUntil);
   return json({ ok: true });
 }

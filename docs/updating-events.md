@@ -24,7 +24,12 @@ live database (the site itself redeploys on every push through Cloudflare Pages)
 
    To change only a few fields, a plain `UPDATE events SET start_date='…', end_date='…', status='confirmed', hours='…', updated_at=datetime('now') WHERE id='…';` is fine.
    Escape apostrophes by doubling them (`'Knott''s'`).
-3. **Removing an event:** `DELETE FROM events WHERE id='…';` — only when it's cancelled for good.
+3. **Cancelled or postponed:** do not delete the event. Show it with a tag so people who saved it find out:
+   `UPDATE events SET notice='cancelled', updated_at=datetime('now') WHERE id='…';` (or `'postponed'`). If the organizer later brings it back,
+   `UPDATE events SET notice='' WHERE id='…';`. A normal upsert never touches `notice`, so a sweep that refreshes an event's dates leaves an
+   organizer's or an earlier sweep's tag in place; clearing it is always an explicit statement like the one above. Cancelled events stay on the map
+   with a red tag and are left out of the weekly email. When a postponed event gets new dates, update the dates **and** clear the notice in the same file.
+4. **Removing an event:** `DELETE FROM events WHERE id='…';` — only when it's cancelled for good.
 4. Events that have ended disappear from the site automatically; don't delete them.
 
 ## Field rules

@@ -18,5 +18,11 @@ export async function onRequestGet({ request, env }) {
     q("SELECT s.id,s.name,s.status,s.city,s.start_date,s.end_date,s.created_at,s.hours,s.blurb,s.venue,s.url,s.free,s.price,s.event_id,e.notice FROM event_submissions s LEFT JOIN events e ON e.id = s.event_id WHERE lower(s.contact_email) = lower(?) ORDER BY s.created_at DESC LIMIT 50", user.email),
     q("SELECT slug, name, web, phone, area FROM installers WHERE owner_email = ?", user.email),
   ]);
+  // Who changed what on each home (the installer shares it once they have confirmed)
+  if (homes.length) {
+    const ids = homes.map((h) => h.id), ch = (await env.DB.prepare(`SELECT post_id, by_name, by_role, field, old, new, at FROM listing_changes WHERE post_id IN (${ids.map(() => "?").join(",")}) ORDER BY at DESC, rowid DESC LIMIT 300`).bind(...ids).all().catch(() => ({ results: [] }))).results;
+    const inst = (await env.DB.prepare(`SELECT p.id, i.name, i.slug, p.installer_confirmed AS ok FROM posts p JOIN installers i ON i.id = p.installer_id WHERE p.id IN (${ids.map(() => "?").join(",")})`).bind(...ids).all().catch(() => ({ results: [] }))).results;
+    for (const h of homes) { h.changes = ch.filter((c) => c.post_id === h.id).slice(0, 8); const i = inst.find((x) => x.id === h.id); h.inst = i ? { name: i.name, slug: i.slug, ok: !!i.ok } : null; }
+  }
   return json({ user: { email: user.email, name: user.name || "" }, drafts, contests, entries, homes, events, installers }, { headers: { "cache-control": "no-store" } });
 }

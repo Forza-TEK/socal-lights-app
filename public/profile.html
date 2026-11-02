@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102c">
+<link rel="stylesheet" href="/addflow.css?v=20261102d">
 </head>
 <body>
 <div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span></div></div>
@@ -42,16 +42,20 @@ const head = (h, add) => `<div class="sechead"><h2>${h}</h2>${add ? `<a class="b
 const fld = (k, l, v, ex = "") => `<label class="mf"><span>${l}</span><input data-k="${k}" value="${esc(v ?? "")}" ${ex}></label>`;
 const sel = (k, l, v, opts) => `<label class="mf"><span>${l}</span><select data-k="${k}">${opts.map(([a, b]) => `<option value="${a}" ${String(v) === a ? "selected" : ""}>${b}</option>`).join("")}</select></label>`;
 // A home you posted: edit, take down for the season, put back
+const ago = (at) => { const t = new Date(String(at || "").replace(" ", "T") + "Z").getTime(), m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " days ago"; };
+// The installer and the homeowner share a listing: say so, and show who changed which field
+const sharedLine = (h) => (h.inst ? `<div class="small" style="margin-top:4px">${h.inst.ok ? `Shared with <a href="/installer/${esc(h.inst.slug)}">${esc(h.inst.name)}</a>, who can edit it too and is emailed when you change it.` : `Waiting for <a href="/installer/${esc(h.inst.slug)}">${esc(h.inst.name)}</a> to confirm. Once they do, you both can edit this listing.`}</div>` : "") + (h.changes && h.changes[0] ? `<div class="small chgnote">Last change: <b>${esc(h.changes[0].by_name || "Someone")}</b> changed <b>${esc(h.changes[0].field)}</b> · ${esc(ago(h.changes[0].at))}</div>` : "");
+const chgList = (cs) => (cs && cs.length ? `<div class="chgbox"><b>Recent changes</b><ul class="chg">${cs.map((c) => `<li><span class="who">${esc(c.by_name || "Someone")}</span> changed <b>${esc(c.field)}</b>: <span class="was">${esc(c.old || "(blank)")}</span> &rarr; ${esc(c.new || "(blank)")} <span class="muted">· ${esc(ago(c.at))}</span></li>`).join("")}</ul></div>` : "");
 function homeRow(h) {
   const st = h.status === "approved" ? ["live", "On the map"] : h.status === "paused" ? ["", "Taken down for the season"] : h.status === "pending" ? ["warn", "In review"] : ["", h.status];
   const pro = h.poster_type === "installer";
-  return `<div class="rowi mrow" data-home="${esc(h.id)}"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status, st)}</span></div>
+  return `<div class="rowi mrow" data-home="${esc(h.id)}"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status, st)}</span>${sharedLine(h)}</div>
    <div class="acts">${h.status === "approved" || h.status === "paused" ? `<button class="btn out sm" type="button" data-medit>Edit</button><button class="btn out sm" type="button" data-hact="${h.status === "paused" ? "resume" : "pause"}">${h.status === "paused" ? "Put back on the map" : "Take down for the season"}</button>` : ""}</div>
    <form class="mform" hidden>${fld("title", "Display name", h.title, 'maxlength="90"')}<label class="mf"><span>About it</span><textarea data-k="desc" rows="3" maxlength="1200">${esc(h.descr || "")}</textarea></label>${fld("where", "Tips for visitors", h.where_txt, 'maxlength="120"')}
     ${fld("lights_on", "Lights are on", h.lights_on, 'maxlength="60" placeholder="e.g. 5 to 10 pm nightly"')}${sel("visit", "How to see it", h.visit || "", [["", "Not sure"], ["drive", "Drive by"], ["walk", "Walk by"], ["both", "Drive or walk"]])}${sel("parking", "Parking", h.parking || "", [["", "Not listed"], ["free", "Free parking nearby"], ["street", "Street parking"], ["none", "Hard to park"]])}
     <label class="mf chk"><input type="checkbox" data-k="accessible" ${h.accessible ? "checked" : ""}> <span>Stroller and wheelchair friendly</span></label>${fld("radio", "Radio station for the music", h.radio, 'maxlength="40" placeholder="e.g. 88.1 FM"')}
     ${pro ? fld("web", "Website", h.web, 'maxlength="200"') + fld("phone", "Phone for quotes", h.phone, 'maxlength="80"') + fld("area", "Service area", h.service_area, 'maxlength="120"') : ""}
-    <p class="err" role="alert" hidden></p><div class="acts"><button class="btn sm" type="submit">Save</button><button class="btn out sm" type="button" data-mcancel>Cancel</button></div></form></div>`;
+    ${chgList(h.changes)}<p class="err" role="alert" hidden></p><div class="acts"><button class="btn sm" type="submit">Save</button><button class="btn out sm" type="button" data-mcancel>Cancel</button></div></form></div>`;
 }
 // An event you added: edit, cancelled or postponed tag, run again next year
 function eventRow(e) {

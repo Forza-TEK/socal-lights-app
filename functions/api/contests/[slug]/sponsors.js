@@ -2,6 +2,7 @@
 import { json, err, clean, webUrl, newId } from "../../../_lib/util.js";
 import { getUser, sameOrigin } from "../../../_lib/auth.js";
 import { ownerOf, getContest } from "../../../_lib/contests.js";
+import { teamChanged } from "../../../_lib/changes.js";
 
 const TIERS = ["presenting", "gold", "silver", "prize"];
 function sniff(bytes) {
@@ -19,9 +20,9 @@ export async function onRequestGet({ params, request, env }) {
   const h = new Headers(); obj.writeHttpMetadata(h); h.set("cache-control", "public, max-age=86400");
   return new Response(obj.body, { headers: h });
 }
-export async function onRequestPost({ params, request, env }) {
+export async function onRequestPost({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
-  const { c, res } = await ownerOf(request, env, params.slug, getUser);
+  const { c, res, user } = await ownerOf(request, env, params.slug, getUser);
   if (res) return res;
   const form = await request.formData().catch(() => null);
   if (!form) return err(400, "The form couldn't be read.");
@@ -40,15 +41,17 @@ export async function onRequestPost({ params, request, env }) {
     await env.PHOTOS.put(logo, buf, { httpMetadata: { contentType: t.type } });
   }
   await env.DB.prepare("INSERT INTO contest_sponsors (id, contest_id, name, tier, url, logo) VALUES (?,?,?,?,?,?)").bind(id, c.id, name, tier, url || "", logo).run();
+  await teamChanged(env, c, user, [{ label: "Sponsors", old: "", new: `Added ${name} (${tier})` }], waitUntil);
   return json({ ok: true, id });
 }
-export async function onRequestDelete({ params, request, env }) {
+export async function onRequestDelete({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
-  const { c, res } = await ownerOf(request, env, params.slug, getUser);
+  const { c, res, user } = await ownerOf(request, env, params.slug, getUser);
   if (res) return res;
   const id = new URL(request.url).searchParams.get("id") || "";
-  const row = await env.DB.prepare("SELECT logo FROM contest_sponsors WHERE id = ? AND contest_id = ?").bind(id, c.id).first();
+  const row = await env.DB.prepare("SELECT logo, name FROM contest_sponsors WHERE id = ? AND contest_id = ?").bind(id, c.id).first();
   if (row && row.logo) await env.PHOTOS.delete(row.logo);
   await env.DB.prepare("DELETE FROM contest_sponsors WHERE id = ? AND contest_id = ?").bind(id, c.id).run();
+  if (row) await teamChanged(env, c, user, [{ label: "Sponsors", old: row.name, new: "Removed" }], waitUntil);
   return json({ ok: true });
 }

@@ -38,5 +38,13 @@ Search the open web for each city one at a time, using the web search tool (neve
 - Venue and organizer angle: `"<city> chamber of commerce events"`, `"<city> library OR parks and recreation events December 2026"`, `"<city> Patch OR local news holiday events"`
 Budget about 6–10 searches per city (the web search allowance is shared within a run); put the most likely queries first and stop for a city once its results repeat. Accept a result only when it gives a date, a time and a place for 2026 (see the inclusion rule above); treat last year's pages as `expected` patterns only. Log each city's queries that found something and each city where nothing turned up, so the next run can try different words.
 
+## Cancellations and postponements (every sweep)
+While checking each event's source page, also look for the words cancelled, canceled, postponed, rescheduled or "no longer taking place".
+- Source says cancelled or postponed and the event has no tag: add `UPDATE events SET notice='cancelled'` (or `'postponed'`) in the sweep's migration (see `docs/updating-events.md`, rule 3).
+- Source shows a new date for a postponed event: update the dates and set `notice=''` in the same file.
+- Source says the event is back on: set `notice=''`.
+- An event whose organizer tagged it themselves (from their profile) is checked the same way; the organizer's tag is never cleared unless the source clearly shows the event is on.
+- Mention every cancellation or reinstatement in the sweep report.
+
 ## 9. Report
 List contests found, homes added/matched, photos set, pins fixed, and the pages that were blocked or had no addresses.

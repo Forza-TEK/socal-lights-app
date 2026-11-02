@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102c">
-<link rel="stylesheet" href="/contest.css?v=20261101h">
+<link rel="stylesheet" href="/addflow.css?v=20261102d">
+<link rel="stylesheet" href="/contest.css?v=20261102a">
 <style>main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
 </head>
 <body>
@@ -27,7 +27,7 @@ const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","
 const fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };
 const initials = (o) => (o.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("") || "EN").toUpperCase();
 $("#back").href = "/c/" + slug;
-let D = null, M = null, V = null, J = { judges: [] }, SF = { staff: [], owner: "" }, ST = { views: 0, qr: 0, shares: 0, votesByDay: [], voters: 0, leads: [] }, ME = "";
+let D = null, M = null, V = null, J = { judges: [] }, CH = [], SF = { staff: [], owner: "" }, ST = { views: 0, qr: 0, shares: 0, votesByDay: [], voters: 0, leads: [] }, ME = "";
 const CROWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>';
 const photoUrl = (k) => (k.startsWith("p/") ? "/api/photo/" + k : `/api/contests/${encodeURIComponent(slug)}/photo/${k}`);
 
@@ -35,9 +35,9 @@ async function load() {
   const i = await me(true);
   if (!i.user) { $("#app").innerHTML = `<div class="card center"><h1>Organizer sign-in</h1><p class="muted" style="max-width:44ch">Only the person who created this contest can see its entries and results.</p><button class="btn org" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to manage your contest", next: location.pathname })) { refreshAcct($("#acct")); load(); } }; return; }
   ME = (i.user.email || "").toLowerCase();
-  const [a, b, vv, jj, sf, st] = await Promise.all([fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/manage`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/votes`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/judges`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/staff`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/stats`, { cache: "no-store" })]);
+  const [a, b, vv, jj, sf, st, chr] = await Promise.all([fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/manage`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/votes`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/judges`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/staff`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/stats`, { cache: "no-store" }), fetch(`/api/contests/${encodeURIComponent(slug)}/changes`, { cache: "no-store" })]);
   if (!a.ok || !b.ok || !(D = await a.json()).me.isOwner) { $("#app").innerHTML = `<div class="card center"><h1>This isn't your contest</h1><p class="muted">You're signed in as ${esc(i.user.email)}. Sign in with the email you used to create the contest.</p><a class="btn" href="/">Back to the map</a></div>`; return; }
-  M = await b.json(); V = vv.ok ? await vv.json() : { votes: [], locked: false }; J = jj.ok ? await jj.json() : { judges: [] }; if (sf.ok) SF = await sf.json(); if (st.ok) ST = await st.json(); document.title = "Dashboard: " + D.contest.name; render();
+  M = await b.json(); V = vv.ok ? await vv.json() : { votes: [], locked: false }; J = jj.ok ? await jj.json() : { judges: [] }; if (sf.ok) SF = await sf.json(); if (st.ok) ST = await st.json(); if (chr.ok) CH = (await chr.json()).changes || []; document.title = "Dashboard: " + D.contest.name; render();
 }
 
 async function act(path, body, okMsg) {
@@ -71,6 +71,16 @@ function editCard() {
     ${fld("Official rules", `<textarea id="e-rules" rows="10" maxlength="4000" style="font:inherit;font-weight:400;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px">${esc(c.rules)}</textarea>`)}
     <p class="err" id="e-err" role="alert" hidden></p>
     <div><button class="btn org" type="submit">Save changes</button></div></form></details>`;
+}
+
+const ago = (at) => { const t = new Date(String(at || "").replace(" ", "T") + "Z").getTime(), m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " days ago"; };
+// The team sees who changed which setting
+function teamBanner() {
+  const c = CH.find((x) => (x.by_email || "").toLowerCase() !== ME); if (!c || Date.now() - new Date(c.at.replace(" ", "T") + "Z").getTime() > 7 * 86400000) return "";
+  return `<div class="status ok" style="display:block"><b>${esc(c.by_name || c.by_email)}</b> changed <b>${esc(c.field)}</b>${c.old || c.new ? `: <span style="text-decoration:line-through;opacity:.7">${esc(c.old || "(blank)")}</span> &rarr; ${esc(c.new || "(blank)")}` : ""} <span class="small muted">· ${esc(ago(c.at))}</span> <a href="#teamact">See all changes</a></div>`;
+}
+function teamCard() {
+  return `<div class="card" id="teamact"><h2 style="font-size:19px">What the team changed</h2><p class="muted small">Everyone who runs this contest is emailed when someone else changes a setting. Here is who changed what, newest first.</p>${CH.length ? `<ul class="chg" style="margin:0">${CH.map((c) => `<li><span class="who">${esc(c.by_name || c.by_email)}${(c.by_email || "").toLowerCase() === ME ? " (you)" : ""}</span> changed <b>${esc(c.field)}</b>${c.old || c.new ? `: <span class="was">${esc(c.old || "(blank)")}</span> &rarr; ${esc(c.new || "(blank)")}` : ""} <span class="muted">· ${esc(ago(c.at))}</span></li>`).join("")}</ul>` : `<p class="muted small">No changes yet.</p>`}</div>`;
 }
 
 // Co-organizers (only the creator can add or remove them)
@@ -128,6 +138,7 @@ function render() {
   $("#app").innerHTML = `${c.status !== "live" ? `<div class="status no"><span><b>Waiting for approval.</b> A person checks new contests, usually within a day. Your link and QR code already work, but the contest isn't on the map and entries are paused until then.</span></div>` : ""}
   <div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(c.org))}</div><div><h1>${esc(c.name)}</h1><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
   <div class="stats"><div class="stat"><b>${entries.length}</b><span>Entries</span></div><div class="stat"><b>${waiting}</b><span>Waiting for you</span></div><div class="stat"><b>${votes}</b><span>Votes</span></div></div>
+  ${teamBanner()}
   ${c.announced ? "" : `<ol class="steps" aria-label="Next steps">${[[entries.length > 0, "Share your link or QR code (Share it, below)"], [entries.length > 0 && !waiting, waiting ? `Approve the ${waiting} waiting ${waiting > 1 ? "entries" : "entry"}` : "Approve entries as they arrive"], [votes > 0, "Voting: neighbors vote for their favorites"], [false, "Announce the winners when voting ends"]].map(([d, t]) => `<li class="${d ? "done" : ""}">${d ? "✓ " : ""}${t}</li>`).join("")}</ol>`}
   ${waiting ? `<div class="status no">${waiting} ${waiting > 1 ? "entries need" : "entry needs"} your OK before ${waiting > 1 ? "they appear" : "it appears"} on the map. See Entries below.</div>` : ""}</div>
   <div class="grid2"><div class="card"><h2 style="font-size:19px">Controls</h2><p class="muted small">Dates run entries and voting by themselves. These buttons override them.</p><div>
@@ -141,7 +152,7 @@ function render() {
   ${judgesCard()}
   <div class="card"><h2 style="font-size:19px">Results${c.announced ? " (announced)" : " so far"}</h2>${preview}${results}<div class="actions"><a class="btn ghost" href="/api/contests/${encodeURIComponent(slug)}/export">Download results (spreadsheet)</a><button class="btn org" type="button" data-act="announce" ${c.announced || c.status !== "live" ? "disabled" : ""}>${c.announced ? "Winners announced" : "Close voting and announce winners"}</button></div><p class="small muted">You always see the full tally, even when it is hidden from the public. Announcing ends voting, locks the final results exactly as they are, shows everyone the winners and emails every entrant. Tied homes share the win.</p></div>
   ${pub ? `<details class="card" id="votecard"><summary style="cursor:pointer;font-size:19px;font-weight:600">Review individual votes <span class="small muted" style="font-weight:400">(${V.votes.length}${V.votes.some((v) => v.flags.length) ? ", " + V.votes.filter((v) => v.flags.length).length + " flagged" : ""})</span></summary><p class="muted small">Throwaway emails can't sign in. Suspicious patterns are flagged here, and you can void any vote. A voided vote stops counting right away and you can restore it${V.locked ? ". Results are locked now" : ""}.</p>${V.votes.length ? `<div class="tbl"><table><thead><tr><th>Voter</th><th>Vote</th><th>When</th><th></th></tr></thead><tbody>${V.votes.map((v) => `<tr><td${v.voided ? ' style="text-decoration:line-through"' : ""}>${esc(v.email)}</td><td>${esc(v.category)} → ${esc(v.entry)}${v.flags.length ? `<br><span class="pill p-wait">Flagged</span> <span class="small muted">${esc(v.flags[0])}</span>` : ""}${v.voided ? ' <span class="pill p-no">Voided</span>' : ""}</td><td class="small muted">${esc(v.at)}</td><td>${V.locked ? "" : `<button class="btn ghost sm" data-void="${esc(v.id)}:${v.voided ? 0 : 1}" type="button">${v.voided ? "Restore" : "Void"}</button>`}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">No votes yet.</p>`}</details>` : ""}
-  ${statsCard()}${sponsorsCard()}${staffCard()}${againCard()}`;
+  ${teamCard()}${statsCard()}${sponsorsCard()}${staffCard()}${againCard()}`;
   const ivf = $("#inviteform"); if (ivf) ivf.onsubmit = async (ev) => { ev.preventDefault(); const er = $("#iv-err"); er.hidden = true; const r = await asj("invite", "POST", { emails: $("#iv-list").value, note: $("#iv-note").value }), j = await r.json().catch(() => ({})); if (!r.ok) { er.textContent = j.error || "That didn't send."; er.hidden = false; return; } toast(`Sent ${j.sent} of ${j.count} invitation${j.count === 1 ? "" : "s"}.`); $("#iv-list").value = ""; };
   const ra = $("#runagain"); if (ra) ra.onclick = async () => { if (!ra.dataset.sure) { ra.dataset.sure = "1"; ra.textContent = "Tap again to create next year's contest"; return; } ra.disabled = true; const r = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "clone" }) }), j = await r.json().catch(() => ({})); if (!r.ok) { ra.disabled = false; toast(j.error || "That didn't work."); return; } toast("New contest created."); location.href = "/c/" + j.slug + "/manage"; };
   const nj = $("#nudgejudges"); if (nj) nj.onclick = async () => { nj.disabled = true; const r = await asj("nudge", "POST"), j = await r.json().catch(() => ({})); nj.disabled = false; toast(r.ok ? `Reminded ${j.sent} judge${j.sent === 1 ? "" : "s"}.` : (j.error || "That didn't work.")); };

@@ -592,10 +592,16 @@ const noticeTag = (ev) => (ev.nt ? `<span class="tag cancel">${ev.nt === "cancel
 // What families need to know about a home: when it is lit, how to see it, parking, access, the radio station
 const VISIT = { drive: "Drive by", walk: "Walk by", both: "Drive or walk" }, PARK = { free: "Free parking nearby", street: "Street parking", none: "Hard to park" };
 const homeChips = (p) => [p.lon && "Lights on " + p.lon, VISIT[p.visit], p.radio && "Tune to " + p.radio, p.acc && "Stroller friendly", PARK[p.parking]].filter(Boolean);
-const homeTags = (p, n = 3) => { const c = homeChips(p).slice(0, n); return c.length || p.tonight ? `<div class="tags">${p.tonight ? `<span class="tag conf">Lit tonight · ${p.tonight}</span>` : ""}${c.map((t) => `<span class="tag ice">${esc(t)}</span>`).join("")}</div>` : ""; };
+const homeTags = (p, n = 3) => { const c = homeChips(p).slice(0, n); return c.length || p.tonight ? `<div class="tags">${p.tonight ? `<span class="tag conf">${p.tonightNear ? "Seen lit on site tonight" : "Reported lit tonight"} · ${p.tonight}</span>` : ""}${c.map((t) => `<span class="tag ice">${esc(t)}</span>`).join("")}</div>` : ""; };
 // "Lights are on tonight": one tap from a visitor, counted per night
 const nightKey = (p) => "scl-on-" + p.id + "-" + new Date().toLocaleDateString("en-CA");
-const onButton = (p) => { let done = false; try { done = !!localStorage.getItem(nightKey(p)); } catch {} return `<button class="onbtn${done ? " done" : ""}" type="button" data-lightson="${esc(p.id)}" ${done ? "disabled" : ""}><span aria-hidden="true">💡</span> ${done ? "Thanks, noted as lit" : "I saw it lit tonight"}${p.tonight ? ` <b>${p.tonight} tonight</b>` : ""}</button>`; };
+const onButton = (p) => { let done = false; try { done = !!localStorage.getItem(nightKey(p)); } catch {} return `<button class="onbtn${done ? " done" : ""}" type="button" data-lightson="${esc(p.id)}" ${done ? "disabled" : ""}><span aria-hidden="true">💡</span> ${done ? "Thanks, noted as lit" : "I saw it lit tonight"}${p.tonight ? ` <b>${p.tonight} tonight</b>` : ""}</button>${done ? "" : `<p class="onhint">If you share your location we mark it "seen on site" when you are within about a quarter mile. Otherwise it counts as a report.</p>`}`; };
+// Where you are right now, only if you allow it (asked when you tap, never before)
+const whereNow = () => new Promise((res) => {
+  if (!navigator.geolocation) return res(null);
+  const go = () => navigator.geolocation.getCurrentPosition((q) => res({ lat: q.coords.latitude, lng: q.coords.longitude }), () => res(null), { timeout: 6000, maximumAge: 120000 });
+  try { navigator.permissions ? navigator.permissions.query({ name: "geolocation" }).then((r) => (r.state === "denied" ? res(null) : go())).catch(go) : go(); } catch { go(); }
+});
 // Installer attribution: a home installed by a professional links to that company's profile page
 const instLink = (p) => (p.inst ? `<a class="instlink" href="/installer/${esc(p.inst.slug)}">${esc(p.inst.name)}</a>` : "");
 const byLine = (p) => (p.kind === "installer" ? (p.inst ? instLink(p) : esc(p.biz)) : "Posted by " + esc(p.biz));
@@ -733,9 +739,9 @@ $("#pbody").addEventListener("click", (e) => {
   const sh = e.target.closest("[data-share]"); if (sh) { e.stopPropagation(); shareItem(sh.dataset.share); }
   const lo = e.target.closest("[data-lightson]"); if (lo && !lo.disabled) {
     e.stopPropagation(); const id = lo.dataset.lightson; lo.disabled = true;
-    fetch("/api/posts/" + encodeURIComponent(id) + "/on", { method: "POST" }).then((r) => r.json()).then((j) => {
+    whereNow().then((pos) => fetch("/api/posts/" + encodeURIComponent(id) + "/on", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pos || {}) })).then((r) => r.json()).then((j) => {
       try { const p = SHOW.find((x) => x.id === id); if (p) { try { localStorage.setItem(nightKey(p), "1"); } catch {} p.tonight = j.n || 1; } } catch {}
-      lo.classList.add("done"); lo.innerHTML = `<span aria-hidden="true">💡</span> Thanks, noted as lit <b>${j.n || 1} tonight</b>`; toast("Thanks. Other families will see it's lit.");
+      lo.classList.add("done"); lo.innerHTML = `<span aria-hidden="true">💡</span> Thanks, noted as lit <b>${j.n || 1} tonight</b>`; const hint = lo.nextElementSibling; if (hint && hint.classList.contains("onhint")) hint.remove(); toast(j.mine ? "Thanks. Marked as seen on site." : "Thanks. Other families will see it's lit.");
     }).catch(() => { lo.disabled = false; toast("Couldn't send that. Try again."); });
   }
 });

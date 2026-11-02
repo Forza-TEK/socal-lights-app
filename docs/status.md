@@ -27,6 +27,12 @@ New homes and events publish immediately (spam words and daily caps hold them); 
 - **Tutorials page:** videos in a grid, coming-soon items as compact rows.
 - Still needs a person: test Google sign-in inside the Android app (checklist item).
 
+## Shared editing, change logs, cancellations, on-site reports (2026-11-02, migration 0143)
+- **Homeowner and installer share a listing.** Once the installer confirms they installed a home, the installer's profile owner can edit it too (the homeowner alone can take it down or put it back). Every edit is saved as "who changed which field, from what to what" (`listing_changes`) and the other side is emailed. Shown on the homeowner's Profile > Displays and the installer's manage page, with a "Last change" line.
+- **Contest team change log.** Edits, switches (entries, voting, counts), Start voting, announcing, sponsors, judges and co-organizers are saved in `contest_changes`; the others on the team are emailed, the dashboard shows a banner for the latest change by someone else and a "What the team changed" card.
+- **Cancellations in sweeps.** Sweeps set `notice` with an UPDATE (rules in `docs/updating-events.md` rule 3 and `docs/sweep-methods.md`); upserts never touch it.
+- **"I saw it lit tonight"** is self-reported. If the visitor allows location and is within about a quarter mile of the home it counts as "seen lit on site"; the card says Reported or Seen on site.
+
 ## Where we are
 Site is live at https://socallights.app. Event data is being maintained through weekly sweeps (see the latest `migrations/00NN_sweep_*` files and `docs/confirmation-plan.md`). The repository moved from the personal GitHub account to the `Forza-TEK` org on 2026-10-27.
 
