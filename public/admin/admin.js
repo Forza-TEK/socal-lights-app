@@ -69,7 +69,7 @@ async function render() {
     const waiting = await api("/api/admin/posts?status=" + tab), declined = tab === "pending" ? await api("/api/admin/posts?status=declined") : [];
     if (tab === "pending") setCount("pending", waiting.length);
     const showing = tab === "pending" && PVIEW === "declined" ? declined : waiting;
-    const bar = toolbar({ views: tab === "pending" ? [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "declined", label: "Declined", n: declined.length }] : [], active: PVIEW, search: { placeholder: "Search houses, people, cities" }, count: String(showing.length) });
+    const bar = toolbar({ views: tab === "pending" ? [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "declined", label: "Declined", n: declined.length }] : [], active: PVIEW, search: { placeholder: "Search houses, people, cities" }, right: dl("houses" + (tab === "pending" ? (PVIEW === "declined" ? "&status=declined" : "&status=pending") : "&status=approved")), count: String(showing.length) });
     const go = () => { wireToolbar(main, { onView: (v) => { PVIEW = v; render(); }, onSearch: (q) => filterCards(main, q) }); applyPreset(main); };
     if (!showing.length) { main.innerHTML = bar + `<div class="empty">${tab !== "pending" ? "No published houses yet." : PVIEW === "declined" ? "Nothing declined." : "Nothing waiting for review."}</div>`; go(); return; }
     const bulk = tab === "pending" && PVIEW !== "declined" ? `<div class="bulk" id="bulk"><label class="chk"><input type="checkbox" id="selAll"> Select all</label><span class="grow"></span><span class="meta" id="selN"></span><button class="btn ice" type="button" id="bulkGo" hidden></button><button class="btn ghost" type="button" id="bulkClear" hidden>Clear</button></div>` : "";
@@ -133,6 +133,8 @@ function askReason({ title, hint, go = "Decline" }) {
     $("#rsForm").onsubmit = (e) => { e.preventDefault(); end($("#rs-t").value.trim()); }; $("#rs-t").focus();
   });
 }
+// A "Download CSV" link for a list (spreadsheet)
+const dl = (q, label = "Download CSV") => `<a class="btn ghost" href="/api/admin/export?type=${q}" download>${label}</a>`;
 // Edit-form building blocks: sections with a heading, fields on a 6-column grid (c2 c3 c4 c6 = how many columns wide)
 const fsec = (title, desc, inner, o = {}) => `<fieldset class="fsec"${o.id ? ` id="${o.id}"` : ""}${o.hide ? " hidden" : ""}><legend>${title}</legend>${desc ? `<p class="fdesc">${desc}</p>` : ""}<div class="fgrid">${inner}</div></fieldset>`;
 const ff = (id, label, control, o = {}) => `<div class="ff ${o.c || "c6"}"${o.id ? ` id="${o.id}"` : ""}${o.hide ? " hidden" : ""}><label for="${id}">${label}</label>${control}${o.hint ? `<small class="fhint">${o.hint}</small>` : ""}</div>`;
@@ -287,7 +289,7 @@ async function renderContests() {
   setCount("contests", n.look);
   if (!CVIEW || (CVIEW === "look" && !n.look)) CVIEW = n.look ? "look" : n.live ? "live" : n.ended ? "ended" : "declined";
   const list = g(CVIEW);
-  const bar = toolbar({ views: [{ k: "look", label: "Needs a look", n: n.look }, { k: "live", label: "Live", n: n.live }, { k: "ended", label: "Ended", n: n.ended }, { k: "declined", label: "Unpublished", n: n.declined }], active: CVIEW, search: { placeholder: "Search contests, organizers", value: CSEARCH }, count: String(list.length) });
+  const bar = toolbar({ views: [{ k: "look", label: "Needs a look", n: n.look }, { k: "live", label: "Live", n: n.live }, { k: "ended", label: "Ended", n: n.ended }, { k: "declined", label: "Unpublished", n: n.declined }], active: CVIEW, search: { placeholder: "Search contests, organizers", value: CSEARCH }, right: dl("contests"), count: String(list.length) });
   const wire = () => { wireToolbar(main, { onView: (v) => { CVIEW = v; renderContests(); }, onSearch: (q) => { CSEARCH = q; filterCards(main, q); } }); if (CSEARCH) filterCards(main, CSEARCH); applyPreset(main); };
   if (!list.length) { main.innerHTML = bar + `<div class="empty">${CVIEW === "look" ? "Nothing needs a look. New contests go live right away. One shows here when the organizer's email could not be matched to a website." : "No contests here."}</div>`; wire(); return; }
   main.innerHTML = bar + `<div class="cards">${list.map((c) => {
@@ -326,7 +328,7 @@ async function renderEvents() {
   EVENTS = await (await fetch("/api/events?all=1", { cache: "no-store" })).json();
   const main = $("#main");
   const seasonSel = `<select id="evSeason" aria-label="Season">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === evSeason ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`;
-  main.innerHTML = toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: seasonSel, add: { id: "addEv", label: "Add an event" }, count: "" }) + `<div id="evlist"></div>`;
+  main.innerHTML = toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: seasonSel + `<a class="btn ghost" id="evDl" href="/api/admin/export?type=events&season=${evSeason}" download>Download CSV</a>`, add: { id: "addEv", label: "Add an event" }, count: "" }) + `<div id="evlist"></div>`;
   const paint = () => {
     const w = EVQ.toLowerCase().split(/\s+/).filter(Boolean);
     const all = EVENTS.filter((e) => (e.sn || "christmas") === evSeason && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x)));
@@ -342,7 +344,7 @@ async function renderEvents() {
   };
   paint();
   wireToolbar(main, { onSearch: (q) => { EVQ = q; EVLIMIT = 60; paint(); } });
-  $("#evSeason").onchange = (x) => { evSeason = x.target.value; EVLIMIT = 60; paint(); };
+  $("#evSeason").onchange = (x) => { evSeason = x.target.value; EVLIMIT = 60; $("#evDl").href = "/api/admin/export?type=events&season=" + evSeason; paint(); };
   $("#addEv").onclick = () => editEvent(null);
 }
 function editEvent(ev) {
@@ -454,7 +456,7 @@ async function openUser(id) {
 
 
 /* ---------- activity log (what the admin tools were used for) ---------- */
-const VERB = { photo_remove: "removed a photo from", photo_move: "reordered the photos of", dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for" };
+const VERB = { restore: "restored", photo_remove: "removed a photo from", photo_move: "reordered the photos of", dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for" };
 const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", normalize: "data check" };
 let LOG = { area: "", offset: 0 };
 async function renderLog() {
@@ -501,7 +503,7 @@ async function renderInstallers() {
   INST = await api("/api/admin/installers");
   setCount("installers", INST.length);
   if (!INST.length) { main.innerHTML = `<div class="empty">No installer profiles yet. One appears when an installer posts a display or a homeowner names the company that installed their lights.</div>`; return; }
-  main.innerHTML = toolbar({ search: { placeholder: "Search installers" }, count: String(INST.length) }) + `<div class="cards">${INST.map((i) => rec({
+  main.innerHTML = toolbar({ search: { placeholder: "Search installers" }, right: dl("installers"), count: String(INST.length) }) + `<div class="cards">${INST.map((i) => rec({
     attrs: `data-iid="${esc(i.id)}"`, title: esc(i.name), tags: [i.status === "hidden" ? ["Hidden", "bad"] : ["Active", "ok"], ...(i.unconfirmed ? [[i.unconfirmed + " not confirmed", "warn"]] : [])],
     meta: `${i.homes} home${i.homes === 1 ? "" : "s"} · <a href="/installer/${esc(i.slug)}" target="_blank" rel="noopener">view page</a>`,
     facts: fact("Website", esc(i.web)) + fact("Phone", esc(i.phone)) + fact("Service area", esc(i.area)) + fact("Confirmation email", esc(i.email)) + fact("Owner", esc(i.owner_email)),
@@ -598,6 +600,14 @@ const DI = {
 const dico = (k, cls = "ico") => `<span class="${cls}" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${DI[k]}</svg></span>`;
 // Several identical actions in a row (six photo reorders) show as one line with a count
 const collapse = (list) => { const out = []; for (const e of list) { const l = out[out.length - 1]; if (l && l.action === e.action && l.area === e.area && l.label === e.label && l.admin === e.admin) l.n++; else out.push({ ...e, n: 1 }); } return out.slice(0, 8); };
+const PAGE_NAMES = { map: "The map", contest: "Contest pages", "contest-manage": "Contest dashboards", "contest-enter": "Contest entry forms", "contest-judge": "Judge ballots", installer: "Installer pages", "installer-manage": "Installer dashboards", city: "City pages", tutorials: "Tutorials", profile: "Your profile", add: "The Add page", "add-event": "Add an event", "add-house": "Add a display", "add-contest": "Add a contest", contests: "The Contests page", privacy: "Privacy", terms: "Terms", feature: "Feature your event" };
+// A small area chart for one number per day: faint grid, a line, a dot on the latest day
+function spark(vals, days, label) {
+  const W = 320, H = 84, pad = 8, max = Math.max(1, ...vals), x = (i) => pad + (i * (W - 2 * pad)) / (vals.length - 1), y = (v) => H - pad - (v / max) * (H - 2 * pad);
+  const pts = vals.map((v, i) => [x(i), y(v)]), line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" "), area = `${line} L${pts[pts.length - 1][0].toFixed(1)} ${H - pad} L${pts[0][0].toFixed(1)} ${H - pad} Z`, last = pts[pts.length - 1];
+  const md = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}: ${vals.join(", ")} from ${md(days[0])} to ${md(days[days.length - 1])}" preserveAspectRatio="none"><title>${esc(label)}</title>${[0, .5, 1].map((t) => `<line x1="${pad}" x2="${W - pad}" y1="${(pad + t * (H - 2 * pad)).toFixed(1)}" y2="${(pad + t * (H - 2 * pad)).toFixed(1)}" class="sg"/>`).join("")}<path d="${area}" class="sa"/><path d="${line}" class="sl" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="4" class="sd"/></svg><div class="sx"><span>${md(days[0])}</span><span>${md(days[days.length - 1])}</span></div>`;
+}
 async function renderDashboard() {
   const main = $("#main"), d = await api("/api/admin/dashboard");
   const a = d.attention, todo = [
@@ -615,6 +625,9 @@ async function renderDashboard() {
     <div class="stats">${tile("h", d.live.homes, "published houses")}${tile("e", d.live.events, "map events")}${tile("c", d.live.contests, "contests running")}${tile("i", d.live.installers, "installers")}</div>
     <h2 class="dh">People, last 7 days</h2>
     <div class="stats">${tile("u", d.people.users, "accounts in total")}${tile("n", d.people.newUsers, "new accounts")}${tile("v", d.people.votesWeek, "contest votes")}${tile("p", d.people.hits, "installer profile views")}</div>
+    <h2 class="dh">Last 14 days</h2>
+    <div class="trends">${[["New houses", d.trends.houses], ["Contest votes", d.trends.votes], ["New accounts", d.trends.accounts], ["Page views", d.trends.views]].map(([t, v]) => { const sum = v.reduce((a, b) => a + b, 0), prev = v.slice(0, 7).reduce((a, b) => a + b, 0), now = v.slice(7).reduce((a, b) => a + b, 0), ch = prev ? Math.round(((now - prev) / prev) * 100) : null; return `<div class="tr"><div class="trh"><span>${t}</span>${ch == null ? "" : `<span class="chg ${ch >= 0 ? "up" : "dn"}" title="Last 7 days compared with the 7 days before">${ch >= 0 ? "+" : ""}${ch}%</span>`}</div><b>${fmt(sum)}</b>${sum || t !== "Page views" ? spark(v, d.trends.days, t) : '<p class="meta" style="margin:8px 0 0">Counting starts now. Visits appear here as people open pages.</p>'}</div>`; }).join("")}</div>
+    ${d.trends.topPages.length ? `<h2 class="dh">Most visited pages, last 14 days</h2><ul class="dl toppg">${d.trends.topPages.map((p) => `<li><div class="dli" style="cursor:default"><span class="dt"><b>${esc(PAGE_NAMES[p.page.replace(/^\/+/, "")] || p.page.replace(/^\/+/, "").replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase()))}</b></span><span class="meta">${fmt(p.n)} view${p.n === 1 ? "" : "s"}</span></div></li>`).join("")}</ul>` : ""}
     <div class="dcols">
       <section class="dbox"><h2 class="dh">Newest submissions</h2>${d.recent.length ? `<ul class="dl">${d.recent.map((r) => `<li><button type="button" class="dli" data-recent="${esc(r.kind)}" data-id="${esc(r.id)}" data-eid="${esc(r.eid || "")}" data-st="${esc(r.status)}" data-name="${esc(r.name)}">${dico(r.kind === "event" ? "event" : r.pro ? "pro" : "home")}<span class="dt"><b>${esc(r.name)}</b><small>${esc(r.city || "")} · ${r.kind === "event" ? "event" : r.pro ? "installer post" : "house"} · ${agoShort(r.at)}</small></span><span class="tag ${r.status === "pending" ? "warn" : r.status === "approved" || r.status === "published" ? "ok" : ""}">${esc(r.status)}</span></button></li>`).join("")}</ul>` : `<div class="empty">Nothing submitted yet.</div>`}</section>
       <section class="dbox"><h2 class="dh">Contests running</h2>${d.contests.length ? `<ul class="dl">${d.contests.map((c) => `<li><a class="dli" href="/c/${esc(c.slug)}" target="_blank" rel="noopener">${dico("trophy")}<span class="dt"><b>${esc(c.name)}</b><small>${esc(c.city)} · ${fmt(c.entries)} ${c.entries === 1 ? "entry" : "entries"} · ${fmt(c.votes)} ${c.votes === 1 ? "vote" : "votes"} · voting ends ${shortDate(c.vote_end)}</small></span></a></li>`).join("")}</ul>` : `<div class="empty">No contest is running right now.</div>`}

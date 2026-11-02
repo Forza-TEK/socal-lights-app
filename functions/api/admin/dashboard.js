@@ -34,7 +34,19 @@ export async function onRequestGet({ env }) {
     rows("SELECT at, admin, area, action, label FROM admin_log ORDER BY id DESC LIMIT 40"),
   ]);
   const recent = [...recentHomes.map((r) => ({ kind: "home", id: r.id, name: r.name, city: r.city, status: r.status, at: r.created_at, pro: r.poster_type === "installer" })), ...recentEvents.map((r) => ({ kind: "event", id: r.id, eid: r.event_id || "", name: r.name, city: r.city, status: r.status, at: r.created_at }))].sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 10);
+  // The last 14 days (Pacific dates, oldest first): new houses, votes, new accounts and page views per day
+  const days = Array.from({ length: 14 }, (_, k) => new Date(Date.now() - 8 * 3600_000 - (13 - k) * 86400000).toISOString().slice(0, 10));
+  const series = async (sql, ...b) => { const m = Object.fromEntries((await rows(sql, ...b)).map((r) => [r.d, r.n])); return days.map((d) => m[d] || 0); };
+  const since = days[0] + " 08:00:00";
+  const [tHouses, tVotes, tAccounts, tViews] = await Promise.all([
+    series("SELECT date(datetime(created_at, '-8 hours')) AS d, COUNT(*) AS n FROM posts WHERE contest_id IS NULL AND created_at >= ? GROUP BY d", since),
+    series("SELECT date(datetime(created_at, '-8 hours')) AS d, COUNT(*) AS n FROM votes WHERE created_at >= ? GROUP BY d", since),
+    series("SELECT date(datetime(created_at, '-8 hours')) AS d, COUNT(*) AS n FROM users WHERE created_at >= ? GROUP BY d", since),
+    series("SELECT day AS d, SUM(n) AS n FROM site_hits WHERE day >= ? GROUP BY day", days[0]),
+  ]);
+  const topPages = await rows("SELECT page, SUM(n) AS n FROM site_hits WHERE day >= ? GROUP BY page ORDER BY n DESC LIMIT 6", days[0]);
   return json({
+    trends: { days, houses: tHouses, votes: tVotes, accounts: tAccounts, views: tViews, topPages },
     attention: { waitHomes, waitEvents, waitContests, reports, claims },
     today: { homes: homesToday, events: subsToday, entries: entriesToday },
     live: { homes: homesLive, events: eventsLive, contests: contestsLive, installers },
