@@ -44,9 +44,10 @@ export async function record(spec) {
   const say = spec.steps.map((s) => s.say || ""); writeFileSync(w + "/texts.json", JSON.stringify(say));
   // Voice files are cached by text, so re-recording a video only speaks the lines that changed
   const cacheDir = `${WORK}/tts`; mkdirSync(cacheDir, { recursive: true });
-  const keyOf = (t) => createHash("sha1").update("hfc_female-" + (process.env.LENGTH_SCALE || "1.0") + "|" + t).digest("hex");
+  const spoken = (t) => t.replaceAll("SoCal", "So Cal"); // said as two words; captions keep the brand spelling
+  const keyOf = (t) => createHash("sha1").update("hfc_female-" + (process.env.LENGTH_SCALE || "1.0") + "|" + spoken(t)).digest("hex");
   const todo = [...new Set(say.filter((t) => t && !existsSync(`${cacheDir}/${keyOf(t)}.wav`)))];
-  if (todo.length) { mkdirSync(w + "/wav", { recursive: true }); writeFileSync(w + "/todo.json", JSON.stringify(todo));
+  if (todo.length) { mkdirSync(w + "/wav", { recursive: true }); writeFileSync(w + "/todo.json", JSON.stringify(todo.map(spoken)));
     const r = spawnSync("python3", [new URL("./tts.py", import.meta.url).pathname, VOICE, w + "/todo.json", w + "/wav"], { stdio: "inherit" }); if (r.status) throw new Error("tts failed");
     todo.forEach((t, i) => copyFileSync(`${w}/wav/${i}.wav`, `${cacheDir}/${keyOf(t)}.wav`)); }
   say.forEach((t, i) => { if (t) copyFileSync(`${cacheDir}/${keyOf(t)}.wav`, `${w}/wav/${i}.wav`); });
