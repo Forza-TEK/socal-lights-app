@@ -88,8 +88,8 @@ S.team = { id: "team", file: "run-team", cookie: ck.u_org, ...MAPSPEC, steps: [
   target("Tap Team", "Tap Team. Co-organizers get the same dashboard you have.", nav("team"), { after: 1400 }),
   { cap: "Add a co-organizer", say: "Type their email, and tap Add co-organizer.", do: async (p, h) => { await h.scrollTo("#newstaff", 260); await h.type("#newstaff", "helper@example.com"); }, target: "#addstaff", after: 1800, poster: true },
   emailScene(mails.coorg, "They get an email like this one, with one button to open the dashboard.", "helper@example.com"),
-  { cap: "Back to the dashboard", say: "", do: async (p, h) => { await p.goto(BASE + `/c/${SLUG}/manage#judges`, { waitUntil: "networkidle" }); await sleep(1200); }, pad: 0.1 },
-  { cap: "Add a judge", say: "Judges are added on the Judges tab. Type a judge's email, and tap Add judge.", do: async (p, h) => { await h.scrollTo("#newjudge", 260); await h.type("#newjudge", "judge4@example.com"); }, target: "button:has-text('Add judge')", after: 1800 },
+  target("Tap Judges", "Judges are added on the Judges tab. Tap Judges.", nav("judges"), { after: 1400 }),
+  { cap: "Add a judge", say: "Type a judge's email, and tap Add judge.", do: async (p, h) => { await h.scrollTo("#newjudge", 260); await h.type("#newjudge", "judge4@example.com"); }, target: "button:has-text('Add judge')", after: 1800 },
   emailScene(mails.judge, "Your judge gets an invitation like this one, with a button that opens their ballot.", "judge4@example.com"),
   nextUp(ER, "Announce winners", "Close voting, announce, export results and see the archive"),
 ]};
