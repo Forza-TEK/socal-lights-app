@@ -30,7 +30,13 @@
           "url": "/tutorials/find-email.mp4",
           "length": "1:08",
           "captions": "/tutorials/find-email.vtt",
-          "poster": "/tutorials/find-email.jpg"
+          "poster": "/tutorials/find-email.jpg",
+          "mobile": {
+            "url": "/tutorials/find-email-mobile.mp4",
+            "poster": "/tutorials/find-email-mobile.jpg",
+            "captions": "/tutorials/find-email-mobile.vtt",
+            "length": "1:10"
+          }
         },
         {
           "id": "app",
@@ -39,7 +45,13 @@
           "url": "/tutorials/find-app.mp4",
           "length": "0:46",
           "captions": "/tutorials/find-app.vtt",
-          "poster": "/tutorials/find-app.jpg"
+          "poster": "/tutorials/find-app.jpg",
+          "mobile": {
+            "url": "/tutorials/find-app-mobile.mp4",
+            "poster": "/tutorials/find-app-mobile.jpg",
+            "captions": "/tutorials/find-app-mobile.vtt",
+            "length": "0:46"
+          }
         },
         {
           "id": "contests",
@@ -73,7 +85,13 @@
           "url": "/tutorials/enter.mp4",
           "length": "1:27",
           "captions": "/tutorials/enter.vtt",
-          "poster": "/tutorials/enter.jpg"
+          "poster": "/tutorials/enter.jpg",
+          "mobile": {
+            "url": "/tutorials/enter-mobile.mp4",
+            "poster": "/tutorials/enter-mobile.jpg",
+            "captions": "/tutorials/enter-mobile.vtt",
+            "length": "1:31"
+          }
         },
         {
           "id": "edit-entry",

@@ -26,7 +26,9 @@ const OVERLAY = `(() => {
 })();`;
 class Helper {
   constructor(page) { this.page = page; this.x = 200; this.y = 200; }
-  async move(sel, opt = {}) { const loc = typeof sel === "string" ? this.page.locator(sel).first() : sel; await loc.scrollIntoViewIfNeeded().catch(() => {}); const b = await loc.boundingBox(); if (!b) throw new Error("no box for " + sel);
+  async move(sel, opt = {}) { if (MOB && typeof sel === "string") sel = MSEL(sel); if (MOB && typeof sel === "string" && /data-k=/.test(sel) && !(await this.page.locator(sel).count()) && (await this.page.locator("#sh-more").count())) await this.click("#sh-more", { after: 900 }); // phone dashboards keep most sections behind More
+    if (MOB && typeof sel === "string" && /^#pbody|^\.panel|data-route|data-nroute/.test(sel) && await this.page.evaluate(() => { const p = document.querySelector(".panel"); return !!p && p.getBoundingClientRect().top > innerHeight * 0.45; })) await this.click('#bnav [data-tab="events"]', { after: 1200 }); // the list sheet is down: raise it
+    const loc = typeof sel === "string" ? this.page.locator(sel).first() : sel; await loc.scrollIntoViewIfNeeded().catch(() => {}); let b = await loc.boundingBox(); if (MOB && b && b.y > 600 && !/bnav/.test(String(sel)) && (await this.page.locator("#bnav").count())) { await this.click('#bnav [data-tab="events"]', { after: 1200 }); b = await loc.boundingBox(); } if (!b) throw new Error("no box for " + sel);
     await this.page.evaluate((b) => { let r = document.getElementById("__hl"); if (!r) { r = document.createElement("div"); r.id = "__hl"; document.body.appendChild(r); } const g = 6; r.style.left = b.x - g + "px"; r.style.top = b.y - g + "px"; r.style.width = b.width + 2 * g + "px"; r.style.height = b.height + 2 * g + "px"; }, b);
     const tx = b.x + (opt.fx ?? 0.5) * b.width, ty = b.y + (opt.fy ?? 0.5) * b.height; const sx = this.x, sy = this.y, n = Math.hypot(tx - sx, ty - sy) < 6 ? 0 : 38; // already pointing at it: no second glide
     for (let i = 1; i <= n; i++) { const t = i / n, e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; await this.page.mouse.move(sx + (tx - sx) * e, sy + (ty - sy) * e); await sleep(16); }
@@ -40,6 +42,11 @@ class Helper {
   async type(sel, text, opt = {}) { await this.click(sel, { after: 300 }); if (opt.fill) await this.page.fill(sel, text); else { if (opt.clear !== false) await this.page.fill(sel, ""); await this.page.type(sel, text, { delay: 85 }); } await sleep(opt.after ?? 900); }
   async hover(sel, ms = 1200) { await this.move(sel); await sleep(ms); await this.unring(); }
 }
+const MOB = process.env.MOBILE === "1"; // phone version: 9:16 Shorts, 1080 x 1920, the page itself at 360 x 640 and 3x
+const MOBCSS = `;(() => { const st = document.createElement("style"); st.textContent = "#__cur{display:none!important}#__cap{font-size:15px!important;padding:9px 14px!important;max-width:86vw!important;border-radius:10px!important}#__card{padding:18px!important}#__card img{width:72px!important;height:72px!important}#__card .wm{font-size:20px!important;margin-bottom:14px!important}#__card .ey{font-size:11px!important}#__card h1{font-size:30px!important;max-width:300px!important}#__card .ub{font-size:22px!important;padding:12px 18px!important;gap:8px!important;margin:18px 0 6px!important}#__card .ub svg{width:20px!important;height:20px!important}#__card ul{font-size:15px!important;max-width:290px!important}#__card li:before{top:7px!important;width:11px!important;height:11px!important}#__card p{font-size:14px!important;max-width:290px!important}"; const add = () => { if (!document.head) return setTimeout(add, 20); document.head.appendChild(st); }; add(); })();`;
+// On a phone the map screen is different: tabs are in the bottom bar and the list is a sheet that has to be raised first
+const MSEL = (x) => x.replace(/^#t-plan$/, '#bnav [data-tab="plan"]').replace(/^#t-events$/, '#bnav [data-tab="events"]');
+const needsSheet = (s) => /#pbody|\.panel|data-route|data-nroute|#t-plan/.test((s.target || "") + " " + (s.do ? s.do.toString() : "") + " " + (s.post ? s.post.toString() : ""));
 const DRY = process.env.DRY === "1"; // dry run: walk every step to check each button and link exists, with no voice and no video
 export async function record(spec) {
   const w = `${WORK}/${spec.id}`; mkdirSync(w + "/wav", { recursive: true });
@@ -55,13 +62,13 @@ export async function record(spec) {
   if (!DRY) say.forEach((t, i) => { if (t) copyFileSync(`${cacheDir}/${keyOf(t)}.wav`, `${w}/wav/${i}.wav`); });
   const soft = "highpass=f=70,lowpass=f=7000,equalizer=f=250:t=q:w=1:g=2.5,equalizer=f=5000:t=q:w=1:g=-2,aecho=0.8:0.4:35:0.1,loudnorm=I=-17:TP=-2:LRA=9";
   const audio = say.map((t, i) => { if (!t) return null; if (DRY) return { f: null, d: 0.3 }; const o = `${w}/wav/s${i}.wav`; execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${w}/wav/${i}.wav`, "-af", soft, "-ar", "44100", o]); return { f: o, d: dur(o) }; });
-  const vp = spec.phone ? { width: 390, height: 680 } : { width: 1280, height: 720 };
+  const vp = MOB ? { width: 360, height: 640 } : spec.phone ? { width: 390, height: 680 } : { width: 1280, height: 720 };
   const br = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
-  const SC = spec.phone ? 3 : 2; // device pixels per CSS pixel: desktop frames are 2560x1440, phone frames 1170x2040
-  const ctx = await br.newContext({ viewport: vp, deviceScaleFactor: SC, colorScheme: "light", hasTouch: false, isMobile: false, permissions: ["clipboard-read", "clipboard-write", ...(spec.geo && !spec.lateGeo ? ["geolocation"] : [])], geolocation: spec.geo });
+  const SC = MOB || spec.phone ? 3 : 2; // device pixels per CSS pixel: desktop frames are 2560x1440, phone frames 1170x2040
+  const ctx = await br.newContext({ viewport: vp, deviceScaleFactor: SC, colorScheme: "light", hasTouch: MOB, isMobile: MOB, permissions: ["clipboard-read", "clipboard-write", ...(spec.geo && !spec.lateGeo ? ["geolocation"] : [])], geolocation: spec.geo });
   const until = Date.now() + 864e5;
   await ctx.addInitScript(`try{localStorage.setItem("socal-theme","light");${spec.welcome ? "" : 'localStorage.setItem("socal-welcomed","1");'}localStorage.setItem("socal-theme-until","${until}")}catch(e){}`);
-  await ctx.addInitScript(OVERLAY.replaceAll("__BOT__", spec.phone ? "92" : "22"));
+  await ctx.addInitScript(OVERLAY.replaceAll("__BOT__", MOB ? "150" : spec.phone ? "92" : "22") + (MOB ? MOBCSS : ""));
   for (const rt of spec.routes || (spec.route ? [spec.route] : [])) await ctx.route(rt.url, (r) => r.fulfill({ json: rt.json })); // e.g. hide the Turnstile widget locally, or stand in for the mail service
   if (spec.cookie) await ctx.addCookies([{ name: "scl_session", value: spec.cookie, url: BASE }]);
   if (spec.warm) { const wp = await ctx.newPage(); await wp.goto(BASE + "/", { waitUntil: "networkidle" }); await sleep(2500); await wp.reload({ waitUntil: "networkidle" }); await sleep(3000); await wp.close(); } // lets the app's offline cache fill, like a phone that has used the app before
@@ -86,6 +93,8 @@ export async function record(spec) {
     await sleep(900);
     if (s.pre) await s.pre(page, h);
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
+    if (MOB && s.target && s.optional && await page.evaluate(() => { const p = document.querySelector(".panel"); return !!p && p.getBoundingClientRect().top > innerHeight * 0.45; })) { await h.click('#bnav [data-tab="events"]', { after: 1200 }); }
+    if (process.env.DBG && s.optional) console.log('optional', i, await page.evaluate(() => { const p = document.querySelector('.panel'); return p ? p.getBoundingClientRect().top + ' / ' + innerHeight : 'nopanel'; }), await page.locator(s.target).count());
     if (s.target && s.optional && !(await page.locator(s.target).count())) { s.target = null; } // an optional tap is skipped when its button is not there
     if (s.target) { try { await h.move(s.target); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } } // act first (typing, scrolling), then glide to the thing to tap
     { const bad = await page.evaluate(() => [...document.querySelectorAll(".err, [role=alert]")].filter((e) => e.offsetParent && /couldn.t|can.t|didn.t|enter a |should |invalid|wrong|try again|isn.t|not allowed|too many/i.test(e.textContent)).map((e) => e.textContent.trim()).join(" | ")).catch(() => ""); if (bad) { await page.screenshot({ path: `${w}/error-${i}.png` }); throw new Error(`The page showed an error on step ${i} (${s.cap || "card"}): ${bad}`); } } // a recording must never show a failed action
@@ -112,8 +121,8 @@ export async function record(spec) {
   const webm = null;
   const inputs = marks.flatMap((m) => ["-i", m.f]);
   const fc = marks.map((m, k) => `[${k + 1}:a]adelay=${Math.round(m.t * 1000)}|${Math.round(m.t * 1000)}[a${k}]`).join(";") + (marks.length ? ";" : "") + marks.map((_, k) => `[a${k}]`).join("") + `amix=inputs=${marks.length}:normalize=0[aout]`;
-  const vf = spec.phone ? "scale=-2:1380:flags=lanczos,pad=2560:1440:(ow-iw)/2:30:color=#fbf3ea" : "scale=2560:1440:flags=lanczos";
-  const mp4 = `${OUT}/${spec.file}.mp4`;
+  const vf = MOB ? "scale=1080:1920:flags=lanczos" : spec.phone ? "scale=-2:1380:flags=lanczos,pad=2560:1440:(ow-iw)/2:30:color=#fbf3ea" : "scale=2560:1440:flags=lanczos";
+  const mp4 = `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.mp4`;
   execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", w + "/frames.txt", ...inputs, "-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "23", "-preset", "medium", "-vf", vf + ",fps=30", "-r", "30", "-c:a", "aac", "-b:a", "160k", "-ac", "2", "-ar", "48000", "-t", String(total2), "-movflags", "+faststart", mp4], { stdio: "inherit" });
 
   // ---- Checks before a video counts as finished: it must open on the title card and the voice must already be speaking ----
@@ -130,8 +139,8 @@ export async function record(spec) {
   // Closed captions (WebVTT): each narration line, split by sentence, timed from where its voice starts
   const ts = (x) => { const m = Math.floor(x / 60), sec = x - m * 60; return `00:${String(m).padStart(2, "0")}:${sec.toFixed(3).padStart(6, "0")}`; };
   const cues = []; for (const m of marks) { const text = say[m.i], d = audio[m.i].d, parts = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text], total = parts.reduce((a, x) => a + x.length, 0); let at = m.t; for (const part of parts) { const len = d * part.length / total; cues.push(`${ts(at)} --> ${ts(at + len)}\n${part.trim()}`); at += len; } }
-  writeFileSync(`${OUT}/${spec.file}.vtt`, "WEBVTT\n\n" + cues.join("\n\n") + "\n");
-  if (poster !== null) execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", String(poster), "-i", mp4, "-frames:v", "1", "-q:v", "4", `${OUT}/${spec.file}.jpg`]);
+  writeFileSync(`${OUT}/${spec.file}${MOB ? "-mobile" : ""}.vtt`, "WEBVTT\n\n" + cues.join("\n\n") + "\n");
+  if (poster !== null) execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", String(poster), "-i", mp4, "-frames:v", "1", "-q:v", "4", `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.jpg`]);
   const L = dur(mp4); console.log(spec.file, "length", Math.floor(L / 60) + ":" + String(Math.round(L % 60)).padStart(2, "0"));
   writeFileSync(`${w}/script.txt`, say.filter(Boolean).join("\n\n")); rmSync(fdir, { recursive: true, force: true });
 }
