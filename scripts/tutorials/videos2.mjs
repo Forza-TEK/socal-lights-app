@@ -40,7 +40,7 @@ S.custom = { id: "custom", file: "run-custom", cookie: ck.u_org, ...MAPSPEC, ste
 ]};
 const preview = async (p, h, sel, ms) => { await p.evaluate(() => { window.print = () => {}; }); const y = await p.evaluate(() => scrollY); await h.click(sel, { after: 300 }); await p.emulateMedia({ media: "print" }); await p.evaluate(() => scrollTo(0, 0)); await sleep(ms / 2); await h.scroll(260, ms / 2); await sleep(300); await p.evaluate((y) => scrollTo(0, y), y); await p.emulateMedia({ media: null }); await p.evaluate(() => dispatchEvent(new Event("afterprint"))); await sleep(600); };
 S.share = { id: "share", file: "run-share", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ER, "Share your contest", "Link, QR code, poster, yard sign", "In two minutes, you will share your contest with your neighbors. We start on the map."),
+  hook(ER, "Share your contest", "Link, QR code, poster, yard sign", "In under two minutes, you will share your contest with your neighbors. We start on the map."),
   ...toDash(),
   { cap: "Share it", say: "On the Overview, find the card called Share it.", do: async (p, h) => { await h.scrollTo("text=Share it", 100); } },
   target("Tap Copy link", "Tap Copy link, then paste it into an email, a text, or a Facebook post.", "[data-copy]", { after: 1200, poster: true }),
@@ -53,7 +53,7 @@ S.share = { id: "share", file: "run-share", cookie: ck.u_org, ...MAPSPEC, steps:
   nextUp(ER, "Approve and decline entries", "Approve, decline with a reason, and undo a decline"),
 ]};
 S.approve = { id: "approve", file: "run-approve", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ER, "Approve and decline entries", "Review each home", "In two minutes, you will review the homes your neighbors entered. We start on the map."),
+  hook(ER, "Approve and decline entries", "Review each home", "In under two minutes, you will review the homes your neighbors entered. We start on the map."),
   ...toDash(),
   target("Tap Entries", "Tap Entries. Nothing goes on the map until you approve it.", nav("entries"), { after: 1500 }),
   target("Tap Approve", "Tap Approve to put a home in the contest, and on the map.", '[data-entry="approve:p_pend1"]', { after: 1800, poster: true }),
@@ -63,7 +63,7 @@ S.approve = { id: "approve", file: "run-approve", cookie: ck.u_org, ...MAPSPEC, 
   nextUp(ER, "Edit your contest and change the dates", "Change the details any time before winners are announced"),
 ]};
 S.edit = { id: "edit", file: "run-edit", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ER, "Edit your contest", "Change the dates and details", "In two minutes, you will change your contest's dates and details. We start on the map."),
+  hook(ER, "Edit your contest", "Change the dates and details", "In under two minutes, you will change your contest's dates and details. We start on the map."),
   ...toDash(),
   target("Tap Change dates", "On the Overview, find Schedule. Tap Change dates.", "#editdates", { after: 1800 }),
   { cap: "Change the date", say: "Change the date that entries close. Voting dates are here too.", do: async (p, h) => { await h.scrollTo("#e-closes", 220); await h.type("#e-closes", "2026-12-12", { fill: true }); }, poster: true },
@@ -72,7 +72,7 @@ S.edit = { id: "edit", file: "run-edit", cookie: ck.u_org, ...MAPSPEC, steps: [
   nextUp(ER, "Run voting", "Start now, pause, review votes and void a vote"),
 ]};
 S.voting = { id: "voting", file: "run-voting", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ER, "Run voting", "Pause, review, and void a vote", "In two minutes, you will control voting: pause it, check the votes, and void a bad one. We start on the map."),
+  hook(ER, "Run voting", "Pause, review, and void a vote", "In under two minutes, you will control voting: pause it, check the votes, and void a bad one. We start on the map."),
   ...toDash(),
   { cap: "Controls", say: "Voting opens and closes on your dates. The Controls card lets you change that.", do: async (p, h) => { await h.scrollTo("text=Controls", 100); } },
   target("Tap Pause voting", "Tap Pause voting to stop votes for a moment.", '[data-act="pause_voting"]', { after: 1500, poster: true }),
@@ -83,7 +83,7 @@ S.voting = { id: "voting", file: "run-voting", cookie: ck.u_org, ...MAPSPEC, ste
   nextUp(ER, "Add co-organizers and judges", "Invite people to help run the contest"),
 ]};
 S.team = { id: "team", file: "run-team", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ER, "Add co-organizers and judges", "Invite people to help", "In two minutes, you will invite people to help run your contest. We start on the map."),
+  hook(ER, "Add co-organizers and judges", "Invite people to help", "In under two minutes, you will invite people to help run your contest. We start on the map."),
   ...toDash(),
   target("Tap Team", "Tap Team. Co-organizers get the same dashboard you have.", nav("team"), { after: 1400 }),
   { cap: "Add a co-organizer", say: "Type their email, and tap Add co-organizer.", do: async (p, h) => { await h.scrollTo("#newstaff", 260); await h.type("#newstaff", "helper@example.com"); }, target: "#addstaff", after: 1800, poster: true },
@@ -94,13 +94,14 @@ S.team = { id: "team", file: "run-team", cookie: ck.u_org, ...MAPSPEC, steps: [
   nextUp(ER, "Announce winners", "Close voting, announce, export results and see the archive"),
 ]};
 S.announce = { id: "announce", file: "run-announce", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ER, "Announce the winners", "Close voting and show the results", "In two minutes, you will close voting and announce the winners. We start on the map."),
+  hook(ER, "Announce the winners", "Close voting and show the results", "In under two minutes, you will close voting and announce the winners. We start on the map."),
   ...toDash(),
   target("Tap Results", "Tap Results. It shows who would win if you announced today.", nav("results"), { after: 1500 }),
   target("Tap Download results", "Tap Download results to save a spreadsheet.", "text=Download results", { after: 800, pre: async (p, h) => { await h.scrollTo("text=Download results", 300); } }),
   target("Close voting and announce winners", "When voting is over, tap Close voting and announce winners.", '[data-act="announce"]', { after: 1400, poster: true }),
   target("Tap again to confirm", "It asks you to tap again, because this cannot be undone. Tap it again. Everyone is emailed.", '[data-act="announce"]', { after: 2400 }),
-  target("See it as voters do", "To see what everyone sees, tap See it as voters do. The winners keep a crown.", 'a:has-text("See it as voters do")', { after: 2400 }),
+  target("See it as voters do", "To see what everyone sees, tap See it as voters do.", 'a:has-text("See it as voters do")', { after: 1800 }),
+  { cap: "The winners", say: "The winners keep a crown on the contest page.", do: async (p, h) => { await h.scrollTo("h2:has-text('Winners')", 140).catch(() => {}); await h.hover("h2:has-text('Winners')", 1200).catch(() => {}); await sleep(800); }, pad: 0.6 },
   nextUp(ER, "Read your contest activity", "Visits, QR scans, voters and votes per day"),
 ]};
 S.activity = { id: "activity", file: "run-activity", cookie: ck.u_org, ...MAPSPEC, steps: [
@@ -114,7 +115,7 @@ S.activity = { id: "activity", file: "run-activity", cookie: ck.u_org, ...MAPSPE
 
 // ---------------- Sponsors and installers ----------------
 S.sponsors = { id: "sponsors", file: "sponsors-add", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ES, "Add sponsors and logos", "Thank the businesses that help", "In two minutes, you will add a sponsor and its logo to your contest. We start on the map."),
+  hook(ES, "Add sponsors and logos", "Thank the businesses that help", "In under two minutes, you will add a sponsor and its logo to your contest. We start on the map."),
   ...toDash(),
   target("Tap Sponsors", "Tap Sponsors.", nav("sponsors"), { after: 1400 }),
   { cap: "Name and tier", say: "Type the sponsor's name, and choose a tier.", do: async (p, h) => { await h.type("#sp-name", "Oak Hill Hardware"); await h.move("#sp-tier"); await p.selectOption("#sp-tier", "gold"); await h.unring(); await sleep(600); } },
@@ -124,7 +125,7 @@ S.sponsors = { id: "sponsors", file: "sponsors-add", cookie: ck.u_org, ...MAPSPE
   nextUp(ES, "Presenting installer and quote requests", "How the Get a quote button works"),
 ]};
 S.installer = { id: "installer", file: "sponsors-installer", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ES, "Add a presenting installer", "The Get a quote button", "In two minutes, you will add a lighting company to your contest, and see how families ask for a quote. We start on the map."),
+  hook(ES, "Add a presenting installer", "The Get a quote button", "In under two minutes, you will add a lighting company to your contest, and see how families ask for a quote. We start on the map."),
   ...toDash(),
   target("Tap Details", "Tap Details, and scroll to Presenting installer.", nav("details"), { after: 1400 }),
   { cap: "Presenting installer", say: "Type the company's name, the email for quote requests, and their website.", do: async (p, h) => { await h.scrollTo("#e-iname", 220); await h.type("#e-iname", "Bright Nights Lighting"); await h.type("#e-iemail", "quotes@brightnights.example.com"); await h.type("#e-iurl", "brightnights.example.com"); } },
@@ -134,7 +135,7 @@ S.installer = { id: "installer", file: "sponsors-installer", cookie: ck.u_org, .
   nextUp(ES, "Installer profiles and Installed by", "How a company gets a profile, how a home links to it, and how to confirm or claim yours"),
 ]};
 S["installer-profile"] = { id: "installer-profile", file: "sponsors-profile", cookie: ck.u_inst, ...MAPSPEC, steps: [
-  hook(ES, "Installer profiles", "Installed by, and how to claim yours", "In two minutes, you will see how a lighting company gets a profile, and how to manage it. We start on the map."),
+  hook(ES, "Installer profiles", "Installed by, and how to claim yours", "In under two minutes, you will see how a lighting company gets a profile, and how to manage it. We start on the map."),
   ...openShort(),
   target("Tap the season button", "Tap the season button.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Tap Thanksgiving and Christmas Lights.", '[data-sp]:has-text("Christmas")', { after: 1400 }),
@@ -149,7 +150,7 @@ S["installer-profile"] = { id: "installer-profile", file: "sponsors-profile", co
 // ---------------- Post events and homes ----------------
 const NOCFG = [{ url: "**/api/config", json: {} }];
 S["add-event"] = { id: "add-event", file: "post-event", cookie: ck.u_enter, routes: NOCFG, ...MAPSPEC, steps: [
-  hook(EP, "Add an event to the map", "A tree lighting, market or parade", "In two minutes, you will add an event to the map. We start on the map."),
+  hook(EP, "Add an event to the map", "A tree lighting, market or parade", "In under two minutes, you will add an event to the map. We start on the map."),
   ...openShort(),
   ...fromMap("add", [target("Tap An event", "Tap An event.", 'a[href="/add-event"]', { after: 1800 })]),
   { cap: "1 of 6: Web page", say: "If your event has a web page, paste it here. If not, tap No, Next.", target: '[data-a="skipurl"]', after: 1400 },
@@ -162,7 +163,7 @@ S["add-event"] = { id: "add-event", file: "post-event", cookie: ck.u_enter, rout
   nextUp(EP, "Show off your house", "Put your lights on the map with Showcase a House"),
 ]};
 S.showcase = { id: "showcase", file: "post-house", cookie: ck.u_enter, routes: NOCFG, ...MAPSPEC, steps: [
-  hook(EP, "Show off your house", "Put your lights on the map", "In two minutes, you will put your own lights on the map. We start on the map."),
+  hook(EP, "Show off your house", "Put your lights on the map", "In under two minutes, you will put your own lights on the map. We start on the map."),
   ...openShort(),
   ...fromMap("add", [target("Tap A lighting display", "Tap A lighting display.", 'a[href="/add-house"]', { after: 1800 })]),
   { cap: "Who is posting", say: "Who is posting? Tap A homeowner. Then tap Next.", target: '[data-tile="kind|homeowner"]', after: 800, post: (p, h) => next(p, h) },

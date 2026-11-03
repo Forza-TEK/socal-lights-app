@@ -106,7 +106,7 @@ const EE = "Enter a home";
 const PH = ["public/img/stock/tree-3.jpg", "public/img/stock/show-2.jpg"];
 const chooser = (p) => p.once("filechooser", (fc) => fc.setFiles(PH));
 S.enter = { id: "enter", file: "enter", cookie: ck.u_enter, ...MAPSPEC, steps: [
-  hook(EE, "Enter your home in a contest", "Photos, address, and the rules", "In two minutes, you will enter your home in a neighborhood contest. We start on the map."),
+  hook(EE, "Enter your home in a contest", "Photos, address, and the rules", "In under two minutes, you will enter your home in a neighborhood contest. We start on the map."),
   ...openShort(),
   ...fromMap("contests", [target("Tap Enter my home", "Under Live now, tap Enter my home. If you are not signed in, the site asks you to sign in with Google or your email first.", `a[href="/c/${SLUG}/enter"]`, { after: 2000 })]),
   { cap: "1 of 4: Add photos", say: "Add photos of your home. Tap Choose photos. The first photo is the cover.", pre: async (p) => chooser(p), target: "label[for=f-photos]", after: 2200 },
@@ -141,7 +141,7 @@ S.profile = { id: "profile", file: "profile", cookie: ck.u_mine, ...MAPSPEC, ste
 // ---------------- Vote and judge ----------------
 const EV = "Vote and judge";
 S.vote = { id: "vote", file: "vote", cookie: ck.u_voter, ...MAPSPEC, steps: [
-  hook(EV, "Vote for your favorite homes", "One favorite in each category", "In two minutes, you will vote for your favorite homes in a neighborhood contest. We start on the map."),
+  hook(EV, "Vote for your favorite homes", "One favorite in each category", "In under two minutes, you will vote for your favorite homes in a neighborhood contest. We start on the map."),
   ...openShort(),
   ...fromMap("contests", [target("Tap Vote", "Under Live now, tap Vote. The first time, the site asks you to sign in. That keeps it to one vote per person.", `a[href="/c/${SLUG}"]:has-text("Vote")`, { after: 2200 })]),
   { cap: "Visit the homes", say: "Want to see the homes first? Visit the homes puts them in a few driving routes, in your maps app.", do: async (p, h) => { await h.scrollTo("[data-tour]", 90); await h.hover("[data-tour] .leg", 900); } },
@@ -152,7 +152,7 @@ S.vote = { id: "vote", file: "vote", cookie: ck.u_voter, ...MAPSPEC, steps: [
   nextUp(EV, "Judge a contest", "Open your judge link, score each home, and recuse yourself when you know the household"),
 ]};
 S.judge = { id: "judge", file: "judge", cookie: ck.u_judge, start: "/offline.html", steps: [
-  hook(EV, "Judge a contest", "From your invitation email", "In two minutes, you will score the homes in a contest, starting from your invitation email."),
+  hook(EV, "Judge a contest", "From your invitation email", "In under two minutes, you will score the homes in a contest, starting from your invitation email."),
   emailScene(mails.judge, "This is your invitation email. It says which contest it is, and how judging works. Tap Open my judges' ballot.", "dana@demo.example"),
   { cap: "Tap Open my judges' ballot", say: "", mail: "keep", target: '#__mail a[href*="/judge"] >> nth=0', after: 2600, pad: 0.1 },
   { cap: "Your ballot", say: "This is your ballot. It says when voting closes, and how many scores you have given.", do: async (p, h) => { await h.hover(".status", 900); } },
