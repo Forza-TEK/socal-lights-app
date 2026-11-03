@@ -12,7 +12,13 @@
           "url": "/tutorials/find-map.mp4",
           "length": "1:31",
           "captions": "/tutorials/find-map.vtt",
-          "poster": "/tutorials/find-map.jpg"
+          "poster": "/tutorials/find-map.jpg",
+          "mobile": {
+            "url": "/tutorials/find-map-mobile.mp4",
+            "poster": "/tutorials/find-map-mobile.jpg",
+            "captions": "/tutorials/find-map-mobile.vtt",
+            "length": "1:28"
+          }
         },
         {
           "id": "night",
@@ -21,7 +27,13 @@
           "url": "/tutorials/find-night.mp4",
           "length": "1:38",
           "captions": "/tutorials/find-night.vtt",
-          "poster": "/tutorials/find-night.jpg"
+          "poster": "/tutorials/find-night.jpg",
+          "mobile": {
+            "url": "/tutorials/find-night-mobile.mp4",
+            "poster": "/tutorials/find-night-mobile.jpg",
+            "captions": "/tutorials/find-night-mobile.vtt",
+            "length": "1:28"
+          }
         },
         {
           "id": "email",
@@ -69,7 +81,13 @@
           "url": "/tutorials/find-pro.mp4",
           "length": "1:08",
           "captions": "/tutorials/find-pro.vtt",
-          "poster": "/tutorials/find-pro.jpg"
+          "poster": "/tutorials/find-pro.jpg",
+          "mobile": {
+            "url": "/tutorials/find-pro-mobile.mp4",
+            "poster": "/tutorials/find-pro-mobile.jpg",
+            "captions": "/tutorials/find-pro-mobile.vtt",
+            "length": "1:08"
+          }
         }
       ]
     },
@@ -174,7 +192,13 @@
           "url": "/tutorials/run-quick.mp4",
           "length": "1:55",
           "captions": "/tutorials/run-quick.vtt",
-          "poster": "/tutorials/run-quick.jpg"
+          "poster": "/tutorials/run-quick.jpg",
+          "mobile": {
+            "url": "/tutorials/run-quick-mobile.mp4",
+            "poster": "/tutorials/run-quick-mobile.jpg",
+            "captions": "/tutorials/run-quick-mobile.vtt",
+            "length": "1:49"
+          }
         },
         {
           "id": "custom",
