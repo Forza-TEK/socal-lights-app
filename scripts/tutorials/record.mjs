@@ -83,6 +83,7 @@ export async function record(spec) {
     if (audio[i]) marks.push({ i, t: t0 + 0.4, f: audio[i].f });
     const end = t0 + 0.4 + (audio[i]?.d || 0) + (s.pad ?? 0.5);
     await sleep(900);
+    if (s.pre) await s.pre(page, h);
     if (s.target) await h.move(s.target);
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
     if (s.poster) poster = T();
