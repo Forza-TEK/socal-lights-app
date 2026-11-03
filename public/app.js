@@ -5,6 +5,7 @@ import { STOCK } from "/stock.js";
 import { SITE } from "/site-config.js?v=20261031j";
 import "/norm-ui.js?v=20261102b";
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
+import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261105a";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -629,27 +630,42 @@ function moreCards(upTo) {
   list.insertAdjacentHTML("beforeend", listVis.slice(listShown, to).map((it, i) => listCard(it, listShown + i)).join("")); listShown = to;
   const sen = $("#listmore"); if (sen && listShown >= listVis.length) sen.remove();
 }
-// "Route these": a driving route through the places in view, for when the map is zoomed in far enough that no number circles
-// are left (clusters stop above clusterMaxZoom) and there are few enough places for a maps link (Google and Apple take about 9 stops).
-const ROUTE_MAX = 9, CLUSTER_ZOOM = 11;
+// "Route these": the places in view as driving routes. Maps apps take about 9 stops at a time, so a longer list is split into the
+// fewest routes of 9 or fewer (7, 7 and 6 for 20 places); each route starts where the last one ended, and stops can be ticked off.
+// Past ROUTE_CAP places in view the list is too long to drive, so the map has to be zoomed in first.
+const ROUTE_CAP = 45;
 const ROUTE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8.2 19H15a3.5 3.5 0 000-7H9a3.5 3.5 0 010-7h6.8"/></svg>';
 function routeHint(vis) {
-  if (!mapReady || map.getZoom() <= CLUSTER_ZOOM) return "Zoom in until the number circles are gone to route these places";
-  if (vis.length > ROUTE_MAX) return `Zoom in to ${ROUTE_MAX} or fewer places to route them (${vis.length} in view)`;
+  if (!mapReady) return "The map is still loading";
   if (!vis.length) return "No places in view to route";
+  if (vis.length > ROUTE_CAP) return `Zoom in to ${ROUTE_CAP} or fewer places to route them (${vis.length} in view)`;
   return "";
 }
 function routeLink(vis) {
-  const hint = routeHint(vis);
-  return `<button type="button" class="rtlink" data-route aria-disabled="${hint ? "true" : "false"}" title="${esc(hint || "Open a driving route through these places")}" data-hint="${esc(hint)}">${ROUTE_ICON}<span>Route these</span></button>`;
+  const hint = routeHint(vis), n = hint ? 0 : routeLegs(vis).length;
+  return `<button type="button" class="rtlink" data-route aria-disabled="${hint ? "true" : "false"}" title="${esc(hint || (n > 1 ? `Open ${n} driving routes through these places` : "Open a driving route through these places"))}" data-hint="${esc(hint)}">${ROUTE_ICON}<span>Route these</span></button>`;
+}
+// A stop for the route pop-up: name, a short line under it, where the maps app should go, and the pin (for ordering)
+function toStop(x) {
+  if (x.house) return { id: x.key, name: x.p.title, sub: [x.p.address, x.p.city].filter(Boolean).join(", "), dest: destOf(x), lat: x.lat, lng: x.lng };
+  return { id: "e:" + x.id, name: x.n, sub: [x.v, x.city].filter(Boolean).join(", "), dest: destOf(x), lat: x.lat, lng: x.lng };
 }
 function routeFromView() {
-  const items = listVis.slice(); if (routeHint(items) || !items.length) return "";
-  const stops = items.map((it) => it.t === "e" ? it.o : { lat: it.lat, lng: it.lng, a: it.o.address ? it.o.address + ", " + it.o.city + ", CA" : "" });
+  const items = listVis.slice(); if (routeHint(items) || !items.length) return;
+  const stops = items.map((it) => it.t === "e" ? toStop(it.o) : toStop({ house: true, key: it.key, p: it.o, lat: it.lat, lng: it.lng, a: it.o.address ? it.o.address + ", " + it.o.city + ", CA" : "" }));
   const c = map.getCenter(), og = state.start === "me" && state.me ? state.me : { lat: c.lat, lng: c.lng };
   let at = og; const pool = stops.slice(), ord = [];
   while (pool.length) { pool.sort((a, b) => miles(at, a) - miles(at, b)); at = pool.shift(); ord.push(at); }
-  return navUrl(ord.map(destOf), ""); // no origin: the maps app starts from wherever the phone is
+  openRouteSheet({ title: "Route these places", intro: `Your maps app takes about 9 stops at a time, so ${ord.length > 9 ? "these " + ord.length + " places are split into routes of 9 or fewer" : "this is one route"}. Each route starts where the last one ended. Tick a place when you have been there.`, stops: ord, app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); } });
+}
+function openNightRoutes() {
+  const st = routeStops(); if (!st.length) return;
+  const og = routeOrigin(), startStop = state.start === "first" && !og && st.length > 1 ? st[0] : null;
+  const origin = startStop || state.start === "me" ? "" : og ? og.lat + "," + og.lng : "";
+  const stops = st.map(toStop), n = startStop ? stops.length - 1 : stops.length;
+  openRouteSheet({ title: "Your night", key: "map", stops: startStop ? stops.slice(1) : stops, start: startStop ? stops[0] : null, origin, app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); },
+    intro: `Your maps app takes about 9 stops at a time, so ${n > 9 ? "your night is split into routes of 9 or fewer" : "this is one route"}. Each route starts where the last one ended. Tick a stop when you have been there.`,
+    note: mapsApp === "apple" ? "Multi-stop routes in Apple Maps need iOS 18.4 or later. Older iPhones open with the first stop." : "" });
 }
 async function shareNight() {
   if (!favs.size) return;
@@ -704,19 +720,17 @@ function renderPanel(opts) {
     // With "My location" we leave out the starting point, so the maps app starts from wherever the phone is right now.
     const pts = st.map(destOf), og = routeOrigin();
     const origin = state.start === "me" ? "" : og ? og.lat + "," + og.lng : pts[0];
-    // with a single stop and "First stop", the stop is also the destination. Maps links hold about 10 stops, so a longer night is split into parts that each start where the last ended.
-    const dests = origin && !og && pts.length > 1 ? pts.slice(1) : pts, parts = [];
-    for (let i = 0; i < dests.length; i += 10) parts.push(navUrl(dests.slice(i, i + 10), i === 0 ? origin : dests[i - 1]));
-    const url = parts[0] || "";
+    // "First stop" as the start means that stop is where the trip begins, so the routes cover the stops after it. Routes hold 9 stops at most (see tour.js).
+    const startStop = state.start === "first" && !og && st.length > 1 ? st[0] : null;
+    const nRoutes = routeLegs(startStop ? st.slice(1) : st).length;
     const dur = mins >= 60 ? Math.floor(mins / 60) + " hr" + (mins % 60 ? " " + (mins % 60) + " min" : "") : mins + " min";
     const startSel = `<label class="qsel">Start <select id="startFrom" aria-label="Start from"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
     const mapsSel = `<label class="qsel">Maps <select id="mapsSel" aria-label="Maps app">${Object.entries(MAPS).map(([k, l]) => `<option value="${k}"${k === mapsApp ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
-    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How My night works" title="How My night works">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options">${parts.map((u, i) => `<a class="qgo" href="${esc(u)}" target="_blank" rel="noopener" title="Open route${parts.length > 1 ? " part " + (i + 1) + " of " + parts.length : ""} in ${MAPS[mapsApp]}">${parts.length > 1 ? "Route " + (i + 1) + " of " + parts.length : "Open route"} ↗</a>`).join("")}${startSel}${mapsSel}${state.shared ? "" : `<button type="button" class="qshare" data-nshare>Share</button>`}</div>` : ""}${state.shared ? `<div class="sharedbar"><span>A night shared with you</span><button type="button" data-nsave>Add to my night</button><button type="button" data-nclose>Close</button></div>` : ""}`;
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How My night works" title="How My night works">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options"><button type="button" class="qgo" data-nroute title="Open ${nRoutes > 1 ? nRoutes + ' driving routes' : 'the driving route'} in ${MAPS[mapsApp]}">${nRoutes > 1 ? "Open " + nRoutes + " routes" : "Open route"} ↗</button>${startSel}${mapsSel}${state.shared ? "" : `<button type="button" class="qshare" data-nshare>Share</button>`}</div>` : ""}${state.shared ? `<div class="sharedbar"><span>A night shared with you</span><button type="button" data-nsave>Add to my night</button><button type="button" data-nclose>Close</button></div>` : ""}`;
     const sf = $("#startFrom"); if (sf) sf.onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
     const ms = $("#mapsSel"); if (ms) ms.onchange = (e) => setMapsApp(e.target.value);
     if (!st.length) { body.innerHTML = nightHelp ? helpHtml(0) : `<div class="empty">No stops yet. Tap the heart on any place to add it.</div>`; return; }
     const notes = [];
-    if (parts.length > 1) notes.push(`Maps apps take about 10 stops per route, so this night opens in ${parts.length} parts. Each part starts where the last one ends.`);
     if (state.start === "me" && !state.me) notes.push(state.meErr ? esc(state.meErr) : "Finding your location…");
     const nights = [...new Set(st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s)))];
     if (nights.length) notes.push(`One-night events: ${nights.join(", ")}.`);
@@ -751,8 +765,9 @@ $("#phead").addEventListener("click", (e) => {
   const ns = e.target.closest("[data-nshare]"); if (ns) { shareNight(); return; }
   if (e.target.closest("[data-nsave]")) { state.shared.forEach((id) => favs.add(id)); state.shared = null; saveFavs(); counts(); renderPanel(); drawMap(); toast("Added to your night"); return; }
   if (e.target.closest("[data-nclose]")) { state.shared = null; renderPanel(); drawMap(); return; }
+  if (e.target.closest("[data-nroute]")) { openNightRoutes(); return; }
   const rt = e.target.closest("[data-route]");
-  if (rt) { if (rt.dataset.hint) { toast(rt.dataset.hint, true); return; } const u = routeFromView(); if (u) window.open(u, "_blank", "noopener"); return; }
+  if (rt) { if (rt.dataset.hint) { toast(rt.dataset.hint, true); return; } routeFromView(); return; }
   const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
   const cl = e.target.closest("[data-clear]"); if (cl) { clearFilter(cl.dataset.clear); return; }
   const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { toggleSeasonPick(sc, "shop"); return; }
