@@ -37,10 +37,8 @@ S.map = { id: "map", file: "find-map", cookie: null, ...MAPSPEC, steps: [
   target("Tap the season button", "Choose a season. Tap the season button at the top.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Tap Thanksgiving and Christmas Lights.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
   { cap: "Search a city", say: "Or search for a city. Type its name, and tap it in the list.", do: async (p, h) => { await h.type("#q", "Irvine"); }, target: 'button:has-text("Show this city on the map")', after: 1800 },
-  target("Tap the season button", "Want everything coming up? Open the season button again.", "#seasonbtn", { after: 800 }),
-  target("Tap All seasons", "Tap All seasons. It shows every upcoming event for that city.", '[data-sp="all"]', { after: 1800 }),
   target("Tap Filters", "To narrow the list, tap Filters. You can pick a date, a distance, a type, and more.", "text=Filters >> visible=true", { after: 1500, poster: true }),
-  recap(EF, "You can now find lights near you", ["Use my location for distances", "Pick a season, or All seasons", "Search a city, and use Filters"], "That is how you find lights near you. Use your location, pick a season, search a city, and narrow it with Filters."),
+  recap(EF, "You can now find lights near you", ["Use my location for distances", "Pick a season", "Search a city, and use Filters"], "That is how you find lights near you. Use your location, pick a season, search a city, and narrow it with Filters."),
   nextUp(EF, "Plan a night", "Save favorites, build a route, share it and add it to your calendar"),
 ]};
 S.night = { id: "night", file: "find-night", cookie: null, ...MAPSPEC, steps: [
@@ -71,7 +69,8 @@ S.email = { id: "email", file: "find-email", cookie: null, ...MAPSPEC, routes: [
 ]};
 S.app = { id: "app", file: "find-app", phone: true, warm: true, cookie: null, start: "/", steps: [
   hook(EF, "Put SoCal Lights on your phone", "Install it, and use it offline", "In one minute, you will put SoCal Lights on your phone, and see what works with no signal."),
-  { cap: "Open the site on your phone", say: "On your phone, open your web browser, and go to SoCal Lights dot app. There is nothing to download from an app store.", do: async (p, h) => { await h.hover("#q", 900); } },
+  { card: { ey: "Start here", title: "On your phone, open your web browser and go to", urlbar: "socallights.app" }, say: "On your phone, open your web browser, and go to SoCal Lights dot app.", pad: 0.8 },
+  { cap: "This is the home page", say: "This is the home page. There is nothing to download from an app store.", do: async (p, h) => { await h.hover("#q", 900); } },
   { card: { ey: "On an iPhone", title: "Share, then Add to Home Screen", sub: "In Safari, tap the Share button, scroll down, and tap Add to Home Screen" }, say: "On an iPhone, use Safari. Tap the Share button, scroll down, and tap Add to Home Screen.", pad: 1.0 },
   { card: { ey: "On an Android phone", title: "Menu, then Install app", sub: "In Chrome, tap the three dots, then Install app or Add to Home screen" }, say: "On an Android phone, use Chrome. Tap the three dots, then tap Install app.", pad: 1.0 },
   { cap: "No signal", say: "With no signal, the app still opens. Your last list of places is saved on your phone.", do: async (p, h) => { await sleep(1500); await h.ctx.setOffline(true); await p.reload({ waitUntil: "domcontentloaded" }); await sleep(3000); }, poster: true },
@@ -79,10 +78,10 @@ S.app = { id: "app", file: "find-app", phone: true, warm: true, cookie: null, st
   nextUp(EF, "Find contests", "Live now, Mine and Past results, and the Enter or vote button on a map card"),
 ]};
 S.contests = { id: "contests", file: "find-contests", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(EF, "Find the contests", "Live now, Mine, and Past results", "In two minutes, you will find the neighborhood contests, and where to vote or enter. We start on the map."),
+  hook(EF, "Find the contests", "Live now, Mine, and Past results", "In one minute, you will find the neighborhood contests, and where to vote or enter. We start on the map."),
   ...openShort(),
   ...fromMap("contests"),
-  target("Live now", "Live now lists the contests open today. You can vote, or enter your own home.", 'a:has-text("Enter my home")', { after: 800 }),
+  { cap: "Live now", say: "Live now lists the contests open today. You can vote, or enter your own home.", do: async (p, h) => { await h.hover('a:has-text("Enter my home")', 1000); } },
   target("Tap Mine", "Tap Mine. These are the contests you run, and the homes you entered.", "[data-tab=mine]", { after: 1400, poster: true }),
   target("Tap Past results", "Tap Past results, for finished contests and their winners.", "[data-tab=past]", { after: 1800 }),
   recap(EF, "Contests, found", ["Three dots, then Contests", "Live now, Mine, and Past results", "Contests are on the map too"], "Three dots, then Contests. Live now, Mine, and Past results. And contests are on the map too."),
@@ -97,7 +96,8 @@ S["pro-filter"] = { id: "pro-filter", file: "find-pro", cookie: null, ...MAPSPEC
   target("Tap Professionally installed", "Under Type, tap Professionally installed.", '[data-ftype="pro"] >> visible=true', { after: 900 }),
   target("Show the places", "Tap the red button to show the places.", "text=/^Show \\d+ places?$/ >> visible=true", { after: 2200, poster: true }),
   target("Open a display", "Open one. It says Installed by, with the company's name.", "#pbody .item.home >> nth=0", { after: 2000 }),
-  target("Tap the company name", "Tap the company's name to open its profile.", "a.instlink >> nth=0", { after: 2600 }),
+  target("Tap the company name", "Tap the company's name to open its profile.", "a.instlink >> nth=0", { after: 1800 }),
+  { cap: "The installer's profile", say: "This is the company's profile, with its area, phone, website, and the homes it has installed.", do: async (p, h) => { await sleep(1500); }, pad: 0.8 },
   nextUp(EF, "Enter your home in a contest", "Sign in, add photos, your address and agree to the rules"),
 ]};
 

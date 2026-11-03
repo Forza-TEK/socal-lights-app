@@ -8,7 +8,7 @@
         {
           "id": "map",
           "title": "Find lights near me",
-          "desc": "Use the map, filters, seasons and All seasons to find what is on near you.",
+          "desc": "Use your location, the seasons, city search and filters to find what is on near you.",
           "url": "",
           "length": ""
         },
@@ -25,15 +25,19 @@
           "id": "email",
           "title": "Weekly lights email",
           "desc": "Sign up for the weekly email and unsubscribe any time.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/find-email.mp4",
+          "length": "1:08",
+          "captions": "/tutorials/find-email.vtt",
+          "poster": "/tutorials/find-email.jpg"
         },
         {
           "id": "app",
           "title": "Install the app and use it offline",
           "desc": "Add SoCal Lights to your phone and use it without a connection.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/find-app.mp4",
+          "length": "0:46",
+          "captions": "/tutorials/find-app.vtt",
+          "poster": "/tutorials/find-app.jpg"
         },
         {
           "id": "contests",
