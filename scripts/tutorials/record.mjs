@@ -91,6 +91,7 @@ export async function record(spec) {
   const total = T() + 0.3; await sleep(300);
   await cdp.send("Page.stopScreencast").catch(() => {}); await page.close(); await ctx.close(); await br.close();
   // frames -> constant-rate video, each frame shown until the next one arrives
+  if (frames.length > 1 && frames[1].t - ref < 1.5) frames.shift(); frames[0].t = ref; // Chrome can hand over one stale frame first (the page before the title card): drop it, so frame one is the card
   const lines = []; frames.forEach((f, k) => { const t = Math.max(0, f.t - ref), nx = k + 1 < frames.length ? Math.max(0, frames[k + 1].t - ref) : total; lines.push(`file '${fdir}/${f.i}.jpg'`, `duration ${Math.max(0.001, nx - t).toFixed(4)}`); });
   lines.push(`file '${fdir}/${frames[frames.length - 1].i}.jpg'`); writeFileSync(w + "/frames.txt", lines.join("\n"));
   const webm = null;
@@ -103,7 +104,7 @@ export async function record(spec) {
   // ---- Checks before a video counts as finished: it must open on the title card and the voice must already be speaking ----
   const probe = (args) => spawnSync("ffmpeg", ["-hide_banner", ...args], { encoding: "utf8" }).stderr;
   const vol = /mean_volume: (-?[\d.]+|-inf)/.exec(probe(["-ss", "0.6", "-t", "2.4", "-i", mp4, "-af", "volumedetect", "-vn", "-f", "null", "-"]));
-  const first = spawnSync("ffmpeg", ["-v", "error", "-ss", "0.3", "-i", mp4, "-frames:v", "1", "-vf", "scale=64:36,format=rgb24", "-f", "rawvideo", "-"], { maxBuffer: 1e7 }).stdout;
+  const first = Buffer.concat(["0", "0.4"].map((at) => spawnSync("ffmpeg", ["-v", "error", "-ss", at, "-i", mp4, "-frames:v", "1", "-vf", "scale=64:36,format=rgb24", "-f", "rawvideo", "-"], { maxBuffer: 1e7 }).stdout)); // frame zero and a moment later must both be the plain title card
   let r = 0, g = 0, b = 0; for (let k = 0; k + 2 < first.length; k += 3) { r += first[k]; g += first[k + 1]; b += first[k + 2]; } const px = first.length / 3 || 1; const avg = [r / px, g / px, b / px];
   const problems = [];
   if (!vol || vol[1] === "-inf" || parseFloat(vol[1]) < -45) problems.push("no voice in the first three seconds");
