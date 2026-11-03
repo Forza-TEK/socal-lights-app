@@ -37,20 +37,25 @@ S.map = { id: "map", file: "find-map", cookie: null, ...MAPSPEC, steps: [
   target("Tap the season button", "Choose a season. Tap the season button at the top.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Tap Thanksgiving and Christmas Lights.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
   { cap: "Search a city", say: "Or search for a city. Type its name, and tap it in the list.", do: async (p, h) => { await h.type("#q", "Irvine"); }, target: 'button:has-text("Show this city on the map")', after: 1800 },
+  target("Tap Route these", "To drive to what you see, tap Route these, under the list.", "[data-route]", { after: 1800 }),
+  { cap: "Routes of 9 or fewer", say: "A long list is split into routes of nine or fewer. Each route starts where the last one ended, and you can tick off places as you go.", do: async (p, h) => { await h.hover(".rsheet .leg", 1400); }, target: "[data-rsx]", after: 1000 },
   target("Tap Filters", "To narrow the list, tap Filters. You can pick a date, a distance, a type, and more.", "text=Filters >> visible=true", { after: 3200, poster: true }),
   recap(EF, "You can now find lights near you", ["Use my location for distances", "Pick a season", "Search a city, and use Filters"], "That is how you find lights near you. Use your location, pick a season, search a city, and narrow it with Filters."),
   nextUp(EF, "Plan a night", "Save favorites, build a route, share it and add it to your calendar"),
 ]};
 S.night = { id: "night", file: "find-night", cookie: null, ...MAPSPEC, steps: [
-  hook(EF, "Plan a night of lights", "Hearts, route, share, calendar", "In about a minute, you will plan a night of lights, and get a driving route. We start on the map."),
+  hook(EF, "Plan a night of lights", "Hearts, route, share, calendar", "In about a minute, you will plan a night of lights, and get driving routes. We start on the map."),
   ...openShort(),
   target("Tap the season button", "Choose what you want to see. Tap the season button.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Tap Thanksgiving and Christmas Lights.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
   { cap: "Tap the heart", say: "On a place you want to visit, tap the heart. Add three.", do: async (p, h) => { await h.click("#pbody .item .star >> nth=0", { after: 800 }); await h.click("#pbody .item .star >> nth=1", { after: 800 }); }, target: "#pbody .item .star >> nth=2", after: 1200, poster: true },
   target("Tap My night", "Tap My night. Your stops are here, in a sensible driving order, with the miles and the time.", "#t-plan", { after: 1600 }),
-  { cap: "Open route", say: "Choose your maps app, and tap Open route. Your maps app takes you there.", do: async (p, h) => { await h.hover("#mapsSel", 900); }, target: ".qgo", after: 0, post: async (p) => { await p.keyboard.press("Escape"); } },
+  target("Tap Open route", "Tap Open route.", "[data-nroute]", { after: 1800 }),
+  { cap: "Routes of 9 or fewer", say: "Your maps app takes about nine stops at a time, so a long night is split into routes of nine or fewer. Each route starts where the last one ended.", do: async (p, h) => { await h.hover(".rsheet .leg", 1400); } },
+  target("Tick a stop", "Tick each stop when you have been there.", ".rsheet [data-tvis] >> nth=0", { after: 1200 }),
+  { cap: "Open a route in your maps app", say: "Tap a route's button to open it in your maps app. Then tap the X to close.", do: async (p, h) => { await h.hover(".rsheet .legbtn", 1000); }, target: "[data-rsx]", after: 1000 },
   { cap: "Share", say: "Tap Share to send your night to a friend.", target: "[data-nshare]", after: 800 },
-  recap(EF, "Your night is planned", ["Tap the heart on places you like", "My night builds the route", "Open it in your maps app, or share it"], "Tap the heart on places you like. My night builds the route. Then open it in your maps app, or share it."),
+  recap(EF, "Your night is planned", ["Tap the heart on places you like", "Open route splits it into routes of 9 or fewer", "Tick off stops as you go"], "Tap the heart on places you like. Open route splits your night into routes of nine or fewer, each starting where the last one ended. Tick off stops as you go."),
   nextUp(EF, "Weekly lights email", "Sign up for the weekly email and unsubscribe any time"),
 ]};
 const confirmText = "Confirm that you want a weekly email of lights and events within 10 miles of Irvine:\n\nhttps://socallights.app/api/alerts/confirm?t=demo-confirm-token\n\nIf you did not ask for this, ignore this email and nothing will be sent.\n\nSoCal Lights · socallights.app";
