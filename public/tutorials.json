@@ -172,8 +172,10 @@
           "id": "voting",
           "title": "Run voting",
           "desc": "Start now, pause, review votes and void a vote.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/run-voting.mp4",
+          "length": "1:26",
+          "captions": "/tutorials/run-voting.vtt",
+          "poster": "/tutorials/run-voting.jpg"
         },
         {
           "id": "team",
