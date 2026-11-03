@@ -20,7 +20,7 @@ export const toContest = (btn) => ({ cap: "Tap " + btn, say: `Find the contest, 
 // (including the "use my location" message), so a new visitor knows exactly where they are before the first tap.
 export const openSite = (ey) => [
   { card: { ey: "Start here", title: "Open your web browser and go to", urlbar: "socallights.app" }, say: "Open your web browser, and go to SoCal Lights dot app.", pad: 0.8,
-    post: async (p, h) => { await p.goto((process.env.BASE || "http://localhost:8788") + "/", { waitUntil: "domcontentloaded" }); } }, // the page loads as the card goes away, so the first-visit message is still showing
+    post: async (p, h) => { await p.evaluate(() => { try { localStorage.removeItem("socal-welcomed"); } catch {} }); await p.goto((process.env.BASE || "http://localhost:8788") + "/", { waitUntil: "domcontentloaded" }); } }, // the page loads as the card goes away, so the first-visit message is still showing
   { cap: "This is the home page", say: "This is the SoCal Lights home page: the map, and a list of places.", pad: 0.3 },
   { cap: "Tap No thanks", say: "A message asks to use your location. Tap No thanks.", target: '[data-welcome="no"]', after: 900 },
 ];
