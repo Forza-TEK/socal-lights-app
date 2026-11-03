@@ -37,10 +37,8 @@ S.map = { id: "map", file: "find-map", cookie: null, ...MAPSPEC, steps: [
   target("Tap the season button", "Choose a season. Tap the season button at the top.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Tap Thanksgiving and Christmas Lights.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
   { cap: "Search a city", say: "Or search for a city. Type its name, and tap it in the list.", do: async (p, h) => { await h.type("#q", "Irvine"); }, target: 'button:has-text("Show this city on the map")', after: 1800 },
-  target("Tap the season button", "Want everything coming up? Open the season button again.", "#seasonbtn", { after: 800 }),
-  target("Tap All seasons", "Tap All seasons. It shows every upcoming event for that city.", '[data-sp="all"]', { after: 1800 }),
   target("Tap Filters", "To narrow the list, tap Filters. You can pick a date, a distance, a type, and more.", "text=Filters >> visible=true", { after: 1500, poster: true }),
-  recap(EF, "You can now find lights near you", ["Use my location for distances", "Pick a season, or All seasons", "Search a city, and use Filters"], "That is how you find lights near you. Use your location, pick a season, search a city, and narrow it with Filters."),
+  recap(EF, "You can now find lights near you", ["Use my location for distances", "Pick a season", "Search a city, and use Filters"], "That is how you find lights near you. Use your location, pick a season, search a city, and narrow it with Filters."),
   nextUp(EF, "Plan a night", "Save favorites, build a route, share it and add it to your calendar"),
 ]};
 S.night = { id: "night", file: "find-night", cookie: null, ...MAPSPEC, steps: [
@@ -82,7 +80,7 @@ S.contests = { id: "contests", file: "find-contests", cookie: ck.u_org, ...MAPSP
   hook(EF, "Find the contests", "Live now, Mine, and Past results", "In two minutes, you will find the neighborhood contests, and where to vote or enter. We start on the map."),
   ...openShort(),
   ...fromMap("contests"),
-  target("Live now", "Live now lists the contests open today. You can vote, or enter your own home.", 'a:has-text("Enter my home")', { after: 800 }),
+  { cap: "Live now", say: "Live now lists the contests open today. You can vote, or enter your own home.", do: async (p, h) => { await h.hover('a:has-text("Enter my home")', 1000); } },
   target("Tap Mine", "Tap Mine. These are the contests you run, and the homes you entered.", "[data-tab=mine]", { after: 1400, poster: true }),
   target("Tap Past results", "Tap Past results, for finished contests and their winners.", "[data-tab=past]", { after: 1800 }),
   recap(EF, "Contests, found", ["Three dots, then Contests", "Live now, Mine, and Past results", "Contests are on the map too"], "Three dots, then Contests. Live now, Mine, and Past results. And contests are on the map too."),
