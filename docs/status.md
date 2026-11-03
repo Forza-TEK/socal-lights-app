@@ -332,3 +332,5 @@ Nothing new qualified to add. Checked: Beaumont contest (judging Dec 7-13, addre
 
 ## 2026-11-02 sweep, group 18 (High Desert & Mountains)
 Added 2 events (migration 0149): county library Winter Luau at Yucca Valley (Dec 5) and Lake Arrowhead (Dec 22). The group already had about 55 events. Not found / leads: Crestlights (Crestline) 2026 not announced (2025 judged Dec 19, entries by text, the map publishes addresses after entry; check mid-Dec); Big Bear Festival of Lights dates TBA; Big Bear Chanukah/menorah Dec 21 (intersection only, no time); Needles, Barstow parade, Oak Glen, Apple Valley Breakfast with Santa / Jingle Mingle (2025 only): no 2026 pages. Photos: none valid (allevents banners are portrait, library pages have no og:image). Pins: new rows geocoded with house number match.
+
+- 2026-11-03 sweep group 19 (Ventura County): 3 street displays added (Moorpark, Simi Valley, Newbury Park; migration 0150). Searches for Fillmore, Port Hueneme, Santa Paula, Simi Valley contests found no 2026 pages; city sites (fillmoreca.gov events 404). Try the cities' own calendars and Facebook event pages next time.
