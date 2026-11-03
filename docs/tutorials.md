@@ -25,3 +25,6 @@ Add an entry to `public/tutorials.json` (`groups[].videos[]`, with `id`, `title`
 - `install.mjs <outDir>` copies finished videos into `public/tutorials/` and fills `url`, `poster` and `length` in `tutorials.json`, keeping each video in its group slot.
 - `vote-judge.mjs` is the spec for the two Vote and judge videos. Narration is the `say` text of each step, so changing a line means editing it and re-recording that one video (about two minutes).
 - Environment: `VOICE` (the `en_US-hfc_female-medium.onnx` file), `COOKIES`, `WORK`, `OUT`, `PLAYWRIGHT_PATH`.
+
+## Merging in small batches
+Videos go live in small batches, each only after review (see `docs/tutorial-standard.md`). For a batch: `node scripts/tutorials/install.mjs <outDir> id id ...` copies each video, its thumbnail and its captions file (`.vtt`) into `public/tutorials/` and fills `url`, `poster`, `captions` and `length` in `tutorials.json`. Review copies kept by the recorder (`public/tutorials/_review/`) are git-ignored and never merged.

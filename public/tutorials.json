@@ -16,8 +16,10 @@
           "id": "night",
           "title": "Plan a night",
           "desc": "Save favorites, build a route, share it and add it to your calendar.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/find-night.mp4",
+          "length": "1:15",
+          "captions": "/tutorials/find-night.vtt",
+          "poster": "/tutorials/find-night.jpg"
         },
         {
           "id": "email",
@@ -107,8 +109,10 @@
           "id": "quick",
           "title": "Create a contest with Quick start",
           "desc": "The short setup: seven screens.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/run-quick.mp4",
+          "length": "1:55",
+          "captions": "/tutorials/run-quick.vtt",
+          "poster": "/tutorials/run-quick.jpg"
         },
         {
           "id": "custom",

@@ -2,7 +2,7 @@
 // Usage: VOICE=... COOKIES=... PLAYWRIGHT_PATH=... node scripts/tutorials/run-contest.mjs [quick|custom|share|approve|edit|voting|team|announce|activity]
 import { readFileSync } from "node:fs";
 import { record, sleep } from "./record.mjs";
-import { end as endCard, fromMap, navSteps } from "./steps.mjs";
+import { end as endCard, fromMap, navSteps, openSite } from "./steps.mjs";
 import { renderTemplate } from "../../functions/_lib/mailtpl.js";
 // The app's real invitation emails (the wording comes from the template list that Admin edits), filled with demo names
 const PAGE = "https://socallights.app/c/maple-street-holiday-lights-2026", NOTE = "Hi neighbors! Come enter your house, or vote for your favorites. Cocoa on the corner Saturday at 6.", BASE_VARS = { contest: "Maple Street Holiday Lights 2026", org: "Maple Street Neighbors" };
@@ -22,27 +22,28 @@ const toDash = () => fromMap("contests", "", [
 const panel = (k, label, say) => ({ cap: "Tap " + label, say, do: async (p, h) => { await h.click(nav(k), { after: 2200 }); } });
 // map -> Add -> A contest
 const toWizard = () => fromMap("add", "", [
-  { cap: "Tap A contest", say: "Last, tap A contest.", do: async (p, h) => { await h.click('a[href="/add-contest"]', { after: 2200 }); } },
+  { cap: "Tap A contest", say: "Three choices. Tap A contest.", target: 'a[href="/add-contest"]', after: 2200 },
 ]);
 const NEXT = "#nextbtn";
 const next = async (p, h, after = 1800) => h.click(NEXT, { after });
 const startScreens = (nm) => [
-  { cap: "Name your contest", say: "First, name your contest. We suggest a name, or you can type your own.", do: async (p, h) => { await h.type("#f-name", nm); }, post: (p, h) => next(p, h) },
-  { cap: "Who runs it", say: "Next, say who is running it, and choose the city the homes are in.", do: async (p, h) => { await h.type("#f-org", "Oak Hill Neighbors"); await h.move("#f-city"); await p.selectOption("#f-city", "Irvine"); await sleep(1200); }, post: (p, h) => next(p, h) },
-  { cap: "Welcome message", say: "We wrote a welcome message for you. Keep it, or change it.", do: async (p, h) => { await h.hover("#f-descr", 1800); }, post: (p, h) => next(p, h) },
-  { cap: "Website (optional)", say: "A website is optional. You can leave it blank.", do: async (p, h) => { await h.hover("#f-site", 1200); }, post: (p, h) => next(p, h) },
-  { cap: "Dates", say: "We filled in typical dates for entries and voting. Change them, or just tap Next.", do: async (p, h) => { await h.hover("#f-closes", 1800); }, post: (p, h) => next(p, h) },
+  { cap: "1 of 7: Name it", say: "Name your contest. Type a name, then tap Next.", do: async (p, h) => { await h.type("#f-name", nm); }, target: NEXT },
+  { cap: "2 of 7: Who runs it", say: "Who is running it? Type the name, pick your city, then tap Next.", do: async (p, h) => { await h.type("#f-org", "Oak Hill Neighbors"); await h.move("#f-city"); await p.selectOption("#f-city", "Irvine"); await h.unring(); await sleep(700); }, target: NEXT },
+  { cap: "3 of 7: Welcome message", say: "This welcome message is already written. Keep it, and tap Next.", do: async (p, h) => { await h.hover("#f-descr", 900); }, target: NEXT },
+  { cap: "4 of 7: Website (optional)", say: "A website is optional. Skip it, and tap Next.", do: async (p, h) => { await h.hover("#f-site", 700); }, target: NEXT },
+  { cap: "5 of 7: Dates", say: "These dates are filled in for you. Tap Next.", do: async (p, h) => { await h.hover("#f-closes", 900); }, target: NEXT },
 ];
 const quick = {
-  id: "quick", file: "run-quick", cookie: ck.u_org, start: "/",
+  id: "quick", file: "run-quick", cookie: ck.u_org, start: "/", welcome: true, lateGeo: true, geo: { latitude: 33.6846, longitude: -117.8265 },
   steps: [
-    { ...card("Create a contest with Quick start", "The short setup: seven screens"), say: "Create a contest with Quick start. In this video, you set up a neighborhood contest in seven short screens.", pad: 1.2 },
+    { card: { ey: EY, title: "Create a contest in two minutes", sub: "Quick start" }, say: "In two minutes, you will have a live neighborhood contest, with its own link and QR code. Let's start.", pad: 0.5 },
+    ...openSite(),
     ...toWizard(),
     ...startScreens("Oak Hill Holiday Lights 2026"),
-    { cap: "Quick start", say: "Choose Quick start. You get public voting, four categories, and you approve each entry. We write the official rules for you.", do: async (p, h) => { await h.click('[data-tile="quick|yes"]', { after: 2200 }); }, post: (p, h) => next(p, h) },
-    { cap: "Create contest", say: "Check everything on the last screen, then tap Create contest. You can change any of it later.", do: async (p, h) => { await h.scroll(160); }, post: (p, h) => h.click(NEXT, { after: 3200 }), poster: true },
-    { cap: "Your contest is live", say: "Your contest is live. It is on the map, and it has a link and a QR code to share. Tap Open my dashboard.", do: async (p, h) => { await h.click("text=Open my dashboard", { after: 2800 }); } },
-    { cap: "Your dashboard", say: "This is your dashboard. You run everything from here.", do: async (p, h) => { await h.hover(".stats", 1600); } },
+    { cap: "6 of 7: Quick start", say: "Choose Quick start. It sets everything up for you. Then tap Next.", target: '[data-tile="quick|yes"]', after: 1000, post: (p, h) => next(p, h) },
+    { cap: "7 of 7: Create contest", say: "Check your details, and tap Create contest.", do: async (p, h) => { await h.scroll(160); }, target: NEXT, after: 2600, poster: true },
+    { cap: "Your contest is live", say: "Your contest is live! Tap Open my dashboard.", target: "text=Open my dashboard", after: 2200 },
+    { cap: "Your dashboard", say: "This is your dashboard, with your link and QR code, ready to share.", do: async (p, h) => { await h.hover(".stats", 1200); }, pad: 1.0 },
     end("Create a contest with Customize", "Judges, prizes, categories, vote counts and your own rules"),
   ],
 };
