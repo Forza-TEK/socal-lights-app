@@ -26,7 +26,8 @@ const OVERLAY = `(() => {
 })();`;
 class Helper {
   constructor(page) { this.page = page; this.x = 200; this.y = 200; }
-  async move(sel, opt = {}) { const loc = typeof sel === "string" ? this.page.locator(sel).first() : sel; await loc.scrollIntoViewIfNeeded().catch(() => {}); const b = await loc.boundingBox(); if (!b) throw new Error("no box for " + sel);
+  async move(sel, opt = {}) { if (MOB && typeof sel === "string") sel = MSEL(sel); if (MOB && typeof sel === "string" && /data-k=/.test(sel) && !(await this.page.locator(sel).count()) && (await this.page.locator("#sh-more").count())) await this.click("#sh-more", { after: 900 }); // phone dashboards keep most sections behind More
+    const loc = typeof sel === "string" ? this.page.locator(sel).first() : sel; await loc.scrollIntoViewIfNeeded().catch(() => {}); const b = await loc.boundingBox(); if (!b) throw new Error("no box for " + sel);
     await this.page.evaluate((b) => { let r = document.getElementById("__hl"); if (!r) { r = document.createElement("div"); r.id = "__hl"; document.body.appendChild(r); } const g = 6; r.style.left = b.x - g + "px"; r.style.top = b.y - g + "px"; r.style.width = b.width + 2 * g + "px"; r.style.height = b.height + 2 * g + "px"; }, b);
     const tx = b.x + (opt.fx ?? 0.5) * b.width, ty = b.y + (opt.fy ?? 0.5) * b.height; const sx = this.x, sy = this.y, n = Math.hypot(tx - sx, ty - sy) < 6 ? 0 : 38; // already pointing at it: no second glide
     for (let i = 1; i <= n; i++) { const t = i / n, e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; await this.page.mouse.move(sx + (tx - sx) * e, sy + (ty - sy) * e); await sleep(16); }
@@ -42,8 +43,17 @@ class Helper {
 }
 const MOB = process.env.MOBILE === "1"; // phone version: 9:16 Shorts, 1080 x 1920, the page itself at 360 x 640 and 3x
 const MOBCSS = `;(() => { const st = document.createElement("style"); st.textContent = "#__cur{display:none!important}#__cap{font-size:15px!important;padding:9px 14px!important;max-width:86vw!important;border-radius:10px!important}#__card{padding:18px!important}#__card img{width:72px!important;height:72px!important}#__card .wm{font-size:20px!important;margin-bottom:14px!important}#__card .ey{font-size:11px!important}#__card h1{font-size:30px!important;max-width:300px!important}#__card .ub{font-size:22px!important;padding:12px 18px!important;gap:8px!important;margin:18px 0 6px!important}#__card .ub svg{width:20px!important;height:20px!important}#__card ul{font-size:15px!important;max-width:290px!important}#__card li:before{top:7px!important;width:11px!important;height:11px!important}#__card p{font-size:14px!important;max-width:290px!important}"; const add = () => { if (!document.head) return setTimeout(add, 20); document.head.appendChild(st); }; add(); })();`;
+// On a phone the map screen is different: tabs are in the bottom bar and the list is a sheet that has to be raised first
+const MSEL = (x) => x.replace(/^#t-plan$/, '#bnav [data-tab="plan"]').replace(/^#t-events$/, '#bnav [data-tab="events"]');
+const needsSheet = (s) => /#pbody|\.panel|data-route|data-nroute|#t-plan/.test((s.target || "") + " " + (s.do ? s.do.toString() : "") + " " + (s.post ? s.post.toString() : ""));
 const DRY = process.env.DRY === "1"; // dry run: walk every step to check each button and link exists, with no voice and no video
 export async function record(spec) {
+  if (MOB) { // the list sheet is raised once, with its own spoken step, before the first step that needs it
+    const k = spec.steps.findIndex(needsSheet); const st = spec.steps[k];
+    if (k > 0 && !(st.target && /t-plan/.test(st.target)) && !spec.steps.slice(0, k).some((x) => x.target && /bnav|t-events/.test(x.target))) {
+      spec = { ...spec, steps: [...spec.steps.slice(0, k), { cap: "Tap Places", say: "Tap Places to open the list.", target: '#bnav [data-tab="events"]', after: 1500 }, ...spec.steps.slice(k)] };
+    }
+  }
   const w = `${WORK}/${spec.id}`; mkdirSync(w + "/wav", { recursive: true });
   const say = spec.steps.map((s) => s.say || ""); writeFileSync(w + "/texts.json", JSON.stringify(say));
   // Voice files are cached by text, so re-recording a video only speaks the lines that changed
