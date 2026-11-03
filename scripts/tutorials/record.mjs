@@ -49,12 +49,6 @@ const MSEL = (x) => x.replace(/^#t-plan$/, '#bnav [data-tab="plan"]').replace(/^
 const needsSheet = (s) => /#pbody|\.panel|data-route|data-nroute|#t-plan/.test((s.target || "") + " " + (s.do ? s.do.toString() : "") + " " + (s.post ? s.post.toString() : ""));
 const DRY = process.env.DRY === "1"; // dry run: walk every step to check each button and link exists, with no voice and no video
 export async function record(spec) {
-  if (MOB) { // the list sheet is raised once, with its own spoken step, before the first step that needs it
-    const k = spec.steps.findIndex(needsSheet); const st = spec.steps[k];
-    if (k > 0 && !(st.target && /t-plan/.test(st.target)) && !spec.steps.slice(0, k).some((x) => x.target && /bnav|t-events/.test(x.target))) {
-      spec = { ...spec, steps: [...spec.steps.slice(0, k), { cap: "Tap Places", say: "Tap Places to open the list.", target: '#bnav [data-tab="events"]', after: 1500 }, ...spec.steps.slice(k)] };
-    }
-  }
   const w = `${WORK}/${spec.id}`; mkdirSync(w + "/wav", { recursive: true });
   const say = spec.steps.map((s) => s.say || ""); writeFileSync(w + "/texts.json", JSON.stringify(say));
   // Voice files are cached by text, so re-recording a video only speaks the lines that changed
