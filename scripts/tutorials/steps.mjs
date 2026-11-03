@@ -33,7 +33,7 @@ export const MAPSPEC = { start: "/", welcome: true, lateGeo: true, geo: { latitu
 // The short version of the opening, used by every map video after the first: address, home page, Use my location, Allow, then the list quietly shows all places
 export const openShort = () => [
   ...openSite().slice(0, 3),
-  { cap: "", say: "", target: "text=Show all of Southern California", optional: true, after: 700, pad: 0.1, pre: async (p) => { await p.waitForSelector("text=Show all of Southern California", { timeout: 15000 }).catch(() => {}); } },
+  { cap: "", say: "", target: "text=Show all of Southern California", optional: true, after: 700, pad: 0.1, pre: async (p) => { await p.waitForSelector("text=Show all of Southern California", { timeout: 5000 }).catch(() => {}); } },
 ];
 export const hook = (ey, title, sub, say) => ({ card: { ey, title, sub }, say, pad: 0.5 });
 export const recap = (ey, title, list, say) => ({ card: { ey, title, list }, say, pad: 1.0 });
