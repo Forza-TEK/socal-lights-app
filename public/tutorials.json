@@ -195,8 +195,10 @@
           "id": "activity",
           "title": "Read your contest activity",
           "desc": "Visits, QR scans, voters and votes per day.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/run-activity.mp4",
+          "length": "1:08",
+          "captions": "/tutorials/run-activity.vtt",
+          "poster": "/tutorials/run-activity.jpg"
         }
       ]
     },
