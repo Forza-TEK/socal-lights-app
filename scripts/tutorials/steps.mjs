@@ -15,3 +15,12 @@ export const fromMapProfile = () => navSteps([
   { cap: "Tap the person icon", say: "You start on the map. Tap the person icon at the top, next to the three dots.", do: async (p, h) => { await h.click("#acctbtn", { after: 2400 }); } },
 ]);
 export const toContest = (btn) => ({ cap: "Tap " + btn, say: `Find the contest, and tap ${btn}.`, do: async (p, h) => { await h.click(`text=${btn}`, { after: 2200 }); } });
+
+// The starting point every map video shows first: the address to open, then what the home page looks like on a first visit
+// (including the "use my location" message), so a new visitor knows exactly where they are before the first tap.
+export const openSite = (ey) => [
+  { card: { ey: "Start here", title: "Open your web browser and go to", urlbar: "socallights.app" }, say: "Open your web browser, and go to SoCal Lights dot app.", pad: 0.8,
+    post: async (p, h) => { await p.goto((process.env.BASE || "http://localhost:8788") + "/", { waitUntil: "domcontentloaded" }); } }, // the page loads as the card goes away, so the first-visit message is still showing
+  { cap: "This is the home page", say: "This is the SoCal Lights home page: the map, and a list of places.", pad: 0.3 },
+  { cap: "Tap No thanks", say: "A message asks to use your location. Tap No thanks.", target: '[data-welcome="no"]', after: 900 },
+];

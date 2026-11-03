@@ -2,7 +2,7 @@
 // Usage: VOICE=... COOKIES=... PLAYWRIGHT_PATH=... node scripts/tutorials/run-contest.mjs [quick|custom|share|approve|edit|voting|team|announce|activity]
 import { readFileSync } from "node:fs";
 import { record, sleep } from "./record.mjs";
-import { end as endCard, fromMap, navSteps } from "./steps.mjs";
+import { end as endCard, fromMap, navSteps, openSite } from "./steps.mjs";
 import { renderTemplate } from "../../functions/_lib/mailtpl.js";
 // The app's real invitation emails (the wording comes from the template list that Admin edits), filled with demo names
 const PAGE = "https://socallights.app/c/maple-street-holiday-lights-2026", NOTE = "Hi neighbors! Come enter your house, or vote for your favorites. Cocoa on the corner Saturday at 6.", BASE_VARS = { contest: "Maple Street Holiday Lights 2026", org: "Maple Street Neighbors" };
@@ -34,15 +34,16 @@ const startScreens = (nm) => [
   { cap: "5 of 7: Dates", say: "These dates are filled in for you. Tap Next.", do: async (p, h) => { await h.hover("#f-closes", 900); }, target: NEXT },
 ];
 const quick = {
-  id: "quick", file: "run-quick", cookie: ck.u_org, start: "/",
+  id: "quick", file: "run-quick", cookie: ck.u_org, start: "/", welcome: true,
   steps: [
-    { card: { ey: EY, title: "Create a contest in two minutes", sub: "Quick start" }, say: "In two minutes, you will have a live neighborhood contest, with its own link and QR code. We start on the map.", pad: 0.6 },
+    { card: { ey: EY, title: "Create a contest in two minutes", sub: "Quick start" }, say: "In two minutes, you will have a live neighborhood contest, with its own link and QR code. Let's start.", pad: 0.5 },
+    ...openSite(),
     ...toWizard(),
     ...startScreens("Oak Hill Holiday Lights 2026"),
     { cap: "6 of 7: Quick start", say: "Choose Quick start. It sets everything up for you. Then tap Next.", target: '[data-tile="quick|yes"]', after: 1000, post: (p, h) => next(p, h) },
     { cap: "7 of 7: Create contest", say: "Check your details, and tap Create contest.", do: async (p, h) => { await h.scroll(160); }, target: NEXT, after: 2600, poster: true },
     { cap: "Your contest is live", say: "Your contest is live! Tap Open my dashboard.", target: "text=Open my dashboard", after: 2200 },
-    { cap: "Your dashboard", say: "This is your dashboard, with your link and QR code, ready to share. That was the map, the three dots, Add, A contest, and seven quick screens.", do: async (p, h) => { await h.hover(".stats", 1200); }, pad: 1.0 },
+    { cap: "Your dashboard", say: "This is your dashboard, with your link and QR code, ready to share.", do: async (p, h) => { await h.hover(".stats", 1200); }, pad: 1.0 },
     end("Create a contest with Customize", "Judges, prizes, categories, vote counts and your own rules"),
   ],
 };
