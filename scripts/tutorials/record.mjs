@@ -55,7 +55,7 @@ export async function record(spec) {
   const audio = say.map((t, i) => { if (!t) return null; const o = `${w}/wav/s${i}.wav`; execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${w}/wav/${i}.wav`, "-af", soft, "-ar", "44100", o]); return { f: o, d: dur(o) }; });
   const vp = spec.phone ? { width: 390, height: 680 } : { width: 1280, height: 720 };
   const br = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
-  const SC = spec.phone ? 3 : 1.5; // device pixels per CSS pixel: desktop frames are 1920x1080, phone frames 1170x2040
+  const SC = spec.phone ? 3 : 2; // device pixels per CSS pixel: desktop frames are 2560x1440, phone frames 1170x2040
   const ctx = await br.newContext({ viewport: vp, deviceScaleFactor: SC, colorScheme: "light", hasTouch: false, isMobile: false, permissions: ["clipboard-read", "clipboard-write", ...(spec.geo ? ["geolocation"] : [])], geolocation: spec.geo });
   const until = Date.now() + 864e5;
   await ctx.addInitScript(`try{localStorage.setItem("socal-theme","light");${spec.welcome ? "" : 'localStorage.setItem("socal-welcomed","1");'}localStorage.setItem("socal-theme-until","${until}")}catch(e){}`);
@@ -98,9 +98,9 @@ export async function record(spec) {
   const webm = null;
   const inputs = marks.flatMap((m) => ["-i", m.f]);
   const fc = marks.map((m, k) => `[${k + 1}:a]adelay=${Math.round(m.t * 1000)}|${Math.round(m.t * 1000)}[a${k}]`).join(";") + (marks.length ? ";" : "") + marks.map((_, k) => `[a${k}]`).join("") + `amix=inputs=${marks.length}:normalize=0[aout]`;
-  const vf = spec.phone ? "scale=-2:1040:flags=lanczos,pad=1920:1080:(ow-iw)/2:20:color=#fbf3ea" : "scale=1920:1080:flags=lanczos";
+  const vf = spec.phone ? "scale=-2:1380:flags=lanczos,pad=2560:1440:(ow-iw)/2:30:color=#fbf3ea" : "scale=2560:1440:flags=lanczos";
   const mp4 = `${OUT}/${spec.file}.mp4`;
-  execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", w + "/frames.txt", ...inputs, "-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "25", "-preset", "medium", "-vf", vf + ",fps=30", "-r", "30", "-c:a", "aac", "-b:a", "160k", "-ac", "2", "-ar", "48000", "-t", String(total), "-movflags", "+faststart", mp4], { stdio: "inherit" });
+  execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", w + "/frames.txt", ...inputs, "-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "23", "-preset", "medium", "-vf", vf + ",fps=30", "-r", "30", "-c:a", "aac", "-b:a", "160k", "-ac", "2", "-ar", "48000", "-t", String(total), "-movflags", "+faststart", mp4], { stdio: "inherit" });
 
   // ---- Checks before a video counts as finished: it must open on the title card and the voice must already be speaking ----
   const probe = (args) => spawnSync("ffmpeg", ["-hide_banner", ...args], { encoding: "utf8" }).stderr;

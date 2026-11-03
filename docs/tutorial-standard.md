@@ -25,10 +25,11 @@ Sources: [Guo, Kim and Rubin, "How video production affects student engagement" 
 5. **Close (about 8 seconds).** One sentence recap, then "Next: ..." with what that video covers.
 
 ## Rules
+- The starting point is always shown first: the address to open ("Start here" card), then the home page as a first-time visitor sees it, or the invitation email. A first-time visitor's "use your location" message is answered with **Use my location**, and the voice says why (distances and directions depend on it), not No thanks.
 - No silence at the start. The first frame is the title card; speech starts within one second.
 - One tap per instruction. Never click before the voice has named it.
 - Captions never cover the pointer or the thing being clicked; they clear the moment the screen changes.
-- Day mode, 1920 x 1080, steady window, no stray windows, demo data only.
+- Day mode, 2560 x 1440 (crisp on large screens), steady window, no stray windows, demo data only.
 - Numbers and names are written the way they are spoken.
 - A video over 2:30 is split, not sped up.
 

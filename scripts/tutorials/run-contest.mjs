@@ -34,7 +34,7 @@ const startScreens = (nm) => [
   { cap: "5 of 7: Dates", say: "These dates are filled in for you. Tap Next.", do: async (p, h) => { await h.hover("#f-closes", 900); }, target: NEXT },
 ];
 const quick = {
-  id: "quick", file: "run-quick", cookie: ck.u_org, start: "/", welcome: true,
+  id: "quick", file: "run-quick", cookie: ck.u_org, start: "/", welcome: true, geo: { latitude: 33.6846, longitude: -117.8265 },
   steps: [
     { card: { ey: EY, title: "Create a contest in two minutes", sub: "Quick start" }, say: "In two minutes, you will have a live neighborhood contest, with its own link and QR code. Let's start.", pad: 0.5 },
     ...openSite(),
