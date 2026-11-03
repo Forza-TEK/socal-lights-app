@@ -70,8 +70,10 @@
           "id": "enter",
           "title": "Enter your home in a contest",
           "desc": "Sign in, add photos, your address and agree to the rules.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/enter.mp4",
+          "length": "1:27",
+          "captions": "/tutorials/enter.vtt",
+          "poster": "/tutorials/enter.jpg"
         },
         {
           "id": "edit-entry",
@@ -233,8 +235,10 @@
           "id": "add-event",
           "title": "Add an event to the map",
           "desc": "Share a tree lighting, market, parade or haunted house.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/post-event.mp4",
+          "length": "1:27",
+          "captions": "/tutorials/post-event.vtt",
+          "poster": "/tutorials/post-event.jpg"
         },
         {
           "id": "showcase",
