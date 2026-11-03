@@ -214,15 +214,19 @@
           "id": "installer",
           "title": "Presenting installer and quote requests",
           "desc": "How the Get a quote button works.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/sponsors-installer.mp4",
+          "length": "1:33",
+          "captions": "/tutorials/sponsors-installer.vtt",
+          "poster": "/tutorials/sponsors-installer.jpg"
         },
         {
           "id": "installer-profile",
           "title": "Installer profiles and \"Installed by\"",
           "desc": "How a company gets a profile, how a home links to it, and how to confirm or claim yours.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/sponsors-profile.mp4",
+          "length": "1:12",
+          "captions": "/tutorials/sponsors-profile.vtt",
+          "poster": "/tutorials/sponsors-profile.jpg"
         }
       ]
     },
