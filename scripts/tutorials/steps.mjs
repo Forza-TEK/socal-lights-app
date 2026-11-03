@@ -21,6 +21,6 @@ export const toContest = (btn) => ({ cap: "Tap " + btn, say: `Find the contest, 
 export const openSite = (ey) => [
   { card: { ey: "Start here", title: "Open your web browser and go to", urlbar: "socallights.app" }, say: "Open your web browser, and go to SoCal Lights dot app.", pad: 0.8,
     post: async (p, h) => { await p.evaluate(() => { try { localStorage.removeItem("socal-welcomed"); } catch {} }); await p.goto((process.env.BASE || "http://localhost:8788") + "/", { waitUntil: "domcontentloaded" }); } }, // the page loads as the card goes away, so the first-visit message is still showing
-  { cap: "Tap Use my location", say: "This is the SoCal Lights home page. A message asks to use your location. Tap Use my location.", target: '[data-welcome="go"]', after: 1200 },
+  { cap: "Tap Use my location", say: "This is the SoCal Lights home page. A message asks to use your location. Tap Use my location.", target: '[data-welcome="go"]', after: 1200, do: async (p, h) => { await h.ctx.grantPermissions(["geolocation"], { origin: process.env.BASE || "http://localhost:8788" }); } }, // permission is given at the tap, like a real first visit
   { cap: "Tap Allow", say: "Your browser will ask for permission. Tap Allow. That is how the map shows how far each place is, and gives you directions.", do: async (p, h) => { await h.hover("#pbody .item >> nth=0", 1200); }, pad: 0.8 },
 ];
