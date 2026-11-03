@@ -36,3 +36,11 @@ Sources: [Guo, Kim and Rubin, "How video production affects student engagement" 
 ## Checks before a video is called finished
 Automatic (the recorder refuses to save a video that fails): title card is the first frame; voice is audible in the first three seconds; the video is within the length limit.
 By hand, on the finished file: look at 0:00, 0:01, 0:03; read the speech-recognizer transcript of the first 30 seconds and of every navigation step; check each click happens after its instruction and that no caption covers the pointer; open the end card.
+
+## Mobile versions (made after the whole desktop set is live)
+Every video also gets a phone version in **Shorts format: 9:16, 1080 x 1920, full screen on a phone with no bars**.
+- The page itself is recorded at a 360 x 640 viewport at 3x, so the app fills the entire vertical frame (never a phone shape inside a wide frame, as the old install-app video did).
+- Same script and voice. Taps are shown with a ripple and an orange ring; no mouse pointer.
+- Keep captions and anything important in the Shorts safe zone: away from the top 10 percent and the bottom 20 percent, where the player's buttons sit.
+- Files: `<name>-mobile.mp4`, `.vtt`, `.jpg` next to the desktop files; `tutorials.json` gets a `mobile` URL for each video. The Tutorials page plays the phone version on narrow screens and opens it filling the screen.
+- Same checks and the same small-batch merging as the desktop set.
