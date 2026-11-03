@@ -80,9 +80,11 @@ export async function record(spec) {
     if (audio[i]) marks.push({ i, t: t0 + 0.4, f: audio[i].f });
     const end = t0 + 0.4 + (audio[i]?.d || 0) + (s.pad ?? 0.9);
     await sleep(900);
+    if (s.target) await h.move(s.target);
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
     if (s.poster) poster = T();
     const left = end - T(); if (left > 0) await sleep(left * 1000);
+    if (s.target) { await sleep(500); await h.click(s.target, { after: s.after ?? 1500 }); }
     if (s.post) { try { await s.post(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-post-${i}.png` }); throw e; } }
   }
   const total = T() + 0.3; await sleep(300);
