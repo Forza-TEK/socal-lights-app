@@ -17,7 +17,7 @@
           "title": "Plan a night",
           "desc": "Save favorites, build a route, share it and add it to your calendar.",
           "url": "/tutorials/find-night.mp4",
-          "length": "1:15",
+          "length": "1:38",
           "captions": "/tutorials/find-night.vtt",
           "poster": "/tutorials/find-night.jpg"
         },
@@ -96,15 +96,19 @@
           "id": "vote",
           "title": "Vote in a contest",
           "desc": "Use the category tabs, pick one favorite in each, and share the contest.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/vote.mp4",
+          "length": "1:26",
+          "captions": "/tutorials/vote.vtt",
+          "poster": "/tutorials/vote.jpg"
         },
         {
           "id": "judge",
           "title": "Judge a contest",
           "desc": "Open your judge link, score each home, and recuse yourself when you know the household.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/judge.mp4",
+          "length": "0:56",
+          "captions": "/tutorials/judge.vtt",
+          "poster": "/tutorials/judge.jpg"
         }
       ]
     },
