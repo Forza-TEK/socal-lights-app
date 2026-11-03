@@ -69,7 +69,8 @@ S.email = { id: "email", file: "find-email", cookie: null, ...MAPSPEC, routes: [
 ]};
 S.app = { id: "app", file: "find-app", phone: true, warm: true, cookie: null, start: "/", steps: [
   hook(EF, "Put SoCal Lights on your phone", "Install it, and use it offline", "In one minute, you will put SoCal Lights on your phone, and see what works with no signal."),
-  { cap: "Open the site on your phone", say: "On your phone, open your web browser, and go to SoCal Lights dot app. There is nothing to download from an app store.", do: async (p, h) => { await h.hover("#q", 900); } },
+  { card: { ey: "Start here", title: "On your phone, open your web browser and go to", urlbar: "socallights.app" }, say: "On your phone, open your web browser, and go to SoCal Lights dot app.", pad: 0.8 },
+  { cap: "This is the home page", say: "This is the home page. There is nothing to download from an app store.", do: async (p, h) => { await h.hover("#q", 900); } },
   { card: { ey: "On an iPhone", title: "Share, then Add to Home Screen", sub: "In Safari, tap the Share button, scroll down, and tap Add to Home Screen" }, say: "On an iPhone, use Safari. Tap the Share button, scroll down, and tap Add to Home Screen.", pad: 1.0 },
   { card: { ey: "On an Android phone", title: "Menu, then Install app", sub: "In Chrome, tap the three dots, then Install app or Add to Home screen" }, say: "On an Android phone, use Chrome. Tap the three dots, then tap Install app.", pad: 1.0 },
   { cap: "No signal", say: "With no signal, the app still opens. Your last list of places is saved on your phone.", do: async (p, h) => { await sleep(1500); await h.ctx.setOffline(true); await p.reload({ waitUntil: "domcontentloaded" }); await sleep(3000); }, poster: true },
