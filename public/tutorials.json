@@ -181,8 +181,10 @@
           "id": "team",
           "title": "Add co-organizers and judges",
           "desc": "Invite people to help run the contest.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/run-team.mp4",
+          "length": "1:25",
+          "captions": "/tutorials/run-team.vtt",
+          "poster": "/tutorials/run-team.jpg"
         },
         {
           "id": "announce",
@@ -211,8 +213,10 @@
           "id": "sponsors",
           "title": "Add sponsors and logos",
           "desc": "Show sponsors by tier on the contest page.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/sponsors-add.mp4",
+          "length": "1:16",
+          "captions": "/tutorials/sponsors-add.vtt",
+          "poster": "/tutorials/sponsors-add.jpg"
         },
         {
           "id": "installer",
