@@ -270,7 +270,13 @@
           "url": "/tutorials/run-team.mp4",
           "length": "1:25",
           "captions": "/tutorials/run-team.vtt",
-          "poster": "/tutorials/run-team.jpg"
+          "poster": "/tutorials/run-team.jpg",
+          "mobile": {
+            "url": "/tutorials/run-team-mobile.mp4",
+            "poster": "/tutorials/run-team-mobile.jpg",
+            "captions": "/tutorials/run-team-mobile.vtt",
+            "length": "1:23"
+          }
         },
         {
           "id": "announce",
@@ -279,7 +285,13 @@
           "url": "/tutorials/run-announce.mp4",
           "length": "1:25",
           "captions": "/tutorials/run-announce.vtt",
-          "poster": "/tutorials/run-announce.jpg"
+          "poster": "/tutorials/run-announce.jpg",
+          "mobile": {
+            "url": "/tutorials/run-announce-mobile.mp4",
+            "poster": "/tutorials/run-announce-mobile.jpg",
+            "captions": "/tutorials/run-announce-mobile.vtt",
+            "length": "1:44"
+          }
         },
         {
           "id": "activity",
@@ -288,7 +300,13 @@
           "url": "/tutorials/run-activity.mp4",
           "length": "1:08",
           "captions": "/tutorials/run-activity.vtt",
-          "poster": "/tutorials/run-activity.jpg"
+          "poster": "/tutorials/run-activity.jpg",
+          "mobile": {
+            "url": "/tutorials/run-activity-mobile.mp4",
+            "poster": "/tutorials/run-activity-mobile.jpg",
+            "captions": "/tutorials/run-activity-mobile.vtt",
+            "length": "1:07"
+          }
         }
       ]
     },
@@ -322,7 +340,13 @@
           "url": "/tutorials/sponsors-profile.mp4",
           "length": "1:12",
           "captions": "/tutorials/sponsors-profile.vtt",
-          "poster": "/tutorials/sponsors-profile.jpg"
+          "poster": "/tutorials/sponsors-profile.jpg",
+          "mobile": {
+            "url": "/tutorials/sponsors-profile-mobile.mp4",
+            "poster": "/tutorials/sponsors-profile-mobile.jpg",
+            "captions": "/tutorials/sponsors-profile-mobile.vtt",
+            "length": "1:10"
+          }
         }
       ]
     },
@@ -338,7 +362,13 @@
           "url": "/tutorials/post-event.mp4",
           "length": "1:27",
           "captions": "/tutorials/post-event.vtt",
-          "poster": "/tutorials/post-event.jpg"
+          "poster": "/tutorials/post-event.jpg",
+          "mobile": {
+            "url": "/tutorials/post-event-mobile.mp4",
+            "poster": "/tutorials/post-event-mobile.jpg",
+            "captions": "/tutorials/post-event-mobile.vtt",
+            "length": "1:27"
+          }
         },
         {
           "id": "showcase",
@@ -347,7 +377,13 @@
           "url": "/tutorials/post-house.mp4",
           "length": "1:43",
           "captions": "/tutorials/post-house.vtt",
-          "poster": "/tutorials/post-house.jpg"
+          "poster": "/tutorials/post-house.jpg",
+          "mobile": {
+            "url": "/tutorials/post-house-mobile.mp4",
+            "poster": "/tutorials/post-house-mobile.jpg",
+            "captions": "/tutorials/post-house-mobile.vtt",
+            "length": "1:40"
+          }
         }
       ]
     }
