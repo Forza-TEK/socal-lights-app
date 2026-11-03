@@ -16,7 +16,7 @@ const map = {
     { cap: "Seasons", say: "The season button picks what you are looking for. Open it, and choose Thanksgiving and Christmas Lights.", do: season("Christmas") },
     { cap: "Search a city", say: "Next, search for a city. Type its name, and tap the city in the list.", do: async (p, h) => { await h.type("#q", "Irvine"); await h.click('button:has-text("Show this city on the map")', { after: 3000 }); }, poster: true },
     { cap: "All seasons", say: "Choose All seasons to see every upcoming event for this city, not just the season in view.", do: async (p, h) => { await h.click("#seasonbtn", { after: 1400 }); await h.click('[data-sp="all"]', { after: 2800 }); } },
-    { cap: "Filters", say: "Tap Filters to narrow the list by date, distance, county, type, and more. Then tap the button at the bottom to show the places.", do: async (p, h) => { await h.click("text=Filters >> visible=true", { after: 2400 }); await h.hover('[data-ftype="house"]', 1400); await h.click("text=Clear all", { after: 1000 }); await h.click(".fclose, [aria-label='Close filters'] >> visible=true", { after: 1500 }).catch(() => {}); } },
+    { cap: "Filters", say: "Tap Filters to narrow the list by date, distance, county, type, and more. Then tap the button at the bottom to show the places.", do: async (p, h) => { await h.click("text=Filters >> visible=true", { after: 2400 }); await h.hover('[data-ftype="house"] >> visible=true', 1400); await h.click("text=Clear all", { after: 1000 }); await h.click(".fclose, [aria-label='Close filters'] >> visible=true", { after: 1500 }).catch(() => {}); } },
     end("Plan a night", "Save favorites, build a route, share it and add it to your calendar"),
   ],
 };
@@ -96,7 +96,7 @@ const proFilter = {
     { ...card("Find professionally installed displays", "Use the Professionally installed filter, then open an installer's profile"), say: "Find professionally installed displays. In this video, you find displays that a lighting company installed.", pad: 1.2 },
     { cap: "Choose Christmas", say: "Start on the map. Choose Thanksgiving and Christmas Lights from the season button.", do: season("Christmas") },
     { cap: "Filters", say: "Tap Filters.", do: async (p, h) => { await h.click("text=Filters >> visible=true", { after: 2000 }); } },
-    { cap: "Professionally installed", say: "Under Type, choose Professionally installed. Then tap the button at the bottom to show the places.", do: async (p, h) => { await h.click('[data-ftype="pro"]', { after: 1800 }); await h.click("button:has-text('Show')", { after: 2600 }); }, poster: true },
+    { cap: "Professionally installed", say: "Under Type, choose Professionally installed. Then tap the button at the bottom to show the places.", do: async (p, h) => { await h.click('[data-ftype="pro"] >> visible=true', { after: 1800 }); await h.click("text=/^Show \\d+ places?$/ >> visible=true", { after: 2600 }); }, poster: true },
     { cap: "Installed by", say: "Each display shows the company that installed it. Open one.", do: async (p, h) => { await h.click("#pbody .item.home >> nth=0", { after: 2600 }); } },
     { cap: "Installer profile", say: "Tap the company's name to open its profile, with its area, phone, website and the displays it has installed.", do: async (p, h) => { await h.click("a.instlink >> nth=0", { after: 3200 }); } },
     end("Enter your home in a contest", "Sign in, add photos, your address and agree to the rules"),
