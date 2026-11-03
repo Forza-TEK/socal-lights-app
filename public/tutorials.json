@@ -72,7 +72,13 @@
           "url": "/tutorials/find-contests.mp4",
           "length": "1:06",
           "captions": "/tutorials/find-contests.vtt",
-          "poster": "/tutorials/find-contests.jpg"
+          "poster": "/tutorials/find-contests.jpg",
+          "mobile": {
+            "url": "/tutorials/find-contests-mobile.mp4",
+            "poster": "/tutorials/find-contests-mobile.jpg",
+            "captions": "/tutorials/find-contests-mobile.vtt",
+            "length": "1:06"
+          }
         },
         {
           "id": "pro-filter",
@@ -207,7 +213,13 @@
           "url": "/tutorials/run-custom.mp4",
           "length": "2:23",
           "captions": "/tutorials/run-custom.vtt",
-          "poster": "/tutorials/run-custom.jpg"
+          "poster": "/tutorials/run-custom.jpg",
+          "mobile": {
+            "url": "/tutorials/run-custom-mobile.mp4",
+            "poster": "/tutorials/run-custom-mobile.jpg",
+            "captions": "/tutorials/run-custom-mobile.vtt",
+            "length": "2:23"
+          }
         },
         {
           "id": "share",
@@ -231,7 +243,13 @@
           "url": "/tutorials/run-approve.mp4",
           "length": "1:18",
           "captions": "/tutorials/run-approve.vtt",
-          "poster": "/tutorials/run-approve.jpg"
+          "poster": "/tutorials/run-approve.jpg",
+          "mobile": {
+            "url": "/tutorials/run-approve-mobile.mp4",
+            "poster": "/tutorials/run-approve-mobile.jpg",
+            "captions": "/tutorials/run-approve-mobile.vtt",
+            "length": "1:17"
+          }
         },
         {
           "id": "edit",
@@ -322,7 +340,13 @@
           "url": "/tutorials/sponsors-add.mp4",
           "length": "1:16",
           "captions": "/tutorials/sponsors-add.vtt",
-          "poster": "/tutorials/sponsors-add.jpg"
+          "poster": "/tutorials/sponsors-add.jpg",
+          "mobile": {
+            "url": "/tutorials/sponsors-add-mobile.mp4",
+            "poster": "/tutorials/sponsors-add-mobile.jpg",
+            "captions": "/tutorials/sponsors-add-mobile.vtt",
+            "length": "1:17"
+          }
         },
         {
           "id": "installer",
@@ -331,7 +355,13 @@
           "url": "/tutorials/sponsors-installer.mp4",
           "length": "1:33",
           "captions": "/tutorials/sponsors-installer.vtt",
-          "poster": "/tutorials/sponsors-installer.jpg"
+          "poster": "/tutorials/sponsors-installer.jpg",
+          "mobile": {
+            "url": "/tutorials/sponsors-installer-mobile.mp4",
+            "poster": "/tutorials/sponsors-installer-mobile.jpg",
+            "captions": "/tutorials/sponsors-installer-mobile.vtt",
+            "length": "1:31"
+          }
         },
         {
           "id": "installer-profile",
