@@ -75,15 +75,19 @@
           "id": "edit-entry",
           "title": "Edit or withdraw your entry",
           "desc": "Change your entry's name and description, or take it out.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/edit-entry.mp4",
+          "length": "1:12",
+          "captions": "/tutorials/edit-entry.vtt",
+          "poster": "/tutorials/edit-entry.jpg"
         },
         {
           "id": "profile",
           "title": "Your profile",
           "desc": "Badges, saved drafts and deleting your account.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/profile.mp4",
+          "length": "1:04",
+          "captions": "/tutorials/profile.vtt",
+          "poster": "/tutorials/profile.jpg"
         }
       ]
     },
@@ -155,8 +159,10 @@
           "id": "edit",
           "title": "Edit your contest and change the dates",
           "desc": "Change the details any time before winners are announced.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/run-edit.mp4",
+          "length": "1:20",
+          "captions": "/tutorials/run-edit.vtt",
+          "poster": "/tutorials/run-edit.jpg"
         },
         {
           "id": "voting",
