@@ -216,7 +216,13 @@
           "url": "/tutorials/run-share.mp4",
           "length": "1:34",
           "captions": "/tutorials/run-share.vtt",
-          "poster": "/tutorials/run-share.jpg"
+          "poster": "/tutorials/run-share.jpg",
+          "mobile": {
+            "url": "/tutorials/run-share-mobile.mp4",
+            "poster": "/tutorials/run-share-mobile.jpg",
+            "captions": "/tutorials/run-share-mobile.vtt",
+            "length": "1:36"
+          }
         },
         {
           "id": "approve",
@@ -234,7 +240,13 @@
           "url": "/tutorials/run-edit.mp4",
           "length": "1:20",
           "captions": "/tutorials/run-edit.vtt",
-          "poster": "/tutorials/run-edit.jpg"
+          "poster": "/tutorials/run-edit.jpg",
+          "mobile": {
+            "url": "/tutorials/run-edit-mobile.mp4",
+            "poster": "/tutorials/run-edit-mobile.jpg",
+            "captions": "/tutorials/run-edit-mobile.vtt",
+            "length": "1:15"
+          }
         },
         {
           "id": "voting",
@@ -243,7 +255,13 @@
           "url": "/tutorials/run-voting.mp4",
           "length": "1:26",
           "captions": "/tutorials/run-voting.vtt",
-          "poster": "/tutorials/run-voting.jpg"
+          "poster": "/tutorials/run-voting.jpg",
+          "mobile": {
+            "url": "/tutorials/run-voting-mobile.mp4",
+            "poster": "/tutorials/run-voting-mobile.jpg",
+            "captions": "/tutorials/run-voting-mobile.vtt",
+            "length": "1:23"
+          }
         },
         {
           "id": "team",
