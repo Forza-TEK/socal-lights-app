@@ -27,3 +27,15 @@ export const openSite = (ey) => [
   { cap: "The map zooms to you", say: "The map zooms to where you are. There are no events on your street, so tap Show all of Southern California.", target: "text=Show all of Southern California", after: 900, pad: 0.3, pre: async (p) => { await p.waitForSelector("text=Show all of Southern California", { timeout: 15000 }).catch(() => {}); } },
   { cap: "Distances show", say: "Now every place shows how far away it is, nearest first, so you can plan your drive.", do: async (p, h) => { await sleep2(1500); await h.hover("#pbody .item >> nth=0", 1200); }, pad: 0.5 },
 ];
+
+// ---- Shared pieces for the full set of videos ----
+export const MAPSPEC = { start: "/", welcome: true, lateGeo: true, geo: { latitude: 33.6846, longitude: -117.8265 } };
+// The short version of the opening, used by every map video after the first: address, home page, Use my location, Allow, then the list quietly shows all places
+export const openShort = () => [
+  ...openSite().slice(0, 3),
+  { cap: "", say: "", target: "text=Show all of Southern California", after: 700, pad: 0.1, pre: async (p) => { await p.waitForSelector("text=Show all of Southern California", { timeout: 15000 }).catch(() => {}); } },
+];
+export const hook = (ey, title, sub, say) => ({ card: { ey, title, sub }, say, pad: 0.5 });
+export const recap = (ey, title, list, say) => ({ card: { ey, title, list }, say, pad: 1.0 });
+// An example email scene: shows the app's real email in a mock inbox
+export const emailScene = (m, say, to) => ({ cap: "Your email", say, mail: { subject: m.subject, html: m.html, to, note: "Example email" }, pad: 0.6 });
