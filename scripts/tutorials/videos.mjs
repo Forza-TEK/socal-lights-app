@@ -32,12 +32,12 @@ const S = {}; // specs by video id
 // ---------------- Find and plan ----------------
 const EF = "Find and plan";
 S.map = { id: "map", file: "find-map", cookie: null, ...MAPSPEC, steps: [
-  hook(EF, "Find lights near you", "The map, seasons and filters", "In two minutes, you will find the lights and events near you. We start on the map."),
+  hook(EF, "Find lights near you", "The map, seasons and filters", "In about a minute, you will find the lights and events near you. We start on the map."),
   ...openSite(),
   target("Tap the season button", "Choose a season. Tap the season button at the top.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Tap Thanksgiving and Christmas Lights.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
   { cap: "Search a city", say: "Or search for a city. Type its name, and tap it in the list.", do: async (p, h) => { await h.type("#q", "Irvine"); }, target: 'button:has-text("Show this city on the map")', after: 1800 },
-  target("Tap Filters", "To narrow the list, tap Filters. You can pick a date, a distance, a type, and more.", "text=Filters >> visible=true", { after: 1500, poster: true }),
+  target("Tap Filters", "To narrow the list, tap Filters. You can pick a date, a distance, a type, and more.", "text=Filters >> visible=true", { after: 3200, poster: true }),
   recap(EF, "You can now find lights near you", ["Use my location for distances", "Pick a season", "Search a city, and use Filters"], "That is how you find lights near you. Use your location, pick a season, search a city, and narrow it with Filters."),
   nextUp(EF, "Plan a night", "Save favorites, build a route, share it and add it to your calendar"),
 ]};
