@@ -88,6 +88,7 @@ export async function record(spec) {
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
     if (s.target && s.optional && !(await page.locator(s.target).count())) { s.target = null; } // an optional tap is skipped when its button is not there
     if (s.target) { try { await h.move(s.target); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } } // act first (typing, scrolling), then glide to the thing to tap
+    { const bad = await page.evaluate(() => [...document.querySelectorAll(".err, [role=alert]")].filter((e) => e.offsetParent && /couldn.t|can.t|didn.t|enter a |should |invalid|wrong|try again|isn.t|not allowed|too many/i.test(e.textContent)).map((e) => e.textContent.trim()).join(" | ")).catch(() => ""); if (bad) { await page.screenshot({ path: `${w}/error-${i}.png` }); throw new Error(`The page showed an error on step ${i} (${s.cap || "card"}): ${bad}`); } } // a recording must never show a failed action
     if (s.poster) poster = T();
     const left = end - T(); if (left > 0) await sleep(left * 1000);
     if (s.target) { await sleep(500); if (s.beforeClick) await s.beforeClick(page, h); await h.click(s.target, { after: 0 }); await page.evaluate(() => { const c = document.getElementById("__cap"); if (c) c.remove(); }).catch(() => {}); await sleep(s.after ?? 1500); } // the caption goes the moment the screen changes, so it never describes the old screen

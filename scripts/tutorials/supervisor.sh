@@ -29,6 +29,7 @@ for round in 1 2 3 4; do
     server || { echo "server would not start"; continue; }
     npx wrangler d1 execute socal-lights --local --file $S/demo/seed.sql >/dev/null 2>&1
     [ "$id" = "announce" ] && npx wrangler d1 execute socal-lights --local --file $S/demo/judged.sql >/dev/null 2>&1
+    [ "$id" = "installer" ] && npx wrangler d1 execute socal-lights --local --file scripts/tutorials/seed-installer.sql >/dev/null 2>&1
     echo "== round $round: $id"
     res=$(node scripts/tutorials/videos2.mjs $id 2>&1 | grep -v "^\s*at \|Warning\|Reparsing\|To eliminate\|trace-warnings" | tail -6)
     echo "$res"
