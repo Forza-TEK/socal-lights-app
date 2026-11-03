@@ -190,8 +190,10 @@
           "id": "announce",
           "title": "Announce winners",
           "desc": "Close voting, announce, export results and see the archive.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/run-announce.mp4",
+          "length": "1:25",
+          "captions": "/tutorials/run-announce.vtt",
+          "poster": "/tutorials/run-announce.jpg"
         },
         {
           "id": "activity",
