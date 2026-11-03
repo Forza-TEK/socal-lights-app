@@ -15,7 +15,7 @@ const OVERLAY = `(() => {
   add();
   const mk = () => { if (!document.body) return setTimeout(mk, 20); if (document.getElementById("__cur")) return; const c = document.createElement("div"); c.id = "__cur"; c.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2l14 9-6 1.5L8 19z" fill="#111" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>'; c.style.left = "-40px"; document.body.appendChild(c); };
   mk();
-  const fixUrl = () => { try { const w = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (n.nodeValue.includes("localhost:")) n.nodeValue = n.nodeValue.replace(/localhost:\d+/g, "socallights.app"); document.querySelectorAll("input,textarea").forEach((e) => { if (/localhost:\d+/.test(e.value || "") && e.readOnly) e.value = e.value.replace(/localhost:\d+/g, "socallights.app"); }); } catch (e) {} };
+  const fixUrl = () => { try { const w = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (n.nodeValue.includes("localhost:")) n.nodeValue = n.nodeValue.replace(/localhost:\d+/g, "socallights.app"); document.querySelectorAll("input,textarea").forEach((e) => { if (/localhost:\d+/.test(e.value || "")) e.value = e.value.replace(/localhost:\d+/g, "socallights.app"); }); } catch (e) {} };
   setInterval(fixUrl, 250);
   // The caption never sits on the pointer: when the pointer comes near it, the caption hops to the other edge of the screen
   let cx = -999, cy = -999, side = "bottom";
