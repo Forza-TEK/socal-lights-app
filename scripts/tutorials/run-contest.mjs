@@ -36,13 +36,15 @@ const startScreens = (nm) => [
 const quick = {
   id: "quick", file: "run-quick", cookie: ck.u_org, start: "/",
   steps: [
-    { ...card("Create a contest with Quick start", "The short setup: seven screens"), say: "Create a contest with Quick start. In this video, you will set up a neighborhood contest in seven short screens. We start on the map, and I will tell you every place to tap.", pad: 1.2 },
+    { card: { ey: EY, title: "Create a contest with Quick start", sub: "The short setup: seven screens" }, say: "Welcome to SoCal Lights. In this video, you will learn how to create a neighborhood home decorating contest, using Quick start.", pad: 1.0 },
+    { card: { ey: "In this video", title: "You will learn how to", list: ["Find the Add menu, starting from the map", "Answer seven short screens", "Open your contest dashboard, with a link and QR code ready to share"] }, say: "Here is what we will do. First, we will find the Add menu, starting from the map. Second, we will answer seven short screens. And third, we will open your new contest dashboard, with a link and a QR code that are ready to share. It takes about two minutes. Let's begin.", pad: 1.4 },
     ...toWizard(),
     ...startScreens("Oak Hill Holiday Lights 2026"),
     { cap: "Screen 6: Choose Quick start", say: "Screen 6 of 7. Tap Quick start. You get public voting, four categories, and you approve each entry. We write the official rules for you. After you tap Quick start, tap Next.", target: '[data-tile="quick|yes"]', after: 1600, post: (p, h) => next(p, h) },
     { cap: "Screen 7: Create contest", say: "Screen 7 of 7. Check everything here. You can change any of it later. When you are ready, tap Create contest.", do: async (p, h) => { await h.scroll(160); }, target: NEXT, after: 3200, poster: true },
     { cap: "Your contest is live", say: "Your contest is live. It is on the map, and it has a link and a QR code to share. Now tap Open my dashboard.", target: "text=Open my dashboard", after: 2800 },
-    { cap: "Your dashboard", say: "This is your dashboard. You run everything from here. That is how you create a contest with Quick start.", do: async (p, h) => { await h.hover(".stats", 1600); } },
+    { cap: "Your dashboard", say: "This is your dashboard. You run everything from here.", do: async (p, h) => { await h.hover(".stats", 1600); } },
+    { card: { ey: "Recap", title: "You created a contest", list: ["From the map: three dots, Add, A contest", "Seven short screens with Quick start", "Your dashboard, with a link and QR code to share"] }, say: "Here is a quick recap. You started on the map, tapped the three dots, then Add, then A contest. You answered seven short screens with Quick start. And now your contest is live, with a link and a QR code to share. Next, we will look at Customize, which lets you add judges, prizes, and your own rules.", pad: 1.4 },
     end("Create a contest with Customize", "Judges, prizes, categories, vote counts and your own rules"),
   ],
 };
