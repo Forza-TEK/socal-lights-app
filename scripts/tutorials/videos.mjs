@@ -32,12 +32,12 @@ const S = {}; // specs by video id
 // ---------------- Find and plan ----------------
 const EF = "Find and plan";
 S.map = { id: "map", file: "find-map", cookie: null, ...MAPSPEC, steps: [
-  hook(EF, "Find lights near you", "The map, seasons and filters", "In two minutes, you will find the lights and events near you. We start on the map."),
+  hook(EF, "Find lights near you", "The map, seasons and filters", "In about a minute, you will find the lights and events near you. We start on the map."),
   ...openSite(),
   target("Tap the season button", "Choose a season. Tap the season button at the top.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Tap Thanksgiving and Christmas Lights.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
   { cap: "Search a city", say: "Or search for a city. Type its name, and tap it in the list.", do: async (p, h) => { await h.type("#q", "Irvine"); }, target: 'button:has-text("Show this city on the map")', after: 1800 },
-  target("Tap Filters", "To narrow the list, tap Filters. You can pick a date, a distance, a type, and more.", "text=Filters >> visible=true", { after: 1500, poster: true }),
+  target("Tap Filters", "To narrow the list, tap Filters. You can pick a date, a distance, a type, and more.", "text=Filters >> visible=true", { after: 3200, poster: true }),
   recap(EF, "You can now find lights near you", ["Use my location for distances", "Pick a season", "Search a city, and use Filters"], "That is how you find lights near you. Use your location, pick a season, search a city, and narrow it with Filters."),
   nextUp(EF, "Plan a night", "Save favorites, build a route, share it and add it to your calendar"),
 ]};
@@ -95,9 +95,9 @@ S["pro-filter"] = { id: "pro-filter", file: "find-pro", cookie: null, ...MAPSPEC
   target("Tap Filters", "Tap Filters.", "text=Filters >> visible=true", { after: 1500 }),
   target("Tap Professionally installed", "Under Type, tap Professionally installed.", '[data-ftype="pro"] >> visible=true', { after: 900 }),
   target("Show the places", "Tap the red button to show the places.", "text=/^Show \\d+ places?$/ >> visible=true", { after: 2200, poster: true }),
-  target("Open a display", "Open one. It says Installed by, with the company's name.", "#pbody .item.home >> nth=0", { after: 2000 }),
-  target("Tap the company name", "Tap the company's name to open its profile.", "a.instlink >> nth=0", { after: 1800 }),
-  { cap: "The installer's profile", say: "This is the company's profile, with its area, phone, website, and the homes it has installed.", do: async (p, h) => { await sleep(1500); }, pad: 0.8 },
+  target("Open a display", "Open one. It says Installed by, with the company's name.", "#pbody .item >> nth=0", { after: 2000 }),
+  { cap: "Tap the company name", say: "Tap the company's name to open its profile.", do: async (p, h) => { await p.locator("a.instlink").first().evaluate((el) => el.scrollIntoView({ block: "center" })); await sleep(500); }, target: "a.instlink >> nth=0", after: 2400 },
+  { cap: "The installer's profile", say: "This is the company's profile, with its area, phone, website, and the homes it has installed.", do: async (p, h) => { await p.waitForURL(/\/installer\//, { timeout: 8000 }); await sleep(1200); }, pad: 0.8, poster: true },
   nextUp(EF, "Enter your home in a contest", "Sign in, add photos, your address and agree to the rules"),
 ]};
 
@@ -106,7 +106,7 @@ const EE = "Enter a home";
 const PH = ["public/img/stock/tree-3.jpg", "public/img/stock/show-2.jpg"];
 const chooser = (p) => p.once("filechooser", (fc) => fc.setFiles(PH));
 S.enter = { id: "enter", file: "enter", cookie: ck.u_enter, ...MAPSPEC, steps: [
-  hook(EE, "Enter your home in a contest", "Photos, address, and the rules", "In two minutes, you will enter your home in a neighborhood contest. We start on the map."),
+  hook(EE, "Enter your home in a contest", "Photos, address, and the rules", "In under two minutes, you will enter your home in a neighborhood contest. We start on the map."),
   ...openShort(),
   ...fromMap("contests", [target("Tap Enter my home", "Under Live now, tap Enter my home. If you are not signed in, the site asks you to sign in with Google or your email first.", `a[href="/c/${SLUG}/enter"]`, { after: 2000 })]),
   { cap: "1 of 4: Add photos", say: "Add photos of your home. Tap Choose photos. The first photo is the cover.", pre: async (p) => chooser(p), target: "label[for=f-photos]", after: 2200 },
@@ -141,7 +141,7 @@ S.profile = { id: "profile", file: "profile", cookie: ck.u_mine, ...MAPSPEC, ste
 // ---------------- Vote and judge ----------------
 const EV = "Vote and judge";
 S.vote = { id: "vote", file: "vote", cookie: ck.u_voter, ...MAPSPEC, steps: [
-  hook(EV, "Vote for your favorite homes", "One favorite in each category", "In two minutes, you will vote for your favorite homes in a neighborhood contest. We start on the map."),
+  hook(EV, "Vote for your favorite homes", "One favorite in each category", "In under two minutes, you will vote for your favorite homes in a neighborhood contest. We start on the map."),
   ...openShort(),
   ...fromMap("contests", [target("Tap Vote", "Under Live now, tap Vote. The first time, the site asks you to sign in. That keeps it to one vote per person.", `a[href="/c/${SLUG}"]:has-text("Vote")`, { after: 2200 })]),
   { cap: "Visit the homes", say: "Want to see the homes first? Visit the homes puts them in a few driving routes, in your maps app.", do: async (p, h) => { await h.scrollTo("[data-tour]", 90); await h.hover("[data-tour] .leg", 900); } },
@@ -152,7 +152,7 @@ S.vote = { id: "vote", file: "vote", cookie: ck.u_voter, ...MAPSPEC, steps: [
   nextUp(EV, "Judge a contest", "Open your judge link, score each home, and recuse yourself when you know the household"),
 ]};
 S.judge = { id: "judge", file: "judge", cookie: ck.u_judge, start: "/offline.html", steps: [
-  hook(EV, "Judge a contest", "From your invitation email", "In two minutes, you will score the homes in a contest, starting from your invitation email."),
+  hook(EV, "Judge a contest", "From your invitation email", "In under two minutes, you will score the homes in a contest, starting from your invitation email."),
   emailScene(mails.judge, "This is your invitation email. It says which contest it is, and how judging works. Tap Open my judges' ballot.", "dana@demo.example"),
   { cap: "Tap Open my judges' ballot", say: "", mail: "keep", target: '#__mail a[href*="/judge"] >> nth=0', after: 2600, pad: 0.1 },
   { cap: "Your ballot", say: "This is your ballot. It says when voting closes, and how many scores you have given.", do: async (p, h) => { await h.hover(".status", 900); } },

@@ -85,6 +85,7 @@ export async function record(spec) {
     await sleep(900);
     if (s.pre) await s.pre(page, h);
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
+    if (s.target && s.optional && !(await page.locator(s.target).count())) { s.target = null; } // an optional tap is skipped when its button is not there
     if (s.target) { try { await h.move(s.target); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } } // act first (typing, scrolling), then glide to the thing to tap
     if (s.poster) poster = T();
     const left = end - T(); if (left > 0) await sleep(left * 1000);

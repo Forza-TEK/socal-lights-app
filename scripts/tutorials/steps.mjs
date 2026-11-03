@@ -29,11 +29,11 @@ export const openSite = (ey) => [
 ];
 
 // ---- Shared pieces for the full set of videos ----
-export const MAPSPEC = { start: "/", welcome: true, lateGeo: true, geo: { latitude: 33.6846, longitude: -117.8265 } };
+export const MAPSPEC = { start: "/", welcome: true, lateGeo: true, geo: { latitude: 33.6580, longitude: -117.8560 } };
 // The short version of the opening, used by every map video after the first: address, home page, Use my location, Allow, then the list quietly shows all places
 export const openShort = () => [
   ...openSite().slice(0, 3),
-  { cap: "", say: "", target: "text=Show all of Southern California", after: 700, pad: 0.1, pre: async (p) => { await p.waitForSelector("text=Show all of Southern California", { timeout: 15000 }).catch(() => {}); } },
+  { cap: "", say: "", target: "text=Show all of Southern California", optional: true, after: 700, pad: 0.1, pre: async (p) => { await p.waitForSelector("text=Show all of Southern California", { timeout: 5000 }).catch(() => {}); } },
 ];
 export const hook = (ey, title, sub, say) => ({ card: { ey, title, sub }, say, pad: 0.5 });
 export const recap = (ey, title, list, say) => ({ card: { ey, title, list }, say, pad: 1.0 });

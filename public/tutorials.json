@@ -43,8 +43,10 @@
           "id": "contests",
           "title": "Find contests: the Contests page",
           "desc": "Live now, Mine and Past results, and the Enter or vote button on a map card.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/find-contests.mp4",
+          "length": "1:06",
+          "captions": "/tutorials/find-contests.vtt",
+          "poster": "/tutorials/find-contests.jpg"
         },
         {
           "id": "pro-filter",
