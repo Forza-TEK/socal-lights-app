@@ -84,8 +84,8 @@ export async function record(spec) {
     const end = t0 + 0.4 + (audio[i]?.d || 0) + (s.pad ?? 0.5);
     await sleep(900);
     if (s.pre) await s.pre(page, h);
-    if (s.target) await h.move(s.target);
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
+    if (s.target) { try { await h.move(s.target); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } } // act first (typing, scrolling), then glide to the thing to tap
     if (s.poster) poster = T();
     const left = end - T(); if (left > 0) await sleep(left * 1000);
     if (s.target) { await sleep(500); if (s.beforeClick) await s.beforeClick(page, h); await h.click(s.target, { after: 0 }); await page.evaluate(() => { const c = document.getElementById("__cap"); if (c) c.remove(); }).catch(() => {}); await sleep(s.after ?? 1500); } // the caption goes the moment the screen changes, so it never describes the old screen
