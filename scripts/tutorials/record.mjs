@@ -84,7 +84,7 @@ export async function record(spec) {
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
     if (s.poster) poster = T();
     const left = end - T(); if (left > 0) await sleep(left * 1000);
-    if (s.target) { await sleep(500); await h.click(s.target, { after: s.after ?? 1500 }); }
+    if (s.target) { await sleep(500); await h.click(s.target, { after: 0 }); await page.evaluate(() => { const c = document.getElementById("__cap"); if (c) c.remove(); }); await sleep(s.after ?? 1500); } // the caption goes the moment the screen changes, so it never describes the old screen
     if (s.post) { try { await s.post(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-post-${i}.png` }); throw e; } }
   }
   const total = T() + 0.3; await sleep(300);
