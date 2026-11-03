@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-02_
 
+## Copyright (2026-11-03)
+- Every page except the map ends with "© <year> Forza-TEK. SoCal Lights. All rights reserved." plus Privacy, Terms and Contact (`public/footer.js`, also loaded by server-made pages through `functions/_lib/shell.js`). The map shows "© <year> Forza-TEK" in its credit pill and the same line under the Places list. The year updates itself.
+
 ## Map routes split into 9 stops (2026-11-03)
 - "Route these" (Places) and "Open route" (My night) now open the same route pop-up as contests' "Visit the homes" (`openRouteSheet` in `public/tour.js`, styles in `public/routes.css`): routes of 9 stops or fewer, evenly sized, each starting where the last ended, with tick-off boxes (saved on the device) and a Google or Apple Maps switch.
 - "Route these" no longer needs the map zoomed past the number circles; it works for up to 45 places in view (5 routes).

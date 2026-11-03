@@ -206,7 +206,7 @@ function placeHouses() {
 }
 
 /* ---------- map ---------- */
-const map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false, clickTolerance: 10 }); // clickTolerance: a tap with a little finger wobble still counts as a tap
+const map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true, customAttribution: "\u00a9 " + new Date().getFullYear() + " Forza-TEK" }, dragRotate: false, pitchWithRotate: false, clickTolerance: 10 }); // clickTolerance: a tap with a little finger wobble still counts as a tap
 map.touchZoomRotate.disableRotation();
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
 const geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false }, trackUserLocation: false });
@@ -705,7 +705,7 @@ function renderPanel(opts) {
     const sig = vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
     if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
     listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE);
-    body.innerHTML = vis.length ? `<div class="list">${vis.slice(0, listShown).map((it, i) => listCard(it, i)).join("")}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}`
+    body.innerHTML = vis.length ? `<div class="list">${vis.slice(0, listShown).map((it, i) => listCard(it, i)).join("")}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];

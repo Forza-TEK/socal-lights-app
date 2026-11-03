@@ -103,5 +103,6 @@ const api = run({ steps, data: d, persist: "scl-contest-draft", account: { kind:
 document.addEventListener("input", (e) => { const t = e.target; if (t.matches && t.matches("[data-prize]")) d.prizes[t.dataset.prize] = t.value; });
 api.ready.then(() => { if (new URLSearchParams(location.search).get("resume")) api.goto("review"); });
 </script>
+<script src="/footer.js?v=20261105a" defer></script>
 </body>
 </html>
