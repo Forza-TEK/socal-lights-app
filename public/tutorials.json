@@ -138,8 +138,10 @@
           "id": "custom",
           "title": "Create a contest with Customize",
           "desc": "Judges, prizes, categories, vote counts and your own rules.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/run-custom.mp4",
+          "length": "2:23",
+          "captions": "/tutorials/run-custom.vtt",
+          "poster": "/tutorials/run-custom.jpg"
         },
         {
           "id": "share",
