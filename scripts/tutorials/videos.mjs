@@ -78,7 +78,7 @@ S.app = { id: "app", file: "find-app", phone: true, warm: true, cookie: null, st
   nextUp(EF, "Find contests", "Live now, Mine and Past results, and the Enter or vote button on a map card"),
 ]};
 S.contests = { id: "contests", file: "find-contests", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(EF, "Find the contests", "Live now, Mine, and Past results", "In two minutes, you will find the neighborhood contests, and where to vote or enter. We start on the map."),
+  hook(EF, "Find the contests", "Live now, Mine, and Past results", "In one minute, you will find the neighborhood contests, and where to vote or enter. We start on the map."),
   ...openShort(),
   ...fromMap("contests"),
   { cap: "Live now", say: "Live now lists the contests open today. You can vote, or enter your own home.", do: async (p, h) => { await h.hover('a:has-text("Enter my home")', 1000); } },
@@ -96,7 +96,8 @@ S["pro-filter"] = { id: "pro-filter", file: "find-pro", cookie: null, ...MAPSPEC
   target("Tap Professionally installed", "Under Type, tap Professionally installed.", '[data-ftype="pro"] >> visible=true', { after: 900 }),
   target("Show the places", "Tap the red button to show the places.", "text=/^Show \\d+ places?$/ >> visible=true", { after: 2200, poster: true }),
   target("Open a display", "Open one. It says Installed by, with the company's name.", "#pbody .item.home >> nth=0", { after: 2000 }),
-  target("Tap the company name", "Tap the company's name to open its profile.", "a.instlink >> nth=0", { after: 2600 }),
+  target("Tap the company name", "Tap the company's name to open its profile.", "a.instlink >> nth=0", { after: 1800 }),
+  { cap: "The installer's profile", say: "This is the company's profile, with its area, phone, website, and the homes it has installed.", do: async (p, h) => { await sleep(1500); }, pad: 0.8 },
   nextUp(EF, "Enter your home in a contest", "Sign in, add photos, your address and agree to the rules"),
 ]};
 
