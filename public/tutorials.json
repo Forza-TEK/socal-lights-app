@@ -47,7 +47,7 @@
             "url": "/tutorials/find-email-mobile.mp4",
             "poster": "/tutorials/find-email-mobile.jpg",
             "captions": "/tutorials/find-email-mobile.vtt",
-            "length": "1:10"
+            "length": "1:06"
           }
         },
         {
@@ -114,7 +114,7 @@
             "url": "/tutorials/enter-mobile.mp4",
             "poster": "/tutorials/enter-mobile.jpg",
             "captions": "/tutorials/enter-mobile.vtt",
-            "length": "1:31"
+            "length": "1:27"
           }
         },
         {
@@ -129,7 +129,7 @@
             "url": "/tutorials/edit-entry-mobile.mp4",
             "poster": "/tutorials/edit-entry-mobile.jpg",
             "captions": "/tutorials/edit-entry-mobile.vtt",
-            "length": "1:17"
+            "length": "1:08"
           }
         },
         {
@@ -144,7 +144,7 @@
             "url": "/tutorials/profile-mobile.mp4",
             "poster": "/tutorials/profile-mobile.jpg",
             "captions": "/tutorials/profile-mobile.vtt",
-            "length": "1:02"
+            "length": "1:01"
           }
         }
       ]
@@ -166,7 +166,7 @@
             "url": "/tutorials/vote-mobile.mp4",
             "poster": "/tutorials/vote-mobile.jpg",
             "captions": "/tutorials/vote-mobile.vtt",
-            "length": "1:22"
+            "length": "1:25"
           }
         },
         {
@@ -181,7 +181,7 @@
             "url": "/tutorials/judge-mobile.mp4",
             "poster": "/tutorials/judge-mobile.jpg",
             "captions": "/tutorials/judge-mobile.vtt",
-            "length": "0:55"
+            "length": "1:01"
           }
         }
       ]
@@ -233,7 +233,7 @@
             "url": "/tutorials/run-share-mobile.mp4",
             "poster": "/tutorials/run-share-mobile.jpg",
             "captions": "/tutorials/run-share-mobile.vtt",
-            "length": "1:36"
+            "length": "1:35"
           }
         },
         {
@@ -308,7 +308,7 @@
             "url": "/tutorials/run-announce-mobile.mp4",
             "poster": "/tutorials/run-announce-mobile.jpg",
             "captions": "/tutorials/run-announce-mobile.vtt",
-            "length": "1:44"
+            "length": "1:51"
           }
         },
         {
@@ -375,7 +375,7 @@
             "url": "/tutorials/sponsors-profile-mobile.mp4",
             "poster": "/tutorials/sponsors-profile-mobile.jpg",
             "captions": "/tutorials/sponsors-profile-mobile.vtt",
-            "length": "1:10"
+            "length": "1:11"
           }
         }
       ]
