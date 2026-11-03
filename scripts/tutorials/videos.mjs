@@ -37,7 +37,11 @@ S.map = { id: "map", file: "find-map", cookie: null, ...MAPSPEC, steps: [
   target("Tap the season button", "Choose a season. Tap the season button at the top.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Tap Thanksgiving and Christmas Lights.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
   { cap: "Search a city", say: "Or search for a city. Type its name, and tap it in the list.", do: async (p, h) => { await h.type("#q", "Irvine"); }, target: 'button:has-text("Show this city on the map")', after: 1800 },
+<<<<<<< HEAD
   target("Tap Filters", "To narrow the list, tap Filters. You can pick a date, a distance, a type, and more.", "text=Filters >> visible=true", { after: 3200, poster: true }),
+=======
+  target("Tap Filters", "To narrow the list, tap Filters. You can pick a date, a distance, a type, and more.", "text=Filters >> visible=true", { after: 1500, poster: true }),
+>>>>>>> origin/main
   recap(EF, "You can now find lights near you", ["Use my location for distances", "Pick a season", "Search a city, and use Filters"], "That is how you find lights near you. Use your location, pick a season, search a city, and narrow it with Filters."),
   nextUp(EF, "Plan a night", "Save favorites, build a route, share it and add it to your calendar"),
 ]};
@@ -95,9 +99,15 @@ S["pro-filter"] = { id: "pro-filter", file: "find-pro", cookie: null, ...MAPSPEC
   target("Tap Filters", "Tap Filters.", "text=Filters >> visible=true", { after: 1500 }),
   target("Tap Professionally installed", "Under Type, tap Professionally installed.", '[data-ftype="pro"] >> visible=true', { after: 900 }),
   target("Show the places", "Tap the red button to show the places.", "text=/^Show \\d+ places?$/ >> visible=true", { after: 2200, poster: true }),
+<<<<<<< HEAD
   target("Open a display", "Open one. It says Installed by, with the company's name.", "#pbody .item >> nth=0", { after: 2000 }),
   { cap: "Tap the company name", say: "Tap the company's name to open its profile.", do: async (p, h) => { await p.locator("a.instlink").first().evaluate((el) => el.scrollIntoView({ block: "center" })); await sleep(500); }, target: "a.instlink >> nth=0", after: 2400 },
   { cap: "The installer's profile", say: "This is the company's profile, with its area, phone, website, and the homes it has installed.", do: async (p, h) => { await p.waitForURL(/\/installer\//, { timeout: 8000 }); await sleep(1200); }, pad: 0.8, poster: true },
+=======
+  target("Open a display", "Open one. It says Installed by, with the company's name.", "#pbody .item.home >> nth=0", { after: 2000 }),
+  target("Tap the company name", "Tap the company's name to open its profile.", "a.instlink >> nth=0", { after: 1800 }),
+  { cap: "The installer's profile", say: "This is the company's profile, with its area, phone, website, and the homes it has installed.", do: async (p, h) => { await sleep(1500); }, pad: 0.8 },
+>>>>>>> origin/main
   nextUp(EF, "Enter your home in a contest", "Sign in, add photos, your address and agree to the rules"),
 ]};
 
