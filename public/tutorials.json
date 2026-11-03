@@ -100,7 +100,13 @@
           "url": "/tutorials/edit-entry.mp4",
           "length": "1:12",
           "captions": "/tutorials/edit-entry.vtt",
-          "poster": "/tutorials/edit-entry.jpg"
+          "poster": "/tutorials/edit-entry.jpg",
+          "mobile": {
+            "url": "/tutorials/edit-entry-mobile.mp4",
+            "poster": "/tutorials/edit-entry-mobile.jpg",
+            "captions": "/tutorials/edit-entry-mobile.vtt",
+            "length": "1:17"
+          }
         },
         {
           "id": "profile",
@@ -109,7 +115,13 @@
           "url": "/tutorials/profile.mp4",
           "length": "1:04",
           "captions": "/tutorials/profile.vtt",
-          "poster": "/tutorials/profile.jpg"
+          "poster": "/tutorials/profile.jpg",
+          "mobile": {
+            "url": "/tutorials/profile-mobile.mp4",
+            "poster": "/tutorials/profile-mobile.jpg",
+            "captions": "/tutorials/profile-mobile.vtt",
+            "length": "1:02"
+          }
         }
       ]
     },
@@ -125,7 +137,13 @@
           "url": "/tutorials/vote.mp4",
           "length": "1:26",
           "captions": "/tutorials/vote.vtt",
-          "poster": "/tutorials/vote.jpg"
+          "poster": "/tutorials/vote.jpg",
+          "mobile": {
+            "url": "/tutorials/vote-mobile.mp4",
+            "poster": "/tutorials/vote-mobile.jpg",
+            "captions": "/tutorials/vote-mobile.vtt",
+            "length": "1:22"
+          }
         },
         {
           "id": "judge",
@@ -134,7 +152,13 @@
           "url": "/tutorials/judge.mp4",
           "length": "0:56",
           "captions": "/tutorials/judge.vtt",
-          "poster": "/tutorials/judge.jpg"
+          "poster": "/tutorials/judge.jpg",
+          "mobile": {
+            "url": "/tutorials/judge-mobile.mp4",
+            "poster": "/tutorials/judge-mobile.jpg",
+            "captions": "/tutorials/judge-mobile.vtt",
+            "length": "0:55"
+          }
         }
       ]
     },
