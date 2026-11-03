@@ -22,29 +22,27 @@ const toDash = () => fromMap("contests", "", [
 const panel = (k, label, say) => ({ cap: "Tap " + label, say, do: async (p, h) => { await h.click(nav(k), { after: 2200 }); } });
 // map -> Add -> A contest
 const toWizard = () => fromMap("add", "", [
-  { cap: "Tap A contest", say: "Now you see three choices: An event, A contest, and A lighting display. Tap A contest.", target: 'a[href="/add-contest"]', after: 2200 },
+  { cap: "Tap A contest", say: "Three choices. Tap A contest.", target: 'a[href="/add-contest"]', after: 2200 },
 ]);
 const NEXT = "#nextbtn";
 const next = async (p, h, after = 1800) => h.click(NEXT, { after });
 const startScreens = (nm) => [
-  { cap: "Screen 1: Name your contest", say: "Screen 1 of 7. Type a name for your contest. We suggest one, or you can type your own. When you are ready, tap Next.", do: async (p, h) => { await h.type("#f-name", nm); }, target: NEXT },
-  { cap: "Screen 2: Who runs it", say: "Screen 2 of 7. Type who is running the contest, and choose the city where the homes are. Then tap Next.", do: async (p, h) => { await h.type("#f-org", "Oak Hill Neighbors"); await h.move("#f-city"); await p.selectOption("#f-city", "Irvine"); await h.unring(); await sleep(1000); }, target: NEXT },
-  { cap: "Screen 3: Welcome message", say: "Screen 3 of 7. This is the welcome message your neighbors will read. We wrote one for you, so you can keep it. Tap Next.", do: async (p, h) => { await h.hover("#f-descr", 1400); }, target: NEXT },
-  { cap: "Screen 4: Website (optional)", say: "Screen 4 of 7. A website is optional, so you can leave this blank. Tap Next.", do: async (p, h) => { await h.hover("#f-site", 1200); }, target: NEXT },
-  { cap: "Screen 5: Dates", say: "Screen 5 of 7. We filled in typical dates for entries and voting. You can change them later. Tap Next.", do: async (p, h) => { await h.hover("#f-closes", 1400); }, target: NEXT },
+  { cap: "1 of 7: Name it", say: "Name your contest. Type a name, then tap Next.", do: async (p, h) => { await h.type("#f-name", nm); }, target: NEXT },
+  { cap: "2 of 7: Who runs it", say: "Who is running it? Type the name, pick your city, then tap Next.", do: async (p, h) => { await h.type("#f-org", "Oak Hill Neighbors"); await h.move("#f-city"); await p.selectOption("#f-city", "Irvine"); await h.unring(); await sleep(700); }, target: NEXT },
+  { cap: "3 of 7: Welcome message", say: "This welcome message is already written. Keep it, and tap Next.", do: async (p, h) => { await h.hover("#f-descr", 900); }, target: NEXT },
+  { cap: "4 of 7: Website (optional)", say: "A website is optional. Skip it, and tap Next.", do: async (p, h) => { await h.hover("#f-site", 700); }, target: NEXT },
+  { cap: "5 of 7: Dates", say: "These dates are filled in for you. Tap Next.", do: async (p, h) => { await h.hover("#f-closes", 900); }, target: NEXT },
 ];
 const quick = {
   id: "quick", file: "run-quick", cookie: ck.u_org, start: "/",
   steps: [
-    { card: { ey: EY, title: "Create a contest with Quick start", sub: "The short setup: seven screens" }, say: "Welcome to SoCal Lights. In this video, you will learn how to create a neighborhood home decorating contest, using Quick start.", pad: 1.0 },
-    { card: { ey: "In this video", title: "You will learn how to", list: ["Find the Add menu, starting from the map", "Answer seven short screens", "Open your contest dashboard, with a link and QR code ready to share"] }, say: "Here is what we will do. First, we will find the Add menu, starting from the map. Second, we will answer seven short screens. And third, we will open your new contest dashboard, with a link and a QR code that are ready to share. It takes about two minutes. Let's begin.", pad: 1.4 },
+    { card: { ey: EY, title: "Create a contest in two minutes", sub: "Quick start" }, say: "In two minutes, you will have a live neighborhood contest, with its own link and QR code. We start on the map.", pad: 0.6 },
     ...toWizard(),
     ...startScreens("Oak Hill Holiday Lights 2026"),
-    { cap: "Screen 6: Choose Quick start", say: "Screen 6 of 7. Tap Quick start. You get public voting, four categories, and you approve each entry. We write the official rules for you. After you tap Quick start, tap Next.", target: '[data-tile="quick|yes"]', after: 1600, post: (p, h) => next(p, h) },
-    { cap: "Screen 7: Create contest", say: "Screen 7 of 7. Check everything here. You can change any of it later. When you are ready, tap Create contest.", do: async (p, h) => { await h.scroll(160); }, target: NEXT, after: 3200, poster: true },
-    { cap: "Your contest is live", say: "Your contest is live. It is on the map, and it has a link and a QR code to share. Now tap Open my dashboard.", target: "text=Open my dashboard", after: 2800 },
-    { cap: "Your dashboard", say: "This is your dashboard. You run everything from here.", do: async (p, h) => { await h.hover(".stats", 1600); } },
-    { card: { ey: "Recap", title: "You created a contest", list: ["From the map: three dots, Add, A contest", "Seven short screens with Quick start", "Your dashboard, with a link and QR code to share"] }, say: "Here is a quick recap. You started on the map, tapped the three dots, then Add, then A contest. You answered seven short screens with Quick start. And now your contest is live, with a link and a QR code to share. Next, we will look at Customize, which lets you add judges, prizes, and your own rules.", pad: 1.4 },
+    { cap: "6 of 7: Quick start", say: "Choose Quick start. It sets everything up for you. Then tap Next.", target: '[data-tile="quick|yes"]', after: 1000, post: (p, h) => next(p, h) },
+    { cap: "7 of 7: Create contest", say: "Check your details, and tap Create contest.", do: async (p, h) => { await h.scroll(160); }, target: NEXT, after: 2600, poster: true },
+    { cap: "Your contest is live", say: "Your contest is live! Tap Open my dashboard.", target: "text=Open my dashboard", after: 2200 },
+    { cap: "Your dashboard", say: "This is your dashboard, with your link and QR code, ready to share. That was the map, the three dots, Add, A contest, and seven quick screens.", do: async (p, h) => { await h.hover(".stats", 1200); }, pad: 1.0 },
     end("Create a contest with Customize", "Judges, prizes, categories, vote counts and your own rules"),
   ],
 };

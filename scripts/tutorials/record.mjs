@@ -44,7 +44,7 @@ export async function record(spec) {
   const say = spec.steps.map((s) => s.say || ""); writeFileSync(w + "/texts.json", JSON.stringify(say));
   // Voice files are cached by text, so re-recording a video only speaks the lines that changed
   const cacheDir = `${WORK}/tts`; mkdirSync(cacheDir, { recursive: true });
-  const keyOf = (t) => createHash("sha1").update("hfc_female-1.18|" + t).digest("hex");
+  const keyOf = (t) => createHash("sha1").update("hfc_female-" + (process.env.LENGTH_SCALE || "1.0") + "|" + t).digest("hex");
   const todo = [...new Set(say.filter((t) => t && !existsSync(`${cacheDir}/${keyOf(t)}.wav`)))];
   if (todo.length) { mkdirSync(w + "/wav", { recursive: true }); writeFileSync(w + "/todo.json", JSON.stringify(todo));
     const r = spawnSync("python3", [new URL("./tts.py", import.meta.url).pathname, VOICE, w + "/todo.json", w + "/wav"], { stdio: "inherit" }); if (r.status) throw new Error("tts failed");
@@ -79,7 +79,7 @@ export async function record(spec) {
     if (s.mail !== "keep") await h.showMail(s.mail ? { ...s.mail, html: s.mail.html && s.mail.html.replaceAll("https://socallights.app", BASE) } : null);
     await page.evaluate((c) => { let e = document.getElementById("__cap"); if (!c) { if (e) e.remove(); return; } if (!e) { e = document.createElement("div"); e.id = "__cap"; document.body.appendChild(e); } e.textContent = c; }, s.card ? "" : s.cap || "");
     if (audio[i]) marks.push({ i, t: t0 + 0.4, f: audio[i].f });
-    const end = t0 + 0.4 + (audio[i]?.d || 0) + (s.pad ?? 0.9);
+    const end = t0 + 0.4 + (audio[i]?.d || 0) + (s.pad ?? 0.5);
     await sleep(900);
     if (s.target) await h.move(s.target);
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
@@ -107,8 +107,14 @@ export async function record(spec) {
   let r = 0, g = 0, b = 0; for (let k = 0; k + 2 < first.length; k += 3) { r += first[k]; g += first[k + 1]; b += first[k + 2]; } const px = first.length / 3 || 1; const avg = [r / px, g / px, b / px];
   const problems = [];
   if (!vol || vol[1] === "-inf" || parseFloat(vol[1]) < -45) problems.push("no voice in the first three seconds");
+  const secs = dur(mp4); if (secs > 150) problems.push("longer than 2:30 (" + Math.round(secs) + " seconds): split it");
   if (!(avg[0] > 238 && avg[1] > 232 && avg[2] > 225)) problems.push("the first frame is not the plain title card (average colour " + avg.map(Math.round).join(",") + ")");
   if (problems.length) throw new Error("QA FAILED for " + spec.file + ": " + problems.join("; "));
+
+  // Closed captions (WebVTT): each narration line, split by sentence, timed from where its voice starts
+  const ts = (x) => { const m = Math.floor(x / 60), sec = x - m * 60; return `00:${String(m).padStart(2, "0")}:${sec.toFixed(3).padStart(6, "0")}`; };
+  const cues = []; for (const m of marks) { const text = say[m.i], d = audio[m.i].d, parts = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text], total = parts.reduce((a, x) => a + x.length, 0); let at = m.t; for (const part of parts) { const len = d * part.length / total; cues.push(`${ts(at)} --> ${ts(at + len)}\n${part.trim()}`); at += len; } }
+  writeFileSync(`${OUT}/${spec.file}.vtt`, "WEBVTT\n\n" + cues.join("\n\n") + "\n");
   if (poster !== null) execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", String(poster), "-i", mp4, "-frames:v", "1", "-q:v", "4", `${OUT}/${spec.file}.jpg`]);
   const L = dur(mp4); console.log(spec.file, "length", Math.floor(L / 60) + ":" + String(Math.round(L % 60)).padStart(2, "0"));
   writeFileSync(`${w}/script.txt`, say.filter(Boolean).join("\n\n")); rmSync(fdir, { recursive: true, force: true });
