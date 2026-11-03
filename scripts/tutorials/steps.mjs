@@ -29,7 +29,7 @@ export const openSite = (ey) => [
 ];
 
 // ---- Shared pieces for the full set of videos ----
-export const MAPSPEC = { start: "/", welcome: true, lateGeo: true, geo: { latitude: 33.6846, longitude: -117.8265 } };
+export const MAPSPEC = { start: "/", welcome: true, lateGeo: true, geo: { latitude: 33.6580, longitude: -117.8560 } };
 // The short version of the opening, used by every map video after the first: address, home page, Use my location, Allow, then the list quietly shows all places
 export const openShort = () => [
   ...openSite().slice(0, 3),

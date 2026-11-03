@@ -95,7 +95,7 @@ S["pro-filter"] = { id: "pro-filter", file: "find-pro", cookie: null, ...MAPSPEC
   target("Tap Filters", "Tap Filters.", "text=Filters >> visible=true", { after: 1500 }),
   target("Tap Professionally installed", "Under Type, tap Professionally installed.", '[data-ftype="pro"] >> visible=true', { after: 900 }),
   target("Show the places", "Tap the red button to show the places.", "text=/^Show \\d+ places?$/ >> visible=true", { after: 2200, poster: true }),
-  target("Open a display", "Open one. It says Installed by, with the company's name.", "#pbody .item.home >> nth=0", { after: 2000 }),
+  target("Open a display", "Open one. It says Installed by, with the company's name.", "#pbody .item >> nth=0", { after: 2000 }),
   target("Tap the company name", "Tap the company's name to open its profile.", "a.instlink >> nth=0", { after: 1800 }),
   { cap: "The installer's profile", say: "This is the company's profile, with its area, phone, website, and the homes it has installed.", do: async (p, h) => { await sleep(1500); }, pad: 0.8 },
   nextUp(EF, "Enter your home in a contest", "Sign in, add photos, your address and agree to the rules"),
