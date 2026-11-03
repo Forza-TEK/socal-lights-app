@@ -7,7 +7,7 @@ import { getUser, sameOrigin, normEmail, okEmail, sendMail } from "../../../_lib
 import { ownerOf, computeResults, hasJudges } from "../../../_lib/contests.js";
 import { judgeProgress } from "../../../_lib/judging.js";
 import { teamChanged } from "../../../_lib/changes.js";
-import { judgeInvite } from "../../../_lib/email-html.js";
+import { sendTemplate } from "../../../_lib/mailtpl.js";
 
 export async function inviteJudges(env, c, emails, origin = "https://socallights.app") {
   const have = new Set((await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all()).results.map((r) => r.email));
@@ -18,8 +18,8 @@ export async function inviteJudges(env, c, emails, origin = "https://socallights
     await env.DB.prepare("INSERT INTO judges (id,contest_id,email,token) VALUES (?,?,?,?)").bind(j.id, c.id, email, j.token).run();
     out.push({ ...j, to: String(raw).trim() });
   }
-  const mail = judgeInvite(c, origin);
-  for (const j of out) await sendMail(env, { to: j.to, subject: mail.subject, text: mail.text, html: mail.html }).catch(() => {});
+  const how = c.judge_method === "score" ? "Score every home from 1 to 10 in each category." : "Pick one favorite home in each category.";
+  for (const j of out) await sendTemplate(env, "judge_invite", j.to, { contest: c.name, org: c.org, how, link: `${origin}/c/${c.slug}/judge` }).catch(() => {});
   return out.length;
 }
 

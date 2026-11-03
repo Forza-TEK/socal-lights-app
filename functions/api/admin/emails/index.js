@@ -11,7 +11,7 @@ export async function onRequestGet({ env }) {
     const s = by.get(t.id), sample = sampleVars(t);
     const now = await renderTemplate(env, t.id, sample, s ? { subject: s.subject, body: s.body } : null);
     items.push({
-      id: t.id, group: t.group, name: t.name, to: t.to, when: t.when,
+      id: t.id, group: t.group, name: t.name, to: t.to, when: t.when, format: t.format || "",
       vars: Object.entries(t.vars).map(([k, v]) => ({ key: k, label: v[0], sample: v[1], required: !!v[2] })),
       default: { subject: t.subject, body: t.text },
       subject: s ? s.subject : t.subject, body: s ? s.body : t.text,

@@ -151,6 +151,23 @@ export const TEMPLATES = [
     subject: "Results are in: {{contest}}",
     text: "Thank you for judging {{contest}}. The winners are {{winners}}. {{link}}" },
 
+  // ---- Invitations with the designed layout (centered title, orange button, boxed tips). See "Formatting" in the editor.
+  { id: "judge_invite", group: "entrant", layout: "invite", name: "Judge invitation", to: "A judge the organizer added", when: "The organizer adds a judge to a contest.",
+    format: "Formatting for this email: start a line with ~ for the small heading above the title, # for the title, ## for a box title (then lines starting with - for its bullets), and > for a quoted note. Write [Button text](link) for the orange button and **bold** for bold. Start the last line with * for the small print at the bottom.",
+    vars: { contest: ["Contest name", "Maple Street Holiday Lights"], org: ["Organizer", "Maple Street Neighbors"], how: ["How judges vote (built by the site)", "Score every home from 1 to 10 in each category."], link: ["Judge ballot link", `${SITE}/c/maple-street/judge`, true] },
+    subject: "You're invited to judge {{contest}}",
+    text: "~ Judges' invitation\n\n# You're invited to judge {{contest}}\n\n**{{org}}** asked you to be one of the judges. It takes a few minutes, and you can do it on your phone.\n\n[Open my judges' ballot]({{link}})\n\n## How judging works\n- {{how}}\n- Judge on first impression, creativity, theme, craftsmanship and variety of lights.\n- Know a household? Tap \"I know this household\" and your vote for it will not count.\n- Your picks stay private until winners are announced, and you can change them until voting closes.\n\nSign in with **this email address** so we know it is you.\n\n* You got this email because {{org}} added you as a judge for {{contest}}." },
+  { id: "contest_invite", group: "entrant", layout: "invite", name: "Contest invitation (neighbors)", to: "A neighbor the organizer invites", when: "The organizer sends Invite neighbors by email.",
+    format: "Formatting for this email: start a line with ~ for the small heading above the title, # for the title, ## for a box title (then lines starting with - for its bullets), and > for a quoted note. Write [Button text](link) for the orange button and **bold** for bold. Start the last line with * for the small print at the bottom.",
+    vars: { contest: ["Contest name", "Maple Street Holiday Lights"], org: ["Organizer", "Maple Street Neighbors"], city: ["City", "Irvine"], link: ["Contest page", `${SITE}/c/maple-street`, true], note: ["The organizer's note (blank if none)", "Cocoa on the corner Saturday at 6."], contact: ["Organizer's reply address (blank if none)", "maria@example.com"] },
+    subject: "You're invited: {{contest}}",
+    text: "~ Home decorating contest · {{city}}\n\n# {{org}} invites you to {{contest}}\n\nEnter your home, or vote for your favorite lights in the neighborhood. It is free.\n\n[Enter your home or vote]({{link}})\n\n{{#note}}> {{note}}\n\n{{/note}}## It takes about a minute\n- Tap the button and sign in with your email or Google.\n- To enter: add a photo of your home and your address.\n- To vote: pick one favorite in each category.\n\n* You got this because {{org}} entered your address.{{#contact}} Reply to {{contact}} to be left off future invitations.{{/contact}}" },
+  { id: "coorg_invite", group: "contest", layout: "invite", name: "Co-organizer invitation", to: "A co-organizer the owner added", when: "The contest owner adds a co-organizer on the Team tab.",
+    format: "Formatting for this email: start a line with ~ for the small heading above the title, # for the title, ## for a box title (then lines starting with - for its bullets), and > for a quoted note. Write [Button text](link) for the orange button and **bold** for bold. Start the last line with * for the small print at the bottom.",
+    vars: { contest: ["Contest name", "Maple Street Holiday Lights"], org: ["Organizer", "Maple Street Neighbors"], link: ["Dashboard link", `${SITE}/c/maple-street/manage`, true] },
+    subject: "You can help run {{contest}}",
+    text: "~ Co-organizer invitation\n\n# You can help run {{contest}}\n\n**{{org}}** added you as a co-organizer. You get the same dashboard they use.\n\n[Open the dashboard]({{link}})\n\n## What you can do\n- Approve or decline the homes people enter.\n- Review votes, and void any that look wrong.\n- Invite judges and add sponsors.\n- See visits, QR scans and votes per day.\n\nSign in with **this email address**. Only the person who created the contest can change its dates and details.\n\n* You got this email because {{org}} added you to {{contest}}." },
+
   // ---- Sent to the admin
   { id: "admin_digest", group: "admin", name: "New submissions summary", to: "Admin", when: "Every few hours when there is something new.",
     vars: { headline: ["Short summary for the subject", "3 new submissions"], day_total: ["Submissions so far today", "5"], summary: ["What's new (built by the site)", "3 new submissions since the last update.\n\nEvents (3):\n- Candy Cane Lane · Altadena\n\n", true], today_line: ["Today's counts", "5 submissions (2 homes, 3 events, 0 contest entries)."], live_line: ["Live from submissions", "120 homes, 48 events."], held: ["Waiting for your review", "2"] },
@@ -207,13 +224,49 @@ export function toHtml(text, subject) {
 </table></td></tr></table></body></html>`;
 }
 
+// ---- The designed layout for invitations (layout: "invite") ----
+// Wording markers: "~ " small heading, "# " title, "[Label](url)" button, "## " + "- " lines = boxed tips, "> " quote, "* " small print, **bold**.
+const INK = "#1f1d1a", MUTED = "#6b6760", LINE = "#ece6dd", CREAM = "#fbf3ea", ORANGE = "#e0560a", RED = "#c8324f", FONT = "Arial,Helvetica,sans-serif";
+const inline = (s) => link(esc(s)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+const bigButton = (label, url) => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px auto 6px"><tr><td align="center" bgcolor="${ORANGE}" style="border-radius:10px"><a href="${esc(url)}" style="display:inline-block;padding:15px 30px;font:600 17px/1.2 ${FONT};color:#ffffff;text-decoration:none;border-radius:10px">${esc(label)}</a></td></tr></table>`;
+export function plainOf(text) {
+  return String(text).split("\n").map((l) => l.replace(/^~ /, "").replace(/^## ?/, "").replace(/^# /, "").replace(/^\* /, "").replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1: $2").replace(/\*\*(.+?)\*\*/g, "$1")).filter((l, i, a) => !(l === "" && a[i - 1] === "")).join("\n").trim();
+}
+export function toInviteHtml(text, subject) {
+  const blocks = String(text).trim().split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
+  let eyebrow = "", title = "", foot = "", cta = null, introDone = false; const body = [];
+  for (const b of blocks) {
+    const lines = b.split("\n"); let m;
+    if (b.startsWith("~ ")) eyebrow = b.slice(2);
+    else if (b.startsWith("# ")) title = b.slice(2);
+    else if (b.startsWith("* ")) foot = b.slice(2);
+    else if ((m = b.match(/^\[([^\]]+)\]\(([^)]+)\)$/))) { if (!cta) cta = { label: m[1], url: m[2] }; body.push(`<div align="center">${bigButton(m[1], m[2])}</div>`); }
+    else if (b.startsWith("> ")) body.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px"><tr><td style="border-left:4px solid ${ORANGE};padding:4px 0 4px 16px;font:italic 400 16px/1.55 Georgia,'Times New Roman',serif;color:${INK}">${inline(lines.map((l) => l.replace(/^> ?/, "")).join(" "))}</td></tr></table>`);
+    else if (b.startsWith("## ")) body.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;background:${CREAM};border-radius:12px"><tr><td style="padding:18px 22px;font:400 15px/1.55 ${FONT};color:${INK}"><b style="font-weight:600">${inline(lines[0].slice(3))}</b>${lines.slice(1).map((l) => `<div style="margin-top:8px;padding-left:16px;text-indent:-16px">&bull;&nbsp; ${inline(l.replace(/^- /, ""))}</div>`).join("")}</td></tr></table>`);
+    else if (!introDone) { introDone = true; body.push(`<p style="margin:18px 0 0;font:400 17px/1.55 ${FONT};color:${INK};text-align:center">${lines.map(inline).join("<br>")}</p>`); }
+    else body.push(`<p style="margin:18px 0 0;font:400 14px/1.5 ${FONT};color:${MUTED};text-align:center">${lines.map(inline).join("<br>")}</p>`);
+  }
+  const row = (h) => `<tr><td style="padding:0 40px">${h}</td></tr>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${esc(subject)}</title></head>
+<body style="margin:0;padding:0;background:${CREAM}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${CREAM}"><tr><td align="center" style="padding:28px 12px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:16px;border:1px solid ${LINE}">
+<tr><td align="center" style="padding:34px 40px 8px"><a href="${SITE}" style="text-decoration:none"><img src="${SITE}/img/icon-192.png" width="64" height="64" alt="SoCal Lights" style="display:block;border:0;border-radius:32px;margin:0 auto 10px"><span style="font:600 22px/1.2 ${FONT};color:${INK}">SoCal <span style="color:${ORANGE}">Lights</span></span></a></td></tr>
+${row(`<p style="margin:26px 0 8px;font:600 12px/1.3 ${FONT};letter-spacing:.16em;text-transform:uppercase;color:${RED};text-align:center">${esc(eyebrow)}</p><h1 style="margin:0;font:600 28px/1.25 ${FONT};color:${INK};text-align:center">${esc(title)}</h1>`)}
+${row(body.join(""))}
+<tr><td style="padding:30px 40px 34px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid ${LINE};padding-top:18px;font:400 13px/1.55 ${FONT};color:${MUTED};text-align:center">${inline(foot)}${cta ? `<br><br>Button not working? Copy this link into your browser:<br><a href="${esc(cta.url)}" style="color:${MUTED};word-break:break-all">${esc(cta.url)}</a>` : ""}</td></tr></table></td></tr>
+</table>
+<p style="margin:16px 0 0;font:400 12px/1.5 ${FONT};color:${MUTED};text-align:center">SoCal Lights &middot; <a href="${SITE}" style="color:${MUTED}">socallights.app</a> &middot; <a href="mailto:info@socallights.app" style="color:${MUTED}">info@socallights.app</a></p>
+</td></tr></table></body></html>`;
+}
+
 // Fill in a template. `draft` ({subject, body}) previews unsaved edits; otherwise the saved wording, else the default.
 export async function renderTemplate(env, id, vars, draft) {
   const t = byId(id); if (!t) throw new Error("Unknown email template: " + id);
   const s = draft || (await savedFor(env, id));
   const subject = oneLine(fill(s ? s.subject : t.subject, vars)) || oneLine(fill(t.subject, vars));
   const text = fill(s ? s.body : t.text, vars).trim() || fill(t.text, vars).trim();
-  return { subject, text, html: toHtml(text, subject), edited: !!s && !draft };
+  const inv = t.layout === "invite";
+  return { subject, text: inv ? plainOf(text) : text, html: inv ? toInviteHtml(text, subject) : toHtml(text, subject), edited: !!s && !draft };
 }
 
 // Send one templated email (HTML and plain text). Returns true when it was handed to the mail service.

@@ -52,8 +52,8 @@ function openEmail(id, main, q = "") {
     <form class="f" id="emForm" novalidate>
       <fieldset class="fsec"><legend>Wording</legend><div class="fgrid">
         <div class="ff c6"><label for="em-s">Subject</label><input id="em-s" maxlength="200" value="${esc(t.subject)}" autocomplete="off"></div>
-        <div class="ff c6"><label for="em-b">Email text</label><textarea id="em-b" rows="8" maxlength="6000" spellcheck="true">${esc(t.body)}</textarea>
-          <small class="fhint">Blank lines start a new paragraph. Start a line with "- " for a list. Web addresses become links in the HTML version.</small></div>
+        <div class="ff c6"><label for="em-b">Email text</label><textarea id="em-b" rows="${t.format ? 18 : 8}" maxlength="6000" spellcheck="true">${esc(t.body)}</textarea>
+          <small class="fhint">Blank lines start a new paragraph. Start a line with "- " for a list. Web addresses become links in the HTML version.</small>${t.format ? `<small class="fhint" style="display:block;margin-top:6px">${esc(t.format)}</small>` : ""}</div>
         <div class="ff c6"><label>Insert a value</label><div class="emchips">${chips}</div>
           <small class="fhint">Each {{value}} is filled in when the email is sent. Values marked * must stay in the email. To show a line only when a value exists, wrap it like {{#reason}}A note: {{reason}}{{/reason}}.</small></div>
       </div></fieldset>
