@@ -44,7 +44,7 @@ S.map = { id: "map", file: "find-map", cookie: null, ...MAPSPEC, steps: [
   nextUp(EF, "Plan a night", "Save favorites, build a route, share it and add it to your calendar"),
 ]};
 S.night = { id: "night", file: "find-night", cookie: null, ...MAPSPEC, steps: [
-  hook(EF, "Plan a night of lights", "Hearts, route, share, calendar", "In two minutes, you will plan a night of lights, and get a driving route. We start on the map."),
+  hook(EF, "Plan a night of lights", "Hearts, route, share, calendar", "In about a minute, you will plan a night of lights, and get a driving route. We start on the map."),
   ...openShort(),
   target("Tap the season button", "Choose what you want to see. Tap the season button.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Tap Thanksgiving and Christmas Lights.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
