@@ -27,7 +27,8 @@ const OVERLAY = `(() => {
 class Helper {
   constructor(page) { this.page = page; this.x = 200; this.y = 200; }
   async move(sel, opt = {}) { if (MOB && typeof sel === "string") sel = MSEL(sel); if (MOB && typeof sel === "string" && /data-k=/.test(sel) && !(await this.page.locator(sel).count()) && (await this.page.locator("#sh-more").count())) await this.click("#sh-more", { after: 900 }); // phone dashboards keep most sections behind More
-    const loc = typeof sel === "string" ? this.page.locator(sel).first() : sel; await loc.scrollIntoViewIfNeeded().catch(() => {}); const b = await loc.boundingBox(); if (!b) throw new Error("no box for " + sel);
+    if (MOB && typeof sel === "string" && /^#pbody|^\.panel|data-route|data-nroute/.test(sel) && await this.page.evaluate(() => { const p = document.querySelector(".panel"); return !!p && p.getBoundingClientRect().top > innerHeight * 0.45; })) await this.click('#bnav [data-tab="events"]', { after: 1200 }); // the list sheet is down: raise it
+    const loc = typeof sel === "string" ? this.page.locator(sel).first() : sel; await loc.scrollIntoViewIfNeeded().catch(() => {}); let b = await loc.boundingBox(); if (MOB && b && b.y > 600 && !/bnav/.test(String(sel)) && (await this.page.locator("#bnav").count())) { await this.click('#bnav [data-tab="events"]', { after: 1200 }); b = await loc.boundingBox(); } if (!b) throw new Error("no box for " + sel);
     await this.page.evaluate((b) => { let r = document.getElementById("__hl"); if (!r) { r = document.createElement("div"); r.id = "__hl"; document.body.appendChild(r); } const g = 6; r.style.left = b.x - g + "px"; r.style.top = b.y - g + "px"; r.style.width = b.width + 2 * g + "px"; r.style.height = b.height + 2 * g + "px"; }, b);
     const tx = b.x + (opt.fx ?? 0.5) * b.width, ty = b.y + (opt.fy ?? 0.5) * b.height; const sx = this.x, sy = this.y, n = Math.hypot(tx - sx, ty - sy) < 6 ? 0 : 38; // already pointing at it: no second glide
     for (let i = 1; i <= n; i++) { const t = i / n, e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; await this.page.mouse.move(sx + (tx - sx) * e, sy + (ty - sy) * e); await sleep(16); }
@@ -98,6 +99,8 @@ export async function record(spec) {
     await sleep(900);
     if (s.pre) await s.pre(page, h);
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
+    if (MOB && s.target && s.optional && await page.evaluate(() => { const p = document.querySelector(".panel"); return !!p && p.getBoundingClientRect().top > innerHeight * 0.45; })) { await h.click('#bnav [data-tab="events"]', { after: 1200 }); }
+    if (process.env.DBG && s.optional) console.log('optional', i, await page.evaluate(() => { const p = document.querySelector('.panel'); return p ? p.getBoundingClientRect().top + ' / ' + innerHeight : 'nopanel'; }), await page.locator(s.target).count());
     if (s.target && s.optional && !(await page.locator(s.target).count())) { s.target = null; } // an optional tap is skipped when its button is not there
     if (s.target) { try { await h.move(s.target); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } } // act first (typing, scrolling), then glide to the thing to tap
     { const bad = await page.evaluate(() => [...document.querySelectorAll(".err, [role=alert]")].filter((e) => e.offsetParent && /couldn.t|can.t|didn.t|enter a |should |invalid|wrong|try again|isn.t|not allowed|too many/i.test(e.textContent)).map((e) => e.textContent.trim()).join(" | ")).catch(() => ""); if (bad) { await page.screenshot({ path: `${w}/error-${i}.png` }); throw new Error(`The page showed an error on step ${i} (${s.cap || "card"}): ${bad}`); } } // a recording must never show a failed action
