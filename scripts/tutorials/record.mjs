@@ -15,7 +15,7 @@ const OVERLAY = `(() => {
   add();
   const mk = () => { if (!document.body) return setTimeout(mk, 20); if (document.getElementById("__cur")) return; const c = document.createElement("div"); c.id = "__cur"; c.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2l14 9-6 1.5L8 19z" fill="#111" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>'; c.style.left = "-40px"; document.body.appendChild(c); };
   mk();
-  const fixUrl = () => { try { const w = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (n.nodeValue.includes("localhost:8788")) n.nodeValue = n.nodeValue.replace(/localhost:8788/g, "socallights.app"); } catch (e) {} };
+  const fixUrl = () => { try { const w = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (n.nodeValue.includes("localhost:")) n.nodeValue = n.nodeValue.replace(/localhost:\d+/g, "socallights.app"); } catch (e) {} };
   setInterval(fixUrl, 250);
   // The caption never sits on the pointer: when the pointer comes near it, the caption hops to the other edge of the screen
   let cx = -999, cy = -999, side = "bottom";
@@ -40,6 +40,7 @@ class Helper {
   async type(sel, text, opt = {}) { await this.click(sel, { after: 300 }); if (opt.fill) await this.page.fill(sel, text); else { if (opt.clear !== false) await this.page.fill(sel, ""); await this.page.type(sel, text, { delay: 85 }); } await sleep(opt.after ?? 900); }
   async hover(sel, ms = 1200) { await this.move(sel); await sleep(ms); await this.unring(); }
 }
+const DRY = process.env.DRY === "1"; // dry run: walk every step to check each button and link exists, with no voice and no video
 export async function record(spec) {
   const w = `${WORK}/${spec.id}`; mkdirSync(w + "/wav", { recursive: true });
   const say = spec.steps.map((s) => s.say || ""); writeFileSync(w + "/texts.json", JSON.stringify(say));
@@ -48,12 +49,12 @@ export async function record(spec) {
   const spoken = (t) => t.replaceAll("SoCal", "So Cal"); // said as two words; captions keep the brand spelling
   const keyOf = (t) => createHash("sha1").update("hfc_female-" + (process.env.LENGTH_SCALE || "1.0") + "|" + spoken(t)).digest("hex");
   const todo = [...new Set(say.filter((t) => t && !existsSync(`${cacheDir}/${keyOf(t)}.wav`)))];
-  if (todo.length) { mkdirSync(w + "/wav", { recursive: true }); writeFileSync(w + "/todo.json", JSON.stringify(todo.map(spoken)));
+  if (todo.length && !DRY) { mkdirSync(w + "/wav", { recursive: true }); writeFileSync(w + "/todo.json", JSON.stringify(todo.map(spoken)));
     const r = spawnSync("python3", [new URL("./tts.py", import.meta.url).pathname, VOICE, w + "/todo.json", w + "/wav"], { stdio: "inherit" }); if (r.status) throw new Error("tts failed");
     todo.forEach((t, i) => copyFileSync(`${w}/wav/${i}.wav`, `${cacheDir}/${keyOf(t)}.wav`)); }
-  say.forEach((t, i) => { if (t) copyFileSync(`${cacheDir}/${keyOf(t)}.wav`, `${w}/wav/${i}.wav`); });
+  if (!DRY) say.forEach((t, i) => { if (t) copyFileSync(`${cacheDir}/${keyOf(t)}.wav`, `${w}/wav/${i}.wav`); });
   const soft = "highpass=f=70,lowpass=f=7000,equalizer=f=250:t=q:w=1:g=2.5,equalizer=f=5000:t=q:w=1:g=-2,aecho=0.8:0.4:35:0.1,loudnorm=I=-17:TP=-2:LRA=9";
-  const audio = say.map((t, i) => { if (!t) return null; const o = `${w}/wav/s${i}.wav`; execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${w}/wav/${i}.wav`, "-af", soft, "-ar", "44100", o]); return { f: o, d: dur(o) }; });
+  const audio = say.map((t, i) => { if (!t) return null; if (DRY) return { f: null, d: 0.3 }; const o = `${w}/wav/s${i}.wav`; execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${w}/wav/${i}.wav`, "-af", soft, "-ar", "44100", o]); return { f: o, d: dur(o) }; });
   const vp = spec.phone ? { width: 390, height: 680 } : { width: 1280, height: 720 };
   const br = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
   const SC = spec.phone ? 3 : 2; // device pixels per CSS pixel: desktop frames are 2560x1440, phone frames 1170x2040
@@ -73,7 +74,7 @@ export async function record(spec) {
   const fdir = w + "/frames"; rmSync(fdir, { recursive: true, force: true }); mkdirSync(fdir, { recursive: true });
   const cdp = await ctx.newCDPSession(page), frames = []; let fi = 0, writing = Promise.resolve();
   cdp.on("Page.screencastFrame", (f) => { const i = fi++; frames.push({ i, t: f.metadata.timestamp }); writeFileSync(`${fdir}/${i}.jpg`, Buffer.from(f.data, "base64")); cdp.send("Page.screencastFrameAck", { sessionId: f.sessionId }).catch(() => {}); });
-  await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, maxWidth: Math.round(vp.width * SC), maxHeight: Math.round(vp.height * SC), everyNthFrame: 1 });
+  if (!DRY) await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, maxWidth: Math.round(vp.width * SC), maxHeight: Math.round(vp.height * SC), everyNthFrame: 1 });
   const t00 = Date.now(), ref = t00 / 1000; var T = () => (Date.now() - t00) / 1000;
   for (let i = 0; i < spec.steps.length; i++) {
     const s = spec.steps[i]; const t0 = T();
@@ -87,6 +88,7 @@ export async function record(spec) {
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
     if (s.target && s.optional && !(await page.locator(s.target).count())) { s.target = null; } // an optional tap is skipped when its button is not there
     if (s.target) { try { await h.move(s.target); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } } // act first (typing, scrolling), then glide to the thing to tap
+    { const bad = await page.evaluate(() => [...document.querySelectorAll(".err, [role=alert]")].filter((e) => e.offsetParent && /couldn.t|can.t|didn.t|enter a |should |invalid|wrong|try again|isn.t|not allowed|too many/i.test(e.textContent)).map((e) => e.textContent.trim()).join(" | ")).catch(() => ""); if (bad) { await page.screenshot({ path: `${w}/error-${i}.png` }); throw new Error(`The page showed an error on step ${i} (${s.cap || "card"}): ${bad}`); } } // a recording must never show a failed action
     if (s.poster) poster = T();
     const left = end - T(); if (left > 0) await sleep(left * 1000);
     if (s.target) { await sleep(500); if (s.beforeClick) await s.beforeClick(page, h); await h.click(s.target, { after: 0 }); await page.evaluate(() => { const c = document.getElementById("__cap"); if (c) c.remove(); }).catch(() => {}); await sleep(s.after ?? 1500); } // the caption goes the moment the screen changes, so it never describes the old screen
@@ -94,6 +96,7 @@ export async function record(spec) {
   }
   const total = T() + 0.3; await sleep(300);
   await cdp.send("Page.stopScreencast").catch(() => {}); await page.close(); await ctx.close(); await br.close();
+  if (DRY) { console.log(spec.file, "dry run OK:", spec.steps.length, "steps"); return; }
   // frames -> constant-rate video, each frame shown until the next one arrives
   if (frames.length > 1 && frames[1].t - ref < 1.5) frames.shift(); frames[0].t = ref; // Chrome can hand over one stale frame first (the page before the title card): drop it, so frame one is the card
   // Dead air is fast-forwarded: any stretch with no voice that is longer than 1.5 s plays at 4x (the first 0.8 s and last 0.4 s stay at normal speed, so each click is still seen)

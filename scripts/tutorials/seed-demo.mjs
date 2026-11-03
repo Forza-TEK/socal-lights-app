@@ -24,6 +24,7 @@ const cats = ["Best Traditional", "Most Creative", "Best Animated"];
 const sql = [
   // re-runnable: clear the demo rows first (and any contest the recordings created for the organizer)
   "DELETE FROM votes WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org' OR id IN ('c_demo','c_past')); DELETE FROM judges WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org' OR id IN ('c_demo','c_past')); DELETE FROM judge_picks WHERE contest_id='c_demo'; DELETE FROM judge_scores WHERE contest_id='c_demo'; DELETE FROM judge_conflicts WHERE contest_id='c_demo';",
+  "DELETE FROM submit_log;", // the app allows 5 form submissions an hour from one address; recordings all come from one address
   "DELETE FROM installers WHERE id='i_bright'; DELETE FROM alert_subs WHERE token IN ('demo-confirm-token','demo-unsub-token');",
   "DELETE FROM events WHERE id IN (SELECT event_id FROM contests WHERE owner_id='u_org' OR id IN ('c_demo','c_past')); DELETE FROM events WHERE id='c-maple-street-holiday-lights-2026';",
   "DELETE FROM contest_hits WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org'); DELETE FROM contest_staff WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org'); DELETE FROM contest_sponsors WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org'); DELETE FROM contest_changes WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org');",
@@ -43,12 +44,13 @@ VALUES ('c_past','maple-street-holiday-lights-2025','u_org','Maple Street Holida
 sql.push(`INSERT INTO posts (id,status,biz,title,city,county,lat,lng,descr,photos,season,address,poster_type,contest_id,user_id,entry_no,approved_at) VALUES ('p_jamie25','approved','Cole Family Christmas','Cole Family Christmas','Irvine','Orange',33.70,-117.80,'Last year.','[]','christmas','452 Maple Street','homeowner','c_past','u_mine',1,datetime('now'));`);
 sql.push(`INSERT INTO drafts (id,user_id,kind,title,data,step) VALUES ('d_demo','u_mine','house','Our new light show',${q(JSON.stringify({ title: "Our new light show" }))},1);`);
 // a made-up installer with two linked homes (Professionally installed filter, Installed by, installer profile)
-sql.push(`INSERT INTO installers (id,slug,name,web,phone,area,blurb,email) VALUES ('i_bright','bright-nights-lighting','Bright Nights Lighting','brightnights.example.com','(949) 555-0142','Orange County','Custom holiday lighting design, installation and takedown. Demo data.','quotes@brightnights.example.com');`);
+sql.push(`INSERT INTO installers (id,slug,name,web,phone,area,blurb,email,owner_email) VALUES ('i_bright','bright-nights-lighting','Bright Nights Lighting','brightnights.example.com','(949) 555-0142','Orange County','Custom holiday lighting design, installation and takedown. Demo data.','quotes@brightnights.example.com','quotes@brightnights.example.com');`);
 sql.push(`UPDATE posts SET installer_id='i_bright', installer_confirmed=1 WHERE id IN ('p_garcia','p_patel');`);
 sql.push(`UPDATE posts SET installer_id='i_bright', installer_confirmed=0 WHERE id='p_jamie';`); // a home that names the company but is not confirmed yet
 // weekly email sign-ups: one waiting for its confirm link, one confirmed (for the unsubscribe link)
 sql.push(`INSERT INTO alert_subs (id,email,city,lat,lng,radius,token,confirmed) VALUES ('a_demo1','neighbor@example.com','Irvine',33.6846,-117.8265,10,'demo-confirm-token',0);`);
 sql.push(`INSERT INTO alert_subs (id,email,city,lat,lng,radius,token,confirmed,confirmed_at) VALUES ('a_demo2','neighbor2@example.com','Irvine',33.6846,-117.8265,10,'demo-unsub-token',1,datetime('now'));`);
+sql.push(`UPDATE contests SET rules = ${q("Official rules for the Maple Street Holiday Lights contest (demo). Anyone who lives on Maple Street may enter one home. Photos must show your own display. Judges and neighbors vote for their favorites in each category. Winners are announced when voting closes. By entering you agree that judges may visit your home.")} WHERE id IN ('c_demo','c_past');`);
 // a few neighbor votes so the contest looks alive
 for (let v = 0; v < 8; v++) cats.forEach((c, ci) => sql.push(`INSERT INTO votes (id,contest_id,user_id,post_id,category) VALUES ('vt${v}_${ci}','c_demo','u_v${v}',${q(homes[(v + ci * 2) % 6][0])},${q(c)});`));
 for (let v = 0; v < 8; v++) sql.push(`UPDATE votes SET created_at = datetime('now','-${v % 5} days') WHERE user_id = 'u_v${v}';`);

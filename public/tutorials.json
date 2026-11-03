@@ -52,8 +52,10 @@
           "id": "pro-filter",
           "title": "Find professionally installed displays",
           "desc": "Use the Professionally installed filter, then open an installer's profile.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/find-pro.mp4",
+          "length": "1:08",
+          "captions": "/tutorials/find-pro.vtt",
+          "poster": "/tutorials/find-pro.jpg"
         }
       ]
     },
@@ -131,15 +133,19 @@
           "id": "share",
           "title": "Share your contest",
           "desc": "Link, QR code, entry poster and yard sign.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/run-share.mp4",
+          "length": "1:34",
+          "captions": "/tutorials/run-share.vtt",
+          "poster": "/tutorials/run-share.jpg"
         },
         {
           "id": "approve",
           "title": "Approve and decline entries",
           "desc": "Approve, decline with a reason, and undo a decline.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/run-approve.mp4",
+          "length": "1:18",
+          "captions": "/tutorials/run-approve.vtt",
+          "poster": "/tutorials/run-approve.jpg"
         },
         {
           "id": "edit",
@@ -222,8 +228,10 @@
           "id": "showcase",
           "title": "Show off your house",
           "desc": "Put your lights on the map with Showcase a House.",
-          "url": "",
-          "length": ""
+          "url": "/tutorials/post-house.mp4",
+          "length": "1:43",
+          "captions": "/tutorials/post-house.vtt",
+          "poster": "/tutorials/post-house.jpg"
         }
       ]
     }
