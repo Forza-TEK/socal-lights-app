@@ -102,6 +102,7 @@ export async function record(spec) {
   frames.forEach((f) => { f.t = ref + remap(Math.max(0, f.t - ref)); });
   marks.forEach((m) => { m.t0 = m.t; m.t = remap(m.t); });
   const total2 = remap(total);
+  if (poster !== null) poster = remap(poster); // the thumbnail time follows the fast-forwarded timeline
   const lines = []; frames.forEach((f, k) => { const t = Math.max(0, f.t - ref), nx = k + 1 < frames.length ? Math.max(0, frames[k + 1].t - ref) : total2; lines.push(`file '${fdir}/${f.i}.jpg'`, `duration ${Math.max(0.001, nx - t).toFixed(4)}`); });
   lines.push(`file '${fdir}/${frames[frames.length - 1].i}.jpg'`); writeFileSync(w + "/frames.txt", lines.join("\n"));
   const webm = null;
