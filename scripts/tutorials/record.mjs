@@ -93,14 +93,21 @@ export async function record(spec) {
   await cdp.send("Page.stopScreencast").catch(() => {}); await page.close(); await ctx.close(); await br.close();
   // frames -> constant-rate video, each frame shown until the next one arrives
   if (frames.length > 1 && frames[1].t - ref < 1.5) frames.shift(); frames[0].t = ref; // Chrome can hand over one stale frame first (the page before the title card): drop it, so frame one is the card
-  const lines = []; frames.forEach((f, k) => { const t = Math.max(0, f.t - ref), nx = k + 1 < frames.length ? Math.max(0, frames[k + 1].t - ref) : total; lines.push(`file '${fdir}/${f.i}.jpg'`, `duration ${Math.max(0.001, nx - t).toFixed(4)}`); });
+  // Dead air is fast-forwarded: any stretch with no voice that is longer than 1.5 s plays at 4x (the first 0.8 s and last 0.4 s stay at normal speed, so each click is still seen)
+  const spans = marks.map((m) => [m.t, m.t + audio[m.i].d]).sort((a, b) => a[0] - b[0]), cuts = []; let prevEnd = 0;
+  for (const [a, b] of [...spans, [total, total]]) { const c0 = prevEnd + 0.8, c1 = a - 0.4; if (c1 - c0 > 1.5) cuts.push([c0, c1]); prevEnd = Math.max(prevEnd, b); }
+  const remap = (t) => { let r = 0; for (const [c0, c1] of cuts) { if (t <= c0) break; r += (Math.min(t, c1) - c0) * 0.75; } return t - r; };
+  frames.forEach((f) => { f.t = ref + remap(Math.max(0, f.t - ref)); });
+  marks.forEach((m) => { m.t0 = m.t; m.t = remap(m.t); });
+  const total2 = remap(total);
+  const lines = []; frames.forEach((f, k) => { const t = Math.max(0, f.t - ref), nx = k + 1 < frames.length ? Math.max(0, frames[k + 1].t - ref) : total2; lines.push(`file '${fdir}/${f.i}.jpg'`, `duration ${Math.max(0.001, nx - t).toFixed(4)}`); });
   lines.push(`file '${fdir}/${frames[frames.length - 1].i}.jpg'`); writeFileSync(w + "/frames.txt", lines.join("\n"));
   const webm = null;
   const inputs = marks.flatMap((m) => ["-i", m.f]);
   const fc = marks.map((m, k) => `[${k + 1}:a]adelay=${Math.round(m.t * 1000)}|${Math.round(m.t * 1000)}[a${k}]`).join(";") + (marks.length ? ";" : "") + marks.map((_, k) => `[a${k}]`).join("") + `amix=inputs=${marks.length}:normalize=0[aout]`;
   const vf = spec.phone ? "scale=-2:1380:flags=lanczos,pad=2560:1440:(ow-iw)/2:30:color=#fbf3ea" : "scale=2560:1440:flags=lanczos";
   const mp4 = `${OUT}/${spec.file}.mp4`;
-  execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", w + "/frames.txt", ...inputs, "-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "23", "-preset", "medium", "-vf", vf + ",fps=30", "-r", "30", "-c:a", "aac", "-b:a", "160k", "-ac", "2", "-ar", "48000", "-t", String(total), "-movflags", "+faststart", mp4], { stdio: "inherit" });
+  execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", w + "/frames.txt", ...inputs, "-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "23", "-preset", "medium", "-vf", vf + ",fps=30", "-r", "30", "-c:a", "aac", "-b:a", "160k", "-ac", "2", "-ar", "48000", "-t", String(total2), "-movflags", "+faststart", mp4], { stdio: "inherit" });
 
   // ---- Checks before a video counts as finished: it must open on the title card and the voice must already be speaking ----
   const probe = (args) => spawnSync("ffmpeg", ["-hide_banner", ...args], { encoding: "utf8" }).stderr;
