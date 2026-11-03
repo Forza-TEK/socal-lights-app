@@ -24,6 +24,7 @@ const cats = ["Best Traditional", "Most Creative", "Best Animated"];
 const sql = [
   // re-runnable: clear the demo rows first (and any contest the recordings created for the organizer)
   "DELETE FROM votes WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org' OR id IN ('c_demo','c_past')); DELETE FROM judges WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org' OR id IN ('c_demo','c_past')); DELETE FROM judge_picks WHERE contest_id='c_demo'; DELETE FROM judge_scores WHERE contest_id='c_demo'; DELETE FROM judge_conflicts WHERE contest_id='c_demo';",
+  "DELETE FROM submit_log;", // the app allows 5 form submissions an hour from one address; recordings all come from one address
   "DELETE FROM installers WHERE id='i_bright'; DELETE FROM alert_subs WHERE token IN ('demo-confirm-token','demo-unsub-token');",
   "DELETE FROM events WHERE id IN (SELECT event_id FROM contests WHERE owner_id='u_org' OR id IN ('c_demo','c_past')); DELETE FROM events WHERE id='c-maple-street-holiday-lights-2026';",
   "DELETE FROM contest_hits WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org'); DELETE FROM contest_staff WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org'); DELETE FROM contest_sponsors WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org'); DELETE FROM contest_changes WHERE contest_id IN (SELECT id FROM contests WHERE owner_id='u_org');",
