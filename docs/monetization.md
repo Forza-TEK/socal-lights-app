@@ -29,7 +29,7 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
   ```sql
   UPDATE events SET featured=1, featured_until='2026-12-15', updated_at=datetime('now') WHERE id='the-event-id';
   ```
-  Placement ends by itself after `featured_until`. Scheduled upkeep and sweep upserts never touch these two columns.
+  Placement ends by itself after `featured_until`: there is no scheduled job. Every time the event list is built, `featuredLevel()` in `functions/_lib/util.js` reports 0 once `featured_until` is before today (Pacific date, the same one used when a plan is bought, so a 30-day plan lasts through the end of its last day). The database row keeps `featured=1/2` afterwards and is simply ignored (the admin CSV export still says "yes" for an expired placement). Scheduled upkeep and sweep upserts never touch these two columns.
 - Featured must stay honest: the event still has to be real, public and verified, and the badge is always shown.
 - History: built 2026-10-28, removed briefly the same day, then restored with Cash App payments; Cash App links replaced by Stripe-only checkout 2026-11-04.
 
