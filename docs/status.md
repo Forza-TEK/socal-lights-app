@@ -2,6 +2,15 @@
 
 _Last updated: 2026-11-04_
 
+## Audit batch A: six safe fixes (2026-11-04, branch `claude/quirky-goodall-yaumg1`, not merged)
+- **Fake "City of X" contests:** contests still go live at once, but one with a review note (`contests.note`, set for free-mail, no website or mismatch) cannot buy Featured until Admin clicks "Looks fine" (the existing Contests tab action; it clears the note and is logged). `/api/me/featurable` shows it as state `review`. The dashboard and tab counts already include live contests with a note.
+- **Invite abuse and email injection:** migration 0158 `email_send_log`; `functions/_lib/sendlimit.js`. Neighbor invitations: 10 addresses per call, 30 per contest per day; every third-party email (invites, judges, co-organizers, judge reminders) counts toward 100 per account per day (429). The invite note loses links and is 300 characters. `functions/_lib/mailtpl.js` neutralizes typed values (brackets, parentheses, angle brackets, backticks, web addresses, line breaks) before the layout is built, and `esc` now escapes quotes.
+- **Locked results:** after announce, approve, restore, decline, flag and entrant edits return 409 "Results are locked."; the announce write is `WHERE announced = 0` (double click writes once); announcing before voting starts or with no votes needs `force` (409 `needs_force`; organizer page asks "Announce anyway?").
+- **Security headers:** `functions/_middleware.js` adds nosniff, Referrer-Policy, Permissions-Policy and X-Frame-Options to Function responses; `public/_headers` has the same for static files. **No Content-Security-Policy yet (deferred: needs a long test across the map, Turnstile, Google sign-in, unpkg, fonts and admin).** `public/_routes.json` lists the paths that run Functions so the new root middleware does not turn every static file into a Function call. **A new top-level Function route must be added there.**
+- **Real 404s:** `public/404.html`; unknown paths now return 404 (every real route re-checked, still 200).
+- **SEO:** city pages emit Event JSON-LD only for confirmed events, titles are at most 60 characters, and a "More places" block links to other cities in the county plus /add-event and /pricing; the sitemap has no `lastmod` and lists `/past` only when a contest has been announced.
+- Tests: `npm test` (mail injection unit tests). Not fixed here: `/c/<unknown>` still returns 200 (ux F1 second half).
+
 ## Professional HTML emails + unsubscribe (2026-11-04)
 - All 34 emails use one designed layout (logo, label, title, message, orange button, boxes, footer with why-you-got-this, Privacy/Terms links and copyright), written with simple markers in the wording so the Admin editor can change them. No light bulbs. See `docs/email-templates.md`.
 - Unsubscribe: notification emails link to `/unsubscribe` (migration 0156 `email_prefs`); the weekly alert keeps its own link; service emails (sign-in code, approvals, quote requests) explain they have none.

@@ -11,12 +11,12 @@ _CEO, 2026-11-04. Seven read-only specialist audits of the merged app (reports i
 ## Tier 1: fix now (small, safe, no owner input)
 | # | Gap | Report | Why first |
 |---|---|---|---|
-| 1 | Fake "City of X" contests go live at once and can buy Featured; nothing alerts admin | contests C1 | Impersonation plus paid promotion |
-| 2 | Any account can send 50 invites per call from the site's email; user text becomes links in branded email | contests C2, security S-05, S-06 | Phishing from our domain; can exhaust the shared email quota and lock out sign-in |
-| 3 | Results are not fully locked after announcement (organizer can decline an entry and delete its photos and votes) | contests C3 | Breaks the promise that results are frozen |
-| 4 | No security headers on Function responses (nosniff, referrer, permissions, frame) | security S-02 | Cheap hardening |
-| 5 | Unknown URLs return 200 with the map (soft 404s) | ux F1 | Search engines can index junk |
-| 6 | Event structured data marks 659 "expected" events as scheduled; city titles too long; sitemap lastmod faked; empty `/past` listed | seo F1, F6 | Structured-data policy risk |
+| 1 (FIXED on branch, not merged) | Fake "City of X" contests go live at once and can buy Featured; nothing alerts admin | contests C1 | Impersonation plus paid promotion |
+| 2 (FIXED on branch, not merged) | Any account can send 50 invites per call from the site's email; user text becomes links in branded email | contests C2, security S-05, S-06 | Phishing from our domain; can exhaust the shared email quota and lock out sign-in |
+| 3 (FIXED on branch, not merged) | Results are not fully locked after announcement (organizer can decline an entry and delete its photos and votes) | contests C3 | Breaks the promise that results are frozen |
+| 4 (FIXED on branch, not merged) | No security headers on Function responses (nosniff, referrer, permissions, frame) | security S-02 | Cheap hardening |
+| 5 (FIXED on branch, not merged) | Unknown URLs return 200 with the map (soft 404s) | ux F1 | Search engines can index junk |
+| 6 (FIXED on branch, not merged) | Event structured data marks 659 "expected" events as scheduled; city titles too long; sitemap lastmod faked; empty `/past` listed | seo F1, F6 | Structured-data policy risk |
 | 7 | Privacy policy states things the code contradicts (location "not sent", "no ads / not shared with advertisers", IP deleted "in a day or two", quote-lead consent) | privacy P-01 to P-04 | False statements |
 | 8 | Account deletion leaves personal data in judges, leads, claims, listing changes, alert subscriptions, installer owner email, staff rows | privacy P-05 | Deletion promise |
 

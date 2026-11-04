@@ -3,7 +3,7 @@
 //
 // Rules: never change a body, never override a header the handler already set, never throw (any problem falls through to the plain response).
 // A Content-Security-Policy is deliberately NOT set here: it needs a long test across the map app, Turnstile, Google sign-in and the admin pages
-// (see docs/security-headers.md). Set-Cookie and cache headers are left exactly as the handler wrote them.
+// (deferred, see docs/status.md and the audit item S-02). Set-Cookie and cache headers are left exactly as the handler wrote them.
 const HEADERS = [
   ["X-Content-Type-Options", "nosniff"],
   ["Referrer-Policy", "strict-origin-when-cross-origin"],
