@@ -4,6 +4,7 @@ import { SEASONS, defaultSeason } from "/seasons.js";
 import { attachAddress } from "/addflow.js?v=20261102c";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261104c";
+import { renderHelp } from "/admin/help.js?v=20261104a";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261103a";
 
 const $ = (s) => document.querySelector(s);
@@ -27,8 +28,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "emails"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", emails: "Email templates" };
+const TABS = ["dashboard", "pending", "subs", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "emails", "help"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", emails: "Email templates", help: "Help Center" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
@@ -68,6 +69,7 @@ async function render() {
     if (tab === "users") return renderUsers();
     if (tab === "log") return renderLog();
     if (tab === "emails") return renderEmails(main);
+    if (tab === "help") return renderHelp(main);
     const waiting = await api("/api/admin/posts?status=" + tab), declined = tab === "pending" ? await api("/api/admin/posts?status=declined") : [];
     if (tab === "pending") setCount("pending", waiting.length);
     const showing = tab === "pending" && PVIEW === "declined" ? declined : waiting;

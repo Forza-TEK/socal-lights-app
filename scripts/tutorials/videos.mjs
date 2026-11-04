@@ -44,7 +44,7 @@ S.map = { id: "map", file: "find-map", cookie: null, ...MAPSPEC, steps: [
   nextUp(EF, "Plan a night", "Save favorites, build a route, share it and add it to your calendar"),
 ]};
 S.night = { id: "night", file: "find-night", cookie: null, ...MAPSPEC, steps: [
-  hook(EF, "Plan a night of lights", "Hearts, route, share, calendar", "In about a minute, you will plan a night of lights, and get driving routes. We start on the map."),
+  hook(EF, "Plan a night of lights", "Hearts, route, share, calendar", "In under two minutes, you will plan a night of lights, and get driving routes. We start on the map."),
   ...openShort(),
   target("Tap the season button", "Choose what you want to see. Tap the season button.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Tap Thanksgiving and Christmas Lights.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
@@ -149,7 +149,7 @@ S.vote = { id: "vote", file: "vote", cookie: ck.u_voter, ...MAPSPEC, steps: [
   hook(EV, "Vote for your favorite homes", "One favorite in each category", "In under two minutes, you will vote for your favorite homes in a neighborhood contest. We start on the map."),
   ...openShort(),
   ...fromMap("contests", [target("Tap Vote", "Under Live now, tap Vote. The first time, the site asks you to sign in. That keeps it to one vote per person.", `a[href="/c/${SLUG}"]:has-text("Vote")`, { after: 2200 })]),
-  { cap: "Visit the homes", say: "Want to see the homes first? Visit the homes puts them in a few driving routes, in your maps app.", do: async (p, h) => { await h.scrollTo("[data-tour]", 90); await h.hover("[data-tour] .leg", 900); } },
+  { cap: "Visit the homes", say: "Want to see the homes first? Visit the homes splits them into routes of nine stops or fewer. Each route starts where the last one ended, and you can tick off each home as you go.", do: async (p, h) => { await h.scrollTo("[data-tour]", 90); await h.hover("[data-tour] .leg", 900); } },
   target("Best Traditional", "Every home is in every category. In Best Traditional, tap Vote on your favorite.", `[data-vote="p_garcia"]`, { after: 2000, poster: true, pre: async (p, h) => { await h.scrollTo(".vrow", 120); } }),
   target("Most Creative", "The next category opens by itself. Tap Vote on your favorite creative display.", `[data-vote="p_patel"]`, { after: 2000, pre: async (p, h) => { await h.scrollTo(".vrow", 120); } }),
   target("Best Animated", "Last, Best Animated. Tap your favorite.", `[data-vote="p_nguyen"]`, { after: 2000, pre: async (p, h) => { await h.scrollTo(".vrow", 120); } }),
@@ -161,7 +161,7 @@ S.judge = { id: "judge", file: "judge", cookie: ck.u_judge, start: "/offline.htm
   emailScene(mails.judge, "This is your invitation email. It says which contest it is, and how judging works. Tap Open my judges' ballot.", "dana@demo.example"),
   { cap: "Tap Open my judges' ballot", say: "", mail: "keep", target: '#__mail a[href*="/judge"] >> nth=0', after: 2600, pad: 0.1 },
   { cap: "Your ballot", say: "This is your ballot. It says when voting closes, and how many scores you have given.", do: async (p, h) => { await h.hover(".status", 900); } },
-  target("Visit the homes", "Tap Visit the homes to see the homes in a few driving routes, before you score.", nav("tour"), { after: 1600 }),
+  target("Visit the homes", "Tap Visit the homes. A long list is split into routes of nine stops or fewer. Each route starts where the last one ended, and you tick off each home as you go.", nav("tour"), { after: 1600 }),
   target("Tap a category", "Tap a category. Every home is in every category.", nav("c0"), { after: 1600 }),
   target("I know this household", "Know a household? Tap I know this household. That home is skipped.", `[data-conf="p_okafor"]`, { after: 1600, poster: true }),
   { cap: "Score each home", say: "Score each of the other homes, one to ten.", do: async (p, h) => { for (const [id, n] of [["p_garcia", "9"], ["p_patel", "8"], ["p_nguyen", "7"]]) { const sel = `[data-score="${id}|Best Traditional"]`; await h.move(sel); await p.selectOption(sel, n); await h.unring(); await sleep(800); } } },
