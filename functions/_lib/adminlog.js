@@ -10,6 +10,7 @@ const AREAS = {
   reports: ["reports", "name"],
   normalize: ["users", "email"],
   emails: ["email_templates", "id"],
+  help: ["help_articles", "title", "slug"],
 };
 
 // "/api/admin/posts/abc" -> { area: "posts", id: "abc" }; null for anything that isn't a logged area
@@ -20,8 +21,8 @@ export function parseTarget(pathname) {
 // What the item is called right now (read before the change, so a delete still has a name)
 export async function labelFor(env, area, id) {
   if (!id) return "";
-  const [table, col] = AREAS[area];
-  try { const r = await env.DB.prepare(`SELECT ${col} AS l FROM ${table} WHERE id = ?`).bind(id).first(); return String((r && r.l) || "").slice(0, 120); } catch { return ""; }
+  const [table, col, key = "id"] = AREAS[area];
+  try { const r = await env.DB.prepare(`SELECT ${col} AS l FROM ${table} WHERE ${key} = ?`).bind(id).first(); return String((r && r.l) || "").slice(0, 120); } catch { return ""; }
 }
 export const actionName = (method, body, id) => {
   if (body && typeof body.action === "string" && /^[a-z_]{2,20}$/.test(body.action)) return body.action;

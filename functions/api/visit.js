@@ -5,6 +5,7 @@ const group = (p) => {
   p = String(p || "/").split(/[?#]/)[0].toLowerCase().replace(/\/+$/, "") || "/";
   if (p === "/" || p === "/index.html") return "map";
   if (p.startsWith("/admin") || p.startsWith("/api")) return "";
+  if (p === "/help" || p.startsWith("/help/")) return "help";
   const m = p.match(/^\/(c|installer|in)\//);
   if (m) return ({ c: "contest", installer: "installer", in: "city" })[m[1]] + (/\/(manage|enter|judge)$/.test(p) ? "-" + p.split("/").pop() : "");
   return p.replace(/^\//, "").replace(/[^a-z0-9/_-]/g, "").slice(0, 40) || "other";

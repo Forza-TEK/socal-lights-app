@@ -29,12 +29,12 @@
 <body class="sh-page">
 <main id="content">
 <h1>Tutorials</h1>
-<p class="tsub">Short how-to videos, grouped by what you want to do. New ones are added as they are finished.</p>
+<p class="tsub">Short how-to videos, grouped by what you want to do. Prefer to read? Every video has written steps in the <a href="/help">Help Center</a>.</p>
 <div id="tut"><p class="tsub">Loading…</p></div>
 <noscript><p>Turn on JavaScript to see the tutorial list.</p></noscript>
 </main>
 <script type="module">
-import { mountShell } from "/appshell.js?v=20261103a";
+import { mountShell } from "/appshell.js?v=20261104a";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (q) => document.querySelector(q);
 // Turns a pasted video link into something we can play: YouTube, Vimeo, Cloudflare Stream, or a direct video file
