@@ -137,7 +137,7 @@ export async function record(spec) {
   let r = 0, g = 0, b = 0; for (let k = 0; k + 2 < first.length; k += 3) { r += first[k]; g += first[k + 1]; b += first[k + 2]; } const px = first.length / 3 || 1; const avg = [r / px, g / px, b / px];
   const problems = [];
   if (!vol || vol[1] === "-inf" || parseFloat(vol[1]) < -45) problems.push("no voice in the first three seconds");
-  const secs = dur(mp4); const maxSecs = spec.maxSeconds || 150; if (secs > maxSecs) problems.push("longer than " + Math.floor(maxSecs / 60) + ":" + String(maxSecs % 60).padStart(2, "0") + " (" + Math.round(secs) + " seconds): split it");
+  const secs = dur(mp4); const maxSecs = spec.maxSeconds || (KOKORO ? 300 : 150); if (secs > maxSecs) problems.push("longer than " + Math.floor(maxSecs / 60) + ":" + String(maxSecs % 60).padStart(2, "0") + " (" + Math.round(secs) + " seconds): split it");
   if (!(avg[0] > 238 && avg[1] > 232 && avg[2] > 225)) problems.push("the first frame is not the plain title card (average colour " + avg.map(Math.round).join(",") + ")");
   if (problems.length) throw new Error("QA FAILED for " + spec.file + ": " + problems.join("; "));
 
