@@ -15,12 +15,34 @@ const live = (label) => [
   { cap: "Your contest is live", say: "Your contest is live! Tap Open my dashboard.", target: "text=Open my dashboard", after: 2000 },
   { cap: "Your dashboard", say: `This is your dashboard, with your link and QR code, ready to share.`, do: async (p, h) => { await h.hover(".stats", 1000); }, pad: 0.8 },
 ];
-S.quick = { id: "quick", file: "run-quick", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ER, "Create a contest in two minutes", "Quick start", "In two minutes, you will have a live neighborhood contest, with its own link and QR code. Let's start."),
-  ...toWizard(true), ...screens("Oak Hill Holiday Lights 2026"),
-  { cap: "6 of 7: Quick start", say: "Choose Quick start. It sets everything up for you. Then tap Next.", target: '[data-tile="quick|yes"]', after: 1000, post: (p, h) => next(p, h) },
-  { cap: "7 of 7: Create contest", say: "Check your details, and tap Create contest.", do: async (p, h) => { await h.scroll(160); }, target: NEXT, after: 2600, poster: true },
-  ...live(), nextUp(ER, "Create a contest with Customize", "Judges, prizes, categories, vote counts and your own rules"),
+S.quick = { id: "quick", file: "run-quick", cookie: ck.u_org, ...MAPSPEC, maxSeconds: 300, steps: [
+  { ...hook(ER, "Create a contest with Quick start", "The short setup, explained", "Let's create a neighborhood decorating contest. With Quick start, you will have a live contest, with its own link and QR code, in a few minutes. I will explain what every screen is for as we go, so you always know what you are choosing. We will start on the map."), pre: async (p) => { await p.route('**/api/auth/me', async (r) => { const res = await r.fetch(); const j = await res.json().catch(() => ({})); j.methods = { ...(j.methods || {}), google: true, email: true }; await r.fulfill({ response: res, json: j }); }); } },
+  ...openSite(), ...fromMap("add", [
+    { cap: "Three choices", say: "This is the Add page. It has three choices. An event, like a tree lighting or a holiday parade. A contest, where neighbors enter their homes, and the community votes for a favorite. Or a lighting display, to show off your own house.", do: async (p, h) => { await sleep(1500); await p.evaluate(() => { if (!document.getElementById('o-contest')) location.reload(); }); }, pad: 0.4 },
+    { cap: "Tap A contest", say: "We are creating a contest, so tap A contest.", do: async (p, h) => { await h.click('a[href="/add-contest"]', { after: 400 }); await p.waitForURL(/add-contest/, { timeout: 8000 }).catch(() => {}); await p.waitForSelector("#f-name", { timeout: 10000 }); await sleep(1200); }, pad: 0.4 },
+  ]),
+  { cap: "1 of 7: Name it", say: "First, the name. This is the title everyone sees, on the contest page, on the map, and in the emails your neighbors get. Something simple and local works best, like your street or neighborhood, and the year.", do: async (p, h) => { await h.hover("#f-name", 800); }, pad: 0.3 },
+  { cap: "1 of 7: Name it", say: "I will type Oak Hill Holiday Lights 2026. Then tap Next.", do: async (p, h) => { await h.type("#f-name", "Oak Hill Holiday Lights 2026"); }, target: NEXT },
+  { cap: "2 of 7: Who runs it", say: "Next, who is running it, and where. Type the name of your group. It can be a city, a school, an H O A, a club, a business, or just your neighbors on one street.", do: async (p, h) => { await h.type("#f-org", "Oak Hill Neighbors"); }, pad: 0.3 },
+  { cap: "2 of 7: Where", say: "Then pick the city the homes are in. That is how your contest shows up for the right neighbors. Tap Next.", do: async (p, h) => { await h.move("#f-city"); await p.selectOption("#f-city", "Irvine"); await h.unring(); await sleep(700); }, target: NEXT },
+  { cap: "3 of 7: Welcome message", say: "This is the welcome message. Neighbors read it before they decide to enter, so it is your chance to say what the contest is about.", do: async (p, h) => { await h.hover("#f-descr", 1200); }, pad: 0.3 },
+  { cap: "3 of 7: Welcome message", say: "We already wrote a friendly one for you. You can keep it as it is, or change a few words so it sounds like you. Tap Next.", do: async (p, h) => { await h.hover("#f-descr", 600); }, target: NEXT },
+  { cap: "4 of 7: Website (optional)", say: "A website is optional. If your group has one, add it here, and people can see who is behind the contest.", do: async (p, h) => { await h.hover("#f-site", 1000); }, pad: 0.3 },
+  { cap: "4 of 7: Website (optional)", say: "Your contest goes live right away either way, so it is fine to skip this. Tap Next.", do: async (p, h) => { await sleep(300); }, target: NEXT },
+  { cap: "5 of 7: Dates", say: "Now the dates. There are three. The last day neighbors can enter.", do: async (p, h) => { await h.hover("#f-closes", 1000); }, pad: 0.3 },
+  { cap: "5 of 7: Dates", say: "The day voting starts. And the day voting ends.", do: async (p, h) => { await h.hover("#f-vs", 800); await h.hover("#f-ve", 800); }, pad: 0.3 },
+  { cap: "5 of 7: Dates", say: "Entries and voting open and close on these dates by themselves. We filled in typical dates, so you can just tap Next. You can change any of them later, from your dashboard.", do: async (p, h) => { await h.hover(".note", 900); }, target: NEXT },
+  { cap: "6 of 7: How to set it up", say: "This is the big choice, how the rules are set up. Quick start is the recommended one, and it is what we are using.", do: async (p, h) => { await h.hover('[data-tile="quick|yes"]', 1100); }, pad: 0.3 },
+  { cap: "6 of 7: Quick start", say: "It turns on public voting, where anyone with an account gets one vote in each category. It gives you four voting categories: Best Overall, Most Creative, Best Lights and Music, and Best Traditional.", do: async (p, h) => { await h.hover('[data-tile="quick|yes"]', 600); }, pad: 0.3 },
+  { cap: "6 of 7: Quick start", say: "It lets you approve every entry before it reaches the map. And it writes your official rules for you. Everything can still be changed later.", do: async (p, h) => { await h.hover('[data-tile="quick|yes"]', 600); }, pad: 0.3 },
+  { cap: "6 of 7: Customize", say: "If you would rather choose judges, prizes, or your own categories, pick Customize everything. We cover that in the next video.", do: async (p, h) => { await h.hover('[data-tile="quick|no"]', 1100); }, pad: 0.3 },
+  { cap: "6 of 7: Quick start", say: "For now, choose Quick start, then tap Next.", target: '[data-tile="quick|yes"]', after: 1000, post: (p, h) => next(p, h) },
+  { cap: "7 of 7: Review", say: "The last screen is the review. It lists everything you chose: the name, who runs it, the dates, the categories, and who can vote.", do: async (p, h) => { await h.hover(".sum", 1500); }, pad: 0.3 },
+  { cap: "7 of 7: Review", say: "If something is not right, tap Edit next to it. Nothing is public until you tap Create contest. When you are happy, tap Create contest.", do: async (p, h) => { await h.scroll(160); }, target: NEXT, after: 2600, poster: true },
+  { cap: "Your contest is live", say: "That is it. Your contest is live. This page explains what happens next. You share your link or your QR code. Neighbors enter their homes. You look over each entry before it goes on the map. Then the community votes, on the dates you set, and you announce the winners. Tap Open my dashboard.", target: "text=Open my dashboard", after: 2000 },
+  { cap: "Your dashboard", say: "This is your dashboard. It is where you run the contest. Up here are the numbers that matter: your entries, the ones waiting for you, and the votes.", do: async (p, h) => { await h.hover(".stats", 1200); }, pad: 0.3 },
+  { cap: "Share it", say: "And here is your link, and your QR code, ready to paste into a message, or print for a flyer. We will cover sharing in a moment.", do: async (p, h) => { await h.scrollTo("text=Share it", 100); await h.hover(".poster", 1200); }, pad: 0.8 },
+  nextUp(ER, "Create a contest with Customize", "Judges, prizes, categories, vote counts and your own rules"),
 ]};
 S.custom = { id: "custom", file: "run-custom", cookie: ck.u_org, ...MAPSPEC, steps: [
   hook(ER, "Customize your contest", "Judges, prizes, categories and rules", "In about two minutes, you will set up a contest your way, with judges and a prize."),
@@ -38,7 +60,15 @@ S.custom = { id: "custom", file: "run-custom", cookie: ck.u_org, ...MAPSPEC, ste
   { cap: "Create contest", say: "Check everything, and tap Create contest.", do: async (p, h) => { await h.scroll(260, 1000); }, target: NEXT, after: 2600 },
   ...live(), nextUp(ER, "Share your contest", "Link, QR code, entry poster and yard sign"),
 ]};
-const preview = async (p, h, sel, ms) => { await p.evaluate(() => { window.print = () => {}; }); const y = await p.evaluate(() => scrollY); await h.click(sel, { after: 300 }); await p.emulateMedia({ media: "print" }); await p.evaluate(() => scrollTo(0, 0)); await sleep(ms / 2); await h.scroll(260, ms / 2); await sleep(300); await p.evaluate((y) => scrollTo(0, y), y); await p.emulateMedia({ media: null }); await p.evaluate(() => dispatchEvent(new Event("afterprint"))); await sleep(600); };
+const preview = async (p, h, sel, ms) => { // the real print layout, drawn as a sample page (the print dialog itself cannot be recorded)
+  await h.hover(sel, 900);
+  const q = await h.ctx.newPage(); await q.setViewportSize({ width: 816, height: 1056 });
+  await q.goto(p.url(), { waitUntil: "networkidle" }); await sleep(900);
+  await q.evaluate(() => { window.print = () => {}; const o = window.addEventListener.bind(window); window.addEventListener = (t, ...a) => (t === "afterprint" ? 0 : o(t, ...a)); });
+  await q.click(sel); await q.emulateMedia({ media: "print" }); await sleep(500);
+  const src = "data:image/png;base64," + (await q.screenshot({ type: "png" })).toString("base64"); await q.close();
+  await h.showSheet(src); await sleep(ms); await h.showSheet(null); await sleep(500);
+};
 S.share = { id: "share", file: "run-share", cookie: ck.u_org, ...MAPSPEC, steps: [
   hook(ER, "Share your contest", "Link, QR code, poster, yard sign", "In under two minutes, you will share your contest with your neighbors. We start on the map."),
   ...toDash(),
