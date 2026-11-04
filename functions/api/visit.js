@@ -12,7 +12,7 @@ const group = (p) => {
 };
 
 // POST /api/visit { k: "click:ticket" } — counts one tap on a link or button, by a fixed list of keys (anything else is ignored). Same table, same privacy.
-export const CLICK_KEYS = ["click:ticket", "click:event-link", "click:feature-checkout-start", "click:installer", "click:shop", "click:promote", "click:route"];
+export const CLICK_KEYS = ["click:ticket", "click:event-link", "click:feature-checkout-start", "click:installer", "click:shop", "click:promote", "click:route", "ref:inst", "ref:cont", "ref:pub", "ref:soc"];
 const DAILY_CAP = 20000; // per key per day, so a script cannot run a counter up without limit
 
 export async function onRequestPost({ request, env }) {
