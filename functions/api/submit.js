@@ -2,6 +2,7 @@
 // Saves the post as 'pending' and its photos under pending/<id>/ in R2.
 import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
 import { sendTemplate } from "../_lib/mailtpl.js";
+import { ipPruneStatements } from "../_lib/retention.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 import { getUser } from "../_lib/auth.js";
@@ -119,7 +120,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'CA',?,?,?,?,?,${contest ? "(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?)" : "NULL"},${autoApprove ? "datetime('now')" : "NULL"})`
     ).bind(id, autoApprove ? "approved" : "pending", biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area, contest ? contest.id : null, "", cu.id, ...(contest ? [contest.id] : [])),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
-    env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
+    ...ipPruneStatements(env),
   ]);
 
   // Visiting details for families (all optional)
