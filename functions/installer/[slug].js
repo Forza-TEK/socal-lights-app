@@ -1,6 +1,6 @@
 // GET /installer/<slug> — a company's profile, styled like the app's details card: a swipeable photo header, tags, facts,
 // a sticky "Call for a quote" bar, and every home on the map they installed. Plain, indexable HTML (like /in/<city>).
-import { esc, header, hero, page, SHARE } from "../_lib/shell.js";
+import { esc, header, hero, page, SHARE, jsonScript } from "../_lib/shell.js";
 import { fmtPhone, telHref } from "../../public/norm.js";
 
 export async function onRequestGet({ request, env, params }) {
@@ -30,7 +30,7 @@ export async function onRequestGet({ request, env, params }) {
     <div class="foot"><a href="/">All of Southern California</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>${inst.owner_email ? "" : `<button class="linkbtn" type="button" id="claimbtn">Is this your company? Claim this profile</button>`}</div></main>
     <script type="module" src="/norm-ui.js?v=20261102b"></script>
     <script type="module">
-    const slug = ${JSON.stringify(inst.slug)}, name = ${JSON.stringify(inst.name)}, $ = (q) => document.querySelector(q);
+    const slug = ${jsonScript(inst.slug)}, name = ${jsonScript(inst.name)}, $ = (q) => document.querySelector(q);
     try { fetch("/api/installers/" + slug + "/hit", { method: "POST", keepalive: true }); } catch {}
     const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     async function ready() { const a = await import("/auth.js?v=20261101a"); let i = await a.me(); if (!i.user) { const u = await a.signIn({ title: "Sign in to continue", next: location.pathname }); if (!u) return null; } return a; }
