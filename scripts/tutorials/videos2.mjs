@@ -35,7 +35,7 @@ const wizardStart = (nameText, total = 7) => [
   { cap: "5 of 7: Dates", say: "Entries and voting open and close on these dates by themselves. We filled in typical dates, so you can just tap Next. You can change any of them later, from your dashboard.", do: async (p, h) => { await h.hover(".note", 900); }, target: NEXT },
 ].map((x) => (x.cap ? { ...x, cap: x.cap.replace(" of 7:", ` of ${total}:`) } : x));
 S.quick = { id: "quick", file: "run-quick", cookie: ck.u_org, ...MAPSPEC, maxSeconds: 300, steps: [
-  { ...hook(ER, "Create a contest with Quick start", "The short setup, explained", "Let's create a neighborhood decorating contest. With Quick start, you will have a live contest, with its own link and QR code, in a few minutes. I will explain what every screen is for as we go, so you always know what you are choosing. We will start on the map."), pre: authPre,
+  { ...hook(ER, "Create a contest with Quick start", "The short setup, explained", "Let's create a neighborhood decorating contest. With Quick start, you will have a live contest, with its own link and QR code, in a few minutes. I will explain what every screen is for as we go, so you always know what you are choosing. We will start on the map."), pre: authPre },
   ...wizardStart("Oak Hill Holiday Lights 2026"),
   { cap: "6 of 7: How to set it up", say: "This is the big choice, how the rules are set up. Quick start is the recommended one, and it is what we are using.", do: async (p, h) => { await h.hover('[data-tile="quick|yes"]', 1100); }, pad: 0.3 },
   { cap: "6 of 7: Quick start", say: "It turns on public voting, where anyone with an account gets one vote in each category. It gives you four voting categories: Best Overall, Most Creative, Best Lights and Music, and Best Traditional.", do: async (p, h) => { await h.hover('[data-tile="quick|yes"]', 600); }, pad: 0.3 },
@@ -50,7 +50,7 @@ S.quick = { id: "quick", file: "run-quick", cookie: ck.u_org, ...MAPSPEC, maxSec
   nextUp(ER, "Create a contest with Customize", "Judges, prizes, categories, vote counts and your own rules"),
 ]};
 S.custom = { id: "custom", file: "run-custom", cookie: ck.u_org, ...MAPSPEC, maxSeconds: 420, steps: [
-  { ...hook(ER, "Create a contest with Customize", "Judges, prizes, categories and rules", "In this video, you will set up a contest exactly your way: your own voting categories, invited judges, a prize, and your own rules. I will explain every choice as we go, so you know what each one does. We will start on the map.", pre: authPre },
+  { ...hook(ER, "Create a contest with Customize", "Judges, prizes, categories and rules", "In this video, you will set up a contest exactly your way: your own voting categories, invited judges, a prize, and your own rules. I will explain every choice as we go, so you know what each one does. We will start on the map."), pre: authPre },
   ...wizardStart("Pine Ridge Holiday Lights 2026", 16),
   { cap: "6 of 16: How to set it up", say: "Here is the big choice. Quick start sets everything up for you. Customize everything lets you decide each rule yourself. We want to decide, so choose Customize everything, then tap Next.", do: async (p, h) => { await h.hover('[data-tile="quick|yes"]', 800); }, target: '[data-tile="quick|no"]', after: 1000, post: (p, h) => next(p, h) },
   { cap: "7 of 16: Categories", say: "Now the voting categories. Every home competes in every category, and each voter picks one favorite home in each. So the categories are the awards you will give out.", do: async (p, h) => { await h.hover(".tiles", 1200); }, pad: 0.3 },
