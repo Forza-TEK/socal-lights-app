@@ -8,11 +8,11 @@ const img = (k, alt, size) => (PHOTO.test(k || "") ? `<img src="/api/photo/${esc
 const CROWN = "&#128081; ";
 
 export async function onRequestGet(context) {
-  const { request, env, params } = context, origin = new URL(request.url).origin;
+  const { request, env, params } = context, origin = new URL(request.url).origin, slug = String(params.slug || "").toLowerCase();
   const cache = typeof caches !== "undefined" ? caches.default : null, key = new Request(request.url, { method: "GET" });
   if (cache) { const hit = await cache.match(key); if (hit) return hit; }
   let row = null;
-  try { row = await env.DB.prepare(`SELECT ${ARCHIVE_COLS} FROM contests WHERE slug = ? AND ${ARCHIVE_WHERE}`).bind(params.slug).first(); } catch {}
+  try { row = await env.DB.prepare(`SELECT ${ARCHIVE_COLS} FROM contests WHERE slug = ? AND ${ARCHIVE_WHERE}`).bind(slug).first(); } catch {}
   if (!row) return new Response("No finished contest found at that address.", { status: 404, headers: { "content-type": "text/plain; charset=utf-8" } });
   const c = shapeContest(row), n = c.entries.length;
   const title = `${c.name}: results (${c.label.replace(" | ", " ")}) | SoCal Lights`;
@@ -26,13 +26,13 @@ export async function onRequestGet(context) {
     const w = e.won.filter((x) => x.category === r.category);
     return `<p>${w.length ? CROWN : ""}<b>${esc(r.category)}</b>: ${esc(parts.join(" · "))}${w.length ? " · " + w.map((x) => esc(x.label)).join(", ") : ""}</p>`;
   };
-  const winners = c.awards.map((a) => a.winners.map((w) => `<div class="ev"><div class="ph">${img(w.photo, `${w.name} lights`, 120)}</div><div><h3>${CROWN}${esc(w.name)}</h3><p>${esc(a.category)}: ${esc(a.label)}</p><p>${esc(w.address || w.city || "")}</p>${a.prize ? `<p>Prize: ${esc(a.prize)}</p>` : ""}</div></div>`).join("")).join("");
-  const homes = c.entries.map((e) => `<div class="ev"><div class="ph">${img(e.photo, `${e.name} lights`, 120)}</div><div><h3>${e.won.length ? CROWN : ""}${esc(e.name)}</h3><p>${esc(e.address || e.city || "")}${e.dq ? " · Disqualified" : ""}</p>${e.results.map((r) => line(e, r)).join("")}</div></div>`).join("");
+  const winners = c.awards.map((a) => a.winners.map((w) => `<div class="ev"><div class="ph">${img(w.photo, `Photo of ${w.name}`, 120)}</div><div><h3>${CROWN}${esc(w.name)}</h3><p>${esc(a.category)}: ${esc(a.label)}</p><p>${esc(w.address || w.city || "")}</p>${a.prize ? `<p>Prize: ${esc(a.prize)}</p>` : ""}</div></div>`).join("")).join("");
+  const homes = c.entries.map((e) => `<div class="ev"><div class="ph">${img(e.photo, `Photo of ${e.name}`, 120)}</div><div><h3>${e.won.length ? CROWN : ""}${esc(e.name)}</h3><p>${esc(e.address || e.city || "")}${e.dq ? " · Disqualified" : ""}</p>${e.results.map((r) => line(e, r)).join("")}</div></div>`).join("");
 
   const body = `${header("Open the map")}<main><div class="tags"><span class="tag ice">${esc(c.label)}</span><span class="tag">Results locked ${esc(c.at)}</span></div><h1>${esc(c.name)}: results</h1><p class="sub">${esc(c.org)} · ${esc(c.city)}</p>
 ${c.awards.length ? `<h2>Winners</h2><div class="list">${winners}</div>` : ""}<h2>All homes that entered</h2>${n ? `<div class="list">${homes}</div>` : `<div class="note"><p>No homes entered.</p></div>`}
 <div class="foot"><a href="/past">All past results</a><a href="/contests">Contests</a><a href="/">All of Southern California</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></main>`;
-  const html = page({ title, desc, canonical: `${origin}/past/${params.slug}`, ld, body, origin });
+  const html = page({ title, desc, canonical: `${origin}/past/${slug}`, ld, body, origin });
   const res = new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=600, s-maxage=3600" } });
   if (cache) context.waitUntil(cache.put(key, res.clone()));
   return res;

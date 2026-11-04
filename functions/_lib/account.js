@@ -9,7 +9,20 @@ export async function deleteAccount(env, id, email) {
   for (const e of entries) for (const k of JSON.parse(e.photos || "[]")) await env.PHOTOS.delete(k).catch(() => {});
   if (avatar) await env.PHOTOS.delete(avatar).catch(() => {});
 
-  const stmts = [
+  // Homes this person entered in announced contests: scrub them from the frozen results (name, address, city, coordinates, photos) so no page
+  // can show them; the placeholder is drawn wherever the snapshot is read. Vote tallies, ranks and judge values stay, so results don't change.
+  const snaps = [];
+  try {
+    const mine = new Set((await all("SELECT id FROM posts WHERE user_id = ?", id)).map((r) => r.id));
+    for (const c of await all("SELECT id, results FROM contests WHERE announced = 1 AND results != '' AND id IN (SELECT contest_id FROM posts WHERE user_id = ? AND contest_id IS NOT NULL)", id)) {
+      let snap; try { snap = JSON.parse(c.results); } catch { continue; }
+      if (!snap || !Array.isArray(snap.entries)) continue;
+      for (const e of snap.entries) if (mine.has(e.id)) Object.assign(e, { name: "", biz: "", address: "", city: "", lat: null, lng: null, photos: [], removed: true });
+      snaps.push(env.DB.prepare("UPDATE contests SET results = ? WHERE id = ?").bind(JSON.stringify(snap), c.id));
+    }
+  } catch {}
+
+  const stmts = [...snaps,
     env.DB.prepare("DELETE FROM votes WHERE user_id = ? OR post_id IN (SELECT id FROM posts WHERE user_id = ?)").bind(id, id),
     env.DB.prepare("DELETE FROM posts WHERE user_id = ?").bind(id),
     env.DB.prepare("UPDATE posts SET contact_email = '' WHERE contest_id IS NULL AND lower(contact_email) = lower(?)").bind(email),

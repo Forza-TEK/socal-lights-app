@@ -7,6 +7,7 @@ import { slug as slugify } from "../../_lib/events.js";
 import { inviteJudges } from "./[slug]/judges.js";
 import { getUser, sameOrigin, okEmail } from "../../_lib/auth.js";
 import { getContest, windows, todayPT, isDate, listOnMap, isStaff, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
+import { publicEntry } from "../../_lib/archive.js";
 import { judgeProgress } from "../../_lib/judging.js";
 import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
 import { normName, normText } from "../../_lib/fields.js";
@@ -30,7 +31,7 @@ export async function onRequestGet({ params, request, env }) {
   };
   // Every home competes in every category, so each home carries a vote count per category (null when counts are hidden)
   const entries = frozen
-    ? frozen.entries.map((e) => ({ ...e, mine: own.has(e.id) }))
+    ? frozen.entries.map((e) => ({ ...publicEntry(e), mine: own.has(e.id) }))
     : live.posts.map((p) => ({
         id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, descr: /^Entry in /.test(p.descr || "") ? "" : (p.descr || "").slice(0, 300),
         votes: showCounts && hasPublic(c) ? Object.fromEntries(categories.map((k) => [k, (live.counts[p.id] || {})[k] || 0])) : null, mine: own.has(p.id), flagged: isOwner ? !!p.dq : undefined,
