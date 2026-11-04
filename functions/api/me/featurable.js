@@ -25,9 +25,20 @@ export async function onRequestGet({ request, env }) {
     if (seen.has(id)) continue; seen.add(id);
     const end = live ? s.eend : s.end_date;
     const f = live ? level(s.featured, s.featured_until, t) : 0;
-    const state = live ? (s.notice === "cancelled" || s.notice === "postponed" ? s.notice === "cancelled" ? "cancelled" : "postponed" : end < t ? "ended" : "live")
+    const state = live ? (s.notice === "cancelled" || s.notice === "postponed" ? s.notice : end < t ? "ended" : "live")
       : s.status === "declined" ? "declined" : end < t ? "ended" : "pending";
     events.push({ kind: "event", id, name: live ? s.ename : s.name, city: live ? s.ecity : s.city, start: live ? s.estart : s.start_date, end, state, featured: f, until: f ? s.featured_until || null : null });
+  }
+
+  // Claims: approved ones are buyable; pending ones are listed so the person sees where they stand. (A claim gives no edit rights.)
+  const cl = (await env.DB.prepare(
+    `SELECT c.status, e.id, e.name, e.city, e.start_date, e.end_date, e.notice, e.featured, e.featured_until
+     FROM event_claims c JOIN events e ON e.id = c.event_id WHERE c.user_id = ? AND c.status IN ('approved','pending') ORDER BY c.created_at DESC LIMIT 100`).bind(user.id).all()).results;
+  for (const c of cl) {
+    if (seen.has(c.id)) continue; seen.add(c.id);
+    const f = level(c.featured, c.featured_until, t);
+    const state = c.status === "pending" ? "claim-pending" : c.notice === "cancelled" || c.notice === "postponed" ? c.notice : c.end_date < t ? "ended" : "live";
+    events.push({ kind: "event", id: c.id, name: c.name, city: c.city, start: c.start_date, end: c.end_date, state, source: "claimed", featured: f, until: f ? c.featured_until || null : null });
   }
 
   const cs = (await env.DB.prepare(
@@ -37,6 +48,6 @@ export async function onRequestGet({ request, env }) {
      WHERE c.status = 'live' AND c.announced = 0 AND e.end_date >= ?3
        AND (c.owner_id = ?1 OR c.id IN (SELECT contest_id FROM contest_staff WHERE lower(email) = lower(?2)))
      ORDER BY c.created_at DESC LIMIT 50`).bind(user.id, user.email, t).all()).results;
-  const contests = cs.map((c) => { const f = level(c.featured, c.featured_until, t); return { kind: "contest", slug: c.slug, name: c.name, id: c.id, end: c.end, featured: f, until: f ? c.featured_until || null : null, role: c.role }; });
+  const contests = cs.map((c) => { const f = level(c.featured, c.featured_until, t); return { kind: "contest", state: "live", slug: c.slug, name: c.name, id: c.id, end: c.end, featured: f, until: f ? c.featured_until || null : null, role: c.role }; });
   return json({ events, contests }, h);
 }
