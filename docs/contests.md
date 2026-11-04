@@ -49,6 +49,9 @@ A method with no secrets is simply hidden from the sign-in sheet (`GET /api/auth
 
 **Local development**: put `DEV_AUTH=1` and `ADMIN_DEV_BYPASS=1` in `.dev.vars` (gitignored). The sign-in code is then returned on screen instead of emailed, only on `localhost`. **Never set `DEV_AUTH` as a Pages secret.**
 
+## Past results pages (indexable)
+`GET /past` lists every announced, live contest grouped by Season | Year; `GET /past/<slug>` is the permanent results page: winners, then every home that entered with its result per category, awards and disqualifications. Both are server-written (`functions/past/`), built from the frozen snapshot through `functions/_lib/archive.js` (shared with `/api/archive`), show only what the Past results tab already shows publicly, are in `sitemap.xml`, and are edge-cached for an hour. Unknown or unannounced slugs return 404. `/c/*` stays `noindex` and disallowed in `robots.txt` on purpose; `/past` is not blocked.
+
 ## Launch checklist
 1. Merge to `main`. The `Apply database migrations` workflow applies `0109_accounts_contests.sql` to the live database. It only adds tables and columns, so existing events and houses are untouched.
 2. Add the secrets above. Until then email and Google sign-in report "not switched on" and the rest of the site is unaffected.
@@ -57,7 +60,8 @@ A method with no secrets is simply hidden from the sign-in sheet (`GET /api/auth
 5. App stores: the store text says "Free, no sign-up". Change it to "no sign-up to browse". Google sign-in does not work inside an embedded web view, so the Capacitor apps need the sign-in opened in the system browser before contests are offered there. Apple requires in-app account deletion for any app with accounts; deletion is currently by email (`info@socallights.app`).
 
 ## Known gaps
-- Account deletion is self-serve (Profile, Account tab, `DELETE /api/me`): it removes sign-ins, drafts, picture, entries and votes, closes contests the person runs and blanks their email on homes and events. Contest entries by other people stay (the contest is closed).
+- Account deletion is self-serve (Profile, Account tab, `DELETE /api/me`): it removes sign-ins, drafts, picture, entries and votes and blanks their email on homes and events. For contests the person runs: **announced** contests stay `live` as a frozen archive (Past results, `/past/<slug>`, winner crowns), with `owner_id`, `contact_email` and `installer_email` cleared, co-organizers removed, and the map event removed (the organization name in `org` stays); **unannounced** contests become `closed`. Entries by other people stay. An announced contest with no owner renders normally; nobody can manage it (it is locked anyway).
+- An entrant who deletes their own account loses their live entry, votes and photo, and their entry is scrubbed from the frozen results of announced contests (`contests.results`: name, address, city, coordinates and photos emptied, `removed: true`; rank, vote tallies, judge values and awards stay). Every page that reads the snapshot (`/past`, `/past/<slug>`, `/api/archive`, the contest page, the Past results tab) shows "Entry removed at the entrant's request" with no photo, name, address or city. The home's opaque post id still appears in the award list. The organizer CSV export shows a blank name for such an entry.
 - Contest owners are a single account (no staff accounts).
 - Facebook and Apple sign-in were considered and dropped.
 - Entries do not geocode-check on the contest page; the address is geocoded by `/api/submit` as for any home (falls back to the city center if not found, and the admin can fix the pin).

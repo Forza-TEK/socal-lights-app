@@ -78,7 +78,7 @@ function draw(labels) {
   ${cs.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)} · ${c.entries.length} contestant${c.entries.length === 1 ? "" : "s"} · results locked ${esc(c.at)}</p></div>
     ${c.awards.length ? `<div><h3 style="margin-bottom:10px">Winners</h3><div class="wins">${c.awards.map((a) => a.winners.map((w) => `<div class="win"><div class="ph">${w.photo ? `<img src="/api/photo/${esc(w.photo)}" alt="${esc(w.name)} lights" loading="lazy">` : ""}</div><div class="b"><span class="small" style="display:flex;gap:6px;align-items:center">${CROWN} ${esc(a.category)}</span><span class="m">${esc(a.label)}</span><b>${esc(w.name)}</b><span class="m">${esc(w.address || w.city || "")}</span>${a.prize ? `<span class="m" style="margin-top:6px">Prize: ${esc(a.prize)}</span>` : ""}</div></div>`).join("")).join("")}</div></div>` : ""}
     <div><h3 style="margin-bottom:6px">All contestants and results</h3>${c.entries.length ? `<div class="entries">${rows(c)}</div>` : `<p class="muted">No contestants.</p>`}</div>
-    <div><a class="btn ghost sm" href="/c/${esc(c.slug)}">See the full contest</a></div></section>`).join("")}`;
+    <div><a class="btn ghost sm" href="/c/${esc(c.slug)}">See the full contest</a> <a class="small muted" href="/past/${esc(c.slug)}">Permanent page</a></div></section>`).join("")}`;
   $("#arch").onchange = (e) => { sel = e.target.value; draw(labels); };
 }
 show(tab);

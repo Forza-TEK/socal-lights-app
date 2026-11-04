@@ -363,3 +363,6 @@ All 25 tutorials (computer and phone, 50 files) are re-recorded with the warmer 
 
 ## 2026-11-04 — Midweek upkeep (migration 0156)
 6 events confirmed from published 2026 pages: Alpine Zoo Wild Lights (Nov 13-Jan 3, 5-8pm, $20; bigbear.com/alpine-zoo-wild-lights), Santa Maria Parade of Lights (Dec 5, 5:20pm; smparadeoflights.org), RiverPark tree lighting (Nov 18; thecollectionrp.com), and from Visit Oxnard's Oct 2026 guide: Plaza Park tree lighting (Dec 3), Christmas Tree Lane (moved to Dec 13-27), Holly Trolley (Dec 15-17). 0 removed, 0 contest homes (no contest map published yet), 0 photos (no valid og:image found), 0 pins fixed. Still expected (no 2026 page): Oxnard/Redlands/Ojai/Carpinteria parades and lightings, Upland, Apple Valley, Sheffield (2025 page only), Kimberly Crest. oxnard.gov, cityofrc.us blocked or empty. Leads added: Big Bear Festival of Lights map (live Dec 1), Temecula home map (applications Nov).
+
+## 2026-11-04 — Past contest homes stay viewable
+Announced contests now survive their organizer deleting their account (stay live, owner data cleared), and new indexable pages `/past` and `/past/<slug>` list every home that entered; both are in the sitemap. An entrant who deletes their account is scrubbed from every announced contest's frozen results and shown as "Entry removed at the entrant's request". Not yet committed.

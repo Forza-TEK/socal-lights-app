@@ -1,10 +1,9 @@
 // Winner badges. A home that won an award keeps a crown on its listings. Winners come from the frozen results of announced contests.
 // Each person can switch their badges off entirely, or per place they show (list card, map pop-up, details page). Default: all on.
 import { normEmail } from "./auth.js";
-import { SEASONS } from "../../public/seasons.js";
+import { contestLabel } from "./archive.js";
 
-const yearOf = (c) => { const y = +c.entries_close.slice(0, 4), m = +c.entries_close.slice(5, 7); return c.season === "newyear" && m >= 12 ? y + 1 : y; };
-export const contestLabel = (c) => { const s = SEASONS[c.season] || {}; return `${s.short || s.label || c.season} | ${yearOf(c)}`; };
+export { contestLabel };
 export const SURFACES = ["list", "popup", "detail"];
 
 // userId -> [{ id, a (category), k (award), s (Season | Year), c (contest name) }]
