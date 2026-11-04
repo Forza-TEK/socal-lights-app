@@ -8,7 +8,7 @@
     var host = document.querySelector("main") || document.querySelector(".sh-content") || document.body;
     var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
     var f = document.createElement("footer"); f.id = "sitefoot"; f.className = "sitefoot";
-    f.innerHTML = "<span>© " + y + " Forza-TEK. SoCal Lights. All rights reserved.</span><span class=\"sf-l\"><a href=\"/privacy\">Privacy</a><a href=\"/terms\">Terms</a><a href=\"mailto:info@socallights.app\">Contact</a></span>";
+    f.innerHTML = "<span>© " + y + " Forza-TEK. SoCal Lights. All rights reserved.</span><span class=\"sf-l\"><a href=\"/pricing\">Pricing</a><a href=\"/privacy\">Privacy</a><a href=\"/terms\">Terms</a><a href=\"mailto:info@socallights.app\">Contact</a></span>";
     host.appendChild(f);
   };
   if (document.readyState === "complete") add(); else window.addEventListener("load", add);

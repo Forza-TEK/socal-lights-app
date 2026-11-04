@@ -78,6 +78,6 @@ run({ steps, data: d, persist: "scl-event-draft", account: { kind: "event", titl
   actions: { skipurl(_, a) { d.url = ""; a.next(); } },
   after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });
 </script>
-<script src="/footer.js?v=20261105a" defer></script>
+<script src="/footer.js?v=20261105b" defer></script>
 </body>
 </html>

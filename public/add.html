@@ -17,6 +17,7 @@
   <h1>What would you like to add?</h1>
   <p class="help">Pick one. Nothing goes public until the last step, and you can go back at any time.</p>
   <div class="tiles" id="opts"></div>
+  <p class="help"><a href="/pricing" style="color:var(--ink,inherit);text-underline-offset:3px">See pricing</a>: what is free and what is optional.</p>
 </div>
 <script type="module">
 import { ICON, esc, themeBtn, mountAcct } from "/addflow.js?v=20261103a";
@@ -33,6 +34,6 @@ document.getElementById("opts").innerHTML =
 // Contests need sign-in. Until Google or emailed codes are switched on, hide that choice rather than send people to a dead end.
 fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (!j.methods || (!j.methods.google && !j.methods.email)) document.getElementById("o-contest")?.remove(); }).catch(() => {});
 </script>
-<script src="/footer.js?v=20261105a" defer></script>
+<script src="/footer.js?v=20261105b" defer></script>
 </body>
 </html>

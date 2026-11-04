@@ -1,8 +1,8 @@
 // Featured plans: price, level and how long they last. Prices are in cents.
 export const PLANS = {
-  pin: { label: "Featured pin (30 days)", cents: 500, level: 1, days: 30 },
-  top: { label: "Top of the list (30 days)", cents: 1000, level: 2, days: 30 },
-  season: { label: "Whole season (until the event ends)", cents: 1500, level: 2, days: 0 },
+  pin: { label: "Featured pin (30 days)", cents: 1000, level: 1, days: 30 },
+  top: { label: "Top of the list (30 days)", cents: 1500, level: 2, days: 30 },
+  season: { label: "Whole season (until the event ends)", cents: 2000, level: 2, days: 0 },
 };
 
 // What the browser may know about plans (served by /api/config). Prices exist only in PLANS above.

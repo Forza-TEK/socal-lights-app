@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pricing · SoCal Lights</title>
+<meta name="description" content="SoCal Lights is a free map of holiday lights and events in Southern California. See what is free and what is optional before you add anything.">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261102i">
+<link rel="stylesheet" href="/info.css?v=20261031t">
+<style>
+@media(min-width:700px){.grid.two{grid-template-columns:repeat(2,1fr)}}
+.plan .btn{justify-self:start}
+.free{font-size:32px;font-weight:300;letter-spacing:-.02em;color:var(--ink)}.free small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0;word-spacing:.15em}
+.plan p{margin:0;color:var(--muted)}
+</style>
+<script src="/hit.js" defer></script>
+</head>
+<body>
+<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<main>
+<h1>Pricing</h1>
+<p class="lede">SoCal Lights is a free map of holiday lights and events across Southern California. Here is what is free and what is optional, so you can see it before you add anything.</p>
+
+<h2>Finding lights and events: free</h2>
+<p>Searching the map, filters, routes, saving favorites, the Help Center, and voting in contests are free for everyone. No account is needed to browse.</p>
+
+<h2>Adding to the map</h2>
+<div class="grid two">
+<section class="plan"><h3>Homeowners</h3><div class="free">Free</div><p>Show your lights display on the map so families can drive by. Entering a display is free.</p><a class="btn" href="/add-house">Add your display</a></section>
+<section class="plan"><h3>Installers</h3><div class="free">Free <small>for now</small></div><p>Post the lights you have installed and get a company profile page that lists your homes.</p><a class="btn" href="/add-house">Post your installs</a></section>
+<section class="plan"><h3>Event organizers</h3><div class="free">Free <small>for now</small></div><p>List your tree lighting, parade, market, haunted house or light show. Featured placement is optional (below).</p><a class="btn" href="/add-event">Add your event</a></section>
+<section class="plan"><h3>Contest organizers</h3><div class="free">Free <small>for now</small></div><p>Cities, HOAs, chambers and neighborhood groups: run a decorating contest with resident entries, voting, judges, and People's Choice and Judges' Choice awards.</p><a class="btn" href="/add-contest">Create a contest</a></section>
+</div>
+
+<div id="featsec">
+<h2>Featured events (optional)</h2>
+<p>A Featured event stands out with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin on the map. It is the only thing on SoCal Lights that costs money today.</p>
+<div class="grid" id="plans"></div>
+<p class="meta">Prices are per event. You pay on Stripe's secure page. Featured placements are always labelled. <a href="/feature">Feature my event</a></p>
+</div>
+
+<h2>Good to know</h2>
+<details><summary>What does "free for now" mean?</summary><p>It is free today. We may add paid options later, and this page always shows the current prices.</p></details>
+<details><summary>Will finding lights ever cost money?</summary><p>Finding events and lights, search, routes, favorites and voting in contests are meant to stay free for everyone. That is what the site is for.</p></details>
+<details><summary>Can paying change who wins a contest?</summary><p>No. Contests are free to enter and free to vote in, and payment never affects who wins.</p></details>
+<details><summary>Is a Featured event labelled?</summary><p>Yes. Featured events carry a visible Featured badge so nobody is misled, and they still have to be real, public and accurate.</p></details>
+<details><summary>Questions?</summary><p>Email <a href="mailto:info@socallights.app">info@socallights.app</a>.</p></details>
+</main>
+<script type="module">
+import { themeBtn, mountAcct } from "/addflow.js?v=20261103a";
+document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+const $ = (q) => document.querySelector(q);
+const COPY = { pin: ["Featured pin", ["Gold-ringed pin on the map", "Featured badge in the list"]], top: ["Top of the list", ["Everything in Featured pin", "Listed first in your city, county and season"]], season: ["Whole season", ["Everything in Top of the list", "Featured from now until your event ends"]] };
+const dollars = (p) => "$" + (p.cents / 100);
+if (/SoCalLightsApp/.test(navigator.userAgent)) {
+  // Paid placement is web-only (store rules): the Featured section is not shown in the app.
+  $("#featsec").hidden = true;
+} else {
+  const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({})), PL = cfg.featurePlans || {};
+  if (!Object.keys(PL).length) $("#featsec").hidden = true;
+  else $("#plans").innerHTML = Object.keys(COPY).filter((k) => PL[k]).map((k) => `<section class="plan${k === "top" ? " pop" : ""}"><h3>${COPY[k][0]}</h3><div class="price">${dollars(PL[k])} <small>/ ${PL[k].days ? PL[k].days + " days" : "season"}</small></div><ul>${COPY[k][1].map((t) => `<li>${t}</li>`).join("")}</ul><a class="btn${k === "top" ? "" : " ghost"}" href="/feature?plan=${k}">Choose</a></section>`).join("");
+}
+</script>
+<script src="/footer.js?v=20261105b" defer></script>
+</body>
+</html>
