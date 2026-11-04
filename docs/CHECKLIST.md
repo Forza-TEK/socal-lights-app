@@ -25,15 +25,16 @@ _Last updated 2026-11-04 (CEO session). `[x]` done and verified, `[ ]` open. Det
 - [ ] **$10 test purchase**, then refund it: Add an event, Feature, sign in, pay the $10 pin. Tell the CEO session; it verifies the charge, the placement, the webhook delivery and the refund. This is the only real test of the payment path.
 - [ ] **Redeploy once** (Workers and Pages, socal-lights, Deployments, latest, Retry deployment) so the mailing-address secret loads; it also loads on the next merge.
 - [ ] **Remove the five temporary write permissions** from the `Claude read-only` token (D1 Edit, Pages Edit, R2 Edit, DNS Edit, Zone Settings Edit) unless you want the CEO session to do more Cloudflare changes.
-- [ ] **Add the DMARC record** (DNS, Add record): Type TXT, Name `_dmarc`, Content `v=DMARC1; p=none; rua=mailto:info@socallights.app; fo=1`. The session cannot make DNS changes. After a few weeks of reports, move `p=none` to `quarantine`.
-- [ ] **Minimum TLS 1.2**: SSL/TLS, Edge Certificates, Minimum TLS Version.
+- [x] DMARC record added and verified live (`p=none`, monitor only; DKIM and SPF line up). After 2 to 4 weeks of clean reports, move to `quarantine`.
+- [ ] **Minimum TLS 1.2**: Cloudflare, socallights.app, SSL/TLS, Edge Certificates, Minimum TLS Version, choose TLS 1.2 (currently TLS 1.0).
 - [ ] Stripe, Settings, Business, Customer emails: **Successful payments** on (cannot be read by API).
 **This week**
 - [ ] Send the three Outlook drafts (Mom's LA, Mission Viejo MVAC, Pasadena Now) and paste Draft A2 into Enjoy Orange County's form
 - [ ] Book the **CPA hour** (brief: `monetization/finance-operations.md`) and the **attorney** review (`monetization/legal-redlines.md`)
 - [ ] Apply to the **Fever** affiliate program (Impact); read Eventbrite's live terms first (`monetization/affiliate-plan.md`)
 - [ ] Search Console: request indexing for the ten top city pages; send fresh Indexing and Performance screenshots in 2 to 3 days
-- [ ] Confirm the Grok outreach follows `monetization/grok-outreach-guide.md` (CAN-SPAM address and opt-out, no traffic claims, "free for now")
+- [ ] **Fix the Grok outreach email template (found 2026-11-04 in the Sent mail):** the installer emails (11 sent since Oct 30, 1 bounce, 0 replies, 0 homes added) have no postal address and no opt-out line (CAN-SPAM), and link to the home page. Add a footer with the business mailing address and "Don't want these? Reply no thanks and I won't write again"; link to `https://socallights.app/add-house?ref=inst` so landings are counted; keep a do-not-contact list. Rules: `monetization/grok-outreach-guide.md`.
+- [ ] Info mailbox: `info@socallights.app` forwards to `rey@forza-tek.com` (confirmed); DMARC reports will arrive there daily; add a mail rule to file them
 **Before the first Google Play upload**
 - [ ] Make a new Android upload key locally and replace the four GitHub secrets (`docs/android-signing.md`); use Play App Signing
 **Cloudflare, optional**
