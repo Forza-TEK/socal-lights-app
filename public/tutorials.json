@@ -286,14 +286,14 @@
           "title": "Add co-organizers and judges",
           "desc": "Invite people to help run the contest.",
           "url": "/tutorials/run-team.mp4",
-          "length": "1:25",
+          "length": "2:32",
           "captions": "/tutorials/run-team.vtt",
           "poster": "/tutorials/run-team.jpg",
           "mobile": {
             "url": "/tutorials/run-team-mobile.mp4",
             "poster": "/tutorials/run-team-mobile.jpg",
             "captions": "/tutorials/run-team-mobile.vtt",
-            "length": "1:23"
+            "length": "2:24"
           }
         },
         {
@@ -301,14 +301,14 @@
           "title": "Announce winners",
           "desc": "Close voting, announce, export results and see the archive.",
           "url": "/tutorials/run-announce.mp4",
-          "length": "1:25",
+          "length": "2:14",
           "captions": "/tutorials/run-announce.vtt",
           "poster": "/tutorials/run-announce.jpg",
           "mobile": {
             "url": "/tutorials/run-announce-mobile.mp4",
             "poster": "/tutorials/run-announce-mobile.jpg",
             "captions": "/tutorials/run-announce-mobile.vtt",
-            "length": "1:51"
+            "length": "2:45"
           }
         },
         {
@@ -405,14 +405,14 @@
           "title": "Show off your house",
           "desc": "Put your lights on the map with Showcase a House.",
           "url": "/tutorials/post-house.mp4",
-          "length": "1:43",
+          "length": "3:00",
           "captions": "/tutorials/post-house.vtt",
           "poster": "/tutorials/post-house.jpg",
           "mobile": {
             "url": "/tutorials/post-house-mobile.mp4",
             "poster": "/tutorials/post-house-mobile.jpg",
             "captions": "/tutorials/post-house-mobile.vtt",
-            "length": "1:40"
+            "length": "2:56"
           }
         }
       ]
