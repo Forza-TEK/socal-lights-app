@@ -46,7 +46,7 @@ S.quick = { id: "quick", file: "run-quick", cookie: ck.u_org, ...MAPSPEC, maxSec
   { cap: "7 of 7: Review", say: "If something is not right, tap Edit next to it. Nothing is public until you tap Create contest. When you are happy, tap Create contest.", do: async (p, h) => { await h.scroll(160); }, target: NEXT, after: 2600, poster: true },
   { cap: "Your contest is live", say: "That is it. Your contest is live. This page explains what happens next. You share your link or your QR code. Neighbors enter their homes. You look over each entry before it goes on the map. Then the community votes, on the dates you set, and you announce the winners. Tap Open my dashboard.", target: "text=Open my dashboard", after: 2000 },
   { cap: "Your dashboard", say: "This is your dashboard. It is where you run the contest. Up here are the numbers that matter: your entries, the ones waiting for you, and the votes.", do: async (p, h) => { await h.hover(".stats", 1200); }, pad: 0.3 },
-  { cap: "Share it", say: "And here is your link, and your QR code, ready to paste into a message, or print for a flyer. We will cover sharing in a moment.", do: async (p, h) => { await h.scrollTo("text=Share it", 100); await h.hover(".poster", 1200); }, pad: 0.8 },
+  { cap: "Share it", say: "And here is your link, and your QR code, ready to paste into a message, or print for a flyer. We will cover sharing in a moment.", do: async (p, h) => { await h.scrollTo("text=Share it", 100); await h.hover(".pzprev", 1200); }, pad: 0.8 },
   nextUp(ER, "Create a contest with Customize", "Judges, prizes, categories, vote counts and your own rules"),
 ]};
 S.custom = { id: "custom", file: "run-custom", cookie: ck.u_org, ...MAPSPEC, maxSeconds: 420, steps: [
