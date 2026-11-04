@@ -40,14 +40,14 @@
           "title": "Weekly lights email",
           "desc": "Sign up for the weekly email and unsubscribe any time.",
           "url": "/tutorials/find-email.mp4",
-          "length": "1:08",
+          "length": "1:54",
           "captions": "/tutorials/find-email.vtt",
           "poster": "/tutorials/find-email.jpg",
           "mobile": {
             "url": "/tutorials/find-email-mobile.mp4",
             "poster": "/tutorials/find-email-mobile.jpg",
             "captions": "/tutorials/find-email-mobile.vtt",
-            "length": "1:06"
+            "length": "1:45"
           }
         },
         {
@@ -174,14 +174,14 @@
           "title": "Judge a contest",
           "desc": "Open your judge link, score each home, and recuse yourself when you know the household.",
           "url": "/tutorials/judge.mp4",
-          "length": "1:00",
+          "length": "1:37",
           "captions": "/tutorials/judge.vtt",
           "poster": "/tutorials/judge.jpg",
           "mobile": {
             "url": "/tutorials/judge-mobile.mp4",
             "poster": "/tutorials/judge-mobile.jpg",
             "captions": "/tutorials/judge-mobile.vtt",
-            "length": "1:01"
+            "length": "1:37"
           }
         }
       ]
@@ -256,14 +256,14 @@
           "title": "Edit your contest and change the dates",
           "desc": "Change the details any time before winners are announced.",
           "url": "/tutorials/run-edit.mp4",
-          "length": "1:20",
+          "length": "2:03",
           "captions": "/tutorials/run-edit.vtt",
           "poster": "/tutorials/run-edit.jpg",
           "mobile": {
             "url": "/tutorials/run-edit-mobile.mp4",
             "poster": "/tutorials/run-edit-mobile.jpg",
             "captions": "/tutorials/run-edit-mobile.vtt",
-            "length": "1:15"
+            "length": "2:16"
           }
         },
         {
@@ -271,14 +271,14 @@
           "title": "Run voting",
           "desc": "Start now, pause, review votes and void a vote.",
           "url": "/tutorials/run-voting.mp4",
-          "length": "1:26",
+          "length": "2:42",
           "captions": "/tutorials/run-voting.vtt",
           "poster": "/tutorials/run-voting.jpg",
           "mobile": {
             "url": "/tutorials/run-voting-mobile.mp4",
             "poster": "/tutorials/run-voting-mobile.jpg",
             "captions": "/tutorials/run-voting-mobile.vtt",
-            "length": "1:23"
+            "length": "2:29"
           }
         },
         {
