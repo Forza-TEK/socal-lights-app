@@ -8,11 +8,14 @@ more than one group — that's what made earlier sweeps skim past small cities.)
 Read `public/seasons.js`. Cover the **current season** (events still upcoming) and the **next season**
 if it starts within 6 weeks. Use only the allowed `types` for each season.
 
+### Valentine's Day (season `valentines`, window Feb 1-15)
+Start looking about six weeks ahead (from about Dec 21); most listings appear in January. Add **dated, ticketed or scheduled public events**, never a restaurant's ordinary menu or a generic "Valentine's special" with no event time. Types (see `public/seasons.js`): `romance` (dinner cruises, prix-fixe dinners hosted as an event, candlelight dinners, couples' classes and date-night events), `dance` (sweetheart, father-daughter and mother-son dances, singles and Galentine's parties), `sweets` (chocolate walks, wine and chocolate tastings, bake and candy events), `run` (Cupid runs, sweetheart 5K and 10K), `lights` (heart and love light displays, light shows and illuminated gardens), `show` (Valentine's concerts, comedy, theater, movies in the park), `family` (kids' crafts, library and rec-center Valentine events, zoo and museum Valentine days). Valentine events that fall on Feb 12-14 are the priority. Lunar New Year events stay in `newyear`; Presidents' Day weekend flower and winter festivals stay in their own season. Estimate dates from last year (status `expected`, hours ending in "check site") only for annual events the organizer has run before.
+
 ## How to search (Pomona-level scrutiny)
 Go through **every city in the group, one by one**. For each city check:
 - its parks & recreation / community services **events calendar** — search e.g. "<city> Halloween 2026",
   "<city> trunk or treat", "<city> tree lighting", "<city> holiday parade", "<city> turkey trot", "<city> Thanksgiving community dinner", "<city> Día de los Muertos",
-  "<city> 4th of July fireworks", "<city> egg hunt", "<city> events calendar" (whichever fit the seasons)
+  "<city> 4th of July fireworks", "<city> egg hunt", "<city> Valentine's Day event", "<city> sweetheart dance", "<city> Galentine's", "<city> Cupid run", "<city> events calendar" (whichever fit the seasons)
 - the downtown / village association and chamber of commerce
 - **public library event calendars** (the city's library and its county/regional system: LibCal, LibNet, Beanstack, Communico, `<city>library.org`, `lacountylibrary.org`, `ocpl.org`, `sblibrary.org`, etc.). Libraries host Halloween shows, trick-or-treats, magic/juggling/puppet shows, Día de los Muertos events, holiday concerts and tree lightings. A one-off family show at a library branch counts; only skip routine story times and craft clubs.
 - **park, event-center and Friends-of-the-Library calendars** (for example a city park's own `events` page, theaters at libraries and community centers, and ticket pages like fotcl.org). Many events appear on only one of these and never on roundup sites.

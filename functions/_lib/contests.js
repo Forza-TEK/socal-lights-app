@@ -30,7 +30,7 @@ export function windows(c, today = todayPT()) {
   };
 }
 
-const TYPE_BY_SEASON = { christmas: "drive", halloween: "family", newyear: "family", spring: "festival", summer: "festival" };
+const TYPE_BY_SEASON = { christmas: "drive", halloween: "family", newyear: "family", valentines: "family", spring: "festival", summer: "festival" };
 export const seasonFor = (closeDate) => defaultSeason(closeDate);
 
 // Lists the contest on the map as an event ("Home contest"), like any other event.

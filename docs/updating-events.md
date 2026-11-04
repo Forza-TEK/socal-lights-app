@@ -60,7 +60,7 @@ See [sweep-methods.md](sweep-methods.md) for the photo, pin-audit and migration-
 
 When a season's events have all ended, re-add them for next year with the **same ids** (upsert), new
 dates and `status='expected'`, then confirm them as organizers announce dates. Also update that
-season's `quickDates` and `dateRange` in `public/seasons.js` to the new year.
+season's `quickDates` and `dateRange` in `public/seasons.js` to the new year. Seasons in calendar order: `newyear` (Dec 27 - Jan 31), `valentines` (Feb 1-15), `spring` (Feb 16 - May 15), `summer` (May 16 - Aug 31), `halloween` (Sep 1 - Nov 2), `christmas` (Nov 3 - Dec 26).
 
 ## Validate before you push
 
