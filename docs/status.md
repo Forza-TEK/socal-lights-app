@@ -2,6 +2,8 @@
 
 _Last updated: 2026-11-04_
 
+**Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
+
 ## Audit batch A: six safe fixes (2026-11-04, branch `claude/quirky-goodall-yaumg1`, not merged)
 - **Fake "City of X" contests:** contests still go live at once, but one with a review note (`contests.note`, set for free-mail, no website or mismatch) cannot buy Featured until Admin clicks "Looks fine" (the existing Contests tab action; it clears the note and is logged). `/api/me/featurable` shows it as state `review`. The dashboard and tab counts already include live contests with a note.
 - **Invite abuse and email injection:** migration 0158 `email_send_log`; `functions/_lib/sendlimit.js`. Neighbor invitations: 10 addresses per call, 30 per contest per day; every third-party email (invites, judges, co-organizers, judge reminders) counts toward 100 per account per day (429). The invite note loses links and is 300 characters. `functions/_lib/mailtpl.js` neutralizes typed values (brackets, parentheses, angle brackets, backticks, web addresses, line breaks) before the layout is built, and `esc` now escapes quotes.
