@@ -34,6 +34,8 @@ class Helper {
     for (let i = 1; i <= n; i++) { const t = i / n, e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; await this.page.mouse.move(sx + (tx - sx) * e, sy + (ty - sy) * e); await sleep(16); }
     this.x = tx; this.y = ty; await sleep(n ? 350 : 80); }
   async showMail(m) { await this.page.evaluate((m) => { let o = document.getElementById("__mail"); if (o) o.remove(); if (!m) return; o = document.createElement("div"); o.id = "__mail"; const inner = m.html ? m.html.replace(/^[\s\S]*?<body[^>]*>/i, "").replace(/<\/body>[\s\S]*$/i, "") : `<div class="plain">${m.text.replaceAll("https://socallights.app", location.origin).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/(https?:\/\/[^\s)]+)/g, '<a href="$1">$1</a>')}</div>`; o.innerHTML = `<div class="bar"><b>Inbox</b><span class="tag">${m.note || ""}</span></div><div class="hd"><h2>${m.subject}</h2><div class="who"><div class="av">S</div><div><b>SoCal Lights</b> &lt;login@socallights.app&gt;<small>to ${m.to || "me"} &middot; ${m.time || "Today, 9:12 AM"}</small></div></div></div><div class="body">${inner}</div>`; document.body.appendChild(o); }, m); }
+  // A printed sheet shown as a sample: a dimmed backdrop and a paper-shaped page holding a picture of the real print layout
+  async showSheet(src) { await this.page.evaluate((src) => { let o = document.getElementById("__sheet"); if (o) o.remove(); if (!src) return; if (!document.getElementById("__sheetcss")) { const st = document.createElement("style"); st.id = "__sheetcss"; st.textContent = "#__sheet{position:fixed;inset:0;z-index:2147483640;background:rgba(20,22,27,.74);display:grid;place-items:center}#__sheet .paper{height:86vh;max-width:92vw;aspect-ratio:8.5/11;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}#__sheet img{display:block;width:100%;height:100%}"; document.head.appendChild(st); } o = document.createElement("div"); o.id = "__sheet"; o.innerHTML = '<div class="paper"><img alt="" src="' + src + '"></div>'; document.body.appendChild(o); }, src); }
   async showPerm(on) { await this.page.evaluate((on) => { let o = document.getElementById("__perm"); if (o) o.remove(); if (!on) return; o = document.createElement("div"); o.id = "__perm"; o.innerHTML = '<b>socallights.app wants to</b><p>Know your location</p><div class="row"><button class="block">Block</button><button class="allow">Allow</button></div>'; document.body.appendChild(o); }, on); }
   async unring() { await this.page.evaluate(() => { const r = document.getElementById("__hl"); if (r) r.remove(); }).catch(() => {}); }
   async click(sel, opt = {}) { await this.move(sel, opt); await sleep(500); await this.page.mouse.down(); await sleep(70); await this.page.mouse.up(); await this.unring(); await sleep(opt.after ?? 1500); }
@@ -54,13 +56,14 @@ export async function record(spec) {
   // Voice files are cached by text, so re-recording a video only speaks the lines that changed
   const cacheDir = `${WORK}/tts`; mkdirSync(cacheDir, { recursive: true });
   const spoken = (t) => t.replaceAll("SoCal", "So Cal"); // said as two words; captions keep the brand spelling
-  const keyOf = (t) => createHash("sha1").update("hfc_female-" + (process.env.LENGTH_SCALE || "1.0") + "|" + spoken(t)).digest("hex");
+  const KOKORO = process.env.TTS_ENGINE === "kokoro", engine = KOKORO ? `kokoro-${process.env.KOKORO_VOICE || "af_heart"}-${process.env.KOKORO_SPEED || "1.0"}-` : "hfc_female-" + (process.env.LENGTH_SCALE || "1.0");
+  const keyOf = (t) => createHash("sha1").update(engine + "|" + spoken(t)).digest("hex");
   const todo = [...new Set(say.filter((t) => t && !existsSync(`${cacheDir}/${keyOf(t)}.wav`)))];
   if (todo.length && !DRY) { mkdirSync(w + "/wav", { recursive: true }); writeFileSync(w + "/todo.json", JSON.stringify(todo.map(spoken)));
     const r = spawnSync("python3", [new URL("./tts.py", import.meta.url).pathname, VOICE, w + "/todo.json", w + "/wav"], { stdio: "inherit" }); if (r.status) throw new Error("tts failed");
     todo.forEach((t, i) => copyFileSync(`${w}/wav/${i}.wav`, `${cacheDir}/${keyOf(t)}.wav`)); }
   if (!DRY) say.forEach((t, i) => { if (t) copyFileSync(`${cacheDir}/${keyOf(t)}.wav`, `${w}/wav/${i}.wav`); });
-  const soft = "highpass=f=70,lowpass=f=7000,equalizer=f=250:t=q:w=1:g=2.5,equalizer=f=5000:t=q:w=1:g=-2,aecho=0.8:0.4:35:0.1,loudnorm=I=-17:TP=-2:LRA=9";
+  const soft = KOKORO ? "highpass=f=60,loudnorm=I=-17:TP=-2:LRA=9" : "highpass=f=70,lowpass=f=7000,equalizer=f=250:t=q:w=1:g=2.5,equalizer=f=5000:t=q:w=1:g=-2,aecho=0.8:0.4:35:0.1,loudnorm=I=-17:TP=-2:LRA=9";
   const audio = say.map((t, i) => { if (!t) return null; if (DRY) return { f: null, d: 0.3 }; const o = `${w}/wav/s${i}.wav`; execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${w}/wav/${i}.wav`, "-af", soft, "-ar", "44100", o]); return { f: o, d: dur(o) }; });
   const vp = MOB ? { width: 360, height: 640 } : spec.phone ? { width: 390, height: 680 } : { width: 1280, height: 720 };
   const br = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
@@ -85,6 +88,7 @@ export async function record(spec) {
   const t00 = Date.now(), ref = t00 / 1000; var T = () => (Date.now() - t00) / 1000;
   for (let i = 0; i < spec.steps.length; i++) {
     const s = spec.steps[i]; const t0 = T();
+    if (process.env.DBG) console.log('step', i, s.cap || (s.card && s.card.title) || '', page.url());
     await card(s.card ? { ...s.card, first: i === 0 } : null);
     if (s.mail !== "keep") await h.showMail(s.mail ? { ...s.mail, html: s.mail.html && s.mail.html.replaceAll("https://socallights.app", BASE) } : null);
     await page.evaluate((c) => { let e = document.getElementById("__cap"); if (!c) { if (e) e.remove(); return; } if (!e) { e = document.createElement("div"); e.id = "__cap"; document.body.appendChild(e); } e.textContent = c; }, s.card ? "" : s.cap || "");
@@ -133,7 +137,7 @@ export async function record(spec) {
   let r = 0, g = 0, b = 0; for (let k = 0; k + 2 < first.length; k += 3) { r += first[k]; g += first[k + 1]; b += first[k + 2]; } const px = first.length / 3 || 1; const avg = [r / px, g / px, b / px];
   const problems = [];
   if (!vol || vol[1] === "-inf" || parseFloat(vol[1]) < -45) problems.push("no voice in the first three seconds");
-  const secs = dur(mp4); if (secs > 150) problems.push("longer than 2:30 (" + Math.round(secs) + " seconds): split it");
+  const secs = dur(mp4); const maxSecs = spec.maxSeconds || (KOKORO ? 300 : 150); if (secs > maxSecs) problems.push("longer than " + Math.floor(maxSecs / 60) + ":" + String(maxSecs % 60).padStart(2, "0") + " (" + Math.round(secs) + " seconds): split it");
   if (!(avg[0] > 238 && avg[1] > 232 && avg[2] > 225)) problems.push("the first frame is not the plain title card (average colour " + avg.map(Math.round).join(",") + ")");
   if (problems.length) throw new Error("QA FAILED for " + spec.file + ": " + problems.join("; "));
 
@@ -141,7 +145,7 @@ export async function record(spec) {
   const ts = (x) => { const m = Math.floor(x / 60), sec = x - m * 60; return `00:${String(m).padStart(2, "0")}:${sec.toFixed(3).padStart(6, "0")}`; };
   const cues = []; for (const m of marks) { const text = say[m.i], d = audio[m.i].d, parts = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text], total = parts.reduce((a, x) => a + x.length, 0); let at = m.t; for (const part of parts) { const len = d * part.length / total; cues.push(`${ts(at)} --> ${ts(at + len)}\n${part.trim()}`); at += len; } }
   writeFileSync(`${OUT}/${spec.file}${MOB ? "-mobile" : ""}.vtt`, "WEBVTT\n\n" + cues.join("\n\n") + "\n");
-  if (poster !== null) execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", String(poster), "-i", mp4, "-frames:v", "1", "-q:v", "4", `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.jpg`]);
+  execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", "0", "-i", mp4, "-frames:v", "1", "-q:v", "4", `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.jpg`]);
   const L = dur(mp4); console.log(spec.file, "length", Math.floor(L / 60) + ":" + String(Math.round(L % 60)).padStart(2, "0"));
   writeFileSync(`${w}/script.txt`, say.filter(Boolean).join("\n\n")); rmSync(fdir, { recursive: true, force: true });
 }
