@@ -1,6 +1,8 @@
-# Free uptime check. Every 15 minutes it asks the live site for four things; if any is still wrong after three tries
-# the run fails and GitHub emails the repository's owners ("workflow run failed"). No third-party actions, no secrets.
-# Why not Cloudflare Health Checks: not offered on the Free plan.
+# Free uptime check. Every 15 minutes: (1) the app itself is tested through its pages.dev address (same code and database as the
+# real site, but not behind the zone's bot protection, which answers GitHub's data-center addresses with 403); (2) the real
+# domain must answer at all, proving DNS, TLS and Cloudflare are alive (200 = fine; 403 = Cloudflare's bot rule for cloud addresses,
+# also fine; no answer or a server error = a failure). A failed run makes GitHub email the repository owners.
+# No third-party actions, no secrets. Cloudflare Health Checks are not offered on the Free plan.
 name: Uptime check
 on:
   schedule:
@@ -10,22 +12,33 @@ permissions: {}
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
-      - name: Check the live site
+      - name: Check the site
         run: |
           fail=0
+          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
           check() { # url, text the page must contain
             code=000
             for try in 1 2 3; do
-              code=$(curl -sS -m 20 -o /tmp/body -w "%{http_code}" "$1" 2>/dev/null || echo 000)
+              code=$(curl -sS -m 25 -A "$UA" -o /tmp/body -w "%{http_code}" "$1" 2>/dev/null || echo 000)
               if [ "$code" = "200" ] && grep -q "$2" /tmp/body; then echo "ok   $1"; return 0; fi
-              echo "try $try failed: $1 -> $code"; sleep 20
+              echo "try $try failed: $1 -> $code"; [ "$try" = 3 ] || sleep 20
             done
             echo "::error::$1 is not healthy (last status $code)"; fail=1
           }
-          check "https://socallights.app/" "SoCal Lights"
-          check "https://socallights.app/api/config" "turnstileSiteKey"
-          check "https://socallights.app/api/events" '"id"'
-          check "https://socallights.app/in/irvine" "Irvine"
+          reach() { # url: any answer other than a connection failure or a 5xx counts
+            code=000
+            for try in 1 2 3; do
+              code=$(curl -sS -m 25 -A "$UA" -o /dev/null -w "%{http_code}" "$1" 2>/dev/null || echo 000)
+              case "$code" in 200|301|302|403) echo "ok   $1 (status $code)"; return 0;; esac
+              echo "try $try failed: $1 -> $code"; [ "$try" = 3 ] || sleep 20
+            done
+            echo "::error::$1 is not answering (last status $code)"; fail=1
+          }
+          check "https://socal-lights.pages.dev/" "SoCal Lights"
+          check "https://socal-lights.pages.dev/api/config" "turnstileSiteKey"
+          check "https://socal-lights.pages.dev/api/events" '"id"'
+          check "https://socal-lights.pages.dev/in/irvine" "Irvine"
+          reach "https://socallights.app/"
           exit $fail
