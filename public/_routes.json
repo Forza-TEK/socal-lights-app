@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "description": "Only these paths run Functions. Everything else is a static file (free, no Function invocation). functions/_middleware.js would otherwise make wrangler route /* through the Worker. Add any NEW top-level Function route here.",
+  "include": ["/api/*", "/c/*", "/help", "/help/*", "/in/*", "/installer/*", "/past", "/past/*", "/sitemap.xml"],
+  "exclude": []
+}

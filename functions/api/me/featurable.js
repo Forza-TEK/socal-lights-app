@@ -43,11 +43,11 @@ export async function onRequestGet({ request, env }) {
 
   const cs = (await env.DB.prepare(
     `SELECT c.slug, c.name, c.event_id AS id, CASE WHEN c.owner_id = ?1 THEN 'owner' ELSE 'staff' END AS role,
-            e.end_date AS end, e.featured, e.featured_until
+            e.end_date AS end, e.featured, e.featured_until, c.note
      FROM contests c JOIN events e ON e.id = c.event_id
      WHERE c.status = 'live' AND c.announced = 0 AND e.end_date >= ?3
        AND (c.owner_id = ?1 OR c.id IN (SELECT contest_id FROM contest_staff WHERE lower(email) = lower(?2)))
      ORDER BY c.created_at DESC LIMIT 50`).bind(user.id, user.email, t).all()).results;
-  const contests = cs.map((c) => { const f = level(c.featured, c.featured_until, t); return { kind: "contest", state: "live", slug: c.slug, name: c.name, id: c.id, end: c.end, featured: f, until: f ? c.featured_until || null : null, role: c.role }; });
+  const contests = cs.map((c) => { const f = level(c.featured, c.featured_until, t); return { kind: "contest", state: c.note ? "review" : "live", ...(c.note ? { message: "Waiting for a quick check before it can be featured" } : {}), slug: c.slug, name: c.name, id: c.id, end: c.end, featured: f, until: f ? c.featured_until || null : null, role: c.role }; });
   return json({ events, contests }, h);
 }

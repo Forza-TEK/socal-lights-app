@@ -6,7 +6,8 @@
     "dev": "wrangler pages dev",
     "validate": "node --no-warnings scripts/validate-migrations.mjs --base origin/main --check-urls",
     "db:migrate:local": "wrangler d1 migrations apply socal-lights --local",
-    "db:migrate:remote": "wrangler d1 migrations apply socal-lights --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply socal-lights --remote",
+    "test": "node --no-warnings --test tests/*.test.mjs"
   },
   "devDependencies": {
     "wrangler": "4.40.0"

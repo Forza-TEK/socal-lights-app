@@ -209,7 +209,7 @@ function render() {
     if (b.dataset.act === "announce") {
       if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to confirm. This ends voting."; return; }
       const r = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "announce", force: !!b.dataset.force }) }), j = await r.json().catch(() => ({}));
-      if (r.status === 409 && j.incomplete) { b.dataset.force = "1"; b.textContent = `${j.incomplete.length} judge${j.incomplete.length === 1 ? " hasn't" : "s haven't"} finished. Tap again to announce anyway.`; return; }
+      if (r.status === 409 && (j.needs_force || j.incomplete)) { b.dataset.force = "1"; const jn = (j.incomplete || []).length; b.textContent = `Announce anyway? ${j.needs_force && j.reason && !(jn && j.reason === "Some judges haven't finished.") ? j.reason + " " : ""}${jn ? `${jn} judge${jn === 1 ? " hasn't" : "s haven't"} finished. ` : ""}Tap again to announce.`; return; }
       if (!r.ok) return toast(j.error || "That didn't work. Try again."); toast("Winners announced."); return load();
     }
     act(`/api/contests/${encodeURIComponent(slug)}`, { action: b.dataset.act }, "Done.");

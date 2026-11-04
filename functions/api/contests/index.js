@@ -9,6 +9,7 @@ import { SEASONS } from "../../../public/seasons.js";
 import { trustOf, windows, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest, KIND_LABEL } from "../../_lib/contests.js";
 import { inviteJudges } from "./[slug]/judges.js";
 import { normName, normText } from "../../_lib/fields.js";
+import { reserveSends } from "../../_lib/sendlimit.js";
 
 export async function onRequestGet({ env }) {
   const { results } = await env.DB.prepare("SELECT slug,name,org,city,county,entries_close,vote_start,vote_end,announced,status,entries_open,voting_open FROM contests WHERE status='live' ORDER BY created_at DESC LIMIT 100").all();
@@ -42,6 +43,8 @@ export async function onRequestPost({ request, env }) {
   const prizes = {}; if (prizeMode === "each" && b.prizes && typeof b.prizes === "object") for (const [k, v] of Object.entries(b.prizes)) { const [cat, kind] = String(k).split("|"); if (categories.includes(cat) && KIND_LABEL[kind] && clean(v, 100)) prizes[`${cat}|${kind}`] = clean(v, 100); }
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM contests WHERE owner_id = ? AND created_at > datetime('now','-1 day')").bind(user.id).first();
   if (n >= 3) return err(429, "You've created several contests today. Try again tomorrow.");
+
+  if (judgeEmails.length) { const over = await reserveSends(env, user, null, "judge", judgeEmails.length); if (over) return err(429, over); }
 
   // Every contest goes live right away. When we could not match the organizer to a website, a note is kept so Admin can take a look.
   const trust = trustOf(user.email, site), live = true;

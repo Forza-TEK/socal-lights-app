@@ -11,6 +11,8 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   const row = await env.DB.prepare("SELECT * FROM posts WHERE id = ? AND contest_id = ?").bind(params.id, c.id).first();
   if (!row) return err(404, "That entry doesn't exist.");
   const b = await request.json().catch(() => ({}));
+  // Once winners are announced the results are frozen: no entry can be approved, restored, declined or flagged any more.
+  if (c.announced) return err(409, "Results are locked.");
   const page = `https://socallights.app/c/${c.slug}`, tell = (id, vars) => { if (!row.contact_email) return; const job = sendTemplate(env, id, row.contact_email, vars).catch(() => {}); if (waitUntil) waitUntil(job); };
   const name = row.title || row.biz;
   if (b.action === "approve") {
@@ -26,7 +28,6 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   }
   if (b.action === "flag" || b.action === "unflag") {
     // Disqualification is held until voting closes: the home stays on the ballot but can't win once winners are announced.
-    if (c.announced) return err(400, "The winners are announced and the results are locked.");
     await env.DB.prepare("UPDATE posts SET dq = ? WHERE id = ?").bind(b.action === "flag" ? 1 : 0, row.id).run();
     return json({ ok: true });
   }

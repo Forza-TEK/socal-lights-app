@@ -8,6 +8,7 @@ import { ownerOf, computeResults, hasJudges } from "../../../_lib/contests.js";
 import { judgeProgress } from "../../../_lib/judging.js";
 import { teamChanged } from "../../../_lib/changes.js";
 import { sendTemplate } from "../../../_lib/mailtpl.js";
+import { reserveSends } from "../../../_lib/sendlimit.js";
 
 export async function inviteJudges(env, c, emails, origin = "https://socallights.app") {
   const have = new Set((await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all()).results.map((r) => r.email));
@@ -41,6 +42,8 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   const emails = (Array.isArray(b.emails) ? b.emails : String(b.emails || "").split(/[\n,;]+/)).map((x) => String(x).trim()).filter(Boolean);
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM judges WHERE contest_id = ?").bind(c.id).first();
   if (n + emails.length > 15) return err(400, "A contest can have up to 15 judges.");
+  const over = await reserveSends(env, user, c.id, "judge", emails.length);
+  if (over) return err(429, over);
   const added = await inviteJudges(env, c, emails);
   if (added) await teamChanged(env, c, user, [{ label: "Judges", old: "", new: `Invited ${added} judge${added === 1 ? "" : "s"}` }], waitUntil);
   return json({ ok: true, added });
