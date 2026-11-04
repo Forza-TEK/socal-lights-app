@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261102i">
-<link rel="stylesheet" href="/contest.css?v=20261105a">
+<link rel="stylesheet" href="/contest.css?v=20261105b">
 <link rel="stylesheet" href="/forms.css?v=20261102e">
 <style>main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
 <script src="/hit.js" defer></script>
@@ -182,7 +182,7 @@ function render() {
   const nj = $("#nudgejudges"); if (nj) nj.onclick = async () => { nj.disabled = true; const r = await asj("nudge", "POST"), j = await r.json().catch(() => ({})); nj.disabled = false; toast(r.ok ? `Reminded ${j.sent} judge${j.sent === 1 ? "" : "s"}.` : (j.error || "That didn't work.")); };
   const printSheet = (html, cls) => { const o = document.createElement("div"); o.id = "printsheet"; o.className = cls; o.innerHTML = html; document.body.appendChild(o); document.body.classList.add("printing"); const done = () => { document.body.classList.remove("printing"); o.remove(); removeEventListener("afterprint", done); }; addEventListener("afterprint", done); print(); };
   const pp = $("#printposter"); if (pp) pp.onclick = () => printSheet(document.querySelector(".poster").innerHTML, "");
-  const ps = $("#printsign"); if (ps) ps.onclick = () => printSheet(`<div class="big">VOTE!</div><b>${esc(c.name)}</b>${document.querySelector(".poster svg").outerHTML}<small>Scan to vote for your favorite home. Free.</small>`, "sign");
+  const ps = $("#printsign"); if (ps) ps.onclick = () => printSheet(`<div class="signvote">VOTE!</div><b>${esc(c.name)}</b>${document.querySelector(".poster svg").outerHTML}<small>Scan to vote for your favorite home. Free.</small>`, "sign");
   const asj = (path, method, body) => fetch(`/api/contests/${encodeURIComponent(slug)}/${path}`, { method, headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
   const as = $("#addstaff"); if (as) as.onclick = async () => { const er = $("#serr"); er.hidden = true; const r = await asj("staff", "POST", { email: $("#newstaff").value }), j = await r.json().catch(() => ({})); if (!r.ok) { er.textContent = j.error || "That didn't work."; er.hidden = false; return; } toast("Co-organizer added and emailed."); load(); };
   document.querySelectorAll("[data-rmstaff]").forEach((b) => (b.onclick = async () => { await asj("staff?email=" + encodeURIComponent(b.dataset.rmstaff), "DELETE"); toast("Removed."); load(); }));
