@@ -32,7 +32,7 @@ Cost: about $0 plus time. Revenue target: one real paid Featured order.
 ### Stage 2: Earn small (Dec to Feb)
 Only these products are sold, by hand, with no new build beyond Stage 1:
 - **Featured Event at $10 (30 days) and $15 (season)** to organizers of real, ticketed events. $5 is not promoted: the fixed 30-cent fee takes 8.9% of it. Give the first 5 organizers a free placement in exchange for permission to quote their click counts.
-- **Affiliate links** on the 84 events that link to Eventbrite, Ticketmaster or Fever (`ticketAffiliates` is empty today). Apply to the programs; expect token income.
+- **Affiliate links** on the 73 upcoming events that link to a ticket seller (70 Eventbrite, 3 Fever; none link to Ticketmaster). `ticketAffiliates` is empty today. Apply first to Fever (Impact), then Eventbrite only if it pays per ticket order. Expect $0-5 a month (`affiliate-plan.md`).
 
 ### Stage 3: Build the business (spring 2027 onward)
 Each product unlocks only when its counts are real:
