@@ -1,5 +1,8 @@
 // The look of the app (fonts, colors, tags, buttons, photo header) for the pages the server writes itself:
 // installer profiles, city pages and the confirmation page. One place, so they all match the app.
+// A value placed inside an inline <script>: plain JSON.stringify does not stop "</script>" or an HTML comment from ending the script,
+// so < > & and the two JS line-separator characters are written as unicode escapes (same value, nothing can close the script).
+export const jsonScript = (v) => JSON.stringify(v).replace(/[<>&\u2028\u2029]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const CSS = `

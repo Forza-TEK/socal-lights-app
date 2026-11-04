@@ -90,5 +90,6 @@ export async function sendMail(env, { to, subject, text, html }) {
   return r.ok;
 }
 
-export const safeNext = (n) => (typeof n === "string" && n.startsWith("/") && !n.startsWith("//") && !n.includes("\\") ? n : "/");
+// A same-site path only. Control characters and whitespace (a tab makes "/<TAB>/evil.example" resolve to "//evil.example"), "//" and backslashes are refused.
+export const safeNext = (n) => (typeof n === "string" && /^\/(?![\/\\])[^\u0000-\u0020\u007f\\]*$/.test(n) ? n : "/");
 export { json, err };

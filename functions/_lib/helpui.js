@@ -1,5 +1,5 @@
 // The look of the Help Center pages (/help and /help/<slug>), built on the app's shared page frame in shell.js.
-import { esc, header, page } from "./shell.js";
+import { esc, header, page, jsonScript } from "./shell.js";
 import { CATEGORIES, CAT, KINDS, brief } from "./help.js";
 
 export const HELP_EMAIL = "info@socallights.app";
@@ -65,7 +65,7 @@ export const askForm = (ref = "help") => `<details class="ask" id="ask"><summary
 <div><button class="btn go" type="submit" style="min-height:48px;padding:0 22px;flex:none">Send</button></div>
 <p class="hmsg" id="ask-s" role="status"></p><p style="margin:0;color:var(--muted);font-size:14px">You can also write to <a href="mailto:${HELP_EMAIL}">${HELP_EMAIL}</a>.</p></form></details>
 <script>(function(){var f=document.getElementById("askf");if(!f)return;f.addEventListener("submit",function(e){e.preventDefault();var s=document.getElementById("ask-s"),m=document.getElementById("ask-m").value.trim();if(m.length<5){s.className="hmsg bad";s.textContent="Tell us what you need help with, a few words is enough.";return}
-s.className="hmsg";s.textContent="Sending…";fetch("/api/help/contact",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({ref:${JSON.stringify(ref)},message:m,contact:document.getElementById("ask-c").value})}).then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d}})}).then(function(x){if(x.ok){s.textContent="Thank you. We read every message. If you left an email, we will write back.";f.reset()}else{s.className="hmsg bad";s.textContent=x.d.error||"That did not send. Please try again."}}).catch(function(){s.className="hmsg bad";s.textContent="That did not send. Please check your connection and try again."})})})()</script>`;
+s.className="hmsg";s.textContent="Sending…";fetch("/api/help/contact",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({ref:${jsonScript(ref)},message:m,contact:document.getElementById("ask-c").value})}).then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d}})}).then(function(x){if(x.ok){s.textContent="Thank you. We read every message. If you left an email, we will write back.";f.reset()}else{s.className="hmsg bad";s.textContent=x.d.error||"That did not send. Please try again."}}).catch(function(){s.className="hmsg bad";s.textContent="That did not send. Please check your connection and try again."})})})()</script>`;
 
 export const catCards = (counts) => `<div class="cats">${CATEGORIES.map((c) => `<a class="cat" href="/help#${c.key}"><b>${esc(c.title)}</b><span>${esc(c.blurb)}</span><small>${counts[c.key] || 0} ${(counts[c.key] || 0) === 1 ? "article" : "articles"}</small></a>`).join("")}</div>`;
 export { esc, CAT, KINDS, brief };
