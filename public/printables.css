@@ -1,0 +1,48 @@
+/* Festive entry poster and VOTE! yard sign (public/printables.js). Sized in container units, so the preview and the printed page match. */
+.pz{position:relative;container-type:inline-size;aspect-ratio:8.5/11;width:100%;overflow:hidden;background:linear-gradient(170deg,var(--bg1),var(--bg2));color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;text-align:center}
+.pz *{box-sizing:border-box}
+.pz-sparks{position:absolute;inset:0;display:block}
+.pz-lights{position:absolute;left:0;top:0;width:100%;height:auto;display:block}
+.pz-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:17.5cqw 7cqw 0}
+.pz-kick{font-size:2.8cqw;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--hi);border:.35cqw solid var(--hi);border-radius:99cqw;padding:.9cqw 3.4cqw}
+.pz-head{font-size:6.6cqw;font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:2cqw 0 1.2cqw;max-width:88cqw;text-wrap:balance}
+.pz-name{font-size:var(--ns,5cqw);font-weight:800;line-height:1.1;color:var(--hi);max-width:84cqw;text-wrap:balance}
+.pz-host{font-size:3.1cqw;font-weight:600;color:var(--dim);margin-top:1.2cqw}
+.pz-qr{margin:3cqw 0 2cqw;padding:1.5cqw;border-radius:4.4cqw;background:linear-gradient(135deg,var(--hi),var(--hi2));box-shadow:0 1cqw 3cqw rgba(0,0,0,.28)}
+.pz-qrin{background:#fff;border-radius:3cqw;padding:2.8cqw;width:31cqw;color:#000}
+.pz-qrin svg{display:block;width:100%;height:auto}
+.pz-cap{font-size:3.6cqw;line-height:1.3;max-width:76cqw}
+.pz-cap b{color:var(--hi);font-weight:800}
+.pz-when{display:flex;flex-wrap:wrap;justify-content:center;gap:1.4cqw;margin-top:2cqw}
+.pz-when span{font-size:2.8cqw;font-weight:800;padding:.9cqw 2.8cqw;border-radius:99cqw;background:rgba(128,128,128,.22);color:var(--ink)}
+.pz-bot{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center}
+.pz-motifs{display:block;width:100%;height:auto}
+.pz-url{display:flex;align-items:center;gap:1.4cqw;font-size:3.1cqw;font-weight:800;letter-spacing:.02em;padding:.4cqw 0 4.6cqw}
+.pz-url span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80cqw}
+.pz-url img{width:5cqw;height:5cqw;border-radius:50%}
+/* yard sign: one huge word and a big code */
+.pz-sign .pz-in{padding-top:16.5cqw}
+.pz-vote{font-size:24cqw;font-weight:800;line-height:.95;letter-spacing:-.03em;color:var(--hi);text-shadow:.9cqw .9cqw 0 var(--hi2),0 0 3cqw rgba(0,0,0,.25);-webkit-text-stroke:.5cqw rgba(0,0,0,.18)}
+.pz-for{font-size:4.4cqw;font-weight:700;margin-top:1cqw;color:var(--ink)}
+.pz-sign .pz-name{font-size:var(--ns,5cqw);margin-top:1.6cqw;color:var(--ink);opacity:.92}
+.pz-sign .pz-qr{margin:3cqw 0 2cqw}
+.pz-sign .pz-qrin{width:var(--qs,39cqw)}
+.pz-sign .pz-cap{font-size:4.6cqw}
+
+/* Print: only the sheet, one letter page, edge to edge. The page template (organizer.html) clones it into #printsheet. */
+#printsheet{display:none}
+@media print{
+ @page{size:letter;margin:0}
+ html,body{background:#fff!important}
+ body.printing>*:not(#printsheet){display:none!important}
+ body.printing #printsheet{display:block;margin:0;padding:0}
+ #printsheet .pz{width:8.5in;height:11in;aspect-ratio:auto;border-radius:0;break-inside:avoid}
+}
+
+/* On-screen previews (organizer dashboard, contest wizard) */
+.pzprev{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin:12px 0 4px}
+.pzprev figure{margin:0;display:grid;gap:8px;align-content:start}
+.pzprev .pz{border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.28)}
+.pzprev figcaption{font-size:14px;text-align:center;color:var(--muted,#6b6760)}
+.pzprev.one{grid-template-columns:minmax(0,320px);justify-content:center}
+@media print{.pzprev{display:none}}

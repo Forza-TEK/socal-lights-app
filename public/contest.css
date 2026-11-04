@@ -51,18 +51,6 @@ body{padding-bottom:60px}
  .ent td:last-child{display:block;padding-top:8px}
 }
 
-/* Print: only the poster, big, on one page (organizer.html clones it into #printsheet) */
-#printsheet{display:none}
-@media print{
- body.printing>*:not(#printsheet){display:none!important}
- body.printing #printsheet{display:block;padding:40px 30px;text-align:center;background:#fff;color:#000}
- #printsheet b{font-size:40px;display:block;margin-bottom:24px}
- #printsheet svg{width:70%;height:auto;max-width:520px}
- #printsheet small{display:block;font-size:26px;margin-top:24px}
-}
-#printsheet .signvote{display:block;font-size:120px;font-weight:700;line-height:1;margin-bottom:18px}
-@media print{#printsheet.sign b{font-size:34px}#printsheet.sign svg{width:55%}}
-
 /* One look for headings and controls inside contest pages */
 .banner h1{display:block;margin:0;font-weight:500;font-size:19px;line-height:1.25;letter-spacing:0}
 .card.center h1{font-weight:400;font-size:24px;letter-spacing:-.015em}
