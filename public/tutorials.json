@@ -316,14 +316,14 @@
           "title": "Read your contest activity",
           "desc": "Visits, QR scans, voters and votes per day.",
           "url": "/tutorials/run-activity.mp4",
-          "length": "1:08",
+          "length": "1:46",
           "captions": "/tutorials/run-activity.vtt",
           "poster": "/tutorials/run-activity.jpg",
           "mobile": {
             "url": "/tutorials/run-activity-mobile.mp4",
             "poster": "/tutorials/run-activity-mobile.jpg",
             "captions": "/tutorials/run-activity-mobile.vtt",
-            "length": "1:07"
+            "length": "1:53"
           }
         }
       ]
@@ -338,14 +338,14 @@
           "title": "Add sponsors and logos",
           "desc": "Show sponsors by tier on the contest page.",
           "url": "/tutorials/sponsors-add.mp4",
-          "length": "1:16",
+          "length": "2:11",
           "captions": "/tutorials/sponsors-add.vtt",
           "poster": "/tutorials/sponsors-add.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-add-mobile.mp4",
             "poster": "/tutorials/sponsors-add-mobile.jpg",
             "captions": "/tutorials/sponsors-add-mobile.vtt",
-            "length": "1:17"
+            "length": "2:15"
           }
         },
         {
@@ -390,14 +390,14 @@
           "title": "Add an event to the map",
           "desc": "Share a tree lighting, market, parade or haunted house.",
           "url": "/tutorials/post-event.mp4",
-          "length": "1:27",
+          "length": "2:41",
           "captions": "/tutorials/post-event.vtt",
           "poster": "/tutorials/post-event.jpg",
           "mobile": {
             "url": "/tutorials/post-event-mobile.mp4",
             "poster": "/tutorials/post-event-mobile.jpg",
             "captions": "/tutorials/post-event-mobile.vtt",
-            "length": "1:27"
+            "length": "2:38"
           }
         },
         {
