@@ -22,7 +22,7 @@ Use the `?ref=` ending on every link the agents send. It counts anonymous landin
 - Awards: People's Choice (public votes) and Judges' Choice (judges). One or both.
 - A contest page, a QR code, a printable poster and yard sign, an organizer dashboard, and results emailed to entrants.
 - One vote per person per category; nobody can vote for their own home; vote counts can be hidden until winners are announced.
-- A contest from an organizer whose email matches the contest's website goes live at once (a city address such as `name@city.gov`). Any other email, including Gmail, is held until the site owner approves it. Say "reviewed and approved quickly", never "instant".
+- Every contest goes live as soon as it is created, including from a Gmail or other free-mail address. No approval step. Entries are approved by the organizer, not by us (the organizer can switch that to automatic). Limit: 3 contests per account per day. Admin can unpublish a contest if there is a problem.
 
 **About the site**
 - A free map of Southern California holiday lights and events: 1,244 upcoming listings in 266 cities.
@@ -53,11 +53,11 @@ Use the `?ref=` ending on every link the agents send. It counts anonymous landin
 | Page | Result |
 |---|---|
 | `/add-house` (installers post here) | Loads, 0.3-0.7 s (one timeout during a deploy, then fine) |
-| `/add-contest` (organizers) | Loads; sign-in with Google or email code is on |
+| `/add-contest` (organizers) | Loads; sign-in with Google or email code is on; contests go live at once |
 | `/add`, `/add-event`, `/contests`, `/help`, `/in/<city>` | Load |
 | `/installers` and `/installer` | Show the map, not a landing page: send installers to `/add-house?ref=inst`, not these |
 
-Known friction: a contest created with a free-mail address waits for approval (Admin, Contests). Someone must approve these quickly or the pitch breaks. Ask organizers to use their official email where they have one.
+Contests go live immediately with any email, so there is no approval queue to watch. The CEO checks Admin, Contests daily for contests whose note says the email is free-mail or does not match a website (these are labelled for review after the fact, not held).
 
 ## 6. Scoreboard (CEO reports from the live database)
 Baseline 2026-11-04: homes on the map 6, installer profiles 1, live contests 1, user accounts 5, votes 0, judges 0.
