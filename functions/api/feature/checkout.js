@@ -55,8 +55,9 @@ export async function onRequestPost({ request, env }) {
   if (goodEmail) { f.set("customer_email", goodEmail); f.set("payment_intent_data[receipt_email]", goodEmail); }
   // Same event + plan within 10 minutes reuses one Checkout session (double clicks). The key is a hash (the account is included so two people never share a session).
   const idem = "feature-" + (await sha256hex(`${ev.id}|${plan}|${user.id}|${Math.floor(Date.now() / 600_000)}`));
-  const r = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "idempotency-key": idem, "content-type": "application/x-www-form-urlencoded" }, body: f });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok || !d.url) return err(502, "The payment page couldn't be opened. Please try again in a moment.");
+  // If Stripe cannot be reached the buyer gets the same friendly message as any other payment-page failure, not a raw error.
+  const r = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "idempotency-key": idem, "content-type": "application/x-www-form-urlencoded" }, body: f }).catch(() => null);
+  const d = r ? await r.json().catch(() => ({})) : {};
+  if (!r || !r.ok || !d.url) return err(502, "The payment page couldn't be opened. Please try again in a moment.");
   return json({ url: d.url });
 }

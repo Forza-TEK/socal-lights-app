@@ -34,6 +34,9 @@ Paid placement is web only: the page, the menu link and `/api/feature/checkout` 
 6. Settings > Business > Customer emails: turn on **Successful payments** so Stripe emails receipts (the checkout also passes the buyer's email as the receipt address; Stripe only sends receipts for live-mode payments).
 7. Check: open `https://socallights.app/api/config`; it should show `"featureCheckout":true`. Make one real test purchase on your own event (the cheapest plan is $10) and refund it.
 
+## Who can pay, and the admin step
+Checkout requires a signed-in account and ownership of the event (submitted it, approved claim, or contest owner/staff). Claims that cannot be auto-approved appear in the admin **Event claims** tab: check the claimant's email against the event's website, then Approve or Decline. Approving only lets them buy Featured for that event; it gives no edit rights. Migration 0157 adds `feature_orders.user_id` and `event_claims`.
+
 ## Testing without real money
 - Stripe test mode: use `sk_test_...` and a test-mode webhook secret, card 4242 4242 4242 4242; refund it in the Dashboard to see the placement switch off.
 - Locally: put fake values in `.dev.vars` (gitignored): `STRIPE_WEBHOOK_SECRET=whsec_test`, `STRIPE_SECRET_KEY=sk_test_fake`; run `npm run db:migrate:local` and `npm run dev`.
