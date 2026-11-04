@@ -2,7 +2,11 @@
 import { json, err, clean } from "../../_lib/util.js";
 import { PLANS } from "../../_lib/featured.js";
 
+const sha256hex = async (t) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+
 export async function onRequestPost({ request, env }) {
+  // Paid placement is web-only (store rules). The UI is hidden in the app too; this is the soft server-side check.
+  if (/SoCalLightsApp/.test(request.headers.get("user-agent") || "")) return err(403, "Not available in the app.");
   if (!env.STRIPE_SECRET_KEY) return err(501, "Online payment isn't set up yet.");
   const b = await request.json().catch(() => null);
   const plan = PLANS[b && b.plan] ? b.plan : null;
@@ -23,6 +27,7 @@ export async function onRequestPost({ request, env }) {
   const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
   if (ev.end_date < today) return err(400, "That event has already ended.");
 
+  const email = clean(b && b.email, 120), goodEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
   const p = PLANS[plan], origin = new URL(request.url).origin;
   const f = new URLSearchParams({
     mode: "payment",
@@ -35,9 +40,13 @@ export async function onRequestPost({ request, env }) {
     "metadata[plan]": plan,
     "payment_intent_data[description]": `SoCal Lights Featured: ${ev.name} (${plan})`.slice(0, 200),
     success_url: `${origin}/feature?paid=1${pending ? "&pending=1" : ""}`,
-    cancel_url: `${origin}/feature`,
+    // Back to the plan picker with the event and plan still chosen (a pending submission has no public id yet).
+    cancel_url: `${origin}/feature?cancelled=1&plan=${plan}${pending ? "" : "&event=" + encodeURIComponent(ev.id)}`,
   });
-  const r = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "content-type": "application/x-www-form-urlencoded" }, body: f });
+  if (goodEmail) { f.set("customer_email", goodEmail); f.set("payment_intent_data[receipt_email]", goodEmail); }
+  // Same event + plan within 10 minutes reuses one Checkout session (double clicks). The key is a hash (the email is included only so a changed email is not rejected as a parameter mismatch).
+  const idem = "feature-" + (await sha256hex(`${ev.id}|${plan}|${goodEmail}|${Math.floor(Date.now() / 600_000)}`));
+  const r = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "idempotency-key": idem, "content-type": "application/x-www-form-urlencoded" }, body: f });
   const d = await r.json().catch(() => ({}));
   if (!r.ok || !d.url) return err(502, "The payment page couldn't be opened. Please try again in a moment.");
   return json({ url: d.url });
