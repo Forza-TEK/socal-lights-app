@@ -21,8 +21,7 @@ export async function onRequestPost({ request, env }) {
     const near = evs.filter((e) => miles(s.lat, s.lng, e.lat, e.lng) <= s.radius).sort((a, b) => a.s.localeCompare(b.s));
     done.push(s.id);
     if (!near.length) { skipped++; continue; }
-    const list = near.slice(0, MAX_ITEMS).map((e) => `- ${e.n}\n  ${e.s === e.e ? fmt(e.s) : fmt(e.s) + " to " + fmt(e.e)}${e.h ? ", " + e.h : ""} · ${e.v || e.city}\n  ${origin}/#e-${e.id}`).join("\n\n");
-    const text = `Lights and events within ${s.radius} miles of ${s.city} in the next ${DAYS} days:\n\n${list}\n\n${near.length > MAX_ITEMS ? `And ${near.length - MAX_ITEMS} more. ` : ""}See everything: ${origin}/in/${slugOf(s.city)}\n\nYou asked for this weekly email on socallights.app. Stop it any time: ${origin}/api/alerts/unsubscribe?t=${s.token}${env.ALERT_FOOTER ? "\n" + env.ALERT_FOOTER : ""}`;
+    const list = near.slice(0, MAX_ITEMS).map((e) => `- ${e.n}: ${e.s === e.e ? fmt(e.s) : fmt(e.s) + " to " + fmt(e.e)}${e.h ? ", " + e.h : ""} · ${e.v || e.city} ([details](${origin}/#e-${e.id}))`).join("\n");
     if (await sendTemplate(env, "alerts_weekly", s.email, { radius: s.radius, city: s.city, days: DAYS, list, more: near.length > MAX_ITEMS ? near.length - MAX_ITEMS : "", see_url: `${origin}/in/${slugOf(s.city)}`, unsub_url: `${origin}/api/alerts/unsubscribe?t=${s.token}`, footer: env.ALERT_FOOTER || "" })) sent++; else skipped++;
   }
   await env.DB.batch(done.map((id) => env.DB.prepare("UPDATE alert_subs SET last_sent = date('now') WHERE id = ?").bind(id)));

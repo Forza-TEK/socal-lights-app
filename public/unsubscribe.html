@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Email preferences · SoCal Lights</title>
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261102i">
+<link rel="stylesheet" href="/info.css?v=20261031t">
+<style>.unsub{max-width:520px;margin:40px auto;text-align:center;display:grid;gap:14px;justify-items:center}.unsub h1{margin:0}.unsub p{margin:0}.unsub .btn{min-height:48px;padding:0 26px;border-radius:12px;border:0;background:var(--season);color:#fff;font:700 16px var(--font);cursor:pointer}.unsub .btn.out{background:transparent;color:var(--ink);border:1px solid var(--line2)}.unsub .err{color:var(--bad,#c0392b)}</style>
+<script src="/hit.js" defer></script>
+</head>
+<body>
+<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+<main><div class="unsub" id="box"><p class="meta">One moment…</p></div></main>
+<script>
+(function () {
+  var t = new URLSearchParams(location.search).get("t") || "", box = document.getElementById("box");
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  function draw(d) {
+    box.innerHTML = d.optout
+      ? '<h1>You are unsubscribed</h1><p>We will stop sending reminders, updates and result emails to <b>' + esc(d.email) + '</b>. You will still get service emails, such as sign-in codes and decisions about your listings.</p><button class="btn out" id="back" type="button">Changed your mind? Turn them back on</button>'
+      : '<h1>Stop these emails?</h1><p>Unsubscribe <b>' + esc(d.email) + '</b> from reminders, updates and result emails from SoCal Lights. You will still get service emails, such as sign-in codes and decisions about your listings.</p><button class="btn" id="go" type="button">Unsubscribe</button>';
+    var b = document.getElementById("go") || document.getElementById("back");
+    b.onclick = function () { b.disabled = true; send(!d.optout); };
+  }
+  function fail(m) { box.innerHTML = '<h1>That link did not work</h1><p class="err">' + esc(m) + '</p><p>Write to <a href="mailto:info@socallights.app">info@socallights.app</a> and we will take you off the list.</p>'; }
+  function send(optout) {
+    fetch("/api/unsub", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: t, optout: optout }) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "Something went wrong."); return j; }); })
+      .then(draw).catch(function (e) { fail(e.message); });
+  }
+  if (!t) return fail("This page needs the link from your email.");
+  fetch("/api/unsub?t=" + encodeURIComponent(t)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); }).then(draw).catch(function (e) { fail(e.message); });
+})();
+</script>
+<script src="/footer.js?v=20261105a" defer></script>
+</body>
+</html>
