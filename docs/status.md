@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-02_
 
+## Festive poster and yard sign (2026-11-04)
+- The entry poster and the "VOTE!" yard sign are now themed by the contest's season (Halloween, Christmas, New Year, Spring, Summer): colored background, string lights, seasonal motifs, a framed QR code, the contest's dates. One letter page each. Code in `public/printables.js` and `public/printables.css`; shown as previews on the organizer dashboard (Share it) and the contest wizard's finish screen. In the print window, "Background graphics" must be on.
+
 ## Copyright (2026-11-03)
 - Every page except the map ends with "© <year> Forza-TEK. SoCal Lights. All rights reserved." plus Privacy, Terms and Contact (`public/footer.js`, also loaded by server-made pages through `functions/_lib/shell.js`). The map shows "© <year> Forza-TEK" in its credit pill and the same line under the Places list. The year updates itself.
 
