@@ -26,7 +26,7 @@ _Last updated 2026-11-04 (CEO session). `[x]` done and verified, `[ ]` open. Det
 - [ ] **Redeploy once** (Workers and Pages, socal-lights, Deployments, latest, Retry deployment) so the mailing-address secret loads; it also loads on the next merge.
 - [ ] **Remove the five temporary write permissions** from the `Claude read-only` token (D1 Edit, Pages Edit, R2 Edit, DNS Edit, Zone Settings Edit) unless you want the CEO session to do more Cloudflare changes.
 - [x] DMARC record added and verified live (`p=none`, monitor only; DKIM and SPF line up). After 2 to 4 weeks of clean reports, move to `quarantine`.
-- [ ] **Minimum TLS 1.2**: Cloudflare, socallights.app, SSL/TLS, Edge Certificates, Minimum TLS Version, choose TLS 1.2 (currently TLS 1.0).
+- [x] Minimum TLS version set to 1.2 (confirmed through the API; the site answers over TLS 1.2 and 1.3). Do not buy Advanced Certificate Manager: Universal SSL (free) is all that is needed.
 - [ ] Stripe, Settings, Business, Customer emails: **Successful payments** on (cannot be read by API).
 **This week**
 - [ ] Send the three Outlook drafts (Mom's LA, Mission Viejo MVAC, Pasadena Now) and paste Draft A2 into Enjoy Orange County's form
