@@ -32,7 +32,7 @@ Paid placement is web only: the page, the menu link and `/api/feature/checkout` 
    - `STRIPE_WEBHOOK_SECRET` = the signing secret (type **Secret**)
    Then redeploy (Deployments > the latest > Retry deployment) so the secrets load.
 6. Settings > Business > Customer emails: turn on **Successful payments** so Stripe emails receipts (the checkout also passes the buyer's email as the receipt address; Stripe only sends receipts for live-mode payments).
-7. Check: open `https://socallights.app/api/config`; it should show `"featureCheckout":true`. Make one real $5 test purchase on your own event.
+7. Check: open `https://socallights.app/api/config`; it should show `"featureCheckout":true`. Make one real test purchase on your own event (the cheapest plan is $10) and refund it.
 
 ## Testing without real money
 - Stripe test mode: use `sk_test_...` and a test-mode webhook secret, card 4242 4242 4242 4242; refund it in the Dashboard to see the placement switch off.
@@ -48,7 +48,7 @@ mentions the event name and the year, the event is published immediately as conf
 "Submitted events" (publish as confirmed or expected, or decline). Limits: 5 submissions per hour per connection, 40 auto-publishes per day.
 
 ## Featured while adding an event
-The `/add-event` form offers an optional "Make it stand out" choice ($5 / $10 / $15). After the event is added the visitor goes straight to Stripe.
+The `/add-event` form offers an optional "Make it stand out" choice ($10 / $15 / $20). After the event is added the visitor goes straight to Stripe.
 If the event published instantly the payment attaches to it by id; if it is waiting in the admin "Submitted events" tab, the payment is recorded
 against `sub:<submission id>` and applied the moment you publish it (the pending card shows "Paid Featured"). If you decline a submission that
 has paid, refund it in Stripe. The choice only appears when online payment is switched on (`/api/config` shows `featureCheckout: true`).

@@ -6,7 +6,7 @@ export async function onRequestGet({ request, env }) {
   const { results } = await env.DB.prepare("SELECT DISTINCT city FROM events WHERE end_date >= ?").bind(today).all();
   let inst = []; try { inst = (await env.DB.prepare("SELECT slug FROM installers WHERE status = 'active' AND id IN (SELECT installer_id FROM posts WHERE status = 'approved' AND installer_id IS NOT NULL)").all()).results; } catch {}
   let help = []; try { help = (await env.DB.prepare("SELECT slug FROM help_articles WHERE status = 'published'").all()).results; } catch {}
-  const urls = ["/", "/privacy", "/terms", "/tutorials", "/help", ...help.map((r) => "/help/" + r.slug), ...inst.map((r) => "/installer/" + r.slug), ...results.map((r) => "/in/" + slugOf(r.city)).filter((u) => u !== "/in/").sort()];
+  const urls = ["/", "/pricing", "/privacy", "/terms", "/tutorials", "/help", ...help.map((r) => "/help/" + r.slug), ...inst.map((r) => "/installer/" + r.slug), ...results.map((r) => "/in/" + slugOf(r.city)).filter((u) => u !== "/in/").sort()];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${origin}${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")}\n</urlset>\n`;
   return new Response(xml, { headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
 }
