@@ -85,3 +85,6 @@ To be finalized in 2.3. Already known:
 
 ## Update 2026-11-04 (CEO)
 Access granted: read-only Stripe, Cloudflare analytics and D1. Real data is in `data-2026-11-04.md`. It overturned the first plan: $0 ever paid, about 20-50 human visits a day, 6 homes, 1 installer. All three reports were revised and `strategy.md` is now v2 (prove, earn small, build). Open: the Featured fixes (spec in `digital-monetization.md`), owner decisions listed in `strategy.md`.
+
+## Update 2026-11-04, later (CEO)
+Featured payment fixes built and tested on this branch (migration 0155, not merged, waiting on owner "merge" and Stripe webhook events). Legal research done (`legal-research.md`). Search Console: sitemap read, 271 pages discovered, indexing report still processing. Amazon Associates approved about 2026-10-21; first 3 qualifying sales due within about 180 days (about 2027-04-19, confirm in dashboard); no sales yet. Outreach drafts in `outreach.md` (nothing sent). Owner tomorrow: $5 test purchase; CPA booking.
