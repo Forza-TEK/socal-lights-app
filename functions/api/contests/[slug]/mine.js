@@ -9,7 +9,7 @@ async function mine(request, env, slug, id) {
   if (!user) return { res: err(401, "Please sign in first.") };
   const c = await getContest(env, slug);
   if (!c) return { res: err(404, "Not found.") };
-  if (c.announced) return { res: err(400, "The winners are announced and the results are locked.") };
+  if (c.announced) return { res: err(409, "Results are locked.") };
   const row = await env.DB.prepare("SELECT * FROM posts WHERE id = ? AND contest_id = ? AND user_id = ?").bind(id, c.id, user.id).first();
   if (!row || row.status === "declined") return { res: err(404, "That entry isn't yours.") };
   return { c, row };

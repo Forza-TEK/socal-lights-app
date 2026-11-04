@@ -98,7 +98,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   let ev = null, plan = "", mine = [];
   const KEY = "scl-feature-sel", fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const saveSel = () => { try { sessionStorage.setItem(KEY, JSON.stringify({ id: ev && ev.id, plan })); } catch {} };
-  const WHY = { ended: "Ended", declined: "Declined", cancelled: "Cancelled", postponed: "Postponed", "claim-pending": "Waiting for approval", pending: "Waiting for review" };
+  const WHY = { ended: "Ended", declined: "Declined", cancelled: "Cancelled", postponed: "Postponed", "claim-pending": "Waiting for approval", review: "Waiting for a quick check before it can be featured", pending: "Waiting for review" };
   const owned = (id) => mine.find((m) => m.id === id);
   if (user) {
     const f = await fetch("/api/me/featurable", { cache: "no-store" }).then((r) => (r.ok ? r.json() : { events: [], contests: [] })).catch(() => ({ events: [], contests: [] }));

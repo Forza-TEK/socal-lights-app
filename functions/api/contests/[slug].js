@@ -11,6 +11,7 @@ import { publicEntry } from "../../_lib/archive.js";
 import { judgeProgress } from "../../_lib/judging.js";
 import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
 import { normName, normText } from "../../_lib/fields.js";
+import { reserveSends } from "../../_lib/sendlimit.js";
 
 export async function onRequestGet({ params, request, env }) {
   const c = await getContest(env, params.slug);
@@ -70,15 +71,20 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
     await teamChanged(env, c, user, diff(c, { vote_start: c.vote_start > t ? t : c.vote_start, vote_end: end, voting_open: 1 }, CONTEST_FIELDS), W);
   } else if (b.action === "announce") {
     const r = await computeResults(env, c);
-    // Judges who haven't finished: ask the organizer to confirm before the results are locked
-    if (hasJudges(c) && !b.force) { const inc = (await judgeProgress(env, c, r)).filter((j) => j.done < j.total); if (inc.length) return json({ ok: false, incomplete: inc.map((j) => j.email) }, { status: 409 }); }
+    // Ask the organizer to confirm before the results are locked when voting hasn't started, nobody has voted or judged, or judges haven't finished
+    const votesIn = Object.values(r.counts).reduce((n, m) => n + Object.values(m).reduce((a, x) => a + x, 0), 0), judgeIn = Object.keys(r.jpick).length + Object.keys(r.jscore).length;
+    const early = todayPT() < c.vote_start ? "Voting hasn't started yet." : votesIn === 0 && judgeIn === 0 ? "Nobody has voted yet." : "";
+    const inc = hasJudges(c) ? (await judgeProgress(env, c, r)).filter((j) => j.done < j.total).map((j) => j.email) : [];
+    if (!b.force && (early || inc.length)) return json({ ok: false, needs_force: true, reason: early || "Some judges haven't finished.", ...(inc.length ? { incomplete: inc } : {}) }, { status: 409 });
     const awards = awardList(c, r);
     const jv = {};
     if (hasJudges(c)) for (const p of r.posts) jv[p.id] = c.judge_method === "score" ? r.jscore[p.id] || null : r.jpick[p.id] || null;
     const snap = { at: todayPT(), categories: r.categories, winners: r.winners, jwinners: r.jwinners, awards, jv,
       entries: r.posts.map((p) => ({ id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, dq: !!p.dq, votes: hasPublic(c) ? Object.fromEntries(r.categories.map((k) => [k, (r.counts[p.id] || {})[k] || 0])) : null,
         jv: jv[p.id] ? Object.fromEntries(r.categories.map((k) => [k, c.judge_method === "score" ? (jv[p.id][k] ? { avg: Math.round(jv[p.id][k].avg * 100) / 100, n: jv[p.id][k].n, tr: !!jv[p.id][k].tr } : null) : jv[p.id][k] || 0])) : undefined })) };
-    await env.DB.prepare("UPDATE contests SET announced = 1, results = ?, updated_at = datetime('now') WHERE id = ?").bind(JSON.stringify(snap), c.id).run();
+    // One write only: a double click or a second tab changes no row here and gets the usual "locked" answer
+    const wrote = await env.DB.prepare("UPDATE contests SET announced = 1, results = ?, updated_at = datetime('now') WHERE id = ? AND announced = 0").bind(JSON.stringify(snap), c.id).run();
+    if (!wrote.meta || !wrote.meta.changes) return err(400, "The winners are announced and the results are locked.");
     await teamChanged(env, c, user, [{ label: "Winners", old: "Not announced", new: "Announced and locked" }], W);
     const job = notifyResults(env, c, r, awards);
     if (waitUntil) waitUntil(job);
@@ -89,6 +95,8 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
 // "Run it again next year": a new contest with the same settings, rules, prizes, sponsors and judges, and every date a year later.
 const plusYear = (d) => { const x = new Date(d + "T12:00:00Z"); x.setUTCFullYear(x.getUTCFullYear() + 1); return x.toISOString().slice(0, 10); };
 async function cloneContest(env, c, user) {
+  const jn = (await env.DB.prepare("SELECT COUNT(*) AS n FROM judges WHERE contest_id = ?").bind(c.id).first()).n;
+  if (jn) { const over = await reserveSends(env, user, c.id, "judge", jn); if (over) return err(429, over); }
   const closes = plusYear(c.entries_close); let vs = plusYear(c.vote_start), ve = plusYear(c.vote_end);
   if (vs <= closes) vs = addDays(closes, 1); // an organizer may have started voting early; the copy keeps the normal order
   if (ve <= vs) ve = addDays(vs, 14);

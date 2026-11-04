@@ -203,6 +203,24 @@ export function checkTemplate(t, subject, body) {
   return "";
 }
 
+// ---- User text in emails ----
+// Values are substituted into the wording BEFORE it is turned into HTML, so a name or note like "[Verify your account](https://evil)" would
+// become a branded link or button. Values that people typed (names, notes, reasons...) are therefore neutralized: brackets, parentheses,
+// angle brackets and backticks become look-alike full-width characters, web addresses are removed, and line breaks can't start a new block.
+// Values the site builds itself (links, lists) are left alone. HTML escaping happens when the page is drawn (esc below).
+const RAW_VARS = new Set(["code", "link", "see_url", "unsub_url", "manage", "confirm", "profile", "list", "summary", "footer"]);
+const FULLWIDTH = { "[": "\uFF3B", "]": "\uFF3D", "(": "\uFF08", ")": "\uFF09", "<": "\uFF1C", ">": "\uFF1E", "`": "\u2018" };
+export function safeText(v, keepLines = false) {
+  let t = String(v == null ? "" : v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/\b(?:https?:\/\/|ftp:\/\/|www\.)\S*/gi, "");
+  t = t.replace(/[\[\]()<>`]/g, (ch) => FULLWIDTH[ch]);
+  return keepLines ? t.replace(/\r/g, "") : t.replace(/\s*[\r\n]+\s*/g, " ");
+}
+export function safeVars(vars) {
+  const out = {};
+  for (const [k, v] of Object.entries(vars || {})) out[k] = RAW_VARS.has(k) ? v : safeText(v, k === "changes");
+  return out;
+}
+
 export const sampleVars = (t) => Object.fromEntries(Object.entries(t.vars).map(([k, v]) => [k, v[1]]));
 
 // What the admin has saved (or null). A missing table or row means "use the default".
@@ -210,7 +228,7 @@ export async function savedFor(env, id) {
   try { return await env.DB.prepare("SELECT subject, body FROM email_templates WHERE id = ?").bind(id).first(); } catch { return null; }
 }
 
-const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 const link = (s) => s.replace(/https?:\/\/[^\s<]*[^\s<.,;:!?)"'\]]/g, (u) => `<a href="${u}" style="color:#b3261e;text-decoration:underline">${u}</a>`);
 // ---- The designed layout every email uses ----
 // Wording markers: "~ " small heading, "# " title, "[Label](url)" button, "## " + "- " lines = boxed list, "> " quote, "@ " big code, "* " small print, **bold**.
@@ -272,6 +290,7 @@ function footerFor(t, vars, unsubUrl) {
 export async function renderTemplate(env, id, vars, draft, unsubUrl = SITE + "/unsubscribe?t=sample") {
   const t = byId(id); if (!t) throw new Error("Unknown email template: " + id);
   const s = draft || (await savedFor(env, id));
+  vars = safeVars(vars);
   const subject = oneLine(fill(s ? s.subject : t.subject, vars)) || oneLine(fill(t.subject, vars));
   const text = fill(s ? s.body : t.text, vars).trim() || fill(t.text, vars).trim();
   const f = footerFor(t, vars, unsubUrl), year = new Date().getFullYear();
