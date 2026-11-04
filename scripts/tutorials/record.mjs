@@ -112,7 +112,10 @@ export async function record(spec) {
   await cdp.send("Page.stopScreencast").catch(() => {}); await page.close(); await ctx.close(); await br.close();
   if (DRY) { console.log(spec.file, "dry run OK:", spec.steps.length, "steps"); return; }
   // frames -> constant-rate video, each frame shown until the next one arrives
-  if (frames.length > 1 && frames[1].t - ref < 1.5) frames.shift(); frames[0].t = ref; // Chrome can hand over one stale frame first (the page before the title card): drop it, so frame one is the card
+  if (frames.length > 1 && frames[1].t - ref < 1.5) frames.shift();
+  // Under load Chrome can hand over a stale first frame (the page before the title card) and the timing rule above misses it: drop any leading frame that is not the near-white title card
+  for (let k = 0; k < 3 && frames.length > 1; k++) { const px = spawnSync("ffmpeg", ["-v", "error", "-i", `${fdir}/${frames[0].i}.jpg`, "-vf", "scale=8:8,format=rgb24", "-f", "rawvideo", "-"], { maxBuffer: 1e6 }).stdout; let r = 0, g = 0, b = 0; const n = (px.length / 3) | 0; for (let q = 0; q + 2 < px.length; q += 3) { r += px[q]; g += px[q + 1]; b += px[q + 2]; } if (n && r / n > 238 && g / n > 232 && b / n > 225) break; frames.shift(); }
+  frames[0].t = ref; // Chrome can hand over one stale frame first (the page before the title card): drop it, so frame one is the card
   // Dead air is fast-forwarded: any stretch with no voice that is longer than 1.5 s plays at 4x (the first 0.8 s and last 0.4 s stay at normal speed, so each click is still seen)
   const spans = marks.map((m) => [m.t, m.t + audio[m.i].d]).sort((a, b) => a[0] - b[0]), cuts = []; let prevEnd = 0;
   for (const [a, b] of [...spans, [total, total]]) { const c0 = prevEnd + 0.8, c1 = a - 0.4; if (c1 - c0 > 1.5) cuts.push([c0, c1]); prevEnd = Math.max(prevEnd, b); }
