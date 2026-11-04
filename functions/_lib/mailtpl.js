@@ -153,7 +153,7 @@ export const TEMPLATES = [
     text: "~ Results\n\n# Results are in: {{contest}}\n\nThank you for judging **{{contest}}**. The winners are {{winners}}.\n\n[See the results]({{link}})\n\n* You got this email because you were a judge for {{contest}} on SoCal Lights." },
 
   // ---- Invitations with the designed layout (centered title, orange button, boxed tips). See "Formatting" in the editor.
-  { id: "judge_invite", group: "entrant", layout: "invite", name: "Judge invitation", to: "A judge the organizer added", when: "The organizer adds a judge to a contest.",
+  { id: "judge_invite", group: "entrant", unsub: "link", layout: "invite", name: "Judge invitation", to: "A judge the organizer added", when: "The organizer adds a judge to a contest.",
     format: "Formatting for this email: start a line with ~ for the small heading above the title, # for the title, ## for a box title (then lines starting with - for its bullets), and > for a quoted note. Write [Button text](link) for the orange button and **bold** for bold. Start the last line with * for the small print at the bottom.",
     vars: { contest: ["Contest name", "Maple Street Holiday Lights"], org: ["Organizer", "Maple Street Neighbors"], how: ["How judges vote (built by the site)", "Score every home from 1 to 10 in each category."], link: ["Judge ballot link", `${SITE}/c/maple-street/judge`, true] },
     subject: "You're invited to judge {{contest}}",
@@ -163,7 +163,7 @@ export const TEMPLATES = [
     vars: { contest: ["Contest name", "Maple Street Holiday Lights"], org: ["Organizer", "Maple Street Neighbors"], city: ["City", "Irvine"], link: ["Contest page", `${SITE}/c/maple-street`, true], note: ["The organizer's note (blank if none)", "Cocoa on the corner Saturday at 6."], contact: ["Organizer's reply address (blank if none)", "maria@example.com"] },
     subject: "You're invited: {{contest}}",
     text: "~ Home decorating contest · {{city}}\n\n# {{org}} invites you to {{contest}}\n\nEnter your home, or vote for your favorite lights in the neighborhood. It is free.\n\n[Enter your home or vote]({{link}})\n\n{{#note}}> {{note}}\n\n{{/note}}## It takes about a minute\n- Tap the button and sign in with your email or Google.\n- To enter: add a photo of your home and your address.\n- To vote: pick one favorite in each category.\n\n* You got this because {{org}} entered your address.{{#contact}} Reply to {{contact}} to be left off future invitations.{{/contact}}" },
-  { id: "coorg_invite", group: "contest", layout: "invite", name: "Co-organizer invitation", to: "A co-organizer the owner added", when: "The contest owner adds a co-organizer on the Team tab.",
+  { id: "coorg_invite", group: "contest", unsub: "link", layout: "invite", name: "Co-organizer invitation", to: "A co-organizer the owner added", when: "The contest owner adds a co-organizer on the Team tab.",
     format: "Formatting for this email: start a line with ~ for the small heading above the title, # for the title, ## for a box title (then lines starting with - for its bullets), and > for a quoted note. Write [Button text](link) for the orange button and **bold** for bold. Start the last line with * for the small print at the bottom.",
     vars: { contest: ["Contest name", "Maple Street Holiday Lights"], org: ["Organizer", "Maple Street Neighbors"], link: ["Dashboard link", `${SITE}/c/maple-street/manage`, true] },
     subject: "You can help run {{contest}}",
@@ -273,6 +273,12 @@ ${foot2.html ? `<p style="margin:16px 0 0;font:400 12px/1.6 ${FONT};color:${MUTE
 </td></tr></table></body></html>`;
 }
 
+// Marketing and invitation emails (the ones with an unsubscribe link: weekly alert, reminders, results, invitations) carry the sender's postal address and
+// List-Unsubscribe headers. The address is NOT in the repository (it is public): it comes from the MAIL_POSTAL_ADDRESS secret, and the line is left out when it is not set.
+export const isMarketing = (t) => !!t && (t.unsub === "link" || t.unsub === "alerts");
+export const postalLine = (env) => String((env && env.MAIL_POSTAL_ADDRESS) || "").replace(/\s*[\r\n]+\s*/g, ", ").replace(/\s+/g, " ").trim().slice(0, 300);
+const MAILTO_UNSUB = "mailto:info@socallights.app?subject=unsubscribe";
+
 // The line under every email about stopping it. The kind is set per email (unsub: link | alerts | signin | service | none).
 function footerFor(t, vars, unsubUrl) {
   const a = (u, label) => `<a href="${esc(u)}" style="color:${MUTED};text-decoration:underline">${label}</a>`;
@@ -294,20 +300,27 @@ export async function renderTemplate(env, id, vars, draft, unsubUrl = SITE + "/u
   const subject = oneLine(fill(s ? s.subject : t.subject, vars)) || oneLine(fill(t.subject, vars));
   const text = fill(s ? s.body : t.text, vars).trim() || fill(t.text, vars).trim();
   const f = footerFor(t, vars, unsubUrl), year = new Date().getFullYear();
+  const addr = isMarketing(t) ? postalLine(env) : "";
+  if (addr) { f.html = (f.html ? f.html + "<br>" : "") + esc(addr); f.plain = (f.plain ? f.plain + "\n" : "") + addr; }
   const plain = plainOf(text) + "\n\n--\n" + (f.plain ? f.plain + "\n" : "") + `SoCal Lights, ${SITE}\n(c) ${year} Forza-TEK. All rights reserved.`;
-  return { subject, text: plain, html: toInviteHtml(text, subject, f), edited: !!s && !draft };
+  return { subject, text: plain, html: toInviteHtml(text, subject, f), edited: !!s && !draft, marketing: isMarketing(t) };
+}
+
+// List-Unsubscribe headers for marketing mail. With a one-click address (a token link that accepts POST) both headers go; without, only the mailto.
+export function unsubHeaders(oneClickUrl) {
+  return oneClickUrl ? { "List-Unsubscribe": `<${oneClickUrl}>, <${MAILTO_UNSUB}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } : { "List-Unsubscribe": `<${MAILTO_UNSUB}>` };
 }
 
 // Send one templated email (HTML and plain text). Returns true when it was handed to the mail service.
 // Emails with an unsubscribe link (unsub: "link") are skipped for anyone who has unsubscribed.
 export async function sendTemplate(env, id, to, vars) {
   if (!to) return false;
-  const t = byId(id); let unsubUrl;
+  const t = byId(id); let unsubUrl, oneClick = "";
   if (t && t.unsub === "link") {
     const p = await prefsFor(env, to);
     if (p && p.optout) return false;
-    if (p) unsubUrl = `${SITE}/unsubscribe?t=${p.token}`;
-  }
+    if (p) { unsubUrl = `${SITE}/unsubscribe?t=${p.token}`; oneClick = `${SITE}/api/unsub?t=${p.token}`; } // the link in the email opens the page; the header's one-click address takes the POST
+  } else if (t && t.unsub === "alerts" && vars && vars.unsub_url) oneClick = String(vars.unsub_url);
   const m = await renderTemplate(env, id, vars, null, unsubUrl || SITE + "/unsubscribe");
-  return sendMail(env, { to, subject: m.subject, text: m.text, html: m.html });
+  return sendMail(env, { to, subject: m.subject, text: m.text, html: m.html, headers: isMarketing(t) ? unsubHeaders(oneClick) : undefined });
 }
