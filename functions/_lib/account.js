@@ -1,6 +1,6 @@
 // Removes an account and everything tied to it. Used by "delete my account" (DELETE /api/me) and the admin Users tab.
 // Removes sign-ins, drafts, profile picture, contest entries (with their photos) and votes, closes contests the person
-// runs (taking them off the map), and blanks their email on homes and events they posted.
+// runs (unannounced ones are closed; announced ones keep their frozen results, owner-less; both leave the map), and blanks their email on homes and events they posted.
 export async function deleteAccount(env, id, email) {
   const all = (sql, ...b) => env.DB.prepare(sql).bind(...b).all().then((r) => r.results);
   const contests = await all("SELECT id, event_id FROM contests WHERE owner_id = ?", id);
@@ -14,7 +14,10 @@ export async function deleteAccount(env, id, email) {
     env.DB.prepare("DELETE FROM posts WHERE user_id = ?").bind(id),
     env.DB.prepare("UPDATE posts SET contact_email = '' WHERE contest_id IS NULL AND lower(contact_email) = lower(?)").bind(email),
     env.DB.prepare("UPDATE event_submissions SET contact_email = '' WHERE lower(contact_email) = lower(?)").bind(email),
-    env.DB.prepare("UPDATE contests SET status = 'closed', owner_id = '', contact_email = '', event_id = NULL WHERE owner_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM contest_staff WHERE contest_id IN (SELECT id FROM contests WHERE owner_id = ?)").bind(id),
+    env.DB.prepare("UPDATE contest_changes SET by_email = '', by_name = '' WHERE lower(by_email) = lower(?)").bind(email),
+    // Announced contests stay 'live' (frozen results, winner crowns and the Past results page stay); the organizer's personal data goes either way.
+    env.DB.prepare("UPDATE contests SET status = CASE WHEN announced = 1 THEN 'live' ELSE 'closed' END, owner_id = '', contact_email = '', installer_email = '', event_id = NULL WHERE owner_id = ?").bind(id),
     env.DB.prepare("DELETE FROM drafts WHERE user_id = ?").bind(id),
     env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id),
     env.DB.prepare("DELETE FROM login_codes WHERE email = ?").bind(email),
