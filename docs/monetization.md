@@ -33,5 +33,9 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
 - Featured must stay honest: the event still has to be real, public and verified, and the badge is always shown.
 - History: built 2026-10-28, removed briefly the same day, then restored with Cash App payments; Cash App links replaced by Stripe-only checkout 2026-11-04.
 
+### Who can pay (ownership) and claims
+Paying needs a signed-in account, and only the event's owner may pay; the checkout API enforces it (403 "Claim this event first"). Owner means: (a) they submitted it (normalized `contact_email` matches their account), (b) they hold an **approved claim** (`event_claims`), or (c) it is the map row of a contest they own or staff. The receipt goes to the account email and the order stores `user_id`.
+Swept events have no owner, so `/feature` offers **Claim this event** (`POST /api/me/claims`). It is approved automatically when the person's email is on a non-free, non-disposable domain that equals or is a parent of the event website's host and that host is not an aggregator/social/ticketing site (deny list `AGGREGATORS` in `functions/api/me/claims.js`). Otherwise it waits in the admin **Event claims** tab. Limits: 5 pending, 10 per day per person. **A claim gives no edit rights; it only lets the person buy Featured for that event.**
+
 ## 4. Add your event (free, public)
 `/add-event` lets organizers add events themselves; page-verified events publish automatically, others go to the admin "Submitted events" tab. Details in `docs/stripe-setup.md`.

@@ -74,8 +74,8 @@ async function paid(s, env) {
   if (!eventId || !PLANS[plan]) return { ignored: "no feature metadata" };
 
   // One order per Checkout session. The row existing is NOT proof the placement was applied; `applied` is.
-  await env.DB.prepare("INSERT OR IGNORE INTO feature_orders (session_id,event_id,plan,amount,email,payment_intent,currency,status) VALUES (?,?,?,?,?,?,?,'paid')")
-    .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "", (typeof s.payment_intent === "string" && s.payment_intent) || null, s.currency || null).run();
+  await env.DB.prepare("INSERT OR IGNORE INTO feature_orders (session_id,event_id,plan,amount,email,payment_intent,currency,status,user_id) VALUES (?,?,?,?,?,?,?,'paid',?)")
+    .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "", (typeof s.payment_intent === "string" && s.payment_intent) || null, s.currency || null, (s.metadata && s.metadata.user_id) || null).run();
   const order = await env.DB.prepare("SELECT * FROM feature_orders WHERE session_id = ?").bind(s.id).first();
   if (order.applied) return { duplicate: true };
   if (order.status !== "paid") return { skipped: order.status }; // already refunded/disputed before we got to apply it

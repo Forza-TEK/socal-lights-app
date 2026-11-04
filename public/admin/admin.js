@@ -28,12 +28,12 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "emails", "help"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", emails: "Email templates", help: "Help Center" };
+const TABS = ["dashboard", "pending", "subs", "claims", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "emails", "help"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", emails: "Email templates", help: "Help Center" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
-function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; }
+function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; }
 function setTab(t, push = true) {
   if (t !== tab) PVIEW = "pending";
   tab = t;
@@ -62,6 +62,7 @@ async function render() {
     if (tab === "reports") return renderReports();
     if (tab === "events") return renderEvents();
     if (tab === "subs") return renderSubs();
+    if (tab === "claims") return renderClaims();
     if (tab === "contests") return renderContests();
     if (tab === "overlaps") return renderOverlaps();
     if (tab === "installers") return renderInstallers();
@@ -280,6 +281,28 @@ $("#main").addEventListener("click", async (e) => {
     toast(SDONE[act] || "Done", false, undo ? { undo: async () => { try { await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); renderSubs(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
     renderSubs(); refreshCounts();
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
+});
+
+/* ---------- event claims ("this event is mine": approving lets them buy Featured for it, nothing else) ---------- */
+let CLVIEW = "pending";
+async function renderClaims() {
+  const main = $("#main"), [pend, ok, no] = await Promise.all(["pending", "approved", "declined"].map((s) => api("/api/admin/claims?status=" + s)));
+  const rows = CLVIEW === "pending" ? pend : CLVIEW === "declined" ? no : ok;
+  setCount("claims", pend.length);
+  const bar = toolbar({ views: [{ k: "pending", label: "Waiting", n: pend.length }, { k: "approved", label: "Approved", n: ok.length }, { k: "declined", label: "Declined", n: no.length }], active: CLVIEW, count: String(rows.length) });
+  const go = () => wireToolbar(main, { onView: (v) => { CLVIEW = v; renderClaims(); }, onSearch: () => {} });
+  if (!rows.length) { main.innerHTML = bar + `<div class="empty">${CLVIEW === "pending" ? "No claims waiting. A claim only lets the person buy Featured for that event; it gives no edit rights." : "Nothing here."}</div>`; go(); return; }
+  main.innerHTML = bar + `<div class="cards">${rows.map((x) => rec({
+    attrs: `data-clid="${esc(x.id)}"`, title: esc(x.name || x.event_id), tags: [[x.status === "pending" ? "Waiting" : x.status === "approved" ? "Approved" : "Declined", x.status === "pending" ? "warn" : x.status === "approved" ? "ok" : "bad"]], meta: esc((x.created_at || "").slice(0, 16)) + " UTC",
+    facts: fact("Claimed by", `<span style="user-select:all">${esc(x.claimant)}</span>`) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "None") + fact("Where", esc(x.city || "")) + (x.method ? fact("Approved by", esc(x.method)) : ""),
+    edit: "", main: x.status !== "approved" ? btn("main", "Approve", 'data-clact="approve"') : "", danger: x.status !== "declined" ? btn("danger", "Decline", 'data-clact="decline"') : "",
+  })).join("")}</div>`;
+  go();
+}
+$("#main").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-clact]"); if (!b) return;
+  const card = b.closest("[data-clid]"); b.disabled = true;
+  try { await api("/api/admin/claims/" + card.dataset.clid, { method: "POST", body: JSON.stringify({ action: b.dataset.clact }) }); toast(b.dataset.clact === "approve" ? "Approved" : "Declined"); renderClaims(); refreshCounts(); } catch (er) { b.disabled = false; toast(er.message, true); }
 });
 
 /* ---------- contests (organizers who need a review, e.g. a Gmail address or an email that doesn't match their website) ---------- */
