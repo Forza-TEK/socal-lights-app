@@ -49,9 +49,15 @@ S.quick = { id: "quick", file: "run-quick", cookie: ck.u_org, ...MAPSPEC, maxSec
   { cap: "Share it", say: "And here is your link, and your QR code, ready to paste into a message, or print for a flyer. We will cover sharing in a moment.", do: async (p, h) => { await h.scrollTo("text=Share it", 100); await h.hover(".pzprev", 1200); }, pad: 0.8 },
   nextUp(ER, "Create a contest with Customize", "Judges, prizes, categories, vote counts and your own rules"),
 ]};
-S.custom = { id: "custom", file: "run-custom", cookie: ck.u_org, ...MAPSPEC, maxSeconds: 420, steps: [
+// Customize repeats the first five screens that the Quick start video already explains in full, so here they are short
+const condense = (steps) => {
+  const DROP = ["First, the name.", "This is the welcome message.", "A website is optional. If", "Now the dates.", "The day voting starts."];
+  const SHORT = [["This is the Add page. It has three choices.", "This is the Add page, with three choices. We want a contest."], ["I will type", null], ["Next, who is running it, and where.", "Next, who is running it. Type the name of your group."], ["Then pick the city", "Then pick the city the homes are in, and tap Next."], ["We already wrote a friendly one", "The welcome message is already written for you. Keep it, or change it to sound like you. Tap Next."], ["Your contest goes live right away either way", "A website is optional, and your contest goes live right away without one. Tap Next."], ["Entries and voting open and close", "These three dates are filled in for you: the last day to enter, and when voting starts and ends. Tap Next."]];
+  return steps.filter((x) => !(x.say && DROP.some((d) => x.say.startsWith(d)))).map((x) => { const r = x.say && SHORT.find(([k]) => x.say.startsWith(k)); return r && r[1] ? { ...x, say: r[1] } : x; });
+};
+S.custom = { id: "custom", file: "run-custom", cookie: ck.u_org, ...MAPSPEC, maxSeconds: 480, steps: [
   { ...hook(ER, "Create a contest with Customize", "Judges, prizes, categories and rules", "In this video, you will set up a contest exactly your way: your own voting categories, invited judges, a prize, and your own rules. I will explain every choice as we go, so you know what each one does. We will start on the map."), pre: authPre },
-  ...wizardStart("Pine Ridge Holiday Lights 2026", 16),
+  ...condense(wizardStart("Pine Ridge Holiday Lights 2026", 16)),
   { cap: "6 of 16: How to set it up", say: "Here is the big choice. Quick start sets everything up for you. Customize everything lets you decide each rule yourself. We want to decide, so choose Customize everything, then tap Next.", do: async (p, h) => { await h.hover('[data-tile="quick|yes"]', 800); }, target: '[data-tile="quick|no"]', after: 1000, post: (p, h) => next(p, h) },
   { cap: "7 of 16: Categories", say: "Now the voting categories. Every home competes in every category, and each voter picks one favorite home in each. So the categories are the awards you will give out.", do: async (p, h) => { await h.hover(".tiles", 1200); }, pad: 0.3 },
   { cap: "7 of 16: Categories", say: "These four are suggested. Tap one to turn it off. Best Overall is a category like any other, so you can keep it, or drop it. You need at least one.", do: async (p, h) => { await h.hover('[data-tile], .tile', 1000); }, pad: 0.3 },
