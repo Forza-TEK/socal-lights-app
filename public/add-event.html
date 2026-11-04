@@ -32,7 +32,10 @@ if (!acct) {
 const cfg = await ts.init(), pay = !!cfg.featureCheckout && !IN_APP; // paid placement is offered only when online payment is on, and never inside the store apps
 const d = { url: "", name: "", season: defaultSeason(today), type: "", start: "", end: "", hours: "", free: "yes", price: "", venue: "", street: "", city: "", blurb: "", email: "", plan: "" };
 d.email = acct.email;
-const PLANS = [["", "No thanks, just list it", "Free"], ["pin", "Featured pin: $5", "Gold-ringed pin and Featured badge for 30 days"], ["top", "Top of the list: $10", "Everything above, plus listed first for 30 days"], ["season", "Whole season: $15", "Everything above, until your event ends"]];
+// Prices come from /api/config (functions/_lib/featured.js); only the wording lives here.
+const PLAN_COPY = { pin: ["Featured pin", "Gold-ringed pin and Featured badge for"], top: ["Top of the list", "Everything above, plus listed first for"], season: ["Whole season", "Everything above, until your event ends"] };
+const FP = cfg.featurePlans || {};
+const PLANS = [["", "No thanks, just list it", "Free"], ...Object.keys(PLAN_COPY).filter((k) => FP[k]).map((k) => [k, `${PLAN_COPY[k][0]}: $${FP[k].cents / 100}`, FP[k].days ? `${PLAN_COPY[k][1]} ${FP[k].days} days` : PLAN_COPY[k][1]])];
 
 const steps = [
   { id: "url", sec: "Basics", title: "Do you have a web page for your event?", help: "If the page mentions your event's name and date, it shows as Confirmed. Without one, it still goes on the map right away, marked Expected until the dates are checked.",
@@ -62,7 +65,7 @@ const steps = [
       if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
       if (x.plan && pay) {
         // Straight on to Stripe. A published event is featured by its id; one in review is held until it is approved.
-        const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(j.status === "published" || j.status === "duplicate" ? { event_id: j.id, plan: x.plan } : { submission_id: j.submission_id, plan: x.plan }) });
+        const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(j.status === "published" || j.status === "duplicate" ? { event_id: j.id } : { submission_id: j.submission_id }), plan: x.plan, email: x.email }) });
         const cd = await c.json().catch(() => ({}));
         if (c.ok && cd.url) { location.href = cd.url; return; }
         api.finish(`<h1>${esc(j.message)}</h1><p class="help">We couldn't open the payment page just now. You can <a href="/feature">feature your event from here</a> any time.</p>`); return;

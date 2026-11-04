@@ -16,12 +16,12 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
 - To get started: apply to Amazon Associates (needs 3 qualifying sales in 180 days to stay active) and to ticket programs such as Eventbrite, Ticketmaster (via Impact), Groupon (via Impact). Each has its own approval.
 
 ## 3. Feature your event
-**Automatic (Stripe):** see `docs/stripe-setup.md`. Once the two Stripe secrets are set, visitors pick their event and pay on `/feature`, and the placement turns on by itself. The notes below describe the manual Cash App fallback that is used until then.
+**Automatic (Stripe):** see `docs/stripe-setup.md`. Once the two Stripe secrets are set, visitors pick their event and pay on `/feature`, and the placement turns on by itself. The manual SQL below is only for comping a placement by hand.
 
-- Page: `/feature` (plans: Featured pin $5 / 30 days, Top of the list $10 / 30 days, Whole season $15). Edit the copy and prices in `public/feature.html`
-  (and the matching `NAMES` in its script).
-- Payment: Cash App links in `featurePay.pin|top|season` (`https://cash.app/$RelaxationMeditation/5`, `/10`, `/15`). The customer puts their event name in
-  the Cash App note, then emails the event link to `contactEmail` (info@socallights.app). Clear a value to fall back to an email button.
+- Page: `/feature` (plans: Featured pin $5 / 30 days, Top of the list $10 / 30 days, Whole season $15). Prices are defined only in `functions/_lib/featured.js`
+  (`PLANS`) and reach the pages through `/api/config`; the HTML holds wording only. Linked from the ⋯ menu as "Promote your event" (hidden in the store apps).
+- Payment: Stripe only. The Cash App payment links (`featurePay`) were removed; if Stripe isn't switched on, `/feature` shows an email-us message to `contactEmail`.
+  Refunds and disputes switch the placement off automatically (see `docs/stripe-setup.md`).
 - Database: migration `0062_featured_events.sql` adds `featured` (0/1) and `featured_until` (YYYY-MM-DD, optional) to `events`.
   Featured events get a gold "Featured" badge, sort to the top of the list, and show a bigger gold-ringed pin. The API exposes it as `f`.
 - To turn a placement on after payment, add a new migration (never edit an old one):
@@ -31,7 +31,7 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
   ```
   Placement ends by itself after `featured_until`. Scheduled upkeep and sweep upserts never touch these two columns.
 - Featured must stay honest: the event still has to be real, public and verified, and the badge is always shown.
-- History: built 2026-10-28, removed briefly the same day, then restored with Cash App payments and $5/$10/$15 pricing.
+- History: built 2026-10-28, removed briefly the same day, then restored with Cash App payments; Cash App links replaced by Stripe-only checkout 2026-11-04.
 
 ## 4. Add your event (free, public)
 `/add-event` lets organizers add events themselves; page-verified events publish automatically, others go to the admin "Submitted events" tab. Details in `docs/stripe-setup.md`.

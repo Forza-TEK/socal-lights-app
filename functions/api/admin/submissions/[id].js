@@ -45,14 +45,14 @@ export async function onRequestPost({ request, env, params, waitUntil }) {
     blurb: s.blurb, url: s.url, season: s.season, venue: s.venue, address: s.address });
   await env.DB.prepare("UPDATE event_submissions SET status='published', event_id=? WHERE id = ?").bind(eventId, s.id).run();
   // Apply any Featured plans paid for while this event was waiting for review.
-  const { results: orders } = await env.DB.prepare("SELECT plan FROM feature_orders WHERE event_id = ? ORDER BY created_at").bind("sub:" + s.id).all();
+  const { results: orders } = await env.DB.prepare("SELECT plan FROM feature_orders WHERE event_id = ? AND status = 'paid' AND applied = 0 ORDER BY created_at").bind("sub:" + s.id).all();
   if (orders.length) {
     const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
     let ev = await env.DB.prepare("SELECT id, end_date, featured, featured_until FROM events WHERE id = ?").bind(eventId).first();
     for (const o of orders) ev = { ...ev, ...applyPlan(ev, o.plan, today) };
     await env.DB.batch([
       env.DB.prepare("UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=?").bind(ev.featured, ev.featured_until, eventId),
-      env.DB.prepare("UPDATE feature_orders SET event_id=? WHERE event_id=?").bind(eventId, "sub:" + s.id),
+      env.DB.prepare("UPDATE feature_orders SET event_id=?, applied=1, applied_featured=?, applied_until=? WHERE event_id=? AND status='paid' AND applied=0").bind(eventId, ev.featured, ev.featured_until, "sub:" + s.id),
     ]);
   }
   if (b.notify !== false) { tell(env, waitUntil, s.contact_email, "event_approved", { name: s.name }); }

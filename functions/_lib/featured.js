@@ -5,6 +5,9 @@ export const PLANS = {
   season: { label: "Whole season (until the event ends)", cents: 1500, level: 2, days: 0 },
 };
 
+// What the browser may know about plans (served by /api/config). Prices exist only in PLANS above.
+export const PUBLIC_PLANS = Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, days: p.days, level: p.level }]));
+
 const addDays = (ymd, n) => new Date(Date.parse(ymd + "T00:00:00Z") + n * 86400_000).toISOString().slice(0, 10);
 
 // New featured/featured_until for an event after a paid plan. Extending a running placement adds time on top of it; the level never goes down.
@@ -31,4 +34,17 @@ export async function verifyStripeSignature(raw, header, secret, nowSec = Math.f
   const hex = [...mac].map((b) => b.toString(16).padStart(2, "0")).join("");
   const eq = (a, b) => { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
   return sigs.some((s) => eq(s, hex));
+}
+
+// Switches off the placement an order applied (refund / lost dispute). Only touches the event if it still holds exactly what this
+// order wrote, so a hand-comped or later-extended placement is never wiped. Always records the new order status.
+export async function revokePlan(db, order, status) {
+  let manual = false;
+  if (order.applied && order.event_id && !order.event_id.startsWith("sub:")) {
+    const r = await db.prepare("UPDATE events SET featured=0, featured_until=NULL, updated_at=datetime('now') WHERE id=? AND featured=? AND featured_until IS ?")
+      .bind(order.event_id, order.applied_featured, order.applied_until ?? null).run();
+    manual = !(r.meta && r.meta.changes);
+  }
+  await db.prepare("UPDATE feature_orders SET status=?, refunded_at=COALESCE(refunded_at, datetime('now')) WHERE session_id=?").bind(status, order.session_id).run();
+  return manual;
 }

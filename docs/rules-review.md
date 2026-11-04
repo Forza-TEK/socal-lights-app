@@ -1,5 +1,7 @@
 # Official rules review (2026-11-01)
 
+**Update 2026-11-04:** `docs/monetization/legal-research.md` has the actual statute text. It shows B&P 17539.15 is a sweepstakes-mailing statute and not the basis for these rules, and that 17539.1 requires stating a prize's "exact nature and approximate value" (our rules say "Prizes have no cash value"). Treat the statute numbers below as unverified until an attorney reviews.
+
 **Read this first.** This is a review written by an AI assistant acting in the role of a California contest attorney. It is not legal advice and no attorney has reviewed it. Statute numbers below are from memory and one search; the search found only the 2008 amendments to Business and Professions Code (B&P) 17539.15 and nothing current. Have a California attorney confirm every citation and the final wording before any contest offers a prize.
 
 ## Why a free, vote-based contest is lower risk
