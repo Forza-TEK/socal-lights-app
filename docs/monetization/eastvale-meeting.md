@@ -1,6 +1,6 @@
 # Eastvale walkthrough: Monday, November 9, 2026, 2:00 PM
 
-_Prepared by the CEO session, 2026-11-04. The first organizer to answer the contest outreach. Confirmed in the owner's mailbox: the City of Eastvale's management analyst wrote "We are interested in this platform!", asked for a Zoom, and then accepted **Monday Nov 9 at 2:00 PM**. The owner still needs to send the Zoom invitation. Nothing below has been sent to the city._
+_Prepared by the CEO session, 2026-11-04. The first organizer to answer the contest outreach. Confirmed in the owner's mailbox: the City of Eastvale's management analyst wrote "We are interested in this platform!", asked for a Zoom, and then accepted **Monday Nov 9 at 2:00 PM**. **The Zoom invitation was sent on Nov 4 and the city replied.** Use `city-contest-meeting-kit.md` for the agenda, honest answers and the sign-in plan (city email systems may quarantine the sign-in code). Nothing below has been sent to the city._
 
 ## What we know, and what we do not
 | Fact | Source / status |
@@ -48,7 +48,7 @@ _Prepared by the CEO session, 2026-11-04. The first organizer to answer the cont
 Traffic or audience claims; that installers or sponsors are involved; that the city is endorsing us; "free forever"; anything about 2027 plans.
 
 ## Before Monday (CEO and owner)
-- [ ] Owner: send the Zoom invitation for Nov 9 at 2:00 PM and ask Amanda whether JCSD Parks and Recreation should join.
+- [x] Owner: Zoom invitation for Nov 9 at 2:00 PM sent. Still to ask: whether JCSD Parks and Recreation should join.
 - [ ] CEO: build a demo contest in the **preview environment** (not the live map): 8 sample homes, votes, two judges, an announced contest, so the walkthrough shows real-looking results. Say the word and I will build it.
 - [ ] CEO: fix the top accessibility basics from the UX audit before the meeting (combobox role on search, `<main>` on the Add pages, contrast on the Live tab).
 - [ ] Owner: decide whether to offer to create the contest for them during or right after the call.
