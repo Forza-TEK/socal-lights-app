@@ -10,14 +10,14 @@
           "title": "Find lights near me",
           "desc": "Use your location, the seasons, city search and filters to find what is on near you.",
           "url": "/tutorials/find-map.mp4",
-          "length": "1:31",
+          "length": "2:34",
           "captions": "/tutorials/find-map.vtt",
           "poster": "/tutorials/find-map.jpg",
           "mobile": {
             "url": "/tutorials/find-map-mobile.mp4",
             "poster": "/tutorials/find-map-mobile.jpg",
             "captions": "/tutorials/find-map-mobile.vtt",
-            "length": "1:28"
+            "length": "2:32"
           }
         },
         {
@@ -25,14 +25,14 @@
           "title": "Plan a night",
           "desc": "Save favorites, build a route, share it and add it to your calendar.",
           "url": "/tutorials/find-night.mp4",
-          "length": "1:33",
+          "length": "2:28",
           "captions": "/tutorials/find-night.vtt",
           "poster": "/tutorials/find-night.jpg",
           "mobile": {
             "url": "/tutorials/find-night-mobile.mp4",
             "poster": "/tutorials/find-night-mobile.jpg",
             "captions": "/tutorials/find-night-mobile.vtt",
-            "length": "1:28"
+            "length": "2:28"
           }
         },
         {
@@ -55,14 +55,14 @@
           "title": "Install the app and use it offline",
           "desc": "Add SoCal Lights to your phone and use it without a connection.",
           "url": "/tutorials/find-app.mp4",
-          "length": "0:46",
+          "length": "1:11",
           "captions": "/tutorials/find-app.vtt",
           "poster": "/tutorials/find-app.jpg",
           "mobile": {
             "url": "/tutorials/find-app-mobile.mp4",
             "poster": "/tutorials/find-app-mobile.jpg",
             "captions": "/tutorials/find-app-mobile.vtt",
-            "length": "0:46"
+            "length": "1:11"
           }
         },
         {
@@ -70,14 +70,14 @@
           "title": "Find contests: the Contests page",
           "desc": "Live now, Mine and Past results, and the Enter or vote button on a map card.",
           "url": "/tutorials/find-contests.mp4",
-          "length": "1:06",
+          "length": "1:54",
           "captions": "/tutorials/find-contests.vtt",
           "poster": "/tutorials/find-contests.jpg",
           "mobile": {
             "url": "/tutorials/find-contests-mobile.mp4",
             "poster": "/tutorials/find-contests-mobile.jpg",
             "captions": "/tutorials/find-contests-mobile.vtt",
-            "length": "1:06"
+            "length": "1:54"
           }
         },
         {
@@ -85,14 +85,14 @@
           "title": "Find professionally installed displays",
           "desc": "Use the Professionally installed filter, then open an installer's profile.",
           "url": "/tutorials/find-pro.mp4",
-          "length": "1:08",
+          "length": "1:51",
           "captions": "/tutorials/find-pro.vtt",
           "poster": "/tutorials/find-pro.jpg",
           "mobile": {
             "url": "/tutorials/find-pro-mobile.mp4",
             "poster": "/tutorials/find-pro-mobile.jpg",
             "captions": "/tutorials/find-pro-mobile.vtt",
-            "length": "1:08"
+            "length": "1:46"
           }
         }
       ]
@@ -241,14 +241,14 @@
           "title": "Approve and decline entries",
           "desc": "Approve, decline with a reason, and undo a decline.",
           "url": "/tutorials/run-approve.mp4",
-          "length": "1:18",
+          "length": "2:24",
           "captions": "/tutorials/run-approve.vtt",
           "poster": "/tutorials/run-approve.jpg",
           "mobile": {
             "url": "/tutorials/run-approve-mobile.mp4",
             "poster": "/tutorials/run-approve-mobile.jpg",
             "captions": "/tutorials/run-approve-mobile.vtt",
-            "length": "1:17"
+            "length": "2:24"
           }
         },
         {
