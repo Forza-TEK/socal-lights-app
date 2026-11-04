@@ -21,6 +21,12 @@ _Last updated 2026-11-04 (CEO session). `[x]` done and verified, `[ ]` open. Det
 - [x] Free uptime check on GitHub (every 15 minutes, emails on failure; tests the app through pages.dev because the zone answers cloud addresses with 403)
 
 ## 2. Needs you (owner)
+**Urgent: outreach and your mailbox (`monetization/email-outreach-analysis.md`)**
+- [ ] **Slow the Grok sending now.** Microsoft warned the mailbox on Oct 31 ("Suspicious email sending patterns detected ... will be restricted if this activity continues") about 45 minutes after a burst of 42 emails in about 160 seconds. A restriction would also stop your real business mail from forza-tek.com. Until a separate sending domain exists: at most 15 a day, one every 2 to 6 minutes, never in bursts.
+- [ ] **Do not let the agents send until the postal address is filled in.** 121 earlier first-touch emails had no address and no opt-out; only the 5 sent on Nov 4 have an opt-out line. Give the agents `monetization/grok-email-playbook.md`.
+- [ ] Set up a **separate sending domain or subdomain and mailbox** for cold outreach, kept apart from forza-tek.com and from the site's `login@` mail (the analysis has a warm-up schedule).
+- [ ] **Two Zoom meetings are booked:** Covina (Nov 5) and Eastvale (Nov 9, 2:00 PM; kit in `monetization/eastvale-meeting.md`). Send the Eastvale invitation.
+- [ ] Add the do-not-contact list (Mission Viejo and the other organizations written to the CEO's list) to the agents so no organization gets two emails.
 **Today**
 - [ ] **$10 test purchase**, then refund it: Add an event, Feature, sign in, pay the $10 pin. Tell the CEO session; it verifies the charge, the placement, the webhook delivery and the refund. This is the only real test of the payment path.
 - [ ] **Redeploy once** (Workers and Pages, socal-lights, Deployments, latest, Retry deployment) so the mailing-address secret loads; it also loads on the next merge.
