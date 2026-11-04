@@ -1,0 +1,31 @@
+# Free uptime check. Every 15 minutes it asks the live site for four things; if any is still wrong after three tries
+# the run fails and GitHub emails the repository's owners ("workflow run failed"). No third-party actions, no secrets.
+# Why not Cloudflare Health Checks: not offered on the Free plan.
+name: Uptime check
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Check the live site
+        run: |
+          fail=0
+          check() { # url, text the page must contain
+            code=000
+            for try in 1 2 3; do
+              code=$(curl -sS -m 20 -o /tmp/body -w "%{http_code}" "$1" 2>/dev/null || echo 000)
+              if [ "$code" = "200" ] && grep -q "$2" /tmp/body; then echo "ok   $1"; return 0; fi
+              echo "try $try failed: $1 -> $code"; sleep 20
+            done
+            echo "::error::$1 is not healthy (last status $code)"; fail=1
+          }
+          check "https://socallights.app/" "SoCal Lights"
+          check "https://socallights.app/api/config" "turnstileSiteKey"
+          check "https://socallights.app/api/events" '"id"'
+          check "https://socallights.app/in/irvine" "Irvine"
+          exit $fail
