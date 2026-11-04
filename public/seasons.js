@@ -6,7 +6,7 @@ export const SEASONS = {
     label: "New Year's & Lunar New Year",
     short: "New Year",
     // month-day window when this season is the default view (inclusive; may wrap the year end)
-    window: ["12-27", "02-19"],
+    window: ["12-27", "01-31"],
     types: {
       nye: "New Year's Eve & fireworks",
       family: "Noon Year's & family events",
@@ -26,10 +26,34 @@ export const SEASONS = {
       pitch: "Lights still glowing for New Year's, or lanterns and red-and-gold for Lunar New Year? Put your house on the map so neighbors can stop by.",
     },
   },
+  valentines: {
+    label: "Valentine's Day",
+    short: "Valentine's",
+    window: ["02-01", "02-15"],
+    types: {
+      romance: "Date nights & dinners",
+      dance: "Dances & parties",
+      sweets: "Chocolate, wine & tastings",
+      run: "Cupid runs & fun runs",
+      lights: "Lights & light shows",
+      show: "Shows, concerts & movies",
+      family: "Family & kids events",
+    },
+    quickDates: [
+      ["2027-02-12", "Fri, Feb 12"],
+      ["2027-02-13", "Sat, Feb 13"],
+      ["2027-02-14", "Valentine's Day (Sun, Feb 14)"],
+    ],
+    dateRange: ["2027-01-30", "2027-02-21"],
+    showcase: {
+      title: "Showcase a House",
+      pitch: "Hearts on the roofline, pink and red lights, or a sweetheart display? Put your house on the map so couples and families can stop by on Valentine's night.",
+    },
+  },
   spring: {
     label: "Spring Blooms, Easter & Cinco de Mayo",
     short: "Spring",
-    window: ["02-20", "05-15"],
+    window: ["02-16", "05-15"],
     types: {
       bloom: "Flower fields & wildflowers",
       nature: "Whale watching & nature",
@@ -131,7 +155,7 @@ export const SEASON_KEYS = Object.keys(SEASONS);
 export const TYPE_SHORT = {
   trot: "Turkey trot", thanks: "Thanksgiving", walk: "Walk-through", drive: "Drive-by", parade: "Parade", park: "Park / zoo", tree: "Tree lighting", tour: "Tour / ride",
   haunt: "Haunt", pumpkin: "Pumpkins", family: "Family event", dia: "Día de los Muertos", show: "Show",
-  nye: "New Year's Eve", lunar: "Lunar New Year", bloom: "Blooms", nature: "Nature", stpat: "St. Patrick's",
+  nye: "New Year's Eve", lunar: "Lunar New Year", romance: "Date night", dance: "Dance / party", sweets: "Chocolate & wine", run: "Cupid run", lights: "Lights", bloom: "Blooms", nature: "Nature", stpat: "St. Patrick's",
   easter: "Easter", cinco: "Cinco de Mayo", festival: "Festival", fireworks: "Fireworks", fair: "Fair", concert: "Concert / movie",
 };
 
@@ -169,8 +193,9 @@ export function seasonStarts(k, isoDate) {
 const PHASES = {
   halloween: [["09-01", "10-31", "🎃", "Halloween"], ["11-01", "11-02", "💀", "Día de los Muertos"]],
   christmas: [["11-03", "11-26", "🦃", "Thanksgiving"], ["11-27", "12-26", "🎄", "Christmas Lights"]],
-  newyear: [["12-27", "01-01", "🎆", "New Year's Eve"], ["01-02", "02-19", "🏮", "Lunar New Year"]],
-  spring: [["02-20", "03-14", "🌷", "Spring Blooms"], ["03-15", "04-25", "🐣", "Easter"], ["04-26", "05-15", "🌮", "Cinco de Mayo"]],
+  newyear: [["12-27", "01-01", "🎆", "New Year's Eve"], ["01-02", "01-31", "🏮", "Lunar New Year"]],
+  valentines: [["02-01", "02-15", "💘", "Valentine's Day"]],
+  spring: [["02-16", "03-14", "🌷", "Spring Blooms"], ["03-15", "04-25", "🐣", "Easter"], ["04-26", "05-15", "🌮", "Cinco de Mayo"]],
   summer: [["05-16", "06-24", "☀️", "Summer"], ["06-25", "07-05", "🎇", "Fourth of July"], ["07-06", "08-31", "🏖️", "Summer"]],
 };
 // The phase for a season on a date: the one happening now if the date is inside the season, otherwise the first one coming up.

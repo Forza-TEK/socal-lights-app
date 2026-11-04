@@ -1,6 +1,6 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js";
-import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261101e";
+import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261104a";
 import { STOCK } from "/stock.js";
 import { SITE } from "/site-config.js?v=20261031j";
 import "/norm-ui.js?v=20261102b";
@@ -12,8 +12,8 @@ import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261105a";
 const MAP_STYLES = { light: "https://tiles.openfreemap.org/styles/liberty", dark: "/map-dark.json?v=20261031j" };
 const theme = () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 // Pin and cluster colors: free events are green; ticketed events, clusters and the route take the season's accent
-const SEASON_HEX = { light: { newyear: "#6d3fc0", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
-  dark: { newyear: "#a98bf0", spring: "#f07cb2", summer: "#6fa8f2", halloween: "#ff8a3d", christmas: "#ff6b6b" } };
+const SEASON_HEX = { light: { newyear: "#6d3fc0", valentines: "#b0123f", spring: "#c0306f", summer: "#1e63c4", halloween: "#e8590c", christmas: "#d1343f" },
+  dark: { newyear: "#a98bf0", valentines: "#ff5c82", spring: "#f07cb2", summer: "#6fa8f2", halloween: "#ff8a3d", christmas: "#ff6b6b" } };
 function mapColors() {
   const t = theme(), dark = t === "dark";
   return { season: SEASON_HEX[t][state.season] || "#e8590c", free: dark ? "#3ddc97" : "#0f9d6b", fav: dark ? "#f5c461" : "#c98a06", inst: dark ? "#7fb6ee" : "#2f6fd0",
@@ -706,6 +706,7 @@ function renderPanel(opts) {
     if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
     listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE);
     body.innerHTML = vis.length ? `<div class="list">${vis.slice(0, listShown).map((it, i) => listCard(it, i)).join("")}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
+      : !state.all && !state.city && !E.some((e) => (e.sn || "christmas") === state.season) ? `<div class="empty">No ${esc((SEASONS[state.season] || {}).short || "seasonal")} events are listed yet. We start adding them about six weeks ahead, so check back soon. Know of one? <a href="/add-event">Add an event</a>.</div>`
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
@@ -870,7 +871,7 @@ const isAff = (u) => !!affRule(u);
 function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) return r.template.replace("{url}", encodeURIComponent(u)); try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
 // High-end first: the search words get a "premium" nudge and Amazon sorts the results by price, high to low.
 const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(SITE.shopHighEnd ? q + " " + SITE.shopHighEnd : q)}${SITE.shopSort ? "&s=" + encodeURIComponent(SITE.shopSort) : ""}&tag=${encodeURIComponent(SITE.amazonTag)}`;
-const SHOP_ICON = { halloween: "🎃", christmas: "🎄", newyear: "🎆", spring: "🌷", summer: "☀️" };
+const SHOP_ICON = { halloween: "🎃", christmas: "🎄", newyear: "🎆", valentines: "💘", spring: "🌷", summer: "☀️" };
 const shopSeason = () => (SITE.shop[state.shopSeason] ? state.shopSeason : state.season); // follows the season button at the top until you pick another here
 const shopCats = () => (SITE.amazonTag ? SITE.shop[shopSeason()] || [] : []);
 // The Shop tab only exists when there is an Amazon tag and shop list for the season.
@@ -1101,7 +1102,7 @@ function seasonPeek(ms) {
   seasonMiniT = setTimeout(() => { if (!$("#seasonmenu")) sb.classList.add("mini"); }, ms);
 }
 { const sb = $("#seasonbtn"); if (sb) { sb.addEventListener("mouseenter", () => { clearTimeout(seasonMiniT); sb.classList.remove("mini"); }); sb.addEventListener("mouseleave", () => seasonPeek(1800)); sb.addEventListener("focus", () => { clearTimeout(seasonMiniT); sb.classList.remove("mini"); }); } }
-// One "Halloween ▾" button lists the five seasons (beside the search on desktop, under it on phones)
+// One "Halloween ▾" button lists the six seasons (beside the search on desktop, under it on phones)
 function toggleSeasonPick(btn, mode) {
   const shop = mode === "shop", cur = shop ? shopSeason() : state.all ? "all" : state.season; // the Shop tab uses this same menu to choose what to shop for
   if ($("#seasonmenu")) { closeSeasonMenu(); return; }

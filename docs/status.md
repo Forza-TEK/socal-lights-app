@@ -2,6 +2,10 @@
 
 _Last updated: 2026-11-02_
 
+## Valentine's Day season (2026-11-04)
+- New season `valentines` (Feb 1-15) between New Year and Spring: `public/seasons.js` (types romance, dance, sweets, run, lights, show, family; quick dates Feb 12-14, 2027), color in all three stylesheets, 💘 icon, Shop tab categories (`public/site-config.js`), a Valentine's poster and yard sign theme (`public/printables.js`), and a message when a season has no events yet. Windows changed: `newyear` now ends Jan 31 (was Feb 19) and `spring` starts Feb 16 (was Feb 20). Lunar New Year events stay in `newyear`.
+- Sweeps: `docs/city-sweep.md` has a "Valentine's Day" section (what to add, types, search terms); the [SCL] City sweep task prompt now says to start on Valentine's from Dec 21 and make it primary Jan 1 - Feb 15. The weekly upkeep and browser pass pick the season up from `public/seasons.js` on their own. No Valentine's events exist yet.
+
 ## Festive poster and yard sign (2026-11-04)
 - The entry poster and the "VOTE!" yard sign are now themed by the contest's season (Halloween, Christmas, New Year, Spring, Summer): colored background, string lights, seasonal motifs, a framed QR code, the contest's dates. One letter page each. Code in `public/printables.js` and `public/printables.css`; shown as previews on the organizer dashboard (Share it) and the contest wizard's finish screen. In the print window, "Background graphics" must be on.
 
