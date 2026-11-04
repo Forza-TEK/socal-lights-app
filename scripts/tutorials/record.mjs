@@ -145,7 +145,7 @@ export async function record(spec) {
   const ts = (x) => { const m = Math.floor(x / 60), sec = x - m * 60; return `00:${String(m).padStart(2, "0")}:${sec.toFixed(3).padStart(6, "0")}`; };
   const cues = []; for (const m of marks) { const text = say[m.i], d = audio[m.i].d, parts = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text], total = parts.reduce((a, x) => a + x.length, 0); let at = m.t; for (const part of parts) { const len = d * part.length / total; cues.push(`${ts(at)} --> ${ts(at + len)}\n${part.trim()}`); at += len; } }
   writeFileSync(`${OUT}/${spec.file}${MOB ? "-mobile" : ""}.vtt`, "WEBVTT\n\n" + cues.join("\n\n") + "\n");
-  if (poster !== null) execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", String(poster), "-i", mp4, "-frames:v", "1", "-q:v", "4", `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.jpg`]);
+  execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", "0", "-i", mp4, "-frames:v", "1", "-q:v", "4", `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.jpg`]);
   const L = dur(mp4); console.log(spec.file, "length", Math.floor(L / 60) + ":" + String(Math.round(L % 60)).padStart(2, "0"));
   writeFileSync(`${w}/script.txt`, say.filter(Boolean).join("\n\n")); rmSync(fdir, { recursive: true, force: true });
 }
