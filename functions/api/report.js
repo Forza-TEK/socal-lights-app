@@ -1,6 +1,7 @@
 // POST /api/report { ref, name, message, contact } — "Something wrong? Tell us" from an event or home. Kept for the site owner,
 // counted in the three-a-day email. Five a hour per connection.
 import { json, err, clean, newId } from "../_lib/util.js";
+import { ipPruneStatements } from "../_lib/retention.js";
 import { normEmailText, normText } from "../_lib/fields.js";
 import { looksEmail } from "../../public/norm.js";
 
@@ -15,6 +16,7 @@ export async function onRequestPost({ request, env }) {
   await env.DB.batch([
     env.DB.prepare("INSERT INTO reports (id, ref, name, message, contact) VALUES (?,?,?,?,?)").bind(newId(), ref, name, message, contact),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
+    ...ipPruneStatements(env),
   ]);
   return json({ ok: true });
 }

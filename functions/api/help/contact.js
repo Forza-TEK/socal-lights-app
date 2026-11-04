@@ -1,5 +1,6 @@
 // POST /api/help/contact { ref, message, contact } — "Still stuck? Ask us". Lands in Admin > Reports (and the daily digest email), five an hour per connection.
 import { json, err, clean, newId } from "../../_lib/util.js";
+import { ipPruneStatements } from "../../_lib/retention.js";
 import { normEmailText, normText } from "../../_lib/fields.js";
 import { looksEmail } from "../../../public/norm.js";
 
@@ -14,6 +15,7 @@ export async function onRequestPost({ request, env }) {
   await env.DB.batch([
     env.DB.prepare("INSERT INTO reports (id, ref, name, message, contact) VALUES (?,?,?,?,?)").bind(newId(), ref, "Help Center question", message, contact),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
+    ...ipPruneStatements(env),
   ]);
   return json({ ok: true });
 }

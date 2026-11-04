@@ -13,7 +13,7 @@ export async function onRequestPost({ params, request, env }) {
   const c = await getContest(env, params.slug);
   if (!c || c.status !== "live" || !c.installer_name || !c.installer_email) return err(404, "This contest isn't taking quote requests.");
   const b = await request.json().catch(() => ({}));
-  if (b.consent !== true) return err(400, "Tick the box to share your details with the installer.");
+  if (b.consent !== true) return err(400, "Tick the box to send your request to the installer and the contest organizer.");
   const name = normName(clean(b.name, 80)), ph = phoneField(b.phone), note = line(b.note, 400);
   if (ph.error) return err(400, ph.error);
   const phone = ph.value;

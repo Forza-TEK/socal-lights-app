@@ -1,6 +1,7 @@
 // POST /api/auth/email/start { email } — emails a 6-digit sign-in code (valid 10 minutes).
 import { json, err, verifyTurnstile } from "../../../_lib/util.js";
 import { sendTemplate } from "../../../_lib/mailtpl.js";
+import { ipPruneStatements } from "../../../_lib/retention.js";
 import { normEmail, okEmail, isDisposable, sha256, sameOrigin, isSuspended, SUSPENDED_MSG } from "../../../_lib/auth.js";
 
 export async function onRequestPost({ request, env }) {
@@ -22,7 +23,7 @@ export async function onRequestPost({ request, env }) {
   const exp = new Date(Date.now() + 10 * 60_000).toISOString().slice(0, 19).replace("T", " ");
   await env.DB.batch([
     env.DB.prepare("INSERT INTO login_codes (email,code_hash,ip,expires_at) VALUES (?,?,?,?)").bind(email, await sha256(`${email}:${code}`), ip, exp),
-    env.DB.prepare("DELETE FROM login_codes WHERE expires_at < datetime('now','-1 day')"),
+    ...ipPruneStatements(env),
   ]);
   // Local development only (DEV_AUTH=1 in .dev.vars, localhost): hand the code back instead of emailing it.
   if (env.DEV_AUTH === "1" && new URL(request.url).hostname === "localhost" && !env.RESEND_API_KEY) return json({ ok: true, devCode: code });

@@ -2,6 +2,7 @@
 // The event is geocoded and its web page is checked. If the page really mentions the event and its year, the event
 // is published straight away; otherwise it waits in the admin's "Submitted events" tab. Either way it is logged.
 import { json, err, clean, webUrl, newId, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { ipPruneStatements } from "../_lib/retention.js";
 import { requireUser, sameOrigin } from "../_lib/auth.js";
 import { isDate, slug, upsertEvent, verifyEventPage } from "../_lib/events.js";
 import { normName, line, normEmailText } from "../_lib/fields.js";
@@ -79,7 +80,7 @@ export async function onRequestPost({ request, env }) {
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
     ).bind(id, auto ? "published" : "pending", e.name, county, e.city, e.season, e.type, e.start_date, e.end_date, e.free, e.price, e.hours, lat, lng, e.blurb, e.url, e.venue, e.address, e.email, check.ok ? 1 : 0, reasons.join("; ") || check.note, eventId),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
-    env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
+    ...ipPruneStatements(env),
   ]);
 
   if (auto) {

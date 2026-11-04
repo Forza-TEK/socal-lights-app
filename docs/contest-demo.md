@@ -7,7 +7,7 @@ Chapters in the video: 0:10 Create the contest · 1:46 A neighbor enters their h
 ## Before the demo (15 minutes, the day before)
 1. **Sign-in works:** open `https://socallights.app/profile` and sign in with Google and with an emailed code. If either fails, fix it first (`docs/contests.md`, "Turning it on").
 2. **Email works:** request a code to a second address and confirm it arrives from `login@socallights.app`. Winner and judge emails use the same sender.
-3. **Make a practice contest** with an email at your organization's website so it goes live immediately (a Gmail address waits for approval). Delete or leave it; it is closed by deleting the account or letting its dates pass.
+3. **Make a practice contest** with an email at your organization's website so it is marked as verified and can buy Featured (every contest goes live immediately, but one whose organizer email does not match a website is flagged for an Admin check before it can buy Featured). For a demo that must not appear on the live map, use the separate preview environment (`docs/CHECKLIST.md`, preview database) instead of creating a practice contest on the live site. Delete or leave it; it is closed by deleting the account or letting its dates pass.
 4. **Two phones and a laptop:** laptop = organizer dashboard; phone A = neighbor entering and voting; phone B = a judge. Use two different email addresses.
 5. **Pre-load a few entries** so the dashboard and results are not empty. Entries need photos taken or chosen on the phone.
 6. **Turn on the light or dark mode** you prefer (circle at the top right of every page).
