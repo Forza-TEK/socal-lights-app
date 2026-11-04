@@ -58,6 +58,6 @@ for (const [d, src, n] of [[0, "", 31], [1, "", 24], [2, "", 12], [0, "qr", 9], 
 // optional extra for the "Announce winners" video: the judge has finished scoring every home, so announcing needs no "tap again to announce anyway"
 const judged = []; [...homes, mine].forEach(([id], i) => cats.forEach((c, ci) => judged.push(`INSERT INTO judge_scores (contest_id,judge_id,post_id,category,score) VALUES ('c_demo','j_dana',${q(id)},${q(c)},${5 + ((i * 3 + ci * 2) % 6)});`)));
 writeFileSync(out + "/judged.sql", judged.join("\n") + "\n");
-writeFileSync(out + "/seed.sql", sql.join("\n") + "\n"); writeFileSync(out + "/cookies.json", JSON.stringify(cookies));
+sql.push("UPDATE contests SET created_at = datetime('now','-3 day');"); /* the app allows 3 new contests a day per person; recordings create them, so every existing one is made old */ writeFileSync(out + "/seed.sql", sql.join("\n") + "\n"); writeFileSync(out + "/cookies.json", JSON.stringify(cookies));
 writeFileSync(out + "/photos.json", JSON.stringify([...homes, mine, ...pending].map(([id, , , , ph]) => ({ key: `p/${id.replace("_", "")}xx/1.jpg`, file: `public/img/stock/${ph}.jpg` }))));
 console.log("wrote", out);

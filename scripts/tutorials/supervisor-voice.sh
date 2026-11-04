@@ -11,11 +11,11 @@ for round in 1 2 3; do
   for id in "$@"; do
     f=${FILE[$id]}
     if ! grep -qx "$id" $S/voice.done; then
-      res=$(scripts/tutorials/rec1.sh $id 2>&1 | tail -4); echo "$res"
+      res=$(scripts/tutorials/rec1.sh $id 2>&1 | tail -25); echo "$res" | tail -4
       if echo "$res" | grep -q " length " && ! echo "$res" | grep -q "QA FAILED"; then echo $id >> $S/voice.done; echo "$(date +%T) done $id" >> $S/voice-status.txt; else echo "$(date +%T) FAILED $id (desktop, round $round)" >> $S/voice-status.txt; echo "$res" > $S/work/last-failure-$id.txt; fi
     fi
     if grep -qx "$id" $S/voice.done && ! grep -qx "$id" $S/voice-m.done; then
-      res=$(MOBILE=1 scripts/tutorials/rec1.sh $id 2>&1 | tail -4); echo "$res"
+      res=$(MOBILE=1 scripts/tutorials/rec1.sh $id 2>&1 | tail -25); echo "$res" | tail -4
       if echo "$res" | grep -q " length " && ! echo "$res" | grep -q "QA FAILED"; then echo $id >> $S/voice-m.done; echo "$(date +%T) done $id (phone)" >> $S/voice-status.txt; else echo "$(date +%T) FAILED $id (phone, round $round)" >> $S/voice-status.txt; echo "$res" > $S/workm/last-failure-$id.txt; fi
     fi
   done
