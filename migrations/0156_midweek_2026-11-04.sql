@@ -1,0 +1,7 @@
+-- Midweek upkeep 2026-11-04: confirm events whose 2026 dates are now published
+UPDATE events SET start_date='2026-11-13', end_date='2027-01-03', status='confirmed', hours='5pm–8pm', price='$20; kids under 5 and members free', url='https://www.bigbear.com/alpine-zoo-wild-lights/', updated_at=datetime('now') WHERE id='bbzoo';
+UPDATE events SET status='confirmed', hours='5:20pm', url='https://smparadeoflights.org', updated_at=datetime('now') WHERE id='santa-maria-parade-of-lights';
+UPDATE events SET status='confirmed', hours='Music from 7pm; tree lighting and fireworks about 8pm', url='https://www.thecollectionrp.com/portfolio/tree-lighting-celebration-2026/', updated_at=datetime('now') WHERE id='riverpark-tree-lighting';
+UPDATE events SET status='confirmed', hours='Time not listed — check site', url='https://visitoxnard.com/blog/holiday-events-oxnard/', updated_at=datetime('now') WHERE id='oxnard-plaza-park-tree-lighting';
+UPDATE events SET start_date='2026-12-13', end_date='2026-12-27', status='confirmed', hours='Hours not listed — check site', url='https://visitoxnard.com/blog/holiday-events-oxnard/', updated_at=datetime('now') WHERE id='oxnard-christmas-tree-lane';
+UPDATE events SET status='confirmed', hours='6, 7 and 8pm departures', price='Prepaid reservations required', url='https://visitoxnard.com/blog/holiday-events-oxnard/', updated_at=datetime('now') WHERE id='lg-holly-trolley-oxnard';
