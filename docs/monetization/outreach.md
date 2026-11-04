@@ -11,7 +11,7 @@ A free map of Southern California holiday lights and events, 2,000+ events (1,25
 | 1 | Mom's LA, San Diego Family Magazine, LAist, Only In Your State | Link to or mention the city-page map as a resource; offer our event data for their roundups | They rank for the queries we want; one link from them is worth more than weeks of waiting |
 | 2 | City parks and recreation departments and chambers (Mission Viejo, San Diego, Riverside, Los Angeles, Newport Beach, Temecula, Dana Point) | Check that their events are right; link to the city page from their holiday page | Strongest event counts; the people whose events we list |
 | 3 | Patch editors and local TV/newspaper holiday-lights roundups | A story pitch: "a free map of 2,000 SoCal holiday events" | Links and real human visits |
-| 4 | Event organizers with ticketed events (84 link to Eventbrite, Ticketmaster or Fever) | Free Featured placement for 5 organizers in exchange for permission to quote their click counts | Proves the Featured product with real data |
+| 4 | Event organizers with ticketed events (73 upcoming events link to Eventbrite or Fever) | Free Featured placement for 5 organizers in exchange for permission to quote their click counts | Proves the Featured product with real data |
 | 5 | Installers | Five 15-minute conversations: what do you pay per lead today? No payment asked | Prices are hypotheses until we hear this |
 | 6 | HOAs and neighborhood groups with a lights tradition (see `docs/contest-leads.md`) | Run a free neighbor contest on the site | Supply of homes and votes |
 

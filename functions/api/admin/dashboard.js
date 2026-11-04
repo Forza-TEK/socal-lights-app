@@ -42,11 +42,14 @@ export async function onRequestGet({ env }) {
     series("SELECT date(datetime(created_at, '-8 hours')) AS d, COUNT(*) AS n FROM posts WHERE contest_id IS NULL AND created_at >= ? GROUP BY d", since),
     series("SELECT date(datetime(created_at, '-8 hours')) AS d, COUNT(*) AS n FROM votes WHERE created_at >= ? GROUP BY d", since),
     series("SELECT date(datetime(created_at, '-8 hours')) AS d, COUNT(*) AS n FROM users WHERE created_at >= ? GROUP BY d", since),
-    series("SELECT day AS d, SUM(n) AS n FROM site_hits WHERE day >= ? GROUP BY day", days[0]),
+    series("SELECT day AS d, SUM(n) AS n FROM site_hits WHERE day >= ? AND page NOT LIKE 'click:%' GROUP BY day", days[0]),
   ]);
-  const topPages = await rows("SELECT page, SUM(n) AS n FROM site_hits WHERE day >= ? GROUP BY page ORDER BY n DESC LIMIT 6", days[0]);
+  const topPages = await rows("SELECT page, SUM(n) AS n FROM site_hits WHERE day >= ? AND page NOT LIKE 'click:%' GROUP BY page ORDER BY n DESC LIMIT 6", days[0]);
+  // Taps on tracked links and buttons (and /feature views): today and the last 7 days, per key
+  const clickRows = await rows("SELECT page, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today, SUM(n) AS week FROM site_hits WHERE day >= ? AND (page LIKE 'click:%' OR page = 'feature') GROUP BY page", days[13], days[7]);
+  const clicks = Object.fromEntries(clickRows.map((r) => [r.page, { today: r.today || 0, week: r.week || 0 }]));
   return json({
-    trends: { days, houses: tHouses, votes: tVotes, accounts: tAccounts, views: tViews, topPages },
+    trends: { days, houses: tHouses, votes: tVotes, accounts: tAccounts, views: tViews, topPages, clicks },
     attention: { waitHomes, waitEvents, waitContests, reports, claims },
     today: { homes: homesToday, events: subsToday, entries: entriesToday },
     live: { homes: homesLive, events: eventsLive, contests: contestsLive, installers },

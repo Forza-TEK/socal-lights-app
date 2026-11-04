@@ -100,6 +100,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   if (PL[qs.get("plan")]) plan = qs.get("plan");
   upd();
   $("#go").addEventListener("click", async () => {
+    try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k: "click:feature-checkout-start" })], { type: "application/json" })); } catch {}
     $("#go").disabled = true; $("#gomsg").className = "msg"; $("#gomsg").textContent = "Opening the secure payment page…";
     try {
       const r = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event_id: ev.id, plan, email: $("#em").value.trim() }) });
