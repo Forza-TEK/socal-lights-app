@@ -353,14 +353,14 @@
           "title": "Presenting installer and quote requests",
           "desc": "How the Get a quote button works.",
           "url": "/tutorials/sponsors-installer.mp4",
-          "length": "1:33",
+          "length": "2:28",
           "captions": "/tutorials/sponsors-installer.vtt",
           "poster": "/tutorials/sponsors-installer.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-installer-mobile.mp4",
             "poster": "/tutorials/sponsors-installer-mobile.jpg",
             "captions": "/tutorials/sponsors-installer-mobile.vtt",
-            "length": "1:31"
+            "length": "2:32"
           }
         },
         {
@@ -368,14 +368,14 @@
           "title": "Installer profiles and \"Installed by\"",
           "desc": "How a company gets a profile, how a home links to it, and how to confirm or claim yours.",
           "url": "/tutorials/sponsors-profile.mp4",
-          "length": "1:12",
+          "length": "2:01",
           "captions": "/tutorials/sponsors-profile.vtt",
           "poster": "/tutorials/sponsors-profile.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-profile-mobile.mp4",
             "poster": "/tutorials/sponsors-profile-mobile.jpg",
             "captions": "/tutorials/sponsors-profile-mobile.vtt",
-            "length": "1:11"
+            "length": "1:57"
           }
         }
       ]
