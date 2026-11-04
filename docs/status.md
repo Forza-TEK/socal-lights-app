@@ -2,6 +2,10 @@
 
 _Last updated: 2026-11-04_
 
+## Professional HTML emails + unsubscribe (2026-11-04)
+- All 34 emails use one designed layout (logo, label, title, message, orange button, boxes, footer with why-you-got-this, Privacy/Terms links and copyright), written with simple markers in the wording so the Admin editor can change them. No light bulbs. See `docs/email-templates.md`.
+- Unsubscribe: notification emails link to `/unsubscribe` (migration 0156 `email_prefs`); the weekly alert keeps its own link; service emails (sign-in code, approvals, quote requests) explain they have none.
+
 ## Monetization project (2026-11-04, branch `claude/quirky-goodall-yaumg1`)
 Docs in `docs/monetization/` (`strategy.md` v2, `data-2026-11-04.md`, three department reports, `project.md`). Real data overturned the first plan: Stripe shows $0 ever paid, real traffic is about 20-50 human visits a day, only 6 homes and 1 installer exist. Strategy: prove the payment path, fix the Featured webhook (found a bug: failed first attempt is never applied on retry), measure, grow audience and supply free, sell only Featured and affiliate links this season. **Merged and live 2026-11-04 (PR 291):** Featured payment fixes (retry-safe webhook, refund and dispute handling, one price source, receipts, native-app guard, menu link) and migration 0155, verified on the live database and site. Still needed in Stripe (owner): add webhook events `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`, `checkout.session.expired`; turn on Successful payments receipts; remove `STRIPE_READONLY_KEY` from the Pages secrets. Next: $5 test purchase, outreach (`docs/monetization/outreach.md`), Search Console recheck. Owner decisions are at the end of `strategy.md`.
 
