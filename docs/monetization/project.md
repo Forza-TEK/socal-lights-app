@@ -45,21 +45,21 @@ Operating rules for the team: each reports to the CEO with sources, labels guess
 ### Phase 1: Research and reports
 | # | Task | Owner | Status |
 |---|---|---|---|
-| 1.1 | CEO playbook research: how successful founders monetize a small consumer product | Product/Marketing + CEO | in progress |
-| 1.2 | Fees, costs, price points, scenarios, tax/refund questions | Finance | in progress |
-| 1.3 | Code audit, paid product catalog, collection architecture, free/paid boundary | Digital Monetization | in progress |
-| 1.4 | Feature ranking by persona, positioning, partnerships, 30/60/90 plan | Product/Marketing | in progress |
+| 1.1 | CEO playbook research: how successful founders monetize a small consumer product | Product/Marketing + CEO | done |
+| 1.2 | Fees, costs, price points, scenarios, tax/refund questions | Finance | done |
+| 1.3 | Code audit, paid product catalog, collection architecture, free/paid boundary | Digital Monetization | done |
+| 1.4 | Feature ranking by persona, positioning, partnerships, 30/60/90 plan | Product/Marketing | done |
 
 ### Phase 2: Synthesis (CEO)
 | # | Task | Owner | Status |
 |---|---|---|---|
-| 2.1 | Resolve conflicts between the three reports | CEO | waiting on 1.x |
-| 2.2 | One strategy: offers, prices, free/paid line, order of build | CEO | waiting |
-| 2.3 | Decisions list for the owner (see below) | CEO | waiting |
-| 2.4 | Update `docs/status.md` and open a branch for review | CEO | waiting |
+| 2.1 | Resolve conflicts between the three reports | CEO | done |
+| 2.2 | One strategy: offers, prices, free/paid line, order of build | CEO | done (2.4 branch only) |
+| 2.3 | Decisions list for the owner (see below) | CEO | done (2.4 branch only) |
+| 2.4 | Update `docs/status.md`, commit to branch (no PR) | CEO | done |
 
 ### Phase 3: Build (only after owner approves the strategy; on a branch)
-Order and scope will be set in 2.2. Candidates, cheapest first:
+Order and scope are in `strategy.md` (small fixes first, then Payment Links, then the orders layer). Candidates, cheapest first:
 1. Turn on Stripe for Featured (set secrets, one $5 test purchase). No new code.
 2. Stripe Payment Links for the first installer and sponsor offers. No new code.
 3. Shared orders / entitlements table so every product uses the same checkout and expiry.

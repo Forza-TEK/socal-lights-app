@@ -1,6 +1,9 @@
 # Status
 
-_Last updated: 2026-11-02_
+_Last updated: 2026-11-04_
+
+## Monetization project (2026-11-04, branch `claude/quirky-goodall-yaumg1`)
+Three department reports and a CEO strategy are in `docs/monetization/` (`project.md` task list, `strategy.md` decisions, `finance-pricing.md`, `digital-monetization.md`, `product-marketing.md`). No code changed. `/api/config` shows `featureCheckout: true`, so Stripe is on. Next: owner runs a $5 test purchase, fix the small Featured gaps (refund handling, `/feature` link and app guard, one price source, receipts), publish the free-heart promise, talk to five installers. Open decisions: CPA, attorney, who sells. All prices are hypotheses.
 
 ## Valentine's Day season (2026-11-04)
 - New season `valentines` (Feb 1-15) between New Year and Spring: `public/seasons.js` (types romance, dance, sweets, run, lights, show, family; quick dates Feb 12-14, 2027), color in all three stylesheets, 💘 icon, Shop tab categories (`public/site-config.js`), a Valentine's poster and yard sign theme (`public/printables.js`), and a message when a season has no events yet. Windows changed: `newyear` now ends Jan 31 (was Feb 19) and `spring` starts Feb 16 (was Feb 20). Lunar New Year events stay in `newyear`.
