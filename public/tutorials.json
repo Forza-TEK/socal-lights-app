@@ -159,14 +159,14 @@
           "title": "Vote in a contest",
           "desc": "Use the category tabs, pick one favorite in each, and share the contest.",
           "url": "/tutorials/vote.mp4",
-          "length": "2:17",
+          "length": "1:57",
           "captions": "/tutorials/vote.vtt",
           "poster": "/tutorials/vote.jpg",
           "mobile": {
             "url": "/tutorials/vote-mobile.mp4",
             "poster": "/tutorials/vote-mobile.jpg",
             "captions": "/tutorials/vote-mobile.vtt",
-            "length": "2:17"
+            "length": "1:56"
           }
         },
         {
@@ -174,14 +174,14 @@
           "title": "Judge a contest",
           "desc": "Open your judge link, score each home, and recuse yourself when you know the household.",
           "url": "/tutorials/judge.mp4",
-          "length": "1:37",
+          "length": "1:39",
           "captions": "/tutorials/judge.vtt",
           "poster": "/tutorials/judge.jpg",
           "mobile": {
             "url": "/tutorials/judge-mobile.mp4",
             "poster": "/tutorials/judge-mobile.jpg",
             "captions": "/tutorials/judge-mobile.vtt",
-            "length": "1:37"
+            "length": "1:39"
           }
         }
       ]
@@ -271,14 +271,14 @@
           "title": "Run voting",
           "desc": "Start now, pause, review votes and void a vote.",
           "url": "/tutorials/run-voting.mp4",
-          "length": "2:42",
+          "length": "2:11",
           "captions": "/tutorials/run-voting.vtt",
           "poster": "/tutorials/run-voting.jpg",
           "mobile": {
             "url": "/tutorials/run-voting-mobile.mp4",
             "poster": "/tutorials/run-voting-mobile.jpg",
             "captions": "/tutorials/run-voting-mobile.vtt",
-            "length": "2:29"
+            "length": "2:11"
           }
         },
         {
