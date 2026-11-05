@@ -6,7 +6,13 @@ import { requireUser, sameOrigin, isDisposable } from "../../_lib/auth.js";
 import { trustOf } from "../../_lib/contests.js";
 
 // Sites many unrelated events share: a matching email on these proves nothing about who runs the event.
-const AGGREGATORS = ["eventbrite", "facebook", "instagram", "ticketmaster", "feverup", "fever", "meetup", "allevents", "yelp", "tripadvisor", "google", "youtube", "x.com", "twitter", "linkedin", "patch.com", "nextdoor", "runsignup", "raceroster", "momsla", "enjoyorangecounty"];
+const AGGREGATORS = [
+  // social, listings and ticketing sites: many unrelated events share them ("eventbrite" also covers eventbrite.com, .co.uk, .ca ...)
+  "eventbrite", "facebook", "instagram", "ticketmaster", "feverup", "fever", "meetup", "allevents", "yelp", "tripadvisor", "google", "youtube", "x.com", "twitter", "linkedin", "patch.com", "nextdoor", "runsignup", "raceroster", "momsla", "enjoyorangecounty",
+  "stubhub", "axs", "seetickets", "universe", "dice", "ticketweb", "ticketleap", "bandsintown", "songkick", "seatgeek", "vividseats", "groupon", "livingsocial", "eventeny", "tiktok", "pinterest", "reddit", "linktr.ee", "linktree", "tix", "etix", "showclix", "brownpapertickets", "eventzilla", "ticketsauce", "evvnt", "visitcalifornia", "discoverlosangeles", "timeout", "laweekly", "ocregister", "patch", "kidsoutandabout", "macaronikid",
+  // free website builders and shared hosts: anyone can put a page up there
+  "wixsite.com", "wix.com", "squarespace.com", "weebly.com", "wordpress.com", "blogspot.com", "github.io", "godaddysites.com", "carrd.co", "business.site", "notion.site", "webflow.io", "netlify.app", "vercel.app", "pages.dev", "herokuapp.com", "web.app", "firebaseapp.com", "my.canva.site", "canva.com", "sites.google.com", "myshopify.com", "bigcartel.com", "strikingly.com", "jimdofree.com", "yolasite.com", "site123.me", "adobe.com",
+];
 export const isAggregator = (url) => {
   let h = ""; try { h = new URL(/^https?:/i.test(url) ? url : "https://" + url).hostname.toLowerCase(); } catch { return true; }
   return AGGREGATORS.some((a) => (a.includes(".") ? h === a || h.endsWith("." + a) : h.split(".").includes(a))); // "eventbrite" covers eventbrite.com, .co.uk, .ca ...

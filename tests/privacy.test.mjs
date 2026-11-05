@@ -260,7 +260,8 @@ const NAMED = {
   "www.google.com": "google maps", "maps.apple.com": "apple maps", "calendar.google.com": "google calendar",
 };
 // hosts that appear in the code but are not a data recipient: standards/namespace URLs, comments, credits, examples
-const NOT_RECIPIENTS = new Set(["socallights.app", "socal-lights.pages.dev", "schema.org", "www.w3.org", "www.sitemaps.org", "www.opensource.org", "www.denso-wave.com", "www.d-project.com", "example.com", "stackoverflow.com", "www.flickr.com", "ticketmaster.evyy.net"]);
+const NOT_RECIPIENTS = new Set(["socallights.app", "socal-lights.pages.dev", "schema.org", "www.w3.org", "www.sitemaps.org", "www.opensource.org", "www.denso-wave.com", "www.d-project.com", "example.com", "stackoverflow.com", "www.flickr.com", "ticketmaster.evyy.net",
+  "dashboard.stripe.com" /* an admin-only link to the owner's own Stripe dashboard; no visitor data goes there */]);
 
 test("every outside host named in the policy is used by the code, and every outside host the code uses is in the policy", () => {
   const code = walk(join(root, "public")).concat(walk(join(root, "functions"))).filter((f) => !f.endsWith("privacy.html"));

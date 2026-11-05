@@ -2,13 +2,13 @@
 export const PLANS = {
   pin: { label: "Featured pin (30 days)", cents: 1000, level: 1, days: 30 },
   top: { label: "Top of the list (30 days)", cents: 1500, level: 2, days: 30 },
-  season: { label: "Whole season (until the event ends)", cents: 2000, level: 2, days: 0 },
+  season: { label: "Whole season (until the event ends)", cents: 2000, level: 2, days: 0, minDays: 7 }, // minDays: the event must still have this many days to run (a $20 plan must not last a day)
 };
 
 // What the browser may know about plans (served by /api/config). Prices exist only in PLANS above.
-export const PUBLIC_PLANS = Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, days: p.days, level: p.level }]));
+export const PUBLIC_PLANS = Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, days: p.days, level: p.level, minDays: p.minDays || 0 }]));
 
-const addDays = (ymd, n) => new Date(Date.parse(ymd + "T00:00:00Z") + n * 86400_000).toISOString().slice(0, 10);
+export const addDays = (ymd, n) => new Date(Date.parse(ymd + "T00:00:00Z") + n * 86400_000).toISOString().slice(0, 10);
 
 // New featured/featured_until for an event after a paid plan. Extending a running placement adds time on top of it; the level never goes down.
 export function applyPlan(ev, plan, today) {
@@ -36,15 +36,70 @@ export async function verifyStripeSignature(raw, header, secret, nowSec = Math.f
   return sigs.some((s) => eq(s, hex));
 }
 
-// Switches off the placement an order applied (refund / lost dispute). Only touches the event if it still holds exactly what this
-// order wrote, so a hand-comped or later-extended placement is never wiped. Always records the new order status.
+export const ptToday = () => new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
+// Order notes that begin with this mark are "needs a look" for the owner (Admin > Orders). Writing a note of your own there clears them.
+export const AUTO = "[auto] ";
+export const setOrderNote = (db, sessionId, text) => db.prepare("UPDATE feature_orders SET note = ? WHERE session_id = ?").bind(String(text).slice(0, 500), sessionId).run();
+
+// Applies one paid, unapplied order to a live event. Both statements only act while the order is still unapplied, so a concurrent
+// retry cannot extend the placement twice. Returns the new placement, or null when the event does not exist.
+export async function applyOrder(db, order, targetId, today = ptToday()) {
+  const ev = await db.prepare("SELECT id, end_date, featured, featured_until FROM events WHERE id = ?").bind(targetId).first();
+  if (!ev) return null;
+  const nf = applyPlan(ev, order.plan, today);
+  await db.batch([
+    db.prepare("UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=? AND EXISTS (SELECT 1 FROM feature_orders WHERE session_id=? AND applied=0)").bind(nf.featured, nf.featured_until, targetId, order.session_id),
+    db.prepare("UPDATE feature_orders SET event_id=?, applied=1, applied_featured=?, applied_until=? WHERE session_id=? AND applied=0").bind(targetId, nf.featured, nf.featured_until, order.session_id),
+  ]);
+  return nf;
+}
+
+// An event's still-running placement, rebuilt from its valid orders (paid, applied, not refunded or disputed, not yet over):
+// the highest level and the latest end date. A hand-set placement that runs longer than every order is never touched.
+// Used when an order is revoked (revokePlan) and when an unpublished event comes back (restorePlacement).
+async function validOrders(db, eventId, today, exceptSession = "") {
+  const all = (await db.prepare("SELECT session_id, status, applied_featured AS f, applied_until AS u FROM feature_orders WHERE event_id = ? AND applied = 1").bind(eventId).all()).results;
+  return { all, valid: all.filter((o) => o.session_id !== exceptSession && o.status === "paid" && o.u && o.u >= today) };
+}
+const maxOf = (rows, k) => rows.reduce((m, o) => (o[k] != null && (m == null || o[k] > m) ? o[k] : m), null);
+
+// Puts back the placement a republished event is still owed (the unpublish deleted the row; the orders remain). Never lowers anything.
+export async function restorePlacement(db, eventId, today = ptToday()) {
+  const { valid } = await validOrders(db, eventId, today);
+  if (!valid.length) return null;
+  const ev = await db.prepare("SELECT featured, featured_until FROM events WHERE id = ?").bind(eventId).first();
+  if (!ev) return null;
+  const level = Math.max(ev.featured || 0, maxOf(valid, "f") || 0), until = ev.featured && !ev.featured_until ? null : (ev.featured_until && ev.featured_until > maxOf(valid, "u") ? ev.featured_until : maxOf(valid, "u"));
+  if (level === ev.featured && until === ev.featured_until) return null;
+  await db.prepare("UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=?").bind(level, until, eventId).run();
+  return { featured: level, featured_until: until };
+}
+
+// Switches off what an order applied (refund / lost dispute) without wiping time other orders paid for or a hand-set placement.
+// Recomputes from the event's remaining valid orders. Returns true when the placement was dealt with cleanly, false when a human has
+// to look (the event still holds something these orders do not explain).
+async function recomputeAfterRevoke(db, order, today) {
+  const { all, valid } = await validOrders(db, order.event_id, today, order.session_id);
+  const ev = await db.prepare("SELECT featured, featured_until FROM events WHERE id = ?").bind(order.event_id).first();
+  if (!ev || !ev.featured) return true; // nothing is featured any more
+  const swap = (featured, until) => db.prepare("UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=? AND featured=? AND featured_until IS ?")
+    .bind(featured, until, order.event_id, ev.featured, ev.featured_until ?? null).run().then((r) => !!(r.meta && r.meta.changes));
+  if (!valid.length) { // no other order explains a placement: off only if it is exactly what this order wrote
+    if (ev.featured !== order.applied_featured || (ev.featured_until ?? null) !== (order.applied_until ?? null)) return false;
+    return swap(0, null);
+  }
+  const rl = maxOf(valid, "f"), ru = maxOf(valid, "u"), allU = maxOf(all, "u"), allL = maxOf(all, "f");
+  if (!ev.featured_until || ev.featured_until > allU) return false; // a hand-applied extension or comp runs longer than every order: keep it
+  const level = Math.min(ev.featured, Math.max(rl, ev.featured > allL ? ev.featured : 0)), until = ru < ev.featured_until ? ru : ev.featured_until;
+  return swap(level, until);
+}
+
+// Records the order's new status and removes the placement it applied (once per order). Returns true ("manual") when the placement
+// could not be removed cleanly; the reason is also written to the order's note so Admin > Orders shows it.
 export async function revokePlan(db, order, status) {
   let manual = false;
-  if (order.applied && order.event_id && !order.event_id.startsWith("sub:")) {
-    const r = await db.prepare("UPDATE events SET featured=0, featured_until=NULL, updated_at=datetime('now') WHERE id=? AND featured=? AND featured_until IS ?")
-      .bind(order.event_id, order.applied_featured, order.applied_until ?? null).run();
-    manual = !(r.meta && r.meta.changes);
-  }
-  await db.prepare("UPDATE feature_orders SET status=?, refunded_at=COALESCE(refunded_at, datetime('now')) WHERE session_id=?").bind(status, order.session_id).run();
+  if (order.applied && order.event_id && !order.event_id.startsWith("sub:") && !order.refunded_at) manual = !(await recomputeAfterRevoke(db, order, ptToday()));
+  await db.prepare("UPDATE feature_orders SET status=?, refunded_at=COALESCE(refunded_at, datetime('now')), note=CASE WHEN ? THEN ? ELSE note END WHERE session_id=?")
+    .bind(status, manual ? 1 : 0, AUTO + `manual: placement differs. The ${status} order did not own the event's current placement (comped, extended or changed by hand), so it was left on. Check it in Admin > Events.`, order.session_id).run();
   return manual;
 }

@@ -20,7 +20,7 @@
 
 <p class="meta">Listing an event is free. <a href="/pricing">See all pricing</a>.</p>
 
-<div id="paid" class="ok" hidden><b>Thank you!</b> <span id="paidmsg">Your payment went through. Your event is being featured now; refresh the map in a minute to see the gold badge.</span> A receipt is on its way from Stripe.</div>
+<div id="paid" class="ok" hidden><b>Thank you!</b> <span id="paidmsg">Your payment went through. Your event is being featured now; refresh the map in a few minutes to see the gold badge.</span> A receipt is on its way from Stripe.</div>
 
 <div id="cancelled" class="ok" hidden><b>No payment was made.</b> Your event and plan are still chosen below, so you can pick up where you left off.</div>
 <p id="inapp" class="lede" hidden>Event promotion isn't available in the app.</p>
@@ -50,7 +50,7 @@
 <div class="grid" id="plans"></div>
 <h2>Pay securely</h2>
 <p><button class="btn" id="go" type="button" disabled>Continue to payment</button></p>
-<p class="meta" id="gomsg">Choose your event and a plan above. You pay on Stripe's secure page with a card or Cash App Pay; your Featured placement turns on automatically within a minute.</p>
+<p class="meta" id="gomsg">Choose your event and a plan above. You pay on Stripe's secure page with a card or Cash App Pay; your Featured placement turns on automatically within a few minutes.</p>
 </div>
 </div>
 
@@ -74,7 +74,7 @@
 import { SITE } from "/site-config.js";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const COPY = { pin: ["Featured pin", ["Gold-ringed pin on the map", "Featured badge in the list"]], top: ["Top of the list", ["Everything in Featured pin", "Listed first in your city, county and season"]], season: ["Whole season", ["Everything in Top of the list", "Featured from now until your event ends"]] };
+const COPY = { pin: ["Featured pin", ["Gold-ringed pin on the map", "Featured badge in the list"]], top: ["Top of the list", ["Everything in Featured pin", "Listed first when people browse your area"]], season: ["Whole season", ["Everything in Top of the list", "Featured from now until your event ends"]] };
 let PL = {};
 const dollars = (p) => "$" + (p.cents / 100);
 const mail = (plan) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent("Feature my event" + (plan && PL[plan] ? " – " + PL[plan].label : ""))}&body=${encodeURIComponent("Event name:\nLink to my event on socallights.app (or its own web page):\nMy name and phone:\n")}`;
@@ -91,7 +91,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
 } else if (!cfg.featureCheckout) {
   $("#auto").hidden = true; $("#manual").hidden = false;
 } else {
-  $("#plans").innerHTML = Object.keys(COPY).filter((k) => PL[k]).map((k) => `<section class="plan${k === "top" ? " pop" : ""}" data-p="${k}"><h3>${COPY[k][0]}</h3><div class="price">${dollars(PL[k])} <small>/ ${PL[k].days ? PL[k].days + " days" : "season"}</small></div><ul>${COPY[k][1].map((t) => `<li>${t}</li>`).join("")}</ul><button class="btn${k === "top" ? "" : " ghost"}" type="button" data-pick="${k}">Choose</button></section>`).join("");
+  $("#plans").innerHTML = Object.keys(COPY).filter((k) => PL[k]).map((k) => `<section class="plan${k === "top" ? " pop" : ""}" data-p="${k}"><h3>${COPY[k][0]}</h3><div class="price">${dollars(PL[k])} <small>/ ${PL[k].days ? PL[k].days + " days" : "season"}</small></div><p class="meta" data-until="${k}"></p><ul>${COPY[k][1].map((t) => `<li>${t}</li>`).join("")}</ul><button class="btn${k === "top" ? "" : " ghost"}" type="button" data-pick="${k}">Choose</button></section>`).join("");
   const events = (await fetch("/api/events").then((r) => r.json()).catch(() => [])).filter((e) => e.e >= new Date().toISOString().slice(0, 10));
   const { me, signIn } = await import("/auth.js?v=20261101a");
   const user = (await me()).user;
@@ -116,6 +116,16 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
     $("#claimbox").hidden = !unknown; $("#planbox").hidden = unknown;
     $("#go").disabled = !(ev && plan) || unknown;
     $("#go").textContent = user ? "Continue to payment" : "Sign in to continue";
+    // The real end date of each plan for the chosen event; the whole-season plan is off when the event ends too soon for it.
+    const tod = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date()), plus = (n) => { const d = new Date(tod + "T12:00:00"); d.setDate(d.getDate() + n); return d.toLocaleDateString("en-CA"); };
+    for (const k of Object.keys(PL)) {
+      const card = document.querySelector(`[data-p="${k}"]`), note = document.querySelector(`[data-until="${k}"]`); if (!card || !note) continue;
+      const tooSoon = !!(ev && ev.e && PL[k].minDays && ev.e < plus(PL[k].minDays));
+      card.classList.toggle("off", tooSoon); card.querySelector("[data-pick]").disabled = tooSoon;
+      note.textContent = tooSoon ? `Not available: this event ends ${fmt(ev.e)}. A 30-day plan fits better.` : ev ? (PL[k].days ? `Runs until ${fmt(plus(PL[k].days))}` : ev.e ? `Runs until ${fmt(ev.e)}, your event's last day` : "") : "";
+      if (tooSoon && plan === k) { plan = ""; saveSel(); }
+    }
+    $("#go").disabled = !(ev && plan) || unknown;
     document.querySelectorAll("[data-p]").forEach((p) => p.classList.toggle("sel", p.dataset.p === plan));
   };
   function showChosen() {
@@ -123,7 +133,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
     $("#chosen").hidden = false; $("#chosen").innerHTML = `<b>${esc(ev.n)}</b><br><span class="meta">${esc(ev.city || "")}${ev.s ? " · " + esc(ev.s) : ""}${m && m.featured ? " · Featured until " + (m.until ? esc(fmt(m.until)) : "the event ends") : ""}</span> · <a href="#" id="chg">change</a>`;
     $("#chg").onclick = (y) => { y.preventDefault(); ev = null; $("#chosen").hidden = true; saveSel(); upd(); };
     $("#claimmsg").textContent = ""; $("#claimgo").hidden = false;
-    $("#gomsg").className = "meta"; if (user && m) $("#gomsg").textContent = `Choose a plan. The receipt goes to ${user.email}. You pay on Stripe's secure page with a card or Cash App Pay; your Featured placement turns on automatically within a minute.`;
+    $("#gomsg").className = "meta"; if (user && m) $("#gomsg").textContent = `Choose a plan. The receipt goes to ${user.email}. You pay on Stripe's secure page with a card or Cash App Pay; your Featured placement turns on automatically within a few minutes.`;
   }
   const pick = (e) => { ev = e; $("#res").innerHTML = ""; $("#q").value = ""; showChosen(); saveSel(); upd(); };
   $("#q").addEventListener("input", () => {
@@ -135,7 +145,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   $("#res").addEventListener("click", (x) => { const b = x.target.closest("[data-id]"); if (b) pick(events.find((e) => e.id === b.dataset.id)); });
   $("#mylist").addEventListener("click", (x) => {
     const b = x.target.closest("[data-mine]"); if (!b || b.disabled) return;
-    const m = owned(b.dataset.mine); pick({ id: m.id, n: m.name, city: m.kind === "contest" ? "Contest" : m.city, s: m.start || "" });
+    const m = owned(b.dataset.mine); pick({ id: m.id, n: m.name, city: m.kind === "contest" ? "Contest" : m.city, s: m.start || "", e: m.end || "" });
     $("#chosen").scrollIntoView({ block: "nearest" });
   });
   document.querySelectorAll("[data-pick]").forEach((b) => b.addEventListener("click", () => { plan = b.dataset.pick; saveSel(); upd(); }));
@@ -153,7 +163,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   // Restore what was chosen: from the link (?event= ?plan=) or from before sign-in (sessionStorage, which survives the Google redirect)
   let saved = {}; try { saved = JSON.parse(sessionStorage.getItem(KEY) || "{}") || {}; } catch {}
   const want = qs.get("event") || saved.id, p0 = qs.get("plan") || saved.plan;
-  if (want) { const m = owned(want), e0 = events.find((e) => e.id === want); if (m) { ev = { id: m.id, n: m.name, city: m.city, s: m.start || "" }; } else if (e0) ev = e0; if (ev) showChosen(); }
+  if (want) { const m = owned(want), e0 = events.find((e) => e.id === want); if (m) { ev = { id: m.id, n: m.name, city: m.city, s: m.start || "", e: m.end || "" }; } else if (e0) ev = e0; if (ev) showChosen(); }
   if (PL[p0]) plan = p0;
   upd();
   $("#go").addEventListener("click", async () => {

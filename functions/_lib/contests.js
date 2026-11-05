@@ -4,7 +4,33 @@ import { upsertEvent } from "./events.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS, defaultSeason } from "../../public/seasons.js";
 
-const FREE_DOMAINS = new Set(["gmail.com", "googlemail.com", "hotmail.com", "outlook.com", "live.com", "msn.com", "yahoo.com", "icloud.com", "me.com", "aol.com", "proton.me", "protonmail.com"]);
+// Consumer mailbox providers: an address here proves nothing about who runs a website or an event.
+export const FREE_DOMAINS = new Set([
+  "gmail.com", "googlemail.com", "hotmail.com", "outlook.com", "live.com", "msn.com", "yahoo.com", "ymail.com", "rocketmail.com", "icloud.com", "me.com", "mac.com", "aol.com",
+  "proton.me", "protonmail.com", "pm.me", "gmx.com", "gmx.net", "gmx.us", "gmx.de", "mail.com", "email.com", "zoho.com", "zohomail.com", "fastmail.com", "fastmail.fm", "hey.com", "tutanota.com", "tuta.io", "hushmail.com",
+  "comcast.net", "sbcglobal.net", "att.net", "cox.net", "verizon.net", "bellsouth.net", "charter.net", "earthlink.net", "frontier.com", "frontiernet.net", "optonline.net", "roadrunner.com", "pacbell.net", "ca.rr.com", "socal.rr.com", "centurylink.net", "windstream.net", "juno.com", "netzero.net", "prodigy.net",
+  "yandex.com", "yandex.ru", "mail.ru", "qq.com", "163.com", "126.com", "naver.com", "web.de", "t-online.de", "orange.fr", "free.fr", "laposte.net", "libero.it", "btinternet.com", "sky.com", "inbox.com", "rediffmail.com",
+]);
+// Regional editions of the big providers (yahoo.ca, hotmail.co.uk, live.com.mx, outlook.fr ...)
+const FREE_REGIONAL = /^(yahoo|hotmail|outlook|live|msn|gmx|aol|icloud)\.[a-z]{2,3}(\.[a-z]{2})?$/;
+export const isFreeMail = (dom) => FREE_DOMAINS.has(dom) || FREE_REGIONAL.test(dom);
+
+// Domains that many unrelated organizations share. An email at one of these is not a business address, and a website under one is not "their own".
+// A domain counts as someone's own only with at least one label of its own beyond these (pasadena.gov yes; gov, ca.gov, k12.ca.us no).
+const SHARED_SUFFIXES = new Set([
+  "com", "net", "org", "edu", "gov", "mil", "int", "info", "biz", "us", "co", "io", "app", "dev", "me", "tv", "ca", "mx", "uk", "co.uk", "org.uk", "ac.uk", "gov.uk", "com.au", "com.mx",
+  "ca.us", "ca.gov", "k12.ca.us", "cc.ca.us", "lib.ca.us", "state.ca.us", "ci.ca.us", "co.ca.us", "dst.ca.us", "tec.ca.us",
+  "k12.us", "state.us", "city.us", "county.us", "fed.us", "nsn.us",
+  "github.io", "pages.dev", "netlify.app", "vercel.app", "wixsite.com", "weebly.com", "blogspot.com", "wordpress.com", "squarespace.com", "herokuapp.com", "web.app", "firebaseapp.com",
+]);
+// Number of labels the name has beyond its shared suffix (the longest matching one, else the last label). pasadena.gov -> 1, ca.gov -> 0, dmv.ca.gov -> 1.
+export function ownLabels(host) {
+  const l = String(host || "").toLowerCase().replace(/\.$/, "").split(".").filter(Boolean);
+  if (l.length < 2) return 0;
+  for (let i = 0; i < l.length; i++) if (SHARED_SUFFIXES.has(l.slice(i).join("."))) return i;
+  return l.length - 1;
+}
+export const hasOwnName = (host) => ownLabels(host) >= 1;
 export const todayPT = () => new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10); // roughly Pacific time
 export const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || "");
 export const addDays = (s, n) => new Date(new Date(s + "T12:00:00Z").getTime() + n * 86400_000).toISOString().slice(0, 10);
@@ -12,11 +38,13 @@ export const addDays = (s, n) => new Date(new Date(s + "T12:00:00Z").getTime() +
 // Can this organizer's email be tied to the website they gave? match = goes live straight away; anything else waits for review.
 export function trustOf(email, site) {
   const dom = String(email).split("@")[1] || "";
-  if (!dom || FREE_DOMAINS.has(dom)) return "free";
+  if (!dom || isFreeMail(dom)) return "free";
   if (!site) return "none";
   let host = "";
   try { host = new URL(/^https?:/i.test(site) ? site : "https://" + site).hostname.replace(/^www\./, "").toLowerCase(); } catch { return "other"; }
-  return host === dom || host.endsWith("." + dom) || dom.endsWith("." + host) ? "match" : "other";
+  // The person's own domain must be somebody's own name (not "gov", "ca.gov" or "k12.ca.us", which every agency or school under it shares).
+  if (!hasOwnName(dom)) return "other";
+  return host === dom || host.endsWith("." + dom) || (dom.endsWith("." + host) && hasOwnName(host)) ? "match" : "other";
 }
 
 export const getContest = (env, slug) => env.DB.prepare("SELECT * FROM contests WHERE slug = ?").bind(String(slug || "").toLowerCase()).first();

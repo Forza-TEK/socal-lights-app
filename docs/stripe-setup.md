@@ -15,6 +15,18 @@ Featured is fully automatic once two secrets are set. Until then `/feature` show
    `charge.dispute.created` and a lost `charge.dispute.closed`. It only clears the event if it still holds exactly what that order wrote, so a placement you
    set by hand or a later order that extended it is left alone (the order is still marked `refunded` / `disputed`; check the event by hand). A dispute that
    is won stays switched off with status `dispute_won`; re-grant by hand if you want it back.
+   **Overlapping orders:** a refund or lost dispute recomputes the event's placement from its remaining valid orders (paid, applied, not over): the highest
+   level and the latest end date. A hand-applied placement that runs longer than every order is never wiped (the order's note says "placement differs").
+   **Ordering:** a refund or dispute that arrives before its order is remembered in `feature_pending_revocations`; the order is then created already
+   refunded/disputed and never applied. **Amount check:** if the paid amount or currency differs from the plan price the placement is still applied
+   and the order gets an `[auto] amount mismatch` note.
+   **Admin > Orders** lists every order, "Needs attention" first (`refund_due`, disputed, partial refund, paid but not applied for an hour, placement differs,
+   amount differs, placement running on a cancelled/postponed event, dispute won). Each links to the payment in the Stripe dashboard. Actions: *Mark refunded*
+   (after you refunded in Stripe; this never calls Stripe), *Apply now*, *Add note* (your own note marks an `[auto]` warning as seen). The tab badge and the
+   admin digest email use the same rule. Declining a submission that has a paid order sets it to `refund_due`; unpublishing or deleting an event with a running
+   paid placement asks for confirmation (API: 409, then `confirm`), keeps the orders, and republishing restores the placement.
+   A migration that deletes an event cannot be checked against production: `npm run validate` only warns with the SQL to run. Check `feature_orders` first.
+   One account can open 6 Checkout sessions an hour and 20 a day (`checkout_log`). The whole-season plan needs at least 7 days left on the event.
 5. Placement ends by itself after `featured_until`. Scheduled sweeps and upkeep never touch these columns.
 
 Plans and prices live only in `functions/_lib/featured.js` (change `cents`); `/api/config` publishes them and `/feature` and `/add-event` render them. Only the wording is in the HTML.
@@ -59,3 +71,8 @@ has paid, refund it in Stripe. The choice only appears when online payment is sw
 ## Panel buttons
 The Events and Houses lists always follow the visible map. Their headers carry "+ Add event" (goes to `/add-event`) and "+ Add house" (opens
 Showcase a House). The coffee-mug button now only holds the tip link and the optional shop links.
+
+## Automated tests (CI)
+`npm test` runs the signed-webhook, checkout, claims, orders and digest tests against an in-memory D1 (`tests/_pay.mjs`, `tests/_d1.mjs`).
+`.github/workflows/test.yml` runs them and `npm run validate` on every pull request and push to `main`. To make it a merge gate: GitHub > Settings >
+Rules (or Branches) > protect `main` > require the status check "Tests". Run `npm test` before touching any payment code.

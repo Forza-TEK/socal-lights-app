@@ -24,8 +24,8 @@ _CEO, 2026-11-04. Seven read-only specialist audits of the merged app (reports i
 | # | Gap | Report |
 |---|---|---|
 | 9 | Emails have no postal address and no unsubscribe header (**needs the owner's mailing address**) | privacy |
-| 10 | Declined paid submission: order stays paid forever, no refund prompt; no admin orders and refunds view; overlapping orders and refunds interact badly; unpublishing drops a paid placement | payments P2 to P8 |
-| 11 | No automated tests for payment, claim, voting or deletion code; `main` has no merge gate | payments P1, contests C4 |
+| 10 (FIXED on branch, not merged; batch C, tests pass) | Declined paid submission: order stays paid forever, no refund prompt; no admin orders and refunds view; overlapping orders and refunds interact badly; unpublishing drops a paid placement | payments P2 to P8 |
+| 11 (payments part FIXED on branch: tests + `.github/workflows/test.yml`; owner must require the check on `main`) | No automated tests for payment, claim, voting or deletion code; `main` has no merge gate | payments P1, contests C4 |
 | 12 | No backup of the database or photos; no restore runbook; live DB cannot be rebuilt from migrations | data F1, F2 |
 | 13 | No alerting or uptime monitoring; failed emails marked as sent | contests C5 |
 | 14 | `/api/events` is 1.36 MB raw / 300 KB gzip, includes 769 ended events, no ETag; 7 seconds on a throttled phone | data F3, ux F2 |

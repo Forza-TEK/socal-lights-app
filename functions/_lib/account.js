@@ -61,6 +61,10 @@ export async function deleteAccount(env, id, email) {
     env.DB.prepare("DELETE FROM login_codes WHERE email = ?").bind(email),
     env.DB.prepare("DELETE FROM users WHERE id = ?").bind(id),
   ];
-  for (const c of contests) if (c.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id));
+  for (const c of contests) if (c.event_id) {
+    // A paid Featured placement on that event goes with it: the owner has to refund it, so make that visible in Admin > Orders first.
+    stmts.push(env.DB.prepare("UPDATE feature_orders SET status = 'refund_due', note = ? WHERE event_id = ? AND status = 'paid'").bind("[auto] The contest owner deleted their account, which removed this event while the placement was running. Refund it in the Stripe dashboard, then mark it refunded here.", c.event_id));
+    stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id));
+  }
   await env.DB.batch(stmts);
 }

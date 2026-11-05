@@ -4,7 +4,7 @@ Author: Digital Monetization lead. Not legal or financial advice. Revised after 
 
 ## Recommendations
 
-1. **Prove the payment path before anything else.** Stripe shows $0 ever paid, and `featureCheckout` is already true. The webhook has never received a real paid event, so we do not know it works. Do a Stripe test-mode run, then one live $5 purchase on one of our own events, then refund it and confirm the pin appears and (after fix 1 below) disappears. Stripe does not return its original processing fee on a refund; at the published 2.9% + 30 cents for domestic cards (stripe.com/pricing) a $5 test costs about 44 cents.
+1. **Prove the payment path before anything else.** Stripe shows $0 ever paid, and `featureCheckout` is already true. The webhook has never received a real paid event, so we do not know it works. Do a Stripe test-mode run, then one live $10 purchase on one of our own events, then refund it and confirm the pin appears and (after fix 1 below) disappears. Stripe does not return its original processing fee on a refund; at the published 2.9% + 30 cents for domestic cards (stripe.com/pricing) a $5 test costs about 44 cents.
 2. **Ship the five Featured fixes (spec in section 4), then stop building Featured.** They are all S-sized. Do not build the generic `orders`/`entitlements` layer from my first draft yet; there is nothing to put in it.
 3. **Grow the free side first and measure.** With about 50 real visits a day, 6 homes and 1 installer, no paid placement can show value. The paid products that survive are the ones that do not depend on our own audience: ticket affiliates on the 84 ticket-linked events, and hand-sold Featured to commercial organizers.
 4. **Sell only to buyers who already exist.** Ticketed organizers (the 84) for Featured; chambers or cities by invoice only if they ask; installers only after at least about 10 have claimed free profiles and one lead has arrived. Everything else waits for numbers.
@@ -37,7 +37,7 @@ Principle: money only where a buyer already exists, and free growth first.
 **B. Paid, in order**
 | # | Product | Decision |
 |---|---|---|
-| 1 | **Featured event** ($5/$10/$15, exists) | Fix, link quietly, sell by hand to the 84 ticket-linked events' organizers. Offer the first 5 free in exchange for permission to quote their click counts. |
+| 1 | **Featured event** ($10/$15/$20, exists; prices live in `functions/_lib/featured.js`) | Fix, link quietly, sell by hand to the 84 ticket-linked events' organizers. Offer the first 5 free in exchange for permission to quote their click counts. |
 | 2 | **Ticket affiliate links** | 84 events (not 22) already link to Eventbrite, Ticketmaster or Fever and `ticketAffiliates` is `{}` in `site-config.js`. Zero buyer, zero billing. Which programs accept a site this size, and their terms, are UNVERIFIED (not checked). Needs the FTC-style disclosure line near each link. |
 | 3 | **Installer Listing** | Do not build billing. At 1 installer, 0 leads, nothing to sell. When the first installer asks, use a Stripe Payment Link plus a manual admin flag. |
 | 4 | **Presenting Installer, Contest Pro, sponsor slots** | Defer. 1 contest, 0 votes, 0 sponsors: nothing to present against. Revisit after a contest has entries. |
@@ -90,7 +90,7 @@ Existing rows: none (0 orders), so no backfill. Defaults keep the migration safe
 ### Fix 2: single price source
 - `featured.js` `PLANS` stays the only definition. Add `export const PUBLIC_PLANS = Object.fromEntries(Object.entries(PLANS).map(([k,p])=>[k,{label:p.label,cents:p.cents,days:p.days,level:p.level}]))`.
 - `functions/api/config.js` returns `featurePlans: PUBLIC_PLANS` (cache stays 300 seconds).
-- `public/feature.html`: render the three `.plan` sections and `NAMES` from `cfg.featurePlans` in JS; delete the hard-coded `$5/$10/$15` strings and the `NAMES` constant. `public/add-event.html`: replace its own `PLANS` tile list the same way (line 58 uses a local list; contents not read). Checkout continues to read `PLANS` server-side only, so a tampered client price is impossible (already true: the client sends only the plan key).
+- `public/feature.html`: render the three `.plan` sections and `NAMES` from `cfg.featurePlans` in JS; delete any hard-coded `$10/$15/$20` strings and the `NAMES` constant. `public/add-event.html`: replace its own `PLANS` tile list the same way (line 58 uses a local list; contents not read). Checkout continues to read `PLANS` server-side only, so a tampered client price is impossible (already true: the client sends only the plan key).
 - Bump the `?v=` on any CSS/JS tags touched, per `CLAUDE.md`.
 
 ### Fix 3: customer email and receipt, `functions/api/feature/checkout.js` and `feature.html`
@@ -136,7 +136,7 @@ Existing rows: none (0 orders), so no backfill. Defaults keep the migration safe
 - Net-30 and PO details for Invoicing.
 - Ticket-affiliate program eligibility; Amazon Associates status.
 - Whether the one expired session was a real visitor or a test, and whether any earlier outreach pointed at Cash App.
-- Economics: at 2.9% + 30 cents a $5 sale nets about $4.56 and a $10 sale about $9.41.
+- Economics: at 2.9% + 30 cents a $10 sale nets about $9.41 and a $20 sale about $19.12.
 - Real traffic: `site_hits` has two days. Treat everything about audience as unknown until it has a month.
 
 ## Sources

@@ -875,7 +875,7 @@ function wireDetail() {
 /* ---------- Showcase a House form ---------- */
 /* ---------- monetization: affiliate links, support box ---------- */
 // Add the affiliate tracking parameter to ticket links on hosts configured in site-config.js (no-op when none are set).
-function affRule(u) { try { const h = new URL(u).hostname.replace(/^www\./, ""); return SITE.ticketAffiliates[h] || SITE.ticketAffiliates[h.split(".").slice(-2).join(".")] || null; } catch { return null; } }
+function affRule(u) { if (IN_APP) return null; try { const h = new URL(u).hostname.replace(/^www\./, ""); return SITE.ticketAffiliates[h] || SITE.ticketAffiliates[h.split(".").slice(-2).join(".")] || null; } catch { return null; } }
 const isAff = (u) => !!affRule(u);
 // Two kinds of rule: add a tracking parameter ({ param, value }), or wrap the link in a network deep link ({ template: "https://…?u={url}" }, the form Impact/CJ give you).
 function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) return r.template.replace("{url}", encodeURIComponent(u)); try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
@@ -883,7 +883,7 @@ function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) ret
 const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(SITE.shopHighEnd ? q + " " + SITE.shopHighEnd : q)}${SITE.shopSort ? "&s=" + encodeURIComponent(SITE.shopSort) : ""}&tag=${encodeURIComponent(SITE.amazonTag)}`;
 const SHOP_ICON = { halloween: "🎃", christmas: "🎄", newyear: "🎆", valentines: "💘", spring: "🌷", summer: "☀️" };
 const shopSeason = () => (SITE.shop[state.shopSeason] ? state.shopSeason : state.season); // follows the season button at the top until you pick another here
-const shopCats = () => (SITE.amazonTag ? SITE.shop[shopSeason()] || [] : []);
+const shopCats = () => (SITE.amazonTag && !IN_APP ? SITE.shop[shopSeason()] || [] : []); // no Amazon shop inside the Android/iOS wrapper
 // The Shop tab only exists when there is an Amazon tag and shop list for the season.
 function syncShopTab() {
   const on = shopCats().length > 0;
@@ -896,7 +896,7 @@ function openSupport() {
     <p class="blurb">SoCal Lights is built and kept up to date by one small team: checking dates, adding events and fixing links all season long. There are no ads and no paywall. If it helped you find something fun, you can help keep it going.</p>
     ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
     ${shopCats().length ? `<button class="btn ghost" type="button" id="sShop">🛍️ Browse the shop</button>` : ""}
-    ${SITE.amazonTag || Object.keys(SITE.ticketAffiliates).length ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
+    ${!IN_APP && (SITE.amazonTag || Object.keys(SITE.ticketAffiliates).length) ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
   </div>`;
   m.hidden = false; $("#sClose").onclick = closeForm; $("#sClose").focus();
   if ($("#sShop")) $("#sShop").onclick = () => { closeForm(); setTab("shop"); if (isPhone()) setSheet("full"); };
