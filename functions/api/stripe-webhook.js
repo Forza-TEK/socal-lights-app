@@ -6,7 +6,7 @@
 // Retry safety: nothing is "done" until it has really been applied. The order row records `applied`; the Stripe event id is written to
 // stripe_events only after the work succeeded; failures that a retry can fix return 500 so Stripe redelivers.
 import { json, err } from "../_lib/util.js";
-import { PLANS, applyPlan, verifyStripeSignature, revokePlan } from "../_lib/featured.js";
+import { PLANS, applyOrder, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
 
 const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired", "charge.refunded", "charge.dispute.created", "charge.dispute.closed"]);
 
@@ -33,10 +33,11 @@ async function handle(evt, env) {
     case "checkout.session.expired": return { expired: o.id || null }; // abandoned checkout: recorded in stripe_events only
     case "charge.refunded": {
       const order = await orderByPi(env, o.payment_intent);
-      if (!order) return { ignored: "no matching order" };
+      if (!order) return pendingRevocation(env, o.payment_intent, o.refunded === true ? "refunded" : "held");
       await env.DB.prepare("UPDATE feature_orders SET charge_id = ? WHERE session_id = ?").bind(o.id || null, order.session_id).run();
       if (o.refunded !== true) { // partial refund: flag it, the admin decides
-        await env.DB.prepare("UPDATE feature_orders SET status = 'held' WHERE session_id = ? AND status = 'paid'").bind(order.session_id).run();
+        const h = await env.DB.prepare("UPDATE feature_orders SET status = 'held' WHERE session_id = ? AND status = 'paid'").bind(order.session_id).run();
+        if (h.meta && h.meta.changes) await setOrderNote(env.DB, order.session_id, AUTO + "partial refund: the placement was left on. Decide in Stripe whether to refund the rest, then mark it refunded here.");
         return { held: "partial refund" };
       }
       return revoked(await revokePlan(env.DB, order, "refunded"));
@@ -54,10 +55,10 @@ async function handle(evt, env) {
         }
       }
       const order = await orderByPi(env, pi);
-      if (!order) return { ignored: "no matching order" };
+      if (!order) return pendingRevocation(env, pi, evt.type === "charge.dispute.closed" && o.status === "won" ? "dispute_won" : evt.type === "charge.dispute.closed" && o.status !== "lost" ? null : "disputed");
       if (o.charge) await env.DB.prepare("UPDATE feature_orders SET charge_id = ? WHERE session_id = ?").bind(o.charge, order.session_id).run();
       if (evt.type === "charge.dispute.closed") {
-        if (o.status === "won") { await env.DB.prepare("UPDATE feature_orders SET status = 'dispute_won' WHERE session_id = ?").bind(order.session_id).run(); return { dispute: "won", manual: "re-grant by hand if wanted" }; }
+        if (o.status === "won") { await env.DB.prepare("UPDATE feature_orders SET status = 'dispute_won', note = ? WHERE session_id = ?").bind(AUTO + "dispute won: the placement stays off. Re-grant it by hand if you want to.", order.session_id).run(); return { dispute: "won", manual: "re-grant by hand if wanted" }; }
         if (o.status !== "lost") return { ignored: "dispute closed: " + o.status };
       }
       return revoked(await revokePlan(env.DB, order, "disputed"));
@@ -65,6 +66,13 @@ async function handle(evt, env) {
   }
 }
 
+// A refund or dispute can reach us before the checkout event that creates its order. Remember it; paid() then creates the order already
+// refunded/disputed and never switches the placement on. Without a payment intent there is nothing to key it by.
+async function pendingRevocation(env, pi, kind) {
+  if (!pi || !kind) return { ignored: "no matching order" };
+  await env.DB.prepare("INSERT INTO feature_pending_revocations (payment_intent, kind) VALUES (?, ?) ON CONFLICT(payment_intent) DO UPDATE SET kind = excluded.kind").bind(pi, kind).run();
+  return { pending: kind, note: "no order yet; recorded for when it arrives" };
+}
 const revoked = (manual) => (manual ? { revoked: false, manual: "placement differs" } : { revoked: true });
 const orderByPi = (env, pi) => (pi ? env.DB.prepare("SELECT * FROM feature_orders WHERE payment_intent = ?").bind(pi).first() : null);
 
@@ -74,8 +82,18 @@ async function paid(s, env) {
   if (!eventId || !PLANS[plan]) return { ignored: "no feature metadata" };
 
   // One order per Checkout session. The row existing is NOT proof the placement was applied; `applied` is.
-  await env.DB.prepare("INSERT OR IGNORE INTO feature_orders (session_id,event_id,plan,amount,email,payment_intent,currency,status,user_id) VALUES (?,?,?,?,?,?,?,'paid',?)")
-    .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "", (typeof s.payment_intent === "string" && s.payment_intent) || null, s.currency || null, (s.metadata && s.metadata.user_id) || null).run();
+  const pi = (typeof s.payment_intent === "string" && s.payment_intent) || null;
+  let status = "paid"; const notes = [];
+  const exists = await env.DB.prepare("SELECT 1 FROM feature_orders WHERE session_id = ?").bind(s.id).first();
+  if (!exists && pi) { // did a refund or dispute for this payment already arrive?
+    const pend = await env.DB.prepare("SELECT kind FROM feature_pending_revocations WHERE payment_intent = ?").bind(pi).first();
+    if (pend) { status = pend.kind; notes.push(`${AUTO}${{ refunded: "a refund", held: "a partial refund", disputed: "a dispute", dispute_won: "a dispute (won)" }[pend.kind] || pend.kind} reached us before the payment was recorded, so the placement was not applied.`); }
+  }
+  if (s.amount_total !== PLANS[plan].cents || String(s.currency || "").toLowerCase() !== "usd") // the buyer paid what we asked at checkout: still apply, but flag it
+    notes.push(`${AUTO}amount mismatch: paid ${s.amount_total == null ? "?" : (s.amount_total / 100).toFixed(2)} ${String(s.currency || "?").toUpperCase()}, the ${plan} plan is ${(PLANS[plan].cents / 100).toFixed(2)} USD.`);
+  await env.DB.prepare("INSERT OR IGNORE INTO feature_orders (session_id,event_id,plan,amount,email,payment_intent,currency,status,user_id,note,refunded_at) VALUES (?,?,?,?,?,?,?,?,?,?,CASE WHEN ? = 'paid' THEN NULL ELSE datetime('now') END)")
+    .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "", pi, s.currency || null, status, (s.metadata && s.metadata.user_id) || null, notes.join(" ").slice(0, 500) || null, status).run();
+  if (!exists && status !== "paid") await env.DB.prepare("DELETE FROM feature_pending_revocations WHERE payment_intent = ?").bind(pi).run();
   const order = await env.DB.prepare("SELECT * FROM feature_orders WHERE session_id = ?").bind(s.id).first();
   if (order.applied) return { duplicate: true };
   if (order.status !== "paid") return { skipped: order.status }; // already refunded/disputed before we got to apply it
@@ -90,14 +108,7 @@ async function paid(s, env) {
     targetId = sub.event_id;
     await env.DB.prepare("UPDATE feature_orders SET event_id = ? WHERE session_id = ?").bind(targetId, s.id).run();
   }
-  const ev = await env.DB.prepare("SELECT id, end_date, featured, featured_until FROM events WHERE id = ?").bind(targetId).first();
-  if (!ev) { console.error("stripe-webhook: event not found", targetId); return err(500, "Event not found; will retry."); }
-  const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
-  const nf = applyPlan(ev, plan, today);
-  // One transaction; both statements only act while the order is still unapplied, so a concurrent retry cannot extend the placement twice.
-  await env.DB.batch([
-    env.DB.prepare("UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=? AND EXISTS (SELECT 1 FROM feature_orders WHERE session_id=? AND applied=0)").bind(nf.featured, nf.featured_until, targetId, s.id),
-    env.DB.prepare("UPDATE feature_orders SET applied=1, applied_featured=?, applied_until=? WHERE session_id=? AND applied=0").bind(nf.featured, nf.featured_until, s.id),
-  ]);
+  const nf = await applyOrder(env.DB, order, targetId);
+  if (!nf) { console.error("stripe-webhook: event not found", targetId); return err(500, "Event not found; will retry."); }
   return { featured: nf };
 }

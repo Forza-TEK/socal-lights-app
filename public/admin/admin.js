@@ -24,16 +24,16 @@ async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: "same-origin", headers: opts.body ? { "content-type": "application/json" } : {}, ...opts });
   const d = await r.json().catch(() => ({}));
   if (r.status === 401) throw new Error("You're not signed in as the admin. Open this page through your Cloudflare Access login.");
-  if (!r.ok) throw new Error(d.error || "Something went wrong. Try again.");
+  if (!r.ok) { const e = new Error(d.error || "Something went wrong. Try again."); e.status = r.status; e.data = d; throw e; }
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "claims", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "emails", "help"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", emails: "Email templates", help: "Help Center" };
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "emails", "help"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", emails: "Email templates", help: "Help Center" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
-function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; }
+function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; }
 function setTab(t, push = true) {
   if (t !== tab) PVIEW = "pending";
   tab = t;
@@ -63,6 +63,7 @@ async function render() {
     if (tab === "events") return renderEvents();
     if (tab === "subs") return renderSubs();
     if (tab === "claims") return renderClaims();
+    if (tab === "orders") return renderOrders();
     if (tab === "contests") return renderContests();
     if (tab === "overlaps") return renderOverlaps();
     if (tab === "installers") return renderInstallers();
@@ -268,15 +269,16 @@ document.addEventListener("click", async (e) => {
     SUBVIEW = b.dataset.st === "published" ? "published" : b.dataset.st === "pending" ? "pending" : "published"; setTab("subs");
   } catch (er) { toast(er.message, true); }
 });
-const SDONE = { approve: "Published", decline: "Declined", unpublish: "Unpublished", restore: "Back in the waiting list" };
+const SDONE = { approve: "Published", decline: "Declined. If they paid for Featured, refund it under Orders.", unpublish: "Unpublished", restore: "Back in the waiting list" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-sact]"); if (!b) return;
   const card = b.closest("[data-sid]"), msg = card.querySelector(".msg"), act = b.dataset.sact, id = card.dataset.sid, name = card.querySelector("h3").textContent, x = SUBS.find((r) => r.id === id) || {}, extra = {};
-  if (act === "decline") { const r = await askReason({ title: "Decline " + name, hint: "This is emailed to the person who added it. Leave it blank to send no reason." }); if (r === null) return; extra.reason = r; }
+  if (act === "decline") { const r = await askReason({ title: "Decline " + name, hint: x.paid_plans ? `They already paid for Featured (${x.paid_plans}). After you decline, refund it in the Stripe dashboard (it is listed under Orders as refund due), then mark it refunded. This note is emailed to them.` : "This is emailed to the person who added it. Leave it blank to send no reason." }); if (r === null) return; extra.reason = r; }
   else if (act === "unpublish" && !tap(b, "unpublish")) return;
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try {
-    await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify({ action: act, status: b.dataset.st, ...extra }) });
+    const post = (more = {}) => api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify({ action: act, status: b.dataset.st, ...extra, ...more }) });
+    try { await post(); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && confirm(er.message)) await post({ confirm: true }); else throw er; } // a paid placement needs an explicit yes
     const undo = act === "decline" ? { action: "restore" } : act === "unpublish" ? { action: "approve", status: x.verified ? "confirmed" : "expected", notify: false } : null;
     toast(SDONE[act] || "Done", false, undo ? { undo: async () => { try { await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); renderSubs(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
     renderSubs(); refreshCounts();
@@ -303,6 +305,50 @@ $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-clact]"); if (!b) return;
   const card = b.closest("[data-clid]"); b.disabled = true;
   try { await api("/api/admin/claims/" + card.dataset.clid, { method: "POST", body: JSON.stringify({ action: b.dataset.clact }) }); toast(b.dataset.clact === "approve" ? "Approved" : "Declined"); renderClaims(); refreshCounts(); } catch (er) { b.disabled = false; toast(er.message, true); }
+});
+
+/* ---------- Featured orders: money that needs the owner (refunds to make, disputes, placements that did not apply) ---------- */
+let OVIEW = "attention";
+const OFLAG = { refund_due: ["Refund due", "bad"], disputed: ["Disputed", "bad"], held: ["Partial refund", "warn"], unapplied: ["Not applied", "bad"], differs: ["Placement differs", "warn"], mismatch: ["Amount differs", "warn"], note: ["See note", "warn"], cancelled: ["Event cancelled", "warn"] };
+const OSTATUS = { paid: ["Paid", "ok"], refunded: ["Refunded", ""], disputed: ["Disputed", "bad"], dispute_won: ["Dispute won", ""], held: ["Held", "warn"], refund_due: ["Refund due", "bad"] };
+const money = (c, cur) => (c == null ? "" : (cur && cur !== "usd" ? cur.toUpperCase() + " " : "$") + (c / 100).toFixed(2));
+async function renderOrders() {
+  const main = $("#main"), all = await api("/api/admin/orders");
+  const need = all.filter((o) => o.flags.length), rows = OVIEW === "attention" ? need : OVIEW === "paid" ? all.filter((o) => o.status === "paid") : OVIEW === "closed" ? all.filter((o) => o.status !== "paid") : all;
+  setCount("orders", need.length);
+  const bar = toolbar({ views: [{ k: "attention", label: "Needs attention", n: need.length }, { k: "paid", label: "Paid", n: all.filter((o) => o.status === "paid").length }, { k: "closed", label: "Refunded and disputed", n: all.filter((o) => o.status !== "paid").length }, { k: "all", label: "All", n: all.length }], active: OVIEW, search: { placeholder: "Search events, emails" }, count: String(rows.length) });
+  const go = () => wireToolbar(main, { onView: (v) => { OVIEW = v; renderOrders(); }, onSearch: (q) => filterCards(main, q) });
+  if (!rows.length) { main.innerHTML = bar + `<div class="empty">${OVIEW === "attention" ? "Nothing needs you. Refunds you still have to make, disputes, partial refunds and placements that did not switch on show up here." : "No orders here yet."}</div>`; go(); return; }
+  main.innerHTML = bar + `<div class="cards">${rows.map((o) => {
+    const st = OSTATUS[o.status] || [o.status, ""], due = ["refund_due", "held", "disputed"].includes(o.status);
+    return rec({
+      attrs: `data-oid="${esc(o.session_id)}" data-onote="${esc(o.note || "")}"`, title: esc(o.name || o.event_id), tags: [st, ...o.flags.filter((f) => !(f === "refund_due" || f === "disputed" || f === "held")).map((f) => OFLAG[f] || [f, "warn"])], meta: esc((o.created_at || "").slice(0, 16)) + " UTC",
+      facts: fact("Plan", `${esc(o.plan)} · <b>${esc(money(o.amount, o.currency))}</b>`) + fact("Placement", o.applied ? `level ${esc(o.applied_featured)} until ${esc(o.applied_until || "the end")}${o.ev_featured ? ` (event now: level ${esc(o.ev_featured)} until ${esc(o.ev_until || "the end")})` : " (event now: not featured)"}` : "not on the event yet")
+        + fact("Event", esc([o.city, o.notice && o.notice.toUpperCase(), String(o.event_id).startsWith("sub:") ? "waiting for approval" : o.event_id].filter(Boolean).join(" · "))) + fact("Buyer", `<span style="user-select:all">${esc(o.email)}</span>`)
+        + fact("Payment", o.stripe_url ? `<a href="${esc(o.stripe_url)}" target="_blank" rel="noopener">${esc(o.payment_intent)} in Stripe</a>` : "") + fact("Note", esc(o.note || "")),
+      edit: btn("ghost", o.note ? "Edit note" : "Add note", 'data-oact="note"'),
+      main: due ? btn("main", "Mark refunded", 'data-oact="mark_refunded"') : o.status === "paid" && !o.applied ? btn("main", "Apply now", 'data-oact="reapply"') : "",
+    });
+  }).join("")}</div>`;
+  go();
+}
+function askNote(title, value) {
+  return new Promise((done) => {
+    const m = $("#modal"); m.hidden = false;
+    m.innerHTML = modalFrame(title, `<form class="f" id="rsForm" novalidate>${fsec("Note", "", ff("on-t", "Your note", `<textarea id="on-t" rows="4" maxlength="500">${esc(value)}</textarea>`, { hint: "Saving your own note marks an automatic warning as seen." }))}<div class="mfoot"><button class="btn ice" type="submit">Save note</button><button class="btn ghost" type="button" data-mcancel>Cancel</button></div></form>`);
+    const end = (v) => { m.hidden = true; m.innerHTML = ""; done(v); };
+    $("#mClose").onclick = () => end(null); m.querySelector("[data-mcancel]").addEventListener("click", () => end(null), { once: true });
+    $("#rsForm").onsubmit = (e) => { e.preventDefault(); end($("#on-t").value.trim()); }; $("#on-t").focus();
+  });
+}
+$("#main").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-oact]"); if (!b) return;
+  const card = b.closest("[data-oid]"), act = b.dataset.oact, name = card.querySelector("h3").textContent, msg = card.querySelector(".msg"), body = { action: act };
+  if (act === "mark_refunded" && !confirm("Mark this order refunded?\n\nOnly do this after you refunded the payment in the Stripe dashboard. This does not refund anything.")) return;
+  if (act === "note") { const v = await askNote("Note for " + name, card.dataset.onote); if (v === null) return; body.note = v; }
+  b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
+  try { const d = await api("/api/admin/orders/" + encodeURIComponent(card.dataset.oid), { method: "POST", body: JSON.stringify(body) }); toast(act === "mark_refunded" ? (d.placement_differs ? "Marked refunded. The placement was left on: check it" : "Marked refunded") : act === "reapply" ? "Applied" : "Note saved"); renderOrders(); refreshCounts(); }
+  catch (er) { b.disabled = false; msg.className = "msg err"; msg.textContent = er.message; }
 });
 
 /* ---------- contests (organizers who need a review, e.g. a Gmail address or an email that doesn't match their website) ---------- */
@@ -413,7 +459,7 @@ function editEvent(ev) {
   };
   const close = () => { pm.remove(); m.hidden = true; m.innerHTML = ""; };
   $("#mClose").onclick = close;
-  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; await api("/api/admin/events/" + encodeURIComponent(ev.id), { method: "DELETE" }); close(); toast("Event deleted"); if (tab === "events") renderEvents(); else render(); };
+  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && confirm(er.message)) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted"); if (tab === "events") renderEvents(); else render(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");
     const id = ev ? ev.id : $("#eN").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) + "-" + Math.random().toString(36).slice(2, 6);

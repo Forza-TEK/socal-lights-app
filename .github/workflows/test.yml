@@ -1,0 +1,29 @@
+# Runs the automated tests (payments, privacy, email templates) and the migration checks on every pull request and every push to main.
+# To make this a merge gate: GitHub > Settings > Branches (or Rules) > protect `main` > require status checks > select "Tests".
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the migration check compares against origin/main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit and integration tests
+        run: npm test
+      - name: Migration checks
+        run: npm run validate

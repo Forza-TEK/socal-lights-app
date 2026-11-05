@@ -35,7 +35,9 @@ d.email = acct.email;
 // Prices come from /api/config (functions/_lib/featured.js); only the wording lives here.
 const PLAN_COPY = { pin: ["Featured pin", "Gold-ringed pin and Featured badge for"], top: ["Top of the list", "Everything above, plus listed first for"], season: ["Whole season", "Everything above, until your event ends"] };
 const FP = cfg.featurePlans || {};
-const PLANS = [["", "No thanks, just list it", "Free"], ...Object.keys(PLAN_COPY).filter((k) => FP[k]).map((k) => [k, `${PLAN_COPY[k][0]}: $${FP[k].cents / 100}`, FP[k].days ? `${PLAN_COPY[k][1]} ${FP[k].days} days` : PLAN_COPY[k][1]])];
+// The whole-season plan needs real time left on the event (FP.season.minDays); its card names the real end date.
+const seasonOff = (x, k) => !!(FP[k].minDays && x.end && x.end < addDays(today, FP[k].minDays));
+const plansFor = (x) => [["", "No thanks, just list it", "Free"], ...Object.keys(PLAN_COPY).filter((k) => FP[k] && !seasonOff(x, k)).map((k) => [k, `${PLAN_COPY[k][0]}: $${FP[k].cents / 100}`, FP[k].days ? `${PLAN_COPY[k][1]} ${FP[k].days} days` : `Everything above, until ${fmt(x.end)}, your event's last day`])];
 
 const steps = [
   { id: "url", sec: "Basics", title: "Do you have a web page for your event?", help: "If the page mentions your event's name and date, it shows as Confirmed. Without one, it still goes on the map right away, marked Expected until the dates are checked.",
@@ -58,11 +60,12 @@ const steps = [
   { id: "review", sec: "Review", title: "Check everything, then add it", cta: "Add my event", redraw: false,
     body: (x) => `<div class="sum">${sumRow("Event", esc(x.name), "name")}${sumRow("Page", x.url.trim() ? esc(x.url) : "None. A person will check it", "url")}${sumRow("When", fmt(x.start) + (x.end !== x.start ? " to " + fmt(x.end) : ""), "dates")}${sumRow("Price", x.free === "yes" ? "Free" : esc(x.price), "price")}${sumRow("Where", `${esc(x.venue)}, ${esc(x.city)}`, "where")}</div>
       <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). It is only used if something needs fixing and it is never shown publicly.</p></div>
-      ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div class="tiles">${PLANS.map(([v, t, s]) => tile(x, "plan", v, t, s, false)).join("")}</div><p class="small muted">You'll pay on Stripe's secure page right after your event is added. If it needs a quick review first, your Featured placement turns on as soon as it's approved.</p></div>` : ""}<div id="ts"></div>`,
+      ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div class="tiles">${plansFor(x).map(([v, t, s]) => tile(x, "plan", v, t, s, false)).join("")}</div>${FP.season && seasonOff(x, "season") ? `<p class="small muted">The whole-season plan is for events with more than a week left to run.</p>` : ""}<p class="small muted">You'll pay on Stripe's secure page right after your event is added. If it needs a quick review first, your Featured placement turns on as soon as it's approved.</p></div>` : ""}<div id="ts"></div>`,
     submit: async (x, api) => {
       const body = { name: x.name, url: x.url, season: x.season, type: x.type, start: x.start, end: x.end, hours: x.hours, price: x.free === "yes" ? "" : x.price, free: x.free === "yes", venue: x.venue, address: x.street, city: x.city, blurb: x.blurb, email: x.email, "cf-turnstile-response": ts.token() };
       const r = await fetch("/api/submit-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
+      if (x.plan && FP[x.plan] && seasonOff(x, x.plan)) x.plan = ""; // the dates changed after the plan was chosen
       if (x.plan && pay) {
         // Straight on to Stripe. A published event is featured by its id; one in review is held until it is approved.
         const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(j.status === "published" || j.status === "duplicate" ? { event_id: j.id } : { submission_id: j.submission_id }), plan: x.plan, email: x.email }) });

@@ -1,7 +1,8 @@
 // POST /api/admin/submissions/:id  { action: "approve" | "decline" | "unpublish" | "edit", status?: "confirmed" | "expected", ...fields for edit }
 import { json, err } from "../../../_lib/util.js";
 import { upsertEvent, slug } from "../../../_lib/events.js";
-import { applyPlan } from "../../../_lib/featured.js";
+import { applyOrder, restorePlacement, ptToday } from "../../../_lib/featured.js";
+import { markRefundDue, livePaidOrders, noteOrders, paidPlacementConflict } from "../../../_lib/orders.js";
 import { newId, clean } from "../../../_lib/util.js";
 import { tell } from "../../../_lib/notify.js";
 
@@ -24,18 +25,29 @@ export async function onRequestPost({ request, env, params, waitUntil }) {
   }
   if (b.action === "unpublish") {
     // Takes a published event off the map; the submission goes back to "waiting" with the same event id, so publishing it again restores it
-    if (s.event_id) await env.DB.prepare("DELETE FROM events WHERE id = ?").bind(s.event_id).run();
+    if (s.event_id) {
+      // A paid placement is deleted with the event row: ask first, and keep the orders so a republish gives it back.
+      const live = await livePaidOrders(env.DB, s.event_id, ptToday());
+      if (live.length && !b.confirm) return paidPlacementConflict(live, "unpublish");
+      await env.DB.prepare("DELETE FROM events WHERE id = ?").bind(s.event_id).run();
+      if (live.length) await noteOrders(env.DB, s.event_id, "[auto] The event was unpublished while this placement was running. Publishing it again restores the placement; if it will not come back, refund this order in Stripe and mark it refunded.");
+    }
     await env.DB.prepare("UPDATE event_submissions SET status='pending' WHERE id = ?").bind(s.id).run();
     return json({ ok: true });
   }
   if (b.action === "decline") {
     await env.DB.prepare("UPDATE event_submissions SET status='declined' WHERE id = ?").bind(s.id).run();
+    // A buyer who paid for Featured on a submission we decline is owed a refund: surface it in Admin > Orders (nothing is refunded automatically).
+    const gone = s.event_id && !(await env.DB.prepare("SELECT 1 FROM events WHERE id = ?").bind(s.event_id).first());
+    const due = await markRefundDue(env.DB, s.id, gone ? s.event_id : "", "The submission was declined after the buyer paid for Featured. Refund it in the Stripe dashboard, then mark it refunded here.");
     tell(env, waitUntil, s.contact_email, "event_declined", { name: s.name, reason: clean(b.reason, 400) });
-    return json({ ok: true });
+    return json({ ok: true, refund_due: due });
   }
   if (b.action === "restore") {
     if (s.status !== "declined") return err(400, "Only a declined event can be restored.");
     await env.DB.prepare("UPDATE event_submissions SET status='pending' WHERE id = ?").bind(s.id).run();
+    // Undo of a decline: orders still waiting on a refund go back to paid (an order already marked refunded stays refunded)
+    await env.DB.prepare("UPDATE feature_orders SET status='paid', note=NULL WHERE status='refund_due' AND event_id IN (?, ?)").bind("sub:" + s.id, s.event_id || "sub:" + s.id).run();
     return json({ ok: true });
   }
   if (b.action !== "approve") return err(400, "Unknown action.");
@@ -44,17 +56,11 @@ export async function onRequestPost({ request, env, params, waitUntil }) {
     status: b.status === "confirmed" ? "confirmed" : "expected", free: s.free, price: s.price, hours: s.hours, lat: s.lat, lng: s.lng,
     blurb: s.blurb, url: s.url, season: s.season, venue: s.venue, address: s.address });
   await env.DB.prepare("UPDATE event_submissions SET status='published', event_id=? WHERE id = ?").bind(eventId, s.id).run();
-  // Apply any Featured plans paid for while this event was waiting for review.
-  const { results: orders } = await env.DB.prepare("SELECT plan FROM feature_orders WHERE event_id = ? AND status = 'paid' AND applied = 0 ORDER BY created_at").bind("sub:" + s.id).all();
-  if (orders.length) {
-    const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
-    let ev = await env.DB.prepare("SELECT id, end_date, featured, featured_until FROM events WHERE id = ?").bind(eventId).first();
-    for (const o of orders) ev = { ...ev, ...applyPlan(ev, o.plan, today) };
-    await env.DB.batch([
-      env.DB.prepare("UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=?").bind(ev.featured, ev.featured_until, eventId),
-      env.DB.prepare("UPDATE feature_orders SET event_id=?, applied=1, applied_featured=?, applied_until=? WHERE event_id=? AND status='paid' AND applied=0").bind(eventId, ev.featured, ev.featured_until, "sub:" + s.id),
-    ]);
-  }
+  // Same event id as before an unpublish: put back what its paid orders still owe, then apply plans paid for while it waited for review.
+  const restored = s.event_id ? await restorePlacement(env.DB, eventId) : null;
+  const { results: orders } = await env.DB.prepare("SELECT session_id, plan FROM feature_orders WHERE event_id = ? AND status = 'paid' AND applied = 0 ORDER BY created_at").bind("sub:" + s.id).all();
+  const today = ptToday();
+  for (const o of orders) await applyOrder(env.DB, o, eventId, today); // one at a time, so each order records what it added
   if (b.notify !== false) { tell(env, waitUntil, s.contact_email, "event_approved", { name: s.name }); }
-  return json({ ok: true, id: eventId, featured: orders.length });
+  return json({ ok: true, id: eventId, featured: orders.length, restored: !!restored });
 }

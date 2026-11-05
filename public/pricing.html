@@ -53,7 +53,7 @@
 import { themeBtn, mountAcct } from "/addflow.js?v=20261103a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 const $ = (q) => document.querySelector(q);
-const COPY = { pin: ["Featured pin", ["Gold-ringed pin on the map", "Featured badge in the list"]], top: ["Top of the list", ["Everything in Featured pin", "Listed first in your city, county and season"]], season: ["Whole season", ["Everything in Top of the list", "Featured from now until your event ends"]] };
+const COPY = { pin: ["Featured pin", ["Gold-ringed pin on the map", "Featured badge in the list"]], top: ["Top of the list", ["Everything in Featured pin", "Listed first when people browse your area"]], season: ["Whole season", ["Everything in Top of the list", "Featured from now until your event ends"]] };
 const dollars = (p) => "$" + (p.cents / 100);
 if (/SoCalLightsApp/.test(navigator.userAgent)) {
   // Paid placement is web-only (store rules): the Featured section is not shown in the app.

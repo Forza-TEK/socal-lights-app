@@ -1,6 +1,6 @@
 // POST /api/feature/checkout  { event_id | submission_id, plan: "pin" | "top" | "season" }  ->  { url } (Stripe Checkout page). Needs a signed-in account; the receipt goes to its email.
 import { json, err, clean } from "../../_lib/util.js";
-import { PLANS } from "../../_lib/featured.js";
+import { PLANS, addDays } from "../../_lib/featured.js";
 import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
 import { ownsEvent } from "../../_lib/ownership.js";
 
@@ -34,6 +34,8 @@ export async function onRequestPost({ request, env }) {
   if (!pending && !(await ownsEvent(env, user, ev.id, ""))) return err(403, "Claim this event first. Only its organizer can feature it.");
   const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
   if (ev.end_date < today) return err(400, "That event has already ended.");
+  // The whole-season plan lasts until the event ends, so it needs real time left (otherwise a $20 plan could last a day).
+  if (PLANS[plan].minDays && ev.end_date < addDays(today, PLANS[plan].minDays)) return err(400, `This event ends on ${ev.end_date}, too soon for the whole-season plan (it needs at least ${PLANS[plan].minDays} days left). A 30-day plan is a better fit.`);
 
   const goodEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email || "") ? user.email : ""; // the account email, never one typed in
   const p = PLANS[plan], origin = new URL(request.url).origin;
@@ -55,6 +57,14 @@ export async function onRequestPost({ request, env }) {
   if (goodEmail) { f.set("customer_email", goodEmail); f.set("payment_intent_data[receipt_email]", goodEmail); }
   // Same event + plan within 10 minutes reuses one Checkout session (double clicks). The key is a hash (the account is included so two people never share a session).
   const idem = "feature-" + (await sha256hex(`${ev.id}|${plan}|${user.id}|${Math.floor(Date.now() / 600_000)}`));
+  // Cap how many payment pages one account can open (card testing, plan rotation): 6 an hour, 20 a day. Counted only here, once every other check passed.
+  // If the log cannot be read or written (for example the table is not there yet) the buyer is never blocked.
+  try {
+    const n = await env.DB.prepare("SELECT SUM(created_at > datetime('now','-1 hour')) AS h, COUNT(*) AS d FROM checkout_log WHERE user_id = ? AND created_at > datetime('now','-1 day')").bind(user.id).first();
+    if ((n.h || 0) >= 6) return err(429, "You've opened a lot of payment pages in the last hour. Please wait a little while, or email info@socallights.app if something is wrong.");
+    if ((n.d || 0) >= 20) return err(429, "You've opened a lot of payment pages today. Please try again tomorrow, or email info@socallights.app if something is wrong.");
+    await env.DB.batch([env.DB.prepare("DELETE FROM checkout_log WHERE created_at < datetime('now','-3 days')"), env.DB.prepare("INSERT INTO checkout_log (user_id) VALUES (?)").bind(user.id)]);
+  } catch (e) { console.error("checkout_log", e && e.message); }
   // If Stripe cannot be reached the buyer gets the same friendly message as any other payment-page failure, not a raw error.
   const r = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "idempotency-key": idem, "content-type": "application/x-www-form-urlencoded" }, body: f }).catch(() => null);
   const d = r ? await r.json().catch(() => ({})) : {};
