@@ -241,14 +241,14 @@
           "title": "Approve and decline entries",
           "desc": "Approve, decline with a reason, and undo a decline.",
           "url": "/tutorials/run-approve.mp4",
-          "length": "2:24",
+          "length": "2:05",
           "captions": "/tutorials/run-approve.vtt",
           "poster": "/tutorials/run-approve.jpg",
           "mobile": {
             "url": "/tutorials/run-approve-mobile.mp4",
             "poster": "/tutorials/run-approve-mobile.jpg",
             "captions": "/tutorials/run-approve-mobile.vtt",
-            "length": "2:24"
+            "length": "2:06"
           }
         },
         {
@@ -301,14 +301,14 @@
           "title": "Announce winners",
           "desc": "Close voting, announce, export results and see the archive.",
           "url": "/tutorials/run-announce.mp4",
-          "length": "2:14",
+          "length": "1:58",
           "captions": "/tutorials/run-announce.vtt",
           "poster": "/tutorials/run-announce.jpg",
           "mobile": {
             "url": "/tutorials/run-announce-mobile.mp4",
             "poster": "/tutorials/run-announce-mobile.jpg",
             "captions": "/tutorials/run-announce-mobile.vtt",
-            "length": "2:45"
+            "length": "2:27"
           }
         },
         {
@@ -316,14 +316,14 @@
           "title": "Read your contest activity",
           "desc": "Visits, QR scans, voters and votes per day.",
           "url": "/tutorials/run-activity.mp4",
-          "length": "1:46",
+          "length": "1:32",
           "captions": "/tutorials/run-activity.vtt",
           "poster": "/tutorials/run-activity.jpg",
           "mobile": {
             "url": "/tutorials/run-activity-mobile.mp4",
             "poster": "/tutorials/run-activity-mobile.jpg",
             "captions": "/tutorials/run-activity-mobile.vtt",
-            "length": "1:53"
+            "length": "1:33"
           }
         }
       ]
