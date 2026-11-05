@@ -226,14 +226,14 @@
           "title": "Share your contest",
           "desc": "Link, QR code, entry poster and yard sign.",
           "url": "/tutorials/run-share.mp4",
-          "length": "3:30",
+          "length": "3:14",
           "captions": "/tutorials/run-share.vtt",
           "poster": "/tutorials/run-share.jpg",
           "mobile": {
             "url": "/tutorials/run-share-mobile.mp4",
             "poster": "/tutorials/run-share-mobile.jpg",
             "captions": "/tutorials/run-share-mobile.vtt",
-            "length": "3:32"
+            "length": "3:14"
           }
         },
         {
@@ -256,14 +256,14 @@
           "title": "Edit your contest and change the dates",
           "desc": "Change the details any time before winners are announced.",
           "url": "/tutorials/run-edit.mp4",
-          "length": "2:03",
+          "length": "1:59",
           "captions": "/tutorials/run-edit.vtt",
           "poster": "/tutorials/run-edit.jpg",
           "mobile": {
             "url": "/tutorials/run-edit-mobile.mp4",
             "poster": "/tutorials/run-edit-mobile.jpg",
             "captions": "/tutorials/run-edit-mobile.vtt",
-            "length": "2:16"
+            "length": "1:56"
           }
         },
         {
@@ -286,14 +286,14 @@
           "title": "Add co-organizers and judges",
           "desc": "Invite people to help run the contest.",
           "url": "/tutorials/run-team.mp4",
-          "length": "2:32",
+          "length": "2:08",
           "captions": "/tutorials/run-team.vtt",
           "poster": "/tutorials/run-team.jpg",
           "mobile": {
             "url": "/tutorials/run-team-mobile.mp4",
             "poster": "/tutorials/run-team-mobile.jpg",
             "captions": "/tutorials/run-team-mobile.vtt",
-            "length": "2:24"
+            "length": "2:08"
           }
         },
         {
