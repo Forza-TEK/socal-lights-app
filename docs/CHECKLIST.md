@@ -35,6 +35,8 @@ _Last updated 2026-11-04 (CEO session). `[x]` done and verified, `[ ]` open. Det
 - [x] Minimum TLS version set to 1.2 (confirmed through the API; the site answers over TLS 1.2 and 1.3). Do not buy Advanced Certificate Manager: Universal SSL (free) is all that is needed.
 - [ ] Stripe, Settings, Business, Customer emails: **Successful payments** on (cannot be read by API).
 **This week**
+- [ ] **Protect `main` in GitHub so nothing merges without passing tests:** repository Settings, Branches (or Rules, then Rulesets), add a rule for `main`, tick "Require status checks to pass", search for and add **Tests**, save. The workflow cannot set this itself.
+- [ ] Stripe dashboard: look at Radar fraud rules and confirm the "Successful payments" receipt toggle (audit items; the API cannot read them)
 - [ ] Send the three Outlook drafts (Mom's LA, Mission Viejo MVAC, Pasadena Now) and paste Draft A2 into Enjoy Orange County's form
 - [ ] Book the **CPA hour** (brief: `monetization/finance-operations.md`) and the **attorney** review (`monetization/legal-redlines.md`)
 - [ ] Apply to the **Fever** affiliate program (Impact); read Eventbrite's live terms first (`monetization/affiliate-plan.md`)
@@ -48,8 +50,8 @@ _Last updated 2026-11-04 (CEO session). `[x]` done and verified, `[ ]` open. Det
 - [ ] Turn on a second uptime view (an external free monitor) if you want alerts besides GitHub email
 
 ## 3. Team backlog (CEO runs; order from the audit)
-- [ ] **Batch B, privacy:** fix the false statements (location sent to servers, "no ads", IP kept a day, quote-lead consent); complete account deletion (judges, leads, claims, listing changes, alert subscriptions, installer owner email); email footer with address and `List-Unsubscribe`; Terms (refunds, licence, takedown, DMCA)
-- [ ] **Batch C, payments:** refund path for declined paid submissions; admin orders and refunds view; overlapping orders and refunds; protect paid placements when an event is unpublished or its end date moves; alert on orders stuck unapplied; **automated tests in CI and a merge gate on `main`**
+- [x] **Batch B, privacy (PR 315):** privacy statements made true, account deletion complete, IPs pruned after 48 hours, postal address and unsubscribe in marketing emails (verified on a real email). Still for the attorney: Terms additions, installer licensing text, DMCA, prize wording.
+- [x] **Batch C, payments (PR 318):** 70 automated tests run by a new `Tests` workflow on every pull request; Admin > Orders tab (refund due, disputed, held, unapplied, placement differs); correct refunds on stacked orders; refunds that arrive early; amount check; digest alerts; checkout caps; stricter claim matching; Amazon Shop hidden in the app; Season plan needs 7 days. Not exercised against real Stripe.
 - [ ] **Batch D, operations:** nightly database backup to a private bucket (never a public-repo artifact), restore runbook; error alerting; `/api/events` slimmed (drop ended events, ETag); offline page
 - [ ] **Batch E, SEO and measurement:** richer city pages and internal links, per-event share pages, funnel counters, bot-resistant visitor estimate
 - [ ] **Phase 3:** Featured homes for podium finishers (winner, 2nd, 3rd of announced contests; podium computed from the frozen results; design in `monetization/feature-account-spec.md`)
