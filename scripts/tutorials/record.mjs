@@ -53,18 +53,22 @@ const DRY = process.env.DRY === "1"; // dry run: walk every step to check each b
 export async function record(spec) {
   const w = `${WORK}/${spec.id}`; mkdirSync(w + "/wav", { recursive: true });
   const say = spec.steps.map((s) => s.say || ""); writeFileSync(w + "/texts.json", JSON.stringify(say));
+  // Voice and picture stay together: when a step taps something and the narration goes on explaining afterwards, the narration is spoken in two parts, the tap happens right after the sentence that says "tap", and the explanation plays over the new screen
+  const sentences = (t) => t.match(/[^.!?]+[.!?]+(\s|$)/g) || [t];
+  const splitSay = (s) => { const t = s.say || ""; if (!t) return []; if (!s.target || s.noSplit) return [t]; const ps = sentences(t).map((x) => x.trim()); if (ps.join(" ").length < t.trim().length - 3) return [t]; let k = -1; ps.forEach((x, j) => { if (/\b(tap|click|press)\b/i.test(x)) k = j; }); if (k < 0 || k >= ps.length - 1) return [t]; return [ps.slice(0, k + 1).join(" "), ps.slice(k + 1).join(" ")]; };
+  const plan = spec.steps.map(splitSay), items = plan.flatMap((parts, i) => parts.map((text, j) => ({ i, j, text }))), texts = items.map((x) => x.text);
   // Voice files are cached by text, so re-recording a video only speaks the lines that changed
   const cacheDir = `${WORK}/tts`; mkdirSync(cacheDir, { recursive: true });
   const spoken = (t) => t.replaceAll("SoCal", "So Cal"); // said as two words; captions keep the brand spelling
   const KOKORO = process.env.TTS_ENGINE === "kokoro", engine = KOKORO ? `kokoro-${process.env.KOKORO_VOICE || "af_heart"}-${process.env.KOKORO_SPEED || "1.0"}-` : "hfc_female-" + (process.env.LENGTH_SCALE || "1.0");
   const keyOf = (t) => createHash("sha1").update(engine + "|" + spoken(t)).digest("hex");
-  const todo = [...new Set(say.filter((t) => t && !existsSync(`${cacheDir}/${keyOf(t)}.wav`)))];
+  const todo = [...new Set(texts.filter((t) => t && !existsSync(`${cacheDir}/${keyOf(t)}.wav`)))];
   if (todo.length && !DRY) { mkdirSync(w + "/wav", { recursive: true }); writeFileSync(w + "/todo.json", JSON.stringify(todo.map(spoken)));
     const r = spawnSync("python3", [new URL("./tts.py", import.meta.url).pathname, VOICE, w + "/todo.json", w + "/wav"], { stdio: "inherit" }); if (r.status) throw new Error("tts failed");
     todo.forEach((t, i) => copyFileSync(`${w}/wav/${i}.wav`, `${cacheDir}/${keyOf(t)}.wav`)); }
-  if (!DRY) say.forEach((t, i) => { if (t) copyFileSync(`${cacheDir}/${keyOf(t)}.wav`, `${w}/wav/${i}.wav`); });
+  if (!DRY) texts.forEach((t, n) => { copyFileSync(`${cacheDir}/${keyOf(t)}.wav`, `${w}/wav/${n}.wav`); });
   const soft = KOKORO ? "highpass=f=60,loudnorm=I=-17:TP=-2:LRA=9" : "highpass=f=70,lowpass=f=7000,equalizer=f=250:t=q:w=1:g=2.5,equalizer=f=5000:t=q:w=1:g=-2,aecho=0.8:0.4:35:0.1,loudnorm=I=-17:TP=-2:LRA=9";
-  const audio = say.map((t, i) => { if (!t) return null; if (DRY) return { f: null, d: 0.3 }; const o = `${w}/wav/s${i}.wav`; execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${w}/wav/${i}.wav`, "-af", soft, "-ar", "44100", o]); return { f: o, d: dur(o) }; });
+  const audio = plan.map(() => []); items.forEach((it, n) => { if (DRY) { audio[it.i][it.j] = { f: null, d: 0.3, text: it.text }; return; } const o = `${w}/wav/s${n}.wav`; execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${w}/wav/${n}.wav`, "-af", soft, "-ar", "44100", o]); audio[it.i][it.j] = { f: o, d: dur(o), text: it.text }; });
   const vp = MOB ? { width: 360, height: 640 } : spec.phone ? { width: 390, height: 680 } : { width: 1280, height: 720 };
   const br = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
   const SC = MOB || spec.phone ? 3 : 2; // device pixels per CSS pixel: desktop frames are 2560x1440, phone frames 1170x2040
@@ -92,8 +96,9 @@ export async function record(spec) {
     await card(s.card ? { ...s.card, first: i === 0 } : null);
     if (s.mail !== "keep") await h.showMail(s.mail ? { ...s.mail, html: s.mail.html && s.mail.html.replaceAll("https://socallights.app", BASE) } : null);
     await page.evaluate((c) => { let e = document.getElementById("__cap"); if (!c) { if (e) e.remove(); return; } if (!e) { e = document.createElement("div"); e.id = "__cap"; document.body.appendChild(e); } e.textContent = c; }, s.card ? "" : s.cap || "");
-    if (audio[i]) marks.push({ i, t: t0 + 0.4, f: audio[i].f });
-    const end = t0 + 0.4 + (audio[i]?.d || 0) + (s.pad ?? 0.5);
+    const A = audio[i][0], B = audio[i][1];
+    if (A) marks.push({ t: t0 + 0.4, f: A.f, d: A.d, text: A.text });
+    const end = t0 + 0.4 + (A?.d || 0) + (B ? 0.1 : (s.pad ?? 0.5));
     await sleep(900);
     if (s.pre) await s.pre(page, h);
     if (s.do) { try { await s.do(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } }
@@ -107,6 +112,7 @@ export async function record(spec) {
     if (s.target) { await sleep(500); if (s.beforeClick) await s.beforeClick(page, h); await h.click(s.target, { after: 0 }); await page.evaluate(() => { const c = document.getElementById("__cap"); if (c) c.remove(); }).catch(() => {}); await sleep(s.after ?? 1500); } // the caption goes the moment the screen changes, so it never describes the old screen
     if (process.env.SHOTS) await page.screenshot({ path: `${w}/s${String(i).padStart(2, '0')}.png` }).catch(() => {});
     if (s.post) { try { await s.post(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-post-${i}.png` }); throw e; } }
+    if (B) { const tb = T() + 0.3; marks.push({ t: tb, f: B.f, d: B.d, text: B.text }); const left2 = tb + B.d + (s.pad ?? 0.5) - T(); if (left2 > 0) await sleep(left2 * 1000); } // the explanation after the tap is spoken over the new screen
   }
   const total = T() + 0.3; await sleep(300);
   await cdp.send("Page.stopScreencast").catch(() => {}); await page.close(); await ctx.close(); await br.close();
@@ -117,7 +123,7 @@ export async function record(spec) {
   for (let k = 0; k < 3 && frames.length > 1; k++) { const px = spawnSync("ffmpeg", ["-v", "error", "-i", `${fdir}/${frames[0].i}.jpg`, "-vf", "scale=8:8,format=rgb24", "-f", "rawvideo", "-"], { maxBuffer: 1e6 }).stdout; let r = 0, g = 0, b = 0; const n = (px.length / 3) | 0; for (let q = 0; q + 2 < px.length; q += 3) { r += px[q]; g += px[q + 1]; b += px[q + 2]; } if (n && r / n > 238 && g / n > 232 && b / n > 225) break; frames.shift(); }
   frames[0].t = ref; // Chrome can hand over one stale frame first (the page before the title card): drop it, so frame one is the card
   // Dead air is fast-forwarded: any stretch with no voice that is longer than 1.5 s plays at 4x (the first 0.8 s and last 0.4 s stay at normal speed, so each click is still seen)
-  const spans = marks.map((m) => [m.t, m.t + audio[m.i].d]).sort((a, b) => a[0] - b[0]), cuts = []; let prevEnd = 0;
+  const spans = marks.map((m) => [m.t, m.t + m.d]).sort((a, b) => a[0] - b[0]), cuts = []; let prevEnd = 0;
   for (const [a, b] of [...spans, [total, total]]) { const c0 = prevEnd + 0.8, c1 = a - 0.4; if (c1 - c0 > 1.5) cuts.push([c0, c1]); prevEnd = Math.max(prevEnd, b); }
   const remap = (t) => { let r = 0; for (const [c0, c1] of cuts) { if (t <= c0) break; r += (Math.min(t, c1) - c0) * 0.75; } return t - r; };
   frames.forEach((f) => { f.t = ref + remap(Math.max(0, f.t - ref)); });
@@ -146,7 +152,7 @@ export async function record(spec) {
 
   // Closed captions (WebVTT): each narration line, split by sentence, timed from where its voice starts
   const ts = (x) => { const m = Math.floor(x / 60), sec = x - m * 60; return `00:${String(m).padStart(2, "0")}:${sec.toFixed(3).padStart(6, "0")}`; };
-  const cues = []; for (const m of marks) { const text = say[m.i], d = audio[m.i].d, parts = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text], total = parts.reduce((a, x) => a + x.length, 0); let at = m.t; for (const part of parts) { const len = d * part.length / total; cues.push(`${ts(at)} --> ${ts(at + len)}\n${part.trim()}`); at += len; } }
+  const cues = []; for (const m of marks) { const text = m.text, d = m.d, parts = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text], total = parts.reduce((a, x) => a + x.length, 0); let at = m.t; for (const part of parts) { const len = d * part.length / total; cues.push(`${ts(at)} --> ${ts(at + len)}\n${part.trim()}`); at += len; } }
   writeFileSync(`${OUT}/${spec.file}${MOB ? "-mobile" : ""}.vtt`, "WEBVTT\n\n" + cues.join("\n\n") + "\n");
   execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", "0", "-i", mp4, "-frames:v", "1", "-q:v", "4", `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.jpg`]);
   const L = dur(mp4); console.log(spec.file, "length", Math.floor(L / 60) + ":" + String(Math.round(L % 60)).padStart(2, "0"));
