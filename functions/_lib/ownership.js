@@ -5,6 +5,10 @@
 //       organizer could not be matched to a website (free-mail, no site, mismatch) is live but cannot buy Featured until Admin clicks "Looks fine".
 import { normEmail } from "./auth.js";
 
+// Who may buy a Sponsor placement for an installer profile: its owner (installers.owner_email, set by a claim: an email at the company's website, or an admin).
+// The same exact-match rule as the profile dashboard (api/installers/<slug>/manage.js). Owning a profile here gives no extra rights.
+export const ownsInstaller = (inst, user) => !!inst && !!user && !!inst.owner_email && inst.owner_email === user.email;
+
 export async function ownsEvent(env, user, eventId, subId) {
   if (subId) { // a pending submission: only by (a)
     const s = await env.DB.prepare("SELECT contact_email FROM event_submissions WHERE id = ?").bind(subId).first();

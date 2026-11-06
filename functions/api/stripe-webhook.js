@@ -9,7 +9,9 @@ import { json, err } from "../_lib/util.js";
 import { logOp } from "../_lib/oplog.js";
 import { bump } from "../_lib/funnel.js";
 import { sendFeaturePaidEmail } from "../_lib/featuremail.js";
-import { PLANS, LEGACY_SEASON_CENTS, applyOrder, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
+import { sponsorWindow } from "../_lib/sponsor.js";
+import { sponsorEmails } from "../_lib/sponsormail.js";
+import { PLANS, INSTALLER_PLANS, ptToday, LEGACY_SEASON_CENTS, applyOrder, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
 
 const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired", "charge.refunded", "charge.dispute.created", "charge.dispute.closed"]);
 
@@ -82,20 +84,23 @@ const orderByPi = (env, pi) => (pi ? env.DB.prepare("SELECT * FROM feature_order
 async function paid(s, env) {
   if (s.payment_status !== "paid") return { waiting: s.payment_status }; // e.g. a delayed method; Stripe sends async_payment_succeeded later
   const eventId = s.metadata && s.metadata.event_id, plan = s.metadata && s.metadata.plan;
-  if (!eventId || !PLANS[plan]) return { ignored: "no feature metadata" };
-  const target = s.metadata.target === "home" ? "home" : "event"; // a home (podium finisher) is bought through the same checkout
+  const mt = s.metadata && s.metadata.target, target = mt === "home" ? "home" : mt === "installer" ? "installer" : "event"; // a home (podium finisher) and an installer's Sponsor placement are bought through the same orders
+  const price = target === "installer" ? INSTALLER_PLANS[plan] : PLANS[plan];
+  if (!eventId || !price) return { ignored: "no feature metadata" };
   if (target === "home" && !PLANS[plan].days) return { ignored: "no Full run plan for homes" };
 
   // One order per Checkout session. The row existing is NOT proof the placement was applied; `applied` is.
   const pi = (typeof s.payment_intent === "string" && s.payment_intent) || null;
   let status = "paid"; const notes = [];
+  let expected = price.cents; // an installer's price is prorated by the days left in the season: the same server calculation the checkout used
+  if (target === "installer") { const inst = await env.DB.prepare("SELECT banner_until, top_until FROM installers WHERE id = ?").bind(eventId).first(); if (inst) expected = sponsorWindow(plan, inst, ptToday()).cents; }
   const exists = await env.DB.prepare("SELECT 1 FROM feature_orders WHERE session_id = ?").bind(s.id).first();
   if (!exists && pi) { // did a refund or dispute for this payment already arrive?
     const pend = await env.DB.prepare("SELECT kind FROM feature_pending_revocations WHERE payment_intent = ?").bind(pi).first();
     if (pend) { status = pend.kind; notes.push(`${AUTO}${{ refunded: "a refund", held: "a partial refund", disputed: "a dispute", dispute_won: "a dispute (won)" }[pend.kind] || pend.kind} reached us before the payment was recorded, so the placement was not applied.`); }
   }
-  if ((s.amount_total !== PLANS[plan].cents && !(plan === "season" && s.amount_total === LEGACY_SEASON_CENTS)) || String(s.currency || "").toLowerCase() !== "usd") // the buyer paid what we asked at checkout: still apply, but flag it
-    notes.push(`${AUTO}amount mismatch: paid ${s.amount_total == null ? "?" : (s.amount_total / 100).toFixed(2)} ${String(s.currency || "?").toUpperCase()}, the ${plan} plan is ${(PLANS[plan].cents / 100).toFixed(2)} USD.`);
+  if ((s.amount_total !== expected && !(target !== "installer" && plan === "season" && s.amount_total === LEGACY_SEASON_CENTS)) || String(s.currency || "").toLowerCase() !== "usd") // the buyer paid what we asked at checkout: still apply, but flag it
+    notes.push(`${AUTO}amount mismatch: paid ${s.amount_total == null ? "?" : (s.amount_total / 100).toFixed(2)} ${String(s.currency || "?").toUpperCase()}, the ${plan} plan is ${(expected / 100).toFixed(2)} USD.`);
   await env.DB.prepare("INSERT OR IGNORE INTO feature_orders (session_id,event_id,plan,amount,email,payment_intent,currency,status,user_id,note,target,refunded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,CASE WHEN ? = 'paid' THEN NULL ELSE datetime('now') END)")
     .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "", pi, s.currency || null, status, (s.metadata && s.metadata.user_id) || null, notes.join(" ").slice(0, 500) || null, target, status).run();
   if (!exists && status !== "paid") await env.DB.prepare("DELETE FROM feature_pending_revocations WHERE payment_intent = ?").bind(pi).run();
@@ -118,7 +123,8 @@ async function paid(s, env) {
     await env.DB.prepare("UPDATE feature_orders SET event_id = ? WHERE session_id = ?").bind(targetId, s.id).run();
   }
   const nf = await applyOrder(env.DB, order, targetId);
-  if (!nf) { console.error("stripe-webhook: target not found", targetId); return err(500, (target === "home" ? "Home" : "Event") + " not found; will retry."); }
+  if (!nf) { console.error("stripe-webhook: target not found", targetId); return err(500, (target === "home" ? "Home" : target === "installer" ? "Installer profile" : "Event") + " not found; will retry."); }
+  if (target === "installer") { await bump(env, "fn:sponsor-paid"); await sponsorEmails(env, order, nf, s); return { sponsor: nf }; } // counted and mailed once: a replay returns "duplicate" above
   if (target === "event") { const q = await env.DB.prepare("SELECT name FROM events WHERE id = ?").bind(targetId).first(); await sendFeaturePaidEmail(env, { order, name: q && q.name, until: nf.featured_until, eventId: targetId }); }
   return { featured: nf };
 }
