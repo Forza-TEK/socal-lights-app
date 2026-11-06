@@ -11,10 +11,13 @@
 <link rel="stylesheet" href="/addflow.css?v=20261106zb">
 <link rel="stylesheet" href="/info.css?v=20261106zb">
 <style>
-@media(min-width:700px){.grid.two{grid-template-columns:repeat(2,1fr)}}
+.grid{grid-template-columns:1fr!important}
 .plan{display:flex;flex-direction:column;align-content:normal}.plan>.btn{margin-top:auto;align-self:flex-start}.plan>ul{margin-bottom:14px}.plan{background:#fff}:root[data-theme="dark"] .plan{background:var(--tile)}
 .free{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.free small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0;word-spacing:.15em}
 .plan p{margin:0;color:var(--muted)}
+.plan>h2{font-size:20px;margin:0 0 12px}
+.tiers{display:grid;gap:14px;margin:0 0 14px}.tier{padding-top:14px;border-top:1px solid var(--line)}.tier:first-child{padding-top:0;border-top:0}.tier p{margin-top:4px}.tier p b{color:var(--ink)}.tier .free{font-size:26px}
+@media(min-width:700px){.tiers.one{grid-template-columns:1fr}.tiers{grid-template-columns:repeat(3,1fr);gap:22px}.tier{padding:0 0 0 22px;border-top:0;border-left:1px solid var(--line)}.tier:first-child{padding-left:0;border-left:0}}.plan>.meta{margin:0 0 14px;font-size:14px}.plan .intro{margin-top:-4px}.plan .btn+.btn{margin-left:8px}.tier .btn{margin-top:12px}
 </style>
 <script src="/hit.js" defer></script>
 </head>
@@ -22,25 +25,31 @@
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
 <main>
 <h1>Pricing</h1>
-<p class="lede">SoCal Lights is a free map of holiday lights and events across Southern California. Here is what is free and what is optional, so you can see it before you add anything.</p>
+<p class="lede">Finding lights and events is free, and so is posting them. Paid options only make your listing easier to see. Every paid placement is labelled, and money never changes a contest result.</p>
 
-<h2>Finding lights and events: free</h2>
-<p>Searching the map, filters, routes, saving favorites, the Help Center, and voting in contests are free for everyone. No account is needed to browse.</p>
+<div class="grid">
+<section class="plan" id="homeowners"><h2>Homeowners</h2>
+<div class="tiers one"><div class="tier"><div class="free">Free</div><p><b>Show your lights on the map.</b> Entering a display and entering a contest are free. A contest winner, 2nd or 3rd place can also feature their home for 30 days (see Event organizers for the prices).</p></div></div>
+<a class="btn" href="/add-house">Add your display</a></section>
 
-<h2>Adding to the map</h2>
-<div class="grid two">
-<section class="plan"><h3>Homeowners</h3><div class="free">Free</div><p>Show your lights display on the map so families can drive by. Entering a display and entering a contest are free. A contest winner, 2nd or 3rd place can optionally feature their home (below).</p><a class="btn" href="/add-house">Add your display</a></section>
-<section class="plan" id="banner"><h3>Installers</h3><div class="free">Free <small>for now</small></div><p>Post the lights you have installed and get a company profile page that lists your homes. A labelled "Sponsor" banner on the map can also show your company name and phone when your service area is in view. Ask us about banner pricing.</p><a class="btn" href="/add-house">Post your installs</a></section>
-<section class="plan"><h3>Event organizers</h3><div class="free">Free <small>for now</small></div><p>List your tree lighting, parade, market, haunted house or light show. Featured placement is optional (below).</p><a class="btn" href="/add-event">Add your event</a></section>
-<section class="plan"><h3>Contest organizers</h3><div class="free">Free <small>for now</small></div><p>Cities, HOAs, chambers and neighborhood groups: run a decorating contest with resident entries, voting, judges, and People's Choice and Judges' Choice awards.</p><a class="btn" href="/add-contest">Create a contest</a></section>
+<section class="plan" id="events"><h2>Event organizers</h2>
+<p class="meta intro"><b>Listing your event is free</b> (tree lighting, parade, market, haunted house, light show). Featured placement is optional: pick one, pay once, no subscription.</p>
+<div class="tiers" id="plans"></div>
+<p class="meta" id="featnote">Placement starts when you pay and runs to your event's last day, up to 30 days (up to 90 for a Full run). Featuring opens 30 days before the event. You pay on Stripe's secure page.</p>
+<a class="btn" href="/add-event">Add your event</a></section>
+
+<section class="plan" id="banner"><h2>Installers</h2>
+<div class="tiers">
+<div class="tier"><div class="free">Free</div><p><b>Profile card.</b> Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map, so anyone who likes your work can click through to you.</p></div>
+<div class="tier paid"><div class="free">$50 <small>per season</small></div><p><b>Banner.</b> Everything in Free, plus your company name (linked to your website or email) and phone number in the labelled "Sponsor" banner at the top of the list on the map. It scrolls whenever your service area is in the map view.</p></div>
+<div class="tier paid"><div class="free">$75 <small>per season</small></div><p><b>Banner and top of the list.</b> Everything in the $50 banner, plus your company card at the top of the list, right behind the Featured events. Paid placements are always labelled.</p></div>
 </div>
+<p class="meta paid">To add the banner or the top of the list, email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>.</p>
+<a class="btn" href="/add-house">Post your installs</a></section>
 
-<div id="featsec">
-<h2>Featured events and podium homes (optional)</h2>
-<p>A Featured event stands out with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin on the map. It is the only thing on SoCal Lights that costs money today.</p>
-<p>Homes can be featured too, but only by the owner of a home that finished winner, 2nd or 3rd place in an announced contest, with the Featured pin or Top of the list for 30 days from payment (no Full run). Payment never changes who wins or any contest result.</p>
-<div class="grid" id="plans"></div>
-<p class="meta">Prices are per event or per home, paid once (no subscription). For an event, the placement starts when you pay and ends on the event's last day, up to 30 days (up to 90 days for a Full run). Featuring opens 30 days before the event starts. A home runs 30 days from payment. You pay on Stripe's secure page. Featured placements are always labelled. <a href="/feature">Feature my event</a></p>
+<section class="plan" id="contests"><h2>Contest organizers</h2>
+<div class="tiers one"><div class="tier"><div class="free">Free</div><p><b>Run a decorating contest.</b> Cities, HOAs, chambers and neighborhood groups: resident entries, voting, judges, and People's Choice and Judges' Choice awards.</p></div></div>
+<a class="btn" href="/add-contest">Create a contest</a></section>
 </div>
 
 <h2>Good to know</h2>
@@ -57,13 +66,15 @@ import { planCopy, PLAN_KEYS } from "/feature-plans.js?v=20261106z";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents / 100);
+const PAID = (on) => { document.querySelectorAll(".paid,#featnote,#plans").forEach((e) => (e.hidden = !on)); };
 if (/SoCalLightsApp/.test(navigator.userAgent)) {
-  // Paid placement is web-only (store rules): the Featured section is not shown in the app.
-  $("#featsec").hidden = true;
+  // Paid placement is web-only (store rules): the paid options are not shown in the app.
+  PAID(false);
 } else {
   const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({})), PL = cfg.featurePlans || {};
-  if (!Object.keys(PL).length) $("#featsec").hidden = true;
-  else $("#plans").innerHTML = PLAN_KEYS.filter((k) => PL[k]).map((k) => { const c = planCopy(k, PL); return `<section class="plan${k === "top" ? " pop" : ""}"><h3>${c.name}</h3><div class="price">${dollars(PL[k])} <small>/ ${c.unit}</small></div>${c.sub ? `<p class="meta">${c.sub}</p>` : ""}<ul>${c.bullets.map((t) => `<li>${esc(t)}</li>`).join("")}</ul><a class="btn${k === "top" ? "" : " ghost"}" href="/feature?plan=${k}" aria-label="Choose ${c.name}, ${dollars(PL[k])}">Choose</a></section>`; }).join("");
+  const keys = PLAN_KEYS.filter((k) => PL[k]);
+  if (!keys.length) { $("#featnote").hidden = true; $("#plans").hidden = true; }
+  else $("#plans").insertAdjacentHTML("beforeend", keys.map((k) => { const c = planCopy(k, PL); const what = { pin: "A gold-ringed pin on the map and a Featured badge on your listing.", top: "The pin and badge, plus your event is listed first when people browse your area.", season: "The same as Top of the list, for events that run 31 days or more, for up to " + (PL[k].maxDays || 90) + " days." }[k]; return `<div class="tier paid"><div class="free">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(what)}</p><a class="btn ghost" href="/feature?plan=${k}" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</a></div>`; }).join(""));
 }
 </script>
 <script src="/footer.js?v=20261106z" defer></script>
