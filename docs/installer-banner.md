@@ -25,5 +25,5 @@ Payment, a self-serve booking page, a per-county cap, an "Advertise here" placeh
 ## Prices on the pricing page (owner, 2026-11-06)
 - Free: profile card (page at /installer/<slug>, linked from the homes they installed).
 - $50 per season: the Sponsor banner. Set by an admin with the "Show on the banner until" date.
-- $75 per season: banner plus the company card at the top of the list behind Featured events. **The list placement is not built yet.**
+- $75 per season: banner plus the company card at the top of the list behind Featured events. The list card is built (migration 0170): `installers.top_until`, set in Admin > Installers > Profile > "Top of the list until" (set the banner date too: the $75 tier includes the banner). It shows up to two labelled "Sponsor" cards at the top of the list, right behind the Featured places, for installers whose areas are in the map view (same matching as the banner). Numbers (shown, taps) are in `banner_stats` (`lst_*`) and appear in Admin and the installer's dashboard.
 - Sold by email (info@socallights.app) for now; no checkout.

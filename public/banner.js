@@ -9,7 +9,7 @@ const WIDE = new Set(["southern california", "socal", "all", "everywhere", "stat
 const reduced = matchMedia("(prefers-reduced-motion:reduce)").matches;
 const ROTATE_MS = 7000;
 
-let LIST = [], el = null, cur = [], lastKey = "", host = () => {}, changed = () => {}, io = null, paused = false;
+let LIST = [], regionsNow = new Set(), el = null, cur = [], lastKey = "", host = () => {}, changed = () => {}, io = null, paused = false;
 const seen = new Set(), OFFSET = Math.random(); // OFFSET: the order starts at a different installer each visit, so nobody is always first
 const SPEED = 38; // pixels per second
 
@@ -58,6 +58,7 @@ function setPaused(on) {
 
 // regions: a Set of normalized city and county names that are in view (see regionKey).
 export function updateBanner(regions) {
+  regionsNow = regions;
   if (!el) return;
   const next = LIST.filter((i) => serves(i, regions)), key = next.map((i) => i.id).join(",");
   if (key === lastKey) return;
@@ -84,3 +85,24 @@ export async function initBanner({ place, onChange }) {
   if (reduced) setPaused(true); // people who asked for less motion get it standing still; the play button starts it
   return true;
 }
+
+// ---- Top of the list ($75): a labelled company card at the top of the map list, behind Featured events.
+const TOP_MAX = 2; // at most two cards, so paid cards never push the places off the screen
+export const topSponsors = (regions) => {
+  const m = LIST.filter((i) => i.t && serves(i, regions)), k = Math.floor(OFFSET * Math.max(m.length, 1));
+  return m.slice(k).concat(m.slice(0, k)).slice(0, TOP_MAX);
+};
+export function sponsorCard(it) {
+  const tel = telHref(it.p), ext = /^https?:/.test(it.u), area = it.a ? `Serving ${it.a}` : "";
+  const logo = it.l ? `<img src="/api/installers/${esc(it.s)}/logo" alt="" loading="lazy">` : `<span class="sc-init" aria-hidden="true">${esc((it.n || "?").slice(0, 1).toUpperCase())}</span>`;
+  return `<article class="sponsorcard" data-id="${esc(it.id)}" aria-label="Sponsored: ${esc(it.n)}"><div class="sc-logo">${logo}</div><div class="sc-body"><span class="sc-tag">Sponsor</span><h3>${esc(it.n)}</h3>${area ? `<p class="sc-area">${esc(area)}</p>` : ""}${it.b ? `<p class="sc-blurb">${esc(it.b)}</p>` : ""}<div class="sc-acts">${tel ? `<a class="sc-btn" href="${esc(tel)}" data-lk="lcall">Call ${esc(fmtPhone(it.p))}</a>` : ""}<a class="sc-btn" href="${esc(it.u)}" data-lk="lclick"${ext ? ' target="_blank" rel="noopener sponsored nofollow"' : ""}>${/^mailto:/.test(it.u) ? "Email" : "Website"}</a><a class="sc-link" href="/installer/${esc(it.s)}" data-lk="lclick">Profile</a></div></div></article>`;
+}
+// Call after the list is drawn: counts a "shown" when a card is on screen, and a tap on its buttons.
+export function watchTopCards(root) {
+  const cards = root.querySelectorAll(".sponsorcard"); if (!cards.length) return;
+  const count = (c) => { const id = c.dataset.id; if (id && !seen.has("l" + id)) { seen.add("l" + id); beat(id, "limp"); } };
+  if (!("IntersectionObserver" in window)) return cards.forEach(count);
+  const o = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { count(e.target); o.unobserve(e.target); } }), { threshold: 0.6 });
+  cards.forEach((c) => o.observe(c));
+}
+document.addEventListener("click", (e) => { const a = e.target.closest(".sponsorcard a[data-lk]"); if (a) { const id = a.closest(".sponsorcard").dataset.id; if (id) beat(id, a.dataset.lk); } });
