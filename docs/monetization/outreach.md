@@ -86,3 +86,5 @@ Rey
 - About 180 upcoming listings are decorated homes, many from last year's winners lists; say so when a city's count is mostly homes.
 - Free Featured (Draft C) has no admin button. To comp a placement, add a new migration (`UPDATE events SET featured=..., featured_until=...`, see `docs/monetization.md`); the refund code will not wipe a hand-applied placement. Ask the CEO session to write it.
 - Full target list, contacts, the 12 send-ready emails and the one-week plan are in `outreach-targets.md`. Best first sends (Thu Nov 5): Mission Viejo MVAC, Mom's LA, Enjoy Orange County.
+
+| 2026-11-05 | **City of Covina**: Zoom demo held (30 min). Strong interest; **they loved the routes**; will use the judging module and routing; will NOT use resident entry this year (the city has its own registration) so staff will enter the registered homes' addresses themselves. Follow-up email sent same day with the tutorial link. | Owner | Open: Covina to set up the contest; owner to refresh tutorial videos and check in during the season |
