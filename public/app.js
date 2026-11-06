@@ -737,10 +737,7 @@ function positionRoutePill() {
   if (isPhone()) { if (b.parentElement !== document.body) document.body.appendChild(b); } else { const row = document.querySelector(".searchrow"); if (row && b.parentElement !== row) row.appendChild(b); }
   if (!isPhone()) { b.classList.remove("docked"); b.style.top = b.style.left = b.style.right = ""; return; }
   const r = document.getElementById("panel").getBoundingClientRect(), h = document.querySelector("#phead .hrow"), c = document.querySelector("#phead .hcount");
-  if (r.top < 150 && h && c) { // list nearly full: sit in the header, after the place count
-    const hr = h.getBoundingClientRect(), cr = c.getBoundingClientRect(); b.classList.add("docked");
-    b.style.top = Math.round(hr.top + (hr.height - 32) / 2) + "px"; b.style.left = Math.round(cr.right + 10) + "px"; b.style.right = "auto";
-  } else { b.classList.remove("docked"); b.style.top = Math.round(r.top - 48) + "px"; b.style.left = "auto"; b.style.right = "14px"; }
+  b.classList.remove("docked"); b.style.top = Math.round(r.top - 48) + "px"; b.style.left = "auto"; b.style.right = "14px"; // the list stops below the pill, so the pill always rides on top of it
 }
 { const rp = rtPill(); if (rp) rp.addEventListener("click", () => { if (rp.dataset.hint) { toast(rp.dataset.hint, true); return; } routeFromView(); }); }
 // While the list slides (drag or tap), keep the pill on it
