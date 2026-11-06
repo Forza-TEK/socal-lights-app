@@ -972,3 +972,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .ptab .tbadge[hidden]{display:none}
 .ptab[aria-selected="true"] .tbadge{display:none}
 .quick .qgo svg{flex:none;width:16px;height:16px}
+/* Event pill in the map banner strip: labelled "Featured" (gold, like the Featured badge), name, then city and dates */
+.sp-ev .sp-lbl{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6b4a00;background:#ffd36a;border-radius:999px;padding:2px 7px}
+.sp-ev .sp-meta{color:var(--muted);font-weight:600}
+:root[data-theme="dark"] .sp-ev .sp-lbl{color:#2b1d00}

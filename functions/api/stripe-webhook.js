@@ -13,7 +13,7 @@ import { sponsorWindow } from "../_lib/sponsor.js";
 import { sponsorEmails } from "../_lib/sponsormail.js";
 import { enrollRenewal, pauseOnRevoke } from "../_lib/renewal.js";
 import { stripeCall } from "../_lib/stripe.js";
-import { PLANS, INSTALLER_PLANS, ptToday, LEGACY_SEASON_CENTS, applyOrder, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
+import { PLANS, INSTALLER_PLANS, EVENT_PLANS, ptToday, LEGACY_SEASON_CENTS, applyOrder, eventQuote, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
 
 const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired", "charge.refunded", "charge.dispute.created", "charge.dispute.closed", "payment_intent.succeeded"]);
 
@@ -108,7 +108,8 @@ async function paid(s, env) {
   if (s.payment_status !== "paid") return { waiting: s.payment_status }; // e.g. a delayed method; Stripe sends async_payment_succeeded later
   const eventId = s.metadata && s.metadata.event_id, plan = s.metadata && s.metadata.plan;
   const mt = s.metadata && s.metadata.target, target = mt === "home" ? "home" : mt === "installer" ? "installer" : "event"; // a home (podium finisher) and an installer's Sponsor placement are bought through the same orders
-  const price = target === "installer" ? INSTALLER_PLANS[plan] : PLANS[plan];
+  const tier = target === "event" && !!EVENT_PLANS[plan]; // one of the new event tiers (ev_pin, ev_banner, ev_top, ev_all); the old keys pin / top / season are grandfathered below
+  const price = target === "installer" ? INSTALLER_PLANS[plan] : tier ? EVENT_PLANS[plan] : PLANS[plan];
   if (!eventId || !price) return { ignored: "no feature metadata" };
   if (target === "home" && !PLANS[plan].days) return { ignored: "no Full run plan for homes" };
 
@@ -116,13 +117,21 @@ async function paid(s, env) {
   const pi = (typeof s.payment_intent === "string" && s.payment_intent) || null;
   let status = "paid"; const notes = [];
   let expected = price.cents; // an installer's price is the plan's price, or the difference for an upgrade: the same server calculation the checkout used
-  let quoteChanged = "", quote = null;
+  let quoteChanged = "", quote = null, dupe = "";
+  const m = s.metadata || {}, hasQuote = /^\d{4}-\d{2}-\d{2}$/.test(m.quote_from || "") && /^\d{4}-\d{2}-\d{2}$/.test(m.quote_to || "") && /^\d+$/.test(String(m.quote_cents || ""));
   if (target === "installer") {
-    const inst = await env.DB.prepare("SELECT banner_until, top_until FROM installers WHERE id = ?").bind(eventId).first(), w = inst ? sponsorWindow(plan, inst, ptToday()) : null, m = s.metadata;
+    const inst = await env.DB.prepare("SELECT banner_until, top_until FROM installers WHERE id = ?").bind(eventId).first(), w = inst ? sponsorWindow(plan, inst, ptToday()) : null;
     if (w) expected = w.cents;
-    if (m.quote_from && m.quote_to && /^\d+$/.test(String(m.quote_cents || ""))) { // the buyer was quoted these dates and this price at checkout: that is what they paid for
+    if (hasQuote) { // the buyer was quoted these dates and this price at checkout: that is what they paid for
       quote = { from: m.quote_from, to: m.quote_to, cents: Number(m.quote_cents) }; expected = quote.cents;
       if (w && (w.to !== quote.to || w.cents !== quote.cents)) quoteChanged = `quoted ${quote.from} to ${quote.to} for ${(quote.cents / 100).toFixed(2)} USD, but the placement would now run ${w.from} to ${w.to} for ${(w.cents / 100).toFixed(2)} USD`;
+    }
+  } else if (tier) {
+    // An event tier: the quote (dates and price) was locked at checkout. The paid amount is checked against it; with no quote (a hand-made order) against the same server calculation as of now.
+    if (hasQuote) { quote = { from: m.quote_from, to: m.quote_to, cents: Number(m.quote_cents) }; expected = quote.cents; }
+    if (!eventId.startsWith("sub:")) {
+      const ev = await env.DB.prepare("SELECT start_date, end_date, featured, featured_until, banner_until FROM events WHERE id = ?").bind(eventId).first();
+      if (ev) { const q = eventQuote(ev, plan, ptToday()); if (!hasQuote) expected = q.cents || price.cents; if (!q.added.length && q.problem.startsWith("Nothing to add")) dupe = q.problem; }
     }
   }
   const exists = await env.DB.prepare("SELECT 1 FROM feature_orders WHERE session_id = ?").bind(s.id).first();
@@ -130,10 +139,13 @@ async function paid(s, env) {
     const pend = await env.DB.prepare("SELECT kind FROM feature_pending_revocations WHERE payment_intent = ?").bind(pi).first();
     if (pend) { status = pend.kind; notes.push(`${AUTO}${{ refunded: "a refund", held: "a partial refund", disputed: "a dispute", dispute_won: "a dispute (won)" }[pend.kind] || pend.kind} reached us before the payment was recorded, so the placement was not applied.`); }
   }
-  if ((s.amount_total !== expected && !(target !== "installer" && plan === "season" && s.amount_total === LEGACY_SEASON_CENTS)) || String(s.currency || "").toLowerCase() !== "usd") // the buyer paid what we asked at checkout: still apply, but flag it
+  if ((s.amount_total !== expected && !(target === "event" && plan === "season" && s.amount_total === LEGACY_SEASON_CENTS)) || String(s.currency || "").toLowerCase() !== "usd") // the buyer paid what we asked at checkout: still apply, but flag it
     notes.push(`${AUTO}amount mismatch: paid ${s.amount_total == null ? "?" : (s.amount_total / 100).toFixed(2)} ${String(s.currency || "?").toUpperCase()}, the ${plan} plan is ${(expected / 100).toFixed(2)} USD.`);
   if (!exists && status === "paid" && quoteChanged) { // another payment already bought these dates (a second tab, a duplicate session) or the state changed: never double-book silently
     status = "refund_due"; notes.push(`${AUTO}quote changed: ${quoteChanged}. It was NOT applied. Refund it in Stripe, or apply what is right by hand, then mark it refunded.`);
+  }
+  if (!exists && status === "paid" && dupe) { // another order already gave the event everything this one buys (a second tab, a duplicate session): never double-book silently
+    status = "refund_due"; notes.push(`${AUTO}nothing new: ${dupe} It was NOT applied. Refund it in Stripe, or apply what is right by hand, then mark it refunded.`);
   }
   await env.DB.prepare("INSERT OR IGNORE INTO feature_orders (session_id,event_id,plan,amount,email,payment_intent,currency,status,user_id,note,target,refunded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,CASE WHEN ? = 'paid' THEN NULL ELSE datetime('now') END)")
     .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "", pi, s.currency || null, status, (s.metadata && s.metadata.user_id) || null, notes.join(" ").slice(0, 500) || null, target, status).run();

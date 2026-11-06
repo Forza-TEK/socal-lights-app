@@ -1,4 +1,4 @@
-// Installer Sponsor placements: the banner ($50) and banner + top of the list card ($75). Prices are in featured.js (INSTALLER_PLANS), the only place they are set.
+// Installer Sponsor placements: the banner, the top of the list card (without the banner) and both together. Prices are in featured.js (INSTALLER_PLANS), the only place they are set.
 // Everything about WHEN a placement runs is here, once, and tested in tests/sponsor-rules.test.mjs. The checkout, the quote the page shows and the webhook all call these.
 //
 // THE SEASON RULE ("per season")
@@ -9,8 +9,9 @@
 //   Buying again while the same placement is running starts the day after it ends (the first day of the next season, so full price), never earlier: time is only added.
 //   At most one season ahead can be booked: the horizon is the end of the season after the one a purchase made today would reach.
 // UPGRADE
-//   Banner -> banner + top, when the banner already runs to the end of the season the top card would reach, costs the difference between the two plans' prices (from INSTALLER_PLANS).
-//   The top card starts today and runs to the end of the season; the banner stays as it is. If the banner would end sooner, it is the full price of the new plan.
+//   Banner -> both, or Top of the list -> both, when the held one already runs to the end of the season the new placement would reach, costs the target's price minus the held tier's price
+//   (from INSTALLER_PLANS: banner -> both and top -> both are the difference). The missing one starts today and runs to the end of the season; the held one stays as it is.
+//   Banner and Top of the list are different products: buying the other one is a full, separate purchase. A purchase that adds nothing is refused (booked as far ahead as we sell).
 // A refund or lost dispute switches the placement off again (revokeInstaller), putting back what an admin had set by hand and keeping time other paid orders still cover.
 import { SEASONS, defaultSeason } from "../../public/seasons.js";
 import { INSTALLER_PLANS, addDays } from "./featured.js";
@@ -40,21 +41,34 @@ export function seasonOf(ymd) {
   return { key, label: SEASONS[key].label, start, end, days: daysBetween(start, end) + 1 };
 }
 
-// When a placement of this plan would run if bought today, and what it costs. inst: { banner_until, top_until } (empty string = none).
-// Returns { from, to, season, cents, days (days included, start day counted), upgrade, running (renewal), booked_to, full (already booked as far as it can be), horizon }.
-export function sponsorWindow(plan, inst, today) {
-  const p = INSTALLER_PLANS[plan], cur = (p.top ? inst.top_until : inst.banner_until) || "", running = !!cur && cur >= today;
-  const from = running ? addDays(cur, 1) : today, s = seasonOf(from);
-  const horizon = seasonOf(addDays(seasonOf(today).end, 1)).end; // one season beyond what a purchase today reaches
-  const upgrade = p.top && !!inst.banner_until && inst.banner_until >= s.end; // the banner already covers this whole period (whether or not a top card is running): only the top card is new
-  const cents = upgrade ? INSTALLER_PLANS.banner_top.cents - INSTALLER_PLANS.banner.cents : p.cents;
-  return { from, to: s.end, season: s.label, cents, days: daysBetween(from, s.end) + 1, upgrade, running, booked_to: running ? cur : "", full: running && cur >= horizon, horizon };
+// The components a plan contains, and the held ones' untils. inst: { banner_until, top_until } (empty string = none).
+export const planParts = (plan) => { const p = INSTALLER_PLANS[plan]; return [...(p.banner ? ["banner"] : []), ...(p.top ? ["top"] : [])]; };
+const UNTIL = { banner: "banner_until", top: "top_until" };
+// The price of the tier made of exactly these components (banner, top or both), straight from INSTALLER_PLANS.
+const tierCents = (parts) => (parts.length === 2 ? INSTALLER_PLANS.banner_top.cents : INSTALLER_PLANS[parts[0]].cents);
+// The date the running placement of this plan ends: the earliest end of its components (all must be running), or "" when one of them is not.
+export function planEnds(plan, inst, today) {
+  const ends = planParts(plan).map((c) => inst[UNTIL[c]] || "");
+  return ends.every((e) => e && e >= today) ? ends.reduce((m, e) => (e < m ? e : m)) : "";
 }
 
-// What the banner and the top card read after buying: never shorter than before.
+// When a placement of this plan would run if bought today, and what it costs. inst: { banner_until, top_until } (empty string = none).
+// Returns { from, to, season, cents, days (days included, start day counted), upgrade, covered (components already held for the whole period), added (components this purchase adds),
+//   running (renewal), booked_to, full (already booked as far as it can be), horizon }.
+export function sponsorWindow(plan, inst, today) {
+  const parts = planParts(plan), cur = planEnds(plan, inst, today), running = !!cur;
+  const from = running ? addDays(cur, 1) : today, s = seasonOf(from);
+  const horizon = seasonOf(addDays(seasonOf(today).end, 1)).end; // one season beyond what a purchase today reaches
+  const covered = parts.filter((c) => (inst[UNTIL[c]] || "") >= s.end), added = parts.filter((c) => !covered.includes(c)); // a held component that already runs to the end of this period: only the rest is new
+  const upgrade = covered.length > 0 && added.length > 0;
+  const cents = upgrade ? INSTALLER_PLANS[plan].cents - tierCents(covered) : INSTALLER_PLANS[plan].cents;
+  return { from, to: s.end, season: s.label, cents, days: daysBetween(from, s.end) + 1, upgrade, covered, added, running, booked_to: running ? cur : "", full: running && cur >= horizon, horizon };
+}
+
+// What the banner and the top card read after buying: never shorter than before. Only the components of the plan are touched.
 export function applySponsor(plan, inst, today) {
-  const w = sponsorWindow(plan, inst, today), top = INSTALLER_PLANS[plan].top;
-  return { ...w, banner_until: maxStr([inst.banner_until, w.to]), top_until: top ? maxStr([inst.top_until, w.to]) : inst.top_until || "" };
+  const w = sponsorWindow(plan, inst, today), p = INSTALLER_PLANS[plan];
+  return { ...w, banner_until: p.banner ? maxStr([inst.banner_until, w.to]) : inst.banner_until || "", top_until: p.top ? maxStr([inst.top_until, w.to]) : inst.top_until || "" };
 }
 
 // What is missing before a profile can be sponsored. blocking: the banner needs an active profile with a phone or a website. advice: shown, never blocks.
@@ -77,7 +91,7 @@ export function sponsorProblem(inst, plan, today) {
 }
 
 // ---- Orders (feature_orders rows with target = 'installer'; event_id holds the installer's id) ----
-// Columns used: applied_until = banner_until written, applied_top_until = top_until written (banner_top only), applied_featured = 1 (banner) or 2 (banner_top),
+// Columns used: applied_until = banner_until written (NULL for a top-only order), applied_top_until = top_until written (top and banner_top only), applied_featured = 1 (banner or top) or 2 (banner_top),
 // applied_from = first day of the paid window, prev_banner_until / prev_top_until = what was set by hand before (not explained by a paid order), put back on a refund.
 const orderRows = (db, id) => db.prepare("SELECT session_id, status, applied_until AS bu, applied_top_until AS tu FROM feature_orders WHERE target = 'installer' AND event_id = ? AND applied = 1").bind(id).all().then((r) => r.results);
 
@@ -87,11 +101,11 @@ export async function applyInstallerOrder(db, order, today) {
   if (!inst || !INSTALLER_PLANS[order.plan]) return null;
   const nf = applySponsor(order.plan, inst, today), rows = (await orderRows(db, inst.id)).filter((o) => o.status === "paid");
   const hand = (cur, key) => (cur && cur >= today && cur > maxStr(rows.map((o) => o[key]).filter((u) => u && u >= today)) ? cur : ""); // set by an admin, not by an order
-  const top = INSTALLER_PLANS[order.plan].top;
+  const top = INSTALLER_PLANS[order.plan].top, banner = INSTALLER_PLANS[order.plan].banner;
   await db.batch([
     db.prepare("UPDATE installers SET banner_until=?, top_until=? WHERE id=? AND EXISTS (SELECT 1 FROM feature_orders WHERE session_id=? AND applied=0)").bind(nf.banner_until, nf.top_until, inst.id, order.session_id),
     db.prepare("UPDATE feature_orders SET applied=1, applied_featured=?, applied_until=?, applied_top_until=?, applied_from=?, prev_banner_until=?, prev_top_until=? WHERE session_id=? AND applied=0")
-      .bind(top ? 2 : 1, nf.banner_until, top ? nf.top_until : null, nf.from, hand(inst.banner_until, "bu"), top ? hand(inst.top_until, "tu") : null, order.session_id),
+      .bind(top && banner ? 2 : 1, banner ? nf.banner_until : null, top ? nf.top_until : null, nf.from, banner ? hand(inst.banner_until, "bu") : null, top ? hand(inst.top_until, "tu") : null, order.session_id),
   ]);
   return { banner_until: nf.banner_until, top_until: nf.top_until, from: nf.from, to: nf.to, season: nf.season };
 }

@@ -14,7 +14,7 @@ const addSubmission = (raw, id, email, o = {}) => raw.prepare("INSERT INTO event
 test("checkout: signed out is 401 and Stripe is never called", async () => {
   const { env, raw } = newEnv(); addEvent(raw);
   const f = stubFetch();
-  try { const r = await buy(env, { event_id: "ev1", plan: "pin" }); assert.equal(r.status, 401); assert.equal(f.calls.length, 0); } finally { f.restore(); }
+  try { const r = await buy(env, { event_id: "ev1", plan: "ev_pin" }); assert.equal(r.status, 401); assert.equal(f.calls.length, 0); } finally { f.restore(); }
 });
 
 test("checkout: an event the user does not own is 403", async () => {
@@ -22,7 +22,7 @@ test("checkout: an event the user does not own is 403", async () => {
   const me = await addUser(raw, "u1", "me@example.com");
   addSubmission(raw, "s9", "someone-else@example.com", { status: "published", event_id: "ev1" });
   const f = stubFetch();
-  try { const r = await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: me.cookie }); assert.equal(r.status, 403); assert.equal(f.calls.length, 0); } finally { f.restore(); }
+  try { const r = await buy(env, { event_id: "ev1", plan: "ev_pin" }, { cookie: me.cookie }); assert.equal(r.status, 403); assert.equal(f.calls.length, 0); } finally { f.restore(); }
 });
 
 test("checkout: the submitter, an approved claimant and a contest organizer pass; a pending or declined claim does not", async () => {
@@ -31,32 +31,32 @@ test("checkout: the submitter, an approved claimant and a contest organizer pass
   addSubmission(raw, "s1", "owner@example.com", { status: "published", event_id: "ev1" }); // normalized match: case and +tag
   const f = stubFetch();
   try {
-    let r = await buy(env, { event_id: "ev1", plan: "top" }, { cookie: sub.cookie });
+    let r = await buy(env, { event_id: "ev1", plan: "ev_top" }, { cookie: sub.cookie });
     assert.equal(r.status, 200); assert.match(r.body.url, /^https:\/\/checkout\.stripe\.com\//);
     assert.equal(f.calls.length, 1);
     const sent = new URLSearchParams(String(f.calls[0].init.body));
-    assert.equal(sent.get("line_items[0][price_data][unit_amount]"), "1500", "the price comes from the server plan, never the browser");
-    assert.equal(sent.get("metadata[user_id]"), "u1"); assert.equal(sent.get("metadata[event_id]"), "ev1"); assert.equal(sent.get("metadata[plan]"), "top");
+    assert.equal(sent.get("line_items[0][price_data][unit_amount]"), "5000", "the price comes from the server plan, never the browser");
+    assert.equal(sent.get("metadata[user_id]"), "u1"); assert.equal(sent.get("metadata[event_id]"), "ev1"); assert.equal(sent.get("metadata[plan]"), "ev_top");
     assert.match(f.calls[0].init.headers["idempotency-key"], /^feature-[0-9a-f]{64}$/);
     // claims
     const other = await addUser(raw, "u2", "claimant@example.com");
     raw.prepare("INSERT INTO event_claims (id,event_id,user_id,email,status) VALUES ('c1','ev2','u2','claimant@example.com','pending')").run();
-    assert.equal((await buy(env, { event_id: "ev2", plan: "pin" }, { cookie: other.cookie })).status, 403, "pending claim");
+    assert.equal((await buy(env, { event_id: "ev2", plan: "ev_pin" }, { cookie: other.cookie })).status, 403, "pending claim");
     raw.prepare("UPDATE event_claims SET status='declined'").run();
-    assert.equal((await buy(env, { event_id: "ev2", plan: "pin" }, { cookie: other.cookie })).status, 403, "declined claim");
+    assert.equal((await buy(env, { event_id: "ev2", plan: "ev_pin" }, { cookie: other.cookie })).status, 403, "declined claim");
     raw.prepare("UPDATE event_claims SET status='approved'").run();
     // an approved claim on a listing whose dates are only "expected" (projected) is held: the claimant cannot correct them (audit M8)
-    const held = await buy(env, { event_id: "ev2", plan: "pin" }, { cookie: other.cookie });
+    const held = await buy(env, { event_id: "ev2", plan: "ev_pin" }, { cookie: other.cookie });
     assert.equal(held.status, 400); assert.match(held.body.error, /projected, not confirmed/);
     raw.prepare("UPDATE events SET status='confirmed' WHERE id='ev2'").run();
-    assert.equal((await buy(env, { event_id: "ev2", plan: "pin" }, { cookie: other.cookie })).status, 200, "approved claim");
+    assert.equal((await buy(env, { event_id: "ev2", plan: "ev_pin" }, { cookie: other.cookie })).status, 200, "approved claim");
     // someone else's approved claim does not help
-    assert.equal((await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: other.cookie })).status, 403);
+    assert.equal((await buy(env, { event_id: "ev1", plan: "ev_pin" }, { cookie: other.cookie })).status, 403);
     // contest organizer
     raw.prepare("INSERT INTO contests (id,slug,owner_id,name,org,city,entries_close,vote_start,vote_end,contact_email,status,event_id,note) VALUES ('k1','k1','u2','K','Org','Pasadena','2026-12-01','2026-12-02','2026-12-20','claimant@example.com','live','ev3','')").run();
-    assert.equal((await buy(env, { event_id: "ev3", plan: "pin" }, { cookie: other.cookie })).status, 200, "contest owner");
+    assert.equal((await buy(env, { event_id: "ev3", plan: "ev_pin" }, { cookie: other.cookie })).status, 200, "contest owner");
     raw.prepare("UPDATE contests SET note='needs review'").run();
-    assert.equal((await buy(env, { event_id: "ev3", plan: "pin" }, { cookie: other.cookie })).status, 403, "contest under admin review cannot buy");
+    assert.equal((await buy(env, { event_id: "ev3", plan: "ev_pin" }, { cookie: other.cookie })).status, 403, "contest under admin review cannot buy");
   } finally { f.restore(); }
 });
 
@@ -66,15 +66,15 @@ test("checkout: a pending submission can be paid for only by its submitter", asy
   addSubmission(raw, "s1", "mine@example.com");
   const f = stubFetch();
   try {
-    const no = await buy(env, { submission_id: "s1", plan: "pin" }, { cookie: theirs.cookie });
+    const no = await buy(env, { submission_id: "s1", plan: "ev_pin" }, { cookie: theirs.cookie });
     assert.equal(no.status, 404, "looks exactly like a missing submission, so ids cannot be probed");
     assert.equal(f.calls.length, 0);
-    const ok = await buy(env, { submission_id: "s1", plan: "pin" }, { cookie: mine.cookie });
+    const ok = await buy(env, { submission_id: "s1", plan: "ev_pin" }, { cookie: mine.cookie });
     assert.equal(ok.status, 200);
     const sent = new URLSearchParams(String(f.calls[0].init.body));
     assert.equal(sent.get("metadata[event_id]"), "sub:s1");
     raw.prepare("UPDATE event_submissions SET status='declined'").run();
-    assert.equal((await buy(env, { submission_id: "s1", plan: "pin" }, { cookie: mine.cookie })).status, 404, "declined submissions cannot be paid for");
+    assert.equal((await buy(env, { submission_id: "s1", plan: "ev_pin" }, { cookie: mine.cookie })).status, 404, "declined submissions cannot be paid for");
   } finally { f.restore(); }
 });
 
@@ -84,14 +84,14 @@ test("checkout: the native app, a bad origin, a missing key, an unknown plan and
   addSubmission(raw, "s1", "me@example.com", { status: "published", event_id: "ev1" });
   const f = stubFetch();
   try {
-    const body = { event_id: "ev1", plan: "pin" };
+    const body = { event_id: "ev1", plan: "ev_pin" };
     assert.equal((await buy(env, body, { cookie: me.cookie, ua: "Mozilla/5.0 SoCalLightsApp/1.2" })).status, 403, "native app");
     assert.equal((await buy(env, body, { cookie: me.cookie, origin: "https://evil.example" })).status, 403, "cross-site");
     assert.equal((await buy({ ...env, STRIPE_SECRET_KEY: "" }, body, { cookie: me.cookie })).status, 501);
     assert.equal((await buy(env, { event_id: "ev1", plan: "free" }, { cookie: me.cookie })).status, 400);
-    assert.equal((await buy(env, { event_id: "nope", plan: "pin" }, { cookie: me.cookie })).status, 404);
+    assert.equal((await buy(env, { event_id: "nope", plan: "ev_pin" }, { cookie: me.cookie })).status, 404);
     addSubmission(raw, "s2", "me@example.com", { status: "published", event_id: "old" });
-    assert.equal((await buy(env, { event_id: "old", plan: "pin" }, { cookie: me.cookie })).status, 400, "ended");
+    assert.equal((await buy(env, { event_id: "old", plan: "ev_pin" }, { cookie: me.cookie })).status, 400, "ended");
     assert.equal(f.calls.length, 0);
     const failing = stubFetch(() => new Response("{}", { status: 500 }));
     try { assert.equal((await buy(env, body, { cookie: me.cookie })).status, 502, "Stripe down gives a friendly 502"); } finally { failing.restore(); }
@@ -147,46 +147,41 @@ test("checkout cap: 6 payment pages an hour and 20 a day per account, counted on
   const f = stubFetch();
   try {
     // refused requests are not counted
-    await buy(env, { event_id: "ev1", plan: "free" }, { cookie: me.cookie }); await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: other.cookie });
+    await buy(env, { event_id: "ev1", plan: "free" }, { cookie: me.cookie }); await buy(env, { event_id: "ev1", plan: "ev_pin" }, { cookie: other.cookie });
     assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM checkout_log").get().n, 0);
-    for (let i = 0; i < 6; i++) assert.equal((await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: me.cookie })).status, 200);
+    for (let i = 0; i < 6; i++) assert.equal((await buy(env, { event_id: "ev1", plan: "ev_pin" }, { cookie: me.cookie })).status, 200);
     assert.equal(f.calls.length, 6);
-    const hourly = await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: me.cookie });
+    const hourly = await buy(env, { event_id: "ev1", plan: "ev_pin" }, { cookie: me.cookie });
     assert.equal(hourly.status, 429); assert.match(hourly.body.error, /last hour/); assert.equal(f.calls.length, 6, "Stripe is not called");
     // an hour later the hourly cap lifts, the daily one remains
     raw.prepare("UPDATE checkout_log SET created_at = datetime('now','-2 hours')").run();
-    assert.equal((await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: me.cookie })).status, 200);
+    assert.equal((await buy(env, { event_id: "ev1", plan: "ev_pin" }, { cookie: me.cookie })).status, 200);
     for (let i = 0; i < 13; i++) raw.prepare("INSERT INTO checkout_log (user_id, created_at) VALUES ('u1', datetime('now','-5 hours'))").run();
-    const daily = await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: me.cookie });
+    const daily = await buy(env, { event_id: "ev1", plan: "ev_pin" }, { cookie: me.cookie });
     assert.equal(daily.status, 429); assert.match(daily.body.error, /today/);
     // another account is not affected; day-old rows stop counting and rows over 3 days old are pruned on the next insert
     assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM checkout_log WHERE user_id = 'u2'").get().n, 0);
     raw.prepare("UPDATE checkout_log SET created_at = datetime('now','-4 days')").run();
-    assert.equal((await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: me.cookie })).status, 200);
+    assert.equal((await buy(env, { event_id: "ev1", plan: "ev_pin" }, { cookie: me.cookie })).status, 200);
     assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM checkout_log").get().n, 1, "old rows pruned");
     // a failing log never blocks a buyer
     raw.exec("DROP TABLE checkout_log");
-    assert.equal((await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: me.cookie })).status, 200);
+    assert.equal((await buy(env, { event_id: "ev1", plan: "ev_pin" }, { cookie: me.cookie })).status, 200);
   } finally { f.restore(); }
 });
 
-// ---------------------------------------------------------------- Full run needs time left
-test("checkout: Full run is refused (400) for an event with fewer than 7 days left; the 30-day plans and longer-running events are fine", async () => {
+// ---------------------------------------------------------------- the old event plans are no longer sold
+test("checkout: the old event plans (pin, top, season) are refused for an event (400, Stripe never called); the current plans are fine; homes keep pin and top", async () => {
   const { env, raw } = newEnv();
-  const long = { start_date: ptToday(-40) }; // 31+ days long, so only the days left decide
-  addEvent(raw, "soon", { ...long, end_date: ptToday(3) }); addEvent(raw, "edge", { ...long, end_date: ptToday(7) }); addEvent(raw, "today", { ...long, end_date: ptToday(0) }); addEvent(raw, "long", { end_date: ptToday(60) });
+  addEvent(raw, "soon", { start_date: ptToday(-40), end_date: ptToday(3) });
   const me = await addUser(raw, "u1", "me@example.com");
-  for (const id of ["soon", "edge", "today", "long"]) addSubmission(raw, "s-" + id, "me@example.com", { status: "published", event_id: id });
+  addSubmission(raw, "s-soon", "me@example.com", { status: "published", event_id: "soon" });
   const f = stubFetch();
   try {
-    const soon = await buy(env, { event_id: "soon", plan: "season" }, { cookie: me.cookie });
-    assert.equal(soon.status, 400); assert.match(soon.body.error, /too soon for the Full run plan/); assert.match(soon.body.error, new RegExp(ptToday(3)));
-    assert.equal((await buy(env, { event_id: "today", plan: "season" }, { cookie: me.cookie })).status, 400);
+    for (const plan of ["pin", "top", "season"]) { const r = await buy(env, { event_id: "soon", plan }, { cookie: me.cookie }); assert.equal(r.status, 400, plan); assert.match(r.body.error, /current event plans/); }
     assert.equal(f.calls.length, 0);
-    assert.equal((await buy(env, { event_id: "soon", plan: "top" }, { cookie: me.cookie })).status, 200, "a 30-day plan is still allowed");
-    assert.equal((await buy(env, { event_id: "edge", plan: "season" }, { cookie: me.cookie })).status, 200, "exactly 7 days left is allowed");
-    assert.equal((await buy(env, { event_id: "long", plan: "season" }, { cookie: me.cookie })).status, 200);
-    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM checkout_log").get().n, 3, "refused requests were not counted");
+    assert.equal((await buy(env, { event_id: "soon", plan: "ev_top" }, { cookie: me.cookie })).status, 200);
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM checkout_log").get().n, 1, "refused requests were not counted");
   } finally { f.restore(); }
 });
 
@@ -198,14 +193,14 @@ test("checkout: a cancelled or postponed event is refused with a clear 400 (Term
   addSubmission(raw, "s3", "me@example.com", { status: "published", event_id: "ev3" });
   const f = stubFetch();
   try {
-    let r = await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: me.cookie });
+    let r = await buy(env, { event_id: "ev1", plan: "ev_pin" }, { cookie: me.cookie });
     assert.equal(r.status, 400); assert.match(r.body.error, /cancelled/);
-    r = await buy(env, { event_id: "ev2", plan: "pin" }, { cookie: me.cookie });
+    r = await buy(env, { event_id: "ev2", plan: "ev_pin" }, { cookie: me.cookie });
     assert.equal(r.status, 400); assert.match(r.body.error, /postponed/);
-    r = await buy(env, { submission_id: "s1", plan: "pin" }, { cookie: me.cookie });
+    r = await buy(env, { submission_id: "s1", plan: "ev_pin" }, { cookie: me.cookie });
     assert.equal(r.status, 400); assert.match(r.body.error, /cancelled/);
     assert.equal(f.calls.length, 0);
     // the organizer's own 'expected' event with the dates they entered is not held
-    assert.equal((await buy(env, { event_id: "ev3", plan: "pin" }, { cookie: me.cookie })).status, 200);
+    assert.equal((await buy(env, { event_id: "ev3", plan: "ev_pin" }, { cookie: me.cookie })).status, 200);
   } finally { f.restore(); }
 });

@@ -34,7 +34,7 @@ Fee math is unchanged (fee = 2.9% x price + $0.30): $10 nets $9.41, $15 nets $14
 
 Headroom against real traffic: Cloudflare shows 56,487 requests in 10 days (about 5,600/day including bots), under 6% of the 100,000/day Functions cap even if every request were a Function call. D1 and Resend caps are far away at this traffic. **Fixed cost this season: $0.** The $84/month worst case in the first draft is not a planning number at current volume.
 
-## 2b. Featured event pricing change (2026-11-06, owner-approved)
+## 2b. Featured event pricing change (2026-11-06, owner-approved; SUPERSEDED for events by 2e below, still true for homes and for orders already paid)
 The window now follows the event instead of a flat 30 days. Prices live only in `PLANS` in `functions/_lib/featured.js`.
 
 | Plan | Price | Level | Runs |
@@ -56,12 +56,34 @@ Prices live only in `INSTALLER_PLANS` in `functions/_lib/featured.js`. Self-serv
 | Plan | Price | Includes |
 |---|---|---|
 | Banner | $50 per season | name (linked to website or email) and phone in the labelled Sponsor banner, shown when the service area is in view, numbers in the dashboard |
+| Top of the list (added 2026-11-06, see 2e) | $50 per season | the labelled company card at the top of the list behind Featured events, WITHOUT the banner |
 | Banner and top of the list | $75 per season | the banner, plus a labelled company card at the top of the list behind Featured events |
 
 - **Per season** = from payment to the last day of the current season on the map (sponsor seasons: Christmas lights Nov 3 to Jan 6, New Year's Jan 7 to Jan 31, the others as the map windows in public/seasons.js, which is unchanged). No proration: the price is the same on every day of the season (owner decision), and the page shows the end date and number of days before payment.
 - Renewal starts the day after the running placement ends (full price for the next season); at most one season ahead. Upgrade (banner to banner and top) costs the difference between the two plans' prices ($25 today). No refund or credit for timing.
 - Stripe fee about 2.9% + 30c: on $50 about $1.75 (net $48.25); on $75 about $2.48 (net $72.52); on the $25 upgrade about $1.03 (net $23.97).
 - This replaces the founder-sold pilot guess of about $299 a season for the first installer sales; the owner chose these prices. Gate to watch: installer conversations and `fn:sponsor-paid` (see `docs/CHECKLIST.md`).
+
+### 2e. New pricing structure (2026-11-06, second owner decision; replaces 2b for events)
+Every price lives only in code: `COMPONENT_CENTS` / `EVENT_PLANS` (events) and `INSTALLER_PLANS` (installers) in `functions/_lib/featured.js`; `/api/config` serves them and no page writes a price.
+
+**Event organizers.** Free listing. Three components at $25 each (pin, banner, top of the list); the pin is in every paid tier.
+
+| Plan key | Plan | Components | Price | Stripe fee (2.9% + 30c) | Net |
+|---|---|---|---|---|---|
+| (free) | Free listing | none | $0 | n/a | n/a |
+| `ev_pin` | Featured pin | pin | $25 | $1.03 | $23.97 |
+| `ev_banner` | Banner + Featured pin | pin + banner | $50 | $1.75 | $48.25 |
+| `ev_top` | Top of the list + Featured pin | pin + top | $50 | $1.75 | $48.25 |
+| `ev_all` | Top of the list + Banner + Featured pin | pin + banner + top | $75 | $2.48 | $72.52 |
+
+- Window (flat price, no proration, like installers): from the moment of payment until the event's last day or the last day of the sponsor season that contains the payment day (Christmas lights: Jan 6), whichever comes first. Buying opens 30 days before the event starts. The quote (dates and price) is locked at checkout and stored on the order (`quote_from`, `quote_to`, `quote_cents`); the webhook checks the paid amount against it.
+- Upgrades: $25 per component the event does not already hold for the whole window (pin -> all $50, banner + pin -> all $25, top + pin -> banner + pin $25). A purchase that adds nothing is refused (400, "Nothing to add ..."); a second payment that arrives for something already held is recorded as refund due, not applied.
+- Old keys `pin` ($10), `top` ($15), `season` ($25, and $20 legacy) are no longer sold for events but still apply, refund and restore for orders already paid or in flight, with no amount-mismatch flag at their old prices.
+- Homes are a separate line and unchanged: `pin` $10 and `top` $15, 30 days from payment, podium finishers only (net $9.41 and $14.27).
+- New column `events.banner_until` (migration 0183), `feature_orders.applied_banner_until`; banner shown/taps reuse `banner_stats` with the key `ev:<event id>`.
+
+**Installers.** Free profile; Banner $50 (net $48.25); **Top of the list $50** (net $48.25, the company card without the banner, writes `top_until` only); Banner + Top of the list $75 (net $72.52). Upgrade to both from either single product when it runs to the season end: $25 (net $23.97). The other single product is a full $50 separate purchase. A top-only placement auto-renews as top-only.
 
 ### 2d. Optional automatic renewal for installers (2026-11-07)
 Off by default, installers only. Charged on the last day of the running placement at the plan's CURRENT price (the reminder says when the price changed). Stripe fee about 2.9% + 30c per charge ($50 nets about $48.25, $75 about $72.52); a card saved off-session adds no fee. A failed charge is retried once 3 days later and then lapses: expect some involuntary churn (cards expire) and no revenue from a lapsed renewal. No refund or credit for timing, as for any Sponsor purchase.

@@ -94,11 +94,12 @@ for (const f of newFiles) {
 const db = new DatabaseSync(":memory:");
 const rowsOf = () => Object.fromEntries(db.prepare("SELECT * FROM events").all().map((r) => [r.id, { ...r }]));
 const hasEvents = () => !!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='events'").get();
-const strip = (r) => { const c = { ...r }; delete c.updated_at; return JSON.stringify(c); };
+// Compare only the columns the BEFORE row has: a migration that adds a column (ALTER TABLE events ADD COLUMN, e.g. 0183 banner_until) gives every row a new key, which is not an event edit.
+const strip = (r, like = r) => { const c = {}; for (const k of Object.keys(like)) if (k !== "updated_at") c[k] = r[k]; return JSON.stringify(c); };
 
 function diff(before, after) {
   const changed = [], removed = [];
-  for (const id of Object.keys(after)) { if (!before[id]) changed.push({ id, row: after[id], kind: "added" }); else if (strip(before[id]) !== strip(after[id])) changed.push({ id, row: after[id], kind: "updated", prev: before[id] }); }
+  for (const id of Object.keys(after)) { if (!before[id]) changed.push({ id, row: after[id], kind: "added" }); else if (strip(before[id]) !== strip(after[id], before[id])) changed.push({ id, row: after[id], kind: "updated", prev: before[id] }); }
   for (const id of Object.keys(before)) if (!after[id]) removed.push(id);
   return { changed, removed };
 }

@@ -11,7 +11,7 @@
 //   Cancel: any time before the charge, from the dashboard or the link in any email. Cancelling keeps the placement already paid for.
 //   Refund or dispute of an automatic charge pauses the renewal and tells the team.
 import { INSTALLER_PLANS, ptToday, addDays } from "./featured.js";
-import { sponsorWindow, sponsorProblem } from "./sponsor.js";
+import { sponsorWindow, sponsorProblem, planEnds } from "./sponsor.js";
 import { stripeCall, sha256hex } from "./stripe.js";
 import { sendTemplate } from "./mailtpl.js";
 import { bump } from "./funnel.js";
@@ -34,10 +34,12 @@ const shortErr = (e) => String(e || "").replace(/[^\w .,:'-]/g, "").slice(0, 120
 export const renewalByToken = (env, t) => (validToken(t) ? env.DB.prepare("SELECT * FROM installer_autorenew WHERE cancel_token = ?").bind(t).first() : null);
 export const renewalFor = (env, installerId) => env.DB.prepare("SELECT * FROM installer_autorenew WHERE installer_id = ?").bind(installerId).first();
 
-// The plan that renews and the date it ends, from what is running now: Banner and top if the top card runs, else the Banner.
+// The plan that renews and the date it ends, from what is running now: Banner and top of the list when both run, else whichever one runs (a top-of-the-list-only placement renews as top-only).
 export function renewingPlan(inst, today) {
-  if (inst.top_until && inst.top_until >= today) return { plan: "banner_top", ends: inst.top_until };
-  if (inst.banner_until && inst.banner_until >= today) return { plan: "banner", ends: inst.banner_until };
+  const b = !!inst.banner_until && inst.banner_until >= today, t = !!inst.top_until && inst.top_until >= today;
+  if (b && t) return { plan: "banner_top", ends: planEnds("banner_top", inst, today) };
+  if (t) return { plan: "top", ends: inst.top_until };
+  if (b) return { plan: "banner", ends: inst.banner_until };
   return null;
 }
 
@@ -61,7 +63,7 @@ export async function enrollRenewal(env, { installerId, userId, customer, paymen
   if (!inst) return "nothing-to-renew";
   const running = renewingPlan(inst, today);
   if (!running) return "nothing-to-renew";
-  const use = plan && INSTALLER_PLANS[plan] ? plan : running.plan, ends = (INSTALLER_PLANS[use].top ? inst.top_until : inst.banner_until) || running.ends;
+  const use = plan && INSTALLER_PLANS[plan] ? plan : running.plan, ends = planEnds(use, inst, today) || running.ends;
   const r = await env.DB.prepare(`INSERT INTO installer_autorenew (installer_id, user_id, stripe_customer_id, stripe_payment_method_id, plan, enabled, status, consent_text_version, consent_at, consent_session_id, next_charge_date, notice_sent_for, retry_at, attempts, last_error, last_paid_cents, cancel_token, cancelled_at, consent_text)
       VALUES (?1, ?2, ?3, ?4, ?5, 1, 'active', ?6, datetime('now'), ?7, ?8, NULL, NULL, 0, NULL, ?9, ?10, NULL, ?11)
       ON CONFLICT(installer_id) DO UPDATE SET user_id = excluded.user_id, stripe_customer_id = excluded.stripe_customer_id, stripe_payment_method_id = excluded.stripe_payment_method_id, plan = excluded.plan, enabled = 1, status = 'active',
@@ -151,7 +153,7 @@ export async function processRenewals(env, deps, today = ptToday()) {
       const applied = await deps.apply({ id: pi.id, payment_status: "paid", amount_total: pi.amount_received || pi.amount, currency: pi.currency, payment_intent: pi.id, customer_details: { email: pi.receipt_email || to }, metadata: { ...(pi.metadata || {}), renewal: "1", event_id: inst.id, target: "installer", plan, user_id: row.user_id || "" } }, env);
       if (applied instanceof Response && applied.status >= 500) { out.failed++; continue; } // recorded when Stripe redelivers payment_intent.succeeded, and the next run does not charge again (same idempotency key)
       const after = await env.DB.prepare("SELECT banner_until, top_until FROM installers WHERE id = ?").bind(inst.id).first();
-      const next = (INSTALLER_PLANS[plan].top ? after.top_until : after.banner_until) || w.to;
+      const next = planEnds(plan, after, today) || w.to;
       await env.DB.prepare("UPDATE installer_autorenew SET attempts = 0, retry_at = NULL, last_error = NULL, notice_sent_for = NULL, next_charge_date = ?, last_paid_cents = ?, updated_at = datetime('now') WHERE installer_id = ?").bind(next, pi.amount_received || pi.amount, inst.id).run();
       await bump(env, "fn:autorenew-charged"); out.charged++; if (dueRetry) out.retried++;
     } else {

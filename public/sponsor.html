@@ -33,7 +33,7 @@
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
 <main id="content">
 <h1>Sponsor placement for installers</h1>
-<p class="lede">Put your company where people planning a drive look: the labelled <b>Sponsor</b> banner at the top of the list on the map, and optionally your company card at the top of the list. Pay one time for the season. Automatic renewal is optional and off unless you tick the box before paying. The map and your free profile stay free, and money never changes a contest result.</p>
+<p class="lede">Put your company where people planning a drive look: the labelled <b>Sponsor</b> banner at the top of the list on the map, your company card at the top of the list, or both. Pay one time for the season. Automatic renewal is optional and off unless you tick the box before paying. The map and your free profile stay free, and money never changes a contest result.</p>
 
 <div id="paid" class="ok" hidden><b>Thank you!</b> Your payment went through. Your placement turns on automatically within a few minutes (refresh the map to see it), and the dates are in your <a id="dashlink" href="/profile">dashboard</a>. A receipt is on its way from Stripe.</div>
 <div id="cancelled" class="ok" hidden><b>No payment was made.</b> Your company and plan are still chosen below, so you can pick up where you left off.</div>
@@ -66,7 +66,7 @@
 
 <h2>How it works</h2>
 <details open><summary>How long does a season last, and what does it cost?</summary><p id="rule2"></p></details>
-<details><summary>Can I renew or upgrade?</summary><p><b>Renew:</b> buy the same plan again while it is running and the new season starts the day after the current one ends, at the plan's price. Time is only ever added, and we sell at most one season ahead. <b>Upgrade:</b> to add the top-of-the-list card to a banner that is already running to the end of the season, choose Banner and top of the list. You pay the difference between the two plans' prices (shown on this page before you pay), the card starts today and runs to the end of the season, and your banner stays as it is. This page shows the exact dates and price before you pay.</p></details>
+<details><summary>Can I renew or upgrade?</summary><p><b>Renew:</b> buy the same plan again while it is running and the new season starts the day after the current one ends, at the plan's price. Time is only ever added, and we sell at most one season ahead. Automatic renewal renews the same plan: a Top of the list placement renews as Top of the list. <b>Upgrade:</b> Banner and Top of the list are different products, and Banner and top of the list is both. If you have the Banner or Top of the list running to the end of the season and want both, choose Banner and top of the list: you pay the difference between that plan and the one you hold, the missing one starts today and runs to the end of the season, and what you have stays as it is. Buying the other single product instead is a full, separate purchase. This page shows the exact dates and price before you pay.</p></details>
 <details><summary>Is it labelled as an ad?</summary><p>Yes. Paid placements are always labelled "Sponsor" in the banner and on the list card, and your profile still has to be real and accurate.</p></details>
 <details><summary>Can I get a refund?</summary><p>If we cannot put your placement on for any reason, you get a full refund. Once it is running, payments are non-refundable, but email us if something is wrong. A refund switches the placement off, and so does a payment dispute, so please email us before disputing a charge with your bank.</p></details>
 <details><summary>Does paying change a contest?</summary><p>No. Payment never affects who wins or any contest result, and finding lights and events on the map stays free for everyone.</p></details>
@@ -75,7 +75,7 @@
 <script type="module">
 import { themeBtn, mountAcct } from "/addflow.js?v=20261107b";
 import { me, signIn } from "/auth.js?v=20261107p";
-import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord, renewalText } from "/sponsor-plans.js?v=20261107e";
+import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord, renewalText } from "/sponsor-plans.js?v=20261108a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -137,8 +137,12 @@ function noProfile() {
 function renderPlans(i) {
   $("#plans").innerHTML = SPONSOR_KEYS.map((k) => {
     const c = sponsorCopy(k), q = i.quotes[k], off = !!q.problem;
-    const upg = q.upgrade ? `<p class="meta">You already have the Banner until ${esc(niceDate(i.placement.banner_until))}, so you pay only the difference between the two plans' prices (${money(q.cents)}). The banner stays as it is.</p>` : "";
-    return `<section class="plan${plan === k ? " sel" : ""}${off ? " off" : ""}" data-p="${k}"><div class="price">${money(q.cents)} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${q.renewal ? "Renewal: " : ""}runs ${esc(niceDate(q.from))} to ${esc(niceDate(q.to))}.</p><p class="meta">${esc(runsText(q))}</p><p>Includes:</p><ul>${c.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>${upg}${off ? `<p class="meta">${esc(q.problem)}</p>` : ""}<button class="btn ghost pickbtn" type="button" data-pick="${k}" aria-pressed="${plan === k}" aria-label="Choose ${esc(c.name)}, ${money(q.cents)}"${off ? " disabled" : ""}>${plan === k ? "✓ Chosen" : "Choose"}</button></section>`;
+    const held = (q.covered || []).map((c) => (c === "banner" ? "the Banner until " + niceDate(i.placement.banner_until) : "Top of the list until " + niceDate(i.placement.top_until))).join(" and ");
+    const upg = q.upgrade ? `<p class="meta">You already have ${esc(held)}, so you pay only the difference (${money(q.cents)} instead of ${money(IP[k].cents)}). What you already have stays as it is.</p>` : "";
+    // Banner and Top of the list are different products: buying the other one is a full separate purchase. When the installer holds one, say what both together cost.
+    const other = k === "banner" ? i.placement.top_until : k === "top" ? i.placement.banner_until : "", bt = i.quotes.banner_top;
+    const both = other && bt && bt.upgrade && !bt.problem ? `<p class="meta"><b>Both together are ${money(IP.banner_top.cents)}: upgrade for ${money(bt.cents)}.</b> You already have ${k === "banner" ? "Top of the list" : "the Banner"} until ${esc(niceDate(other))}; choose Banner and top of the list to add the other for ${money(bt.cents)} instead of ${money(q.cents)} on its own.</p>` : "";
+    return `<section class="plan${plan === k ? " sel" : ""}${off ? " off" : ""}" data-p="${k}"><div class="price">${money(q.cents)} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${q.renewal ? "Renewal: " : ""}runs ${esc(niceDate(q.from))} to ${esc(niceDate(q.to))}.</p><p class="meta">${esc(runsText(q))}</p><p>Includes:</p><ul>${c.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>${upg}${both}${off ? `<p class="meta">${esc(q.problem)}</p>` : ""}<button class="btn ghost pickbtn" type="button" data-pick="${k}" aria-pressed="${plan === k}" aria-label="Choose ${esc(c.name)}, ${money(q.cents)}"${off ? " disabled" : ""}>${plan === k ? "✓ Chosen" : "Choose"}</button></section>`;
   }).join("");
   $("#plans").querySelectorAll("[data-pick]").forEach((b) => b.classList.toggle("ghost", b.dataset.pick !== plan));
   $("#plans").querySelectorAll("[data-pick]").forEach((b) => (b.onclick = () => { plan = b.dataset.pick; save(); renderProfiles(); $("#s4box").scrollIntoView({ block: "nearest", behavior: "smooth" }); }));
@@ -148,7 +152,7 @@ function renderSummary(i) {
   const q = plan && i.quotes[plan];
   if (!q || q.problem) { $("#s4box").hidden = true; return; }
   $("#s4box").hidden = false; const c = sponsorCopy(plan);
-  $("#sum").innerHTML = `<dl><dt>Company</dt><dd>${esc(i.name)}</dd><dt>Plan</dt><dd>${esc(c.name)}</dd><dt>Starts</dt><dd>${esc(niceDate(q.from))}${q.renewal ? " (the day after your current placement ends)" : " (today)"}</dd><dt>Ends</dt><dd>${esc(niceDate(q.to))}, the last day of the ${esc(q.season)} season (${dayWord(q.days)})</dd><dt>Price</dt><dd>${money(q.cents)}, one-time payment${q.upgrade ? " (the upgrade difference)" : ""}</dd></dl><p class="meta">${esc(runsText(q))}${q.upgrade ? " You already have the Banner to the end of the season, so you pay the difference between the two plans' prices." : ""}</p>`;
+  $("#sum").innerHTML = `<dl><dt>Company</dt><dd>${esc(i.name)}</dd><dt>Plan</dt><dd>${esc(c.name)}</dd><dt>Starts</dt><dd>${esc(niceDate(q.from))}${q.renewal ? " (the day after your current placement ends)" : " (today)"}</dd><dt>Ends</dt><dd>${esc(niceDate(q.to))}, the last day of the ${esc(q.season)} season (${dayWord(q.days)})</dd><dt>Price</dt><dd>${money(q.cents)}, one-time payment${q.upgrade ? " (the upgrade difference)" : ""}</dd></dl><p class="meta">${esc(runsText(q))}${q.upgrade ? " You already have part of this plan to the end of the season, so you pay only the difference." : ""}</p>`;
   $("#renewtxt").textContent = renewalText(cfg, IP[plan].cents); // unticked by default: the box is never pre-ticked
   const go = $("#go"); go.disabled = false;
   go.onclick = async () => {

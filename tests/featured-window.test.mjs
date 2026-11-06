@@ -21,7 +21,7 @@ test("prices and rules live only in PLANS and reach the browser through /api/con
   assert.deepEqual([PLANS.pin.days, PLANS.top.days, PLANS.season.maxDays, PLANS.season.minLength, PLANS.season.minDays], [30, 30, 90, 31, 7]);
   const cfg = await (await configGet({ env: {} })).json();
   assert.deepEqual(cfg.featurePlans, JSON.parse(JSON.stringify(PUBLIC_PLANS))); assert.equal(cfg.featureOpenDays, 30);
-  assert.equal(cfg.featurePlans.season.cents, 2500); assert.equal(cfg.featurePlans.season.minLength, 31); assert.equal(cfg.featurePlans.season.maxDays, 90);
+  assert.equal(cfg.featurePlans.season, undefined, "the old Full run is not offered any more; the home plans (pin, top) stay"); assert.deepEqual(Object.keys(cfg.featurePlans), ["pin", "top"]);
 });
 
 test("window: a short event is featured from payment to its last day, not for 30 days", async () => {
@@ -52,18 +52,18 @@ test("early purchase: refused with a clear 400 until 30 days before the start; a
   for (const id of ["far", "edge", "run"]) own(raw, id);
   const f = stubFetch();
   try {
-    for (const plan of ["pin", "top", "season"]) {
+    for (const plan of ["ev_pin", "ev_banner", "ev_top", "ev_all"]) {
       const r = await buy(env, { event_id: "far", plan }, me.cookie);
       assert.equal(r.status, 400, plan); assert.match(r.body.error, /^Featuring opens 30 days before your event: come back on /);
       assert.ok(r.body.error.includes(ptToday(1)), "names the date the window opens (start minus 30 days)");
     }
     assert.equal(f.calls.length, 0);
-    assert.equal((await buy(env, { event_id: "edge", plan: "pin" }, me.cookie)).status, 200, "exactly 30 days before the start");
-    assert.equal((await buy(env, { event_id: "run", plan: "top" }, me.cookie)).status, 200, "already running");
+    assert.equal((await buy(env, { event_id: "edge", plan: "ev_pin" }, me.cookie)).status, 200, "exactly 30 days before the start");
+    assert.equal((await buy(env, { event_id: "run", plan: "ev_top" }, me.cookie)).status, 200, "already running");
   } finally { f.restore(); }
   // a submission still in review follows the same rule
   raw.prepare("INSERT INTO event_submissions (id,name,city,season,type,start_date,end_date,contact_email,status) VALUES ('sfar','Far','Pasadena','christmas','walk',?,?,'me@example.com','pending')").run(ptToday(45), ptToday(50));
-  assert.match((await buy(env, { submission_id: "sfar", plan: "pin" }, me.cookie)).body.error, /come back on/);
+  assert.match((await buy(env, { submission_id: "sfar", plan: "ev_pin" }, me.cookie)).body.error, /come back on/);
 });
 
 test("repeat purchase: adds nothing beyond the event's last day, never shortens, and a higher level is still sold", async () => {
@@ -72,16 +72,16 @@ test("repeat purchase: adds nothing beyond the event's last day, never shortens,
   await pay(env, 1, "pin", 1000);
   const f = stubFetch();
   try {
-    const again = await buy(env, { event_id: "ev1", plan: "pin" }, me.cookie);
-    assert.equal(again.status, 400); assert.match(again.body.error, /already featured through/); assert.equal(f.calls.length, 0);
-    assert.equal((await buy(env, { event_id: "ev1", plan: "top" }, me.cookie)).status, 200, "upgrade pin to top");
+    const again = await buy(env, { event_id: "ev1", plan: "ev_pin" }, me.cookie);
+    assert.equal(again.status, 400); assert.match(again.body.error, /Nothing to add/); assert.equal(f.calls.length, 0);
+    assert.equal((await buy(env, { event_id: "ev1", plan: "ev_top" }, me.cookie)).status, 200, "upgrade pin to top");
   } finally { f.restore(); }
   await pay(env, 2, "top", 1500);
   assert.deepEqual(pair(raw), [2, ptToday(10)], "level up, same last day");
   await pay(env, 3, "pin", 1000); // even if it is paid anyway (a stale checkout page), nothing is lost or added
   assert.deepEqual(pair(raw), [2, ptToday(10)]);
   const f2 = stubFetch();
-  try { assert.equal((await buy(env, { event_id: "ev1", plan: "top" }, me.cookie)).status, 400, "top again adds nothing"); } finally { f2.restore(); }
+  try { assert.equal((await buy(env, { event_id: "ev1", plan: "ev_top" }, me.cookie)).status, 400, "top again adds nothing"); } finally { f2.restore(); }
 });
 
 test("repeat purchase: on a long event a later purchase extends by the cap, up to the last day, and never past it", () => {
@@ -91,24 +91,10 @@ test("repeat purchase: on a long event a later purchase extends by the cap, up t
   assert.equal(applyPlan({ ...ev, featured_until: "2027-02-01" }, "pin", "2026-11-21").featured_until, "2027-02-01", "never shortens a longer placement");
 });
 
-test("Full run: 31 days or more long and 7 or more days left; priced $25, level 2, runs to the last day capped at 90 days", async () => {
-  const { env, raw } = newEnv(); const me = await addUser(raw, "u1", "me@example.com");
-  addEvent(raw, "l31", { start_date: ptToday(-23), end_date: ptToday(7) }); // 31 days inclusive, 7 left
-  addEvent(raw, "l30", { start_date: ptToday(-22), end_date: ptToday(7) }); // 30 days
-  addEvent(raw, "l31short", { start_date: ptToday(-40), end_date: ptToday(6) }); // long, but only 6 days left
+test("Full run (old plan key, grandfathered): an order already paid or in flight still applies: level 2, last day capped at 90 days, no mismatch flag at $25", async () => {
+  const { env, raw } = newEnv();
+  addEvent(raw, "l31", { start_date: ptToday(-23), end_date: ptToday(7) });
   addEvent(raw, "big", { start_date: ptToday(-10), end_date: ptToday(200) });
-  for (const id of ["l31", "l30", "l31short", "big"]) own(raw, id);
-  assert.equal(eventPlanProblem({ start_date: ptToday(-23), end_date: ptToday(7) }, "season", ptToday()), "");
-  const f = stubFetch();
-  try {
-    const ok = await buy(env, { event_id: "l31", plan: "season" }, me.cookie);
-    assert.equal(ok.status, 200);
-    assert.equal(new URLSearchParams(String(f.calls[0].init.body)).get("line_items[0][price_data][unit_amount]"), "2500");
-    const short = await buy(env, { event_id: "l30", plan: "season" }, me.cookie);
-    assert.equal(short.status, 400); assert.match(short.body.error, /31 days or more/); assert.match(short.body.error, /runs 30/);
-    assert.match((await buy(env, { event_id: "l31short", plan: "season" }, me.cookie)).body.error, /too soon for the Full run plan/);
-    assert.equal((await buy(env, { event_id: "l30", plan: "top" }, me.cookie)).status, 200, "the shorter event can still take the pin or top");
-  } finally { f.restore(); }
   await pay(env, 1, "season", 2500, "big");
   assert.deepEqual(pair(raw, "big"), [2, ptToday(90)], "capped at 90 days from payment");
   await pay(env, 2, "season", 2500, "l31");
@@ -148,7 +134,7 @@ test("recompute: a refund or lost dispute of the newer, extending order falls ba
   assert.deepEqual(pair(raw), [2, ptToday(50)]);
   // the event is unpublished and comes back: both orders are still valid, the placement is rebuilt from them
   raw.prepare("UPDATE events SET featured=0, featured_until=NULL WHERE id='ev1'").run();
-  assert.deepEqual(await restorePlacement(env.DB, "ev1", ptToday()), { featured: 2, featured_until: ptToday(50) });
+  assert.deepEqual(await restorePlacement(env.DB, "ev1", ptToday()), { featured: 2, featured_until: ptToday(50), banner_until: null });
   // refund of the newer order: level and end fall back to the pin
   const rf = await sendWebhook(webhook, env, refundOf(2));
   assert.equal(rf.body.revoked, true); assert.deepEqual(pair(raw), [1, ptToday(30)]);

@@ -39,6 +39,14 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 
 - [x] Help Center refresh: six articles updated, four added, "home" wording; applied by migration 0167 to articles not edited in Admin (`docs/help-updates.md` has paste text for any you edited)
 
+### Pricing tiers (2026-11-06, second change): owner to do
+- [x] Event tiers (pin / banner / top of the list, additive), event banner pill labelled "Featured", installer Top of the list plan, "Advertise here" pill, pages, Terms, Help (0184), emails, Admin (migrations 0183, 0184)
+- [ ] After merge: confirm the `d1-migrations` run succeeded (0183 and 0184), then Admin > Help Center: check `is-it-free`, `feature-an-event-or-home`, `sponsor-your-installer-company`; paste from `docs/help-updates.md` if you edited them
+- [ ] Admin > Settings > Email templates: if you ever saved "Featured placement receipt", reset it (or paste the new default) so it lists the plan contents
+- [ ] Make one real test purchase of the cheapest event plan on your own event and refund it (confirms the quote, the webhook and the refund path)
+- [ ] Re-record the videos listed in `docs/tutorial-updates.md`; link a video to `sponsor-your-installer-company`
+- [ ] Send the attorney the new section "Pricing and tier wording changed 2026-11-06" in `docs/monetization/legal-redlines.md` (event banner labelled "Featured", refunds per part)
+
 ### Featured event pricing (2026-11-06): owner to do
 - [ ] After the PRs merge: open Admin > Help Center and check `is-it-free` and `feature-an-event-or-home`. Migration 0168 updates them only if nobody edited them in Admin; if you did, paste the new text from `docs/help-updates.md`.
 - [x] **Terms now cover paid placements (2026-11-06, plain-English draft, NOT reviewed by an attorney):** `/terms#paid` (Featured events and homes, installer Sponsor placements, refunds, disputes, no guarantee). Tests: `tests/terms.test.mjs`.

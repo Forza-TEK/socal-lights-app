@@ -1,4 +1,6 @@
-# Installer banner
+# Installer banner (and the event banner)
+
+> 2026-11-06 update: installers now have three products: Banner (`banner_until`), Top of the list (`top_until`, the company card WITHOUT the banner) and both. An installer with only the top card is NOT a pill in the strip (`/api/banner` marks strip members with `bn: 1` and card members with `t: 1`). Events can buy a banner too: the pill is labelled **Featured** (installers keep **Sponsor**), shows the event name, city and dates, and tapping it opens the event (its card on the map, or `/e/<id>`). Event pills come from `events.banner_until`, are matched to the events whose pin is in the map view, and are capped at 3 per view (`EVENT_PILLS_MAX` in `public/banner.js`), mixed into the same rotation as the installers. Shown and taps are counted in `banner_stats` under the key `ev:<event id>`. The dashed pill now reads "Advertise here" and links to `/pricing`.
 
 A thin strip labelled "Sponsor" on the map: company name (links to the website, or to a mailto link if there is no website) | phone (tap to call).
 Always at the top of the list panel (phone portrait, landscape, tablet and desktop), above the Places tabs. It is hidden when the list is minimized.
@@ -12,7 +14,7 @@ Sold, not a free pilot (the owner drives visitors with Facebook and Instagram ad
 `/api/banner` returns every installer on the banner (same for everyone, cached). `public/banner.js` picks the ones to show:
 - The map view's cities (by centre) and counties (from the places in view, plus the nearest city to the centre) are matched to the installer's "Areas served" list ("Orange County, Irvine").
 - An installer with no areas listed, or "Southern California"/"All", shows everywhere.
-- It is a scrolling marquee: each matching installer is its own pill, followed by one dashed "Installers: advertise here" pill (links to /pricing#banner), which is also all that shows when nobody matches. The pause button sits next to the Sponsor label (right end on a portrait phone).
+- It is a scrolling marquee: each matching installer is its own pill, followed by one dashed "Advertise here" pill (links to /pricing), which is also all that shows when nobody matches. The pause button sits next to the Sponsor label (right end on a portrait phone).
 - It pauses on hover and focus and has a pause button. With reduced motion on, it starts paused and the play button starts it.
 - The starting installer changes each visit so nobody is always first. A "shown" is counted when the pill is actually on screen.
 
@@ -25,6 +27,7 @@ A per-county cap, an "Advertise here" placeholder when the banner is empty, a mo
 ## Prices on the pricing page (owner, 2026-11-06)
 - Free: profile card (page at /installer/<slug>, linked from the homes they installed).
 - $50 per season: the Sponsor banner. Set by an admin with the "Show on the banner until" date.
+- $50 per season: Top of the list, the company card at the top of the list behind Featured events WITHOUT the banner (sets `top_until` only; upgrade to both is $25).
 - $75 per season: banner plus the company card at the top of the list behind Featured events. The list card is built (migration 0170): `installers.top_until`, set in Admin > Installers > Profile > "Top of the list until" (set the banner date too: the $75 tier includes the banner). It shows up to two labelled "Sponsor" cards at the top of the list, right behind the Featured places, for installers whose areas are in the map view (same matching as the banner). Numbers (shown, taps) are in `banner_stats` (`lst_*`) and appear in Admin and the installer's dashboard.
 - Sold at `/sponsor` (below). Email info@socallights.app is only for questions.
 

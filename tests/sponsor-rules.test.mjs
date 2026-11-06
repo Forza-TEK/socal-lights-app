@@ -8,9 +8,9 @@ import { INSTALLER_PLANS, PUBLIC_INSTALLER_PLANS } from "../functions/_lib/featu
 import { seasonOf, sponsorSeasonTable, sponsorWindow, applySponsor, profileGaps, sponsorProblem } from "../functions/_lib/sponsor.js";
 import { onRequestGet as config } from "../functions/api/config.js";
 
-test("prices: $50 banner and $75 banner + top, in cents, served to the browser from one place", async () => {
+test("prices: $50 banner, $50 top of the list and $75 both, in cents, served to the browser from one place", async () => {
   assert.equal(INSTALLER_PLANS.banner.cents, 5000); assert.equal(INSTALLER_PLANS.banner_top.cents, 7500);
-  assert.deepEqual(Object.keys(PUBLIC_INSTALLER_PLANS), ["banner", "banner_top"]);
+  assert.equal(INSTALLER_PLANS.top.cents, 5000); assert.deepEqual(Object.keys(PUBLIC_INSTALLER_PLANS), ["banner", "top", "banner_top"]);
   const c = await (await config({ env: {} })).json();
   assert.equal(c.installerPlans.banner.cents, 5000); assert.equal(c.installerPlans.banner_top.cents, 7500);
   assert.ok(!JSON.stringify(c).includes("min_cents") && !("installerFullPriceDays" in c) && !("installerUpgradeMinCents" in c), "no floors, no proration settings");

@@ -1,7 +1,8 @@
-// POST /api/feature/checkout  { event_id | submission_id | home_id, plan: "pin" | "top" | "season" (shown as "Full run", events only) }  (a home: "pin" | "top" only, podium finishers of an announced contest)  ->  { url } (Stripe Checkout page). Needs a signed-in account; the receipt goes to its email.
+// POST /api/feature/checkout  { event_id | submission_id | home_id, plan: "ev_pin" | "ev_banner" | "ev_top" | "ev_all" (events) | "pin" | "top" (a home: podium finishers of an announced contest, 30 days) }  ->  { url } (Stripe Checkout page).
+// Needs a signed-in account; the receipt goes to its email. An event's price and dates come from eventQuote (featured.js) and are locked into the payment (metadata quote_*); the old event keys pin / top / season are no longer sold for events.
 import { json, err, clean } from "../../_lib/util.js";
 import { bump } from "../../_lib/funnel.js";
-import { PLANS, applyPlan, eventPlanProblem } from "../../_lib/featured.js";
+import { PLANS, EVENT_PLANS, eventQuote } from "../../_lib/featured.js";
 import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
 import { ownsEvent } from "../../_lib/ownership.js";
 import { homeForCheckout, HOME_PLANS, placeWord } from "../../_lib/podium.js";
@@ -23,7 +24,7 @@ export async function onRequestPost({ request, env }) {
   const { user, res } = await requireUser(request, env);
   if (res) return err(401, "Please sign in to pay. Your event and plan will be waiting for you.");
   const b = await request.json().catch(() => null);
-  const plan = PLANS[b && b.plan] ? b.plan : null;
+  const plan = b && (EVENT_PLANS[b.plan] || PLANS[b.plan]) ? b.plan : null;
   const eventId = clean(b && b.event_id, 60);
   if (!plan) return err(400, "Choose your event and a plan.");
   let ev = null, pending = false, home = null;
@@ -40,10 +41,10 @@ export async function onRequestPost({ request, env }) {
     // Same answer as "not found" for someone else's submission, so ids can't be probed.
     if (!s || s.status === "declined" || !normEmail(user.email) || normEmail(s.contact_email) !== normEmail(user.email)) return err(404, "We couldn't find that submission.");
     ev = { id: s.event_id || "sub:" + s.id, name: s.name, city: s.city, start_date: s.start_date, end_date: s.end_date }; pending = !s.event_id;
-    if (s.event_id) { const live = await env.DB.prepare("SELECT notice FROM events WHERE id = ?").bind(s.event_id).first(); if (live) ev.notice = live.notice; } // a published submission: its listing may have been marked cancelled or postponed
+    if (s.event_id) { const live = await env.DB.prepare("SELECT notice, featured, featured_until, banner_until FROM events WHERE id = ?").bind(s.event_id).first(); if (live) Object.assign(ev, { notice: live.notice, featured: live.featured, featured_until: live.featured_until, banner_until: live.banner_until }); } // a published submission: its listing may have been marked cancelled or postponed
   } else {
     if (!eventId) return err(400, "Choose your event and a plan.");
-    ev = await env.DB.prepare("SELECT id, name, city, start_date, end_date, featured, featured_until, notice, status FROM events WHERE id = ?").bind(eventId).first();
+    ev = await env.DB.prepare("SELECT id, name, city, start_date, end_date, featured, featured_until, banner_until, notice, status FROM events WHERE id = ?").bind(eventId).first();
   }
   if (!ev) return err(404, "We couldn't find that event. Search for it again.");
   // Only the owner may pay: they submitted it, hold an approved claim, or run the contest it lists. (A claim gives no edit rights.)
@@ -55,29 +56,27 @@ export async function onRequestPost({ request, env }) {
   // Hold the sale until the dates are confirmed. An event the buyer submitted themselves has dates they entered and can edit, so it is not held.
   if (!home && !pending && ev.status === "expected" && !(await ownSubmission(env, user, ev.id))) return err(400, "The dates for this listing are still projected, not confirmed, so it can't be featured yet. Email info@socallights.app with a link to your event page and we will confirm the dates; then you can feature it.");
   if (!home && ev.end_date < today) return err(400, "That event has already ended.");
+  let q = null;
   if (!home) {
-    // The window follows the event: featuring opens 30 days before it starts; the Full run plan needs a long event with time left.
-    const why = eventPlanProblem(ev, plan, today);
-    if (why) return err(400, why);
-    // A repeat purchase must buy something: a higher level, or time beyond what already runs (the cap, not the event's last day, is the limit).
-    if (ev.featured != null) {
-      const nf = applyPlan(ev, plan, today), running = ev.featured && (!ev.featured_until || ev.featured_until >= today);
-      if (running && nf.featured <= ev.featured && ev.featured_until && ev.featured_until >= nf.featured_until)
-        return err(400, `This event is already featured through ${ev.featured_until}, as far as this plan can reach (your event's last day or ${PLANS[plan].days || PLANS[plan].maxDays} days from payment). Nothing to add yet.`);
-    }
+    // Only the current event plans are sold. The window and the price come from eventQuote: featuring opens 30 days before the event, the placement runs to the event's last day or the end of the
+    // season (whichever comes first), and the price is for the components the event does not already hold for the whole window. A purchase that adds nothing is refused.
+    if (!EVENT_PLANS[plan]) return err(400, "Choose one of the current event plans: Featured pin, Banner + Featured pin, Top of the list + Featured pin, or all three.");
+    q = eventQuote(ev, plan, today);
+    if (q.problem) return err(400, q.problem);
   }
 
   const goodEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email || "") ? user.email : ""; // the account email, never one typed in
-  const p = PLANS[plan], origin = new URL(request.url).origin;
+  const p = q || PLANS[plan], origin = new URL(request.url).origin;
   const f = new URLSearchParams({
     mode: "payment",
     "line_items[0][quantity]": "1",
     "line_items[0][price_data][currency]": "usd",
-    "line_items[0][price_data][unit_amount]": String(p.cents),
+    "line_items[0][price_data][unit_amount]": String(p.cents), // an event: the quote's price for what it adds; a home: the plan's price. Never from the browser
     "line_items[0][price_data][product_data][name]": `Featured on SoCal Lights: ${ev.name}`.slice(0, 120),
-    "line_items[0][price_data][product_data][description]": `${p.label} · ${ev.city}${home ? " · " + placeWord(home.standing.place) + ": " + home.row.cname : ""}`.slice(0, 200),
+    "line_items[0][price_data][product_data][description]": (q ? `${p.label} · ${ev.city} · ${q.from} to ${q.to} (${q.season} season${q.capped === "event" ? ", your event's last day" : ""})${q.added.length < q.components.length ? " · adds " + q.added.join(", ") : ""}` : `${p.label} · ${ev.city}${home ? " · " + placeWord(home.standing.place) + ": " + home.row.cname : ""}`).slice(0, 200),
     "metadata[event_id]": ev.id,
     ...(home ? { "metadata[target]": "home" } : {}),
+    ...(q ? { "metadata[quote_from]": q.from, "metadata[quote_to]": q.to, "metadata[quote_cents]": String(q.cents) } : {}), // what the buyer was quoted: the webhook applies this window and checks the amount against it
     "metadata[plan]": plan,
     "metadata[user_id]": user.id,
     "payment_intent_data[description]": `SoCal Lights Featured: ${ev.name} (${plan})`.slice(0, 200),
@@ -87,7 +86,7 @@ export async function onRequestPost({ request, env }) {
   });
   if (goodEmail) { f.set("customer_email", goodEmail); f.set("payment_intent_data[receipt_email]", goodEmail); }
   // Same event + plan within 10 minutes reuses one Checkout session (double clicks). The key is a hash (the account is included so two people never share a session).
-  const idem = "feature-" + (await sha256hex(`${ev.id}|${plan}|${user.id}|${Math.floor(Date.now() / 600_000)}`));
+  const idem = "feature-" + (await sha256hex(`${ev.id}|${plan}|${q ? q.to + "|" + q.cents + "|" : ""}${user.id}|${Math.floor(Date.now() / 600_000)}`));
   const limited = await checkoutLimit(env, user.id); // 6 payment pages an hour, 20 a day per account; counted only once every other check passed
   if (limited) return err(429, limited);
   // If Stripe cannot be reached the buyer gets the same friendly message as any other payment-page failure, not a raw error.
