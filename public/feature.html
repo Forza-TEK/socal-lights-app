@@ -16,6 +16,9 @@
 .plan p{margin:0;color:var(--muted)}.plan p b{color:var(--ink)}.plan>.btn{margin-top:6px;justify-self:start}
 .plan{border:2px solid var(--line);transition:border-color .15s,background-color .15s}.plan.sel{border-color:var(--season);background:color-mix(in srgb,var(--season) 9%,#fff);box-shadow:none}:root[data-theme="dark"] .plan.sel{background:color-mix(in srgb,var(--season) 16%,var(--tile))}
 .plan .btn.pick:not(.ghost){background:var(--season);border-color:var(--season);color:var(--on-season)}
+.grid+.meta{margin-top:14px}
+.grid .plan{cursor:pointer}.grid .plan:hover,.grid .plan:focus-within{border-color:var(--season);background:color-mix(in srgb,var(--season) 9%,#fff);box-shadow:0 6px 18px rgba(20,22,27,.10)}:root[data-theme="dark"] .grid .plan:hover,:root[data-theme="dark"] .grid .plan:focus-within{background:color-mix(in srgb,var(--season) 16%,var(--tile))}
+.grid .plan:hover .btn.pick{background:var(--season);border-color:var(--season);color:var(--on-season)}
 .fsteps{display:flex;gap:6px;list-style:none;margin:0 0 18px;padding:0;flex-wrap:wrap}.fsteps li{font-size:14px;color:var(--muted);padding:4px 12px;border:1px solid var(--line);border-radius:999px}.fsteps li.on{color:var(--ink);border-color:var(--ink);font-weight:600}
 .plan ul{margin:0;padding-left:20px;display:grid;gap:4px}.plan h3{margin:0;font-size:18px}.plan .chosen{margin:0}.plan .btn.pick{margin-top:6px}
 .res small.why{color:var(--muted)}.res button:disabled{opacity:.7;cursor:default}.res button:disabled:hover{border-color:var(--line)}
@@ -57,7 +60,7 @@
 </main>
 <script type="module">
 import { SITE } from "/site-config.js";
-import { planCopy, planStatus, planWindow, eventEligibility, niceDate as fmt, PLAN_KEYS, ptToday } from "/feature-plans.js?v=20261107b";
+import { planCopy, planBlurb, planStatus, planWindow, eventEligibility, niceDate as fmt, PLAN_KEYS, ptToday } from "/feature-plans.js?v=20261107b";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents / 100);
@@ -130,8 +133,8 @@ async function start() {
   };
 
   function planCards() {
-    return `<h2>Pick a plan</h2><div class="grid">${PLAN_KEYS.filter((k) => PL[k]).map((k) => { const c = planCopy(k, PL), bl = [...(c.sub ? [c.sub] : []), ...c.bullets];
-      return `<section class="plan" data-p="${k}"><div class="price">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><h3>${esc(c.name)}</h3><ul>${bl.map((b) => `<li>${esc(b)}</li>`).join("")}</ul><button class="btn pick" type="button" data-pick="${k}" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</button></section>`; }).join("")}</div>
+    return `<h2>Pick a plan</h2><div class="grid">${PLAN_KEYS.filter((k) => PL[k]).map((k) => { const c = planCopy(k, PL);
+      return `<section class="plan" data-p="${k}"><div class="price">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(planBlurb(k, PL))}</p><button class="btn ghost pick" type="button" data-pick="${k}" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</button></section>`; }).join("")}</div>
       <p class="meta">You pay once on Stripe's secure page. No subscription. Featuring opens ${OPEN} days before your event starts.</p>`;
   }
   const planLine = () => { const c = planCopy(S.plan, PL, WHO(S.ev)); return `<p class="chosen"><b>${esc(c.name)}</b> · ${dollars(PL[S.plan])} one time · <a href="#" data-a="plans">change plan</a></p>`; };
@@ -177,7 +180,7 @@ async function start() {
   const pickEvent = (m) => { S.ev = m; S.claim = null; S.msg = ""; S.err = false; fit(); sync(); beacon("fn:event-feature-pick"); draw(); window.scrollTo({ top: 0 }); };
 
   $("#flow").addEventListener("click", async (x) => {
-    const t = x.target.closest("[data-pick],[data-mine],[data-a],[data-sw],[data-find],#si,#go,#addnew"); if (!t) return;
+    let t = x.target.closest("[data-pick],[data-mine],[data-a],[data-sw],[data-find],#si,#go,#addnew"); if (!t) { const pl = x.target.closest(".grid .plan[data-p]"); if (pl) t = pl.querySelector("[data-pick]"); } if (!t) return; // a click anywhere on a plan card chooses it
     if (t.dataset.pick) { S.plan = t.dataset.pick; mails(); sync(); draw(); return; }
     if (t.dataset.mine) { x.preventDefault(); pickEvent(S.mine.find((m) => m.id === t.dataset.mine)); return; }
     if (t.dataset.sw) { x.preventDefault(); S.plan = t.dataset.sw; S.note = ""; sync(); draw(); return; }
