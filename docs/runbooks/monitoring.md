@@ -54,7 +54,7 @@ Pick **Better Stack** (free plan: one account does both the web check and the "h
 **D. Check it worked:** Better Stack > Heartbeats shows "Nightly backup" as Up after step C4, and both monitors show Up.
 
 ## Check by hand any time (no login needed)
-`curl -s https://socallights.app/api/health` should print `{"ok":true,"db":true,"stale":false,"staleJobs":[]}`. It reads one tiny table and is edge cached for 30 seconds.
+`curl -s https://socallights.app/api/health` should print `{"ok":true,"db":true,"stale":false,"staleJobs":[]}`. It reads one tiny table and is edge cached for 30 seconds (errors too). If D1 is over its free daily read limit it answers 503 `{"ok":false,"db":false,"quota":true,...}` ("over quota", resets 00:00 UTC), distinct from a plain outage (`"quota":false`).
 With the key (`ALERT_CRON_KEY`): `curl -s https://socal-lights.pages.dev/api/heartbeat -H "x-alert-key: $KEY"` lists every job: last run, hours ago, stale or failed.
 
 ## Routines (sweeps, weekly and midweek upkeep, browser pass, photo refresh)

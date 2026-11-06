@@ -85,6 +85,14 @@ test("/api/health: public, tiny, no secrets; stale flag flips; 503 when the data
   assert.equal(res.status, 503); assert.equal((await res.json()).db, false);
 });
 
+test("/api/health: over the free-plan quota is reported as quota, distinct from down, with no second query", async () => {
+  let n = 0;
+  const over = { DB: { prepare: () => ({ all: async () => { n++; throw new Error("D1_ERROR: exceeded D1's free tier daily row read limit: SQLITE_ERROR (7500)"); }, first: async () => { n++; throw new Error("x"); } }) } };
+  const res = await health({ request: new Request("https://x.test/api/health"), env: over });
+  const b = await res.json();
+  assert.equal(res.status, 503); assert.equal(b.quota, true); assert.equal(b.ok, false); assert.equal(n, 1);
+});
+
 test("/api/health before the migration: the database answers, so it is still 200", async () => {
   const { env, raw } = newEnv(); raw.exec("DROP TABLE job_heartbeats");
   const res = await health({ request: new Request("https://x.test/api/health"), env });
