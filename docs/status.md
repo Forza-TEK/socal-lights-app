@@ -467,3 +467,8 @@ Reported: the voice and the picture were out of step (a line said "Tap Visit the
 
 ## 2026-11-05 evening: city sweep group 6 (Long Beach & Gateway Cities)
 Added 2 events (migration 0164): Bell Holiday Village (Dec 5) and Winter Runderland run (Long Beach, Dec 13). Most cities' 2026 pages not posted yet (Artesia, Lynwood, Huntington Park, Bell Gardens, Cudahy, Maywood, Vernon, Hawaiian Gardens, Compton, Paramount found nothing new). Macaroni Kid (Norwalk, Lakewood, Downey) returns 403 to bot. Leads: Lakewood showcase (entries close Dec 11, no list yet), Norwalk Slay the Decor (judging Dec 14, no list), Cerritos Center holiday shows (Jake Shimabukuro Dec 11, Home for the Holidays Dec 16, Dave Koz Dec 19: only on ticket aggregators, cerritoscenter.com gave 503), Sea Santa Sail-A-Bration Long Beach Dec 5 (unverified). No photos set (og:images were a screenshot and a logo).
+
+## 2026-11-06 (follow-up to the audit)
+- Unified the visual style: the older white, light-weight pages now use the cream palette and heavy headings of the map and server-built pages (`addflow.css`, `info.css`, `contest.css`, `appshell.css`, 404/offline, pricing). Season red darkened slightly for contrast on cream.
+- `/c/<unknown>` now returns a real 404.
+- Re-ran the full sweep: no new contrast, overflow or console problems.
