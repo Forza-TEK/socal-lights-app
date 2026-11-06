@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-06 (installer Sponsor placements)_
 
+## Page counter buckets (2026-11-06, audit seo-growth H4)
+- `functions/api/visit.js`: `/e/<id>` counts as page `event`, `/past/<slug>` as `past` (old per-id rows stay in history and age out of the top pages). The 80 page-names-per-day abuse cap now counts page rows only, not `fn:`, `click:` or `ref:`. Admin "top pages" lists keys as stored, so it shows `event` and `past` with no change needed. Tests: `tests/visit-pages.test.mjs`.
+
 ## /api/events hardening (2026-11-06, audit N-01 / M1)
 - The edge copy is keyed by `ended` and `full` only; any other query string (`?x=1`, `?ref=fb`) shares the plain copy and cannot force a rebuild. At most 4 keys exist.
 - `?all=1` is admin only (Access JWT via `requireAdmin`, else 401, never cached). The admin editor now reads `GET /api/admin/events` (behind Access, same data); `admin.js?v=20261107d`.
