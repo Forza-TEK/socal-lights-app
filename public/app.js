@@ -228,8 +228,18 @@ function placeHouses() {
 const map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true, customAttribution: "\u00a9 " + new Date().getFullYear() + " Forza-TEK" }, dragRotate: false, pitchWithRotate: false, clickTolerance: 10 }); // clickTolerance: a tap with a little finger wobble still counts as a tap
 map.touchZoomRotate.disableRotation();
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-const geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false }, trackUserLocation: false });
+// The locate button waited only 6 s for a fix and then failed silently, which is what some phones (slow network fixes, in-app browsers) showed: it looked like the button did nothing.
+// Now it waits longer, flies to a position we already know at once, and says what went wrong.
+const SOCIAL_BROWSER = /FBAN|FBAV|FB_IAB|Instagram|Snapchat|MicroMessenger|Line\/|TikTok|musical_ly/i.test(navigator.userAgent || "");
+const geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 }, trackUserLocation: false });
 map.addControl(geo, "top-right");
+const flyToMe = () => map.easeTo({ center: [state.me.lng, state.me.lat], zoom: Math.max(map.getZoom(), 15), duration: 800 });
+geo.on("error", (e) => {
+  if (state.me) { flyToMe(); return; } // we already know where you are (read when you allowed it)
+  const c = e && e.code;
+  toast(c === 1 ? (SOCIAL_BROWSER ? "This app's built-in browser blocks location. Open socallights.app in Safari or Chrome." : "Location is blocked for this site. Allow it in your browser settings, then tap the button again.") : c === 3 ? "Still looking for your location. Tap the button again in a moment." : "Couldn't find your location right now.");
+});
+document.addEventListener("click", (ev) => { const b = ev.target && ev.target.closest && ev.target.closest(".maplibregl-ctrl-geolocate"); if (b && state.me) flyToMe(); }, true); // a tap with a known position moves the map right away
 // The control only zooms to the (often wide) accuracy circle; fly in close on the user instead
 geo.on("geolocate", (e) => { const wel = document.getElementById("welcome"); if (wel) wel.remove(); state.me = { lat: e.coords.latitude, lng: e.coords.longitude }; state.meErr = ""; scheduleList(); map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }); });
 
