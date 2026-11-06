@@ -92,7 +92,7 @@ test("checkout late in the season charges the prorated price, and the webhook ch
     assert.equal(getOrder(raw, "cs_1").note, null, "the prorated amount is what the server expects");
     assert.equal(getOrder(raw, "cs_1").amount, 1600, "the amount actually charged is stored"); assert.equal(getInst(raw).banner_until, "2026-12-26");
     await pay(env, 2, "banner_top", 7500);
-    assert.match(getOrder(raw, "cs_2").note, /amount mismatch: paid 75.00 USD, the banner_top plan is 10.00 USD/, "the full price paid when the upgrade difference ($24 - $16 = $8, floor $10) was due is flagged");
+    assert.match(getOrder(raw, "cs_2").note, /amount mismatch: paid 75.00 USD, the banner_top plan is 15.00 USD/, "the full price paid when the upgrade difference ($25 - $16 = $9, raised to the $15 upgrade minimum) was due is flagged");
     assert.equal(getOrder(raw, "cs_2").applied, 1, "still applied: the buyer paid what we asked");
   } finally { f.restore(); }
 }, "2026-12-14T20:00:00Z"));

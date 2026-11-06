@@ -376,14 +376,16 @@ Installers can show their company in a labeled **Sponsor** banner at the top of 
 5. Tap **Continue to payment** and pay on Stripe's secure page. Your placement turns on within a few minutes.
 
 ## How long it lasts and what it costs
-A season runs from the day you pay to the last day of the season on the map (the Thanksgiving & Christmas season ends Dec 26). The first 14 days of a season cost the full price. After that the price falls a little every day, with the days left (never less than $10). The page shows the exact price and a sentence such as "the season is 40% over, so this costs $X instead of $50" before you pay. The placement always ends on the season's last day.
+A season runs from the day you pay to the last day of the season on the map (the Thanksgiving & Christmas season ends Dec 26). The first 14 days of a season cost the full price. After that the price falls a little every day, with the days left (never less than $10 for the Banner or $25 for Banner and top of the list). The page shows the exact price and a sentence such as "the season is 40% over, so this costs $X instead of $50" before you pay. The placement always ends on the season's last day.
 
 ## Renew or upgrade
 - **Renew:** buy the same plan again while it runs. The new season starts the day after the current one ends, at the full price of that season. Time is only added, and we sell at most one season ahead.
-- **Upgrade:** to add the top of the list to a banner that already runs to the end of the season, choose Banner and top of the list. You pay the difference between the two plans' prices that day (never less than $10).
+- **Upgrade:** to add the top of the list to a banner that already runs to the end of the season, choose Banner and top of the list. You pay the difference between the two plans' prices that day (at least $15).
 - Your dashboard (Overview) shows your dates and numbers, with a **Renew or upgrade** button.
 
 ## Refunds
 If we cannot put your placement on, you get a full refund. A refund switches the placement off, and so does a payment dispute, so please email info@socallights.app before disputing a charge.
 
 Paying never affects a contest, and the map stays free. See [Is SoCal Lights free?](/help/is-it-free).
+
+(Migration 0174, 2026-11-06: updates the Sponsor article's minimum prices where it is still unedited.)

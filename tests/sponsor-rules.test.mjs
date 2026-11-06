@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { SEASONS } from "../public/seasons.js";
-import { INSTALLER_PLANS, PUBLIC_INSTALLER_PLANS, FULL_PRICE_DAYS, INSTALLER_MIN_CENTS, installerPrice } from "../functions/_lib/featured.js";
+import { INSTALLER_PLANS, PUBLIC_INSTALLER_PLANS, FULL_PRICE_DAYS, installerUpgradeMin, installerPrice } from "../functions/_lib/featured.js";
 import { seasonOf, sponsorWindow, applySponsor, profileGaps, sponsorProblem } from "../functions/_lib/sponsor.js";
 import { onRequestGet as config } from "../functions/api/config.js";
 
@@ -44,7 +44,7 @@ test("a new placement runs from today to the end of the current season, at the f
 });
 
 test("price (option C): full for days 1 to 14 of the season, then falling day by day to the $10 floor, never a cliff", () => {
-  assert.equal(FULL_PRICE_DAYS, 14); assert.equal(INSTALLER_MIN_CENTS, 1000);
+  assert.equal(FULL_PRICE_DAYS, 14); assert.deepEqual([INSTALLER_PLANS.banner.min_cents, INSTALLER_PLANS.banner_top.min_cents, installerUpgradeMin()], [1000, 2500, 1500], "a floor per plan");
   // Christmas season: Nov 3 to Dec 26 = 54 days; day 14 is Nov 16 and has 41 days left
   const at = (d, plan = "banner") => sponsorWindow(plan, {}, d);
   const row = (d) => [at(d).day_of_season, at(d).days_left, at(d).cents / 100, at(d, "banner_top").cents / 100];
@@ -53,9 +53,11 @@ test("price (option C): full for days 1 to 14 of the season, then falling day by
   assert.deepEqual(row("2026-11-17"), [15, 40, 49, 73], "day 15: just below full: 50 x 40/41 = 48.78, 75 x 40/41 = 73.17");
   assert.deepEqual(row("2026-11-18"), [16, 39, 48, 71]);
   assert.deepEqual(row("2026-12-01"), [29, 26, 32, 48], "mid-season: 50 x 26/41 = 31.7");
-  assert.deepEqual(row("2026-12-14"), [42, 13, 16, 24]);
-  assert.deepEqual(row("2026-12-24"), [52, 3, 10, 10], "the floor: 50 x 3/41 = 3.66 -> $10 (the same floor for both plans)");
-  assert.deepEqual(row("2026-12-26"), [54, 1, 10, 10], "last day: the floor, and it still ends on the season's last day");
+  assert.deepEqual(row("2026-12-14"), [42, 13, 16, 25], "75 x 13/41 = 23.8 -> $24, raised to the $25 floor of that plan");
+  assert.deepEqual(row("2026-12-01"), [29, 26, 32, 48]);
+  assert.deepEqual(row("2026-12-24"), [52, 3, 10, 25], "the floors: Banner $10 (50 x 3/41 = 3.66), Banner and top $25 (75 x 3/41 = 5.5)");
+  assert.deepEqual(row("2026-12-26"), [54, 1, 10, 25], "last day: each plan's floor, and it still ends on the season's last day");
+  assert.equal(at("2026-12-13", "banner_top").cents, 2600, "the $75 plan reaches its floor on Dec 14 ($25): Dec 13 is $26"); assert.equal(at("2026-12-14", "banner_top").cents, 2500);
   assert.equal(at("2026-12-26").to, "2026-12-26"); assert.equal(at("2026-12-14").to, "2026-12-26", "never rolls into the next season");
   // monotonic: no day costs more than the day before, and day 15 is strictly below full
   for (const plan of ["banner", "banner_top"]) { let prev = Infinity; for (let d = Date.parse("2026-11-03"); d <= Date.parse("2026-12-26"); d += 86400_000) { const c = at(new Date(d).toISOString().slice(0, 10), plan).cents; assert.ok(c <= prev && c >= 1000, "price rises or dips under the floor"); prev = c; } }
@@ -102,7 +104,9 @@ test("upgrade: when the banner already runs to the season end, pay the differenc
   assert.match(u.label, /^Upgrade: .*difference/);
   assert.equal(sponsorWindow("banner_top", inst, "2026-11-20").cents, 2300, "day 18: banner_top $68 minus banner $45");
   assert.equal(sponsorWindow("banner_top", inst, "2026-12-01").cents, 1600, "day 29: banner_top $48 minus banner $32");
-  assert.equal(sponsorWindow("banner_top", inst, "2026-12-14").cents, 1000, "$24 - $16 = $8, raised to the $10 floor");
+  assert.equal(sponsorWindow("banner_top", inst, "2026-12-14").cents, 1500, "$25 - $16 = $9, raised to the upgrade minimum ($25 floor - $10 floor = $15)");
+  assert.equal(sponsorWindow("banner_top", inst, "2026-12-26").cents, 1500, "last day: $25 - $10 = $15");
+  assert.ok(sponsorWindow("banner_top", inst, "2026-11-06").cents <= 2500, "never above the full difference");
   // a banner that ends sooner than the season is not "already covered": the full price of the new plan for the days left, and the banner is extended to match
   const shorter = applySponsor("banner_top", { banner_until: "2026-11-20", top_until: "" }, "2026-11-06"); assert.deepEqual([shorter.cents, shorter.upgrade, shorter.banner_until], [7500, false, "2026-12-26"]);
   const renew = applySponsor("banner_top", { banner_until: "2026-12-26", top_until: "2026-12-26" }, "2026-11-06"); assert.deepEqual([renew.top_until, renew.banner_until, renew.cents, renew.upgrade], ["2027-01-31", "2027-01-31", 7500, false]);
