@@ -1,7 +1,7 @@
 // Step-by-step engine shared by the add forms (event, home display, contest). One question per screen, a segmented
 // progress bar, Back and Next. Each form supplies its steps; this file does the rest (state, validation, photos,
 // address suggestions, "I am human" check, saved drafts).
-import { me, signIn } from "/auth.js?v=20261101a";
+import { me, signIn } from "/auth.js?v=20261106y";
 import "/norm-ui.js?v=20261102b";
 import { CITY } from "/cities.js";
 export const $ = (q, r = document) => r.querySelector(q);
@@ -24,7 +24,7 @@ export function validSite(s) {
 }
 
 /* ---------- light / night switch and account button: shared with every page (see chrome.js) ---------- */
-import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome.js?v=20261103b";
+import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome.js?v=20261106y";
 export { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct };
 
 /* ---------- field builders ---------- */
@@ -105,7 +105,7 @@ export function run(o) {
   } catch {}
   let dirty = false;
   const save = () => { if (!o.persist) return; try { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && typeof v !== "function") c[k] = v; localStorage.setItem(o.persist, JSON.stringify({ d: c, i: S.i })); } catch {} };
-  const hdr = (done) => `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? "" : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
+  const hdr = (done) => `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? "" : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
   function draw(focus) {
     if (S.done !== null) { root.innerHTML = `${hdr(true)}<main class="main">${S.done}</main>`; window.scrollTo(0, 0); return; }
     const st = steps(); S.i = Math.max(0, Math.min(S.i, st.length - 1)); const s = st[S.i];
@@ -118,11 +118,14 @@ export function run(o) {
     if (focus) { const f = root.querySelector(".in,[data-tile]"); if (f && f.classList.contains("in")) f.focus({ preventScroll: true }); window.scrollTo(0, 0); }
     if (o.after) o.after(s, d);
   }
+  // Tie the message to the field it is about: the first empty field on the step gets aria-invalid and aria-describedby="err" (cleared when the person types)
+  const flagField = () => { unflag(); const f = [...root.querySelectorAll("input[data-k],textarea[data-k],select[data-k]")].find((x) => x.type !== "checkbox" && x.type !== "radio" && x.type !== "file" && !String(x.value || "").trim()); if (f) { f.setAttribute("aria-invalid", "true"); f.setAttribute("aria-describedby", "err"); } };
+  const unflag = () => root.querySelectorAll("[aria-describedby=\"err\"][data-k]").forEach((x) => { x.removeAttribute("aria-invalid"); x.removeAttribute("aria-describedby"); });
   const showErr = (t) => { S.err = t; const e = $("#err"); if (e) { e.textContent = t; e.hidden = !t; if (t) e.scrollIntoView({ block: "center", behavior: "smooth" }); } };
   const api = { next: () => next(), draw: () => draw(), err: showErr, finish(html) { S.done = html; if (d._draftId) fetch("/api/drafts/" + d._draftId, { method: "DELETE" }).catch(() => {}); if (o.persist) try { localStorage.removeItem(o.persist); } catch {} draw(); }, goto(id) { const i = steps().findIndex((x) => x.id === id); if (i > -1) { S.i = i; S.err = ""; save(); draw(true); } }, data: d, step: () => steps()[S.i] };
   async function next() {
     if (S.busy) return;
-    const s = steps()[S.i], e = s.check ? s.check(d) : ""; if (e) return showErr(e); showErr("");
+    const s = steps()[S.i], e = s.check ? s.check(d) : ""; if (e) { showErr(e); flagField(); return; } showErr(""); unflag();
     if (s.submit) {
       S.busy = true; const b = $("#nextbtn"), label = b.textContent; b.disabled = true; b.textContent = "Sending…";
       try { await s.submit(d, api); } catch (x) { S.busy = false; if (S.done === null) { showErr(x.message || "Something went wrong. Please try again."); const bb = $("#nextbtn"); if (bb) { bb.disabled = false; bb.textContent = label; } ts.reset(); } return; }
@@ -163,7 +166,7 @@ export function run(o) {
 
   // typing, choosing, clicking
   const onValue = (t) => {
-    const k = t.dataset.k; dirty = true; d[k] = t.type === "checkbox" ? t.checked : t.value; if (t.getAttribute("aria-invalid")) t.removeAttribute("aria-invalid");
+    const k = t.dataset.k; dirty = true; d[k] = t.type === "checkbox" ? t.checked : t.value; if (t.getAttribute("aria-invalid")) { t.removeAttribute("aria-invalid"); t.removeAttribute("aria-describedby"); }
     save(); if (o.onInput) o.onInput(k, d, api);
     const s = steps()[S.i]; if (s && s.redraw && (t.type === "checkbox" || t.tagName === "SELECT")) { draw(); }
   };

@@ -1,7 +1,7 @@
 // The signed-in pages' frame (Profile, Tutorials), built the same way as Admin:
 //   desktop: side menu | tablet: icon rail | phone: top bar + bottom bar + "More" sheet.
 // mountShell moves the page's #content into the frame and returns { setActive, setCount, setTitle }.
-import { themeBtn, mountAcct } from "/chrome.js?v=20261103b";
+import { themeBtn, mountAcct } from "/chrome.js?v=20261106y";
 const P = {
   map: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/>',

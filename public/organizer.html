@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261106s">
+<link rel="stylesheet" href="/addflow.css?v=20261106y">
 <link rel="stylesheet" href="/contest.css?v=20261105b">
 <link rel="stylesheet" href="/printables.css?v=20261105d">
 <link rel="stylesheet" href="/forms.css?v=20261102e">
@@ -21,8 +21,8 @@
 </main>
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
-import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261101a";
-import { refreshAcct } from "/addflow.js?v=20261103a";
+import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261106y";
+import { refreshAcct } from "/addflow.js?v=20261106y";
 import { mountShell } from "/appshell.js?v=20261104a";
 import { fsec, ff } from "/forms.js?v=20261102b";
 import { printable } from "/printables.js?v=20261105c";
@@ -202,7 +202,7 @@ function render() {
   const pp = $("#printposter"); if (pp) pp.onclick = () => printSheet(pz("poster"), "fest");
   const ps = $("#printsign"); if (ps) ps.onclick = () => printSheet(pz("sign"), "fest");
   const asj = (path, method, body) => fetch(`/api/contests/${encodeURIComponent(slug)}/${path}`, { method, headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
-  const as = $("#addstaff"); if (as) as.onclick = async () => { const er = $("#serr"); er.hidden = true; const r = await asj("staff", "POST", { email: $("#newstaff").value }), j = await r.json().catch(() => ({})); if (!r.ok) { er.textContent = j.error || "That didn't work."; er.hidden = false; return; } toast("Co-organizer added and emailed."); load(); };
+  const as = $("#addstaff"); if (as) as.onclick = async () => { const er = $("#serr"), nf = $("#newstaff"); er.hidden = true; nf.removeAttribute("aria-invalid"); const r = await asj("staff", "POST", { email: nf.value }), j = await r.json().catch(() => ({})); if (!r.ok) { er.textContent = j.error || "That didn't work."; er.hidden = false; nf.setAttribute("aria-invalid", "true"); nf.setAttribute("aria-describedby", "serr"); return; } toast("Co-organizer added and emailed."); load(); };
   document.querySelectorAll("[data-rmstaff]").forEach((b) => (b.onclick = async () => { await asj("staff?email=" + encodeURIComponent(b.dataset.rmstaff), "DELETE"); toast("Removed."); load(); }));
   const spf = $("#spform"); if (spf) spf.onsubmit = async (ev) => { ev.preventDefault(); const er = $("#sp-err"); er.hidden = true; const fd = new FormData(); fd.append("name", $("#sp-name").value); fd.append("tier", $("#sp-tier").value); fd.append("url", $("#sp-url").value); const f = $("#sp-logo").files[0]; if (f) fd.append("logo", f); const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/sponsors`, { method: "POST", body: fd }), j = await r.json().catch(() => ({})); if (!r.ok) { er.textContent = j.error || "That didn't save."; er.hidden = false; return; } toast("Sponsor added."); load(); };
   document.querySelectorAll("[data-rmsp]").forEach((b) => (b.onclick = async () => { await asj("sponsors?id=" + encodeURIComponent(b.dataset.rmsp), "DELETE"); toast("Removed."); load(); }));
@@ -286,6 +286,6 @@ function render() {
 }
 noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261106a" defer></script>
+<script src="/footer.js?v=20261106y" defer></script>
 </body>
 </html>
