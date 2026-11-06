@@ -40,6 +40,17 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Export the live database
+        run: |
+          npx wrangler d1 export socal-lights --remote --output backup.sql
+          size=$(wc -c < backup.sql); echo "export is $size bytes"
+          # Sanity check: a truncated or empty export must never overwrite a good backup's place in the rotation
+          if [ "$size" -lt 200000 ]; then echo "::error::The export is suspiciously small ($size bytes)"; exit 1; fi
+          grep -q "CREATE TABLE.*events" backup.sql || { echo "::error::The export has no events table"; exit 1; }
+          grep -q "CREATE TABLE.*users" backup.sql || { echo "::error::The export has no users table"; exit 1; }
+          grep -c "^INSERT INTO" backup.sql | sed 's/^/insert statements: /'
+          gzip -9 backup.sql
+          sha256sum backup.sql.gz | tee backup.sha256
       - name: Make sure the private backup bucket exists
         run: |
           if npx wrangler r2 bucket list 2>/tmp/list.err | grep -q "name:[[:space:]]*$BACKUP_BUCKET"; then echo "bucket $BACKUP_BUCKET exists"; exit 0; fi
@@ -52,17 +63,6 @@ jobs:
           # Lifecycle rules are idempotent by name; failures here must not stop the backup itself
           npx wrangler r2 bucket lifecycle add "$BACKUP_BUCKET" daily daily/ --expire-days 35 -y 2>&1 | tail -2 || true
           npx wrangler r2 bucket lifecycle add "$BACKUP_BUCKET" monthly monthly/ --expire-days 400 -y 2>&1 | tail -2 || true
-      - name: Export the live database
-        run: |
-          npx wrangler d1 export socal-lights --remote --output backup.sql
-          size=$(wc -c < backup.sql); echo "export is $size bytes"
-          # Sanity check: a truncated or empty export must never overwrite a good backup's place in the rotation
-          if [ "$size" -lt 200000 ]; then echo "::error::The export is suspiciously small ($size bytes)"; exit 1; fi
-          grep -q "CREATE TABLE.*events" backup.sql || { echo "::error::The export has no events table"; exit 1; }
-          grep -q "CREATE TABLE.*users" backup.sql || { echo "::error::The export has no users table"; exit 1; }
-          grep -c "^INSERT INTO" backup.sql | sed 's/^/insert statements: /'
-          gzip -9 backup.sql
-          sha256sum backup.sql.gz | tee backup.sha256
       - name: Upload to the private bucket
         run: |
           D=$(date -u +%F); M=$(date -u +%Y-%m)

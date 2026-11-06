@@ -80,3 +80,21 @@ jobs:
       - name: Event counts by season
         if: steps.check.outputs.skip != 'true'
         run: npx wrangler d1 execute socal-lights --remote --command "SELECT season, COUNT(*) AS n, SUM(status='confirmed') AS confirmed FROM events GROUP BY season"
+
+  # A rejected or failed migration must not wait for someone to read the Actions tab: open (or update) an issue, which emails the owner.
+  alert:
+    needs: [validate, migrate]
+    if: ${{ always() && (needs.validate.result == 'failure' || needs.migrate.result == 'failure') }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Open or update the issue
+        run: |
+          T="Database migration failed"
+          URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          N=$(gh issue list --state open --search "\"$T\" in:title" --json number -q '.[0].number' || true)
+          if [ -n "$N" ]; then gh issue comment "$N" --body "Failed again: $URL"; else gh issue create --title "$T" --body "A push to main changed migrations/ and the check or the apply to the live database failed. See $URL. The live data was not changed by a failed migration unless the log says otherwise. Fix with a NEW migration (never edit an old one). Close this issue when the next run is green."; fi

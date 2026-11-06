@@ -6,10 +6,12 @@ import { sendTemplate } from "../_lib/mailtpl.js";
 import { pruneIps } from "../_lib/retention.js";
 import { NEEDS_ATTENTION, ORDER_FROM, orderFlags } from "../_lib/orders.js";
 import { ptToday } from "../_lib/featured.js";
+import { opsSince, pruneOps } from "../_lib/oplog.js";
 
 export async function onRequestPost({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
   if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
+  await pruneOps(env);
   await pruneIps(env); // scheduled backstop for the 48-hour IP retention promise
   const q = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then((r) => r.results);
   const st = await env.DB.prepare("SELECT last_at FROM admin_digest WHERE id = 1").first().catch(() => null);
@@ -19,6 +21,7 @@ export async function onRequestPost({ request, env }) {
   const ptDate = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
   const dst = /PDT/.test(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles", timeZoneName: "short" }));
   const dayStart = new Date(`${ptDate}T00:00:00${dst ? "-07:00" : "-08:00"}`).toISOString().slice(0, 19).replace("T", " ");
+  const problems = await opsSince(env, since);
   const [homes, events, entries, held, dayHomes, dayEvents, dayEntries, live, reports, orders] = await Promise.all([
     q("SELECT id, title, city, status, poster_type FROM posts WHERE contest_id IS NULL AND created_at > ? ORDER BY created_at DESC LIMIT 50", since),
     q("SELECT id, name, city, status FROM event_submissions WHERE created_at > ? ORDER BY created_at DESC LIMIT 50", since),
@@ -37,11 +40,13 @@ export async function onRequestPost({ request, env }) {
   const payLines = orders.map((o) => ({ ...o, why: orderFlags(o, ptToday()).map((f) => REASON[f] || f).join("; ") })).filter((o) => o.why);
   const usd = (c) => "USD " + ((c || 0) / 100).toFixed(2);
   const payments = payLines.length ? `## Payments that need you (${payLines.length})\n${payLines.slice(0, 10).map((o) => `- ${o.name} · ${o.plan} ${usd(o.amount)} · ${o.why}`).join("\n")}${payLines.length > 10 ? `\n...and ${payLines.length - 10} more` : ""}\nOpen Admin > Orders.\n\n` : "";
+  const WHAT = { email: "emails that failed to send", webhook: "Stripe webhook errors" };
+  const problemText = problems.length ? `## Problems the site noticed (${problems.reduce((a, g) => a + g.n, 0)})\n${problems.map((g) => `- ${g.n} ${WHAT[g.kind] || g.kind}. Latest: ${g.example}`).join("\n")}\nWeekly alerts and contest reminders that failed are retried on the next run. Sign-in codes and invitations are not: check the Resend and Stripe dashboards if this repeats.\n\n` : "";
   const total = homes.length + events.length + entries[0].n + reports.length, dayTotal = dayHomes[0].n + dayEvents[0].n + dayEntries[0].n;
   const line = (label, rows, name) => rows.length ? `## ${label} (${rows.length})\n${rows.slice(0, 10).map((r) => `- ${r[name]} · ${r.city}${r.status === "pending" ? " · WAITING" : r.poster_type === "installer" ? " · installer" : ""}`).join("\n")}${rows.length > 10 ? `\n...and ${rows.length - 10} more` : ""}\n\n` : "";
   const head = total ? `${total} new submission${total === 1 ? "" : "s"} since the last update.\n\n${line("Homes and installer displays", homes, "title")}${line("Events", events, "name")}${entries[0].n ? `Contest entries: ${entries[0].n} (organizers review these)\n\n` : ""}${reports.length ? `## "Something wrong?" reports (${reports.length})\n${reports.slice(0, 8).map((r) => `- ${r.name || r.ref}: ${r.message}`).join("\n")}${reports.length > 8 ? `\n...and ${reports.length - 8} more` : ""}\n\n` : ""}` : "Nothing new since the last update.\n\n";
   const todayLine = `${dayTotal} submission${dayTotal === 1 ? "" : "s"} (${dayHomes[0].n} home${dayHomes[0].n === 1 ? "" : "s"}, ${dayEvents[0].n} event${dayEvents[0].n === 1 ? "" : "s"}, ${dayEntries[0].n} contest entr${dayEntries[0].n === 1 ? "y" : "ies"}).`;
-  const ok = await sendTemplate(env, "admin_digest", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { headline: total ? `${total} new submission${total === 1 ? "" : "s"}` : "no new submissions", day_total: dayTotal, summary: head + payments, today_line: todayLine, live_line: `${live[0].homes} homes, ${live[0].events} events.`, held: held[0].n });
+  const ok = await sendTemplate(env, "admin_digest", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { headline: (problems.length ? "PROBLEMS, " : "") + (total ? `${total} new submission${total === 1 ? "" : "s"}` : "no new submissions"), day_total: dayTotal, summary: problemText + head + payments, today_line: todayLine, live_line: `${live[0].homes} homes, ${live[0].events} events.`, held: held[0].n });
   if (ok) await env.DB.prepare("INSERT INTO admin_digest (id, last_at) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET last_at = excluded.last_at").bind(now).run();
-  return json({ sent: ok, new: total, today: dayTotal });
+  return json({ sent: ok, new: total, today: dayTotal, problems: problems.reduce((a, g) => a + g.n, 0) });
 }

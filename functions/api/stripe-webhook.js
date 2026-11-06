@@ -6,6 +6,7 @@
 // Retry safety: nothing is "done" until it has really been applied. The order row records `applied`; the Stripe event id is written to
 // stripe_events only after the work succeeded; failures that a retry can fix return 500 so Stripe redelivers.
 import { json, err } from "../_lib/util.js";
+import { logOp } from "../_lib/oplog.js";
 import { PLANS, applyOrder, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
 
 const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired", "charge.refunded", "charge.dispute.created", "charge.dispute.closed"]);
@@ -19,8 +20,8 @@ export async function onRequestPost({ request, env }) {
   if (await env.DB.prepare("SELECT 1 FROM stripe_events WHERE id = ?").bind(evt.id).first()) return json({ ok: true, duplicate: true });
 
   let res;
-  try { res = await handle(evt, env); } catch (e) { console.error("stripe-webhook", evt.type, evt.id, e && e.message); return err(500, "Could not process; please retry."); }
-  if (res instanceof Response) return res; // a retryable failure: leave the event unrecorded so Stripe redelivers
+  try { res = await handle(evt, env); } catch (e) { console.error("stripe-webhook", evt.type, evt.id, e && e.message); await logOp(env, "webhook", `${evt.type} ${evt.id}: ${e && e.message}`); return err(500, "Could not process; please retry."); }
+  if (res instanceof Response) { if (res.status >= 500) await logOp(env, "webhook", `${evt.type} ${evt.id}: answered ${res.status}, Stripe will retry`); return res; } // a retryable failure: leave the event unrecorded so Stripe redelivers
   await env.DB.prepare("INSERT OR IGNORE INTO stripe_events (id,type) VALUES (?,?)").bind(evt.id, evt.type).run();
   return json({ ok: true, ...res });
 }

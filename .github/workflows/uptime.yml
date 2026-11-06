@@ -2,13 +2,15 @@
 # real site, but not behind the zone's bot protection, which answers GitHub's data-center addresses with 403); (2) the real
 # domain must answer at all, proving DNS, TLS and Cloudflare are alive (200 = fine; 403 = Cloudflare's bot rule for cloud addresses,
 # also fine; no answer or a server error = a failure). A failed run makes GitHub email the repository owners.
+# A failed run also opens ONE GitHub issue ("Site is down"), which emails the owner, and the first healthy run closes it.
 # No third-party actions, no secrets. Cloudflare Health Checks are not offered on the Free plan.
 name: Uptime check
 on:
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
-permissions: {}
+permissions:
+  issues: write   # only to open or close the "Site is down" issue
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -42,3 +44,20 @@ jobs:
           check "https://socal-lights.pages.dev/in/irvine" "Irvine"
           reach "https://socallights.app/"
           exit $fail
+      - name: Open an issue while the site is down
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          T="Site is down (uptime check)"
+          N=$(gh issue list --state open --search "\"$T\" in:title" --json number -q '.[0].number' || true)
+          [ -n "$N" ] || gh issue create --title "$T" --body "The uptime check failed at $(date -u +%FT%TZ). Details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}. This issue closes itself when the check passes again."
+      - name: Close the issue when the site is back
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          T="Site is down (uptime check)"
+          for N in $(gh issue list --state open --search "\"$T\" in:title" --json number -q '.[].number' || true); do gh issue close "$N" --reason completed --comment "Healthy again at $(date -u +%FT%TZ)."; done

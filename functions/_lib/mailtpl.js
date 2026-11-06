@@ -312,15 +312,15 @@ export function unsubHeaders(oneClickUrl) {
 }
 
 // Send one templated email (HTML and plain text). Returns true when it was handed to the mail service.
-// Emails with an unsubscribe link (unsub: "link") are skipped for anyone who has unsubscribed.
+// Returns false when the send failed or was skipped. Emails with an unsubscribe link (unsub: "link") are skipped for anyone who has unsubscribed.
 export async function sendTemplate(env, id, to, vars) {
   if (!to) return false;
   const t = byId(id); let unsubUrl, oneClick = "";
   if (t && t.unsub === "link") {
     const p = await prefsFor(env, to);
-    if (p && p.optout) return false;
+    if (p && p.optout) return false; // skipped on purpose (unsubscribed); a caller that must tell this from a failure checks prefsFor
     if (p) { unsubUrl = `${SITE}/unsubscribe?t=${p.token}`; oneClick = `${SITE}/api/unsub?t=${p.token}`; } // the link in the email opens the page; the header's one-click address takes the POST
   } else if (t && t.unsub === "alerts" && vars && vars.unsub_url) oneClick = String(vars.unsub_url);
   const m = await renderTemplate(env, id, vars, null, unsubUrl || SITE + "/unsubscribe");
-  return sendMail(env, { to, subject: m.subject, text: m.text, html: m.html, headers: isMarketing(t) ? unsubHeaders(oneClick) : undefined });
+  return sendMail(env, { to, subject: m.subject, text: m.text, html: m.html, tag: id, headers: isMarketing(t) ? unsubHeaders(oneClick) : undefined });
 }

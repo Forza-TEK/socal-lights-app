@@ -7,6 +7,13 @@ _Last updated: 2026-11-05_
 ## Batch D 1: nightly backup (2026-11-06)
 `.github/workflows/backup.yml` exports the live D1 every night, checks it, uploads it to a PRIVATE R2 bucket `socal-lights-backups` (daily kept 35 days, monthly 400, `latest.sql.gz`), reads it back, and copies photos on Sundays (`scripts/backup-photos.mjs`). A failure opens a GitHub issue. Never an artifact (public repo). Restore steps: `docs/runbooks/backup-restore.md`. Owner must give the API token R2 Edit permission first.
 
+## Batch D 2: alerting (2026-11-06)
+- Failed emails are never marked sent: the weekly alert (`alerts/send.js`) only sets `last_sent` after a successful send and returns `failed`; `alerts.yml` stops with an error if a whole batch failed; contest open/close reminders are only marked done when something went out (an unsubscribed recipient is not a failure).
+- `sendMail` no longer throws on a network error; it returns false and logs. New table `ops_log` (migration 0163, no personal data, 30-day prune) and `functions/_lib/oplog.js` (`logOp`, `opsSince`). Logged: failed or unreachable mail service, missing `RESEND_API_KEY`, Stripe webhook handler errors and 5xx answers.
+- The admin digest email now starts with "Problems the site noticed" (subject starts "PROBLEMS") when anything was logged since the last digest.
+- GitHub issues (emails the owner): uptime check ("Site is down", closes itself on recovery), migrations (validate or apply failed), admin digest not sent, nightly backup. Tests: `tests/alerting.test.mjs`.
+- Not done: Workers Logs (`[observability]` in wrangler.toml, untested on Pages); Cloudflare notification policies (owner, dashboard).
+
 ## Organizer-added contest entries (2026-11-05, branch `claude/quirky-goodall-yaumg1`, not merged, awaiting CEO diff review)
 Built for Covina ("Light Up the Town"), whose registration lives elsewhere: the organizer pastes the registered homes' addresses and uses our judging and routes. `POST /api/contests/<slug>/entries` (organizer and staff), "Add homes yourself" card on the dashboard Entries tab, migration `0162` (`posts.added_by`, `entry_add_log`). Entries are approved, photo-less, `user_id=''`, tagged "Added by organizer". Account deletion keeps them. Privacy page sentence added (updated Nov 5). Tests: `tests/organizer-entries.test.mjs`. Details and limits in `docs/contests.md`. Open: Covina is not in `public/cities.js`, so the contest has to use a nearby listed city (a line's own `, Covina` is accepted, within 30 km of that city); the free Pages plan allows about 50 subrequests per call, so the dashboard sends 25 addresses at a time.
 
