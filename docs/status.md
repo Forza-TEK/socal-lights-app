@@ -4,6 +4,13 @@ _Last updated: 2026-11-05_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Batch E 4: accessibility quick fixes (2026-11-06)
+- Search box `#q` is now a proper combobox (`role="combobox"`, `aria-controls="sugg"`, `aria-autocomplete="list"`, `aria-haspopup="listbox"`); suggestions have ids and `aria-activedescendant` follows the arrow keys. This removes the invalid `aria-expanded` on `<input type="search">` (audit F4).
+- Heading order on the map: a hidden `<h2>Places in view</h2>` (class `sr`) above the cards, and the filter sheet's section titles are `h3` instead of `h4` (same CSS rule, `.fbody h3,.fbody h4`). No visual change.
+- `<main>` on the Add hub, the three sign-in gates and every step of the add flow (`addflow.js`, `add*.html`); `.main` class styling unchanged (only `addflow.css` loads on those pages, which has no `main` tag rule).
+- `app.js?v=20261106v`, `styles.css?v=20261106t`. `addflow.js` has no version bump (4-hour cache; the change is invisible).
+- Not done, and why: contrast of the coral "Live" tab on `/contests` and the light-theme "Confirmed" tag (needs a colour change people would see; propose #d93f3f for the owner to approve), skip link on non-map pages, `<header>` landmark on the map, aria-invalid on form errors, tap-target padding on footer links. Not checked with a screen reader or axe after the change (no browser in this session).
+
 ## Batch E 3: per-event pages with share previews (2026-11-06)
 - `GET /e/<event id>` (`functions/e/[id].js`, `/e/*` added to `public/_routes.json`): a plain server page per event with its own title, description, canonical, `og:url`, `og:type`, `twitter:card` and `og:image` (the event's photo, else `share.png`), the facts, "Open on the map" (`/#e-<id>`), and links to the city page, `/in` and Add. It is a new page type: the map and its look are unchanged.
 - schema.org Event data only for confirmed events that have not ended (price offer when free or a `$` price is parsed; cancelled/postponed set from the event notice). Expected and ended events are `noindex,follow` and carry no Event data. Unknown id: 404.

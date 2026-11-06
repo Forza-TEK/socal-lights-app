@@ -107,13 +107,13 @@ export function run(o) {
   const save = () => { if (!o.persist) return; try { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && typeof v !== "function") c[k] = v; localStorage.setItem(o.persist, JSON.stringify({ d: c, i: S.i })); } catch {} };
   const hdr = (done) => `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? "" : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
   function draw(focus) {
-    if (S.done !== null) { root.innerHTML = `${hdr(true)}<div class="main">${S.done}</div>`; window.scrollTo(0, 0); return; }
+    if (S.done !== null) { root.innerHTML = `${hdr(true)}<main class="main">${S.done}</main>`; window.scrollTo(0, 0); return; }
     const st = steps(); S.i = Math.max(0, Math.min(S.i, st.length - 1)); const s = st[S.i];
     if (o.season) document.documentElement.dataset.season = o.season(d);
     const secs = [...new Set(st.map((x) => x.sec))], cur = secs.indexOf(s.sec);
     const segs = secs.map((sc, k) => { const inSec = st.filter((x) => x.sec === sc), idx = inSec.indexOf(s), f = k < cur ? 1 : k > cur ? 0 : (idx + 1) / inSec.length; return `<div class="seg" aria-hidden="true"><i style="width:${f * 100}%"></i></div>`; }).join("");
     const last = !!s.submit;
-    root.innerHTML = `${hdr()}<div class="main"><h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<p class="err" id="err" role="alert" ${S.err ? "" : "hidden"}>${esc(S.err)}</p></div>
+    root.innerHTML = `${hdr()}<main class="main"><h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<p class="err" id="err" role="alert" ${S.err ? "" : "hidden"}>${esc(S.err)}</p></main>
     <div class="bar"><div class="segs" role="progressbar" aria-label="Progress: ${esc(s.sec)}">${segs}</div><div class="nav"><button class="link" type="button" data-a="back">${S.i === 0 ? "Cancel" : "Back"}</button><button class="btn" type="button" data-a="next" id="nextbtn">${esc(T(s.cta) || (last ? "Submit" : "Next"))}</button></div></div>`;
     if (focus) { const f = root.querySelector(".in,[data-tile]"); if (f && f.classList.contains("in")) f.focus({ preventScroll: true }); window.scrollTo(0, 0); }
     if (o.after) o.after(s, d);

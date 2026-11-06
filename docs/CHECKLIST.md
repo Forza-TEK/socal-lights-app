@@ -1,6 +1,6 @@
 # SoCal Lights: project checklist and expert recommendations
 
-_Last updated 2026-11-04 (CEO session). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
+_Last updated 2026-11-06 (Batch E). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
 
 ## 1. Done and verified live
 - [x] Monetization strategy v2 from real data (Stripe, Cloudflare, database): prove first, earn small, build later (`monetization/strategy.md`)
@@ -46,7 +46,7 @@ _Last updated 2026-11-04 (CEO session). `[x]` done and verified, `[ ]` open. Det
 - [ ] Send the three Outlook drafts (Mom's LA, Mission Viejo MVAC, Pasadena Now) and paste Draft A2 into Enjoy Orange County's form
 - [ ] Book the **CPA hour** (brief: `monetization/finance-operations.md`) and the **attorney** review (`monetization/legal-redlines.md`)
 - [ ] Apply to the **Fever** affiliate program (Impact); read Eventbrite's live terms first (`monetization/affiliate-plan.md`)
-- [ ] Search Console: request indexing for the ten top city pages; send fresh Indexing and Performance screenshots in 2 to 3 days
+- [ ] Search Console (after Batch E): Sitemaps, resubmit `https://socallights.app/sitemap.xml` (it now lists `/in`, only city pages with 3+ events or one confirmed, and confirmed event pages `/e/...`); then URL inspection, request indexing for `/in` and the ten top city pages; send fresh Indexing and Performance screenshots in 2 to 3 days
 - [ ] **Fix the Grok outreach email template (found 2026-11-04 in the Sent mail):** the installer emails (11 sent since Oct 30, 1 bounce, 0 replies, 0 homes added) have no postal address and no opt-out line (CAN-SPAM), and link to the home page. Add a footer with the business mailing address and "Don't want these? Reply no thanks and I won't write again"; link to `https://socallights.app/add-house?ref=inst` so landings are counted; keep a do-not-contact list. Rules: `monetization/grok-outreach-guide.md`.
 - [ ] Info mailbox: `info@socallights.app` forwards to `rey@forza-tek.com` (confirmed); DMARC reports will arrive there daily; add a mail rule to file them
 **Before the first Google Play upload**
@@ -61,7 +61,7 @@ _Last updated 2026-11-04 (CEO session). `[x]` done and verified, `[ ]` open. Det
 - [x] **Batch C, payments (PR 318):** 70 automated tests run by a new `Tests` workflow on every pull request; Admin > Orders tab (refund due, disputed, held, unapplied, placement differs); correct refunds on stacked orders; refunds that arrive early; amount check; digest alerts; checkout caps; stricter claim matching; Amazon Shop hidden in the app; Season plan needs 7 days. Not exercised against real Stripe.
 - [ ] **Batch D, operations (in progress):** (4) offline page and saved pages on every page (service worker `scl-4`); (3) `/api/events` drops events ended over 3 days ago (`?ended=1` for all) and has an ETag; (2) alerting: failed emails not marked sent, `ops_log`, digest "Problems" section, GitHub issues from uptime, migrations, digest and backup workflows; (1) nightly backup workflow `backup.yml` + `docs/runbooks/backup-restore.md` (needs the owner to add R2 Edit to the API token, see the runbook Setup);
 - [ ] Batch D original scope: nightly database backup to a private bucket (never a public-repo artifact), restore runbook; error alerting; `/api/events` slimmed (drop ended events, ETag); offline page
-- [ ] **Batch E, SEO and measurement:** richer city pages and internal links, per-event share pages, funnel counters, bot-resistant visitor estimate
+- [x] **Batch E, SEO and measurement (2026-11-06; details in `status.md`):** city pages with nearby links, `/in` hub, hidden crawlable city and event list on the home page, thin pages noindex and out of the sitemap (PR 340); funnel counters `fn:*` with an admin list and digest section, honest "Page views*" label (PR 341); per-event pages `/e/<id>` with share previews, Share button now shares them (PR 342); accessibility quick fixes (PR 343). Still open: colour contrast, county hub pages, house share pages, Cloudflare vs counter comparison after a week of `fn:visit`.
 - [ ] **Phase 3:** Featured homes for podium finishers (winner, 2nd, 3rd of announced contests; podium computed from the frozen results; design in `monetization/feature-account-spec.md`)
 - [ ] Accessibility basics; `/c/<unknown>` 404; Content-Security-Policy (needs a long test)
 - [ ] Backfill the privacy scrub for entrants who deleted accounts before it shipped (none yet)

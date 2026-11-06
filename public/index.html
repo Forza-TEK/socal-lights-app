@@ -29,7 +29,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="/styles.css?v=20261106s">
+<link rel="stylesheet" href="/styles.css?v=20261106t">
 <link rel="stylesheet" href="/routes.css?v=20261105b">
 <script src="/hit.js" defer></script>
 </head>
@@ -44,7 +44,7 @@
     <a class="brand" href="https://socallights.app" aria-label="SoCal Lights, socallights.app"><img class="mark" src="/img/badge-160.webp" width="44" height="44" alt=""><span class="wm">SoCal <b>Lights</b></span></a>
     <div class="search">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="q" type="search" placeholder="Search events or a city" aria-label="Search">
+      <input id="q" type="search" placeholder="Search events or a city" aria-label="Search" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="sugg" aria-expanded="false">
     </div>
     <button class="seasonbtn" id="seasonbtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Season"><span class="sico" id="seasonico" aria-hidden="true">🎃</span><span id="seasonlbl">Halloween</span><svg class="caret" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button>
     <button class="iconbtn" id="themebtn" type="button" aria-label="Switch between day and night" title="Day / night"><svg class="moon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><svg class="sun" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg></button>
@@ -79,7 +79,7 @@
 <div class="modal" id="modal" hidden></div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script type="module" src="/app.js?v=20261106u"></script>
+<script type="module" src="/app.js?v=20261106v"></script>
 <script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script>
 </body>
 </html>

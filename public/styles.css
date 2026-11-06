@@ -386,7 +386,7 @@ button{touch-action:manipulation}
 .fhead h2{margin:0;font-size:20px;font-weight:800;letter-spacing:-.01em}
 .fbody{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:8px 18px 14px;display:grid;gap:18px;align-content:start}
 .fbody section{display:grid;gap:8px}
-.fbody h4{margin:0;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fbody h3,.fbody h4{margin:0;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .fchips{display:flex;flex-wrap:wrap;gap:6px}
 .fchip{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer}
 .fchip.on{background:var(--ink);border-color:var(--ink);color:var(--surface)}
