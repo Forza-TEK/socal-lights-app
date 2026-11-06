@@ -18,17 +18,20 @@ export async function pruneIps(env) { try { await env.DB.batch(ipPruneStatements
 //   declined event submissions       : contact email blanked after 12 months
 //   reports (name, message, contact) : blanked after 12 months
 //   admin_log labels that name a person (Users, Reports areas) : blanked after 12 months
+//   removal_requests (address, email, note) : blanked 6 months after Admin closed the request (done or declined); open ones are kept
 //   contest_changes co-organizer rows (they hold email addresses) : old/new blanked after 12 months
 // Account deletion clears the same fields for that person at once (account.js).
 export const UNCONFIRMED_KEEP = "-30 days";
 export const RECORDS_KEEP = "-12 months";
+export const CLOSED_KEEP = "-6 months";
 export function retentionStatements(env) {
-  const long = `datetime('now','${RECORDS_KEEP}')`;
+  const long = `datetime('now','${RECORDS_KEEP}')`, short = `datetime('now','${CLOSED_KEEP}')`;
   return [
     env.DB.prepare(`DELETE FROM alert_subs WHERE confirmed = 0 AND created_at < datetime('now','${UNCONFIRMED_KEEP}')`),
     env.DB.prepare(`UPDATE event_submissions SET contact_email = '' WHERE status = 'declined' AND contact_email != '' AND created_at < ${long}`),
     env.DB.prepare(`UPDATE reports SET name = '', message = '', contact = '' WHERE (name != '' OR message != '' OR contact != '') AND created_at < ${long}`),
-    env.DB.prepare(`UPDATE admin_log SET label = '' WHERE label != '' AND area IN ('users','normalize','reports') AND at < ${long}`),
+    env.DB.prepare(`UPDATE admin_log SET label = '' WHERE label != '' AND area IN ('users','normalize','reports','removals') AND at < ${long}`),
+    env.DB.prepare(`UPDATE removal_requests SET address = '', email = '', note = '' WHERE status != 'open' AND (address != '' OR email != '' OR note != '') AND COALESCE(handled_at, created_at) < ${short}`),
     env.DB.prepare(`UPDATE contest_changes SET old = '', new = '' WHERE field = 'Co-organizers' AND (old != '' OR new != '') AND at < ${long}`),
   ];
 }

@@ -61,7 +61,7 @@ test("the scheduled purge: unconfirmed signups after 30 days, 12-month limit for
   assert.deepEqual(rows(raw, "SELECT target_id, label FROM admin_log ORDER BY target_id").map((r) => r.label), ["", "new@x.com", "Old title", ""]);
   const c = Object.fromEntries(rows(raw, "SELECT id, old, new FROM contest_changes").map((r) => [r.id, r]));
   assert.deepEqual([c["co-old"].old, c["co-old"].new], ["", ""]); assert.equal(c["co-new"].new, "Added y@x.com"); assert.equal(c["other-old"].old, "x@x.com");
-  assert.equal(retentionStatements({ DB }).length, 5);
+  assert.equal(retentionStatements({ DB }).length, 6);
 });
 
 test("the digest runs the purge (scheduled backstop) and a failing purge never breaks it", async () => {

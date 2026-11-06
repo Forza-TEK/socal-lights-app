@@ -64,6 +64,12 @@ export async function deleteAccount(env, id, email) {
     env.DB.prepare("UPDATE event_submissions SET contact_email = '' WHERE lower(contact_email) = lower(?)").bind(email),
     env.DB.prepare("DELETE FROM contest_staff WHERE contest_id IN (SELECT id FROM contests WHERE owner_id = ?)").bind(id),
     env.DB.prepare("UPDATE contest_changes SET by_email = '', by_name = '' WHERE lower(by_email) = lower(?)").bind(email),
+    // Organizer consent records (PL-01) are evidence that residents agreed to be listed, so the rows stay (contest, count, wording, date) but lose the organizer's account id and email.
+    env.DB.prepare("UPDATE home_consents SET user_id = '', email = '' WHERE user_id = ? OR lower(email) = lower(?)").bind(id, email),
+    // "Remove my home" requests this address sent: closed ones lose the address and note now; an open one keeps them until Admin answers (the retention purge clears it after that).
+    env.DB.prepare("UPDATE removal_requests SET email = '', note = '' WHERE status != 'open' AND lower(email) = lower(?)").bind(email),
+    // Profiles this person created but nobody owns: no link back to the account's email.
+    env.DB.prepare("UPDATE installers SET created_by = '' WHERE lower(created_by) = lower(?)").bind(email),
     // Co-organizer log lines hold email addresses ("Added x@y.com", "x@y.com" / "Removed"): the person's own address goes from every contest, and every co-organizer address
     // goes from the logs of contests they ran (those contests lose their owner and their co-organizer list too).
     env.DB.prepare("UPDATE contest_changes SET old = CASE WHEN instr(lower(old), lower(?1)) > 0 THEN '' ELSE old END, new = CASE WHEN instr(lower(new), lower(?1)) > 0 THEN 'a co-organizer' ELSE new END WHERE field = 'Co-organizers'").bind(email),
