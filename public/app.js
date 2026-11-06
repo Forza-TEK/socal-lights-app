@@ -5,7 +5,8 @@ import { STOCK } from "/stock.js?v=20261107a";
 import { SITE } from "/site-config.js?v=20261107a";
 import "/norm-ui.js?v=20261102b";
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
-import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261105a";
+import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261107b";
+import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261107b";
 import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261107e";
 
 /* ---------- constants & helpers ---------- */
@@ -61,23 +62,13 @@ document.addEventListener("click", (e) => {
 }, true);
 if (IN_APP) document.documentElement.classList.add("in-app");
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-const MAPS = { apple: "Apple Maps", google: "Google Maps" };
-let mapsApp = IS_IOS ? "apple" : "google";
-try { const v = localStorage.getItem("socal-maps"); if (MAPS[v]) mapsApp = v; } catch {}
-function setMapsApp(v) { if (!MAPS[v]) return; mapsApp = v; try { localStorage.setItem("socal-maps", v); } catch {} renderPanel(); }
+let mapsApp = getMaps();
+function setMapsApp(v) { if (!MAPS[v]) return; mapsApp = v; setMaps(v); renderPanel(); }
+document.addEventListener("maps-changed", (e) => { if (e.detail && e.detail !== mapsApp) { mapsApp = e.detail; if (state.detail || state.tab === "plan") renderPanel(); } });
 // stops: destination strings in order (last = final destination); origin: "" means "start from where I am"
-function navUrl(stops, origin) {
-  const dest = stops[stops.length - 1], way = stops.slice(0, -1), e = encodeURIComponent;
-  if (mapsApp === "apple") {
-    // Apple's unified Maps URLs (iOS 18.4+) take repeated waypoint= params for multi-stop routes
-    return "https://maps.apple.com/directions?" + (origin ? "source=" + e(origin) + "&" : "") + "destination=" + e(dest) + way.map((w) => "&waypoint=" + e(w)).join("") + "&mode=driving";
-  }
-  return "https://www.google.com/maps/dir/?api=1" + (origin ? "&origin=" + e(origin) : "") + "&destination=" + e(dest) + (way.length ? "&waypoints=" + e(way.join("|")) : "") + "&travelmode=driving";
-}
+function navUrl(stops, origin) { return routeUrl(mapsApp, stops, origin); }
 function dirUrl(ev) { return navUrl([destOf(ev)], ""); }
-function mapsPicker() {
-  return `<div class="mapspick" role="group" aria-label="Maps app"><span>Open in</span>${Object.entries(MAPS).map(([k, l]) => `<button type="button" data-maps="${k}" aria-pressed="${k === mapsApp}">${l}</button>`).join("")}</div>`;
-}
+function mapsPicker() { return mapsNow(mapsApp); }
 // "Event info" links: add a text fragment (#:~:text=) so Safari/Chrome/Edge scroll to and highlight the event's name
 // on pages that list many events. If the name isn't on the page, the page simply opens at the top.
 function infoUrl(u, name) {
@@ -762,7 +753,7 @@ function openNightRoutes() {
   const og = routeOrigin(), startStop = state.start === "first" && !og && st.length > 1 ? st[0] : null;
   const origin = startStop || state.start === "me" ? "" : og ? og.lat + "," + og.lng : "";
   const stops = st.map(toStop), n = startStop ? stops.length - 1 : stops.length;
-  openRouteSheet({ title: "Your night", key: "map", stops: startStop ? stops.slice(1) : stops, start: startStop ? stops[0] : null, origin, app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); },
+  openRouteSheet({ title: "Your favorites", key: "map", stops: startStop ? stops.slice(1) : stops, start: startStop ? stops[0] : null, origin, app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); },
     intro: `Your maps app takes about 9 stops at a time, so ${n > 9 ? "your favorites are split into routes of 9 or fewer" : "this is one route"}. Each route starts where the last one ended. Tick a stop when you have been there.`,
     note: mapsApp === "apple" ? "Multi-stop routes in Apple Maps need iOS 18.4 or later. Older iPhones open with the first stop." : "" });
 }
@@ -838,7 +829,7 @@ function renderPanel(opts) {
     const nRoutes = routeLegs(startStop ? st.slice(1) : st).length;
     const dur = mins >= 60 ? Math.floor(mins / 60) + " hr" + (mins % 60 ? " " + (mins % 60) + " min" : "") : mins + " min";
     const startSel = `<label class="qsel">Start <select id="startFrom" aria-label="Start from"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
-    const mapsSel = `<label class="qsel">Maps <select id="mapsSel" aria-label="Maps app">${Object.entries(MAPS).map(([k, l]) => `<option value="${k}"${k === mapsApp ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
+    const mapsSel = mapsNow(mapsApp);
     head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How Favorites work" title="How Favorites work">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options"><button type="button" class="qgo" data-nroute title="Open ${nRoutes > 1 ? nRoutes + ' driving routes' : 'the driving route'} in ${MAPS[mapsApp]}">${ROUTE_ICON}<span>Route these${nRoutes > 1 ? " · " + nRoutes + " routes" : ""}</span></button>${startSel}${mapsSel}${state.shared ? "" : `<button type="button" class="qshare" data-nshare>Share</button>`}</div>` : ""}${state.shared ? `<div class="sharedbar"><span>Favorites shared with you</span><button type="button" data-nsave>Add to my favorites</button><button type="button" data-nclose>Close</button></div>` : ""}`;
     const sf = $("#startFrom"); if (sf) sf.onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
     const ms = $("#mapsSel"); if (ms) ms.onchange = (e) => setMapsApp(e.target.value);
@@ -997,7 +988,7 @@ function detailHtml(k) {
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd>${ev.lc ? `<dt>Updated</dt><dd class="meta">${esc(fmt(ev.lc))}</dd>` : ""}</dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
-    ${loading ? `<span id="dcontest"></span>` : contestBtn(ev, url)}${isSweepHome(ev) ? `<a class="claimhome" href="/add-house?claim=${encodeURIComponent(ev.id)}">Is this your home? Claim it &rsaquo;</a>` : ""}${reportLink(ev.n, "e-" + ev.id, ev.city, isSweepHome(ev))}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites" title="${f ? "In my favorites" : "Add to my favorites"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${loading ? `<span class="abtn" id="dslot" aria-hidden="true" style="visibility:hidden"></span>` : infoBtn(ev, url)}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
+    ${loading ? `<span id="dcontest"></span>` : contestBtn(ev, url)}${isSweepHome(ev) ? `<a class="claimhome" href="/add-house?claim=${encodeURIComponent(ev.id)}">Is this your home? Claim it &rsaquo;</a>` : ""}${reportLink(ev.n, "e-" + ev.id, ev.city, isSweepHome(ev))}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites" title="${f ? "In my favorites" : "Add to my favorites"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${loading ? `<span class="abtn" id="dslot" aria-hidden="true" style="visibility:hidden"></span>` : infoBtn(ev, url)}<a class="btn go" href="${esc(dirUrl(ev))}" ${navAttr([destOf(ev)])} target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
   return `<div class="detail">  ${ph.length ? `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="ph-none">No photos yet</div></div>`}
