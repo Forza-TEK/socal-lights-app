@@ -13,6 +13,12 @@ export function planCopy(k, PL, who = "event") {
   return { name: NAME[k], unit: home ? `${p.days || 30} days` : `up to ${cap} days`, sub: k === "season" ? "For events that run 31 days or more" : "", bullets };
 }
 
+// One plain sentence per plan, shown on both /pricing and /feature so the cards read the same.
+export function planBlurb(k, PL, who = "event") {
+  const thing = who === "home" ? "home" : "event", p = PL[k] || {};
+  return { pin: `A gold-ringed pin on the map and a Featured badge on your ${thing}.`, top: `The pin and badge, plus your ${thing} is listed first when people browse your area.`, season: `The same as Top of the list, for events that run 31 days or more, for up to ${p.maxDays || 90} days.` }[k] || "";
+}
+
 export const ptToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
 export const plusDays = (s, n) => { const d = new Date(s + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const nice = (s) => new Date(s + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });

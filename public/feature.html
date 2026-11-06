@@ -10,6 +10,13 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261106zb">
 <link rel="stylesheet" href="/info.css?v=20261106zb">
+<style>
+.plan{background:#fff;gap:8px}:root[data-theme="dark"] .plan{background:var(--tile)}
+.plan .price{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.plan .price small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0}
+.plan p{margin:0;color:var(--muted)}.plan p b{color:var(--ink)}.plan>.btn{margin-top:6px;justify-self:start}
+.plan{border:2px solid var(--line);transition:border-color .15s,background-color .15s}.plan.sel{border-color:var(--season);background:color-mix(in srgb,var(--season) 9%,#fff);box-shadow:none}:root[data-theme="dark"] .plan.sel{background:color-mix(in srgb,var(--season) 16%,var(--tile))}
+.plan .btn.pick:not(.ghost){background:var(--season);border-color:var(--season);color:var(--on-season)}
+</style>
 <script src="/hit.js" defer></script>
 </head>
 <body>
@@ -73,7 +80,7 @@
 </main>
 <script type="module">
 import { SITE } from "/site-config.js";
-import { planCopy, planStatus, PLAN_KEYS } from "/feature-plans.js?v=20261106z";
+import { planCopy, planBlurb, planStatus, PLAN_KEYS } from "/feature-plans.js?v=20261107a";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 let PL = {};
@@ -94,7 +101,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
 } else {
   const renderPlans = (who) => { // every tier lists its contents in full; a home reads "home" and has no Full run
     $("#plans").dataset.who = who;
-    $("#plans").innerHTML = PLAN_KEYS.filter((k) => PL[k] && (who === "event" || k !== "season")).map((k) => { const c = planCopy(k, PL, who); return `<section class="plan${k === "top" ? " pop" : ""}${plan === k ? " sel" : ""}" data-p="${k}"><h3>${c.name}</h3><div class="price">${dollars(PL[k])} <small>/ ${c.unit}</small></div>${c.sub ? `<p class="meta">${c.sub}</p>` : ""}<p class="meta" data-until="${k}"></p><ul>${c.bullets.map((t) => `<li>${esc(t)}</li>`).join("")}</ul><button class="btn${k === "top" ? "" : " ghost"}" type="button" data-pick="${k}">Choose</button></section>`; }).join("");
+    $("#plans").innerHTML = PLAN_KEYS.filter((k) => PL[k] && (who === "event" || k !== "season")).map((k) => { const c = planCopy(k, PL, who); return `<section class="plan${plan === k ? " sel" : ""}" data-p="${k}"><div class="price">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(planBlurb(k, PL, who))}</p><p class="meta" data-until="${k}"></p><button class="btn ghost pick" type="button" data-pick="${k}" aria-pressed="false" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</button></section>`; }).join("");
   };
   const events = (await fetch("/api/events").then((r) => r.json()).catch(() => [])).filter((e) => e.e >= new Date().toISOString().slice(0, 10));
   const { me, signIn } = await import("/auth.js?v=20261106y");
@@ -132,7 +139,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
     }
     if (plan && !document.querySelector(`[data-p="${plan}"]`)) { plan = ""; saveSel(); } // e.g. Full run carried over to a home
     $("#go").disabled = !(ev && plan) || unknown;
-    document.querySelectorAll("[data-p]").forEach((p) => p.classList.toggle("sel", p.dataset.p === plan));
+    document.querySelectorAll("[data-p]").forEach((p) => { const on = p.dataset.p === plan, b = p.querySelector("[data-pick]"); p.classList.toggle("sel", on); if (b) { b.classList.toggle("ghost", !on); b.setAttribute("aria-pressed", String(on)); b.textContent = on ? "\u2713 Chosen" : "Choose"; } });
   };
   function showChosen() {
     const m = owned(ev.id);
