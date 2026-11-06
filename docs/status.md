@@ -4,6 +4,9 @@ _Last updated: 2026-11-05_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Organizers can unpublish their contest (2026-11-06)
+- Controls > Contest page > Unpublish (creator only, two taps) hides the contest and takes it off the map; Publish it again restores it. Migration 0165. See `docs/contests.md`.
+
 ## Batch E 4: accessibility quick fixes (2026-11-06)
 - Search box `#q` is now a proper combobox (`role="combobox"`, `aria-controls="sugg"`, `aria-autocomplete="list"`, `aria-haspopup="listbox"`); suggestions have ids and `aria-activedescendant` follows the arrow keys. This removes the invalid `aria-expanded` on `<input type="search">` (audit F4).
 - Heading order on the map: a hidden `<h2>Places in view</h2>` (class `sr`) above the cards, and the filter sheet's section titles are `h3` instead of `h4` (same CSS rule, `.fbody h3,.fbody h4`). No visual change.

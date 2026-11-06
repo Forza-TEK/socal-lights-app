@@ -6,7 +6,7 @@ import { sendTemplate } from "../../_lib/mailtpl.js";
 import { slug as slugify } from "../../_lib/events.js";
 import { inviteJudges } from "./[slug]/judges.js";
 import { getUser, sameOrigin, okEmail } from "../../_lib/auth.js";
-import { getContest, windows, todayPT, isDate, listOnMap, isStaff, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
+import { getContest, windows, todayPT, isDate, listOnMap, unlistFromMap, isStaff, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { publicEntry } from "../../_lib/archive.js";
 import { judgeProgress } from "../../_lib/judging.js";
 import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
@@ -46,7 +46,7 @@ export async function onRequestGet({ params, request, env }) {
     sponsors: sponsors.map((x) => ({ id: x.id, name: x.name, tier: x.tier, url: x.url, logo: !!x.logo })),
     installer: c.installer_name ? { name: c.installer_name, url: c.installer_url || "", slug: (await env.DB.prepare("SELECT slug FROM installers WHERE lower(name) = lower(?) AND status = 'active'").bind(c.installer_name).first())?.slug || "" } : null,
     ...(isOwner ? { installerEmail: c.installer_email || "" } : {}),
-    contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
+    contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, unpublishedByOwner: c.status === "declined" && c.unpublished_by === "owner",  entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
     entries, winners: frozen ? frozen.winners : c.announced ? live.winners : {}, jwinners: frozen ? frozen.jwinners || {} : c.announced ? live.jwinners : {}, awards, prizes,
     me: { signedIn: !!user, isOwner, isCreator: !!user && !!c.owner_id && c.owner_id === user.id, isJudge: !!jrow, votes: mine },
   }, { headers: { "cache-control": "no-store" } });
@@ -61,6 +61,22 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
   const b = await request.json().catch(() => ({}));
   if (b.action === "edit") return editContest(env, c, b, user, W);
   if (b.action === "clone") return cloneContest(env, c, user);
+  // Take the contest off the map and hide it from the public (the creator only), and put it back. Entries, votes and the dashboard stay as they are.
+  // It uses the same "declined" state Admin's Unpublish uses; unpublished_by = 'owner' marks that the creator did it, so only they can undo it.
+  if (b.action === "unpublish") {
+    if (c.status !== "live") return err(400, "This contest isn't on the map right now.");
+    await env.DB.prepare("UPDATE contests SET status = 'declined', unpublished_by = 'owner', updated_at = datetime('now') WHERE id = ?").bind(c.id).run();
+    await unlistFromMap(env, c);
+    await teamChanged(env, c, user, [{ label: "Contest page", old: "Public, on the map", new: "Unpublished by the creator" }], W);
+    return json({ ok: true });
+  }
+  if (b.action === "publish_again") {
+    if (!(c.status === "declined" && c.unpublished_by === "owner")) return err(400, "Only you can put it back, and only if you were the one who unpublished it. Contact us if it was taken off the map for another reason.");
+    await env.DB.prepare("UPDATE contests SET status = 'live', unpublished_by = '', updated_at = datetime('now') WHERE id = ?").bind(c.id).run();
+    await listOnMap(env, { ...c, status: "live" });
+    await teamChanged(env, c, user, [{ label: "Contest page", old: "Unpublished by the creator", new: "Public, on the map" }], W);
+    return json({ ok: true });
+  }
   if (c.status !== "live") return err(400, "This contest isn't live yet.");
   if (c.announced) return err(400, "The winners are announced and the results are locked.");
   const sets = { close_entries: ["entries_open", 0], open_entries: ["entries_open", 1], pause_voting: ["voting_open", 0], resume_voting: ["voting_open", 1], show_counts: ["show_counts", 1], hide_counts: ["show_counts", 0] }[b.action];
