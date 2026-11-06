@@ -4,9 +4,10 @@
 import { r2Delete, photoKeys } from "./dbchunk.js";
 import { livePaidOrders, markHomeRefundDue } from "./orders.js";
 import { logOp } from "./oplog.js";
+import { ptToday } from "./time.js";
 
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
-const today = () => new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
+const today = () => ptToday();
 
 // Accepts a bare id, "h-<id>", "#h-<id>", or a pasted page address (https://socallights.app/e/<id>, https://socallights.app/#h-<id>). Returns "" when nothing usable is there.
 export function cleanRef(raw) {

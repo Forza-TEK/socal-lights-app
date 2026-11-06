@@ -11,7 +11,7 @@ import { newEnv, addUser, stubFetch, ptToday } from "./_pay.mjs";
 const O = "https://socallights.app";
 const post = (env, cookie, b, headers = {}) => create({ request: new Request(O + "/api/contests", { method: "POST", headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}), ...headers }, body: JSON.stringify(b) }), env });
 const J = async (p) => { const r = await p; return { http: r.status, ...(await r.json().catch(() => ({}))) }; };
-const good = (o = {}) => ({ name: "Maple Street Showdown", org: "Maple Street HOA", city: "Pasadena", descr: "Neighbors decorate, everyone votes for a favorite.", site: "", closes: ptToday(10), vs: ptToday(11), ve: ptToday(25), cats: ["Best Overall", "Most Creative"], ...o });
+const good = (o = {}) => ({ name: "Maple Street Showdown", org: "Maple Street Neighbors", city: "Pasadena", descr: "Neighbors decorate, everyone votes for a favorite.", site: "", closes: ptToday(10), vs: ptToday(11), ve: ptToday(25), cats: ["Best Overall", "Most Creative"], ...o });
 const row = (raw, slug) => raw.prepare("SELECT * FROM contests WHERE slug = ?").get(slug);
 
 test("trustOf: free mail, no site, matching and non-matching sites, shared government suffixes", () => {
@@ -154,4 +154,14 @@ test("announce: voting that has not started asks first; only the creator may ann
   const res = await patch({ params: { slug: "show" }, request: new Request(O + "/api/contests/show", { method: "PATCH", headers: { "content-type": "application/json", cookie: other.cookie }, body: JSON.stringify({ action: "announce", force: true }) }), env: t.env });
   assert.ok([401, 403, 404].includes(res.status), "a stranger got " + res.status);
   assert.equal(t.raw.prepare("SELECT announced FROM contests").get().announced, 0);
+});
+
+test("create: an official-sounding name from an organizer we cannot tie to a website is held (not live, not on the map); a matching email goes live", async () => {
+  const { env, raw } = newEnv();
+  const free = await addUser(raw, "u1", "o@gmail.com"), match = await addUser(raw, "u2", "o@pasadena.gov");
+  const held = await J(post(env, free.cookie, good({ name: "City of Pasadena Holiday Contest", org: "City of Pasadena" })));
+  assert.equal(held.http, 200); assert.equal(held.status, "pending"); assert.equal(held.review, true);
+  assert.equal(row(raw, held.slug).status, "pending"); assert.match(row(raw, held.slug).note, /official-sounding/); assert.ok(!row(raw, held.slug).event_id, "not on the map");
+  const live = await J(post(env, match.cookie, good({ name: "City of Pasadena Lights Contest", org: "City of Pasadena", site: "https://pasadena.gov" })));
+  assert.equal(live.status, "live"); assert.equal(row(raw, live.slug).note, "");
 });

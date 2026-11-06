@@ -9,6 +9,7 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 - [ ] Optional: `THROTTLE_SALT` Pages secret (any random string) to salt the abuse-limit hashes
 
 ## 1. Done and verified live
+- [x] One server Pacific "today" helper (`functions/_lib/time.js`) and tests for sign-in, Admin Access JWT, submit paths, contests, migration validator, smoke import of every function (audit 2026-11-07 items 19 and 20; `docs/testing.md`). Open: tests for `app.js`, the many untested `api/me`, `api/admin` routes, fix the R2 orphan photos bug in `submit.js`
 - [x] Cloudflare free-plan usage panel (Admin > Cloudflare usage), digest section, 30-minute GitHub issue check and runtime `limit` logging (2026-11-06; `runbooks/cloudflare-limits.md`)
 - [x] Monetization strategy v2 from real data (Stripe, Cloudflare, database): prove first, earn small, build later (`monetization/strategy.md`)
 - [x] Event organizer Featured funnel (2026-11-06): one flow Choose -> sign in -> which event -> confirm (dates, total) -> Stripe -> success view + `feature_paid` email; funnel counters `fn:event-feature-*`; audit in `docs/event-funnel-audit.md`

@@ -39,8 +39,8 @@ _CEO summary of seven read-only specialist audits (reports in this folder): secu
 | 16 | Phone performance: Lighthouse mobile 36-38 on `/` (unresized photos, MapLibre from unpkg) | ux, seo H5 |
 | 17 | SEO: event pages are islands (link to `/e/<id>`), homepage title brand-only, no subscribe/share on landing pages, ad/source attribution | seo H1, H2, H6 |
 | 18 | UX: search box has no focus ring; location prompt covers Back; Filters dialog focus; http photo URLs (mixed content); description fill-in not announced | ux |
-| 19 | One Pacific "today" helper (14 copies of UTC-8) | engineering M3 |
-| 20 | Tests for sign-in, Admin Access JWT, submit paths, contest announce, front end; stand-in D1 fidelity | engineering |
+| 19 | One Pacific "today" helper (14 copies of UTC-8) | engineering M3 | **Done 2026-11-07 (time.js, PR 404).**
+| 20 | Tests for sign-in, Admin Access JWT, submit paths, contest announce, front end; stand-in D1 fidelity | engineering | **Mostly done 2026-11-07 (docs/testing.md lists what remains).**
 | 21 | Tutorials out of date: feature (re-record), map/night/pro-filter/app (banner strip, description), all 25 predate the cream restyle | ux |
 
 ## Tier 3: later
