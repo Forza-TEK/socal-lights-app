@@ -154,25 +154,34 @@ const kmBetween = (a, b) => {
 };
 // Looks the address up (US Census first, OpenStreetMap as a fallback) and returns [lat, lng], or null when
 // nothing is found. A match more than maxKm from the chosen city is rejected as a wrong hit.
-export async function geocodeAddress(address, city, cityPoint, maxKm = 30, doFetch = fetch) {
+// `info` (optional) is filled in for callers that explain the result: info.matched (the address the geocoder matched), info.far (a hit was
+// rejected for being too far from the city) and info.down (no geocoder answered at all).
+export async function geocodeAddress(address, city, cityPoint, maxKm = 30, doFetch = fetch, info = {}) {
   const q = `${address}, ${city}, CA`;
   const attempts = [
     async () => {
       const r = await doFetch(`https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=json&address=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(4000) });
-      const c = (await r.json())?.result?.addressMatches?.[0]?.coordinates;
+      const m = (await r.json())?.result?.addressMatches?.[0], c = m?.coordinates;
+      if (c) info.pending = m.matchedAddress || "";
       return c ? [Number(c.y), Number(c.x)] : null;
     },
     async () => {
       const r = await doFetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=us&q=${encodeURIComponent(q)}`, { headers: { "user-agent": "SoCalLights.app (rey@forza-tek.com)" }, signal: AbortSignal.timeout(4000) });
       const h = (await r.json())?.[0];
+      if (h) info.pending = String(h.display_name || "").split(",").slice(0, 4).join(",").trim();
       return h ? [Number(h.lat), Number(h.lon)] : null;
     },
   ];
+  let errors = 0;
   for (const go of attempts) {
     try {
       const pt = await go();
-      if (pt && Number.isFinite(pt[0]) && Number.isFinite(pt[1]) && kmBetween(pt, cityPoint) <= maxKm) return pt;
-    } catch { /* try the next geocoder */ }
+      if (pt && Number.isFinite(pt[0]) && Number.isFinite(pt[1])) {
+        if (kmBetween(pt, cityPoint) <= maxKm) { info.matched = info.pending || ""; return pt; }
+        info.far = true;
+      }
+    } catch { errors++; /* try the next geocoder */ }
   }
+  if (errors === attempts.length) info.down = true;
   return null;
 }

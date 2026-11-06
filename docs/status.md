@@ -1,8 +1,11 @@
 # Status
 
-_Last updated: 2026-11-04_
+_Last updated: 2026-11-05_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
+
+## Organizer-added contest entries (2026-11-05, branch `claude/quirky-goodall-yaumg1`, not merged, awaiting CEO diff review)
+Built for Covina ("Light Up the Town"), whose registration lives elsewhere: the organizer pastes the registered homes' addresses and uses our judging and routes. `POST /api/contests/<slug>/entries` (organizer and staff), "Add homes yourself" card on the dashboard Entries tab, migration `0162` (`posts.added_by`, `entry_add_log`). Entries are approved, photo-less, `user_id=''`, tagged "Added by organizer". Account deletion keeps them. Privacy page sentence added (updated Nov 5). Tests: `tests/organizer-entries.test.mjs`. Details and limits in `docs/contests.md`. Open: Covina is not in `public/cities.js`, so the contest has to use a nearby listed city (a line's own `, Covina` is accepted, within 30 km of that city); the free Pages plan allows about 50 subrequests per call, so the dashboard sends 25 addresses at a time.
 
 ## Audit batch A: six safe fixes (2026-11-04, branch `claude/quirky-goodall-yaumg1`, not merged)
 - **Fake "City of X" contests:** contests still go live at once, but one with a review note (`contests.note`, set for free-mail, no website or mismatch) cannot buy Featured until Admin clicks "Looks fine" (the existing Contests tab action; it clears the note and is logged). `/api/me/featurable` shows it as state `review`. The dashboard and tab counts already include live contests with a note.
