@@ -2,7 +2,7 @@
 
 A thin strip labelled "Sponsor" on the map: company name (links to the website, or to a mailto link if there is no website) | phone (tap to call).
 Desktop: its own line under the logo, search and buttons. Phone: right above the list, so it moves with the list.
-Height 24px (the owner's brief was one third of the search field, about 17px; 24px is the smallest comfortable tap target).
+Height 17px (one third of the 52px search field, as briefed). Note: under the 24px WCAG 2.2 minimum tap-target size.
 
 ## Who shows
 `installers.banner_until` (YYYY-MM-DD). Set in Admin > Installers > Profile > "Map banner". Empty = not on the banner. The profile must be active and have a phone or website.
