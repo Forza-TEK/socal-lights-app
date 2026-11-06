@@ -1,11 +1,11 @@
 // GET /api/events — the events for the public map.
-// By default events that ended more than ENDED_GRACE_DAYS ago are left out (the app never shows them; they were 38% of a 1.4 MB download).
+// By default events that ended more than ENDED_GRACE_DAYS (3) days ago are left out (the app never shows them; they were 38% of a 1.4 MB download).
 // Reachable on request: /api/events?ended=1 (everything, with the same house de-duplication) and /api/events?all=1 (admin editor: everything, nothing hidden).
 // The response carries an ETag, so a returning visitor (or the service worker) revalidates with If-None-Match and gets a body-less 304 when nothing changed.
 import { json, rowToEvent } from "../_lib/util.js";
 import { pairs, approvedPosts } from "../_lib/addrkey.js";
 
-export const ENDED_GRACE_DAYS = 30; // generous: covers a device clock a day off and a share link to an event that just finished
+export const ENDED_GRACE_DAYS = 3; // covers a device clock a day off and a share link to an event that just finished (the app hides ended events anyway)
 const CACHE_CONTROL = "public, max-age=60, s-maxage=120";
 
 async function etagOf(text) {

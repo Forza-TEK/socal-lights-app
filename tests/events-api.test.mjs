@@ -9,7 +9,7 @@ const seed = () => {
   const { env, raw } = newEnv();
   addEvent(raw, "now", { start_date: ptToday(-5), end_date: ptToday(20) });
   addEvent(raw, "future", { start_date: ptToday(10), end_date: ptToday(12) });
-  addEvent(raw, "justended", { start_date: ptToday(-12), end_date: ptToday(-3) });
+  addEvent(raw, "justended", { start_date: ptToday(-12), end_date: ptToday(-1) });
   addEvent(raw, "old", { start_date: ptToday(-200), end_date: ptToday(-100) });
   return env;
 };
@@ -19,7 +19,7 @@ test("default payload drops events that ended long ago, keeps current, upcoming 
   const ids = (await (await get(env)).json()).map((e) => e.id); // the test database also holds the real migration events
   for (const id of ["now", "future", "justended"]) assert.ok(ids.includes(id), id);
   assert.ok(!ids.includes("old"));
-  const cutoff = new Date(Date.now() - 31 * 86400000).toISOString().slice(0, 10);
+  const cutoff = new Date(Date.now() - 4 * 86400000).toISOString().slice(0, 10);
   assert.ok((await (await get(env)).json()).every((e) => e.e >= cutoff), "nothing older than the grace window");
 });
 
