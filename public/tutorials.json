@@ -211,14 +211,14 @@
           "title": "Create a contest with Customize",
           "desc": "Judges, prizes, categories, vote counts and your own rules.",
           "url": "/tutorials/run-custom.mp4",
-          "length": "7:02",
+          "length": "6:47",
           "captions": "/tutorials/run-custom.vtt",
           "poster": "/tutorials/run-custom.jpg",
           "mobile": {
             "url": "/tutorials/run-custom-mobile.mp4",
             "poster": "/tutorials/run-custom-mobile.jpg",
             "captions": "/tutorials/run-custom-mobile.vtt",
-            "length": "7:07"
+            "length": "6:44"
           }
         },
         {
@@ -353,14 +353,14 @@
           "title": "Presenting installer and quote requests",
           "desc": "How the Get a quote button works.",
           "url": "/tutorials/sponsors-installer.mp4",
-          "length": "2:28",
+          "length": "2:12",
           "captions": "/tutorials/sponsors-installer.vtt",
           "poster": "/tutorials/sponsors-installer.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-installer-mobile.mp4",
             "poster": "/tutorials/sponsors-installer-mobile.jpg",
             "captions": "/tutorials/sponsors-installer-mobile.vtt",
-            "length": "2:32"
+            "length": "2:13"
           }
         },
         {
@@ -390,14 +390,14 @@
           "title": "Add an event to the map",
           "desc": "Share a tree lighting, market, parade or haunted house.",
           "url": "/tutorials/post-event.mp4",
-          "length": "2:41",
+          "length": "2:20",
           "captions": "/tutorials/post-event.vtt",
           "poster": "/tutorials/post-event.jpg",
           "mobile": {
             "url": "/tutorials/post-event-mobile.mp4",
             "poster": "/tutorials/post-event-mobile.jpg",
             "captions": "/tutorials/post-event-mobile.vtt",
-            "length": "2:38"
+            "length": "2:18"
           }
         },
         {
