@@ -12,12 +12,17 @@ body.prof .sh-content,body.prof .sh-content.main{max-width:1120px;margin:0 auto;
 .prof #pp{display:grid;gap:16px;align-content:start}
 .prof .sechead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border:0;padding:0;margin:0}
 .prof .sechead h2{margin:0;font-size:clamp(20px,2.4vw,24px)}
-.prof .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:14px}
-.prof .list>*{padding:18px;border:1px solid var(--line)!important;border-radius:14px;align-content:start}
-.prof .list .rowi{display:grid;gap:12px}.prof .list .acts{display:flex;flex-wrap:wrap;gap:8px}
+.prof .list{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.prof .list>*{padding:18px 22px;border:1px solid var(--line)!important;border-radius:14px;align-content:start}
+/* A row: what it is on the left, its buttons on the right; an opened edit form takes the full width below */
+.prof .list .rowi{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px 28px;padding:18px 22px}
+.prof .list .rowi>*:nth-child(n+3){grid-column:1/-1;max-width:none}
+.prof .list .rowi>div:first-child b{font-weight:600;font-size:17px;line-height:1.3}
+.prof .list .rowi>div:first-child .small{display:inline-block;margin-top:4px;font-size:14px}
+.prof .list .acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
 .prof #pp>.card,.prof #pform,.prof #pp>section{max-width:760px}
 .prof #pp>.card{padding:22px;border:1px solid var(--line);border-radius:14px}
-@media (max-width:699px){.prof .sh-content .who{grid-template-columns:auto minmax(0,1fr);gap:16px;padding:16px}.prof .sh-content .who .avatar{width:64px;height:64px;font-size:26px}.prof .sh-content .who h1{font-size:24px;overflow-wrap:anywhere}.prof .sh-content .who .muted{display:block;overflow-wrap:anywhere;font-size:14px}.prof .sh-content .who>div>div{margin-top:12px!important}.prof .list{grid-template-columns:1fr}.prof .list .acts .btn{flex:1 1 auto}}
+@media (max-width:699px){.prof .sh-content .who{grid-template-columns:auto minmax(0,1fr);gap:16px;padding:16px}.prof .sh-content .who .avatar{width:64px;height:64px;font-size:26px}.prof .sh-content .who h1{font-size:24px;overflow-wrap:anywhere}.prof .sh-content .who .muted{display:block;overflow-wrap:anywhere;font-size:14px}.prof .sh-content .who>div>div{margin-top:12px!important}.prof .list .rowi{grid-template-columns:minmax(0,1fr);padding:16px}.prof .list .acts{justify-content:flex-start}.prof .list .acts .btn{flex:1 1 auto}}
 body.prof .sh-content,body.prof .sh-content.main{display:block}
 .prof #app{width:100%}
 .prof #pp>p.pempty{margin:0;padding:32px 20px;border:1px dashed var(--line2);border-radius:14px;text-align:center}
@@ -32,3 +37,4 @@ body.prof .sh-content,body.prof .sh-content.main{display:block}
 
 .prof .sh-content .who>div>div>*{flex:0 0 auto;margin:0!important;position:static}
 .prof .sh-content .who>div>div{row-gap:8px!important}
+.prof .list .dot{margin-left:5px}
