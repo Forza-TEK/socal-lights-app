@@ -11,7 +11,7 @@ Pages I read this session (curl, 2026-11-04) are listed in "Sources". Anything I
 **Business.** SoCalLights.app is a free map of Southern California holiday lights and events (2,013 events, 266 city pages, 6 showcased homes, 1 installer, 1 contest). The site is operated by Forza-TEK (per `terms.html` and `privacy.html`). Entity type, state of formation and who owns it: **unknown to me, please advise.** Revenue to date: **$0** (Stripe live account: 0 paid charges, 0 refunds, 0 disputes; 1 checkout started, expired unpaid). Fixed costs: about $0 (Cloudflare free tier, Resend free tier; domain is the only known cost).
 
 **Planned revenue lines** (all digital, no goods shipped):
-1. Featured event listings, sold on the website through Stripe Checkout: $10 Featured pin (30 days), $15 Top of the list (30 days), $20 Whole season (until the event ends). The single source of truth is `PLANS` in `functions/_lib/featured.js` (prices in cents); the web pages read it from `/api/config`.
+1. Featured event listings, sold on the website through Stripe Checkout: $10 Featured pin and $15 Top of the list (each from payment to the event's last day, up to 30 days), $25 Full run (events of 31+ days, to the last day, up to 90 days; replaced the $20 Whole season on 2026-11-06; featuring opens 30 days before the event). The single source of truth is `PLANS` in `functions/_lib/featured.js` (prices in cents); the web pages read it from `/api/config`.
 2. Affiliate commissions: Amazon Associates (status unknown) and ticket affiliates on 84 events (Eventbrite, Ticketmaster, Fever; none registered yet).
 3. Later, hand-sold: installer subscriptions per season (about $299), contest organizer fees (about $99), sponsor placements ($150-$500, unpriced), possibly invoiced to cities and chambers.
 
@@ -47,7 +47,7 @@ Pages I read this session (curl, 2026-11-04) are listed in "Sources". Anything I
 
 **Monthly Stripe export (do on the 1st-3rd, for the prior month).** Dashboard: Reports, then Balance, download "Balance change from activity" (itemized: one row per balance transaction with gross, fee, net, type) and the Payouts reconciliation report (payouts matched to transactions). Also export Payments (all) with metadata (event_id, plan). Save the CSVs as `YYYY-MM_stripe_balance.csv`, `_payouts.csv`, `_payments.csv`. If the Reports menu differs, the Balance transactions list can be exported by date range.
 
-**Fee tracking.** Fee on each charge is 2.9% x amount + $0.30 (so $10 nets $9.41; $15 nets $14.27; $20 nets $19.12). Use the `fee` column from the balance export as the source of truth, never the formula. Dispute fees appear as separate rows of type "dispute fee" or "adjustment".
+**Fee tracking.** Fee on each charge is 2.9% x amount + $0.30 (so $10 nets $9.41; $15 nets $14.27; $25 nets about $23.97; the retired $20 plan netted $19.12). Use the `fee` column from the balance export as the source of truth, never the formula. Dispute fees appear as separate rows of type "dispute fee" or "adjustment".
 
 **Monthly spreadsheet layout (one tab per month, plus a Summary tab).**
 Columns: A Date; B Stripe ID (charge/refund/dispute/payout); C Type (charge, refund, dispute, dispute_fee, payout, other); D Customer or event; E Gross; F Stripe fee; G Net (=E-F, check against Stripe); H Category; I Order row in D1 (`feature_orders.session_id`); J Notes (comp, test, refund reason).
