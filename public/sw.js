@@ -14,7 +14,6 @@ const OFFLINE = "/offline";
 const SHELL = [OFFLINE, "/img/icon-192.png"];                                  // must be cached for the worker to install
 const LIBS = ["/vendor/maplibre-gl-4.7.1.js", "/vendor/maplibre-gl-4.7.1.css"];                // our own copy of the map library: the file name carries the version, so it is answered from the cache first and saved when the worker installs
 const WARM = ["/", "/contests", "/pricing", "/privacy", "/terms", "/tutorials", ...DATA, ...LIBS]; // saved on install when they answer; a failure here never blocks the install
-const LIB = /^https:\/\/unpkg\.com\/maplibre-gl@[\d.]+\/dist\/maplibre-gl\.(js|css)$/;   // the map library (cross-origin): cache first, it never changes for a version
 const KEEP = 80;                                                                         // most saved pages; the oldest beyond this are dropped
 const SLOW_MS = 6000;
 
@@ -36,10 +35,7 @@ const saved = (r) => caches.match(r).then((m) => m || (r.mode === "navigate" ? c
 self.addEventListener("fetch", (e) => {
   const r = e.request, u = new URL(r.url);
   if (r.method !== "GET") return;
-  if (u.origin !== location.origin) { // only the map library from unpkg
-    if (LIB.test(r.url)) e.respondWith(caches.match(r).then((m) => m || fetch(r).then((res) => { if (res && (res.ok || res.type === "opaque")) { const copy = res.clone(); caches.open(V).then((c) => c.put(r, copy)); } return res; })));
-    return;
-  }
+  if (u.origin !== location.origin) return; // everything else is cross-origin and goes straight to the network
   if (LIBS.includes(u.pathname)) { e.respondWith(caches.match(r).then((m) => m || fetch(r).then((res) => { if (res && res.ok) { const copy = res.clone(); e.waitUntil(caches.open(V).then((c) => c.put(r, copy))); } return res; }))); return; }
   if ((u.pathname.startsWith("/api/") && !DATA.includes(u.pathname) && !isDetail(u)) || u.pathname.startsWith("/admin")) return;
   // a query string on the events list (?all=1, ?ended=1) is another request; only the plain one is kept
