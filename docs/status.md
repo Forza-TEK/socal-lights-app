@@ -1,8 +1,16 @@
 # Status
 
-_Last updated: 2026-11-06 (lighter event list)_
+_Last updated: 2026-11-06 (event organizer funnel)_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
+
+## Event organizer Featured funnel (2026-11-06)
+One funnel for event organizers: Choose (Pricing) -> sign in -> Which event? -> Confirm and pay (full bullets, exact dates, total) -> Stripe -> success view and confirmation email. Audit with evidence and click counts: `docs/event-funnel-audit.md`.
+- **Page.** `public/feature.html` rebuilt (plan and event kept in the URL and session storage; one eligible event is preselected; ineligible events say why and the date featuring opens; Add a new event / Claim an existing listing; the plan that does not fit is swapped with a sentence). Homes (podium finishers) use the same page. `feature-plans.js?v=20261107b` (`planWindow`, `eventEligibility`), `/add-event?plan=` preselects and shows dates and total, `admin.js?v=20261107b`.
+- **Server.** `/api/me/featurable` adds `opens` and contest `start`; checkout success/cancel URLs carry plan and event (or `sub=`); the webhook sends the new `feature_paid` template (live, or "held until we approve") and Admin approval sends it again when the placement switches on. Admin > Orders shows plan name and event dates.
+- **Counters.** `fn:event-feature-choose`, `-pick` (browser), `-checkout`, `-paid` (server) in `functions/_lib/funnel.js`, shown in the dashboard list.
+- **Tests.** `tests/event-funnel.test.mjs`. Browser walk with Stripe stubbed (no Stripe call): 390 and 1280 px, light and dark.
+- **Risk.** Not tested with a real payment or real email. Claim approvals still send no email.
 
 ## Lighter event list: blurb and link load on open (2026-11-06)
 Owner-approved. `GET /api/events` no longer sends each event's blurb (`b`) and link (`u`); the map loads them from the new `GET /api/events/<id>` when an event's details open.

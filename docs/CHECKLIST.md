@@ -4,6 +4,7 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 
 ## 1. Done and verified live
 - [x] Monetization strategy v2 from real data (Stripe, Cloudflare, database): prove first, earn small, build later (`monetization/strategy.md`)
+- [x] Event organizer Featured funnel (2026-11-06): one flow Choose -> sign in -> which event -> confirm (dates, total) -> Stripe -> success view + `feature_paid` email; funnel counters `fn:event-feature-*`; audit in `docs/event-funnel-audit.md`
 - [x] Featured payments hardened: retry-safe webhook, refunds and disputes, one price source, receipts, native-app guard (PR 291)
 - [x] Prices $10 pin / $15 top of the list / $25 Full run (was $20 whole season until 2026-11-06; see "Featured event pricing" below); public Pricing page linked from the Add hub, footers and the Featured page (PR 303)
 - [x] Featured expiry uses the Pacific date: a 30-day placement lasts 30 days (PR 304)
@@ -28,6 +29,7 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 - [ ] Send the attorney `docs/monetization/legal-redlines.md` (new section "Featured pricing wording changed 2026-11-06"): the Pricing, Feature and add-event plan text changed; Terms still say nothing about paid placements.
 - [ ] Decide whether to keep selling Full run at $25. Fees: $25 nets about $23.97 after Stripe (2.9% + 30 cents).
 - [ ] Old $20 "Whole season" orders already paid keep running to the event's last day (grandfathered); nothing to do for them. If a buyer opened the old $20 checkout page before the deploy and pays after it, the order is still honored the same way.
+- [ ] **Prove the new event funnel with the $10 test** (steps in the PR description): Pricing > Choose on the $10 Featured pin > sign in > pick an event that starts within 30 days > Pay $10 on Stripe > check the success view, the SoCal Lights email, the gold pin, Admin > Orders and the "How people use the site" counters, then refund it in Stripe.
 - [ ] No real payment was made in testing. When you next do a live $10 test, pick an event that starts within 30 days (earlier ones are refused by design).
 
 ## 2. Needs you (owner)

@@ -1,4 +1,5 @@
 // POST /api/admin/submissions/:id  { action: "approve" | "decline" | "unpublish" | "edit", status?: "confirmed" | "expected", ...fields for edit }
+import { sendFeaturePaidEmail } from "../../../_lib/featuremail.js";
 import { json, err } from "../../../_lib/util.js";
 import { upsertEvent, slug } from "../../../_lib/events.js";
 import { applyOrder, restorePlacement, ptToday } from "../../../_lib/featured.js";
@@ -58,9 +59,12 @@ export async function onRequestPost({ request, env, params, waitUntil }) {
   await env.DB.prepare("UPDATE event_submissions SET status='published', event_id=? WHERE id = ?").bind(eventId, s.id).run();
   // Same event id as before an unpublish: put back what its paid orders still owe, then apply plans paid for while it waited for review.
   const restored = s.event_id ? await restorePlacement(env.DB, eventId) : null;
-  const { results: orders } = await env.DB.prepare("SELECT session_id, plan FROM feature_orders WHERE event_id = ? AND status = 'paid' AND applied = 0 ORDER BY created_at").bind("sub:" + s.id).all();
+  const { results: orders } = await env.DB.prepare("SELECT session_id, plan, amount, email FROM feature_orders WHERE event_id = ? AND status = 'paid' AND applied = 0 ORDER BY created_at").bind("sub:" + s.id).all();
   const today = ptToday();
-  for (const o of orders) await applyOrder(env.DB, o, eventId, today); // one at a time, so each order records what it added
+  for (const o of orders) { // one at a time, so each order records what it added
+    const nf = await applyOrder(env.DB, o, eventId, today);
+    if (nf) await sendFeaturePaidEmail(env, { order: o, name: s.name, until: nf.featured_until, eventId, fallbackEmail: s.contact_email }); // "your placement is on now"
+  }
   if (b.notify !== false) { tell(env, waitUntil, s.contact_email, "event_approved", { name: s.name }); }
   return json({ ok: true, id: eventId, featured: orders.length, restored: !!restored });
 }

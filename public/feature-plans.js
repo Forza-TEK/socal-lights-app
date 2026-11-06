@@ -38,3 +38,21 @@ export function planStatus(k, x, PL, open = 30, today = ptToday()) {
   const lim = plusDays(today, cap), until = x.end < lim ? x.end : lim;
   return { ok: true, note: `Runs until ${nice(until)}${until === x.end ? ", your event's last day" : `, ${cap} days from today`}` };
 }
+
+export const niceDate = nice;
+// The exact dates a plan gives an event bought today: starts today, ends on the event's last day or the plan's cap, whichever comes first.
+export function planWindow(k, x, PL, today = ptToday()) {
+  const p = PL[k] || {}, cap = p.maxDays || p.days || 30, lim = plusDays(today, cap), until = x.end && x.end < lim ? x.end : lim;
+  const capped = until !== x.end;
+  return { from: today, until, days: capped ? cap : span(today, until), capped };
+}
+// Can this event be featured at all today? x: { state, start, end }. Returns { ok, plans: [keys it can buy], reason }: the reason is plain words
+// (for an event that starts too far ahead it names the date featuring opens).
+const WHY = { ended: "This event has ended.", declined: "We could not list this event, so it cannot be featured.", cancelled: "This event is cancelled.", postponed: "This event is postponed. Come back when it has new dates.", "claim-pending": "Your claim is waiting for approval. Once it is approved you can feature it.", review: "Waiting for a quick check before it can be featured." };
+export function eventEligibility(x, PL, open = 30, today = ptToday()) {
+  if (WHY[x.state]) return { ok: false, plans: [], reason: WHY[x.state] };
+  const sts = PLAN_KEYS.filter((k) => PL[k]).map((k) => [k, planStatus(k, { start: x.start, end: x.end }, PL, open, today)]);
+  const plans = sts.filter(([, s]) => s.ok).map(([k]) => k);
+  if (plans.length) return { ok: true, plans, reason: "" };
+  return { ok: false, plans: [], reason: (sts[0] && sts[0][1].note) || "This event cannot be featured right now." };
+}
