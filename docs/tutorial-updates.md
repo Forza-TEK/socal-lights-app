@@ -89,7 +89,7 @@ Order and ids follow `public/tutorials.json`. "Step" is the caption on screen.
 
 ## Pages that mirror the videos
 - **/tutorials page** (`public/tutorials.html`, `tutorials.json`): no change needed; video titles and groups still match. If you add the new videos, add them to `tutorials.json` (see `docs/tutorials.md`).
-- **Help Center articles** (rows in the `help_articles` table; edit in Admin > Help Center, never by migration, or edits made there are overwritten). Written steps that need a sentence added: `approve-and-decline-entries` (C1, C2), `run-voting` (C3), `show-off-your-house` (C4), `your-profile` (C9), `is-it-free` (C5, C6: Featured is the only paid option, homes qualify only after a contest), `install-the-app` (C10). New "answer" articles would help: "Can I add homes for my city?", "Is this my home? How do I claim it?", "How do I unpublish a contest?". The seed text is in `scripts/help/articles.mjs`.
+- **Help Center articles** (rows in the `help_articles` table; edit in Admin > Help Center; a migration may change only rows still `updated_by = 'seed'`, see `docs/help-updates.md`). Written steps that need a sentence added: `approve-and-decline-entries` (C1, C2), `run-voting` (C3), `show-off-your-house` (C4), `your-profile` (C9), `is-it-free` (C5, C6: Featured is the only paid option, homes qualify only after a contest), `install-the-app` (C10). New "answer" articles would help: "Can I add homes for my city?", "Is this my home? How do I claim it?", "How do I unpublish a contest?". Done 2026-11-06: text in `scripts/help/updates.mjs`, migration 0167. Video links are still to add once the new videos exist.
 - **Pricing and Featured pages** (`/pricing`, `/feature`): already current.
 
 ## If you re-record

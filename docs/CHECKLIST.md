@@ -1,6 +1,6 @@
 # SoCal Lights: project checklist and expert recommendations
 
-_Last updated 2026-11-06 (design pass). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
+_Last updated 2026-11-06 (Help Center refresh). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
 
 ## 1. Done and verified live
 - [x] Monetization strategy v2 from real data (Stripe, Cloudflare, database): prove first, earn small, build later (`monetization/strategy.md`)
@@ -21,7 +21,10 @@ _Last updated 2026-11-06 (design pass). `[x]` done and verified, `[ ]` open. Det
 - [x] Android key workflow deleted (it published the key in a public repo); safe signing steps in `docs/android-signing.md`
 - [x] Free uptime check on GitHub (every 15 minutes, emails on failure; tests the app through pages.dev because the zone answers cloud addresses with 403)
 
+- [x] Help Center refresh: six articles updated, four added, "home" wording; applied by migration 0167 to articles not edited in Admin (`docs/help-updates.md` has paste text for any you edited)
+
 ## 2. Needs you (owner)
+- [ ] Help Center: open Admin > Help Center after the deploy. If any of the ten articles in `docs/help-updates.md` still show old text, you had edited it in Admin: paste the text from that page. When the new videos are recorded and in `tutorials.json`, set each article's Video field in Admin.
 **Urgent: outreach and your mailbox (`monetization/email-outreach-analysis.md`)**
 - [ ] **Slow the Grok sending now.** Microsoft warned the mailbox on Oct 31 ("Suspicious email sending patterns detected ... will be restricted if this activity continues") about 45 minutes after a burst of 42 emails in about 160 seconds. A restriction would also stop your real business mail from forza-tek.com. Until a separate sending domain exists: at most 15 a day, one every 2 to 6 minutes, never in bursts.
 - [ ] **Do not let the agents send until the postal address is filled in.** 121 earlier first-touch emails had no address and no opt-out; only the 5 sent on Nov 4 have an opt-out line. Give the agents `monetization/grok-email-playbook.md`.
