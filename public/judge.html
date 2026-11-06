@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261106s">
+<link rel="stylesheet" href="/addflow.css?v=20261106y">
 <link rel="stylesheet" href="/contest.css?v=20261105b">
 <link rel="stylesheet" href="/routes.css?v=20261105b">
 <script src="/hit.js" defer></script>
@@ -16,8 +16,8 @@
 <body class="sh-page">
 <main class="cmain" id="content"><div id="app"><p class="loading">Loading the ballot…</p></div></main>
 <script type="module">
-import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261101a";
-import { refreshAcct } from "/addflow.js?v=20261103a";
+import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261106y";
+import { refreshAcct } from "/addflow.js?v=20261106y";
 import { mountShell } from "/appshell.js?v=20261104a";
 import { tourHtml, wireTour } from "/tour.js?v=20261105a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
@@ -63,6 +63,6 @@ function render() {
 }
 noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261106a" defer></script>
+<script src="/footer.js?v=20261106y" defer></script>
 </body>
 </html>

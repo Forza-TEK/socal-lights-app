@@ -8,16 +8,16 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261106s">
+<link rel="stylesheet" href="/addflow.css?v=20261106y">
 <script src="/hit.js" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, OPT, today } from "/addflow.js?v=20261103a";
+import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, OPT, today } from "/addflow.js?v=20261106y";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
 import { normPhone, PHONE_HELP } from "/norm.js?v=20261102b";
-import { me, signIn } from "/auth.js?v=20261101a";
+import { me, signIn } from "/auth.js?v=20261106y";
 import { CITY } from "/cities.js";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
 const d = { kind: "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", lightsOn: "", visit: "", parking: "", accessible: false, radio: "", hadPro: "no", instName: "", instWeb: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
@@ -28,7 +28,7 @@ const acct = (await me()).user; if (acct) { try { const ov = await (await fetch(
 
 // your display belongs to the account that adds it, so sign in before anything else
 if (!acct) {
-  document.getElementById("app").innerHTML = `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+  document.getElementById("app").innerHTML = `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
     <main class="main"><h1>Sign in to add your lights display</h1><p class="help">Your display is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></main>`;
   await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add your lights display", next: location.pathname })) go(); }; });
@@ -98,6 +98,6 @@ const steps = [
 ];
 run({ steps, data: d, persist: "scl-house-draft", account: { kind: "house", title: (x) => x.title || x.biz }, noPersist: ["photos", "email"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
 </script>
-<script src="/footer.js?v=20261106a" defer></script>
+<script src="/footer.js?v=20261106y" defer></script>
 </body>
 </html>
