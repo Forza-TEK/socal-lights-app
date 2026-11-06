@@ -637,3 +637,6 @@ Re-recorded `approve` (Add homes yourself, Added by organizer, Remove), `profile
 - Phones: the first Directions / Route tap asks which maps app (our own pop-up, "Always use this one" ticked) and remembers it; "Opens in … Change" changes it. Notes in docs/maps-choice.md.
 - "Send to car" on each stop (phone share sheet; the Tesla app takes a shared place).
 - Tesla account option explored: docs/tesla-integration.md (not built).
+
+## 2026-11-06 — Tutorials after the pricing change
+Re-recorded `feature` (four event plans, dates and total, stops before Stripe), recorded the new `sponsor` video (Sponsor your installer company) and re-recorded `installer-profile` (new map strip, end card). Computer and phone, Kokoro voice, day mode. Migration 0185 links `sponsors-sponsor` to the Help article `sponsor-your-installer-company`. Other videos left as they are (see `docs/tutorial-updates.md`, Done).
