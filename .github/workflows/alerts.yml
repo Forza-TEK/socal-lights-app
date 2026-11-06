@@ -20,6 +20,7 @@ jobs:
           for i in $(seq 1 30); do
             out=$(curl -sS -X POST https://socal-lights.pages.dev/api/alerts/send -H "x-alert-key: $ALERT_CRON_KEY")
             echo "batch $i: $(echo "$out" | head -c 300)"
+            if echo "$out" | grep -q '"sent":0' && echo "$out" | grep -qE '"failed":[1-9]'; then echo "::error::Every email in this batch failed to send (mail service problem). Nothing was marked as sent; the next run retries."; exit 1; fi
             echo "$out" | grep -q '"remaining":0' && exit 0
             echo "$out" | grep -q '"remaining"' || exit 1
             sleep 2

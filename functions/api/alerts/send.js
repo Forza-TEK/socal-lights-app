@@ -16,15 +16,14 @@ export async function onRequestPost({ request, env }) {
   const subs = (await env.DB.prepare("SELECT * FROM alert_subs WHERE confirmed = 1 AND (last_sent IS NULL OR last_sent < date('now','-6 days')) ORDER BY created_at LIMIT ?").bind(BATCH).all()).results;
   if (!subs.length) return json({ sent: 0, skipped: 0, remaining: 0 });
   const evs = (await env.DB.prepare("SELECT * FROM events WHERE end_date >= ? AND start_date <= ? ORDER BY start_date, name").bind(today, until).all()).results.map(rowToEvent).filter((e) => e.nt !== "cancelled");
-  let sent = 0, skipped = 0; const done = [];
+  let sent = 0, skipped = 0, failed = 0; const done = [];
   for (const s of subs) {
     const near = evs.filter((e) => miles(s.lat, s.lng, e.lat, e.lng) <= s.radius).sort((a, b) => a.s.localeCompare(b.s));
-    done.push(s.id);
-    if (!near.length) { skipped++; continue; }
+    if (!near.length) { done.push(s.id); skipped++; continue; }
     const list = near.slice(0, MAX_ITEMS).map((e) => `- ${e.n}: ${e.s === e.e ? fmt(e.s) : fmt(e.s) + " to " + fmt(e.e)}${e.h ? ", " + e.h : ""} · ${e.v || e.city} ([details](${origin}/#e-${e.id}))`).join("\n");
-    if (await sendTemplate(env, "alerts_weekly", s.email, { radius: s.radius, city: s.city, days: DAYS, list, more: near.length > MAX_ITEMS ? near.length - MAX_ITEMS : "", see_url: `${origin}/in/${slugOf(s.city)}`, unsub_url: `${origin}/api/alerts/unsubscribe?t=${s.token}`, footer: env.ALERT_FOOTER || "" })) sent++; else skipped++;
+    if (await sendTemplate(env, "alerts_weekly", s.email, { radius: s.radius, city: s.city, days: DAYS, list, more: near.length > MAX_ITEMS ? near.length - MAX_ITEMS : "", see_url: `${origin}/in/${slugOf(s.city)}`, unsub_url: `${origin}/api/alerts/unsubscribe?t=${s.token}`, footer: env.ALERT_FOOTER || "" })) { sent++; done.push(s.id); } else failed++; // a failed send is NOT marked as sent: the next run tries again
   }
-  await env.DB.batch(done.map((id) => env.DB.prepare("UPDATE alert_subs SET last_sent = date('now') WHERE id = ?").bind(id)));
+  if (done.length) await env.DB.batch(done.map((id) => env.DB.prepare("UPDATE alert_subs SET last_sent = date('now') WHERE id = ?").bind(id)));
   const rest = await env.DB.prepare("SELECT COUNT(*) AS n FROM alert_subs WHERE confirmed = 1 AND (last_sent IS NULL OR last_sent < date('now','-6 days'))").first();
-  return json({ sent, skipped, remaining: rest.n });
+  return json({ sent, skipped, failed, remaining: rest.n });
 }

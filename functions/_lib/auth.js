@@ -1,6 +1,7 @@
 // Accounts: one account per verified email. People sign in with Google or an emailed one-time code; both prove
 // the same email, so both land on the same account. Sessions are a random cookie token (only its hash is stored).
 import { json, err, newId } from "./util.js";
+import { logOp } from "./oplog.js";
 
 export const COOKIE = "scl_session";
 const SESSION_DAYS = 30;
@@ -80,14 +81,17 @@ export async function isSuspended(env, email) {
 }
 
 // Sends one email through Resend. Without RESEND_API_KEY it fails, unless local dev mode (DEV_AUTH=1) is on.
-export async function sendMail(env, { to, subject, text, html, headers }) {
-  if (!env.RESEND_API_KEY) { if (env.DEV_AUTH === "1") console.log("[dev mail] to=" + to + " subject=" + subject); return false; } // local testing only: say what would have been sent
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({ from: env.MAIL_FROM || "SoCal Lights <login@socallights.app>", to: [to], subject, text, ...(html ? { html } : {}), ...(headers ? { headers } : {}) }),
-  });
-  return r.ok;
+export async function sendMail(env, { to, subject, text, html, headers, tag }) {
+  if (!env.RESEND_API_KEY) { if (env.DEV_AUTH === "1") console.log("[dev mail] to=" + to + " subject=" + subject); else await logOp(env, "email", `${tag || "mail"}: RESEND_API_KEY is not set`); return false; } // local testing only: say what would have been sent
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({ from: env.MAIL_FROM || "SoCal Lights <login@socallights.app>", to: [to], subject, text, ...(html ? { html } : {}), ...(headers ? { headers } : {}) }),
+    });
+    if (!r.ok) await logOp(env, "email", `${tag || "mail"}: mail service answered ${r.status} ${(await r.text().catch(() => "")).slice(0, 120)}`);
+    return r.ok;
+  } catch (e) { await logOp(env, "email", `${tag || "mail"}: could not reach the mail service (${e && e.message})`); return false; }
 }
 
 // A same-site path only. Control characters and whitespace (a tab makes "/<TAB>/evil.example" resolve to "//evil.example"), "//" and backslashes are refused.
