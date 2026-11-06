@@ -6,7 +6,7 @@ import { SITE } from "/site-config.js?v=20261031j";
 import "/norm-ui.js?v=20261102b";
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261105a";
-import { initBanner, updateBanner, regionKey, bannerHeight } from "/banner.js?v=20261107d";
+import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261107e";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -526,7 +526,7 @@ function viewRegions() {
 const bannerTick = () => updateBanner(viewRegions());
 function placeBanner(el) { const g = $("#grab"); if (el.previousElementSibling !== g) g.after(el); } // always at the top of the list panel, on phones, tablets and desktop alike
 let bannerOn = false;
-async function startBanner() { bannerOn = await initBanner({ place: (el) => { placeBanner(el); }, onChange: () => { if (isPhone()) setSheet(sheetState); } }); if (bannerOn) bannerTick(); }
+async function startBanner() { bannerOn = await initBanner({ place: (el) => { placeBanner(el); }, onChange: () => { if (isPhone()) setSheet(sheetState); } }); if (bannerOn) { bannerTick(); if (!state.detail) renderPanel({ quiet: true }); } }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
 let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (bannerOn) bannerTick(); if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel({ quiet: true }); }, 80); }
 function counts() { $("#n-events").textContent = E.filter(evMatch).length + SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; }
@@ -658,6 +658,12 @@ function quickPicks() {
   return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${f === "weekend" ? state.weekend : state[f] === v}">${l}</button>`).join("")}<button type="button" class="qf${fOpen ? " open" : ""}" data-openfilters aria-haspopup="dialog" aria-expanded="${fOpen}">Filters${nf ? ` <span class="fn">${nf}</span>` : ""}</button>${isPhone() ? "" : sortHtml()}</div>`;
 }
 const LIST_PAGE = 60; let listVis = [], listShown = 0, listSig = "", listIO = null;
+// Paid installer cards go at the top of the list, right behind the Featured places (which sort first).
+function listWithSponsors(items, tops) {
+  const cards = items.map((it, i) => listCard(it, i)); if (!tops.length) return cards.join("");
+  let at = 0; while (at < items.length && items[at].f) at++;
+  cards.splice(at, 0, ...tops.map(sponsorCard)); return cards.join("");
+}
 function listCard(it, i) { return it.t === "e" ? evItem(it.o, i) : instItem(it.o); }
 // the next page of cards is added when the end of the list scrolls into view
 function moreCards(upTo) {
@@ -738,13 +744,15 @@ function renderPanel(opts) {
     const liveEl = $("#live"); if (liveEl) { const msg = vis.length + (vis.length === 1 ? " place" : " places") + " in view"; if (liveEl.textContent !== msg) liveEl.textContent = msg; }
     const act = activeFilters();
     head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span>${routeLink(vis)}${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
-    const sig = vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
+    const tops = bannerOn && !state.detail && state.tab !== "plan" ? topSponsors(viewRegions()) : [], topSig = tops.map((t) => t.id).join(",");
+    const sig = topSig + "@" + vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
     if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
     listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE);
-    body.innerHTML = vis.length ? `<h2 class="sr">Places in view</h2><div class="list">${vis.slice(0, listShown).map((it, i) => listCard(it, i)).join("")}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
+    body.innerHTML = vis.length ? `<h2 class="sr">Places in view</h2><div class="list">${listWithSponsors(vis.slice(0, listShown), tops)}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
       : !state.all && !state.city && !E.some((e) => (e.sn || "christmas") === state.season) ? `<div class="empty">No ${esc((SEASONS[state.season] || {}).short || "seasonal")} events are listed yet. We start adding them about six weeks ahead, so check back soon. Know of one? <a href="/add-event">Add an event</a>.</div>`
       : state.q ? `<div class="empty">No places match \u201c${esc(state.q)}\u201d.<button class="linkbtn" type="button" id="clearq">Clear search</button></div>`
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
+    watchTopCards(body);
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
     head.innerHTML = `<div class="hrow"><button class="chip" type="button" data-pop="shopseason" aria-haspopup="true" aria-label="Choose a season to shop for"><span class="sico" aria-hidden="true">${phaseFor(shopSeason(), TODAY).icon}</span><span>Shop for ${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</span><svg class="caret" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;

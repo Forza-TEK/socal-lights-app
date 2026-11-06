@@ -882,3 +882,19 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .sponsor a:focus-visible,.sp-pause:focus-visible{outline:2px solid var(--season);outline-offset:1px;border-radius:999px}
 /* Phones turned sideways and small tablets: the search row has a second row (season, day/night), so the zoom buttons start below it instead of under the day/night button */
 @media (min-width:701px) and (max-width:1099px){.maplibregl-ctrl-top-right{top:132px}}
+
+/* Installer "top of the list" card (banner.js sponsorCard): a labelled company card behind the Featured places */
+.sponsorcard{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border-radius:18px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink)}
+.sc-logo{width:72px;height:72px;border-radius:14px;overflow:hidden;background:var(--surface-2);display:grid;place-items:center}
+.sc-logo img{width:100%;height:100%;object-fit:contain;padding:6px;box-sizing:border-box}
+.sc-init{font-size:30px;font-weight:800;color:var(--season)}
+.sc-body{min-width:0;display:grid;gap:3px}
+.sc-tag{justify-self:start;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--ink);color:var(--surface)}
+.sponsorcard h3{margin:3px 0 0;font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1.25}
+.sponsorcard p{margin:0;font-size:13px;color:var(--muted);line-height:1.4}
+.sc-area,.sc-blurb{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sc-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}
+.sc-btn{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:999px;background:var(--ink);color:var(--surface);font-size:13px;font-weight:700;text-decoration:none}
+.sc-link{display:inline-flex;align-items:center;min-height:36px;padding:0 6px;font-size:13px;font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.sponsorcard a:focus-visible{outline:2px solid var(--season);outline-offset:2px}
+.panel .list .sponsorcard{grid-column:1/-1}
