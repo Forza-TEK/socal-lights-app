@@ -34,3 +34,15 @@ test("sitemap lists confirmed upcoming events only", async () => {
   const xml = await (await sitemap({ request: new Request("https://x.test/sitemap.xml"), env: seed() })).text();
   assert.match(xml, /\/e\/conf</); assert.doesNotMatch(xml, /\/e\/exp</); assert.doesNotMatch(xml, /\/e\/old</);
 });
+
+test("breadcrumbs: visible trail and BreadcrumbList on event pages, ended events included", async () => {
+  for (const id of ["conf", "exp", "old"]) {
+    const h = await (await get(seed(), id)).text();
+    assert.match(h, /<nav class="crumbs" aria-label="Breadcrumb">/);
+    const ld = [...h.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap((m) => [].concat(JSON.parse(m[1])));
+    const bc = ld.find((x) => x["@type"] === "BreadcrumbList");
+    assert.deepEqual(bc.itemListElement.map((x) => x.position), [1, 2, 3, 4]);
+    assert.equal(bc.itemListElement[0].item, "https://x.test/"); assert.match(bc.itemListElement[2].item, id === "conf" ? /^https:\/\/x\.test\/in\/altadena$/ : /^https:\/\/x\.test\/in\/[a-z-]+$/);
+    assert.equal(bc.itemListElement[3].item, undefined);
+  }
+});
