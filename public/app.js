@@ -6,7 +6,7 @@ import { SITE } from "/site-config.js?v=20261031j";
 import "/norm-ui.js?v=20261102b";
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261105a";
-import { initBanner, updateBanner, regionKey, bannerHeight } from "/banner.js?v=20261107c";
+import { initBanner, updateBanner, regionKey, bannerHeight } from "/banner.js?v=20261107d";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -524,7 +524,7 @@ function viewRegions() {
   return regionKey(names);
 }
 const bannerTick = () => updateBanner(viewRegions());
-function placeBanner(el) { if (isPhone()) { const g = $("#grab"); if (el.previousElementSibling !== g) g.after(el); } else { const t = document.querySelector(".topbar"); if (el.parentNode !== t) t.appendChild(el); } }
+function placeBanner(el) { const g = $("#grab"); if (el.previousElementSibling !== g) g.after(el); } // always at the top of the list panel, on phones, tablets and desktop alike
 let bannerOn = false;
 async function startBanner() { bannerOn = await initBanner({ place: (el) => { placeBanner(el); }, onChange: () => { if (isPhone()) setSheet(sheetState); } }); if (bannerOn) bannerTick(); }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
@@ -1425,6 +1425,6 @@ async function refreshData() {
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - loadedAt > 5 * 60000) refreshData(); });
 setInterval(() => { if (document.visibilityState === "visible") refreshData(); }, 15 * 60000);
 setSheet("peek");
-let wasPhone = isPhone(); matchMedia("(max-width:700px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); const sp = document.getElementById("sponsor"); if (sp) { placeBanner(sp); if (isPhone()) setSheet(sheetState); } renderPanel(); } });
+let wasPhone = isPhone(); matchMedia("(max-width:700px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); const sp = document.getElementById("sponsor"); if (sp && isPhone()) setSheet(sheetState); renderPanel(); } });
 let rT; addEventListener("resize", () => { pinBox = null; clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); renderPanel(); }, 120); });
 load();

@@ -1,7 +1,7 @@
 # Installer banner
 
 A thin strip labelled "Sponsor" on the map: company name (links to the website, or to a mailto link if there is no website) | phone (tap to call).
-Desktop: its own line under the logo, search and buttons. Phone: right above the list, so it moves with the list.
+Always at the top of the list panel (phone portrait, landscape, tablet and desktop), above the Places tabs. It is hidden when the list is minimized.
 Height 24px (the smallest comfortable tap target; WCAG 2.2 minimum). The first brief was one third of the search field (17px); the owner chose 24px.
 
 ## Who shows
@@ -12,7 +12,7 @@ Sold, not a free pilot (the owner drives visitors with Facebook and Instagram ad
 `/api/banner` returns every installer on the banner (same for everyone, cached). `public/banner.js` picks the ones to show:
 - The map view's cities (by centre) and counties (from the places in view, plus the nearest city to the centre) are matched to the installer's "Areas served" list ("Orange County, Irvine").
 - An installer with no areas listed, or "Southern California"/"All", shows everywhere.
-- It is a scrolling marquee: each matching installer is its own pill, followed by one dashed "Installers: advertise here" pill (links to /pricing#banner), which is also all that shows when nobody matches. On desktop the strip runs from the logo to the list panel (the full width when the list is minimized), with the pause button next to the Sponsor label.
+- It is a scrolling marquee: each matching installer is its own pill, followed by one dashed "Installers: advertise here" pill (links to /pricing#banner), which is also all that shows when nobody matches. The pause button sits next to the Sponsor label (right end on a portrait phone).
 - It pauses on hover and focus and has a pause button. With reduced motion on, it starts paused and the play button starts it.
 - The starting installer changes each visit so nobody is always first. A "shown" is counted when the pill is actually on screen.
 
