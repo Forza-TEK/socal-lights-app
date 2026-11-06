@@ -7,6 +7,12 @@ _Last updated: 2026-11-05_
 ## Batch D 1: nightly backup (2026-11-06)
 `.github/workflows/backup.yml` exports the live D1 every night, checks it, uploads it to a PRIVATE R2 bucket `socal-lights-backups` (daily kept 35 days, monthly 400, `latest.sql.gz`), reads it back, and copies photos on Sundays (`scripts/backup-photos.mjs`). A failure opens a GitHub issue. Never an artifact (public repo). Restore steps: `docs/runbooks/backup-restore.md`. Owner must give the API token R2 Edit permission first.
 
+## Batch D 4: offline beyond the map (2026-11-06)
+- The service worker (`public/sw.js`, cache `scl-3`) is now registered from every page: `public/footer.js` (all pages but the map, which registers it in `index.html`; `footer.js?v=` bumped to `20261106a` in 19 places). On install it saves, when reachable, `/`, `/contests`, `/pricing`, `/privacy`, `/terms`, `/tutorials` and the two event/house lists; any page visited later is saved too (newest 80 kept; redirects and errors never saved).
+- Offline, a saved page opens; an unsaved one shows `public/offline.html`, which now lists the pages still available on the device, says when the event list was saved, retries by itself when the connection returns, and has "Try again". If a saved copy exists and the network has not answered in 6 seconds (weak signal), the saved copy is used. The map library from unpkg is cached so the map page does not break without it (map tiles still need a connection).
+- Checked in headless Chrome with the server stopped: saved pages open, unsaved ones show the offline page with the links. Not checked on a real phone or iOS.
+- Not done: the "You are offline, showing the list from..." banner inside the map (app.js), self-hosting MapLibre, offline tiles.
+
 ## Batch D 3: slimmer /api/events (2026-11-06)
 `/api/events` now leaves out events that ended more than 30 days ago (`ENDED_GRACE_DAYS` in `functions/api/events.js`) and filters in SQL, so it reads fewer rows. `?ended=1` returns everything (same house de-duplication), `?all=1` stays the admin's full list. Every response has a weak `ETag`; a matching `If-None-Match` gets an empty 304 (also from the edge cache). Event objects are unchanged, and `public/app.js` and `styles.css` were not touched (no `?v=` bump). The app already hid ended events (`ev.e < TODAY`), so the visible result is identical; only the download shrinks. Tests: `tests/events-api.test.mjs`. Not done: a Cache Rule so hits skip the Function (needs the dashboard and a test), a precomputed snapshot, fewer fields.
 
