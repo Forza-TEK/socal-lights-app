@@ -1,5 +1,5 @@
 // Installer Sponsor placements end to end on the in-memory D1: eligibility, checkout, webhook apply / replay / refund / dispute, extension, upgrade,
-// the prorated amount check, Admin > Orders, hand-set dates, funnel counters. fetch is stubbed: nothing reaches Stripe.
+// the amount check, Admin > Orders, hand-set dates, funnel counters. fetch is stubbed: nothing reaches Stripe.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -60,7 +60,7 @@ test("profile list: only the signed-in owner's profiles, with what is missing an
   assert.equal(r.status, 200); assert.deepEqual(r.body.installers.map((i) => i.slug), ["bare", "bright-nights"]);
   const bare = r.body.installers[0], good = r.body.installers[1];
   assert.equal(bare.blocking[0].key, "contact"); assert.equal(bare.advice[0].key, "area"); assert.match(bare.quotes.banner.problem, /phone number or a website/);
-  assert.deepEqual([good.quotes.banner.cents, good.quotes.banner.from, good.quotes.banner.to, good.quotes.banner_top.cents, good.quotes.banner.prorated], [5000, "2026-11-06", "2026-12-26", 7500, false]);
+  assert.deepEqual([good.quotes.banner.cents, good.quotes.banner.from, good.quotes.banner.to, good.quotes.banner_top.cents, good.quotes.banner.days], [5000, "2026-11-06", "2026-12-26", 7500, 51]);
   assert.equal(good.quotes.banner.problem, "");
 }));
 
@@ -81,19 +81,21 @@ test("checkout: the price and dates come from the server; metadata, idempotency,
   } finally { f.restore(); }
 }));
 
-test("checkout late in the season charges the prorated price, and the webhook checks the amount against the same calculation", () => withNow(async () => {
+test("checkout on the last days of a season charges the full price; the webhook flags an amount that differs from the same calculation", () => withNow(async () => {
   const { env, raw, me } = await setup(); const f = stubFetch();
   try {
     const r = await buy(env, { installer: "bright-nights", plan: "banner" }, { cookie: me.cookie });
     assert.equal(r.status, 200);
-    assert.equal(new URLSearchParams(String(f.calls[0].init.body)).get("line_items[0][price_data][unit_amount]"), "1600", "day 42 of 54, 13 days left: 50 x 13/41 = 15.9 -> $16");
-    assert.match(new URLSearchParams(String(f.calls[0].init.body)).get("line_items[0][price_data][product_data][description]"), /prorated/);
-    await pay(env, 1, "banner", 1600);
-    assert.equal(getOrder(raw, "cs_1").note, null, "the prorated amount is what the server expects");
-    assert.equal(getOrder(raw, "cs_1").amount, 1600, "the amount actually charged is stored"); assert.equal(getInst(raw).banner_until, "2026-12-26");
+    const sent = new URLSearchParams(String(f.calls[0].init.body));
+    assert.equal(sent.get("line_items[0][price_data][unit_amount]"), "5000", "no proration, even on Dec 14");
+    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /2026-12-14 to 2026-12-26/); assert.ok(!/prorated/.test(sent.get("line_items[0][price_data][product_data][description]")));
+    await pay(env, 1, "banner", 5000);
+    assert.equal(getOrder(raw, "cs_1").note, null); assert.equal(getOrder(raw, "cs_1").amount, 5000, "the amount charged is stored"); assert.equal(getInst(raw).banner_until, "2026-12-26");
     await pay(env, 2, "banner_top", 7500);
-    assert.match(getOrder(raw, "cs_2").note, /amount mismatch: paid 75.00 USD, the banner_top plan is 15.00 USD/, "the full price paid when the upgrade difference ($25 - $16 = $9, raised to the $15 upgrade minimum) was due is flagged");
+    assert.match(getOrder(raw, "cs_2").note, /amount mismatch: paid 75.00 USD, the banner_top plan is 25.00 USD/, "the full price paid when only the upgrade difference ($25) was due is flagged");
     assert.equal(getOrder(raw, "cs_2").applied, 1, "still applied: the buyer paid what we asked");
+    await pay(env, 3, "banner", 4000);
+    assert.match(getOrder(raw, "cs_3").note, /amount mismatch: paid 40.00 USD, the banner plan is 50.00 USD/);
   } finally { f.restore(); }
 }, "2026-12-14T20:00:00Z"));
 

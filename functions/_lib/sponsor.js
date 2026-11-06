@@ -4,17 +4,16 @@
 // THE SEASON RULE ("per season")
 //   A placement runs from the day it starts to the last day of the season on the map that day falls in (the windows in public/seasons.js: for example
 //   Thanksgiving & Christmas Lights is Nov 3 to Dec 26).
-// PRICE (owner decision, option C): installerPrice() in featured.js, beside the plan prices. Full price for days 1 to 14 of the season, then falling day by day with the days
-//   remaining, floor per plan ($10 Banner, $25 Banner and top). Example (Christmas, 54 days): Nov 3 to Nov 16 $50, Nov 17 $49, ... Dec 26 $10.
+// PRICE (owner decision): no proration. The plan's price (INSTALLER_PLANS in featured.js) whenever it is bought, and the placement runs until the season's last day.
 // STACKING
 //   Buying again while the same placement is running starts the day after it ends (the first day of the next season, so full price), never earlier: time is only added.
 //   At most one season ahead can be booked: the horizon is the end of the season after the one a purchase made today would reach.
 // UPGRADE
-//   Banner -> banner + top, when the banner already runs to the end of the season the top card would reach, costs the difference between the two plans' prices today (never below the
-//   gap between the two floors, $15, and never above the full difference, $25). The top card starts today and runs to the end of the season; the banner stays as it is. If the banner would end sooner, it is the full price of the new plan for the days left.
+//   Banner -> banner + top, when the banner already runs to the end of the season the top card would reach, costs the difference between the two plans' prices (from INSTALLER_PLANS).
+//   The top card starts today and runs to the end of the season; the banner stays as it is. If the banner would end sooner, it is the full price of the new plan.
 // A refund or lost dispute switches the placement off again (revokeInstaller), putting back what an admin had set by hand and keeping time other paid orders still cover.
 import { SEASONS, defaultSeason } from "../../public/seasons.js";
-import { INSTALLER_PLANS, installerUpgradeMin, installerPrice, addDays } from "./featured.js";
+import { INSTALLER_PLANS, addDays } from "./featured.js";
 
 const daysBetween = (a, b) => Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86400_000);
 const maxStr = (list) => list.reduce((m, v) => (v && v > m ? v : m), "");
@@ -27,20 +26,14 @@ export function seasonOf(ymd) {
 }
 
 // When a placement of this plan would run if bought today, and what it costs. inst: { banner_until, top_until } (empty string = none).
-// Returns { from, to, season, cents, full_cents, prorated, label, days_left, day_of_season, season_days, percent_over, upgrade, running (renewal), booked_to, full (already booked as far as it can be), horizon }.
+// Returns { from, to, season, cents, days (days included, start day counted), upgrade, running (renewal), booked_to, full (already booked as far as it can be), horizon }.
 export function sponsorWindow(plan, inst, today) {
   const p = INSTALLER_PLANS[plan], cur = (p.top ? inst.top_until : inst.banner_until) || "", running = !!cur && cur >= today;
   const from = running ? addDays(cur, 1) : today, s = seasonOf(from);
   const horizon = seasonOf(addDays(seasonOf(today).end, 1)).end; // one season beyond what a purchase today reaches
-  const own = installerPrice(plan, s, from);
   const upgrade = p.top && !running && !!inst.banner_until && inst.banner_until >= s.end; // the banner already covers this whole period: only the top card is new
-  let cents = own.amount_cents, full_cents = own.full_cents, label = own.label;
-  if (upgrade) {
-    const b = installerPrice("banner", s, from), money = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : c / 100);
-    full_cents = INSTALLER_PLANS.banner_top.cents - INSTALLER_PLANS.banner.cents; cents = Math.min(full_cents, Math.max(installerUpgradeMin(), own.amount_cents - b.amount_cents));
-    label = `Upgrade: you already have the Banner to the end of the season, so you pay the difference between the two plans' prices today (${money(own.amount_cents)} for Banner and top of the list minus ${money(b.amount_cents)} for the Banner), at least ${money(installerUpgradeMin())}.`;
-  }
-  return { from, to: s.end, season: s.label, cents, full_cents, prorated: cents < full_cents, label, days_left: own.daysLeft, day_of_season: own.dayOfSeason, season_days: own.seasonDays, percent_over: own.percentOver, upgrade, running, booked_to: running ? cur : "", full: running && cur >= horizon, horizon };
+  const cents = upgrade ? INSTALLER_PLANS.banner_top.cents - INSTALLER_PLANS.banner.cents : p.cents;
+  return { from, to: s.end, season: s.label, cents, days: daysBetween(from, s.end) + 1, upgrade, running, booked_to: running ? cur : "", full: running && cur >= horizon, horizon };
 }
 
 // What the banner and the top card read after buying: never shorter than before.

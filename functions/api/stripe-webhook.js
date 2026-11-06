@@ -92,7 +92,7 @@ async function paid(s, env) {
   // One order per Checkout session. The row existing is NOT proof the placement was applied; `applied` is.
   const pi = (typeof s.payment_intent === "string" && s.payment_intent) || null;
   let status = "paid"; const notes = [];
-  let expected = price.cents; // an installer's price is prorated by the days left in the season: the same server calculation the checkout used
+  let expected = price.cents; // an installer's price is the plan's price, or the difference for an upgrade: the same server calculation the checkout used
   if (target === "installer") { const inst = await env.DB.prepare("SELECT banner_until, top_until FROM installers WHERE id = ?").bind(eventId).first(); if (inst) expected = sponsorWindow(plan, inst, ptToday()).cents; }
   const exists = await env.DB.prepare("SELECT 1 FROM feature_orders WHERE session_id = ?").bind(s.id).first();
   if (!exists && pi) { // did a refund or dispute for this payment already arrive?

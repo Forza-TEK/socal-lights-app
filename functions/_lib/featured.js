@@ -15,30 +15,12 @@ export const PLANS = {
 // Installer placements (Sponsor banner, and banner + top of the list card). Prices in cents; they exist only here (/api/config serves them).
 // Rules (season length, stacking, renewal, upgrade) are in sponsor.js. The stored plan keys are "banner" and "banner_top", on feature_orders rows with target = 'installer'.
 export const INSTALLER_PLANS = {
-  banner: { label: "Banner", cents: 5000, min_cents: 1000, top: false },
-  banner_top: { label: "Banner and top of the list", cents: 7500, min_cents: 2500, top: true },
+  banner: { label: "Banner", cents: 5000, top: false },
+  banner_top: { label: "Banner and top of the list", cents: 7500, top: true },
 };
-// SEASON PRICE (owner decision, option C). Day 1 is the first day of the season (Pacific date). Days 1 to FULL_PRICE_DAYS (14) cost the full price. After day 14 the price falls
-// day by day with the days remaining (the start day counts): price = full x daysLeft / daysLeftOnDay14, where daysLeftOnDay14 = season days - 13, so day 14 is exactly full and day 15
-// is just below it (no cliff). Rounded to a whole dollar, never below the plan's own floor (min_cents in INSTALLER_PLANS: $10 for the Banner, $25 for Banner and top of the list, so Stripe's ~2.9% + 30c never eats it), and never at the full
-// price after day 14. A season shorter than 14 days is prorated over the whole season (full x daysLeft / season days). Without a known season start the full price applies.
-// Returns { amount_cents, starts, ends, daysLeft, dayOfSeason, seasonDays, percentOver, full_cents, prorated, label }. Used by the quote, the checkout and the webhook amount check.
-export const FULL_PRICE_DAYS = 14;
-export const installerUpgradeMin = () => INSTALLER_PLANS.banner_top.min_cents - INSTALLER_PLANS.banner.min_cents; // an upgrade never costs less than the gap between the two floors ($15)
-const usd = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : c / 100);
-export function installerPrice(plan, season, from) {
-  const full = INSTALLER_PLANS[plan].cents, floor = INSTALLER_PLANS[plan].min_cents, start = season && season.start, end = season && season.end;
-  const total = start ? daysBetween(start, end) + 1 : 0, day = start ? daysBetween(start, from) + 1 : 0, left = daysBetween(from, end) + 1;
-  let cents = full;
-  if (start && total >= FULL_PRICE_DAYS && day > FULL_PRICE_DAYS) {
-    cents = Math.min(full, Math.max(floor, Math.round((full / 100) * left / (total - FULL_PRICE_DAYS + 1)) * 100));
-    if (cents >= full) cents = Math.max(floor, full - 100); // after day 14 it is always a little below the full price
-  } else if (start && total < FULL_PRICE_DAYS) cents = Math.min(full, Math.max(floor, Math.round((full / 100) * left / total) * 100));
-  const pct = total ? Math.min(100, Math.round(((day - 1) / total) * 100)) : 0, prorated = cents < full;
-  const label = prorated ? `Day ${day} of ${total}: the season is ${pct}% over, so this season costs ${usd(cents)} instead of ${usd(full)}.` : `Full price: the first ${FULL_PRICE_DAYS} days of a season cost ${usd(full)}.`;
-  return { amount_cents: cents, starts: from, ends: end, daysLeft: left, dayOfSeason: day, seasonDays: total, percentOver: pct, full_cents: full, prorated, label };
-}
-export const PUBLIC_INSTALLER_PLANS = Object.fromEntries(Object.entries(INSTALLER_PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, min_cents: p.min_cents, top: p.top }]));
+// PRICE (owner decision): no proration. A plan costs its price above whenever it is bought during a season, and the placement runs until the season's last day.
+// An upgrade (Banner -> Banner and top while the banner already runs to the season end) costs the difference between the two plans' prices; see sponsor.js.
+export const PUBLIC_INSTALLER_PLANS = Object.fromEntries(Object.entries(INSTALLER_PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, top: p.top }]));
 
 // What the browser may know about plans (served by /api/config). Prices exist only in PLANS above.
 export const PUBLIC_PLANS = Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, days: p.days, level: p.level, minDays: p.minDays || 0, minLength: p.minLength || 0, maxDays: p.maxDays || p.days }]));

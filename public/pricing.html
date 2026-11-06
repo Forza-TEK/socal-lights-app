@@ -67,7 +67,7 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const dollars = (p) => "$" + (p.cents / 100);
 // one number (no person) when Choose is tapped, to see how many reach the next step
 $("#plans").addEventListener("click", (e) => { if (e.target.closest("a.btn")) try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k: "fn:event-feature-choose" })], { type: "application/json" })); } catch {} });
-import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261107b";
+import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261107d";
 const PAID = (on) => { document.querySelectorAll(".paid,#featnote,#plans").forEach((e) => (e.hidden = !on)); };
 const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
 if (/SoCalLightsApp/.test(navigator.userAgent)) {

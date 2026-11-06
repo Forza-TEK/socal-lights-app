@@ -93,10 +93,10 @@ Summary formulas: Gross revenue =SUMIFS(E,C,"charge"); Refunds =SUMIFS(E,C,"refu
 ---
 
 ### 3b. Installer Sponsor placements (new product, 2026-11-06)
-- Same machinery as Featured: Stripe Checkout (card), one payment per season, no subscription. Fees: Stripe about 2.9% + 30c (net of $50: about $48.25; $75: about $72.52; $10 Banner floor: about $9.41; $25 Banner and top floor: about $23.97). A refund does not return Stripe's fee unless Stripe's current policy says otherwise (check the dashboard).
+- Same machinery as Featured: Stripe Checkout (card), one payment per season, no subscription. Fees: Stripe about 2.9% + 30c (net of $50: about $48.25; $75: about $72.52; the $25 upgrade: about $23.97). A refund does not return Stripe's fee unless Stripe's current policy says otherwise (check the dashboard).
 - **Refund:** full refund before or after the placement is on: refund in the Stripe Dashboard; the webhook switches the placement off (restoring any date an admin had set by hand) and Admin > Orders shows it. Then mark it refunded under Orders if the webhook has not. A partial refund leaves the placement on and marks the order held for you to decide. A dispute switches it off at once.
 - **Bookkeeping:** revenue is "Sponsor placement" (separate from Featured events). Orders list the installer's name; the buyer's receipt email is Stripe's plus our service email. A one-time test purchase and refund is the way to prove the path (see the checklist).
-- **Late-season sales:** after day 14 of a season the price falls day by day (minimum $10 for the Banner and $25 for Banner and top of the list, option C in `docs/installer-banner.md`); the amount charged is on the order and is what a refund returns. An upgrade is charged only the difference between the two plans' prices (at least $15). No refund or credit for a late upgrade (owner decision).
+- **Late-season sales:** no proration; the price is the plan's price on any day of the season and the placement ends on the season's last day (see `docs/installer-banner.md`). The amount charged is on the order and is what a refund returns. An upgrade is charged only the difference between the two plans' prices. No refund or credit for timing (owner decision).
 
 ## 4. First-30-days cash view
 
