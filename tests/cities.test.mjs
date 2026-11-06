@@ -55,3 +55,14 @@ test("hub lists every city; home page gets a hidden city list and stays otherwis
   assert.match(page, /<h1>map<\/h1>/); assert.match(page, /<nav class="sr" aria-label="Browse by city">/);
   assert.match(page, /href="\/in\/bigtown"/); assert.doesNotMatch(page, /tiny-expected/);
 });
+
+test("city page and hub carry a BreadcrumbList that matches the visible trail", async () => {
+  const env = seed();
+  const ldOf = (h) => [...h.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap((m) => [].concat(JSON.parse(m[1])));
+  const c = await (await get(cityPage, env, "/in/bigtown", { city: "bigtown" })).text();
+  const bc = ldOf(c).find((x) => x["@type"] === "BreadcrumbList");
+  assert.deepEqual(bc.itemListElement.map((x) => x.name), ["SoCal Lights", "Cities", "Bigtown"]);
+  assert.match(c, /<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="\/">SoCal Lights<\/a><\/li><li><a href="\/in">Cities<\/a><\/li><li><span aria-current="page">Bigtown<\/span><\/li><\/ol><\/nav>/);
+  const h = await (await get(hub, env, "/in")).text();
+  assert.deepEqual(ldOf(h).find((x) => x["@type"] === "BreadcrumbList").itemListElement.map((x) => x.name), ["SoCal Lights", "Cities"]);
+});
