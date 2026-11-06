@@ -28,8 +28,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "emails", "help"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", emails: "Email templates", help: "Help Center" };
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "emails", "help"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", emails: "Email templates", help: "Help Center" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
@@ -70,6 +70,7 @@ async function render() {
     if (tab === "data") return renderData();
     if (tab === "users") return renderUsers();
     if (tab === "log") return renderLog();
+    if (tab === "usage") return renderUsage();
     if (tab === "emails") return renderEmails(main);
     if (tab === "help") return renderHelp(main);
     const waiting = await api("/api/admin/posts?status=" + tab), declined = tab === "pending" ? await api("/api/admin/posts?status=declined") : [];
@@ -695,6 +696,7 @@ async function renderDashboard() {
   const kindTab = { home: "pending", event: "subs" };
   main.innerHTML = `
     <p class="hello">${hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}. ${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p>
+    ${d.limits && d.limits.length ? `<button type="button" class="limitbanner" data-tab="usage"><b>A Cloudflare free-plan limit was hit at ${esc(String(d.limits[0].at).slice(0, 16))} UTC.</b><span>${esc(String(d.limits[0].detail).slice(0, 140))} Open Cloudflare usage to see which one and what to do.</span></button>` : ""}
     <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l]) => `<button type="button" class="tcard" data-tab="${k}"><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>` : `<div class="calm">${dico("check", "okic")}<div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests or reports are waiting.</p></div></div>`}</section>
     <h2 class="dh">Today</h2>
     <div class="stats">${tile("h", d.today.homes, "new houses")}${tile("e", d.today.events, "events submitted")}${tile("c", d.today.entries, "contest entries")}${tile("l", d.people.litToday, "lights switched on")}</div>
@@ -713,6 +715,51 @@ async function renderDashboard() {
       <section class="dbox"><h2 class="dh">Contests running</h2>${d.contests.length ? `<ul class="dl">${d.contests.map((c) => `<li><a class="dli" href="/c/${esc(c.slug)}" target="_blank" rel="noopener">${dico("trophy")}<span class="dt"><b>${esc(c.name)}</b><small>${esc(c.city)} · ${fmt(c.entries)} ${c.entries === 1 ? "entry" : "entries"} · ${fmt(c.votes)} ${c.votes === 1 ? "vote" : "votes"} · voting ends ${shortDate(c.vote_end)}</small></span></a></li>`).join("")}</ul>` : `<div class="empty">No contest is running right now.</div>`}
       <h2 class="dh">Your recent activity</h2>${d.activity.length ? `<ul class="dl">${collapse(d.activity).map((e) => `<li><button type="button" class="dli wrap" data-tab="log">${dico("edit")}<span class="dt"><b>${esc(VERB[e.action] || e.action)} ${esc(AREA[e.area] || e.area)} ${esc(e.label || "")}${e.n > 1 ? ` <span class="rep">×${e.n}</span>` : ""}</b><small>${esc(e.admin || "admin")} · ${agoShort(e.at)}</small></span></button></li>`).join("")}</ul>` : `<div class="empty">Nothing yet. Approvals and edits will show here.</div>`}</section>
     </div>`;
+}
+
+/* ---------- Cloudflare free-plan usage (read-only) ---------- */
+const U_BYTES = (n) => (n >= 1e9 ? (n / 1e9).toFixed(2) + " GB" : n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : fmt(n) + " B");
+const U_NUM = (m, n) => (m.unit === "bytes" ? U_BYTES(n) : fmt(n));
+const U_TAG = { ok: ["ok", "OK"], watch: ["warn", "Watch"], warning: ["bad", "Warning"], limit: ["bad", "Limit reached"], unknown: ["", "No data"] };
+const U_RESET = { day: "Resets at 00:00 UTC (4 pm Pacific in winter, 5 pm in summer)", month: "Month to date (calendar month, UTC)", now: "Current size" };
+function usageCard(m) {
+  const [cls, lab] = U_TAG[m.level] || U_TAG.unknown, pct = m.pct == null ? 0 : Math.min(100, m.pct);
+  const trend = m.trend && m.trend.length ? `<details class="utrend"><summary>Last 7 days ${usageSpark(m.trend)}</summary><table><thead><tr><th scope="col">UTC day</th><th scope="col">${m.period === "month" ? "That day" : "Used"}</th></tr></thead><tbody>${m.trend.map((p) => `<tr><td>${esc(p.d)}</td><td>${fmt(p.v)}</td></tr>`).join("")}</tbody></table></details>` : "";
+  return `<article class="ucard u-${esc(m.level)}" aria-label="${esc(m.label)}">
+    <div class="uh"><h3>${esc(m.label)}</h3><span class="tag ${cls}">${lab}</span></div>
+    ${m.used == null ? `<p class="meta" style="margin:6px 0 0">${esc(m.why || "No data")}</p>` : `<p class="unum"><b>${U_NUM(m, m.used)}</b> of ${U_NUM(m, m.limit)} <span class="meta">(${m.pct}%)</span></p>
+    <div class="ubar" role="progressbar" aria-label="${esc(m.label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-valuetext="${m.pct}% of the free limit"><i style="width:${pct}%"></i></div>`}
+    <p class="meta ures">${U_RESET[m.period]} · free limit ${U_NUM(m, m.limit)} ${m.verified ? "" : '<span class="tag">unverified</span>'} · <a href="${esc(m.source)}" target="_blank" rel="noopener">source</a></p>
+    ${trend}
+    <details class="utrend"><summary>What happens at the limit</summary><p class="meta" style="margin:6px 0 0">${esc(m.breaks)} On a paid plan: ${esc(m.paid)}.</p></details>
+  </article>`;
+}
+function usageSpark(t) {
+  const max = Math.max(1, ...t.map((p) => p.v)), W = 84, H = 18, step = W / (t.length - 1);
+  return `<svg class="uspark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><polyline fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" points="${t.map((p, i) => `${(i * step).toFixed(1)},${(H - 2 - (p.v / max) * (H - 4)).toFixed(1)}`).join(" ")}"/></svg>`;
+}
+async function renderUsage() {
+  const main = $("#main"), q = main.dataset.urefresh === "1" ? "?refresh=1" : "";
+  main.dataset.urefresh = "";
+  const u = await api("/api/admin/usage" + q);
+  const grp = (title, keys) => `<h2 class="dh">${title}</h2><div class="ugrid">${u.metrics.filter((m) => keys.includes(m.key)).map(usageCard).join("")}</div>`;
+  const worst = u.top ? `${esc(u.top.label)} at ${u.top.pct}%` : "no numbers yet";
+  const steps = `<section class="ucard u-ok" aria-label="Connect Cloudflare analytics"><div class="uh"><h3>Not connected</h3><span class="tag">Cloudflare numbers off</span></div>
+    <p class="meta" style="margin:6px 0">${u.error ? esc(u.error) : "This page needs two secrets so it can read Cloudflare's usage numbers (read-only). Email counts and logged limit errors work without them."}</p>
+    <ol class="usteps"><li>Cloudflare dashboard &gt; avatar (top right) &gt; My Profile &gt; API Tokens &gt; Create Token &gt; Custom token &gt; Get started.</li><li>Permission: Account / Account Analytics / Read. Account resources: Include / this account. Continue to summary &gt; Create Token. Copy the token once.</li><li>Account ID: Workers &amp; Pages overview, right-hand column (it is also the long code in the dashboard address after /).</li><li>Workers &amp; Pages &gt; socal-lights &gt; Settings &gt; Variables and Secrets &gt; Add. Type: Secret, name <code>CF_ANALYTICS_TOKEN</code>, paste the token. Add again: Secret <code>CF_ACCOUNT_ID</code>. Environment: Production. Save.</li><li>Redeploy (Deployments &gt; the latest &gt; Retry deployment), then reload this page.</li></ol>
+    <p class="meta" style="margin:0">Full steps: docs/runbooks/cloudflare-limits.md</p></section>`;
+  main.innerHTML = `<p class="meta" style="margin:0 0 12px">Free-plan limits for <b>today, UTC day ${esc(u.utcDay)}</b>. Cloudflare resets its daily limits at 00:00 UTC. Read-only: this page cannot change anything. ${u.connected && u.fetchedAt ? `Cloudflare numbers as of ${esc(String(u.fetchedAt).slice(0, 16))} UTC (cached up to 5 minutes).` : ""}
+    Colors: <span class="tag warn">Watch</span> from 70%, <span class="tag bad">Warning</span> from 90%, <span class="tag bad">Limit reached</span> at 100%. Highest right now: <b>${worst}</b>. <button type="button" class="btn ghost" id="urefresh">Refresh now</button></p>
+    ${u.limitHits.length ? `<div class="limitbanner" role="alert"><b>Limit hit at ${esc(String(u.limitHits[0].at).slice(0, 16))} UTC${u.limitHits.length > 1 ? ` (${u.limitHits.length} times in 24 hours)` : ""}.</b><span>${esc(String(u.limitHits[0].detail).slice(0, 200))}</span></div>` : ""}
+    ${u.connected && !u.error ? "" : steps}
+    ${u.missing.length ? `<p class="msg err">Cloudflare would not give some numbers: ${u.missing.map((x) => esc(x.what) + (x.permission ? ` (needs ${esc(x.permission)})` : "")).join("; ")}.</p>` : ""}
+    ${grp("Today (UTC)", ["d1_rows_read", "d1_rows_written", "requests"])}
+    ${u.cpu ? `<p class="meta">Today's Function CPU: ${fmt(u.cpu.exceeded)} requests stopped for using too much CPU, ${fmt(u.cpu.failed)} failed in all, of ${fmt(u.cpu.requests)}. The free plan allows 10 ms of CPU per request.</p>` : ""}
+    ${grp("This month", ["r2_class_a", "r2_class_b"])}
+    ${grp("Storage", ["d1_storage", "r2_storage"])}
+    ${grp("Email (Resend, counted by this site)", ["email_day", "email_month"])}
+    <p class="meta">Email counts only emails this site sent through Resend (one send each); Resend's own total also counts received mail. Check the Resend dashboard if the numbers disagree.</p>`;
+  const b = $("#urefresh"); if (b) b.onclick = () => { main.dataset.urefresh = "1"; renderUsage(); };
 }
 
 /* ---------- reports: "Something wrong? Tell us" from visitors ---------- */

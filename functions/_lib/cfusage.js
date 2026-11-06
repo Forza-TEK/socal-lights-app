@@ -73,10 +73,11 @@ export function parseAnalytics(resp, day) {
   return { ok: true, missing, series, now, ...extra };
 }
 
+// env.CF_GRAPHQL_URL exists only for local tests against a stub; never set it in production.
 async function callCloudflare(env, day) {
   const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 12000);
   try {
-    const res = await fetch(GRAPHQL, { method: "POST", signal: ctl.signal, headers: { "content-type": "application/json", authorization: "Bearer " + env.CF_ANALYTICS_TOKEN }, body: JSON.stringify({ query: buildQuery(env.CF_ACCOUNT_ID, day) }) });
+    const res = await fetch(env.CF_GRAPHQL_URL || GRAPHQL, { method: "POST", signal: ctl.signal, headers: { "content-type": "application/json", authorization: "Bearer " + env.CF_ANALYTICS_TOKEN }, body: JSON.stringify({ query: buildQuery(env.CF_ACCOUNT_ID, day) }) });
     const body = await res.json().catch(() => null);
     if (!res.ok && !body) return { ok: false, error: `Cloudflare answered ${res.status}.`, missing: [], series: {}, now: {} };
     const out = parseAnalytics(body, day);
