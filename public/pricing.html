@@ -7,13 +7,13 @@
 <meta name="description" content="SoCal Lights is a free map of holiday lights and events in Southern California. See what is free and what is optional before you add anything.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261106y">
-<link rel="stylesheet" href="/info.css?v=20261031t">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261107a">
+<link rel="stylesheet" href="/info.css?v=20261107a">
 <style>
 @media(min-width:700px){.grid.two{grid-template-columns:repeat(2,1fr)}}
 .plan .btn{justify-self:start}
-.free{font-size:32px;font-weight:300;letter-spacing:-.02em;color:var(--ink)}.free small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0;word-spacing:.15em}
+.free{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.free small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0;word-spacing:.15em}
 .plan p{margin:0;color:var(--muted)}
 </style>
 <script src="/hit.js" defer></script>
@@ -51,7 +51,7 @@
 <details><summary>Questions?</summary><p>Email <a href="mailto:info@socallights.app">info@socallights.app</a>.</p></details>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261106y";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261107a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 import { planCopy, PLAN_KEYS } from "/feature-plans.js?v=20261106z";
 const $ = (q) => document.querySelector(q);

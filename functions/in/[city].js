@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
   try { hide = new Set(pairs(await approvedPosts(env), results).exact.filter((x) => !x.event.keep_listed).map((x) => x.event.id)); } catch {}
   const upcoming = results.filter((r) => !hide.has(r.id)).map(rowToEvent);
   const evs = upcoming.filter((e) => slugOf(e.city) === params.city);
-  if (!evs.length) return new Response("No upcoming events found for that city.", { status: 404, headers: { "content-type": "text/plain; charset=utf-8" } });
+  if (!evs.length) return new Response(page({ title: "No events found for that city | SoCal Lights", noindex: true, origin, body: `${header()}<main><div class="note"><h1>No upcoming events in that city yet</h1><p class="sub">The city may be spelled differently, or nothing is listed there right now. New events are added every day.</p><p><a class="btn go" href="/in">Browse cities with events</a> <a class="btn" href="/">Open the map</a></p></div></main>` }), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
   const city = evs[0].city, county = evs[0].c;
   // At most 60 characters (search results cut longer titles): the long wording first, shorter ones for long city names
   const title = [`Holiday lights and events in ${city}, CA | SoCal Lights`, `Lights and events in ${city}, CA | SoCal Lights`, `${city} lights and events | SoCal Lights`, `${city} | SoCal Lights`].find((t) => t.length <= 60) || `${city.slice(0, 40)} | SoCal Lights`;

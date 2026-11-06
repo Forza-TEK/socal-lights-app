@@ -6,15 +6,16 @@ import { getContest } from "../_lib/contests.js";
 export async function onRequestGet({ request, env, params }) {
   const origin = new URL(request.url).origin;
   const res = await env.ASSETS.fetch(new Request(new URL("/contest", request.url), request));
-  let c = null, photo = "";
+  let c = null, photo = "", exists = true;
   try {
     c = await getContest(env, params.slug);
+    exists = !!c;
     if (c && c.status === "live") {
       const p = await env.DB.prepare("SELECT photos FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no LIMIT 6").bind(c.id).all();
       for (const r of p.results) { const k = JSON.parse(r.photos || "[]")[0]; if (k && k.startsWith("p/")) { photo = `${origin}/api/photo/${k}`; break; } }
     } else c = null;
   } catch {}
-  if (!c) return res;
+  if (!c) return new Response(res.body, { status: exists ? res.status : 404, headers: res.headers });
   const title = `${c.name} | SoCal Lights`;
   const desc = `${c.org} · ${c.city}. ${c.descr}`.slice(0, 200);
   const img = photo || `${origin}/img/share.png`, url = `${origin}/c/${c.slug}`;

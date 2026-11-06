@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Create a contest · SoCal Lights</title>
+<meta name="description" content="Start a neighborhood lighting contest: free, takes about three minutes, and you get a link and QR code to share.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261106y">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261107a">
 <link rel="stylesheet" href="/printables.css?v=20261105d">
 <script src="/hit.js" defer></script>
 </head>
@@ -16,7 +17,7 @@
 <div id="app"></div>
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
-import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt } from "/addflow.js?v=20261106y";
+import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt } from "/addflow.js?v=20261107a";
 import { me, signIn } from "/auth.js?v=20261106y";
 import { rulesDefault } from "/rules.js";
 import { printable } from "/printables.js?v=20261105c";
@@ -45,7 +46,7 @@ const slots = () => d.on.flatMap((c) => kinds().map(([k, l]) => ({ key: c + "|" 
 const catTiles = () => d.cats.map((c) => `<button type="button" class="tile sm" data-a="cat:${esc(c)}" aria-pressed="${d.on.includes(c)}"><b>${esc(c)}</b></button>`).join("");
 
 const steps = [
-  { id: "name", sec: "Basics", title: "What's your contest called?", help: "This is the title everyone sees.", body: (x) => input(x, "name", { max: 90 }), check: (x) => (x.name.trim().length < 4 ? "Give your contest a name (at least 4 letters)." : "") },
+  { id: "name", sec: "Basics", title: "What's your contest called?", help: "This is the title everyone sees.", body: (x) => input(x, "name", { max: 90, aria: "Contest name" }), check: (x) => (x.name.trim().length < 4 ? "Give your contest a name (at least 4 letters)." : "") },
   { id: "org", sec: "Basics", title: "Who is running it, and where?", help: "A city, school, neighborhood group, HOA, club or business, and the city the homes are in.",
     body: (x) => `${input(x, "org", { label: "Who is running it?", ph: "e.g. Mission Viejo Activities Committee", max: 80 })}${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city" })}`,
     check: (x) => (x.org.trim().length < 3 ? "Tell us who is running it." : !x.city ? "Choose the city where the homes are." : "") },
