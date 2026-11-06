@@ -2,9 +2,8 @@
 // so a long list is split into the fewest routes of 9 or fewer, sized evenly, with each route starting where the last one ended.
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const MAX_STOPS = 9;
-const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-const MAPS = { google: "Google Maps", apple: "Apple Maps" };
-const pref = () => { try { const v = localStorage.getItem("socal-maps"); if (MAPS[v]) return v; } catch {} return IS_IOS ? "apple" : "google"; };
+import { MAPS, getMaps, routeUrl, placeUrl, navAttr, mapsNow, askMaps, setMaps } from "/maps.js?v=20261107b";
+export { routeUrl };
 
 const miles = (a, b) => { const R = 3959, r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r, h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
 // A sensible driving order: always go to the nearest home not yet visited, starting from `from` (or the west-most home)
@@ -22,49 +21,52 @@ export function legs(list, max = MAX_STOPS) {
   return out;
 }
 const where = (h) => h.dest || h.address || `${h.lat},${h.lng}`;
-export function routeUrl(app, stops, origin) {
-  const dest = where(stops[stops.length - 1]), way = stops.slice(0, -1).map(where), e = encodeURIComponent;
-  if (app === "apple") return "https://maps.apple.com/directions?" + (origin ? "source=" + e(origin) + "&" : "") + "destination=" + e(dest) + way.map((w) => "&waypoint=" + e(w)).join("") + "&mode=driving";
-  return "https://www.google.com/maps/dir/?api=1" + (origin ? "&origin=" + e(origin) : "") + "&destination=" + e(dest) + (way.length ? "&waypoints=" + e(way.join("|")) : "") + "&travelmode=driving";
-}
 
 // opts: { title, intro, bare (no card frame, for the pop-up), nearest (show "Start with the nearest home", default true) }
-export function tourHtml(opts) { return `<section class="${opts.bare ? "" : "card "}tour" data-tour><h2>${esc(opts.title || "Visit the homes")}</h2><p class="muted small">${esc(opts.intro || "Drive past every home in a few routes. Your maps app takes up to 9 stops at a time, so a long list is split into routes of 9 or fewer, and each route starts where the last one ended.")}</p><div class="tourbar"><div class="mapspick" role="group" aria-label="Maps app"><span>Open in</span>${Object.entries(MAPS).map(([k, l]) => `<button type="button" data-tmaps="${k}" aria-pressed="false">${l}</button>`).join("")}</div>${opts.nearest === false ? "" : `<button type="button" class="btn ghost sm" data-tnear>Start with the nearest home</button>`}</div><div class="tourprog small muted" data-tprog></div><div data-tlegs></div></section>`; }
+export function tourHtml(opts) { return `<section class="${opts.bare ? "" : "card "}tour" data-tour><h2>${esc(opts.title || "Visit the homes")}</h2><p class="muted small">${esc(opts.intro || "Drive past every home in a few routes. Your maps app takes up to 9 stops at a time, so a long list is split into routes of 9 or fewer, and each route starts where the last one ended.")}</p><div class="tourbar">${mapsNow()}${opts.nearest === false ? "" : `<button type="button" class="btn ghost sm" data-tnear>Start with the nearest home</button>`}</div><div class="tourprog small muted" data-tprog></div><div data-tlegs></div></section>`; }
 
 // opts: { slug | key, entries: [{id,name,address,city,lat,lng,no | sub,dest}], ordered (keep the given order), origin (where route 1 starts, "" = where the phone is),
 //         start (a stop the trip starts from; shown first, not part of the routes), app, onApp(app) }
+// Share one stop to the phone's share sheet: the Tesla app (and car apps) take a shared place like this
+async function shareStop(h) {
+  const url = placeUrl(where(h), h.name), data = { title: h.name, text: h.name + (h.sub || h.address ? " – " + (h.sub || h.address) : ""), url };
+  try { await navigator.share(data); } catch (e) { if (e && e.name !== "AbortError") { try { await navigator.clipboard.writeText(url); } catch {} } }
+}
 export function wireTour(root, opts) {
   const el = root.querySelector("[data-tour]"); if (!el) return;
   const key = "scl-tour:" + (opts.key || opts.slug); let visited = new Set(); try { visited = new Set(JSON.parse(localStorage.getItem(key) || "[]")); } catch {}
   const usable = (h) => h.dest || (Number.isFinite(h.lat) && Number.isFinite(h.lng));
-  const homes = opts.entries.filter(usable); let app = MAPS[opts.app] ? opts.app : pref(), from = null, hint = "";
+  const homes = opts.entries.filter(usable); let app = getMaps(), from = null, hint = "";
   const subOf = (h) => h.sub != null ? h.sub : `${h.address || h.city || ""}${h.no ? " · Home #" + h.no : ""}`;
   const save = () => { try { localStorage.setItem(key, JSON.stringify([...visited])); } catch {} };
   const count = () => [...visited].filter((id) => homes.some((h) => h.id === id) || (opts.start && opts.start.id === id)).length;
   const total = () => homes.length + (opts.start ? 1 : 0);
   const prog = () => { el.querySelector("[data-tprog]").textContent = `${count()} of ${total()} visited${hint ? " · " + hint : ""}`; };
-  const row = (h, n) => `<li><label><input type="checkbox" data-tvis="${esc(h.id)}" ${visited.has(h.id) ? "checked" : ""}><span class="num">${n}</span><span class="tn"><b>${esc(h.name)}</b><small>${esc(subOf(h))}</small></span></label><a class="link" href="${esc(routeUrl(app, [h], ""))}" target="_blank" rel="noopener" aria-label="Directions to ${esc(h.name)}">Directions</a></li>`;
+  const row = (h, n) => `<li><label><input type="checkbox" data-tvis="${esc(h.id)}" ${visited.has(h.id) ? "checked" : ""}><span class="num">${n}</span><span class="tn"><b>${esc(h.name)}</b><small>${esc(subOf(h))}</small></span></label><span class="rowacts"><a class="link" href="${esc(routeUrl(app, [h], ""))}" ${navAttr([where(h)])} target="_blank" rel="noopener" aria-label="Directions to ${esc(h.name)}">Directions</a>${navigator.share ? `<button type="button" class="link" data-tsend="${esc(h.id)}" aria-label="Send ${esc(h.name)} to your car or Tesla app" title="Share this stop to the Tesla app or your car's app">Send to car</button>` : ""}</span></li>`;
   const draw = () => {
     const list = opts.ordered ? homes : order(homes, from), L = legs(list); let n = opts.start ? 1 : 0;
-    el.querySelectorAll("[data-tmaps]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tmaps === app)));
+    el.querySelectorAll("[data-mapsname]").forEach((b) => (b.textContent = MAPS[app]));
     prog();
     const startOrigin = opts.start ? where(opts.start) : opts.origin || (from && from.label ? from.label : "");
     el.querySelector("[data-tlegs]").innerHTML = (opts.start ? `<div class="leg legstart"><div class="legh"><b>Start</b><span class="muted small">You begin here</span></div><ol class="legl">${row(opts.start, 1)}</ol></div>` : "") + L.map((leg, i) => {
       const origin = i === 0 ? startOrigin : where(L[i - 1][L[i - 1].length - 1]);
       const place = leg.length + " stop" + (leg.length === 1 ? "" : "s");
       const hdr = i ? ", from the end of route " + i : opts.start ? ", from the start" : opts.origin ? ", from your starting point" : ", from where you are";
-      return `<div class="leg"><div class="legh"><b>Route ${i + 1} of ${L.length}</b><span class="muted small">${place}${hdr}</span><a class="legbtn" href="${esc(routeUrl(app, leg, origin))}" target="_blank" rel="noopener">Open in ${MAPS[app]}</a></div>
+      return `<div class="leg"><div class="legh"><b>Route ${i + 1} of ${L.length}</b><span class="muted small">${place}${hdr}</span><a class="legbtn" href="${esc(routeUrl(app, leg, origin))}" ${navAttr(leg.map(where), origin)} target="_blank" rel="noopener">${app === "waze" ? "Start in Waze" : "Open in " + MAPS[app]}</a></div>${app === "waze" ? `<p class="muted small wznote">Waze takes one stop at a time. Start takes you to stop 1; then tap Directions on the next one.</p>` : ""}
         <ol class="legl">${leg.map((h) => row(h, ++n)).join("")}</ol></div>`;
     }).join("") || '<p class="muted">No places with a location yet.</p>';
   };
   el.addEventListener("click", (e) => {
-    const m = e.target.closest("[data-tmaps]"); if (m) { app = m.dataset.tmaps; try { localStorage.setItem("socal-maps", app); } catch {} if (opts.onApp) opts.onApp(app); return draw(); }
+    const sd = e.target.closest("[data-tsend]");
+    if (sd) { const h = [...homes, ...(opts.start ? [opts.start] : [])].find((x) => x.id === sd.dataset.tsend); if (h) shareStop(h); return; }
     if (e.target.closest("[data-tnear]")) {
       if (!navigator.geolocation) { hint = "Location isn't available here."; return draw(); }
       hint = "Finding you…"; draw();
       navigator.geolocation.getCurrentPosition((p) => { from = { lat: p.coords.latitude, lng: p.coords.longitude, label: "" }; hint = "ordered from where you are"; draw(); }, () => { hint = "Location is blocked, so the order starts at the west end."; draw(); }, { timeout: 8000, maximumAge: 120000 });
     }
   });
+  const onMaps = (ev) => { if (!el.isConnected) return document.removeEventListener("maps-changed", onMaps); app = ev.detail || getMaps(); if (opts.onApp) opts.onApp(app); draw(); };
+  document.addEventListener("maps-changed", onMaps);
   el.addEventListener("change", (e) => { const c = e.target.closest("[data-tvis]"); if (!c) return; c.checked ? visited.add(c.dataset.tvis) : visited.delete(c.dataset.tvis); save(); prog(); });
   draw();
 }

@@ -257,7 +257,7 @@ const NAMED = {
   "challenges.cloudflare.com": "turnstile", "accounts.google.com": "sign in with google|continue with google|sign-in, if you choose", "oauth2.googleapis.com": "google", "openidconnect.googleapis.com": "google",
   "api.geoapify.com": "geoapify", "geocoding.geo.census.gov": "census", "nominatim.openstreetmap.org": "nominatim", "api.resend.com": "resend", "api.stripe.com": "stripe",
   "www.amazon.com": "amazon", "www.youtube-nocookie.com": "youtube", "player.vimeo.com": "vimeo", "cash.app": "cash app",
-  "www.google.com": "google maps", "maps.apple.com": "apple maps", "calendar.google.com": "google calendar",
+  "www.google.com": "google maps", "maps.apple.com": "apple maps", "waze.com": "waze", "calendar.google.com": "google calendar",
 };
 // hosts that appear in the code but are not a data recipient: standards/namespace URLs, comments, credits, examples
 const NOT_RECIPIENTS = new Set(["socallights.app", "socal-lights.pages.dev", "schema.org", "www.w3.org", "www.sitemaps.org", "www.opensource.org", "www.denso-wave.com", "www.d-project.com", "example.com", "stackoverflow.com", "www.flickr.com", "ticketmaster.evyy.net",
