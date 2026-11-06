@@ -80,6 +80,25 @@ export function rowToEvent(r) {
   };
 }
 
+// The public list leaves out the fields only the event's detail view reads (the blurb "b" and the link "u": about 40% of the list's bytes).
+// GET /api/events/<id> returns the whole object. Everything else the list needs stays: search matches name, city, county and address; routes and directions use address and venue; cards use hours, price and the photo.
+export const DETAIL_ONLY = ["b", "u"];
+// The map's "Contests" type filter also matches a contest or competition named in the blurb, so the list carries that answer as ct: 1 instead of the blurb. Same pattern as public/app.js.
+export const CONTEST_RE = /\b(contests?|competitions?)\b/i;
+export function rowToListEvent(r) {
+  const e = rowToEvent(r);
+  if (CONTEST_RE.test(e.n + " " + e.b)) e.ct = 1;
+  for (const k of DETAIL_ONLY) delete e[k];
+  return e;
+}
+
+// ETag helpers shared by the JSON endpoints (a weak tag from a hash of the body; If-None-Match may list several tags)
+export async function etagOf(text) {
+  const d = new Uint8Array(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(text)));
+  return 'W/"' + Array.from(d.slice(0, 12), (b) => b.toString(16).padStart(2, "0")).join("") + '"';
+}
+export const etagMatches = (header, tag) => !!header && (header.trim() === "*" || header.split(",").some((t) => t.trim().replace(/^W\//, "") === tag.replace(/^W\//, "")));
+
 /* ---------- Cloudflare Turnstile ---------- */
 export async function verifyTurnstile(env, token, ip) {
   if (!env.TURNSTILE_SECRET) return true; // not configured yet: allow (README explains turning it on)

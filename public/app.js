@@ -119,6 +119,11 @@ function calParts(ev) {
 }
 function addToCalendar(id) {
   const ev = E.find((x) => x.id === id); if (!ev) return;
+  // the event's link goes in the calendar note, and it comes with the details: wait for them if they have not arrived (offline: add it without the link)
+  if (!hasDetail(ev)) { loadDetail(ev).catch(() => {}).then(() => calendarFor(ev)); return; }
+  calendarFor(ev);
+}
+function calendarFor(ev) {
   const { tr, desc, loc } = calParts(ev);
   if (mapsApp === "google") {
     const dates = tr ? `${ymd(ev.s)}T${tr[0]}/${ymd(ev.e)}T${tr[1]}` : `${ymd(ev.s)}/${ymd(nextDay(ev.e))}`;
@@ -190,7 +195,8 @@ function weekendRange() {
   const sat = new Date(y, m - 1, d + (wd === 6 ? 0 : 6 - wd)), sun = new Date(sat.getFullYear(), sat.getMonth(), sat.getDate() + 1);
   return [f(sat), f(sun)];
 }
-const isContest = (ev) => ev._ct ?? (ev._ct = CONTEST_RE.test(ev.n + " " + (ev.b || "")));
+// The list has no blurb: the server marks an event whose blurb names a contest or competition with ct: 1 (same pattern); a full object is tested here
+const isContest = (ev) => ev._ct ?? (ev._ct = !!ev.ct || CONTEST_RE.test(ev.n + " " + (ev.b || "")));
 // Home displays have no dates or ticket prices, so the date, cost and confirmed filters pass them (they only narrow events);
 // a Type other than "Home displays" leaves them out.
 function instMatch(p) {
@@ -393,6 +399,7 @@ function renderPreview() {
   const acts = `<span class="pv-acts">${awayTag(it.kind === "ev" ? it.ev : { lat: it.p.plat, lng: it.p.plng })}<button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button></span>`;
   if (it.kind === "ev") {
     const ev = it.ev, phs = photosOf(ev), ph = phs[0], conf = ev.st === "c", hrs = hoursOf(ev), manyE = phs.length > 1;
+    if (!hasDetail(ev) && !DERR.has(ev.id)) loadDetail(ev).catch(() => {}); // the card opens the details next: fetch them now (and the photo credit names the event's site)
     pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${manyE ? `<div class="pvtrack" id="pvtrack">${phs.map((q, i) => `<div class="pvslide">${photoImg(q, i < 2, 900)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="pvcount">1 / ${phs.length}</span>` : ph ? photoImg(ph, false, 800) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
   } else {
     const p = it.p, ph = p.photos || [];
@@ -854,22 +861,67 @@ function openLightbox(items, start = 0, title = "") {
   document.addEventListener("keydown", lbKey, true);
   lbEl.querySelector(".lbx").focus({ preventScroll: true });
 }
-function openDetail(k) { if (k !== state.detail && /^e:/.test(k)) tick("fn:event-open"); state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
+/* ---------- event details (blurb and link) load when an event is opened ---------- */
+// The event list leaves out each event's blurb (b) and link (u), about 40% of its bytes. GET /api/events/<id> has them: they are fetched when the details page (or the map card) opens, kept in memory for the visit,
+// and filled into the open page in place, so nothing jumps. The service worker keeps the answers for events you opened, so they still open with no signal; otherwise a short note and a Try again button show.
+const HEAVY = ["b", "u"], DETAIL = new Map(), DFETCH = new Map(), DERR = new Map();
+const hasDetail = (ev) => "b" in ev;
+function loadDetail(ev) {
+  if (hasDetail(ev)) return Promise.resolve(ev);
+  const id = ev.id, kept = DETAIL.get(id);
+  if (kept) { HEAVY.forEach((k) => (ev[k] = kept[k])); return Promise.resolve(ev); }
+  if (DFETCH.has(id)) return DFETCH.get(id);
+  DERR.delete(id);
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
+  const p = fetch("/api/events/" + encodeURIComponent(id), { signal: ctl.signal })
+    .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then((d) => {
+      const got = {}; HEAVY.forEach((k) => (got[k] = typeof d[k] === "string" ? d[k] : "")); DETAIL.set(id, got);
+      const cur = E.find((x) => x.id === id); HEAVY.forEach((k) => { ev[k] = got[k]; if (cur) cur[k] = got[k]; });
+      return ev;
+    })
+    .catch((err) => { DERR.set(id, err instanceof TypeError || (err && err.name === "AbortError") || navigator.onLine === false ? "net" : "http"); throw err; })
+    .finally(() => { clearTimeout(timer); DFETCH.delete(id); });
+  DFETCH.set(id, p); return p;
+}
+const infoBtn = (ev, url) => (url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : "");
+const contestBtn = (ev, url) => (String(ev.id).startsWith("c-") && url ? `<a class="contestgo" href="${esc(url)}">Enter your home or vote &rsaquo;</a>` : "");
+// the blurb's place while it loads: a grey block as tall as a typical blurb, or (when it could not load) a short note with Try again
+const blurbPending = (err) => err
+  ? `<p class="blurb dstatus" id="dblurb" role="status">${err === "http" ? "Couldn't load the details." : "Details need a connection."} <button class="retry" type="button" id="dretry">Try again</button></p>`
+  : `<p class="blurb skel" id="dblurb" aria-busy="true"></p>`;
+const swap = (sel, html) => { const el = $(sel); if (!el) return; const t = document.createElement("template"); t.innerHTML = html.trim(); el.replaceWith(t.content); };
+function startDetail(ev) {
+  if (hasDetail(ev) || DERR.has(ev.id)) return;
+  const key = "e:" + ev.id, still = () => state.detail === key;
+  loadDetail(ev).then(() => { if (still()) showDetail(ev); }).catch(() => { if (still()) { swap("#dblurb", blurbPending(DERR.get(ev.id))); wireRetry(ev); } });
+}
+function wireRetry(ev) { const b = $("#dretry"); if (b) b.onclick = () => { DERR.delete(ev.id); swap("#dblurb", blurbPending("")); startDetail(ev); }; }
+// fill a just-loaded event into the open details page without redrawing it (the photo, scroll position and buttons stay as they are)
+function showDetail(ev) {
+  swap("#dblurb", `<p class="blurb" id="dblurb">${esc(ev.b)}</p>`);
+  const url = safeUrl(ev.u); swap("#dslot", infoBtn(ev, url)); swap("#dcontest", contestBtn(ev, url));
+  const phs = photosOf(ev, true), tr = $("#track"), cr = $("#hcredit"); // the photo credit names the event's site now that its link is known
+  if (tr) [...tr.children].forEach((sl, i) => { const q = phs[i]; if (q) { sl.dataset.credit = q.credit || ""; sl.dataset.link = safeUrl(q.link) || ""; } });
+  const q = phs[tr && tr.clientWidth ? Math.round(tr.scrollLeft / tr.clientWidth) : 0] || phs[0];
+  if (cr && q) { const l = safeUrl(q.link), n = document.createElement(l ? "a" : "span"); n.className = "credit"; n.id = "hcredit"; n.textContent = q.credit; if (l) { n.href = l; n.target = "_blank"; n.rel = "noopener"; } cr.replaceWith(n); }
+}
+function openDetail(k) { if (k !== state.detail && /^e:/.test(k)) { tick("fn:event-open"); DERR.delete(k.slice(2)); } state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
 function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
   if (it.kind === "ev") {
-    const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u), phs = photosOf(ev, true), ph = phs[0], cl = ph && safeUrl(ph.link), manyD = phs.length > 1;
+    const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u), phs = photosOf(ev, true), ph = phs[0], cl = ph && safeUrl(ph.link), manyD = phs.length > 1, loading = !hasDetail(ev), derr = DERR.get(ev.id);
     return `<div class="detail">
     <div class="hero${ev.free ? " free" : ""}${ph ? " photo" : ""}">${manyD ? `<div class="pvtrack" id="track">${phs.map((q, i) => `<div class="pvslide" data-credit="${esc(q.credit || "")}" data-link="${esc(safeUrl(q.link) || "")}">${photoImg(q, i < 2, 900)}</div>`).join("")}</div><button class="pvnav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="gcount">1 / ${phs.length}</span>` : ph ? photoImg(ph, false, 1200) : ""}<button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
       ${ph ? (cl ? `<a class="credit" id="hcredit" href="${esc(cl)}" target="_blank" rel="noopener">${esc(ph.credit)}</a>` : `<span class="credit" id="hcredit">${esc(ph.credit)}</span>`) : ""}
       <div class="htext"><div class="kicker">${esc(TYPE_SHORT[ev.t] || "Event")} · ${esc(ev.city)}${away(ev)}</div><h2>${esc(ev.n)}</h2></div></div>
     <div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
     <div class="boxes"><div><span>When</span><b>${whenShort(ev)}</b></div><div><span>Hours</span><b>${esc(ev.h)}</b></div><div><span>Cost</span><b>${esc(ev.p)}</b></div></div>
-    <p class="blurb">${esc(ev.b)}</p>
+    ${loading ? blurbPending(derr) : `<p class="blurb" id="dblurb">${esc(ev.b)}</p>`}
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd>${ev.lc ? `<dt>Updated</dt><dd class="meta">${esc(fmt(ev.lc))}</dd>` : ""}</dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
-    ${String(ev.id).startsWith("c-") && url ? `<a class="contestgo" href="${esc(url)}">Enter your home or vote &rsaquo;</a>` : ""}${isSweepHome(ev) ? `<a class="claimhome" href="/add-house?claim=${encodeURIComponent(ev.id)}">Is this your home? Claim it &rsaquo;</a>` : ""}${reportLink(ev.n, "e-" + ev.id, ev.city)}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
+    ${loading ? `<span id="dcontest"></span>` : contestBtn(ev, url)}${isSweepHome(ev) ? `<a class="claimhome" href="/add-house?claim=${encodeURIComponent(ev.id)}">Is this your home? Claim it &rsaquo;</a>` : ""}${reportLink(ev.n, "e-" + ev.id, ev.city)}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${loading ? `<span class="abtn" id="dslot" aria-hidden="true" style="visibility:hidden"></span>` : infoBtn(ev, url)}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
   return `<div class="detail">  ${ph.length ? `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="ph-none">No photos yet</div></div>`}
@@ -880,6 +932,7 @@ function detailHtml(k) {
   ${onButton(p)}${reportLink(p.title, "h-" + p.id, p.city)}<div class="actionbar"><button class="abtn" type="button" data-share="i:${esc(p.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
 }
 function wireDetail() {
+  const it0 = findKey(state.detail); if (it0 && it0.kind === "ev") { wireRetry(it0.ev); startDetail(it0.ev); }
   const area = document.querySelector(".detail .hero.photo, .detail .gallery:has(.track)");
   if (area) area.addEventListener("click", (e) => {
     if (e.target.closest("button,a")) return;
@@ -1363,6 +1416,7 @@ async function refreshData() {
     const [ev, posts] = await Promise.all([fetch("/api/events", { cache: "no-cache" }).then((r) => r.json()), fetch("/api/posts", { cache: "no-cache" }).then((r) => r.json())]);
     if (!Array.isArray(ev)) return;
     E = ev; if (Array.isArray(posts)) SHOW = posts;
+    E.forEach((e) => { const d = DETAIL.get(e.id); if (d) HEAVY.forEach((k) => (e[k] = d[k])); }); // keep the details already loaded (the list has none)
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses(); loadedAt = Date.now();
     if (state.detail) { counts(); drawMap(); } else { renderPanel(); drawMap(); }
