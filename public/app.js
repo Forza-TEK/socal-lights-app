@@ -627,7 +627,7 @@ const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentCo
 let toastT;
 function toast(msg, accent, ms) {
   let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
-  t.textContent = msg; t.classList.toggle("accent", !!accent); t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms || 2200);
+  t.textContent = msg; t.classList.toggle("accent", !!accent); t.classList.toggle("long", (ms || 0) > 5000 || msg.length > 80); t.onclick = () => t.classList.remove("show"); /* long messages can be tapped away */ t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms || (msg.length > 80 ? 8000 : 2200));
 }
 async function shareItem(k) {
   const it = findKey(k); if (!it) return;
