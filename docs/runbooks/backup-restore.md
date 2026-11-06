@@ -9,6 +9,9 @@
 
 **Never** store a backup as a GitHub artifact or commit it: this repository is public and the file holds emails.
 A failed backup opens (or comments on) a GitHub issue titled "Nightly backup failed", which emails the repository owner.
+**Before upload the export is restore-tested in CI:** `scripts/verify-backup.mjs` loads it into an empty SQLite database and checks at least 30 tables, 500 events and 100 applied migrations (counts only are printed, never rows). A file that does not restore never replaces a good one.
+**Never silent:** the run reports to the site's heartbeat and pings `BACKUP_PING_URL` (optional external monitor, which emails the owner when the ping stops). A backup older than 30 hours turns Admin home red, adds `STALE JOBS` to the digest, flips `/api/health` to `"stale":true`, and the digest and usage-check workflows start the backup themselves (catch-up). See `docs/runbooks/monitoring.md`.
+**Off-Cloudflare copy:** monthly manual download of `latest.sql.gz` to private storage (steps in `monitoring.md`). Not automated; never as a GitHub artifact.
 Run it by hand any time: GitHub > Actions > "Nightly backup" > Run workflow.
 
 ## Setup (one time, owner)
@@ -33,8 +36,13 @@ The workflow needs the existing `CLOUDFLARE_API_TOKEN` repository secret to also
    6. Switch the site: in `wrangler.toml` change `database_id` (and keep `database_name` consistent with the workflows) to the new database, merge to `main`, and confirm the site loads. Also update the D1 binding in Cloudflare Pages > Settings > Bindings if it is set there. Keep the old database until you are sure.
 4. **Photos:** copy from `socal-lights-backups/photos/<key>` back to `socal-lights-photos/<key>` with `wrangler r2 object get` and `put --remote`.
 
+## Things to know when restoring
+- The workflows name the database `socal-lights` (`wrangler d1 ... socal-lights`), and `wrangler.toml` holds its `database_id`. A restored database under another name needs both edited (workflows: `backup.yml`, `d1-migrations.yml`, plus `wrangler.toml`), and the preview block `[env.preview]` is separate and must not be pointed at production.
+- Restoring rewinds `stripe_events` (the processed-event list), so Stripe may redeliver recent events. That is safe (orders are keyed by session id), but check Admin > Orders afterwards and run the "Stripe reconcile" workflow.
+- Restoring also rewinds `job_heartbeats`; jobs report in again by themselves.
+
 ## Testing the backup
-Once a quarter: do step 3 into a scratch database and compare row counts with live. Delete the scratch database afterwards.
+Every nightly run already proves the file loads (restore test above). Once a quarter do a real one: step 3 into a scratch database and compare row counts with live (tables, events, users, posts, orders). Record the date and counts here: _not yet done with a real nightly file_. Delete the scratch database afterwards.
 
 ## Not covered
 Cloudflare Pages secrets, Access settings and the DNS zone are not in the database. Their list is in `docs/operating-guide.md` and the README setup steps.

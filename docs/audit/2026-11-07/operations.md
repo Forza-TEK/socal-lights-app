@@ -4,6 +4,8 @@ Read-only audit of `main` at commit `668b381` (2026-11-06 ~11:00 UTC). Method: c
 
 Times are UTC unless stated. Pacific is UTC-8 now.
 
+**Status 2026-11-07 (monitoring PR):** H1 shipped as heartbeats + `/api/health` + stale banner/issue/digest + external-monitor runbook (owner must create the monitor and `BACKUP_PING_URL`); H3 shipped as `deploy-watch.yml` + digest check (owner must add Cloudflare Pages Read to the token); H4 fixed in code (`[env.preview]`, Turnstile fails closed on previews, preview DB migrated by CI), to be verified after the next preview build; M3 digest workflow now fails when the email was not sent; M4 restore test in CI + heartbeat + manual off-Cloudflare copy documented (real restore of a nightly file still not done); M5 duplicate-number warning added to the validator; M2 routines: documented only (`docs/runbooks/monitoring.md`).
+
 ## Top 5
 
 1. **The "every 15 minutes" uptime check does not run every 15 minutes (High).** GitHub ran it 6 times in 40 hours, gaps of 6 to 8 hours. The submission digest ran twice a day instead of three, and the first scheduled nightly backup was an hour late and absent when checked. Every alert in the repo depends on GitHub cron, which is best effort. An outage can go unnoticed for most of a day.

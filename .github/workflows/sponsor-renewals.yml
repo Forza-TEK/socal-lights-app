@@ -23,3 +23,13 @@ jobs:
           echo "HTTP $code: $(echo "$body" | head -c 400)"
           if [ "$code" != "200" ]; then echo "::error::The renewal job answered HTTP $code"; exit 1; fi
           if echo "$body" | grep -q '"ok":false'; then echo "::error::The renewal job did not run (see the line above)"; exit 1; fi
+      - name: Report to the heartbeat (dead-man's switch; see docs/runbooks/monitoring.md)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          [ -n "$ALERT_CRON_KEY" ] || exit 0
+          s=ok; [ "$JOB_STATUS" = success ] || s=fail
+          curl -sS -m 20 --retry 2 -X POST "https://socal-lights.pages.dev/api/heartbeat?job=sponsor-renewals&status=$s" -H "x-alert-key: $ALERT_CRON_KEY" -o /dev/null -w "heartbeat: HTTP %{http_code}\n"

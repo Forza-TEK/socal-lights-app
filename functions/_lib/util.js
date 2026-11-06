@@ -102,7 +102,7 @@ export const etagMatches = (header, tag) => !!header && (header.trim() === "*" |
 
 /* ---------- Cloudflare Turnstile ---------- */
 export async function verifyTurnstile(env, token, ip) {
-  if (!env.TURNSTILE_SECRET) return true; // not configured yet: allow (README explains turning it on)
+  if (!env.TURNSTILE_SECRET) return env.TURNSTILE_REQUIRED !== "1"; // not configured yet: allow (README explains turning it on), except where TURNSTILE_REQUIRED = "1" (preview deployments, wrangler.toml [env.preview.vars]): no secret means no posts
   if (!token) return false;
   const body = new FormData();
   body.append("secret", env.TURNSTILE_SECRET);

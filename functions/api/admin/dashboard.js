@@ -4,6 +4,7 @@ import { json } from "../../_lib/util.js";
 import { funnelCounts, STEPS } from "../../_lib/funnel.js";
 import { limitHits } from "../../_lib/cfusage.js";
 import { ptToday, shiftDay } from "../../_lib/time.js";
+import { jobStatus, problemJobs } from "../../_lib/heartbeat.js";
 
 export async function onRequestGet({ env }) {
   const n = async (sql, ...a) => { try { return (await env.DB.prepare(sql).bind(...a).first()).n || 0; } catch { return 0; } };
@@ -53,6 +54,7 @@ export async function onRequestGet({ env }) {
   const refRows = await rows("SELECT page, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today, SUM(n) AS week FROM site_hits WHERE day >= ? AND page LIKE 'ref:%' GROUP BY page ORDER BY week DESC LIMIT 40", days[13], days[7]);
   const clicks = Object.fromEntries(clickRows.map((r) => [r.page, { today: r.today || 0, week: r.week || 0 }]));
   return json({
+    staleJobs: problemJobs(await jobStatus(env)).map((j) => ({ job: j.job, line: j.line, failed: j.failed && !j.stale })), // scheduled jobs that went quiet or failed (red banner on Admin home)
     limits: (await limitHits(env)).slice(0, 3), // quota errors logged in the last 24 hours (banner on Admin home)
     funnel: { steps: STEPS, counts: await funnelCounts(env), refs: refRows.map((r) => ({ code: r.page.slice(4), today: r.today || 0, week: r.week || 0 })) },
     trends: { days, houses: tHouses, votes: tVotes, accounts: tAccounts, views: tViews, topPages, clicks },

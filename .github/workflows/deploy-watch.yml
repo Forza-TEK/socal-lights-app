@@ -1,0 +1,72 @@
+# Read-only Cloudflare Pages deploy-stall check, every 10 minutes (GitHub may run it late: the admin digest runs the same check three times a day).
+# Opens ONE issue, "Production deploy stalled", when (a) a Pages deployment has been "active" for 8+ minutes (builds run one at a time, so one hung preview blocks production) or
+# (b) production is not on main's latest commit 20+ minutes after it was made. It comments on the issue while the problem lasts (at most every 3 hours) and closes it when deploys are healthy.
+# Needs the repository secret CLOUDFLARE_API_TOKEN to have "Account > Cloudflare Pages > Read" (add it once: docs/runbooks/deploy-stall.md). Without it the run ends green with a
+# notice "Deploy check not_configured": it never fails just because the permission is missing. Nothing here writes to Cloudflare.
+name: Deploy watch
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write   # only to open, update or close the "Production deploy stalled" issue
+
+concurrency:
+  group: deploy-watch
+  cancel-in-progress: true
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 52d622850c5e367e319d35143c43a275  # account id (not a secret)
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: |
+            scripts/deploy-watch.mjs
+            functions/_lib/deploys.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the deployments
+        id: check
+        run: |
+          HEAD_SHA=$(git rev-parse HEAD) HEAD_AT=$(git log -1 --format=%cI) node scripts/deploy-watch.mjs
+      - name: Open or update the issue while a deploy is stalled
+        if: failure() && steps.check.outcome == 'failure'
+        run: |
+          T="Production deploy stalled"
+          URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          BODY="The deploy watch found a problem at $(date -u +%FT%TZ). Details in the log: $URL. Fix: Cloudflare dashboard > Workers & Pages > socal-lights > Deployments > cancel the deployment that is stuck 'active' (usually a preview), then open the latest Production deployment > Retry deployment. Step by step: docs/runbooks/deploy-stall.md. This issue closes itself when deploys are healthy."
+          N=$(gh issue list --state open --search "\"$T\" in:title" --json number -q '.[0].number' || true)
+          if [ -z "$N" ]; then gh issue create --title "$T" --body "$BODY"
+          else
+            last=$(gh issue view "$N" --json updatedAt -q .updatedAt)
+            if [ $(( $(date -u +%s) - $(date -u -d "$last" +%s) )) -gt 10800 ]; then gh issue comment "$N" --body "Still stalled. $BODY"; fi
+          fi
+      - name: Close the issue when deploys are healthy
+        if: steps.check.outcome == 'success' && steps.check.outputs.state == 'ok'
+        run: |
+          T="Production deploy stalled"
+          for N in $(gh issue list --state open --search "\"$T\" in:title" --json number -q '.[].number' || true); do gh issue close "$N" --reason completed --comment "Deploys are healthy again at $(date -u +%FT%TZ)."; done
+      - name: Report to the heartbeat (dead-man's switch; see docs/runbooks/monitoring.md)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          JOB_STATUS: ${{ steps.check.outcome }}
+        run: |
+          [ -n "$ALERT_CRON_KEY" ] || exit 0
+          s=ok; [ "$JOB_STATUS" = success ] || s=fail
+          # a stalled deploy is a finding, not a broken job: the job itself ran fine
+          [ "$JOB_STATUS" = failure ] && s=ok
+          curl -sS -m 20 --retry 2 -X POST "https://socal-lights.pages.dev/api/heartbeat?job=deploy-watch&status=$s" -H "x-alert-key: $ALERT_CRON_KEY" -o /dev/null -w "heartbeat: HTTP %{http_code}\n"

@@ -19,3 +19,25 @@ ACCESS_TEAM_DOMAIN = "still-rice-29b5.cloudflareaccess.com"      # e.g. "yourtea
 ACCESS_AUD = "a129de805c2dfbbc50b934ea12afe86921d58260e366e8aedd686db6878e1e3a"              # the Application Audience (AUD) tag
 # Cloudflare Turnstile public site key (the secret goes in a Pages secret named TURNSTILE_SECRET)
 TURNSTILE_SITE_KEY = "0x4AAAAAAFkk14dBx3bEsnCn"
+
+# Preview deployments (every non-production branch build on *.pages.dev). Without this block previews inherited the PRODUCTION database and photo bucket
+# (audit operations H4), so a branch could change live rows. Bindings are not inherited between environments, so everything a preview needs is spelled out here.
+# The preview database `socal-lights-preview` and bucket `socal-lights-photos-preview` hold no real data; migrations are applied to the preview database by
+# .github/workflows/d1-migrations.yml. TURNSTILE_REQUIRED makes the spam check fail CLOSED when a preview has no TURNSTILE_SECRET (production has one).
+# Production keeps using the top-level settings above. Owner steps and how to verify: docs/runbooks/preview-isolation.md.
+[env.preview]
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "socal-lights-preview"
+database_id = "b2f856bf-bb6c-44aa-b17b-c28040f4de52"
+migrations_dir = "migrations"
+
+[[env.preview.r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "socal-lights-photos-preview"
+
+[env.preview.vars]
+ACCESS_TEAM_DOMAIN = "still-rice-29b5.cloudflareaccess.com"
+ACCESS_AUD = "a129de805c2dfbbc50b934ea12afe86921d58260e366e8aedd686db6878e1e3a"
+TURNSTILE_SITE_KEY = "0x4AAAAAAFkk14dBx3bEsnCn"
+TURNSTILE_REQUIRED = "1"

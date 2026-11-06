@@ -3,7 +3,8 @@
 # domain must answer at all, proving DNS, TLS and Cloudflare are alive (200 = fine; 403 = Cloudflare's bot rule for cloud addresses,
 # also fine; no answer or a server error = a failure). A failed run makes GitHub email the repository owners.
 # A failed run also opens ONE GitHub issue ("Site is down"), which emails the owner, and the first healthy run closes it.
-# No third-party actions, no secrets. Cloudflare Health Checks are not offered on the Free plan.
+# No third-party actions. The last step reports to the site's heartbeat with the ALERT_CRON_KEY secret (optional: skipped without it). GitHub runs this late or skips runs (6 to 8 hours apart in practice),
+# so the REAL 5-minute uptime monitor is an external one: docs/runbooks/monitoring.md. Cloudflare Health Checks are not offered on the Free plan.
 name: Uptime check
 on:
   schedule:
@@ -61,3 +62,13 @@ jobs:
         run: |
           T="Site is down (uptime check)"
           for N in $(gh issue list --state open --search "\"$T\" in:title" --json number -q '.[].number' || true); do gh issue close "$N" --reason completed --comment "Healthy again at $(date -u +%FT%TZ)."; done
+      - name: Report to the heartbeat (dead-man's switch; see docs/runbooks/monitoring.md)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          [ -n "$ALERT_CRON_KEY" ] || exit 0
+          s=ok; [ "$JOB_STATUS" = success ] || s=fail
+          curl -sS -m 20 --retry 2 -X POST "https://socal-lights.pages.dev/api/heartbeat?job=uptime&status=$s" -H "x-alert-key: $ALERT_CRON_KEY" -o /dev/null -w "heartbeat: HTTP %{http_code}\n"

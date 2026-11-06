@@ -81,6 +81,15 @@ for (const f of newFiles) {
   if (!allow) for (const [re, label] of bad) if (re.test(s)) err("destructive-sql", f, `${label}. If intentional, add a comment line "-- validate: allow-destructive" and explain why.`, true);
 }
 
+// ---------- duplicate numbers (warning only) ----------
+// Migrations apply in file-name order, so two files with the same number run in alphabetical order of the rest of the name. About 19 historical numbers are shared and are left alone;
+// this only warns when a NEW file takes a number another file already has (usually two branches that picked the same "next" number: rebase and rename the newer one).
+{
+  const byNum = {};
+  for (const f of allFiles) (byNum[f.slice(0, 4)] ||= []).push(f);
+  for (const f of newFiles) { const same = (byNum[f.slice(0, 4)] || []).filter((x) => x !== f); if (same.length) warn("duplicate-number", f, `Number ${f.slice(0, 4)} is also used by ${same.join(", ")}. Rebase and take the next free number (a duplicate runs in file-name order, which can break a dependent pair).`); }
+}
+
 // ---------- replay migrations in a scratch database ----------
 const db = new DatabaseSync(":memory:");
 const rowsOf = () => Object.fromEntries(db.prepare("SELECT * FROM events").all().map((r) => [r.id, { ...r }]));

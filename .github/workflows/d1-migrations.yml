@@ -77,6 +77,10 @@ jobs:
       - name: Apply migrations to the live database
         if: steps.check.outputs.skip != 'true'
         run: npx wrangler d1 migrations apply socal-lights --remote
+      - name: Also bring the PREVIEW database up to date (previews use their own database, see docs/runbooks/preview-isolation.md)
+        if: steps.check.outputs.skip != 'true'
+        continue-on-error: true   # never blocks the live migration; a failure only means previews may show errors until it is fixed
+        run: npx wrangler d1 migrations apply DB --remote --env preview
       - name: Event counts by season
         if: steps.check.outputs.skip != 'true'
         run: npx wrangler d1 execute socal-lights --remote --command "SELECT season, COUNT(*) AS n, SUM(status='confirmed') AS confirmed FROM events GROUP BY season"

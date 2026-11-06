@@ -6,7 +6,7 @@
 // Retry safety: nothing is "done" until it has really been applied. The order row records `applied`; the Stripe event id is written to
 // stripe_events only after the work succeeded; failures that a retry can fix return 500 so Stripe redelivers.
 import { json, err } from "../_lib/util.js";
-import { logOp } from "../_lib/oplog.js";
+import { logOp, logOpOnce } from "../_lib/oplog.js";
 import { bump } from "../_lib/funnel.js";
 import { sendFeaturePaidEmail } from "../_lib/featuremail.js";
 import { sponsorWindow } from "../_lib/sponsor.js";
@@ -19,7 +19,12 @@ const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_p
 
 export async function onRequestPost({ request, env }) {
   const raw = await request.text();
-  if (!(await verifyStripeSignature(raw, request.headers.get("stripe-signature"), env.STRIPE_WEBHOOK_SECRET))) return err(400, "Bad signature.");
+  const sigHeader = request.headers.get("stripe-signature");
+  if (!(await verifyStripeSignature(raw, sigHeader, env.STRIPE_WEBHOOK_SECRET))) {
+    // A wrong or missing signing secret makes every real Stripe delivery fail here, so the cause is filed (once an hour per cause, nothing from the request itself) and the digest shows it.
+    await logOpOnce(env, "webhook", `Stripe webhook rejected: ${signatureProblem(sigHeader, env.STRIPE_WEBHOOK_SECRET)}`, 60);
+    return err(400, "Bad signature.");
+  }
   let evt; try { evt = JSON.parse(raw); } catch { return err(400, "Bad payload."); }
   if (!evt || !evt.id || !HANDLED.has(evt.type)) return json({ ok: true, ignored: evt && evt.type });
 
@@ -30,6 +35,16 @@ export async function onRequestPost({ request, env }) {
   if (res instanceof Response) { if (res.status >= 500) await logOp(env, "webhook", `${evt.type} ${evt.id}: answered ${res.status}, Stripe will retry`); return res; } // a retryable failure: leave the event unrecorded so Stripe redelivers
   await env.DB.prepare("INSERT OR IGNORE INTO stripe_events (id,type) VALUES (?,?)").bind(evt.id, evt.type).run();
   return json({ ok: true, ...res });
+}
+
+// Why a signature failed, in words only (never the header, the body or the secret): the owner can tell a missing STRIPE_WEBHOOK_SECRET from a wrong one.
+export function signatureProblem(header, secret, nowSec = Math.floor(Date.now() / 1000)) {
+  if (!secret) return "STRIPE_WEBHOOK_SECRET is not set in Cloudflare Pages, so every delivery fails";
+  if (!header) return "no stripe-signature header (not sent by Stripe)";
+  const t = Number((String(header).match(/(?:^|,)\s*t=(\d+)/) || [])[1]), hasV1 = /(?:^|,)\s*v1=/.test(header);
+  if (!t || !hasV1) return "malformed stripe-signature header (not sent by Stripe)";
+  if (Math.abs(nowSec - t) > 300) return "signature timestamp more than 5 minutes off (a replay, or the clock)";
+  return "signature does not match: the signing secret (STRIPE_WEBHOOK_SECRET) is probably not the one shown for this endpoint in Stripe, or the body was altered";
 }
 
 async function handle(evt, env) {
