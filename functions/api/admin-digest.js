@@ -28,7 +28,7 @@ export async function onRequestPost({ request, env }) {
     q("SELECT id, title, city, status, poster_type FROM posts WHERE contest_id IS NULL AND created_at > ? ORDER BY created_at DESC LIMIT 50", since),
     q("SELECT id, name, city, status FROM event_submissions WHERE created_at > ? ORDER BY created_at DESC LIMIT 50", since),
     q("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NOT NULL AND created_at > ?", since),
-    q("SELECT (SELECT COUNT(*) FROM posts WHERE status = 'pending' AND contest_id IS NULL) + (SELECT COUNT(*) FROM event_submissions WHERE status = 'pending') + (SELECT COUNT(*) FROM contests WHERE status = 'pending') AS n"),
+    q("SELECT (SELECT COUNT(*) FROM posts WHERE status = 'pending' AND contest_id IS NULL) + (SELECT COUNT(*) FROM event_submissions WHERE status = 'pending') + (SELECT COUNT(*) FROM contests WHERE status = 'pending') + (SELECT COUNT(*) FROM removal_requests WHERE status = 'open') AS n"),
     q("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NULL AND created_at >= ?", dayStart),
     q("SELECT COUNT(*) AS n FROM event_submissions WHERE created_at >= ?", dayStart),
     q("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NOT NULL AND created_at >= ?", dayStart),

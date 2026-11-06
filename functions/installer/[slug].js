@@ -15,8 +15,8 @@ export async function onRequestGet({ request, env, params }) {
   const title = `${inst.name}: professional holiday lighting installer | SoCal Lights`;
   const desc = `${inst.name}${inst.area ? ", serving " + inst.area : ""}. ${homes.length} display${homes.length === 1 ? "" : "s"} on the SoCal Lights map.`;
   const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", name: inst.name, url: web || undefined, telephone: inst.phone || undefined, areaServed: inst.area || undefined, description: inst.blurb || undefined };
-  const confirmed = homes.filter((h) => h.poster_type === "installer" || h.installer_confirmed).length;
-  const cards = homes.map((h) => { const ph = photoOf(h); return `<a class="card" href="/#h-${esc(h.id)}"><div class="ph">${ph ? `<img src="/api/photo/${esc(ph)}" alt="" loading="lazy">` : ""}</div><div class="bd"><h3>${esc(h.title)}</h3><span class="m">${esc(h.city)}</span>${h.poster_type === "installer" || h.installer_confirmed ? '<div class="tags"><span class="tag conf">Confirmed by installer</span></div>' : ""}</div></a>`; }).join("");
+  const confirmed = homes.filter((h) => h.installer_confirmed).length;
+  const cards = homes.map((h) => { const ph = photoOf(h); return `<a class="card" href="/#h-${esc(h.id)}"><div class="ph">${ph ? `<img src="/api/photo/${esc(ph)}" alt="" loading="lazy">` : ""}</div><div class="bd"><h3>${esc(h.title)}</h3><span class="m">${esc(h.city)}</span>${h.installer_confirmed ? '<div class="tags"><span class="tag conf">Confirmed by installer</span></div>' : ""}</div></a>`; }).join("");
   const canQuote = !!(inst.owner_email || inst.email), logoUrl = inst.logo ? `/api/installers/${inst.slug}/logo` : "";
   const heroHtml = slides.length ? hero(slides) : logoUrl ? `<div class="hero"><img class="logoimg" src="${esc(logoUrl)}" alt="${esc(inst.name)} logo"></div>` : hero([], inst.name.slice(0, 1).toUpperCase());
   const body = `${header("Open the map")}<main>

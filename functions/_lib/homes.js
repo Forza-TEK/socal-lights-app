@@ -9,6 +9,11 @@ import { geocodeAddress, clean } from "./util.js";
 // The organizer page sends longer lists in chunks of 10 and shows progress. Checking addresses is limited by homes and calls per hour (the geocoders are free public services).
 export const MAX_HOMES_PER_CALL = 10;
 export const MAX_ADDED_PER_CONTEST = 500;
+
+// What the organizer confirms before homes are added (PL-01). The exact wording is stored with every confirmed call (home_consents), and the organizer page shows
+// this same sentence next to its checkbox (a test keeps them identical). Change the wording only together with a new CONSENT_VERSION.
+export const CONSENT_VERSION = "2026-11-07";
+export const CONSENT_TEXT = "I confirm that the residents of the homes I am adding have agreed to have their street address shown on the public SoCal Lights map as part of this contest, and I will tell SoCal Lights to remove any home whose residents ask me to.";
 export const CALLS_PER_HOUR = 120;
 export const HOMES_PER_HOUR = 1000;
 

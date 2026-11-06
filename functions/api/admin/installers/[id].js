@@ -50,7 +50,8 @@ export async function onRequestPost({ params, request, env }) {
     if (bu < floor.banner) return err(400, `A paid banner order runs until ${floor.banner}, so the banner date cannot be earlier. To end it sooner, refund the order in Stripe and mark it refunded under Orders.`);
     if (tu < floor.top) return err(400, `A paid top-of-the-list order runs until ${floor.top}, so that date cannot be earlier. To end it sooner, refund the order in Stripe and mark it refunded under Orders.`);
     await env.DB.batch([
-      env.DB.prepare("UPDATE installers SET name=?, web=?, phone=?, area=?, blurb=?, email=?, owner_email=?, banner_until=?, top_until=? WHERE id=?").bind(name, web || "", ph.value, line(b.area, 240), normText(clean(b.blurb, 600)), email, owner, bu, tu, inst.id),
+      // a website that Admin changes or types is Admin-set (web_src ''): an email at that domain can then claim the profile at once (S-04)
+      env.DB.prepare("UPDATE installers SET name=?, web_src=CASE WHEN web = ? THEN web_src ELSE '' END, web=?, phone=?, area=?, blurb=?, email=?, owner_email=?, banner_until=?, top_until=? WHERE id=?").bind(name, web || "", web || "", ph.value, line(b.area, 240), normText(clean(b.blurb, 600)), email, owner, bu, tu, inst.id),
       // keep the presenting-installer name on contests in step with the profile
       env.DB.prepare("UPDATE contests SET installer_name = ? WHERE lower(installer_name) = lower(?)").bind(name, inst.name),
     ]);

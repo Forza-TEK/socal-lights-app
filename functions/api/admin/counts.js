@@ -15,7 +15,7 @@ export async function onRequestGet({ env }) {
     safe(n("SELECT COUNT(*) AS n FROM events")),
     safe(n("SELECT COUNT(*) AS n FROM users")),
     safe(n("SELECT COUNT(*) AS n FROM installers")),
-    safe(n("SELECT COUNT(*) AS n FROM reports")),
+    safe(n("SELECT (SELECT COUNT(*) FROM reports) + (SELECT COUNT(*) FROM removal_requests WHERE status = 'open') AS n")),
     safe(n("SELECT COUNT(*) AS n FROM event_claims WHERE status = 'pending'")),
     safe(env.DB.prepare(`SELECT COUNT(*) AS n FROM ${ORDER_FROM} WHERE ${NEEDS_ATTENTION}`).bind(ptToday()).first().then((r) => r.n)), // Featured orders that need the owner
     env.DB.prepare("SELECT id, city, address, keep_listed FROM events WHERE address != ''").all().then((r) => r.results).catch(() => []),

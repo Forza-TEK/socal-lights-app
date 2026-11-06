@@ -10,6 +10,7 @@ const AREAS = {
   overlaps: ["events", "name"],
   installers: ["installers", "name"],
   reports: ["reports", "name"],
+  removals: ["removal_requests", "address"],
   normalize: ["users", "email"],
   emails: ["email_templates", "id"],
   help: ["help_articles", "title", "slug"],

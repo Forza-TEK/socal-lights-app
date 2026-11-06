@@ -8,6 +8,7 @@ live database (the site itself redeploys on every push through Cloudflare Pages)
 
 ## Rules
 
+0. **Residents can ask us to remove their home** (Admin > Reports > "Remove my home requests"; the listing is then deleted from the live database, not from the old migrations). Do not add a private home back that a request removed: before adding "Private home (view from the street)" listings, ask the owner for the handled-requests list in Admin > Reports (or check that the address was not in a recent request). Never add a private home's address unless a public page published it.
 1. **Never edit an existing migration.** Add a new file with the next number:
    `migrations/0006_<short-name>.sql`, `0007_...`, and so on. Check `ls migrations` for the last number.
 2. **Upsert, don't insert.** Use this form so a file can add new events *and* update existing ones:

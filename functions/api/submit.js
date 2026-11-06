@@ -138,12 +138,22 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // Installer profile: an installer's own post makes (or joins) their profile; a homeowner can name the company that installed their lights
   try {
     if (pro) {
-      const inst = await findOrCreateInstaller(env, { name: biz, web, phone, area, email, trusted: true });
-      if (inst) await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 1 WHERE id = ?").bind(inst.id, id).run();
+      // S-04: posting under the name of a company that already has a profile never changes that profile. The post is confirmed at once only when the poster owns
+      // (or created) the profile; otherwise it shows as unverified until the profile's owner confirms it from the email we send them.
+      const r = await findOrCreateInstaller(env, { name: biz, web, phone, area, email, trusted: true });
+      if (r && r.owned) await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 1 WHERE id = ?").bind(r.inst.id, id).run();
+      else if (r) {
+        const token = newId() + newId(), to = r.inst.owner_email || r.inst.email;
+        await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 0, installer_token = ? WHERE id = ?").bind(r.inst.id, token, id).run();
+        if (to) {
+          const job = sendTemplate(env, "installer_listed", to, { title, biz: `Someone posting as ${r.inst.name}`, installer: r.inst.name, city, confirm: `https://socallights.app/api/installers/confirm?t=${token}` }).catch(() => {});
+          if (waitUntil) waitUntil(job);
+        }
+      }
     } else {
       const iname = normName(clean(form.get("installer_name"), 80)), iwebRaw = clean(form.get("installer_web"), 200);
       if (iname.length >= 2) {
-        const inst = await findOrCreateInstaller(env, { name: iname, web: iwebRaw ? webUrl(iwebRaw) || "" : "" });
+        const found = await findOrCreateInstaller(env, { name: iname, web: iwebRaw ? webUrl(iwebRaw) || "" : "" }), inst = found && found.inst;
         if (inst) {
           const token = newId() + newId();
           await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 0, installer_token = ? WHERE id = ?").bind(inst.id, token, id).run();

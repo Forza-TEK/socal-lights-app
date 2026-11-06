@@ -16,7 +16,7 @@ export async function onRequestGet({ env }) {
     n("SELECT COUNT(*) AS n FROM posts WHERE status = 'pending' AND contest_id IS NULL"),
     n("SELECT COUNT(*) AS n FROM event_submissions WHERE status = 'pending'"),
     n("SELECT COUNT(*) AS n FROM contests WHERE status = 'pending' OR (status = 'live' AND note != '')"),
-    n("SELECT COUNT(*) AS n FROM reports WHERE created_at > ?", week),
+    n("SELECT (SELECT COUNT(*) FROM reports WHERE created_at > ?) + (SELECT COUNT(*) FROM removal_requests WHERE status = 'open') AS n", week),
     n("SELECT COUNT(*) AS n FROM posts WHERE installer_id IS NOT NULL AND installer_confirmed = 0 AND poster_type != 'installer' AND status = 'approved'"),
     n("SELECT COUNT(*) AS n FROM posts WHERE status = 'approved' AND contest_id IS NULL"),
     n("SELECT COUNT(*) AS n FROM events"),

@@ -13,10 +13,13 @@ export async function onRequestPost({ params, request, env }) {
   if (!inst) return err(404, "That installer isn't listed.");
   if (inst.owner_email && inst.owner_email === user.email) return json({ ok: true, claimed: true });
   if (inst.owner_email) return err(409, "This profile already has an owner. Email info@socallights.app if that isn't right.");
-  if (trustOf(user.email, inst.web) === "match") {
+  // S-04: an email at the website's domain claims the profile at once only when that website was set by Admin (or the claimer created the profile themselves).
+  // A website a visitor typed into a post proves nothing about who runs the company, so that claim waits for a person.
+  const typedByVisitor = inst.web_src === "user" && String(inst.created_by || "").toLowerCase() !== String(user.email).toLowerCase();
+  if (!typedByVisitor && trustOf(user.email, inst.web) === "match") {
     await env.DB.prepare("UPDATE installers SET owner_email = ? WHERE id = ?").bind(user.email, inst.id).run();
     return json({ ok: true, claimed: true });
   }
-  await sendTemplate(env, "installer_claim", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { email: user.email, installer: inst.name, web: inst.web || "no website on file" }).catch(() => {});
+  await sendTemplate(env, "installer_claim", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { email: user.email, installer: inst.name, web: (inst.web || "no website on file") + (typedByVisitor ? " (typed by a visitor, not checked)" : "") }).catch(() => {});
   return json({ ok: true, claimed: false, message: "Thanks. Because your email isn't at the company's website, a person will check and confirm by email." });
 }
