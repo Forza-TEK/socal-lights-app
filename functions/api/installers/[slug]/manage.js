@@ -27,7 +27,7 @@ export async function onRequestGet({ params, request, env }) {
   const ids = shared.map((h) => h.id);
   const ch = ids.length ? (await env.DB.prepare(`SELECT post_id, by_name, by_role, field, old, new, at FROM listing_changes WHERE post_id IN (${ids.map(() => "?").join(",")}) ORDER BY at DESC, rowid DESC LIMIT 300`).bind(...ids).all()).results : [];
   for (const h of shared) h.changes = ch.filter((c) => c.post_id === h.id).slice(0, 8);
-  return json({ installer: { slug: inst.slug, name: inst.name, web: inst.web, phone: inst.phone, area: inst.area, blurb: inst.blurb, hasLogo: !!inst.logo }, claims, shared, homes: homes[0].n, views: views.reverse(), viewsTotal: views.reduce((s, v) => s + v.n, 0), leads, banner: banner ? { until: inst.banner_until, top: !!(inst.top_until && inst.top_until >= today), ...banner } : null }, { headers: { "cache-control": "no-store" } });
+  return json({ installer: { slug: inst.slug, name: inst.name, web: inst.web, phone: inst.phone, area: inst.area, blurb: inst.blurb, hasLogo: !!inst.logo }, claims, shared, homes: homes[0].n, views: views.reverse(), viewsTotal: views.reduce((s, v) => s + v.n, 0), leads, banner: banner ? { until: inst.banner_until, top: !!(inst.top_until && inst.top_until >= today), ...banner } : null, placement: { banner_until: inst.banner_until >= today ? inst.banner_until : "", top_until: inst.top_until >= today ? inst.top_until : "" } }, { headers: { "cache-control": "no-store" } });
 }
 export async function onRequestPost({ params, request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");

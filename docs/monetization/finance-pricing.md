@@ -50,6 +50,19 @@ The window now follows the event instead of a flat 30 days. Prices live only in 
 - Grandfathered: $20 whole-season orders already paid (and any in flight at $20) run to the event's last day with no 90-day cap.
 - Short events now get shorter placements for the same price (a 10-day event is featured for 10 days, not 30), which is the intended fairness trade; revenue per buyer is unchanged for events of 30+ days. Revenue scenarios in section 3 still use $10-$15 and remain assumptions.
 
+## 2c. Installer Sponsor placements (2026-11-06, owner-approved)
+Prices live only in `INSTALLER_PLANS` in `functions/_lib/featured.js`. Self-serve at `/sponsor`.
+
+| Plan | Price | Includes |
+|---|---|---|
+| Banner | $50 per season | name (linked to website or email) and phone in the labelled Sponsor banner, shown when the service area is in view, numbers in the dashboard |
+| Banner and top of the list | $75 per season | the banner, plus a labelled company card at the top of the list behind Featured events |
+
+- **Per season** = from payment to the last day of the current season on the map (public/seasons.js; Christmas ends Dec 26). the first 14 days of a season (Pacific date; day 1 is the season's first day) cost the full price. After day 14 the price is `full x days left / (season days - 13)` (days left counts the start day), rounded to a whole dollar, never below $10 (same floor for both plans), and never the full price after day 14. Day 14 is exactly full and day 15 just below it, so there is no cliff. A season shorter than 14 days is prorated over the whole season; an unknown season start is the full price. The placement always ends on the season's last day. The helper is `installerPrice()` in `functions/_lib/featured.js`; the quote, checkout and webhook amount check all use it. Christmas season (Nov 3 to Dec 26, 54 days): Nov 3 to Nov 16 $50 / $75; Nov 17 $49 / $73; Nov 24 $40 / $60; Dec 1 $32 / $48; Dec 10 $21 / $31; Dec 19 $10 / $15 (the banner reaches the floor); Dec 22 $10 / $10 (both at the floor) to Dec 26.
+- Renewal starts the day after the running placement ends (full price for the next season); at most one season ahead. Upgrade (banner to banner and top) costs the difference between the two plans' prices today, floor $10.
+- Stripe fee about 2.9% + 30c: on $50 about $1.75 (net $48.25); on $75 about $2.48 (net $72.52); on the $10 floor about $0.59 (net $9.41); the same floor protects the $75 plan.
+- This replaces the founder-sold pilot guess of about $299 a season for the first installer sales; the owner chose these prices. Gate to watch: installer conversations and `fn:sponsor-paid` (see `docs/CHECKLIST.md`).
+
 ## 3. Revenue scenarios from real traffic
 
 Season window: Nov 4 to Jan 2, about 60 days. Humans per day: 20 (low), 50 (high; Nov 3's count). Visits in window: **1,200 to 3,000**. Cloudflare's 450-650 "uniques" are not used.

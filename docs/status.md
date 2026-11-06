@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 2026-11-06 (event organizer funnel)_
+_Last updated: 2026-11-06 (installer Sponsor placements)_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
@@ -11,6 +11,17 @@ One funnel for event organizers: Choose (Pricing) -> sign in -> Which event? -> 
 - **Counters.** `fn:event-feature-choose`, `-pick` (browser), `-checkout`, `-paid` (server) in `functions/_lib/funnel.js`, shown in the dashboard list.
 - **Tests.** `tests/event-funnel.test.mjs`. Browser walk with Stripe stubbed (no Stripe call): 390 and 1280 px, light and dark.
 - **Risk.** Not tested with a real payment or real email. Claim approvals still send no email.
+
+
+**Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
+
+## Installer Sponsor placements: pay for the banner and top of the list (2026-11-06)
+Owner-approved: installers buy the **Banner ($50 per season)** and **Banner and top of the list ($75 per season)** themselves. Details and rules: `docs/installer-banner.md` (Payments).
+- **Funnel:** `/pricing#banner` Choose buttons (aligned, named like "Choose Banner, $50") to `/sponsor` (sign in, profile, plan, exact dates and price, Stripe), return states `?paid=1` and `?cancelled=1`; dashboard card with Renew or upgrade.
+- **Season and price rule (option C):** placement runs from the start day to the last day of the current season (`public/seasons.js`; Christmas ends Dec 26). Days 1 to 14 of the season: full price. After that `full x days left / (season days - 13)`, whole dollars, floor $10 for both plans, never full after day 14, no cliff (details and a price table in `docs/installer-banner.md`). Renewal starts the day after the running one ends (full price), one season ahead at most. Upgrade: the difference between the two plans' prices today (floor $10). Code: `installerPrice()` in `functions/_lib/featured.js`, windows in `functions/_lib/sponsor.js`.
+- **Server:** migration 0171, `/api/sponsor/checkout`, `/api/me/sponsor`, webhook orders `target='installer'` (apply, replay, refund, partial, dispute, dispute won, refund first), amount checked against the same calculation, admin Orders row, admin date floor, merge keeps orders, emails `sponsor_paid` and `sponsor_admin`, funnel counters `fn:pricing-choose`, `fn:sponsor-shown`, `fn:sponsor-picked`, `fn:sponsor-checkout`, `fn:sponsor-paid`.
+- **Tests:** `tests/sponsor-rules.test.mjs`, `tests/sponsor-pay.test.mjs`. Browser run (Chrome, local wrangler, fake Stripe key, hand-off stubbed) at 390 and 1280, light and dark: axe clean.
+- **Open:** a real $50 and $75 test purchase and refund; Terms do not mention paid placements yet (attorney); owner to confirm the upgrade has no credit.
 
 ## Lighter event list: blurb and link load on open (2026-11-06)
 Owner-approved. `GET /api/events` no longer sends each event's blurb (`b`) and link (`u`); the map loads them from the new `GET /api/events/<id>` when an event's details open.

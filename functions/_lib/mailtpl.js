@@ -100,6 +100,15 @@ export const TEMPLATES = [
     subject: "Quote request from SoCal Lights",
     text: "~ Quote request\n\n# {{name}} asked {{installer}} for a quote\n\nThey agreed to share these details with you for this request.\n\n## Their details\n- Email: {{email}}{{#phone}}\n- Phone: {{phone}}{{/phone}}{{#note}}\n- Note: {{note}}{{/note}}\n\n[Open your profile]({{profile}})\n\n* You got this email because someone asked {{installer}} for a quote on SoCal Lights." },
 
+  { id: "sponsor_paid", group: "installer", name: "Sponsor placement is on (receipt)", to: "The installer who paid", when: "A Sponsor banner or top-of-the-list payment is applied. Stripe also emails its own receipt.",
+    vars: { installer: ["Installer name", "Bright Nights"], plan: ["Plan", "Banner and top of the list"], price: ["Price paid", "$75.00"], from: ["First day", "Nov 6, 2026"], to: ["Last day", "Dec 26, 2026"], link: ["Dashboard link", `${SITE}/installer/bright-nights/manage`] },
+    subject: "Your Sponsor placement is on: {{installer}}",
+    text: "~ Thank you\n\n# Your Sponsor placement is on\n\n**{{installer}}** now has the **{{plan}}** placement on the SoCal Lights map ({{price}}, paid once, no subscription).\n\n## When it runs\n- First day: {{from}}\n- Last day: {{to}}\n\nPaid placements are always labelled \"Sponsor\". The number of times you were shown and tapped is in your dashboard. To end it early, or if something is wrong, reply to this email: a refund switches the placement off.\n\n[Open your dashboard]({{link}})\n\n* You got this email because you paid for a Sponsor placement on SoCal Lights. Stripe sends its own receipt too." },
+  { id: "sponsor_admin", group: "admin", unsub: "none", name: "New Sponsor placement paid", to: "Admin", when: "An installer pays for a Sponsor banner or top-of-the-list placement.",
+    vars: { installer: ["Installer name", "Bright Nights"], plan: ["Plan", "Banner"], price: ["Price paid", "$50.00"], from: ["First day", "Nov 6, 2026"], to: ["Last day", "Dec 26, 2026"], buyer: ["Buyer's email", "sam@brightnights.com"] },
+    subject: "Sponsor placement paid: {{installer}} ({{price}})",
+    text: "~ New order\n\n# {{installer}} paid for a Sponsor placement\n\n## Order\n- Plan: {{plan}} ({{price}})\n- Runs: {{from}} to {{to}}\n- Buyer: {{buyer}}\n\nIt is already on the map. Orders, refunds and disputes are under Orders in the admin.\n\n[Open the admin](https://socallights.app/admin/)\n\n* You got this email because you are the SoCal Lights admin." },
+
   // ---- Contest organizers
   { id: "entry_new", group: "contest", unsub: "link", name: "New contest entry waiting", to: "The contest organizer", when: "A home is entered in a contest.",
     vars: { title: ["Home name", "The Garcia Home"], street: ["Street", "12 Elm Ct"], city: ["City", "Pasadena"], contest: ["Contest name", "Maple Street Holiday Lights"], link: ["Manage page", `${SITE}/c/maple-street/manage`, true] },

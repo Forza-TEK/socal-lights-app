@@ -5,8 +5,7 @@ import { PLANS, applyPlan, eventPlanProblem } from "../../_lib/featured.js";
 import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
 import { ownsEvent } from "../../_lib/ownership.js";
 import { homeForCheckout, HOME_PLANS, placeWord } from "../../_lib/podium.js";
-
-const sha256hex = async (t) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+import { sha256hex, checkoutLimit, createCheckoutSession } from "../../_lib/stripe.js";
 
 export async function onRequestPost({ request, env }) {
   // Paid placement is web-only (store rules). The UI is hidden in the app too; this is the soft server-side check.
@@ -75,18 +74,11 @@ export async function onRequestPost({ request, env }) {
   if (goodEmail) { f.set("customer_email", goodEmail); f.set("payment_intent_data[receipt_email]", goodEmail); }
   // Same event + plan within 10 minutes reuses one Checkout session (double clicks). The key is a hash (the account is included so two people never share a session).
   const idem = "feature-" + (await sha256hex(`${ev.id}|${plan}|${user.id}|${Math.floor(Date.now() / 600_000)}`));
-  // Cap how many payment pages one account can open (card testing, plan rotation): 6 an hour, 20 a day. Counted only here, once every other check passed.
-  // If the log cannot be read or written (for example the table is not there yet) the buyer is never blocked.
-  try {
-    const n = await env.DB.prepare("SELECT SUM(created_at > datetime('now','-1 hour')) AS h, COUNT(*) AS d FROM checkout_log WHERE user_id = ? AND created_at > datetime('now','-1 day')").bind(user.id).first();
-    if ((n.h || 0) >= 6) return err(429, "You've opened a lot of payment pages in the last hour. Please wait a little while, or email info@socallights.app if something is wrong.");
-    if ((n.d || 0) >= 20) return err(429, "You've opened a lot of payment pages today. Please try again tomorrow, or email info@socallights.app if something is wrong.");
-    await env.DB.batch([env.DB.prepare("DELETE FROM checkout_log WHERE created_at < datetime('now','-3 days')"), env.DB.prepare("INSERT INTO checkout_log (user_id) VALUES (?)").bind(user.id)]);
-  } catch (e) { console.error("checkout_log", e && e.message); }
+  const limited = await checkoutLimit(env, user.id); // 6 payment pages an hour, 20 a day per account; counted only once every other check passed
+  if (limited) return err(429, limited);
   // If Stripe cannot be reached the buyer gets the same friendly message as any other payment-page failure, not a raw error.
-  const r = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "idempotency-key": idem, "content-type": "application/x-www-form-urlencoded" }, body: f }).catch(() => null);
-  const d = r ? await r.json().catch(() => ({})) : {};
-  if (!r || !r.ok || !d.url) return err(502, "The payment page couldn't be opened. Please try again in a moment.");
+  const url = await createCheckoutSession(env, f, idem);
+  if (!url) return err(502, "The payment page couldn't be opened. Please try again in a moment.");
   if (!home) await bump(env, "fn:event-feature-checkout"); // a number only: payment pages opened for an event
-  return json({ url: d.url });
+  return json({ url });
 }

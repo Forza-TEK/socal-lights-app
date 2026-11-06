@@ -1,3 +1,4 @@
+import { applyInstallerOrder, revokeInstaller } from "./sponsor.js";
 // Featured plans: price, level and how long they last. Prices are in cents and exist only here (/api/config serves them).
 // Events: the window follows the event. Placement starts at payment and ends on the event's last day (end_date as stored when paid), capped at
 //   days (pin, top: 30) or maxDays (season: 90) from payment. Featuring opens OPEN_DAYS before the event starts.
@@ -10,6 +11,34 @@ export const PLANS = {
   top: { label: "Top of the list", cents: 1500, level: 2, days: 30 },
   season: { label: "Full run", cents: 2500, level: 2, days: 0, maxDays: 90, minLength: 31, minDays: 7 },
 };
+
+// Installer placements (Sponsor banner, and banner + top of the list card). Prices in cents; they exist only here (/api/config serves them).
+// Rules (season length, stacking, renewal, upgrade) are in sponsor.js. The stored plan keys are "banner" and "banner_top", on feature_orders rows with target = 'installer'.
+export const INSTALLER_PLANS = {
+  banner: { label: "Banner", cents: 5000, top: false },
+  banner_top: { label: "Banner and top of the list", cents: 7500, top: true },
+};
+// SEASON PRICE (owner decision, option C). Day 1 is the first day of the season (Pacific date). Days 1 to FULL_PRICE_DAYS (14) cost the full price. After day 14 the price falls
+// day by day with the days remaining (the start day counts): price = full x daysLeft / daysLeftOnDay14, where daysLeftOnDay14 = season days - 13, so day 14 is exactly full and day 15
+// is just below it (no cliff). Rounded to a whole dollar, never below INSTALLER_MIN_CENTS ($10, for both plans so Stripe's ~2.9% + 30c never eats it), and never at the full
+// price after day 14. A season shorter than 14 days is prorated over the whole season (full x daysLeft / season days). Without a known season start the full price applies.
+// Returns { amount_cents, starts, ends, daysLeft, dayOfSeason, seasonDays, percentOver, full_cents, prorated, label }. Used by the quote, the checkout and the webhook amount check.
+export const FULL_PRICE_DAYS = 14;
+export const INSTALLER_MIN_CENTS = 1000;
+const usd = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : c / 100);
+export function installerPrice(plan, season, from) {
+  const full = INSTALLER_PLANS[plan].cents, start = season && season.start, end = season && season.end;
+  const total = start ? daysBetween(start, end) + 1 : 0, day = start ? daysBetween(start, from) + 1 : 0, left = daysBetween(from, end) + 1;
+  let cents = full;
+  if (start && total >= FULL_PRICE_DAYS && day > FULL_PRICE_DAYS) {
+    cents = Math.min(full, Math.max(INSTALLER_MIN_CENTS, Math.round((full / 100) * left / (total - FULL_PRICE_DAYS + 1)) * 100));
+    if (cents >= full) cents = Math.max(INSTALLER_MIN_CENTS, full - 100); // after day 14 it is always a little below the full price
+  } else if (start && total < FULL_PRICE_DAYS) cents = Math.min(full, Math.max(INSTALLER_MIN_CENTS, Math.round((full / 100) * left / total) * 100));
+  const pct = total ? Math.min(100, Math.round(((day - 1) / total) * 100)) : 0, prorated = cents < full;
+  const label = prorated ? `Day ${day} of ${total}: the season is ${pct}% over, so this season costs ${usd(cents)} instead of ${usd(full)}.` : `Full price: the first ${FULL_PRICE_DAYS} days of a season cost ${usd(full)}.`;
+  return { amount_cents: cents, starts: from, ends: end, daysLeft: left, dayOfSeason: day, seasonDays: total, percentOver: pct, full_cents: full, prorated, label };
+}
+export const PUBLIC_INSTALLER_PLANS = Object.fromEntries(Object.entries(INSTALLER_PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, top: p.top }]));
 
 // What the browser may know about plans (served by /api/config). Prices exist only in PLANS above.
 export const PUBLIC_PLANS = Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, days: p.days, level: p.level, minDays: p.minDays || 0, minLength: p.minLength || 0, maxDays: p.maxDays || p.days }]));
@@ -67,7 +96,9 @@ export const setOrderNote = (db, sessionId, text) => db.prepare("UPDATE feature_
 // retry cannot extend the placement twice. Returns the new placement, or null when the event does not exist.
 // A home order (order.target = 'home') applies to the posts row the same way; only 30-day plans exist for homes.
 export const isHomeOrder = (o) => !!o && o.target === "home";
+export const isInstallerOrder = (o) => !!o && o.target === "installer";
 export async function applyOrder(db, order, targetId, today = ptToday()) {
+  if (isInstallerOrder(order)) return applyInstallerOrder(db, order, today); // an installer id, not an event: banner_until / top_until (sponsor.js)
   const home = isHomeOrder(order);
   if (home && !PLANS[order.plan].days) return null; // never happens through checkout; a hand-made order for a home cannot use the Full run plan
   const ev = await db.prepare(home ? "SELECT id, featured, featured_until FROM posts WHERE id = ?" : "SELECT id, end_date, featured, featured_until FROM events WHERE id = ?").bind(targetId).first();
@@ -125,8 +156,8 @@ async function recomputeAfterRevoke(db, order, today) {
 // could not be removed cleanly; the reason is also written to the order's note so Admin > Orders shows it.
 export async function revokePlan(db, order, status) {
   let manual = false;
-  if (order.applied && order.event_id && !order.event_id.startsWith("sub:") && !order.refunded_at) manual = !(await recomputeAfterRevoke(db, order, ptToday()));
+  if (order.applied && order.event_id && !order.event_id.startsWith("sub:") && !order.refunded_at) manual = !(await (isInstallerOrder(order) ? revokeInstaller(db, order, ptToday()) : recomputeAfterRevoke(db, order, ptToday())));
   await db.prepare("UPDATE feature_orders SET status=?, refunded_at=COALESCE(refunded_at, datetime('now')), note=CASE WHEN ? THEN ? ELSE note END WHERE session_id=?")
-    .bind(status, manual ? 1 : 0, AUTO + `manual: placement differs. The ${status} order did not own the event's current placement (comped, extended or changed by hand), so it was left on. Check it in Admin > Events.`, order.session_id).run();
+    .bind(status, manual ? 1 : 0, AUTO + `manual: placement differs. The ${status} order did not own the current placement (comped, extended or changed by hand), so it was left on. Check it in Admin > ${isInstallerOrder(order) ? "Installers" : "Events"}.`, order.session_id).run();
   return manual;
 }

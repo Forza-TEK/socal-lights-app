@@ -17,7 +17,7 @@
 .plan p{margin:0;color:var(--muted)}
 .plan>h2{font-size:20px;margin:0 0 12px}
 .tiers{display:grid;gap:14px;margin:0 0 14px}.tier{padding-top:14px;border-top:1px solid var(--line)}.tier:first-child{padding-top:0;border-top:0}.tier p{margin-top:4px}.tier p b{color:var(--ink)}.tier .free{font-size:26px}
-@media(min-width:700px){.tiers.one{grid-template-columns:1fr}.tiers{grid-template-columns:repeat(3,1fr);gap:22px}.tier{padding:0 0 0 22px;border-top:0;border-left:1px solid var(--line)}.tier:first-child{padding-left:0;border-left:0}}.plan>.meta{margin:0 0 14px;font-size:14px}.plan .intro{margin-top:-4px}.plan .btn+.btn{margin-left:8px}.tier .btn{margin-top:12px}
+@media(min-width:700px){.tiers.one{grid-template-columns:1fr}.tiers{grid-template-columns:repeat(3,1fr);gap:22px}.tier{padding:0 0 0 22px;border-top:0;border-left:1px solid var(--line)}.tier:first-child{padding-left:0;border-left:0}}.plan>.meta{margin:0 0 14px;font-size:14px}.plan .intro{margin-top:-4px}.plan .btn+.btn{margin-left:8px}.tier{display:flex;flex-direction:column}.tier>p{margin-bottom:14px}.tier>.btn{margin-top:auto;align-self:flex-start}
 </style>
 <script src="/hit.js" defer></script>
 </head>
@@ -39,13 +39,12 @@
 <a class="btn" href="/add-event">Add your event</a></section>
 
 <section class="plan" id="banner"><h2>Installers</h2>
-<div class="tiers">
-<div class="tier"><div class="free">Free</div><p><b>Profile card.</b> Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map, so anyone who likes your work can click through to you.</p></div>
-<div class="tier paid"><div class="free">$50 <small>per season</small></div><p><b>Banner.</b> Everything in Free, plus your company name (linked to your website or email) and phone number in the labelled "Sponsor" banner at the top of the list on the map. It scrolls whenever your service area is in the map view.</p></div>
-<div class="tier paid"><div class="free">$75 <small>per season</small></div><p><b>Banner and top of the list.</b> Everything in the $50 banner, plus your company card at the top of the list, right behind the Featured events. Paid placements are always labelled.</p></div>
+<div class="tiers" id="insttiers">
+<div class="tier"><div class="free">Free</div><p><b>Profile card.</b> Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map, so anyone who likes your work can click through to you.</p><a class="btn ghost" href="/add-house?kind=installer" aria-label="Choose Free, create your free profile">Create your free profile</a></div>
 </div>
-<p class="meta paid">To add the banner or the top of the list, email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>.</p>
-<a class="btn" href="/add-house">Post your installs</a></section>
+<p class="meta paid" id="instnote">Paid placements are always labelled "Sponsor". You pay once on Stripe's secure page; there is no subscription. You can renew or upgrade any time from your dashboard.</p>
+<p class="meta paid" id="instseason"></p>
+<p class="meta paid">Questions? Email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>.</p></section>
 
 <section class="plan" id="contests"><h2>Contest organizers</h2>
 <div class="tiers one"><div class="tier"><div class="free">Free</div><p><b>Run a decorating contest.</b> Cities, HOAs, chambers and neighborhood groups: resident entries, voting, judges, and People's Choice and Judges' Choice awards.</p></div></div>
@@ -68,12 +67,20 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const dollars = (p) => "$" + (p.cents / 100);
 // one number (no person) when Choose is tapped, to see how many reach the next step
 $("#plans").addEventListener("click", (e) => { if (e.target.closest("a.btn")) try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k: "fn:event-feature-choose" })], { type: "application/json" })); } catch {} });
+import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261107b";
 const PAID = (on) => { document.querySelectorAll(".paid,#featnote,#plans").forEach((e) => (e.hidden = !on)); };
+const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
 if (/SoCalLightsApp/.test(navigator.userAgent)) {
   // Paid placement is web-only (store rules): the paid options are not shown in the app.
   PAID(false);
 } else {
   const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({})), PL = cfg.featurePlans || {};
+  const IP = cfg.installerPlans || {}, ikeys = SPONSOR_KEYS.filter((k) => IP[k]);
+  if (ikeys.length) {
+    $("#insttiers").insertAdjacentHTML("beforeend", ikeys.map((k) => { const c = sponsorCopy(k); return `<div class="tier paid"><div class="free">${money(IP[k].cents)} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(c.blurb)}</p><a class="btn ghost" href="/sponsor?plan=${k}" data-choose aria-label="Choose ${esc(c.name)}, ${money(IP[k].cents)}">Choose</a></div>`; }).join(""));
+    const r = seasonRule(cfg); $("#instseason").textContent = r.rule + " " + r.now;
+    $("#insttiers").addEventListener("click", (e) => { if (e.target.closest("[data-choose]")) beacon("fn:pricing-choose"); });
+  } else { $("#instnote").hidden = true; $("#instseason").hidden = true; }
   const keys = PLAN_KEYS.filter((k) => PL[k]);
   if (!keys.length) { $("#featnote").hidden = true; $("#plans").hidden = true; }
   else $("#plans").insertAdjacentHTML("beforeend", keys.map((k) => { const c = planCopy(k, PL); const what = planBlurb(k, PL); return `<div class="tier paid"><div class="free">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(what)}</p><a class="btn ghost" href="/feature?plan=${k}" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</a></div>`; }).join(""));

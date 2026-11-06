@@ -4,6 +4,8 @@
 //   merge : into = the profile to keep. Homes, contests and the profile's page move to it, and this profile is removed.
 import { json, err, clean, webUrl } from "../../../_lib/util.js";
 import { phoneField, line, normText, normName } from "../../../_lib/fields.js";
+import { ptToday } from "../../../_lib/featured.js";
+import { installerFloor } from "../../../_lib/sponsor.js";
 
 export async function onRequestGet({ params, env }) {
   const installer = await env.DB.prepare("SELECT * FROM installers WHERE id = ?").bind(params.id).first();
@@ -43,6 +45,10 @@ export async function onRequestPost({ params, request, env }) {
     const owner = clean(b.owner, 120).toLowerCase();
     const bu = clean(b.banner_until, 10), tu = clean(b.top_until, 10); if ((bu && !/^\d{4}-\d{2}-\d{2}$/.test(bu)) || (tu && !/^\d{4}-\d{2}-\d{2}$/.test(tu))) return err(400, "An end date doesn't look right.");
     if (owner && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(owner)) return err(400, "That owner email doesn't look right.");
+    // A date set by hand never cuts off a paid order: the banner and top card cannot end before the latest paid order that is still running.
+    const floor = await installerFloor(env.DB, inst.id, ptToday());
+    if (bu < floor.banner) return err(400, `A paid banner order runs until ${floor.banner}, so the banner date cannot be earlier. To end it sooner, refund the order in Stripe and mark it refunded under Orders.`);
+    if (tu < floor.top) return err(400, `A paid top-of-the-list order runs until ${floor.top}, so that date cannot be earlier. To end it sooner, refund the order in Stripe and mark it refunded under Orders.`);
     await env.DB.batch([
       env.DB.prepare("UPDATE installers SET name=?, web=?, phone=?, area=?, blurb=?, email=?, owner_email=?, banner_until=?, top_until=? WHERE id=?").bind(name, web || "", ph.value, line(b.area, 240), normText(clean(b.blurb, 600)), email, owner, bu, tu, inst.id),
       // keep the presenting-installer name on contests in step with the profile
@@ -58,6 +64,9 @@ export async function onRequestPost({ params, request, env }) {
     const fill = ["web", "phone", "area", "blurb", "email"].filter((c) => !into[c] && inst[c]);
     const stmts = [
       env.DB.prepare("UPDATE posts SET installer_id = ? WHERE installer_id = ?").bind(into.id, inst.id),
+      // paid Sponsor orders follow the profile (and the placement they paid for), so a refund later still finds it
+      env.DB.prepare("UPDATE feature_orders SET event_id = ? WHERE target = 'installer' AND event_id = ?").bind(into.id, inst.id),
+      env.DB.prepare("UPDATE installers SET banner_until = MAX(banner_until, ?), top_until = MAX(top_until, ?) WHERE id = ?").bind(inst.banner_until || "", inst.top_until || "", into.id),
       env.DB.prepare("UPDATE contests SET installer_name = ? WHERE lower(installer_name) = lower(?)").bind(into.name, inst.name),
       ...fill.map((c) => env.DB.prepare(`UPDATE installers SET ${c} = ? WHERE id = ?`).bind(inst[c], into.id)),
       env.DB.prepare("DELETE FROM installers WHERE id = ?").bind(inst.id),
