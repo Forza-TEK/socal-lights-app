@@ -37,7 +37,7 @@ _Last updated 2026-11-06 (design pass). `[x]` done and verified, `[ ]` open. Det
 - [ ] Stripe, Settings, Business, Customer emails: **Successful payments** on (cannot be read by API).
 **Covina follow-ups (demo held Nov 5; they loved the routes)**
 - [ ] Delete the live demo contest "Holiday Home Lighting Contest 2026" (organization "Mission Viejo", created during the call) in Admin, Contests, so it does not appear on the public map under a city's name.
-- [ ] Refresh and upload the tutorial videos you promised, then tell Covina. **What is out of date, video by video: `docs/tutorial-updates.md`** (re-record `approve`, a short `profile` fix, and make "Add your city's homes yourself"; the rest is optional).
+- [ ] Tutorial videos: `approve`, `profile`, `voting` re-recorded and new videos "Add your city's homes yourself", "Unpublish and publish again", "Claim your home" are live (2026-11-06); you can tell Covina. Still open: "Feature your event or home" (record after the new Featured pricing is live), and phone versions of the three re-recorded videos. Details: `docs/tutorial-updates.md`. Please review the new videos on `/tutorials`.
 - [ ] Check in with Covina's Director in a week; offer a judge-setup session. The CEO session is building **organizer-added homes** (paste a list of addresses) because the city will enter its registered homes itself.
 - [ ] Tell the Grok agents when organizer entry is live, so the playbook line can be switched on.
 
