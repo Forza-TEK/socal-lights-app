@@ -243,7 +243,12 @@ function startMap() {
   geo.on("error", (e) => {
     if (state.me) { flyToMe(); return; } // we already know where you are (read when you allowed it)
     const c = e && e.code;
-    toast(c === 1 ? (SOCIAL_BROWSER ? "This app's built-in browser blocks location. Open socallights.app in Safari or Chrome." : "Location is blocked for this site. Allow it in your browser settings, then tap the button again.") : c === 3 ? "Still looking for your location. Tap the button again in a moment." : "Couldn't find your location right now.");
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || ""), android = /Android/i.test(navigator.userAgent || "");
+    const blocked = SOCIAL_BROWSER ? "This app's built-in browser blocks location. Open socallights.app in Safari or Chrome."
+      : ios ? "Location is off for this site. On your iPhone: Settings > Privacy & Security > Location Services > Safari Websites (or your browser) > While Using the App. Then reload this page."
+      : android ? "Location is off for this site. Tap the lock icon in the address bar > Permissions > Location > Allow. Also make sure Location is on in your phone's quick settings. Then tap the button again."
+      : "Location is blocked for this site. Allow it in your browser's site settings, then tap the button again.";
+    toast(c === 1 ? blocked : c === 3 ? "Still looking for your location. Tap the button again in a moment." : "Couldn't find your location right now. Check that Location is on for your phone.", false, c === 1 ? 12000 : 5000);
   });
   // The control only zooms to the (often wide) accuracy circle; fly in close on the user instead
   geo.on("geolocate", (e) => { const wel = document.getElementById("welcome"); if (wel) wel.remove(); state.me = { lat: e.coords.latitude, lng: e.coords.longitude }; state.meErr = ""; scheduleList(); map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }); });
@@ -620,9 +625,9 @@ function whenShort(ev) {
 }
 const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
 let toastT;
-function toast(msg, accent) {
+function toast(msg, accent, ms) {
   let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
-  t.textContent = msg; t.classList.toggle("accent", !!accent); t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2200);
+  t.textContent = msg; t.classList.toggle("accent", !!accent); t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms || 2200);
 }
 async function shareItem(k) {
   const it = findKey(k); if (!it) return;
