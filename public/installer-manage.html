@@ -8,9 +8,9 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261107a">
-<link rel="stylesheet" href="/contest.css?v=20261107a">
-<link rel="stylesheet" href="/forms.css?v=20261102e">
+<link rel="stylesheet" href="/addflow.css?v=20261106zb">
+<link rel="stylesheet" href="/contest.css?v=20261106zb">
+<link rel="stylesheet" href="/forms.css?v=20261106zb">
 <style>main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
 <script src="/hit.js" defer></script>
 </head>
@@ -21,9 +21,9 @@
 <script type="module">
 import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261106y";
 import { refreshAcct } from "/addflow.js?v=20261107a";
-import { mountShell } from "/appshell.js?v=20261107a";
+import { mountShell } from "/appshell.js?v=20261106zb";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
-import { homeForm, fsec, ff, openFormWindow } from "/forms.js?v=20261102b";
+import { homeForm, fsec, ff, openFormWindow } from "/forms.js?v=20261106zb";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], fmt = (s) => { const [, m, d] = String(s).split("-").map(Number); return MON[m - 1] + " " + d; };
 let D = null, panel = (location.hash || "").slice(1) || "overview";
@@ -47,7 +47,7 @@ const post = async (body) => { const r = await fetch(`/api/installers/${encodeUR
 function render() {
   const x = D.installer, mx = Math.max(1, ...D.views.map((v) => v.n));
   $("#app").innerHTML = `<section data-p="overview"><div class="card"><div class="banner"><div class="logo" aria-hidden="true">${x.hasLogo ? `<img src="/api/installers/${esc(slug)}/logo?${Date.now()}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:inherit">` : esc(x.name.slice(0, 1))}</div><div><h1>${esc(x.name)}</h1><span>Your installer profile · <a href="/installer/${esc(slug)}">view the public page</a></span></div></div>
-   <div class="stats"><div class="stat"><b>${D.viewsTotal}</b><span>Profile views (30 days)</span></div><div class="stat"><b>${D.homes}</b><span>Homes on the map</span></div><div class="stat"><b>${D.leads.length}</b><span>Quote requests</span></div></div></div>
+   <div class="stats"><div class="stat"><b>${D.viewsTotal}</b><span>Profile views (30 days)</span></div><div class="stat"><b>${D.homes}</b><span>Homes on the map</span></div><div class="stat"><b>${D.leads.length}</b><span>Quote requests</span></div>${D.banner ? `<div class="stat"><b>${D.banner.imp}</b><span>Map banner: times shown (30 days)</span></div><div class="stat"><b>${D.banner.click + D.banner.call}</b><span>Map banner: taps on your name or phone</span></div>` : ""}</div></div>
   </section><section data-p="homes">${!D.claims.length && !(D.shared && D.shared.length) ? `<div class="card"><p class="muted" style="margin:0">No homes need your attention. Homes that name your company, and homes you share with homeowners, appear here.</p></div>` : ""}${D.claims.length ? `<div class="card"><h2 style="font-size:19px">Homes that name your company</h2><p class="muted small">Homeowners said you installed these. Confirm the ones you did (they get a check mark) or remove the ones you didn't.</p><div class="list">${D.claims.map((c) => `<div class="rowi"><div><b>${esc(c.title)}</b><br><span class="small muted">${esc(c.city)} · posted by ${esc(c.biz)}</span></div><div class="acts"><button class="btn org sm" type="button" data-claim="confirm:${esc(c.id)}">Confirm</button><button class="btn ghost sm" type="button" data-claim="remove:${esc(c.id)}">Not ours</button></div></div>`).join("")}</div></div>` : ""}
   ${D.shared && D.shared.length ? `<div class="card"><h2 style="font-size:19px">Homes you share with homeowners</h2><p class="muted small">Once you confirm you installed a home, you and the homeowner can both edit its listing. Each of you is emailed when the other changes something, and every change is listed here with who made it.</p><div class="list">${D.shared.map(sharedRow).join("")}</div></div>` : ""}
   </section><section data-p="details"><div class="card"><h2 style="font-size:19px">Your details</h2><form id="df" class="f" novalidate>${fsec("How people reach you", "Shown on your public page so families can ask for a quote.", ff("Phone for quotes", `<input id="dp" value="${esc(x.phone)}" maxlength="80" inputmode="tel" type="tel">`, { c: "c3" }) + ff("Website", `<input id="dw" value="${esc(x.web)}" maxlength="200" type="url" placeholder="https://">`, { c: "c3" }) + `<div class="ff c6"><div class="ffl"><span class="lt">Areas served</span>${areaHtml({ id: "da", value: x.area })}</div><small class="fhint">The cities or counties you work in, such as Orange County and Los Angeles.</small></div>`)}${fsec("About", "", ff("About your company", `<textarea id="db" rows="4" maxlength="600">${esc(x.blurb)}</textarea>`, { hint: "Shown on your public page." }))}<p class="err" id="de" role="alert" hidden></p><div class="mfoot"><button class="btn org" type="submit">Save</button></div></form></div>
@@ -70,6 +70,6 @@ function render() {
 }
 noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261106y" defer></script>
+<script src="/footer.js?v=20261106z" defer></script>
 </body>
 </html>

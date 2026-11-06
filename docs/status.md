@@ -4,6 +4,8 @@ _Last updated: 2026-11-06 (audit fixes rebased on main)_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Function and design audit (2026-11-06)
+- Automated sweep of 22 pages x phone/desktop x light/dark plus a seeded contest, and a crawl of 409 links (0 broken). Nine gaps fixed; open items and what needs a real device or an owner decision are in `docs/audit-2026-11-06.md`.
 ## Featured event pricing (2026-11-06)
 Owner-approved: the window follows the event. Featured pin $10 and Top of the list $15 run from payment to the event's last day (`end_date` as stored when paid, fixed then), capped at 30 days: `min(end_date, today + 30)`. Checkout refuses an event that starts more than 30 days away (400, "Featuring opens 30 days before your event: come back on <date>"); a running event is fine. Whole season $20 is replaced by **Full run $25** (level 2; events of 31+ days that still have 7+ days left; to the last day, capped at 90 days). The stored plan key stays `season` so old orders and the refund code keep working; `PLANS.season.label` is "Full run"; paid $20 orders are grandfathered (no cap, no amount-mismatch flag). Homes unchanged ($10 / $15, 30 days, Full run refused). A repeat purchase that adds nothing (same or lower level, already through the cap or last day) is refused with a 400; an upgrade of level is still sold; the stacking rule never shortens and never lowers the level.
 - **Code.** `functions/_lib/featured.js` (`PLANS`, `applyPlan`, `eventPlanProblem`, `OPEN_DAYS`), `functions/api/feature/checkout.js`, `functions/api/stripe-webhook.js`, `/api/config` (adds `featureOpenDays`, `minLength`, `maxDays`). `recomputeAfterRevoke` and `restorePlacement` work from stored `applied_until`, so they needed no change; tests cover them under the cap (`tests/featured-window.test.mjs`).
@@ -487,3 +489,7 @@ Added 2 events (migration 0164): Bell Holiday Village (Dec 5) and Winter Runderl
 - Unified the visual style: the older white, light-weight pages now use the cream palette and heavy headings of the map and server-built pages (`addflow.css`, `info.css`, `contest.css`, `appshell.css`, 404/offline, pricing). Season red darkened slightly for contrast on cream.
 - `/c/<unknown>` now returns a real 404.
 - Re-ran the full sweep: no new contrast, overflow or console problems.
+- Tutorials skip-link flag fixed: footer.js no longer adds a second skip link on pages that already have the app-shell one.
+
+## 2026-11-06 (installer banner)
+- Built the map banner for installers (free pilot): migration 0169, `/api/banner`, `/api/banner/hit`, `public/banner.js`, Admin installer profile "Map banner" date and 30-day numbers, installer dashboard numbers, privacy and pricing wording. See `docs/installer-banner.md`.

@@ -23,10 +23,11 @@ export async function onRequestGet({ params, request, env }) {
     q("SELECT name, email, phone, note, created_at FROM installer_leads WHERE installer_id = ? ORDER BY created_at DESC LIMIT 100", inst.id),
     q("SELECT id, title, biz, city, status, poster_type, descr, where_txt, season, lights_on, visit, parking, accessible, radio, web, phone, service_area FROM posts WHERE installer_id = ? AND status IN ('approved','paused') AND (installer_confirmed = 1 OR poster_type = 'installer') ORDER BY created_at DESC LIMIT 100", inst.id),
   ]);
+  const banner = inst.banner_until && inst.banner_until >= new Date().toISOString().slice(0, 10) ? await env.DB.prepare("SELECT COALESCE(SUM(imp),0) AS imp, COALESCE(SUM(click),0) AS click, COALESCE(SUM(call),0) AS call FROM banner_stats WHERE installer_id = ? AND day >= date('now','-29 days')").bind(inst.id).first().catch(() => null) : null;
   const ids = shared.map((h) => h.id);
   const ch = ids.length ? (await env.DB.prepare(`SELECT post_id, by_name, by_role, field, old, new, at FROM listing_changes WHERE post_id IN (${ids.map(() => "?").join(",")}) ORDER BY at DESC, rowid DESC LIMIT 300`).bind(...ids).all()).results : [];
   for (const h of shared) h.changes = ch.filter((c) => c.post_id === h.id).slice(0, 8);
-  return json({ installer: { slug: inst.slug, name: inst.name, web: inst.web, phone: inst.phone, area: inst.area, blurb: inst.blurb, hasLogo: !!inst.logo }, claims, shared, homes: homes[0].n, views: views.reverse(), viewsTotal: views.reduce((s, v) => s + v.n, 0), leads }, { headers: { "cache-control": "no-store" } });
+  return json({ installer: { slug: inst.slug, name: inst.name, web: inst.web, phone: inst.phone, area: inst.area, blurb: inst.blurb, hasLogo: !!inst.logo }, claims, shared, homes: homes[0].n, views: views.reverse(), viewsTotal: views.reduce((s, v) => s + v.n, 0), leads, banner: banner ? { until: inst.banner_until, ...banner } : null }, { headers: { "cache-control": "no-store" } });
 }
 export async function onRequestPost({ params, request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");

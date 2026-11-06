@@ -854,3 +854,19 @@ body.lb-open{overflow:hidden}
 select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 
 .claimhome{display:inline-block;margin:8px 0 2px;font-size:14px;font-weight:600;color:var(--season);text-decoration:none}.claimhome:hover{text-decoration:underline}
+
+/* Installer banner (banner.js): a thin labelled strip. Desktop: its own line under the logo/search/buttons. Phone: right above the list. */
+.sponsor{display:flex;align-items:center;gap:8px;box-sizing:border-box;height:var(--sp-h,24px);min-width:0;padding:0 4px 0 10px;border-radius:999px;background:var(--surface);box-shadow:var(--shadow-sm,0 1px 4px rgba(20,22,27,.12));font-size:12.5px;line-height:1;white-space:nowrap}
+.sponsor[hidden]{display:none}
+.topbar>.sponsor{width:100%;max-width:560px}
+.sp-tag{flex:none;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sp-name,.sp-tel{display:inline-flex;align-items:center;height:24px;color:var(--ink);font-weight:700;text-decoration:none}
+.sp-name{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.sp-name:hover,.sp-tel:hover{text-decoration:underline;text-underline-offset:3px}
+.sp-tel{flex:none}
+.sp-sep{flex:none;color:var(--muted)}
+.sp-next{flex:none;margin-left:auto;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink);font:700 20px/1 var(--f-body,inherit);cursor:pointer}
+.sp-next:hover{background:var(--surface-2,rgba(0,0,0,.06))}
+.sponsor a:focus-visible,.sp-next:focus-visible{outline:2px solid var(--season);outline-offset:1px;border-radius:6px}
+.panel>.sponsor{margin:2px 14px 6px;flex:none}
+@media (min-width:701px){body.has-sponsor #welcome{top:126px}body.has-sponsor .maplibregl-ctrl-top-right{top:116px}}

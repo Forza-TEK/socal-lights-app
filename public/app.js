@@ -6,6 +6,7 @@ import { SITE } from "/site-config.js?v=20261031j";
 import "/norm-ui.js?v=20261102b";
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261105a";
+import { initBanner, updateBanner, regionKey, bannerHeight } from "/banner.js?v=20261106a";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -503,8 +504,24 @@ function initSlidePill(box, selector) {
 }
 initSlidePill(document.querySelector(".ptabs"), '.ptab[aria-selected="true"]');
 initSlidePill(document.getElementById("bnav"), "button[aria-current]");function fitRoute() { const st = routeStops(), og = routeOrigin(); if (st.length + (og ? 1 : 0) < 2 || !mapReady) return; const b = new maplibregl.LngLatBounds(); st.forEach((e) => b.extend([e.lng, e.lat])); if (og) b.extend([og.lng, og.lat]); map.fitBounds(b, { padding: padding(), maxZoom: 13, duration: 600 }); }
+// Installer banner: which cities and counties are in the map view right now (cities by their centre, plus where the places in view are).
+function viewRegions() {
+  const names = new Set(); if (!mapReady) return regionKey(names);
+  const a = mapArea(), inA = (lng, lat) => { const q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; };
+  const countyOf = {}; E.forEach((e) => { if (e.city && e.c) countyOf[e.city] = e.c; }); SHOW.forEach((p) => { if (p.city && p.county) countyOf[p.city] = p.county; });
+  const add = (c) => { names.add(c); if (countyOf[c]) names.add(countyOf[c]); };
+  Object.entries(CITY).forEach(([c, [lat, lng]]) => { if (inA(lng, lat)) add(c); });
+  E.forEach((e) => { if (inA(e.lng, e.lat)) { add(e.city); if (e.c) names.add(e.c); } });
+  SHOW.forEach((p) => { if (p.plat != null && inA(p.plng, p.plat)) { add(p.city); if (p.county) names.add(p.county); } });
+  const c = map.getCenter(); let best = "", bd = 1e9; Object.entries(CITY).forEach(([n, [lat, lng]]) => { const d = miles({ lat: c.lat, lng: c.lng }, { lat, lng }); if (d < bd) { bd = d; best = n; } }); if (best) add(best); // zoomed in far enough that no city centre is in view
+  return regionKey(names);
+}
+const bannerTick = () => updateBanner(viewRegions());
+function placeBanner(el) { if (isPhone()) { const g = $("#grab"); if (el.previousElementSibling !== g) g.after(el); } else { const t = document.querySelector(".topbar"); if (el.parentNode !== t) t.appendChild(el); } }
+let bannerOn = false;
+async function startBanner() { bannerOn = await initBanner({ place: (el) => { placeBanner(el); }, onChange: () => { if (isPhone()) setSheet(sheetState); } }); if (bannerOn) bannerTick(); }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
-let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel({ quiet: true }); }, 80); }
+let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (bannerOn) bannerTick(); if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel({ quiet: true }); }, 80); }
 function counts() { $("#n-events").textContent = E.filter(evMatch).length + SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; }
 function datetile(ev) {
   // Running now: "THRU 31 OCT". One night: "OCT 31 1 night". Upcoming: "NOV 27 opens".
@@ -1223,7 +1240,7 @@ const PEEK = 160; // visible height at Peek: handle + the buttons row, which end
 let safeBottom = null;
 function peekH() {
   if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
-  return PEEK + safeBottom;
+  return PEEK + safeBottom + (typeof bannerHeight === "function" && isPhone() ? bannerHeight() : 0);
 }
 let sheetState = "peek";
 const fullH = () => $("#panel").offsetHeight || innerHeight * 0.85;
@@ -1323,7 +1340,7 @@ async function load() {
   } catch {
     $("#pbody").innerHTML = `<div class="empty">Events couldn't load. Check your connection and refresh the page.</div>`; return;
   }
-  renderSeasonBar(); applyFilters();
+  renderSeasonBar(); applyFilters(); startBanner();
   const h = location.hash.slice(1), dl = h.match(/^([eh])-(.+)$/);
   if (dl) {
     const ev = dl[1] === "e" ? E.find((x) => x.id === dl[2]) : null, ho = dl[1] === "h" ? SHOW.find((x) => x.id === dl[2]) : null, sn = ev ? ev.sn : ho ? ho.season : "";
@@ -1354,6 +1371,6 @@ async function refreshData() {
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - loadedAt > 5 * 60000) refreshData(); });
 setInterval(() => { if (document.visibilityState === "visible") refreshData(); }, 15 * 60000);
 setSheet("peek");
-let wasPhone = isPhone(); matchMedia("(max-width:700px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); renderPanel(); } });
+let wasPhone = isPhone(); matchMedia("(max-width:700px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); const sp = document.getElementById("sponsor"); if (sp) { placeBanner(sp); if (isPhone()) setSheet(sheetState); } renderPanel(); } });
 let rT; addEventListener("resize", () => { pinBox = null; clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); renderPanel(); }, 120); });
 load();

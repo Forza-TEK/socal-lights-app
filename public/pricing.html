@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261107a">
-<link rel="stylesheet" href="/info.css?v=20261107a">
+<link rel="stylesheet" href="/addflow.css?v=20261106zb">
+<link rel="stylesheet" href="/info.css?v=20261106zb">
 <style>
 @media(min-width:700px){.grid.two{grid-template-columns:repeat(2,1fr)}}
 .plan{display:flex;flex-direction:column;align-content:normal}.plan>.btn{margin-top:auto;align-self:flex-start}.plan>ul{margin-bottom:14px}
@@ -30,7 +30,7 @@
 <h2>Adding to the map</h2>
 <div class="grid two">
 <section class="plan"><h3>Homeowners</h3><div class="free">Free</div><p>Show your lights display on the map so families can drive by. Entering a display and entering a contest are free. A contest winner, 2nd or 3rd place can optionally feature their home (below).</p><a class="btn" href="/add-house">Add your display</a></section>
-<section class="plan"><h3>Installers</h3><div class="free">Free <small>for now</small></div><p>Post the lights you have installed and get a company profile page that lists your homes.</p><a class="btn" href="/add-house">Post your installs</a></section>
+<section class="plan"><h3>Installers</h3><div class="free">Free <small>for now</small></div><p>Post the lights you have installed and get a company profile page that lists your homes. A labelled "Sponsor" banner on the map can also show your company name and phone when your service area is in view. It is free during the founding pilot.</p><a class="btn" href="/add-house">Post your installs</a></section>
 <section class="plan"><h3>Event organizers</h3><div class="free">Free <small>for now</small></div><p>List your tree lighting, parade, market, haunted house or light show. Featured placement is optional (below).</p><a class="btn" href="/add-event">Add your event</a></section>
 <section class="plan"><h3>Contest organizers</h3><div class="free">Free <small>for now</small></div><p>Cities, HOAs, chambers and neighborhood groups: run a decorating contest with resident entries, voting, judges, and People's Choice and Judges' Choice awards.</p><a class="btn" href="/add-contest">Create a contest</a></section>
 </div>
@@ -66,6 +66,6 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   else $("#plans").innerHTML = PLAN_KEYS.filter((k) => PL[k]).map((k) => { const c = planCopy(k, PL); return `<section class="plan${k === "top" ? " pop" : ""}"><h3>${c.name}</h3><div class="price">${dollars(PL[k])} <small>/ ${c.unit}</small></div>${c.sub ? `<p class="meta">${c.sub}</p>` : ""}<ul>${c.bullets.map((t) => `<li>${esc(t)}</li>`).join("")}</ul><a class="btn${k === "top" ? "" : " ghost"}" href="/feature?plan=${k}" aria-label="Choose ${c.name}, ${dollars(PL[k])}">Choose</a></section>`; }).join("");
 }
 </script>
-<script src="/footer.js?v=20261106y" defer></script>
+<script src="/footer.js?v=20261106z" defer></script>
 </body>
 </html>

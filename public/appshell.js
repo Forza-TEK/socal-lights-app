@@ -13,7 +13,7 @@ const P = {
 };
 const svg = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.file}</svg>`;
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261107a"; document.head.appendChild(l); }
+if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261106z"; document.head.appendChild(l); }
 const SITE = [["map", "Map", "/", "map"], ["add", "Add", "/add", "add"], ["tut", "Tutorials", "/tutorials", "play"], ["help", "Help", "/help", "help"], ["prof", "Your profile", "/profile", "user"]];
 
 // opts: { page: "tut"|"prof"|"contest"..., extra: [[key,label,href,icon]], title, items: [{k,label,icon,count?}], active, onPick(k) }
@@ -29,7 +29,7 @@ export function mountShell({ page, title, items, active, onPick, extra = [] }) {
   <div class="sh-scrim" id="sh-scrim"></div>
   <div class="sh-col"><header class="sh-top"><a class="sh-tbrand" href="/" aria-label="SoCal Lights home"><img src="/img/badge-160.webp" width="36" height="36" alt=""></a><span class="sh-title" id="sh-title">${esc(title)}</span><span class="sh-grow"></span>${themeBtn()}<span id="acct"></span></header></div>
   <nav class="sh-bbar" aria-label="Quick sections">${bottom}<button type="button" class="sh-bb" id="sh-more" aria-expanded="false" aria-controls="sh-side">${svg("more")}<span>More</span></button></nav>`;
-  document.body.prepend(root);
+  document.querySelectorAll(".skiplink").forEach((a) => a.remove()); document.body.prepend(root);
   const col = root.querySelector(".sh-col"); content.classList.add("sh-content"); col.appendChild(content);
   mountAcct(root.querySelector("#acct"));
   const close = () => { document.body.classList.remove("sh-open"); root.querySelector("#sh-more").setAttribute("aria-expanded", "false"); };
