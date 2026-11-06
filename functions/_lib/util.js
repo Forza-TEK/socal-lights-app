@@ -1,4 +1,5 @@
 // Shared helpers for the API functions.
+import { ptToday } from "./time.js";
 
 export const json = (data, init = {}) =>
   new Response(JSON.stringify(data), {
@@ -64,7 +65,7 @@ export function rowToPost(r, admin = false) {
 function featuredLevel(r) {
   if (!r.featured) return 0;
   // Same "today" as when a plan is bought (roughly Pacific time), so a 30-day placement lasts through the end of its last day, not until 4 pm.
-  if (r.featured_until && r.featured_until < new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10)) return 0;
+  if (r.featured_until && r.featured_until < ptToday()) return 0;
   return r.featured >= 2 ? 2 : 1;
 }
 

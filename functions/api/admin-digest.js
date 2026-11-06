@@ -9,6 +9,7 @@ import { ptToday } from "../_lib/featured.js";
 import { opsSince, pruneOps } from "../_lib/oplog.js";
 import { funnelCounts, STEPS } from "../_lib/funnel.js";
 import { getUsage, usageLines } from "../_lib/cfusage.js";
+import { shiftDay } from "../_lib/time.js";
 
 export async function onRequestPost({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
@@ -44,7 +45,7 @@ export async function onRequestPost({ request, env }) {
   const payments = payLines.length ? `## Payments that need you (${payLines.length})\n${payLines.slice(0, 10).map((o) => `- ${o.name} · ${o.plan} ${usd(o.amount)} · ${o.why}`).join("\n")}${payLines.length > 10 ? `\n...and ${payLines.length - 10} more` : ""}\nOpen Admin > Orders.\n\n` : "";
   // Automatic renewals of installer Sponsor placements: what is coming and what needs a look (the Orders tab lists them)
   const rr = (await env.DB.prepare("SELECT status, attempts, next_charge_date AS d FROM installer_autorenew WHERE enabled = 1 OR status IN ('lapsed','paused')").all().catch(() => ({ results: [] }))).results;
-  const soon = rr.filter((r) => r.status === "active" && r.attempts === 0 && r.d && r.d <= new Date(Date.now() - 8 * 3600_000 + 7 * 86400_000).toISOString().slice(0, 10)).length, retrying = rr.filter((r) => r.status === "active" && r.attempts > 0).length, lapsedN = rr.filter((r) => r.status === "lapsed").length, pausedN = rr.filter((r) => r.status === "paused").length;
+  const soon = rr.filter((r) => r.status === "active" && r.attempts === 0 && r.d && r.d <= shiftDay(ptToday(), 7)).length, retrying = rr.filter((r) => r.status === "active" && r.attempts > 0).length, lapsedN = rr.filter((r) => r.status === "lapsed").length, pausedN = rr.filter((r) => r.status === "paused").length;
   const lastRun = ((await env.DB.prepare("SELECT MAX(day) AS d FROM site_hits WHERE page = 'fn:autorenew-run'").first().catch(() => null)) || {}).d || "never", overdue = rr.filter((r) => r.status === "active" && r.attempts === 0 && r.d && r.d < ptToday()).length;
   const renewals = rr.length ? `## Automatic renewals\n- ${rr.filter((r) => r.status === "active").length} on, ${soon} charging in the next 7 days, ${retrying} with a failed charge waiting for the retry, ${lapsedN} lapsed, ${pausedN} paused. Renewal job last ran: ${lastRun}.${overdue ? ` ${overdue} CHARGE${overdue === 1 ? "" : "S"} OVERDUE (the daily job missed them: run the workflow by hand).` : ""}\nOpen Admin > Orders.\n\n` : "";
   const WHAT = { email: "emails that failed to send", webhook: "Stripe webhook errors" };

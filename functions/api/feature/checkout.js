@@ -6,6 +6,7 @@ import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
 import { ownsEvent } from "../../_lib/ownership.js";
 import { homeForCheckout, HOME_PLANS, placeWord } from "../../_lib/podium.js";
 import { sha256hex, checkoutLimit, createCheckoutSession } from "../../_lib/stripe.js";
+import { ptToday } from "../../_lib/time.js";
 
 export async function onRequestPost({ request, env }) {
   // Paid placement is web-only (store rules). The UI is hidden in the app too; this is the soft server-side check.
@@ -39,7 +40,7 @@ export async function onRequestPost({ request, env }) {
   if (!ev) return err(404, "We couldn't find that event. Search for it again.");
   // Only the owner may pay: they submitted it, hold an approved claim, or run the contest it lists. (A claim gives no edit rights.)
   if (!pending && !home && !(await ownsEvent(env, user, ev.id, ""))) return err(403, "Claim this event first. Only its organizer can feature it.");
-  const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
+  const today = ptToday();
   if (!home && ev.end_date < today) return err(400, "That event has already ended.");
   if (!home) {
     // The window follows the event: featuring opens 30 days before it starts; the Full run plan needs a long event with time left.

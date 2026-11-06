@@ -9,6 +9,7 @@ import { isDate, slug, upsertEvent, verifyEventPage } from "../_lib/events.js";
 import { normName, line, normEmailText } from "../_lib/fields.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
+import { ptToday } from "../_lib/time.js";
 
 const AUTO_PUBLISH_PER_DAY = 100; // safety valve: past this, everything waits for review
 const BAD = /\b(viagra|casino|porn|xxx|escort|crypto|bitcoin|loan|forex|cbd|betting)\b/i;
@@ -35,7 +36,7 @@ export async function onRequestPost({ request, env }) {
   if (!CITY[e.city]) return err(400, "Choose a city from the list.");
   if (!e.season || !SEASONS[e.season].types[e.type]) return err(400, "Choose a season and an event type.");
   if (!isDate(e.start_date) || !isDate(e.end_date) || e.end_date < e.start_date) return err(400, "Check the start and end dates.");
-  const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10); // roughly Pacific time
+  const today = ptToday(); // roughly Pacific time
   const limit = new Date(Date.now() + 500 * 86400_000).toISOString().slice(0, 10);
   if (e.end_date < today) return err(400, "That event has already ended.");
   if (e.start_date > limit) return err(400, "That date is too far in the future.");

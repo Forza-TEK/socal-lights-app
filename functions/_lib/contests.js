@@ -5,6 +5,7 @@ import { r2Delete, photoKeys } from "./dbchunk.js";
 import { logOp } from "./oplog.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS, defaultSeason } from "../../public/seasons.js";
+import { ptToday } from "./time.js";
 
 // Consumer mailbox providers: an address here proves nothing about who runs a website or an event.
 export const FREE_DOMAINS = new Set([
@@ -33,7 +34,7 @@ export function ownLabels(host) {
   return l.length - 1;
 }
 export const hasOwnName = (host) => ownLabels(host) >= 1;
-export const todayPT = () => new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10); // roughly Pacific time
+export const todayPT = ptToday;
 export const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || "");
 export const addDays = (s, n) => new Date(new Date(s + "T12:00:00Z").getTime() + n * 86400_000).toISOString().slice(0, 10);
 

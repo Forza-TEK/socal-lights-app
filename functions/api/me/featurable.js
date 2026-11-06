@@ -5,8 +5,9 @@ import { json, err } from "../../_lib/util.js";
 import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
 import { OPEN_DAYS, addDays } from "../../_lib/featured.js";
 import { featurableHomes, placeWord } from "../../_lib/podium.js";
+import { ptToday } from "../../_lib/time.js";
 
-const today = () => new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10); // Pacific-ish, same as checkout
+const today = () => ptToday(); // Pacific-ish, same as checkout
 // Same rule as featuredLevel() in _lib/util.js
 // The day featuring opens for an event that starts more than OPEN_DAYS from today (else null): shown so the organizer knows when to come back.
 const opens = (start, t) => (start && start > addDays(t, OPEN_DAYS) ? addDays(start, -OPEN_DAYS) : null);

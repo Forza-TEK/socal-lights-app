@@ -1,6 +1,7 @@
 // POST /api/visit { p: "/tutorials" } — counts one page view for the day, by page group. No IP address, cookie or account is stored.
 import { json } from "../_lib/util.js";
 import { CLIENT_KEYS as FUNNEL_KEYS, DAILY_CAP as FUNNEL_CAP } from "../_lib/funnel.js";
+import { ptToday } from "../_lib/time.js";
 
 export const group = (p) => {
   p = String(p || "/").split(/[?#]/)[0].toLowerCase().replace(/\/+$/, "") || "/";
@@ -24,13 +25,13 @@ export async function onRequestPost({ request, env }) {
   if (raw.length > 300) return json({ ok: true }, { headers: { "cache-control": "no-store" } });
   let b = {}; try { b = JSON.parse(raw) || {}; } catch {}
   if (b.k !== undefined) {
-    const day = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
+    const day = ptToday();
     if (CLICK_KEYS.includes(b.k) || FUNNEL_KEYS.includes(b.k)) try { await env.DB.prepare("INSERT INTO site_hits (day, page, n) VALUES (?, ?, 1) ON CONFLICT(day, page) DO UPDATE SET n = n + 1 WHERE n < ?").bind(day, b.k, DAILY_CAP).run(); } catch {}
     return json({ ok: true }, { headers: { "cache-control": "no-store" } });
   }
   const page = group(b.p);
   if (page) {
-    const day = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10); // roughly Pacific time
+    const day = ptToday(); // roughly Pacific time
     try {
       const seen = await env.DB.prepare("SELECT COUNT(*) AS n, SUM(page = ?) AS mine FROM site_hits WHERE day = ? AND page NOT LIKE 'fn:%' AND page NOT LIKE 'click:%' AND page NOT LIKE 'ref:%'").bind(page, day).first();
       if (seen && (seen.mine || seen.n < MAX_PAGES_PER_DAY)) await env.DB.prepare("INSERT INTO site_hits (day, page, n) VALUES (?, ?, 1) ON CONFLICT(day, page) DO UPDATE SET n = n + 1 WHERE n < ?").bind(day, page, DAILY_CAP).run();
