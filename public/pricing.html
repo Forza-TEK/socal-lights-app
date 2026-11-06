@@ -62,7 +62,7 @@
 <script type="module">
 import { themeBtn, mountAcct } from "/addflow.js?v=20261107a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
-import { planCopy, PLAN_KEYS } from "/feature-plans.js?v=20261106z";
+import { planCopy, planBlurb, PLAN_KEYS } from "/feature-plans.js?v=20261107a";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents / 100);
@@ -74,7 +74,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({})), PL = cfg.featurePlans || {};
   const keys = PLAN_KEYS.filter((k) => PL[k]);
   if (!keys.length) { $("#featnote").hidden = true; $("#plans").hidden = true; }
-  else $("#plans").insertAdjacentHTML("beforeend", keys.map((k) => { const c = planCopy(k, PL); const what = { pin: "A gold-ringed pin on the map and a Featured badge on your listing.", top: "The pin and badge, plus your event is listed first when people browse your area.", season: "The same as Top of the list, for events that run 31 days or more, for up to " + (PL[k].maxDays || 90) + " days." }[k]; return `<div class="tier paid"><div class="free">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(what)}</p><a class="btn ghost" href="/feature?plan=${k}" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</a></div>`; }).join(""));
+  else $("#plans").insertAdjacentHTML("beforeend", keys.map((k) => { const c = planCopy(k, PL); const what = planBlurb(k, PL); return `<div class="tier paid"><div class="free">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(what)}</p><a class="btn ghost" href="/feature?plan=${k}" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</a></div>`; }).join(""));
 }
 </script>
 <script src="/footer.js?v=20261106z" defer></script>

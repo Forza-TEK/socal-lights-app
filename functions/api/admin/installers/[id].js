@@ -17,7 +17,7 @@ export async function onRequestGet({ params, env }) {
     all("SELECT at, admin, action FROM admin_log WHERE area = 'installers' AND target_id = ? ORDER BY id DESC LIMIT 10", installer.id),
     env.DB.prepare("SELECT COALESCE(SUM(imp),0) AS imp, COALESCE(SUM(click),0) AS click, COALESCE(SUM(call),0) AS call FROM banner_stats WHERE installer_id = ? AND day >= date('now','-29 days')").bind(installer.id).first().catch(() => ({ imp: 0, click: 0, call: 0 })),
   ]);
-  return json({ installer, homes, leads, views7: (hits && hits.n) || 0, owner, history, banner: bstats || { imp: 0, click: 0, call: 0 } }, { headers: { "cache-control": "no-store" } });
+  return json({ installer, homes, leads, views7: (hits && hits.n) || 0, owner, history, banner: bstats || { imp: 0, click: 0, call: 0, lst_imp: 0, lst_click: 0, lst_call: 0 } }, { headers: { "cache-control": "no-store" } });
 }
 
 export async function onRequestPost({ params, request, env }) {
@@ -41,10 +41,10 @@ export async function onRequestPost({ params, request, env }) {
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err(400, "That email address doesn't look right.");
     const ph = phoneField(b.phone); if (ph.error) return err(400, ph.error);
     const owner = clean(b.owner, 120).toLowerCase();
-    const bu = clean(b.banner_until, 10); if (bu && !/^\d{4}-\d{2}-\d{2}$/.test(bu)) return err(400, "The banner end date doesn't look right.");
+    const bu = clean(b.banner_until, 10), tu = clean(b.top_until, 10); if ((bu && !/^\d{4}-\d{2}-\d{2}$/.test(bu)) || (tu && !/^\d{4}-\d{2}-\d{2}$/.test(tu))) return err(400, "An end date doesn't look right.");
     if (owner && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(owner)) return err(400, "That owner email doesn't look right.");
     await env.DB.batch([
-      env.DB.prepare("UPDATE installers SET name=?, web=?, phone=?, area=?, blurb=?, email=?, owner_email=?, banner_until=? WHERE id=?").bind(name, web || "", ph.value, line(b.area, 240), normText(clean(b.blurb, 600)), email, owner, bu, inst.id),
+      env.DB.prepare("UPDATE installers SET name=?, web=?, phone=?, area=?, blurb=?, email=?, owner_email=?, banner_until=?, top_until=? WHERE id=?").bind(name, web || "", ph.value, line(b.area, 240), normText(clean(b.blurb, 600)), email, owner, bu, tu, inst.id),
       // keep the presenting-installer name on contests in step with the profile
       env.DB.prepare("UPDATE contests SET installer_name = ? WHERE lower(installer_name) = lower(?)").bind(name, inst.name),
     ]);
