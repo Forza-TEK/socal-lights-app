@@ -107,14 +107,14 @@
           "title": "Enter your home in a contest",
           "desc": "Sign in, add photos, your address and agree to the rules.",
           "url": "/tutorials/enter.mp4",
-          "length": "2:40",
+          "length": "2:18",
           "captions": "/tutorials/enter.vtt",
           "poster": "/tutorials/enter.jpg",
           "mobile": {
             "url": "/tutorials/enter-mobile.mp4",
             "poster": "/tutorials/enter-mobile.jpg",
             "captions": "/tutorials/enter-mobile.vtt",
-            "length": "2:38"
+            "length": "2:18"
           }
         },
         {
@@ -122,14 +122,14 @@
           "title": "Edit or withdraw your entry",
           "desc": "Change your entry's name and description, or take it out.",
           "url": "/tutorials/edit-entry.mp4",
-          "length": "1:48",
+          "length": "1:28",
           "captions": "/tutorials/edit-entry.vtt",
           "poster": "/tutorials/edit-entry.jpg",
           "mobile": {
             "url": "/tutorials/edit-entry-mobile.mp4",
             "poster": "/tutorials/edit-entry-mobile.jpg",
             "captions": "/tutorials/edit-entry-mobile.vtt",
-            "length": "1:48"
+            "length": "1:28"
           }
         },
         {
@@ -196,14 +196,14 @@
           "title": "Create a contest with Quick start",
           "desc": "The short setup: seven screens.",
           "url": "/tutorials/run-quick.mp4",
-          "length": "4:50",
+          "length": "4:32",
           "captions": "/tutorials/run-quick.vtt",
           "poster": "/tutorials/run-quick.jpg",
           "mobile": {
             "url": "/tutorials/run-quick-mobile.mp4",
             "poster": "/tutorials/run-quick-mobile.jpg",
             "captions": "/tutorials/run-quick-mobile.vtt",
-            "length": "4:51"
+            "length": "4:29"
           }
         },
         {
