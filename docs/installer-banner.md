@@ -6,7 +6,7 @@ Height 24px (the owner's brief was one third of the search field, about 17px; 24
 
 ## Who shows
 `installers.banner_until` (YYYY-MM-DD). Set in Admin > Installers > Profile > "Map banner". Empty = not on the banner. The profile must be active and have a phone or website.
-Free founding-installer pilot first; payments are not built (see `docs/monetization/strategy.md`, Stage 3: Installer Partner).
+Sold, not a free pilot (the owner drives visitors with Facebook and Instagram ads). Payments are not built (see `docs/monetization/strategy.md`, Stage 3: Installer Partner).
 
 ## Which installers show for the current map view
 `/api/banner` returns every installer on the banner (same for everyone, cached). `public/banner.js` picks the ones to show:
