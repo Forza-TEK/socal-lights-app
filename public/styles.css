@@ -217,6 +217,12 @@ button{touch-action:manipulation}
 .boxes span{font-size:12px;font-weight:700;color:var(--muted)}
 .boxes b{font-size:15px;font-weight:700;line-height:1.35}
 .blurb{margin:0;font-size:16px;line-height:1.6}
+/* the blurb loads after the page opens (GET /api/events/<id>): a grey block as tall as a typical three-line blurb, then the text; or a short note with Try again */
+.blurb.skel{min-height:4.8em;border-radius:8px;background:linear-gradient(var(--line),var(--line)) 0 .45em/100% .85em no-repeat,linear-gradient(var(--line),var(--line)) 0 2.05em/94% .85em no-repeat,linear-gradient(var(--line),var(--line)) 0 3.65em/58% .85em no-repeat;animation:skel 1.1s ease-in-out infinite alternate}
+@keyframes skel{from{opacity:.45}to{opacity:1}}
+.blurb.dstatus{min-height:4.8em;color:var(--muted)}
+.retry{font:inherit;font-weight:600;color:var(--ink);background:none;border:0;padding:10px 6px;min-height:44px;text-decoration:underline;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.blurb.skel{animation:none}}
 .facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 16px;font-size:15px;margin:0}
 .facts dt{color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding-top:3px}
 .facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
