@@ -24,12 +24,12 @@ export function sponsorCopy(k) {
 export const money = (cents) => "$" + (cents % 100 ? (cents / 100).toFixed(2) : cents / 100);
 export const niceDate = (ymd) => new Date(ymd + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-// The rule in plain words. s = config.installerSeason, cfg = /api/config.
+// The rule in plain words. cfg = /api/config. The server computes the label and the amounts (functions/_lib/featured.js installerPrice); this only words them.
 export function seasonRule(cfg) {
   const s = cfg.installerSeason || {}, n = cfg.installerFullPriceDays || 14, floor = money(cfg.installerMinCents || 1000);
-  const rule = `A season runs from the day you pay to the last day of the season on the map. With ${n} or more days left you pay the full price; with fewer days left you pay a share of it for the days remaining (never less than ${floor}). The placement always ends on the season's last day.`;
+  const rule = `A season runs from the day you pay to the last day of the season on the map. The first ${n} days of a season cost the full price. After that the price falls a little every day, with the days left (never less than ${floor}). The placement always ends on the season's last day.`;
   const now = s.season ? (s.prorated
-    ? `Right now: only ${s.daysLeft} day${s.daysLeft === 1 ? "" : "s"} are left in the ${s.season} season (it ends ${niceDate(s.to)}), so a new placement costs ${money(s.cents.banner)} for the Banner or ${money(s.cents.banner_top)} for Banner and top of the list, instead of ${money(cfg.installerPlans.banner.cents)} or ${money(cfg.installerPlans.banner_top.cents)}.`
-    : `Right now: a new placement runs to ${niceDate(s.to)}, the end of the ${s.season} season.`) : "";
+    ? `Right now it is day ${s.dayOfSeason} of ${s.seasonDays} of the ${s.season} season (it ends ${niceDate(s.to)}): the season is ${s.percentOver}% over, so a new placement costs ${money(s.cents.banner)} for the Banner (instead of ${money(cfg.installerPlans.banner.cents)}) or ${money(s.cents.banner_top)} for Banner and top of the list (instead of ${money(cfg.installerPlans.banner_top.cents)}).`
+    : `Right now it is day ${s.dayOfSeason} of the ${s.season} season, so a new placement costs the full price and runs to ${niceDate(s.to)}, the end of the season.`) : "";
   return { rule, now };
 }

@@ -344,7 +344,7 @@ Using SoCal Lights is free. The map, search, routes and voting stay free for eve
 Paid placements are optional, always labeled, and never change a contest result.
 
 - **Featured** has a gold badge and a bigger gold-ringed pin on the map. **Events** can be featured by their organizer: **Featured pin** $10, **Top of the list** $15, or **Full run** $25 for events that run 31 days or more. The placement starts when you pay and ends on your event's last day, up to 30 days (up to 90 days for Full run). **Homes** can be featured only by the owner of a home that finished winner, 2nd or 3rd place in a contest, after the winners are announced: Featured pin $10 or Top of the list $15, for 30 days.
-- **Sponsor** is for installers. A free installer profile stays free. An installer can pay for the **Banner** ($50 per season) or **Banner and top of the list** ($75 per season), always labeled "Sponsor". Late in a season the price is prorated for the days left.
+- **Sponsor** is for installers. A free installer profile stays free. An installer can pay for the **Banner** ($50 per season) or **Banner and top of the list** ($75 per season), always labeled "Sponsor". The first 14 days of a season cost the full price; after that the price falls a little every day.
 - **Paying never affects a contest.** It cannot change who wins or any contest result.
 
 See [Feature an event or a home](/help/feature-an-event-or-home), [Sponsor your installer company](/help/sponsor-your-installer-company) and the [Pricing page](/pricing).
@@ -376,11 +376,11 @@ Installers can show their company in a labeled **Sponsor** banner at the top of 
 5. Tap **Continue to payment** and pay on Stripe's secure page. Your placement turns on within a few minutes.
 
 ## How long it lasts and what it costs
-A season runs from the day you pay to the last day of the season on the map (the Thanksgiving & Christmas season ends Dec 26). With 14 or more days left you pay the full price. With fewer days left you pay a share of it for the days remaining (never less than $10); the page shows the exact price before you pay. The placement always ends on the season's last day.
+A season runs from the day you pay to the last day of the season on the map (the Thanksgiving & Christmas season ends Dec 26). The first 14 days of a season cost the full price. After that the price falls a little every day, with the days left (never less than $10). The page shows the exact price and a sentence such as "the season is 40% over, so this costs $X instead of $50" before you pay. The placement always ends on the season's last day.
 
 ## Renew or upgrade
-- **Renew:** buy the same plan again while it runs. The new season starts the day after the current one ends. Time is only added, and we sell at most one season ahead.
-- **Upgrade:** to add the top of the list to a running banner, choose Banner and top of the list. It is sold at its own price for the days left; there is no credit for the banner you already paid for.
+- **Renew:** buy the same plan again while it runs. The new season starts the day after the current one ends, at the full price of that season. Time is only added, and we sell at most one season ahead.
+- **Upgrade:** to add the top of the list to a banner that already runs to the end of the season, choose Banner and top of the list. You pay the difference between the two plans' prices that day (never less than $10).
 - Your dashboard (Overview) shows your dates and numbers, with a **Renew or upgrade** button.
 
 ## Refunds

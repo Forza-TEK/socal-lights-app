@@ -86,13 +86,13 @@ test("checkout late in the season charges the prorated price, and the webhook ch
   try {
     const r = await buy(env, { installer: "bright-nights", plan: "banner" }, { cookie: me.cookie });
     assert.equal(r.status, 200);
-    assert.equal(new URLSearchParams(String(f.calls[0].init.body)).get("line_items[0][price_data][unit_amount]"), "1200", "13 of 54 days left: $12");
+    assert.equal(new URLSearchParams(String(f.calls[0].init.body)).get("line_items[0][price_data][unit_amount]"), "1600", "day 42 of 54, 13 days left: 50 x 13/41 = 15.9 -> $16");
     assert.match(new URLSearchParams(String(f.calls[0].init.body)).get("line_items[0][price_data][product_data][description]"), /prorated/);
-    await pay(env, 1, "banner", 1200);
+    await pay(env, 1, "banner", 1600);
     assert.equal(getOrder(raw, "cs_1").note, null, "the prorated amount is what the server expects");
-    assert.equal(getOrder(raw, "cs_1").amount, 1200, "the amount actually charged is stored"); assert.equal(getInst(raw).banner_until, "2026-12-26");
+    assert.equal(getOrder(raw, "cs_1").amount, 1600, "the amount actually charged is stored"); assert.equal(getInst(raw).banner_until, "2026-12-26");
     await pay(env, 2, "banner_top", 7500);
-    assert.match(getOrder(raw, "cs_2").note, /amount mismatch: paid 75.00 USD, the banner_top plan is 18.00 USD/, "the full price paid on a day it should have been prorated is flagged");
+    assert.match(getOrder(raw, "cs_2").note, /amount mismatch: paid 75.00 USD, the banner_top plan is 10.00 USD/, "the full price paid when the upgrade difference ($24 - $16 = $8, floor $10) was due is flagged");
     assert.equal(getOrder(raw, "cs_2").applied, 1, "still applied: the buyer paid what we asked");
   } finally { f.restore(); }
 }, "2026-12-14T20:00:00Z"));
@@ -127,7 +127,8 @@ test("extension and upgrade: buying again adds on top and never shortens; the to
   await pay(env, 2, "banner"); assert.equal(getInst(raw).banner_until, "2027-01-31", "renewal starts the day after and runs to the end of the next season");
   assert.equal(getOrder(raw, "cs_2").applied_from, "2026-12-27"); assert.equal(getOrder(raw, "cs_2").note, null, "the renewal is full price");
   // upgrade: top card from today to the season end, banner already runs longer so it is left alone
-  await pay(env, 3, "banner_top");
+  await pay(env, 3, "banner_top", 2500); // an upgrade: the banner already runs past the season end, so only the difference is due
+  assert.equal(getOrder(raw, "cs_3").note, null);
   assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["2027-01-31", "2026-12-26"]);
   assert.equal(getOrder(raw, "cs_3").applied_from, "2026-11-06");
 }));
@@ -139,7 +140,7 @@ test("refund: a full refund switches the placement off, restores what an admin s
   assert.equal((await refund(1)).body.revoked, true);
   assert.equal(getInst(raw).banner_until, "2026-11-20", "back to the hand-set date"); assert.equal(getOrder(raw, "cs_1").status, "refunded");
   // two orders: refund the second, the first still covers its time; refund the first, everything is off
-  const b = await setup(); await pay(b.env, 1, "banner"); await pay(b.env, 2, "banner_top");
+  const b = await setup(); await pay(b.env, 1, "banner"); await pay(b.env, 2, "banner_top", 2500);
   assert.deepEqual([getInst(b.raw).banner_until, getInst(b.raw).top_until], ["2026-12-26", "2026-12-26"]);
   await sendWebhook(webhook, b.env, stripeEvent("charge.refunded", { id: "ch_2", payment_intent: "pi_2", refunded: true }));
   assert.deepEqual([getInst(b.raw).banner_until, getInst(b.raw).top_until], ["2026-12-26", ""], "the banner order still covers the banner; the top card is off");

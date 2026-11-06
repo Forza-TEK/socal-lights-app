@@ -16,7 +16,7 @@ export async function onRequestGet({ request, env }) {
     const gaps = profileGaps(i), quotes = {};
     for (const [k, p] of Object.entries(INSTALLER_PLANS)) {
       const problem = sponsorProblem(i, k, today), w = sponsorWindow(k, i, today);
-      quotes[k] = { cents: w.cents, full_cents: p.cents, prorated: w.prorated, days_left: w.days_left, season_days: w.season_days, from: w.from, to: w.to, season: w.season, renewal: w.running, problem };
+      quotes[k] = { cents: w.cents, full_cents: w.full_cents, list_cents: p.cents, prorated: w.prorated, upgrade: w.upgrade, label: w.label, days_left: w.days_left, day_of_season: w.day_of_season, season_days: w.season_days, percent_over: w.percent_over, from: w.from, to: w.to, season: w.season, renewal: w.running, problem };
     }
     const banner = !!i.banner_until && i.banner_until >= today, top = !!i.top_until && i.top_until >= today;
     const stats = banner || top ? await env.DB.prepare("SELECT COALESCE(SUM(imp),0) AS imp, COALESCE(SUM(click + call),0) AS taps, COALESCE(SUM(lst_imp),0) AS lst_imp, COALESCE(SUM(lst_click + lst_call),0) AS lst_taps FROM banner_stats WHERE installer_id = ? AND day >= date('now','-29 days')").bind(i.id).first().catch(() => null) : null;

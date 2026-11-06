@@ -18,10 +18,26 @@ export const INSTALLER_PLANS = {
   banner: { label: "Banner", cents: 5000, top: false },
   banner_top: { label: "Banner and top of the list", cents: 7500, top: true },
 };
-// Proration (owner decision): a placement that starts with FULL_PRICE_DAYS or more days left in its season costs the full price. With fewer, the price is
-//   round(full dollars x days left (start day included) / days in the season), never below INSTALLER_MIN_CENTS ($10, so Stripe's ~2.9% + 30c does not eat it).
+// SEASON PRICE (owner decision, option C). Day 1 is the first day of the season (Pacific date). Days 1 to FULL_PRICE_DAYS (14) cost the full price. After day 14 the price falls
+// day by day with the days remaining (the start day counts): price = full x daysLeft / daysLeftOnDay14, where daysLeftOnDay14 = season days - 13, so day 14 is exactly full and day 15
+// is just below it (no cliff). Rounded to a whole dollar, never below INSTALLER_MIN_CENTS ($10, for both plans so Stripe's ~2.9% + 30c never eats it), and never at the full
+// price after day 14. A season shorter than 14 days is prorated over the whole season (full x daysLeft / season days). Without a known season start the full price applies.
+// Returns { amount_cents, starts, ends, daysLeft, dayOfSeason, seasonDays, percentOver, full_cents, prorated, label }. Used by the quote, the checkout and the webhook amount check.
 export const FULL_PRICE_DAYS = 14;
 export const INSTALLER_MIN_CENTS = 1000;
+const usd = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : c / 100);
+export function installerPrice(plan, season, from) {
+  const full = INSTALLER_PLANS[plan].cents, start = season && season.start, end = season && season.end;
+  const total = start ? daysBetween(start, end) + 1 : 0, day = start ? daysBetween(start, from) + 1 : 0, left = daysBetween(from, end) + 1;
+  let cents = full;
+  if (start && total >= FULL_PRICE_DAYS && day > FULL_PRICE_DAYS) {
+    cents = Math.min(full, Math.max(INSTALLER_MIN_CENTS, Math.round((full / 100) * left / (total - FULL_PRICE_DAYS + 1)) * 100));
+    if (cents >= full) cents = Math.max(INSTALLER_MIN_CENTS, full - 100); // after day 14 it is always a little below the full price
+  } else if (start && total < FULL_PRICE_DAYS) cents = Math.min(full, Math.max(INSTALLER_MIN_CENTS, Math.round((full / 100) * left / total) * 100));
+  const pct = total ? Math.min(100, Math.round(((day - 1) / total) * 100)) : 0, prorated = cents < full;
+  const label = prorated ? `Day ${day} of ${total}: the season is ${pct}% over, so this season costs ${usd(cents)} instead of ${usd(full)}.` : `Full price: the first ${FULL_PRICE_DAYS} days of a season cost ${usd(full)}.`;
+  return { amount_cents: cents, starts: from, ends: end, daysLeft: left, dayOfSeason: day, seasonDays: total, percentOver: pct, full_cents: full, prorated, label };
+}
 export const PUBLIC_INSTALLER_PLANS = Object.fromEntries(Object.entries(INSTALLER_PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, top: p.top }]));
 
 // What the browser may know about plans (served by /api/config). Prices exist only in PLANS above.
