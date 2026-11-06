@@ -4,6 +4,14 @@ _Last updated: 2026-11-05_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Batch E 3: per-event pages with share previews (2026-11-06)
+- `GET /e/<event id>` (`functions/e/[id].js`, `/e/*` added to `public/_routes.json`): a plain server page per event with its own title, description, canonical, `og:url`, `og:type`, `twitter:card` and `og:image` (the event's photo, else `share.png`), the facts, "Open on the map" (`/#e-<id>`), and links to the city page, `/in` and Add. It is a new page type: the map and its look are unchanged.
+- schema.org Event data only for confirmed events that have not ended (price offer when free or a `$` price is parsed; cancelled/postponed set from the event notice). Expected and ended events are `noindex,follow` and carry no Event data. Unknown id: 404.
+- The map's Share button on an event now shares `/e/<id>` (houses still share `/#h-<id>`), so Messages, Slack and social posts show the event's own card. `app.js?v=20261106u`.
+- `page()` in `functions/_lib/shell.js` now writes `og:url` (from canonical), `og:type`, `og:site_name`, `twitter:card` and takes an `image`: every city, help, installer and past page gains these (audit F9).
+- Sitemap lists confirmed upcoming events; the hidden homepage list adds 20 confirmed events linking to `/e/<id>`. City pages still link events to the map.
+- Tests: `tests/event-page.test.mjs`. Not done: house share pages, an auto-redirect to the map (would make Google treat the page as a redirect), BreadcrumbList.
+
 ## Batch E 2: funnel counters (2026-11-06)
 - New `functions/_lib/funnel.js`: steps stored in `site_hits` under keys `fn:*` (a number per day; no IP, cookie, account or text). Counted on the server, at the real completion: `fn:signin-done` (`startSession`), `fn:add-event-done`, `fn:add-house-done`, `fn:contest-entry-done`, `fn:subscribe` (new sign-ups only), `fn:subscribe-confirm`. Counted in the browser (allowlist in `/api/visit`, skipped when `navigator.webdriver`): `fn:event-open` (event card opened, `app.js` `openDetail`), `fn:signin-open` (`auth.js`), `fn:visit` (first page of a tab session, `hit.js`).
 - `/api/visit` page names: once a day has 80 different names, new ones are ignored (anyone could create unlimited rows before); page keys now have the same daily cap as click keys.

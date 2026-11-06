@@ -571,7 +571,7 @@ function toast(msg, accent) {
 }
 async function shareItem(k) {
   const it = findKey(k); if (!it) return;
-  const title = it.kind === "ev" ? it.ev.n : it.p.title, url = location.origin + "/#" + (it.kind === "ev" ? "e-" + it.ev.id : "h-" + it.p.id);
+  const title = it.kind === "ev" ? it.ev.n : it.p.title, url = location.origin + (it.kind === "ev" ? "/e/" + encodeURIComponent(it.ev.id) : "/#h-" + it.p.id); // events share a server page so texts and social posts show a preview card; its button opens the map
   try { if (navigator.share) { await navigator.share({ title, text: title + " on SoCal Lights", url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
   try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { toast(url); }
 }
