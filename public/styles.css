@@ -469,7 +469,8 @@ button{touch-action:manipulation}
   body.pin-open .panel{transform:translateY(calc(100% + 160px))!important}
   body.pin-open .bnav{display:none}
 }
-#toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,16px);opacity:0;background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;z-index:99;pointer-events:none;transition:opacity .2s,transform .2s}
+#toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,16px);opacity:0;background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:20px;font-weight:700;font-size:14px;z-index:99;pointer-events:none;transition:opacity .2s,transform .2s;width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+#toast.long{pointer-events:auto;text-align:left;font-weight:600;padding:14px 18px;font-size:15px;line-height:1.45;box-shadow:0 6px 24px rgba(0,0,0,.35)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .price.txt{font-size:15px;font-weight:700}
 
