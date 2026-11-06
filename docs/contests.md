@@ -82,3 +82,9 @@ For cities that register residents on their own form, spreadsheet or email: the 
 
 ## Team change log (2026-11-02)
 Everyone who runs a contest (creator and co-organizers) sees "What the team changed" on the dashboard: who changed which setting, from what to what, and when. A banner shows the latest change by someone else. The others on the team are emailed on each change. Logged: edits to the details, the entries/voting/counts switches, Start voting, announcing, sponsors, judges and co-organizers (not individual entry approvals). Table `contest_changes`.
+
+## Unpublish and publish again (creator only)
+- On the dashboard Overview, **Controls > Contest page > Unpublish** (two taps) takes the contest off the map and hides its page from the public. Entries, votes, judges and sponsors are kept, and the creator and co-organizers can still open the dashboard. The team is emailed about the change like any other. It cannot be done by co-organizers.
+- It uses the same `status = 'declined'` that Admin's Unpublish uses, plus `contests.unpublished_by = 'owner'` (migration `0165`). That marker means the creator did it, so a **Publish it again** button (on the banner and in Controls) puts it back live and on the map. If Admin unpublished it (marker empty), only Admin can put it back, and Admin approving clears the marker.
+- API: `PATCH /api/contests/<slug>` with `{ action: "unpublish" | "publish_again" }` (`functions/api/contests/[slug].js`).
+

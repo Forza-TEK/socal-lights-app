@@ -21,13 +21,13 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     return json({ ok: true });
   }
   if (b.action === "approve") {
-    await env.DB.prepare("UPDATE contests SET status='live', note='', updated_at=datetime('now') WHERE id=?").bind(c.id).run();
+    await env.DB.prepare("UPDATE contests SET status='live', note='', unpublished_by='', updated_at=datetime('now') WHERE id=?").bind(c.id).run();
     await listOnMap(env, { ...c, status: "live" });
     if (c.status === "declined" && b.notify !== false) { tell(env, waitUntil, c.contact_email, "contest_live", { name: c.name, link: `https://socallights.app/c/${c.slug}` }); }
     return json({ ok: true });
   }
   if (b.action === "decline") {
-    await env.DB.prepare("UPDATE contests SET status='declined', updated_at=datetime('now') WHERE id=?").bind(c.id).run();
+    await env.DB.prepare("UPDATE contests SET status='declined', unpublished_by='', updated_at=datetime('now') WHERE id=?").bind(c.id).run();
     await unlistFromMap(env, c);
     tell(env, waitUntil, c.contact_email, "contest_unpublished", { name: c.name, reason: String(b.reason || "").trim().slice(0, 400) });
     return json({ ok: true });

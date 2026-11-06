@@ -36,13 +36,27 @@ if (!acct) {
 }
 if (acct) { d.email = acct.email; if (!d.biz && acct.name) d.biz = acct.name; if (acct.city && cities.includes(acct.city)) { d.city = acct.city; d.street = acct.street || ""; d.zip = acct.zip || ""; } }
 
+// "Is this your home?" on the map sends people here with ?claim=<listing id>: start the form with that listing's address,
+// and remember which listing it is so the owner of this site can see the claim when reviewing.
+const claimId = qs.get("claim");
+if (claimId) {
+  try {
+    const j = await (await fetch("/api/events")).json(), ev = (Array.isArray(j) ? j : j.events || []).find((e) => e.id === claimId);
+    if (ev) {
+      localStorage.removeItem("scl-house-draft");
+      const addr = String(ev.a || ""), zip = (addr.match(/\b(\d{5})\b/) || [])[1] || "";
+      Object.assign(d, { claim: ev.id, claimName: ev.n, street: addr.split(",")[0].trim(), city: cities.includes(ev.city) ? ev.city : d.city, zip: zip || d.zip, title: ev.n.replace(/\s*\([^)]*\)\s*$/, "") });
+    }
+  } catch {}
+}
+
 // Suggest installers already on the site while typing a company name
 document.addEventListener("input", async (e) => {
   if (!e.target.matches || !e.target.matches('[data-k="instName"]')) return; const q = e.target.value.trim(), dl = document.getElementById("instlist"); if (!dl || q.length < 2) return;
   try { const r = await (await fetch("/api/installers?q=" + encodeURIComponent(q))).json(); dl.innerHTML = r.map((i) => `<option value="${esc(i.name)}"></option>`).join(""); } catch {}
 });
 const steps = [
-  { id: "kind", sec: "About you", title: "Who's posting?", help: "Homeowners and professional installers can both show their lights on the map.", redraw: true,
+  { id: "kind", sec: "About you", title: "Who's posting?", help: (x) => (x.claim ? `You are claiming “${x.claimName}”. Add your display at this address and, once the site owner approves it, it replaces the automatic listing. ` : "") + "Homeowners and professional installers can both show their lights on the map.", redraw: true,
     body: (x) => `<div class="tiles">${tile(x, "kind", "homeowner", "A homeowner", "It's my house, and I decorated it.")}${tile(x, "kind", "installer", "A professional installer", "I installed this display for a customer, or it's a showcase of my work.")}</div>` },
   { id: "name", sec: "About you", title: (x) => (pro(x) ? "What's your business called?" : "What name should we show?"),
     help: (x) => (pro(x) ? "Families will see this with a way to ask for a quote." : "For example, The Garcia family. It appears as “Posted by”."),
@@ -73,6 +87,7 @@ const steps = [
       const fd = new FormData(), set = { kind: x.kind, biz: x.biz.trim(), email: x.email.trim(), title: x.title.trim(), season: x.season, lights_on: x.lightsOn.trim(), visit: x.visit, parking: x.parking, radio: x.radio.trim(), ...(x.accessible ? { accessible: "1" } : {}), street: x.street.trim(), city: x.city, state: "CA", zip: x.zip.trim(), where: x.where.trim(), desc: x.desc.trim() };
       if (pro(x)) Object.assign(set, { web: x.web.trim(), phone: x.phone.trim(), area: x.area.trim(), permission: "1" });
       if (!pro(x) && x.hadPro === "yes") Object.assign(set, { installer_name: x.instName.trim(), installer_web: x.instWeb.trim() });
+      if (x.claim) set.claim = x.claim;
       for (const [k, v] of Object.entries(set)) fd.append(k, v);
       x.photos.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
       

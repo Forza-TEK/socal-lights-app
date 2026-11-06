@@ -4,6 +4,9 @@ _Last updated: 2026-11-05_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Organizers can unpublish their contest (2026-11-06)
+- Controls > Contest page > Unpublish (creator only, two taps) hides the contest and takes it off the map; Publish it again restores it. Migration 0165. See `docs/contests.md`.
+
 ## Batch E 4: accessibility quick fixes (2026-11-06)
 - Search box `#q` is now a proper combobox (`role="combobox"`, `aria-controls="sugg"`, `aria-autocomplete="list"`, `aria-haspopup="listbox"`); suggestions have ids and `aria-activedescendant` follows the arrow keys. This removes the invalid `aria-expanded` on `<input type="search">` (audit F4).
 - Heading order on the map: a hidden `<h2>Places in view</h2>` (class `sr`) above the cards, and the filter sheet's section titles are `h3` instead of `h4` (same CSS rule, `.fbody h3,.fbody h4`). No visual change.
@@ -32,6 +35,8 @@ _Last updated: 2026-11-05_
 - City pages show the 6 nearest indexable cities with distances, the rest of the county, a one-line count and date-span summary, and links to `/in`, Add an event, Pricing and Help.
 - New `/in` hub (`functions/in/index.js`): all cities by county, in the sitemap. The homepage is now served through `functions/index.js`, which adds a visually hidden (`.sr`, links `tabindex=-1`) "Browse by city" list at the end of `<body>`; the visible map is unchanged and `app.js`/`styles.css` untouched. On any error the plain page is served. `/` and `/in` added to `public/_routes.json`.
 - Tests: `tests/cities.test.mjs`. Not done: county hub pages, a crawlable events list on the homepage (comes with the per-event pages), `Allow: /api/events` in robots.
+## Claim a home (2026-11-06)
+- "Is this your home? Claim it" on sweep-made home listings opens Add a display prefilled with that listing; the admin sees "Says this is their home" on the display. Replacement still follows the same-address rule. Migration 0164. See `docs/superseding.md`. A "remove this listing" request was left out on purpose.
 
 ## Batch D 1: nightly backup (2026-11-06)
 `.github/workflows/backup.yml` exports the live D1 every night, checks it, uploads it to a PRIVATE R2 bucket `socal-lights-backups` (daily kept 35 days, monthly 400, `latest.sql.gz`), reads it back, and copies photos on Sundays (`scripts/backup-photos.mjs`). A failure opens a GitHub issue. Never an artifact (public repo). Restore steps: `docs/runbooks/backup-restore.md`. Owner must give the API token R2 Edit permission first.
