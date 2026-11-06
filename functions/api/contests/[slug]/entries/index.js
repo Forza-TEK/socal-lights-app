@@ -5,10 +5,10 @@
 // Answer: { ok, dryRun, found: [..] (dry run), added: [..], failed: [{ index, address, reason }], skipped: [{ index, address, reason }] }
 import { json, err, clean, newId } from "../../../../_lib/util.js";
 import { getUser, sameOrigin } from "../../../../_lib/auth.js";
-import { getContest, isStaff, todayPT } from "../../../../_lib/contests.js";
+import { getContest, isStaff, todayPT, UNTRUSTED_ADDED_CAP } from "../../../../_lib/contests.js";
 import { teamChanged } from "../../../../_lib/changes.js";
 import { normText } from "../../../../_lib/fields.js";
-import { parseHome, homeKey, homeTitle, locate, pool, MAX_HOMES_PER_CALL, MAX_ADDED_PER_CONTEST, CALLS_PER_HOUR, HOMES_PER_HOUR } from "../../../../_lib/homes.js";
+import { parseHome, homeKey, homeTitle, locate, pool, MAX_HOMES_PER_CALL, MAX_ADDED_PER_CONTEST, CALLS_PER_HOUR, HOMES_PER_HOUR, CONSENT_TEXT, CONSENT_VERSION } from "../../../../_lib/homes.js";
 
 const NO_STORE = { headers: { "cache-control": "no-store" } };
 
@@ -33,7 +33,9 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   if (!b.homes.every((h) => h && typeof h === "object" && typeof h.address === "string")) return err(400, "Each home needs an address.");
   if (!dryRun) {
     const { n: have } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id = ? AND user_id = '' AND status != 'declined'").bind(c.id).first();
-    if (have + b.homes.length > MAX_ADDED_PER_CONTEST) return err(400, `A contest can have up to ${MAX_ADDED_PER_CONTEST} homes added this way. This one has room for ${Math.max(0, MAX_ADDED_PER_CONTEST - have)} more.`);
+    // N-02: until Admin has looked at a contest whose organizer we could not tie to a website (contests.note), the organizer may add only a few homes of their own
+    const cap = c.note ? UNTRUSTED_ADDED_CAP : MAX_ADDED_PER_CONTEST;
+    if (have + b.homes.length > cap) return err(400, c.note ? `Until we have looked at your contest (usually within a day), you can add up to ${UNTRUSTED_ADDED_CAP} homes this way. This one has room for ${Math.max(0, UNTRUSTED_ADDED_CAP - have)} more.` : `A contest can have up to ${MAX_ADDED_PER_CONTEST} homes added this way. This one has room for ${Math.max(0, MAX_ADDED_PER_CONTEST - have)} more.`);
   }
 
   // Per account and hour: up to HOMES_PER_HOUR homes and CALLS_PER_HOUR calls (checking addresses counts too: it asks the geocoders)
@@ -72,10 +74,12 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
 
   const rows = found.map((h) => ({ ...h, id: newId() }));
   if (rows.length) {
-    await env.DB.batch(rows.map((h) => env.DB.prepare(
-      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,added_by,entry_no,approved_at)
-       VALUES (?,'approved',?,?,?,?,?,?,'','','',?,'[]','',?,?,1,'homeowner',?,'CA',?,'',?,'','',?,(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?),datetime('now'))`
-    ).bind(h.id, h.title, h.title, h.city, c.county || "", h.pt[0], h.pt[1], h.descr, c.season, `${h.street}, ${h.city}, CA${h.zip ? " " + h.zip : ""}`, h.street, h.zip, c.id, user.id, c.id)));
+    // PL-01: keep who confirmed, when, for which contest, how many homes and the exact wording, and link each home to that record. Written in the same batch as the homes.
+    const consentId = newId();
+    await env.DB.batch([env.DB.prepare("INSERT INTO home_consents (id, contest_id, user_id, email, n, version, text) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(consentId, c.id, user.id, String(user.email || "").toLowerCase(), rows.length, CONSENT_VERSION, CONSENT_TEXT), ...rows.map((h) => env.DB.prepare(
+      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,added_by,entry_no,approved_at,consent_id)
+       VALUES (?,'approved',?,?,?,?,?,?,'','','',?,'[]','',?,?,1,'homeowner',?,'CA',?,'',?,'','',?,(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?),datetime('now'),?)`
+    ).bind(h.id, h.title, h.title, h.city, c.county || "", h.pt[0], h.pt[1], h.descr, c.season, `${h.street}, ${h.city}, CA${h.zip ? " " + h.zip : ""}`, h.street, h.zip, c.id, user.id, c.id, consentId))]);
     await teamChanged(env, c, user, [{ label: "Entries", old: "", new: `Added ${rows.length} ${rows.length === 1 ? "home" : "homes"}` }], waitUntil);
   }
   const nos = new Map((await env.DB.prepare(`SELECT id, entry_no FROM posts WHERE id IN (${rows.map(() => "?").join(",") || "''"})`).bind(...rows.map((r) => r.id)).all()).results.map((r) => [r.id, r.entry_no]));

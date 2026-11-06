@@ -49,6 +49,14 @@ export function trustOf(email, site) {
   return host === dom || host.endsWith("." + dom) || (dom.endsWith("." + host) && hasOwnName(host)) ? "match" : "other";
 }
 
+// Names that claim to be a government body, school, HOA or other official organizer ("City of Irvine Lights", "Oak Park HOA", "Official ..."). Used to hold such a contest
+// for review when its organizer cannot be tied to a website (N-02). Plain community names ("Maple Street Lights") do not match.
+const OFFICIAL = /\b(city|town of|county|counties|municipal|municipality|hoa|h\.o\.a|homeowners?|home ?owner'?s?|chamber|school|schools|unified|pta|ptsa|official|officially|sheriff|police)\b/i;
+export const officialSounding = (...texts) => texts.some((t) => OFFICIAL.test(String(t || "")));
+
+// Organizer-added homes allowed while a contest still has a review note (an organizer Admin has not vouched for yet).
+export const UNTRUSTED_ADDED_CAP = 25;
+
 export const getContest = (env, slug) => env.DB.prepare("SELECT * FROM contests WHERE slug = ?").bind(String(slug || "").toLowerCase()).first();
 
 // What is open right now. The dates decide; the organizer can also pause entries or voting by hand.

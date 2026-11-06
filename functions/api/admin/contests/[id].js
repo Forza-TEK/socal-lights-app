@@ -23,7 +23,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   if (b.action === "approve") {
     await env.DB.prepare("UPDATE contests SET status='live', note='', unpublished_by='', updated_at=datetime('now') WHERE id=?").bind(c.id).run();
     await listOnMap(env, { ...c, status: "live" });
-    if (c.status === "declined" && b.notify !== false) { tell(env, waitUntil, c.contact_email, "contest_live", { name: c.name, link: `https://socallights.app/c/${c.slug}` }); }
+    if ((c.status === "declined" || c.status === "pending") && b.notify !== false) { tell(env, waitUntil, c.contact_email, "contest_live", { name: c.name, link: `https://socallights.app/c/${c.slug}` }); }
     return json({ ok: true });
   }
   if (b.action === "decline") {

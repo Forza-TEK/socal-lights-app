@@ -31,6 +31,7 @@ Effort: S under a day, M a few days, L a week or more. Atty: whether the attorne
 ### High
 
 **PL-01. Homes of private residents are published with address and (sometimes) family name without a consent record or a removal path.**
+- **Status: FIXED 2026-11-07** (organizer confirmation stored in `home_consents`, public "Remove my home" form and Admin queue, privacy policy paragraph; see `docs/status.md`). Still open: consent evidence for homes the team lists from public pages, and a suppression list so a later city sweep does not re-add a removed home.
 - Evidence:
   - Live `/api/events` (GET, 1,254 events): 158 have venue text containing "view from the street"; sample ids `lo-kooiman-light-show-brea` ("Kooiman Family Christmas Light Show", 515 Cedar Ave, Brea), `contest-1-songbird-lane-aliso`, `cg3-arc100-white-oak-drive`. Sourcing rule is in `docs/city-sweep.md:41` ("never publish a private home's address unless a public page published it"); nothing in the product records which page it came from beyond the event `url`.
   - The "Is this your home? Claim it" link (`public/app.js:932`) lets a resident replace the listing, but `docs/status.md:116` says a "remove this listing" request "was left out on purpose". Removal is only by emailing info@socallights.app or the generic Report link (`public/app.js:143`).

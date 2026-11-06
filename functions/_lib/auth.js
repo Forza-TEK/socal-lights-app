@@ -41,6 +41,15 @@ export function sameOrigin(request) {
   return !o || o === new URL(request.url).origin;
 }
 
+// Same rule as sameOrigin (Origin must match when present), plus the Referer when there is no Origin. Used by the admin API (S-08).
+export function sameOriginStrict(request) {
+  if (!sameOrigin(request)) return false;
+  if (request.headers.get("origin")) return true;
+  const ref = request.headers.get("referer");
+  if (!ref) return true;
+  try { return new URL(ref).origin === new URL(request.url).origin; } catch { return false; }
+}
+
 export async function startSession(env, request, userId) {
   const t = token();
   const exp = new Date(Date.now() + SESSION_DAYS * 86400_000).toISOString().slice(0, 19).replace("T", " ");

@@ -2,6 +2,12 @@
 
 _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
 
+## Owner steps after the 2026-11-07 audit fixes
+- [ ] Check Admin > Reports once a day: "Remove my home" requests promise an answer within two business days; also set `ADMIN_NOTIFY_EMAIL` if the team address is not rey@forza-tek.com
+- [ ] Open a test "Remove my home" request from a private browser on a sweep home and approve it in Admin (use a copy of a real listing id only if you really want it deleted)
+- [ ] Attorney: wording of the organizer consent sentence (`CONSENT_TEXT` in `functions/_lib/homes.js`) and the privacy policy paragraph about team-listed homes
+- [ ] Optional: `THROTTLE_SALT` Pages secret (any random string) to salt the abuse-limit hashes
+
 ## 1. Done and verified live
 - [x] Cloudflare free-plan usage panel (Admin > Cloudflare usage), digest section, 30-minute GitHub issue check and runtime `limit` logging (2026-11-06; `runbooks/cloudflare-limits.md`)
 - [x] Monetization strategy v2 from real data (Stripe, Cloudflare, database): prove first, earn small, build later (`monetization/strategy.md`)
@@ -18,6 +24,7 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 - [x] Page counter: `/e/*` is one key `event`, `/past/*` is `past`; the 80 page-name cap ignores fn:/click:/ref: rows (seo H4)
 - [x] Free-plan per-request limits (2026-11-06): verified Cloudflare/Resend limits in `docs/runbooks/cloudflare-limits.md`; mail outbox + Resend batch for contest results, reminders, invitations and weekly alerts; organizer entries in chunks of 10; `/api/posts` 100-parameter fix and resilient map boot; R2 batch deletes; D1 test stand-in enforces the limits
 - [x] Audit 2026-11-07 small fixes: `/api/events` cache key whitelist, `?all=1` admin only, one rebuild per stale window (security N-01, engineering M1)
+- [x] Audit 2026-11-07 PL-01, N-02, S-04, N-03, S-10, S-08 (migration 0181): organizer consent stored, "Remove my home" form and Admin queue, privacy policy paragraph; unverified organizers with official-sounding contest names held for review (25-home cap until approved); installer takeover closed; quote and alert-confirmation email caps; admin same-origin check
 - [x] Whole-app audit by seven specialists; ranked gap list (PR 308)
 - [x] Batch A fixes: fake-contest gate, invite caps and email escaping, locked results, security headers, real 404s, safer city-page SEO (PR 309)
 - [x] Privacy-light counters (taps, `?ref=` campaign landings) and the privacy sentence that discloses them (PR 296, 300, 301)

@@ -534,7 +534,7 @@ async function openUser(id) {
 
 /* ---------- activity log (what the admin tools were used for) ---------- */
 const VERB = { restore: "restored", photo_remove: "removed a photo from", photo_move: "reordered the photos of", dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for", reset: "reset to default" };
-const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", normalize: "data check", emails: "email template" };
+const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", removals: "home removal", normalize: "data check", emails: "email template" };
 let LOG = { area: "", offset: 0 };
 async function renderLog() {
   const main = $("#main");
@@ -763,14 +763,30 @@ async function renderUsage() {
 }
 
 /* ---------- reports: "Something wrong? Tell us" from visitors ---------- */
+const rmCard = (r) => {
+  const l = r.listing, done = r.status !== "open", pick = (m) => btn("ghost", `Remove: ${m.name || m.address}${m.city ? " (" + m.city + ")" : ""}`, `data-rm="approve" data-target="${esc(m.target)}"`);
+  return rec({
+    attrs: `data-rmid="${esc(r.id)}"`, title: "Remove a home: " + esc((l && l.name) || r.address || r.ref), meta: when(r.createdAt),
+    tags: [[r.status === "open" ? "Waiting" : r.status === "done" ? "Removed" : "Declined", r.status === "open" ? "warn" : r.status === "done" ? "ok" : "bad"], ...(l && l.addedBy ? [["Added by an organizer", ""]] : [])],
+    facts: fact("Contact", `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`) + (r.ref ? fact("Listing id", `<code>${esc(r.ref)}</code>`) : "") + (r.address ? fact("Typed", esc(r.address)) : "") + (r.note ? fact("Note", esc(r.note)) : "")
+      + (l ? fact("Listing", esc([l.name, l.address, l.city].filter(Boolean).join(", "))) + (l.consent ? fact("Organizer confirmed", `${esc(l.consent.email)} on ${esc(l.consent.created_at)} (${l.consent.n} homes, wording ${esc(l.consent.version)})`) : "") : "")
+      + (done ? fact("Handled", esc(r.handledAt || "") + (r.target ? ` · ${esc(r.target)}` : "") + (r.adminNote ? ` · ${esc(r.adminNote)}` : "")) : ""),
+    body: !done && !l ? (r.matches.length ? `<p class="meta" style="margin:0">No listing id. Possible matches by address:</p><div class="row" style="gap:8px;flex-wrap:wrap">${r.matches.map(pick).join("")}</div>` : `<p class="meta" style="margin:0">No listing id and no address match. Search the Events tab by street, then close this request.</p>`) : "",
+    main: done ? "" : l ? btn("main", "Approve and remove the listing", `data-rm="approve" data-target="${esc(l.target)}"`) : btn("ghost", "Nothing to remove, close it", 'data-rm="approve" data-nothing="1"'),
+    danger: done ? "" : btn("danger", "Decline", 'data-rm="decline"'),
+  });
+};
 async function renderReports() {
-  const main = $("#main"), list = await api("/api/admin/reports");
-  setCount("reports", list.length);
-  main.innerHTML = list.length ? toolbar({ search: { placeholder: "Search reports" }, count: String(list.length) }) + `<p class="meta" style="margin:0 0 12px">From the "Something wrong? Tell us" link on events and houses. Fix the event or house, then dismiss the report.</p><div class="cards">${list.map((r) => rec({
+  const main = $("#main"), [list, rem] = await Promise.all([api("/api/admin/reports"), api("/api/admin/removals").catch(() => [])]);
+  const open = rem.filter((r) => r.status === "open").length;
+  setCount("reports", list.length + open);
+  const removals = rem.length ? `<h2 style="font-size:18px;margin:6px 0">Remove my home requests (${open} waiting)</h2><p class="meta" style="margin:0 0 12px">A resident asked us to take a home off the site. Approve deletes the listing (and any photos), marks it done and emails the person. Decline emails them your note. Aim to answer within two business days.</p><div class="cards">${rem.map(rmCard).join("")}</div>` : "";
+  const reports = list.length ? `${rem.length ? '<h2 style="font-size:18px;margin:18px 0 6px">Reports</h2>' : ""}<p class="meta" style="margin:0 0 12px">From the "Something wrong? Tell us" link on events and houses. Fix the event or house, then dismiss the report.</p><div class="cards">${list.map((r) => rec({
     attrs: `data-rid="${esc(r.id)}"`, title: esc(r.name || r.ref), tags: [["New", "warn"]], meta: when(r.created_at),
     body: `<p style="margin:0;white-space:pre-line">${esc(r.message)}</p>`, facts: fact("About", `<code>${esc(r.ref)}</code>`) + fact("Reply to", r.contact ? `<a href="mailto:${esc(r.contact)}">${esc(r.contact)}</a>` : "They left no email"),
     edit: btn("ghost", "Open Events", 'data-tab="events"'), danger: btn("danger", "Dismiss", "data-rdismiss"),
-  })).join("")}</div>` : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`;
+  })).join("")}</div>` : "";
+  main.innerHTML = list.length || rem.length ? toolbar({ search: { placeholder: "Search reports" }, count: String(list.length + open) }) + removals + reports : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`;
   wireToolbar(main, { onSearch: (q) => filterCards(main, q) }); applyPreset(main);
 }
 $("#main").addEventListener("click", async (e) => {
@@ -779,6 +795,18 @@ $("#main").addEventListener("click", async (e) => {
   const card = b.closest("[data-rid]"); b.disabled = true;
   try { await api("/api/admin/reports", { method: "POST", body: JSON.stringify({ id: card.dataset.rid, action: "dismiss" }) }); card.remove(); toast("Dismissed"); refreshCounts(); if (!document.querySelector("[data-rid]")) renderReports(); }
   catch (err) { b.disabled = false; card.querySelector(".msg").className = "msg err"; card.querySelector(".msg").textContent = err.message; }
+});
+
+$("#main").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-rm]"); if (!b) return;
+  const card = b.closest("[data-rmid]"), act = b.dataset.rm;
+  if (!tap(b, act === "approve" ? (b.dataset.nothing ? "close" : "remove") : "decline")) return;
+  const body = { id: card.dataset.rmid, action: act };
+  if (act === "approve") { if (b.dataset.target) body.target = b.dataset.target; if (b.dataset.nothing) body.nothing = true; }
+  if (act === "decline") body.reason = prompt("A note for the person who asked (optional). It is included in the email.") || "";
+  b.disabled = true;
+  try { await api("/api/admin/removals", { method: "POST", body: JSON.stringify(body) }); toast(act === "approve" ? "Done. The person was emailed." : "Declined. The person was emailed."); refreshCounts(); renderReports(); }
+  catch (err) { b.disabled = false; toast(err.message); }
 });
 
 // Every edit window closes the same way: the X, Cancel, Escape, or a tap outside it
