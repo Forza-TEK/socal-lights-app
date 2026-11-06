@@ -31,11 +31,11 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 - [x] Batch A fixes: fake-contest gate, invite caps and email escaping, locked results, security headers, real 404s, safer city-page SEO (PR 309)
 - [x] Privacy-light counters (taps, `?ref=` campaign landings) and the privacy sentence that discloses them (PR 296, 300, 301)
 - [x] Stripe webhook registered with the six events the code handles; Stripe, Cloudflare and database read access working
-- [x] Separate preview environment: database `socal-lights-preview` and bucket `socal-lights-photos-preview`, same 180 migrations, no personal data; Pages preview points at them, production untouched
+- [~] Separate preview environment: database `socal-lights-preview` and bucket `socal-lights-photos-preview` exist. **Correction 2026-11-07 (audit H4): previews were still bound to production** because `wrangler.toml` overrode the dashboard. `[env.preview]` now fixes it in code (migrations also apply to the preview DB); verify after the next preview build and turn off preview deployments: `docs/runbooks/preview-isolation.md`, `docs/runbooks/deploy-stall.md`
 - [x] Admin protection verified (Access policy "Site owner only" on both hosts, admin pages and `/api/admin`)
 - [x] Mailing address stored as a Pages secret (not in the public repo)
 - [x] Android key workflow deleted (it published the key in a public repo); safe signing steps in `docs/android-signing.md`
-- [x] Free uptime check on GitHub (every 15 minutes, emails on failure; tests the app through pages.dev because the zone answers cloud addresses with 403)
+- [x] Free uptime check on GitHub (**best effort: GitHub ran it every 6 to 8 hours, not every 15 minutes**; emails on failure; tests the app through pages.dev because the zone answers cloud addresses with 403). Backed since 2026-11-07 by heartbeats, `/api/health` and a stale-job banner/issue: `docs/runbooks/monitoring.md`
 
 - [x] Help Center refresh: six articles updated, four added, "home" wording; applied by migration 0167 to articles not edited in Admin (`docs/help-updates.md` has paste text for any you edited)
 
@@ -87,7 +87,10 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 **Cloudflare, optional**
 - [ ] **Backups:** Cloudflare > My Profile > API Tokens > the GitHub token > Edit > add Account > Workers R2 Storage > Edit > Update; then GitHub > Actions > Nightly backup > Run workflow, and confirm the file in R2 `socal-lights-backups` (`docs/runbooks/backup-restore.md`)
 - [ ] Add notification policies (failed Pages deployment, D1 alerts) and confirm D1 Time Travel retention
-- [ ] Turn on a second uptime view (an external free monitor) if you want alerts besides GitHub email
+- [ ] **Owner, 5 minutes: create the external monitor and the backup dead-man's switch (Better Stack, click by click in `docs/runbooks/monitoring.md`) and add the repo secret `BACKUP_PING_URL`.**
+- [ ] **Owner: add "Account > Cloudflare Pages > Read" to the `CLOUDFLARE_API_TOKEN` (and the Pages secret `CF_ANALYTICS_TOKEN`) so deploy-stall detection works (`docs/runbooks/deploy-stall.md`); turn off preview deployments (same page).**
+- [ ] **Owner: if `STRIPE_SECRET_KEY` is a restricted key, give it Read on Checkout Sessions and PaymentIntents (`docs/stripe-setup.md`, "Stripe reconcile").**
+- [ ] Owner, monthly: download `latest.sql.gz` from R2 to private storage outside Cloudflare (`docs/runbooks/monitoring.md`, "Off-Cloudflare copy")
 
 ## 3. Team backlog (CEO runs; order from the audit)
 - [x] **Batch B, privacy (PR 315):** privacy statements made true, account deletion complete, IPs pruned after 48 hours, postal address and unsubscribe in marketing emails (verified on a real email). Still for the attorney: Terms additions, installer licensing text, DMCA, prize wording.

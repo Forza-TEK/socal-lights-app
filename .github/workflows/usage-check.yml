@@ -11,7 +11,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  issues: write   # only to open, update or close the usage issue
+  issues: write    # only to open, update or close the usage issue and the stale-job issue
+  actions: write   # only so the stale-job check can start a late nightly backup
 
 jobs:
   check:
@@ -27,3 +28,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: bash .github/scripts/usage-issue.sh
+      - name: Check that the scheduled jobs are reporting in (opens or closes the issue "Scheduled job stopped reporting"; starts a late backup)
+        if: always()
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash .github/scripts/stale-issue.sh
+      - name: Report to the heartbeat (dead-man's switch; see docs/runbooks/monitoring.md)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          [ -n "$ALERT_CRON_KEY" ] || exit 0
+          s=ok; [ "$JOB_STATUS" = success ] || s=fail
+          curl -sS -m 20 --retry 2 -X POST "https://socal-lights.pages.dev/api/heartbeat?job=usage-check&status=$s" -H "x-alert-key: $ALERT_CRON_KEY" -o /dev/null -w "heartbeat: HTTP %{http_code}\n"

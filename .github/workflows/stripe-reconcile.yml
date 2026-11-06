@@ -1,0 +1,49 @@
+name: Stripe reconcile
+
+# Daily, read-only check that Stripe and our orders agree (functions/_lib/reconcile.js): last 3 days of Checkout Sessions and PaymentIntents against feature_orders.
+# Reports paid-but-not-recorded, paid-but-not-applied, amount differences and unknown payments to the admin digest and to ops_log. It only ever READS from Stripe.
+# One call reads about 20 objects (the free plan allows 50 outgoing calls per request), so this loops until the site says { "done": true }.
+# Calls the pages.dev address of the same site (socallights.app puts a bot check in front of GitHub's servers). Uses the existing repository secret ALERT_CRON_KEY.
+# If STRIPE_SECRET_KEY is a restricted key without read access to Checkout Sessions / PaymentIntents the run still passes and the digest says what permission to add (docs/stripe-setup.md).
+# 14:47 UTC = 6:47 or 7:47 Pacific.
+on:
+  schedule:
+    - cron: "47 14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stripe-reconcile
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Compare Stripe with the orders
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+        run: |
+          if [ -z "$ALERT_CRON_KEY" ]; then echo "ALERT_CRON_KEY is not set in the repository secrets"; exit 1; fi
+          for i in $(seq 1 12); do
+            out=$(curl -sS -m 40 -w "\n%{http_code}" -X POST https://socal-lights.pages.dev/api/stripe-reconcile -H "x-alert-key: $ALERT_CRON_KEY")
+            code=$(echo "$out" | tail -n1); body=$(echo "$out" | head -n -1)
+            echo "HTTP $code: $(echo "$body" | head -c 300)"
+            [ "$code" = "200" ] || { echo "::error::The reconcile answered HTTP $code"; exit 1; }
+            echo "$body" | grep -q '"status":"error"' && { echo "::error::The reconcile could not read Stripe (see the line above)"; exit 1; }
+            echo "$body" | grep -q '"done":true' && exit 0
+          done
+          echo "::error::The reconcile did not finish in 12 calls"; exit 1
+      - name: Report to the heartbeat (dead-man's switch; see docs/runbooks/monitoring.md)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          [ -n "$ALERT_CRON_KEY" ] || exit 0
+          s=ok; [ "$JOB_STATUS" = success ] || s=fail
+          curl -sS -m 20 --retry 2 -X POST "https://socal-lights.pages.dev/api/heartbeat?job=stripe-reconcile&status=$s" -H "x-alert-key: $ALERT_CRON_KEY" -o /dev/null -w "heartbeat: HTTP %{http_code}\n"

@@ -2,6 +2,9 @@
 # This repository is PUBLIC, so the backup is never stored as a workflow artifact or committed: it contains emails and private data.
 # Needs the repository secret CLOUDFLARE_API_TOKEN with: D1 Edit (already there) and Workers R2 Storage Edit (add it once; see docs/runbooks/backup-restore.md).
 # If the token cannot reach R2 the run fails with the exact steps and opens a GitHub issue, so a missing backup is never silent.
+# Before anything is uploaded the export is loaded into an empty SQLite database (scripts/verify-backup.mjs: counts only, no rows are printed) so a file that cannot be restored never replaces a good one.
+# Dead-man's switch: the last step reports to the site's heartbeat (a missing or failed backup shows on Admin home, in the digest and at /api/health; a backup more than 30 hours old also makes the
+# digest and usage-check workflows start this one) and pings an optional external monitor, repository secret BACKUP_PING_URL (healthchecks.io style; docs/runbooks/monitoring.md), which emails the owner when the ping stops.
 name: Nightly backup
 
 on:
@@ -37,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22   # node:sqlite is needed by the restore test
           cache: npm
       - run: npm ci
       - name: Export the live database
@@ -55,6 +58,8 @@ jobs:
           grep -c "^INSERT INTO" backup.sql | sed 's/^/insert statements: /'
           gzip -9 backup.sql
           sha256sum backup.sql.gz | tee backup.sha256
+      - name: Prove the export restores (load it into an empty SQLite database, counts only)
+        run: node --no-warnings scripts/verify-backup.mjs backup.sql.gz
       - name: Make sure the private backup bucket exists
         run: |
           if npx wrangler r2 bucket list 2>/tmp/list.err | grep -q "name:[[:space:]]*$BACKUP_BUCKET"; then echo "bucket $BACKUP_BUCKET exists"; exit 0; fi
@@ -91,3 +96,19 @@ jobs:
           URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           N=$(gh issue list --state open --search "\"$T\" in:title" --json number -q '.[0].number' || true)
           if [ -n "$N" ]; then gh issue comment "$N" --body "Failed again: $URL"; else gh issue create --title "$T" --body "The nightly D1 backup did not complete. See $URL. If the log says the token cannot reach R2, follow docs/runbooks/backup-restore.md (Setup). Close this issue once a run succeeds."; fi
+      - name: Report to the heartbeat and the external monitor
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          BACKUP_PING_URL: ${{ secrets.BACKUP_PING_URL }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          s=ok; [ "$JOB_STATUS" = success ] || s=fail
+          if [ -n "$ALERT_CRON_KEY" ]; then curl -sS -m 20 --retry 2 -X POST "https://socal-lights.pages.dev/api/heartbeat?job=backup&status=$s" -H "x-alert-key: $ALERT_CRON_KEY" -o /dev/null -w "heartbeat: HTTP %{http_code}\n"; fi
+          if [ -n "$BACKUP_PING_URL" ]; then
+            echo "::add-mask::$BACKUP_PING_URL"
+            # healthchecks.io: GET <url> = success, <url>/fail = failure. The URL is a secret, so curl runs silent and its output is discarded.
+            if [ "$s" = ok ]; then u="$BACKUP_PING_URL"; else u="${BACKUP_PING_URL%/}/fail"; fi
+            curl -fsS -m 20 --retry 3 -o /dev/null "$u" >/dev/null 2>&1 && echo "external monitor pinged ($s)" || echo "::warning::could not ping the external monitor"
+          fi

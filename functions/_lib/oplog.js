@@ -19,6 +19,17 @@ export async function logOp(env, kind, detail = "") {
   } catch {}
 }
 
+// Like logOp, but the same kind and detail is filed only once per `minutes` (default one hour). For things a stranger or a loop can repeat, such as a bad webhook signature. Returns true when filed.
+export async function logOpOnce(env, kind, detail = "", minutes = 60) {
+  try {
+    const d = String(detail).replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[email]").slice(0, 300);
+    const dup = await env.DB.prepare("SELECT id FROM ops_log WHERE kind = ? AND detail = ? AND created_at > datetime('now', ?) LIMIT 1").bind(String(kind).slice(0, 40), d, `-${Math.max(1, Math.floor(minutes))} minutes`).first();
+    if (dup) return false;
+  } catch {}
+  await logOp(env, kind, detail);
+  return true;
+}
+
 // Grouped summary since a timestamp ("YYYY-MM-DD HH:MM:SS", UTC): [{ kind, n, last, example }], newest group first.
 export async function opsSince(env, since) {
   try {

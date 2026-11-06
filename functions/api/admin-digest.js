@@ -10,6 +10,9 @@ import { opsSince, pruneOps } from "../_lib/oplog.js";
 import { funnelCounts, STEPS } from "../_lib/funnel.js";
 import { getUsage, usageLines } from "../_lib/cfusage.js";
 import { shiftDay } from "../_lib/time.js";
+import { jobStatus, problemJobs } from "../_lib/heartbeat.js";
+import { checkDeploys, NEEDS as DEPLOY_NEEDS } from "../_lib/deploys.js";
+import { readState, reconcileLines } from "../_lib/reconcile.js";
 
 export async function onRequestPost({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
@@ -25,7 +28,7 @@ export async function onRequestPost({ request, env }) {
   const ptDate = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
   const dst = /PDT/.test(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles", timeZoneName: "short" }));
   const dayStart = new Date(`${ptDate}T00:00:00${dst ? "-07:00" : "-08:00"}`).toISOString().slice(0, 19).replace("T", " ");
-  const problems = await opsSince(env, since);
+  const problems = (await opsSince(env, since)).filter((g) => g.kind !== "reconcile"); // Stripe-vs-orders findings have their own section below
   const [homes, events, entries, held, dayHomes, dayEvents, dayEntries, live, reports, orders] = await Promise.all([
     q("SELECT id, title, city, status, poster_type FROM posts WHERE contest_id IS NULL AND created_at > ? ORDER BY created_at DESC LIMIT 50", since),
     q("SELECT id, name, city, status FROM event_submissions WHERE created_at > ? ORDER BY created_at DESC LIMIT 50", since),
@@ -49,7 +52,7 @@ export async function onRequestPost({ request, env }) {
   const soon = rr.filter((r) => r.status === "active" && r.attempts === 0 && r.d && r.d <= shiftDay(ptToday(), 7)).length, retrying = rr.filter((r) => r.status === "active" && r.attempts > 0).length, lapsedN = rr.filter((r) => r.status === "lapsed").length, pausedN = rr.filter((r) => r.status === "paused").length;
   const lastRun = ((await env.DB.prepare("SELECT MAX(day) AS d FROM site_hits WHERE page = 'fn:autorenew-run'").first().catch(() => null)) || {}).d || "never", overdue = rr.filter((r) => r.status === "active" && r.attempts === 0 && r.d && r.d < ptToday()).length;
   const renewals = rr.length ? `## Automatic renewals\n- ${rr.filter((r) => r.status === "active").length} on, ${soon} charging in the next 7 days, ${retrying} with a failed charge waiting for the retry, ${lapsedN} lapsed, ${pausedN} paused. Renewal job last ran: ${lastRun}.${overdue ? ` ${overdue} CHARGE${overdue === 1 ? "" : "S"} OVERDUE (the daily job missed them: run the workflow by hand).` : ""}\nOpen Admin > Orders.\n\n` : "";
-  const WHAT = { email: "emails that failed to send", webhook: "Stripe webhook errors" };
+  const WHAT = { email: "emails that failed to send", webhook: "Stripe webhook errors (a rejected signature means STRIPE_WEBHOOK_SECRET is wrong)", reconcile: "Stripe payments that do not match our orders" };
   const problemText = problems.length ? `## Problems the site noticed (${problems.reduce((a, g) => a + g.n, 0)})\n${problems.map((g) => `- ${g.n} ${WHAT[g.kind] || g.kind}. Latest: ${g.example}`).join("\n")}\nWeekly alerts and contest reminders that failed are retried on the next run. Sign-in codes and invitations are not: check the Resend and Stripe dashboards if this repeats.\n\n` : "";
   // Cloudflare free-plan usage: every metric at 70% or more, always the top one; "LIMIT" in the subject at 90% or more (or a quota error logged in the last 2 hours)
   let usage = null;
@@ -57,13 +60,23 @@ export async function onRequestPost({ request, env }) {
   const uLines = usage ? usageLines(usage) : [];
   const limitSubject = !!usage && (usage.level === "warning" || usage.level === "limit");
   const usageText = usage ? `## Cloudflare free-plan usage (UTC day ${usage.utcDay})\n${uLines.length ? uLines.map((l) => "- " + l).join("\n") : usage.connected ? "- No numbers came back from Cloudflare." : "- Cloudflare analytics is not connected (see docs/runbooks/cloudflare-limits.md)."}${usage.limitHits.length ? `\n- LIMIT HIT at ${usage.limitHits[0].at} UTC: ${usage.limitHits[0].detail.slice(0, 120)}` : ""}\nOpen Admin > Usage. When a limit is reached, see docs/runbooks/cloudflare-limits.md.\n\n` : "";
+  // Scheduled jobs that went quiet or failed (GitHub's cron is best effort), a stalled Pages deploy, and what the daily Stripe-vs-orders check found. Each is one small read; nothing here can stop the digest.
+  let jobs = { jobs: [] }, deploy = null, rec = [];
+  try { jobs = await jobStatus(env); } catch {}
+  try { const token = env.CF_PAGES_TOKEN || env.CF_ANALYTICS_TOKEN; deploy = await checkDeploys({ token, accountId: env.CF_ACCOUNT_ID }); } catch {}
+  let recN = 0;
+  try { const rs = await readState(env); rec = reconcileLines(rs); recN = rs.last && rs.last.findings ? rs.last.findings.length : 0; } catch {}
+  const stale = problemJobs(jobs), stalled = !!deploy && deploy.state === "stalled";
+  const jobsText = (stale.length || stalled || rec.length || (deploy && deploy.state === "not_configured"))
+    ? `## Scheduled jobs and deploys\n${stale.map((j) => `- STALE: ${j.line}`).join("\n")}${stale.length ? "\nGitHub runs scheduled jobs late or skips them: run the workflow by hand from the Actions tab, and see docs/runbooks/monitoring.md.\n" : ""}${stalled ? deploy.problems.map((p) => `- DEPLOY STALLED: ${p.text}`).join("\n") + "\nFix: Cloudflare > Workers & Pages > socal-lights > Deployments > cancel the stuck one, then retry the production deployment (docs/runbooks/deploy-stall.md).\n" : ""}${deploy && deploy.state === "not_configured" ? `- Deploy check not set up: add "${DEPLOY_NEEDS}" to the Cloudflare token (docs/runbooks/deploy-stall.md).\n` : ""}${rec.length ? rec.map((l) => `- STRIPE: ${l}`).join("\n") + "\n" : ""}\n`
+    : "";
   const fc = await funnelCounts(env), fl = STEPS.filter(([k]) => fc[k].today || fc[k].week).map(([k, l]) => `- ${l}: ${fc[k].today} today, ${fc[k].week} in 7 days`);
   const funnelText = `## How people used the site\n${fl.length ? fl.join("\n") : "- Nothing counted yet."}\nThese are counts of taps and completions, not people: a person who comes back counts again, and browsers that block scripts are missed.\n\n`;
   const total = homes.length + events.length + entries[0].n + reports.length, dayTotal = dayHomes[0].n + dayEvents[0].n + dayEntries[0].n;
   const line = (label, rows, name) => rows.length ? `## ${label} (${rows.length})\n${rows.slice(0, 10).map((r) => `- ${r[name]} · ${r.city}${r.status === "pending" ? " · WAITING" : r.poster_type === "installer" ? " · installer" : ""}`).join("\n")}${rows.length > 10 ? `\n...and ${rows.length - 10} more` : ""}\n\n` : "";
   const head = total ? `${total} new submission${total === 1 ? "" : "s"} since the last update.\n\n${line("Homes and installer displays", homes, "title")}${line("Events", events, "name")}${entries[0].n ? `Contest entries: ${entries[0].n} (organizers review these)\n\n` : ""}${reports.length ? `## "Something wrong?" reports (${reports.length})\n${reports.slice(0, 8).map((r) => `- ${r.name || r.ref}: ${r.message}`).join("\n")}${reports.length > 8 ? `\n...and ${reports.length - 8} more` : ""}\n\n` : ""}` : "Nothing new since the last update.\n\n";
   const todayLine = `${dayTotal} submission${dayTotal === 1 ? "" : "s"} (${dayHomes[0].n} home${dayHomes[0].n === 1 ? "" : "s"}, ${dayEvents[0].n} event${dayEvents[0].n === 1 ? "" : "s"}, ${dayEntries[0].n} contest entr${dayEntries[0].n === 1 ? "y" : "ies"}).`;
-  const ok = await sendTemplate(env, "admin_digest", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { headline: (limitSubject ? "LIMIT, " : "") + (problems.length ? "PROBLEMS, " : "") + (total ? `${total} new submission${total === 1 ? "" : "s"}` : "no new submissions"), day_total: dayTotal, summary: problemText + usageText + head + payments + renewals + funnelText, today_line: todayLine, live_line: `${live[0].homes} homes, ${live[0].events} events.`, held: held[0].n });
+  const ok = await sendTemplate(env, "admin_digest", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { headline: (limitSubject ? "LIMIT, " : "") + (stale.length || stalled ? "STALE JOBS, " : "") + (recN ? "STRIPE MISMATCH, " : "") + (problems.length ? "PROBLEMS, " : "") + (total ? `${total} new submission${total === 1 ? "" : "s"}` : "no new submissions"), day_total: dayTotal, summary: problemText + jobsText + usageText + head + payments + renewals + funnelText, today_line: todayLine, live_line: `${live[0].homes} homes, ${live[0].events} events.`, held: held[0].n });
   if (ok) await env.DB.prepare("INSERT INTO admin_digest (id, last_at) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET last_at = excluded.last_at").bind(now).run();
-  return json({ sent: ok, new: total, today: dayTotal, problems: problems.reduce((a, g) => a + g.n, 0) });
+  return json({ sent: ok, new: total, today: dayTotal, problems: problems.reduce((a, g) => a + g.n, 0), stale: stale.map((j) => j.job), deploy: deploy ? deploy.state : "unknown" });
 }
