@@ -719,6 +719,7 @@ function renderPanel(opts) {
     listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE);
     body.innerHTML = vis.length ? `<h2 class="sr">Places in view</h2><div class="list">${vis.slice(0, listShown).map((it, i) => listCard(it, i)).join("")}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
       : !state.all && !state.city && !E.some((e) => (e.sn || "christmas") === state.season) ? `<div class="empty">No ${esc((SEASONS[state.season] || {}).short || "seasonal")} events are listed yet. We start adding them about six weeks ahead, so check back soon. Know of one? <a href="/add-event">Add an event</a>.</div>`
+      : state.q ? `<div class="empty">No places match \u201c${esc(state.q)}\u201d.<button class="linkbtn" type="button" id="clearq">Clear search</button></div>`
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
@@ -752,6 +753,7 @@ function renderPanel(opts) {
   }
   if (listIO) listIO.disconnect(); const sen = $("#listmore"); if (sen && window.IntersectionObserver) { listIO = new IntersectionObserver((en) => { if (en.some((e) => e.isIntersecting)) moreCards(); }, { root: body, rootMargin: "600px" }); listIO.observe(sen); }
   body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
+  const cq = $("#clearq"); if (cq) cq.onclick = () => { const q = $("#q"); q.value = ""; state.q = ""; closeSuggestions(); applyFilters(); q.focus(); };
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
 }
 document.getElementById("panel").addEventListener("click", (e) => { const h = e.target.closest("[data-nhelp]"); if (h) setNightHelp(h.dataset.nhelp === "1"); });

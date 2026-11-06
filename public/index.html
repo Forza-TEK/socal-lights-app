@@ -26,6 +26,12 @@
 <!-- day mode is the default; night mode is remembered per device. Set before CSS loads so the page never flashes. -->
 <script>/* night mode: automatic from 6 pm to 6 am local time; the sun/moon button overrides it until the next switch */try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<!-- start the data requests now instead of after the map library has loaded (app.js asks for the same three URLs) -->
+<link rel="preload" href="/api/events" as="fetch" crossorigin>
+<link rel="preload" href="/api/posts" as="fetch" crossorigin>
+<link rel="preload" href="/api/config" as="fetch" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
@@ -79,7 +85,7 @@
 <div class="modal" id="modal" hidden></div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script type="module" src="/app.js?v=20261106y"></script>
+<script type="module" src="/app.js?v=20261106z"></script>
 <script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script>
 </body>
 </html>
