@@ -8,6 +8,10 @@ _Last updated: 2026-11-06 (installer Sponsor placements)_
 - A stale copy gets a 20 second lease (the first request re-stores it with a younger age) plus a same-isolate in-flight flag, so concurrent requests start one rebuild. Best effort across edge locations.
 - Tests: `tests/events-api.test.mjs`. Still open: one Cloudflare WAF rate-limit rule on `/api/*` (dashboard, owner).
 
+## Sign-in code attempt limit (2026-11-06, audit S-07)
+- `functions/api/auth/email/verify.js`: an attempt is spent with one `UPDATE login_codes SET tries = tries + 1 WHERE id = ? AND tries < 5` and `meta.changes` is checked before the code is compared, so parallel guesses cannot exceed 5 per code. A per-address cap of 30 verifies an hour (429) counts rows in `submit_log` keyed `vf:<24 hex of a SHA-256 of the address>`; no raw address is stored, and the existing 48 hour prune removes them. No migration.
+- Tests: `tests/signin-attempts.test.mjs` (the stand-in database is synchronous, so it reproduces the old race by interleaving awaits but not real multi-connection D1 contention).
+- Not done: deleting older codes when a new one is issued (not needed: verify only reads the newest code).
 ## Home page list cached (2026-11-06, audit operations H5)
 - `functions/index.js`: the hidden city/event list is built by one narrow query (9 columns, upcoming rows only; the old code ran two scans, 2,016 + 2,602 = about 4,618 rows read per hit) and kept in the edge cache under `/__home-nav` (fresh 5 min, served stale up to 1 h, 30 s lease and in-flight flag so one rebuild at a time). A hit reads 0 rows. Output is byte-identical to the old code (tested against the old implementation); any error serves the plain static page.
 - Tests: `tests/home-cache.test.mjs`.
