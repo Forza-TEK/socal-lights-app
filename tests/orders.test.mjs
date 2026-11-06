@@ -105,8 +105,8 @@ const refundOf = (n) => stripeEvent("charge.refunded", { id: "ch_" + n, payment_
 test("overlap: two stacked orders; refunding the newer shortens the placement to what the older paid for", async () => {
   const { env, raw } = newEnv(); addEvent(raw);
   await pay(1, { env, s: { metadata: { event_id: "ev1", plan: "pin", user_id: "u1" }, amount_total: 1000 } }); // level 1 until +30
-  await pay(2, { env, s: { metadata: { event_id: "ev1", plan: "top", user_id: "u1" } } });                     // level 2 until +60
-  assert.deepEqual([getEvent(raw).featured, getEvent(raw).featured_until], [2, ptToday(60)]);
+  await pay(2, { env, s: { metadata: { event_id: "ev1", plan: "top", user_id: "u1" } } });                     // level 2, still +30: the 30-day cap from payment
+  assert.deepEqual([getEvent(raw).featured, getEvent(raw).featured_until], [2, ptToday(30)]);
   const r = await sendWebhook(webhook, env, refundOf(2));
   assert.equal(r.body.revoked, true);
   assert.deepEqual([getEvent(raw).featured, getEvent(raw).featured_until], [1, ptToday(30)], "the older order's time and level remain");
@@ -121,7 +121,7 @@ test("overlap: refunding the older order keeps the placement the newer order cov
   await pay(2, { env, s: { metadata: { event_id: "ev1", plan: "top", user_id: "u1" } } });
   const r = await sendWebhook(webhook, env, refundOf(1));
   assert.equal(r.body.revoked, true);
-  assert.deepEqual([getEvent(raw).featured, getEvent(raw).featured_until], [2, ptToday(60)]);
+  assert.deepEqual([getEvent(raw).featured, getEvent(raw).featured_until], [2, ptToday(30)]);
   assert.equal(getOrder(raw, "cs_1").status, "refunded"); assert.equal(getOrder(raw, "cs_2").status, "paid");
   const r2 = await sendWebhook(webhook, env, refundOf(2));
   assert.equal(r2.body.revoked, true);
@@ -171,9 +171,9 @@ test("approve: a plan paid while waiting is applied, one order at a time", async
   await pay(2, { env, s: { metadata: { event_id: "sub:s1", plan: "top", user_id: "u1" } } });
   const a = await subAct(env, "s1", { action: "approve", status: "confirmed" });
   const ev = getEvent(raw, a.body.id);
-  assert.deepEqual([ev.featured, ev.featured_until], [2, ptToday(60)]);
+  assert.deepEqual([ev.featured, ev.featured_until], [2, ptToday(30)]);
   assert.equal(getOrder(raw, "cs_1").applied_until, ptToday(30), "each order records what it added");
-  assert.equal(getOrder(raw, "cs_2").applied_until, ptToday(60));
+  assert.equal(getOrder(raw, "cs_2").applied_until, ptToday(30), "a second order for the same window adds no time (30-day cap from payment)");
   assert.equal(getOrder(raw, "cs_1").event_id, a.body.id);
 });
 

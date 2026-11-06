@@ -1,24 +1,46 @@
-// Featured plans: price, level and how long they last. Prices are in cents.
+// Featured plans: price, level and how long they last. Prices are in cents and exist only here (/api/config serves them).
+// Events: the window follows the event. Placement starts at payment and ends on the event's last day (end_date as stored when paid), capped at
+//   days (pin, top: 30) or maxDays (season: 90) from payment. Featuring opens OPEN_DAYS before the event starts.
+// Homes have no end date: pin and top run `days` days from payment, and "season" is never sold for a home.
+// The plan key "season" is kept so orders already paid keep working; users see it as "Full run": events 31+ days long (minLength) with at least minDays left.
+export const OPEN_DAYS = 30;
+export const LEGACY_SEASON_CENTS = 2000; // the old "Whole season" price: a paid or in-flight order at this amount is grandfathered (no 90-day cap, no amount-mismatch flag)
 export const PLANS = {
-  pin: { label: "Featured pin (30 days)", cents: 1000, level: 1, days: 30 },
-  top: { label: "Top of the list (30 days)", cents: 1500, level: 2, days: 30 },
-  season: { label: "Whole season (until the event ends)", cents: 2000, level: 2, days: 0, minDays: 7 }, // minDays: the event must still have this many days to run (a $20 plan must not last a day)
+  pin: { label: "Featured pin", cents: 1000, level: 1, days: 30 },
+  top: { label: "Top of the list", cents: 1500, level: 2, days: 30 },
+  season: { label: "Full run", cents: 2500, level: 2, days: 0, maxDays: 90, minLength: 31, minDays: 7 },
 };
 
 // What the browser may know about plans (served by /api/config). Prices exist only in PLANS above.
-export const PUBLIC_PLANS = Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, days: p.days, level: p.level, minDays: p.minDays || 0 }]));
+export const PUBLIC_PLANS = Object.fromEntries(Object.entries(PLANS).map(([k, p]) => [k, { label: p.label, cents: p.cents, days: p.days, level: p.level, minDays: p.minDays || 0, minLength: p.minLength || 0, maxDays: p.maxDays || p.days }]));
 
 export const addDays = (ymd, n) => new Date(Date.parse(ymd + "T00:00:00Z") + n * 86400_000).toISOString().slice(0, 10);
+const daysBetween = (a, b) => Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86400_000);
 
-// New featured/featured_until for an event after a paid plan. Extending a running placement adds time on top of it; the level never goes down.
-export function applyPlan(ev, plan, today) {
+// Why an event cannot buy this plan today, or "" when it can. ev: { start_date, end_date }. Checked by checkout (and mirrored in the pages).
+export function eventPlanProblem(ev, plan, today) {
+  const p = PLANS[plan];
+  if (ev.start_date && ev.start_date > addDays(today, OPEN_DAYS)) return `Featuring opens ${OPEN_DAYS} days before your event: come back on ${addDays(ev.start_date, -OPEN_DAYS)}.`;
+  if (p.minLength && ev.start_date && daysBetween(ev.start_date, ev.end_date) + 1 < p.minLength) return `The ${p.label} plan is for events that run ${p.minLength} days or more. This one runs ${daysBetween(ev.start_date, ev.end_date) + 1}. The featured pin or top of the list fits better.`;
+  if (p.minDays && ev.end_date < addDays(today, p.minDays)) return `This event ends on ${ev.end_date}, too soon for the ${p.label} plan (it needs at least ${p.minDays} days left). The featured pin or top of the list is a better fit.`;
+  return "";
+}
+
+// New featured/featured_until for a target after a paid plan. Extending a running placement never shortens it; the level never goes down.
+// Event: until = min(end_date, today + cap), at least today. Buying again therefore adds time only while the cap (not the event's last day) is what limits it.
+// opts.home: a home (no end date): days from payment, added on top of a running placement. opts.legacy: an old $20 whole-season order: until the event's last day, no cap.
+export function applyPlan(ev, plan, today, opts = {}) {
   const p = PLANS[plan];
   const running = ev.featured && (!ev.featured_until || ev.featured_until >= today);
   const level = Math.max(p.level, running ? ev.featured : 0);
   let until;
-  if (p.days) until = addDays(running && ev.featured_until && ev.featured_until > today ? ev.featured_until : today, p.days);
-  else until = ev.end_date >= today ? ev.end_date : today;
-  if (!p.days && running && ev.featured_until && ev.featured_until > until) until = ev.featured_until; // never shorten
+  if (opts.home) until = addDays(running && ev.featured_until && ev.featured_until > today ? ev.featured_until : today, p.days);
+  else {
+    const cap = opts.legacy ? ev.end_date : addDays(today, p.days || p.maxDays);
+    until = ev.end_date < cap ? ev.end_date : cap;
+    if (until < today) until = today; // an event that ended in the meantime: through today only
+    if (running && ev.featured_until && ev.featured_until > until) until = ev.featured_until; // never shorten
+  }
   return { featured: level, featured_until: until };
 }
 
@@ -47,10 +69,10 @@ export const setOrderNote = (db, sessionId, text) => db.prepare("UPDATE feature_
 export const isHomeOrder = (o) => !!o && o.target === "home";
 export async function applyOrder(db, order, targetId, today = ptToday()) {
   const home = isHomeOrder(order);
-  if (home && !PLANS[order.plan].days) return null; // never happens through checkout; a hand-made order for a home cannot use the season plan
+  if (home && !PLANS[order.plan].days) return null; // never happens through checkout; a hand-made order for a home cannot use the Full run plan
   const ev = await db.prepare(home ? "SELECT id, featured, featured_until FROM posts WHERE id = ?" : "SELECT id, end_date, featured, featured_until FROM events WHERE id = ?").bind(targetId).first();
   if (!ev) return null;
-  const nf = applyPlan(ev, order.plan, today);
+  const nf = applyPlan(ev, order.plan, today, { home, legacy: order.plan === "season" && order.amount === LEGACY_SEASON_CENTS });
   await db.batch([
     db.prepare(home ? "UPDATE posts SET featured=?, featured_until=? WHERE id=? AND EXISTS (SELECT 1 FROM feature_orders WHERE session_id=? AND applied=0)" : "UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=? AND EXISTS (SELECT 1 FROM feature_orders WHERE session_id=? AND applied=0)").bind(nf.featured, nf.featured_until, targetId, order.session_id),
     db.prepare("UPDATE feature_orders SET event_id=?, applied=1, applied_featured=?, applied_until=? WHERE session_id=? AND applied=0").bind(targetId, nf.featured, nf.featured_until, order.session_id),

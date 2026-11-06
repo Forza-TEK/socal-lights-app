@@ -186,7 +186,7 @@ test("dispute: naming only its charge is resolved through the stored charge id, 
 test("applyPlan: extension adds time on top of a running placement", () => {
   const today = "2026-12-01";
   const ev = { end_date: "2027-01-10", featured: 2, featured_until: "2026-12-10" };
-  assert.deepEqual(applyPlan(ev, "top", today), { featured: 2, featured_until: "2027-01-09" });
+  assert.deepEqual(applyPlan(ev, "top", today), { featured: 2, featured_until: "2026-12-31" }, "running until 12-10: the 30-day cap from payment (12-31) is later, and the event runs to 01-10");
   assert.deepEqual(applyPlan({ end_date: "2027-01-10", featured: 0, featured_until: null }, "pin", today), { featured: 1, featured_until: "2026-12-31" });
   const expired = { end_date: "2027-01-10", featured: 2, featured_until: "2026-11-20" };
   assert.deepEqual(applyPlan(expired, "pin", today), { featured: 1, featured_until: "2026-12-31" }, "an expired placement does not carry its old level or time");
@@ -196,13 +196,14 @@ test("applyPlan: an upgrade never downgrades the level", () => {
   const today = "2026-12-01";
   const r = applyPlan({ end_date: "2027-01-10", featured: 2, featured_until: "2026-12-10" }, "pin", today);
   assert.equal(r.featured, 2);
-  assert.equal(r.featured_until, "2027-01-09");
+  assert.equal(r.featured_until, "2026-12-31", "a pin bought on top of a running top keeps level 2 and gets the cap");
   assert.equal(applyPlan({ end_date: "2027-01-10", featured: 1, featured_until: "2026-12-10" }, "top", today).featured, 2);
 });
 
-test("applyPlan: season runs to the event end, never shortens, and on its last day lasts only that day", () => {
+test("applyPlan: Full run runs to the event end (capped at 90 days), never shortens, and on its last day lasts only that day", () => {
   const today = "2026-12-01";
   assert.deepEqual(applyPlan({ end_date: "2027-01-10", featured: 0, featured_until: null }, "season", today), { featured: 2, featured_until: "2027-01-10" });
+  assert.equal(applyPlan({ end_date: "2027-06-30", featured: 0, featured_until: null }, "season", today).featured_until, "2027-03-01", "90 days from payment");
   assert.equal(applyPlan({ end_date: "2026-12-20", featured: 2, featured_until: "2027-02-01" }, "season", today).featured_until, "2027-02-01", "a longer running placement is kept");
   assert.equal(applyPlan({ end_date: today, featured: 0, featured_until: null }, "season", today).featured_until, today, "last day: through today only");
   assert.equal(applyPlan({ end_date: "2026-11-30", featured: 0, featured_until: null }, "season", today).featured_until, today, "an already-ended event gets today at most");
