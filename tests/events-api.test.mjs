@@ -28,10 +28,10 @@ test("?ended=1 and ?all=1 still return the long-ended events", async () => {
   for (const qs of ["?ended=1", "?all=1"]) assert.ok((await (await get(env, qs)).json()).some((e) => e.id === "old"), qs);
 });
 
-test("event objects keep exactly the fields the app reads", async () => {
+test("list event objects keep the fields cards, pins, search and routes read (the blurb and link come from /api/events/<id>, see event-detail.test.mjs)", async () => {
   const env = seed();
   const e = (await (await get(env)).json())[0];
-  for (const k of ["id", "n", "c", "city", "t", "s", "e", "st", "free", "p", "h", "lat", "lng", "b", "u", "sn", "v", "a", "img", "imgs", "f", "nt", "lc"]) assert.ok(k in e, k);
+  for (const k of ["id", "n", "c", "city", "t", "s", "e", "st", "free", "p", "h", "lat", "lng", "sn", "v", "a", "img", "imgs", "f", "nt", "lc"]) assert.ok(k in e, k);
 });
 
 test("ETag: present, 304 on a matching If-None-Match, 200 again when the data changes", async () => {
