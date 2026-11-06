@@ -2,6 +2,7 @@
 // the newest submissions, and the latest admin activity. One request, a handful of small queries.
 import { json } from "../../_lib/util.js";
 import { funnelCounts, STEPS } from "../../_lib/funnel.js";
+import { limitHits } from "../../_lib/cfusage.js";
 
 export async function onRequestGet({ env }) {
   const n = async (sql, ...a) => { try { return (await env.DB.prepare(sql).bind(...a).first()).n || 0; } catch { return 0; } };
@@ -50,6 +51,7 @@ export async function onRequestGet({ env }) {
   const clickRows = await rows("SELECT page, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today, SUM(n) AS week FROM site_hits WHERE day >= ? AND (page LIKE 'click:%' OR page = 'feature') GROUP BY page", days[13], days[7]);
   const clicks = Object.fromEntries(clickRows.map((r) => [r.page, { today: r.today || 0, week: r.week || 0 }]));
   return json({
+    limits: (await limitHits(env)).slice(0, 3), // quota errors logged in the last 24 hours (banner on Admin home)
     funnel: { steps: STEPS, counts: await funnelCounts(env) },
     trends: { days, houses: tHouses, votes: tVotes, accounts: tAccounts, views: tViews, topPages, clicks },
     attention: { waitHomes, waitEvents, waitContests, reports, claims },

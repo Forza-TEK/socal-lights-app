@@ -4,6 +4,8 @@
 // Rules: never change a body, never override a header the handler already set, never throw (any problem falls through to the plain response).
 // A Content-Security-Policy is deliberately NOT set here: it needs a long test across the map app, Turnstile, Google sign-in and the admin pages
 // (deferred, see docs/status.md and the audit item S-02). Set-Cookie and cache headers are left exactly as the handler wrote them.
+import { noteQuotaError } from "./_lib/oplog.js";
+
 const HEADERS = [
   ["X-Content-Type-Options", "nosniff"],
   ["Referrer-Policy", "strict-origin-when-cross-origin"],
@@ -11,8 +13,10 @@ const HEADERS = [
   ["X-Frame-Options", "SAMEORIGIN"],
 ];
 
-export async function onRequest({ next }) {
-  const res = await next();
+export async function onRequest({ next, env }) {
+  let res;
+  try { res = await next(); }
+  catch (e) { try { if (env && env.DB) await noteQuotaError(env, e, "request"); } catch {} throw e; } // an uncaught quota error is noted as a "limit", then handled as before
   try {
     const missing = HEADERS.filter(([k]) => !res.headers.has(k));
     if (!missing.length) return res;

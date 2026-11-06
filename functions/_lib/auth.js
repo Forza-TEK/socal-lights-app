@@ -3,6 +3,7 @@
 import { json, err, newId } from "./util.js";
 import { logOp } from "./oplog.js";
 import { bump } from "./funnel.js";
+import { EMAIL_KEY, utcDay } from "./cfusage.js";
 
 export const COOKIE = "scl_session";
 const SESSION_DAYS = 30;
@@ -92,6 +93,7 @@ export async function sendMail(env, { to, subject, text, html, headers, tag }) {
       body: JSON.stringify({ from: env.MAIL_FROM || "SoCal Lights <login@socallights.app>", to: [to], subject, text, ...(html ? { html } : {}), ...(headers ? { headers } : {}) }),
     });
     if (!r.ok) await logOp(env, "email", `${tag || "mail"}: mail service answered ${r.status} ${(await r.text().catch(() => "")).slice(0, 120)}`);
+    if (r.ok) await bump(env, EMAIL_KEY, utcDay()); // counts toward the Resend free-plan quota shown in Admin > Usage (UTC day)
     return r.ok;
   } catch (e) { await logOp(env, "email", `${tag || "mail"}: could not reach the mail service (${e && e.message})`); return false; }
 }

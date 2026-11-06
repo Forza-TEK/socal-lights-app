@@ -23,6 +23,18 @@ jobs:
           out=$(curl -sS -X POST https://socal-lights.pages.dev/api/admin-digest -H "x-alert-key: $ALERT_CRON_KEY")
           echo "$out" | head -c 400
           echo "$out" | grep -q '"new"' || exit 1
+      - uses: actions/checkout@v4
+        if: always()
+        with:
+          sparse-checkout: .github/scripts
+      - name: Also run the Cloudflare usage check (the 30-minute workflow can be late; this keeps the usage issue current)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash .github/scripts/usage-issue.sh
       - name: Open an issue if the digest could not be sent
         if: failure()
         env:

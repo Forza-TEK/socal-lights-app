@@ -3,6 +3,7 @@
 _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
 
 ## 1. Done and verified live
+- [x] Cloudflare free-plan usage panel (Admin > Cloudflare usage), digest section, 30-minute GitHub issue check and runtime `limit` logging (2026-11-06; `runbooks/cloudflare-limits.md`)
 - [x] Monetization strategy v2 from real data (Stripe, Cloudflare, database): prove first, earn small, build later (`monetization/strategy.md`)
 - [x] Event organizer Featured funnel (2026-11-06): one flow Choose -> sign in -> which event -> confirm (dates, total) -> Stripe -> success view + `feature_paid` email; funnel counters `fn:event-feature-*`; audit in `docs/event-funnel-audit.md`
 - [x] Featured payments hardened: retry-safe webhook, refunds and disputes, one price source, receipts, native-app guard (PR 291)
@@ -39,6 +40,7 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 - [ ] No real payment was made in testing. When you next do a live $10 test, pick an event that starts within 30 days (earlier ones are refused by design).
 
 ## 2. Needs you (owner)
+- [ ] **Connect the usage panel** (5 minutes, `runbooks/cloudflare-limits.md` > One-time setup): create an API token with Account / Account Analytics / Read, then add Pages secrets `CF_ANALYTICS_TOKEN` and `CF_ACCOUNT_ID` (Production) and redeploy. Also check Cloudflare Billing: is the account on Workers Paid or Free? D1 reads hit 3.66M of the free 5M on Nov 6.
 - [ ] Help Center: open Admin > Help Center after the deploy. If any of the ten articles in `docs/help-updates.md` still show old text, you had edited it in Admin: paste the text from that page. When the new videos are recorded and in `tutorials.json`, set each article's Video field in Admin.
 **Urgent: outreach and your mailbox (`monetization/email-outreach-analysis.md`)**
 - [ ] **Slow the Grok sending now.** Microsoft warned the mailbox on Oct 31 ("Suspicious email sending patterns detected ... will be restricted if this activity continues") about 45 minutes after a burst of 42 emails in about 160 seconds. A restriction would also stop your real business mail from forza-tek.com. Until a separate sending domain exists: at most 15 a day, one every 2 to 6 minutes, never in bursts.
