@@ -2,6 +2,12 @@
 
 _Last updated: 2026-11-07 (audit fixes: homes, contests, installers, email caps)_
 
+## Tests and Pacific time (2026-11-07; engineering M3 and test gaps)
+- **One Pacific "today"** (`functions/_lib/time.js`: `ptToday`, `ptDate`, `shiftDay`, DST-aware; `featured.js` still re-exports `ptToday`). All server copies of `Date.now() - 8h` replaced (PR 404 plus `removal.js`). Left alone on purpose: `admin-digest.js` `since` (an 8 hour look-back, not a time zone) and client `public/addflow.js:10` (front-end owner: use `Intl`). A test fails if a fixed offset reappears under `functions/`.
+- **New tests** (about 90): `signin`, `admin-gate`, `submit` (house, installer, event), `contests` (creation, announce, podium), `pacific-time`, `validate-migrations`, `smoke` (every function imports, every public script parses), `frontend-logic`. `tests/_d1.mjs` now throws if a migration fails to apply. How to run, what the stand-in cannot do, what is not covered, and the "must have a test" checklist: `docs/testing.md`.
+- **Bugs found, not fixed** (no behavior changes allowed here): `submit.js:100,112` orphan photos in R2 when the per-account daily limit refuses a post (`todo` test); `util.js:153` Access token without `exp` accepted; no Turnstile or honeypot on submit forms (sign-in replaced them).
+- **Risk:** live verification was skipped (D1 daily read limit reached; no live requests made).
+
 ## Audit fixes: private homes, fake contests, installer takeover, email caps, admin CSRF (2026-11-07; PL-01, N-02, S-04, N-03, S-10, S-08)
 Migration `0181_audit_privacy_abuse.sql` (add-only). Tests: `tests/audit-fixes.test.mjs`, updated `tests/privacy.test.mjs`.
 - **Decision reversed (owner priority after the audit).** The 2026-11-06 note that a "remove this listing" request "was left out on purpose" (see "Is this your home? Claim it" below) no longer holds: residents now have a Remove my home path.
