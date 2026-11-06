@@ -144,7 +144,7 @@
             "url": "/tutorials/profile-mobile.mp4",
             "poster": "/tutorials/profile-mobile.jpg",
             "captions": "/tutorials/profile-mobile.vtt",
-            "length": "1:22"
+            "length": "1:54"
           }
         }
       ]
@@ -248,7 +248,7 @@
             "url": "/tutorials/run-approve-mobile.mp4",
             "poster": "/tutorials/run-approve-mobile.jpg",
             "captions": "/tutorials/run-approve-mobile.vtt",
-            "length": "2:06"
+            "length": "2:25"
           }
         },
         {
@@ -258,7 +258,13 @@
           "url": "/tutorials/run-add-homes.mp4",
           "length": "2:26",
           "captions": "/tutorials/run-add-homes.vtt",
-          "poster": "/tutorials/run-add-homes.jpg"
+          "poster": "/tutorials/run-add-homes.jpg",
+          "mobile": {
+            "url": "/tutorials/run-add-homes-mobile.mp4",
+            "poster": "/tutorials/run-add-homes-mobile.jpg",
+            "captions": "/tutorials/run-add-homes-mobile.vtt",
+            "length": "2:26"
+          }
         },
         {
           "id": "edit",
@@ -287,7 +293,7 @@
             "url": "/tutorials/run-voting-mobile.mp4",
             "poster": "/tutorials/run-voting-mobile.jpg",
             "captions": "/tutorials/run-voting-mobile.vtt",
-            "length": "2:11"
+            "length": "2:23"
           }
         },
         {
@@ -297,7 +303,13 @@
           "url": "/tutorials/run-unpublish.mp4",
           "length": "2:04",
           "captions": "/tutorials/run-unpublish.vtt",
-          "poster": "/tutorials/run-unpublish.jpg"
+          "poster": "/tutorials/run-unpublish.jpg",
+          "mobile": {
+            "url": "/tutorials/run-unpublish-mobile.mp4",
+            "poster": "/tutorials/run-unpublish-mobile.jpg",
+            "captions": "/tutorials/run-unpublish-mobile.vtt",
+            "length": "2:05"
+          }
         },
         {
           "id": "team",
@@ -440,7 +452,28 @@
           "url": "/tutorials/post-claim.mp4",
           "length": "2:15",
           "captions": "/tutorials/post-claim.vtt",
-          "poster": "/tutorials/post-claim.jpg"
+          "poster": "/tutorials/post-claim.jpg",
+          "mobile": {
+            "url": "/tutorials/post-claim-mobile.mp4",
+            "poster": "/tutorials/post-claim-mobile.jpg",
+            "captions": "/tutorials/post-claim-mobile.vtt",
+            "length": "2:14"
+          }
+        },
+        {
+          "id": "feature",
+          "title": "Feature your event or home",
+          "desc": "A gold pin and the top of the list, for events and winning homes. Stops at the secure payment page.",
+          "url": "/tutorials/post-feature.mp4",
+          "length": "2:11",
+          "captions": "/tutorials/post-feature.vtt",
+          "poster": "/tutorials/post-feature.jpg",
+          "mobile": {
+            "url": "/tutorials/post-feature-mobile.mp4",
+            "poster": "/tutorials/post-feature-mobile.jpg",
+            "captions": "/tutorials/post-feature-mobile.vtt",
+            "length": "2:11"
+          }
         }
       ]
     }
