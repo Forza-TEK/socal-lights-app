@@ -64,7 +64,7 @@
 
 <h2>How it works</h2>
 <details open><summary>How long does a season last, and what does it cost?</summary><p id="rule2"></p></details>
-<details><summary>Can I renew or upgrade?</summary><p><b>Renew:</b> buy the same plan again while it is running and the new season starts the day after the current one ends, at the full price of that new season. Time is only ever added, and we sell at most one season ahead. <b>Upgrade:</b> to add the top-of-the-list card to a banner that is already running to the end of the season, choose Banner and top of the list. You pay the difference between the two plans' prices today (never less than <span class="minp"></span>), the card starts today and runs to the end of the season, and your banner stays as it is. This page shows the exact dates and price before you pay.</p></details>
+<details><summary>Can I renew or upgrade?</summary><p><b>Renew:</b> buy the same plan again while it is running and the new season starts the day after the current one ends, at the full price of that new season. Time is only ever added, and we sell at most one season ahead. <b>Upgrade:</b> to add the top-of-the-list card to a banner that is already running to the end of the season, choose Banner and top of the list. You pay the difference between the two plans' prices today (never less than <span class="minup"></span>), the card starts today and runs to the end of the season, and your banner stays as it is. This page shows the exact dates and price before you pay.</p></details>
 <details><summary>Is it labelled as an ad?</summary><p>Yes. Paid placements are always labelled "Sponsor" in the banner and on the list card, and your profile still has to be real and accurate.</p></details>
 <details><summary>Can I get a refund?</summary><p>If we cannot put your placement on for any reason, you get a full refund. Once it is running, payments are non-refundable, but email us if something is wrong. A refund switches the placement off, and so does a payment dispute, so please email us before disputing a charge with your bank.</p></details>
 <details><summary>Does paying change a contest?</summary><p>No. Payment never affects who wins or any contest result, and finding lights and events on the map stays free for everyone.</p></details>
@@ -94,7 +94,7 @@ else if (!cfg.featureCheckout || !SPONSOR_KEYS.every((k) => IP[k])) { $("#flow")
 else start();
 
 async function start() {
-  document.querySelectorAll(".minp").forEach((e) => (e.textContent = money(cfg.installerMinCents || 1000)));
+  document.querySelectorAll(".minup").forEach((e) => (e.textContent = money(cfg.installerUpgradeMinCents || 1500)));
   const r = seasonRule(cfg); $("#rule").textContent = r.rule + " " + r.now; $("#rule2").textContent = r.rule + " " + r.now;
   user = (await me()).user;
   if (!user) {
