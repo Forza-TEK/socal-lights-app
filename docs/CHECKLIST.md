@@ -52,13 +52,15 @@ _Last updated 2026-11-04 (CEO session). `[x]` done and verified, `[ ]` open. Det
 **Before the first Google Play upload**
 - [ ] Make a new Android upload key locally and replace the four GitHub secrets (`docs/android-signing.md`); use Play App Signing
 **Cloudflare, optional**
+- [ ] **Backups:** Cloudflare > My Profile > API Tokens > the GitHub token > Edit > add Account > Workers R2 Storage > Edit > Update; then GitHub > Actions > Nightly backup > Run workflow, and confirm the file in R2 `socal-lights-backups` (`docs/runbooks/backup-restore.md`)
 - [ ] Add notification policies (failed Pages deployment, D1 alerts) and confirm D1 Time Travel retention
 - [ ] Turn on a second uptime view (an external free monitor) if you want alerts besides GitHub email
 
 ## 3. Team backlog (CEO runs; order from the audit)
 - [x] **Batch B, privacy (PR 315):** privacy statements made true, account deletion complete, IPs pruned after 48 hours, postal address and unsubscribe in marketing emails (verified on a real email). Still for the attorney: Terms additions, installer licensing text, DMCA, prize wording.
 - [x] **Batch C, payments (PR 318):** 70 automated tests run by a new `Tests` workflow on every pull request; Admin > Orders tab (refund due, disputed, held, unapplied, placement differs); correct refunds on stacked orders; refunds that arrive early; amount check; digest alerts; checkout caps; stricter claim matching; Amazon Shop hidden in the app; Season plan needs 7 days. Not exercised against real Stripe.
-- [ ] **Batch D, operations:** nightly database backup to a private bucket (never a public-repo artifact), restore runbook; error alerting; `/api/events` slimmed (drop ended events, ETag); offline page
+- [ ] **Batch D, operations (in progress):** (1) nightly backup workflow `backup.yml` + `docs/runbooks/backup-restore.md` (needs the owner to add R2 Edit to the API token, see the runbook Setup);
+- [ ] Batch D original scope: nightly database backup to a private bucket (never a public-repo artifact), restore runbook; error alerting; `/api/events` slimmed (drop ended events, ETag); offline page
 - [ ] **Batch E, SEO and measurement:** richer city pages and internal links, per-event share pages, funnel counters, bot-resistant visitor estimate
 - [ ] **Phase 3:** Featured homes for podium finishers (winner, 2nd, 3rd of announced contests; podium computed from the frozen results; design in `monetization/feature-account-spec.md`)
 - [ ] Accessibility basics; `/c/<unknown>` 404; Content-Security-Policy (needs a long test)

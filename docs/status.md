@@ -4,6 +4,9 @@ _Last updated: 2026-11-05_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Batch D 1: nightly backup (2026-11-06)
+`.github/workflows/backup.yml` exports the live D1 every night, checks it, uploads it to a PRIVATE R2 bucket `socal-lights-backups` (daily kept 35 days, monthly 400, `latest.sql.gz`), reads it back, and copies photos on Sundays (`scripts/backup-photos.mjs`). A failure opens a GitHub issue. Never an artifact (public repo). Restore steps: `docs/runbooks/backup-restore.md`. Owner must give the API token R2 Edit permission first.
+
 ## Organizer-added contest entries (2026-11-05, branch `claude/quirky-goodall-yaumg1`, not merged, awaiting CEO diff review)
 Built for Covina ("Light Up the Town"), whose registration lives elsewhere: the organizer pastes the registered homes' addresses and uses our judging and routes. `POST /api/contests/<slug>/entries` (organizer and staff), "Add homes yourself" card on the dashboard Entries tab, migration `0162` (`posts.added_by`, `entry_add_log`). Entries are approved, photo-less, `user_id=''`, tagged "Added by organizer". Account deletion keeps them. Privacy page sentence added (updated Nov 5). Tests: `tests/organizer-entries.test.mjs`. Details and limits in `docs/contests.md`. Open: Covina is not in `public/cities.js`, so the contest has to use a nearby listed city (a line's own `, Covina` is accepted, within 30 km of that city); the free Pages plan allows about 50 subrequests per call, so the dashboard sends 25 addresses at a time.
 
