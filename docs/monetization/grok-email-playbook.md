@@ -18,7 +18,7 @@ Every link ends with its `?ref=` code. Never link the bare homepage.
 - Installers get a profile page (company, service area, phone, website, every home posted) and a "Call for a quote" button.
 - Creating a contest is free. Residents enter, neighbors vote, one vote per person per category. People's Choice and Judges' Choice. Contest page, QR code, poster and yard sign, organizer dashboard, results emailed to entrants. The organizer approves entries.
 - **Driving routes (what Covina's city staff liked most):** judges and visitors can build driving routes of nine stops or fewer to the homes, opened in Google Maps or Apple Maps, with each home tick-off-able. For a judged contest, judges get an emailed link, score or pick on their own ballot, and use the routes to drive the homes in order.
-- [ONLY after the CEO says "organizer entry is live"] An organizer who already has its own registration can enter the homes' addresses itself by pasting a list.
+- An organizer who already has its own registration can enter the homes' addresses itself by pasting a list.
 - The site is a free map of holiday lights and events across Southern California (1,244 upcoming listings in 266 cities).
 
 **Never say:** any visitor, traffic or "popular" claim; leads, customers or territory for installers; prizes, money or sponsors from us; future prices or paid plans; "free forever", "always free" or "no ads"; endorsement by a city or company; that payment affects winners. **Never ask an organization to confirm, check or fix individual events.**
