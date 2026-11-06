@@ -20,17 +20,17 @@
 
 <p class="meta">Listing an event is free. <a href="/pricing">See all pricing</a>.</p>
 
-<div id="paid" class="ok" hidden><b>Thank you!</b> <span id="paidmsg">Your payment went through. Your event is being featured now; refresh the map in a few minutes to see the gold badge.</span> A receipt is on its way from Stripe.</div>
+<div id="paid" class="ok" hidden><b>Thank you!</b> <span id="paidmsg">Your payment went through. Your listing is being featured now; refresh the map in a few minutes to see the gold badge.</span> A receipt is on its way from Stripe.</div>
 
 <div id="cancelled" class="ok" hidden><b>No payment was made.</b> Your event and plan are still chosen below, so you can pick up where you left off.</div>
 <p id="inapp" class="lede" hidden>Event promotion isn't available in the app.</p>
 
 <div id="auto">
 <div id="mine" hidden>
-<h2>Your events and contests</h2>
+<h2>Your events, contests and homes</h2>
 <ul class="res" id="mylist"></ul>
 <p class="meta" id="myempty" hidden>You haven't added an event or contest with this account yet. <a href="/add-event">Add your event for free</a>, or find an event below and claim it.</p>
-<p class="meta">Featured homes are not available yet.</p>
+<p class="meta">Homes: a Featured home is open to the winner, 2nd and 3rd place of an announced contest, to the home's owner. Paying never changes a contest result, and voting and the map stay free.</p>
 </div>
 <details id="findbox" open><summary id="findsum">Find your event</summary>
 <div id="pick"><input id="q" type="search" placeholder="Type your event's name or city" autocomplete="off" aria-label="Search for your event"><ul class="res" id="res"></ul></div>
@@ -61,7 +61,7 @@
 </div>
 
 <h2>Good to know</h2>
-<details><summary>Is it labeled as an ad?</summary><p>Featured events carry a visible Featured badge, so nobody is misled. We only list real, public events, and a Featured event still has to be accurate: dates, venue and address are checked like every other listing.</p></details>
+<details><summary>Is it labeled as an ad?</summary><p>Featured events and homes carry a visible Featured badge, so nobody is misled. We only list real, public events, and a Featured event still has to be accurate: dates, venue and address are checked like every other listing.</p></details>
 <details><summary>What can I feature?</summary><p>Public Halloween, Día de los Muertos, Thanksgiving, Christmas and holiday, New Year's, spring, and summer events in Southern California: haunts, pumpkin patches, tree lightings, light shows, parades, markets and more. We reserve the right to decline events that are not open to the public or that we cannot verify.</p></details>
 <details><summary>Can I get a refund?</summary><p>If we cannot feature your event for any reason, you get a full refund. Once your placement is live, payments are non-refundable, but if your event is cancelled we will move your placement to another event of yours or refund the unused time. A refund switches your Featured placement off, and so does a payment dispute, so please email us before disputing a charge with your bank.</p></details>
 <details><summary>Does Featured change my event's details?</summary><p>No. Your event keeps its dates, hours and link. Send us corrections any time at no charge.</p></details>
@@ -75,12 +75,13 @@ import { SITE } from "/site-config.js";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const COPY = { pin: ["Featured pin", ["Gold-ringed pin on the map", "Featured badge in the list"]], top: ["Top of the list", ["Everything in Featured pin", "Listed first when people browse your area"]], season: ["Whole season", ["Everything in Top of the list", "Featured from now until your event ends"]] };
+const HOME_OK = { pin: 1, top: 1 }; // a home has no end date: 30-day plans only
 let PL = {};
 const dollars = (p) => "$" + (p.cents / 100);
 const mail = (plan) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent("Feature my event" + (plan && PL[plan] ? " – " + PL[plan].label : ""))}&body=${encodeURIComponent("Event name:\nLink to my event on socallights.app (or its own web page):\nMy name and phone:\n")}`;
 $("#mail").href = $("#mail2").href = mail("");
 const qs = new URLSearchParams(location.search);
-if (qs.get("paid")) { try { sessionStorage.removeItem("scl-feature-sel"); } catch {} $("#paid").hidden = false; if (qs.get("pending")) $("#paidmsg").textContent = "Your payment went through. Your event is waiting for a quick review; its Featured placement turns on the moment it is approved."; }
+if (qs.get("paid")) { try { sessionStorage.removeItem("scl-feature-sel"); } catch {} $("#paid").hidden = false; if (qs.get("home")) $("#paidmsg").textContent = "Your payment went through. Your home is being featured now; refresh the map in a few minutes to see the gold badge. Your contest result is unchanged."; if (qs.get("pending")) $("#paidmsg").textContent = "Your payment went through. Your event is waiting for a quick review; its Featured placement turns on the moment it is approved."; }
 if (qs.get("cancelled")) $("#cancelled").hidden = false;
 
 const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
@@ -101,14 +102,14 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   const WHY = { ended: "Ended", declined: "Declined", cancelled: "Cancelled", postponed: "Postponed", "claim-pending": "Waiting for approval", review: "Waiting for a quick check before it can be featured", pending: "Waiting for review" };
   const owned = (id) => mine.find((m) => m.id === id);
   if (user) {
-    const f = await fetch("/api/me/featurable", { cache: "no-store" }).then((r) => (r.ok ? r.json() : { events: [], contests: [] })).catch(() => ({ events: [], contests: [] }));
-    mine = [...f.contests, ...f.events];
+    const f = await fetch("/api/me/featurable", { cache: "no-store" }).then((r) => (r.ok ? r.json() : { events: [], contests: [], homes: [] })).catch(() => ({ events: [], contests: [], homes: [] }));
+    mine = [...(f.homes || []), ...f.contests, ...f.events];
     $("#mine").hidden = false; $("#myempty").hidden = mine.length > 0;
     $("#findbox").open = false; $("#findsum").textContent = "Find another event";
     $("#mylist").innerHTML = mine.map((m) => {
       const ok = m.state === "live" || m.state === "pending", fe = m.featured ? `Featured until ${m.until ? fmt(m.until) : "the event ends"}` : "";
-      const bits = [m.kind === "contest" ? "Contest" : m.city, m.end ? fmt(m.end) : "", ok ? "" : WHY[m.state] || "", fe, m.state === "pending" ? "Waiting for review; you can pay now and it turns on when approved" : ""].filter(Boolean);
-      return `<li><button type="button" data-mine="${esc(m.id)}"${ok ? "" : " disabled style=\"opacity:.6;cursor:default\""}>${esc(m.name)}<small>${esc(bits.join(" · "))}</small>${ok ? `<small><b>${m.featured ? "Extend or upgrade" : "Feature this"}</b></small>` : ""}</button></li>`;
+      const bits = [m.kind === "contest" ? "Contest" : m.kind === "home" ? `Home · ${m.placeText}, ${m.category} (${m.award}) in ${m.contest}` : m.city, m.end ? fmt(m.end) : "", ok ? "" : WHY[m.state] || "", fe, m.state === "pending" ? "Waiting for review; you can pay now and it turns on when approved" : ""].filter(Boolean);
+      return `<li><button type="button" data-mine="${esc(m.id)}"${ok ? "" : " disabled style=\"opacity:.6;cursor:default\""}>${esc(m.name)}<small>${esc(bits.join(" · "))}</small>${ok ? `<small><b>${m.featured ? "Extend or upgrade" : m.kind === "home" ? "Feature this home" : "Feature this"}</b></small>` : ""}</button></li>`;
     }).join("");
   }
   const upd = () => {
@@ -120,9 +121,9 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
     const tod = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date()), plus = (n) => { const d = new Date(tod + "T12:00:00"); d.setDate(d.getDate() + n); return d.toLocaleDateString("en-CA"); };
     for (const k of Object.keys(PL)) {
       const card = document.querySelector(`[data-p="${k}"]`), note = document.querySelector(`[data-until="${k}"]`); if (!card || !note) continue;
-      const tooSoon = !!(ev && ev.e && PL[k].minDays && ev.e < plus(PL[k].minDays));
+      const noHome = !!(ev && ev.home && !HOME_OK[k]), tooSoon = noHome || !!(ev && ev.e && PL[k].minDays && ev.e < plus(PL[k].minDays));
       card.classList.toggle("off", tooSoon); card.querySelector("[data-pick]").disabled = tooSoon;
-      note.textContent = tooSoon ? `Not available: this event ends ${fmt(ev.e)}. A 30-day plan fits better.` : ev ? (PL[k].days ? `Runs until ${fmt(plus(PL[k].days))}` : ev.e ? `Runs until ${fmt(ev.e)}, your event's last day` : "") : "";
+      note.textContent = noHome ? "Not available for homes: a home is featured for 30 days." : tooSoon ? `Not available: this event ends ${fmt(ev.e)}. A 30-day plan fits better.` : ev ? (PL[k].days ? `Runs until ${fmt(plus(PL[k].days))}` : ev.e ? `Runs until ${fmt(ev.e)}, your event's last day` : "") : "";
       if (tooSoon && plan === k) { plan = ""; saveSel(); }
     }
     $("#go").disabled = !(ev && plan) || unknown;
@@ -145,7 +146,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   $("#res").addEventListener("click", (x) => { const b = x.target.closest("[data-id]"); if (b) pick(events.find((e) => e.id === b.dataset.id)); });
   $("#mylist").addEventListener("click", (x) => {
     const b = x.target.closest("[data-mine]"); if (!b || b.disabled) return;
-    const m = owned(b.dataset.mine); pick({ id: m.id, n: m.name, city: m.kind === "contest" ? "Contest" : m.city, s: m.start || "", e: m.end || "" });
+    const m = owned(b.dataset.mine); pick({ id: m.id, n: m.name, city: m.kind === "contest" ? "Contest" : m.city, s: m.start || "", e: m.end || "", home: m.kind === "home" });
     $("#chosen").scrollIntoView({ block: "nearest" });
   });
   document.querySelectorAll("[data-pick]").forEach((b) => b.addEventListener("click", () => { plan = b.dataset.pick; saveSel(); upd(); }));
@@ -162,21 +163,21 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   });
   // Restore what was chosen: from the link (?event= ?plan=) or from before sign-in (sessionStorage, which survives the Google redirect)
   let saved = {}; try { saved = JSON.parse(sessionStorage.getItem(KEY) || "{}") || {}; } catch {}
-  const want = qs.get("event") || saved.id, p0 = qs.get("plan") || saved.plan;
-  if (want) { const m = owned(want), e0 = events.find((e) => e.id === want); if (m) { ev = { id: m.id, n: m.name, city: m.city, s: m.start || "", e: m.end || "" }; } else if (e0) ev = e0; if (ev) showChosen(); }
+  const want = qs.get("event") || qs.get("home") || saved.id, p0 = qs.get("plan") || saved.plan;
+  if (want) { const m = owned(want), e0 = events.find((e) => e.id === want); if (m) { ev = { id: m.id, n: m.name, city: m.city, s: m.start || "", e: m.end || "", home: m.kind === "home" }; } else if (e0) ev = e0; if (ev) showChosen(); }
   if (PL[p0]) plan = p0;
   upd();
   $("#go").addEventListener("click", async () => {
     try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k: "click:feature-checkout-start" })], { type: "application/json" })); } catch {}
     if (!user) { // keep the choice through sign-in (an emailed code reloads this page; Google returns to the link below)
       saveSel();
-      const next = "/feature" + (plan || (ev && !String(ev.id).startsWith("sub:")) ? "?" + new URLSearchParams({ ...(plan ? { plan } : {}), ...(ev && !String(ev.id).startsWith("sub:") ? { event: ev.id } : {}) }) : "");
+      const next = "/feature" + (plan || (ev && !String(ev.id).startsWith("sub:")) ? "?" + new URLSearchParams({ ...(plan ? { plan } : {}), ...(ev && !String(ev.id).startsWith("sub:") ? { [ev.home ? "home" : "event"]: ev.id } : {}) }) : "");
       if (await signIn({ title: "Sign in to feature your event", next })) location.reload();
       return;
     }
     $("#go").disabled = true; $("#gomsg").className = "msg"; $("#gomsg").textContent = "Opening the secure payment page…";
     try {
-      const r = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(String(ev.id).startsWith("sub:") ? { submission_id: ev.id.slice(4), plan } : { event_id: ev.id, plan }) });
+      const r = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(ev.home ? { home_id: ev.id, plan } : String(ev.id).startsWith("sub:") ? { submission_id: ev.id.slice(4), plan } : { event_id: ev.id, plan }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.url) throw new Error(d.error || "The payment page couldn't be opened.");
       location.href = d.url;

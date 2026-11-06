@@ -53,6 +53,7 @@ export function rowToPost(r, admin = false) {
     address: r.address || "", // a home's street address is always public: the pin sits on it and visitors drive by (search finds it too)
     tonight: r.on_n || 0, tonightNear: r.on_near || 0, lon: r.lights_on || "", visit: r.visit || "", parking: r.parking || "", acc: !!r.accessible, radio: r.radio || "",
     inst: r.inst_slug ? { slug: r.inst_slug, name: r.inst_name, ok: !!r.installer_confirmed } : null, // the installer profile this home links to; ok = the installer confirmed it
+    f: featuredLevel(r), // paid Featured home (podium finishers only); 0 for every other home
     kind: r.poster_type === "installer" ? "installer" : "homeowner", street: r.street || "", state: r.state || "CA", zip: r.zip || "", area: r.service_area || "",
   };
   if (admin) { p.status = r.status; p.contact_email = r.contact_email || ""; p.approved = r.approved_at; p.show_address = !!r.show_address; }

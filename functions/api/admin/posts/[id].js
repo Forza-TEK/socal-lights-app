@@ -4,6 +4,7 @@
 import { phoneField, line, normText, normName, normStreet, normZip } from "../../../_lib/fields.js";
 import { json, err, clean, safeUrl, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
 import { tell } from "../../../_lib/notify.js";
+import { markHomeRefundDue } from "../../../_lib/orders.js";
 import { CITY } from "../../../../public/cities.js";
 import { SEASONS } from "../../../../public/seasons.js";
 
@@ -98,6 +99,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
       moved.push(nk);
     }
     await env.DB.prepare("UPDATE posts SET status='pending', approved_at=NULL, photos=? WHERE id=?").bind(JSON.stringify(moved), row.id).run();
+    await markHomeRefundDue(env.DB, row.id, "The home was unpublished while a paid Featured placement was running. Refund it in Stripe, then mark it refunded.");
     await deletePhotos(env, keys.filter((k) => k.startsWith("p/")));
     return json({ ok: true });
   }
@@ -105,6 +107,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   if (body.action === "decline") {
     // The photos stay in the private pending/ folder so a decline can be undone. The person is emailed the reason, if you wrote one.
     await env.DB.prepare("UPDATE posts SET status='declined' WHERE id=?").bind(row.id).run();
+    await markHomeRefundDue(env.DB, row.id, "The home was declined while a paid Featured placement was running. Refund it in Stripe, then mark it refunded.");
     tell(env, waitUntil, row.contact_email, "house_declined", { name: row.title || row.biz, reason: clean(body.reason, 400) });
     return json({ ok: true });
   }
@@ -146,6 +149,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
 export async function onRequestDelete({ params, env }) {
   const row = await getPost(env, params.id);
   if (!row) return json({ ok: true });
+  await markHomeRefundDue(env.DB, row.id, "The home was deleted while a paid Featured placement was running. Refund it in Stripe, then mark it refunded.");
   await deletePhotos(env, JSON.parse(row.photos || "[]"));
   await env.DB.batch([env.DB.prepare("DELETE FROM lights_on WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM listing_changes WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM posts WHERE id=?").bind(row.id)]);
   return json({ ok: true });

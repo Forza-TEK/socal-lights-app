@@ -1,8 +1,9 @@
-// POST /api/feature/checkout  { event_id | submission_id, plan: "pin" | "top" | "season" }  ->  { url } (Stripe Checkout page). Needs a signed-in account; the receipt goes to its email.
+// POST /api/feature/checkout  { event_id | submission_id | home_id, plan: "pin" | "top" | "season" }  (a home: "pin" | "top" only, podium finishers of an announced contest)  ->  { url } (Stripe Checkout page). Needs a signed-in account; the receipt goes to its email.
 import { json, err, clean } from "../../_lib/util.js";
 import { PLANS, addDays } from "../../_lib/featured.js";
 import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
 import { ownsEvent } from "../../_lib/ownership.js";
+import { homeForCheckout, HOME_PLANS, placeWord } from "../../_lib/podium.js";
 
 const sha256hex = async (t) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map((b) => b.toString(16).padStart(2, "0")).join("");
 
@@ -17,9 +18,15 @@ export async function onRequestPost({ request, env }) {
   const plan = PLANS[b && b.plan] ? b.plan : null;
   const eventId = clean(b && b.event_id, 60);
   if (!plan) return err(400, "Choose your event and a plan.");
-  let ev = null, pending = false;
-  const subId = clean(b && b.submission_id, 40);
-  if (subId) {
+  let ev = null, pending = false, home = null;
+  const subId = clean(b && b.submission_id, 40), homeId = clean(b && b.home_id, 60);
+  if (homeId) {
+    // A home: only the winner, 2nd or 3rd place of an announced contest (read from the frozen results), and only its owner. Payment never touches the contest.
+    if (!HOME_PLANS.includes(plan)) return err(400, "Homes can be featured for 30 days: choose the featured pin or top of the list.");
+    const h = await homeForCheckout(env, user, homeId);
+    if (h.error) return err(h.status, h.error);
+    home = h; ev = { id: h.row.id, name: h.row.title, city: h.row.city, end_date: "9999-12-31" };
+  } else if (subId) {
     // An event that was just submitted: attach the payment to the live event if it already published, else hold it until the admin approves.
     const s = await env.DB.prepare("SELECT id, name, city, end_date, event_id, status, contact_email FROM event_submissions WHERE id = ?").bind(subId).first();
     // Same answer as "not found" for someone else's submission, so ids can't be probed.
@@ -31,11 +38,11 @@ export async function onRequestPost({ request, env }) {
   }
   if (!ev) return err(404, "We couldn't find that event. Search for it again.");
   // Only the owner may pay: they submitted it, hold an approved claim, or run the contest it lists. (A claim gives no edit rights.)
-  if (!pending && !(await ownsEvent(env, user, ev.id, ""))) return err(403, "Claim this event first. Only its organizer can feature it.");
+  if (!pending && !home && !(await ownsEvent(env, user, ev.id, ""))) return err(403, "Claim this event first. Only its organizer can feature it.");
   const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
-  if (ev.end_date < today) return err(400, "That event has already ended.");
+  if (!home && ev.end_date < today) return err(400, "That event has already ended.");
   // The whole-season plan lasts until the event ends, so it needs real time left (otherwise a $20 plan could last a day).
-  if (PLANS[plan].minDays && ev.end_date < addDays(today, PLANS[plan].minDays)) return err(400, `This event ends on ${ev.end_date}, too soon for the whole-season plan (it needs at least ${PLANS[plan].minDays} days left). A 30-day plan is a better fit.`);
+  if (!home && PLANS[plan].minDays && ev.end_date < addDays(today, PLANS[plan].minDays)) return err(400, `This event ends on ${ev.end_date}, too soon for the whole-season plan (it needs at least ${PLANS[plan].minDays} days left). A 30-day plan is a better fit.`);
 
   const goodEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email || "") ? user.email : ""; // the account email, never one typed in
   const p = PLANS[plan], origin = new URL(request.url).origin;
@@ -45,14 +52,15 @@ export async function onRequestPost({ request, env }) {
     "line_items[0][price_data][currency]": "usd",
     "line_items[0][price_data][unit_amount]": String(p.cents),
     "line_items[0][price_data][product_data][name]": `Featured on SoCal Lights: ${ev.name}`.slice(0, 120),
-    "line_items[0][price_data][product_data][description]": `${p.label} · ${ev.city}`.slice(0, 200),
+    "line_items[0][price_data][product_data][description]": `${p.label} · ${ev.city}${home ? " · " + placeWord(home.standing.place) + ": " + home.row.cname : ""}`.slice(0, 200),
     "metadata[event_id]": ev.id,
+    ...(home ? { "metadata[target]": "home" } : {}),
     "metadata[plan]": plan,
     "metadata[user_id]": user.id,
     "payment_intent_data[description]": `SoCal Lights Featured: ${ev.name} (${plan})`.slice(0, 200),
-    success_url: `${origin}/feature?paid=1${pending ? "&pending=1" : ""}`,
+    success_url: `${origin}/feature?paid=1${pending ? "&pending=1" : ""}${home ? "&home=1" : ""}`,
     // Back to the plan picker with the event and plan still chosen (a pending submission has no public id yet).
-    cancel_url: `${origin}/feature?cancelled=1&plan=${plan}${pending ? "" : "&event=" + encodeURIComponent(ev.id)}`,
+    cancel_url: `${origin}/feature?cancelled=1&plan=${plan}${pending ? "" : (home ? "&home=" : "&event=") + encodeURIComponent(ev.id)}`,
   });
   if (goodEmail) { f.set("customer_email", goodEmail); f.set("payment_intent_data[receipt_email]", goodEmail); }
   // Same event + plan within 10 minutes reuses one Checkout session (double clicks). The key is a hash (the account is included so two people never share a session).

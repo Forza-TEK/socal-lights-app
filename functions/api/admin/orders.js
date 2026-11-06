@@ -8,9 +8,10 @@ export async function onRequestGet({ env }) {
   const today = ptToday();
   const { results } = await env.DB.prepare(
     `SELECT o.session_id, o.event_id, o.plan, o.amount, o.currency, o.email, o.status, o.applied, o.applied_featured, o.applied_until, o.payment_intent,
-            o.charge_id, o.refunded_at, o.created_at, o.note, o.user_id, COALESCE(e.name, s.name) AS name, COALESCE(e.city, s.city) AS city, e.notice,
-            e.end_date, e.featured AS ev_featured, e.featured_until AS ev_until
+            o.charge_id, o.refunded_at, o.created_at, o.note, o.user_id, o.target, COALESCE(e.name, s.name, hp.title) AS name, COALESCE(e.city, s.city, hp.city) AS city, e.notice,
+            e.end_date, COALESCE(e.featured, hp.featured) AS ev_featured, COALESCE(e.featured_until, hp.featured_until) AS ev_until, hc.name AS contest_name, hc.slug AS contest_slug
      FROM ${ORDER_FROM} LEFT JOIN event_submissions s ON o.event_id = 'sub:' || s.id
+     LEFT JOIN posts hp ON o.target = 'home' AND hp.id = o.event_id LEFT JOIN contests hc ON hc.id = hp.contest_id
      ORDER BY o.created_at DESC LIMIT 500`).all();
   const rows = results.map((o) => ({ ...o, flags: orderFlags(o, today), stripe_url: stripeUrl(o.payment_intent) }));
   rows.sort((a, b) => (b.flags.length > 0) - (a.flags.length > 0)); // stable: newest first inside each group
