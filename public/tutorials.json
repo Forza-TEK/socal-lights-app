@@ -25,14 +25,14 @@
           "title": "Plan a night",
           "desc": "Save favorites, build a route, share it and add it to your calendar.",
           "url": "/tutorials/find-night.mp4",
-          "length": "2:28",
+          "length": "2:12",
           "captions": "/tutorials/find-night.vtt",
           "poster": "/tutorials/find-night.jpg",
           "mobile": {
             "url": "/tutorials/find-night-mobile.mp4",
             "poster": "/tutorials/find-night-mobile.jpg",
             "captions": "/tutorials/find-night-mobile.vtt",
-            "length": "2:28"
+            "length": "2:10"
           }
         },
         {
@@ -40,14 +40,14 @@
           "title": "Weekly lights email",
           "desc": "Sign up for the weekly email and unsubscribe any time.",
           "url": "/tutorials/find-email.mp4",
-          "length": "1:54",
+          "length": "1:24",
           "captions": "/tutorials/find-email.vtt",
           "poster": "/tutorials/find-email.jpg",
           "mobile": {
             "url": "/tutorials/find-email-mobile.mp4",
             "poster": "/tutorials/find-email-mobile.jpg",
             "captions": "/tutorials/find-email-mobile.vtt",
-            "length": "1:45"
+            "length": "1:25"
           }
         },
         {
@@ -405,14 +405,14 @@
           "title": "Show off your house",
           "desc": "Put your lights on the map with Showcase a House.",
           "url": "/tutorials/post-house.mp4",
-          "length": "3:00",
+          "length": "2:35",
           "captions": "/tutorials/post-house.vtt",
           "poster": "/tutorials/post-house.jpg",
           "mobile": {
             "url": "/tutorials/post-house-mobile.mp4",
             "poster": "/tutorials/post-house-mobile.jpg",
             "captions": "/tutorials/post-house-mobile.vtt",
-            "length": "2:56"
+            "length": "2:37"
           }
         }
       ]
