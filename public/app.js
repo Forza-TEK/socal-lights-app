@@ -6,7 +6,7 @@ import { SITE } from "/site-config.js?v=20261031j";
 import "/norm-ui.js?v=20261102b";
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261105a";
-import { initBanner, updateBanner, regionKey, bannerHeight } from "/banner.js?v=20261107b";
+import { initBanner, updateBanner, regionKey, bannerHeight } from "/banner.js?v=20261107c";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).

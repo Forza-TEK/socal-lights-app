@@ -33,14 +33,11 @@ const EMPTY = `<a class="sp-pill sp-empty" href="/pricing#banner">Installers: ad
 function paint() {
   if (!el) return;
   const k = Math.floor(OFFSET * Math.max(cur.length, 1)), order = cur.slice(k).concat(cur.slice(0, k));
-  // one "set" = the installers, then empty pills; repeat the empty pills until the set is wider than the strip so the loop has no gap
-  const win = el.querySelector(".sp-win"), track = el.querySelector(".sp-track");
-  const build = (n) => order.map(pill).join("") + EMPTY.repeat(n);
-  let n = Math.max(2, 4 - order.length), set = build(n);
-  track.innerHTML = set; track.style.removeProperty("--sw");
-  const need = (win.clientWidth || 360) + 40;
-  while (track.scrollWidth < need && n < 12) { n++; set = build(n); track.innerHTML = set; }
-  const w = track.scrollWidth; track.innerHTML = set + `<span class="sp-dup" aria-hidden="true" inert>${set}</span>`;
+  // one "set" = the installers, then a single "advertise here" pill; the set is at least as wide as the strip, so the loop has no repeats
+  const win = el.querySelector(".sp-win"), track = el.querySelector(".sp-track"), set = order.map(pill).join("") + EMPTY;
+  track.style.setProperty("--win", (win.clientWidth || 360) + "px");
+  track.innerHTML = `<span class="sp-set">${set}</span><span class="sp-set sp-dup" aria-hidden="true" inert>${set}</span>`;
+  const w = track.firstElementChild.getBoundingClientRect().width;
   track.style.setProperty("--sw", w + "px"); track.style.setProperty("--dur", Math.max(12, w / SPEED) + "s"); track.classList.add("go");
   watch(); changed();
 }
@@ -50,7 +47,7 @@ function watch() {
   if (io) io.disconnect();
   if (!("IntersectionObserver" in window)) { cur.forEach((i) => { if (!seen.has(i.id)) { seen.add(i.id); beat(i.id, "imp"); } }); return; }
   io = new IntersectionObserver((es) => es.forEach((e) => { const id = e.target.dataset.id; if (e.isIntersecting && id && !seen.has(id)) { seen.add(id); beat(id, "imp"); } }), { root: el.querySelector(".sp-win"), threshold: 0.6 });
-  el.querySelectorAll(".sp-track > .sp-pill[data-id]").forEach((n) => io.observe(n));
+  el.querySelectorAll(".sp-set:first-child > .sp-pill[data-id]").forEach((n) => io.observe(n));
 }
 
 function setPaused(on) {
@@ -82,6 +79,8 @@ export async function initBanner({ place, onChange }) {
     else if (pb) setPaused(!paused);
   });
   host(el); paint();
+  let lastW = el.querySelector(".sp-win").clientWidth, rt; // the strip follows the list panel opening and closing, and the window size
+  if ("ResizeObserver" in window) new ResizeObserver(() => { const w = el.querySelector(".sp-win").clientWidth; if (Math.abs(w - lastW) < 3) return; lastW = w; clearTimeout(rt); rt = setTimeout(paint, 150); }).observe(el.querySelector(".sp-win"));
   if (reduced) setPaused(true); // people who asked for less motion get it standing still; the play button starts it
   return true;
 }
