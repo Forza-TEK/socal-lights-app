@@ -7,7 +7,7 @@
 // stripe_events only after the work succeeded; failures that a retry can fix return 500 so Stripe redelivers.
 import { json, err } from "../_lib/util.js";
 import { logOp } from "../_lib/oplog.js";
-import { PLANS, applyOrder, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
+import { PLANS, LEGACY_SEASON_CENTS, applyOrder, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
 
 const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired", "charge.refunded", "charge.dispute.created", "charge.dispute.closed"]);
 
@@ -82,7 +82,7 @@ async function paid(s, env) {
   const eventId = s.metadata && s.metadata.event_id, plan = s.metadata && s.metadata.plan;
   if (!eventId || !PLANS[plan]) return { ignored: "no feature metadata" };
   const target = s.metadata.target === "home" ? "home" : "event"; // a home (podium finisher) is bought through the same checkout
-  if (target === "home" && !PLANS[plan].days) return { ignored: "no season plan for homes" };
+  if (target === "home" && !PLANS[plan].days) return { ignored: "no Full run plan for homes" };
 
   // One order per Checkout session. The row existing is NOT proof the placement was applied; `applied` is.
   const pi = (typeof s.payment_intent === "string" && s.payment_intent) || null;
@@ -92,7 +92,7 @@ async function paid(s, env) {
     const pend = await env.DB.prepare("SELECT kind FROM feature_pending_revocations WHERE payment_intent = ?").bind(pi).first();
     if (pend) { status = pend.kind; notes.push(`${AUTO}${{ refunded: "a refund", held: "a partial refund", disputed: "a dispute", dispute_won: "a dispute (won)" }[pend.kind] || pend.kind} reached us before the payment was recorded, so the placement was not applied.`); }
   }
-  if (s.amount_total !== PLANS[plan].cents || String(s.currency || "").toLowerCase() !== "usd") // the buyer paid what we asked at checkout: still apply, but flag it
+  if ((s.amount_total !== PLANS[plan].cents && !(plan === "season" && s.amount_total === LEGACY_SEASON_CENTS)) || String(s.currency || "").toLowerCase() !== "usd") // the buyer paid what we asked at checkout: still apply, but flag it
     notes.push(`${AUTO}amount mismatch: paid ${s.amount_total == null ? "?" : (s.amount_total / 100).toFixed(2)} ${String(s.currency || "?").toUpperCase()}, the ${plan} plan is ${(PLANS[plan].cents / 100).toFixed(2)} USD.`);
   await env.DB.prepare("INSERT OR IGNORE INTO feature_orders (session_id,event_id,plan,amount,email,payment_intent,currency,status,user_id,note,target,refunded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,CASE WHEN ? = 'paid' THEN NULL ELSE datetime('now') END)")
     .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "", pi, s.currency || null, status, (s.metadata && s.metadata.user_id) || null, notes.join(" ").slice(0, 500) || null, target, status).run();

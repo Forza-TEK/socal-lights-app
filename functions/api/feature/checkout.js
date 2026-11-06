@@ -1,6 +1,6 @@
-// POST /api/feature/checkout  { event_id | submission_id | home_id, plan: "pin" | "top" | "season" }  (a home: "pin" | "top" only, podium finishers of an announced contest)  ->  { url } (Stripe Checkout page). Needs a signed-in account; the receipt goes to its email.
+// POST /api/feature/checkout  { event_id | submission_id | home_id, plan: "pin" | "top" | "season" (shown as "Full run", events only) }  (a home: "pin" | "top" only, podium finishers of an announced contest)  ->  { url } (Stripe Checkout page). Needs a signed-in account; the receipt goes to its email.
 import { json, err, clean } from "../../_lib/util.js";
-import { PLANS, addDays } from "../../_lib/featured.js";
+import { PLANS, applyPlan, eventPlanProblem } from "../../_lib/featured.js";
 import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
 import { ownsEvent } from "../../_lib/ownership.js";
 import { homeForCheckout, HOME_PLANS, placeWord } from "../../_lib/podium.js";
@@ -28,21 +28,30 @@ export async function onRequestPost({ request, env }) {
     home = h; ev = { id: h.row.id, name: h.row.title, city: h.row.city, end_date: "9999-12-31" };
   } else if (subId) {
     // An event that was just submitted: attach the payment to the live event if it already published, else hold it until the admin approves.
-    const s = await env.DB.prepare("SELECT id, name, city, end_date, event_id, status, contact_email FROM event_submissions WHERE id = ?").bind(subId).first();
+    const s = await env.DB.prepare("SELECT id, name, city, start_date, end_date, event_id, status, contact_email FROM event_submissions WHERE id = ?").bind(subId).first();
     // Same answer as "not found" for someone else's submission, so ids can't be probed.
     if (!s || s.status === "declined" || !normEmail(user.email) || normEmail(s.contact_email) !== normEmail(user.email)) return err(404, "We couldn't find that submission.");
-    ev = { id: s.event_id || "sub:" + s.id, name: s.name, city: s.city, end_date: s.end_date }; pending = !s.event_id;
+    ev = { id: s.event_id || "sub:" + s.id, name: s.name, city: s.city, start_date: s.start_date, end_date: s.end_date }; pending = !s.event_id;
   } else {
     if (!eventId) return err(400, "Choose your event and a plan.");
-    ev = await env.DB.prepare("SELECT id, name, city, end_date FROM events WHERE id = ?").bind(eventId).first();
+    ev = await env.DB.prepare("SELECT id, name, city, start_date, end_date, featured, featured_until FROM events WHERE id = ?").bind(eventId).first();
   }
   if (!ev) return err(404, "We couldn't find that event. Search for it again.");
   // Only the owner may pay: they submitted it, hold an approved claim, or run the contest it lists. (A claim gives no edit rights.)
   if (!pending && !home && !(await ownsEvent(env, user, ev.id, ""))) return err(403, "Claim this event first. Only its organizer can feature it.");
   const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
   if (!home && ev.end_date < today) return err(400, "That event has already ended.");
-  // The whole-season plan lasts until the event ends, so it needs real time left (otherwise a $20 plan could last a day).
-  if (!home && PLANS[plan].minDays && ev.end_date < addDays(today, PLANS[plan].minDays)) return err(400, `This event ends on ${ev.end_date}, too soon for the whole-season plan (it needs at least ${PLANS[plan].minDays} days left). A 30-day plan is a better fit.`);
+  if (!home) {
+    // The window follows the event: featuring opens 30 days before it starts; the Full run plan needs a long event with time left.
+    const why = eventPlanProblem(ev, plan, today);
+    if (why) return err(400, why);
+    // A repeat purchase must buy something: a higher level, or time beyond what already runs (the cap, not the event's last day, is the limit).
+    if (ev.featured != null) {
+      const nf = applyPlan(ev, plan, today), running = ev.featured && (!ev.featured_until || ev.featured_until >= today);
+      if (running && nf.featured <= ev.featured && ev.featured_until && ev.featured_until >= nf.featured_until)
+        return err(400, `This event is already featured through ${ev.featured_until}, as far as this plan can reach (your event's last day or ${PLANS[plan].days || PLANS[plan].maxDays} days from payment). Nothing to add yet.`);
+    }
+  }
 
   const goodEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email || "") ? user.email : ""; // the account email, never one typed in
   const p = PLANS[plan], origin = new URL(request.url).origin;
