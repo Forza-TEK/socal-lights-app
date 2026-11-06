@@ -34,6 +34,22 @@ Fee math is unchanged (fee = 2.9% x price + $0.30): $10 nets $9.41, $15 nets $14
 
 Headroom against real traffic: Cloudflare shows 56,487 requests in 10 days (about 5,600/day including bots), under 6% of the 100,000/day Functions cap even if every request were a Function call. D1 and Resend caps are far away at this traffic. **Fixed cost this season: $0.** The $84/month worst case in the first draft is not a planning number at current volume.
 
+## 2b. Featured event pricing change (2026-11-06, owner-approved)
+The window now follows the event instead of a flat 30 days. Prices live only in `PLANS` in `functions/_lib/featured.js`.
+
+| Plan | Price | Level | Runs |
+|---|---|---|---|
+| Featured pin | $10 | 1 (gold pin and badge) | payment to the event's last day, up to 30 days |
+| Top of the list | $15 | 2 (also listed first) | payment to the event's last day, up to 30 days |
+| Full run (stored key `season`; replaces Whole season $20) | $25 | 2 | payment to the event's last day, up to 90 days; events of 31+ days with 7+ days left |
+
+- Featuring opens 30 days before the event starts; earlier checkout returns a 400 with the date to come back. A running event can buy any time.
+- The end date is the admin-approved `end_date` at payment and is fixed then; later date changes do not extend the placement. A repeat purchase adds time only when the cap (not the last day) ended the first one; an upgrade of level is still sold.
+- Homes are unchanged: $10 pin, $15 top, 30 days from payment, no Full run.
+- Stripe fee on $25 is about $1.03 (net about $23.97). Margin per sale is unchanged in kind: still dominated by the fixed 30 cents on a $10 sale.
+- Grandfathered: $20 whole-season orders already paid (and any in flight at $20) run to the event's last day with no 90-day cap.
+- Short events now get shorter placements for the same price (a 10-day event is featured for 10 days, not 30), which is the intended fairness trade; revenue per buyer is unchanged for events of 30+ days. Revenue scenarios in section 3 still use $10-$15 and remain assumptions.
+
 ## 3. Revenue scenarios from real traffic
 
 Season window: Nov 4 to Jan 2, about 60 days. Humans per day: 20 (low), 50 (high; Nov 3's count). Visits in window: **1,200 to 3,000**. Cloudflare's 450-650 "uniques" are not used.

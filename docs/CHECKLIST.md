@@ -1,11 +1,11 @@
 # SoCal Lights: project checklist and expert recommendations
 
-_Last updated 2026-11-06 (design pass). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
+_Last updated 2026-11-06 (Help Center refresh). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
 
 ## 1. Done and verified live
 - [x] Monetization strategy v2 from real data (Stripe, Cloudflare, database): prove first, earn small, build later (`monetization/strategy.md`)
 - [x] Featured payments hardened: retry-safe webhook, refunds and disputes, one price source, receipts, native-app guard (PR 291)
-- [x] Prices $10 pin / $15 top of the list / $20 whole season; public Pricing page linked from the Add hub, footers and the Featured page (PR 303)
+- [x] Prices $10 pin / $15 top of the list / $25 Full run (was $20 whole season until 2026-11-06; see "Featured event pricing" below); public Pricing page linked from the Add hub, footers and the Featured page (PR 303)
 - [x] Featured expiry uses the Pacific date: a 30-day placement lasts 30 days (PR 304)
 - [x] Signed-in Featured page, owner-only checkout, event claim flow with Admin "Event claims" tab (PR 305)
 - [x] Featured homes for contest podium finishers: `posts.featured`, `feature_orders.target`, podium from the frozen snapshot, checkout, webhook, Admin > Orders, gold pin and badge (migration 0166)
@@ -21,7 +21,17 @@ _Last updated 2026-11-06 (design pass). `[x]` done and verified, `[ ]` open. Det
 - [x] Android key workflow deleted (it published the key in a public repo); safe signing steps in `docs/android-signing.md`
 - [x] Free uptime check on GitHub (every 15 minutes, emails on failure; tests the app through pages.dev because the zone answers cloud addresses with 403)
 
+- [x] Help Center refresh: six articles updated, four added, "home" wording; applied by migration 0167 to articles not edited in Admin (`docs/help-updates.md` has paste text for any you edited)
+
+### Featured event pricing (2026-11-06): owner to do
+- [ ] After the PRs merge: open Admin > Help Center and check `is-it-free` and `feature-an-event-or-home`. Migration 0168 updates them only if nobody edited them in Admin; if you did, paste the new text from `docs/help-updates.md`.
+- [ ] Send the attorney `docs/monetization/legal-redlines.md` (new section "Featured pricing wording changed 2026-11-06"): the Pricing, Feature and add-event plan text changed; Terms still say nothing about paid placements.
+- [ ] Decide whether to keep selling Full run at $25. Fees: $25 nets about $23.97 after Stripe (2.9% + 30 cents).
+- [ ] Old $20 "Whole season" orders already paid keep running to the event's last day (grandfathered); nothing to do for them. If a buyer opened the old $20 checkout page before the deploy and pays after it, the order is still honored the same way.
+- [ ] No real payment was made in testing. When you next do a live $10 test, pick an event that starts within 30 days (earlier ones are refused by design).
+
 ## 2. Needs you (owner)
+- [ ] Help Center: open Admin > Help Center after the deploy. If any of the ten articles in `docs/help-updates.md` still show old text, you had edited it in Admin: paste the text from that page. When the new videos are recorded and in `tutorials.json`, set each article's Video field in Admin.
 **Urgent: outreach and your mailbox (`monetization/email-outreach-analysis.md`)**
 - [ ] **Slow the Grok sending now.** Microsoft warned the mailbox on Oct 31 ("Suspicious email sending patterns detected ... will be restricted if this activity continues") about 45 minutes after a burst of 42 emails in about 160 seconds. A restriction would also stop your real business mail from forza-tek.com. Until a separate sending domain exists: at most 15 a day, one every 2 to 6 minutes, never in bursts.
 - [ ] **Do not let the agents send until the postal address is filled in.** 121 earlier first-touch emails had no address and no opt-out; only the 5 sent on Nov 4 have an opt-out line. Give the agents `monetization/grok-email-playbook.md`.
@@ -83,7 +93,7 @@ Nov 26 Thanksgiving; Dec 11 Mission Viejo winners release (send MVAC first); Dec
 
 ## 6. Recommendations from the experts
 **CEO.** This season is proof, not revenue (Finance estimates $0 to $300). Sell by hand to a handful of real organizers; get the payment path proven with one real purchase; do not build installer or contest products until the gates above are met. Keep the free map free: no paid votes, no entry fees, payment never touches contest results.
-**Finance.** Keep Featured at $10 / $15 / $20; hand-sell Contest Pro at about $99 only to an existing organizer; installer pricing stays a founder-sold pilot (about $299 a season) after five installer conversations. Fixed costs are $0 this season. One CPA hour before the first dollar: entity and a dedicated bank account, whether listing placement is taxable, seller's permit, affiliate income reporting. Refund policy as drafted in `finance-operations.md` (owner decision on the 7-day and 3-day rules).
+**Finance.** Keep Featured at $10 / $15 / $25 (Full run, events of 31+ days; the old $20 whole season is retired); hand-sell Contest Pro at about $99 only to an existing organizer; installer pricing stays a founder-sold pilot (about $299 a season) after five installer conversations. Fixed costs are $0 this season. One CPA hour before the first dollar: entity and a dedicated bank account, whether listing placement is taxable, seller's permit, affiliate income reporting. Refund policy as drafted in `finance-operations.md` (owner decision on the 7-day and 3-day rules).
 **Digital monetization.** One shared price source and one checkout path (done). Next: orders view, refund handling for declined paid submissions, and tests. Sell Featured to organizers of ticketed events (73 upcoming links to Eventbrite or Fever); apply to Fever first; expect $0 to $5 a month from affiliates.
 **Product and marketing.** Growth before monetization: city pages, local press, parks departments, neighborhood groups, the weekly email. The event database is the moat. First sends: Mission Viejo MVAC, Mom's LA, Enjoy Orange County. The Grok campaign is about supply (homes and contests); say "free for now", never "free forever", quote no traffic.
 **Legal (not a lawyer; attorney review pending).** Free entry and free voting appear to fall outside California's contest provisions; paid votes would not. Label paid placements clearly (the FTC does not list "Featured" as clearly understood: consider "Sponsored"). Prize wording must state the approximate value. Installer listings need an opinion on licensing language. Fix the privacy statements before the attorney sees them.

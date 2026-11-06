@@ -166,15 +166,17 @@ test("checkout cap: 6 payment pages an hour and 20 a day per account, counted on
   } finally { f.restore(); }
 });
 
-// ---------------------------------------------------------------- P6 season plan needs time left
-test("checkout: the whole-season plan is refused (400) for an event ending within 7 days; 30-day plans and longer events are fine", async () => {
-  const { env, raw } = newEnv(); addEvent(raw, "soon", { end_date: ptToday(3) }); addEvent(raw, "edge", { end_date: ptToday(7) }); addEvent(raw, "today", { end_date: ptToday(0) }); addEvent(raw, "long", { end_date: ptToday(60) });
+// ---------------------------------------------------------------- Full run needs time left
+test("checkout: Full run is refused (400) for an event with fewer than 7 days left; the 30-day plans and longer-running events are fine", async () => {
+  const { env, raw } = newEnv();
+  const long = { start_date: ptToday(-40) }; // 31+ days long, so only the days left decide
+  addEvent(raw, "soon", { ...long, end_date: ptToday(3) }); addEvent(raw, "edge", { ...long, end_date: ptToday(7) }); addEvent(raw, "today", { ...long, end_date: ptToday(0) }); addEvent(raw, "long", { end_date: ptToday(60) });
   const me = await addUser(raw, "u1", "me@example.com");
   for (const id of ["soon", "edge", "today", "long"]) addSubmission(raw, "s-" + id, "me@example.com", { status: "published", event_id: id });
   const f = stubFetch();
   try {
     const soon = await buy(env, { event_id: "soon", plan: "season" }, { cookie: me.cookie });
-    assert.equal(soon.status, 400); assert.match(soon.body.error, /too soon for the whole-season plan/); assert.match(soon.body.error, new RegExp(ptToday(3)));
+    assert.equal(soon.status, 400); assert.match(soon.body.error, /too soon for the Full run plan/); assert.match(soon.body.error, new RegExp(ptToday(3)));
     assert.equal((await buy(env, { event_id: "today", plan: "season" }, { cookie: me.cookie })).status, 400);
     assert.equal(f.calls.length, 0);
     assert.equal((await buy(env, { event_id: "soon", plan: "top" }, { cookie: me.cookie })).status, 200, "a 30-day plan is still allowed");

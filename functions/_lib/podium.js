@@ -4,7 +4,7 @@
 import { normEmail } from "./auth.js";
 
 export const PODIUM_PLACES = 3;
-export const HOME_PLANS = ["pin", "top"]; // a home has no end date, so no "whole season" plan
+export const HOME_PLANS = ["pin", "top"]; // a home has no end date, so no "Full run" plan
 
 // Competition ranking ("1224"): entries with the same value share a place and the next place is skipped (two firsts, then 3rd).
 // Returns [{ id, place }] for every entry with a value above zero.

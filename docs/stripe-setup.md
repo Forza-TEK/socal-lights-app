@@ -7,7 +7,7 @@ Featured is fully automatic once two secrets are set. Until then `/feature` show
 2. `POST /api/feature/checkout` creates a Stripe Checkout session (card, plus Cash App Pay if enabled in Stripe) and sends them to Stripe.
 3. Stripe calls `POST /api/stripe-webhook` when the payment completes. The function checks the signature, records one row in
    `feature_orders`, and sets `events.featured` (1 = gold pin + badge, 2 = also listed first) and
-   `featured_until` (30 days, or the event's end date for the season plan). Extending a running placement adds time and never lowers the level.
+   `featured_until`: for an event, `min(event end_date, today + 30)` for the pin and top plans, `min(end_date, today + 90)` for Full run (stored plan key `season`), never earlier than today. The end date is the one stored when the order is applied; later date changes do not extend it. A repeat purchase can only add time while the cap, not the event's last day, was the limit, and never lowers the level or shortens a longer placement. A home has no end date: 30 days from payment, stacking on a running placement. Old $20 whole-season orders (`amount` 2000) are grandfathered: until the event's end date, no cap, no amount-mismatch flag.
    The row's `applied` flag (with `applied_featured` / `applied_until`) says whether the placement was really written. If the first attempt
    fails (for example the event isn't found yet) the webhook returns 500 and Stripe's retry finishes the job; a true duplicate does nothing.
    Each handled Stripe event id is stored in `stripe_events`.
@@ -26,7 +26,7 @@ Featured is fully automatic once two secrets are set. Until then `/feature` show
    admin digest email use the same rule. Declining a submission that has a paid order sets it to `refund_due`; unpublishing or deleting an event with a running
    paid placement asks for confirmation (API: 409, then `confirm`), keeps the orders, and republishing restores the placement.
    A migration that deletes an event cannot be checked against production: `npm run validate` only warns with the SQL to run. Check `feature_orders` first.
-   One account can open 6 Checkout sessions an hour and 20 a day (`checkout_log`). The whole-season plan needs at least 7 days left on the event.
+   One account can open 6 Checkout sessions an hour and 20 a day (`checkout_log`). Checkout refuses (400) an event that starts more than 30 days from today ("Featuring opens 30 days before your event: come back on <date>"), Full run for an event under 31 days long or with under 7 days left, and a repeat purchase that would add nothing.
 5. Placement ends by itself after `featured_until`. Scheduled sweeps and upkeep never touch these columns.
 
 Plans and prices live only in `functions/_lib/featured.js` (change `cents`); `/api/config` publishes them and `/feature` and `/add-event` render them. Only the wording is in the HTML.
@@ -63,7 +63,7 @@ mentions the event name and the year, the event is published immediately as conf
 "Submitted events" (publish as confirmed or expected, or decline). Limits: 5 submissions per hour per connection, 40 auto-publishes per day.
 
 ## Featured while adding an event
-The `/add-event` form offers an optional "Make it stand out" choice ($10 / $15 / $20). After the event is added the visitor goes straight to Stripe.
+The `/add-event` form offers an optional "Make it stand out" choice ($10 / $15 / $25). After the event is added the visitor goes straight to Stripe.
 If the event published instantly the payment attaches to it by id; if it is waiting in the admin "Submitted events" tab, the payment is recorded
 against `sub:<submission id>` and applied the moment you publish it (the pending card shows "Paid Featured"). If you decline a submission that
 has paid, refund it in Stripe. The choice only appears when online payment is switched on (`/api/config` shows `featureCheckout: true`).

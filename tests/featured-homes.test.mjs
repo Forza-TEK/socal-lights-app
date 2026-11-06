@@ -138,8 +138,8 @@ test("webhook: expiry, partial refund, refund and dispute handling for homes", a
   const gone = await payHome(env, 4, { m: { event_id: "gone" } });
   assert.equal(gone.status, 500);
   // an event order and a home order never mix: the season plan is ignored for homes
-  const sea = await payHome(env, 5, { m: { plan: "season" }, s: { amount_total: 2000 } });
-  assert.equal(sea.body.ignored, "no season plan for homes");
+  const sea = await payHome(env, 5, { m: { plan: "season" }, s: { amount_total: 2500 } });
+  assert.equal(sea.body.ignored, "no Full run plan for homes");
 });
 
 test("Admin > Orders shows the home's name and contest; declining, unpublishing or deleting a home with a running paid placement makes it refund due", async () => {

@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261106zb">
-<link rel="stylesheet" href="/info.css?v=20261106z">
+<link rel="stylesheet" href="/info.css?v=20261106zb">
 <script src="/hit.js" defer></script>
 </head>
 <body>
@@ -47,6 +47,7 @@
 
 <div id="planbox">
 <h2>Pick a plan</h2>
+<p class="meta">Your placement starts when you pay and ends on your event's last day, up to 30 days (up to 90 days for a Full run). Featuring opens 30 days before your event starts. You pay once; there is no subscription.</p>
 <div class="grid" id="plans"></div>
 <h2>Pay securely</h2>
 <p><button class="btn" id="go" type="button" disabled>Continue to payment</button></p>
@@ -72,10 +73,9 @@
 </main>
 <script type="module">
 import { SITE } from "/site-config.js";
+import { planCopy, planStatus, PLAN_KEYS } from "/feature-plans.js?v=20261106z";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const COPY = { pin: ["Featured pin", ["Gold-ringed pin on the map", "Featured badge in the list"]], top: ["Top of the list", ["Everything in Featured pin", "Listed first when people browse your area"]], season: ["Whole season", ["Everything in Top of the list", "Featured from now until your event ends"]] };
-const HOME_OK = { pin: 1, top: 1 }; // a home has no end date: 30-day plans only
 let PL = {};
 const dollars = (p) => "$" + (p.cents / 100);
 const mail = (plan) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent("Feature my event" + (plan && PL[plan] ? " – " + PL[plan].label : ""))}&body=${encodeURIComponent("Event name:\nLink to my event on socallights.app (or its own web page):\nMy name and phone:\n")}`;
@@ -92,11 +92,15 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
 } else if (!cfg.featureCheckout) {
   $("#auto").hidden = true; $("#manual").hidden = false;
 } else {
-  $("#plans").innerHTML = Object.keys(COPY).filter((k) => PL[k]).map((k) => `<section class="plan${k === "top" ? " pop" : ""}" data-p="${k}"><h3>${COPY[k][0]}</h3><div class="price">${dollars(PL[k])} <small>/ ${PL[k].days ? PL[k].days + " days" : "season"}</small></div><p class="meta" data-until="${k}"></p><ul>${COPY[k][1].map((t) => `<li>${t}</li>`).join("")}</ul><button class="btn${k === "top" ? "" : " ghost"}" type="button" data-pick="${k}">Choose</button></section>`).join("");
+  const renderPlans = (who) => { // every tier lists its contents in full; a home reads "home" and has no Full run
+    $("#plans").dataset.who = who;
+    $("#plans").innerHTML = PLAN_KEYS.filter((k) => PL[k] && (who === "event" || k !== "season")).map((k) => { const c = planCopy(k, PL, who); return `<section class="plan${k === "top" ? " pop" : ""}${plan === k ? " sel" : ""}" data-p="${k}"><h3>${c.name}</h3><div class="price">${dollars(PL[k])} <small>/ ${c.unit}</small></div>${c.sub ? `<p class="meta">${c.sub}</p>` : ""}<p class="meta" data-until="${k}"></p><ul>${c.bullets.map((t) => `<li>${esc(t)}</li>`).join("")}</ul><button class="btn${k === "top" ? "" : " ghost"}" type="button" data-pick="${k}">Choose</button></section>`; }).join("");
+  };
   const events = (await fetch("/api/events").then((r) => r.json()).catch(() => [])).filter((e) => e.e >= new Date().toISOString().slice(0, 10));
   const { me, signIn } = await import("/auth.js?v=20261106y");
   const user = (await me()).user;
   let ev = null, plan = "", mine = [];
+  renderPlans("event");
   const KEY = "scl-feature-sel", fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const saveSel = () => { try { sessionStorage.setItem(KEY, JSON.stringify({ id: ev && ev.id, plan })); } catch {} };
   const WHY = { ended: "Ended", declined: "Declined", cancelled: "Cancelled", postponed: "Postponed", "claim-pending": "Waiting for approval", review: "Waiting for a quick check before it can be featured", pending: "Waiting for review" };
@@ -117,15 +121,16 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
     $("#claimbox").hidden = !unknown; $("#planbox").hidden = unknown;
     $("#go").disabled = !(ev && plan) || unknown;
     $("#go").textContent = user ? "Continue to payment" : "Sign in to continue";
-    // The real end date of each plan for the chosen event; the whole-season plan is off when the event ends too soon for it.
-    const tod = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date()), plus = (n) => { const d = new Date(tod + "T12:00:00"); d.setDate(d.getDate() + n); return d.toLocaleDateString("en-CA"); };
+    // The real end date of each plan for the chosen event or home, and why a plan is off (featuring not open yet, event too short, too little time left, home).
+    const who = ev && ev.home ? "home" : "event";
+    if ($("#plans").dataset.who !== who) renderPlans(who);
     for (const k of Object.keys(PL)) {
       const card = document.querySelector(`[data-p="${k}"]`), note = document.querySelector(`[data-until="${k}"]`); if (!card || !note) continue;
-      const noHome = !!(ev && ev.home && !HOME_OK[k]), tooSoon = noHome || !!(ev && ev.e && PL[k].minDays && ev.e < plus(PL[k].minDays));
-      card.classList.toggle("off", tooSoon); card.querySelector("[data-pick]").disabled = tooSoon;
-      note.textContent = noHome ? "Not available for homes: a home is featured for 30 days." : tooSoon ? `Not available: this event ends ${fmt(ev.e)}. A 30-day plan fits better.` : ev ? (PL[k].days ? `Runs until ${fmt(plus(PL[k].days))}` : ev.e ? `Runs until ${fmt(ev.e)}, your event's last day` : "") : "";
-      if (tooSoon && plan === k) { plan = ""; saveSel(); }
+      const st = ev ? planStatus(k, { start: ev.s, end: ev.e, home: !!ev.home }, PL, cfg.featureOpenDays || 30) : { ok: true, note: "" };
+      card.classList.toggle("off", !st.ok); card.querySelector("[data-pick]").disabled = !st.ok; note.textContent = st.note;
+      if (!st.ok && plan === k) { plan = ""; saveSel(); }
     }
+    if (plan && !document.querySelector(`[data-p="${plan}"]`)) { plan = ""; saveSel(); } // e.g. Full run carried over to a home
     $("#go").disabled = !(ev && plan) || unknown;
     document.querySelectorAll("[data-p]").forEach((p) => p.classList.toggle("sel", p.dataset.p === plan));
   };
@@ -149,7 +154,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
     const m = owned(b.dataset.mine); pick({ id: m.id, n: m.name, city: m.kind === "contest" ? "Contest" : m.city, s: m.start || "", e: m.end || "", home: m.kind === "home" });
     $("#chosen").scrollIntoView({ block: "nearest" });
   });
-  document.querySelectorAll("[data-pick]").forEach((b) => b.addEventListener("click", () => { plan = b.dataset.pick; saveSel(); upd(); }));
+  $("#plans").addEventListener("click", (x) => { const b = x.target.closest("[data-pick]"); if (b && !b.disabled) { plan = b.dataset.pick; saveSel(); upd(); } });
   $("#claimgo").addEventListener("click", async () => {
     $("#claimgo").disabled = true; $("#claimmsg").className = "msg"; $("#claimmsg").textContent = "Sending…";
     try {
@@ -186,7 +191,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
 }
 </script>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261106y";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261107a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 </script>
 <script src="/footer.js?v=20261106z" defer></script>

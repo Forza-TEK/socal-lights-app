@@ -18,7 +18,7 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
 ## 3. Feature your event
 **Automatic (Stripe):** see `docs/stripe-setup.md`. Once the two Stripe secrets are set, visitors pick their event and pay on `/feature`, and the placement turns on by itself. The manual SQL below is only for comping a placement by hand.
 
-- Page: `/feature` (plans: Featured pin $10 / 30 days, Top of the list $15 / 30 days, Whole season $20; raised from $5 / $10 / $15 on 2026-11-04). Prices are defined only in `functions/_lib/featured.js`
+- Page: `/feature` (plans: Featured pin $10, Top of the list $15 (each from payment to the event's last day, up to 30 days), Full run $25 (events of 31+ days, up to 90 days); raised from $5 / $10 / $15 on 2026-11-04; Whole season $20 became Full run $25 on 2026-11-06). Prices are defined only in `functions/_lib/featured.js`
   (`PLANS`) and reach the pages through `/api/config`; the HTML holds wording only. Linked from the ⋯ menu as "Promote your event" (hidden in the store apps).
 - Payment: Stripe only. The Cash App payment links (`featurePay`) were removed; if Stripe isn't switched on, `/feature` shows an email-us message to `contactEmail`.
   Refunds and disputes switch the placement off automatically (see `docs/stripe-setup.md`).
@@ -31,7 +31,7 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
   ```
   Placement ends by itself after `featured_until`: there is no scheduled job. Every time the event list is built, `featuredLevel()` in `functions/_lib/util.js` reports 0 once `featured_until` is before today (Pacific date, the same one used when a plan is bought, so a 30-day plan lasts through the end of its last day). The database row keeps `featured=1/2` afterwards and is simply ignored (the admin CSV export still says "yes" for an expired placement). Scheduled upkeep and sweep upserts never touch these two columns.
 - Admin > Orders (`/api/admin/orders`) is the owner's view of every Featured order, with refunds still to make, disputes, partial refunds, unapplied payments and
-  amount mismatches first, and `refund_due` set when a paid submission is declined. See `docs/stripe-setup.md`. Season plan: needs 7+ days left on the event. Copy
+  amount mismatches first, and `refund_due` set when a paid submission is declined. See `docs/stripe-setup.md`. Full run (plan key `season`): events of 31+ days with 7+ days left. Featuring opens 30 days before the event. Copy
   promises "listed first when people browse your area" and activation "within a few minutes" (the event list is cached up to about 3 minutes).
 - Claims: auto-approval needs the person's own business domain (not free-mail, not a bare shared suffix such as `ca.gov`, `gov`, `edu`, `k12.ca.us`) to match the
   event's own site, which must not be an aggregator or shared host (lists in `functions/_lib/contests.js` and `functions/api/me/claims.js`). Remaining gap:

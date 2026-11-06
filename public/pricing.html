@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261106zb">
-<link rel="stylesheet" href="/info.css?v=20261106z">
+<link rel="stylesheet" href="/info.css?v=20261106zb">
 <style>
 @media(min-width:700px){.grid.two{grid-template-columns:repeat(2,1fr)}}
 .plan .btn{justify-self:start}
@@ -38,9 +38,9 @@
 <div id="featsec">
 <h2>Featured events and podium homes (optional)</h2>
 <p>A Featured event stands out with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin on the map. It is the only thing on SoCal Lights that costs money today.</p>
-<p>Homes can be featured too, but only by the owner of a home that finished winner, 2nd or 3rd place in an announced contest, for the same 30-day plans (no season plan). Payment never changes who wins or any contest result.</p>
+<p>Homes can be featured too, but only by the owner of a home that finished winner, 2nd or 3rd place in an announced contest, with the Featured pin or Top of the list for 30 days from payment (no Full run). Payment never changes who wins or any contest result.</p>
 <div class="grid" id="plans"></div>
-<p class="meta">Prices are per event or per home, paid once (no subscription). A 30-day plan runs for 30 days from the day you pay; the whole-season plan is for events only and lasts until the event ends. You pay on Stripe's secure page. Featured placements are always labelled. <a href="/feature">Feature my event</a></p>
+<p class="meta">Prices are per event or per home, paid once (no subscription). For an event, the placement starts when you pay and ends on the event's last day, up to 30 days (up to 90 days for a Full run). Featuring opens 30 days before the event starts. A home runs 30 days from payment. You pay on Stripe's secure page. Featured placements are always labelled. <a href="/feature">Feature my event</a></p>
 </div>
 
 <h2>Good to know</h2>
@@ -51,10 +51,11 @@
 <details><summary>Questions?</summary><p>Email <a href="mailto:info@socallights.app">info@socallights.app</a>.</p></details>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261106y";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261107a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+import { planCopy, PLAN_KEYS } from "/feature-plans.js?v=20261106z";
 const $ = (q) => document.querySelector(q);
-const COPY = { pin: ["Featured pin", ["Gold-ringed pin on the map", "Featured badge in the list"]], top: ["Top of the list", ["Everything in Featured pin", "Listed first when people browse your area"]], season: ["Whole season", ["Everything in Top of the list", "Featured from now until your event ends"]] };
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents / 100);
 if (/SoCalLightsApp/.test(navigator.userAgent)) {
   // Paid placement is web-only (store rules): the Featured section is not shown in the app.
@@ -62,7 +63,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
 } else {
   const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({})), PL = cfg.featurePlans || {};
   if (!Object.keys(PL).length) $("#featsec").hidden = true;
-  else $("#plans").innerHTML = Object.keys(COPY).filter((k) => PL[k]).map((k) => `<section class="plan${k === "top" ? " pop" : ""}"><h3>${COPY[k][0]}</h3><div class="price">${dollars(PL[k])} <small>/ ${PL[k].days ? PL[k].days + " days" : "season"}</small></div><ul>${COPY[k][1].map((t) => `<li>${t}</li>`).join("")}</ul><a class="btn${k === "top" ? "" : " ghost"}" href="/feature?plan=${k}" aria-label="Choose ${COPY[k][0]}, ${dollars(PL[k])}">Choose</a></section>`).join("");
+  else $("#plans").innerHTML = PLAN_KEYS.filter((k) => PL[k]).map((k) => { const c = planCopy(k, PL); return `<section class="plan${k === "top" ? " pop" : ""}"><h3>${c.name}</h3><div class="price">${dollars(PL[k])} <small>/ ${c.unit}</small></div>${c.sub ? `<p class="meta">${c.sub}</p>` : ""}<ul>${c.bullets.map((t) => `<li>${esc(t)}</li>`).join("")}</ul><a class="btn${k === "top" ? "" : " ghost"}" href="/feature?plan=${k}" aria-label="Choose ${c.name}, ${dollars(PL[k])}">Choose</a></section>`; }).join("");
 }
 </script>
 <script src="/footer.js?v=20261106z" defer></script>
