@@ -5,6 +5,7 @@
 import { json, err, clean, webUrl } from "../../../_lib/util.js";
 import { phoneField, line, normText, normName } from "../../../_lib/fields.js";
 import { ptToday } from "../../../_lib/featured.js";
+import { flagRefundDue, restoreRefundDue } from "../../../_lib/orders.js";
 import { installerFloor } from "../../../_lib/sponsor.js";
 
 export async function onRequestGet({ params, env }) {
@@ -29,6 +30,9 @@ export async function onRequestPost({ params, request, env }) {
 
   if (b.action === "hide" || b.action === "show") {
     await env.DB.prepare("UPDATE installers SET status = ? WHERE id = ?").bind(b.action === "hide" ? "hidden" : "active", inst.id).run();
+    // A hidden profile shows no banner, so a paid Sponsor placement is switched off with it: flag it refund due (restorable: Show puts it back).
+    if (b.action === "hide") await flagRefundDue(env.DB, { installers: [inst.id] }, "The installer profile was hidden while a paid Sponsor placement was running. Refund it in Stripe, then mark it refunded here.", { restorable: true });
+    else await restoreRefundDue(env.DB, { installers: [inst.id] });
     return json({ ok: true });
   }
 

@@ -29,12 +29,12 @@ _CEO summary of seven read-only specialist audits (reports in this folder): secu
 ## Tier 2: next
 | # | Gap | Source |
 |---|---|---|
-| 9 | Paid placements vanish without a refund flag on self-service paths (account deletion, delete home, creator unpublish, admin contest decline/delete) | engineering H1 |
+| 9 | Paid placements vanish without a refund flag on self-service paths (account deletion, delete home, creator unpublish, admin contest decline/delete) | engineering H1 | **FIXED 2026-11-06**
 | 10 | Private-home addresses: 158 "Private home" listings, no remove-my-home control, no stored consent for organizer-added homes, policy silent | privacy PL-01 |
 | 11 | Installer takeover (post as an installer under an existing name, claim by domain); fake "City of X Official" contests live instantly | security S-04, N-02 |
 | 12 | Monitoring: GitHub cron unreliable (uptime ~every 6-8 h; backup not yet scheduled), stuck Pages deploys undetected; add an external monitor and a dead-man's switch | operations H1, H3, engineering H2 |
 | 13 | Stripe vs D1 reconcile report; log bad webhook signatures; dispute readiness | payments H1, M5 |
-| 14 | Account deletion leaves admin_log labels, contest_changes emails, unconfirmed alert subs | privacy PL-04 |
+| 14 | Account deletion leaves admin_log labels, contest_changes emails, unconfirmed alert subs | privacy PL-04 | **FIXED 2026-11-06**
 | 15 | CSP (report-only first) and HSTS; email caps on quote/alert emails | security S-02, N-03, S-10 |
 | 16 | Phone performance: Lighthouse mobile 36-38 on `/` (unresized photos, MapLibre from unpkg) | ux, seo H5 |
 | 17 | SEO: event pages are islands (link to `/e/<id>`), homepage title brand-only, no subscribe/share on landing pages, ad/source attribution | seo H1, H2, H6 |

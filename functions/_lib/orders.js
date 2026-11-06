@@ -6,6 +6,7 @@
 //   cancelled  : a paid placement is still running on a cancelled or postponed event
 import { json } from "./util.js";
 import { ptToday } from "./time.js";
+import { AUTO, restorePlacement } from "./featured.js";
 
 export const NEEDS_ATTENTION = `(o.status IN ('refund_due','disputed','held')
   OR (o.status = 'paid' AND o.applied = 0 AND o.created_at < datetime('now','-1 hour') AND (o.event_id NOT LIKE 'sub:%' OR o.created_at < datetime('now','-1 day')))
@@ -53,3 +54,47 @@ export async function markHomeRefundDue(db, postId, why, today = ptToday()) { //
   const r = await db.prepare("UPDATE feature_orders SET status='refund_due', note=? WHERE target='home' AND event_id=? AND status IN ('paid','held') AND (applied = 0 OR applied_until IS NULL OR applied_until >= ?)").bind(("[auto] " + why).slice(0, 500), postId, today).run();
   return (r.meta && r.meta.changes) || 0;
 }
+
+// ---- One helper for every path that takes a paid placement away (delete, unpublish, hide, account deletion) ----
+// Rule: a path that removes an event row, a home row or hides an installer profile MUST call flagRefundDue (or unlistFromMap / deleteContest, which do).
+// It marks every paid (or held), not-yet-refunded order that is unapplied or still running as refund_due with an [auto] note, which puts it in Admin > Orders,
+// the tab badge and the daily digest email (NEEDS_ATTENTION above). tests/refund-flags.test.mjs scans the code and fails when a delete path does not call it.
+// restorable: the removal can be undone (unpublish, decline, hide). The note then ends with RESTORE_MARK, and restoreRefundDue turns those orders back to paid
+// when the event or profile comes back (an order the owner already refunded stays refunded). Time on the clock keeps running while it is off, as with Admin's unpublish.
+export const RESTORE_MARK = " Publishing it again puts the placement back.";
+const OPEN = "status IN ('paid','held') AND (applied = 0 OR applied_until IS NULL OR applied_until >= ?)";
+const KINDS = [["event", "events"], ["home", "homes"], ["installer", "installers"]];
+const slices = (ids) => { const l = [...new Set((ids || []).filter(Boolean))], o = []; for (let i = 0; i < l.length; i += 80) o.push(l.slice(i, i + 80)); return o; };
+// t: { events: [event ids or "sub:<id>"], homes: [post ids], installers: [installer ids] }. Statements only, so a caller can put them in its own batch (before the delete).
+export function refundDueStatements(db, t, why, { restorable = false, today = ptToday() } = {}) {
+  const note = (AUTO + why).slice(0, restorable ? 500 - RESTORE_MARK.length : 500) + (restorable ? RESTORE_MARK : "");
+  const out = [];
+  for (const [kind, key] of KINDS) for (const part of slices(t[key]))
+    out.push(db.prepare(`UPDATE feature_orders SET status='refund_due', note=? WHERE target=? AND event_id IN (${part.map(() => "?").join(",")}) AND ${OPEN}`).bind(note, kind, ...part, today));
+  return out;
+}
+const changed = (rs) => rs.reduce((n, r) => n + ((r.meta && r.meta.changes) || 0), 0);
+// Runs the statements; returns how many orders were flagged.
+export async function flagRefundDue(db, t, why, opts) {
+  const stmts = refundDueStatements(db, t, why, opts);
+  return stmts.length ? changed(await db.batch(stmts)) : 0;
+}
+// Undo of a restorable flag: orders flagged by an unpublish/hide go back to paid. Returns how many.
+export async function restoreRefundDue(db, t) {
+  const stmts = [];
+  for (const [kind, key] of KINDS) for (const part of slices(t[key]))
+    stmts.push(db.prepare(`UPDATE feature_orders SET status='paid', note=NULL WHERE status='refund_due' AND target=? AND note LIKE '[auto]%' AND note LIKE '%' || ? AND event_id IN (${part.map(() => "?").join(",")})`).bind(kind, RESTORE_MARK, ...part));
+  return stmts.length ? changed(await db.batch(stmts)) : 0;
+}
+
+// Taking an event row off the map (a contest unpublished or declined): flag its paid orders (restorable), then delete the row. putBackOnMap is the undo after the event is listed again.
+// `by` finishes the sentence "The contest was ..." in the order note. (Contest code may not mention the Featured feature; see tests/featured-homes.test.mjs, so the wording lives here.)
+export async function takeOffMap(db, eventId, by) {
+  await flagRefundDue(db, { events: [eventId] }, `The contest was ${by} while a paid placement was running. Refund it in the Stripe dashboard, then mark it refunded here.`, { restorable: true });
+  return db.prepare("DELETE FROM events WHERE id = ?").bind(eventId).run();
+}
+export async function putBackOnMap(db, eventId) {
+  await restoreRefundDue(db, { events: [eventId] });
+  return restorePlacement(db, eventId);
+}
+export const contestDeletedStatements = (db, eventId, homeIds = []) => refundDueStatements(db, { events: [eventId], homes: homeIds }, "The contest was deleted while a paid placement was running. Refund it in the Stripe dashboard, then mark it refunded here.");

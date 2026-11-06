@@ -3,6 +3,7 @@ import { err, clean, nearestCounty } from "./util.js";
 import { upsertEvent } from "./events.js";
 import { r2Delete, photoKeys } from "./dbchunk.js";
 import { logOp } from "./oplog.js";
+import { takeOffMap, putBackOnMap, contestDeletedStatements } from "./orders.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS, defaultSeason } from "../../public/seasons.js";
 import { ptToday } from "./time.js";
@@ -79,8 +80,10 @@ export async function listOnMap(env, c) {
   const id = `c-${c.slug}`.slice(0, 40);
   await upsertEvent(env, { id, name: c.name, county: c.county, city: c.city, type, start_date: todayPT(), end_date: c.vote_end, status: "confirmed", free: 1, price: "Free", hours: "", lat, lng, blurb: `${c.org} home decorating contest. ${c.descr}`.slice(0, 200), url: `https://socallights.app/c/${c.slug}`, season: c.season, venue: c.org, address: `${c.city}, CA` });
   await env.DB.prepare("UPDATE contests SET event_id = ? WHERE id = ?").bind(id, c.id).run();
+  await putBackOnMap(env.DB, id); // coming back after an unpublish or decline: put back what its paid orders still owe
 }
-export const unlistFromMap = (env, c) => c.event_id ? env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id).run() : null;
+// Takes the contest's map event off. A paid placement on it goes with the row, so it is flagged refund due first (restorable: listOnMap undoes it). `by` says who did it.
+export const unlistFromMap = async (env, c, by = "unpublished") => c.event_id ? takeOffMap(env.DB, c.event_id, by) : null;
 
 export async function countyFor(env, city) {
   const [lat, lng] = CITY[city];
@@ -192,10 +195,13 @@ export async function judgeOf(env, c, user) {
 // co-organizers, visit counts, quote requests, the change log and the listing on the map. Used by the admin Contests tab.
 export async function deleteContest(env, c) {
   const all = (sql) => env.DB.prepare(sql).bind(c.id).all().then((r) => r.results).catch((e) => { logOp(env, "contest", "delete: lookup failed: " + (e && e.message)); return []; });
-  await r2Delete(env, [...photoKeys(await all("SELECT photos FROM posts WHERE contest_id = ?")), ...(await all("SELECT logo FROM contest_sponsors WHERE contest_id = ?")).map((x) => x.logo)], "contest photos"); // R2 delete takes a list: one call per 1000 files
-  const stmts = ["votes", "judge_picks", "judge_scores", "judge_conflicts", "judges", "contest_staff", "contest_hits", "contest_sponsors", "contest_leads", "contest_changes"]
+  const entries = await all("SELECT id, photos FROM posts WHERE contest_id = ?");
+  await r2Delete(env, [...photoKeys(entries), ...(await all("SELECT logo FROM contest_sponsors WHERE contest_id = ?")).map((x) => x.logo)], "contest photos"); // R2 delete takes a list: one call per 1000 files
+  const stmts = ["votes", "judge_picks", "judge_scores", "judge_conflicts", "judges", "contest_staff", "contest_hits", "contest_sponsors", "contest_leads", "contest_changes", "home_consents"]
     .map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE contest_id = ?`).bind(c.id));
   stmts.push(env.DB.prepare("DELETE FROM posts WHERE contest_id = ?").bind(c.id), env.DB.prepare("DELETE FROM contests WHERE id = ?").bind(c.id));
+  // Paid placements on the contest's map event and on its podium homes go with the rows: flag them refund due first, in the same batch.
+  stmts.unshift(...contestDeletedStatements(env.DB, c.event_id, entries.map((r) => r.id)));
   if (c.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id));
   await env.DB.batch(stmts);
 }

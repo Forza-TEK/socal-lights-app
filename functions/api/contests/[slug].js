@@ -67,7 +67,7 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
   if (b.action === "unpublish") {
     if (c.status !== "live") return err(400, "This contest isn't on the map right now.");
     await env.DB.prepare("UPDATE contests SET status = 'declined', unpublished_by = 'owner', updated_at = datetime('now') WHERE id = ?").bind(c.id).run();
-    await unlistFromMap(env, c);
+    await unlistFromMap(env, c, "unpublished by its creator");
     await teamChanged(env, c, user, [{ label: "Contest page", old: "Public, on the map", new: "Unpublished by the creator" }], W);
     return json({ ok: true });
   }

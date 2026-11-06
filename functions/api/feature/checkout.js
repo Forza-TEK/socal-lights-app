@@ -8,6 +8,13 @@ import { homeForCheckout, HOME_PLANS, placeWord } from "../../_lib/podium.js";
 import { sha256hex, checkoutLimit, createCheckoutSession } from "../../_lib/stripe.js";
 import { ptToday } from "../../_lib/time.js";
 
+// True when the dates are the buyer's own: they submitted the event (and can edit it), or it is the map listing of a contest they run.
+async function ownSubmission(env, user, eventId) {
+  const rows = (await env.DB.prepare("SELECT contact_email FROM event_submissions WHERE event_id = ?").bind(eventId).all()).results;
+  if (rows.some((r) => normEmail(r.contact_email) === normEmail(user.email))) return true;
+  return !!(await env.DB.prepare("SELECT 1 AS x FROM contests WHERE event_id = ?").bind(eventId).first()); // a contest's map event takes its dates from the contest the organizer runs
+}
+
 export async function onRequestPost({ request, env }) {
   // Paid placement is web-only (store rules). The UI is hidden in the app too; this is the soft server-side check.
   if (/SoCalLightsApp/.test(request.headers.get("user-agent") || "")) return err(403, "Not available in the app.");
@@ -33,14 +40,20 @@ export async function onRequestPost({ request, env }) {
     // Same answer as "not found" for someone else's submission, so ids can't be probed.
     if (!s || s.status === "declined" || !normEmail(user.email) || normEmail(s.contact_email) !== normEmail(user.email)) return err(404, "We couldn't find that submission.");
     ev = { id: s.event_id || "sub:" + s.id, name: s.name, city: s.city, start_date: s.start_date, end_date: s.end_date }; pending = !s.event_id;
+    if (s.event_id) { const live = await env.DB.prepare("SELECT notice FROM events WHERE id = ?").bind(s.event_id).first(); if (live) ev.notice = live.notice; } // a published submission: its listing may have been marked cancelled or postponed
   } else {
     if (!eventId) return err(400, "Choose your event and a plan.");
-    ev = await env.DB.prepare("SELECT id, name, city, start_date, end_date, featured, featured_until FROM events WHERE id = ?").bind(eventId).first();
+    ev = await env.DB.prepare("SELECT id, name, city, start_date, end_date, featured, featured_until, notice, status FROM events WHERE id = ?").bind(eventId).first();
   }
   if (!ev) return err(404, "We couldn't find that event. Search for it again.");
   // Only the owner may pay: they submitted it, hold an approved claim, or run the contest it lists. (A claim gives no edit rights.)
   if (!pending && !home && !(await ownsEvent(env, user, ev.id, ""))) return err(403, "Claim this event first. Only its organizer can feature it.");
   const today = ptToday();
+  // The Terms promise that a cancelled or postponed event cannot be featured (payments audit M3): refuse here, not only in the page.
+  if (!home && (ev.notice === "cancelled" || ev.notice === "postponed")) return err(400, `This event is marked ${ev.notice}, so it cannot be featured. Email info@socallights.app if that is a mistake.`);
+  // "Expected" listings carry projected dates that the organizer cannot correct (a claim gives no edit rights), and the paid window is computed from them (audit M8).
+  // Hold the sale until the dates are confirmed. An event the buyer submitted themselves has dates they entered and can edit, so it is not held.
+  if (!home && !pending && ev.status === "expected" && !(await ownSubmission(env, user, ev.id))) return err(400, "The dates for this listing are still projected, not confirmed, so it can't be featured yet. Email info@socallights.app with a link to your event page and we will confirm the dates; then you can feature it.");
   if (!home && ev.end_date < today) return err(400, "That event has already ended.");
   if (!home) {
     // The window follows the event: featuring opens 30 days before it starts; the Full run plan needs a long event with time left.
