@@ -29,7 +29,7 @@ export function mountShell({ page, title, items, active, onPick, extra = [] }) {
   <div class="sh-scrim" id="sh-scrim"></div>
   <div class="sh-col"><header class="sh-top"><a class="sh-tbrand" href="/" aria-label="SoCal Lights home"><img src="/img/badge-160.webp" width="36" height="36" alt=""></a><span class="sh-title" id="sh-title">${esc(title)}</span><span class="sh-grow"></span>${themeBtn()}<span id="acct"></span></header></div>
   <nav class="sh-bbar" aria-label="Quick sections">${bottom}<button type="button" class="sh-bb" id="sh-more" aria-expanded="false" aria-controls="sh-side">${svg("more")}<span>More</span></button></nav>`;
-  document.body.prepend(root);
+  document.querySelectorAll(".skiplink").forEach((a) => a.remove()); document.body.prepend(root);
   const col = root.querySelector(".sh-col"); content.classList.add("sh-content"); col.appendChild(content);
   mountAcct(root.querySelector("#acct"));
   const close = () => { document.body.classList.remove("sh-open"); root.querySelector("#sh-more").setAttribute("aria-expanded", "false"); };

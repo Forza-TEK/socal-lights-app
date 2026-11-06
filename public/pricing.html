@@ -65,6 +65,6 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   else $("#plans").innerHTML = Object.keys(COPY).filter((k) => PL[k]).map((k) => `<section class="plan${k === "top" ? " pop" : ""}"><h3>${COPY[k][0]}</h3><div class="price">${dollars(PL[k])} <small>/ ${PL[k].days ? PL[k].days + " days" : "season"}</small></div><ul>${COPY[k][1].map((t) => `<li>${t}</li>`).join("")}</ul><a class="btn${k === "top" ? "" : " ghost"}" href="/feature?plan=${k}" aria-label="Choose ${COPY[k][0]}, ${dollars(PL[k])}">Choose</a></section>`).join("");
 }
 </script>
-<script src="/footer.js?v=20261106y" defer></script>
+<script src="/footer.js?v=20261106z" defer></script>
 </body>
 </html>

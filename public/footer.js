@@ -5,7 +5,7 @@
   // "Skip to the content": the first Tab stop on every page that has a main area (the map has its own skip link)
   var skip = function () {
     try {
-      var m = document.querySelector("main"); if (!m || document.querySelector(".skiplink")) return;
+      var m = document.querySelector("main"); if (!m || document.querySelector(".skiplink,.sh-skip")) return;
       if (!m.id) m.id = "main";
       m.setAttribute("tabindex", "-1"); m.style.outline = "none";
       var st = document.createElement("style");

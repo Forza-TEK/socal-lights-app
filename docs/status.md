@@ -472,3 +472,4 @@ Added 2 events (migration 0164): Bell Holiday Village (Dec 5) and Winter Runderl
 - Unified the visual style: the older white, light-weight pages now use the cream palette and heavy headings of the map and server-built pages (`addflow.css`, `info.css`, `contest.css`, `appshell.css`, 404/offline, pricing). Season red darkened slightly for contrast on cream.
 - `/c/<unknown>` now returns a real 404.
 - Re-ran the full sweep: no new contrast, overflow or console problems.
+- Tutorials skip-link flag fixed: footer.js no longer adds a second skip link on pages that already have the app-shell one.

@@ -18,7 +18,7 @@
 <script type="module">
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261106y";
 import { refreshAcct } from "/addflow.js?v=20261106y";
-import { mountShell } from "/appshell.js?v=20261106z";
+import { mountShell } from "/appshell.js?v=20261106zb";
 import { tourHtml, wireTour } from "/tour.js?v=20261105a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 let panel = "ballot";
@@ -63,6 +63,6 @@ function render() {
 }
 noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261106y" defer></script>
+<script src="/footer.js?v=20261106z" defer></script>
 </body>
 </html>
