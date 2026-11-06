@@ -63,6 +63,9 @@ Prices live only in `INSTALLER_PLANS` in `functions/_lib/featured.js`. Self-serv
 - Stripe fee about 2.9% + 30c: on $50 about $1.75 (net $48.25); on $75 about $2.48 (net $72.52); on the $25 upgrade about $1.03 (net $23.97).
 - This replaces the founder-sold pilot guess of about $299 a season for the first installer sales; the owner chose these prices. Gate to watch: installer conversations and `fn:sponsor-paid` (see `docs/CHECKLIST.md`).
 
+### 2d. Optional automatic renewal for installers (2026-11-07)
+Off by default, installers only. Charged on the last day of the running placement at the plan's CURRENT price (the reminder says when the price changed). Stripe fee about 2.9% + 30c per charge ($50 nets about $48.25, $75 about $72.52); a card saved off-session adds no fee. A failed charge is retried once 3 days later and then lapses: expect some involuntary churn (cards expire) and no revenue from a lapsed renewal. No refund or credit for timing, as for any Sponsor purchase.
+
 ## 3. Revenue scenarios from real traffic
 
 Season window: Nov 4 to Jan 2, about 60 days. Humans per day: 20 (low), 50 (high; Nov 3's count). Visits in window: **1,200 to 3,000**. Cloudflare's 450-650 "uniques" are not used.

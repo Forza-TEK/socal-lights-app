@@ -33,3 +33,6 @@ export function seasonRule(cfg) {
   const now = s.season ? `Right now a new placement runs from today until ${niceDate(s.to)}, the end of the ${s.season} season (${dayWord(s.days)}, counting today).` : "";
   return { rule, now };
 }
+
+// The wording next to the (unticked-by-default) automatic renewal box. cfg = /api/config; the text and its version are set once in functions/_lib/renewal.js and stored with the buyer's consent.
+export const renewalText = (cfg, cents) => ((cfg.installerRenewal && cfg.installerRenewal.text) || "").replace("{price}", money(cents));

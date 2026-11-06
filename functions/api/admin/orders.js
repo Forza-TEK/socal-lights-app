@@ -8,7 +8,7 @@ export async function onRequestGet({ env }) {
   const today = ptToday();
   const { results } = await env.DB.prepare(
     `SELECT o.session_id, o.event_id, o.plan, o.amount, o.currency, o.email, o.status, o.applied, o.applied_featured, o.applied_until, o.payment_intent,
-            o.charge_id, o.refunded_at, o.created_at, o.note, o.user_id, o.target, o.applied_top_until, o.applied_from, ins.slug AS inst_slug, ins.banner_until AS inst_banner, ins.top_until AS inst_top, COALESCE(e.name, s.name, hp.title, ins.name) AS name, COALESCE(e.city, s.city, hp.city) AS city, e.notice,
+            o.charge_id, o.refunded_at, o.created_at, o.note, o.user_id, o.target, o.renewal, o.applied_top_until, o.applied_from, ins.slug AS inst_slug, ins.banner_until AS inst_banner, ins.top_until AS inst_top, COALESCE(e.name, s.name, hp.title, ins.name) AS name, COALESCE(e.city, s.city, hp.city) AS city, e.notice,
             e.start_date, e.end_date, COALESCE(e.featured, hp.featured) AS ev_featured, COALESCE(e.featured_until, hp.featured_until) AS ev_until, hc.name AS contest_name, hc.slug AS contest_slug
      FROM ${ORDER_FROM} LEFT JOIN event_submissions s ON o.event_id = 'sub:' || s.id
      LEFT JOIN installers ins ON o.target = 'installer' AND ins.id = o.event_id

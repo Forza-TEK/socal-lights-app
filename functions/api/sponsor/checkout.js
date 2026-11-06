@@ -8,6 +8,7 @@ import { ownsInstaller } from "../../_lib/ownership.js";
 import { sponsorWindow, sponsorProblem } from "../../_lib/sponsor.js";
 import { sha256hex, checkoutLimit, createCheckoutSession } from "../../_lib/stripe.js";
 import { bump } from "../../_lib/funnel.js";
+import { CONSENT_VERSION } from "../../_lib/renewal.js";
 
 export async function onRequestPost({ request, env }) {
   // Paid placement is web-only (store rules). The UI is hidden in the app too; this is the soft server-side check.
@@ -38,13 +39,17 @@ export async function onRequestPost({ request, env }) {
     "metadata[target]": "installer",
     "metadata[plan]": plan,
     "metadata[user_id]": user.id,
+    "metadata[quote_from]": w.from, "metadata[quote_to]": w.to, "metadata[quote_cents]": String(w.cents), // what the buyer was quoted: the webhook applies exactly this, or holds the order if it no longer fits
     "payment_intent_data[description]": `SoCal Lights Sponsor: ${inst.name} (${plan})`.slice(0, 200),
     success_url: `${origin}/sponsor?paid=1&installer=${encodeURIComponent(inst.slug)}&plan=${plan}`,
     cancel_url: `${origin}/sponsor?cancelled=1&installer=${encodeURIComponent(inst.slug)}&plan=${plan}`,
   });
+  // Optional automatic renewal: only when the buyer ticked the (unticked-by-default) box. Stripe then keeps the card for later charges; the webhook turns renewal on after the payment.
+  const renew = !!(b && b.renew === true); // card only for a saved card: Cash App Pay and other methods cannot be reused off-session
+  if (renew) { f.set("customer_creation", "always"); f.set("payment_method_types[0]", "card"); f.set("payment_intent_data[setup_future_usage]", "off_session"); f.set("metadata[renew]", "1"); f.set("metadata[consent]", CONSENT_VERSION); }
   if (goodEmail) { f.set("customer_email", goodEmail); f.set("payment_intent_data[receipt_email]", goodEmail); }
   // Same profile + plan + dates within 10 minutes reuses one Checkout session (double clicks). A hash; the account is included so two people never share a session.
-  const idem = "sponsor-" + (await sha256hex(`${inst.id}|${plan}|${w.from}|${w.to}|${w.cents}|${user.id}|${Math.floor(Date.now() / 600_000)}`));
+  const idem = "sponsor-" + (await sha256hex(`${inst.id}|${plan}|${w.from}|${w.to}|${w.cents}|${renew ? 1 : 0}|${user.id}|${Math.floor(Date.now() / 600_000)}`));
   const limited = await checkoutLimit(env, user.id);
   if (limited) return err(429, limited);
   const url = await createCheckoutSession(env, f, idem);

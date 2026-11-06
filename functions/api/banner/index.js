@@ -1,9 +1,10 @@
 // GET /api/banner — the installers on the map banner today: name, where the name links, phone, and the areas they serve.
 // The page picks which ones to show from what is in the map view, so this list is the same for everyone and can be cached.
 import { json } from "../../_lib/util.js";
+import { ptToday } from "../../_lib/featured.js";
 
 export async function onRequestGet({ env }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = ptToday(); // Pacific, like the sale: a placement shows through its last Pacific day
   const { results } = await env.DB.prepare(
     "SELECT id, slug, name, web, phone, area, email, blurb, (logo IS NOT NULL AND logo != '') AS has_logo, (top_until != '' AND top_until >= ?1) AS top FROM installers WHERE status = 'active' AND ((banner_until != '' AND banner_until >= ?1) OR (top_until != '' AND top_until >= ?1)) ORDER BY lower(name) LIMIT 80"
   ).bind(today).all().catch(() => ({ results: [] }));

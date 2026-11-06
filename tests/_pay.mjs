@@ -4,7 +4,7 @@ import { makeDB } from "./_d1.mjs";
 import { sha256 } from "../functions/_lib/auth.js";
 
 export const SECRET = "whsec_test_secret_value";
-export const ptToday = (offsetDays = 0) => new Date(Date.now() - 8 * 3600_000 + offsetDays * 86400_000).toISOString().slice(0, 10);
+export const ptToday = (offsetDays = 0) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date(Date.now() + offsetDays * 86400_000));
 
 export function newEnv(extra = {}) {
   const { DB, raw } = makeDB();

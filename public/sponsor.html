@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Sponsor placement for installers · SoCal Lights</title>
-<meta name="description" content="Installers: put your company in the labelled Sponsor banner on the SoCal Lights map, and optionally at the top of the list. Pay once for the season.">
+<meta name="description" content="Installers: put your company in the labelled Sponsor banner on the SoCal Lights map, and optionally at the top of the list. A one-time payment for the season, or renew automatically if you choose.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -24,6 +24,7 @@
 .step{margin:26px 0 8px}.step span{display:inline-block;min-width:28px;height:28px;line-height:28px;text-align:center;border-radius:14px;background:var(--ink);color:var(--bg,#fff);font-size:14px;margin-right:8px}
 .gap{margin:8px 0 12px;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:#fff}:root[data-theme="dark"] .gap{background:var(--tile)}.gap b{color:var(--ink)}
 .sum{border:2px solid var(--season);border-radius:12px;padding:16px 18px;background:#fff;margin:0 0 14px}:root[data-theme="dark"] .sum{background:var(--tile)}.sum dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px}.sum dt{color:var(--muted)}.sum dd{margin:0;color:var(--ink);font-weight:600}
+.renew{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 14px;background:#fff}:root[data-theme="dark"] .renew{background:var(--tile)}.rcheck{display:flex;gap:12px;align-items:flex-start;cursor:pointer;color:var(--ink)}.rcheck input{width:24px;height:24px;flex:none;margin:2px 0 0;accent-color:var(--season)}
 .srch{display:flex;gap:8px;flex-wrap:wrap}.srch input{flex:1;min-width:200px}
 </style>
 <script src="/hit.js" defer></script>
@@ -32,7 +33,7 @@
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
 <main id="content">
 <h1>Sponsor placement for installers</h1>
-<p class="lede">Put your company where people planning a drive look: the labelled <b>Sponsor</b> banner at the top of the list on the map, and optionally your company card at the top of the list. Pay once for the season, no subscription. The map and your free profile stay free, and money never changes a contest result.</p>
+<p class="lede">Put your company where people planning a drive look: the labelled <b>Sponsor</b> banner at the top of the list on the map, and optionally your company card at the top of the list. Pay one time for the season. Automatic renewal is optional and off unless you tick the box before paying. The map and your free profile stay free, and money never changes a contest result.</p>
 
 <div id="paid" class="ok" hidden><b>Thank you!</b> Your payment went through. Your placement turns on automatically within a few minutes (refresh the map to see it), and the dates are in your <a id="dashlink" href="/profile">dashboard</a>. A receipt is on its way from Stripe.</div>
 <div id="cancelled" class="ok" hidden><b>No payment was made.</b> Your company and plan are still chosen below, so you can pick up where you left off.</div>
@@ -57,6 +58,7 @@
 <div id="s4box" hidden>
 <h2 class="step"><span>4</span>Check the dates and pay</h2>
 <div class="sum" id="sum" aria-live="polite"></div>
+<div class="renew" id="renewbox"><label class="rcheck"><input type="checkbox" id="renew"><span id="renewtxt"></span></label></div>
 <p><button class="btn" id="go" type="button" disabled>Continue to payment</button></p>
 <p class="meta" id="gomsg">You pay on Stripe's secure page with a card; your placement turns on automatically within a few minutes. We never see your card details.</p>
 </div>
@@ -73,7 +75,7 @@
 <script type="module">
 import { themeBtn, mountAcct } from "/addflow.js?v=20261107a";
 import { me, signIn } from "/auth.js?v=20261106y";
-import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord } from "/sponsor-plans.js?v=20261107d";
+import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord, renewalText } from "/sponsor-plans.js?v=20261107e";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -146,12 +148,13 @@ function renderSummary(i) {
   const q = plan && i.quotes[plan];
   if (!q || q.problem) { $("#s4box").hidden = true; return; }
   $("#s4box").hidden = false; const c = sponsorCopy(plan);
-  $("#sum").innerHTML = `<dl><dt>Company</dt><dd>${esc(i.name)}</dd><dt>Plan</dt><dd>${esc(c.name)}</dd><dt>Starts</dt><dd>${esc(niceDate(q.from))}${q.renewal ? " (the day after your current placement ends)" : " (today)"}</dd><dt>Ends</dt><dd>${esc(niceDate(q.to))}, the last day of the ${esc(q.season)} season (${dayWord(q.days)})</dd><dt>Price</dt><dd>${money(q.cents)}, paid once${q.upgrade ? " (the upgrade difference)" : ""}</dd></dl><p class="meta">${esc(runsText(q))}${q.upgrade ? " You already have the Banner to the end of the season, so you pay the difference between the two plans' prices." : ""}</p>`;
+  $("#sum").innerHTML = `<dl><dt>Company</dt><dd>${esc(i.name)}</dd><dt>Plan</dt><dd>${esc(c.name)}</dd><dt>Starts</dt><dd>${esc(niceDate(q.from))}${q.renewal ? " (the day after your current placement ends)" : " (today)"}</dd><dt>Ends</dt><dd>${esc(niceDate(q.to))}, the last day of the ${esc(q.season)} season (${dayWord(q.days)})</dd><dt>Price</dt><dd>${money(q.cents)}, one-time payment${q.upgrade ? " (the upgrade difference)" : ""}</dd></dl><p class="meta">${esc(runsText(q))}${q.upgrade ? " You already have the Banner to the end of the season, so you pay the difference between the two plans' prices." : ""}</p>`;
+  $("#renewtxt").textContent = renewalText(cfg, IP[plan].cents); // unticked by default: the box is never pre-ticked
   const go = $("#go"); go.disabled = false;
   go.onclick = async () => {
     go.disabled = true; $("#gomsg").className = "meta"; $("#gomsg").textContent = "Opening the payment page…"; save();
     try {
-      const r = await fetch("/api/sponsor/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ installer: slug, plan }) }), j = await r.json().catch(() => ({}));
+      const r = await fetch("/api/sponsor/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ installer: slug, plan, renew: $("#renew").checked }) }), j = await r.json().catch(() => ({}));
       if (r.status === 401) { if (await signIn({ title: "Sign in to pay", next: "/sponsor?plan=" + plan })) location.reload(); go.disabled = false; return; }
       if (!r.ok || !j.url) throw new Error(j.error || "The payment page couldn't be opened. Please try again.");
       location.href = j.url;

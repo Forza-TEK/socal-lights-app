@@ -23,6 +23,10 @@ export const STEPS = [
   ["fn:sponsor-picked", "Sponsor page: chose an installer profile"],
   ["fn:sponsor-checkout", "Sponsor placement: payment page opened"],
   ["fn:sponsor-paid", "Sponsor placement: paid"],
+  ["fn:autorenew-opt-in", "Automatic renewal: turned on"],
+  ["fn:autorenew-charged", "Automatic renewal: charged"],
+  ["fn:autorenew-failed", "Automatic renewal: charge failed"],
+  ["fn:autorenew-cancelled", "Automatic renewal: cancelled"],
 ];
 export const CLIENT_KEYS = ["fn:visit", "fn:event-open", "fn:signin-open", "fn:event-feature-choose", "fn:event-feature-pick", "fn:pricing-choose", "fn:sponsor-shown", "fn:sponsor-picked"];
 
