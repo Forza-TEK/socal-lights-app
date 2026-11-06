@@ -4,6 +4,7 @@ _Last updated: 2026-11-06 (installer Sponsor placements)_
 
 ## Page counter buckets (2026-11-06, audit seo-growth H4)
 - `functions/api/visit.js`: `/e/<id>` counts as page `event`, `/past/<slug>` as `past` (old per-id rows stay in history and age out of the top pages). The 80 page-names-per-day abuse cap now counts page rows only, not `fn:`, `click:` or `ref:`. Admin "top pages" lists keys as stored, so it shows `event` and `past` with no change needed. Tests: `tests/visit-pages.test.mjs`.
+
 ## Free-plan per-request limits (2026-11-06, audit M9, M2, C13)
 Verified limits and the full before/after table: `docs/runbooks/cloudflare-limits.md` ("Per-request limits and how the code stays under them"). Key fact: on Workers/Pages Free a request may make **50 subrequests and D1 and R2 calls count too** (a D1 `batch()` is one); D1 allows 100 bound parameters per query.
 - **Mail outbox.** Migration `0178_mail_outbox.sql`, `functions/_lib/mailbatch.js` (batched Resend `/emails/batch`, outbox with dedupe, retry/backoff, split of a refused batch, quota pause), `POST /api/mail/drain`, hourly workflow `.github/workflows/mail-outbox.yml`. Contest results, voting reminders: queued, first 40 sent at once (CPU: 10 ms on Free), rest by the hourly workflow in a loop. Invitations, judge mail, team notices and the weekly alerts (40 per run) use one batch call (`sendNow`). Failures are logged to `ops_log` (`email`, `mail`), never swallowed.
