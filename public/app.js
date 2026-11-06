@@ -296,27 +296,25 @@ function initLayers() {
     paint: { "text-color": C.ink, "text-halo-color": C.ring, "text-halo-width": 2.2 } });
   if (mapReady) { drawMap(); return; } // base style swapped (day/night): layers are back, nothing else to set up
 
-  map.on("click", "clusters", async (e) => {
-    const f = e.features[0];
-    const z = await map.getSource("pts").getClusterExpansionZoom(f.properties.cluster_id);
-    map.easeTo({ center: f.geometry.coordinates, zoom: z + 0.3 });
+  // A finger is bigger than a pin: look for places in a box around the tap and take the nearest (cluster circles too)
+  const tapBox = (pt) => { const r = CAN_HOVER ? 6 : 20; return [[pt.x - r, pt.y - r], [pt.x + r, pt.y + r]]; };
+  const nearest = (fs, pt) => fs.map((f) => { const q = map.project(f.geometry.coordinates); return { f, d: Math.hypot(q.x - pt.x, q.y - pt.y) }; }).sort((a, b) => a.d - b.d)[0];
+  map.on("click", async (e) => {
+    const box = tapBox(e.point), pin = nearest(map.queryRenderedFeatures(box, { layers: ["pt", "stops"] }), e.point), cl = nearest(map.queryRenderedFeatures(box, { layers: ["clusters"] }), e.point);
+    if (pin && (!cl || pin.d <= cl.d)) { state.hot = null; selectKey(pin.f.properties.key, "map"); return; }
+    if (cl) { const z = await map.getSource("pts").getClusterExpansionZoom(cl.f.properties.cluster_id); map.easeTo({ center: cl.f.geometry.coordinates, zoom: z + 0.3 }); return; }
+    if (!state.sel) return;
+    // Tapped empty map: deselect (and leave a card's detail if one is open, so the panel matches the map)
+    state.sel = null; state.hot = null;
+    if (state.detail) { state.detail = null; renderPanel(); }
+    renderPreview(); drawHL(); markItems();
   });
   for (const id of ["pt", "stops"]) {
-    map.on("click", id, (e) => { e.preventDefault(); selectKey(e.features[0].properties.key, "map"); });
     map.on("mouseenter", id, (e) => { map.getCanvas().style.cursor = "pointer"; setHot(e.features[0].properties.key); });
     map.on("mouseleave", id, () => { map.getCanvas().style.cursor = ""; setHot(null); });
   }
   map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
   map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
-  map.on("click", (e) => {
-    if (e.defaultPrevented) return;
-    const hit = map.queryRenderedFeatures(e.point, { layers: ["pt", "clusters", "stops"] });
-    if (hit.length || !state.sel) return;
-    // Tapped empty map: deselect (and leave a card's detail if one is open, so the panel matches the map)
-    state.sel = null;
-    if (state.detail) { state.detail = null; renderPanel(); }
-    renderPreview(); drawHL(); markItems();
-  });
   map.on("dragstart", () => { state.keep = null; }); map.on("moveend", scheduleList); map.on("move", placePin);
   mapReady = true;
   if (state.city) fitCity(state.city, false); else fitSoCal(false); // a city link (#city-...) opens zoomed on the city
@@ -353,7 +351,8 @@ function drawHL() {
   }
   map.getSource("hl").setData(fc(out));
 }
-function setHot(k) { if (state.hot === k) return; state.hot = k; drawHL(); document.querySelectorAll(".item").forEach((el) => el.classList.toggle("hot", el.dataset.key === k)); }
+const CAN_HOVER = matchMedia("(hover:hover) and (pointer:fine)").matches;
+function setHot(k) { if (!CAN_HOVER) k = null; if (state.hot === k) return; state.hot = k; drawHL(); document.querySelectorAll(".item").forEach((el) => el.classList.toggle("hot", el.dataset.key === k)); }
 
 /* ---------- planner ---------- */
 // Where the route begins: your current location (default), a chosen city, or the first stop ("first" → null)
@@ -850,7 +849,7 @@ document.getElementById("panel").addEventListener("click", (e) => { const h = e.
 $("#pbody").addEventListener("click", (e) => {
   const mp = e.target.closest("[data-maps]"); if (mp) { e.stopPropagation(); setMapsApp(mp.dataset.maps); return; }
   const f = e.target.closest("[data-fav]");
-  if (f) { e.stopPropagation(); const id = f.dataset.fav; favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); if (state.tab === "plan" && !favs.size) { setTab("events"); if (isPhone()) setSheet("peek"); fitSoCal(true); return; } renderPanel(); drawMap(); return; }
+  if (f) { e.stopPropagation(); const id = f.dataset.fav; const was = favs.has(id); was ? favs.delete(id) : favs.add(id); saveFavs(); if (was && state.tab === "plan" && !state.detail) { state.hot = null; closePin(); } if (state.tab === "plan" && !favs.size) { setTab("events"); if (isPhone()) setSheet("peek"); fitSoCal(true); return; } renderPanel(); drawMap(); return; }
   const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) { selectKey(it.dataset.key, "list"); if (e.target.closest(".tile,.thumb") && state.detail !== it.dataset.key) openDetail(it.dataset.key); }
 });
 $("#phead").addEventListener("change", (e) => { if (e.target.id === "sortSel") { state.sort = e.target.value; renderPanel(); scroller().scrollTop = 0; } });
