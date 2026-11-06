@@ -6,6 +6,7 @@
 // The edge copy is served stale-while-revalidate (fresh 2 min, kept 15). The response carries an ETag, so a returning visitor (or the service worker) revalidates with If-None-Match and gets a body-less 304 when nothing changed.
 import { rowToEvent, rowToListEvent, etagOf, etagMatches as matches, requireAdmin, err } from "../_lib/util.js";
 import { pairs, approvedPosts } from "../_lib/addrkey.js";
+import { ptDate } from "../_lib/time.js";
 
 export const ENDED_GRACE_DAYS = 3; // covers a device clock a day off and a share link to an event that just finished (the app hides ended events anyway)
 const CACHE_CONTROL = "public, max-age=60, s-maxage=120";
@@ -16,7 +17,7 @@ const notModified = (tag) => new Response(null, { status: 304, headers: { etag: 
 const FRESH_MS = 120_000, KEEP_S = 900;
 
 export async function build(env, all, ended, full) {
-  const cutoff = new Date(Date.now() - ENDED_GRACE_DAYS * 86400000).toISOString().slice(0, 10);
+  const cutoff = ptDate(Date.now() - ENDED_GRACE_DAYS * 86400000);
   const q = all || ended ? env.DB.prepare("SELECT * FROM events ORDER BY start_date, name") : env.DB.prepare("SELECT * FROM events WHERE end_date >= ? ORDER BY start_date, name").bind(cutoff);
   const { results } = await q.all();
   // A sweep-made event at the same address as an approved house or installer post is replaced by that post (unless the admin chose to keep it)

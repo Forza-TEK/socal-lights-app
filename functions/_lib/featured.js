@@ -1,4 +1,5 @@
 import { applyInstallerOrder, revokeInstaller } from "./sponsor.js";
+import { ptToday } from "./time.js";
 // Featured plans: price, level and how long they last. Prices are in cents and exist only here (/api/config serves them).
 // Events: the window follows the event. Placement starts at payment and ends on the event's last day (end_date as stored when paid), capped at
 //   days (pin, top: 30) or maxDays (season: 90) from payment. Featuring opens OPEN_DAYS before the event starts.
@@ -70,7 +71,7 @@ export async function verifyStripeSignature(raw, header, secret, nowSec = Math.f
 }
 
 // The Pacific calendar date (YYYY-MM-DD), real time zone rules (daylight saving included). One helper for everything that is sold or shown by date; uses Date.now() so tests can freeze it.
-export const ptToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date(Date.now()));
+export { ptToday }; // lives in time.js; re-exported so existing imports keep working
 // Order notes that begin with this mark are "needs a look" for the owner (Admin > Orders). Writing a note of your own there clears them.
 export const AUTO = "[auto] ";
 export const setOrderNote = (db, sessionId, text) => db.prepare("UPDATE feature_orders SET note = ? WHERE session_id = ?").bind(String(text).slice(0, 500), sessionId).run();

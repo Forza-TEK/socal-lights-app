@@ -1,0 +1,189 @@
+// Public submission endpoints: "Showcase a house / installer" (submit.js) and "Add your event" (submit-event.js).
+// Sign-in replaced Turnstile and the honeypot on these two forms (there is no honeypot field in the code), so what is tested is: sign-in required, validation, rate limits, geocode success and failure, page verification, auto-publish.
+// Geocoders, the event page and R2 are stubbed.
+import test from "node:test";
+import assert from "node:assert/strict";
+import { onRequestPost as submitHome } from "../functions/api/submit.js";
+import { onRequestPost as submitEvent } from "../functions/api/submit-event.js";
+import { newEnv, addUser, stubFetch, ptToday } from "./_pay.mjs";
+
+const ORIGIN = "https://socallights.app";
+const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
+const jpeg = (name = "a.jpg") => new File([JPEG], name, { type: "image/jpeg" });
+// A tiny in-memory R2: put/get/delete, with every key ever put or deleted recorded.
+const r2 = () => { const store = new Map(), puts = [], dels = []; return { store, puts, dels, put: async (k, v, o) => { puts.push(k); store.set(k, { body: v, httpMetadata: o && o.httpMetadata }); }, get: async (k) => store.get(k) || null, delete: async (k) => { for (const x of [].concat(k)) { dels.push(x); store.delete(x); } } }; };
+
+// Geocoder stub: the US Census answers { matches }, OpenStreetMap answers [hit]; anything else (an event page) is answered by `page`.
+const geo = ({ census = null, osm = null, down = false, page = null } = {}) => stubFetch((url) => {
+  url = String(url);
+  if (down && /census|nominatim/.test(url)) throw new Error("geocoder down");
+  if (/census/.test(url)) return new Response(JSON.stringify({ result: { addressMatches: census ? [{ coordinates: { x: census[1], y: census[0] }, matchedAddress: "1 MAIN ST, PASADENA, CA" }] : [] } }));
+  if (/nominatim/.test(url)) return new Response(JSON.stringify(osm ? [{ lat: String(osm[0]), lon: String(osm[1]), display_name: "1 Main St, Pasadena" }] : []));
+  if (page === "down") throw new Error("page down");
+  return new Response(page ?? "", { status: page == null ? 404 : 200 });
+});
+const PASADENA = [34.148, -118.144];
+
+// ---------------- house / installer posts ----------------
+const homeForm = (o = {}) => { const f = new FormData(); const d = { biz: "Lee Family", title: "Maple Street Lights", city: "Pasadena", desc: "Ten thousand lights synced to music every night.", street: "123 Maple St", zip: "91101", ...o }; for (const [k, v] of Object.entries(d)) if (v !== undefined && v !== null) f.append(k, v); return f; };
+const postHome = (env, form, cookie, ip = "203.0.113.7") => submitHome({ request: new Request(ORIGIN + "/api/submit", { method: "POST", headers: { "CF-Connecting-IP": ip, ...(cookie ? { cookie } : {}) }, body: form }), env });
+const body = async (r) => ({ ...(await r.json()), http: r.status }); // http = the HTTP status; status = the post or event status in the answer
+
+test("house post: needs a signed-in account", async () => {
+  const { env } = newEnv({ PHOTOS: r2() });
+  const r = await body(await postHome(env, homeForm())); assert.equal(r.http, 401);
+});
+test("house post: validation messages (name, city, zip, address, installer rules, photos)", async () => {
+  const { env, raw } = newEnv({ PHOTOS: r2() }); const u = await addUser(raw, "u1", "owner@example.com"), f = geo();
+  try {
+    const bad = async (over, re, form) => { const r = await body(await postHome(env, form || homeForm(over), u.cookie)); assert.equal(r.http, 400, JSON.stringify(over)); assert.match(r.error, re, JSON.stringify(over)); };
+    await bad({ biz: "" }, /Fill in/);
+    await bad({ title: "" }, /Fill in/);
+    await bad({ desc: "" }, /Fill in/);
+    await bad({ city: "Gotham" }, /Choose a city/);
+    await bad({ zip: "9110" }, /ZIP/);
+    await bad({ street: "", address: "x" }, /street address/);
+    await bad({ kind: "installer" }, /website or a phone/);
+    await bad({ kind: "installer", web: "example.com" }, /permission/);
+    await bad({ kind: "installer", web: "not a site !!", phone: "626-555-0100", permission: "1" }, /valid website/);
+    const many = homeForm(); for (let i = 0; i < 9; i++) many.append("photos", jpeg()); await bad({}, /up to 8/, many);
+    const notImg = homeForm(); notImg.append("photos", new File([new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])], "x.jpg")); await bad({}, /JPG, PNG or WebP/, notImg);
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM posts").get().n, 0);
+  } finally { f.restore(); }
+});
+test("house post: geocode success pins the exact address and publishes right away; the account email is used, not the form's", async () => {
+  const bucket = r2(), { env, raw } = newEnv({ PHOTOS: bucket }); const u = await addUser(raw, "u1", "owner@example.com"), f = geo({ census: [34.15, -118.13] });
+  try {
+    const form = homeForm({ email: "someone-else@example.com" }); form.append("photos", jpeg());
+    const r = await body(await postHome(env, form, u.cookie));
+    assert.equal(r.http, 200); assert.equal(r.ok, true);
+    const p = raw.prepare("SELECT * FROM posts WHERE id = ?").get(r.id);
+    assert.equal(p.contact_email, "owner@example.com"); assert.equal(p.user_id, "u1");
+    assert.equal(p.lat, 34.15); assert.equal(p.lng, -118.13);
+    assert.equal(p.status, "approved", "homes go live straight away"); assert.equal(r.status, "published");
+    assert.equal(bucket.puts.length >= 1, true, "the photo was saved to R2");
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM submit_log").get().n, 1);
+  } finally { f.restore(); }
+});
+test("house post: geocoder failure or far-away match falls back to the city center and still saves", async () => {
+  const { env, raw } = newEnv({ PHOTOS: r2() }); const u = await addUser(raw, "u1", "owner@example.com");
+  for (const stub of [{ down: true }, {}, { census: [40.7, -74.0] }]) {
+    const f = geo(stub);
+    try {
+      const r = await body(await postHome(env, homeForm({ biz: "Biz " + JSON.stringify(stub) }), u.cookie, "198.51.100." + Math.floor(Math.random() * 200)));
+      assert.equal(r.http, 200, JSON.stringify(stub));
+      const p = raw.prepare("SELECT lat, lng FROM posts WHERE id = ?").get(r.id); assert.deepEqual([p.lat, p.lng], PASADENA, JSON.stringify(stub));
+    } finally { f.restore(); }
+  }
+});
+test("house post: spammy words hold it for review; installers need website or phone and get a profile", async () => {
+  const { env, raw } = newEnv({ PHOTOS: r2() }); const u = await addUser(raw, "u1", "pro@example.com"), f = geo({ census: PASADENA });
+  try {
+    const spam = await body(await postHome(env, homeForm({ desc: "Best casino bonus lights" }), u.cookie)); assert.equal(spam.http, 200);
+    assert.equal(raw.prepare("SELECT status FROM posts WHERE id = ?").get(spam.id).status, "pending");
+    const inst = await body(await postHome(env, homeForm({ kind: "installer", biz: "Bright Install Co", web: "brightinstall.example.com", permission: "1" }), u.cookie, "198.51.100.5")); assert.equal(inst.http, 200);
+    const p = raw.prepare("SELECT poster_type, installer_id, installer_confirmed, web FROM posts WHERE id = ?").get(inst.id);
+    assert.equal(p.poster_type, "installer"); assert.ok(p.installer_id); assert.equal(p.installer_confirmed, 1); assert.match(p.web, /brightinstall/);
+  } finally { f.restore(); }
+});
+test("house post: 5 per hour per connection (429), 5 displays a day per account", async () => {
+  const { env, raw } = newEnv({ PHOTOS: r2() }); const u = await addUser(raw, "u1", "owner@example.com"), f = geo({ census: PASADENA });
+  try {
+    for (let i = 0; i < 5; i++) assert.equal((await postHome(env, homeForm({ biz: "B" + i }), u.cookie, "192.0.2.1")).status, 200);
+    assert.equal((await postHome(env, homeForm(), u.cookie, "192.0.2.1")).status, 429, "6th from one connection");
+    // a different connection hits the per-account daily limit instead
+    assert.equal((await postHome(env, homeForm(), u.cookie, "192.0.2.2")).status, 429);
+    const u2 = await addUser(raw, "u2", "other@example.com");
+    assert.equal((await postHome(env, homeForm(), u2.cookie, "192.0.2.2")).status, 200, "another account on that connection is fine");
+  } finally { f.restore(); }
+});
+// KNOWN BUG (reported, not fixed here: tests may not change behavior): submit.js uploads photos before the per-account daily check, and that 429 path returns without deleting them.
+test("house post: the per-account daily limit does not leave uploaded photos behind in R2", { todo: "BUG submit.js: photos uploaded before the per-account daily limit check are orphaned on 429" }, async () => {
+  const bucket = r2(), { env, raw } = newEnv({ PHOTOS: bucket }); const u = await addUser(raw, "u1", "owner@example.com"), f = geo({ census: PASADENA });
+  try {
+    for (let i = 0; i < 5; i++) await postHome(env, homeForm({ biz: "B" + i }), u.cookie, "192.0.2." + (10 + i));
+    const before = [...bucket.store.keys()].sort();
+    const form = homeForm(); form.append("photos", jpeg());
+    assert.equal((await postHome(env, form, u.cookie, "192.0.2.99")).status, 429);
+    assert.deepEqual([...bucket.store.keys()].sort(), before, "photos uploaded for a refused post are deleted");
+  } finally { f.restore(); }
+});
+
+// ---------------- events ----------------
+const evBody = (o = {}) => ({ name: "Pasadena Holiday Parade", city: "Pasadena", season: "christmas", type: "parade", start: ptToday(20), end: ptToday(20), hours: "6 pm", free: true, blurb: "A lighted holiday parade down Colorado Boulevard.", url: "", venue: "Colorado Blvd", address: "100 E Colorado Blvd", ...o });
+const postEvent = (env, b, cookie, { ip = "203.0.113.8", origin } = {}) => submitEvent({ request: new Request(ORIGIN + "/api/submit-event", { method: "POST", headers: { "content-type": "application/json", "CF-Connecting-IP": ip, ...(origin ? { origin } : {}), ...(cookie ? { cookie } : {}) }, body: typeof b === "string" ? b : JSON.stringify(b) }), env });
+
+test("event: sign-in and same-origin are required; unreadable body refused", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com");
+  assert.equal((await postEvent(env, evBody())).status, 401);
+  assert.equal((await postEvent(env, evBody(), u.cookie, { origin: "https://evil.example" })).status, 403);
+  assert.equal((await postEvent(env, "not json", u.cookie)).status, 400);
+});
+test("event: validation messages", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), f = geo();
+  try {
+    const cases = [[{ name: "abc" }, /name/], [{ city: "Gotham" }, /city/], [{ season: "x" }, /season/], [{ type: "nope" }, /event type/], [{ start: "2026-13-45x" }, /dates/], [{ end: ptToday(5) }, /dates/],
+      [{ start: ptToday(-5), end: ptToday(-2) }, /already ended/], [{ start: ptToday(600), end: ptToday(601) }, /too far/], [{ url: "ht!tp//bad" }, /web address/], [{ venue: "ab" }, /venue/], [{ address: "x" }, /street address/], [{ blurb: "too short" }, /description/], [{ name: "Casino night for crypto" }, /community event/]];
+    for (const [o, re] of cases) { const r = await body(await postEvent(env, evBody(o), u.cookie, { ip: "198.51.100." + Math.floor(Math.random() * 250) })); assert.equal(r.http, 400, JSON.stringify(o)); assert.match(r.error, re, JSON.stringify(o)); }
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM event_submissions").get().n, 0);
+  } finally { f.restore(); }
+});
+test("event: geocode hit pins it; with a page that mentions the name and year it is confirmed", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), year = ptToday(20).slice(0, 4);
+  const f = geo({ census: [34.14, -118.15], page: `<h1>Pasadena Holiday Parade ${year}</h1>` });
+  try {
+    const r = await body(await postEvent(env, evBody({ url: "https://parade.example.org/info" }), u.cookie));
+    assert.equal(r.http, 200); assert.equal(r.http, 200);
+    const ev = raw.prepare("SELECT * FROM events WHERE id = ?").get(r.id);
+    assert.equal(ev.status, "confirmed"); assert.deepEqual([ev.lat, ev.lng], [34.14, -118.15]);
+    const sub = raw.prepare("SELECT * FROM event_submissions WHERE id = ?").get(r.submission_id);
+    assert.equal(sub.status, "published"); assert.equal(sub.verified, 1); assert.equal(sub.contact_email, "o@example.com");
+  } finally { f.restore(); }
+});
+test("event: geocoder down and no web page: still published as expected, pin at the city center, reasons recorded", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), f = geo({ down: true });
+  try {
+    const r = await body(await postEvent(env, evBody(), u.cookie)); assert.equal(r.http, 200);
+    const ev = raw.prepare("SELECT status, lat, lng FROM events WHERE id = ?").get(r.id);
+    assert.equal(ev.status, "expected"); assert.deepEqual([ev.lat, ev.lng], PASADENA);
+    const note = raw.prepare("SELECT note FROM event_submissions WHERE id = ?").get(r.submission_id).note;
+    assert.match(note, /city center/); assert.match(note, /no event web page/);
+  } finally { f.restore(); }
+});
+test("event: a page that is down or does not mention the year leaves it expected", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com");
+  for (const page of ["down", "<p>Pasadena Holiday Parade 1999</p>"]) {
+    const f = geo({ census: PASADENA, page });
+    try {
+      const r = await body(await postEvent(env, evBody({ url: "https://parade.example.org/x", name: "Pasadena Holiday Parade " + page.length }), u.cookie, { ip: "198.51.100." + page.length }));
+      assert.equal(r.http, 200); assert.equal(raw.prepare("SELECT status FROM events WHERE id = ?").get(r.id).status, "expected", page);
+    } finally { f.restore(); }
+  }
+});
+test("event: same name and day as one on the map is reported as a duplicate and adds nothing", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), f = geo({ census: PASADENA });
+  try {
+    const first = await body(await postEvent(env, evBody(), u.cookie)); assert.equal(first.http, 200);
+    const again = await body(await postEvent(env, evBody(), u.cookie, { ip: "198.51.100.1" }));
+    assert.equal(again.http, 200); assert.equal(again.status, "duplicate"); assert.equal(again.id, first.id);
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM event_submissions").get().n, 1);
+  } finally { f.restore(); }
+});
+test("event: 5 per hour per connection and 8 per account per day", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), f = geo({ census: PASADENA });
+  try {
+    for (let i = 0; i < 5; i++) assert.equal((await postEvent(env, evBody({ name: "Holiday Show Number " + i, address: i + "00 Main Street" }), u.cookie, { ip: "192.0.2.1" })).status, 200);
+    assert.equal((await postEvent(env, evBody({ name: "Holiday Show Number 9" }), u.cookie, { ip: "192.0.2.1" })).status, 429);
+    for (let i = 5; i < 8; i++) assert.equal((await postEvent(env, evBody({ name: "Holiday Show Number " + i, address: i + "00 Main Street" }), u.cookie, { ip: "192.0.2.2" })).status, 200);
+    assert.equal((await postEvent(env, evBody({ name: "Holiday Show Number 10", address: "900 Main Street" }), u.cookie, { ip: "192.0.2.3" })).status, 429, "the 9th event for one account in a day");
+  } finally { f.restore(); }
+});
+test("event: after 100 auto-published in a day, new ones wait for review and are not put on the map", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), f = geo({ census: PASADENA });
+  try {
+    for (let i = 0; i < 100; i++) raw.prepare("INSERT INTO event_submissions (id,status,name,city,season,type,start_date,end_date,contact_email) VALUES (?,?,?,?,?,?,?,?,?)").run("s" + i, "published", "n" + i, "Pasadena", "christmas", "walk", "2026-12-01", "2026-12-01", "x" + i + "@example.com");
+    const r = await body(await postEvent(env, evBody(), u.cookie)); assert.equal(r.http, 200); assert.equal(r.http, 200);
+    const sub = raw.prepare("SELECT status, event_id FROM event_submissions WHERE name = 'Pasadena Holiday Parade'").get();
+    assert.equal(sub.status, "pending"); assert.equal(sub.event_id, null);
+  } finally { f.restore(); }
+});

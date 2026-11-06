@@ -11,6 +11,8 @@ export function makeDB() {
   for (const f of readdirSync(dir).filter((n) => n.endsWith(".sql")).sort()) {
     try { db.exec(readFileSync(join(dir, f), "utf8")); } catch (e) { failed.push(f + ": " + e.message); }
   }
+  // A migration that does not apply must stop the suite (it used to be skipped silently, and tests ran on a partial schema). Report it; never edit an old migration to hide it.
+  if (failed.length) throw new Error("Migrations failed to apply in the test database:\n  " + failed.join("\n  "));
   // The real D1 limits that matter here (https://developers.cloudflare.com/d1/platform/limits/): at most 100 bound parameters per query and 100 KB per SQL statement.
   // Every query counts as one outgoing call (a batch is one), because on the Workers Free plan one request may make only 50 (see docs/runbooks/cloudflare-limits.md).
   // Tests read DB.stats.calls (reset with DB.stats.reset()) to prove a path stays under the cap.

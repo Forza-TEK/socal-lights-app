@@ -4,6 +4,7 @@
 import { json, err, clean, newId } from "../../_lib/util.js";
 import { requireUser, sameOrigin, isDisposable } from "../../_lib/auth.js";
 import { trustOf } from "../../_lib/contests.js";
+import { ptToday } from "../../_lib/time.js";
 
 // Sites many unrelated events share: a matching email on these proves nothing about who runs the event.
 const AGGREGATORS = [
@@ -25,7 +26,7 @@ export async function onRequestPost({ request, env }) {
   const h = { headers: { "cache-control": "no-store" } };
   const b = await request.json().catch(() => null);
   const eventId = clean(b && b.event_id, 60);
-  const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
+  const today = ptToday();
   const ev = eventId && await env.DB.prepare("SELECT id, url, end_date FROM events WHERE id = ?").bind(eventId).first();
   if (!ev || ev.end_date < today) return err(404, "We couldn't find that event, or it has already ended.");
 

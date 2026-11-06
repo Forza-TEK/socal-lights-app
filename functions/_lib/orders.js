@@ -5,6 +5,7 @@
 //   note       : the system left an "[auto]" note (placement differs, amount mismatch, dispute won, partial refund)
 //   cancelled  : a paid placement is still running on a cancelled or postponed event
 import { json } from "./util.js";
+import { ptToday } from "./time.js";
 
 export const NEEDS_ATTENTION = `(o.status IN ('refund_due','disputed','held')
   OR (o.status = 'paid' AND o.applied = 0 AND o.created_at < datetime('now','-1 hour') AND (o.event_id NOT LIKE 'sub:%' OR o.created_at < datetime('now','-1 day')))
@@ -48,7 +49,7 @@ export function paidPlacementConflict(orders, verb) {
 }
 
 // A home with a paid Featured placement is declined, unpublished or deleted: its paid orders become "refund due" for the owner to refund in Stripe.
-export async function markHomeRefundDue(db, postId, why, today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10)) { // only placements still running or not yet applied
+export async function markHomeRefundDue(db, postId, why, today = ptToday()) { // only placements still running or not yet applied
   const r = await db.prepare("UPDATE feature_orders SET status='refund_due', note=? WHERE target='home' AND event_id=? AND status IN ('paid','held') AND (applied = 0 OR applied_until IS NULL OR applied_until >= ?)").bind(("[auto] " + why).slice(0, 500), postId, today).run();
   return (r.meta && r.meta.changes) || 0;
 }
