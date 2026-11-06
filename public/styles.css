@@ -949,3 +949,14 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .rtpill[aria-disabled="false"]::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:#12a150;box-shadow:0 0 0 3px color-mix(in srgb,#12a150 24%,transparent)}
 :root[data-theme="dark"] .rtpill[aria-disabled="false"] svg{color:#3ddc97}
 :root[data-theme="dark"] .rtpill[aria-disabled="false"]::before{background:#3ddc97;box-shadow:0 0 0 3px color-mix(in srgb,#3ddc97 28%,transparent)}
+
+/* Favorites: the buttons row stays one tidy line: Route these, Start, Maps app, Share (icon) */
+.quick .qchg{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.quick .qchg svg{flex:none;color:var(--muted)}
+.quick .qshare.qicon{display:inline-grid;place-items:center;width:44px;height:44px;padding:0;margin-left:auto}
+.quick .qshare.qicon svg{width:20px;height:20px}
+.quick .qsel{flex:none;white-space:nowrap}
+.quick[aria-label="Route options"]{flex-wrap:wrap;overflow:visible;touch-action:auto}
+.quick[aria-label="Route options"] .qgo{order:0;flex:1 1 auto;justify-content:center;gap:6px}
+.quick[aria-label="Route options"] .qshare.qicon{order:1;margin-left:0}
+.quick[aria-label="Route options"] .qsel{order:2}.quick[aria-label="Route options"] .qchg{order:3}
