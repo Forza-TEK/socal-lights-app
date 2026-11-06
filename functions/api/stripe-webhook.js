@@ -81,6 +81,8 @@ async function paid(s, env) {
   if (s.payment_status !== "paid") return { waiting: s.payment_status }; // e.g. a delayed method; Stripe sends async_payment_succeeded later
   const eventId = s.metadata && s.metadata.event_id, plan = s.metadata && s.metadata.plan;
   if (!eventId || !PLANS[plan]) return { ignored: "no feature metadata" };
+  const target = s.metadata.target === "home" ? "home" : "event"; // a home (podium finisher) is bought through the same checkout
+  if (target === "home" && !PLANS[plan].days) return { ignored: "no season plan for homes" };
 
   // One order per Checkout session. The row existing is NOT proof the placement was applied; `applied` is.
   const pi = (typeof s.payment_intent === "string" && s.payment_intent) || null;
@@ -92,8 +94,8 @@ async function paid(s, env) {
   }
   if (s.amount_total !== PLANS[plan].cents || String(s.currency || "").toLowerCase() !== "usd") // the buyer paid what we asked at checkout: still apply, but flag it
     notes.push(`${AUTO}amount mismatch: paid ${s.amount_total == null ? "?" : (s.amount_total / 100).toFixed(2)} ${String(s.currency || "?").toUpperCase()}, the ${plan} plan is ${(PLANS[plan].cents / 100).toFixed(2)} USD.`);
-  await env.DB.prepare("INSERT OR IGNORE INTO feature_orders (session_id,event_id,plan,amount,email,payment_intent,currency,status,user_id,note,refunded_at) VALUES (?,?,?,?,?,?,?,?,?,?,CASE WHEN ? = 'paid' THEN NULL ELSE datetime('now') END)")
-    .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "", pi, s.currency || null, status, (s.metadata && s.metadata.user_id) || null, notes.join(" ").slice(0, 500) || null, status).run();
+  await env.DB.prepare("INSERT OR IGNORE INTO feature_orders (session_id,event_id,plan,amount,email,payment_intent,currency,status,user_id,note,target,refunded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,CASE WHEN ? = 'paid' THEN NULL ELSE datetime('now') END)")
+    .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "", pi, s.currency || null, status, (s.metadata && s.metadata.user_id) || null, notes.join(" ").slice(0, 500) || null, target, status).run();
   if (!exists && status !== "paid") await env.DB.prepare("DELETE FROM feature_pending_revocations WHERE payment_intent = ?").bind(pi).run();
   const order = await env.DB.prepare("SELECT * FROM feature_orders WHERE session_id = ?").bind(s.id).first();
   if (order.applied) return { duplicate: true };
@@ -110,6 +112,6 @@ async function paid(s, env) {
     await env.DB.prepare("UPDATE feature_orders SET event_id = ? WHERE session_id = ?").bind(targetId, s.id).run();
   }
   const nf = await applyOrder(env.DB, order, targetId);
-  if (!nf) { console.error("stripe-webhook: event not found", targetId); return err(500, "Event not found; will retry."); }
+  if (!nf) { console.error("stripe-webhook: target not found", targetId); return err(500, (target === "home" ? "Home" : "Event") + " not found; will retry."); }
   return { featured: nf };
 }

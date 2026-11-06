@@ -43,12 +43,16 @@ export const setOrderNote = (db, sessionId, text) => db.prepare("UPDATE feature_
 
 // Applies one paid, unapplied order to a live event. Both statements only act while the order is still unapplied, so a concurrent
 // retry cannot extend the placement twice. Returns the new placement, or null when the event does not exist.
+// A home order (order.target = 'home') applies to the posts row the same way; only 30-day plans exist for homes.
+export const isHomeOrder = (o) => !!o && o.target === "home";
 export async function applyOrder(db, order, targetId, today = ptToday()) {
-  const ev = await db.prepare("SELECT id, end_date, featured, featured_until FROM events WHERE id = ?").bind(targetId).first();
+  const home = isHomeOrder(order);
+  if (home && !PLANS[order.plan].days) return null; // never happens through checkout; a hand-made order for a home cannot use the season plan
+  const ev = await db.prepare(home ? "SELECT id, featured, featured_until FROM posts WHERE id = ?" : "SELECT id, end_date, featured, featured_until FROM events WHERE id = ?").bind(targetId).first();
   if (!ev) return null;
   const nf = applyPlan(ev, order.plan, today);
   await db.batch([
-    db.prepare("UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=? AND EXISTS (SELECT 1 FROM feature_orders WHERE session_id=? AND applied=0)").bind(nf.featured, nf.featured_until, targetId, order.session_id),
+    db.prepare(home ? "UPDATE posts SET featured=?, featured_until=? WHERE id=? AND EXISTS (SELECT 1 FROM feature_orders WHERE session_id=? AND applied=0)" : "UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=? AND EXISTS (SELECT 1 FROM feature_orders WHERE session_id=? AND applied=0)").bind(nf.featured, nf.featured_until, targetId, order.session_id),
     db.prepare("UPDATE feature_orders SET event_id=?, applied=1, applied_featured=?, applied_until=? WHERE session_id=? AND applied=0").bind(targetId, nf.featured, nf.featured_until, order.session_id),
   ]);
   return nf;
@@ -80,9 +84,10 @@ export async function restorePlacement(db, eventId, today = ptToday()) {
 // to look (the event still holds something these orders do not explain).
 async function recomputeAfterRevoke(db, order, today) {
   const { all, valid } = await validOrders(db, order.event_id, today, order.session_id);
-  const ev = await db.prepare("SELECT featured, featured_until FROM events WHERE id = ?").bind(order.event_id).first();
+  const tbl = isHomeOrder(order) ? "posts" : "events"; // posts has no updated_at
+  const ev = await db.prepare(`SELECT featured, featured_until FROM ${tbl} WHERE id = ?`).bind(order.event_id).first();
   if (!ev || !ev.featured) return true; // nothing is featured any more
-  const swap = (featured, until) => db.prepare("UPDATE events SET featured=?, featured_until=?, updated_at=datetime('now') WHERE id=? AND featured=? AND featured_until IS ?")
+  const swap = (featured, until) => db.prepare(`UPDATE ${tbl} SET featured=?, featured_until=?${tbl === "events" ? ", updated_at=datetime('now')" : ""} WHERE id=? AND featured=? AND featured_until IS ?`)
     .bind(featured, until, order.event_id, ev.featured, ev.featured_until ?? null).run().then((r) => !!(r.meta && r.meta.changes));
   if (!valid.length) { // no other order explains a placement: off only if it is exactly what this order wrote
     if (ev.featured !== order.applied_featured || (ev.featured_until ?? null) !== (order.applied_until ?? null)) return false;

@@ -1,8 +1,14 @@
 # Status
 
-_Last updated: 2026-11-05_
+_Last updated: 2026-11-06_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
+
+## Phase 3: Featured homes for podium finishers (2026-11-06)
+- Owner of a home that finished winner, 2nd or 3rd of an announced contest can buy the 30-day pin ($10) or top of the list ($15) at `/feature`. Podium = frozen results snapshot (competition ranking; disqualified and zero-score entries out). Payment never touches a result; a test checks that contest code never reads `featured`.
+- Migration 0166: `posts.featured`, `posts.featured_until`, `feature_orders.target`. Checkout (`home_id`), webhook apply and refund/dispute revoke, `/api/me/featurable` (`homes`), Admin > Orders (home name, contest), pricing and Featured page copy. `app.js?v=20261106x` (gold pin, Featured tag, level 2 first for homes). Spec and decisions: `docs/monetization/feature-account-spec.md`.
+- Contest staff may buy only for organizer-added homes (no owner). Open: Terms wording (attorney), a real $10 test on a home after a contest is announced.
+- Tests: `tests/featured-homes.test.mjs`.
 
 ## Organizers can unpublish their contest (2026-11-06)
 - Controls > Contest page > Unpublish (creator only, two taps) hides the contest and takes it off the map; Publish it again restores it. Migration 0165. See `docs/contests.md`.

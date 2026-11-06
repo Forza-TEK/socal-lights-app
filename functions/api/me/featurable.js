@@ -1,7 +1,9 @@
 // GET /api/me/featurable — what the signed-in person can put a Featured placement on: the events they submitted (matched by the
-// email on the form, normalized) and the contests they own or help run (their map listing). Only ever their own items.
+// email on the form, normalized), the contests they own or help run (their map listing), and their homes that finished 1st, 2nd or 3rd in
+// an announced contest (podium read from the frozen results). Only ever their own items.
 import { json, err } from "../../_lib/util.js";
 import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
+import { featurableHomes, placeWord } from "../../_lib/podium.js";
 
 const today = () => new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10); // Pacific-ish, same as checkout
 // Same rule as featuredLevel() in _lib/util.js
@@ -49,5 +51,13 @@ export async function onRequestGet({ request, env }) {
        AND (c.owner_id = ?1 OR c.id IN (SELECT contest_id FROM contest_staff WHERE lower(email) = lower(?2)))
      ORDER BY c.created_at DESC LIMIT 50`).bind(user.id, user.email, t).all()).results;
   const contests = cs.map((c) => { const f = level(c.featured, c.featured_until, t); return { kind: "contest", state: c.note ? "review" : "live", ...(c.note ? { message: "Waiting for a quick check before it can be featured" } : {}), slug: c.slug, name: c.name, id: c.id, end: c.end, featured: f, until: f ? c.featured_until || null : null, role: c.role }; });
-  return json({ events, contests }, h);
+
+  // Homes on a podium. A failure here must never hide the events and contests.
+  let homes = [];
+  try {
+    homes = (await featurableHomes(env, user)).map(({ row, role, standing }) => { const f = level(row.featured, row.featured_until, t);
+      return { kind: "home", state: "live", id: row.id, name: row.title, city: row.city, contest: row.cname, slug: row.slug, place: standing.place, placeText: placeWord(standing.place), category: standing.category, award: standing.label, role, featured: f, until: f ? row.featured_until || null : null }; })
+      .sort((a, b) => a.place - b.place);
+  } catch (e) { console.error("featurable homes", e && e.message); }
+  return json({ events, contests, homes }, h);
 }

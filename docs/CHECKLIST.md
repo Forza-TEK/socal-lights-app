@@ -1,6 +1,6 @@
 # SoCal Lights: project checklist and expert recommendations
 
-_Last updated 2026-11-06 (Batch E). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
+_Last updated 2026-11-06 (Phase 3). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
 
 ## 1. Done and verified live
 - [x] Monetization strategy v2 from real data (Stripe, Cloudflare, database): prove first, earn small, build later (`monetization/strategy.md`)
@@ -8,6 +8,7 @@ _Last updated 2026-11-06 (Batch E). `[x]` done and verified, `[ ]` open. Detail 
 - [x] Prices $10 pin / $15 top of the list / $20 whole season; public Pricing page linked from the Add hub, footers and the Featured page (PR 303)
 - [x] Featured expiry uses the Pacific date: a 30-day placement lasts 30 days (PR 304)
 - [x] Signed-in Featured page, owner-only checkout, event claim flow with Admin "Event claims" tab (PR 305)
+- [x] Featured homes for contest podium finishers: `posts.featured`, `feature_orders.target`, podium from the frozen snapshot, checkout, webhook, Admin > Orders, gold pin and badge (migration 0166)
 - [x] Contest history kept: indexable `/past` pages, organizer deletion no longer wipes results, deleted entrants scrubbed (PR 306)
 - [x] Security fixes: stored script injection on installer pages, sign-in open redirect (PR 307)
 - [x] Whole-app audit by seven specialists; ranked gap list (PR 308)
@@ -62,7 +63,7 @@ _Last updated 2026-11-06 (Batch E). `[x]` done and verified, `[ ]` open. Detail 
 - [ ] **Batch D, operations (in progress):** (4) offline page and saved pages on every page (service worker `scl-4`); (3) `/api/events` drops events ended over 3 days ago (`?ended=1` for all) and has an ETag; (2) alerting: failed emails not marked sent, `ops_log`, digest "Problems" section, GitHub issues from uptime, migrations, digest and backup workflows; (1) nightly backup workflow `backup.yml` + `docs/runbooks/backup-restore.md` (needs the owner to add R2 Edit to the API token, see the runbook Setup);
 - [ ] Batch D original scope: nightly database backup to a private bucket (never a public-repo artifact), restore runbook; error alerting; `/api/events` slimmed (drop ended events, ETag); offline page
 - [x] **Batch E, SEO and measurement (2026-11-06; details in `status.md`):** city pages with nearby links, `/in` hub, hidden crawlable city and event list on the home page, thin pages noindex and out of the sitemap (PR 340); funnel counters `fn:*` with an admin list and digest section, honest "Page views*" label (PR 341); per-event pages `/e/<id>` with share previews, Share button now shares them (PR 342); accessibility quick fixes (PR 343). Still open: colour contrast, county hub pages, house share pages, Cloudflare vs counter comparison after a week of `fn:visit`.
-- [ ] **Phase 3:** Featured homes for podium finishers (winner, 2nd, 3rd of announced contests; podium computed from the frozen results; design in `monetization/feature-account-spec.md`)
+- [x] **Phase 3 built (2026-11-06):** Featured homes for podium finishers (winner, 2nd, 3rd of announced contests; podium computed from the frozen results; design in `monetization/feature-account-spec.md`). Owner: run one real $10 home test after a contest is announced, and have the attorney read the Featured home wording (Terms, Pricing, Featured page) with the other redlines.
 - [ ] Accessibility basics; `/c/<unknown>` 404; Content-Security-Policy (needs a long test)
 - [ ] Backfill the privacy scrub for entrants who deleted accounts before it shipped (none yet)
 

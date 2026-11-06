@@ -46,3 +46,9 @@ export function paidPlacementConflict(orders, verb) {
   const list = orders.map((o) => o.plan + ", " + ((o.amount || 0) / 100).toFixed(2) + " USD, until " + (o.applied_until || "the end")).join("; ");
   return json({ error: `This event has a paid Featured placement (${list}). To ${verb} it anyway, confirm. The paid orders are kept and listed in Admin > Orders.`, code: "paid_placement", orders }, { status: 409 });
 }
+
+// A home with a paid Featured placement is declined, unpublished or deleted: its paid orders become "refund due" for the owner to refund in Stripe.
+export async function markHomeRefundDue(db, postId, why, today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10)) { // only placements still running or not yet applied
+  const r = await db.prepare("UPDATE feature_orders SET status='refund_due', note=? WHERE target='home' AND event_id=? AND status IN ('paid','held') AND (applied = 0 OR applied_until IS NULL OR applied_until >= ?)").bind(("[auto] " + why).slice(0, 500), postId, today).run();
+  return (r.meta && r.meta.changes) || 0;
+}
