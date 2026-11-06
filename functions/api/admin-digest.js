@@ -8,6 +8,7 @@ import { NEEDS_ATTENTION, ORDER_FROM, orderFlags } from "../_lib/orders.js";
 import { ptToday } from "../_lib/featured.js";
 import { opsSince, pruneOps } from "../_lib/oplog.js";
 import { funnelCounts, STEPS } from "../_lib/funnel.js";
+import { getUsage, usageLines } from "../_lib/cfusage.js";
 
 export async function onRequestPost({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
@@ -48,13 +49,19 @@ export async function onRequestPost({ request, env }) {
   const renewals = rr.length ? `## Automatic renewals\n- ${rr.filter((r) => r.status === "active").length} on, ${soon} charging in the next 7 days, ${retrying} with a failed charge waiting for the retry, ${lapsedN} lapsed, ${pausedN} paused. Renewal job last ran: ${lastRun}.${overdue ? ` ${overdue} CHARGE${overdue === 1 ? "" : "S"} OVERDUE (the daily job missed them: run the workflow by hand).` : ""}\nOpen Admin > Orders.\n\n` : "";
   const WHAT = { email: "emails that failed to send", webhook: "Stripe webhook errors" };
   const problemText = problems.length ? `## Problems the site noticed (${problems.reduce((a, g) => a + g.n, 0)})\n${problems.map((g) => `- ${g.n} ${WHAT[g.kind] || g.kind}. Latest: ${g.example}`).join("\n")}\nWeekly alerts and contest reminders that failed are retried on the next run. Sign-in codes and invitations are not: check the Resend and Stripe dashboards if this repeats.\n\n` : "";
+  // Cloudflare free-plan usage: every metric at 70% or more, always the top one; "LIMIT" in the subject at 90% or more (or a quota error logged in the last 2 hours)
+  let usage = null;
+  try { usage = await getUsage(env); } catch {}
+  const uLines = usage ? usageLines(usage) : [];
+  const limitSubject = !!usage && (usage.level === "warning" || usage.level === "limit");
+  const usageText = usage ? `## Cloudflare free-plan usage (UTC day ${usage.utcDay})\n${uLines.length ? uLines.map((l) => "- " + l).join("\n") : usage.connected ? "- No numbers came back from Cloudflare." : "- Cloudflare analytics is not connected (see docs/runbooks/cloudflare-limits.md)."}${usage.limitHits.length ? `\n- LIMIT HIT at ${usage.limitHits[0].at} UTC: ${usage.limitHits[0].detail.slice(0, 120)}` : ""}\nOpen Admin > Usage. When a limit is reached, see docs/runbooks/cloudflare-limits.md.\n\n` : "";
   const fc = await funnelCounts(env), fl = STEPS.filter(([k]) => fc[k].today || fc[k].week).map(([k, l]) => `- ${l}: ${fc[k].today} today, ${fc[k].week} in 7 days`);
   const funnelText = `## How people used the site\n${fl.length ? fl.join("\n") : "- Nothing counted yet."}\nThese are counts of taps and completions, not people: a person who comes back counts again, and browsers that block scripts are missed.\n\n`;
   const total = homes.length + events.length + entries[0].n + reports.length, dayTotal = dayHomes[0].n + dayEvents[0].n + dayEntries[0].n;
   const line = (label, rows, name) => rows.length ? `## ${label} (${rows.length})\n${rows.slice(0, 10).map((r) => `- ${r[name]} · ${r.city}${r.status === "pending" ? " · WAITING" : r.poster_type === "installer" ? " · installer" : ""}`).join("\n")}${rows.length > 10 ? `\n...and ${rows.length - 10} more` : ""}\n\n` : "";
   const head = total ? `${total} new submission${total === 1 ? "" : "s"} since the last update.\n\n${line("Homes and installer displays", homes, "title")}${line("Events", events, "name")}${entries[0].n ? `Contest entries: ${entries[0].n} (organizers review these)\n\n` : ""}${reports.length ? `## "Something wrong?" reports (${reports.length})\n${reports.slice(0, 8).map((r) => `- ${r.name || r.ref}: ${r.message}`).join("\n")}${reports.length > 8 ? `\n...and ${reports.length - 8} more` : ""}\n\n` : ""}` : "Nothing new since the last update.\n\n";
   const todayLine = `${dayTotal} submission${dayTotal === 1 ? "" : "s"} (${dayHomes[0].n} home${dayHomes[0].n === 1 ? "" : "s"}, ${dayEvents[0].n} event${dayEvents[0].n === 1 ? "" : "s"}, ${dayEntries[0].n} contest entr${dayEntries[0].n === 1 ? "y" : "ies"}).`;
-  const ok = await sendTemplate(env, "admin_digest", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { headline: (problems.length ? "PROBLEMS, " : "") + (total ? `${total} new submission${total === 1 ? "" : "s"}` : "no new submissions"), day_total: dayTotal, summary: problemText + head + payments + renewals + funnelText, today_line: todayLine, live_line: `${live[0].homes} homes, ${live[0].events} events.`, held: held[0].n });
+  const ok = await sendTemplate(env, "admin_digest", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { headline: (limitSubject ? "LIMIT, " : "") + (problems.length ? "PROBLEMS, " : "") + (total ? `${total} new submission${total === 1 ? "" : "s"}` : "no new submissions"), day_total: dayTotal, summary: problemText + usageText + head + payments + renewals + funnelText, today_line: todayLine, live_line: `${live[0].homes} homes, ${live[0].events} events.`, held: held[0].n });
   if (ok) await env.DB.prepare("INSERT INTO admin_digest (id, last_at) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET last_at = excluded.last_at").bind(now).run();
   return json({ sent: ok, new: total, today: dayTotal, problems: problems.reduce((a, g) => a + g.n, 0) });
 }
