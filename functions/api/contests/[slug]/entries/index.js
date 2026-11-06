@@ -8,7 +8,7 @@ import { getUser, sameOrigin } from "../../../../_lib/auth.js";
 import { getContest, isStaff, todayPT } from "../../../../_lib/contests.js";
 import { teamChanged } from "../../../../_lib/changes.js";
 import { normText } from "../../../../_lib/fields.js";
-import { parseHome, homeKey, homeTitle, locate, pool, MAX_HOMES_PER_CALL, MAX_ADDED_PER_CONTEST, CALLS_PER_HOUR } from "../../../../_lib/homes.js";
+import { parseHome, homeKey, homeTitle, locate, pool, MAX_HOMES_PER_CALL, MAX_ADDED_PER_CONTEST, CALLS_PER_HOUR, HOMES_PER_HOUR } from "../../../../_lib/homes.js";
 
 const NO_STORE = { headers: { "cache-control": "no-store" } };
 
@@ -36,9 +36,9 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     if (have + b.homes.length > MAX_ADDED_PER_CONTEST) return err(400, `A contest can have up to ${MAX_ADDED_PER_CONTEST} homes added this way. This one has room for ${Math.max(0, MAX_ADDED_PER_CONTEST - have)} more.`);
   }
 
-  // Ten calls an hour per account (checking addresses counts too: it asks the geocoders)
-  const { n: calls } = await env.DB.prepare("SELECT COUNT(*) AS n FROM entry_add_log WHERE user_id = ? AND created_at > datetime('now','-1 hour')").bind(user.id).first();
-  if (calls >= CALLS_PER_HOUR) return err(429, `You can add or check homes ${CALLS_PER_HOUR} times an hour. Try again later.`);
+  // Per account and hour: up to HOMES_PER_HOUR homes and CALLS_PER_HOUR calls (checking addresses counts too: it asks the geocoders)
+  const used = await env.DB.prepare("SELECT COUNT(*) AS calls, COALESCE(SUM(n),0) AS homes FROM entry_add_log WHERE user_id = ? AND created_at > datetime('now','-1 hour')").bind(user.id).first();
+  if (used.calls >= CALLS_PER_HOUR || used.homes + b.homes.length > HOMES_PER_HOUR) return err(429, `You can add or check up to ${HOMES_PER_HOUR} homes an hour. Try again later.`);
   await env.DB.batch([
     env.DB.prepare("INSERT INTO entry_add_log (user_id, contest_id, n) VALUES (?, ?, ?)").bind(user.id, c.id, b.homes.length),
     env.DB.prepare("DELETE FROM entry_add_log WHERE created_at < datetime('now','-1 day')"),

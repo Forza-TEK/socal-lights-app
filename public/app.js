@@ -1395,8 +1395,13 @@ function setSheet(s) {
 /* ---------- boot ---------- */
 async function load() {
   try {
-    const [ev, posts, cfg] = await Promise.all([fetch("/api/events").then((r) => r.json()), fetch("/api/posts").then((r) => r.json()), fetch("/api/config").then((r) => r.json()).catch(() => ({}))]);
-    E = Array.isArray(ev) ? ev : []; setTimeout(probeRemoteThumbs, 1500); SHOW = Array.isArray(posts) ? posts : []; CONFIG = cfg || {};
+    // Each list loads on its own: the events are the app (no events = the error message), but homes or settings failing leave the map working (homes retry in 10 seconds, then every 15 minutes).
+    const get = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
+    const [evR, postsR, cfgR] = await Promise.allSettled([get("/api/events"), get("/api/posts"), get("/api/config")]);
+    if (evR.status !== "fulfilled" || !Array.isArray(evR.value)) throw new Error("events failed");
+    E = evR.value; setTimeout(probeRemoteThumbs, 1500);
+    SHOW = postsR.status === "fulfilled" && Array.isArray(postsR.value) ? postsR.value : []; CONFIG = cfgR.status === "fulfilled" && cfgR.value ? cfgR.value : {};
+    if (postsR.status !== "fulfilled") setTimeout(refreshData, 10000);
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses();
   } catch {
@@ -1422,9 +1427,11 @@ async function load() {
 let loadedAt = Date.now();
 async function refreshData() {
   try {
-    const [ev, posts] = await Promise.all([fetch("/api/events", { cache: "no-cache" }).then((r) => r.json()), fetch("/api/posts", { cache: "no-cache" }).then((r) => r.json())]);
-    if (!Array.isArray(ev)) return;
-    E = ev; if (Array.isArray(posts)) SHOW = posts;
+    const get = (u) => fetch(u, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
+    const [evR, postsR] = await Promise.allSettled([get("/api/events"), get("/api/posts")]);
+    const ev = evR.status === "fulfilled" ? evR.value : null, posts = postsR.status === "fulfilled" ? postsR.value : null;
+    if (!Array.isArray(ev) && !Array.isArray(posts)) return;
+    if (Array.isArray(ev)) E = ev; if (Array.isArray(posts)) SHOW = posts;
     E.forEach((e) => { const d = DETAIL.get(e.id); if (d) HEAVY.forEach((k) => (e[k] = d[k])); }); // keep the details already loaded (the list has none)
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses(); loadedAt = Date.now();

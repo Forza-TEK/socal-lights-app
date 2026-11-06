@@ -147,29 +147,70 @@ test("created entries are approved, photo-less, ownerless, numbered after the ex
   } finally { t.done(); }
 });
 
-test("limits: 100 homes a call, 500 added homes a contest, 10 calls an hour per account", async () => {
+test("limits: 10 homes a call (the free plan allows 50 outgoing calls a request), 500 added homes a contest, 1000 homes an hour per account", async () => {
   const t = await setup();
   try {
     const many = (n, from = 0) => Array.from({ length: n }, (_, i) => ({ address: `${1000 + from + i} Pine Ct` }));
-    const big = await t.add({ homes: many(101) });
-    assert.equal(big.status, 400); assert.match(big.body.error, /up to 100/);
+    const big = await t.add({ homes: many(11) });
+    assert.equal(big.status, 400); assert.match(big.body.error, /up to 10 homes/);
     assert.equal(q(t.raw, "SELECT COUNT(*) AS n FROM entry_add_log")[0].n, 0, "a refused call is not counted");
-    const ok = await t.add({ homes: many(100) });
-    assert.equal(ok.status, 200); assert.equal(ok.body.added.length, 100);
+    const ok = await t.add({ homes: many(10) });
+    assert.equal(ok.status, 200); assert.equal(ok.body.added.length, 10);
     // 500 per contest: seed up to 499 added homes, then 2 more is refused and 1 more works
     const ins = t.raw.prepare("INSERT INTO posts (id,status,biz,title,city,lat,lng,descr,photos,season,address,street,contest_id,user_id,added_by,entry_no) VALUES (?,'approved','b','t','Pasadena',34.1,-118.1,'d','[]','christmas',?,?,'c1','','uO',?)");
-    for (let i = 0; i < 399; i++) ins.run("seed" + i, `${5000 + i} Seed Way`, `${5000 + i} Seed Way`, 200 + i);
+    for (let i = 0; i < 489; i++) ins.run("seed" + i, `${5000 + i} Seed Way`, `${5000 + i} Seed Way`, 200 + i);
     const over = await t.add({ homes: many(2, 500) });
     assert.equal(over.status, 400); assert.match(over.body.error, /up to 500.*room for 1 more/);
     assert.equal((await t.add({ homes: many(1, 500) })).body.added.length, 1);
     assert.equal(added(t.raw).length, 500);
-    // calls an hour: 2 used so far (the refused ones do not count), so 8 more go through and the 11th is 429
-    for (let i = 0; i < 8; i++) assert.equal((await t.post(t.users.owner, { homes: homes("1 Nowhere Rd"), dryRun: true })).status, 200, "call " + (i + 3));
+    // homes an hour: 11 used so far (the refused ones do not count); fill the log to 995, then 5 more are fine and 1 more is 429
+    t.raw.prepare("INSERT INTO entry_add_log (user_id, contest_id, n) VALUES ('uO','c1',984)").run();
+    assert.equal((await t.post(t.users.owner, { homes: homes("1 Nowhere Rd", "2 Nowhere Rd", "3 Nowhere Rd", "4 Nowhere Rd", "5 Nowhere Rd"), dryRun: true })).status, 200);
     const limited = await t.post(t.users.owner, { homes: homes("1 Nowhere Rd"), dryRun: true });
-    assert.equal(limited.status, 429); assert.match(limited.body.error, /10 times an hour/);
+    assert.equal(limited.status, 429); assert.match(limited.body.error, /1000 homes an hour/);
     assert.equal((await t.post(t.users.staff, { homes: homes("1 Nowhere Rd"), dryRun: true })).status, 200, "the limit is per account");
     t.raw.prepare("UPDATE entry_add_log SET created_at = datetime('now','-2 hours')").run();
     assert.equal((await t.post(t.users.owner, { homes: homes("1 Nowhere Rd"), dryRun: true })).status, 200, "an hour later it works again");
+  } finally { t.done(); }
+});
+
+// A request on the Workers Free plan may make 50 subrequests, and D1 queries count too (docs/runbooks/cloudflare-limits.md).
+// The worst case for one call is every home needing both geocoders, so the meter below counts fetches plus D1 calls for a full call of 10 such homes.
+test("a full call of 10 homes stays under 50 outgoing calls even when both geocoders are asked for every home", async () => {
+  const t = await setup();
+  try {
+    t.env.DB.stats.reset(); const before = t.calls.length;
+    const dry = await t.post(t.users.owner, { homes: Array.from({ length: 10 }, (_, i) => ({ address: `${i + 1} Nowhere Rd` })), dryRun: true });
+    assert.equal(dry.status, 200); assert.equal(dry.body.failed.length, 10);
+    const fetches = t.calls.length - before;
+    assert.equal(fetches, 20, "Census then OpenStreetMap for each home");
+    assert.ok(fetches + t.env.DB.stats.calls < 50, `dry run made ${fetches} fetches and ${t.env.DB.stats.calls} database calls`);
+    t.env.DB.stats.reset(); const b2 = t.calls.length;
+    const add = await t.add({ homes: Array.from({ length: 10 }, (_, i) => ({ address: `${i + 1} Elm Ave` })) });
+    assert.equal(add.status, 200); assert.equal(add.body.added.length, 10);
+    assert.ok(t.calls.length - b2 + t.env.DB.stats.calls < 50, `add made ${t.calls.length - b2} fetches and ${t.env.DB.stats.calls} database calls`);
+  } finally { t.done(); }
+});
+
+test("100 addresses are checked and added in chunks of 10, the way the organizer page does it, and every home lands", async () => {
+  const t = await setup();
+  try {
+    const list = Array.from({ length: 100 }, (_, i) => ({ address: `${2000 + i} Maple Dr`, name: `Home ${i}` }));
+    const found = [], added2 = [];
+    for (let i = 0; i < list.length; i += 10) { // check, as the page does
+      const r = await t.post(t.users.owner, { homes: list.slice(i, i + 10), dryRun: true });
+      assert.equal(r.status, 200); found.push(...r.body.found.map((x) => ({ ...x, index: x.index + i })));
+    }
+    assert.equal(found.length, 100);
+    for (let i = 0; i < list.length; i += 10) { // add, as the page does
+      t.env.DB.stats.reset(); const f0 = t.calls.length;
+      const r = await t.add({ homes: list.slice(i, i + 10) });
+      assert.equal(r.status, 200); added2.push(...r.body.added);
+      assert.ok(t.calls.length - f0 + t.env.DB.stats.calls < 50, "each request stays under the 50 outgoing calls of the free plan");
+    }
+    assert.equal(added2.length, 100);
+    assert.equal(added(t.raw).length, 100);
+    assert.deepEqual(added(t.raw).map((p) => p.entry_no), Array.from({ length: 100 }, (_, i) => i + 2), "entry numbers continue without gaps");
   } finally { t.done(); }
 });
 

@@ -1,4 +1,6 @@
 import { purgeRenewals } from "./renewal.js";
+import { r2Delete, photoKeys } from "./dbchunk.js";
+import { logOp } from "./oplog.js";
 // Removes an account and everything tied to it. Used by "delete my account" (DELETE /api/me) and the admin Users tab.
 // Removes sign-ins, drafts, profile picture, contest entries (with their photos) and votes, closes contests the person
 // runs (unannounced ones are closed; announced ones keep their frozen results, owner-less; both leave the map), and blanks their email on homes and events they posted.
@@ -11,8 +13,7 @@ export async function deleteAccount(env, id, email) {
   const contests = await all("SELECT id, event_id FROM contests WHERE owner_id = ?", id);
   const entries = await all("SELECT photos FROM posts WHERE user_id = ?", id);
   let avatar = ""; try { avatar = ((await env.DB.prepare("SELECT avatar FROM users WHERE id = ?").bind(id).first()) || {}).avatar || ""; } catch {}
-  for (const e of entries) for (const k of JSON.parse(e.photos || "[]")) await env.PHOTOS.delete(k).catch(() => {});
-  if (avatar) await env.PHOTOS.delete(avatar).catch(() => {});
+  await r2Delete(env, [...photoKeys(entries), avatar], "account photos"); // one call per 1000 files (R2 delete takes a list), not one per file
 
   // Homes this person entered in announced contests: scrub them from the frozen results (name, address, city, coordinates, photos) so no page
   // can show them; the placeholder is drawn wherever the snapshot is read. Vote tallies, ranks and judge values stay, so results don't change.
@@ -25,9 +26,9 @@ export async function deleteAccount(env, id, email) {
       for (const e of snap.entries) if (mine.has(e.id)) Object.assign(e, { name: "", biz: "", address: "", city: "", lat: null, lng: null, photos: [], removed: true });
       snaps.push(env.DB.prepare("UPDATE contests SET results = ? WHERE id = ?").bind(JSON.stringify(snap), c.id));
     }
-  } catch {}
+  } catch (e) { await logOp(env, "account", "scrubbing frozen contest results failed: " + (e && e.message)); }
 
-  try { await purgeRenewals(env, id, email); } catch {} // automatic renewal: detach the saved payment method at Stripe (best effort) and delete the row; only Stripe ids were ever stored
+  try { await purgeRenewals(env, id, email); } catch (e) { await logOp(env, "account", "automatic renewal cleanup failed: " + (e && e.message)); } // automatic renewal: detach the saved payment method at Stripe (best effort) and delete the row; only Stripe ids were ever stored
   const E = email, I = id;
   // Judge rows: the person as a judge in anyone's contest, and every judge of a contest they ran. Unannounced contest: the row and its ballot go.
   // Announced contest: results are frozen, so the row stays as an anonymous placeholder (no email, token or account link) and the scores stay.

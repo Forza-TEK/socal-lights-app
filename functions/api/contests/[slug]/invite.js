@@ -3,7 +3,7 @@ import { json, err } from "../../../_lib/util.js";
 import { getUser, sameOrigin, okEmail, sendMail } from "../../../_lib/auth.js";
 import { reserveSends, cleanNote } from "../../../_lib/sendlimit.js";
 import { ownerOf } from "../../../_lib/contests.js";
-import { sendTemplate } from "../../../_lib/mailtpl.js";
+import { sendNow } from "../../../_lib/mailbatch.js";
 
 export async function onRequestPost({ params, request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -16,8 +16,8 @@ export async function onRequestPost({ params, request, env }) {
   const note = cleanNote(b.note);
   const over = await reserveSends(env, user, c.id, "invite", list.length);
   if (over) return err(429, over);
-  let sent = 0;
   const vars = { contest: c.name, org: c.org, city: c.city, link: `https://socallights.app/c/${c.slug}`, note, contact: c.contact_email || "" };
-  for (const to of list) if (await sendTemplate(env, "contest_invite", to, vars)) sent++;
+  // One Resend batch call for the whole list (at most 10 addresses), not one call per address
+  const sent = (await sendNow(env, list.map((to) => ({ id: "contest_invite", to, vars })), "contest_invite")).filter(Boolean).length;
   return json({ ok: true, count: list.length, sent });
 }

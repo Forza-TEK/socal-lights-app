@@ -2,6 +2,7 @@
 // POST { action: "edit" | "confirm" | "remove" } — edit details (web, phone, area, blurb), confirm a homeowner's claim, or take it off.
 import { json, err, clean, webUrl } from "../../../_lib/util.js";
 import { sendTemplate } from "../../../_lib/mailtpl.js";
+import { selectIn } from "../../../_lib/dbchunk.js";
 import { getUser, sameOrigin } from "../../../_lib/auth.js";
 import { phoneField, line, normText } from "../../../_lib/fields.js";
 import { INSTALLER_PLANS, ptToday } from "../../../_lib/featured.js";
@@ -28,7 +29,7 @@ export async function onRequestGet({ params, request, env }) {
   ]);
   const today = ptToday(), banner = (inst.banner_until && inst.banner_until >= today) || (inst.top_until && inst.top_until >= today) ? await env.DB.prepare("SELECT COALESCE(SUM(imp),0) AS imp, COALESCE(SUM(click),0) AS click, COALESCE(SUM(call),0) AS call, COALESCE(SUM(lst_imp),0) AS lst_imp, COALESCE(SUM(lst_click + lst_call),0) AS lst_taps FROM banner_stats WHERE installer_id = ? AND day >= date('now','-29 days')").bind(inst.id).first().catch(() => null) : null;
   const ids = shared.map((h) => h.id);
-  const ch = ids.length ? (await env.DB.prepare(`SELECT post_id, by_name, by_role, field, old, new, at FROM listing_changes WHERE post_id IN (${ids.map(() => "?").join(",")}) ORDER BY at DESC, rowid DESC LIMIT 300`).bind(...ids).all()).results : [];
+  const ch = (await selectIn(env, "SELECT post_id, by_name, by_role, field, old, new, at FROM listing_changes WHERE post_id IN ({IN}) ORDER BY at DESC, rowid DESC LIMIT 300", ids)).sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 300); // 100 homes can be shared: more than D1's 100 bound parameters with the id list alone, so read in slices
   for (const h of shared) h.changes = ch.filter((c) => c.post_id === h.id).slice(0, 8);
   const rn = await renewalFor(env, inst.id).catch(() => null), run = renewingPlan(inst, ptToday()), rp = INSTALLER_PLANS[(rn && rn.plan) || (run && run.plan) || "banner"];
   const renewal = { on: !!(rn && rn.enabled === 1 && rn.status === "active"), status: rn ? rn.status : "off", plan: rp.label, price: usd(rp.cents), next_charge_date: rn && rn.enabled === 1 && rn.status === "active" ? rn.next_charge_date : "", last_error: rn && rn.status === "lapsed" ? rn.last_error : "", canTurnOn: !!run, consent: consentText(rp.cents) };

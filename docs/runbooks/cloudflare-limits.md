@@ -78,3 +78,82 @@ No GitHub secret is needed: the 30-minute workflow reuses `ALERT_CRON_KEY`. The 
 
 ## Verified API facts (2026-11-06, read-only queries)
 Datasets used on the account GraphQL node: `d1AnalyticsAdaptiveGroups` (sum: `rowsRead`, `rowsWritten`, `readQueries`, `writeQueries`), `d1StorageAdaptiveGroups` (`max.databaseSizeBytes`), `pagesFunctionsInvocationsAdaptiveGroups` (sum: `requests`, `errors`, `subrequests`; dimension `status`, e.g. `success`, `scriptThrewException`, `clientDisconnected`, `exceededCpu`; quantile `cpuTimeP99` in microseconds), `workersInvocationsAdaptive` (`requests`, `errors`; empty for this account, which uses Pages Functions), `r2OperationsAdaptiveGroups` (`actionType`, sum `requests`), `r2StorageAdaptiveGroups` (max `payloadSize`, `metadataSize`). All need only **Account Analytics: Read**.
+
+---
+
+
+_Section below written 2026-11-06 from the live Cloudflare documentation. Other sections of this file (account setup steps) are written separately; keep them apart and rebase carefully._
+
+## Per-request limits and how the code stays under them
+
+The owner is on the **Workers/Pages Free plan**. Pages Functions are billed and limited as Workers (Cloudflare: "Requests to your Pages Functions count towards your quota for the Workers Free plan"). Verified against the Cloudflare docs on 2026-11-06 (pages last updated by Cloudflare Oct 29 to Oct 30, 2026):
+
+| Limit | Free plan value | What happens past it | Source |
+|---|---|---|---|
+| Requests | 100,000 a day (Pages Functions and Workers share it; resets 00:00 UTC) | Error 1027 for the request (Pages: fails or falls to static, depending on route mode) | developers.cloudflare.com/workers/platform/limits/ (Daily requests), /pages/functions/pricing/ |
+| CPU time per HTTP request | **10 ms** (Paid: 30 s default, up to 5 min). Waiting on fetch or D1 does not count. | The request is terminated: Error 1102 "Worker exceeded resource limits" (outcome `exceededCpu`). Each isolate gets "some flexibility" for rare overruns; if it keeps hitting the limit it is terminated. | workers/platform/limits/ (CPU time) |
+| Memory | 128 MB per isolate (shared by concurrent requests on it) | In-flight requests finish, a new isolate starts; Error 1102 (`exceededMemory`) | same |
+| **Subrequests per invocation** | **50** (Paid 10,000) | Further calls fail with "Too many subrequests"; code that swallows the error goes on silently | workers/platform/limits/ (Subrequests) |
+| What counts as a subrequest | Every `fetch()` **and calls to Cloudflare services such as R2, KV and D1**. Each hop of a redirect counts. The Cache API (`put`, `match`, `delete`) shares the same quota. | | same, and Cache API limits section |
+| Subrequests to "internal services" | 1,000 (separate allowance listed in the table) | | same |
+| D1 queries per Worker invocation | 50 on Free (1,000 Paid). **A `db.batch()` counts as ONE**, however many statements it holds (the docs say a 2,000-statement batch runs in one invocation, while 2,000 separate queries fail with "Too many API requests by single Worker invocation"). | The query errors | d1/platform/limits/ |
+| D1 bound parameters per query | **100** (applies to each statement in a batch) | The query fails | d1/platform/limits/ |
+| D1 SQL statement length | 100,000 bytes (each statement in a batch) | fails | same |
+| D1 batch size | No statement-count limit is documented, only the per-statement limits and the 30 s query duration (applies to the whole batch call). The code keeps batches at 100 statements or fewer. | | same |
+| D1 query result size | 50 MB (takes effect 2026-11-04) | fails | same |
+| D1 rows read / written | **5,000,000 reads a day, 100,000 writes a day** (resets 00:00 UTC) | "you will not be able to run queries against D1" until the reset; D1 returns errors | d1/platform/pricing/ |
+| D1 storage | 500 MB per database, 5 GB per account (Free) | writes fail | d1/platform/limits/ |
+| Simultaneous open connections | 6 per invocation (waiting for response headers): `fetch`, KV, Cache API and R2 calls (R2 `list/get/put/delete/head`), Queues, outbound sockets. D1 also: "up to six connections to D1". A 7th is queued, not failed. | Queued | workers/platform/limits/ (Simultaneous open connections), D1 FAQ |
+| `waitUntil()` | Work can run **up to 30 seconds after the response is sent or the client disconnects**. It shares the request's CPU and subrequest budget. | Work past 30 s may be cancelled | workers/platform/limits/ (Duration) |
+| Request body size | **100 MB** on the Cloudflare Free plan (it follows the zone's plan, not the Workers plan; Pro 100 MB, Business 200 MB) | 413 | workers/platform/limits/ (Request limits) |
+| Response body | no enforced limit | | same |
+| Log data per request | 256 KB (console output, exceptions) | further context not recorded | same |
+| Cron Triggers per account | 5 (Pages has none: the site uses GitHub Actions schedules) | | same |
+| R2 | Free: 10 GB storage, 1 million Class A and 10 million Class B operations a month, free egress. `delete()` takes **up to 1,000 keys in one call**. Max object 5 TiB; single-part upload 5 GiB; per-key writes 1 a second. | | r2/platform/limits/, r2/pricing/ |
+| Resend (mail, not Cloudflare) | Batch endpoint `POST /emails/batch`: up to **100 messages per call**, `to` up to 50 per message, no attachments, supports `Idempotency-Key` (24 h). Rate limit 10 requests a second per team; **free plan daily quota 100 emails (UTC day) and 3,000 a month**; over it: HTTP 429 `daily_quota_exceeded` or `monthly_quota_exceeded`. | 429 | resend.com/docs/api-reference/emails/send-batch-emails, /rate-limit |
+
+Not verified from a live account (cannot be read from the docs): whether the Cloudflare account is actually on Free or Paid. The audit saw CPU p50 of 14 ms, which on Free would already be failing, so the account may be on Paid; the code is written so that it is safe on Free either way. **Owner: confirm the plan in Workers & Pages > Plans.**
+
+### The rule the code follows
+
+Count every `await env.DB...`, `env.PHOTOS...`, `fetch(...)` and Cache call in one request (including work in `waitUntil`). Keep the worst case under **50**, with margin. Prefer:
+
+- `env.DB.batch([...])` for several writes (one call; also atomic).
+- One `IN (...)` query per at most **90** ids (`selectIn` in `functions/_lib/dbchunk.js`), never one query per id.
+- `env.PHOTOS.delete([...keys])` (up to 1,000 keys in one call), `r2Delete` in `functions/_lib/dbchunk.js`.
+- Email: Resend batch endpoint through `functions/_lib/mailbatch.js` (never `sendTemplate` in a loop).
+- Work that cannot fit in one request goes into a small persisted queue and is finished by the next request or the scheduled workflow, never into a silent `catch {}`. A failure is logged with `logOp(env, kind, detail)` (table `ops_log`; no email addresses or personal data; the admin digest reports it).
+
+The test stand-in `tests/_d1.mjs` now enforces the D1 100-parameter and 100 KB statement limits and counts calls (`env.DB.stats.calls`, `env.DB.stats.reset()`), so a test can assert that a request stays under 50 when it adds its own fetch count. `tests/limits.test.mjs` and `tests/organizer-entries.test.mjs` do this.
+
+### Request paths that fan out, and what each costs now
+
+| Path | Before | Now |
+|---|---|---|
+| Announce winners (`PATCH /api/contests/<slug>` announce): results emails | Up to 200 sequential `sendTemplate` calls in one `waitUntil`, 3 to 5 outgoing calls each, ending in `catch {}`. Past about 10 to 16 recipients the rest got nothing and nothing was logged. | `queueResults` writes all recipients (entrants, winners, judges, organizer) to table `mail_outbox` in batches of 100 (a few D1 calls; dedupe key `results:<contest>:<template>:<email>`, so a repeat queues nothing twice), then `waitUntil(drainMail)` sends the first 40 in one Resend batch call (rendering 100 emails measured about 9 ms of CPU, and Free allows 10 ms, so a drain handles 40). The rest go out when the hourly workflow `.github/workflows/mail-outbox.yml` calls `POST /api/mail/drain` in a loop (40 messages and about 6 outgoing calls per call, up to 40 calls per run). |
+| Voting reminders (`POST /api/contest-remind`, daily) | Up to 150 sequential sends per contest and kind, each 3 to 5 calls; no per-contest cap on D1 calls. | Same outbox, dedupe key `remind_open:<contest>:<email>` or `remind_close:...`; the contest is marked reminded once its messages are queued; cap 1,000 per contest and kind, logged if exceeded. |
+| Outbox retry rules | n/a | A failed chunk is retried after 10 minutes (attempts 1 to 2), then 2 hours, up to 8 attempts, then `failed` and an `ops_log` line (`email`). A 429 (Resend quota) pauses the run, waits 3 hours and does **not** use up an attempt. A refused batch is split in halves (up to 12 extra calls) so one bad address does not block the rest. Unsubscribed addresses are marked `skipped`. Still queued after 5 days: marked `failed` and logged. Sent and skipped rows are deleted after 3 days, failed after 30, and message values are cleared as soon as a row is sent. |
+| Small lists: contest invitations (10 at a time), judge invitations (15), judge reminders, co-organizer team notices, weekly alert groups (40) | One `sendTemplate` per address: 2 to 5 calls each (settings read, prefs read and insert, fetch). 20 weekly alerts cost about 44 of the 50. | `sendNow` renders with one settings read per template and one prefs read per 90 recipients, and sends one Resend batch call (up to 100). 40 weekly alerts: 1 Resend call. |
+| Organizer adds homes (`POST /api/contests/<slug>/entries`) | Up to 100 homes per call (UI sent 25), each 1 to 2 geocoder fetches: up to 200 fetches per call; even 25 homes could need 50. | **10 homes per call** (`MAX_HOMES_PER_CALL`): at most 20 geocoder fetches plus about 15 D1 and mail calls; the test asserts under 50 with both geocoders hit for every home. The page (`public/organizer.html`) sends chunks of 10 with "Checking x of y" and "Adding x of y" progress and keeps failed lines in the box. Dry run unchanged. Hourly limit is now 1,000 homes and 120 calls per account (it was 10 calls). Per-contest cap 500 unchanged. |
+| `GET /api/posts` (public map) | `IN (...)` with up to 200 user ids in one query: over D1's 100 parameters, inside `try {} catch {}`, so winner crowns silently disappeared, and `winnerBadges` made one query per announced contest (up to 200). | `selectIn` slices of 90 (up to 1,000 ids), `winnerBadges` reads all contests' winners in one slice pass; failures go to `ops_log` (`posts`, `badges`) and the list is still served. |
+| Map boot (`public/app.js` `load()` and `refreshData()`) | One `Promise.all` of events, posts and config: any failure showed "Events couldn't load". | `Promise.allSettled`: only a failed events list shows the error; homes and settings fall back to empty, and a failed homes list is retried after 10 seconds, then every 15 minutes. |
+| Delete account, delete contest, delete home | One `PHOTOS.delete` per photo, `.catch(() => {})` (a contest with 500 homes and 3 photos each: 1,500 calls, silently stopped near 50 while the database rows were deleted anyway, leaving orphan files). | `r2Delete`: one call per 1,000 keys, failure logged (`r2`). |
+| Change log (`logHome`, `logContest`) | One INSERT per changed field | One `batch()` |
+| Installer dashboard (`/api/installers/<slug>/manage`) and admin Homes list | `IN (...)` of up to 100 ids (exactly at D1's limit) / unbounded | `selectIn` |
+
+### Paths reviewed and left as they are
+
+- `functions/api/admin/dashboard.js`: about 26 D1 queries in one request (read-only, admin only). Under 50; if more panels are added, move them into a `batch()`.
+- `functions/api/admin-digest.js`: about 10 reads and one send. Fine.
+- `functions/sitemap.xml.js`, `functions/in/*`, `functions/past/*`, `functions/installer/[slug].js`: 2 to 5 queries each, edge-cached. Fine.
+- `functions/api/me/overview.js`: homes list is `LIMIT 50`, so its `IN (...)` has at most 50 parameters.
+- `functions/_lib/retention.js` (`pruneIps`): one `batch()` of three statements.
+- `functions/api/admin/normalize.js`: batches of 40 statements (one call each) for at most the admin's chosen set.
+- Photo approval (`approveEntry`, `movePhotos`): 3 R2 calls per photo, 3 to 4 photos per entry, so about 12 calls. Fine.
+- Single transactional emails (sign-in code, claim decision, order and payment mail): one `sendTemplate` each (3 to 5 calls). Fine.
+
+### Open items (owned elsewhere or deferred)
+
+- **Sponsor automatic renewals job** (`functions/_lib/renewal.js` `processRenewals`, daily workflow): up to 200 rows per run, about 6 to 10 outgoing calls per renewal (installer read, ownership check, reminder or charge, Stripe call, order apply, mail). On the Free plan about 5 renewals fit in one run; the rest are not lost (each row stays due and the daily run, or a manual `workflow_dispatch`, picks it up; a missed charge day is still charged later) but they wait a day each. Recommended change for the renewal owner: `LIMIT 5` per call and let the workflow loop while `remaining` is true, exactly like `/api/mail/drain`.
+- **CPU time 10 ms**: a cold `/api/events` rebuild (about 1,250 rows to JSON, 600 KB) and `/` with the events list probably exceed 10 ms. They are edge-cached and rebuilt rarely. If Cloudflare Analytics shows `exceededCpu`, upgrade the plan before optimizing further. Not measurable from the repo.
+- **Resend free daily quota (100 emails)**: with the outbox, a results announcement to more than about 90 people spreads over two UTC days (the run pauses on 429 and resumes after midnight UTC). Sign-in codes share the same quota; there is still no budget that reserves headroom for them (audit M9). Upgrade Resend (or reserve headroom) before a large contest announces.
