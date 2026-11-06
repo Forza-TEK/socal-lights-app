@@ -31,9 +31,9 @@ export async function onRequestPost({ request, env }) {
     mode: "payment",
     "line_items[0][quantity]": "1",
     "line_items[0][price_data][currency]": "usd",
-    "line_items[0][price_data][unit_amount]": String(w.cents), // the plan price, prorated by the days left in the season (sponsor.js)
+    "line_items[0][price_data][unit_amount]": String(w.cents), // the plan's price, or the difference for an upgrade (sponsor.js); never from the browser
     "line_items[0][price_data][product_data][name]": `Sponsor placement on SoCal Lights: ${inst.name}`.slice(0, 120),
-    "line_items[0][price_data][product_data][description]": `${p.label} · ${w.from} to ${w.to} (${w.season})${w.prorated ? " · prorated" : ""}`.slice(0, 200),
+    "line_items[0][price_data][product_data][description]": `${p.label} · ${w.from} to ${w.to} (${w.season})`.slice(0, 200),
     "metadata[event_id]": inst.id,
     "metadata[target]": "installer",
     "metadata[plan]": plan,
