@@ -3,4 +3,4 @@
 # Round 2 (sync fix + short opening): chain A takes judge vote approve share quick custom, chain B takes edit voting team announce activity; then both continue with the rest.
 cd /home/user/socal-lights-app
 ps -eo args | grep -q "[s]upervisor-voice.sh judge" || (setsid nohup scripts/tutorials/supervisor-voice.sh judge approve vote share quick custom map night email app contests pro-filter > /tmp/sv-a.log 2>&1 &)
-ps -eo args | grep -q "[s]upervisor-voice.sh edit " || (PORT=8789 setsid nohup scripts/tutorials/supervisor-voice.sh edit voting team announce activity enter edit-entry profile sponsors installer installer-profile add-event showcase > /tmp/sv-b.log 2>&1 &)
+ps -eo args | grep -q "[s]upervisor-voice.sh edit " || (PORT=8789 setsid nohup scripts/tutorials/supervisor-voice.sh edit pro-filter contests app > /tmp/sv-b.log 2>&1 &)
