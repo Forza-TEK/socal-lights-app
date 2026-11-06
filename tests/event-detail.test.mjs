@@ -5,7 +5,7 @@ import { onRequestGet as getList } from "../functions/api/events.js";
 import { onRequestGet as getOne } from "../functions/api/events/[id].js";
 import { newEnv, addEvent, ptToday } from "./_pay.mjs";
 
-const list = (env, qs = "") => getList({ request: new Request("https://x.test/api/events" + qs), env, waitUntil() {} });
+const list = (env, qs = "") => getList({ request: new Request((qs.includes("all=1") ? "http://localhost/api/events" : "https://x.test/api/events") + qs), env: qs.includes("all=1") ? Object.assign(Object.create(env), { ADMIN_DEV_BYPASS: "1" }) : env, waitUntil() {} }); // ?all=1 is admin only (local dev bypass here)
 const one = (env, id, headers = {}) => getOne({ request: new Request("https://x.test/api/events/" + encodeURIComponent(id), { headers }), env, params: { id }, waitUntil() {} });
 const ALL_KEYS = ["id", "n", "c", "city", "t", "s", "e", "st", "free", "p", "h", "lat", "lng", "b", "u", "sn", "v", "a", "img", "imgs", "f", "nt", "lc"];
 const seed = () => {

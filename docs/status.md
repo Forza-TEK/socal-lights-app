@@ -2,6 +2,12 @@
 
 _Last updated: 2026-11-06 (installer Sponsor placements)_
 
+## /api/events hardening (2026-11-06, audit N-01 / M1)
+- The edge copy is keyed by `ended` and `full` only; any other query string (`?x=1`, `?ref=fb`) shares the plain copy and cannot force a rebuild. At most 4 keys exist.
+- `?all=1` is admin only (Access JWT via `requireAdmin`, else 401, never cached). The admin editor now reads `GET /api/admin/events` (behind Access, same data); `admin.js?v=20261107d`.
+- A stale copy gets a 20 second lease (the first request re-stores it with a younger age) plus a same-isolate in-flight flag, so concurrent requests start one rebuild. Best effort across edge locations.
+- Tests: `tests/events-api.test.mjs`. Still open: one Cloudflare WAF rate-limit rule on `/api/*` (dashboard, owner).
+
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
 ## Claim decision emails (2026-11-06)

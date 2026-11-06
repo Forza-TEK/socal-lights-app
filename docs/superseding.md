@@ -16,7 +16,7 @@ Installers and homeowners add their displays through the Add form. The sweeps ma
   - **Both**: both records show.
   - **Sweep record**: the sweep record shows and the person's post is hidden from the map. The post stays approved and the person is not told; switch back at any time.
   Stored in `events.keep_listed` (migration `0128`): 0 = their record, 1 = both, 2 = sweep record. Each change is written to the Activity log. A post hidden this way is marked "Not on the map" in Published houses.
-- The Events tab and its count still include hidden sweep records, so they can be edited. The public map shows `/api/events`; the admin uses `/api/events?all=1`.
+- The Events tab and its count still include hidden sweep records, so they can be edited. The public map shows `/api/events`; the admin uses `/api/admin/events` (behind Access; `/api/events?all=1` now answers 401 unless the request carries the Access login).
 - The tab counts (Waiting for review, Published houses, Submitted events, Contests, Events, Replaced records, Users) come from `/api/admin/counts`.
 
 ## Contest wins carry over (rule)

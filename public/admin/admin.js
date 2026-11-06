@@ -263,7 +263,7 @@ document.addEventListener("click", async (e) => {
     PRESET = b.dataset.name;
     if (b.dataset.recent === "home") return setTab(b.dataset.st === "pending" ? "pending" : "approved");
     if (b.dataset.st === "published" && b.dataset.eid) {
-      const all = await (await fetch("/api/events?all=1", { cache: "no-store" })).json(), ev = all.find((r) => r.id === b.dataset.eid);
+      const all = await (await fetch("/api/admin/events", { cache: "no-store" })).json(), ev = all.find((r) => r.id === b.dataset.eid);
       if (ev) { evSeason = ev.sn || "christmas"; EVQ = b.dataset.name; PRESET = ""; return setTab("events"); }
     }
     SUBVIEW = b.dataset.st === "published" ? "published" : b.dataset.st === "pending" ? "pending" : "published"; setTab("subs");
@@ -401,7 +401,7 @@ $("#main").addEventListener("click", async (e) => {
 /* ---------- events ---------- */
 let EVQ = "", EVLIMIT = 60;
 async function renderEvents() {
-  EVENTS = await (await fetch("/api/events?all=1", { cache: "no-store" })).json();
+  EVENTS = await (await fetch("/api/admin/events", { cache: "no-store" })).json();
   const main = $("#main");
   const seasonSel = `<select id="evSeason" aria-label="Season">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === evSeason ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`;
   main.innerHTML = toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: seasonSel + `<a class="btn ghost" id="evDl" href="/api/admin/export?type=events&season=${evSeason}" download>Download CSV</a>`, add: { id: "addEv", label: "Add an event" }, count: "" }) + `<div id="evlist"></div>`;

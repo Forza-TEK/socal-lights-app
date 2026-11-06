@@ -1,6 +1,9 @@
+// GET /api/admin/events — every event, nothing hidden (the admin editor reads it; behind the Access login like all of /api/admin).
 // POST /api/admin/events — create or update one event.
 import { json, err, clean, safeUrl, COUNTIES } from "../../../_lib/util.js";
 import { SEASONS } from "../../../../public/seasons.js";
+import { build } from "../../events.js";
+export async function onRequestGet({ env }) { const b = await build(env, true, true, true); return new Response(b.body, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", etag: b.tag } }); }
 const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 
 export async function onRequestPost({ request, env }) {

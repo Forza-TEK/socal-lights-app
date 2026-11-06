@@ -2,6 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { onRequestGet } from "../functions/api/events.js";
+import { onRequestGet as adminList } from "../functions/api/admin/events/index.js";
 import { newEnv, addEvent, ptToday } from "./_pay.mjs";
 
 const get = (env, qs = "", headers = {}) => onRequestGet({ request: new Request("https://x.test/api/events" + qs, { headers }), env, waitUntil() {} });
@@ -23,9 +24,57 @@ test("default payload drops events that ended long ago, keeps current, upcoming 
   assert.ok((await (await get(env)).json()).every((e) => e.e >= cutoff), "nothing older than the grace window");
 });
 
-test("?ended=1 and ?all=1 still return the long-ended events", async () => {
+const asAdmin = (env, qs = "?all=1") => onRequestGet({ request: new Request("http://localhost/api/events" + qs), env: Object.assign(Object.create(env), { ADMIN_DEV_BYPASS: "1" }), waitUntil() {} });
+
+test("?ended=1 is public and returns the long-ended events; ?all=1 does too, for an admin only", async () => {
   const env = seed();
-  for (const qs of ["?ended=1", "?all=1"]) assert.ok((await (await get(env, qs)).json()).some((e) => e.id === "old"), qs);
+  assert.ok((await (await get(env, "?ended=1")).json()).some((e) => e.id === "old"));
+  assert.ok((await (await asAdmin(env)).json()).some((e) => e.id === "old"));
+  const anon = await get(env, "?all=1"); assert.equal(anon.status, 401); assert.ok(!(await anon.text()).includes("old"));
+  assert.equal((await get(env, "?all=1", { "cf-access-jwt-assertion": "a.b.c" })).status, 401, "a made-up token is not enough");
+});
+
+test("GET /api/admin/events (the admin editor's feed) returns everything, uncached", async () => {
+  const env = seed(), r = await adminList({ env });
+  assert.equal(r.status, 200); assert.equal(r.headers.get("cache-control"), "no-store");
+  assert.ok((await r.json()).some((e) => e.id === "old"));
+});
+
+test("cache key ignores unknown params: random query strings share one edge copy and never rebuild", async () => {
+  const store = new Map(), prev = globalThis.caches;
+  globalThis.caches = { default: { match: async (k) => store.get(k.url)?.clone(), put: async (k, r) => { store.set(k.url, r); } } };
+  try {
+    const env = seed(), jobs = [];
+    let queries = 0; const db = env.DB; const spy = { ...env, DB: { prepare: (q) => { queries++; return db.prepare(q); } } };
+    const ctx = (qs) => ({ request: new Request("https://x.test/api/events" + qs), env: spy, waitUntil: (p) => jobs.push(p) });
+    await onRequestGet(ctx("")); await Promise.all(jobs.splice(0));
+    const q1 = queries;
+    for (const qs of ["?x=1", "?x=2&ref=fb", "?cb=" + Math.random(), "?ended=0", "?all=0"]) { const r = await onRequestGet(ctx(qs)); assert.equal(r.status, 200); }
+    assert.equal(queries, q1, "no further database reads"); assert.equal(store.size, 1);
+    await onRequestGet(ctx("?ended=1&junk=1")); await onRequestGet(ctx("?junk=2&ended=1")); await Promise.all(jobs.splice(0));
+    assert.equal(store.size, 2, "ended has its own copy, whatever else is on the URL");
+    await onRequestGet(ctx("?full=1&ended=1")); await Promise.all(jobs.splice(0));
+    assert.equal(store.size, 3);
+    assert.deepEqual([...store.keys()].sort(), ["https://x.test/api/events", "https://x.test/api/events?ended=1", "https://x.test/api/events?ended=1&full=1"]);
+  } finally { globalThis.caches = prev; }
+});
+
+test("stale copy: concurrent requests start one rebuild, not one each", async () => {
+  const store = new Map(), prev = globalThis.caches;
+  globalThis.caches = { default: { match: async (k) => store.get(k.url)?.clone(), put: async (k, r) => { store.set(k.url, r); } } };
+  try {
+    const env = seed(), jobs = [], ctx = () => ({ request: new Request("https://x.test/api/events"), env, waitUntil: (p) => jobs.push(p) });
+    await onRequestGet(ctx()); await Promise.all(jobs.splice(0));
+    const k = [...store.keys()][0], old = store.get(k); store.set(k, new Response(await old.clone().text(), { headers: { ...Object.fromEntries(old.headers), "x-built": String(Date.now() - 300000) } }));
+    await Promise.all([1, 2, 3, 4, 5].map(() => onRequestGet(ctx())));
+    assert.equal(jobs.length, 1);
+    await Promise.all(jobs.splice(0));
+    // a later request, with the first rebuild finished and the copy fresh, starts nothing
+    await onRequestGet(ctx()); assert.equal(jobs.length, 0);
+    // a lease from another isolate (no in-flight entry here) also holds: the stored copy was pushed back, so a stale-looking-but-leased copy is not rebuilt
+    const o2 = store.get(k); store.set(k, new Response(await o2.clone().text(), { headers: { ...Object.fromEntries(o2.headers), "x-built": String(Date.now() - 120000 + 15000) } }));
+    await onRequestGet(ctx()); assert.equal(jobs.length, 0);
+  } finally { globalThis.caches = prev; }
 });
 
 test("list event objects keep the fields cards, pins, search and routes read (the blurb and link come from /api/events/<id>, see event-detail.test.mjs)", async () => {
@@ -67,6 +116,6 @@ test("edge copy: a stale copy is served at once and rebuilt in the background; a
     await Promise.all(jobs.splice(0));
     assert.ok((await (await onRequestGet(ctx())).json()).some((e) => e.id === "edge2"));
     // ?all=1 never touches the cache
-    const before = store.size; await onRequestGet(ctx("?all=1")); assert.equal(store.size, before);
+    const before = store.size; await onRequestGet({ request: new Request("http://localhost/api/events?all=1"), env: Object.assign(Object.create(env), { ADMIN_DEV_BYPASS: "1" }), waitUntil() {} }); assert.equal(store.size, before);
   } finally { globalThis.caches = prev; }
 });
