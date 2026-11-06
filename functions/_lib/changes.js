@@ -1,6 +1,7 @@
 // "Who changed what": compare a record before and after an edit, keep the differences, and tell the other people who share it.
 import { newId } from "./util.js";
-import { sendTemplate } from "./mailtpl.js";
+import { sendNow } from "./mailbatch.js";
+import { logOp } from "./oplog.js";
 
 export const HOME_FIELDS = { title: "Display name", descr: "About it", where_txt: "Tips for visitors", season: "Season", lights_on: "Lights are on", visit: "How to see it", parking: "Parking", accessible: "Stroller and wheelchair friendly", radio: "Radio station", web: "Website", phone: "Phone for quotes", service_area: "Service area" };
 export const CONTEST_FIELDS = { name: "Contest name", org: "Run by", descr: "Welcome message", entries_close: "Entries close", vote_start: "Voting starts", vote_end: "Voting ends", categories: "Voting categories", approval: "Entry approval", prize_mode: "Prize type", prize: "Prize", prizes: "Prizes per award", sponsor: "Prize provided by", rules: "Official rules", installer_name: "Presenting installer", installer_email: "Installer email", installer_url: "Installer website", show_counts: "Show vote counts", entries_open: "Entries open", voting_open: "Voting open", mode: "Who votes" };
@@ -17,13 +18,14 @@ export function diff(before, after, labels) {
   return out;
 }
 export async function logHome(env, postId, by, changes) {
-  for (const c of changes) await env.DB.prepare("INSERT INTO listing_changes (id, post_id, by_email, by_name, by_role, field, old, new) VALUES (?,?,?,?,?,?,?,?)").bind(newId(), postId, by.email, by.name || "", by.role, c.label, c.old, c.new).run();
+  if (changes.length) await env.DB.batch(changes.map((c) => env.DB.prepare("INSERT INTO listing_changes (id, post_id, by_email, by_name, by_role, field, old, new) VALUES (?,?,?,?,?,?,?,?)").bind(newId(), postId, by.email, by.name || "", by.role, c.label, c.old, c.new))); // one call, not one per field
 }
 export async function logContest(env, contestId, by, changes) {
-  for (const c of changes) await env.DB.prepare("INSERT INTO contest_changes (id, contest_id, by_email, by_name, field, old, new) VALUES (?,?,?,?,?,?,?)").bind(newId(), contestId, by.email, by.name || "", c.label, c.old, c.new).run();
+  if (changes.length) await env.DB.batch(changes.map((c) => env.DB.prepare("INSERT INTO contest_changes (id, contest_id, by_email, by_name, field, old, new) VALUES (?,?,?,?,?,?,?)").bind(newId(), contestId, by.email, by.name || "", c.label, c.old, c.new)));
 }
 export const lines = (changes) => changes.map((c) => `- ${c.label}: ${c.old || "(blank)"} -> ${c.new || "(blank)"}`).join("\n");
-export async function notify(env, to, id, vars) { const list = [...new Set([].concat(to).filter(Boolean))]; for (const t of list) await sendTemplate(env, id, t, vars).catch(() => {}); }
+// One Resend batch call for the whole team (a request can only make 50 outgoing calls on the free plan). A failure is logged to ops_log, never thrown.
+export async function notify(env, to, id, vars) { const list = [...new Set([].concat(to).filter(Boolean))]; try { await sendNow(env, list.map((t) => ({ id, to: t, vars })), id); } catch (e) { await logOp(env, "mail", `${id}: team notice could not be sent: ` + (e && e.message)); } }
 
 // The people who run a contest together: the creator and the co-organizers. `actor` is left out of the notification.
 export async function teamEmails(env, c, actor) {

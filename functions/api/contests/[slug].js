@@ -2,7 +2,8 @@
 // PATCH /api/contests/<slug>  organizer controls: pause/resume entries and voting, show counts, start voting now, announce winners.
 // Announcing freezes the results into contests.results; from then on the page, the archive and the export read that snapshot, never the live votes.
 import { json, err, clean, webUrl, newId } from "../../_lib/util.js";
-import { sendTemplate } from "../../_lib/mailtpl.js";
+import { enqueueMail, drainMail } from "../../_lib/mailbatch.js";
+import { logOp } from "../../_lib/oplog.js";
 import { slug as slugify } from "../../_lib/events.js";
 import { inviteJudges } from "./[slug]/judges.js";
 import { getUser, sameOrigin, okEmail } from "../../_lib/auth.js";
@@ -102,7 +103,8 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
     const wrote = await env.DB.prepare("UPDATE contests SET announced = 1, results = ?, updated_at = datetime('now') WHERE id = ? AND announced = 0").bind(JSON.stringify(snap), c.id).run();
     if (!wrote.meta || !wrote.meta.changes) return err(400, "The winners are announced and the results are locked.");
     await teamChanged(env, c, user, [{ label: "Winners", old: "Not announced", new: "Announced and locked" }], W);
-    const job = notifyResults(env, c, r, awards);
+    await queueResults(env, c, r, awards); // queued (never lost); the first 100 go out now, the rest on the hourly run (functions/_lib/mailbatch.js)
+    const job = drainMail(env).catch((e) => logOp(env, "mail", "results: first send failed: " + (e && e.message)));
     if (waitUntil) waitUntil(job);
   } else return err(400, "Unknown action.");
   return json({ ok: true });
@@ -175,7 +177,8 @@ async function editContest(env, c, b, user, waitUntil) {
 }
 
 // Everyone who entered gets the results; winners get a congratulations with their prize. Judges and the organizer are told too.
-async function notifyResults(env, c, r, awards) {
+// Queued in mail_outbox (a request can only make 50 outgoing calls on the free plan); a repeat of this call queues nothing twice (dedupe key per contest, template and address).
+async function queueResults(env, c, r, awards) {
   try {
     const won = new Map(); // post id -> [{ category, label, prize }]
     for (const a of awards) for (const id of a.ids) (won.get(id) || won.set(id, []).get(id)).push(a);
@@ -184,12 +187,13 @@ async function notifyResults(env, c, r, awards) {
     const page = `https://socallights.app/c/${c.slug}`;
     const byEmail = new Map();
     for (const row of rows) { const e = byEmail.get(row.email) || { wins: [] }; e.wins.push(...(won.get(row.id) || [])); byEmail.set(row.email, e); }
-    let sent = 0;
-    for (const [to, e] of [...byEmail].slice(0, 200)) {
-      const win = e.wins.length > 0, pz = e.wins.filter((w) => w.prize).map((w) => `${w.category} (${w.label}): ${w.prize}`);
-      if (await sendTemplate(env, win ? "results_winner" : "results_entrant", to, win ? { contest: c.name, wins: e.wins.map((w) => `${w.category} (${w.label})`).join(", "), prize: pz.join("; "), org: c.org, link: page } : { contest: c.name, winners: names.join(", ") || "to be announced", link: page })) sent++;
+    const items = [];
+    for (const [to, e] of byEmail) {
+      const win = e.wins.length > 0, pz = e.wins.filter((w) => w.prize).map((w) => `${w.category} (${w.label}): ${w.prize}`), id = win ? "results_winner" : "results_entrant";
+      items.push({ id, to, dedupe: `results:${c.id}:${id}:${String(to).toLowerCase()}`, vars: win ? { contest: c.name, wins: e.wins.map((w) => `${w.category} (${w.label})`).join(", "), prize: pz.join("; "), org: c.org, link: page } : { contest: c.name, winners: names.join(", ") || "to be announced", link: page } });
     }
-    if (hasJudges(c)) { const { results: js } = await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all(); for (const j of js) await sendTemplate(env, "results_judge", j.email, { contest: c.name, winners: names.join(", ") || "to be announced", link: page }); }
-    await sendTemplate(env, "results_organizer", c.contact_email, { contest: c.name, sent, total: byEmail.size, link: `https://socallights.app/c/${c.slug}/manage` });
-  } catch {}
+    if (hasJudges(c)) { const { results: js } = await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all(); for (const j of js) items.push({ id: "results_judge", to: j.email, dedupe: `results:${c.id}:results_judge:${String(j.email).toLowerCase()}`, vars: { contest: c.name, winners: names.join(", ") || "to be announced", link: page } }); }
+    items.push({ id: "results_organizer", to: c.contact_email, dedupe: `results:${c.id}:results_organizer`, vars: { contest: c.name, sent: byEmail.size, total: byEmail.size, link: `https://socallights.app/c/${c.slug}/manage` } });
+    await enqueueMail(env, items);
+  } catch (e) { await logOp(env, "mail", `results emails for contest ${c.id} could not be queued: ` + (e && e.message)); }
 }

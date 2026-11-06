@@ -11,6 +11,7 @@ Last updated 2026-10-30. This is the one page that says where SoCal Lights work 
 ## Background agents (all in the Code scheduled-task list, prefix [SCL])
 | Task | When (Pacific) | Needs work computer? | Job |
 |---|---|---|---|
+| (GitHub Actions, not a scheduled task) Send queued emails | hourly (`mail-outbox.yml`) | No | Sends contest results and voting reminders waiting in `mail_outbox`, retries failures (`/api/mail/drain`, key `ALERT_CRON_KEY`) |
 | [SCL] City sweep | 4:13, 12:13, 20:13 daily | No | One city group per run: new events, contest homes, photos |
 | [SCL] Weekly upkeep | Mondays 6:47 | No | Confirm dates, fix details, remove dupes, season roll-overs |
 | [SCL] Midweek upkeep (Nov-Dec) | Wed + Sat 6:52, Nov-Dec | No | Date confirmation, contest homes, photos |

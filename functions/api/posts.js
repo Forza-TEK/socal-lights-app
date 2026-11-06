@@ -4,6 +4,8 @@ import { json, rowToPost } from "../_lib/util.js";
 import { pairs } from "../_lib/addrkey.js";
 import { winsFor } from "../_lib/wins.js";
 import { winnerBadges, parsePrefs, shown, emailKey } from "../_lib/badges.js";
+import { selectIn } from "../_lib/dbchunk.js";
+import { logOp } from "../_lib/oplog.js";
 
 export async function onRequestGet({ env }) {
   const { results } = await env.DB.prepare(
@@ -14,16 +16,16 @@ export async function onRequestGet({ env }) {
   try {
     const chosen = (await env.DB.prepare("SELECT id, city, address FROM events WHERE keep_listed = 2 AND address != ''").all()).results;
     if (chosen.length) hide = new Set(pairs(results.filter((r) => !r.contest_id), chosen).exact.map((x) => x.post.id));
-  } catch {}
+  } catch (e) { await logOp(env, "posts", "hidden-by-sweep lookup failed: " + (e && e.message)); }
   const wins = await winsFor(env, results.filter((r) => !r.contest_id), pairs); // contest wins stated on the sweep record this post replaces
   let byUser = new Map(), users = new Map(); // userId -> badges; userId -> { email, prefs }
   try {
     byUser = await winnerBadges(env);
     if (byUser.size) {
-      const ids = [...byUser.keys()].slice(0, 200);
-      for (const u of (await env.DB.prepare(`SELECT id, email, badges FROM users WHERE id IN (${ids.map(() => "?").join(",")})`).bind(...ids).all()).results) users.set(u.id, { email: u.email, prefs: parsePrefs(u.badges) });
+      // D1 allows 100 bound parameters per query, so the winners are read in slices of 90 (selectIn). A failure is logged and the list is still served without crowns.
+      for (const u of await selectIn(env, "SELECT id, email, badges FROM users WHERE id IN ({IN})", [...byUser.keys()].slice(0, 1000))) users.set(u.id, { email: u.email, prefs: parsePrefs(u.badges) });
     }
-  } catch {}
+  } catch (e) { byUser = new Map(); users = new Map(); await logOp(env, "posts", "winner badges lookup failed: " + (e && e.message)); }
   const idByEmail = new Map([...users].map(([id, u]) => [u.email, id]));
   const out = results.filter((r) => !hide.has(r.id)).map((r) => {
     const p = rowToPost(r);

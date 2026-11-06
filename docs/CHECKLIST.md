@@ -16,6 +16,7 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 - [x] Home page `/` list served from the edge copy (fresh 5 min, kept 1 h) with one narrow query instead of two scans (operations H5)
 - [x] Sign-in code attempts atomic (5 per code even in parallel) plus 30 verifies per address per hour (security S-07)
 - [x] Page counter: `/e/*` is one key `event`, `/past/*` is `past`; the 80 page-name cap ignores fn:/click:/ref: rows (seo H4)
+- [x] Free-plan per-request limits (2026-11-06): verified Cloudflare/Resend limits in `docs/runbooks/cloudflare-limits.md`; mail outbox + Resend batch for contest results, reminders, invitations and weekly alerts; organizer entries in chunks of 10; `/api/posts` 100-parameter fix and resilient map boot; R2 batch deletes; D1 test stand-in enforces the limits
 - [x] Audit 2026-11-07 small fixes: `/api/events` cache key whitelist, `?all=1` admin only, one rebuild per stale window (security N-01, engineering M1)
 - [x] Whole-app audit by seven specialists; ranked gap list (PR 308)
 - [x] Batch A fixes: fake-contest gate, invite caps and email escaping, locked results, security headers, real 404s, safer city-page SEO (PR 309)
@@ -88,6 +89,7 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 - [x] **Batch E, SEO and measurement (2026-11-06; details in `status.md`):** city pages with nearby links, `/in` hub, hidden crawlable city and event list on the home page, thin pages noindex and out of the sitemap (PR 340); funnel counters `fn:*` with an admin list and digest section, honest "Page views*" label (PR 341); per-event pages `/e/<id>` with share previews, Share button now shares them (PR 342); accessibility quick fixes (PR 343). Still open: colour contrast, county hub pages, house share pages, Cloudflare vs counter comparison after a week of `fn:visit`.
 - [x] **Phase 3 built (2026-11-06):** Featured homes for podium finishers (winner, 2nd, 3rd of announced contests; podium computed from the frozen results; design in `monetization/feature-account-spec.md`). Owner: run one real $10 home test after a contest is announced, and have the attorney read the Featured home wording (Terms, Pricing, Featured page) with the other redlines.
 - [x] **Design pass (2026-11-06, PRs 345 to 347):** contrast fixes verified with axe, skip link, header landmarks, aria-invalid on step errors, 44 px footer links, asset version test, breadcrumbs, map data preload, clear-search empty state, Featured pricing wording (`status.md`)
+- [ ] Owner: confirm the Cloudflare plan (Workers & Pages > Plans) and the Resend plan (free = 100 emails a day, shared with sign-in codes); after the first big contest announcement check Admin > ops log for `email` lines. Renewal job: process 5 renewals per call (see runbook)
 - [ ] Still open from the audit: a screen reader and real-phone check of the design pass; one word for house/home/display (owner decision); `<main>` on `contest-enter.html`; tutorials folder to R2 or Stream; `/c/<unknown>` 404; Content-Security-Policy (needs a long test)
 - [ ] Backfill the privacy scrub for entrants who deleted accounts before it shipped (none yet)
 

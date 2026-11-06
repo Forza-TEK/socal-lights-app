@@ -4,6 +4,14 @@ _Last updated: 2026-11-06 (installer Sponsor placements)_
 
 ## Page counter buckets (2026-11-06, audit seo-growth H4)
 - `functions/api/visit.js`: `/e/<id>` counts as page `event`, `/past/<slug>` as `past` (old per-id rows stay in history and age out of the top pages). The 80 page-names-per-day abuse cap now counts page rows only, not `fn:`, `click:` or `ref:`. Admin "top pages" lists keys as stored, so it shows `event` and `past` with no change needed. Tests: `tests/visit-pages.test.mjs`.
+## Free-plan per-request limits (2026-11-06, audit M9, M2, C13)
+Verified limits and the full before/after table: `docs/runbooks/cloudflare-limits.md` ("Per-request limits and how the code stays under them"). Key fact: on Workers/Pages Free a request may make **50 subrequests and D1 and R2 calls count too** (a D1 `batch()` is one); D1 allows 100 bound parameters per query.
+- **Mail outbox.** Migration `0178_mail_outbox.sql`, `functions/_lib/mailbatch.js` (batched Resend `/emails/batch`, outbox with dedupe, retry/backoff, split of a refused batch, quota pause), `POST /api/mail/drain`, hourly workflow `.github/workflows/mail-outbox.yml`. Contest results, voting reminders: queued, first 40 sent at once (CPU: 10 ms on Free), rest by the hourly workflow in a loop. Invitations, judge mail, team notices and the weekly alerts (40 per run) use one batch call (`sendNow`). Failures are logged to `ops_log` (`email`, `mail`), never swallowed.
+- **Organizer-added entries:** 10 homes per request (was 100, UI 25), UI chunks of 10 with progress, hourly limit by homes (1,000) and calls (120); test asserts under 50 outgoing calls with both geocoders hit.
+- **`/api/posts`:** winners read through `selectIn` (slices of 90) and `winnerBadges` in one pass; failures logged (`posts`, `badges`); `public/app.js` boot uses `Promise.allSettled` (index.html `?v=20261107l`).
+- **R2 deletes** (account, contest, home) in one call per 1,000 keys; change logs in one batch; D1 stand-in (`tests/_d1.mjs`) now enforces 100 parameters and 100 KB statements and counts calls (`DB.stats`).
+- **Tests:** `tests/limits.test.mjs`, `tests/limits-r2.test.mjs`, updated `tests/organizer-entries.test.mjs`.
+- **Open:** sponsor renewals job still does about 6 to 10 calls per renewal (about 5 per run on Free; rows stay due, see the runbook); Resend free daily quota is 100 emails; confirm the Cloudflare plan; not tested with real email.
 
 ## /api/events hardening (2026-11-06, audit N-01 / M1)
 - The edge copy is keyed by `ended` and `full` only; any other query string (`?x=1`, `?ref=fb`) shares the plain copy and cannot force a rebuild. At most 4 keys exist.

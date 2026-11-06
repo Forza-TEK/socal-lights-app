@@ -1,6 +1,7 @@
 // GET /api/admin/posts?status=pending|approved|declined
 import { json, rowToPost } from "../../../_lib/util.js";
 import { pairs } from "../../../_lib/addrkey.js";
+import { selectIn } from "../../../_lib/dbchunk.js";
 
 export async function onRequestGet({ request, env }) {
   const qs = new URL(request.url).searchParams, status = qs.get("status") || "pending";
@@ -28,7 +29,7 @@ export async function onRequestGet({ request, env }) {
     try {
       const withClaim = results.filter((r) => r.claim_event_id);
       if (withClaim.length) {
-        const ids = [...new Set(withClaim.map((r) => r.claim_event_id))], evs = (await env.DB.prepare(`SELECT id, name, city, address FROM events WHERE id IN (${ids.map(() => "?").join(",")})`).bind(...ids).all()).results, by = new Map(out.map((p) => [p.id, p]));
+        const ids = [...new Set(withClaim.map((r) => r.claim_event_id))], evs = await selectIn(env, "SELECT id, name, city, address FROM events WHERE id IN ({IN})", ids), by = new Map(out.map((p) => [p.id, p]));
         for (const r of withClaim) {
           const e = evs.find((x) => x.id === r.claim_event_id), p = by.get(r.id); if (!e || !p) continue;
           const matched = pairs([{ id: r.id, street: r.street, address: r.address, city: r.city, zip: r.zip }], [e]).exact.length > 0;

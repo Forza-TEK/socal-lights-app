@@ -7,7 +7,8 @@ import { getUser, sameOrigin, normEmail, okEmail, sendMail } from "../../../_lib
 import { ownerOf, computeResults, hasJudges } from "../../../_lib/contests.js";
 import { judgeProgress } from "../../../_lib/judging.js";
 import { teamChanged } from "../../../_lib/changes.js";
-import { sendTemplate } from "../../../_lib/mailtpl.js";
+import { sendNow } from "../../../_lib/mailbatch.js";
+import { logOp } from "../../../_lib/oplog.js";
 import { reserveSends } from "../../../_lib/sendlimit.js";
 
 export async function inviteJudges(env, c, emails, origin = "https://socallights.app") {
@@ -16,11 +17,12 @@ export async function inviteJudges(env, c, emails, origin = "https://socallights
   for (const raw of emails) {
     if (!okEmail(raw)) continue; const email = normEmail(raw); if (have.has(email)) continue; have.add(email);
     const j = { id: newId(), email, token: newId() + newId() };
-    await env.DB.prepare("INSERT INTO judges (id,contest_id,email,token) VALUES (?,?,?,?)").bind(j.id, c.id, email, j.token).run();
     out.push({ ...j, to: String(raw).trim() });
   }
   const how = c.judge_method === "score" ? "Score every home from 1 to 10 in each category." : "Pick one favorite home in each category.";
-  for (const j of out) await sendTemplate(env, "judge_invite", j.to, { contest: c.name, org: c.org, how, link: `${origin}/c/${c.slug}/judge` }).catch(() => {});
+  if (out.length) await env.DB.batch(out.map((j) => env.DB.prepare("INSERT INTO judges (id,contest_id,email,token) VALUES (?,?,?,?)").bind(j.id, c.id, j.email, j.token))); // one call, not one per judge
+  try { await sendNow(env, out.map((j) => ({ id: "judge_invite", to: j.to, vars: { contest: c.name, org: c.org, how, link: `${origin}/c/${c.slug}/judge` } })), "judge_invite"); }
+  catch (e) { await logOp(env, "mail", "judge invitations could not be sent: " + (e && e.message)); }
   return out.length;
 }
 

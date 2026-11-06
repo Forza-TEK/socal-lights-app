@@ -121,7 +121,7 @@ function inviteCard() {
    <form id="inviteform" class="f" novalidate>${fsec("Who to invite", "", ff("Email addresses", `<textarea id="iv-list" rows="5" placeholder="neighbor@example.com"></textarea>`, { hint: "One per line, up to 50 at a time." }) + ff("Note (optional)", `<input id="iv-note" maxlength="300" placeholder="Add a short note">`))}<p class="err" id="iv-err" role="alert" hidden></p><div class="mfoot"><button class="btn org" type="submit">Send invitations</button></div></form></details>`;
 }
 // Add homes yourself: paste addresses, check them, add them (for contests that register residents elsewhere)
-const CHUNK = 25, today = () => new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
+const CHUNK = 10, today = () => new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
 let leftover = "";
 function addHomesCard() {
   const c = D.contest; if (c.announced || c.status !== "live") return "";
@@ -242,7 +242,7 @@ function render() {
     const stale = () => { checked = false; rows = []; res.innerHTML = ""; er.hidden = true; sync(); };
     const draw = () => { res.innerHTML = `<div class="list" style="margin:8px 0">${rows.map((r) => `<div class="rowi"><div><b>${esc(r.address)}</b>${r.name ? ` <span class="small muted">· ${esc(r.name)}</span>` : ""}<br><span class="small muted">${esc(r.text)}</span></div><span class="pill ${r.state === "found" ? "p-ok" : r.state === "failed" ? "p-no" : ""}">${r.state === "found" ? "Found" : r.state === "failed" ? "Not found" : "Already in"}</span></div>`).join("")}</div>`; };
     const fail = (m) => { er.textContent = m; er.hidden = false; };
-    // Sends the lines in batches of 25 (the lookup service is asked once per home); returns what came back, or an error message
+    // Sends the lines in chunks of 10 (the lookup service is asked once per home, and one request may only make so many outgoing calls); returns what came back, or an error message
     const send = async (list, extra, progress) => {
       const out = { ok: [], failed: [], skipped: [], at: 0, error: "" };
       for (let i = 0; i < list.length; i += CHUNK) {

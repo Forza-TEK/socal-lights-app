@@ -4,9 +4,13 @@ import { streetParts } from "./addrkey.js";
 import { normStreet, normName, normZip, tidy } from "./fields.js";
 import { geocodeAddress, clean } from "./util.js";
 
-export const MAX_HOMES_PER_CALL = 100;
+// One request may make at most 50 outgoing calls on the Cloudflare free plan (every fetch and every D1 query counts, docs/runbooks/cloudflare-limits.md).
+// A home costs up to 2 geocoder fetches (Census, then OpenStreetMap), so 10 homes cost at most 20, plus about 15 database and mail calls: safely under 50.
+// The organizer page sends longer lists in chunks of 10 and shows progress. Checking addresses is limited by homes and calls per hour (the geocoders are free public services).
+export const MAX_HOMES_PER_CALL = 10;
 export const MAX_ADDED_PER_CONTEST = 500;
-export const CALLS_PER_HOUR = 10;
+export const CALLS_PER_HOUR = 120;
+export const HOMES_PER_HOUR = 1000;
 
 const ZIP = /^(?:CA|California)?\s*(\d{5})(?:-\d{4})?$/i;
 const UNIT = /^(apt|apartment|unit|ste|suite|bldg|building|#)/i;
