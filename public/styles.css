@@ -968,7 +968,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 
 /* a red count on the Favorites tab while it is not the open tab (desktop and tablet) */
 .ptab{position:relative}
-.ptab .tbadge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--heart,#e0245e);color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--surface)}
+.ptab .tbadge{position:absolute;top:3px;left:calc(50% + 1px);min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--heart,#e0245e);color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--surface)}
 .ptab .tbadge[hidden]{display:none}
 .ptab[aria-selected="true"] .tbadge{display:none}
 .quick .qgo svg{flex:none;width:16px;height:16px}
