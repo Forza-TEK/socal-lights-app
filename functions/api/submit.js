@@ -124,6 +124,12 @@ export async function onRequestPost({ request, env, waitUntil }) {
     ...ipPruneStatements(env),
   ]);
 
+  // "Is this your home?" from the map: remember which automatic listing this display claims (shown to Admin when reviewing)
+  try {
+    const claim = clean(form.get("claim"), 60);
+    if (claim && !contest && (await env.DB.prepare("SELECT 1 FROM events WHERE id = ?").bind(claim).first())) await env.DB.prepare("UPDATE posts SET claim_event_id = ? WHERE id = ?").bind(claim, id).run();
+  } catch {}
+
   // Visiting details for families (all optional)
   try {
     const visit = ["drive", "walk", "both"].includes(form.get("visit")) ? form.get("visit") : "", parking = ["free", "street", "none"].includes(form.get("parking")) ? form.get("parking") : "";

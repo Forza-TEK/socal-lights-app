@@ -28,3 +28,10 @@ When a person's record replaces a sweep record (choice **Their record**), a cont
 - **Admin:** the Replaced records tab shows "Win shown on their listing: ..." under each person's record.
 - Code: `functions/_lib/wins.js`, `functions/api/posts.js` (field `b`, entries with `t` and `u`), `public/app.js` (`bChip`, `bPop`, `bLines`).
 
+## "Is this your home?" (claiming a sweep-made home)
+- On the map, the details of a home the sweeps found on a public contest or tour page (venue "... view from the street", not a contest itself) show **Is this your home? Claim it**. It opens **Add a display** with `?claim=<listing id>` (`public/add-house.html`).
+- The form starts with that listing's street, city and ZIP and its name, and the first screen says they are claiming it. Any earlier house draft is cleared. After the owner signs in and finishes, `/api/submit` stores the id in `posts.claim_event_id` (migration `0164`), but only if the listing exists. Contest entries ignore it.
+- Nothing new decides the replacement: it is still the same-address rule above. The claim only tells the admin which listing the person meant.
+- **Admin:** a display with a claim shows **Says this is their home** with the listing's name, on waiting and published houses (`functions/api/admin/posts/index.js`, `public/admin/admin.js`). If the addresses agree it says the listing is replaced. If they do not (a typo, another number), it says it is not replaced, and the street can be fixed in Edit.
+- Displays are published as soon as they are added, so the claim takes effect when the public map list refreshes (up to about two minutes).
+

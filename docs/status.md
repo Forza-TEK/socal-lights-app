@@ -35,6 +35,8 @@ _Last updated: 2026-11-05_
 - City pages show the 6 nearest indexable cities with distances, the rest of the county, a one-line count and date-span summary, and links to `/in`, Add an event, Pricing and Help.
 - New `/in` hub (`functions/in/index.js`): all cities by county, in the sitemap. The homepage is now served through `functions/index.js`, which adds a visually hidden (`.sr`, links `tabindex=-1`) "Browse by city" list at the end of `<body>`; the visible map is unchanged and `app.js`/`styles.css` untouched. On any error the plain page is served. `/` and `/in` added to `public/_routes.json`.
 - Tests: `tests/cities.test.mjs`. Not done: county hub pages, a crawlable events list on the homepage (comes with the per-event pages), `Allow: /api/events` in robots.
+## Claim a home (2026-11-06)
+- "Is this your home? Claim it" on sweep-made home listings opens Add a display prefilled with that listing; the admin sees "Says this is their home" on the display. Replacement still follows the same-address rule. Migration 0164. See `docs/superseding.md`. A "remove this listing" request was left out on purpose.
 
 ## Batch D 1: nightly backup (2026-11-06)
 `.github/workflows/backup.yml` exports the live D1 every night, checks it, uploads it to a PRIVATE R2 bucket `socal-lights-backups` (daily kept 35 days, monthly 400, `latest.sql.gz`), reads it back, and copies photos on Sundays (`scripts/backup-photos.mjs`). A failure opens a GitHub issue. Never an artifact (public repo). Restore steps: `docs/runbooks/backup-restore.md`. Owner must give the API token R2 Edit permission first.
