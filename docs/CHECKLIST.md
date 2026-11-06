@@ -12,6 +12,7 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 - [x] Featured homes for contest podium finishers: `posts.featured`, `feature_orders.target`, podium from the frozen snapshot, checkout, webhook, Admin > Orders, gold pin and badge (migration 0166)
 - [x] Contest history kept: indexable `/past` pages, organizer deletion no longer wipes results, deleted entrants scrubbed (PR 306)
 - [x] Security fixes: stored script injection on installer pages, sign-in open redirect (PR 307)
+- [x] Sign-in code attempts atomic (5 per code even in parallel) plus 30 verifies per address per hour (security S-07)
 - [x] Audit 2026-11-07 small fixes: `/api/events` cache key whitelist, `?all=1` admin only, one rebuild per stale window (security N-01, engineering M1)
 - [x] Whole-app audit by seven specialists; ranked gap list (PR 308)
 - [x] Batch A fixes: fake-contest gate, invite caps and email escaping, locked results, security headers, real 404s, safer city-page SEO (PR 309)
