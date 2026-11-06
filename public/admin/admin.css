@@ -299,3 +299,6 @@ body.admin #em-b{min-height:150px}
 .ems{font-size:13px;color:var(--ink)}
 .emw{font-size:13px;color:var(--muted);line-height:1.35}
 @media (max-width:699px){.emgrid{grid-template-columns:1fr}.emcard{min-height:0}}
+
+/* Dropdown lists: the browser draws them itself, so give them the page colors (otherwise light text on white in dark mode) */
+select option,select optgroup{background-color:var(--bg);color:var(--ink)}
