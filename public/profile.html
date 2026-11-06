@@ -8,9 +8,9 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102i">
+<link rel="stylesheet" href="/addflow.css?v=20261106s">
 <link rel="stylesheet" href="/forms.css?v=20261102e">
-<link rel="stylesheet" href="/profile.css?v=20261106b">
+<link rel="stylesheet" href="/profile.css?v=20261106d">
 <script src="/hit.js" defer></script>
 </head>
 <body class="sh-page prof">
@@ -57,6 +57,19 @@ function homeRow(h) {
    <div class="acts">${h.status === "approved" || h.status === "paused" ? `<button class="btn out sm" type="button" data-medit>Edit</button><button class="btn out sm" type="button" data-hact="${h.status === "paused" ? "resume" : "pause"}">${h.status === "paused" ? "Put back on the map" : "Take down for the season"}</button><button class="btn out sm danger" type="button" data-hdel>Delete</button>` : ""}</div>
    ${homeForm(h, { pro, changes: chgList(h.changes) })}</div>`;
 }
+// A contest you run or help run: where it stands, and the buttons for it
+const dshort = (iso) => { try { return new Date(iso + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
+function contestRow(c) {
+  const st = c.announced ? ["", "Winners announced"] : c.status === "live" ? ["live", "Live"] : c.status === "pending" ? ["warn", "In review"] : c.status === "declined" ? ["", "Taken off the map"] : ["", c.status];
+  return `<div class="rowi"><div><b>${esc(c.name)}</b><br><span class="small muted">${c.role === "owner" ? "You run it" : "You help run it"} · ${dot(c.status, st)}${c.vote_start ? ` · Voting ${dshort(c.vote_start)} to ${dshort(c.vote_end)}` : ""}${c.waiting ? ` · <span class="waitnote">${c.waiting} ${c.waiting === 1 ? "entry" : "entries"} waiting for you</span>` : ""}</span></div>
+   <div class="acts"><a class="btn out sm" href="/c/${esc(c.slug)}/manage">Manage</a><a class="btn out sm" href="/c/${esc(c.slug)}">View page</a></div></div>`;
+}
+// A home you entered in someone's contest
+function entryRow(e) {
+  const st = e.status === "approved" ? ["live", "In the contest"] : e.status === "pending" ? ["warn", "Waiting for the organizer"] : e.status === "declined" ? ["", "Not accepted"] : ["", e.status];
+  return `<div class="rowi"><div><b>${esc(e.title || e.biz)}</b><br><span class="small muted">${esc(e.contest)} · ${dot(e.status, st)}</span></div>
+   <div class="acts"><a class="btn out sm" href="/c/${esc(e.slug)}">Open contest</a></div></div>`;
+}
 // An event you added: edit, cancelled or postponed tag, run again next year
 function eventRow(e) {
   const live = e.status === "published" && e.event_id;
@@ -70,7 +83,8 @@ const list = (rows, empty) => (rows.length ? `<div class="list">${rows.join("")}
 function panel() {
   const o = O, u = o.user;
   if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}</span></div><div class="acts"><a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
-  if (tab === "contests") return head("Contests") + `<section class="card"><p class="muted">The contests you run, help run or entered are on the Contests page.</p><div class="actions"><a class="btn org" href="/contests#mine">Open my contests</a></div></section>`;
+  if (tab === "contests") return head("Contests you run", ["+ Add a contest", "/add-contest"]) + list(o.contests.map(contestRow), 'You do not run or help run a contest yet. <a href="/add-contest">Create one</a>.')
+    + head("Homes you entered") + list(o.entries.map(entryRow), 'You have not entered a home in a contest yet. <a href="/contests">See contests to enter</a>.');
   if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + (o.installers || []).map((i) => `<p class="small"><a class="btn out sm" href="/installer/${esc(i.slug)}/manage">Manage the ${esc(i.name)} profile</a></p>`).join("") + list(o.homes.map(homeRow), "None yet.");
   if (tab === "events") return head("Events you added", ["+ Add an event", "/add-event"]) + list(o.events.map(eventRow), "None yet.");
   if (tab === "badges") {

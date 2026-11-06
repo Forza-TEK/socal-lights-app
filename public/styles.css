@@ -849,3 +849,6 @@ body.lb-open{overflow:hidden}
   .searchrow{grid-template-areas:"brand search acct more" "season season season theme"}
   .searchrow #themebtn{grid-area:theme}
 }
+
+/* Dropdown lists: the browser draws them itself, so give them the page colors (otherwise light text on white in dark mode) */
+select option,select optgroup{background-color:var(--bg);color:var(--ink)}
