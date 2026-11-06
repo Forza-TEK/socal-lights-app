@@ -620,3 +620,9 @@ Added 2 events (migration 0164): Bell Holiday Village (Dec 5) and Winter Runderl
 
 ## 2026-11-06 — Tutorial videos: approve, profile, voting re-recorded; four new videos
 Re-recorded `approve` (Add homes yourself, Added by organizer, Remove), `profile` (Contests tab, rows) and `voting` (Contest page, Unpublish). New: "Add your city's homes yourself", "Unpublish and publish again", "Claim your home", "Feature your event or home" (recorded after the new Featured pricing went live; stops before Stripe, nothing sent). Computer and phone versions of all seven, day mode, Kokoro voice, captions, title card first. Recorder additions: `scripts/tutorials/mockgeo.mjs` (local stand-in for the address lookup in the Add homes scenes), new specs in `videos2.mjs`. Not re-recorded: map, pro-filter, installer-profile (tag colours), announce (Terms wording open), showcase. See `docs/tutorial-updates.md`.
+
+## 2026-11-07 (maps choice, Waze, Send to car)
+- Waze added as a third maps app everywhere; one shared module `public/maps.js`.
+- Phones: the first Directions / Route tap asks which maps app (our own pop-up, "Always use this one" ticked) and remembers it; "Opens in … Change" changes it. Notes in docs/maps-choice.md.
+- "Send to car" on each stop (phone share sheet; the Tesla app takes a shared place).
+- Tesla account option explored: docs/tesla-integration.md (not built).
