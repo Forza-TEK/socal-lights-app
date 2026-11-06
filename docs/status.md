@@ -4,13 +4,21 @@ _Last updated: 2026-11-06 (installer Sponsor placements)_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Claim decision emails (2026-11-06)
+When an admin approves or declines a person's event claim (Admin > Event claims), that person gets one email: templates `claim_approved` (event name, link to `/feature?event=<id>`, what to do next, says approval does not give edit rights) and `claim_declined` (short, kind, factual, "write to info@socallights.app"). Both are editable in Admin > Settings > Email templates (code defaults in `functions/_lib/mailtpl.js`, no seed migration needed).
+- **Once per decision.** Migration `0173_claim_decision_email.sql` adds `event_claims.emailed_status` (old decided rows backfilled as handled). A repeat click, or an admin click on a claim that was auto-approved by email-domain match, sends nothing. A failed send is logged to `ops_log`, is not marked sent, and never blocks the decision; a later click retries. Admin toast says "and emailed" or "(no email sent)".
+- **No reason text.** The Admin claim UI has no reason field, so neither email carries one.
+- **Pages.** `/feature` now tells the claimant "We will email you when it has been reviewed". Privacy policy got one line about claims and the claim email (Updated November 6, 2026). `admin.js?v=20261107c`.
+- **Tests.** `tests/claim-email.test.mjs`.
+- **Risk.** Not tested with a real email.
+
 ## Event organizer Featured funnel (2026-11-06)
 One funnel for event organizers: Choose (Pricing) -> sign in -> Which event? -> Confirm and pay (full bullets, exact dates, total) -> Stripe -> success view and confirmation email. Audit with evidence and click counts: `docs/event-funnel-audit.md`.
 - **Page.** `public/feature.html` rebuilt (plan and event kept in the URL and session storage; one eligible event is preselected; ineligible events say why and the date featuring opens; Add a new event / Claim an existing listing; the plan that does not fit is swapped with a sentence). Homes (podium finishers) use the same page. `feature-plans.js?v=20261107b` (`planWindow`, `eventEligibility`), `/add-event?plan=` preselects and shows dates and total, `admin.js?v=20261107b`.
 - **Server.** `/api/me/featurable` adds `opens` and contest `start`; checkout success/cancel URLs carry plan and event (or `sub=`); the webhook sends the new `feature_paid` template (live, or "held until we approve") and Admin approval sends it again when the placement switches on. Admin > Orders shows plan name and event dates.
 - **Counters.** `fn:event-feature-choose`, `-pick` (browser), `-checkout`, `-paid` (server) in `functions/_lib/funnel.js`, shown in the dashboard list.
 - **Tests.** `tests/event-funnel.test.mjs`. Browser walk with Stripe stubbed (no Stripe call): 390 and 1280 px, light and dark.
-- **Risk.** Not tested with a real payment or real email. Claim approvals still send no email.
+- **Risk.** Not tested with a real payment or real email. Claim approvals sent no email at the time; see the next section.
 
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
