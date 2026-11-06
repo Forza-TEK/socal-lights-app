@@ -7,7 +7,7 @@ import "/norm-ui.js?v=20261102b";
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261107b";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261107b";
-import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261107e";
+import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261108a";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -546,10 +546,12 @@ function viewRegions() {
   const c = map.getCenter(); let best = "", bd = 1e9; Object.entries(CITY).forEach(([n, [lat, lng]]) => { const d = miles({ lat: c.lat, lng: c.lng }, { lat, lng }); if (d < bd) { bd = d; best = n; } }); if (best) add(best); // zoomed in far enough that no city centre is in view
   return regionKey(names);
 }
-const bannerTick = () => updateBanner(viewRegions());
+// Events whose pin is in the map view right now (their banner pill shows only then)
+function viewEventIds() { const ids = new Set(); if (!mapReady) return ids; const a = mapArea(); E.forEach((e) => { const q = map.project([e.lng, e.lat]); if (q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1) ids.add(e.id); }); return ids; }
+const bannerTick = () => updateBanner(viewRegions(), viewEventIds());
 function placeBanner(el) { const g = $("#grab"); if (el.previousElementSibling !== g) g.after(el); } // always at the top of the list panel, on phones, tablets and desktop alike
 let bannerOn = false;
-async function startBanner() { bannerOn = await initBanner({ place: (el) => { placeBanner(el); }, onChange: () => { if (isPhone()) setSheet(sheetState); } }); if (bannerOn) { bannerTick(); if (!state.detail) renderPanel({ quiet: true }); } }
+async function startBanner() { bannerOn = await initBanner({ place: (el) => { placeBanner(el); }, onOpenEvent: (id) => { if (!E.some((e) => e.id === id)) return false; openDetail("e:" + id); return true; }, onChange: () => { if (isPhone()) setSheet(sheetState); } }); if (bannerOn) { bannerTick(); if (!state.detail) renderPanel({ quiet: true }); } }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
 let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (bannerOn) bannerTick(); if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel({ quiet: true }); }, 80); }
 function counts() { $("#n-events").textContent = E.filter(evMatch).length + SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; const tb = $("#tb-plan"); if (tb) { tb.textContent = favs.size; tb.hidden = !favs.size; } }

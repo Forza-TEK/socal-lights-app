@@ -360,3 +360,16 @@ Terms the pages state to the buyer, for review:
 ## Not covered here (outside the brief or other owners)
 
 Sales tax on listings and 1099s for prizes of $600 or more are CPA questions (brief 5, Q7). State sweepstakes registration (NY, FL, RI) is secondary-source only. `docs/rules-review.md` and `docs/contest-business-model.md` need the corrections listed in brief section 8; I did not edit them.
+
+---
+
+## Pricing and tier wording changed 2026-11-06 (second change, for the attorney)
+
+Plain-English draft in the live Terms (`/terms#paid`), NOT reviewed by an attorney. What changed since the first redline:
+1. **Event plans are now additive parts.** A paid event plan is built from the Featured pin (always included), a banner and top of the list. The Terms describe each part and say the plans are the pin, banner + pin, top of the list + pin and all three at the prices on the Pricing page (prices are not written in the Terms).
+2. **The event banner is labelled "Featured".** An event's banner is a pill in the strip at the top of the map list, labelled "Featured" (installers' banner stays "Sponsor"). Question: does a pill labelled "Featured" meet the labelling duty for paid placement, or should it say "Ad" or "Sponsored"? The first redline treated the gold "Featured" badge as sufficient; the pill is the same wording on a different surface.
+3. **Window.** From payment until the event's last day or the end of the season it was bought in (Christmas lights: Jan 6), whichever comes first; flat price, no proration, exact dates and total shown before payment. Upgrades charge only for the parts added; a purchase that adds nothing is not sold.
+4. **Refunds apply per part.** The full refund promise when we cannot list or feature an event covers every part (pin, banner, top of the list). A refund or lost dispute switches off the parts that order bought (the pin, the banner and top of the list end with the order that bought them); time another paid order covers stays. Question: is "time another paid order still covers stays" clear enough for a buyer who bought parts separately?
+5. **Installers** can now buy Top of the list (the card) without the banner. Same labelling ("Sponsor"), same refund and renewal wording; automatic renewal renews the same plan bought.
+6. **Homes** are unchanged (30 days, podium finishers only; payment never affects a contest).
+7. The old plans (Featured pin, Top of the list, Full run for events) are no longer sold; paid orders honor the terms they were bought under.

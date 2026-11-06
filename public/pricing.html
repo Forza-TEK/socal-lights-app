@@ -18,6 +18,8 @@
 .plan>h2{font-size:20px;margin:0 0 12px}
 .tiers{display:grid;gap:14px;margin:0 0 14px}.tier{padding-top:14px;border-top:1px solid var(--line)}.tier:first-child{padding-top:0;border-top:0}.tier p{margin-top:4px}.tier p b{color:var(--ink)}.tier .free{font-size:26px}
 @media(min-width:700px){.tiers.one{grid-template-columns:1fr}.tiers{grid-template-columns:repeat(3,1fr);gap:22px}.tier{padding:0 0 0 22px;border-top:0;border-left:1px solid var(--line)}.tier:first-child{padding-left:0;border-left:0}}.tiers.four{grid-template-columns:1fr}.tiers.four .tier,.tiers.four .tier:first-child{padding:16px;border:1px solid var(--line);border-radius:14px}@media(min-width:700px){.tiers.four{grid-template-columns:repeat(2,1fr);gap:14px}.tiers.four .tier{border-left:1px solid var(--line)}}
+.tiers.five{grid-template-columns:1fr}.tiers.five .tier,.tiers.five .tier:first-child{padding:16px;border:1px solid var(--line);border-radius:14px}@media(min-width:700px){.tiers.five{grid-template-columns:repeat(2,1fr);gap:14px}.tiers.five .tier{border-left:1px solid var(--line)}.tiers.five .tier:first-child{grid-column:1/-1}}
+.tier ul{margin:0 0 14px;padding-left:20px;display:grid;gap:4px;color:var(--muted)}.tier .inc{margin:0 0 4px}
 .plan>.meta{margin:0 0 14px;font-size:14px}.plan .intro{margin-top:-4px}.plan .btn+.btn{margin-left:8px}.tier{display:flex;flex-direction:column}.tier>p{margin-bottom:14px}.tier>.btn{margin-top:auto;align-self:flex-start}
 </style>
 <script src="/hit.js?v=20261107a" defer></script>
@@ -30,16 +32,16 @@
 
 <div class="grid">
 <section class="plan" id="homeowners"><h2>Homeowners</h2>
-<div class="tiers one"><div class="tier"><div class="free">Free</div><p><b>Show your lights on the map.</b> Entering a display and entering a contest are free. A contest winner, 2nd or 3rd place can also feature their home for 30 days (see Event organizers for the prices).</p></div></div>
+<div class="tiers one"><div class="tier"><div class="free">Free</div><p><b>Show your lights on the map.</b> Entering a display and entering a contest are free. A contest winner, 2nd or 3rd place can also feature their home for 30 days: <span id="homeprices">the Featured pin or Top of the list</span>. Homes are a separate line from event plans.</p></div></div>
 <a class="btn" href="/add-house">Add your display</a></section>
 
 <section class="plan" id="events"><h2>Event organizers</h2>
 <p class="meta intro"><b>Listing your event is free</b> (tree lighting, parade, market, haunted house, light show). Featured placement is optional: pick one, pay once, no subscription.</p>
-<div class="tiers four" id="plans"><div class="tier"><div class="free">Free</div><p><b>Your listing.</b> A pin on the map and a card in the list.</p><a class="btn ghost" href="/add-event">Add your event</a></div></div>
-<p class="meta" id="featnote">Choose a plan, sign in with an emailed code, pick your event, and pay on Stripe's secure page. Placement starts when you pay and runs to your event's last day, up to 30 days (up to 90 for a Full run). Featuring opens 30 days before the event.</p></section>
+<div class="tiers five" id="plans"><div class="tier"><div class="free">Free</div><p><b>Your listing.</b> A pin on the map and a card in the list.</p><a class="btn ghost" href="/add-event">Add your event</a></div></div>
+<p class="meta" id="featnote">Choose a plan, sign in with an emailed code, pick your event, and pay on Stripe's secure page. <span id="evrule"></span> The exact dates and total are shown before you pay.</p></section>
 
 <section class="plan" id="banner"><h2>Installers</h2>
-<div class="tiers" id="insttiers">
+<div class="tiers four" id="insttiers">
 <div class="tier"><div class="free">Free</div><p><b>Profile card.</b> Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map, so anyone who likes your work can click through to you.</p><a class="btn ghost" href="/add-house?kind=installer" aria-label="Choose Free, create your free profile">Create your free profile</a></div>
 </div>
 <p class="meta paid" id="instnote">Paid placements are always labelled "Sponsor". You pay on Stripe's secure page, one time for the season by default. Automatic renewal is optional: it is off unless you tick the box on the payment step (or turn it on in your dashboard), and you can cancel it any time. You can also renew or upgrade by hand from your dashboard.</p>
@@ -61,13 +63,13 @@
 <script type="module">
 import { themeBtn, mountAcct } from "/addflow.js?v=20261107b";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
-import { planCopy, planBlurb, PLAN_KEYS } from "/feature-plans.js?v=20261107b";
+import { eventTierCopy, eventRule, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const dollars = (p) => "$" + (p.cents / 100);
+const dollars = (p) => "$" + (p.cents % 100 ? (p.cents / 100).toFixed(2) : p.cents / 100);
 // one number (no person) when Choose is tapped, to see how many reach the next step
 $("#plans").addEventListener("click", (e) => { if (e.target.closest("a.btn")) try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k: "fn:event-feature-choose" })], { type: "application/json" })); } catch {} });
-import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261107e";
+import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261108a";
 const PAID = (on) => { document.querySelectorAll(".paid,#featnote,#plans").forEach((e) => (e.hidden = !on)); };
 const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
 if (/SoCalLightsApp/.test(navigator.userAgent)) {
@@ -77,13 +79,17 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({})), PL = cfg.featurePlans || {};
   const IP = cfg.installerPlans || {}, ikeys = SPONSOR_KEYS.filter((k) => IP[k]);
   if (ikeys.length) {
-    $("#insttiers").insertAdjacentHTML("beforeend", ikeys.map((k) => { const c = sponsorCopy(k); return `<div class="tier paid"><div class="free">${money(IP[k].cents)} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(c.blurb)}</p><a class="btn ghost" href="/sponsor?plan=${k}" data-choose aria-label="Choose ${esc(c.name)}, ${money(IP[k].cents)}">Choose</a></div>`; }).join(""));
+    $("#insttiers").insertAdjacentHTML("beforeend", ikeys.map((k) => { const c = sponsorCopy(k); return `<div class="tier paid"><div class="free">${money(IP[k].cents)} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b></p><p class="inc">Includes:</p><ul>${c.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul><a class="btn ghost" href="/sponsor?plan=${k}" data-choose aria-label="Choose ${esc(c.name)}, ${money(IP[k].cents)}">Choose</a></div>`; }).join(""));
     const r = seasonRule(cfg); $("#instseason").textContent = r.rule + " " + r.now;
     $("#insttiers").addEventListener("click", (e) => { if (e.target.closest("[data-choose]")) beacon("fn:pricing-choose"); });
   } else { $("#instnote").hidden = true; $("#instseason").hidden = true; }
-  const keys = PLAN_KEYS.filter((k) => PL[k]);
+  const EP = cfg.eventPlans || {}, keys = EVENT_KEYS.filter((k) => EP[k]);
+  if (PL.pin && PL.top) $("#homeprices").textContent = `the Featured pin (${dollars(PL.pin)}) or Top of the list (${dollars(PL.top)}), each for 30 days`;
   if (!keys.length) { $("#featnote").hidden = true; $("#plans").hidden = true; }
-  else $("#plans").insertAdjacentHTML("beforeend", keys.map((k) => { const c = planCopy(k, PL); const what = planBlurb(k, PL); return `<div class="tier paid"><div class="free">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(what)}</p><a class="btn ghost" href="/feature?plan=${k}" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</a></div>`; }).join(""));
+  else {
+    const r = eventRule(cfg, (c) => dollars({ cents: c })); $("#evrule").textContent = r.rule + r.now + r.up;
+    $("#plans").insertAdjacentHTML("beforeend", keys.map((k) => { const c = eventTierCopy(k); return `<div class="tier paid"><div class="free">${dollars(EP[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b></p><p class="inc">Includes:</p><ul>${c.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul><a class="btn ghost" href="/feature?plan=${k}" aria-label="Choose ${esc(c.name)}, ${dollars(EP[k])}">Choose</a></div>`; }).join(""));
+  }
 }
 </script>
 <script src="/footer.js?v=20261106z" defer></script>

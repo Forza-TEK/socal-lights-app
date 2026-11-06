@@ -17,7 +17,7 @@
 import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261107b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
 import { CITY } from "/cities.js?v=20261107a";
-import { planCopy, planStatus, planWindow, niceDate, PLAN_KEYS } from "/feature-plans.js?v=20261107b";
+import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
 import { me, signIn } from "/auth.js?v=20261107p";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
 const acct = (await me()).user;
@@ -33,15 +33,20 @@ if (!acct) {
 const cfg = await ts.init(), pay = !!cfg.featureCheckout && !IN_APP; // paid placement is offered only when online payment is on, and never inside the store apps
 const d = { url: "", name: "", season: defaultSeason(today), type: "", start: "", end: "", hours: "", free: "yes", price: "", venue: "", street: "", city: "", blurb: "", email: "", plan: "" };
 d.email = acct.email;
-{ const want = new URLSearchParams(location.search).get("plan"); if (want && ["pin", "top", "season"].includes(want)) d.plan = want; } // arrived from Pricing or the Feature page with a plan chosen
-// Prices, day limits and the 30-day opening window come from /api/config (functions/_lib/featured.js); the wording lives in /feature-plans.js.
-// A plan is offered only when the event can buy it today (featuring opens 30 days before the event; Full run needs a 31+ day event with 7+ days left).
-const FP = cfg.featurePlans || {}, OPEN = cfg.featureOpenDays || 30;
-const statusOf = (x, k) => planStatus(k, { start: x.start, end: x.end }, FP, OPEN, today);
-const planOff = (x, k) => !statusOf(x, k).ok;
+{ const want = new URLSearchParams(location.search).get("plan"), LEG = { pin: "ev_pin", top: "ev_top", season: "ev_all" }, k = EVENT_KEYS.includes(want) ? want : LEG[want]; if (k) d.plan = k; } // arrived from Pricing or the Feature page with a plan chosen
+// Prices come from /api/config (functions/_lib/featured.js); the wording lives in /feature-plans.js. What each plan costs and when it would run for THIS event's dates comes from the server
+// (/api/feature/quote, the same calculation the payment uses). A plan is offered only when the event can buy it today (featuring opens 30 days before the event).
+const EP = cfg.eventPlans || {}, QUOTES = {}; // QUOTES["start|end"]: the server's quotes for those dates (null while loading)
+const money = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : c / 100), qKey = (x) => x.start + "|" + x.end;
+function loadQuotes(x) {
+  const k = qKey(x); if (QUOTES[k] !== undefined || !x.start) return; QUOTES[k] = null;
+  fetch("/api/feature/quote?start=" + encodeURIComponent(x.start) + "&end=" + encodeURIComponent(x.end || x.start)).then((r) => (r.ok ? r.json() : null)).then((j) => { QUOTES[k] = j ? j.quotes : {}; const box = document.getElementById("planbox"); if (box) box.innerHTML = plansHtml(x); }).catch(() => { QUOTES[k] = {}; });
+}
+const planOff = (x, k) => { const q = QUOTES[qKey(x)]; return !!q && (!q[k] || !!q[k].problem); };
 // Each offered plan lists everything it includes, the exact dates it would run if bought today, and the total.
-const plansFor = (x) => [["", "No thanks, just list it", "Free"], ...PLAN_KEYS.filter((k) => FP[k] && !planOff(x, k)).map((k) => { const c = planCopy(k, FP), w = planWindow(k, { end: x.end }, FP, today); return [k, `${c.name}: $${FP[k].cents / 100}`, [...(c.sub ? [c.sub] : []), ...c.bullets, `Runs ${niceDate(w.from)} to ${niceDate(w.until)} (${w.days} day${w.days === 1 ? "" : "s"}). Total $${FP[k].cents / 100}, charged once on Stripe.`].map((t) => "&bull; " + esc(t)).join("<br>")]; })];
-const planNote = (x) => [...new Set(PLAN_KEYS.filter((k) => FP[k] && planOff(x, k)).map((k) => statusOf(x, k).note))].join(" ");
+const plansFor = (x) => { const q = QUOTES[qKey(x)] || {}; return [["", "No thanks, just list it", "Free"], ...EVENT_KEYS.filter((k) => EP[k] && q[k] && !q[k].problem).map((k) => { const c = eventTierCopy(k), ql = quoteLine(q[k], money); return [k, `${c.name}: ${ql.price}`, [...c.bullets, `Starts the moment you pay, ends ${niceDate(q[k].to)} (${ql.endsBy}). Total ${ql.price}, charged once on Stripe.`].map((t) => "&bull; " + esc(t)).join("<br>")]; })]; };
+const planNote = (x) => { const q = QUOTES[qKey(x)] || {}; return [...new Set(EVENT_KEYS.filter((k) => q[k] && q[k].problem).map((k) => q[k].problem))].join(" "); };
+const plansHtml = (x) => (QUOTES[qKey(x)] ? `<div class="tiles">${plansFor(x).map(([v, t, s2]) => tile(x, "plan", v, t, s2, false)).join("")}</div>${planNote(x) ? `<p class="small muted">${esc(planNote(x))}</p>` : ""}` : `<p class="small muted">Loading the plans for your dates…</p>`);
 
 const steps = [
   { id: "url", sec: "Basics", title: "Do you have a web page for your event?", help: "If the page mentions your event's name and date, it shows as Confirmed. Without one, it still goes on the map right away, marked Expected until the dates are checked.",
@@ -64,12 +69,12 @@ const steps = [
   { id: "review", sec: "Review", title: "Check everything, then add it", cta: "Add my event", redraw: false,
     body: (x) => `<div class="sum">${sumRow("Event", esc(x.name), "name")}${sumRow("Page", x.url.trim() ? esc(x.url) : "None. A person will check it", "url")}${sumRow("When", fmt(x.start) + (x.end !== x.start ? " to " + fmt(x.end) : ""), "dates")}${sumRow("Price", x.free === "yes" ? "Free" : esc(x.price), "price")}${sumRow("Where", `${esc(x.venue)}, ${esc(x.city)}`, "where")}</div>
       <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). It is only used if something needs fixing and it is never shown publicly.</p></div>
-      ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div class="tiles">${plansFor(x).map(([v, t, s]) => tile(x, "plan", v, t, s, false)).join("")}</div>${planNote(x) ? `<p class="small muted">${esc(planNote(x))}</p>` : ""}<p class="small muted">After you tap Add my event, you go straight to Stripe's secure page to pay; there is nothing to enter again. If it needs a quick review first, your payment is held and Featured turns on the moment we approve it (a full refund if we cannot list it).</p></div>` : ""}<div id="ts"></div>`,
+      ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div id="planbox">${(loadQuotes(x), plansHtml(x))}</div><p class="small muted">After you tap Add my event, you go straight to Stripe's secure page to pay; there is nothing to enter again. If it needs a quick review first, your payment is held and Featured turns on the moment we approve it (a full refund if we cannot list it).</p></div>` : ""}<div id="ts"></div>`,
     submit: async (x, api) => {
       const body = { name: x.name, url: x.url, season: x.season, type: x.type, start: x.start, end: x.end, hours: x.hours, price: x.free === "yes" ? "" : x.price, free: x.free === "yes", venue: x.venue, address: x.street, city: x.city, blurb: x.blurb, email: x.email, "cf-turnstile-response": ts.token() };
       const r = await fetch("/api/submit-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
-      if (x.plan && FP[x.plan] && planOff(x, x.plan)) x.plan = ""; // the dates changed after the plan was chosen
+      if (x.plan && planOff(x, x.plan)) x.plan = ""; // the dates changed after the plan was chosen
       if (x.plan && pay) {
         // Straight on to Stripe. A published event is featured by its id; one in review is held until it is approved.
         const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(j.status === "published" || j.status === "duplicate" ? { event_id: j.id } : { submission_id: j.submission_id }), plan: x.plan, email: x.email }) });

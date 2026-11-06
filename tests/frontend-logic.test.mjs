@@ -6,8 +6,8 @@ import { normPhone, fmtPhone, telHref, tidy, normEmailText, looksEmail, normZip,
 import { SEASONS, SEASON_KEYS, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "../public/seasons.js";
 import { rulesDefault } from "../public/rules.js";
 import { money, dayWord, SPONSOR_KEYS } from "../public/sponsor-plans.js";
-import { planStatus, planWindow, eventEligibility, plusDays, PLAN_KEYS } from "../public/feature-plans.js";
-import { PLANS, OPEN_DAYS, applyPlan, eventPlanProblem } from "../functions/_lib/featured.js";
+import { planStatus, planWindow, eventEligibility, plusDays, EVENT_KEYS, quoteLine } from "../public/feature-plans.js";
+import { PLANS, EVENT_PLANS, OPEN_DAYS, eventQuote } from "../functions/_lib/featured.js";
 import * as serverFields from "../functions/_lib/fields.js";
 
 test("norm: phone numbers", () => {
@@ -55,35 +55,37 @@ test("rules text: includes the contest facts the organizer chose", () => {
 });
 test("sponsor plan helpers", () => {
   assert.equal(money(2500), "$25"); assert.equal(money(1050), "$10.50"); assert.equal(money(0), "$0");
-  assert.equal(dayWord(1), "1 day"); assert.equal(dayWord(30), "30 days"); assert.deepEqual(SPONSOR_KEYS, ["banner", "banner_top"]);
+  assert.equal(dayWord(1), "1 day"); assert.equal(dayWord(30), "30 days"); assert.deepEqual(SPONSOR_KEYS, ["banner", "top", "banner_top"]);
 });
 
-// ---- the page and checkout must agree on who can buy which Featured plan and what it gives (client planStatus/planWindow vs server eventPlanProblem/applyPlan) ----
-test("feature plans: the page's plan status matches the server's checkout rule on a grid of events and days", () => {
+// ---- the page and checkout must agree on who can buy which event plan and what it gives: the page reads the server's quotes (eventQuote), it holds no rule of its own ----
+test("feature plans: eligibility follows the server's quotes on a grid of events and days; the dates the page shows are the quote's", () => {
   const today = "2026-11-10", mism = [];
   const starts = [-40, -5, 0, 5, 29, 30, 31, 45], lens = [0, 2, 5, 6, 7, 30, 31, 60, 120];
-  for (const s of starts) for (const l of lens) for (const k of PLAN_KEYS) {
+  for (const s of starts) for (const l of lens) {
     const ev = { start_date: plusDays(today, s), end_date: plusDays(today, s + l) };
     if (ev.end_date < today) continue; // ended events are refused earlier in checkout, and the page says "ended"
-    const page = planStatus(k, { start: ev.start_date, end: ev.end_date }, PLANS, OPEN_DAYS, today).ok, server = eventPlanProblem(ev, k, today) === "";
-    if (page !== server) mism.push(`${k} start ${s} len ${l}: page ${page}, server ${server}`);
+    const quotes = Object.fromEntries(EVENT_KEYS.map((k) => [k, eventQuote(ev, k, today)]));
+    const el = eventEligibility({ state: "live" }, quotes);
+    for (const k of EVENT_KEYS) {
+      if (el.plans.includes(k) !== (quotes[k].problem === "")) mism.push(`${k} start ${s} len ${l}`);
+      if (!quotes[k].problem) { // the placement ends on the event's last day or the season's last day, whichever comes first; never before today
+        if (quotes[k].to > ev.end_date || quotes[k].to < today || (quotes[k].to < ev.end_date && quotes[k].to !== quotes[k].season_end)) mism.push(`${k} start ${s} len ${l}: ends ${quotes[k].to}`);
+        if (quoteLine(quotes[k], money).ends.length < 6) mism.push("no end date shown");
+      }
+    }
   }
   assert.deepEqual(mism, []);
 });
-test("feature plans: the dates the page promises equal the dates the server applies", () => {
-  const today = "2026-11-10", mism = [];
-  for (const s of [-20, 0, 10, 29]) for (const l of [0, 3, 10, 29, 31, 45, 80, 200]) for (const k of PLAN_KEYS) {
-    const ev = { start_date: plusDays(today, s), end_date: plusDays(today, s + l) };
-    if (ev.end_date < today || eventPlanProblem(ev, k, today)) continue;
-    const w = planWindow(k, { start: ev.start_date, end: ev.end_date }, PLANS, today), a = applyPlan({ ...ev, featured: 0, featured_until: null }, k, today);
-    if (w.until !== a.featured_until) mism.push(`${k} start ${s} len ${l}: page ${w.until}, server ${a.featured_until}`);
-  }
-  assert.deepEqual(mism, []);
+test("feature plans: the home plans (pin $10, top $15, 30 days) are unchanged and still shown by planWindow", () => {
+  const today = "2026-11-10";
+  assert.deepEqual([PLANS.pin.cents, PLANS.top.cents, PLANS.pin.days, PLANS.top.days], [1000, 1500, 30, 30]);
+  assert.equal(planWindow("pin", {}, PLANS, today).until, plusDays(today, 30)); assert.equal(planStatus("top", { home: true }, PLANS, 30, today).ok, true);
 });
 test("feature plans: eligibility reasons for events that cannot be featured", () => {
-  const today = "2026-11-10";
-  assert.equal(eventEligibility({ state: "cancelled", start: "2026-12-01", end: "2026-12-02" }, PLANS, 30, today).ok, false);
-  assert.match(eventEligibility({ state: "live", start: plusDays(today, 90), end: plusDays(today, 91) }, PLANS, 30, today).reason, /opens 30 days before/);
-  assert.match(eventEligibility({ state: "live", start: plusDays(today, -9), end: plusDays(today, -8) }, PLANS, 30, today).reason, /ended/);
-  const ok = eventEligibility({ state: "live", start: plusDays(today, 5), end: plusDays(today, 9) }, PLANS, 30, today); assert.equal(ok.ok, true); assert.deepEqual(ok.plans, ["pin", "top"], "a 5-day event cannot buy the 31-day Full run");
+  const today = "2026-11-10", qs = (s, e) => Object.fromEntries(EVENT_KEYS.map((k) => [k, eventQuote({ start_date: plusDays(today, s), end_date: plusDays(today, e) }, k, today)]));
+  assert.equal(eventEligibility({ state: "cancelled" }, qs(20, 21)).ok, false);
+  assert.match(eventEligibility({ state: "live" }, qs(90, 91)).reason, /opens 30 days before/);
+  assert.match(eventEligibility({ state: "live" }, qs(-9, -8)).reason, /ended/);
+  const ok = eventEligibility({ state: "live" }, qs(5, 9)); assert.equal(ok.ok, true); assert.deepEqual(ok.plans, ["ev_pin", "ev_banner", "ev_top", "ev_all"]);
 });

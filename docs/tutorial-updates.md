@@ -107,3 +107,21 @@ Order and ids follow `public/tutorials.json`. "Step" is the caption on screen.
 
 ## If you re-record
 Use `docs/tutorials.md` and `docs/tutorial-standard.md`. Order of value: `approve` (re-record), `profile` (small re-record), then the new organizer video. Everything else can wait for the next full refresh. Record in day mode, after merging this pass, so the darker tag colours (C12) are what viewers see.
+
+---
+
+## 2026-11-06 (second change): pricing tiers, event banner, installer Top of the list
+
+The owner re-records after the pricing PR is live. Videos are `public/tutorials/<id>.mp4` (+ `-mobile`), built by `scripts/tutorials/*.mjs`; a Help article attaches one through its Video field.
+
+## Videos out of date (id, step)
+| Video (file) | Script | Steps that show old screens or wording |
+|---|---|---|
+| `feature` (`post-feature`) | `scripts/tutorials/videos2.mjs` (`S.feature`) | "Pick a plan": there are now four event plans (Featured pin, Banner + Featured pin, Top of the list + Featured pin, Top of the list + Banner + Featured pin) each listing its contents, not three; the narration says "a Featured event gets a gold ringed pin" only. "Tap a plan" (`#plans [data-pick] nth=1`) now picks the banner plan. The picker hovers `#plans [data-p]` 0 to 2, so add a fourth and check the selector (the plan grid has no `id="plans"`). "Tap Continue to payment": the button now reads "Pay <price> on Stripe" and the confirm screen shows the start, end and total. Recap "Featured is the only paid option": wrong, installers can also sponsor. Mention the banner and the exact dates. |
+| `add-event` (`post-event`) | `scripts/tutorials/post-events-homes.mjs` | The review step's "Make it stand out" plan tiles are new (four tiers, loaded for the event's dates), if the take shows that step. |
+| `find-map`, `find-night`, `find-app`, `find-pro` (any take that shows the top of the map list) | `scripts/tutorials/*.mjs` | The strip's dashed pill now says "Advertise here" (was "Installers: advertise here") and event pills labelled "Featured" can appear in it. Check screenshots/poster frames. |
+| `installer` (`sponsors-installer`), `profile` / installer dashboard takes | `scripts/tutorials/sponsors-installers.mjs` | Only if a take opens the Sponsor placement card or /sponsor: three plans now (Banner, Top of the list, Banner and top of the list) and the new "both together" upgrade line. No take shown today names a price. |
+
+## Help articles changed by migration 0184 (seed-only; paste text in `docs/help-updates.md`)
+- `is-it-free`, `feature-an-event-or-home`, `sponsor-your-installer-company` (new tiers, no prices written), `automatic-renewal-for-installers` (one sentence: renews the same plan).
+- **Needs a video linked:** `sponsor-your-installer-company` has no video yet (record "sponsor" and set its Video field). `feature-an-event-or-home` is linked to `post-feature`, which is now out of date (above): re-record, same file name, no change to the Video field.

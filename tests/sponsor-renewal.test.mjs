@@ -353,3 +353,19 @@ test("audit: consent evidence (wording, version, time, user, plan), card-only, t
     assert.ok(hits(raw, "fn:autorenew-run") >= 1, "heartbeat");
   } finally { net.restore(); }
 });
+
+test("a Top of the list only placement renews as top-only: the stored plan, the charge ($50, plan top) and the dates touch top_until and never the banner", async () => {
+  const { env, raw } = await setup(); const net = fakeNet();
+  try {
+    let un = at("2026-11-06");
+    try { await paidRenew(env, 1, { meta: { plan: "top" } }); } finally { un(); }
+    const row = getRen(raw); assert.equal(row.plan, "top"); assert.equal(row.next_charge_date, "2027-01-06");
+    assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["", "2027-01-06"]);
+    un = at("2027-01-06");
+    try { const r = await run(env); assert.equal(r.body.charged, 1); } finally { un(); }
+    const c = net.piCalls()[0]; assert.deepEqual([c.body.amount, c.body["metadata[plan]"], c.body["metadata[renewal_from]"]], ["5000", "top", "2027-01-07"]);
+    assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["", "2027-01-31"], "only the top of the list was extended");
+    const o = raw.prepare("SELECT * FROM feature_orders WHERE renewal = 1").get(); assert.deepEqual([o.plan, o.applied_until, o.applied_top_until], ["top", null, "2027-01-31"]);
+    assert.equal(getRen(raw).next_charge_date, "2027-01-31");
+  } finally { net.restore(); }
+});

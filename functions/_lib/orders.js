@@ -30,7 +30,7 @@ export function orderFlags(o, today, now = Date.now()) {
 
 // Paid, applied orders whose placement is still running on this event (what an unpublish or delete would take away).
 export async function livePaidOrders(db, eventId, today) {
-  return (await db.prepare("SELECT session_id, plan, amount, applied_until, email FROM feature_orders WHERE event_id = ? AND status = 'paid' AND applied = 1 AND (applied_until IS NULL OR applied_until >= ?) ORDER BY created_at").bind(eventId, today).all()).results;
+  return (await db.prepare("SELECT session_id, plan, amount, applied_until, email FROM feature_orders WHERE event_id = ?1 AND status = 'paid' AND applied = 1 AND ((applied_until IS NULL AND applied_top_until IS NULL) OR applied_until >= ?2 OR applied_top_until >= ?2) ORDER BY created_at").bind(eventId, today).all()).results;
 }
 // Writes the same note on every live paid order of an event.
 export const noteOrders = (db, eventId, note) => db.prepare("UPDATE feature_orders SET note = ? WHERE event_id = ? AND status = 'paid' AND applied = 1").bind(String(note).slice(0, 500), eventId).run();
@@ -62,7 +62,8 @@ export async function markHomeRefundDue(db, postId, why, today = ptToday()) { //
 // restorable: the removal can be undone (unpublish, decline, hide). The note then ends with RESTORE_MARK, and restoreRefundDue turns those orders back to paid
 // when the event or profile comes back (an order the owner already refunded stays refunded). Time on the clock keeps running while it is off, as with Admin's unpublish.
 export const RESTORE_MARK = " Publishing it again puts the placement back.";
-const OPEN = "status IN ('paid','held') AND (applied = 0 OR applied_until IS NULL OR applied_until >= ?)";
+// Still running or not applied yet. An installer's top-of-the-list-only order has no applied_until (it wrote only top_until), so a placement counts as running while ANY date it wrote is today or later; no date at all = open-ended.
+const OPEN = "status IN ('paid','held') AND (applied = 0 OR (applied_until IS NULL AND applied_top_until IS NULL) OR applied_until >= ? OR applied_top_until >= ?)";
 const KINDS = [["event", "events"], ["home", "homes"], ["installer", "installers"]];
 const slices = (ids) => { const l = [...new Set((ids || []).filter(Boolean))], o = []; for (let i = 0; i < l.length; i += 80) o.push(l.slice(i, i + 80)); return o; };
 // t: { events: [event ids or "sub:<id>"], homes: [post ids], installers: [installer ids] }. Statements only, so a caller can put them in its own batch (before the delete).
@@ -70,7 +71,7 @@ export function refundDueStatements(db, t, why, { restorable = false, today = pt
   const note = (AUTO + why).slice(0, restorable ? 500 - RESTORE_MARK.length : 500) + (restorable ? RESTORE_MARK : "");
   const out = [];
   for (const [kind, key] of KINDS) for (const part of slices(t[key]))
-    out.push(db.prepare(`UPDATE feature_orders SET status='refund_due', note=? WHERE target=? AND event_id IN (${part.map(() => "?").join(",")}) AND ${OPEN}`).bind(note, kind, ...part, today));
+    out.push(db.prepare(`UPDATE feature_orders SET status='refund_due', note=? WHERE target=? AND event_id IN (${part.map(() => "?").join(",")}) AND ${OPEN}`).bind(note, kind, ...part, today, today));
   return out;
 }
 const changed = (rs) => rs.reduce((n, r) => n + ((r.meta && r.meta.changes) || 0), 0);

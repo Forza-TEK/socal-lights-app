@@ -8,8 +8,8 @@ import { onRequestPost as webhook } from "../functions/api/stripe-webhook.js";
 import { onRequestPost as decide } from "../functions/api/admin/submissions/[id].js";
 import { onRequestPost as visit } from "../functions/api/visit.js";
 import { STEPS, dayKey } from "../functions/_lib/funnel.js";
-import { eventEligibility, planWindow } from "../public/feature-plans.js";
-import { PUBLIC_PLANS } from "../functions/_lib/featured.js";
+import { eventEligibility, EVENT_KEYS } from "../public/feature-plans.js";
+import { eventQuote } from "../functions/_lib/featured.js";
 import { newEnv, addEvent, addUser, stubFetch, sendWebhook, stripeEvent, session, getEvent, ptToday } from "./_pay.mjs";
 
 const n = (raw, page) => (raw.prepare("SELECT n FROM site_hits WHERE day = ? AND page = ?").get(dayKey(), page) || {}).n || 0;
@@ -28,16 +28,20 @@ test("featurable: tells an event that starts too far ahead the day featuring ope
   assert.equal(by.soon.opens, null); assert.equal(by.later.opens, ptToday(20));
 });
 
-test("eligibility (the page's rules): later, ended, pending claim, short event for Full run", () => {
-  const PL = PUBLIC_PLANS, t = ptToday();
-  const later = eventEligibility({ state: "live", start: ptToday(50), end: ptToday(60) }, PL, 30, t);
+test("eligibility (the page's rules): later, ended, pending claim, nothing new to add", () => {
+  const t = ptToday(), qs = (start, end, held = {}) => Object.fromEntries(EVENT_KEYS.map((k) => [k, eventQuote({ start_date: start, end_date: end, ...held }, k, t)]));
+  const later = eventEligibility({ state: "live" }, qs(ptToday(50), ptToday(60)));
   assert.equal(later.ok, false); assert.match(later.reason, /opens 30 days before/);
-  assert.equal(eventEligibility({ state: "ended", start: ptToday(-9), end: ptToday(-1) }, PL, 30, t).ok, false);
-  assert.match(eventEligibility({ state: "claim-pending" }, PL, 30, t).reason, /claim is waiting/);
-  const short = eventEligibility({ state: "live", start: ptToday(1), end: ptToday(10) }, PL, 30, t);
-  assert.deepEqual(short.plans, ["pin", "top"]);
-  const w = planWindow("pin", { end: ptToday(60) }, PL, t); assert.equal(w.capped, true); assert.equal(w.until, ptToday(30));
-  assert.equal(planWindow("pin", { end: ptToday(5) }, PL, t).until, ptToday(5));
+  assert.equal(eventEligibility({ state: "ended" }, qs(ptToday(-9), ptToday(-1))).ok, false);
+  assert.match(eventEligibility({ state: "claim-pending" }, {}).reason, /claim is waiting/);
+  const fresh = eventEligibility({ state: "live" }, qs(ptToday(1), ptToday(10)));
+  assert.deepEqual(fresh.plans, ["ev_pin", "ev_banner", "ev_top", "ev_all"]);
+  // an event that already has everything through its last day: nothing to add, with the reason
+  const full = eventEligibility({ state: "live" }, qs(ptToday(1), ptToday(10), { featured: 2, featured_until: ptToday(10), banner_until: ptToday(10) }));
+  assert.equal(full.ok, false); assert.match(full.reason, /Nothing to add/);
+  // a pin held through the last day: the pin-only plan adds nothing, the others are still sold
+  const pinned = eventEligibility({ state: "live" }, qs(ptToday(1), ptToday(10), { featured: 1, featured_until: ptToday(10) }));
+  assert.deepEqual(pinned.plans, ["ev_banner", "ev_top", "ev_all"]);
 });
 
 test("checkout: success and cancel come back to the same page with the plan and event; 'payment page opened' is counted once Stripe answered", async () => {
@@ -46,24 +50,24 @@ test("checkout: success and cancel come back to the same page with the plan and 
   try {
     const bad = await checkout({ request: post("/api/feature/checkout", { event_id: "ev1", plan: "nope" }, me.cookie), env });
     assert.equal(bad.status, 400); assert.equal(n(raw, "fn:event-feature-checkout"), 0, "a refused request is not counted");
-    const r = await checkout({ request: post("/api/feature/checkout", { event_id: "ev1", plan: "top" }, me.cookie), env });
+    const r = await checkout({ request: post("/api/feature/checkout", { event_id: "ev1", plan: "ev_top" }, me.cookie), env });
     assert.equal(r.status, 200); assert.equal(n(raw, "fn:event-feature-checkout"), 1);
     const sent = new URLSearchParams(String(f.calls[0].init.body));
-    assert.equal(sent.get("success_url"), "https://socallights.app/feature?paid=1&plan=top&event=ev1");
-    assert.equal(sent.get("cancel_url"), "https://socallights.app/feature?cancelled=1&plan=top&event=ev1");
+    assert.equal(sent.get("success_url"), "https://socallights.app/feature?paid=1&plan=ev_top&event=ev1");
+    assert.equal(sent.get("cancel_url"), "https://socallights.app/feature?cancelled=1&plan=ev_top&event=ev1");
     // a pending submission goes by its submission id both ways
     addSub(raw, "s2", "me@example.com");
-    await checkout({ request: post("/api/feature/checkout", { submission_id: "s2", plan: "pin" }, me.cookie), env });
+    await checkout({ request: post("/api/feature/checkout", { submission_id: "s2", plan: "ev_pin" }, me.cookie), env });
     const p = new URLSearchParams(String(f.calls[1].init.body));
-    assert.equal(p.get("success_url"), "https://socallights.app/feature?paid=1&plan=pin&sub=s2");
-    assert.equal(p.get("cancel_url"), "https://socallights.app/feature?cancelled=1&plan=pin&sub=s2");
+    assert.equal(p.get("success_url"), "https://socallights.app/feature?paid=1&plan=ev_pin&sub=s2");
+    assert.equal(p.get("cancel_url"), "https://socallights.app/feature?cancelled=1&plan=ev_pin&sub=s2");
   } finally { f.restore(); }
 });
 
 test("checkout: Stripe failing is not counted", async () => {
   const { env, raw } = newEnv(); addEvent(raw); const me = await addUser(raw, "u1", "me@example.com"); addSub(raw, "s1", "me@example.com", { status: "published", event_id: "ev1" });
   const f = stubFetch(() => new Response("{}", { status: 500 }));
-  try { assert.equal((await checkout({ request: post("/api/feature/checkout", { event_id: "ev1", plan: "pin" }, me.cookie), env })).status, 502); assert.equal(n(raw, "fn:event-feature-checkout"), 0); } finally { f.restore(); }
+  try { assert.equal((await checkout({ request: post("/api/feature/checkout", { event_id: "ev1", plan: "ev_pin" }, me.cookie), env })).status, 502); assert.equal(n(raw, "fn:event-feature-checkout"), 0); } finally { f.restore(); }
 });
 
 test("webhook: a paid, live event is counted once, featured, and the buyer gets the confirmation email (not on a replay)", async () => {
