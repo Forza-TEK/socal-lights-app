@@ -1,5 +1,6 @@
 // POST /api/visit { p: "/tutorials" } — counts one page view for the day, by page group. No IP address, cookie or account is stored.
 import { json } from "../_lib/util.js";
+import { CLIENT_KEYS as FUNNEL_KEYS, DAILY_CAP as FUNNEL_CAP } from "../_lib/funnel.js";
 
 const group = (p) => {
   p = String(p || "/").split(/[?#]/)[0].toLowerCase().replace(/\/+$/, "") || "/";
@@ -13,7 +14,8 @@ const group = (p) => {
 
 // POST /api/visit { k: "click:ticket" } — counts one tap on a link or button, by a fixed list of keys (anything else is ignored). Same table, same privacy.
 export const CLICK_KEYS = ["click:ticket", "click:event-link", "click:feature-checkout-start", "click:installer", "click:shop", "click:promote", "click:route", "ref:inst", "ref:cont", "ref:pub", "ref:soc"];
-const DAILY_CAP = 20000; // per key per day, so a script cannot run a counter up without limit
+const DAILY_CAP = FUNNEL_CAP;
+const MAX_PAGES_PER_DAY = 80; // page names are free text from the browser: once a day has this many different ones, new names are ignored // per key per day, so a script cannot run a counter up without limit
 
 export async function onRequestPost({ request, env }) {
   const raw = await request.text().catch(() => "");
@@ -21,13 +23,16 @@ export async function onRequestPost({ request, env }) {
   let b = {}; try { b = JSON.parse(raw) || {}; } catch {}
   if (b.k !== undefined) {
     const day = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
-    if (CLICK_KEYS.includes(b.k)) try { await env.DB.prepare("INSERT INTO site_hits (day, page, n) VALUES (?, ?, 1) ON CONFLICT(day, page) DO UPDATE SET n = n + 1 WHERE n < ?").bind(day, b.k, DAILY_CAP).run(); } catch {}
+    if (CLICK_KEYS.includes(b.k) || FUNNEL_KEYS.includes(b.k)) try { await env.DB.prepare("INSERT INTO site_hits (day, page, n) VALUES (?, ?, 1) ON CONFLICT(day, page) DO UPDATE SET n = n + 1 WHERE n < ?").bind(day, b.k, DAILY_CAP).run(); } catch {}
     return json({ ok: true }, { headers: { "cache-control": "no-store" } });
   }
   const page = group(b.p);
   if (page) {
     const day = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10); // roughly Pacific time
-    try { await env.DB.prepare("INSERT INTO site_hits (day, page, n) VALUES (?, ?, 1) ON CONFLICT(day, page) DO UPDATE SET n = n + 1").bind(day, page).run(); } catch {}
+    try {
+      const seen = await env.DB.prepare("SELECT COUNT(*) AS n, SUM(page = ?) AS mine FROM site_hits WHERE day = ?").bind(page, day).first();
+      if (seen && (seen.mine || seen.n < MAX_PAGES_PER_DAY)) await env.DB.prepare("INSERT INTO site_hits (day, page, n) VALUES (?, ?, 1) ON CONFLICT(day, page) DO UPDATE SET n = n + 1 WHERE n < ?").bind(day, page, DAILY_CAP).run();
+    } catch {}
   }
   return json({ ok: true }, { headers: { "cache-control": "no-store" } });
 }

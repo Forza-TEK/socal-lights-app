@@ -4,6 +4,14 @@ _Last updated: 2026-11-05_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Batch E 2: funnel counters (2026-11-06)
+- New `functions/_lib/funnel.js`: steps stored in `site_hits` under keys `fn:*` (a number per day; no IP, cookie, account or text). Counted on the server, at the real completion: `fn:signin-done` (`startSession`), `fn:add-event-done`, `fn:add-house-done`, `fn:contest-entry-done`, `fn:subscribe` (new sign-ups only), `fn:subscribe-confirm`. Counted in the browser (allowlist in `/api/visit`, skipped when `navigator.webdriver`): `fn:event-open` (event card opened, `app.js` `openDetail`), `fn:signin-open` (`auth.js`), `fn:visit` (first page of a tab session, `hit.js`).
+- `/api/visit` page names: once a day has 80 different names, new ones are ignored (anyone could create unlimited rows before); page keys now have the same daily cap as click keys.
+- "Real humans": there was no such number in the app, only in the strategy docs. The dashboard's "Page views" is now labelled "Page views*" with a note saying it is a per-tab-session count from a script, not people. `fn:visit` gives a second, coarser number to compare for a week. Dashboard page-view totals and "most visited" no longer include `fn:*` and `ref:*` keys.
+- Admin home has a "How people use the site" list (today and 7 days); the admin digest email has a "How people used the site" section. Tests: `tests/funnel.test.mjs`.
+- `app.js?v=` bumped to 20261106t. `auth.js` was changed but its `?v=` (14 files) was not bumped: browsers get it within 4 hours, and until then only `fn:signin-open` is missed.
+- Still open: Cloudflare analytics comparison (needs the token), `click:directions`, `add:*-start` counters, install counters.
+
 ## Batch E 1: city pages (2026-11-06)
 - `functions/_lib/cityindex.js` is the one place for city logic. A city page is indexable only with 3+ upcoming events or at least one confirmed one; the rest are `noindex,follow` (shell `page()` now writes `noindex,follow`) and are left out of `/sitemap.xml`. They still open normally from the map and links.
 - City pages show the 6 nearest indexable cities with distances, the rest of the county, a one-line count and date-span summary, and links to `/in`, Add an event, Pricing and Help.

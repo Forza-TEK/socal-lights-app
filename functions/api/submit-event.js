@@ -2,6 +2,7 @@
 // The event is geocoded and its web page is checked. If the page really mentions the event and its year, the event
 // is published straight away; otherwise it waits in the admin's "Submitted events" tab. Either way it is logged.
 import { json, err, clean, webUrl, newId, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
 import { requireUser, sameOrigin } from "../_lib/auth.js";
 import { isDate, slug, upsertEvent, verifyEventPage } from "../_lib/events.js";
@@ -85,7 +86,9 @@ export async function onRequestPost({ request, env }) {
 
   if (auto) {
     await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: check.ok ? "confirmed" : "expected", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
+    await bump(env, "fn:add-event-done");
     return json({ ok: true, status: "published", id: eventId, submission_id: id, message: "Your event is on the map." });
   }
+  await bump(env, "fn:add-event-done");
   return json({ ok: true, status: "pending", submission_id: id, message: "Thanks! We'll check your event and add it shortly." });
 }

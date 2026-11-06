@@ -28,6 +28,7 @@ export function noteSigninResult() {
 export function signIn({ title = "Sign in to continue", next = location.pathname + location.search } = {}) {
   return new Promise(async (resolve) => {
     const info = await me(true);
+    try { if (!navigator.webdriver) { const tb = JSON.stringify({ k: "fn:signin-open" }); if (!(navigator.sendBeacon && navigator.sendBeacon("/api/visit", new Blob([tb], { type: "application/json" })))) fetch("/api/visit", { method: "POST", headers: { "content-type": "application/json" }, body: tb, keepalive: true }); } } catch {}
     const host = document.createElement("div");
     const close = (v) => { host.remove(); document.removeEventListener("keydown", onKey); resolve(v); };
     const onKey = (e) => { if (e.key === "Escape") close(null); };

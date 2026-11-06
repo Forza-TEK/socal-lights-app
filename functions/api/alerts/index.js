@@ -1,6 +1,7 @@
 // POST /api/alerts — ask for the weekly "lights near you" email. Sends a confirmation link; nothing is sent until it is clicked.
 import { json, err, clean, newId, verifyTurnstile } from "../../_lib/util.js";
 import { sendTemplate } from "../../_lib/mailtpl.js";
+import { bump } from "../../_lib/funnel.js";
 import { CITY } from "../../../public/cities.js";
 
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
@@ -28,5 +29,6 @@ export async function onRequestPost({ request, env }) {
     const ok = await sendTemplate(env, "alerts_confirm", email, { radius, city, link: `${origin}/api/alerts/confirm?t=${token}` });
     if (!ok) return err(503, "The confirmation email could not be sent. Please try again later.");
   }
+  if (!old) await bump(env, "fn:subscribe"); // a new sign-up (an update to an existing one is not counted again)
   return json({ ok: true, already: !!(old && old.confirmed) });
 }
