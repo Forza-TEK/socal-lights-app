@@ -376,7 +376,7 @@ Installers can show their company in a labeled **Sponsor** banner at the top of 
 5. Tap **Continue to payment** and pay on Stripe's secure page. Your placement turns on within a few minutes.
 
 ## How long it lasts and what it costs
-A season runs from the day you pay to the last day of the season on the map (the Thanksgiving & Christmas season ends Dec 26). The price is the same whenever you start in a season. The page shows the exact price and a sentence such as "the season is 40% over, so this costs $X instead of $50" before you pay. The placement always ends on the season's last day.
+A season runs from the day you pay to the last day of the season on the map (the Christmas lights season runs from Nov 3 to Jan 6, and the next season runs from Jan 7 to Jan 31). The price is the same whenever you start in a season. The page shows the exact price and a sentence such as "the season is 40% over, so this costs $X instead of $50" before you pay. The placement always ends on the season's last day.
 
 ## Renew or upgrade
 - **Renew:** buy the same plan again while it runs. The new season starts the day after the current one ends, at the full price of that season. Time is only added, and we sell at most one season ahead.
@@ -418,7 +418,7 @@ Installers can show their company in a labeled **Sponsor** banner at the top of 
 5. Tap **Continue to payment** and pay on Stripe's secure page. Your placement turns on within a few minutes.
 
 ## How long it lasts and what it costs
-A season runs from the day you pay to the last day of the season on the map (the Thanksgiving & Christmas season ends Dec 26). The price is the same whenever you start, so check the end date before you pay: the page shows the exact start date, end date, number of days and price. We do not refund or credit for timing.
+A season runs from the day you pay to the last day of the season on the map (the Christmas lights season runs from Nov 3 to Jan 6, and the next season runs from Jan 7 to Jan 31). The price is the same whenever you start, so check the end date before you pay: the page shows the exact start date, end date, number of days and price. We do not refund or credit for timing.
 
 ## Renew or upgrade
 - **Renew:** buy the same plan again while it runs. The new season starts the day after the current one ends, at the plan's price. Time is only added, and we sell at most one season ahead.

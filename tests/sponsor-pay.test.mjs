@@ -12,7 +12,7 @@ import { onRequestPost as adminInst } from "../functions/api/admin/installers/[i
 import { dayKey } from "../functions/_lib/funnel.js";
 import { newEnv, addUser, stubFetch, stripeEvent, sendWebhook, session, getOrder, freezeNow } from "./_pay.mjs";
 
-const NOW = "2026-11-06T20:00:00Z"; // Nov 6 Pacific: 51 of 54 days left in the Christmas season, which ends Dec 26
+const NOW = "2026-11-06T20:00:00Z"; // Nov 6 Pacific: 62 days included in the Christmas sponsor season, which ends Jan 6
 const J = async (p) => { const r = await p; return { status: r.status, body: await r.json().catch(() => ({})) }; };
 const req = (url, body, { cookie, ua } = {}) => new Request("https://socallights.app" + url, { method: body ? "POST" : "GET", headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}), ...(ua ? { "user-agent": ua } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
 const buy = (env, body, o) => J(checkout({ request: req("/api/sponsor/checkout", body, o), env }));
@@ -60,7 +60,7 @@ test("profile list: only the signed-in owner's profiles, with what is missing an
   assert.equal(r.status, 200); assert.deepEqual(r.body.installers.map((i) => i.slug), ["bare", "bright-nights"]);
   const bare = r.body.installers[0], good = r.body.installers[1];
   assert.equal(bare.blocking[0].key, "contact"); assert.equal(bare.advice[0].key, "area"); assert.match(bare.quotes.banner.problem, /phone number or a website/);
-  assert.deepEqual([good.quotes.banner.cents, good.quotes.banner.from, good.quotes.banner.to, good.quotes.banner_top.cents, good.quotes.banner.days], [5000, "2026-11-06", "2026-12-26", 7500, 51]);
+  assert.deepEqual([good.quotes.banner.cents, good.quotes.banner.from, good.quotes.banner.to, good.quotes.banner_top.cents, good.quotes.banner.days], [5000, "2026-11-06", "2027-01-06", 7500, 62]);
   assert.equal(good.quotes.banner.problem, "");
 }));
 
@@ -72,7 +72,7 @@ test("checkout: the price and dates come from the server; metadata, idempotency,
     const sent = new URLSearchParams(String(f.calls[0].init.body));
     assert.equal(sent.get("line_items[0][price_data][unit_amount]"), "7500");
     assert.equal(sent.get("metadata[target]"), "installer"); assert.equal(sent.get("metadata[event_id]"), "i1"); assert.equal(sent.get("metadata[plan]"), "banner_top"); assert.equal(sent.get("metadata[user_id]"), "u1");
-    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /2026-11-06 to 2026-12-26/);
+    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /2026-11-06 to 2027-01-06/);
     assert.equal(sent.get("customer_email"), "owner@example.com");
     assert.match(sent.get("success_url"), /\/sponsor\?paid=1&installer=bright-nights&plan=banner_top$/); assert.match(sent.get("cancel_url"), /\/sponsor\?cancelled=1&installer=bright-nights/);
     assert.match(f.calls[0].init.headers["idempotency-key"], /^sponsor-[0-9a-f]{64}$/);
@@ -88,9 +88,9 @@ test("checkout on the last days of a season charges the full price; the webhook 
     assert.equal(r.status, 200);
     const sent = new URLSearchParams(String(f.calls[0].init.body));
     assert.equal(sent.get("line_items[0][price_data][unit_amount]"), "5000", "no proration, even on Dec 14");
-    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /2026-12-14 to 2026-12-26/); assert.ok(!/prorated/.test(sent.get("line_items[0][price_data][product_data][description]")));
+    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /2026-12-14 to 2027-01-06/); assert.ok(!/prorated/.test(sent.get("line_items[0][price_data][product_data][description]")));
     await pay(env, 1, "banner", 5000);
-    assert.equal(getOrder(raw, "cs_1").note, null); assert.equal(getOrder(raw, "cs_1").amount, 5000, "the amount charged is stored"); assert.equal(getInst(raw).banner_until, "2026-12-26");
+    assert.equal(getOrder(raw, "cs_1").note, null); assert.equal(getOrder(raw, "cs_1").amount, 5000, "the amount charged is stored"); assert.equal(getInst(raw).banner_until, "2027-01-06");
     await pay(env, 2, "banner_top", 7500);
     assert.match(getOrder(raw, "cs_2").note, /amount mismatch: paid 75.00 USD, the banner_top plan is 25.00 USD/, "the full price paid when only the upgrade difference ($25) was due is flagged");
     assert.equal(getOrder(raw, "cs_2").applied, 1, "still applied: the buyer paid what we asked");
@@ -103,12 +103,12 @@ test("webhook: a paid banner order switches the banner on to the season's last d
   const { env, raw } = await setup();
   const evt = stripeEvent("checkout.session.completed", session({ id: "cs_1", payment_intent: "pi_1", amount_total: 5000, metadata: meta("banner") }));
   const r1 = await sendWebhook(webhook, env, evt); assert.equal(r1.status, 200);
-  assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["2026-12-26", ""]);
-  const o = getOrder(raw, "cs_1"); assert.deepEqual([o.target, o.plan, o.event_id, o.applied, o.applied_until, o.applied_top_until, o.applied_from, o.status, o.note], ["installer", "banner", "i1", 1, "2026-12-26", null, "2026-11-06", "paid", null]);
+  assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["2027-01-06", ""]);
+  const o = getOrder(raw, "cs_1"); assert.deepEqual([o.target, o.plan, o.event_id, o.applied, o.applied_until, o.applied_top_until, o.applied_from, o.status, o.note], ["installer", "banner", "i1", 1, "2027-01-06", null, "2026-11-06", "paid", null]);
   assert.equal(hits(raw, "fn:sponsor-paid"), 1);
   assert.equal((await sendWebhook(webhook, env, evt)).body.duplicate, true, "same Stripe event again");
   assert.equal((await pay(env, 1)).body.duplicate, true, "the same payment under a new event id");
-  assert.equal(getInst(raw).banner_until, "2026-12-26"); assert.equal(raw.prepare("SELECT COUNT(*) AS c FROM feature_orders").get().c, 1); assert.equal(hits(raw, "fn:sponsor-paid"), 1);
+  assert.equal(getInst(raw).banner_until, "2027-01-06"); assert.equal(raw.prepare("SELECT COUNT(*) AS c FROM feature_orders").get().c, 1); assert.equal(hits(raw, "fn:sponsor-paid"), 1);
   const bad = await pay(env, 9, "banner", 5000, { metadata: meta("banner", { event_id: "missing" }) });
   assert.equal(bad.status, 500, "an unknown profile is retried by Stripe, not lost");
 }));
@@ -116,42 +116,42 @@ test("webhook: a paid banner order switches the banner on to the season's last d
 test("webhook: banner + top sets both dates; a wrong amount is flagged but still applied; an unknown plan key is ignored", () => withNow(async () => {
   const { env, raw } = await setup();
   await pay(env, 1, "banner_top", 7500);
-  assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["2026-12-26", "2026-12-26"]);
-  const o = getOrder(raw, "cs_1"); assert.deepEqual([o.applied_featured, o.applied_top_until], [2, "2026-12-26"]);
+  assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["2027-01-06", "2027-01-06"]);
+  const o = getOrder(raw, "cs_1"); assert.deepEqual([o.applied_featured, o.applied_top_until], [2, "2027-01-06"]);
   const { env: e2, raw: r2 } = await setup(); await pay(e2, 2, "banner", 4000);
-  assert.match(getOrder(r2, "cs_2").note, /^\[auto\] amount mismatch/); assert.equal(getInst(r2).banner_until, "2026-12-26");
+  assert.match(getOrder(r2, "cs_2").note, /^\[auto\] amount mismatch/); assert.equal(getInst(r2).banner_until, "2027-01-06");
   const ign = await pay(e2, 3, "pin", 1000, { metadata: meta("pin") }); assert.equal(ign.body.ignored, "no feature metadata");
 }));
 
 test("extension and upgrade: buying again adds on top and never shortens; the top card starts today on an upgrade", () => withNow(async () => {
   const { env, raw } = await setup();
-  await pay(env, 1, "banner"); assert.equal(getInst(raw).banner_until, "2026-12-26");
+  await pay(env, 1, "banner"); assert.equal(getInst(raw).banner_until, "2027-01-06");
   await pay(env, 2, "banner"); assert.equal(getInst(raw).banner_until, "2027-01-31", "renewal starts the day after and runs to the end of the next season");
-  assert.equal(getOrder(raw, "cs_2").applied_from, "2026-12-27"); assert.equal(getOrder(raw, "cs_2").note, null, "the renewal is full price");
+  assert.equal(getOrder(raw, "cs_2").applied_from, "2027-01-07"); assert.equal(getOrder(raw, "cs_2").note, null, "the renewal is full price");
   // upgrade: top card from today to the season end, banner already runs longer so it is left alone
   await pay(env, 3, "banner_top", 2500); // an upgrade: the banner already runs past the season end, so only the difference is due
   assert.equal(getOrder(raw, "cs_3").note, null);
-  assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["2027-01-31", "2026-12-26"]);
+  assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["2027-01-31", "2027-01-06"]);
   assert.equal(getOrder(raw, "cs_3").applied_from, "2026-11-06");
 }));
 
 test("refund: a full refund switches the placement off, restores what an admin set by hand, and keeps time other paid orders cover", () => withNow(async () => {
   const { env, raw } = await setup({ banner_until: "2026-11-20" }); // set by hand before any order
-  await pay(env, 1, "banner"); assert.equal(getInst(raw).banner_until, "2026-12-26"); assert.equal(getOrder(raw, "cs_1").prev_banner_until, "2026-11-20");
+  await pay(env, 1, "banner"); assert.equal(getInst(raw).banner_until, "2027-01-06"); assert.equal(getOrder(raw, "cs_1").prev_banner_until, "2026-11-20");
   const refund = (n, o = {}) => sendWebhook(webhook, env, stripeEvent("charge.refunded", { id: "ch_" + n, payment_intent: "pi_" + n, refunded: true, ...o }));
   assert.equal((await refund(1)).body.revoked, true);
   assert.equal(getInst(raw).banner_until, "2026-11-20", "back to the hand-set date"); assert.equal(getOrder(raw, "cs_1").status, "refunded");
   // two orders: refund the second, the first still covers its time; refund the first, everything is off
   const b = await setup(); await pay(b.env, 1, "banner"); await pay(b.env, 2, "banner_top", 2500);
-  assert.deepEqual([getInst(b.raw).banner_until, getInst(b.raw).top_until], ["2026-12-26", "2026-12-26"]);
+  assert.deepEqual([getInst(b.raw).banner_until, getInst(b.raw).top_until], ["2027-01-06", "2027-01-06"]);
   await sendWebhook(webhook, b.env, stripeEvent("charge.refunded", { id: "ch_2", payment_intent: "pi_2", refunded: true }));
-  assert.deepEqual([getInst(b.raw).banner_until, getInst(b.raw).top_until], ["2026-12-26", ""], "the banner order still covers the banner; the top card is off");
+  assert.deepEqual([getInst(b.raw).banner_until, getInst(b.raw).top_until], ["2027-01-06", ""], "the banner order still covers the banner; the top card is off");
   await sendWebhook(webhook, b.env, stripeEvent("charge.refunded", { id: "ch_1", payment_intent: "pi_1", refunded: true }));
   assert.deepEqual([getInst(b.raw).banner_until, getInst(b.raw).top_until], ["", ""]);
   // a renewal refunded leaves the first season on
   const c = await setup(); await pay(c.env, 1, "banner"); await pay(c.env, 2, "banner");
   await sendWebhook(webhook, c.env, stripeEvent("charge.refunded", { id: "ch_2", payment_intent: "pi_2", refunded: true }));
-  assert.equal(getInst(c.raw).banner_until, "2026-12-26");
+  assert.equal(getInst(c.raw).banner_until, "2027-01-06");
   // an admin who extended by hand after the order: the refund leaves it on and says so
   const d = await setup(); await pay(d.env, 1, "banner"); d.raw.prepare("UPDATE installers SET banner_until='2027-03-01'").run();
   const rr = await sendWebhook(webhook, d.env, stripeEvent("charge.refunded", { id: "ch_1", payment_intent: "pi_1", refunded: true }));
@@ -161,7 +161,7 @@ test("refund: a full refund switches the placement off, restores what an admin s
 test("partial refund holds, dispute switches off, dispute won stays off, and a refund that arrives first means it is never applied", () => withNow(async () => {
   const a = await setup(); await pay(a.env, 1, "banner");
   await sendWebhook(webhook, a.env, stripeEvent("charge.refunded", { id: "ch_1", payment_intent: "pi_1", refunded: false }));
-  assert.equal(getOrder(a.raw, "cs_1").status, "held"); assert.equal(getInst(a.raw).banner_until, "2026-12-26", "a partial refund leaves it on for the owner to decide");
+  assert.equal(getOrder(a.raw, "cs_1").status, "held"); assert.equal(getInst(a.raw).banner_until, "2027-01-06", "a partial refund leaves it on for the owner to decide");
   const b = await setup(); await pay(b.env, 1, "banner_top");
   await sendWebhook(webhook, b.env, stripeEvent("charge.dispute.created", { payment_intent: "pi_1", charge: "ch_1" }));
   assert.equal(getOrder(b.raw, "cs_1").status, "disputed"); assert.deepEqual([getInst(b.raw).banner_until, getInst(b.raw).top_until], ["", ""]);
@@ -176,25 +176,25 @@ test("partial refund holds, dispute switches off, dispute won stays off, and a r
 test("Admin > Orders lists an installer order with the installer's name and plan; mark refunded takes the placement off", () => withNow(async () => {
   const { env, raw } = await setup(); await pay(env, 1, "banner_top");
   const rows = (await J(ordersGet({ env }))).body, o = rows.find((r) => r.session_id === "cs_1");
-  assert.deepEqual([o.name, o.target, o.plan, o.amount, o.applied_until, o.applied_top_until, o.inst_slug, o.flags], ["Bright Nights", "installer", "banner_top", 7500, "2026-12-26", "2026-12-26", "bright-nights", []]);
+  assert.deepEqual([o.name, o.target, o.plan, o.amount, o.applied_until, o.applied_top_until, o.inst_slug, o.flags], ["Bright Nights", "installer", "banner_top", 7500, "2027-01-06", "2027-01-06", "bright-nights", []]);
   const r = await J(orderAction({ request: req("/api/admin/orders/cs_1", { action: "mark_refunded" }), env, params: { id: "cs_1" }, data: { admin: { email: "owner@example.com" } } }));
   assert.equal(r.status, 200); assert.equal(r.body.placement_differs, false); assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["", ""]);
   // an order paid but not applied (profile missing at the time) can be applied later
   raw.prepare("INSERT INTO feature_orders (session_id,event_id,plan,amount,email,status,target,applied) VALUES ('cs_x','i1','banner',5000,'a@b.co','paid','installer',0)").run();
   const ap = await J(orderAction({ request: req("/api/admin/orders/cs_x", { action: "reapply" }), env, params: { id: "cs_x" }, data: {} }));
-  assert.equal(ap.status, 200); assert.equal(getInst(raw).banner_until, "2026-12-26");
+  assert.equal(ap.status, 200); assert.equal(getInst(raw).banner_until, "2027-01-06");
 }));
 
 test("Admin cannot hand-set a date below a paid, running order; above it is fine; merge keeps paid orders with the profile", () => withNow(async () => {
   const { env, raw } = await setup(); await pay(env, 1, "banner_top");
-  const edit = (b) => J(adminInst({ request: req("/api/admin/installers/i1", { action: "edit", name: "Bright Nights", web: "https://bright.example", phone: "626-555-0100", area: "Orange County", banner_until: "2026-12-26", top_until: "2026-12-26", ...b }), env, params: { id: "i1" } }));
+  const edit = (b) => J(adminInst({ request: req("/api/admin/installers/i1", { action: "edit", name: "Bright Nights", web: "https://bright.example", phone: "626-555-0100", area: "Orange County", banner_until: "2027-01-06", top_until: "2027-01-06", ...b }), env, params: { id: "i1" } }));
   assert.equal((await edit({ banner_until: "2026-12-01" })).status, 400);
   assert.equal((await edit({ top_until: "" })).status, 400);
   assert.equal((await edit({ banner_until: "2027-02-01" })).status, 200); assert.equal(getInst(raw).banner_until, "2027-02-01");
   addInst(raw, "i2", { slug: "keep", name: "Keep Co", owner_email: "" });
   const m = await J(adminInst({ request: req("/api/admin/installers/i1", { action: "merge", into: "i2" }), env, params: { id: "i1" } }));
   assert.equal(m.status, 200); assert.equal(raw.prepare("SELECT event_id FROM feature_orders WHERE session_id='cs_1'").get().event_id, "i2");
-  assert.deepEqual([getInst(raw, "i2").banner_until, getInst(raw, "i2").top_until], ["2027-02-01", "2026-12-26"]);
+  assert.deepEqual([getInst(raw, "i2").banner_until, getInst(raw, "i2").top_until], ["2027-02-01", "2027-01-06"]);
 }));
 
 test("emails: the buyer gets a service receipt (no unsubscribe, no postal line) and the team a notice, once", () => withNow(async () => {
@@ -206,7 +206,7 @@ test("emails: the buyer gets a service receipt (no unsubscribe, no postal line) 
     await sendWebhook(webhook, e, evt); await sendWebhook(webhook, e, evt);
     assert.equal(sent.length, 2); const buyer = sent.find((m) => m.to[0] === "buyer@example.com" || m.to[0] === "owner@example.com"), team = sent.find((m) => m.to[0] === "team@example.com");
     assert.ok(buyer && team);
-    assert.match(buyer.subject, /Sponsor placement is on: Bright Nights/); assert.match(buyer.text, /Dec 26, 2026/); assert.match(buyer.text, /\$50\.00/);
+    assert.match(buyer.subject, /Sponsor placement is on: Bright Nights/); assert.match(buyer.text, /Jan 6, 2027/); assert.match(buyer.text, /\$50\.00/);
     assert.ok(!/unsubscribe/i.test(buyer.text) || /no unsubscribe link/.test(buyer.text), "a service email");
     assert.ok(!buyer.headers, "no marketing headers");
     assert.match(team.subject, /Sponsor placement paid: Bright Nights/);

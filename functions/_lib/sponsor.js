@@ -3,7 +3,7 @@
 //
 // THE SEASON RULE ("per season")
 //   A placement runs from the day it starts to the last day of the season on the map that day falls in (the windows in public/seasons.js: for example
-//   Thanksgiving & Christmas Lights is Nov 3 to Dec 26).
+//   see SPONSOR SEASONS below: the Christmas season is Nov 3 to Jan 6).
 // PRICE (owner decision): no proration. The plan's price (INSTALLER_PLANS in featured.js) whenever it is bought, and the placement runs until the season's last day.
 // STACKING
 //   Buying again while the same placement is running starts the day after it ends (the first day of the next season, so full price), never earlier: time is only added.
@@ -18,9 +18,24 @@ import { INSTALLER_PLANS, addDays } from "./featured.js";
 const daysBetween = (a, b) => Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86400_000);
 const maxStr = (list) => list.reduce((m, v) => (v && v > m ? v : m), "");
 
-// The season a date falls in with its first and last day (YYYY-MM-DD). The windows cover the whole year; a window that wraps the year end (New Year's) runs into January.
+// SPONSOR SEASONS. They follow the map's season windows (public/seasons.js, which this file never changes) except around the new year, where the owner set them differently:
+//   Christmas lights season: from the map's Christmas start (Nov 3) to Jan 6 (the map's own Christmas window ends Dec 26, and the map shows New Year's from Dec 27)
+//   New Year's & Lunar New Year season: Jan 7 to the map window's end (Jan 31)
+//   every other season: the map window, unchanged (Valentine's Feb 1-15, Spring Feb 16-May 15, Summer May 16-Aug 31, Halloween Sep 1-Nov 2)
+// So a purchase on any date from Nov 3 through Jan 6 ends Jan 6, including purchases made Dec 27 to Jan 6 while the map shows New Year's.
+export const SPONSOR_XMAS_END = "01-06";
+export const sponsorSeasonTable = () => ({
+  ...Object.fromEntries(Object.entries(SEASONS).map(([k, v]) => [k, v.window])),
+  christmas: [SEASONS.christmas.window[0], SPONSOR_XMAS_END],
+  newyear: [addDays("2001-" + SPONSOR_XMAS_END, 1).slice(5), SEASONS.newyear.window[1]],
+});
+
+// The sponsor season a date falls in with its first and last day (YYYY-MM-DD). A window that wraps the year end (Christmas: Nov 3 to Jan 6) takes its end year from the start date.
 export function seasonOf(ymd) {
-  const key = defaultSeason(ymd), [s, e] = SEASONS[key].window, md = ymd.slice(5), y = Number(ymd.slice(0, 4)), wraps = s > e;
+  const md = ymd.slice(5), y = Number(ymd.slice(0, 4)), table = sponsorSeasonTable();
+  let key = defaultSeason(ymd);
+  if (key === "newyear" && (md >= SEASONS.newyear.window[0] || md <= SPONSOR_XMAS_END)) key = "christmas"; // the map shows New Year's from Dec 27, the Christmas sponsor season runs on to Jan 6
+  const [s, e] = table[key], wraps = s > e;
   const start = `${wraps && md <= e ? y - 1 : y}-${s}`, end = `${wraps && md >= s ? y + 1 : y}-${e}`;
   return { key, label: SEASONS[key].label, start, end, days: daysBetween(start, end) + 1 };
 }

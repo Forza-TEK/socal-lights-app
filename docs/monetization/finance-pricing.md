@@ -58,7 +58,7 @@ Prices live only in `INSTALLER_PLANS` in `functions/_lib/featured.js`. Self-serv
 | Banner | $50 per season | name (linked to website or email) and phone in the labelled Sponsor banner, shown when the service area is in view, numbers in the dashboard |
 | Banner and top of the list | $75 per season | the banner, plus a labelled company card at the top of the list behind Featured events |
 
-- **Per season** = from payment to the last day of the current season on the map (public/seasons.js; Christmas ends Dec 26). No proration: the price is the same on every day of the season (owner decision), and the page shows the end date and number of days before payment.
+- **Per season** = from payment to the last day of the current season on the map (sponsor seasons: Christmas lights Nov 3 to Jan 6, New Year's Jan 7 to Jan 31, the others as the map windows in public/seasons.js, which is unchanged). No proration: the price is the same on every day of the season (owner decision), and the page shows the end date and number of days before payment.
 - Renewal starts the day after the running placement ends (full price for the next season); at most one season ahead. Upgrade (banner to banner and top) costs the difference between the two plans' prices ($25 today). No refund or credit for timing.
 - Stripe fee about 2.9% + 30c: on $50 about $1.75 (net $48.25); on $75 about $2.48 (net $72.52); on the $25 upgrade about $1.03 (net $23.97).
 - This replaces the founder-sold pilot guess of about $299 a season for the first installer sales; the owner chose these prices. Gate to watch: installer conversations and `fn:sponsor-paid` (see `docs/CHECKLIST.md`).
