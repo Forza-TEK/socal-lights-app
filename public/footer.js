@@ -1,5 +1,7 @@
 // Copyright line and links at the bottom of every page except the map (the map has its own, in the credit pill and under the Places list).
 (function () {
+  // every page registers the offline worker (the map does it in index.html), so any page you have opened once opens again with no signal
+  try { if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () {}); }); } catch (e) {}
   if (document.getElementById("sitefoot")) return;
   var y = new Date().getFullYear();
   var css = ".sitefoot{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 18px;margin:36px auto 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line,rgba(128,128,128,.28));font:400 13px/1.5 var(--font,system-ui,sans-serif);color:var(--muted,#6b6760);text-align:center}"
