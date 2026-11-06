@@ -49,6 +49,11 @@ test("a clean, correctly upserted event passes with no errors", async () => {
   const r = await check(sqlFor({}));
   assert.equal(r.code, 0, r.out); assert.match(r.out, /Migration check passed/); assert.match(r.out, /1 added, 0 updated, 0 removed. Errors: 0. Warnings: 0/);
 });
+test("a migration that only ADDS a column to events does not make every existing event look 'updated' (it must not trigger URL checks of all events)", async () => {
+  const r = await check("ALTER TABLE events ADD COLUMN banner_until_test TEXT;\n");
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /Events: 0 added, 0 updated, 0 removed/);
+});
 test("re-using an existing id with new details is reported as an update, and a different name under that id is warned about", async () => {
   const r = await check(sqlFor({ id: "g7-jingle-fest-26", name: "Completely Different Parade", city: "Santa Clarita", start_date: "2026-11-14", end_date: "2026-11-15", lat: 34.4363, lng: -118.519, address: "27150 Bouquet Canyon Rd, Santa Clarita, CA 91350" }));
   assert.equal(r.code, 0, r.out); assert.match(r.out, /0 added, 1 updated/); assert.ok(has(r, "id-reused"));
