@@ -134,13 +134,13 @@ async function start() {
 
   function planCards() {
     return `<h2>Pick a plan</h2><div class="grid">${PLAN_KEYS.filter((k) => PL[k]).map((k) => { const c = planCopy(k, PL);
-      return `<section class="plan" data-p="${k}"><div class="price">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(planBlurb(k, PL))}</p><button class="btn ghost pick" type="button" data-pick="${k}" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</button></section>`; }).join("")}</div>
+      const on = S.plan === k; return `<section class="plan${on ? " sel" : ""}" data-p="${k}"><div class="price">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(planBlurb(k, PL))}</p><button class="btn pick${on ? "" : " ghost"}" type="button" data-pick="${k}" aria-pressed="${on}" aria-label="${on ? "Chosen: " : "Choose "}${esc(c.name)}, ${dollars(PL[k])}">${on ? "\u2713 Chosen" : "Choose"}</button></section>`; }).join("")}</div>
       <p class="meta">You pay once on Stripe's secure page. No subscription. Featuring opens ${OPEN} days before your event starts.</p>`;
   }
   const planLine = () => { const c = planCopy(S.plan, PL, WHO(S.ev)); return `<p class="chosen"><b>${esc(c.name)}</b> · ${dollars(PL[S.plan])} one time · <a href="#" data-a="plans">change plan</a></p>`; };
 
   function signInBox() {
-    return `${planLine()}<h2>Sign in to continue</h2><p>Sign in with Google or an emailed 6-digit code, so we know which events are yours. You'll come right back here with your plan chosen.</p><p><button class="btn" id="si" type="button">Sign in</button></p>`;
+    return `<div id="nextsec"></div><h2>Sign in to continue</h2><p>Sign in with Google or an emailed 6-digit code, so we know which events are yours. You'll come right back here with your plan chosen.</p><p><button class="btn" id="si" type="button">Sign in</button></p>`;
   }
 
   function whichBox() {
@@ -148,7 +148,7 @@ async function start() {
     const li = (m) => { const ok = m.elig.ok, bits = [m.kind === "contest" ? "Contest" : m.kind === "home" ? `Home · ${m.placeText} in ${m.contest}` : m.city, when(m), running(m)].filter(Boolean).join(" · ");
       const state = m.state === "pending" ? "Waiting for our review. You can pay now; it turns on when we approve it." : ok ? "" : m.elig.reason;
       return `<li><button type="button" data-mine="${esc(m.id)}"${ok ? "" : " disabled"}><b>${esc(m.name)}</b><small>${esc(bits)}</small>${state ? `<small class="${ok ? "" : "why"}">${esc(state)}</small>` : ""}${ok ? `<small><b>${m.featured ? "Extend or upgrade" : "Feature this " + WHO(m)}</b></small>` : ""}</button></li>`; };
-    return `${planLine()}<h2>Which event?</h2>${rows.length ? `<ul class="res" id="mylist">${rows.map(li).join("")}</ul>` : `<p>You don't have an event on this account yet. Add it (free), or claim a listing that is already on the map.</p>`}
+    return `<div id="nextsec"></div><h2>Which event?</h2>${rows.length ? `<ul class="res" id="mylist">${rows.map(li).join("")}</ul>` : `<p>You don't have an event on this account yet. Add it (free), or claim a listing that is already on the map.</p>`}
       <div class="opts"><a class="btn out" id="addnew" href="/add-event?plan=${esc(S.plan)}">Add a new event</a>
       <details id="claimbox"${S.claim ? " open" : ""}><summary>Claim an existing listing</summary>${claimBox()}</details></div>`;
   }
@@ -175,13 +175,14 @@ async function start() {
   function draw() {
     steps();
     const f = $("#flow");
-    f.innerHTML = !S.plan && !S.ev ? planCards() : !user ? signInBox() : S.ev ? confirmBox() : whichBox();
+    // The plan cards stay open after a plan is chosen; the next section (sign in, or Which event?) follows them
+    f.innerHTML = S.ev ? confirmBox() : planCards() + (!S.plan ? "" : !user ? signInBox() : whichBox());
   }
   const pickEvent = (m) => { S.ev = m; S.claim = null; S.msg = ""; S.err = false; fit(); sync(); beacon("fn:event-feature-pick"); draw(); window.scrollTo({ top: 0 }); };
 
   $("#flow").addEventListener("click", async (x) => {
     let t = x.target.closest("[data-pick],[data-mine],[data-a],[data-sw],[data-find],#si,#go,#addnew"); if (!t) { const pl = x.target.closest(".grid .plan[data-p]"); if (pl) t = pl.querySelector("[data-pick]"); } if (!t) return; // a click anywhere on a plan card chooses it
-    if (t.dataset.pick) { S.plan = t.dataset.pick; mails(); sync(); draw(); return; }
+    if (t.dataset.pick) { const first = !S.plan; S.plan = t.dataset.pick; mails(); sync(); draw(); if (first) document.getElementById("nextsec")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }); return; }
     if (t.dataset.mine) { x.preventDefault(); pickEvent(S.mine.find((m) => m.id === t.dataset.mine)); return; }
     if (t.dataset.sw) { x.preventDefault(); S.plan = t.dataset.sw; S.note = ""; sync(); draw(); return; }
     if (t.dataset.find) { S.claim = (all || []).find((e) => e.id === t.dataset.find) || null; S.claimMsg = ""; S.claimErr = false; S.claimDone = false; draw(); return; }
