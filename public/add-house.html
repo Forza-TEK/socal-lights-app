@@ -17,7 +17,7 @@
 import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, OPT, today } from "/addflow.js?v=20261107a";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
 import { normPhone, PHONE_HELP } from "/norm.js?v=20261102b";
-import { me, signIn } from "/auth.js?v=20261106y";
+import { me, signIn } from "/auth.js?v=20261107p";
 import { CITY } from "/cities.js";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
 const d = { kind: qs.get("kind") === "installer" ? "installer" : "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", lightsOn: "", visit: "", parking: "", accessible: false, radio: "", hadPro: "no", instName: "", instWeb: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
