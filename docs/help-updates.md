@@ -1,5 +1,7 @@
 # Help Center refresh: paste-ready text (2026-11-06)
 
+Update 2026-11-06 (new Featured event pricing): `is-it-free` and `feature-an-event-or-home` below carry the newer text from migration `0168_help_featured_pricing.sql`, which replaces what 0167 wrote for them (again only where nobody edited the article in Admin). If you edited either article in Admin, paste the blocks below over it. Regenerate with `node scripts/help/updates-0168.mjs`.
+
 Normally you do nothing: migration `0167_help_refresh.sql` applies this text to every article nobody has edited in Admin, and adds the four new ones. Use this page only for an article you edited in Admin earlier (the migration skips those on purpose), or to check the wording.
 
 To paste: Admin > Help Center > click the article > replace Title, One-sentence answer, Search words and Text with the blocks below (copy without the four leading spaces) > Save. For a new article that did not appear, click New article, type the slug exactly as the heading, and choose the category and type shown. Leave Video empty. Slugs never change. Word rule: "home", not "house" or "display".
@@ -116,7 +118,7 @@ Text:
     - **Account** is where you change your name and photo, and where you can delete your account.
 
 ## is-it-free
-Existing article. Category: account. Type: answer. Order: 10.
+Existing article (updated by migration 0168). Category: account. Type: answer. Order: 10.
 
 Title:
 
@@ -128,7 +130,7 @@ One-sentence answer:
 
 Search words:
 
-    free cost price pay charge fee money tip cash app featured paid winner podium buy
+    free cost price pay charge fee money tip cash app featured paid winner podium buy full run $10 $15 $25
 
 Text:
 
@@ -137,14 +139,13 @@ Text:
     ## Featured is the one paid option
     A **Featured** listing has a gold badge and a bigger gold-ringed pin on the map. It is optional, and it is the only thing on SoCal Lights that costs money today. Featured listings are always labeled.
     
-    - **Events** can be featured by their organizer.
-    - **Homes** can be featured only by the owner of a home that finished winner, 2nd or 3rd place in a contest, after the winners are announced.
+    - **Events** can be featured by their organizer: **Featured pin** $10, **Top of the list** $15, or **Full run** $25 for events that run 31 days or more. The placement starts when you pay and ends on your event's last day, up to 30 days (up to 90 days for Full run).
+    - **Homes** can be featured only by the owner of a home that finished winner, 2nd or 3rd place in a contest, after the winners are announced. Featured pin $10 or Top of the list $15, for 30 days.
     - **Paying never affects a contest.** It cannot change who wins or any contest result.
     
     See [Feature an event or a home](/help/feature-an-event-or-home) and the [Pricing page](/pricing).
     
     If you would like to help keep it free, there is a **Keep SoCal Lights Free** row in the three-dots menu.
-
 ## install-the-app
 Existing article. Category: find. Type: howto. Order: 40.
 
@@ -263,7 +264,7 @@ Text:
     See also [Run voting](/help/run-voting).
 
 ## feature-an-event-or-home
-New article. Category: post. Type: howto. Order: 30.
+Existing article (updated by migration 0168). Category: post. Type: howto. Order: 30.
 
 Title:
 
@@ -275,7 +276,7 @@ One-sentence answer:
 
 Search words:
 
-    feature featured event home pin gold badge top of the list season plan pay stripe winner second third promote advertise
+    feature featured event home pin gold badge top of the list full run plan price pay stripe winner second third promote advertise opens 30 days last day
 
 Text:
 
@@ -284,11 +285,46 @@ Text:
     ## An event
     1. Open the Feature page at [socallights.app/feature](/feature).
     2. Find your event. If it is not on the map yet, add it for free first. If it is yours but you did not add it, tap **Claim this event**.
-    3. Pick a plan: **Featured pin**, **Top of the list**, or **Whole season** (events only).
+    3. Pick a plan (below).
     4. Tap **Continue to payment** and pay on Stripe's secure page.
     
+    ### The plans for an event
+    **Featured pin, $10**
+    - A gold-ringed pin on the map
+    - A "Featured" badge on your event in the list and its details
+    - Runs from today until your event's last day, up to 30 days
+    
+    **Top of the list, $15**
+    - A gold-ringed pin on the map
+    - A "Featured" badge on your event in the list and its details
+    - Your event is listed first when people browse your area
+    - Runs from today until your event's last day, up to 30 days
+    
+    **Full run, $25** (events that run 31 days or more)
+    - A gold-ringed pin on the map
+    - A "Featured" badge on your event in the list and its details
+    - Your event is listed first when people browse your area
+    - Runs from today until your event's last day, up to 90 days
+    
+    ### When it starts and ends
+    - Featuring opens 30 days before your event starts. If you try sooner, the page tells you the date to come back. An event that is already running can be featured any time.
+    - Your placement starts when you pay and ends on your event's last day, as the date is on the map when you pay. If the event's dates change later, the placement does not change.
+    - Full run is for events that run 31 days or more and still have at least 7 days left.
+    - Buying again adds time only if the earlier placement ended at the 30-day (or 90-day) limit rather than your event's last day. If it already runs to the last day, there is nothing to add; you can still upgrade the pin to Top of the list.
+    
     ## A home
-    Only the owner of a home that finished winner, 2nd or 3rd place in an announced contest can feature it, with the 30-day plans. Paying never changes a contest result.
+    Only the owner of a home that finished winner, 2nd or 3rd place in an announced contest can feature it. Paying never changes a contest result.
+    
+    **Featured pin, $10**
+    - A gold-ringed pin on the map
+    - A "Featured" badge on your home in the list and its details
+    - Runs for 30 days from today
+    
+    **Top of the list, $15**
+    - A gold-ringed pin on the map
+    - A "Featured" badge on your home in the list and its details
+    - Your home is listed first when people browse your area
+    - Runs for 30 days from today
     
     ## Good to know
     - You pay once per event or home. There is no subscription.

@@ -279,6 +279,16 @@ TAG: **WAIT** (needs Finance's refund policy and attorney review of liability li
 
 ---
 
+## Featured pricing wording changed 2026-11-06 (for the attorney)
+
+**Not legal advice; a note so the attorney sees current text.** The owner approved new Featured EVENT pricing and the public wording changed in `public/pricing.html`, `public/feature.html`, the add-event plan step (`public/add-event.html`), the shared plan copy `public/feature-plans.js`, and the Help articles `is-it-free` and `feature-an-event-or-home` (migration 0168). Terms (`public/terms.html`) were NOT changed and still say nothing about paid placements, so this wording is not yet covered by Terms.
+
+What the pages now promise a buyer: Featured pin $10 and Top of the list $15 run "from today until your event's last day, up to 30 days"; Full run $25 (events that run 31 days or more) runs "until your event's last day, up to 90 days"; featuring opens 30 days before the event starts; one payment, no subscription. Each tier lists its contents in full (gold-ringed pin; "Featured" badge; listed first for Top of the list and Full run). The old $20 "Whole season" plan was retired; orders already paid keep their original terms.
+
+Please review: (a) whether "up to 30 / 90 days" and "until your event's last day" are clear enough as the price/duration disclosure; (b) the refund wording on `feature.html` ("If we cannot feature your event for any reason, you get a full refund. Once your placement is live, payments are non-refundable, but if your event is cancelled we will move your placement to another event of yours or refund the unused time") against the window now ending at the event's last day; (c) whether Terms need a paid-placement clause (item 6 above) before the plans are promoted further.
+
+---
+
 ## Not covered here (outside the brief or other owners)
 
 Sales tax on listings and 1099s for prizes of $600 or more are CPA questions (brief 5, Q7). State sweepstakes registration (NY, FL, RI) is secondary-source only. `docs/rules-review.md` and `docs/contest-business-model.md` need the corrections listed in brief section 8; I did not edit them.
