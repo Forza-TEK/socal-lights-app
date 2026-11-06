@@ -15,6 +15,8 @@
 .plan{display:flex;flex-direction:column;align-content:normal}.plan>.btn{margin-top:auto;align-self:flex-start}.plan>ul{margin-bottom:14px}.plan{background:#fff}:root[data-theme="dark"] .plan{background:var(--tile)}
 .free{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.free small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0;word-spacing:.15em}
 .plan p{margin:0;color:var(--muted)}
+.tiers{display:grid;gap:14px;margin:0 0 14px}.tier{padding-top:14px;border-top:1px solid var(--line)}.tier:first-child{padding-top:0;border-top:0}.tier p{margin-top:4px}.tier p b{color:var(--ink)}.tier .free{font-size:26px}
+@media(min-width:700px){#banner{grid-column:1/-1}.tiers{grid-template-columns:repeat(3,1fr);gap:22px}.tier{padding:0 0 0 22px;border-top:0;border-left:1px solid var(--line)}.tier:first-child{padding-left:0;border-left:0}}.plan>.meta{margin:0 0 14px;font-size:14px}
 </style>
 <script src="/hit.js" defer></script>
 </head>
@@ -30,7 +32,14 @@
 <h2>Adding to the map</h2>
 <div class="grid two">
 <section class="plan"><h3>Homeowners</h3><div class="free">Free</div><p>Show your lights display on the map so families can drive by. Entering a display and entering a contest are free. A contest winner, 2nd or 3rd place can optionally feature their home (below).</p><a class="btn" href="/add-house">Add your display</a></section>
-<section class="plan" id="banner"><h3>Installers</h3><div class="free">Free <small>for now</small></div><p>Post the lights you have installed and get a company profile page that lists your homes. A labelled "Sponsor" banner on the map can also show your company name and phone when your service area is in view. Ask us about banner pricing.</p><a class="btn" href="/add-house">Post your installs</a></section>
+<section class="plan" id="banner"><h3>Installers</h3>
+<div class="tiers">
+<div class="tier"><div class="free">Free</div><p><b>Profile card.</b> Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map, so anyone who likes your work can click through to you.</p></div>
+<div class="tier"><div class="free">$50 <small>per season</small></div><p><b>Banner.</b> Everything in Free, plus your company name (linked to your website or email) and phone number in the labelled "Sponsor" banner at the top of the list on the map. It scrolls whenever your service area is in the map view.</p></div>
+<div class="tier"><div class="free">$75 <small>per season</small></div><p><b>Banner and top of the list.</b> Everything in the $50 banner, plus your company card at the top of the list, right behind the Featured events. Paid placements are always labelled.</p></div>
+</div>
+<p class="meta">Posting installs and the profile card are free. To add the banner or the top of the list, email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>. Money never changes contest results.</p>
+<a class="btn" href="/add-house">Post your installs</a></section>
 <section class="plan"><h3>Event organizers</h3><div class="free">Free <small>for now</small></div><p>List your tree lighting, parade, market, haunted house or light show. Featured placement is optional (below).</p><a class="btn" href="/add-event">Add your event</a></section>
 <section class="plan"><h3>Contest organizers</h3><div class="free">Free <small>for now</small></div><p>Cities, HOAs, chambers and neighborhood groups: run a decorating contest with resident entries, voting, judges, and People's Choice and Judges' Choice awards.</p><a class="btn" href="/add-contest">Create a contest</a></section>
 </div>

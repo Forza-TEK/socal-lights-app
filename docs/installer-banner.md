@@ -21,3 +21,9 @@ Sold, not a free pilot (the owner drives visitors with Facebook and Instagram ad
 
 ## Not built yet
 Payment, a self-serve booking page, a per-county cap, an "Advertise here" placeholder when the banner is empty, a monthly report email.
+
+## Prices on the pricing page (owner, 2026-11-06)
+- Free: profile card (page at /installer/<slug>, linked from the homes they installed).
+- $50 per season: the Sponsor banner. Set by an admin with the "Show on the banner until" date.
+- $75 per season: banner plus the company card at the top of the list behind Featured events. **The list placement is not built yet.**
+- Sold by email (info@socallights.app) for now; no checkout.
