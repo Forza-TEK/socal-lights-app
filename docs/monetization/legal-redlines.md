@@ -252,6 +252,8 @@ TAG: checkbox text and lead text **SHIP NOW** (more accurate); storing consent v
 
 ## 6. Terms: paid placements, refunds, sponsored contests
 
+> **Update 2026-11-06: partly implemented.** A plain-English "Paid placements" section is now live in `public/terms.html` (see "What is now in the live Terms" near the end of this file). It is a draft written by the site team from the redlines and the code. **It has not been reviewed by an attorney.** The PROPOSED text below is kept for the attorney; the live text differs in places.
+
 CURRENT (`terms.html:41-44`, quoted above for 41, 44): "Organizers agree to run their contest fairly, follow the law that applies to it, honor the prizes they promise, and not charge entrants to enter or vote." "Sponsors and installers shown on a contest page are identified as such."
 CURRENT (`terms.html:51`): limit "to $100".
 CURRENT (`feature.html:49`): "If we cannot feature your event for any reason, you get a full refund. Once your placement is live, payments are non-refundable, but if your event is cancelled we will move your placement to another event of yours or refund the unused time."
@@ -281,7 +283,7 @@ TAG: **WAIT** (needs Finance's refund policy and attorney review of liability li
 
 ## Featured pricing wording changed 2026-11-06 (for the attorney)
 
-**Not legal advice; a note so the attorney sees current text.** The owner approved new Featured EVENT pricing and the public wording changed in `public/pricing.html`, `public/feature.html`, the add-event plan step (`public/add-event.html`), the shared plan copy `public/feature-plans.js`, and the Help articles `is-it-free` and `feature-an-event-or-home` (migration 0168). Terms (`public/terms.html`) were NOT changed and still say nothing about paid placements, so this wording is not yet covered by Terms.
+**Not legal advice; a note so the attorney sees current text.** The owner approved new Featured EVENT pricing and the public wording changed in `public/pricing.html`, `public/feature.html`, the add-event plan step (`public/add-event.html`), the shared plan copy `public/feature-plans.js`, and the Help articles `is-it-free` and `feature-an-event-or-home` (migration 0168). Terms did not cover paid placements when this note was written; a plain-English "Paid placements" section was added on 2026-11-06 (see the end of this file).
 
 What the pages now promise a buyer: Featured pin $10 and Top of the list $15 run "from today until your event's last day, up to 30 days"; Full run $25 (events that run 31 days or more) runs "until your event's last day, up to 90 days"; featuring opens 30 days before the event starts; one payment, no subscription. Each tier lists its contents in full (gold-ringed pin; "Featured" badge; listed first for Top of the list and Full run). The old $20 "Whole season" plan was retired; orders already paid keep their original terms.
 
@@ -300,8 +302,43 @@ Terms the pages state to the buyer, for review:
 4. **Labelling.** Paid placements are always labelled "Sponsor" (banner and list card), and the Featured and contest areas are separate. Please confirm "Sponsor" is clear enough for the FTC endorsement and native-advertising guidance (see section 3 above) and that it does not collide with contest "sponsors" (1C).
 5. **Eligibility and content.** Only the verified owner of an installer profile (email at the company's website, or admin-approved) can buy. The profile must be active with a phone number or website. We show the company's own name, link and phone; we do not verify licensing. Please advise whether a licensing line (B&P 7027.1, section 4) must appear next to a paid placement.
 6. **No effect on contests; the map stays free.** Payment never affects a contest result and nothing is charged to find lights.
-7. **Terms and privacy.** `public/terms.html` does not yet mention paid placements, Sponsor or the refund rules; the privacy page should say Stripe processes the payment and what the order record keeps (installer id, plan, amount, buyer email).
+7. **Terms and privacy.** `public/terms.html` now has a "Paid placements" section that includes installer Sponsor placements (2026-11-06, unreviewed by an attorney). The privacy page already says Stripe processes the payment and what the order record keeps.
 8. **Statistics.** The dashboard shows counts of times shown and taps (totals only, no personal data).
+
+---
+
+## What is now in the live Terms (2026-11-06) and what still needs the attorney
+
+**The Terms text is a plain-English draft written by the site team. It has not been reviewed by an attorney. It is not legal advice.** It was written to describe only what the code does and what the Feature page already promised. `public/terms.html`, section "Paid placements" (`/terms#paid`), "Updated November 6, 2026"; test `tests/terms.test.mjs`.
+
+**Redline item 6 (Terms: paid placements, refunds, sponsored contests), item by item**
+
+| Redline item | State |
+|---|---|
+| A section on paid placements, payments through Stripe | Implemented in the live Terms (Featured events and homes, Installer Sponsor placements). |
+| Placements are labelled | Implemented. States "Featured" for events and homes and "Sponsor" for installer placements, which is what the site shows today. The redline's proposed "Sponsored" label was NOT adopted by the site, so the Terms do not say "Sponsored". |
+| Paid placements never affect contests, votes cannot be bought | Implemented (no payment affects any contest result or vote; homes can be featured only after winners are announced and only for 1st to 3rd place). |
+| We may decline or remove an event we cannot verify or that breaks the terms | Implemented, in plain words (inaccurate listing, cancelled event, breaks the terms), plus the review hold before an unapproved event goes live. |
+| Refund policy text from Finance | Implemented as the policy the Feature page already stated (full refund if we cannot list or feature it; non-refundable once live; move or refund unused time if the event is cancelled; a refund or dispute switches the placement off). The Feature FAQ was reworded to match the Terms exactly. Finance's proposed 7-day or 3-day window (`finance-operations.md` section 3) is NOT in the Terms because the owner has not decided it. |
+| "Nothing in these terms limits any refund right you have by law" | Implemented (sentence taken from the redline). |
+| No guarantee of traffic or results | Implemented. |
+| Installers are independent businesses; we are not a party to any agreement with them | NOT yet in the Terms. Still needs the attorney. |
+| Sponsors that pay a contest organizer do not judge, vote or influence results | NOT yet in the Terms. Still needs the attorney. |
+| Affiliate links (Amazon, tickets) earn a commission | NOT yet in the Terms. (The shop and support box already disclose it on the page.) |
+| Change the defined term "Sponsor" (contest organizer) to "organizer" (item 1C) | NOT done. The new section only says the installer "Sponsor" label is separate from the contest organizer. |
+| Organizer-specific acceptance at contest creation, indemnity, prize delivery | NOT done. Still needs the attorney. |
+| Limitation of liability ($100) against paying customers, carve-outs for refunds | NOT changed. Still needs the attorney. |
+
+**What the attorney should review (exactly)**
+1. The whole "Paid placements" section for plain accuracy and for anything it should say or must not say.
+2. The $100 limit of liability in "No warranty, and limits on our responsibility" as applied to paying customers, with refund carve-outs.
+3. The refund rules: "full refund if we cannot list or feature it", "non-refundable once live", and the promise that a cancelled event gets its placement moved or the unused time refunded (made by hand, no code does it), against California consumer rules for prepaid advertising; whether the Finance 7-day window should be added.
+4. "Featured" (events and homes) and "Sponsor" (installers) as labels for paid placements (item 3 above), and whether "Sponsor" collides with the contest organizer "Sponsor" in the Contests section (1C).
+5. The rule that we may decline, remove or unpublish a listing or placement, and whether a removal for breaking the terms needs refund wording.
+6. Dispute wording ("a payment dispute switches the placement off; email us before disputing").
+7. Missing pieces listed as NOT done in the table (installer independence, paying contest sponsors, affiliate links, organizer agreement).
+8. Whether a licensing line (B&P 7027.1, item 4) must appear next to a paid installer placement.
+9. The one-line privacy addition about event claims and the claim email, and the rest of item 2.
 
 ---
 
