@@ -17,7 +17,8 @@
 .plan p{margin:0;color:var(--muted)}
 .plan>h2{font-size:20px;margin:0 0 12px}
 .tiers{display:grid;gap:14px;margin:0 0 14px}.tier{padding-top:14px;border-top:1px solid var(--line)}.tier:first-child{padding-top:0;border-top:0}.tier p{margin-top:4px}.tier p b{color:var(--ink)}.tier .free{font-size:26px}
-@media(min-width:700px){.tiers.one{grid-template-columns:1fr}.tiers{grid-template-columns:repeat(3,1fr);gap:22px}.tier{padding:0 0 0 22px;border-top:0;border-left:1px solid var(--line)}.tier:first-child{padding-left:0;border-left:0}}.plan>.meta{margin:0 0 14px;font-size:14px}.plan .intro{margin-top:-4px}.plan .btn+.btn{margin-left:8px}.tier{display:flex;flex-direction:column}.tier>p{margin-bottom:14px}.tier>.btn{margin-top:auto;align-self:flex-start}
+@media(min-width:700px){.tiers.one{grid-template-columns:1fr}.tiers{grid-template-columns:repeat(3,1fr);gap:22px}.tier{padding:0 0 0 22px;border-top:0;border-left:1px solid var(--line)}.tier:first-child{padding-left:0;border-left:0}}.tiers.four{grid-template-columns:1fr}.tiers.four .tier,.tiers.four .tier:first-child{padding:16px;border:1px solid var(--line);border-radius:14px}@media(min-width:700px){.tiers.four{grid-template-columns:repeat(2,1fr);gap:14px}.tiers.four .tier{border-left:1px solid var(--line)}}
+.plan>.meta{margin:0 0 14px;font-size:14px}.plan .intro{margin-top:-4px}.plan .btn+.btn{margin-left:8px}.tier{display:flex;flex-direction:column}.tier>p{margin-bottom:14px}.tier>.btn{margin-top:auto;align-self:flex-start}
 </style>
 <script src="/hit.js" defer></script>
 </head>
@@ -34,9 +35,8 @@
 
 <section class="plan" id="events"><h2>Event organizers</h2>
 <p class="meta intro"><b>Listing your event is free</b> (tree lighting, parade, market, haunted house, light show). Featured placement is optional: pick one, pay once, no subscription.</p>
-<div class="tiers" id="plans"></div>
-<p class="meta" id="featnote">Choose a plan, sign in with an emailed code, pick your event, and pay on Stripe's secure page. Placement starts when you pay and runs to your event's last day, up to 30 days (up to 90 for a Full run). Featuring opens 30 days before the event.</p>
-<a class="btn" href="/add-event">Add your event</a></section>
+<div class="tiers four" id="plans"><div class="tier"><div class="free">Free</div><p><b>Your listing.</b> A pin on the map and a card in the list.</p><a class="btn ghost" href="/add-event">Add your event</a></div></div>
+<p class="meta" id="featnote">Choose a plan, sign in with an emailed code, pick your event, and pay on Stripe's secure page. Placement starts when you pay and runs to your event's last day, up to 30 days (up to 90 for a Full run). Featuring opens 30 days before the event.</p></section>
 
 <section class="plan" id="banner"><h2>Installers</h2>
 <div class="tiers" id="insttiers">
