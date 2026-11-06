@@ -11,7 +11,7 @@ caches.keys().then(function(ks){var k=ks.filter(function(x){return/^scl-/.test(x
  if(!c)return;return c.keys().then(function(reqs){
   var here=location.pathname,seen={},paths=[];
   reqs.forEach(function(r){var u=new URL(r.url);if(u.origin!==location.origin)return;var p=u.pathname;
-   if(p===here||seen[p]||p==="/offline.html"||p.indexOf("/api/")===0||/\.[a-z0-9]+$/i.test(p))return;seen[p]=1;paths.push(p)});
+   if(p===here||seen[p]||p==="/offline.html"||p==="/offline"||p.indexOf("/api/")===0||/\.[a-z0-9]+$/i.test(p))return;seen[p]=1;paths.push(p)});
   var order=Object.keys(NAMES);paths.sort(function(a,b){var i=order.indexOf(a),j=order.indexOf(b);return(i<0?99:i)-(j<0?99:j)||a.localeCompare(b)});
   var ul=document.getElementById("links");
   paths.slice(0,12).forEach(function(p){var li=document.createElement("li"),a=document.createElement("a");a.href=p;a.textContent=nice(p);li.appendChild(a);ul.appendChild(li)});
