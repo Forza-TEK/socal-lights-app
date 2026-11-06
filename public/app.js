@@ -30,6 +30,9 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (d) => { const [, m, dd] = d.split("-").map(Number); return M[m - 1] + " " + dd; };
 const isPhone = () => matchMedia("(max-width:700px)").matches;
+// A phone turned sideways: the whole list panel scrolls as one, so the header moves away and the list gets the full height
+const isLandShort = () => matchMedia("(min-width:701px) and (max-height:500px)").matches;
+const scroller = () => (isLandShort() ? document.getElementById("panel") : document.getElementById("pbody"));
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const photoUrl = (k) => "/api/photo/" + k.split("/").map(encodeURIComponent).join("/");
 function range(ev) {
@@ -378,11 +381,11 @@ function locateMe(force) {
     (err) => { locating = false; state.meErr = err.code === 1 ? "Location is blocked for this site, so the route starts at your first stop. Google Maps will still start from where you are." : "Couldn't find your location right now."; if (state.tab === "plan") renderPanel(); },
     { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
 }
-// Distances use your own location. Nothing is asked up front: if you already allowed it for this site we read it quietly; otherwise it starts when you tap the locate button (or open My night).
+// Distances use your own location. Nothing is asked up front: if you already allowed it for this site we read it quietly; otherwise it starts when you tap the locate button (or open Favorites).
 try { navigator.permissions && navigator.permissions.query({ name: "geolocation" }).then((r) => { if (r.state === "granted") locateMe(false); }).catch(() => {}); } catch {}
 function routeStops() {
   // starred events plus starred houses (a house becomes a stop with its pin position and street address)
-  const ids = state.shared || favs; // a plan someone shared, until it is added to My night or closed
+  const ids = state.shared || favs; // a plan someone shared, until it is added to Favorites or closed
   const fl = [...E.filter((e) => ids.has(e.id)), ...SHOW.filter((p) => ids.has(hfav(p))).map((p) => ({ house: true, id: p.id, key: "i:" + p.id, n: p.title, lat: p.plat, lng: p.plng, a: p.address ? p.address + ", " + p.city + ", CA" : "", p }))];
   if (!fl.length) return [];
   const o = routeOrigin();
@@ -417,15 +420,15 @@ function revealItem(k) {
   const body = $("#pbody"); let el = body.querySelector(`.item[data-key="${CSS.escape(k)}"]`);
   if (!el) { const ix = listVis.findIndex((x) => x.key === k); if (ix >= 0) { moreCards(ix + 12); el = body.querySelector(`.item[data-key="${CSS.escape(k)}"]`); } }
   if (!el) return;
-  const top = body.scrollTop + el.getBoundingClientRect().top - body.getBoundingClientRect().top - 10;
-  body.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  const sc = scroller(), top = sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - 10;
+  sc.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
 }
 function renderPreview() {
   const pv = $("#preview"), it = findKey(state.sel);
   if (!it || state.detail === state.sel) { pv.hidden = true; document.body.classList.remove("pin-open"); return; }
   const k = state.sel, f = it.kind === "ev" ? favs.has(it.ev.id) : favs.has(hfav(it.p));
-  const acts = `<span class="pv-acts">${awayTag(it.kind === "ev" ? it.ev : { lat: it.p.plat, lng: it.p.plng })}<button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button></span>`;
+  const acts = `<span class="pv-acts">${awayTag(it.kind === "ev" ? it.ev : { lat: it.p.plat, lng: it.p.plng })}<button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites" title="${f ? "In my favorites" : "Add to my favorites"}">${HEART}</button></span>`;
   if (it.kind === "ev") {
     const ev = it.ev, phs = photosOf(ev), ph = phs[0], conf = ev.st === "c", hrs = hoursOf(ev), manyE = phs.length > 1;
     if (!hasDetail(ev) && !DERR.has(ev.id)) loadDetail(ev).catch(() => {}); // the card opens the details next: fetch them now (and the photo credit names the event's site)
@@ -499,7 +502,7 @@ function placePin() {
 /* ---------- panel ---------- */
 function setTab(t) { const order = ["events", "plan", "shop"], dir = order.indexOf(t) - order.indexOf(state.tab), anim = dir > 0 ? "tabin-r" : dir < 0 ? "tabin-l" : "tabin"; state.tab = t; state.detail = null; ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
   document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute();
-  for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin", "tabin-r", "tabin-l"); void el.offsetWidth; el.classList.add(anim); } // the new tab slides in from the side it sits on: Places, My night, Shop
+  for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin", "tabin-r", "tabin-l"); void el.offsetWidth; el.classList.add(anim); } // the new tab slides in from the side it sits on: Places, Favorites, Shop
   if (t === "shop") nudgeShopTabs(); }
 // On phones the category row swipes sideways; slide it out and back once when Shop opens so people notice.
 function nudgeShopTabs() {
@@ -647,13 +650,13 @@ const hoursOf = (ev) => (ev.h && !/^check/i.test(ev.h) ? cut(ev.h, 30) : "");
 function evItem(ev, i = 99, x = null) {
   const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
   // Same layout as the card that opens when you tap a dot on the map
-  return `<article class="item ev${ev.nt ? " noticed" : ""}${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 2, 320, 120) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts">${awayTag(ev)}<button class="shr" type="button" data-share="e:${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div>${x ? legLine(x) : ""}<div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
+  return `<article class="item ev${ev.nt ? " noticed" : ""}${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 2, 320, 120) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts">${awayTag(ev)}<button class="shr" type="button" data-share="e:${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div>${x ? legLine(x) : ""}<div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
 }
-// My night help: three simple steps, which can be folded into a ? button next to the stop count (remembered on this device)
+// Favorites help: three simple steps, which can be folded into a ? button next to the stop count (remembered on this device)
 let nightHelp = true; try { nightHelp = localStorage.getItem("socal-nighthelp") !== "0"; } catch {}
 function setNightHelp(v) { nightHelp = v; try { localStorage.setItem("socal-nighthelp", v ? "1" : "0"); } catch {} renderPanel(); }
-const helpHtml = (n) => `<section class="nhelp" aria-label="How My night works"><div class="nh-top"><b>Plan your night in 3 steps</b><button type="button" class="nh-x" data-nhelp="0" aria-label="Hide these steps" title="Hide"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><ol><li class="${n ? "is-done" : ""}"><span>${n ? "✓" : "1"}</span><div><b>Tap the heart</b><small>On any place you want to visit.</small></div></li><li class="${n > 1 ? "is-done" : ""}"><span>${n > 1 ? "✓" : "2"}</span><div><b>Check your stops here</b><small>We put them in a sensible driving order.</small></div></li><li><span>3</span><div><b>Tap Open route</b><small>Your maps app takes you there.</small></div></li></ol></section>`;
-// My night: the stop number and the drive from the previous stop
+const helpHtml = (n) => `<section class="nhelp" aria-label="How Favorites work"><div class="nh-top"><b>Plan your drive in 3 steps</b><button type="button" class="nh-x" data-nhelp="0" aria-label="Hide these steps" title="Hide"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><ol><li class="${n ? "is-done" : ""}"><span>${n ? "✓" : "1"}</span><div><b>Tap the heart</b><small>On any place you want to visit.</small></div></li><li class="${n > 1 ? "is-done" : ""}"><span>${n > 1 ? "✓" : "2"}</span><div><b>Check your stops here</b><small>We put them in a sensible driving order.</small></div></li><li><span>3</span><div><b>Tap Route these</b><small>Your maps app takes you there.</small></div></li></ol></section>`;
+// Favorites: the stop number and the drive from the previous stop
 const legLine = (x) => `<div class="legline">${x.leg ? `↓ ${x.leg.mi} mi · ~${x.leg.min} min from ${esc(x.leg.from)}` : "Start here"}</div>`;
 // Winner badges: one yellow crown icon, shown where the owner chose (list card chip, map pop-up, details page)
 const CROWN_B = (n = 16) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;flex:none"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`;
@@ -681,7 +684,7 @@ const byLine = (p) => (p.kind === "installer" ? (p.inst ? instLink(p) : esc(p.bi
 const instLine = (p) => (p.kind !== "installer" && p.inst ? `<div class="meta instby">Installed by ${instLink(p)}${p.inst.ok ? ` <span class="instok" title="Confirmed by the installer" aria-label="Confirmed by the installer">&#10003;</span>` : ""}</div>` : "");
 function instItem(p, x = null, i = 99) {
   const ph = p.photos || [], k = "i:" + p.id, f = favs.has(hfav(p)), sn = SEASONS[p.season] ? SEASONS[p.season].short : "";
-  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? photoImg({ src: photoUrl(ph[0]) }, i < 2, 320, 120) : ""}<span class="when">Home display</span>${bChip(p)}${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts">${awayTag({ lat: p.plat, lng: p.plng })}<button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${byLine(p)} · ${esc(p.city)}</div>${instLine(p)}<div class="dates">${esc(sn)} display · Free to view</div>${homeTags(p)}${x ? legLine(x) : ""}<div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
+  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? photoImg({ src: photoUrl(ph[0]) }, i < 2, 320, 120) : ""}<span class="when">Home display</span>${bChip(p)}${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts">${awayTag({ lat: p.plat, lng: p.plng })}<button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites">${HEART}</button></span></div><div class="meta">${byLine(p)} · ${esc(p.city)}</div>${instLine(p)}<div class="dates">${esc(sn)} display · Free to view</div>${homeTags(p)}${x ? legLine(x) : ""}<div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
@@ -717,10 +720,32 @@ function routeHint(vis) {
   if (vis.length > ROUTE_CAP) return `Zoom in to ${ROUTE_CAP} or fewer places to route them (${vis.length} in view)`;
   return "";
 }
-function routeLink(vis) {
-  const hint = routeHint(vis), n = hint ? 0 : routeLegs(vis).length;
-  return `<button type="button" class="rtlink" data-route aria-disabled="${hint ? "true" : "false"}" title="${esc(hint || (n > 1 ? `Open ${n} driving routes through these places` : "Open a driving route through these places"))}" data-hint="${esc(hint)}">${ROUTE_ICON}<span>Route these</span></button>`;
+// The "Route these" pill on the map (not in the list). Desktop: right of the ••• circle. Phone: above the list, at the right, moving with it;
+// when the list is nearly full it slides into the list header. It routes the places in the map view and only shows on the Places tab.
+const rtPill = () => document.getElementById("rtpill");
+function updateRoutePill(vis) {
+  const b = rtPill(); if (!b) return;
+  const on = state.tab === "events" && !state.detail; b.hidden = !on; if (!on) return;
+  const hint = routeHint(vis || listVis), n = hint ? 0 : routeLegs(vis || listVis).length;
+  b.setAttribute("aria-disabled", hint ? "true" : "false"); b.dataset.hint = hint;
+  b.title = hint || (n > 1 ? `Open ${n} driving routes through these places` : "Open a driving route through these places");
+  positionRoutePill();
 }
+function positionRoutePill() {
+  const b = rtPill(); if (!b || b.hidden) return;
+  // On a phone the pill must sit above the list panel, so it lives at the top level of the page; elsewhere it lives in the top bar
+  if (isPhone()) { if (b.parentElement !== document.body) document.body.appendChild(b); } else { const row = document.querySelector(".searchrow"); if (row && b.parentElement !== row) row.appendChild(b); }
+  if (!isPhone()) { b.classList.remove("docked"); b.style.top = b.style.left = b.style.right = ""; return; }
+  const r = document.getElementById("panel").getBoundingClientRect(), h = document.querySelector("#phead .hrow"), c = document.querySelector("#phead .hcount");
+  if (r.top < 150 && h && c) { // list nearly full: sit in the header, after the place count
+    const hr = h.getBoundingClientRect(), cr = c.getBoundingClientRect(); b.classList.add("docked");
+    b.style.top = Math.round(hr.top + (hr.height - 32) / 2) + "px"; b.style.left = Math.round(cr.right + 10) + "px"; b.style.right = "auto";
+  } else { b.classList.remove("docked"); b.style.top = Math.round(r.top - 48) + "px"; b.style.left = "auto"; b.style.right = "14px"; }
+}
+{ const rp = rtPill(); if (rp) rp.addEventListener("click", () => { if (rp.dataset.hint) { toast(rp.dataset.hint, true); return; } routeFromView(); }); }
+// While the list slides (drag or tap), keep the pill on it
+let rpRaf = 0;
+function followRoutePill(ms = 480) { const t0 = performance.now(); cancelAnimationFrame(rpRaf); const tick = () => { positionRoutePill(); if (performance.now() - t0 < ms) rpRaf = requestAnimationFrame(tick); }; tick(); }
 // A stop for the route pop-up: name, a short line under it, where the maps app should go, and the pin (for ordering)
 function toStop(x) {
   if (x.house) return { id: x.key, name: x.p.title, sub: [x.p.address, x.p.city].filter(Boolean).join(", "), dest: destOf(x), lat: x.lat, lng: x.lng };
@@ -741,14 +766,14 @@ function openNightRoutes() {
   const origin = startStop || state.start === "me" ? "" : og ? og.lat + "," + og.lng : "";
   const stops = st.map(toStop), n = startStop ? stops.length - 1 : stops.length;
   openRouteSheet({ title: "Your night", key: "map", stops: startStop ? stops.slice(1) : stops, start: startStop ? stops[0] : null, origin, app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); },
-    intro: `Your maps app takes about 9 stops at a time, so ${n > 9 ? "your night is split into routes of 9 or fewer" : "this is one route"}. Each route starts where the last one ended. Tick a stop when you have been there.`,
+    intro: `Your maps app takes about 9 stops at a time, so ${n > 9 ? "your favorites are split into routes of 9 or fewer" : "this is one route"}. Each route starts where the last one ended. Tick a stop when you have been there.`,
     note: mapsApp === "apple" ? "Multi-stop routes in Apple Maps need iOS 18.4 or later. Older iPhones open with the first stop." : "" });
 }
 async function shareNight() {
   if (!favs.size) return;
-  const url = location.origin + "/#night-" + [...favs].map(encodeURIComponent).join(","), title = "My night on SoCal Lights";
+  const url = location.origin + "/#night-" + [...favs].map(encodeURIComponent).join(","), title = "My favorites on SoCal Lights";
   try { if (navigator.share) { await navigator.share({ title, text: `${favs.size} stops for a night of lights`, url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
-  try { await navigator.clipboard.writeText(url); toast("Link to your night copied"); } catch { toast(url); }
+  try { await navigator.clipboard.writeText(url); toast("Link to your favorites copied"); } catch { toast(url); }
 }
 // First visit: offer to use the location so distances and Nearest work; asked once, never up front
 function showWelcome() {
@@ -771,6 +796,7 @@ function welcomeLater() {
 function renderPanel(opts) {
   counts();
   const head = $("#phead"), body = $("#pbody");
+  if (state.tab !== "events" || state.detail) { const rp = rtPill(); if (rp) rp.hidden = true; } // the map's Route these pill belongs to the Places tab
   document.body.classList.toggle("detail-open", !!state.detail);
   if (state.detail) { head.hidden = true; body.innerHTML = detailHtml(state.detail); wireDetail(); return; }
   head.hidden = false;
@@ -787,11 +813,11 @@ function renderPanel(opts) {
     const vis = items.filter((it) => inView(it.lng, it.lat) || state.sel === it.key || state.keep === it.key); // keep: the card you just came back from stays listed
     const liveEl = $("#live"); if (liveEl) { const msg = vis.length + (vis.length === 1 ? " place" : " places") + " in view"; if (liveEl.textContent !== msg) liveEl.textContent = msg; }
     const act = activeFilters();
-    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span>${routeLink(vis)}${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span>${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
     const tops = bannerOn && !state.detail && state.tab !== "plan" ? topSponsors(viewRegions()) : [], topSig = tops.map((t) => t.id).join(",");
     const sig = topSig + "@" + vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
     if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
-    listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE);
+    listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE); updateRoutePill(vis);
     body.innerHTML = vis.length ? `<h2 class="sr">Places in view</h2><div class="list">${listWithSponsors(vis.slice(0, listShown), tops)}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
       : !state.all && !state.city && !E.some((e) => (e.sn || "christmas") === state.season) ? `<div class="empty">No ${esc((SEASONS[state.season] || {}).short || "seasonal")} events are listed yet. We start adding them about six weeks ahead, so check back soon. Know of one? <a href="/add-event">Add an event</a>.</div>`
       : state.q ? `<div class="empty">No places match \u201c${esc(state.q)}\u201d.<button class="linkbtn" type="button" id="clearq">Clear search</button></div>`
@@ -802,7 +828,7 @@ function renderPanel(opts) {
     head.innerHTML = `<div class="hrow"><button class="chip" type="button" data-pop="shopseason" aria-haspopup="true" aria-label="Choose a season to shop for"><span class="sico" aria-hidden="true">${phaseFor(shopSeason(), TODAY).icon}</span><span>Shop for ${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</span><svg class="caret" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
     body.innerHTML = `<div class="shopgrid">${c[1].map(([em, l, q]) => `<a class="shopcard" href="${amzUrl(q)}" target="_blank" rel="sponsored noopener"><span class="shopem" aria-hidden="true">${em}</span><span class="shoptx">${esc(l)}</span><span class="shopgo">Amazon ↗</span></a>`).join("")}</div><p class="meta" style="padding:4px 14px 14px">As an Amazon Associate we earn from qualifying purchases, at no extra cost to you.</p>`;
   } else {
-    // My night uses the same layout as Places: buttons row, count line, then the cards
+    // Favorites use the same layout as Places: buttons row, count line, then the cards
     const st = routeStops();
     if (state.start === "me" && st.length) locateMe(false);
     let prev = routeOrigin(), total = 0, mins = 0;
@@ -816,7 +842,7 @@ function renderPanel(opts) {
     const dur = mins >= 60 ? Math.floor(mins / 60) + " hr" + (mins % 60 ? " " + (mins % 60) + " min" : "") : mins + " min";
     const startSel = `<label class="qsel">Start <select id="startFrom" aria-label="Start from"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
     const mapsSel = `<label class="qsel">Maps <select id="mapsSel" aria-label="Maps app">${Object.entries(MAPS).map(([k, l]) => `<option value="${k}"${k === mapsApp ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
-    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How My night works" title="How My night works">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options"><button type="button" class="qgo" data-nroute title="Open ${nRoutes > 1 ? nRoutes + ' driving routes' : 'the driving route'} in ${MAPS[mapsApp]}">${nRoutes > 1 ? "Open " + nRoutes + " routes" : "Open route"} ↗</button>${startSel}${mapsSel}${state.shared ? "" : `<button type="button" class="qshare" data-nshare>Share</button>`}</div>` : ""}${state.shared ? `<div class="sharedbar"><span>A night shared with you</span><button type="button" data-nsave>Add to my night</button><button type="button" data-nclose>Close</button></div>` : ""}`;
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How Favorites work" title="How Favorites work">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options"><button type="button" class="qgo" data-nroute title="Open ${nRoutes > 1 ? nRoutes + ' driving routes' : 'the driving route'} in ${MAPS[mapsApp]}">${ROUTE_ICON}<span>Route these${nRoutes > 1 ? " · " + nRoutes + " routes" : ""}</span></button>${startSel}${mapsSel}${state.shared ? "" : `<button type="button" class="qshare" data-nshare>Share</button>`}</div>` : ""}${state.shared ? `<div class="sharedbar"><span>Favorites shared with you</span><button type="button" data-nsave>Add to my favorites</button><button type="button" data-nclose>Close</button></div>` : ""}`;
     const sf = $("#startFrom"); if (sf) sf.onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
     const ms = $("#mapsSel"); if (ms) ms.onchange = (e) => setMapsApp(e.target.value);
     if (!st.length) { body.innerHTML = nightHelp ? helpHtml(0) : `<div class="empty">No stops yet. Tap the heart on any place to add it.</div>`; return; }
@@ -825,10 +851,10 @@ function renderPanel(opts) {
     const nights = [...new Set(st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s)))];
     if (nights.length) notes.push(`One-night events: ${nights.join(", ")}.`);
     if (mapsApp === "apple" && st.length > 1) notes.push("Multi-stop routes in Apple Maps need iOS 18.4 or later. Older iPhones open with the first stop.");
-    body.innerHTML = (nightHelp ? helpHtml(st.length) : "") + `<div class="list">${st.map((ev, i) => (ev.house ? instItem(ev.p, { n: i + 1, leg: legs[i] }) : evItem(ev, i, { n: i + 1, leg: legs[i] }))).join("")}</div>${notes.length ? `<div class="routenotes">${notes.map((n) => `<p><span aria-hidden="true">i</span>${n}</p>`).join("")}</div>` : ""}`;
+    body.innerHTML = (nightHelp ? helpHtml(st.length) : "") + `<h2 class="sr">Your favorites</h2><div class="list">${st.map((ev, i) => (ev.house ? instItem(ev.p, { n: i + 1, leg: legs[i] }) : evItem(ev, i, { n: i + 1, leg: legs[i] }))).join("")}</div>${notes.length ? `<div class="routenotes">${notes.map((n) => `<p><span aria-hidden="true">i</span>${n}</p>`).join("")}</div>` : ""}`;
   }
-  if (listIO) listIO.disconnect(); const sen = $("#listmore"); if (sen && window.IntersectionObserver) { listIO = new IntersectionObserver((en) => { if (en.some((e) => e.isIntersecting)) moreCards(); }, { root: body, rootMargin: "600px" }); listIO.observe(sen); }
-  body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
+  if (listIO) listIO.disconnect(); const sen = $("#listmore"); if (sen && window.IntersectionObserver) { listIO = new IntersectionObserver((en) => { if (en.some((e) => e.isIntersecting)) moreCards(); }, { root: scroller(), rootMargin: "600px" }); listIO.observe(sen); }
+  body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); scroller().scrollTop = 0; }));
   const cq = $("#clearq"); if (cq) cq.onclick = () => { const q = $("#q"); q.value = ""; state.q = ""; closeSuggestions(); applyFilters(); q.focus(); };
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
 }
@@ -839,7 +865,7 @@ $("#pbody").addEventListener("click", (e) => {
   if (f) { e.stopPropagation(); const id = f.dataset.fav; favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); if (state.tab === "plan" && !favs.size) { setTab("events"); if (isPhone()) setSheet("peek"); fitSoCal(true); return; } renderPanel(); drawMap(); return; }
   const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) { selectKey(it.dataset.key, "list"); if (e.target.closest(".tile,.thumb") && state.detail !== it.dataset.key) openDetail(it.dataset.key); }
 });
-$("#phead").addEventListener("change", (e) => { if (e.target.id === "sortSel") { state.sort = e.target.value; renderPanel(); $("#pbody").scrollTop = 0; } });
+$("#phead").addEventListener("change", (e) => { if (e.target.id === "sortSel") { state.sort = e.target.value; renderPanel(); scroller().scrollTop = 0; } });
 $("#pbody").addEventListener("click", (e) => {
   if (e.target.closest("[data-support]")) { openSupport(); return; }
   const cl = e.target.closest("[data-cal]"); if (cl) { e.stopPropagation(); addToCalendar(cl.dataset.cal); return; }
@@ -854,7 +880,7 @@ $("#pbody").addEventListener("click", (e) => {
 });
 $("#phead").addEventListener("click", (e) => {
   const ns = e.target.closest("[data-nshare]"); if (ns) { shareNight(); return; }
-  if (e.target.closest("[data-nsave]")) { state.shared.forEach((id) => favs.add(id)); state.shared = null; saveFavs(); counts(); renderPanel(); drawMap(); toast("Added to your night"); return; }
+  if (e.target.closest("[data-nsave]")) { state.shared.forEach((id) => favs.add(id)); state.shared = null; saveFavs(); counts(); renderPanel(); drawMap(); toast("Added to your favorites"); return; }
   if (e.target.closest("[data-nclose]")) { state.shared = null; renderPanel(); drawMap(); return; }
   if (e.target.closest("[data-nroute]")) { openNightRoutes(); return; }
   const rt = e.target.closest("[data-route]");
@@ -862,7 +888,7 @@ $("#phead").addEventListener("click", (e) => {
   const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
   const cl = e.target.closest("[data-clear]"); if (cl) { clearFilter(cl.dataset.clear); return; }
   const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { toggleSeasonPick(sc, "shop"); return; }
-  const sb = e.target.closest("[data-shop]"); if (sb) { state.shopCat = +sb.dataset.shop; renderPanel(); $("#pbody").scrollTop = 0; return; }
+  const sb = e.target.closest("[data-shop]"); if (sb) { state.shopCat = +sb.dataset.shop; renderPanel(); scroller().scrollTop = 0; return; }
   const b = e.target.closest("[data-quick]"); if (!b) return;
   const f = b.dataset.quick, v = b.dataset.v;
   if (f === "date") { state.date = state.date === v ? "" : v; if (state.date) state.weekend = false; } else if (f === "weekend") { state.weekend = !state.weekend; if (state.weekend) state.date = ""; } else state.cost = state.cost === v ? "all" : v;
@@ -959,7 +985,7 @@ function showDetail(ev) {
   if (cr && q) { const l = safeUrl(q.link), n = document.createElement(l ? "a" : "span"); n.className = "credit"; n.id = "hcredit"; n.textContent = q.credit; if (l) { n.href = l; n.target = "_blank"; n.rel = "noopener"; } cr.replaceWith(n); }
 }
 function dismissWelcome() { const w = $("#welcome"); if (w) { w.remove(); try { localStorage.setItem("socal-welcomed", "1"); } catch {} } } // opening an event means "not now" to the location prompt
-function openDetail(k) { dismissWelcome(); if (k !== state.detail && /^e:/.test(k)) { tick("fn:event-open"); DERR.delete(k.slice(2)); } state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
+function openDetail(k) { dismissWelcome(); if (k !== state.detail && /^e:/.test(k)) { tick("fn:event-open"); DERR.delete(k.slice(2)); } state.detail = k; state.sel = k; renderPanel(); renderPreview(); scroller().scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
 function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
   if (it.kind === "ev") {
@@ -974,7 +1000,7 @@ function detailHtml(k) {
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd>${ev.lc ? `<dt>Updated</dt><dd class="meta">${esc(fmt(ev.lc))}</dd>` : ""}</dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
-    ${loading ? `<span id="dcontest"></span>` : contestBtn(ev, url)}${isSweepHome(ev) ? `<a class="claimhome" href="/add-house?claim=${encodeURIComponent(ev.id)}">Is this your home? Claim it &rsaquo;</a>` : ""}${reportLink(ev.n, "e-" + ev.id, ev.city, isSweepHome(ev))}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${loading ? `<span class="abtn" id="dslot" aria-hidden="true" style="visibility:hidden"></span>` : infoBtn(ev, url)}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
+    ${loading ? `<span id="dcontest"></span>` : contestBtn(ev, url)}${isSweepHome(ev) ? `<a class="claimhome" href="/add-house?claim=${encodeURIComponent(ev.id)}">Is this your home? Claim it &rsaquo;</a>` : ""}${reportLink(ev.n, "e-" + ev.id, ev.city, isSweepHome(ev))}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites" title="${f ? "In my favorites" : "Add to my favorites"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${loading ? `<span class="abtn" id="dslot" aria-hidden="true" style="visibility:hidden"></span>` : infoBtn(ev, url)}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
   return `<div class="detail">  ${ph.length ? `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="ph-none">No photos yet</div></div>`}
@@ -982,7 +1008,7 @@ function detailHtml(k) {
   <h2>${esc(p.title)}</h2><div class="meta">${p.kind === "installer" ? "" : "Posted by "}<b style="color:var(--ink)">${p.kind === "installer" && p.inst ? instLink(p) : esc(p.biz)}</b> · ${esc(p.city)}${away({ lat: p.plat, lng: p.plng })}</div>${instLine(p)}${bLines(p)}
   <p style="margin:0;white-space:pre-line">${esc(p.desc)}</p>
   <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}</dd>` : ""}${p.lon ? `<dt>Lights on</dt><dd>${esc(p.lon)}</dd>` : ""}${VISIT[p.visit] ? `<dt>Visit</dt><dd>${VISIT[p.visit]}${PARK[p.parking] ? " · " + PARK[p.parking] : ""}${p.acc ? " · Stroller and wheelchair friendly" : ""}</dd>` : p.acc || PARK[p.parking] ? `<dt>Visit</dt><dd>${[PARK[p.parking], p.acc && "Stroller and wheelchair friendly"].filter(Boolean).join(" · ")}</dd>` : ""}${p.radio ? `<dt>Tune in</dt><dd>${esc(p.radio)}</dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.kind === "installer" && p.area ? `<dt>Service area</dt><dd>${esc(p.area)}</dd>` : ""}${p.phone ? `<dt>Call for Quotes</dt><dd>${telHref(p.phone) ? `<a href="${esc(telHref(p.phone))}"${p.kind === "installer" ? ' data-clk="click:installer"' : ""}>${esc(fmtPhone(p.phone))}</a>` : esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener"${p.kind === "installer" ? ' data-clk="click:installer"' : ""}>${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
-  ${onButton(p)}${reportLink(p.title, "h-" + p.id, p.city, true)}<div class="actionbar"><button class="abtn" type="button" data-share="i:${esc(p.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
+  ${onButton(p)}${reportLink(p.title, "h-" + p.id, p.city, true)}<div class="actionbar"><button class="abtn" type="button" data-share="i:${esc(p.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my favorites" title="${favs.has(hfav(p)) ? "In my favorites" : "Add to my favorites"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
 }
 function wireDetail() {
   const it0 = findKey(state.detail); if (it0 && it0.kind === "ev") { wireRetry(it0.ev); startDetail(it0.ev); }
@@ -1047,7 +1073,7 @@ function openPop(chip) {
   if (k === "shopseason") h = `<h4>Shop for</h4>${Object.keys(SITE.shop).filter((x) => SEASONS[x]).map((x) => `<label class="opt"><input type="radio" name="ss" value="${x}" ${x === shopSeason() ? "checked" : ""}> ${SHOP_ICON[x] || ""} ${esc(SEASONS[x].short || SEASONS[x].label)}</label>`).join("")}`;
   p.innerHTML = h; p.hidden = false;
   const r = chip.getBoundingClientRect(), pw = p.offsetWidth; p.style.top = r.bottom + 6 + "px"; p.style.left = Math.max(12, Math.min(r.left, innerWidth - pw - 12)) + "px";
-  p.querySelectorAll("input[name=ss]").forEach((r) => (r.onchange = () => { state.shopSeason = r.value; state.shopCat = 0; closePop(); renderPanel(); $("#pbody").scrollTop = 0; }));
+  p.querySelectorAll("input[name=ss]").forEach((r) => (r.onchange = () => { state.shopSeason = r.value; state.shopCat = 0; closePop(); renderPanel(); scroller().scrollTop = 0; }));
 }
 
 /* Filters: one panel for everything that narrows the list (a popover on desktop, a full-height sheet on phones) */
@@ -1269,7 +1295,7 @@ function toggleSeasonPick(btn, mode) {
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 8 + "px"; m.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
   btn.setAttribute("aria-expanded", "true");
-  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); if (shop) { state.shopSeason = b.dataset.sp; state.shopCat = 0; renderPanel(); $("#pbody").scrollTop = 0; } else if (b.dataset.sp === "all") showAllSeasons(); else setSeason(b.dataset.sp); };
+  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); if (shop) { state.shopSeason = b.dataset.sp; state.shopCat = 0; renderPanel(); scroller().scrollTop = 0; } else if (b.dataset.sp === "all") showAllSeasons(); else setSeason(b.dataset.sp); };
   setTimeout(() => document.addEventListener("click", function off(e) { if (!$("#seasonmenu")) { document.removeEventListener("click", off); return; } if (!e.target.closest("#seasonmenu,#seasonbtn,[data-pop=shopseason]")) { closeSeasonMenu(); document.removeEventListener("click", off); } }), 0);
 }
 $("#seasonbtn").onclick = (e) => toggleSeasonPick(e.currentTarget);
@@ -1378,7 +1404,7 @@ const peekY = () => Math.max(0, fullH() - stopH("peek")); // how far the sheet i
 // y = how far down the sheet is (0 = Full); the fade behind the tab bar follows
 function placeSheet(y) {
   const panel = $("#panel"), py = peekY(), v = Math.max(0, Math.min(py, y));
-  panel.style.transform = `translate3d(0,${v}px,0)`;
+  panel.style.transform = `translate3d(0,${v}px,0)`; positionRoutePill();
   const f = $("#navfade"); if (f) f.style.opacity = py ? Math.min(1, Math.max(0, v / py)) : 1;
   return v;
 }
@@ -1399,7 +1425,7 @@ function keepSelectedVisible() {
 function setSheet(s) {
   sheetState = s; const panel = $("#panel");
   if (!isPhone()) { panel.style.removeProperty("transform"); return; }
-  placeSheet(s === "peek" ? peekY() : 0);
+  placeSheet(s === "peek" ? peekY() : 0); followRoutePill();
   document.documentElement.style.setProperty("--peek", sheetVisible() + "px");
   keepSelectedVisible();
 }
