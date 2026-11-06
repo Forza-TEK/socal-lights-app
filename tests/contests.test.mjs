@@ -57,10 +57,10 @@ test("create: goes live and onto the map; the season comes from the entry deadli
   assert.ok(c.rules.length > 40, "default rules were filled in");
   const listed = await (await list({ env })).json(); assert.ok(listed.some((x) => x.slug === r.slug && x.entriesOpen === true && x.votingOpen === false));
 });
-test("create: flagged notes for free mail, no website and a mismatched website; the contest still goes live", async () => {
+test("create: flagged notes for free mail, no website and a mismatched website; a plain organizer name still goes live (official-sounding names are held: see audit-fixes tests)", async () => {
   const { env, raw } = newEnv();
   const g = await addUser(raw, "u1", "o@gmail.com"), a = await addUser(raw, "u2", "o@city.gov"), b = await addUser(raw, "u3", "o@other.org");
-  const r1 = await J(post(env, g.cookie, good({ name: "Free Mail Contest", site: "x.org" }))), r2 = await J(post(env, a.cookie, good({ name: "No Site Contest" }))), r3 = await J(post(env, b.cookie, good({ name: "Mismatch Contest", site: "https://city.gov" })));
+  const r1 = await J(post(env, g.cookie, good({ name: "Free Mail Contest", org: "Maple Street Neighbors", site: "x.org" }))), r2 = await J(post(env, a.cookie, good({ name: "No Site Contest", org: "Maple Street Neighbors" }))), r3 = await J(post(env, b.cookie, good({ name: "Mismatch Contest", org: "Maple Street Neighbors", site: "https://city.gov" })));
   assert.deepEqual([r1.trust, r2.trust, r3.trust], ["free", "none", "other"]);
   assert.match(row(raw, r1.slug).note, /free-mail/); assert.match(row(raw, r2.slug).note, /no website/); assert.match(row(raw, r3.slug).note, /does not match/);
   for (const r of [r1, r2, r3]) assert.equal(row(raw, r.slug).status, "live");
