@@ -1,3 +1,4 @@
+import { purgeRenewals } from "./renewal.js";
 // Removes an account and everything tied to it. Used by "delete my account" (DELETE /api/me) and the admin Users tab.
 // Removes sign-ins, drafts, profile picture, contest entries (with their photos) and votes, closes contests the person
 // runs (unannounced ones are closed; announced ones keep their frozen results, owner-less; both leave the map), and blanks their email on homes and events they posted.
@@ -26,6 +27,7 @@ export async function deleteAccount(env, id, email) {
     }
   } catch {}
 
+  try { await purgeRenewals(env, id, email); } catch {} // automatic renewal: detach the saved payment method at Stripe (best effort) and delete the row; only Stripe ids were ever stored
   const E = email, I = id;
   // Judge rows: the person as a judge in anyone's contest, and every judge of a contest they ran. Unannounced contest: the row and its ballot go.
   // Announced contest: results are frozen, so the row stays as an anonymous placeholder (no email, token or account link) and the scores stay.

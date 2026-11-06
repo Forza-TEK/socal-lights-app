@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Cancel automatic renewal · SoCal Lights</title>
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261106zb">
+<link rel="stylesheet" href="/info.css?v=20261106zb">
+<style>.unsub{max-width:520px;margin:40px auto;text-align:center;display:grid;gap:14px;justify-items:center}.unsub h1{margin:0}.unsub p{margin:0}.unsub .btn{min-height:48px;padding:0 26px}</style>
+<script src="/hit.js" defer></script>
+</head>
+<body>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+<main id="content"><div class="unsub" id="box"><p class="meta">One moment…</p></div></main>
+<script>
+(function () {
+  var t = new URLSearchParams(location.search).get("t") || "", box = document.getElementById("box");
+  var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  function fail(m) { box.innerHTML = '<h1>That link did not work</h1><p class="err" role="alert">' + esc(m) + '</p><p>Sign in and use the button in your installer dashboard, or write to <a href="mailto:info@socallights.app">info@socallights.app</a> and we will cancel it for you.</p>'; }
+  function draw(d) {
+    if (!d.on) { box.innerHTML = '<h1>Automatic renewal is off</h1><p>Automatic renewal for <b>' + esc(d.installer) + '</b> is cancelled. Nothing will be charged automatically. The placement you already paid for keeps running to its last day.</p><p><a class="btn" href="/">Back to SoCal Lights</a></p>'; return; }
+    box.innerHTML = '<h1>Cancel automatic renewal?</h1><p>Stop renewing the <b>' + esc(d.plan) + '</b> Sponsor placement for <b>' + esc(d.installer) + '</b> (' + esc(d.price) + ' on ' + esc(d.next_charge_date) + '). Nothing will be charged. The placement you already paid for keeps running to its last day.</p><p><button class="btn" id="go" type="button">Cancel automatic renewal</button></p>';
+    document.getElementById("go").onclick = function () {
+      this.disabled = true;
+      fetch("/api/sponsor/renewal", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: t }) })
+        .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "Something went wrong."); return j; }); })
+        .then(function () { d.on = false; draw(d); }).catch(function (e) { fail(e.message); });
+    };
+  }
+  if (!t) return fail("This page needs the link from your email.");
+  fetch("/api/sponsor/renewal?t=" + encodeURIComponent(t)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); }).then(draw).catch(function (e) { fail(e.message); });
+})();
+</script>
+<script src="/footer.js?v=20261106z" defer></script>
+</body>
+</html>

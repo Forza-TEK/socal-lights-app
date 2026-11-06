@@ -28,6 +28,13 @@ One funnel for event organizers: Choose (Pricing) -> sign in -> Which event? -> 
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Optional automatic renewal for installer Sponsor placements (2026-11-07)
+Installers only, default OFF. Details: `docs/installer-banner.md` (Optional automatic renewal), Stripe steps in `docs/stripe-setup.md`, attorney notes in `docs/monetization/legal-redlines.md`.
+- **Flow:** unticked box on `/sponsor` (or a dashboard toggle that opens a Stripe card-setup page) -> consent wording (versioned) stored -> Stripe keeps the card, we keep only ids (`installer_autorenew`, migration 0176) -> reminder email 7 days before -> on the last day of the running placement a daily job (`.github/workflows/sponsor-renewals.yml`, existing `ALERT_CRON_KEY`) creates one off-session PaymentIntent at the plan's current price -> the order is applied through the same machinery as a Checkout payment (keyed by the PaymentIntent id; `payment_intent.succeeded` webhook is the safety net) -> next season starts the next day, one season ahead at most. Failure: email, one retry after 3 days, then lapse. Cancel by the link in any email (`/cancel-renewal`, no login) or in the dashboard. Refund or dispute pauses it.
+- **Also:** admin Orders "Automatic renewals" list and "Auto-renewal" tag, digest line, counters `fn:autorenew-*`, account deletion detaches the card, six editable emails plus a team notice, Terms/Privacy/Pricing/Help updated.
+- **Audit fixes shipped with it:** H2 (Pacific date for banners, real DST), M1 (quote locked at checkout; stale second sessions become refund_due, never double-booked), M2 ($25 difference when the banner already covers the period), PL-02 (copy), ARL checklist; deferred items are listed in `docs/installer-banner.md`.
+- **Tests:** `tests/sponsor-renewal.test.mjs`, `tests/sponsor-audit.test.mjs`. **Open:** a real $50 renewal test (owner steps in the report and `docs/stripe-setup.md`); attorney review of the ARL notes; add `payment_intent.succeeded` to the Stripe webhook.
+
 ## Installer Sponsor placements: pay for the banner and top of the list (2026-11-06)
 Owner-approved: installers buy the **Banner ($50 per season)** and **Banner and top of the list ($75 per season)** themselves. Details and rules: `docs/installer-banner.md` (Payments).
 - **Funnel:** `/pricing#banner` Choose buttons (aligned, named like "Choose Banner, $50") to `/sponsor` (sign in, profile, plan, exact dates and price, Stripe), return states `?paid=1` and `?cancelled=1`; dashboard card with Renew or upgrade.

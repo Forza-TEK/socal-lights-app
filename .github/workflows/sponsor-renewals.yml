@@ -1,0 +1,25 @@
+name: Sponsor automatic renewals
+
+# Daily job for the optional automatic renewal of installer Sponsor placements: reminders 7 days before a charge, the charge on the last day of the running
+# placement, the one retry after 3 days. Calls the pages.dev address of the same site (socallights.app puts a bot check in front of GitHub's servers).
+# 15:17 UTC (7:17 or 8:17 in the morning Pacific). Needs the repository secret ALERT_CRON_KEY, the same value as the Cloudflare Pages secret of that name
+# (the weekly email already uses it). It is safe to run by hand from the Actions tab or twice in a day: a reminder is sent once per renewal and a charge uses an idempotency key.
+on:
+  schedule:
+    - cron: "17 15 * * *"
+  workflow_dispatch:
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run the renewals
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+        run: |
+          if [ -z "$ALERT_CRON_KEY" ]; then echo "ALERT_CRON_KEY is not set in the repository secrets"; exit 1; fi
+          out=$(curl -sS -w "\n%{http_code}" -X POST https://socal-lights.pages.dev/api/sponsor/renewals -H "x-alert-key: $ALERT_CRON_KEY")
+          code=$(echo "$out" | tail -n1); body=$(echo "$out" | head -n -1)
+          echo "HTTP $code: $(echo "$body" | head -c 400)"
+          if [ "$code" != "200" ]; then echo "::error::The renewal job answered HTTP $code"; exit 1; fi
+          if echo "$body" | grep -q '"ok":false'; then echo "::error::The renewal job did not run (see the line above)"; exit 1; fi

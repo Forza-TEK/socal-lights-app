@@ -46,7 +46,7 @@ export function sponsorWindow(plan, inst, today) {
   const p = INSTALLER_PLANS[plan], cur = (p.top ? inst.top_until : inst.banner_until) || "", running = !!cur && cur >= today;
   const from = running ? addDays(cur, 1) : today, s = seasonOf(from);
   const horizon = seasonOf(addDays(seasonOf(today).end, 1)).end; // one season beyond what a purchase today reaches
-  const upgrade = p.top && !running && !!inst.banner_until && inst.banner_until >= s.end; // the banner already covers this whole period: only the top card is new
+  const upgrade = p.top && !!inst.banner_until && inst.banner_until >= s.end; // the banner already covers this whole period (whether or not a top card is running): only the top card is new
   const cents = upgrade ? INSTALLER_PLANS.banner_top.cents - INSTALLER_PLANS.banner.cents : p.cents;
   return { from, to: s.end, season: s.label, cents, days: daysBetween(from, s.end) + 1, upgrade, running, booked_to: running ? cur : "", full: running && cur >= horizon, horizon };
 }

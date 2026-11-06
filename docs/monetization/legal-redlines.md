@@ -307,6 +307,21 @@ Terms the pages state to the buyer, for review:
 
 ---
 
+## Automatic renewal of installer Sponsor placements (added 2026-11-07, for the attorney)
+
+**Not legal advice; a note so the attorney sees what the site now does.** California's Automatic Renewal Law (Bus. & Prof. Code 17600 and following) applies to a seller that offers an automatic renewal. The feature is OPTIONAL, installers only, and OFF unless the buyer ticks an unticked-by-default box. Code: `functions/_lib/renewal.js`; pages `public/sponsor.html`, `public/installer-manage.html`, `public/cancel-renewal.html`, `public/terms.html` (Installer Sponsor placements), `public/privacy.html`.
+1. **Disclosure and consent.** Next to the box the buyer reads: "Renew automatically each season: we charge your saved card on the last day of your placement at the plan price shown then (currently $X), and the next season starts the next day. We email you 7 days before each charge. Cancel any time in your dashboard or from the link in any email." The wording is a versioned constant; the version and time of consent are stored with the renewal (`consent_text_version`, `consent_at`). The box is never pre-ticked. Please advise whether the disclosure is "clear and conspicuous" and in visual proximity to the request for consent, and whether it must also state the length of the renewal term (one season, which varies: roughly 25 to 108 days) and that the price may change.
+2. **Acknowledgment.** An email right after opting in repeats the wording, the first charge date and a cancel link, and says nothing is charged that day. Please confirm it can be a plain email (the statute asks for a form the consumer can retain).
+3. **Cancellation.** Online, with no login: the link in every email (`/cancel-renewal?t=...`, an unguessable token; opening it changes nothing, one button cancels) or a button in the dashboard. Cancelling keeps the placement already paid for, removes the saved card at Stripe and sends a confirmation email. Please confirm this satisfies the "easy" cancellation requirement and the rule for cancelling the same way as signing up.
+4. **Reminder.** Sent once per renewal, 7 days before the charge, with the amount, date, plan, the next placement's dates and a note when the price changed. If someone opts in less than 7 days before their placement ends, the first reminder is sent the same day or the next run (the acknowledgment email also states the date). Please advise whether a minimum notice is needed in that case.
+5. **Price changes.** The charge is at the plan's current price on the charge date; the reminder states the new price when it differs from the last payment. Please advise whether the renewal price must be fixed at opt-in.
+6. **Failed charge.** One retry after 3 days, then the renewal lapses and no more automatic charges are made; emails are sent for the failure and the lapse.
+7. **Refunds and disputes.** An automatic charge is a normal order: the same refund and dispute rules apply; a refund or dispute pauses automatic renewal.
+8. **Card data and privacy.** We never see or store a card number; only Stripe's customer and payment-method ids are stored. The privacy page says so, and says the saved card is removed on cancellation or account deletion.
+9. **Terms.** `public/terms.html` has an "Automatic renewal (optional)" bullet written to match the code (a test checks the stated days against the constants).
+
+---
+
 ## What is now in the live Terms (2026-11-06) and what still needs the attorney
 
 **The Terms text is a plain-English draft written by the site team. It has not been reviewed by an attorney. It is not legal advice.** It was written to describe only what the code does and what the Feature page already promised. `public/terms.html`, section "Paid placements" (`/terms#paid`), "Updated November 6, 2026"; test `tests/terms.test.mjs`.

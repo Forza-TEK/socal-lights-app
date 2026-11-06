@@ -42,7 +42,7 @@
 <div class="tiers" id="insttiers">
 <div class="tier"><div class="free">Free</div><p><b>Profile card.</b> Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map, so anyone who likes your work can click through to you.</p><a class="btn ghost" href="/add-house?kind=installer" aria-label="Choose Free, create your free profile">Create your free profile</a></div>
 </div>
-<p class="meta paid" id="instnote">Paid placements are always labelled "Sponsor". You pay once on Stripe's secure page; there is no subscription. You can renew or upgrade any time from your dashboard.</p>
+<p class="meta paid" id="instnote">Paid placements are always labelled "Sponsor". You pay on Stripe's secure page, one time for the season by default. Automatic renewal is optional: it is off unless you tick the box on the payment step (or turn it on in your dashboard), and you can cancel it any time. You can also renew or upgrade by hand from your dashboard.</p>
 <p class="meta paid" id="instseason"></p>
 <p class="meta paid">Questions? Email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>.</p></section>
 
@@ -67,7 +67,7 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const dollars = (p) => "$" + (p.cents / 100);
 // one number (no person) when Choose is tapped, to see how many reach the next step
 $("#plans").addEventListener("click", (e) => { if (e.target.closest("a.btn")) try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k: "fn:event-feature-choose" })], { type: "application/json" })); } catch {} });
-import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261107d";
+import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261107e";
 const PAID = (on) => { document.querySelectorAll(".paid,#featnote,#plans").forEach((e) => (e.hidden = !on)); };
 const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
 if (/SoCalLightsApp/.test(navigator.userAgent)) {

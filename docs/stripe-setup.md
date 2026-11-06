@@ -37,7 +37,7 @@ Paid placement is web only: the page, the menu link and `/api/feature/checkout` 
 2. Stripe Dashboard > Settings > Payment methods: make sure **Cards** and **Cash App Pay** are on.
 3. Developers > API keys: copy the **Secret key** (`sk_live_...`).
 4. Developers > Webhooks > Add endpoint: URL `https://socallights.app/api/stripe-webhook`; subscribe to exactly these events: `checkout.session.completed`,
-   `checkout.session.async_payment_succeeded`, `checkout.session.expired`, `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`
+   `checkout.session.async_payment_succeeded`, `checkout.session.expired`, `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`, and (for automatic renewal of installer Sponsor placements) `payment_intent.succeeded`
    (an existing endpoint needs the four newer ones added). After saving, reveal and copy the **Signing secret** (`whsec_...`).
 5. Cloudflare dashboard > Workers & Pages > socal-lights > Settings > Variables and Secrets > Production > Add:
    - `STRIPE_SECRET_KEY` = the secret key (type **Secret**)
@@ -76,3 +76,9 @@ Showcase a House). The coffee-mug button now only holds the tip link and the opt
 `npm test` runs the signed-webhook, checkout, claims, orders and digest tests against an in-memory D1 (`tests/_pay.mjs`, `tests/_d1.mjs`).
 `.github/workflows/test.yml` runs them and `npm run validate` on every pull request and push to `main`. To make it a merge gate: GitHub > Settings >
 Rules (or Branches) > protect `main` > require the status check "Tests". Run `npm test` before touching any payment code.
+
+## Automatic renewal of installer Sponsor placements (added 2026-11-07)
+- **Webhook:** add the event `payment_intent.succeeded` to the existing endpoint (Developers > Webhooks > the `https://socallights.app/api/stripe-webhook` endpoint > Update details > add the event). `checkout.session.completed` (already enabled) also covers the small "save a card" setup page. Nothing else is new.
+- **Receipts:** Stripe > Settings > Customer emails > "Successful payments" on, so the buyer also gets Stripe's receipt for an automatic charge (we pass `receipt_email`).
+- **Cron:** `.github/workflows/sponsor-renewals.yml` uses the existing repository secret `ALERT_CRON_KEY` and the existing Pages secret of the same name. No new secret. Run it once by hand (Actions > Sponsor automatic renewals > Run workflow): it answers `{"ok":true,"reminded":0,...}` when nothing is due.
+- **Test:** in Stripe test mode (`sk_test_` key and a test webhook secret) pay with 4242 4242 4242 4242 with the box ticked; the declined card for the failure path is 4000 0000 0000 0341 (attaches, then fails when charged). Cancel and refund from the Dashboard as above.

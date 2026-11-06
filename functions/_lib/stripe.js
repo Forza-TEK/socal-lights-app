@@ -19,3 +19,13 @@ export async function createCheckoutSession(env, form, idem) {
   const d = r ? await r.json().catch(() => ({})) : {};
   return r && r.ok && d.url ? d.url : "";
 }
+
+// Plain Stripe API calls for renewals. Return { ok, status, data }; a network failure is { ok: false, status: 0, data: {} }. Card details never pass through here: only ids.
+export async function stripeCall(env, method, path, form, idem) {
+  const headers = { authorization: `Bearer ${env.STRIPE_SECRET_KEY}` };
+  if (form) headers["content-type"] = "application/x-www-form-urlencoded";
+  if (idem) headers["idempotency-key"] = idem;
+  const r = await fetch("https://api.stripe.com" + path, { method, headers, ...(form ? { body: form } : {}) }).catch(() => null);
+  const data = r ? await r.json().catch(() => ({})) : {};
+  return { ok: !!r && r.ok, status: r ? r.status : 0, data };
+}

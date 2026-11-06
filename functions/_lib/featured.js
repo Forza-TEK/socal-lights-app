@@ -69,7 +69,8 @@ export async function verifyStripeSignature(raw, header, secret, nowSec = Math.f
   return sigs.some((s) => eq(s, hex));
 }
 
-export const ptToday = () => new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
+// The Pacific calendar date (YYYY-MM-DD), real time zone rules (daylight saving included). One helper for everything that is sold or shown by date; uses Date.now() so tests can freeze it.
+export const ptToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date(Date.now()));
 // Order notes that begin with this mark are "needs a look" for the owner (Admin > Orders). Writing a note of your own there clears them.
 export const AUTO = "[auto] ";
 export const setOrderNote = (db, sessionId, text) => db.prepare("UPDATE feature_orders SET note = ? WHERE session_id = ?").bind(String(text).slice(0, 500), sessionId).run();

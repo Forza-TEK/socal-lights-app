@@ -11,9 +11,11 @@ import { bump } from "../_lib/funnel.js";
 import { sendFeaturePaidEmail } from "../_lib/featuremail.js";
 import { sponsorWindow } from "../_lib/sponsor.js";
 import { sponsorEmails } from "../_lib/sponsormail.js";
+import { enrollRenewal, pauseOnRevoke } from "../_lib/renewal.js";
+import { stripeCall } from "../_lib/stripe.js";
 import { PLANS, INSTALLER_PLANS, ptToday, LEGACY_SEASON_CENTS, applyOrder, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
 
-const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired", "charge.refunded", "charge.dispute.created", "charge.dispute.closed"]);
+const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired", "charge.refunded", "charge.dispute.created", "charge.dispute.closed", "payment_intent.succeeded"]);
 
 export async function onRequestPost({ request, env }) {
   const raw = await request.text();
@@ -34,12 +36,17 @@ async function handle(evt, env) {
   const o = (evt.data && evt.data.object) || {};
   switch (evt.type) {
     case "checkout.session.completed":
+      if (o.mode === "setup") return setupDone(o, env); // a saved card for automatic renewal, no payment
+      return paid(o, env);
     case "checkout.session.async_payment_succeeded": return paid(o, env);
+    case "payment_intent.succeeded": // an automatic renewal charge (the daily job also records it; the order is keyed by the PaymentIntent id, so it is recorded once). Checkout payments are handled by their session.
+      return o.metadata && o.metadata.renewal === "1" ? paid({ id: o.id, payment_status: "paid", amount_total: o.amount_received || o.amount, currency: o.currency, payment_intent: o.id, customer_details: { email: o.receipt_email || "" }, metadata: o.metadata }, env) : { ignored: "not a renewal charge" };
     case "checkout.session.expired": return { expired: o.id || null }; // abandoned checkout: recorded in stripe_events only
     case "charge.refunded": {
       const order = await orderByPi(env, o.payment_intent);
       if (!order) return pendingRevocation(env, o.payment_intent, o.refunded === true ? "refunded" : "held");
       await env.DB.prepare("UPDATE feature_orders SET charge_id = ? WHERE session_id = ?").bind(o.id || null, order.session_id).run();
+      await pauseOnRevoke(env, order, o.refunded === true ? "refunded" : "partly refunded"); // an automatic renewal stops until the installer turns it on again
       if (o.refunded !== true) { // partial refund: flag it, the admin decides
         const h = await env.DB.prepare("UPDATE feature_orders SET status = 'held' WHERE session_id = ? AND status = 'paid'").bind(order.session_id).run();
         if (h.meta && h.meta.changes) await setOrderNote(env.DB, order.session_id, AUTO + "partial refund: the placement was left on. Decide in Stripe whether to refund the rest, then mark it refunded here.");
@@ -62,6 +69,7 @@ async function handle(evt, env) {
       const order = await orderByPi(env, pi);
       if (!order) return pendingRevocation(env, pi, evt.type === "charge.dispute.closed" && o.status === "won" ? "dispute_won" : evt.type === "charge.dispute.closed" && o.status !== "lost" ? null : "disputed");
       if (o.charge) await env.DB.prepare("UPDATE feature_orders SET charge_id = ? WHERE session_id = ?").bind(o.charge, order.session_id).run();
+      if (evt.type === "charge.dispute.created" || o.status === "lost") await pauseOnRevoke(env, order, "disputed");
       if (evt.type === "charge.dispute.closed") {
         if (o.status === "won") { await env.DB.prepare("UPDATE feature_orders SET status = 'dispute_won', note = ? WHERE session_id = ?").bind(AUTO + "dispute won: the placement stays off. Re-grant it by hand if you want to.", order.session_id).run(); return { dispute: "won", manual: "re-grant by hand if wanted" }; }
         if (o.status !== "lost") return { ignored: "dispute closed: " + o.status };
@@ -93,7 +101,15 @@ async function paid(s, env) {
   const pi = (typeof s.payment_intent === "string" && s.payment_intent) || null;
   let status = "paid"; const notes = [];
   let expected = price.cents; // an installer's price is the plan's price, or the difference for an upgrade: the same server calculation the checkout used
-  if (target === "installer") { const inst = await env.DB.prepare("SELECT banner_until, top_until FROM installers WHERE id = ?").bind(eventId).first(); if (inst) expected = sponsorWindow(plan, inst, ptToday()).cents; }
+  let quoteChanged = "", quote = null;
+  if (target === "installer") {
+    const inst = await env.DB.prepare("SELECT banner_until, top_until FROM installers WHERE id = ?").bind(eventId).first(), w = inst ? sponsorWindow(plan, inst, ptToday()) : null, m = s.metadata;
+    if (w) expected = w.cents;
+    if (m.quote_from && m.quote_to && /^\d+$/.test(String(m.quote_cents || ""))) { // the buyer was quoted these dates and this price at checkout: that is what they paid for
+      quote = { from: m.quote_from, to: m.quote_to, cents: Number(m.quote_cents) }; expected = quote.cents;
+      if (w && (w.to !== quote.to || w.cents !== quote.cents)) quoteChanged = `quoted ${quote.from} to ${quote.to} for ${(quote.cents / 100).toFixed(2)} USD, but the placement would now run ${w.from} to ${w.to} for ${(w.cents / 100).toFixed(2)} USD`;
+    }
+  }
   const exists = await env.DB.prepare("SELECT 1 FROM feature_orders WHERE session_id = ?").bind(s.id).first();
   if (!exists && pi) { // did a refund or dispute for this payment already arrive?
     const pend = await env.DB.prepare("SELECT kind FROM feature_pending_revocations WHERE payment_intent = ?").bind(pi).first();
@@ -101,11 +117,19 @@ async function paid(s, env) {
   }
   if ((s.amount_total !== expected && !(target !== "installer" && plan === "season" && s.amount_total === LEGACY_SEASON_CENTS)) || String(s.currency || "").toLowerCase() !== "usd") // the buyer paid what we asked at checkout: still apply, but flag it
     notes.push(`${AUTO}amount mismatch: paid ${s.amount_total == null ? "?" : (s.amount_total / 100).toFixed(2)} ${String(s.currency || "?").toUpperCase()}, the ${plan} plan is ${(expected / 100).toFixed(2)} USD.`);
+  if (!exists && status === "paid" && quoteChanged) { // another payment already bought these dates (a second tab, a duplicate session) or the state changed: never double-book silently
+    status = "refund_due"; notes.push(`${AUTO}quote changed: ${quoteChanged}. It was NOT applied. Refund it in Stripe, or apply what is right by hand, then mark it refunded.`);
+  }
   await env.DB.prepare("INSERT OR IGNORE INTO feature_orders (session_id,event_id,plan,amount,email,payment_intent,currency,status,user_id,note,target,refunded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,CASE WHEN ? = 'paid' THEN NULL ELSE datetime('now') END)")
     .bind(s.id, eventId, plan, s.amount_total ?? null, (s.customer_details && s.customer_details.email) || "", pi, s.currency || null, status, (s.metadata && s.metadata.user_id) || null, notes.join(" ").slice(0, 500) || null, target, status).run();
   if (!exists && status !== "paid") await env.DB.prepare("DELETE FROM feature_pending_revocations WHERE payment_intent = ?").bind(pi).run();
+  if (!exists && quote) await env.DB.prepare("UPDATE feature_orders SET quote_from = ?, quote_to = ? WHERE session_id = ?").bind(quote.from, quote.to, s.id).run();
+  if (!exists && target === "installer" && s.metadata.renewal === "1") await env.DB.prepare("UPDATE feature_orders SET renewal = 1 WHERE session_id = ?").bind(s.id).run(); // an automatic charge: Admin > Orders marks it, a refund or dispute pauses the renewal
   const order = await env.DB.prepare("SELECT * FROM feature_orders WHERE session_id = ?").bind(s.id).first();
-  if (order.applied) return { duplicate: true };
+  if (order.applied) { // a replay: the placement is on. Saving the card for renewal is idempotent, so a retry that failed after applying still completes it.
+    if (target === "installer" && s.metadata.renew === "1") { const e = await enrollFromSession(s, order, env); if (e instanceof Response) return e; }
+    return { duplicate: true };
+  }
   if (order.status !== "paid") return { skipped: order.status }; // already refunded/disputed before we got to apply it
   if (!order.payment_intent && typeof s.payment_intent === "string") await env.DB.prepare("UPDATE feature_orders SET payment_intent = ? WHERE session_id = ?").bind(s.payment_intent, s.id).run();
 
@@ -124,7 +148,37 @@ async function paid(s, env) {
   }
   const nf = await applyOrder(env.DB, order, targetId);
   if (!nf) { console.error("stripe-webhook: target not found", targetId); return err(500, (target === "home" ? "Home" : target === "installer" ? "Installer profile" : "Event") + " not found; will retry."); }
-  if (target === "installer") { await bump(env, "fn:sponsor-paid"); await sponsorEmails(env, order, nf, s); return { sponsor: nf }; } // counted and mailed once: a replay returns "duplicate" above
+  if (target === "installer") {
+    await bump(env, "fn:sponsor-paid"); await sponsorEmails(env, order, nf, s, s.metadata.renewal === "1");
+    if (s.metadata.renew === "1") { const e = await enrollFromSession(s, order, env); if (e instanceof Response) return e; } // the buyer ticked "renew automatically"
+    return { sponsor: nf };
+  } // counted and mailed once: a replay returns "duplicate" above
   if (target === "event") { const q = await env.DB.prepare("SELECT name FROM events WHERE id = ?").bind(targetId).first(); await sendFeaturePaidEmail(env, { order, name: q && q.name, until: nf.featured_until, eventId: targetId }); }
   return { featured: nf };
+}
+
+// Used by the daily renewal job to record a charge it just made, through the same path as a webhook.
+export { paid as applyPaid };
+
+// The buyer ticked the (unticked-by-default) renewal box at Checkout: save the card Stripe kept for later and turn renewal on. Only Stripe ids are stored.
+async function enrollFromSession(s, order, env) {
+  const customer = typeof s.customer === "string" ? s.customer : "", pi = typeof s.payment_intent === "string" ? s.payment_intent : "";
+  if (!customer || !pi) return { skipped: "no saved card" };
+  const r = await stripeCall(env, "GET", "/v1/payment_intents/" + encodeURIComponent(pi));
+  const pm = r.ok && r.data && (typeof r.data.payment_method === "string" ? r.data.payment_method : r.data.payment_method && r.data.payment_method.id);
+  if (!pm) return err(502, "Could not read the saved card; will retry.");
+  await enrollRenewal(env, { installerId: order.event_id, userId: s.metadata.user_id, customer, paymentMethod: pm, plan: order.plan, sessionId: s.id, paidCents: order.amount, version: s.metadata.consent });
+  return null;
+}
+
+// A setup-mode Checkout from the installer dashboard ("Turn on automatic renewal"): save the card and turn renewal on for the plan that is running.
+async function setupDone(s, env) {
+  if (!s.metadata || s.metadata.purpose !== "renewal" || !s.metadata.event_id) return { ignored: "setup session for something else" };
+  const customer = typeof s.customer === "string" ? s.customer : "", si = typeof s.setup_intent === "string" ? s.setup_intent : "";
+  if (!customer || !si) return { ignored: "no saved card" };
+  const r = await stripeCall(env, "GET", "/v1/setup_intents/" + encodeURIComponent(si));
+  const pm = r.ok && r.data && (typeof r.data.payment_method === "string" ? r.data.payment_method : r.data.payment_method && r.data.payment_method.id);
+  if (!pm) return err(502, "Could not read the saved card; will retry.");
+  const res = await enrollRenewal(env, { installerId: s.metadata.event_id, userId: s.metadata.user_id, customer, paymentMethod: pm, plan: s.metadata.plan, sessionId: s.id, version: s.metadata.consent });
+  return { renewal: res };
 }

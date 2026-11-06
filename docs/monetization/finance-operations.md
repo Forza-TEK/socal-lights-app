@@ -98,6 +98,12 @@ Summary formulas: Gross revenue =SUMIFS(E,C,"charge"); Refunds =SUMIFS(E,C,"refu
 - **Bookkeeping:** revenue is "Sponsor placement" (separate from Featured events). Orders list the installer's name; the buyer's receipt email is Stripe's plus our service email. A one-time test purchase and refund is the way to prove the path (see the checklist).
 - **Late-season sales:** no proration; the price is the plan's price on any day of the season and the placement ends on the season's last day (see `docs/installer-banner.md`). The amount charged is on the order and is what a refund returns. An upgrade is charged only the difference between the two plans' prices. No refund or credit for timing (owner decision).
 
+### 3c. Automatic renewal: failed charges and refunds (2026-11-07)
+- **Failed charge:** the buyer gets an email with a link to pay once or change the card; we retry ONCE 3 days later; if that fails the renewal lapses (status `lapsed`, no more automatic charges) and you get an email. Nothing to do unless you want to chase them; Admin > Orders lists lapsed renewals.
+- **Refund or dispute of an automatic charge:** refund in the Stripe Dashboard as usual; the webhook switches the placement off and pauses the renewal (status `paused`) and emails you. It stays paused until the installer turns it on again.
+- **Bookkeeping:** automatic charges are ordinary Sponsor revenue; Admin > Orders marks them "Auto-renewal" and their payment id starts with `pi_` (the order's key is the PaymentIntent id, not a Checkout session).
+- **Reconcile weekly during a season:** Admin > Orders > Automatic renewals (upcoming, failed, lapsed) against Stripe > Payments filtered by description "SoCal Lights Sponsor renewal".
+
 ## 4. First-30-days cash view
 
 **Revenue: $0** (most likely outcome per finance-pricing.md; plan range $0-$300 this season).
