@@ -565,7 +565,8 @@ const ARW_L = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" strok
 const ARW_R = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>`;
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
 // Smaller copies of photos for the list and popup, made by Cloudflare image resizing (/cdn-cgi/image). It is used only once a quick test shows it works on this site (and is remembered), otherwise the original photo loads, and a failed copy falls back to the original.
-let THUMBS = false, THUMBS_REMOTE = false; try { THUMBS = localStorage.getItem("socal-thumbs") === "1"; THUMBS_REMOTE = localStorage.getItem("socal-thumbs-remote") === "1"; } catch {}
+// Remote photos are resized from the first visit (city pages already do this unconditionally and it works; a failed copy falls back to the original). Only a remembered failed probe ("0") turns it off.
+let THUMBS = false, THUMBS_REMOTE = true; try { THUMBS = localStorage.getItem("socal-thumbs") === "1"; THUMBS_REMOTE = localStorage.getItem("socal-thumbs-remote") !== "0"; } catch {}
 const thumbProbe = (u) => fetch("/cdn-cgi/image/width=16/" + u, { method: "HEAD" }).then((r) => r.ok && /^image\//.test(r.headers.get("content-type") || "")).catch(() => false);
 thumbProbe(location.origin + "/img/badge-160.webp").then((ok) => { THUMBS = ok; try { localStorage.setItem("socal-thumbs", ok ? "1" : "0"); } catch {} });
 // photos hosted on other sites can only be resized when Cloudflare is set to resize from any origin: test one of them once the events are loaded
