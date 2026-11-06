@@ -7,6 +7,9 @@ _Last updated: 2026-11-05_
 ## Batch D 1: nightly backup (2026-11-06)
 `.github/workflows/backup.yml` exports the live D1 every night, checks it, uploads it to a PRIVATE R2 bucket `socal-lights-backups` (daily kept 35 days, monthly 400, `latest.sql.gz`), reads it back, and copies photos on Sundays (`scripts/backup-photos.mjs`). A failure opens a GitHub issue. Never an artifact (public repo). Restore steps: `docs/runbooks/backup-restore.md`. Owner must give the API token R2 Edit permission first.
 
+## Batch D 3: slimmer /api/events (2026-11-06)
+`/api/events` now leaves out events that ended more than 30 days ago (`ENDED_GRACE_DAYS` in `functions/api/events.js`) and filters in SQL, so it reads fewer rows. `?ended=1` returns everything (same house de-duplication), `?all=1` stays the admin's full list. Every response has a weak `ETag`; a matching `If-None-Match` gets an empty 304 (also from the edge cache). Event objects are unchanged, and `public/app.js` and `styles.css` were not touched (no `?v=` bump). The app already hid ended events (`ev.e < TODAY`), so the visible result is identical; only the download shrinks. Tests: `tests/events-api.test.mjs`. Not done: a Cache Rule so hits skip the Function (needs the dashboard and a test), a precomputed snapshot, fewer fields.
+
 ## Batch D 2: alerting (2026-11-06)
 - Failed emails are never marked sent: the weekly alert (`alerts/send.js`) only sets `last_sent` after a successful send and returns `failed`; `alerts.yml` stops with an error if a whole batch failed; contest open/close reminders are only marked done when something went out (an unsubscribed recipient is not a failure).
 - `sendMail` no longer throws on a network error; it returns false and logs. New table `ops_log` (migration 0163, no personal data, 30-day prune) and `functions/_lib/oplog.js` (`logOp`, `opsSince`). Logged: failed or unreachable mail service, missing `RESEND_API_KEY`, Stripe webhook handler errors and 5xx answers.
