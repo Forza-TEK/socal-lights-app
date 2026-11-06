@@ -1,7 +1,7 @@
 // Step-by-step engine shared by the add forms (event, home display, contest). One question per screen, a segmented
 // progress bar, Back and Next. Each form supplies its steps; this file does the rest (state, validation, photos,
 // address suggestions, "I am human" check, saved drafts).
-import { me, signIn } from "/auth.js?v=20261106y";
+import { me, signIn } from "/auth.js?v=20261107p";
 import "/norm-ui.js?v=20261102b";
 import { CITY } from "/cities.js";
 export const $ = (q, r = document) => r.querySelector(q);

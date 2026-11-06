@@ -79,7 +79,7 @@ else if (!cfg.featureCheckout) { $("#auto").hidden = true; $("#manual").hidden =
 else await start();
 
 async function start() {
-  const { me, signIn } = await import("/auth.js?v=20261106y");
+  const { me, signIn } = await import("/auth.js?v=20261107p");
   const user = (await me()).user;
   const S = { plan: PL[qs.get("plan")] ? qs.get("plan") : "", ev: null, mine: [], user, busy: false, msg: "", changing: false, claim: null, claimMsg: "", found: [] };
   let all = null; // every public event, loaded only when someone searches to claim one
