@@ -12,6 +12,11 @@ When an admin approves or declines a person's event claim (Admin > Event claims)
 - **Tests.** `tests/claim-email.test.mjs`.
 - **Risk.** Not tested with a real email.
 
+## Terms: paid placements (2026-11-06)
+`public/terms.html` has a plain-English "Paid placements" section (`/terms#paid`, Updated November 6, 2026): Featured events and homes (pin, top of the list, Full run; one payment through Stripe; labelled; never affects contests; window rules: starts at payment, ends on the event's last day up to 30 days or 90 for Full run, homes 30 days), installer Sponsor placements (per season, labelled "Sponsor", sold as shown on /pricing), what we can do (decline, remove, unpublish), refunds and disputes, no guarantee of results. The Feature page refund FAQ was reworded to match it word for word on the key rules. Test: `tests/terms.test.mjs`. This is a draft that has NOT been reviewed by an attorney; `docs/monetization/legal-redlines.md` ("What is now in the live Terms") lists what is done and exactly what the attorney should review; `docs/CHECKLIST.md` updated.
+- **TODO:** re-read the Terms "Installer Sponsor placements" clause whenever the installer checkout (`/sponsor`) rules change (prices, season rule, refunds, labels). It was written against the checkout as it shipped in PR 375.
+- **Owner:** send the attorney the redlines file; decide the Finance refund window (not in the Terms).
+
 ## Event organizer Featured funnel (2026-11-06)
 One funnel for event organizers: Choose (Pricing) -> sign in -> Which event? -> Confirm and pay (full bullets, exact dates, total) -> Stripe -> success view and confirmation email. Audit with evidence and click counts: `docs/event-funnel-audit.md`.
 - **Page.** `public/feature.html` rebuilt (plan and event kept in the URL and session storage; one eligible event is preselected; ineligible events say why and the date featuring opens; Add a new event / Claim an existing listing; the plan that does not fit is swapped with a sentence). Homes (podium finishers) use the same page. `feature-plans.js?v=20261107b` (`planWindow`, `eventEligibility`), `/add-event?plan=` preselects and shows dates and total, `admin.js?v=20261107b`.
