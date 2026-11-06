@@ -898,3 +898,5 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .sc-link{display:inline-flex;align-items:center;min-height:36px;padding:0 6px;font-size:13px;font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 .sponsorcard a:focus-visible{outline:2px solid var(--season);outline-offset:2px}
 .panel .list .sponsorcard{grid-column:1/-1}
+/* No bar behind the phone navigation buttons: the floating Places / Route / Shop pill sits straight over the map and list */
+.navfade,:root[data-theme="dark"] .navfade{display:none!important}
