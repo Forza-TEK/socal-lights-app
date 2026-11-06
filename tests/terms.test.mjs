@@ -32,6 +32,11 @@ test("the day limits stated in the Terms match the code", () => {
   assert.ok(text.includes("31 days or more"));
 });
 
+test("the Feature page tells a claimant they will be emailed when the claim is reviewed", () => {
+  assert.ok(feature.includes("We will email you when it has been reviewed"));
+  assert.ok(!feature.includes("You can come back to this page once it is approved"));
+});
+
 test("the Feature page refund FAQ and the Terms say the same thing", () => {
   const faq = feature.match(/<summary>Can I get a refund\?<\/summary><p>(.*?)<\/p>/)[1].replace(/<[^>]+>/g, "");
   for (const s of ["you get a full refund", "payments are non-refundable", "move your placement to another of your events or refund the unused time", "switches your Featured placement off", "payment dispute"]) assert.ok(faq.includes(s), "FAQ: " + s);
