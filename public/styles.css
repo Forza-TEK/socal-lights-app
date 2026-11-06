@@ -852,3 +852,5 @@ body.lb-open{overflow:hidden}
 
 /* Dropdown lists: the browser draws them itself, so give them the page colors (otherwise light text on white in dark mode) */
 select option,select optgroup{background-color:var(--bg);color:var(--ink)}
+
+.claimhome{display:inline-block;margin:8px 0 2px;font-size:14px;font-weight:600;color:var(--season);text-decoration:none}.claimhome:hover{text-decoration:underline}

@@ -4,6 +4,9 @@ _Last updated: 2026-11-05_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Claim a home (2026-11-06)
+- "Is this your home? Claim it" on sweep-made home listings opens Add a display prefilled with that listing; the admin sees "Says this is their home" on the display. Replacement still follows the same-address rule. Migration 0164. See `docs/superseding.md`. A "remove this listing" request was left out on purpose.
+
 ## Batch D 1: nightly backup (2026-11-06)
 `.github/workflows/backup.yml` exports the live D1 every night, checks it, uploads it to a PRIVATE R2 bucket `socal-lights-backups` (daily kept 35 days, monthly 400, `latest.sql.gz`), reads it back, and copies photos on Sundays (`scripts/backup-photos.mjs`). A failure opens a GitHub issue. Never an artifact (public repo). Restore steps: `docs/runbooks/backup-restore.md`. Owner must give the API token R2 Edit permission first.
 
