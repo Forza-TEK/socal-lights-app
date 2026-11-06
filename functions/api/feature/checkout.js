@@ -1,5 +1,6 @@
 // POST /api/feature/checkout  { event_id | submission_id | home_id, plan: "pin" | "top" | "season" (shown as "Full run", events only) }  (a home: "pin" | "top" only, podium finishers of an announced contest)  ->  { url } (Stripe Checkout page). Needs a signed-in account; the receipt goes to its email.
 import { json, err, clean } from "../../_lib/util.js";
+import { bump } from "../../_lib/funnel.js";
 import { PLANS, applyPlan, eventPlanProblem } from "../../_lib/featured.js";
 import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
 import { ownsEvent } from "../../_lib/ownership.js";
@@ -67,9 +68,9 @@ export async function onRequestPost({ request, env }) {
     "metadata[plan]": plan,
     "metadata[user_id]": user.id,
     "payment_intent_data[description]": `SoCal Lights Featured: ${ev.name} (${plan})`.slice(0, 200),
-    success_url: `${origin}/feature?paid=1${pending ? "&pending=1" : ""}${home ? "&home=1" : ""}`,
-    // Back to the plan picker with the event and plan still chosen (a pending submission has no public id yet).
-    cancel_url: `${origin}/feature?cancelled=1&plan=${plan}${pending ? "" : (home ? "&home=" : "&event=") + encodeURIComponent(ev.id)}`,
+    // Back to the same page: the success view names the event and plan; a cancel keeps both chosen (a pending submission goes by its submission id).
+    success_url: `${origin}/feature?paid=1&plan=${plan}${home ? "&home=1" : pending ? "&sub=" + encodeURIComponent(subId) : "&event=" + encodeURIComponent(ev.id)}`,
+    cancel_url: `${origin}/feature?cancelled=1&plan=${plan}${pending ? "&sub=" + encodeURIComponent(subId) : (home ? "&home=" : "&event=") + encodeURIComponent(ev.id)}`,
   });
   if (goodEmail) { f.set("customer_email", goodEmail); f.set("payment_intent_data[receipt_email]", goodEmail); }
   // Same event + plan within 10 minutes reuses one Checkout session (double clicks). The key is a hash (the account is included so two people never share a session).
@@ -86,5 +87,6 @@ export async function onRequestPost({ request, env }) {
   const r = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "idempotency-key": idem, "content-type": "application/x-www-form-urlencoded" }, body: f }).catch(() => null);
   const d = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok || !d.url) return err(502, "The payment page couldn't be opened. Please try again in a moment.");
+  if (!home) await bump(env, "fn:event-feature-checkout"); // a number only: payment pages opened for an event
   return json({ url: d.url });
 }

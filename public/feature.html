@@ -16,50 +16,27 @@
 .plan p{margin:0;color:var(--muted)}.plan p b{color:var(--ink)}.plan>.btn{margin-top:6px;justify-self:start}
 .plan{border:2px solid var(--line);transition:border-color .15s,background-color .15s}.plan.sel{border-color:var(--season);background:color-mix(in srgb,var(--season) 9%,#fff);box-shadow:none}:root[data-theme="dark"] .plan.sel{background:color-mix(in srgb,var(--season) 16%,var(--tile))}
 .plan .btn.pick:not(.ghost){background:var(--season);border-color:var(--season);color:var(--on-season)}
+.fsteps{display:flex;gap:6px;list-style:none;margin:0 0 18px;padding:0;flex-wrap:wrap}.fsteps li{font-size:14px;color:var(--muted);padding:4px 12px;border:1px solid var(--line);border-radius:999px}.fsteps li.on{color:var(--ink);border-color:var(--ink);font-weight:600}
+.plan ul{margin:0;padding-left:20px;display:grid;gap:4px}.plan h3{margin:0;font-size:18px}.plan .chosen{margin:0}.plan .btn.pick{margin-top:6px}
+.res small.why{color:var(--muted)}.res button:disabled{opacity:.7;cursor:default}.res button:disabled:hover{border-color:var(--line)}
+.opts{display:grid;gap:12px;margin:16px 0}.opts .btn{justify-self:start}.opts details{background:#fff}:root[data-theme="dark"] .opts details{background:var(--tile)}.opts details p,.opts details .res{margin-top:10px}
+.paidbox{border:2px solid var(--ok);border-radius:12px;padding:18px 20px;margin:16px 0;background:#fff}:root[data-theme="dark"] .paidbox{background:var(--tile)}.paidbox h2{margin-top:0}.paidbox ul{padding-left:20px;display:grid;gap:8px}.paidbox .btn{margin:4px 8px 0 0}
 </style>
 <script src="/hit.js" defer></script>
 </head>
 <body>
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
 <main>
-<h1>Feature your event on SoCal Lights</h1>
-<p class="lede">SoCal Lights is a free map of holiday lights and events across Southern California. A Featured listing stands out, with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin on the map.</p>
+<h1>Feature your event</h1>
+<p class="lede">A Featured event stands out on the SoCal Lights map with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin. Listing an event is free; this is optional. <a href="/pricing">See all pricing</a>.</p>
 
-<p class="meta">Listing an event is free. <a href="/pricing">See all pricing</a>.</p>
-
-<div id="paid" class="ok" hidden><b>Thank you!</b> <span id="paidmsg">Your payment went through. Your listing is being featured now; refresh the map in a few minutes to see the gold badge.</span> A receipt is on its way from Stripe.</div>
-
+<div id="paid" hidden></div>
 <div id="cancelled" class="ok" hidden><b>No payment was made.</b> Your event and plan are still chosen below, so you can pick up where you left off.</div>
 <p id="inapp" class="lede" hidden>Event promotion isn't available in the app.</p>
 
 <div id="auto">
-<div id="mine" hidden>
-<h2>Your events, contests and homes</h2>
-<ul class="res" id="mylist"></ul>
-<p class="meta" id="myempty" hidden>You haven't added an event or contest with this account yet. <a href="/add-event">Add your event for free</a>, or find an event below and claim it.</p>
-<p class="meta">Homes: a Featured home is open to the winner, 2nd and 3rd place of an announced contest, to the home's owner. Paying never changes a contest result, and voting and the map stay free.</p>
-</div>
-<details id="findbox" open><summary id="findsum">Find your event</summary>
-<div id="pick"><input id="q" type="search" placeholder="Type your event's name or city" autocomplete="off" aria-label="Search for your event"><ul class="res" id="res"></ul></div>
-<p class="meta">Not on the map yet? <a href="/add-event">Add your event for free</a> first, then come back here.</p>
-</details>
-<div id="chosen" class="chosen" hidden></div>
-
-<div id="claimbox" hidden>
-<h2>Claim this event</h2>
-<p id="claimtxt">Only an event's organizer can feature it. Tell us this one is yours and we'll check. If your work email matches the event's own website it is approved right away; otherwise we review it. Claiming does not let you edit the listing.</p>
-<p><button class="btn" id="claimgo" type="button">Claim this event</button></p>
-<p class="meta" id="claimmsg"></p>
-</div>
-
-<div id="planbox">
-<h2>Pick a plan</h2>
-<p class="meta">Your placement starts when you pay and ends on your event's last day, up to 30 days (up to 90 days for a Full run). Featuring opens 30 days before your event starts. You pay once; there is no subscription.</p>
-<div class="grid" id="plans"></div>
-<h2>Pay securely</h2>
-<p><button class="btn" id="go" type="button" disabled>Continue to payment</button></p>
-<p class="meta" id="gomsg">Choose your event and a plan above. You pay on Stripe's secure page with a card or Cash App Pay; your Featured placement turns on automatically within a few minutes.</p>
-</div>
+<ol class="fsteps" id="fsteps" aria-label="Steps"></ol>
+<div id="flow" aria-live="polite"></div>
 </div>
 
 <div id="manual" hidden>
@@ -80,121 +57,203 @@
 </main>
 <script type="module">
 import { SITE } from "/site-config.js";
-import { planCopy, planBlurb, planStatus, PLAN_KEYS } from "/feature-plans.js?v=20261107a";
+import { planCopy, planStatus, planWindow, eventEligibility, niceDate as fmt, PLAN_KEYS, ptToday } from "/feature-plans.js?v=20261107b";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-let PL = {};
 const dollars = (p) => "$" + (p.cents / 100);
+let PL = {};
 const mail = (plan) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent("Feature my event" + (plan && PL[plan] ? " – " + PL[plan].label : ""))}&body=${encodeURIComponent("Event name:\nLink to my event on socallights.app (or its own web page):\nMy name and phone:\n")}`;
-$("#mail").href = $("#mail2").href = mail("");
+const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
 const qs = new URLSearchParams(location.search);
-if (qs.get("paid")) { try { sessionStorage.removeItem("scl-feature-sel"); } catch {} $("#paid").hidden = false; if (qs.get("home")) $("#paidmsg").textContent = "Your payment went through. Your home is being featured now; refresh the map in a few minutes to see the gold badge. Your contest result is unchanged."; if (qs.get("pending")) $("#paidmsg").textContent = "Your payment went through. Your event is waiting for a quick review; its Featured placement turns on the moment it is approved."; }
-if (qs.get("cancelled")) $("#cancelled").hidden = false;
 
 const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
 PL = cfg.featurePlans || {};
-if (/SoCalLightsApp/.test(navigator.userAgent)) {
-  // Paid placement is web-only (store rules): no plans, no links, no payment.
-  $("#auto").hidden = true; $("#manual").hidden = true; $("#inapp").hidden = false; $("#cancelled").hidden = true;
-} else if (!cfg.featureCheckout) {
-  $("#auto").hidden = true; $("#manual").hidden = false;
-} else {
-  const renderPlans = (who) => { // every tier lists its contents in full; a home reads "home" and has no Full run
-    $("#plans").dataset.who = who;
-    $("#plans").innerHTML = PLAN_KEYS.filter((k) => PL[k] && (who === "event" || k !== "season")).map((k) => { const c = planCopy(k, PL, who); return `<section class="plan${plan === k ? " sel" : ""}" data-p="${k}"><div class="price">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${esc(planBlurb(k, PL, who))}</p><p class="meta" data-until="${k}"></p><button class="btn ghost pick" type="button" data-pick="${k}" aria-pressed="false" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</button></section>`; }).join("");
-  };
-  const events = (await fetch("/api/events").then((r) => r.json()).catch(() => [])).filter((e) => e.e >= new Date().toISOString().slice(0, 10));
+$("#mail").href = $("#mail2").href = mail("");
+const OPEN = cfg.featureOpenDays || 30, KEY = "scl-feature-sel", today = ptToday();
+const inApp = /SoCalLightsApp/.test(navigator.userAgent);
+if (inApp) { $("#auto").hidden = true; $("#inapp").hidden = false; }
+else if (!cfg.featureCheckout) { $("#auto").hidden = true; $("#manual").hidden = false; }
+else await start();
+
+async function start() {
   const { me, signIn } = await import("/auth.js?v=20261106y");
   const user = (await me()).user;
-  let ev = null, plan = "", mine = [];
-  renderPlans("event");
-  const KEY = "scl-feature-sel", fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  const saveSel = () => { try { sessionStorage.setItem(KEY, JSON.stringify({ id: ev && ev.id, plan })); } catch {} };
-  const WHY = { ended: "Ended", declined: "Declined", cancelled: "Cancelled", postponed: "Postponed", "claim-pending": "Waiting for approval", review: "Waiting for a quick check before it can be featured", pending: "Waiting for review" };
-  const owned = (id) => mine.find((m) => m.id === id);
+  const S = { plan: PL[qs.get("plan")] ? qs.get("plan") : "", ev: null, mine: [], user, busy: false, msg: "", changing: false, claim: null, claimMsg: "", found: [] };
+  let all = null; // every public event, loaded only when someone searches to claim one
+  try { const s = JSON.parse(sessionStorage.getItem(KEY) || "{}") || {}; if (!S.plan && PL[s.plan]) S.plan = s.plan; S.saved = s.id || ""; } catch {}
+  const saveSel = () => { try { sessionStorage.setItem(KEY, JSON.stringify({ id: S.ev && S.ev.id, plan: S.plan })); } catch {} };
+  const evParam = (e) => (e.id.startsWith("sub:") ? ["sub", e.id.slice(4)] : [e.home ? "home" : "event", e.id]);
+  const urlState = () => { const p = new URLSearchParams(); if (S.plan) p.set("plan", S.plan); if (S.ev) p.set(...evParam(S.ev)); return "/feature" + ([...p].length ? "?" + p : ""); };
+  const sync = () => { saveSel(); try { history.replaceState(null, "", urlState()); } catch {} };
+  const mails = () => { $("#mail").href = $("#mail2").href = mail(S.plan); };
+
   if (user) {
-    const f = await fetch("/api/me/featurable", { cache: "no-store" }).then((r) => (r.ok ? r.json() : { events: [], contests: [], homes: [] })).catch(() => ({ events: [], contests: [], homes: [] }));
-    mine = [...(f.homes || []), ...f.contests, ...f.events];
-    $("#mine").hidden = false; $("#myempty").hidden = mine.length > 0;
-    $("#findbox").open = false; $("#findsum").textContent = "Find another event";
-    $("#mylist").innerHTML = mine.map((m) => {
-      const ok = m.state === "live" || m.state === "pending", fe = m.featured ? `Featured until ${m.until ? fmt(m.until) : "the event ends"}` : "";
-      const bits = [m.kind === "contest" ? "Contest" : m.kind === "home" ? `Home · ${m.placeText}, ${m.category} (${m.award}) in ${m.contest}` : m.city, m.end ? fmt(m.end) : "", ok ? "" : WHY[m.state] || "", fe, m.state === "pending" ? "Waiting for review; you can pay now and it turns on when approved" : ""].filter(Boolean);
-      return `<li><button type="button" data-mine="${esc(m.id)}"${ok ? "" : " disabled style=\"opacity:.6;cursor:default\""}>${esc(m.name)}<small>${esc(bits.join(" · "))}</small>${ok ? `<small><b>${m.featured ? "Extend or upgrade" : m.kind === "home" ? "Feature this home" : "Feature this"}</b></small>` : ""}</button></li>`;
-    }).join("");
+    const f = await fetch("/api/me/featurable", { cache: "no-store" }).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+    S.mine = [...(f.homes || []), ...(f.contests || []), ...(f.events || [])].map((m) => ({ ...m, home: m.kind === "home", elig: m.kind === "home" ? { ok: true, plans: ["pin", "top"], reason: "" } : eventEligibility({ state: m.state, start: m.start, end: m.end }, PL, OPEN, today) }));
   }
-  const upd = () => {
-    const own = !!(ev && owned(ev.id)), unknown = !!ev && !!user && !own;
-    $("#claimbox").hidden = !unknown; $("#planbox").hidden = unknown;
-    $("#go").disabled = !(ev && plan) || unknown;
-    $("#go").textContent = user ? "Continue to payment" : "Sign in to continue";
-    // The real end date of each plan for the chosen event or home, and why a plan is off (featuring not open yet, event too short, too little time left, home).
-    const who = ev && ev.home ? "home" : "event";
-    if ($("#plans").dataset.who !== who) renderPlans(who);
-    for (const k of Object.keys(PL)) {
-      const card = document.querySelector(`[data-p="${k}"]`), note = document.querySelector(`[data-until="${k}"]`); if (!card || !note) continue;
-      const st = ev ? planStatus(k, { start: ev.s, end: ev.e, home: !!ev.home }, PL, cfg.featureOpenDays || 30) : { ok: true, note: "" };
-      card.classList.toggle("off", !st.ok); card.querySelector("[data-pick]").disabled = !st.ok; note.textContent = st.note;
-      if (!st.ok && plan === k) { plan = ""; saveSel(); }
+  const WHO = (m) => (m && m.home ? "home" : "event");
+  const when = (m) => (m.start && m.end && m.start !== m.end ? `${fmt(m.start)} to ${fmt(m.end)}` : m.end ? fmt(m.end) : "");
+  const running = (m) => (m.featured ? `Featured until ${m.until ? fmt(m.until) : "the event ends"}` : "");
+
+  if (qs.get("paid")) return paidView(S);
+  if (qs.get("cancelled")) $("#cancelled").hidden = false;
+
+  // Restore the choice: from the link (?event= ?sub= ?home=) or from before sign-in
+  const want = qs.get("sub") ? "sub:" + qs.get("sub") : qs.get("event") || qs.get("home") || S.saved || "";
+  if (want && user) {
+    const m = S.mine.find((x) => x.id === want);
+    if (m) S.ev = m;
+    else if (!want.startsWith("sub:")) { // an event that is not theirs (yet): offer to claim it
+      const e = await fetch("/api/events/" + encodeURIComponent(want)).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      if (e && e.e >= today) S.claim = { id: e.id, n: e.n, city: e.city, s: e.s, e: e.e };
     }
-    if (plan && !document.querySelector(`[data-p="${plan}"]`)) { plan = ""; saveSel(); } // e.g. Full run carried over to a home
-    $("#go").disabled = !(ev && plan) || unknown;
-    document.querySelectorAll("[data-p]").forEach((p) => { const on = p.dataset.p === plan, b = p.querySelector("[data-pick]"); p.classList.toggle("sel", on); if (b) { b.classList.toggle("ghost", !on); b.setAttribute("aria-pressed", String(on)); b.textContent = on ? "\u2713 Chosen" : "Choose"; } });
-  };
-  function showChosen() {
-    const m = owned(ev.id);
-    $("#chosen").hidden = false; $("#chosen").innerHTML = `<b>${esc(ev.n)}</b><br><span class="meta">${esc(ev.city || "")}${ev.s ? " · " + esc(ev.s) : ""}${m && m.featured ? " · Featured until " + (m.until ? esc(fmt(m.until)) : "the event ends") : ""}</span> · <a href="#" id="chg">change</a>`;
-    $("#chg").onclick = (y) => { y.preventDefault(); ev = null; $("#chosen").hidden = true; saveSel(); upd(); };
-    $("#claimmsg").textContent = ""; $("#claimgo").hidden = false;
-    $("#gomsg").className = "meta"; if (user && m) $("#gomsg").textContent = `Choose a plan. The receipt goes to ${user.email}. You pay on Stripe's secure page with a card or Cash App Pay; your Featured placement turns on automatically within a few minutes.`;
   }
-  const pick = (e) => { ev = e; $("#res").innerHTML = ""; $("#q").value = ""; showChosen(); saveSel(); upd(); };
-  $("#q").addEventListener("input", () => {
-    const q = $("#q").value.trim().toLowerCase();
-    if (q.length < 2) { $("#res").innerHTML = ""; return; }
-    const hits = events.filter((e) => (e.n + " " + e.city).toLowerCase().includes(q)).slice(0, 8);
-    $("#res").innerHTML = hits.map((e) => `<li><button type="button" data-id="${esc(e.id)}">${esc(e.n)}<small>${esc(e.city)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}</small></button></li>`).join("") || `<li class="meta">No match. <a href="/add-event">Add your event</a>.</li>`;
+  // Exactly one event they can feature: choose it for them (they can still change it)
+  if (user && !S.ev && !S.claim) { const ok = S.mine.filter((m) => m.elig.ok); if (ok.length === 1 && !qs.get("cancelled")) { S.ev = ok[0]; beacon("fn:event-feature-pick"); } }
+
+  // When the chosen event cannot buy the chosen plan (for example Full run for a short event), move to the one that fits and say so.
+  function fit() {
+    S.note = "";
+    if (!S.ev) return;
+    const ok = S.ev.elig.plans;
+    if (S.plan && ok.length && !ok.includes(S.plan)) {
+      const old = S.plan, nxt = ["top", "pin", "season"].find((k) => ok.includes(k)) || ok[0];
+      const why = planStatus(old, { start: S.ev.start, end: S.ev.end, home: S.ev.home }, PL, OPEN, today).note.replace(/^Not available( for homes)?: /, "").replace(/^./, (c) => c.toUpperCase());
+      S.note = `${planCopy(old, PL).name} isn't available for this ${WHO(S.ev)}. ${why}${/[.!]$/.test(why) ? "" : "."} We chose ${planCopy(nxt, PL).name} instead.`;
+      S.plan = nxt;
+    }
+    if (!S.plan && ok.length) S.plan = ok.includes("top") ? "top" : ok[0];
+  }
+  const steps = () => {
+    const at = !S.plan ? 0 : !user || !S.ev ? 1 : 2, names = ["Plan", "Event", "Pay"];
+    $("#fsteps").innerHTML = names.map((n, i) => `<li${i === at ? ' class="on" aria-current="step"' : ""}>${i + 1}. ${n}</li>`).join("");
+  };
+
+  function planCards() {
+    return `<h2>Pick a plan</h2><div class="grid">${PLAN_KEYS.filter((k) => PL[k]).map((k) => { const c = planCopy(k, PL), bl = [...(c.sub ? [c.sub] : []), ...c.bullets];
+      return `<section class="plan" data-p="${k}"><div class="price">${dollars(PL[k])} <small>${esc(c.unit)}</small></div><h3>${esc(c.name)}</h3><ul>${bl.map((b) => `<li>${esc(b)}</li>`).join("")}</ul><button class="btn pick" type="button" data-pick="${k}" aria-label="Choose ${esc(c.name)}, ${dollars(PL[k])}">Choose</button></section>`; }).join("")}</div>
+      <p class="meta">You pay once on Stripe's secure page. No subscription. Featuring opens ${OPEN} days before your event starts.</p>`;
+  }
+  const planLine = () => { const c = planCopy(S.plan, PL, WHO(S.ev)); return `<p class="chosen"><b>${esc(c.name)}</b> · ${dollars(PL[S.plan])} one time · <a href="#" data-a="plans">change plan</a></p>`; };
+
+  function signInBox() {
+    return `${planLine()}<h2>Sign in to continue</h2><p>Sign in with Google or an emailed 6-digit code, so we know which events are yours. You'll come right back here with your plan chosen.</p><p><button class="btn" id="si" type="button">Sign in</button></p>`;
+  }
+
+  function whichBox() {
+    const rows = S.mine;
+    const li = (m) => { const ok = m.elig.ok, bits = [m.kind === "contest" ? "Contest" : m.kind === "home" ? `Home · ${m.placeText} in ${m.contest}` : m.city, when(m), running(m)].filter(Boolean).join(" · ");
+      const state = m.state === "pending" ? "Waiting for our review. You can pay now; it turns on when we approve it." : ok ? "" : m.elig.reason;
+      return `<li><button type="button" data-mine="${esc(m.id)}"${ok ? "" : " disabled"}><b>${esc(m.name)}</b><small>${esc(bits)}</small>${state ? `<small class="${ok ? "" : "why"}">${esc(state)}</small>` : ""}${ok ? `<small><b>${m.featured ? "Extend or upgrade" : "Feature this " + WHO(m)}</b></small>` : ""}</button></li>`; };
+    return `${planLine()}<h2>Which event?</h2>${rows.length ? `<ul class="res" id="mylist">${rows.map(li).join("")}</ul>` : `<p>You don't have an event on this account yet. Add it (free), or claim a listing that is already on the map.</p>`}
+      <div class="opts"><a class="btn out" id="addnew" href="/add-event?plan=${esc(S.plan)}">Add a new event</a>
+      <details id="claimbox"${S.claim ? " open" : ""}><summary>Claim an existing listing</summary>${claimBox()}</details></div>`;
+  }
+  function claimBox() {
+    if (S.claim) return `<div class="chosen"><b>${esc(S.claim.n)}</b><br><span class="meta">${esc(S.claim.city || "")} · ${esc(S.claim.s)}${S.claim.e !== S.claim.s ? " to " + esc(S.claim.e) : ""}</span></div><p>Only an event's organizer can feature it. Tell us this one is yours and we'll check. If your email matches the event's own website it is approved right away; otherwise we review it and email you. Claiming does not let you edit the listing.</p><p><button class="btn" data-a="claim" type="button"${S.claimDone ? " hidden" : ""}>This is my event: claim it</button> <a href="#" data-a="unclaim">pick another</a></p><p class="msg${S.claimErr ? " err" : ""}">${esc(S.claimMsg)}</p>`;
+    return `<p class="meta">Find the listing by name or city.</p><input id="q" type="search" placeholder="Type your event's name or city" autocomplete="off" aria-label="Search for your event"><ul class="res" id="res">${S.found.map((e) => `<li><button type="button" data-find="${esc(e.id)}"><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}</small></button></li>`).join("")}</ul>`;
+  }
+
+  function confirmBox() {
+    const m = S.ev, c = planCopy(S.plan, PL, WHO(m)), w = planWindow(S.plan, { end: m.home ? "" : m.end }, PL, today), pend = m.state === "pending", price = dollars(PL[S.plan]);
+    const bl = [...(c.sub ? [c.sub] : []), ...c.bullets];
+    const others = m.elig.plans.filter((k) => k !== S.plan);
+    return `${S.note ? `<p class="msg">${esc(S.note)}</p>` : ""}<h2>Confirm and pay</h2>
+    <div class="plan sel"><p class="chosen"><b>${esc(m.name)}</b><br><span class="meta">${esc([m.kind === "contest" ? "Contest" : m.city, when(m)].filter(Boolean).join(" · "))}</span> · <a href="#" data-a="event">change event</a></p>
+    <div class="price">${price} <small>one time</small></div><h3>${esc(c.name)}</h3><ul>${bl.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>
+    <p><b>Starts:</b> today, ${esc(fmt(w.from))}<br><b>Ends:</b> ${esc(fmt(w.until))} (${w.capped ? `${w.days} days from today, the longest this plan runs` : `${w.days} day${w.days === 1 ? "" : "s"}${m.home ? "" : ", your event's last day"}`})<br><b>Total:</b> ${price}, charged once on Stripe</p>
+    ${m.featured ? `<p class="meta">This ${WHO(m)} is already ${esc(running(m).toLowerCase())}. This purchase upgrades or adds time; it never shortens what you have.</p>` : ""}
+    ${pend ? `<p class="meta"><b>We'll review your event first.</b> Your payment is held and Featured switches on the moment we approve it. If we can't list the event, you get a full refund.</p>` : ""}
+    ${others.length ? `<p class="meta">Other plans for this ${WHO(m)}: ${others.map((k) => `<a href="#" data-sw="${k}">${esc(planCopy(k, PL).name)} (${dollars(PL[k])})</a>`).join(" · ")}</p>` : ""}
+    <p><button class="btn" id="go" type="button"${S.busy ? " disabled" : ""}>${S.busy ? "Opening Stripe…" : `Pay ${price} on Stripe`}</button></p>
+    <p class="msg${S.err ? " err" : ""}" id="gomsg">${S.msg ? esc(S.msg) : `The receipt goes to ${esc(user.email)}. You pay on Stripe's secure page with a card or Cash App Pay. No subscription.`}</p></div>`;
+  }
+
+  function draw() {
+    steps();
+    const f = $("#flow");
+    f.innerHTML = !S.plan && !S.ev ? planCards() : !user ? signInBox() : S.ev ? confirmBox() : whichBox();
+  }
+  const pickEvent = (m) => { S.ev = m; S.claim = null; S.msg = ""; S.err = false; fit(); sync(); beacon("fn:event-feature-pick"); draw(); window.scrollTo({ top: 0 }); };
+
+  $("#flow").addEventListener("click", async (x) => {
+    const t = x.target.closest("[data-pick],[data-mine],[data-a],[data-sw],[data-find],#si,#go,#addnew"); if (!t) return;
+    if (t.dataset.pick) { S.plan = t.dataset.pick; mails(); sync(); draw(); return; }
+    if (t.dataset.mine) { x.preventDefault(); pickEvent(S.mine.find((m) => m.id === t.dataset.mine)); return; }
+    if (t.dataset.sw) { x.preventDefault(); S.plan = t.dataset.sw; S.note = ""; sync(); draw(); return; }
+    if (t.dataset.find) { S.claim = (all || []).find((e) => e.id === t.dataset.find) || null; S.claimMsg = ""; S.claimErr = false; S.claimDone = false; draw(); return; }
+    const a = t.dataset.a;
+    if (a) x.preventDefault();
+    if (a === "plans") { S.plan = ""; S.ev = null; mails(); sync(); draw(); }
+    else if (a === "event") { S.ev = null; S.note = ""; sync(); draw(); }
+    else if (a === "unclaim") { S.claim = null; draw(); }
+    else if (a === "claim") await claim();
+    else if (t.id === "si") {
+      saveSel();
+      if (await signIn({ title: "Sign in to feature your event", next: urlState() })) location.reload();
+    } else if (t.id === "go") await pay();
   });
-  $("#res").addEventListener("click", (x) => { const b = x.target.closest("[data-id]"); if (b) pick(events.find((e) => e.id === b.dataset.id)); });
-  $("#mylist").addEventListener("click", (x) => {
-    const b = x.target.closest("[data-mine]"); if (!b || b.disabled) return;
-    const m = owned(b.dataset.mine); pick({ id: m.id, n: m.name, city: m.kind === "contest" ? "Contest" : m.city, s: m.start || "", e: m.end || "", home: m.kind === "home" });
-    $("#chosen").scrollIntoView({ block: "nearest" });
+  $("#flow").addEventListener("input", async (x) => {
+    if (x.target.id !== "q") return;
+    if (!all) all = (await fetch("/api/events").then((r) => r.json()).catch(() => [])).filter((e) => e.e >= today);
+    const q = x.target.value.trim().toLowerCase();
+    S.found = q.length < 2 ? [] : all.filter((e) => (e.n + " " + e.city).toLowerCase().includes(q)).slice(0, 8);
+    $("#res").innerHTML = S.found.map((e) => `<li><button type="button" data-find="${esc(e.id)}"><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}</small></button></li>`).join("") || (q.length < 2 ? "" : `<li class="meta">No match. <a href="/add-event?plan=${esc(S.plan)}">Add your event</a>.</li>`);
   });
-  $("#plans").addEventListener("click", (x) => { const b = x.target.closest("[data-pick]"); if (b && !b.disabled) { plan = b.dataset.pick; saveSel(); upd(); } });
-  $("#claimgo").addEventListener("click", async () => {
-    $("#claimgo").disabled = true; $("#claimmsg").className = "msg"; $("#claimmsg").textContent = "Sending…";
+
+  fit(); sync(); draw();
+
+  async function claim() {
+    S.claimMsg = "Sending…"; S.claimErr = false; draw();
     try {
-      const r = await fetch("/api/me/claims", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event_id: ev.id }) });
+      const r = await fetch("/api/me/claims", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event_id: S.claim.id }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Couldn't send your claim.");
-      if (d.status === "approved") { saveSel(); location.reload(); return; }
-      $("#claimmsg").textContent = d.status === "pending" ? "Thanks. Your claim is waiting for approval. Come back to this page once it is approved." : "Your claim was declined.";
-      $("#claimgo").hidden = true;
-    } catch (e) { $("#claimmsg").className = "msg err"; $("#claimmsg").textContent = e.message; $("#claimgo").disabled = false; }
-  });
-  // Restore what was chosen: from the link (?event= ?plan=) or from before sign-in (sessionStorage, which survives the Google redirect)
-  let saved = {}; try { saved = JSON.parse(sessionStorage.getItem(KEY) || "{}") || {}; } catch {}
-  const want = qs.get("event") || qs.get("home") || saved.id, p0 = qs.get("plan") || saved.plan;
-  if (want) { const m = owned(want), e0 = events.find((e) => e.id === want); if (m) { ev = { id: m.id, n: m.name, city: m.city, s: m.start || "", e: m.end || "", home: m.kind === "home" }; } else if (e0) ev = e0; if (ev) showChosen(); }
-  if (PL[p0]) plan = p0;
-  upd();
-  $("#go").addEventListener("click", async () => {
-    try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k: "click:feature-checkout-start" })], { type: "application/json" })); } catch {}
-    if (!user) { // keep the choice through sign-in (an emailed code reloads this page; Google returns to the link below)
-      saveSel();
-      const next = "/feature" + (plan || (ev && !String(ev.id).startsWith("sub:")) ? "?" + new URLSearchParams({ ...(plan ? { plan } : {}), ...(ev && !String(ev.id).startsWith("sub:") ? { [ev.home ? "home" : "event"]: ev.id } : {}) }) : "");
-      if (await signIn({ title: "Sign in to feature your event", next })) location.reload();
-      return;
-    }
-    $("#go").disabled = true; $("#gomsg").className = "msg"; $("#gomsg").textContent = "Opening the secure payment page…";
+      if (d.status === "approved") { S.ev = null; const id = S.claim.id; history.replaceState(null, "", "/feature?" + new URLSearchParams({ ...(S.plan ? { plan: S.plan } : {}), event: id })); location.reload(); return; } // the event is now theirs: back here with it chosen
+      S.claimDone = true; S.claimMsg = d.status === "pending" ? "Thanks. Your claim is waiting for our approval, usually within a day. You can come back to this page once it is approved; your plan will still be chosen." : "Your claim was declined. Write to " + SITE.contactEmail + " if that is a mistake.";
+    } catch (e) { S.claimErr = true; S.claimMsg = e.message; }
+    draw();
+  }
+  async function pay() {
+    beacon("click:feature-checkout-start");
+    S.busy = true; S.err = false; S.msg = "Opening the secure payment page…"; draw();
+    const m = S.ev;
     try {
-      const r = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(ev.home ? { home_id: ev.id, plan } : String(ev.id).startsWith("sub:") ? { submission_id: ev.id.slice(4), plan } : { event_id: ev.id, plan }) });
+      const body = m.home ? { home_id: m.id, plan: S.plan } : m.id.startsWith("sub:") ? { submission_id: m.id.slice(4), plan: S.plan } : { event_id: m.id, plan: S.plan };
+      const r = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       const d = await r.json().catch(() => ({}));
+      if (r.status === 401) { S.busy = false; saveSel(); if (await signIn({ title: "Sign in to pay", next: urlState() })) location.reload(); draw(); return; }
       if (!r.ok || !d.url) throw new Error(d.error || "The payment page couldn't be opened.");
       location.href = d.url;
-    } catch (e) { $("#gomsg").className = "msg err"; $("#gomsg").textContent = e.message + " You can also email " + SITE.contactEmail + "."; upd(); }
-  });
+    } catch (e) { S.busy = false; S.err = true; S.msg = e.message + " You can also email " + SITE.contactEmail + "."; draw(); }
+  }
+}
+
+// After paying: say exactly what happens next. The placement is switched on by Stripe's message to us, which can take a few seconds.
+async function paidView(S) {
+  try { sessionStorage.removeItem(KEY); } catch {}
+  $("#auto").hidden = true;
+  const id = qs.get("sub") ? "sub:" + qs.get("sub") : qs.get("event") || "", home = !!qs.get("home"), plan = PL[qs.get("plan")] ? qs.get("plan") : "";
+  const box = $("#paid"); box.hidden = false; box.className = "paidbox";
+  const find = async () => { if (!S.user) return null; const f = await fetch("/api/me/featurable", { cache: "no-store" }).then((r) => (r.ok ? r.json() : {})).catch(() => ({})); return [...(f.homes || []), ...(f.events || []), ...(f.contests || [])].find((m) => m.id === id) || null; };
+  const paint = (m) => {
+    const pname = plan ? planCopy(plan, PL).name : "Featured", waiting = m && m.state === "pending", on = m && m.featured, thing = home ? "home" : "event";
+    const head = waiting ? "Payment received. We're checking your event first." : on ? `Thank you. ${m.name} is Featured.` : "Thank you. Your payment went through.";
+    const when1 = waiting ? "As soon as we approve your event, usually within a day. You don't need to do anything. If we can't list it, you get a full refund." : on ? `It is on now${m.until ? " and runs through " + fmt(m.until) : ""}. Refresh the map if you don't see the gold pin yet.` : `Within a few minutes. We're switching it on now; refresh this page or the map in a minute.`;
+    const see = id && !id.startsWith("sub:") && !home ? `<a href="/#e-${esc(id)}">See it on the map</a> or ` : "";
+    box.innerHTML = `<h2>${esc(head)}</h2><p class="meta">${esc(pname)}${m && m.name && !on ? " · " + esc(m.name) : ""}</p>
+      <h3>What happens next</h3><ul>
+      <li><b>On the map:</b> ${esc(when1)}${home ? " Your contest result is unchanged." : ""}</li>
+      <li><b>The badge:</b> a gold-ringed pin on the map and a Featured badge on your ${thing}${plan && plan !== "pin" ? ", and it is listed first when people browse your area" : ""}.</li>
+      <li><b>Receipt:</b> Stripe emails your card receipt${S.user ? ` to ${esc(S.user.email)}` : ""}, and we send a short confirmation from SoCal Lights.</li>
+      <li><b>Where to see it:</b> ${see}<a href="/profile#events">Your profile</a>.</li>
+      <li><b>Help or a refund:</b> write to <a href="mailto:${esc(SITE.contactEmail)}">${esc(SITE.contactEmail)}</a>.</li>
+      <li><b>Renew or upgrade:</b> come back to <a href="/feature">this page</a> any time and pick the same event. Upgrading to Top of the list or adding time never shortens what you have.</li></ul>
+      <p><a class="btn" href="/">Back to the map</a> <a class="btn out" href="/feature">Feature another event</a></p>`;
+    return !!(on || waiting);
+  };
+  let m = await find(); if (paint(m)) return;
+  for (let i = 0; i < 5; i++) { await new Promise((r) => setTimeout(r, 3000)); m = await find(); if (paint(m)) return; }
 }
 </script>
 <script type="module">

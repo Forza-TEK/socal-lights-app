@@ -35,7 +35,7 @@
 <section class="plan" id="events"><h2>Event organizers</h2>
 <p class="meta intro"><b>Listing your event is free</b> (tree lighting, parade, market, haunted house, light show). Featured placement is optional: pick one, pay once, no subscription.</p>
 <div class="tiers" id="plans"></div>
-<p class="meta" id="featnote">Placement starts when you pay and runs to your event's last day, up to 30 days (up to 90 for a Full run). Featuring opens 30 days before the event. You pay on Stripe's secure page.</p>
+<p class="meta" id="featnote">Choose a plan, sign in with an emailed code, pick your event, and pay on Stripe's secure page. Placement starts when you pay and runs to your event's last day, up to 30 days (up to 90 for a Full run). Featuring opens 30 days before the event.</p>
 <a class="btn" href="/add-event">Add your event</a></section>
 
 <section class="plan" id="banner"><h2>Installers</h2>
@@ -62,10 +62,12 @@
 <script type="module">
 import { themeBtn, mountAcct } from "/addflow.js?v=20261107a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
-import { planCopy, planBlurb, PLAN_KEYS } from "/feature-plans.js?v=20261107a";
+import { planCopy, planBlurb, PLAN_KEYS } from "/feature-plans.js?v=20261107b";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents / 100);
+// one number (no person) when Choose is tapped, to see how many reach the next step
+$("#plans").addEventListener("click", (e) => { if (e.target.closest("a.btn")) try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k: "fn:event-feature-choose" })], { type: "application/json" })); } catch {} });
 const PAID = (on) => { document.querySelectorAll(".paid,#featnote,#plans").forEach((e) => (e.hidden = !on)); };
 if (/SoCalLightsApp/.test(navigator.userAgent)) {
   // Paid placement is web-only (store rules): the paid options are not shown in the app.

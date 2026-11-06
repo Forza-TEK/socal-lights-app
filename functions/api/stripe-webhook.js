@@ -7,6 +7,8 @@
 // stripe_events only after the work succeeded; failures that a retry can fix return 500 so Stripe redelivers.
 import { json, err } from "../_lib/util.js";
 import { logOp } from "../_lib/oplog.js";
+import { bump } from "../_lib/funnel.js";
+import { sendFeaturePaidEmail } from "../_lib/featuremail.js";
 import { PLANS, LEGACY_SEASON_CENTS, applyOrder, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
 
 const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired", "charge.refunded", "charge.dispute.created", "charge.dispute.closed"]);
@@ -102,16 +104,21 @@ async function paid(s, env) {
   if (order.status !== "paid") return { skipped: order.status }; // already refunded/disputed before we got to apply it
   if (!order.payment_intent && typeof s.payment_intent === "string") await env.DB.prepare("UPDATE feature_orders SET payment_intent = ? WHERE session_id = ?").bind(s.payment_intent, s.id).run();
 
+  if (!exists && target === "event") await bump(env, "fn:event-feature-paid"); // a number only; counted here, never from the browser
   let targetId = order.event_id;
   if (targetId.startsWith("sub:")) {
     // Paid while the event was still waiting for review: apply now if it has since published, otherwise the admin's approval applies it.
     const sub = await env.DB.prepare("SELECT event_id FROM event_submissions WHERE id = ?").bind(targetId.slice(4)).first();
     if (!sub) { console.error("stripe-webhook: submission not found", targetId); return err(500, "Submission not found; will retry."); }
-    if (!sub.event_id) return { held: "waiting for the event to be approved" };
+    if (!sub.event_id) {
+      if (!exists && target === "event") { const q = await env.DB.prepare("SELECT name, contact_email FROM event_submissions WHERE id = ?").bind(targetId.slice(4)).first(); await sendFeaturePaidEmail(env, { order, name: q && q.name, waiting: true, fallbackEmail: q && q.contact_email }); }
+      return { held: "waiting for the event to be approved" };
+    }
     targetId = sub.event_id;
     await env.DB.prepare("UPDATE feature_orders SET event_id = ? WHERE session_id = ?").bind(targetId, s.id).run();
   }
   const nf = await applyOrder(env.DB, order, targetId);
   if (!nf) { console.error("stripe-webhook: target not found", targetId); return err(500, (target === "home" ? "Home" : "Event") + " not found; will retry."); }
+  if (target === "event") { const q = await env.DB.prepare("SELECT name FROM events WHERE id = ?").bind(targetId).first(); await sendFeaturePaidEmail(env, { order, name: q && q.name, until: nf.featured_until, eventId: targetId }); }
   return { featured: nf };
 }

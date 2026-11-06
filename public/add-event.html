@@ -17,7 +17,7 @@
 import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261107a";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
 import { CITY } from "/cities.js";
-import { planCopy, planStatus, PLAN_KEYS } from "/feature-plans.js?v=20261107a";
+import { planCopy, planStatus, planWindow, niceDate, PLAN_KEYS } from "/feature-plans.js?v=20261107b";
 import { me, signIn } from "/auth.js?v=20261106y";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
 const acct = (await me()).user;
@@ -33,12 +33,14 @@ if (!acct) {
 const cfg = await ts.init(), pay = !!cfg.featureCheckout && !IN_APP; // paid placement is offered only when online payment is on, and never inside the store apps
 const d = { url: "", name: "", season: defaultSeason(today), type: "", start: "", end: "", hours: "", free: "yes", price: "", venue: "", street: "", city: "", blurb: "", email: "", plan: "" };
 d.email = acct.email;
+{ const want = new URLSearchParams(location.search).get("plan"); if (want && ["pin", "top", "season"].includes(want)) d.plan = want; } // arrived from Pricing or the Feature page with a plan chosen
 // Prices, day limits and the 30-day opening window come from /api/config (functions/_lib/featured.js); the wording lives in /feature-plans.js.
 // A plan is offered only when the event can buy it today (featuring opens 30 days before the event; Full run needs a 31+ day event with 7+ days left).
 const FP = cfg.featurePlans || {}, OPEN = cfg.featureOpenDays || 30;
 const statusOf = (x, k) => planStatus(k, { start: x.start, end: x.end }, FP, OPEN, today);
 const planOff = (x, k) => !statusOf(x, k).ok;
-const plansFor = (x) => [["", "No thanks, just list it", "Free"], ...PLAN_KEYS.filter((k) => FP[k] && !planOff(x, k)).map((k) => { const c = planCopy(k, FP), st = statusOf(x, k); return [k, `${c.name}: $${FP[k].cents / 100}`, [...c.bullets, st.note].map((t) => "&bull; " + esc(t)).join("<br>")]; })];
+// Each offered plan lists everything it includes, the exact dates it would run if bought today, and the total.
+const plansFor = (x) => [["", "No thanks, just list it", "Free"], ...PLAN_KEYS.filter((k) => FP[k] && !planOff(x, k)).map((k) => { const c = planCopy(k, FP), w = planWindow(k, { end: x.end }, FP, today); return [k, `${c.name}: $${FP[k].cents / 100}`, [...(c.sub ? [c.sub] : []), ...c.bullets, `Runs ${niceDate(w.from)} to ${niceDate(w.until)} (${w.days} day${w.days === 1 ? "" : "s"}). Total $${FP[k].cents / 100}, charged once on Stripe.`].map((t) => "&bull; " + esc(t)).join("<br>")]; })];
 const planNote = (x) => [...new Set(PLAN_KEYS.filter((k) => FP[k] && planOff(x, k)).map((k) => statusOf(x, k).note))].join(" ");
 
 const steps = [
@@ -62,7 +64,7 @@ const steps = [
   { id: "review", sec: "Review", title: "Check everything, then add it", cta: "Add my event", redraw: false,
     body: (x) => `<div class="sum">${sumRow("Event", esc(x.name), "name")}${sumRow("Page", x.url.trim() ? esc(x.url) : "None. A person will check it", "url")}${sumRow("When", fmt(x.start) + (x.end !== x.start ? " to " + fmt(x.end) : ""), "dates")}${sumRow("Price", x.free === "yes" ? "Free" : esc(x.price), "price")}${sumRow("Where", `${esc(x.venue)}, ${esc(x.city)}`, "where")}</div>
       <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). It is only used if something needs fixing and it is never shown publicly.</p></div>
-      ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div class="tiles">${plansFor(x).map(([v, t, s]) => tile(x, "plan", v, t, s, false)).join("")}</div>${planNote(x) ? `<p class="small muted">${esc(planNote(x))}</p>` : ""}<p class="small muted">You'll pay on Stripe's secure page right after your event is added. If it needs a quick review first, your Featured placement turns on as soon as it's approved.</p></div>` : ""}<div id="ts"></div>`,
+      ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div class="tiles">${plansFor(x).map(([v, t, s]) => tile(x, "plan", v, t, s, false)).join("")}</div>${planNote(x) ? `<p class="small muted">${esc(planNote(x))}</p>` : ""}<p class="small muted">After you tap Add my event, you go straight to Stripe's secure page to pay; there is nothing to enter again. If it needs a quick review first, your payment is held and Featured turns on the moment we approve it (a full refund if we cannot list it).</p></div>` : ""}<div id="ts"></div>`,
     submit: async (x, api) => {
       const body = { name: x.name, url: x.url, season: x.season, type: x.type, start: x.start, end: x.end, hours: x.hours, price: x.free === "yes" ? "" : x.price, free: x.free === "yes", venue: x.venue, address: x.street, city: x.city, blurb: x.blurb, email: x.email, "cf-turnstile-response": ts.token() };
       const r = await fetch("/api/submit-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
@@ -73,7 +75,7 @@ const steps = [
         const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(j.status === "published" || j.status === "duplicate" ? { event_id: j.id } : { submission_id: j.submission_id }), plan: x.plan, email: x.email }) });
         const cd = await c.json().catch(() => ({}));
         if (c.ok && cd.url) { location.href = cd.url; return; }
-        api.finish(`<h1>${esc(j.message)}</h1><p class="help">We couldn't open the payment page just now. You can <a href="/feature">feature your event from here</a> any time.</p>`); return;
+        api.finish(`<h1>${esc(j.message)}</h1><p class="help">We couldn't open the payment page just now. <a href="/feature?plan=${esc(x.plan)}&${j.status === "published" || j.status === "duplicate" ? "event=" + encodeURIComponent(j.id) : "sub=" + encodeURIComponent(j.submission_id)}">Pick up where you left off</a>: your event and plan are already chosen.</p>`); return;
       }
       api.finish(`<h1>${esc(j.message)}</h1><p class="help">${j.status === "published" ? "It's on the map now." : "It is on the map shortly."}</p><div style="display:flex;gap:12px;flex-wrap:wrap">${j.status === "published" || j.status === "duplicate" ? '<a class="btn" href="/">See it on the map</a>' : ""}${IN_APP ? "" : '<a class="btn out" href="/feature">Feature your event</a>'}<a class="btn out" href="/add-event">Add another event</a></div>`);
     } },

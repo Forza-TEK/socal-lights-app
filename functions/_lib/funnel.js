@@ -12,10 +12,14 @@ export const STEPS = [
   ["fn:add-event-done", "Event submitted"],
   ["fn:add-house-done", "House or installer display submitted"],
   ["fn:contest-entry-done", "Contest entry submitted"],
+  ["fn:event-feature-choose", "Event plan: Choose clicked on Pricing"],
+  ["fn:event-feature-pick", "Event plan: an event picked on the Feature page"],
+  ["fn:event-feature-checkout", "Event plan: payment page opened"],
+  ["fn:event-feature-paid", "Event plan: paid (counted by the server)"],
   ["fn:subscribe", "Weekly email sign-up submitted"],
   ["fn:subscribe-confirm", "Weekly email confirmed"],
 ];
-export const CLIENT_KEYS = ["fn:visit", "fn:event-open", "fn:signin-open"];
+export const CLIENT_KEYS = ["fn:visit", "fn:event-open", "fn:signin-open", "fn:event-feature-choose", "fn:event-feature-pick"];
 
 export async function bump(env, key, day = dayKey()) {
   try { await env.DB.prepare("INSERT INTO site_hits (day, page, n) VALUES (?, ?, 1) ON CONFLICT(day, page) DO UPDATE SET n = n + 1 WHERE n < ?").bind(day, key, DAILY_CAP).run(); } catch {}
