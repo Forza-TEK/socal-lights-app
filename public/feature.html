@@ -210,7 +210,7 @@ async function start() {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Couldn't send your claim.");
       if (d.status === "approved") { S.ev = null; const id = S.claim.id; history.replaceState(null, "", "/feature?" + new URLSearchParams({ ...(S.plan ? { plan: S.plan } : {}), event: id })); location.reload(); return; } // the event is now theirs: back here with it chosen
-      S.claimDone = true; S.claimMsg = d.status === "pending" ? "Thanks. Your claim is waiting for our approval, usually within a day. You can come back to this page once it is approved; your plan will still be chosen." : "Your claim was declined. Write to " + SITE.contactEmail + " if that is a mistake.";
+      S.claimDone = true; S.claimMsg = d.status === "pending" ? "Thanks. Your claim is waiting for our approval, usually within a day. We will email you when it has been reviewed, with a link back to this page." : "Your claim was declined. Write to " + SITE.contactEmail + " if that is a mistake.";
     } catch (e) { S.claimErr = true; S.claimMsg = e.message; }
     draw();
   }

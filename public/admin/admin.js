@@ -293,7 +293,7 @@ async function renderClaims() {
   setCount("claims", pend.length);
   const bar = toolbar({ views: [{ k: "pending", label: "Waiting", n: pend.length }, { k: "approved", label: "Approved", n: ok.length }, { k: "declined", label: "Declined", n: no.length }], active: CLVIEW, count: String(rows.length) });
   const go = () => wireToolbar(main, { onView: (v) => { CLVIEW = v; renderClaims(); }, onSearch: () => {} });
-  if (!rows.length) { main.innerHTML = bar + `<div class="empty">${CLVIEW === "pending" ? "No claims waiting. A claim only lets the person buy Featured for that event; it gives no edit rights." : "Nothing here."}</div>`; go(); return; }
+  if (!rows.length) { main.innerHTML = bar + `<div class="empty">${CLVIEW === "pending" ? "No claims waiting. A claim only lets the person buy Featured for that event; it gives no edit rights. When you approve or decline one, the person is emailed once." : "Nothing here."}</div>`; go(); return; }
   main.innerHTML = bar + `<div class="cards">${rows.map((x) => rec({
     attrs: `data-clid="${esc(x.id)}"`, title: esc(x.name || x.event_id), tags: [[x.status === "pending" ? "Waiting" : x.status === "approved" ? "Approved" : "Declined", x.status === "pending" ? "warn" : x.status === "approved" ? "ok" : "bad"]], meta: esc((x.created_at || "").slice(0, 16)) + " UTC",
     facts: fact("Claimed by", `<span style="user-select:all">${esc(x.claimant)}</span>`) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "None") + fact("Where", esc(x.city || "")) + (x.method ? fact("Approved by", esc(x.method)) : ""),
@@ -304,7 +304,7 @@ async function renderClaims() {
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-clact]"); if (!b) return;
   const card = b.closest("[data-clid]"); b.disabled = true;
-  try { await api("/api/admin/claims/" + card.dataset.clid, { method: "POST", body: JSON.stringify({ action: b.dataset.clact }) }); toast(b.dataset.clact === "approve" ? "Approved" : "Declined"); renderClaims(); refreshCounts(); } catch (er) { b.disabled = false; toast(er.message, true); }
+  try { const r = await api("/api/admin/claims/" + card.dataset.clid, { method: "POST", body: JSON.stringify({ action: b.dataset.clact }) }); toast((b.dataset.clact === "approve" ? "Approved" : "Declined") + (r && r.emailed ? " and emailed" : " (no email sent)")); renderClaims(); refreshCounts(); } catch (er) { b.disabled = false; toast(er.message, true); }
 });
 
 /* ---------- Featured orders: money that needs the owner (refunds to make, disputes, placements that did not apply) ---------- */
