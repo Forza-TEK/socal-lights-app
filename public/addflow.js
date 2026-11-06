@@ -28,8 +28,8 @@ import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome
 export { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct };
 
 /* ---------- field builders ---------- */
-export const input = (d, k, { label = "", ph = "", max = 200, type = "text", opt = false, ac = "", mode = "", addr = false } = {}) =>
-  `<div class="field${addr ? " combo" : ""}">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<input class="in" id="f-${k}" data-k="${k}" ${addr ? "data-addr" : ""} type="${type}" maxlength="${max}" ${ac ? `autocomplete="${ac}"` : 'autocomplete="off"'} ${mode ? `inputmode="${mode}"` : ""} placeholder="${esc(ph)}" value="${esc(d[k] ?? "")}"></div>`;
+export const input = (d, k, { label = "", ph = "", max = 200, type = "text", opt = false, ac = "", mode = "", addr = false, aria = "" } = {}) =>
+  `<div class="field${addr ? " combo" : ""}">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<input class="in" id="f-${k}" data-k="${k}" ${aria && !label ? `aria-label="${esc(aria)}"` : ""} ${addr ? "data-addr" : ""} type="${type}" maxlength="${max}" ${ac ? `autocomplete="${ac}"` : 'autocomplete="off"'} ${mode ? `inputmode="${mode}"` : ""} placeholder="${esc(ph)}" value="${esc(d[k] ?? "")}"></div>`;
 export const area = (d, k, { label = "", ph = "", max = 300, opt = false } = {}) =>
   `<div class="field">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<textarea class="in" id="f-${k}" data-k="${k}" maxlength="${max}" placeholder="${esc(ph)}">${esc(d[k] ?? "")}</textarea></div>`;
 export const select = (d, k, options, { label = "", blank = "", ac = "" } = {}) =>
@@ -114,7 +114,7 @@ export function run(o) {
     const segs = secs.map((sc, k) => { const inSec = st.filter((x) => x.sec === sc), idx = inSec.indexOf(s), f = k < cur ? 1 : k > cur ? 0 : (idx + 1) / inSec.length; return `<div class="seg" aria-hidden="true"><i style="width:${f * 100}%"></i></div>`; }).join("");
     const last = !!s.submit;
     root.innerHTML = `${hdr()}<main class="main"><h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<p class="err" id="err" role="alert" ${S.err ? "" : "hidden"}>${esc(S.err)}</p></main>
-    <div class="bar"><div class="segs" role="progressbar" aria-label="Progress: ${esc(s.sec)}">${segs}</div><div class="nav"><button class="link" type="button" data-a="back">${S.i === 0 ? "Cancel" : "Back"}</button><button class="btn" type="button" data-a="next" id="nextbtn">${esc(T(s.cta) || (last ? "Submit" : "Next"))}</button></div></div>`;
+    <div class="bar" role="navigation" aria-label="Steps"><div class="segs" role="progressbar" aria-label="Progress: ${esc(s.sec)}">${segs}</div><div class="nav"><button class="link" type="button" data-a="back">${S.i === 0 ? "Cancel" : "Back"}</button><button class="btn" type="button" data-a="next" id="nextbtn">${esc(T(s.cta) || (last ? "Submit" : "Next"))}</button></div></div>`;
     if (focus) { const f = root.querySelector(".in,[data-tile]"); if (f && f.classList.contains("in")) f.focus({ preventScroll: true }); window.scrollTo(0, 0); }
     if (o.after) o.after(s, d);
   }

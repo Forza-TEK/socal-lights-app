@@ -4,6 +4,9 @@ _Last updated: 2026-11-06 (design pass)_
 
 **Start here:** `docs/CHECKLIST.md` is the master project checklist (done, owner actions, team backlog, decision gates, expert recommendations).
 
+## Function and design audit (2026-11-06)
+- Automated sweep of 22 pages x phone/desktop x light/dark plus a seeded contest, and a crawl of 409 links (0 broken). Nine gaps fixed; open items and what needs a real device or an owner decision are in `docs/audit-2026-11-06.md`.
+
 ## Design pass: accessibility, SEO and map polish (2026-11-06; PRs 345, 346, 347)
 The owner approved visible design changes (tutorials are recorded). Same design language, no rebrand.
 - **Accessibility (PR 345).** Contrast fixed with computed ratios and re-tested with axe-core 4.9.1 (light and dark, 390 and 1280 px; Chrome via Playwright; no serious or critical findings left on `/`, Contests, Add pages, Pricing, Feature, Privacy, Terms, Tutorials, Profile, city, event and Help pages): Contests "Live now" tab (night mode: dark text on coral 7.0:1; light Halloween orange gets dark text 5.05:1, the audit's #d93f3f would only reach 4.44), light-theme tags Confirmed 3.02 to 4.67, Expected 4.13 to 4.93, Paid 4.34 to 5.0, blue tags 4.09 to 5.51 (`--free`, `--gold`, `--paid`, `--ice` in `styles.css` and the server shell), server-page accent 4.47 to 4.8. "Skip to the content" link (`footer.js`) on every non-map page with a `<main>`; map top bar is a `<header>` before the canvas (Tab reaches search first); `role="banner"` on page headers; `<main>` on Profile; `aria-invalid` plus `aria-describedby` on the first empty field of an add-flow step that shows an error and on the co-organizer email; footer links 44 px tall. Version bumps: `auth.js`, `addflow.js`, `chrome.js`, `footer.js`, `addflow.css`, `styles.css`, `app.js`, `admin.js` all `20261106y`. New `tests/asset-versions.test.mjs` fails if any asset has two `?v=` values (addflow.js was on two).
