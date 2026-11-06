@@ -398,14 +398,29 @@
           "title": "Installer profiles and \"Installed by\"",
           "desc": "How a company gets a profile, how a home links to it, and how to confirm or claim yours.",
           "url": "/tutorials/sponsors-profile.mp4",
-          "length": "1:34",
+          "length": "1:56",
           "captions": "/tutorials/sponsors-profile.vtt",
           "poster": "/tutorials/sponsors-profile.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-profile-mobile.mp4",
             "poster": "/tutorials/sponsors-profile-mobile.jpg",
             "captions": "/tutorials/sponsors-profile-mobile.vtt",
-            "length": "1:35"
+            "length": "1:56"
+          }
+        },
+        {
+          "id": "sponsor",
+          "title": "Sponsor your installer company",
+          "desc": "Banner, Top of the list, or both: pick your company, check the dates, and stop at the secure payment page.",
+          "url": "/tutorials/sponsors-sponsor.mp4",
+          "length": "2:25",
+          "captions": "/tutorials/sponsors-sponsor.vtt",
+          "poster": "/tutorials/sponsors-sponsor.jpg",
+          "mobile": {
+            "url": "/tutorials/sponsors-sponsor-mobile.mp4",
+            "poster": "/tutorials/sponsors-sponsor-mobile.jpg",
+            "captions": "/tutorials/sponsors-sponsor-mobile.vtt",
+            "length": "2:24"
           }
         }
       ]
@@ -463,16 +478,16 @@
         {
           "id": "feature",
           "title": "Feature your event or home",
-          "desc": "A gold pin and the top of the list, for events and winning homes. Stops at the secure payment page.",
+          "desc": "Pick a plan, pick your event or winning home, check the dates. Stops at the secure payment page.",
           "url": "/tutorials/post-feature.mp4",
-          "length": "2:11",
+          "length": "2:22",
           "captions": "/tutorials/post-feature.vtt",
           "poster": "/tutorials/post-feature.jpg",
           "mobile": {
             "url": "/tutorials/post-feature-mobile.mp4",
             "poster": "/tutorials/post-feature-mobile.jpg",
             "captions": "/tutorials/post-feature-mobile.vtt",
-            "length": "2:11"
+            "length": "2:22"
           }
         }
       ]

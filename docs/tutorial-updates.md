@@ -125,3 +125,9 @@ The owner re-records after the pricing PR is live. Videos are `public/tutorials/
 ## Help articles changed by migration 0184 (seed-only; paste text in `docs/help-updates.md`)
 - `is-it-free`, `feature-an-event-or-home`, `sponsor-your-installer-company` (new tiers, no prices written), `automatic-renewal-for-installers` (one sentence: renews the same plan).
 - **Needs a video linked:** `sponsor-your-installer-company` has no video yet (record "sponsor" and set its Video field). `feature-an-event-or-home` is linked to `post-feature`, which is now out of date (above): re-record, same file name, no change to the Video field.
+
+### Done (2026-11-06, after the pricing PR went live)
+- `feature` (Feature your event or home) re-recorded in place against the new feature page: four plans with their contents, Which event?, the confirm screen with exact dates and total, stops at Pay on Stripe (request held, nothing sent). Narration quotes no prices and uses no old plan names ("see the Pricing page"). Same file name `post-feature`, phone version too.
+- `sponsor` (Sponsor your installer company, new, Sponsors and installers group, `sponsors-sponsor`): menu, Promote, See all pricing, Choose on the installer section, your company, the three plans, dates and the optional renewal box (off by default), stops at Continue to payment (held). Phone version too. Linked to the Help article by migration 0185.
+- `installer-profile` re-recorded (end card now leads to the sponsor video; the map list now shows the new strip with the Sponsor pill and Advertise here).
+- Left as they are: `find-map`, `find-night`, `find-app`, `find-pro` (the older takes show no strip at all, so no wrong pill or plan is visible), `add-event` (the recorder stubs `/api/config`, so the plan tiles never appear in it), `installer` (opens no placement card). The on-screen plan cards and confirm screens in `feature` and `sponsor` do show the current prices; re-record those two if prices change.

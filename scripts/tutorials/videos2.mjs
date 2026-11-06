@@ -216,7 +216,7 @@ S["installer-profile"] = { id: "installer-profile", file: "sponsors-profile", co
   target("Tap the company name", "Tap the company's name to open its profile page.", "a.instlink >> nth=0", { after: 2400, poster: true }),
   { cap: "Manage your profile", say: "If this is your company, claim the profile with your company email. That proves it is yours. Then you manage it here, with your company details and logo. Homes that name your company are listed on the Homes tab.", do: async (p, h) => { await p.goto(BASE + "/installer/bright-nights-lighting/manage#homes", { waitUntil: "networkidle" }); await sleep(1200); await h.hover("[data-claim^='confirm']", 900); } },
   target("Tap Confirm", "Tap Confirm for each home you really installed. It gets a check mark, which tells visitors it is true. If it is not yours, tap Not ours, and the name is removed from that home.", "[data-claim^='confirm']", { after: 2000 }),
-  nextUp(ES, "Add an event to the map", "Share a tree lighting, market, parade or haunted house"),
+  nextUp(ES, "Sponsor your installer company", "Banner, Top of the list, or both"),
 ]};
 
 // ---------------- Post events and homes ----------------
@@ -299,20 +299,39 @@ S.claim = { id: "claim", file: "post-claim", cookie: ck.u_enter, routes: NOCFG, 
   nextUp(EP, "Feature your event or home", "A gold pin on the map, for events and winning homes"),
 ]};
 S.feature = { id: "feature", file: "post-feature", cookie: ck.u_mine, ...MAPSPEC, steps: [
-  hook(EP, "Feature your event or home", "A gold pin and the top of the list", "In this video, you will see how to feature an event, or a winning home, with a gold pin on the map. We go as far as the secure payment page, and stop there. We start on the map."),
+  hook(EP, "Feature your event or home", "Stand out on the map", "In this video, you will see how to feature an event, or a winning home, so it stands out on the map. We go as far as the secure payment page, and stop there. We start on the map."),
   ...openShort(),
   ...navSteps([
     target("Tap the three dots", "Look at the top right corner of the map, and tap the three dots.", "#morebtn", { after: 900 }),
-    target("Tap Promote your event", "In the menu, tap Promote your event. Listing an event is always free. This is for organizers who want a Featured pin.", '#moremenu a[href="/feature"]', { after: 2200 }),
+    target("Tap Promote your event", "In the menu, tap Promote your event. Listing an event is always free. This is for organizers who want to stand out.", '#moremenu a[href="/feature"]', { after: 2200 }),
   ]),
-  { cap: "Your events and homes", say: "This list shows what you can feature: events you added, contests you run, and homes that finished first, second or third in an announced contest. Paying never changes a contest result.", do: async (p, h) => { await p.locator("#mylist").first().waitFor({ timeout: 10000 }); await h.hover("#mylist li >> nth=0", 1200); await h.hover("#mylist li >> nth=1", 1200); } },
-  target("Tap your event", "Tap your event, to feature it.", '[data-mine="ev-oak-hill-tree-lighting"]', { after: 1600 }),
-  { cap: "Pick a plan", say: "Now pick a plan. Each plan lists what you get and how long it runs, and each is a one time payment, with no subscription. A Featured event gets a gold ringed pin on the map, and a Featured badge in the list.", do: async (p, h) => { await h.scrollTo("#plans", 160); await h.hover("#plans [data-p] >> nth=0", 1100); await h.hover("#plans [data-p] >> nth=1", 1100); await h.hover("#plans [data-p] >> nth=2", 1100); } },
-  target("Tap a plan", "Tap the plan you want.", "#plans [data-pick] >> nth=1", { after: 1200 }),
-  { cap: "Tap Continue to payment", say: "Then tap Continue to payment. This opens Stripe's secure page, where you pay with a card or Cash App Pay. We stop here, because this is only a demonstration, and we never enter card details in a video.", target: "#go", after: 3500, pre: async (p) => { await p.route("**/api/feature/checkout", () => new Promise(() => {})); }, poster: true }, // the request is held: nothing is sent to Stripe
-  { cap: "Your gold pin", say: "After you pay, your gold pin turns on by itself, within a few minutes, and a receipt arrives by email. Winning homes work the same way: tap the home in this list, and pick a plan.", do: async (p, h) => { await sleep(600); } },
-  recap(EP, "Featured, in four taps", ["Menu, then Promote your event", "Tap your event or winning home", "Pick a plan", "Pay on Stripe's secure page"], "That is how you feature an event or a winning home. Listing is always free, and Featured is the only paid option."),
+  { cap: "Pick a plan", say: "First, pick a plan. There are four, and each one lists everything it includes. Every plan includes the gold Featured pin on the map. The banner adds your event as a Featured pill, in the strip at the top of the map list. And Top of the list puts your event first when people browse your area. For prices, see the Pricing page.", do: async (p, h) => { await p.locator("#flow .plan[data-p]").first().waitFor({ timeout: 10000 }); await h.scrollTo("#flow .plan[data-p] >> nth=0", 150); for (const n of [0, 1, 2, 3]) await h.hover(`#flow .plan[data-p] >> nth=${n}`, 1300); } },
+  target("Tap Choose", "Tap Choose on the plan you want. We will take the banner with the pin.", '[data-pick="ev_banner"]', { after: 1600 }),
+  { cap: "Which event?", say: "Next, pick what to feature. This list shows your events, and homes that finished first, second or third in an announced contest.", do: async (p, h) => { await p.locator("#mylist").first().waitFor({ timeout: 10000 }); await h.scrollTo("#mylist", 200); await h.hover("#mylist li >> nth=0", 1000); await h.hover("#mylist li >> nth=1", 1000); } },
+  target("Tap your event", "Tap your event.", '[data-mine="ev-oak-hill-tree-lighting"]', { after: 1800 }),
+  { cap: "Check the dates", say: "This page shows exactly what you get, when it starts, when it ends, and the total, before you pay.", do: async (p, h) => { await h.hover("#flow .plan.sel ul", 1200); await h.hover("#flow .plan.sel p:has-text('Starts')", 1800); } },
+  { cap: "Tap Pay on Stripe", say: "Then tap Pay on Stripe. This opens Stripe's secure page, where you pay with a card or Cash App Pay. We stop here, because this is only a demonstration, and we never enter card details in a video.", target: "#go", after: 3500, pre: async (p) => { await p.route("**/api/feature/checkout", () => new Promise(() => {})); }, poster: true }, // the request is held: nothing is sent to Stripe
+  { cap: "", say: "After you pay, your placement turns on by itself within a few minutes, and a receipt arrives by email. There is no subscription. A winning home works the same way.", do: async (p, h) => { await sleep(600); } },
+  recap(EP, "Featured, in a few taps", ["Menu, then Promote your event", "Pick a plan", "Pick your event or winning home", "Check the dates, then pay on Stripe"], "That is how you feature an event or a winning home. Listing is always free, and a Featured placement is optional."),
   nextUp(EP, "Find lights near you", "Use the map, filters, seasons and All seasons to find what is on near you"),
+]};
+S.sponsor = { id: "sponsor", file: "sponsors-sponsor", cookie: ck.u_inst, ...MAPSPEC, steps: [
+  hook(ES, "Sponsor your installer company", "Banner, Top of the list, or both", "In this video, you will sponsor your installer company, so it stands out at the top of the map list, in the installer list, or both. We go as far as the secure payment page, and stop there. We start on the map."),
+  ...openShort(),
+  ...navSteps([
+    target("Tap the three dots", "Look at the top right corner of the map, and tap the three dots.", "#morebtn", { after: 900 }),
+    target("Tap Promote your event", "In the menu, tap Promote your event. This page is for paid placements.", '#moremenu a[href="/feature"]', { after: 2200 }),
+    target("Tap See all pricing", "At the top, tap See all pricing.", 'main a[href="/pricing"] >> nth=0', { after: 2200 }),
+  ]),
+  { cap: "Installers", say: "Scroll to Installers. Paid placements are always labelled Sponsor. The Banner is a pill in the strip at the top of the map list. Top of the list puts your company first in the installer list. Or take both. The prices are on this page.", do: async (p, h) => { await h.scrollTo("#insttiers", 140); for (const n of [0, 1, 2, 3]) await h.hover(`#insttiers .tier >> nth=${n}`, 1100); } },
+  target("Tap Choose", "Under Banner, tap Choose.", 'a[href="/sponsor?plan=banner"]', { after: 2400 }),
+  { cap: "Your company", say: "If you are not signed in, it asks you to sign in with your company email. Your company is picked here. It needs a free profile first.", do: async (p, h) => { await p.locator("#s2 .pick").first().waitFor({ timeout: 10000 }); await h.hover("#s2 .pick", 1500); } },
+  { cap: "The three plans", say: "These are the three plans: Banner, Top of the list, and both together. Your choice is marked, and each one lists everything it includes.", do: async (p, h) => { await h.scrollTo("#plans", 160); for (const n of [0, 1, 2]) await h.hover(`#plans .plan >> nth=${n}`, 1200); } },
+  { cap: "Check the dates", say: "Below is a summary with the exact dates. It starts today, and ends on the last day of the season. Automatic renewal is optional. It is off unless you tick this box, and you can cancel it any time.", do: async (p, h) => { await h.scrollTo("#sum", 160); await h.hover("#sum", 1800); await h.hover("#renewbox", 1500); } },
+  { cap: "Tap Continue to payment", say: "Then tap Continue to payment. This opens Stripe's secure page. We stop here, because this is only a demonstration, and we never enter card details in a video.", target: "#go", after: 3500, pre: async (p) => { await p.route("**/api/sponsor/checkout", () => new Promise(() => {})); }, poster: true }, // the request is held: nothing is sent to Stripe
+  { cap: "", say: "After you pay, your placement turns on within a few minutes, and a receipt arrives by email.", do: async (p, h) => { await sleep(600); } },
+  recap(ES, "Sponsored, in a few taps", ["Menu, Promote, See all pricing", "Choose Banner, Top of the list, or both", "Pick your company and check the dates", "Pay on Stripe's secure page"], "That is how you sponsor your installer company. Every paid placement is labelled Sponsor, and renewal is always your choice."),
+  nextUp(EP, "Add an event to the map", "Share a tree lighting, market, parade or haunted house"),
 ]};
 
 const id = process.argv[2];
