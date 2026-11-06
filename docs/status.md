@@ -490,3 +490,6 @@ Added 2 events (migration 0164): Bell Holiday Village (Dec 5) and Winter Runderl
 - `/c/<unknown>` now returns a real 404.
 - Re-ran the full sweep: no new contrast, overflow or console problems.
 - Tutorials skip-link flag fixed: footer.js no longer adds a second skip link on pages that already have the app-shell one.
+
+## 2026-11-06 (installer banner)
+- Built the map banner for installers (free pilot): migration 0169, `/api/banner`, `/api/banner/hit`, `public/banner.js`, Admin installer profile "Map banner" date and 30-day numbers, installer dashboard numbers, privacy and pricing wording. See `docs/installer-banner.md`.
