@@ -46,3 +46,27 @@ test("ETag: present, 304 on a matching If-None-Match, 200 again when the data ch
   const r3 = await get(env, "", { "if-none-match": tag });
   assert.equal(r3.status, 200); assert.notEqual(r3.headers.get("etag"), tag);
 });
+
+test("edge copy: a stale copy is served at once and rebuilt in the background; a fresh one is not rebuilt", async () => {
+  const store = new Map(), prev = globalThis.caches;
+  globalThis.caches = { default: { match: async (k) => store.get(k.url)?.clone(), put: async (k, r) => { store.set(k.url, r); } } };
+  try {
+    const { env, raw } = newEnv(); addEvent(raw, "edge1", { start_date: ptToday(1), end_date: ptToday(2) });
+    const jobs = [], ctx = (qs = "", h = {}) => ({ request: new Request("https://x.test/api/events" + qs, { headers: h }), env, waitUntil: (p) => jobs.push(p) });
+    const r1 = await onRequestGet(ctx()); const ids1 = (await r1.json()).map((e) => e.id); await Promise.all(jobs.splice(0));
+    assert.ok(ids1.includes("edge1")); assert.equal(store.size, 1);
+    addEvent(raw, "edge2", { start_date: ptToday(1), end_date: ptToday(2) });
+    // fresh: served from the edge copy, edge2 not yet visible, nothing rebuilt
+    const r2 = await onRequestGet(ctx()); assert.ok(!(await r2.json()).some((e) => e.id === "edge2")); assert.equal(jobs.length, 0);
+    assert.match(r2.headers.get("cache-control"), /max-age=60/); assert.ok(!r2.headers.get("x-built"));
+    // matching If-None-Match gets a 304 from the edge copy
+    assert.equal((await onRequestGet(ctx("", { "if-none-match": r1.headers.get("etag") }))).status, 304);
+    // stale: the old copy is still what is served, and a rebuild is queued that makes edge2 visible
+    const k = [...store.keys()][0], old = store.get(k); store.set(k, new Response(await old.clone().text(), { headers: { ...Object.fromEntries(old.headers), "x-built": String(Date.now() - 200000) } }));
+    const r3 = await onRequestGet(ctx()); assert.ok(!(await r3.json()).some((e) => e.id === "edge2")); assert.equal(jobs.length, 1);
+    await Promise.all(jobs.splice(0));
+    assert.ok((await (await onRequestGet(ctx())).json()).some((e) => e.id === "edge2"));
+    // ?all=1 never touches the cache
+    const before = store.size; await onRequestGet(ctx("?all=1")); assert.equal(store.size, before);
+  } finally { globalThis.caches = prev; }
+});
