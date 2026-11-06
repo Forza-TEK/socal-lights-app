@@ -45,6 +45,10 @@ test("checkout: the submitter, an approved claimant and a contest organizer pass
     raw.prepare("UPDATE event_claims SET status='declined'").run();
     assert.equal((await buy(env, { event_id: "ev2", plan: "pin" }, { cookie: other.cookie })).status, 403, "declined claim");
     raw.prepare("UPDATE event_claims SET status='approved'").run();
+    // an approved claim on a listing whose dates are only "expected" (projected) is held: the claimant cannot correct them (audit M8)
+    const held = await buy(env, { event_id: "ev2", plan: "pin" }, { cookie: other.cookie });
+    assert.equal(held.status, 400); assert.match(held.body.error, /projected, not confirmed/);
+    raw.prepare("UPDATE events SET status='confirmed' WHERE id='ev2'").run();
     assert.equal((await buy(env, { event_id: "ev2", plan: "pin" }, { cookie: other.cookie })).status, 200, "approved claim");
     // someone else's approved claim does not help
     assert.equal((await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: other.cookie })).status, 403);
@@ -183,5 +187,25 @@ test("checkout: Full run is refused (400) for an event with fewer than 7 days le
     assert.equal((await buy(env, { event_id: "edge", plan: "season" }, { cookie: me.cookie })).status, 200, "exactly 7 days left is allowed");
     assert.equal((await buy(env, { event_id: "long", plan: "season" }, { cookie: me.cookie })).status, 200);
     assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM checkout_log").get().n, 3, "refused requests were not counted");
+  } finally { f.restore(); }
+});
+
+test("checkout: a cancelled or postponed event is refused with a clear 400 (Terms), for a direct event id and for a published submission; Stripe is never called", async () => {
+  const { env, raw } = newEnv(); addEvent(raw, "ev1", { notice: "cancelled" }); addEvent(raw, "ev2", { notice: "postponed" }); addEvent(raw, "ev3");
+  const me = await addUser(raw, "u1", "me@example.com");
+  addSubmission(raw, "s1", "me@example.com", { status: "published", event_id: "ev1" });
+  addSubmission(raw, "s2", "me@example.com", { status: "published", event_id: "ev2" });
+  addSubmission(raw, "s3", "me@example.com", { status: "published", event_id: "ev3" });
+  const f = stubFetch();
+  try {
+    let r = await buy(env, { event_id: "ev1", plan: "pin" }, { cookie: me.cookie });
+    assert.equal(r.status, 400); assert.match(r.body.error, /cancelled/);
+    r = await buy(env, { event_id: "ev2", plan: "pin" }, { cookie: me.cookie });
+    assert.equal(r.status, 400); assert.match(r.body.error, /postponed/);
+    r = await buy(env, { submission_id: "s1", plan: "pin" }, { cookie: me.cookie });
+    assert.equal(r.status, 400); assert.match(r.body.error, /cancelled/);
+    assert.equal(f.calls.length, 0);
+    // the organizer's own 'expected' event with the dates they entered is not held
+    assert.equal((await buy(env, { event_id: "ev3", plan: "pin" }, { cookie: me.cookie })).status, 200);
   } finally { f.restore(); }
 });

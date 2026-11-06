@@ -1,6 +1,7 @@
 import { purgeRenewals } from "./renewal.js";
 import { r2Delete, photoKeys } from "./dbchunk.js";
 import { logOp } from "./oplog.js";
+import { refundDueStatements } from "./orders.js";
 // Removes an account and everything tied to it. Used by "delete my account" (DELETE /api/me) and the admin Users tab.
 // Removes sign-ins, drafts, profile picture, contest entries (with their photos) and votes, closes contests the person
 // runs (unannounced ones are closed; announced ones keep their frozen results, owner-less; both leave the map), and blanks their email on homes and events they posted.
@@ -11,7 +12,8 @@ import { logOp } from "./oplog.js";
 export async function deleteAccount(env, id, email) {
   const all = (sql, ...b) => env.DB.prepare(sql).bind(...b).all().then((r) => r.results);
   const contests = await all("SELECT id, event_id FROM contests WHERE owner_id = ?", id);
-  const entries = await all("SELECT photos FROM posts WHERE user_id = ?", id);
+  const entries = await all("SELECT id, photos FROM posts WHERE user_id = ?", id);
+  const installers = (await all("SELECT id FROM installers WHERE lower(owner_email) = lower(?)", email)).map((r) => r.id);
   let avatar = ""; try { avatar = ((await env.DB.prepare("SELECT avatar FROM users WHERE id = ?").bind(id).first()) || {}).avatar || ""; } catch {}
   await r2Delete(env, [...photoKeys(entries), avatar], "account photos"); // one call per 1000 files (R2 delete takes a list), not one per file
 
@@ -33,7 +35,9 @@ export async function deleteAccount(env, id, email) {
   // Judge rows: the person as a judge in anyone's contest, and every judge of a contest they ran. Unannounced contest: the row and its ballot go.
   // Announced contest: results are frozen, so the row stays as an anonymous placeholder (no email, token or account link) and the scores stay.
   const jMine = "SELECT j.id FROM judges j JOIN contests c ON c.id = j.contest_id WHERE c.announced = ? AND (c.owner_id = ? OR j.user_id = ? OR lower(j.email) = lower(?))";
-  const stmts = [...snaps,
+  // Paid placements that vanish with this account (their event rows, homes and installer profile): flagged refund due FIRST, in the same batch, so Admin > Orders and the digest show them.
+  // An installer profile stays on the site without an owner, but nobody can manage or renew the paid Sponsor placement any more, so it is flagged too.
+  const stmts = [...refundDueStatements(env.DB, { events: contests.map((c) => c.event_id), homes: entries.map((r) => r.id), installers }, "The account owner deleted their account while a paid placement was running. Refund it in the Stripe dashboard, then mark it refunded here."), ...snaps,
     ...["judge_picks", "judge_scores", "judge_conflicts"].map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE judge_id IN (${jMine})`).bind(0, I, I, E)),
     env.DB.prepare(`DELETE FROM judges WHERE id IN (${jMine})`).bind(0, I, I, E),
     env.DB.prepare(`UPDATE judges SET email = 'removed-' || id, token = '', user_id = NULL WHERE id IN (${jMine})`).bind(1, I, I, E),
@@ -60,6 +64,12 @@ export async function deleteAccount(env, id, email) {
     env.DB.prepare("UPDATE event_submissions SET contact_email = '' WHERE lower(contact_email) = lower(?)").bind(email),
     env.DB.prepare("DELETE FROM contest_staff WHERE contest_id IN (SELECT id FROM contests WHERE owner_id = ?)").bind(id),
     env.DB.prepare("UPDATE contest_changes SET by_email = '', by_name = '' WHERE lower(by_email) = lower(?)").bind(email),
+    // Co-organizer log lines hold email addresses ("Added x@y.com", "x@y.com" / "Removed"): the person's own address goes from every contest, and every co-organizer address
+    // goes from the logs of contests they ran (those contests lose their owner and their co-organizer list too).
+    env.DB.prepare("UPDATE contest_changes SET old = CASE WHEN instr(lower(old), lower(?1)) > 0 THEN '' ELSE old END, new = CASE WHEN instr(lower(new), lower(?1)) > 0 THEN 'a co-organizer' ELSE new END WHERE field = 'Co-organizers'").bind(email),
+    env.DB.prepare("UPDATE contest_changes SET old = '', new = '' WHERE field = 'Co-organizers' AND contest_id IN (SELECT id FROM contests WHERE owner_id = ?)").bind(id),
+    // The admin activity log labels Users rows with the person's email. Blank the labels that carry it (the action, time and admin stay).
+    env.DB.prepare("UPDATE admin_log SET label = '' WHERE instr(lower(label), lower(?)) > 0").bind(email),
     // Announced contests stay 'live' (frozen results, winner crowns and the Past results page stay); the organizer's personal data goes either way.
     env.DB.prepare("UPDATE contests SET status = CASE WHEN announced = 1 THEN 'live' ELSE 'closed' END, owner_id = '', contact_email = '', installer_email = '', event_id = NULL WHERE owner_id = ?").bind(id),
     env.DB.prepare("DELETE FROM drafts WHERE user_id = ?").bind(id),
@@ -67,10 +77,6 @@ export async function deleteAccount(env, id, email) {
     env.DB.prepare("DELETE FROM login_codes WHERE email = ?").bind(email),
     env.DB.prepare("DELETE FROM users WHERE id = ?").bind(id),
   ];
-  for (const c of contests) if (c.event_id) {
-    // A paid Featured placement on that event goes with it: the owner has to refund it, so make that visible in Admin > Orders first.
-    stmts.push(env.DB.prepare("UPDATE feature_orders SET status = 'refund_due', note = ? WHERE event_id = ? AND status = 'paid'").bind("[auto] The contest owner deleted their account, which removed this event while the placement was running. Refund it in the Stripe dashboard, then mark it refunded here.", c.event_id));
-    stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id));
-  }
+  for (const c of contests) if (c.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id)); // its paid placement was flagged above
   await env.DB.batch(stmts);
 }

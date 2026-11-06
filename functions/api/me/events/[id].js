@@ -6,6 +6,7 @@
 import { json, err, clean, webUrl, newId } from "../../../_lib/util.js";
 import { requireUser, sameOrigin, normEmail } from "../../../_lib/auth.js";
 import { isDate, slug, upsertEvent } from "../../../_lib/events.js";
+import { refundDueStatements } from "../../../_lib/orders.js";
 import { normName, line } from "../../../_lib/fields.js";
 
 const plusYear = (d) => { const x = new Date(d + "T12:00:00Z"); x.setUTCFullYear(x.getUTCFullYear() + 1); return x.toISOString().slice(0, 10); };
@@ -58,7 +59,8 @@ export async function onRequestDelete({ params, request, env }) {
   if (res) return res;
   const s = await env.DB.prepare("SELECT * FROM event_submissions WHERE id = ?").bind(params.id).first();
   if (!s || normEmail(s.contact_email) !== user.email) return err(404, "That event isn't yours.");
-  const stmts = [env.DB.prepare("DELETE FROM event_submissions WHERE id = ?").bind(s.id)];
+  // A paid Featured placement goes with the event row (or was waiting on this submission): flag it refund due first.
+  const stmts = [...refundDueStatements(env.DB, { events: ["sub:" + s.id, s.event_id] }, "The organizer deleted the event while a paid Featured placement was running or waiting. Refund it in Stripe, then mark it refunded here."), env.DB.prepare("DELETE FROM event_submissions WHERE id = ?").bind(s.id)];
   if (s.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(s.event_id));
   await env.DB.batch(stmts);
   return json({ ok: true });

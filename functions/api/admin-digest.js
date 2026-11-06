@@ -3,7 +3,7 @@
 // It always sends (a "nothing new" note when quiet) and includes the day's totals. Set ADMIN_NOTIFY_EMAIL to change where it goes (default rey@forza-tek.com).
 import { json, err } from "../_lib/util.js";
 import { sendTemplate } from "../_lib/mailtpl.js";
-import { pruneIps } from "../_lib/retention.js";
+import { pruneIps, pruneRetention } from "../_lib/retention.js";
 import { NEEDS_ATTENTION, ORDER_FROM, orderFlags } from "../_lib/orders.js";
 import { ptToday } from "../_lib/featured.js";
 import { opsSince, pruneOps } from "../_lib/oplog.js";
@@ -16,6 +16,7 @@ export async function onRequestPost({ request, env }) {
   if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
   await pruneOps(env);
   await pruneIps(env); // scheduled backstop for the 48-hour IP retention promise
+  await pruneRetention(env); // PL-04: unconfirmed signups, old reports, declined submissions, admin-log labels
   const q = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then((r) => r.results);
   const st = await env.DB.prepare("SELECT last_at FROM admin_digest WHERE id = 1").first().catch(() => null);
   const since = st ? st.last_at : new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 19).replace("T", " ");

@@ -28,7 +28,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   }
   if (b.action === "decline") {
     await env.DB.prepare("UPDATE contests SET status='declined', unpublished_by='', updated_at=datetime('now') WHERE id=?").bind(c.id).run();
-    await unlistFromMap(env, c);
+    await unlistFromMap(env, c, "declined by Admin");
     tell(env, waitUntil, c.contact_email, "contest_unpublished", { name: c.name, reason: String(b.reason || "").trim().slice(0, 400) });
     return json({ ok: true });
   }
