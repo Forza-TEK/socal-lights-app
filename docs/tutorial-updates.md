@@ -2,6 +2,19 @@
 
 Written after the design pass (PRs 345 to 347) so that all recording can be done in one sitting.
 
+## Done (2026-11-06, recorded in day mode against the local demo setup with the Kokoro `af_heart` voice, the same voice as the other 25)
+| Video | What was done |
+|---|---|
+| `approve` | Re-recorded (2:24): the Entries tab opens with Add homes yourself (paste five addresses, Check addresses, tick the box, Add 3 homes), the Added by organizer tag, Remove, then Approve, Decline with a reason, Undo decline. |
+| `profile` | Re-recorded (1:54): full-width rows, and a Contests step (contests you run, homes you entered). |
+| `voting` | Re-recorded (2:23) with the Contest page row and Unpublish; its end card now leads to the new Unpublish video. |
+| `add-homes` (new, Run a contest) | Add your city's homes yourself (2:26). |
+| `unpublish` (new, Run a contest) | Unpublish and publish again (2:04). |
+| `claim` (new, Post events and homes) | Claim your home (2:15). |
+| `feature` (new) | Recorded as a draft, NOT shipped: the Featured pricing is being rebuilt (new tiers, Full run replaces Whole season). Record it again after the new pricing is live; the spec is `S.feature` in `scripts/tutorials/videos2.mjs` and avoids prices and tier names. |
+Not re-recorded, on purpose: `map`, `pro-filter`, `installer-profile` (the darker tag colours are a small change, narration still true), `announce` (Terms wording about Featured homes is still open with the attorney), `showcase` (the claim video covers the new path), `app`, `email`. The phone versions (`mobile` in `tutorials.json`) of `approve`, `profile` and `voting` are the old ones until they are re-recorded with `MOBILE=1`.
+The recorder cannot reach the address lookup services from the local server, so `scripts/tutorials/mockgeo.mjs` stands in for them in the Add homes scenes (demo addresses are public buildings, never homes; the rows it writes are in the local database only). The Featured scene holds the checkout request, so nothing is sent to Stripe.
+
 **Baseline.** The 25 videos were re-recorded on 2026-11-05 and merged in batches between 15:26 and 17:14 Pacific (PRs 320 to 329), against the app as it was that afternoon. Everything merged from PR 324 (profile as rows, 16:53) onward counts as "after". The recordings are day mode, so night-mode-only changes are ignored. Narration is not affected by anything below unless stated.
 
 **How to read the verdicts.**
