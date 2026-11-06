@@ -12,6 +12,8 @@ Scope: live https://socallights.app (GET and navigation only, nothing submitted)
 
 Good news worth stating: axe found **no serious or critical violations on 24 live pages and 34 local pages across 4 viewports and both themes**, other than the three items listed under "axe results"; no horizontal overflow at 390, 768, 1280 or 844x390 on any page; reflow holds at 320 CSS px and at 200% zoom (640 px) on 10 pages; keyboard order matches visual order on all 13 pages tried.
 
+**Status 2026-11-06:** fixed in the phone-performance PR: P1 (thumbnails, lazy cards, self-hosted MapLibre loaded after the list), P2, A1, A2, A3 (detail/event-page links), A4 (device dark setting), A5 (reduced motion), U1, U2, M1, M2 (Filters). Not touched: T1, C1, V1, O1, A6-A8.
+
 ## Counts by severity
 
 | Severity | Count |

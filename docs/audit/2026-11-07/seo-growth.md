@@ -14,6 +14,8 @@ Read-only audit of https://socallights.app and `origin/main` at `1a86c27` (PR 38
 
 **Counts:** High 6, Medium 8, Low 7. Nothing is a security problem or an outage. The urgent items are the timing ones: Christmas search intent ramps from mid-November and Google needs weeks, so H1, H2, H4 and H5 (all effort S) are worth shipping this week.
 
+**Status 2026-11-06:** H1, H2, H5 (with the location-prompt LCP fix), H6, M1, M4, M7 and the address/image part of M2 are fixed in the landing-pages PR; M5 gains `?ref=<code>` campaign counters. H3 (season cliff), M3, M6, M8 and the Low items are still open.
+
 ## Fixed since Nov 4 (verified live)
 
 | Nov 4 item | Now |

@@ -24,6 +24,8 @@ Suite: 177 tests, 177 pass, 3 runs in a row (4.9 s, 5.0 s, 5.0 s), no flakiness 
 
 ---
 
+**Status 2026-11-06:** M2 map boot is `Promise.allSettled` (verified) and the map library now loads separately; asset `?v=` on cities/stock/hit/rules/site-config enforced by `tests/asset-versions.test.mjs`.
+
 ## 1. Regression risk in the most-changed areas
 
 ### 1.1 What was checked and found sound

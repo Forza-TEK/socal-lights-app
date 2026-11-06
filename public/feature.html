@@ -6,7 +6,7 @@
 <title>Feature your event · SoCal Lights</title>
 <meta name="description" content="Put your Southern California Halloween, holiday or seasonal event at the top of SoCal Lights with a Featured pin on the map.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261106zb">
 <link rel="stylesheet" href="/info.css?v=20261106zb">
@@ -25,7 +25,7 @@
 .opts{display:grid;gap:12px;margin:16px 0}.opts .btn{justify-self:start}.opts details{background:#fff}:root[data-theme="dark"] .opts details{background:var(--tile)}.opts details p,.opts details .res{margin-top:10px}
 .paidbox{border:2px solid var(--ok);border-radius:12px;padding:18px 20px;margin:16px 0;background:#fff}:root[data-theme="dark"] .paidbox{background:var(--tile)}.paidbox h2{margin-top:0}.paidbox ul{padding-left:20px;display:grid;gap:8px}.paidbox .btn{margin:4px 8px 0 0}
 </style>
-<script src="/hit.js" defer></script>
+<script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
@@ -59,7 +59,7 @@
 <p class="meta">SoCal Lights is a small independent project. Thanks for helping keep it free for everyone.</p>
 </main>
 <script type="module">
-import { SITE } from "/site-config.js";
+import { SITE } from "/site-config.js?v=20261107a";
 import { planCopy, planBlurb, planStatus, planWindow, eventEligibility, niceDate as fmt, PLAN_KEYS, ptToday } from "/feature-plans.js?v=20261107b";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -261,7 +261,7 @@ async function paidView(S) {
 }
 </script>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261107a";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261107b";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 </script>
 <script src="/footer.js?v=20261106z" defer></script>

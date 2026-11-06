@@ -2,6 +2,7 @@
 // screen reader) that does not run the map sees real links into the site. Nothing visible changes. If anything fails the plain page is served.
 import { esc } from "./_lib/shell.js";
 import { summarize } from "./_lib/cityindex.js";
+import { applyHomeMeta } from "./_lib/homemeta.js";
 
 // One narrow read (only the columns the list needs; the old version ran two full scans, about 4,600 rows read per visit) builds both the city groups and the top-20 confirmed events.
 export async function cityNavHtml(env, today) {
@@ -46,7 +47,7 @@ export async function onRequestGet(context) {
   const res = await next(), keep = res.clone();
   try {
     if (res.status !== 200 || !/text\/html/.test(res.headers.get("content-type") || "")) return res;
-    const nav = await cachedNav(env, new URL(request.url).origin, (p) => { try { context.waitUntil(p); } catch {} }), src = await res.text(), i = src.lastIndexOf("</body>");
+    const nav = await cachedNav(env, new URL(request.url).origin, (p) => { try { context.waitUntil(p); } catch {} }), src = applyHomeMeta(await res.text(), pacificToday()), i = src.lastIndexOf("</body>"); // title and description for the season it is now
     if (i < 0) return new Response(src, res);
     const h = new Headers(res.headers); h.delete("content-length"); h.delete("etag");
     return new Response(src.slice(0, i) + nav + src.slice(i), { status: 200, headers: h });
