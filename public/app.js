@@ -715,7 +715,7 @@ function renderPanel(opts) {
     const sig = vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
     if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
     listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE);
-    body.innerHTML = vis.length ? `<div class="list">${vis.slice(0, listShown).map((it, i) => listCard(it, i)).join("")}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
+    body.innerHTML = vis.length ? `<h2 class="sr">Places in view</h2><div class="list">${vis.slice(0, listShown).map((it, i) => listCard(it, i)).join("")}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
       : !state.all && !state.city && !E.some((e) => (e.sn || "christmas") === state.season) ? `<div class="empty">No ${esc((SEASONS[state.season] || {}).short || "seasonal")} events are listed yet. We start adding them about six weeks ahead, so check back soon. Know of one? <a href="/add-event">Add an event</a>.</div>`
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
   } else if (state.tab === "shop") {
@@ -949,15 +949,15 @@ function filtersHtml() {
   const ch = (on, attrs, label) => `<button type="button" class="fchip${on ? " on" : ""}" aria-pressed="${on}" ${attrs}>${label}</button>`;
   return `<div class="fhead"><h2>Filters</h2><button class="xbtn" type="button" data-fdone aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
   <div class="fbody">
-    <section><h4>When</h4><div class="fchips">${ch(!state.date && !state.weekend, 'data-fwhen="any"', "Any date")}${ch(state.date === TODAY, 'data-fwhen="today"', "Tonight")}${ch(state.weekend, 'data-fwhen="weekend"', "This weekend")}</div>
+    <section><h3>When</h3><div class="fchips">${ch(!state.date && !state.weekend, 'data-fwhen="any"', "Any date")}${ch(state.date === TODAY, 'data-fwhen="today"', "Tonight")}${ch(state.weekend, 'data-fwhen="weekend"', "This weekend")}</div>
       <label class="fdate">or pick a day<input type="date" id="fDate" min="${S.dateRange[0]}" max="${S.dateRange[1]}" value="${esc(state.date)}"></label></section>
-    <section><h4>Near</h4>${state.city ? `<div class="fchips">${ch(true, 'data-clear="city"', esc(state.city) + " ✕")}</div>` : ""}
+    <section><h3>Near</h3>${state.city ? `<div class="fchips">${ch(true, 'data-clear="city"', esc(state.city) + " ✕")}</div>` : ""}
       <input type="search" id="fCityQ" class="fq" placeholder="Type a city" aria-label="Find a city" autocomplete="off"><div class="fcities" id="fCityList"></div>
       ${state.city ? "" : `<p class="fhint">Pick a city, then choose how far from it to look.</p>`}<div class="fseg${state.city ? "" : " off"}" role="group" aria-label="Distance from the city">${[5, 10, 25].map((r) => `<button type="button" data-rad="${r}" ${state.city ? "" : "disabled"} class="${state.radius === r ? "on" : ""}">${r} mi</button>`).join("")}</div></section>
-    <section><h4>County</h4><div class="fchips">${COUNTIES.map((c) => ch(state.counties.has(c), `data-county="${esc(c)}"`, esc(c.replace(/^Los Angeles$/, "LA")))).join("")}</div></section>
-    <section><h4>Cost</h4><div class="fseg" role="group" aria-label="Cost">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-fcost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div></section>
-    <section><h4>Type</h4><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).filter(([v]) => v !== "drive").map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}${ch(state.type === "pro", 'data-ftype="pro"', "Professionally installed")}</div></section>
-    <section><h4>Visiting a home</h4><div class="fchips">${[["drive", "Drive by"], ["walk", "Walk by"], ["free", "Free parking"], ["acc", "Stroller friendly"]].map(([v, l]) => ch(state.vis.has(v), `data-fvis="${v}"`, l)).join("")}</div></section>
+    <section><h3>County</h3><div class="fchips">${COUNTIES.map((c) => ch(state.counties.has(c), `data-county="${esc(c)}"`, esc(c.replace(/^Los Angeles$/, "LA")))).join("")}</div></section>
+    <section><h3>Cost</h3><div class="fseg" role="group" aria-label="Cost">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-fcost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div></section>
+    <section><h3>Type</h3><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).filter(([v]) => v !== "drive").map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}${ch(state.type === "pro", 'data-ftype="pro"', "Professionally installed")}</div></section>
+    <section><h3>Visiting a home</h3><div class="fchips">${[["drive", "Drive by"], ["walk", "Walk by"], ["free", "Free parking"], ["acc", "Stroller friendly"]].map(([v, l]) => ch(state.vis.has(v), `data-fvis="${v}"`, l)).join("")}</div></section>
     <section class="frow"><span><b>Confirmed dates only</b></span><button type="button" class="sw${state.conf ? " on" : ""}" role="switch" aria-checked="${state.conf}" data-fconf aria-label="Confirmed dates only"><i></i></button></section>
   </div>
   <div class="ffoot"><button type="button" class="linkbtn" data-clear="all">Clear all</button><button type="button" class="btn" data-fdone>Show ${nShow.toLocaleString("en-US")} place${nShow === 1 ? "" : "s"}</button></div>`;
@@ -1184,7 +1184,7 @@ fitHint(); addEventListener("resize", fitHint);
 let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); showSuggestions(); }, 120); };
 // Suggestions under the search box: cities (move the map there) and places (open their details)
 let suggIdx = -1;
-function closeSuggestions() { const s = $("#sugg"); if (s) s.remove(); suggIdx = -1; $("#q").setAttribute("aria-expanded", "false"); }
+function closeSuggestions() { const s = $("#sugg"); if (s) s.remove(); suggIdx = -1; $("#q").setAttribute("aria-expanded", "false"); $("#q").removeAttribute("aria-activedescendant"); }
 function showSuggestions() {
   const q = hay($("#q").value.trim()), box = document.querySelector(".search");
   if (q.length < 2) { closeSuggestions(); return; }
@@ -1194,8 +1194,8 @@ function showSuggestions() {
   let s = $("#sugg"); if (!s) { s = document.createElement("div"); s.id = "sugg"; s.setAttribute("role", "listbox"); document.body.appendChild(s); }
   { const r = box.getBoundingClientRect(), wide = innerWidth <= 860; s.style.top = r.bottom + 8 + "px"; s.style.left = (wide ? 12 : r.left) + "px"; s.style.width = (wide ? innerWidth - 24 : r.width) + "px"; }
   $("#q").setAttribute("aria-expanded", "true"); suggIdx = -1;
-  s.innerHTML = cities.map((c) => `<button type="button" role="option" data-sc="${esc(c)}"><span class="si">📍</span><span><b>${esc(c)}</b><small>Show this city on the map</small></span></button>`).join("")
-    + places.map((e) => `<button type="button" role="option" data-se="${esc(e.id)}"><span class="si">${esc(phaseFor(e.sn && SEASONS[e.sn] ? e.sn : state.season, TODAY).icon)}</span><span><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(whenShort(e))}</small></span></button>`).join("");
+  s.innerHTML = cities.map((c, i) => `<button type="button" role="option" id="sg-c-${i}" data-sc="${esc(c)}"><span class="si">📍</span><span><b>${esc(c)}</b><small>Show this city on the map</small></span></button>`).join("")
+    + places.map((e, i) => `<button type="button" role="option" id="sg-e-${i}" data-se="${esc(e.id)}"><span class="si">${esc(phaseFor(e.sn && SEASONS[e.sn] ? e.sn : state.season, TODAY).icon)}</span><span><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(whenShort(e))}</small></span></button>`).join("");
 }
 document.addEventListener("click", (e) => {
   const wl = e.target.closest("[data-welcome]"); if (wl) { try { localStorage.setItem("socal-welcomed", "1"); } catch {} const w = $("#welcome"); if (w) w.remove(); if (wl.dataset.welcome === "go") geo.trigger(); return; }
@@ -1206,7 +1206,7 @@ document.addEventListener("click", (e) => {
 });
 $("#q").addEventListener("keydown", (e) => {
   const s = $("#sugg"); if (!s) return; const items = [...s.querySelectorAll("button")];
-  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); suggIdx = (suggIdx + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; items.forEach((b, i) => b.classList.toggle("on", i === suggIdx)); }
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); suggIdx = (suggIdx + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; items.forEach((b, i) => b.classList.toggle("on", i === suggIdx)); $("#q").setAttribute("aria-activedescendant", items[suggIdx].id); }
   else if (e.key === "Enter" && suggIdx >= 0) { e.preventDefault(); items[suggIdx].click(); }
   else if (e.key === "Escape") closeSuggestions();
 });
