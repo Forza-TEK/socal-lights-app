@@ -833,7 +833,7 @@ function openLightbox(items, start = 0, title = "") {
   document.addEventListener("keydown", lbKey, true);
   lbEl.querySelector(".lbx").focus({ preventScroll: true });
 }
-function openDetail(k) { state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
+function openDetail(k) { if (k !== state.detail && /^e:/.test(k)) tick("fn:event-open"); state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
 function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
   if (it.kind === "ev") {

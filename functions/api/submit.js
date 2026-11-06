@@ -2,6 +2,7 @@
 // Saves the post as 'pending' and its photos under pending/<id>/ in R2.
 import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
 import { sendTemplate } from "../_lib/mailtpl.js";
+import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
@@ -162,5 +163,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const job = sendTemplate(env, "entry_new", contest.contact_email, { title, street, city, contest: contest.name, link: `https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});
     if (waitUntil) waitUntil(job);
   }
+  await bump(env, contest ? "fn:contest-entry-done" : "fn:add-house-done");
   return json({ ok: true, id, status: published ? "published" : "pending" });
 }

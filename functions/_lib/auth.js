@@ -2,6 +2,7 @@
 // the same email, so both land on the same account. Sessions are a random cookie token (only its hash is stored).
 import { json, err, newId } from "./util.js";
 import { logOp } from "./oplog.js";
+import { bump } from "./funnel.js";
 
 export const COOKIE = "scl_session";
 const SESSION_DAYS = 30;
@@ -46,6 +47,7 @@ export async function startSession(env, request, userId) {
     env.DB.prepare("INSERT INTO sessions (id,user_id,expires_at) VALUES (?,?,?)").bind(await sha256(t), userId, exp),
     env.DB.prepare("DELETE FROM sessions WHERE expires_at < datetime('now')"),
   ]);
+  await bump(env, "fn:signin-done"); // one more completed sign-in today (a number only; no account is recorded)
   return setCookie(request, COOKIE, t, SESSION_DAYS * 86400);
 }
 
