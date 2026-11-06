@@ -12,7 +12,7 @@ Sold, not a free pilot (the owner drives visitors with Facebook and Instagram ad
 `/api/banner` returns every installer on the banner (same for everyone, cached). `public/banner.js` picks the ones to show:
 - The map view's cities (by centre) and counties (from the places in view, plus the nearest city to the centre) are matched to the installer's "Areas served" list ("Orange County, Irvine").
 - An installer with no areas listed, or "Southern California"/"All", shows everywhere.
-- It is a scrolling marquee: each matching installer is its own pill, followed by dashed "Installers: advertise here" pills (link to /pricing#banner). The empty pills also show when nobody matches.
+- It is a scrolling marquee: each matching installer is its own pill, followed by one dashed "Installers: advertise here" pill (links to /pricing#banner), which is also all that shows when nobody matches. On desktop the strip runs from the logo to the list panel (the full width when the list is minimized), with the pause button next to the Sponsor label.
 - It pauses on hover and focus and has a pause button. With reduced motion on, it starts paused and the play button starts it.
 - The starting installer changes each visit so nobody is always first. A "shown" is counted when the pill is actually on screen.
 
