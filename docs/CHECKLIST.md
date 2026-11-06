@@ -34,6 +34,12 @@ _Last updated 2026-11-04 (CEO session). `[x]` done and verified, `[ ]` open. Det
 - [x] DMARC record added and verified live (`p=none`, monitor only; DKIM and SPF line up). After 2 to 4 weeks of clean reports, move to `quarantine`.
 - [x] Minimum TLS version set to 1.2 (confirmed through the API; the site answers over TLS 1.2 and 1.3). Do not buy Advanced Certificate Manager: Universal SSL (free) is all that is needed.
 - [ ] Stripe, Settings, Business, Customer emails: **Successful payments** on (cannot be read by API).
+**Covina follow-ups (demo held Nov 5; they loved the routes)**
+- [ ] Delete the live demo contest "Holiday Home Lighting Contest 2026" (organization "Mission Viejo", created during the call) in Admin, Contests, so it does not appear on the public map under a city's name.
+- [ ] Refresh and upload the tutorial videos you promised, then tell Covina.
+- [ ] Check in with Covina's Director in a week; offer a judge-setup session. The CEO session is building **organizer-added homes** (paste a list of addresses) because the city will enter its registered homes itself.
+- [ ] Tell the Grok agents when organizer entry is live, so the playbook line can be switched on.
+
 **This week**
 - [ ] **Protect `main` in GitHub so nothing merges without passing tests:** repository Settings, Branches (or Rules, then Rulesets), add a rule for `main`, tick "Require status checks to pass", search for and add **Tests**, save. The workflow cannot set this itself.
 - [ ] Stripe dashboard: look at Radar fraud rules and confirm the "Successful payments" receipt toggle (audit items; the API cannot read them)

@@ -3,6 +3,7 @@
 // runs (unannounced ones are closed; announced ones keep their frozen results, owner-less; both leave the map), and blanks their email on homes and events they posted.
 // It also clears the person's email, name and phone from every other table that holds them: judge invitations and ballots, quote requests they sent, installer profiles they
 // own (and the requests those received), edit logs, event claims, weekly-email signup, co-organizer rows in other people's contests and contact details on reports.
+// Homes the person added to a contest as its organizer stay (they belong to the contest); only posts.added_by is cleared.
 // Kept on purpose: feature_orders (financial records; only user_id is cleared), email_prefs (so an unsubscribed address is not mailed again), hashes that expire by themselves.
 export async function deleteAccount(env, id, email) {
   const all = (sql, ...b) => env.DB.prepare(sql).bind(...b).all().then((r) => r.results);
@@ -50,6 +51,8 @@ export async function deleteAccount(env, id, email) {
     env.DB.prepare("UPDATE feature_orders SET user_id = NULL WHERE user_id = ?").bind(I),
     env.DB.prepare("DELETE FROM votes WHERE user_id = ? OR post_id IN (SELECT id FROM posts WHERE user_id = ?)").bind(id, id),
     env.DB.prepare("DELETE FROM posts WHERE user_id = ?").bind(id),
+    // Homes this person added to a contest as its organizer belong to the contest: they stay, without the link back to the account.
+    env.DB.prepare("UPDATE posts SET added_by = NULL WHERE added_by = ?").bind(id),
     env.DB.prepare("UPDATE posts SET contact_email = '' WHERE contest_id IS NULL AND lower(contact_email) = lower(?)").bind(email),
     env.DB.prepare("UPDATE event_submissions SET contact_email = '' WHERE lower(contact_email) = lower(?)").bind(email),
     env.DB.prepare("DELETE FROM contest_staff WHERE contest_id IN (SELECT id FROM contests WHERE owner_id = ?)").bind(id),

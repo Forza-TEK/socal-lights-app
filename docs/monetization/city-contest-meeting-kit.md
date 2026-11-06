@@ -12,6 +12,9 @@ Let the organizer drive: by the end of the call their contest exists (or has a d
 - [ ] Have `socallights.app/add-contest` open, the poster and yard-sign printables ready, and one tutorial video queued as a backup if the network is slow.
 - [ ] Do **not** build a practice contest on the live site: every contest goes live on the map at once.
 
+## What cities liked most
+From the Covina call (Nov 5): the **driving routes** (nine stops at a time, Google or Apple Maps) and the **judging module** (emailed ballot link, judges drive the homes in order). Lead the demo with a route to real homes, then the judge ballot, then contest creation. Cities that already run their own registration will want to **enter the homes themselves** (paste a list of addresses): ask early whether they have a registration list.
+
 ## Agenda (20 minutes)
 1. Their goals and how last year went (3 min). Ask before showing.
 2. They share their screen and create the contest with our guidance (10 min). The wizard's Quick start takes about three minutes.

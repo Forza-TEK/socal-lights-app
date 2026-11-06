@@ -17,6 +17,8 @@ Every link ends with its `?ref=` code. Never link the bare homepage.
 - Posting a home is free for now. It goes live right away unless spam checks stop it.
 - Installers get a profile page (company, service area, phone, website, every home posted) and a "Call for a quote" button.
 - Creating a contest is free. Residents enter, neighbors vote, one vote per person per category. People's Choice and Judges' Choice. Contest page, QR code, poster and yard sign, organizer dashboard, results emailed to entrants. The organizer approves entries.
+- **Driving routes (what Covina's city staff liked most):** judges and visitors can build driving routes of nine stops or fewer to the homes, opened in Google Maps or Apple Maps, with each home tick-off-able. For a judged contest, judges get an emailed link, score or pick on their own ballot, and use the routes to drive the homes in order.
+- [ONLY after the CEO says "organizer entry is live"] An organizer who already has its own registration can enter the homes' addresses itself by pasting a list.
 - The site is a free map of holiday lights and events across Southern California (1,244 upcoming listings in 266 cities).
 
 **Never say:** any visitor, traffic or "popular" claim; leads, customers or territory for installers; prizes, money or sponsors from us; future prices or paid plans; "free forever", "always free" or "no ads"; endorsement by a city or company; that payment affects winners. **Never ask an organization to confirm, check or fix individual events.**
@@ -48,7 +50,7 @@ Same body as A. Add this as the first line only when verified: `I saw on [source
 Subject options: `A free home for the [contest_name], from entries to winners` or `Hosting [contest_name] online, free`
 > Hi [first_name or department] team,
 > I'm Rey. I run SoCal Lights, a free map where families find holiday light displays across Southern California. [If our events database lists it: We already list [contest_or_event_name] on our [city] page: [city_page_url].]
-> SoCal Lights can host a decorating contest for free. Residents enter their home, neighbors vote, and you can run People's Choice, Judges' Choice or both. You get a contest page, QR code, printable poster and a dashboard, and results go out by email.
+> SoCal Lights can host a decorating contest for free. Judges get driving routes to every home in Google or Apple Maps and score from their phones; you can add a public vote too (People's Choice, Judges' Choice or both). You get a contest page, QR code, printable poster and a dashboard, and results go out by email.
 > Would a 20-minute walkthrough work? Reply with a day that suits you. Or you can start it yourself: https://socallights.app/add-contest?ref=cont
 > [FOOTER]
 
