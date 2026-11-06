@@ -552,7 +552,7 @@ let bannerOn = false;
 async function startBanner() { bannerOn = await initBanner({ place: (el) => { placeBanner(el); }, onChange: () => { if (isPhone()) setSheet(sheetState); } }); if (bannerOn) { bannerTick(); if (!state.detail) renderPanel({ quiet: true }); } }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
 let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (bannerOn) bannerTick(); if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel({ quiet: true }); }, 80); }
-function counts() { $("#n-events").textContent = E.filter(evMatch).length + SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; }
+function counts() { $("#n-events").textContent = E.filter(evMatch).length + SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; const tb = $("#tb-plan"); if (tb) { tb.textContent = favs.size; tb.hidden = !favs.size; } }
 function datetile(ev) {
   // Running now: "THRU 31 OCT". One night: "OCT 31 1 night". Upcoming: "NOV 27 opens".
   const live = ev.s <= TODAY && ev.e >= TODAY && ev.s !== ev.e;

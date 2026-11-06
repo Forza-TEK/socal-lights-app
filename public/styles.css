@@ -956,11 +956,19 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .quick .qshare.qicon{display:inline-grid;place-items:center;width:44px;height:44px;padding:0;margin-left:auto}
 .quick .qshare.qicon svg{width:20px;height:20px}
 .quick .qsel{flex:none;white-space:nowrap}
-/* Favorites buttons: always two tidy lines. Line 1: Route these (grows) and the Share icon. Line 2: Start from (grows) and the maps app. */
-.quick[aria-label="Route options"]{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;overflow:visible;touch-action:auto;align-items:center}
-.quick[aria-label="Route options"] .qgo{grid-column:1;grid-row:1;justify-content:center;gap:6px;min-width:0}
-.quick[aria-label="Route options"] .qshare.qicon{grid-column:2;grid-row:1;margin:0}
-.quick[aria-label="Route options"] .qsel{grid-column:1;grid-row:2;min-width:0;display:flex;align-items:center}
+/* Favorites buttons: one line when there is room (Route these, Start from, Maps app, Share), wrapping onto more lines as the list gets narrower. All the same height. */
+.quick[aria-label="Route options"]{--qh:40px;display:flex;flex-wrap:wrap;gap:8px;overflow:visible;touch-action:auto;align-items:center}
+.quick[aria-label="Route options"] .qgo,.quick[aria-label="Route options"] .qsel,.quick[aria-label="Route options"] .qchg,.quick[aria-label="Route options"] .qshare.qicon{height:var(--qh);min-height:var(--qh);box-sizing:border-box;margin:0}
+.quick[aria-label="Route options"] .qgo{order:0;flex:1 1 120px;justify-content:center;gap:6px;min-width:0}
+.quick[aria-label="Route options"] .qsel{order:1;flex:1 1 170px;min-width:0;display:flex;align-items:center}
 .quick[aria-label="Route options"] .qsel select{flex:1;min-width:0;width:100%;max-width:none}
-.quick[aria-label="Route options"] .qchg{grid-column:2;grid-row:2}
+.quick[aria-label="Route options"] .qchg{order:2;flex:0 1 auto;justify-content:center;padding:0 12px}
+.quick[aria-label="Route options"] .qshare.qicon{order:3;flex:none;width:var(--qh);padding:0}
 
+
+/* a red count on the Favorites tab while it is not the open tab (desktop and tablet) */
+.ptab{position:relative}
+.ptab .tbadge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--heart,#e0245e);color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--surface)}
+.ptab .tbadge[hidden]{display:none}
+.ptab[aria-selected="true"] .tbadge{display:none}
+.quick .qgo svg{flex:none;width:16px;height:16px}
