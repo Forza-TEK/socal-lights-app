@@ -92,6 +92,12 @@ Summary formulas: Gross revenue =SUMIFS(E,C,"charge"); Refunds =SUMIFS(E,C,"refu
 
 ---
 
+### 3b. Installer Sponsor placements (new product, 2026-11-06)
+- Same machinery as Featured: Stripe Checkout (card), one payment per season, no subscription. Fees: Stripe about 2.9% + 30c (net of $50: about $48.25; $75: about $72.52; $10 floor: about $9.41). A refund does not return Stripe's fee unless Stripe's current policy says otherwise (check the dashboard).
+- **Refund:** full refund before or after the placement is on: refund in the Stripe Dashboard; the webhook switches the placement off (restoring any date an admin had set by hand) and Admin > Orders shows it. Then mark it refunded under Orders if the webhook has not. A partial refund leaves the placement on and marks the order held for you to decide. A dispute switches it off at once.
+- **Bookkeeping:** revenue is "Sponsor placement" (separate from Featured events). Orders list the installer's name; the buyer's receipt email is Stripe's plus our service email. A one-time test purchase and refund is the way to prove the path (see the checklist).
+- **Prorated sales:** late-season buyers pay a share of the price (minimum $10); the amount charged is on the order and is what the refund returns.
+
 ## 4. First-30-days cash view
 
 **Revenue: $0** (most likely outcome per finance-pricing.md; plan range $0-$300 this season).

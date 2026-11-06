@@ -289,6 +289,22 @@ Please review: (a) whether "up to 30 / 90 days" and "until your event's last day
 
 ---
 
+## Installer Sponsor placements (added 2026-11-06, for the attorney)
+
+**Not legal advice; a note so the attorney sees what the site now sells.** Installers can buy, at `/sponsor`, a **Banner** ($50 per season: company name linked to their website or email and phone number in a thin strip labelled "Sponsor" at the top of the map list) and a **Banner and top of the list** ($75 per season: the banner plus a company card labelled "Sponsor" at the top of the list). Prices are set in `functions/_lib/featured.js`; the page code is `public/sponsor.html`, `public/sponsor-plans.js`, `public/pricing.html`.
+
+Terms the pages state to the buyer, for review:
+1. **Duration and price.** From payment to the last day of the current season on the map (for example Dec 26 for Thanksgiving & Christmas Lights). With 14 or more days left, the full price; with fewer, a prorated price (full price x days left / days in the season, whole dollars, never below $10). The exact start date, end date and price are shown before payment. One payment, no subscription, no automatic renewal.
+2. **Renewal and upgrade.** A renewal starts the day after the running placement ends; at most one season ahead is sold. An upgrade from the banner to banner and top is sold at the price of the new plan for the days left, with no credit for the banner already paid.
+3. **Refunds.** "If we cannot put your placement on for any reason, you get a full refund. Once it is running, payments are non-refundable, but email us if something is wrong. A refund switches the placement off, and so does a dispute." Same text pattern as Featured; please check it against California consumer rules for prorated and prepaid advertising.
+4. **Labelling.** Paid placements are always labelled "Sponsor" (banner and list card), and the Featured and contest areas are separate. Please confirm "Sponsor" is clear enough for the FTC endorsement and native-advertising guidance (see section 3 above) and that it does not collide with contest "sponsors" (1C).
+5. **Eligibility and content.** Only the verified owner of an installer profile (email at the company's website, or admin-approved) can buy. The profile must be active with a phone number or website. We show the company's own name, link and phone; we do not verify licensing. Please advise whether a licensing line (B&P 7027.1, section 4) must appear next to a paid placement.
+6. **No effect on contests; the map stays free.** Payment never affects a contest result and nothing is charged to find lights.
+7. **Terms and privacy.** `public/terms.html` does not yet mention paid placements, Sponsor or the refund rules; the privacy page should say Stripe processes the payment and what the order record keeps (installer id, plan, amount, buyer email).
+8. **Statistics.** The dashboard shows counts of times shown and taps (totals only, no personal data).
+
+---
+
 ## Not covered here (outside the brief or other owners)
 
 Sales tax on listings and 1099s for prizes of $600 or more are CPA questions (brief 5, Q7). State sweepstakes registration (NY, FL, RI) is secondary-source only. `docs/rules-review.md` and `docs/contest-business-model.md` need the corrections listed in brief section 8; I did not edit them.

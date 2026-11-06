@@ -6,7 +6,7 @@ Height 24px (the smallest comfortable tap target; WCAG 2.2 minimum). The first b
 
 ## Who shows
 `installers.banner_until` (YYYY-MM-DD). Set in Admin > Installers > Profile > "Map banner". Empty = not on the banner. The profile must be active and have a phone or website.
-Sold, not a free pilot (the owner drives visitors with Facebook and Instagram ads). Payments are not built (see `docs/monetization/strategy.md`, Stage 3: Installer Partner).
+Sold, not a free pilot (the owner drives visitors with Facebook and Instagram ads). Installers now buy it themselves at `/sponsor` (see "Payments" below). An admin can still set the dates by hand.
 
 ## Which installers show for the current map view
 `/api/banner` returns every installer on the banner (same for everyone, cached). `public/banner.js` picks the ones to show:
@@ -20,10 +20,24 @@ Sold, not a free pilot (the owner drives visitors with Facebook and Instagram ad
 `banner_stats` (daily): times shown (once per installer per page visit), company-link taps, phone taps. Totals only, nothing personal. Shown to admins (installer profile, last 30 days) and to the installer in their dashboard.
 
 ## Not built yet
-Payment, a self-serve booking page, a per-county cap, an "Advertise here" placeholder when the banner is empty, a monthly report email.
+A per-county cap, an "Advertise here" placeholder when the banner is empty, a monthly report email.
 
 ## Prices on the pricing page (owner, 2026-11-06)
 - Free: profile card (page at /installer/<slug>, linked from the homes they installed).
 - $50 per season: the Sponsor banner. Set by an admin with the "Show on the banner until" date.
 - $75 per season: banner plus the company card at the top of the list behind Featured events. The list card is built (migration 0170): `installers.top_until`, set in Admin > Installers > Profile > "Top of the list until" (set the banner date too: the $75 tier includes the banner). It shows up to two labelled "Sponsor" cards at the top of the list, right behind the Featured places, for installers whose areas are in the map view (same matching as the banner). Numbers (shown, taps) are in `banner_stats` (`lst_*`) and appear in Admin and the installer's dashboard.
-- Sold by email (info@socallights.app) for now; no checkout.
+- Sold at `/sponsor` (below). Email info@socallights.app is only for questions.
+
+## Payments (built 2026-11-06)
+Funnel: `/pricing#banner` has a **Choose** button on each paid tier (`/sponsor?plan=banner|banner_top`; the free tier's button goes to `/add-house?kind=installer`). `/sponsor` steps: sign in (the plan choice survives the sign-in), choose the installer profile, choose the plan, check the exact dates and price, Stripe Checkout. Back from Stripe: `/sponsor?paid=1` or `?cancelled=1`. The installer dashboard (`/installer/<slug>/manage`) has a Sponsor placement card with status, dates, numbers and Renew or upgrade.
+- **Prices:** `INSTALLER_PLANS` in `functions/_lib/featured.js` (the only place; `/api/config` serves them as `installerPlans`). No page holds a price (a test checks `public/`).
+- **Who can buy:** the signed-in owner of the profile (`installers.owner_email`, same rule as the dashboard, helper `ownsInstaller`). No profile: the page offers "Create your free profile first" and a search with Claim this profile. The profile must be active with a phone or a website (blocking, with a link to fix it); no areas listed is advice only.
+- **Season rule** (`functions/_lib/sponsor.js`, tested in `tests/sponsor-rules.test.mjs`): a placement runs from the day it starts to the last day of the season on the map that day falls in (windows in `public/seasons.js`; Thanksgiving & Christmas Lights ends Dec 26; New Year's runs Dec 27 to Jan 31).
+- **Price by days left (owner decision 2026-11-06):** days left counts the start day. 14 or more = full price. Fewer = `round(full dollars x days left / days in the season)` whole dollars, never below $10 (`FULL_PRICE_DAYS`, `INSTALLER_MIN_CENTS` in `featured.js`). Example: Dec 14 leaves 13 of 54 days: Banner $12, Banner and top $18. The placement still ends on the season's last day (it never rolls into the next season). The amount charged is stored on the order; the webhook checks the paid amount against the same calculation and flags a mismatch like Featured does (`[auto] amount mismatch`).
+- **Renewal:** buying the same plan while it runs starts the day after it ends (the first day of the next season, full price) and runs to that season's end. Time is only added, never shortened. At most one season ahead is sold (the horizon is the end of the season after the one a purchase today reaches); beyond that checkout answers 400 "already booked through ...".
+- **Upgrade:** Banner to Banner and top of the list is priced as a new Banner and top for the days left (the same formula, no credit for a banner already paid; chosen as the simpler consistent option). The top card starts today (or after a running top card ends) and runs to the season end; the banner is left as it is, or extended to match if it ends sooner. The page says this plainly.
+- **Webhook** (`functions/api/stripe-webhook.js`, `applyInstallerOrder` / `revokeInstaller` in `sponsor.js`): orders are `feature_orders` rows with `target='installer'`, `event_id` = installer id, plan `banner` or `banner_top` (migration 0171 adds `applied_top_until`, `applied_from`, `prev_banner_until`, `prev_top_until`). Same dedupe, retry (an unknown profile answers 500 so Stripe retries), refund, partial refund (held), dispute, dispute won and refund-first handling as Featured. A refund or lost dispute switches the placement off, putting back what an admin had set by hand and keeping time other paid orders still cover; a longer date an admin set by hand afterwards is left on and the order gets a "placement differs" note.
+- **Admin:** Orders shows the installer's name, plan, amount and dates. Admin > Installers refuses a banner or top date earlier than a paid order that is still running (refund the order first). Merging profiles moves the paid orders and keeps the later dates.
+- **Emails:** Stripe's own receipt (receipt_email), a service email to the buyer (`sponsor_paid`, no unsubscribe or postal line: it is transactional) and a note to the team (`sponsor_admin`). Both are editable in Admin > Email templates.
+- **Counters** (`site_hits`, no personal data; shown in Admin > Dashboard "How people use the site" and the digest): `fn:pricing-choose`, `fn:sponsor-shown`, `fn:sponsor-picked` (browser), `fn:sponsor-checkout`, `fn:sponsor-paid` (server).
+- **Rules that stay:** paid placements are always labelled "Sponsor"; payment never touches a contest (a test checks); the map stays free; web only (hidden in the app, 403 for the app's user agent).
