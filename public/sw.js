@@ -3,17 +3,19 @@
 // Pages, scripts and data always come from the network first, so an update goes live the moment it is deployed;
 // the cache is only a fallback when there is no connection (or the connection is so slow it has not answered in 6 seconds and a saved copy exists).
 // Not cached: map tiles and photos (only the map library itself, so the page does not break without it), /api/* except the two lists below, /admin.
-const V = "scl-3";
+const V = "scl-4";
 // the event and house lists are also kept, so the list still opens with no signal (map tiles and photos are not)
 const DATA = ["/api/events", "/api/posts"];
-const SHELL = ["/offline.html", "/img/icon-192.png"];                                  // must be cached for the worker to install
+// Cloudflare Pages answers /offline.html with a redirect to /offline, and a redirected response cannot be shown for a page navigation (it fails with a blank error), so the clean address is the one saved.
+const OFFLINE = "/offline";
+const SHELL = [OFFLINE, "/img/icon-192.png"];                                  // must be cached for the worker to install
 const WARM = ["/", "/contests", "/pricing", "/privacy", "/terms", "/tutorials", ...DATA]; // saved on install when they answer; a failure here never blocks the install
 const LIB = /^https:\/\/unpkg\.com\/maplibre-gl@[\d.]+\/dist\/maplibre-gl\.(js|css)$/;   // the map library (cross-origin): cache first, it never changes for a version
 const KEEP = 80;                                                                         // most saved pages; the oldest beyond this are dropped
 const SLOW_MS = 6000;
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(V).then(async (c) => { await c.addAll(SHELL); await Promise.all(WARM.map((u) => c.add(new Request(u, { cache: "reload" })).catch(() => {}))); }).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(V).then(async (c) => { await c.addAll(SHELL); await Promise.all(WARM.map((u) => fetch(u, { cache: "reload" }).then((res) => { if (res.ok && !res.redirected) return c.put(u, res); }).catch(() => {}))); }).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== V).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 
@@ -44,7 +46,7 @@ self.addEventListener("fetch", (e) => {
       return await Promise.race([fromNet, new Promise((_, no) => setTimeout(() => no(new Error("slow")), SLOW_MS))]);
     } catch {
       fromNet.catch(() => {});
-      return have || (r.mode === "navigate" ? (await caches.match("/offline.html")) || Response.error() : Response.error());
+      return have || (r.mode === "navigate" ? (await caches.match(OFFLINE)) || Response.error() : Response.error());
     }
   })());
 });
