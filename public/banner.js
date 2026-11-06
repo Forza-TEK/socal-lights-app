@@ -40,10 +40,8 @@ function paint() {
   track.innerHTML = set; track.style.removeProperty("--sw");
   const need = (win.clientWidth || 360) + 40;
   while (track.scrollWidth < need && n < 12) { n++; set = build(n); track.innerHTML = set; }
-  if (reduced) { track.classList.remove("go"); } else {
-    const w = track.scrollWidth; track.innerHTML = set + `<span class="sp-dup" aria-hidden="true" inert>${set}</span>`;
-    track.style.setProperty("--sw", w + "px"); track.style.setProperty("--dur", Math.max(12, w / SPEED) + "s"); track.classList.add("go");
-  }
+  const w = track.scrollWidth; track.innerHTML = set + `<span class="sp-dup" aria-hidden="true" inert>${set}</span>`;
+  track.style.setProperty("--sw", w + "px"); track.style.setProperty("--dur", Math.max(12, w / SPEED) + "s"); track.classList.add("go");
   watch(); changed();
 }
 
@@ -53,6 +51,12 @@ function watch() {
   if (!("IntersectionObserver" in window)) { cur.forEach((i) => { if (!seen.has(i.id)) { seen.add(i.id); beat(i.id, "imp"); } }); return; }
   io = new IntersectionObserver((es) => es.forEach((e) => { const id = e.target.dataset.id; if (e.isIntersecting && id && !seen.has(id)) { seen.add(id); beat(id, "imp"); } }), { root: el.querySelector(".sp-win"), threshold: 0.6 });
   el.querySelectorAll(".sp-track > .sp-pill[data-id]").forEach((n) => io.observe(n));
+}
+
+function setPaused(on) {
+  paused = on; el.classList.toggle("paused", on);
+  const pb = el.querySelector(".sp-pause"); if (!pb) return;
+  pb.setAttribute("aria-pressed", String(on)); pb.setAttribute("aria-label", on ? "Play the scrolling banner" : "Pause the scrolling banner"); pb.querySelector(".pp").setAttribute("d", on ? "M2 1l7 4-7 4z" : "M2 1h2v8H2zM6 1h2v8H6z");
 }
 
 // regions: a Set of normalized city and county names that are in view (see regionKey).
@@ -71,12 +75,13 @@ export async function initBanner({ place, onChange }) {
   try { const r = await fetch("/api/banner"); LIST = r.ok ? await r.json() : []; } catch { LIST = []; }
   el = document.createElement("div"); el.id = "sponsor"; el.className = "sponsor";
   el.setAttribute("role", "region"); el.setAttribute("aria-label", "Installer sponsors");
-  el.innerHTML = `<span class="sp-tag">Sponsor</span><div class="sp-win"><div class="sp-track"></div></div>${reduced ? "" : `<button type="button" class="sp-pause" aria-pressed="false" aria-label="Pause the scrolling banner"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path class="pp" d="M2 1h2v8H2zM6 1h2v8H6z" fill="currentColor"/></svg></button>`}`;
+  el.innerHTML = `<span class="sp-tag">Sponsor</span><div class="sp-win"><div class="sp-track"></div></div><button type="button" class="sp-pause" aria-pressed="false" aria-label="Pause the scrolling banner"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path class="pp" d="M2 1h2v8H2zM6 1h2v8H6z" fill="currentColor"/></svg></button>`;
   el.addEventListener("click", (e) => {
     const a = e.target.closest("a[data-k]"), pb = e.target.closest(".sp-pause");
     if (a) { const id = a.closest(".sp-pill")?.dataset.id; if (id) beat(id, a.dataset.k); }
-    else if (pb) { paused = !paused; el.classList.toggle("paused", paused); pb.setAttribute("aria-pressed", String(paused)); pb.setAttribute("aria-label", paused ? "Resume the scrolling banner" : "Pause the scrolling banner"); pb.querySelector(".pp").setAttribute("d", paused ? "M2 1l7 4-7 4z" : "M2 1h2v8H2zM6 1h2v8H6z"); }
+    else if (pb) setPaused(!paused);
   });
   host(el); paint();
+  if (reduced) setPaused(true); // people who asked for less motion get it standing still; the play button starts it
   return true;
 }
