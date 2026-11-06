@@ -956,7 +956,11 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .quick .qshare.qicon{display:inline-grid;place-items:center;width:44px;height:44px;padding:0;margin-left:auto}
 .quick .qshare.qicon svg{width:20px;height:20px}
 .quick .qsel{flex:none;white-space:nowrap}
-.quick[aria-label="Route options"]{flex-wrap:wrap;overflow:visible;touch-action:auto}
-.quick[aria-label="Route options"] .qgo{order:0;flex:1 1 auto;justify-content:center;gap:6px}
-.quick[aria-label="Route options"] .qshare.qicon{order:1;margin-left:0}
-.quick[aria-label="Route options"] .qsel{order:2}.quick[aria-label="Route options"] .qchg{order:3}
+/* Favorites buttons: always two tidy lines. Line 1: Route these (grows) and the Share icon. Line 2: Start from (grows) and the maps app. */
+.quick[aria-label="Route options"]{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;overflow:visible;touch-action:auto;align-items:center}
+.quick[aria-label="Route options"] .qgo{grid-column:1;grid-row:1;justify-content:center;gap:6px;min-width:0}
+.quick[aria-label="Route options"] .qshare.qicon{grid-column:2;grid-row:1;margin:0}
+.quick[aria-label="Route options"] .qsel{grid-column:1;grid-row:2;min-width:0;display:flex;align-items:center}
+.quick[aria-label="Route options"] .qsel select{flex:1;min-width:0;width:100%;max-width:none}
+.quick[aria-label="Route options"] .qchg{grid-column:2;grid-row:2}
+
