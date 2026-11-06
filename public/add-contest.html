@@ -7,21 +7,21 @@
 <title>Create a contest · SoCal Lights</title>
 <meta name="description" content="Start a neighborhood lighting contest: free, takes about three minutes, and you get a link and QR code to share.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261106zb">
 <link rel="stylesheet" href="/printables.css?v=20261105d">
-<script src="/hit.js" defer></script>
+<script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
-import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt } from "/addflow.js?v=20261107a";
+import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt } from "/addflow.js?v=20261107b";
 import { me, signIn } from "/auth.js?v=20261107p";
-import { rulesDefault } from "/rules.js";
-import { printable } from "/printables.js?v=20261105c";
-import { CITY } from "/cities.js";
+import { rulesDefault } from "/rules.js?v=20261107a";
+import { printable } from "/printables.js?v=20261107a";
+import { CITY } from "/cities.js?v=20261107a";
 import { defaultSeason } from "/seasons.js?v=20261104a";
 const FREE = new Set(["gmail.com","googlemail.com","hotmail.com","outlook.com","live.com","msn.com","yahoo.com","icloud.com","me.com","aol.com","proton.me","protonmail.com"]);
 const DEF = ["Best Overall", "Most Creative", "Best Lights & Music", "Best Traditional"], cities = Object.keys(CITY).sort();

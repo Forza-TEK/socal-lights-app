@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SoCal Lights Finder</title>
+<title>Christmas Lights &amp; Holiday Events Near You | SoCal Lights</title>
 <link rel="canonical" href="https://socallights.app/">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"SoCal Lights","url":"https://socallights.app/","description":"A street-level map of Christmas lights, Halloween, parades and holiday events across Southern California.","potentialAction":{"@type":"SearchAction","target":"https://socallights.app/?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
-<meta name="description" content="Year-round Southern California events on one map: New Year's and Lunar New Year, Valentine's Day, spring blooms, Fourth of July fireworks and fairs, Halloween haunts and Christmas lights.">
-<meta property="og:title" content="SoCal Lights Finder">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"SoCal Lights","url":"https://socallights.app/","description":"A street-level map of Christmas lights, Halloween, parades and holiday events across Southern California."}</script>
+<meta name="description" content="Find Christmas lights, tree lightings, parades and holiday events across Southern California on one street-level map, with dates and directions.">
+<meta property="og:title" content="Christmas Lights &amp; Holiday Events Near You | SoCal Lights">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://socallights.app/">
 <meta property="og:image" content="https://socallights.app/img/share.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta property="og:description" content="Holiday and seasonal events across Southern California, all year, on one map.">
+<meta property="og:description" content="Find Christmas lights, tree lightings, parades and holiday events across Southern California on one street-level map, with dates and directions.">
 <meta name="theme-color" content="#f6f4f0">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -24,20 +24,28 @@
 <meta name="apple-mobile-web-app-title" content="SoCal Lights">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <!-- day mode is the default; night mode is remembered per device. Set before CSS loads so the page never flashes. -->
-<script>/* night mode: automatic from 6 pm to 6 am local time; the sun/moon button overrides it until the next switch */try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>/* night mode: automatic from 6 pm to 6 am local time, or all day when the device is set to dark; the sun/moon button overrides it until the next switch */try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
-<!-- start the data requests now instead of after the map library has loaded (app.js asks for the same three URLs) -->
-<link rel="preload" href="/api/events" as="fetch" crossorigin>
-<link rel="preload" href="/api/posts" as="fetch" crossorigin>
-<link rel="preload" href="/api/config" as="fetch" crossorigin>
+<!-- start the three data requests now (app.js uses these answers instead of asking again). A plain fetch, not a <link rel=preload>: a preload is not shared with a page the service worker controls, so returning visitors asked twice. -->
+<script>window.__pre=(function(){try{var g=function(u){var p=fetch(u).then(function(r){if(!r.ok)throw new Error(u+" "+r.status);return r.json()});p.catch(function(){});return p};return{"/api/events":g("/api/events"),"/api/posts":g("/api/posts"),"/api/config":g("/api/config")}}catch(e){return null}})()</script>
+<!-- the map library is our own copy (no third-party origin); it is fetched at low priority and used once the list is on screen -->
+<link rel="preload" href="/vendor/maplibre-gl-4.7.1.js" as="script" fetchpriority="low">
+<link rel="preload" href="/vendor/maplibre-gl-4.7.1.css" as="style" fetchpriority="low">
+<!-- the modules app.js imports, fetched at the same time as app.js instead of one level after it (keep in step with the import lines at the top of app.js; tests/seo-landing.test.mjs checks) -->
+<link rel="modulepreload" href="/cities.js?v=20261107a">
+<link rel="modulepreload" href="/seasons.js?v=20261104a">
+<link rel="modulepreload" href="/stock.js?v=20261107a">
+<link rel="modulepreload" href="/site-config.js?v=20261107a">
+<link rel="modulepreload" href="/norm-ui.js?v=20261102b">
+<link rel="modulepreload" href="/norm.js?v=20261102b">
+<link rel="modulepreload" href="/tour.js?v=20261105a">
+<link rel="modulepreload" href="/banner.js?v=20261107e">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="/styles.css?v=20261107m">
+<link rel="stylesheet" href="/styles.css?v=20261107r">
 <link rel="stylesheet" href="/routes.css?v=20261107a">
-<script src="/hit.js" defer></script>
+<script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <a class="skip" href="#pbody">Skip to the list of places</a>
@@ -84,8 +92,7 @@
 <div class="menu" id="moremenu" role="menu" hidden></div>
 <div class="modal" id="modal" hidden></div>
 
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script type="module" src="/app.js?v=20261107n"></script>
+<script type="module" src="/app.js?v=20261107r"></script>
 <script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script>
 </body>
 </html>

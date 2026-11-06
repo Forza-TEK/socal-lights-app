@@ -18,6 +18,7 @@ export const STEPS = [
   ["fn:event-feature-checkout", "Event plan: payment page opened"],
   ["fn:event-feature-paid", "Event plan: paid (counted by the server)"],
   ["fn:subscribe", "Weekly email sign-up submitted"],
+  ["fn:subscribe-landing", "Weekly email sign-up from a city or event page (also counted above)"],
   ["fn:subscribe-confirm", "Weekly email confirmed"],
   ["fn:pricing-choose", "Installer pricing: tapped Choose (Banner or Banner + top)"],
   ["fn:sponsor-shown", "Sponsor page shown"],

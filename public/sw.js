@@ -3,7 +3,7 @@
 // Pages, scripts and data always come from the network first, so an update goes live the moment it is deployed;
 // the cache is only a fallback when there is no connection (or the connection is so slow it has not answered in 6 seconds and a saved copy exists).
 // Not cached: map tiles and photos (only the map library itself, so the page does not break without it), /api/* except the two lists below and the details of events you opened, /admin.
-const V = "scl-5";
+const V = "scl-6";
 // opened events keep their full details (/api/events/<id>: the blurb and link the list leaves out) in a cache of their own, so the list cache, the offline page (which reads the newest "scl-" cache) and the page limit stay as they were
 const DV = "scld-5", KEEP_D = 120;
 const isDetail = (u) => /^\/api\/events\/[^/]+$/.test(u.pathname);
@@ -12,7 +12,8 @@ const DATA = ["/api/events", "/api/posts"];
 // Cloudflare Pages answers /offline.html with a redirect to /offline, and a redirected response cannot be shown for a page navigation (it fails with a blank error), so the clean address is the one saved.
 const OFFLINE = "/offline";
 const SHELL = [OFFLINE, "/img/icon-192.png"];                                  // must be cached for the worker to install
-const WARM = ["/", "/contests", "/pricing", "/privacy", "/terms", "/tutorials", ...DATA]; // saved on install when they answer; a failure here never blocks the install
+const LIBS = ["/vendor/maplibre-gl-4.7.1.js", "/vendor/maplibre-gl-4.7.1.css"];                // our own copy of the map library: the file name carries the version, so it is answered from the cache first and saved when the worker installs
+const WARM = ["/", "/contests", "/pricing", "/privacy", "/terms", "/tutorials", ...DATA, ...LIBS]; // saved on install when they answer; a failure here never blocks the install
 const LIB = /^https:\/\/unpkg\.com\/maplibre-gl@[\d.]+\/dist\/maplibre-gl\.(js|css)$/;   // the map library (cross-origin): cache first, it never changes for a version
 const KEEP = 80;                                                                         // most saved pages; the oldest beyond this are dropped
 const SLOW_MS = 6000;
@@ -39,6 +40,7 @@ self.addEventListener("fetch", (e) => {
     if (LIB.test(r.url)) e.respondWith(caches.match(r).then((m) => m || fetch(r).then((res) => { if (res && (res.ok || res.type === "opaque")) { const copy = res.clone(); caches.open(V).then((c) => c.put(r, copy)); } return res; })));
     return;
   }
+  if (LIBS.includes(u.pathname)) { e.respondWith(caches.match(r).then((m) => m || fetch(r).then((res) => { if (res && res.ok) { const copy = res.clone(); e.waitUntil(caches.open(V).then((c) => c.put(r, copy))); } return res; }))); return; }
   if ((u.pathname.startsWith("/api/") && !DATA.includes(u.pathname) && !isDetail(u)) || u.pathname.startsWith("/admin")) return;
   // a query string on the events list (?all=1, ?ended=1) is another request; only the plain one is kept
   e.respondWith((async () => {

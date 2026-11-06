@@ -22,6 +22,7 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 - [x] Security fixes: stored script injection on installer pages, sign-in open redirect (PR 307)
 - [x] Home page `/` list served from the edge copy (fresh 5 min, kept 1 h) with one narrow query instead of two scans (operations H5)
 - [x] Sign-in code attempts atomic (5 per code even in parallel) plus 30 verifies per address per hour (security S-07)
+- [x] Phone performance and landing pages (2026-11-06): self-hosted MapLibre loaded after the list, 320 px thumbnails for all photos, location prompt no longer the LCP element, search focus ring, Filters dialog focus, reduced-motion sponsor strip, dark theme follows the device, city cards link to `/e/<id>`, richer event pages, share and weekly-list boxes, seasonal home title, `?ref=` campaign codes, `?v=` on every asset (`docs/status.md`)
 - [x] Page counter: `/e/*` is one key `event`, `/past/*` is `past`; the 80 page-name cap ignores fn:/click:/ref: rows (seo H4)
 - [x] Free-plan per-request limits (2026-11-06): verified Cloudflare/Resend limits in `docs/runbooks/cloudflare-limits.md`; mail outbox + Resend batch for contest results, reminders, invitations and weekly alerts; organizer entries in chunks of 10; `/api/posts` 100-parameter fix and resilient map boot; R2 batch deletes; D1 test stand-in enforces the limits
 - [x] Audit 2026-11-07 small fixes: `/api/events` cache key whitelist, `?all=1` admin only, one rebuild per stale window (security N-01, engineering M1)

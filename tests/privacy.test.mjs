@@ -261,7 +261,7 @@ const NAMED = {
 };
 // hosts that appear in the code but are not a data recipient: standards/namespace URLs, comments, credits, examples
 const NOT_RECIPIENTS = new Set(["socallights.app", "socal-lights.pages.dev", "schema.org", "www.w3.org", "www.sitemaps.org", "www.opensource.org", "www.denso-wave.com", "www.d-project.com", "example.com", "stackoverflow.com", "www.flickr.com", "ticketmaster.evyy.net",
-  "developers.cloudflare.com", "resend.com" /* documentation links for the owner (Admin > Usage "source"), no data sent */,
+  "maplibre.org", "github.com" /* licence and documentation links inside the self-hosted map library (public/vendor), no data sent */, "developers.cloudflare.com", "resend.com" /* documentation links for the owner (Admin > Usage "source"), no data sent */,
   "api.cloudflare.com" /* the admin-only usage read (Cloudflare analytics, our own account's counts): no visitor data goes there */,
   "dashboard.stripe.com" /* an admin-only link to the owner's own Stripe dashboard; no visitor data goes there */]);
 

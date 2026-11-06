@@ -50,10 +50,11 @@ export async function onRequestGet({ env }) {
   const topPages = await rows("SELECT page, SUM(n) AS n FROM site_hits WHERE day >= ? AND page NOT LIKE 'click:%' AND page NOT LIKE 'fn:%' AND page NOT LIKE 'ref:%' GROUP BY page ORDER BY n DESC LIMIT 6", days[0]);
   // Taps on tracked links and buttons (and /feature views): today and the last 7 days, per key
   const clickRows = await rows("SELECT page, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today, SUM(n) AS week FROM site_hits WHERE day >= ? AND (page LIKE 'click:%' OR page = 'feature') GROUP BY page", days[13], days[7]);
+  const refRows = await rows("SELECT page, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today, SUM(n) AS week FROM site_hits WHERE day >= ? AND page LIKE 'ref:%' GROUP BY page ORDER BY week DESC LIMIT 40", days[13], days[7]);
   const clicks = Object.fromEntries(clickRows.map((r) => [r.page, { today: r.today || 0, week: r.week || 0 }]));
   return json({
     limits: (await limitHits(env)).slice(0, 3), // quota errors logged in the last 24 hours (banner on Admin home)
-    funnel: { steps: STEPS, counts: await funnelCounts(env) },
+    funnel: { steps: STEPS, counts: await funnelCounts(env), refs: refRows.map((r) => ({ code: r.page.slice(4), today: r.today || 0, week: r.week || 0 })) },
     trends: { days, houses: tHouses, votes: tVotes, accounts: tAccounts, views: tViews, topPages, clicks },
     attention: { waitHomes, waitEvents, waitContests, reports, claims },
     today: { homes: homesToday, events: subsToday, entries: entriesToday },

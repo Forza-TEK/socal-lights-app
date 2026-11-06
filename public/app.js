@@ -1,8 +1,8 @@
 // SoCal Lights Finder — public map app
-import { CITY } from "/cities.js";
+import { CITY } from "/cities.js?v=20261107a";
 import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261104a";
-import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261031j";
+import { STOCK } from "/stock.js?v=20261107a";
+import { SITE } from "/site-config.js?v=20261107a";
 import "/norm-ui.js?v=20261102b";
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261105a";
@@ -225,23 +225,39 @@ function placeHouses() {
 }
 
 /* ---------- map ---------- */
-const map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true, customAttribution: "\u00a9 " + new Date().getFullYear() + " Forza-TEK" }, dragRotate: false, pitchWithRotate: false, clickTolerance: 10 }); // clickTolerance: a tap with a little finger wobble still counts as a tap
-map.touchZoomRotate.disableRotation();
-map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-// The locate button waited only 6 s for a fix and then failed silently, which is what some phones (slow network fixes, in-app browsers) showed: it looked like the button did nothing.
-// Now it waits longer, flies to a position we already know at once, and says what went wrong.
+// The map library (self-hosted, same origin) is requested after the list has been drawn, so the first paint never waits for it.
+// Everything below that touches `map` runs only once the library is in (mapReady) or checks `map` first; the list works without it.
+let map = null, geo = null;
 const SOCIAL_BROWSER = /FBAN|FBAV|FB_IAB|Instagram|Snapchat|MicroMessenger|Line\/|TikTok|musical_ly/i.test(navigator.userAgent || "");
-const geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 }, trackUserLocation: false });
-map.addControl(geo, "top-right");
-const flyToMe = () => map.easeTo({ center: [state.me.lng, state.me.lat], zoom: Math.max(map.getZoom(), 15), duration: 800 });
-geo.on("error", (e) => {
-  if (state.me) { flyToMe(); return; } // we already know where you are (read when you allowed it)
-  const c = e && e.code;
-  toast(c === 1 ? (SOCIAL_BROWSER ? "This app's built-in browser blocks location. Open socallights.app in Safari or Chrome." : "Location is blocked for this site. Allow it in your browser settings, then tap the button again.") : c === 3 ? "Still looking for your location. Tap the button again in a moment." : "Couldn't find your location right now.");
-});
+const flyToMe = () => { if (map && state.me) map.easeTo({ center: [state.me.lng, state.me.lat], zoom: Math.max(map.getZoom(), 15), duration: 800 }); };
 document.addEventListener("click", (ev) => { const b = ev.target && ev.target.closest && ev.target.closest(".maplibregl-ctrl-geolocate"); if (b && state.me) flyToMe(); }, true); // a tap with a known position moves the map right away
-// The control only zooms to the (often wide) accuracy circle; fly in close on the user instead
-geo.on("geolocate", (e) => { const wel = document.getElementById("welcome"); if (wel) wel.remove(); state.me = { lat: e.coords.latitude, lng: e.coords.longitude }; state.meErr = ""; scheduleList(); map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }); });
+function startMap() {
+  if (map || !window.maplibregl) return;
+  map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true, customAttribution: "\u00a9 " + new Date().getFullYear() + " Forza-TEK" }, dragRotate: false, pitchWithRotate: false, clickTolerance: 10 }); // clickTolerance: a tap with a little finger wobble still counts as a tap
+  map.touchZoomRotate.disableRotation();
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+  // The locate button waited only 6 s for a fix and then failed silently, which is what some phones (slow network fixes, in-app browsers) showed: it looked like the button did nothing.
+  // Now it waits longer, flies to a position we already know at once, and says what went wrong.
+  geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 }, trackUserLocation: false });
+  map.addControl(geo, "top-right");
+  geo.on("error", (e) => {
+    if (state.me) { flyToMe(); return; } // we already know where you are (read when you allowed it)
+    const c = e && e.code;
+    toast(c === 1 ? (SOCIAL_BROWSER ? "This app's built-in browser blocks location. Open socallights.app in Safari or Chrome." : "Location is blocked for this site. Allow it in your browser settings, then tap the button again.") : c === 3 ? "Still looking for your location. Tap the button again in a moment." : "Couldn't find your location right now.");
+  });
+  // The control only zooms to the (often wide) accuracy circle; fly in close on the user instead
+  geo.on("geolocate", (e) => { const wel = document.getElementById("welcome"); if (wel) wel.remove(); state.me = { lat: e.coords.latitude, lng: e.coords.longitude }; state.meErr = ""; scheduleList(); map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }); });
+  map.on("style.load", initLayers);
+  map.on("load", initLayers);
+}
+const MAPLIB = "/vendor/maplibre-gl-4.7.1";
+function loadMapLib() {
+  if (map) return;
+  if (window.maplibregl) return startMap();
+  const css = new Promise((ok) => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = MAPLIB + ".css"; l.onload = l.onerror = ok; document.head.insertBefore(l, document.querySelector('link[href^="/styles.css"]')); }); // before our own stylesheet, as it always was: our rules for the map buttons must win
+  const js = new Promise((ok, no) => { const sc = document.createElement("script"); sc.src = MAPLIB + ".js"; sc.async = true; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+  Promise.all([css, js]).then(startMap).catch(() => { const m = $("#map"); if (m) m.innerHTML = '<p class="maperr" role="status">The map could not load. The list of places still works.</p>'; });
+}
 
 function padding() {
   const ph = isPhone();
@@ -249,15 +265,13 @@ function padding() {
 }
 // On phones the list covers the map when expanded, so "in map view" means the map above the collapsed sheet.
 function mapArea() { const p = padding(); if (isPhone()) p.bottom = peekH() + 16; return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
-function fitSoCal(animate) { map.fitBounds(SOCAL, { padding: padding(), duration: animate ? 600 : 0 }); }
-function easeToPoint(lng, lat, minZoom = 12) { map.easeTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), minZoom), padding: padding(), duration: 600 }); }
+function fitSoCal(animate) { if (!map) return; map.fitBounds(SOCAL, { padding: padding(), duration: animate ? 600 : 0 }); }
+function easeToPoint(lng, lat, minZoom = 12) { if (!map) return; map.easeTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), minZoom), padding: padding(), duration: 600 }); }
 
 let mapReady = false;
 // Add our layers as soon as the base style is parsed ("style.load"), not on "load",
 // which waits for every base-map tile and can stall on a slow or failed tile request.
 // Switching day/night swaps the base style, which drops our layers; "style.load" then adds them back.
-map.on("style.load", initLayers);
-map.on("load", initLayers);
 const catColor = (C) => ["match", ["get", "cat"], "free", C.free, "paid", C.season, "fav", C.fav, "inst", C.inst, C.season];
 function initLayers() {
   if (map.getSource("pts")) return;
@@ -414,7 +428,7 @@ function renderPreview() {
   } else {
     const p = it.p, ph = p.photos || [];
     const many = ph.length > 1;
-    pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide"><img class="evimg ld" src="${photoUrl(k2)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i < 2 ? "eager" : "lazy"}" draggable="false"></div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="pvcount" id="pvcount">1 / ${ph.length}</span>` : ph.length ? `<img class="evimg ld" src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${bPop(p).icon}${esc(p.title)}${bPop(p).sub}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
+    pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide">${photoImg({ src: photoUrl(k2) }, i < 2, 800).replace('alt=""', `alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" draggable="false"`)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="pvcount" id="pvcount">1 / ${ph.length}</span>` : ph.length ? photoImg({ src: photoUrl(ph[0]) }, true, 800) : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${bPop(p).icon}${esc(p.title)}${bPop(p).sub}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
   }
   pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); pinBox = null; if (!pinRO && window.ResizeObserver) { pinRO = new ResizeObserver(() => { pinBox = null; placePin(); }); pinRO.observe(pv); } placePin();
   const tr = $("#pvtrack");
@@ -576,13 +590,17 @@ const ARW_R = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" strok
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
 // Smaller copies of photos for the list and popup, made by Cloudflare image resizing (/cdn-cgi/image). It is used only once a quick test shows it works on this site (and is remembered), otherwise the original photo loads, and a failed copy falls back to the original.
 // Remote photos are resized from the first visit (city pages already do this unconditionally and it works; a failed copy falls back to the original). Only a remembered failed probe ("0") turns it off.
-let THUMBS = false, THUMBS_REMOTE = true; try { THUMBS = localStorage.getItem("socal-thumbs") === "1"; THUMBS_REMOTE = localStorage.getItem("socal-thumbs-remote") !== "0"; } catch {}
+// Our own photos (/img/events, /api/photo) are resized from the first visit too, same rule: only a remembered failed probe ("0") turns it off.
+let THUMBS = true, THUMBS_REMOTE = true; try { THUMBS = localStorage.getItem("socal-thumbs") !== "0"; THUMBS_REMOTE = localStorage.getItem("socal-thumbs-remote") !== "0"; } catch {}
 const thumbProbe = (u) => fetch("/cdn-cgi/image/width=16/" + u, { method: "HEAD" }).then((r) => r.ok && /^image\//.test(r.headers.get("content-type") || "")).catch(() => false);
 thumbProbe(location.origin + "/img/badge-160.webp").then((ok) => { THUMBS = ok; try { localStorage.setItem("socal-thumbs", ok ? "1" : "0"); } catch {} });
 // photos hosted on other sites can only be resized when Cloudflare is set to resize from any origin: test one of them once the events are loaded
 function probeRemoteThumbs() { const e = E.find((x) => /^https?:/.test(x.img || "")); if (e) thumbProbe(e.img).then((ok) => { THUMBS_REMOTE = ok; try { localStorage.setItem("socal-thumbs-remote", ok ? "1" : "0"); } catch {} }); }
-const thumbOf = (u, w) => ((THUMBS && /^\/img\/events\//.test(u || "")) || (THUMBS_REMOTE && /^https?:\/\//.test(u || "")) ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : u);
-const photoImg = (ph, eager, w = 640) => `<img class="evimg" src="${esc(thumbOf(ph.src, w))}"${thumbOf(ph.src, w) !== ph.src ? ` data-orig="${esc(ph.src)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt="" loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`;
+// Photos stored as http:// are never requested directly from an https page (mixed content): the resizer fetches them for us, and the fallback copy is the https address.
+const secure = (u) => String(u || "").replace(/^http:\/\//i, "https://");
+const thumbOf = (u, w) => { u = u || ""; return (THUMBS && /^\/(img\/events|api\/photo)\//.test(u)) || (THUMBS_REMOTE && /^https?:\/\//.test(u)) ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : secure(u); };
+// w: the width asked for (list cards 320, pop-up 800, details 900); h: when given, the box is declared so nothing moves while the photo loads. Only the first cards load at once: the rest wait until they near the screen.
+const photoImg = (ph, eager, w = 640, h = 0) => { const t = thumbOf(ph.src, w), o = secure(ph.src); return `<img class="evimg" src="${esc(t)}"${t !== o ? ` data-orig="${esc(o)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt=""${h ? ` width="${w}" height="${h}"` : ""} loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`; };
 document.addEventListener("load", (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains("evimg")) e.target.classList.add("ld"); }, true);
 document.addEventListener("error", (e) => {
   const i = e.target;
@@ -624,7 +642,7 @@ const hoursOf = (ev) => (ev.h && !/^check/i.test(ev.h) ? cut(ev.h, 30) : "");
 function evItem(ev, i = 99, x = null) {
   const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
   // Same layout as the card that opens when you tap a dot on the map
-  return `<article class="item ev${ev.nt ? " noticed" : ""}${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 8) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts">${awayTag(ev)}<button class="shr" type="button" data-share="e:${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div>${x ? legLine(x) : ""}<div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
+  return `<article class="item ev${ev.nt ? " noticed" : ""}${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 2, 320, 120) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts">${awayTag(ev)}<button class="shr" type="button" data-share="e:${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div>${x ? legLine(x) : ""}<div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
 }
 // My night help: three simple steps, which can be folded into a ? button next to the stop count (remembered on this device)
 let nightHelp = true; try { nightHelp = localStorage.getItem("socal-nighthelp") !== "0"; } catch {}
@@ -656,9 +674,9 @@ const whereNow = () => new Promise((res) => {
 const instLink = (p) => (p.inst ? `<a class="instlink" href="/installer/${esc(p.inst.slug)}">${esc(p.inst.name)}</a>` : "");
 const byLine = (p) => (p.kind === "installer" ? (p.inst ? instLink(p) : esc(p.biz)) : "Posted by " + esc(p.biz));
 const instLine = (p) => (p.kind !== "installer" && p.inst ? `<div class="meta instby">Installed by ${instLink(p)}${p.inst.ok ? ` <span class="instok" title="Confirmed by the installer" aria-label="Confirmed by the installer">&#10003;</span>` : ""}</div>` : "");
-function instItem(p, x = null) {
+function instItem(p, x = null, i = 99) {
   const ph = p.photos || [], k = "i:" + p.id, f = favs.has(hfav(p)), sn = SEASONS[p.season] ? SEASONS[p.season].short : "";
-  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span>${bChip(p)}${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts">${awayTag({ lat: p.plat, lng: p.plng })}<button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${byLine(p)} · ${esc(p.city)}</div>${instLine(p)}<div class="dates">${esc(sn)} display · Free to view</div>${homeTags(p)}${x ? legLine(x) : ""}<div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
+  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? photoImg({ src: photoUrl(ph[0]) }, i < 2, 320, 120) : ""}<span class="when">Home display</span>${bChip(p)}${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts">${awayTag({ lat: p.plat, lng: p.plng })}<button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${byLine(p)} · ${esc(p.city)}</div>${instLine(p)}<div class="dates">${esc(sn)} display · Free to view</div>${homeTags(p)}${x ? legLine(x) : ""}<div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
@@ -675,7 +693,7 @@ function listWithSponsors(items, tops) {
   let at = 0; while (at < items.length && items[at].f) at++;
   cards.splice(at, 0, ...tops.map(sponsorCard)); return cards.join("");
 }
-function listCard(it, i) { return it.t === "e" ? evItem(it.o, i) : instItem(it.o); }
+function listCard(it, i) { return it.t === "e" ? evItem(it.o, i) : instItem(it.o, null, i); }
 // the next page of cards is added when the end of the list scrolls into view
 function moreCards(upTo) {
   const list = document.querySelector("#pbody .list"); if (!list || listShown >= listVis.length) return;
@@ -706,6 +724,7 @@ function toStop(x) {
 function routeFromView() {
   const items = listVis.slice(); if (routeHint(items) || !items.length) return;
   const stops = items.map((it) => it.t === "e" ? toStop(it.o) : toStop({ house: true, key: it.key, p: it.o, lat: it.lat, lng: it.lng, a: it.o.address ? it.o.address + ", " + it.o.city + ", CA" : "" }));
+  if (!map) return;
   const c = map.getCenter(), og = state.start === "me" && state.me ? state.me : { lat: c.lat, lng: c.lng };
   let at = og; const pool = stops.slice(), ord = [];
   while (pool.length) { pool.sort((a, b) => miles(at, a) - miles(at, b)); at = pool.shift(); ord.push(at); }
@@ -729,11 +748,20 @@ async function shareNight() {
 // First visit: offer to use the location so distances and Nearest work; asked once, never up front
 function showWelcome() {
   let seen = false; try { seen = !!localStorage.getItem("socal-welcomed"); } catch {}
-  if (seen || state.me || $("#welcome")) return;
+  if (seen || state.me || $("#welcome") || state.detail || /^#[eh]-/.test(location.hash)) return; // never over an open event (it hides the Back button) or for someone who arrived on a shared link
   const w = document.createElement("div"); w.id = "welcome"; w.setAttribute("role", "region"); w.setAttribute("aria-label", "Use your location");
   w.innerHTML = `<span>See what is close to you and how far it is.</span><button type="button" data-welcome="go">Use my location</button><button type="button" class="no" data-welcome="no" aria-label="No thanks">No thanks</button>`;
   document.body.appendChild(w);
   setTimeout(() => { if (w.isConnected) { w.remove(); try { localStorage.setItem("socal-welcomed", "1"); } catch {} } }, 15000); // offered once; ignored for 15 seconds counts as "no thanks"
+}
+// The offer comes once the person has started using the page (a tap, a key or a scroll, then a moment), or after 10 seconds of looking. It is not drawn while the list is first painting:
+// a big card of text that appears at that moment becomes the page's largest paint and holds back the load measurement (Lighthouse LCP) for no reason.
+function welcomeLater() {
+  const EV = ["pointerdown", "keydown", "wheel", "touchstart", "scroll"];
+  let done = false;
+  const go = (wait) => { if (done) return; done = true; clearTimeout(idle); EV.forEach((t) => removeEventListener(t, first, true)); setTimeout(showWelcome, wait); };
+  const first = () => go(1500), idle = setTimeout(() => go(0), 10000);
+  EV.forEach((t) => addEventListener(t, first, { capture: true, passive: true }));
 }
 function renderPanel(opts) {
   counts();
@@ -862,7 +890,7 @@ function openLightbox(items, start = 0, title = "") {
   closeLightbox(); lbBack = document.activeElement;
   const many = items.length > 1;
   lbEl = document.createElement("div"); lbEl.id = "lightbox"; lbEl.setAttribute("role", "dialog"); lbEl.setAttribute("aria-modal", "true"); lbEl.setAttribute("aria-label", (title || "Photos") + ", full size");
-  lbEl.innerHTML = `<div class="lbtrack">${items.map((q, i) => `<div class="lbslide" data-credit="${esc(q.credit)}" data-link="${esc(q.link)}"><img src="${esc(q.src)}"${q.fb ? ` data-fb="${esc(q.fb)}"` : ""} alt="${esc(title)}${many ? `, photo ${i + 1} of ${items.length}` : ""}" referrerpolicy="no-referrer" draggable="false"></div>`).join("")}</div>
+  lbEl.innerHTML = `<div class="lbtrack">${items.map((q, i) => `<div class="lbslide" data-credit="${esc(q.credit)}" data-link="${esc(q.link)}"><img src="${esc(secure(q.src))}"${q.fb ? ` data-fb="${esc(q.fb)}"` : ""} alt="${esc(title)}${many ? `, photo ${i + 1} of ${items.length}` : ""}" referrerpolicy="no-referrer" draggable="false"></div>`).join("")}</div>
     <button class="lbx" type="button" aria-label="Close photos">${`<svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg>`}</button>
     ${many ? `<button class="lbn l" type="button" data-lb="-1" aria-label="Previous photo">${ARW_L}</button><button class="lbn r" type="button" data-lb="1" aria-label="Next photo">${ARW_R}</button><span class="lbcount">${start + 1} / ${items.length}</span>` : ""}
     <a class="lbcredit" target="_blank" rel="noopener" hidden></a>`;
@@ -907,7 +935,7 @@ const infoBtn = (ev, url) => (url ? `<a class="abtn" href="${esc(infoUrl(affUrl(
 const contestBtn = (ev, url) => (String(ev.id).startsWith("c-") && url ? `<a class="contestgo" href="${esc(url)}">Enter your home or vote &rsaquo;</a>` : "");
 // the blurb's place while it loads: a grey block as tall as a typical blurb, or (when it could not load) a short note with Try again
 const blurbPending = (err) => err
-  ? `<p class="blurb dstatus" id="dblurb" role="status">${err === "http" ? "Couldn't load the details." : "Details need a connection."} <button class="retry" type="button" id="dretry">Try again</button></p>`
+  ? `<p class="blurb dstatus" id="dblurb">${err === "http" ? "Couldn't load the details." : "Details need a connection."} <button class="retry" type="button" id="dretry">Try again</button></p>`
   : `<p class="blurb skel" id="dblurb" aria-busy="true"></p>`;
 const swap = (sel, html) => { const el = $(sel); if (!el) return; const t = document.createElement("template"); t.innerHTML = html.trim(); el.replaceWith(t.content); };
 function startDetail(ev) {
@@ -925,7 +953,8 @@ function showDetail(ev) {
   const q = phs[tr && tr.clientWidth ? Math.round(tr.scrollLeft / tr.clientWidth) : 0] || phs[0];
   if (cr && q) { const l = safeUrl(q.link), n = document.createElement(l ? "a" : "span"); n.className = "credit"; n.id = "hcredit"; n.textContent = q.credit; if (l) { n.href = l; n.target = "_blank"; n.rel = "noopener"; } cr.replaceWith(n); }
 }
-function openDetail(k) { if (k !== state.detail && /^e:/.test(k)) { tick("fn:event-open"); DERR.delete(k.slice(2)); } state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
+function dismissWelcome() { const w = $("#welcome"); if (w) { w.remove(); try { localStorage.setItem("socal-welcomed", "1"); } catch {} } } // opening an event means "not now" to the location prompt
+function openDetail(k) { dismissWelcome(); if (k !== state.detail && /^e:/.test(k)) { tick("fn:event-open"); DERR.delete(k.slice(2)); } state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
 function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
   if (it.kind === "ev") {
@@ -936,7 +965,7 @@ function detailHtml(k) {
       <div class="htext"><div class="kicker">${esc(TYPE_SHORT[ev.t] || "Event")} · ${esc(ev.city)}${away(ev)}</div><h2>${esc(ev.n)}</h2></div></div>
     <div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
     <div class="boxes"><div><span>When</span><b>${whenShort(ev)}</b></div><div><span>Hours</span><b>${esc(ev.h)}</b></div><div><span>Cost</span><b>${esc(ev.p)}</b></div></div>
-    ${loading ? blurbPending(derr) : `<p class="blurb" id="dblurb">${esc(ev.b)}</p>`}
+    <div class="dlive" aria-live="polite">${loading ? blurbPending(derr) : `<p class="blurb" id="dblurb">${esc(ev.b)}</p>`}</div>
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd>${ev.lc ? `<dt>Updated</dt><dd class="meta">${esc(fmt(ev.lc))}</dd>` : ""}</dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
@@ -1080,6 +1109,16 @@ function fPanel() {
       else if (e.target.dataset.layer) { state.layers[e.target.dataset.layer] = e.target.checked; applyFilters(); }
     });
     f.addEventListener("input", (e) => { if (e.target.id === "fCityQ") drawCityList(e.target.value); });
+    // it is a modal dialog, so Tab and Shift+Tab stay inside it
+    f.tabIndex = -1;
+    f.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      const els = [...f.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href]')].filter((x) => x.offsetParent !== null);
+      if (!els.length) return;
+      const first = els[0], last = els[els.length - 1], a = document.activeElement;
+      if (e.shiftKey && (a === first || a === f)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
+    });
   }
   return f;
 }
@@ -1099,7 +1138,9 @@ function placeFilters() {
 function refreshFilters() {
   const f = $("#fpanel"); if (!f || f.hidden) return;
   const sc = f.querySelector(".fbody")?.scrollTop || 0, q = f.querySelector("#fCityQ")?.value || "";
+  const FOC = 'button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href]', at = [...f.querySelectorAll(FOC)].indexOf(document.activeElement); // the panel is redrawn on every choice: keep the keyboard where it was
   f.innerHTML = filtersHtml(); const b = f.querySelector(".fbody"); if (b) b.scrollTop = sc;
+  if (at >= 0) { const again = f.querySelectorAll(FOC)[at]; if (again) again.focus({ preventScroll: true }); }
   const qi = f.querySelector("#fCityQ"); if (qi && q) { qi.value = q; drawCityList(q); }
 }
 function openFilters(anchor) {
@@ -1107,8 +1148,14 @@ function openFilters(anchor) {
   fAnchor = anchor; fOpen = true;
   const f = fPanel(); f.hidden = false; f.innerHTML = filtersHtml(); $("#fback").hidden = !isPhone();
   document.body.classList.add("filters-open"); placeFilters();
+  f.focus({ preventScroll: true }); // focus moves into the dialog (a screen reader announces "Filters, dialog"); Tab then reaches the Close button first
 }
-function closeFilters() { fOpen = false; const f = $("#fpanel"); if (f) f.hidden = true; const bk = $("#fback"); if (bk) bk.hidden = true; document.body.classList.remove("filters-open"); }
+// Closing hands the keyboard back to the Filters button, but only when it was in the dialog (or nowhere): a click on some other control keeps its own focus.
+function closeFilters() {
+  const f = $("#fpanel"), back = !!f && !f.hidden && (f.contains(document.activeElement) || document.activeElement === document.body || !!document.activeElement.closest("[data-openfilters]"));
+  fOpen = false; if (f) f.hidden = true; const bk = $("#fback"); if (bk) bk.hidden = true; document.body.classList.remove("filters-open");
+  if (back) setTimeout(() => { const o = document.querySelector("[data-openfilters]"); if (o) o.focus({ preventScroll: true }); }, 0); // after the list is redrawn, which replaces the button
+}
 document.addEventListener("click", (e) => { if (!e.target.isConnected) return; if (fOpen && !isPhone() && !e.target.closest("#fpanel,[data-openfilters]")) closeFilters(); });
 addEventListener("resize", placeFilters);
 
@@ -1122,6 +1169,7 @@ function moreHtml() {
     + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us on Cash App" : "Shop the season"))
     + (IN_APP ? "" : row("a", 'href="/feature"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>`, "Promote your event", "For organizers: a paid Featured pin"))
     + row("a", 'href="/contests"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`, "Contests", "Vote, enter, run one, and past results")
+    + row("a", 'href="/in"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`, "Browse by city", "Events listed city by city")
     + row("a", 'href="/tutorials"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>`, "Tutorials", "Short how-to videos")
     + row("a", 'href="/help"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>`, "Help", "Answers and how-to steps")
     + row("a", 'href="/privacy"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>`, "Privacy & terms", "How accounts and your data are handled")
@@ -1233,17 +1281,18 @@ function repaintMap() {
   map.setPaintProperty("pt", "circle-color", catColor(C));
   map.setPaintProperty("hl", "circle-color", catColor(C));
 }
-// Day / night: automatic (dark from 6 pm to 6 am, device time); the toggle overrides it until the next switch
+// Day / night: automatic (dark when the device asks for dark, and from 6 pm to 6 am by its clock); the toggle overrides it until the next switch (same rule as the script in every page head)
 // The day / night button in the top bar (the same switch every other page has)
 { const tb = document.getElementById("themebtn"); if (tb) tb.addEventListener("click", () => setTheme(theme() === "dark" ? "light" : "dark")); }
-const autoTheme = () => { const h = new Date().getHours(); return h >= 18 || h < 6 ? "dark" : "light"; };
+const darkMQ = matchMedia("(prefers-color-scheme: dark)");
+const autoTheme = () => { const h = new Date().getHours(); return h >= 18 || h < 6 || darkMQ.matches ? "dark" : "light"; };
 function nextSwitch() { const d = new Date(); d.setMinutes(0, 0, 0); const h = d.getHours(); if (h < 6) d.setHours(6); else if (h < 18) d.setHours(18); else { d.setDate(d.getDate() + 1); d.setHours(6); } return d.getTime(); }
 function setTheme(t, manual = true) {
   document.documentElement.dataset.theme = t;
   if (manual) { try { localStorage.setItem("socal-theme", t); localStorage.setItem("socal-theme-until", String(nextSwitch())); } catch {} }
   const night = t === "dark";
   document.querySelector('meta[name="theme-color"]').content = night ? "#0b0d12" : "#f6f4f0";
-  map.setStyle(MAP_STYLES[t], { diff: false });
+  if (map) map.setStyle(MAP_STYLES[t], { diff: false });
 }
 // A page left open flips at 6 pm / 6 am unless the toggle is overriding it
 setInterval(() => {
@@ -1251,6 +1300,8 @@ setInterval(() => {
   if (until > Date.now()) return;
   const t = autoTheme(); if (t !== theme()) setTheme(t, false);
 }, 60000);
+// the device switching between light and dark (a phone's own schedule, say) is followed at once, unless the toggle is overriding it
+darkMQ.addEventListener("change", () => { let until = 0; try { until = +localStorage.getItem("socal-theme-until") || 0; } catch {} if (until > Date.now()) return; const t = autoTheme(); if (t !== theme()) setTheme(t, false); });
 if (theme() === "dark") document.querySelector('meta[name="theme-color"]').content = "#0b0d12";
 // "All seasons": every upcoming event, not just the season in view (used with a city, from a city page link)
 function showAllSeasons() {
@@ -1291,7 +1342,7 @@ function showSuggestions() {
     + places.map((e, i) => `<button type="button" role="option" id="sg-e-${i}" data-se="${esc(e.id)}"><span class="si">${esc(phaseFor(e.sn && SEASONS[e.sn] ? e.sn : state.season, TODAY).icon)}</span><span><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(whenShort(e))}</small></span></button>`).join("");
 }
 document.addEventListener("click", (e) => {
-  const wl = e.target.closest("[data-welcome]"); if (wl) { try { localStorage.setItem("socal-welcomed", "1"); } catch {} const w = $("#welcome"); if (w) w.remove(); if (wl.dataset.welcome === "go") geo.trigger(); return; }
+  const wl = e.target.closest("[data-welcome]"); if (wl) { try { localStorage.setItem("socal-welcomed", "1"); } catch {} const w = $("#welcome"); if (w) w.remove(); if (wl.dataset.welcome === "go" && geo) geo.trigger(); return; }
   const sc = e.target.closest("[data-sc]"), se = e.target.closest("[data-se]");
   if (sc) { const c = CITY_OPTS[sc.dataset.sc]; $("#q").value = ""; state.q = ""; closeSuggestions(); applyFilters(); if (c && mapReady) map.easeTo({ center: [c[1], c[0]], zoom: 11.5, duration: 700 }); return; }
   if (se) { const id = se.dataset.se, ev = E.find((x) => x.id === id); $("#q").value = ""; state.q = ""; closeSuggestions(); applyFilters(); if (ev) { if (ev.sn && SEASONS[ev.sn] && ev.sn !== state.season) setSeason(ev.sn); selectKey("e:" + id, "list"); } return; }
@@ -1406,7 +1457,9 @@ function setSheet(s) {
 async function load() {
   try {
     // Each list loads on its own: the events are the app (no events = the error message), but homes or settings failing leave the map working (homes retry in 10 seconds, then every 15 minutes).
-    const get = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
+    // index.html starts these three requests while the page is still loading (window.__pre); use those answers once instead of asking again
+    const pre = window.__pre || {}; window.__pre = null;
+    const get = (u) => pre[u] || fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
     const [evR, postsR, cfgR] = await Promise.allSettled([get("/api/events"), get("/api/posts"), get("/api/config")]);
     if (evR.status !== "fulfilled" || !Array.isArray(evR.value)) throw new Error("events failed");
     E = evR.value; setTimeout(probeRemoteThumbs, 1500);
@@ -1415,16 +1468,17 @@ async function load() {
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses();
   } catch {
-    $("#pbody").innerHTML = `<div class="empty">Events couldn't load. Check your connection and refresh the page.</div>`; return;
+    $("#pbody").innerHTML = `<div class="empty">Events couldn't load. Check your connection and refresh the page.</div>`; loadMapLib(); return;
   }
   renderSeasonBar(); applyFilters(); startBanner();
+  loadMapLib(); // the list is on screen: now bring in the map library (index.html already asked the browser to fetch it quietly)
   const h = location.hash.slice(1), dl = h.match(/^([eh])-(.+)$/);
   if (dl) {
     const ev = dl[1] === "e" ? E.find((x) => x.id === dl[2]) : null, ho = dl[1] === "h" ? SHOW.find((x) => x.id === dl[2]) : null, sn = ev ? ev.sn : ho ? ho.season : "";
     if (SEASONS[sn]) setSeason(sn);
     if (ev) selectKey("e:" + ev.id, "list"); else if (ho) selectKey("i:" + ho.id, "list");
   }
-  setTimeout(showWelcome, 1500);
+  welcomeLater();
   const cm = h.match(/^city-(.+)$/);
   if (cm) { const c = Object.keys(CITY_OPTS).find((x) => citySlug(x) === cm[1]); if (c) { state.all = true; renderSeasonBar(); setCity(c); } }
   if (h === "all") { state.all = true; renderSeasonBar(); applyFilters(); }

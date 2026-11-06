@@ -32,6 +32,6 @@ export async function onRequestPost({ request, env }) {
     const ok = await sendTemplate(env, "alerts_confirm", email, { radius, city, link: `${origin}/api/alerts/confirm?t=${token}` });
     if (!ok) return err(503, "The confirmation email could not be sent. Please try again later.");
   }
-  if (!old) await bump(env, "fn:subscribe"); // a new sign-up (an update to an existing one is not counted again)
+  if (!old) { await bump(env, "fn:subscribe"); if (b.src === "city" || b.src === "event") await bump(env, "fn:subscribe-landing"); } // a new sign-up (an update to an existing one is not counted again); "landing" = from a city or event page
   return json({ ok: true, already: !!(old && old.confirmed) });
 }

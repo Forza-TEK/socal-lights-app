@@ -88,3 +88,11 @@ Rey
 - Full target list, contacts, the 12 send-ready emails and the one-week plan are in `outreach-targets.md`. Best first sends (Thu Nov 5): Mission Viejo MVAC, Mom's LA, Enjoy Orange County.
 
 | 2026-11-05 | **City of Covina**: Zoom demo held (30 min). Strong interest; **they loved the routes**; will use the judging module and routing; will NOT use resident entry this year (the city has its own registration) so staff will enter the registered homes' addresses themselves. Follow-up email sent same day with the tutorial link. | Owner | Open: Covina to set up the contest; owner to refresh tutorial videos and check in during the season |
+
+
+## Campaign links: the `?ref=` convention (2026-11-06)
+Put `?ref=<code>` on any link you post (the home page, a city page, an event page, Pricing). The first page a visitor opens in a browser tab counts one landing for that code, one number per day, with no cookie, IP address or account stored. Admin > Home > "How people use the site" lists each code ("Arrived from link ?ref=...") with today and 7-day counts.
+- Code: lowercase letters, digits and hyphens, 1 to 20 characters. Suggested pattern `channel-where-month`: `https://socallights.app/?ref=fb-ig-nov`, `https://socallights.app/in/covina?ref=covina-flyer`, `...?ref=grok-email`, `...?ref=press`.
+- The older groups `inst`, `cont`, `pub`, `soc` still work.
+- At most 30 different codes are counted per day (a typo or a made-up flood cannot fill the table); a code already counted that day always keeps counting. Anything else is ignored.
+- It counts landings only. For results, compare a code's landings with "Weekly email sign-up" and the other steps on the same day; signups from city or event pages also show under "from a city or event page".

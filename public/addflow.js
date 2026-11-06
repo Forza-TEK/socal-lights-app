@@ -3,7 +3,7 @@
 // address suggestions, "I am human" check, saved drafts).
 import { me, signIn } from "/auth.js?v=20261107p";
 import "/norm-ui.js?v=20261102b";
-import { CITY } from "/cities.js";
+import { CITY } from "/cities.js?v=20261107a";
 export const $ = (q, r = document) => r.querySelector(q);
 export const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
