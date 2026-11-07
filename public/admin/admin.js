@@ -1,7 +1,7 @@
 // SoCal Lights admin: review houses, manage published posts, edit events.
 import { CITY } from "/cities.js";
 import { SEASONS, defaultSeason } from "/seasons.js";
-import { attachAddress } from "/addflow.js?v=20261110d";
+import { attachAddress } from "/addflow.js?v=20261111a";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261104c";
 import { renderHelp } from "/admin/help.js?v=20261104a";
@@ -28,8 +28,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "emails", "help"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", emails: "Email templates", help: "Help Center" };
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "emails", "help"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", emails: "Email templates", help: "Help Center" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
@@ -71,6 +71,7 @@ async function render() {
     if (tab === "users") return renderUsers();
     if (tab === "log") return renderLog();
     if (tab === "usage") return renderUsage();
+    if (tab === "outreach") return renderOutreach();
     if (tab === "emails") return renderEmails(main);
     if (tab === "help") return renderHelp(main);
     const waiting = await api("/api/admin/posts?status=" + tab), declined = tab === "pending" ? await api("/api/admin/posts?status=declined") : [];
@@ -824,6 +825,56 @@ async function renderUsage() {
     ${grp("Email (Resend, counted by this site)", ["email_day", "email_month"])}
     <p class="meta">Email counts only emails this site sent through Resend (one send each); Resend's own total also counts received mail. Check the Resend dashboard if the numbers disagree.</p>`;
   const b = $("#urefresh"); if (b) b.onclick = () => { main.dataset.urefresh = "1"; renderUsage(); };
+}
+
+/* ---------- Outreach: reconcile Grok's sent log against the app, results by segment and step, the do-not-contact list, API health. Hashes and counts only. ---------- */
+const ORSTATUS = { registered: "Registered", listing: "Has a listing", review: "Review", suppressed: "Suppressed", clear: "Clear" };
+const ORTAG = { registered: "bad", listing: "bad", review: "warn", suppressed: "bad", clear: "ok" };
+const csvCell = (v) => { let s = String(v ?? ""); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }; // a leading = + - @ would be run as a formula in a spreadsheet
+const parseEmails = (text) => { const seen = new Set(), out = []; for (const t of String(text).split(/[\s,;"<>()\[\]]+/)) { const e = t.trim(); if (e.includes("@") && !seen.has(e.toLowerCase())) { seen.add(e.toLowerCase()); out.push(e); } } return out; };
+async function renderOutreach() {
+  const main = $("#main"), d = await api("/api/admin/outreach");
+  const a = d.api, w = a.week, t = d.totals;
+  const when = (s) => (s ? esc(String(s).slice(0, 16)) + " UTC" : "never");
+  const apiCard = `<article class="ucard ${a.configured ? "u-ok" : "u-warning"}" aria-label="API health"><div class="uh"><h3>API health</h3><span class="tag ${a.configured ? "ok" : "bad"}">${a.configured ? "Key set" : "No key: API is off"}</span></div>
+    <p class="meta" style="margin:8px 0 0">Last check: <b>${when(a.lastCheckAt)}</b>${a.lastCheck ? ` (${fmt(a.lastCheck.emails)} addresses: ${fmt(a.lastCheck.clear)} clear, ${fmt(a.lastCheck.registered + a.lastCheck.listing + a.lastCheck.review + a.lastCheck.suppressed)} not)` : ""}</p>
+    <p class="meta" style="margin:4px 0 0">Last 7 days: ${fmt(w.calls)} calls, ${fmt(w.emails)} addresses: ${fmt(w.clear)} clear, ${fmt(w.registered)} registered, ${fmt(w.listing)} listing, ${fmt(w.review)} review, ${fmt(w.suppressed)} suppressed.</p>
+    <p class="meta" style="margin:4px 0 0">Last failure: ${when(a.lastFailureAt)}. ${a.configured ? "" : "Set the OUTREACH_API_KEY secret (docs/CHECKLIST.md) to turn it on."}</p></article>`;
+  const supRows = d.suppression.last.length ? d.suppression.last.map((x) => `<tr><td><code>${esc(x.prefix)}</code></td><td>${esc(x.reason)}</td><td>${esc(x.source)}</td><td>${esc(x.date)}</td></tr>`).join("") : `<tr><td colspan="4" class="meta">Nothing on the list yet.</td></tr>`;
+  const resRows = d.results.map((c) => `<tr><td>${esc(c.segment.replace("_", " "))}</td><td>${c.step === 0 ? "Original" : "Follow-up " + c.step}</td><td>${fmt(c.sent)}</td><td>${fmt(c.replies)}</td><td>${fmt(c.bounces)}</td><td>${fmt(c.complaints)}</td><td>${fmt(c.unsubscribes)}</td><td>${fmt(c.registered)}</td><td>${fmt(c.listed)}</td></tr>`).join("");
+  main.innerHTML = `<p class="meta" style="margin:0 0 12px">Grok checks the app before every send through a narrow, key-protected API that returns only a status word. Nothing here shows a name or an address, and nothing you paste below is stored.</p>
+    <div class="ugrid">${apiCard}
+      <article class="ucard u-ok" aria-label="Suppression list"><div class="uh"><h3>Do-not-contact list</h3><span class="tag">${fmt(d.suppression.count)} hashed</span></div><p class="meta" style="margin:8px 0 0">One-way hashes only. Added by Grok (replies, bounces, complaints, unsubscribes), by the app (any marketing unsubscribe, deleted accounts) or by hand.</p></article></div>
+    <h2 class="dh">Reconcile a sent log</h2>
+    <p class="meta" style="margin:0 0 8px">Paste up to 500 addresses (one per line, or a whole export: any text with addresses in it) or choose a .csv or .txt file. You get counts by status and a CSV for your records. Computed now, not stored.</p>
+    <label for="orlog" class="meta">Addresses</label><textarea id="orlog" rows="6" style="width:100%;box-sizing:border-box;font:inherit;background:transparent;color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:10px" spellcheck="false" autocomplete="off"></textarea>
+    <p style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0"><button type="button" class="btn ice" id="orrun">Check these addresses</button><label class="btn ghost" for="orfile" style="cursor:pointer">Choose a file</label><input type="file" id="orfile" accept=".csv,.txt,text/plain,text/csv" hidden><span class="meta" id="ornote" role="status"></span></p>
+    <div id="orout"></div>
+    <h2 class="dh">Results by segment and step</h2>
+    <div style="overflow-x:auto"><table style="width:100%;min-width:640px"><caption class="meta" style="text-align:left;padding:0 0 6px">Counted from what Grok reported. “Registered” and “Listed” are people who created an account or a listing after being emailed, credited to the latest step sent before that (not opens).${d.capped ? " Some very large tables were capped." : ""}</caption>
+      <thead><tr><th scope="col">Segment</th><th scope="col">Step</th><th scope="col">Sent</th><th scope="col">Replies</th><th scope="col">Bounces</th><th scope="col">Complaints</th><th scope="col">Unsubscribes</th><th scope="col">Registered after</th><th scope="col">Listed after</th></tr></thead>
+      <tbody>${resRows}<tr><th scope="row" colspan="2">All</th><td><b>${fmt(t.sent)}</b></td><td><b>${fmt(t.replies)}</b></td><td><b>${fmt(t.bounces)}</b></td><td><b>${fmt(t.complaints)}</b></td><td><b>${fmt(t.unsubscribes)}</b></td><td><b>${fmt(t.registered)}</b></td><td><b>${fmt(t.listed)}</b></td></tr></tbody></table></div>
+    <h2 class="dh">Last 20 on the do-not-contact list</h2>
+    <div style="overflow-x:auto"><table style="width:100%;min-width:420px"><thead><tr><th scope="col">Hash (first 8)</th><th scope="col">Reason</th><th scope="col">Source</th><th scope="col">Date</th></tr></thead><tbody>${supRows}</tbody></table></div>`;
+  let list = [];
+  const note = $("#ornote"), out = $("#orout");
+  $("#orfile").onchange = async (e) => { const f = e.target.files[0]; e.target.value = ""; if (!f) return; if (f.size > 2e6) { note.textContent = "That file is too big."; return; } $("#orlog").value = await f.text(); note.textContent = `${fmt(parseEmails($("#orlog").value).length)} addresses found.`; };
+  $("#orrun").onclick = async (e) => {
+    list = parseEmails($("#orlog").value); out.innerHTML = "";
+    if (!list.length) { note.textContent = "Paste some addresses first."; return; }
+    if (list.length > 500) { note.textContent = `That is ${fmt(list.length)} addresses; the limit is 500. Split the log and run it twice.`; return; }
+    const b = e.target; b.disabled = true; note.textContent = "Checking…";
+    try {
+      const r = await api("/api/admin/outreach", { method: "POST", body: JSON.stringify({ action: "reconcile", emails: list }) });
+      note.textContent = "";
+      out.innerHTML = `<div class="ugrid" style="margin:8px 0">${Object.keys(ORSTATUS).map((k) => `<article class="ucard"><div class="uh"><h3>${ORSTATUS[k]}</h3><span class="tag ${ORTAG[k]}">${k === "clear" ? "send ok" : "do not send"}</span></div><p class="unum"><b>${fmt(r.counts[k])}</b> <span class="meta">of ${fmt(r.total)}</span></p></article>`).join("")}</div>
+        <p style="margin:6px 0"><button type="button" class="btn ghost" id="orcsv">Download CSV</button> <span class="meta">One row per address: address, status, reasons. Review means the website domain matches a registered installer, organizer or account: check by hand.</span></p>`;
+      $("#orcsv").onclick = () => {
+        const csv = "email,status,reasons\r\n" + r.rows.map((x) => [list[x.i], x.status, x.reasons.join(" ")].map(csvCell).join(",")).join("\r\n") + "\r\n";
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "outreach-reconcile.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      };
+    } catch (x) { note.textContent = x.message; } finally { b.disabled = false; }
+  };
 }
 
 /* ---------- reports: "Something wrong? Tell us" from visitors ---------- */

@@ -305,3 +305,19 @@ test("the quote checkbox names the recipients and data on the contest page and t
   assert.match(iq, /INSERT INTO installer_leads[\s\S]*name, user\.email, phone, note/);
   assert.ok(!iq.includes("contact_email") && !iq.includes("contest_quote_sent"), "installer-page requests do not go to a contest organizer");
 });
+
+// ---------------------------------------------------------------- (h) outreach hashes and the monthly update (behavior is in outreach.test.mjs)
+test("the policy describes the outreach do-not-contact list (hash only) and the separate monthly-update opt-in, and retention names both", () => {
+  const t = policy.replace(/\s+/g, " ");
+  for (const must of ["public sources", "one-way hash", "do-not-contact list", "monthly update", "never ticked for you", "sponsored or affiliate", "monthly update opt-in:", "hashed outreach counts are deleted after 24 months"]) assert.ok(t.includes(must), must);
+});
+test("deleting an account removes the newsletter opt-in and leaves only a hash on the suppression list", async () => {
+  const { DB, raw } = makeDB();
+  raw.prepare("INSERT INTO users (id,email,name) VALUES ('uN','nl@x.com','N')").run();
+  raw.prepare("INSERT INTO newsletter_optins (user_id,email,role,opted_in_at,token) VALUES ('uN','nl@x.com','host',datetime('now'),'" + "a".repeat(36) + "')").run();
+  await deleteAccount({ DB, PHOTOS }, "uN", "nl@x.com");
+  assert.equal(n(raw, "SELECT 1 FROM newsletter_optins"), 0);
+  const s = q(raw, "SELECT * FROM outreach_suppressions");
+  assert.equal(s.length, 1); assert.match(s[0].email_hash, /^[0-9a-f]{64}$/);
+  assert.ok(!JSON.stringify(s).includes("nl@x.com"));
+});

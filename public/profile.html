@@ -19,7 +19,7 @@
 import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261107p";
 import { mountShell } from "/appshell.js?v=20261110e";
 import { homeForm, eventForm, openFormWindow } from "/forms.js?v=20261106zb";
-import { esc, input, select, attachAddress, OPT } from "/addflow.js?v=20261110d";
+import { esc, input, select, attachAddress, OPT } from "/addflow.js?v=20261111a";
 import { CITY } from "/cities.js?v=20261107a";
 const shell = mountShell({ page: "prof", title: "Your profile", active: (location.hash || "").slice(1) || "drafts", items: [{ k: "drafts", label: "Drafts", icon: "file" }, { k: "contests", label: "Contests", icon: "trophy" }, { k: "displays", label: "Displays", icon: "home" }, { k: "events", label: "Events", icon: "cal" }, { k: "badges", label: "Badges", icon: "star", hidden: true }, { k: "account", label: "Account", icon: "user" }, { k: "tutorials", label: "Tutorials", icon: "play", href: "/tutorials" }], onPick: (k) => { tab = k; history.replaceState(null, "", "#" + k); render(); window.scrollTo(0, 0); } });
 const $ = (q) => document.querySelector(q), app = $("#app"), cities = Object.keys(CITY).sort();
@@ -27,7 +27,7 @@ const KEYS = { house: "scl-house-draft", event: "scl-event-draft", contest: "scl
 const when = (s) => { try { return new Date(String(s).replace(" ", "T") + "Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
 const stat = { approved: ["live", "Live"], published: ["live", "Live"], live: ["live", "Live"], pending: ["warn", "In review"], declined: ["", "Declined"], closed: ["", "Ended"] };
 const dot = (s, over) => { const [c, l] = over || stat[s] || ["", s]; return `<span class="dot ${c}"></span>${esc(l)}`; };
-let O = null, BD = { badges: [], master: true, off: {} }, tab = (location.hash || "").slice(1) || "drafts";
+let O = null, NL = { optin: null, config: null }, BD = { badges: [], master: true, off: {} }, tab = (location.hash || "").slice(1) || "drafts";
 
 // After Google sign-in comes back with ?save=<kind>, move the draft kept on this device into the account
 async function syncLocal() {
@@ -80,6 +80,24 @@ function eventRow(e) {
 }
 const list = (rows, empty) => (rows.length ? `<div class="list">${rows.join("")}</div>` : `<p class="muted pempty">${empty}</p>`);
 
+// Monthly update: a separate, optional permission. The box is never checked for anyone who has not chosen it. Turning it on needs a role; topics are optional.
+function nlTopics(role, picked) {
+  const r = NL.config && NL.config.roles.find((x) => x.id === role);
+  return r ? r.topics.map((t) => `<label class="chk"><input type="checkbox" data-nl-topic="${esc(t.id)}" ${picked.includes(t.id) ? "checked" : ""}> <span>${esc(t.label)}</span></label>`).join("") : '<p class="muted small">Pick one above to see the topics.</p>';
+}
+function nlSection() {
+  if (!NL.config) return "";
+  const o = NL.optin, on = !!(o && o.active), role = on ? o.role : "";
+  return `<section id="nlsec" style="margin-top:12px"><h2>Monthly update</h2><p class="muted small" style="margin-top:-6px">One short email a month with seasonal recommendations. It is separate from your account and your listings, and it stays off unless you turn it on.</p>
+    <label class="chk"><input type="checkbox" data-nl-on ${on ? "checked" : ""}> <span>Email me a monthly update with seasonal recommendations</span></label>
+    <div id="nlopts" style="display:grid;gap:10px;margin:12px 0 0 34px" ${on ? "" : "hidden"}>
+      <fieldset style="border:0;margin:0;padding:0;display:grid;gap:4px"><legend class="small" style="padding:0;font-weight:600">I am</legend>${NL.config.roles.map((r) => `<label class="chk"><input type="radio" name="nlrole" value="${esc(r.id)}" ${role === r.id ? "checked" : ""}> <span>${esc(r.label)}</span></label>`).join("")}</fieldset>
+      <fieldset style="border:0;margin:0;padding:0;display:grid;gap:4px"><legend class="small" style="padding:0;font-weight:600">I would like <span class="muted" style="font-weight:400">(optional)</span></legend><div id="nltopics" style="display:grid;gap:4px">${nlTopics(role, on ? o.topics : [])}</div></fieldset>
+      <p class="err" id="nlerr" role="alert" hidden></p>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn" id="nlsave" type="button">${on ? "Save" : "Turn on the monthly update"}</button><span class="muted small" id="nlok" role="status"></span></div>
+    </div>
+    <p class="muted small" style="margin-top:10px">${esc(NL.config.disclosure)} Unsubscribe here at any time, or from the link in every email.</p></section>`;
+}
 function panel() {
   const o = O, u = o.user;
   if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}</span></div><div class="acts"><a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
@@ -103,8 +121,9 @@ function panel() {
   return head("Account") + `<p class="muted" style="margin-top:-8px">Your name and address are optional. We use them to fill in forms for you; they are never shown publicly.</p>
     <form id="pform" class="main" style="padding:0;gap:18px;max-width:none" novalidate>${input(pf, "name", { label: "Name", opt: true, max: 80, ac: "name", ph: "Your name" })}${select(pf, "city", cities.map((c) => [c, c]), { label: `City ${OPT}`, blank: "Choose a city", ac: "address-level2" })}${input(pf, "street", { label: "Street address", opt: true, max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}${input(pf, "zip", { label: "ZIP", opt: true, max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}
     <p class="err" id="perr" role="alert" hidden></p><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn" type="submit">Save</button><span class="muted small" id="pok" role="status"></span></div></form>
+    ${nlSection()}
     <div style="margin-top:8px"><button class="btn out" id="so" type="button">Sign out</button></div>
-    <section style="margin-top:12px"><h2>Delete my account</h2><p class="muted small" id="delmsg">Deletes your account, saved drafts, profile picture, contest entries and votes, closes contests you run, and removes your email from homes and events you posted. This can't be undone.</p><p class="err" id="delerr" role="alert" hidden></p><div style="margin-top:10px"><button class="btn out" id="delacct" type="button" style="color:var(--bad);border-color:var(--bad)">Delete my account</button></div></section><p class="small muted">Homes and events are matched by the email you typed on the form.</p>`;
+    <section style="margin-top:12px"><h2>Delete my account</h2><p class="muted small" id="delmsg">Deletes your account, saved drafts, profile picture, contest entries and votes, closes contests you run, and removes your email from homes and events you posted. It also ends the monthly update, and your address goes on our do-not-contact list as a one-way hash (not the address itself) so we do not contact you again. This can't be undone.</p><p class="err" id="delerr" role="alert" hidden></p><div style="margin-top:10px"><button class="btn out" id="delacct" type="button" style="color:var(--bad);border-color:var(--bad)">Delete my account</button></div></section><p class="small muted">Homes and events are matched by the email you typed on the form.</p>`;
 }
 
 function render() {
@@ -148,6 +167,22 @@ function wire() {
       const cp = row.querySelector("[data-ecopy]"); if (cp) cp.onclick = async () => { if (!cp.dataset.sure) { cp.dataset.sure = "1"; cp.textContent = "Tap again: copy to next year"; return; } try { await post("/api/me/events/" + row.dataset.ev, { action: "copy" }); toast("Copied. Edit the new dates when you know them."); load(); } catch (x) { toast(x.message); } };
     }
   });
+  const nlOn = app.querySelector("[data-nl-on]");
+  if (nlOn) {
+    const box = $("#nlopts"), er = $("#nlerr"), ok = $("#nlok"), picked = () => [...app.querySelectorAll("[data-nl-topic]:checked")].map((c) => c.dataset.nlTopic), roleNow = () => { const r = app.querySelector("[name=nlrole]:checked"); return r ? r.value : ""; };
+    const call = async (body) => { const r = await fetch("/api/me/newsletter", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Couldn't save that. Try again."); NL.optin = j.optin; return j; };
+    nlOn.onchange = async () => {
+      er.hidden = true; ok.textContent = "";
+      if (nlOn.checked) { box.hidden = false; const f = app.querySelector("[name=nlrole]"); if (f) f.focus(); return; } // nothing is saved until they choose a role and press the button
+      if (!(NL.optin && NL.optin.active)) { box.hidden = true; return; }
+      try { await call({ optin: false }); render(); const s = $("#nlsec"); if (s) s.scrollIntoView({ block: "center" }); const m = $("#nlok"); if (m) m.textContent = "Unsubscribed."; } catch (x) { nlOn.checked = true; er.textContent = x.message; er.hidden = false; }
+    };
+    app.querySelectorAll("[name=nlrole]").forEach((r) => (r.onchange = () => { $("#nltopics").innerHTML = nlTopics(r.value, picked().filter((t) => NL.config.roles.find((x) => x.id === r.value).topics.some((y) => y.id === t))); }));
+    $("#nlsave").onclick = async () => {
+      er.hidden = true; ok.textContent = ""; if (!roleNow()) { er.textContent = "Choose whether you are an installer, an event or contest host, or a family."; er.hidden = false; return; }
+      try { const was = NL.optin && NL.optin.active; await call({ optin: true, role: roleNow(), topics: picked(), method: "profile checkbox", source_page: "profile" }); render(); const m = $("#nlok"); if (m) m.textContent = was ? "Saved." : "You are signed up. You can turn it off here any time."; } catch (x) { er.textContent = x.message; er.hidden = false; }
+    };
+  }
   const so = $("#so"); if (so) so.onclick = async () => { await signOut(); location.href = "/"; };
   const pf = $("#pform"); if (pf) {
     attachAddress(pf, { getCity: () => $("#f-city").value, onPick: (s) => { $("#f-street").value = s.street; if (cities.includes(s.city)) $("#f-city").value = s.city; if (/^\d{5}/.test(s.zip)) $("#f-zip").value = s.zip.slice(0, 5); } });
@@ -181,7 +216,8 @@ async function load() {
   await syncLocal();
   const r = await fetch("/api/me/overview", { cache: "no-store" }); if (!r.ok) { app.innerHTML = `<h1>Your profile</h1><p class="err">Couldn't load your profile. Try again in a moment.</p>`; return; }
   BD = await fetch("/api/me/badges", { cache: "no-store" }).then((x) => (x.ok ? x.json() : BD)).catch(() => BD);
-  O = await r.json(); O.user = { ...O.user, street: i.user.street || "", city: i.user.city || "", zip: i.user.zip || "", name: i.user.name || O.user.name || "" };
+  NL = await fetch("/api/me/newsletter", { cache: "no-store" }).then((x) => (x.ok ? x.json() : NL)).catch(() => NL);
+  O = await r.json(); O.user ={ ...O.user, street: i.user.street || "", city: i.user.city || "", zip: i.user.zip || "", name: i.user.name || O.user.name || "" };
   render();
 }
 load();
