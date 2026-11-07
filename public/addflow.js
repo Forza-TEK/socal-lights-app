@@ -113,7 +113,7 @@ export function run(o) {
     const secs = [...new Set(st.map((x) => x.sec))], cur = secs.indexOf(s.sec);
     const segs = secs.map((sc, k) => { const inSec = st.filter((x) => x.sec === sc), idx = inSec.indexOf(s), f = k < cur ? 1 : k > cur ? 0 : (idx + 1) / inSec.length; return `<div class="seg" aria-hidden="true"><i style="width:${f * 100}%"></i></div>`; }).join("");
     const last = !!s.submit;
-    root.innerHTML = `${hdr()}<main class="main"><h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<p class="err" id="err" role="alert" ${S.err ? "" : "hidden"}>${esc(S.err)}</p></main>
+    root.innerHTML = `${hdr()}<main class="main"><h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<p class="err" id="err" role="alert" ${S.err ? "" : "hidden"}>${esc(S.err)}</p></main>${o.preview ? `<aside class="pvcard" id="pvcard" aria-label="Preview of your listing"><span class="pvl">Preview</span><div id="pvbody">${o.preview(d)}</div><p class="pvn">This is how it will look to people. It updates as you type.</p></aside>` : ""}
     <div class="bar" role="navigation" aria-label="Steps"><div class="segs" role="progressbar" aria-label="Progress: ${esc(s.sec)}">${segs}</div><div class="nav"><button class="link" type="button" data-a="back">${S.i === 0 ? "Cancel" : "Back"}</button><button class="btn" type="button" data-a="next" id="nextbtn">${esc(T(s.cta) || (last ? "Submit" : "Next"))}</button></div></div>`;
     if (focus) { const f = root.querySelector(".in,[data-tile]"); if (f && f.classList.contains("in")) f.focus({ preventScroll: true }); window.scrollTo(0, 0); }
     if (o.after) o.after(s, d);
@@ -122,6 +122,7 @@ export function run(o) {
   const flagField = () => { unflag(); const f = [...root.querySelectorAll("input[data-k],textarea[data-k],select[data-k]")].find((x) => x.type !== "checkbox" && x.type !== "radio" && x.type !== "file" && !String(x.value || "").trim()); if (f) { f.setAttribute("aria-invalid", "true"); f.setAttribute("aria-describedby", "err"); } };
   const unflag = () => root.querySelectorAll("[aria-describedby=\"err\"][data-k]").forEach((x) => { x.removeAttribute("aria-invalid"); x.removeAttribute("aria-describedby"); });
   const showErr = (t) => { S.err = t; const e = $("#err"); if (e) { e.textContent = t; e.hidden = !t; if (t) e.scrollIntoView({ block: "center", behavior: "smooth" }); } };
+  const pv = () => { const b = $("#pvbody"); if (b && o.preview) b.innerHTML = o.preview(d); };
   const api = { next: () => next(), draw: () => draw(), err: showErr, finish(html) { S.done = html; if (d._draftId) fetch("/api/drafts/" + d._draftId, { method: "DELETE" }).catch(() => {}); if (o.persist) try { localStorage.removeItem(o.persist); } catch {} draw(); }, goto(id) { const i = steps().findIndex((x) => x.id === id); if (i > -1) { S.i = i; S.err = ""; save(); draw(true); } }, data: d, step: () => steps()[S.i] };
   async function next() {
     if (S.busy) return;
@@ -167,7 +168,7 @@ export function run(o) {
   // typing, choosing, clicking
   const onValue = (t) => {
     const k = t.dataset.k; dirty = true; d[k] = t.type === "checkbox" ? t.checked : t.value; if (t.getAttribute("aria-invalid")) { t.removeAttribute("aria-invalid"); t.removeAttribute("aria-describedby"); }
-    save(); if (o.onInput) o.onInput(k, d, api);
+    save(); if (o.onInput) o.onInput(k, d, api); pv();
     const s = steps()[S.i]; if (s && s.redraw && (t.type === "checkbox" || t.tagName === "SELECT")) { draw(); }
   };
   document.addEventListener("input", (e) => { if (root.contains(e.target) && e.target.matches("[data-k]") && e.target.type !== "checkbox" && e.target.tagName !== "SELECT") onValue(e.target); });
@@ -183,10 +184,10 @@ export function run(o) {
       const [k, ...v] = t.dataset.tile.split("|"); dirty = true; d[k] = v.join("|"); save();
       const s = steps()[S.i];
       if (s && s.redraw) draw(); else root.querySelectorAll(`[data-tile^="${k}|"]`).forEach((x) => x.setAttribute("aria-pressed", x === t));
-      if (o.onInput) o.onInput(k, d, api); return;
+      if (o.onInput) o.onInput(k, d, api); pv(); return;
     }
     if (t.dataset.goto) return api.goto(t.dataset.goto);
-    if (t.dataset.rm) { const i = +t.dataset.rm; URL.revokeObjectURL(d.photos[i].url); d.photos.splice(i, 1); $("#thumbs").innerHTML = thumbsHtml(d); return; }
+    if (t.dataset.rm) { const i = +t.dataset.rm; URL.revokeObjectURL(d.photos[i].url); d.photos.splice(i, 1); $("#thumbs").innerHTML = thumbsHtml(d); pv(); return; }
     if (t.dataset.copy) { const old = t.textContent; navigator.clipboard.writeText(t.dataset.copy).then(() => (t.textContent = "Copied"), () => (t.textContent = "Select it")); setTimeout(() => (t.textContent = old), 1500); return; }
     const [a, p] = (t.dataset.a || "").split(/:(.*)/s);
     if (a === "next") return next(); if (a === "back") return back(); if (a === "saveexit") return saveExit();
@@ -201,7 +202,7 @@ export function run(o) {
     for (const f of list) {
       if (d.photos.length >= 8) { say("That's the limit of 8 photos."); break; }
       if (!f.type.startsWith("image/")) { say("Skipped a file that isn't a photo."); continue; }
-      try { const b = await shrink(f); dirty = true; d.photos.push({ blob: b, url: URL.createObjectURL(b) }); } catch { say("One photo couldn't be read. Try a JPG or PNG."); }
+      try { const b = await shrink(f); dirty = true; d.photos.push({ blob: b, url: URL.createObjectURL(b) }); pv(); } catch { say("One photo couldn't be read. Try a JPG or PNG."); }
       const th = $("#thumbs"); if (th) th.innerHTML = thumbsHtml(d);
     }
   }
@@ -221,4 +222,10 @@ export function run(o) {
     draw(true);
   })();
   return api;
+}
+
+// A listing card for the live preview beside the add forms (empty fields show a greyed example, so people see what is still missing)
+export function pvCard({ photo = "", when = "", title = "", ph = "Your title", lines = [], tags = [] }) {
+  const ln = lines.filter((l) => l && l.t);
+  return `<article class="pvc"><div class="pvph">${photo ? `<img src="${esc(photo)}" alt="">` : `<span aria-hidden="true">✨</span>`}${when ? `<i>${esc(when)}</i>` : ""}</div><div class="pvb"><p class="pvh${title ? "" : " empty"}">${esc(title || ph)}</p>${ln.map((l) => `<p class="${l.e ? "empty" : ""}">${esc(l.t)}</p>`).join("")}${tags.length ? `<div class="pvt">${tags.map((t) => `<b>${esc(t)}</b>`).join("")}</div>` : ""}</div></article>`;
 }

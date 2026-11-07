@@ -8,13 +8,13 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261108b">
+<link rel="stylesheet" href="/addflow.css?v=20261110b">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, OPT, today } from "/addflow.js?v=20261107b";
+import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, OPT, today, pvCard } from "/addflow.js?v=20261110b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
 import { normPhone, PHONE_HELP } from "/norm.js?v=20261102b";
 import { me, signIn } from "/auth.js?v=20261107p";
@@ -60,7 +60,7 @@ const steps = [
     body: (x) => `<div class="tiles">${tile(x, "kind", "homeowner", "A homeowner", "It's my house, and I decorated it.")}${tile(x, "kind", "installer", "A professional installer", "I installed this display for a customer, or it's a showcase of my work.")}</div>` },
   { id: "name", sec: "About you", title: (x) => (pro(x) ? "What's your business called?" : "What name should we show?"),
     help: (x) => (pro(x) ? "Families will see this with a way to ask for a quote." : "For example, The Garcia family. It appears as “Posted by”."),
-    body: (x) => { if (pro(x) && x.mine && !x._pre) { Object.assign(x, { biz: x.mine.name, web: x.mine.web || "", phone: x.mine.phone || "", area: x.mine.area || "", _pre: true }); } return input(x, "biz", { max: 80, ph: pro(x) ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family", ac: "name" }); },
+    body: (x) => { if (pro(x) && x.mine && !x._pre) { Object.assign(x, { biz: x.mine.name, web: x.mine.web || "", phone: x.mine.phone || "", area: x.mine.area || "", _pre: true }); } return input(x, "biz", { max: 80, ph: pro(x) ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family", ac: "name", aria: pro(x) ? "Company name" : "Your name or family name" }); },
     check: (x) => (x.biz.trim().length < 2 ? "Add the name to show." : "") },
   { id: "installer", sec: "About you", skip: (x) => pro(x), redraw: true, title: "Did a professional install your lights?",
     help: "If a company installed them, tell us. Their name shows on your listing and links to their profile. This is optional.",
@@ -96,7 +96,8 @@ const steps = [
       api.finish(j.status === "published" ? `<h1>You're on the map!</h1><p class="help">Your display is live now. The site owner may look it over and email you if anything needs fixing.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/#h-${esc(j.id)}">See it on the map</a><a class="btn out" href="/add-house">Add another</a></div>` : `<h1>Thanks! You're in review.</h1><p class="help">The site owner will look it over and publish it to the map. They may email you with questions.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/">Back to the map</a><a class="btn out" href="/add-house">Add another</a></div>`);
     } },
 ];
-run({ steps, data: d, persist: "scl-house-draft", account: { kind: "house", title: (x) => x.title || x.biz }, noPersist: ["photos", "email"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
+const preview = (x) => pvCard({ photo: (x.photos && x.photos[0] && x.photos[0].url) || "", title: x.kind === "installer" ? (x.biz || x.title) : x.title, ph: "Your display's name", when: "Home display", lines: [{ t: [x.city, SEASONS[x.season] ? SEASONS[x.season].label : ""].filter(Boolean).join(" \u00b7 ") || "Your city", e: !x.city }, { t: x.desc ? (x.desc.length > 90 ? x.desc.slice(0, 90) + "\u2026" : x.desc) : "A line about your lights", e: !x.desc }], tags: [x.kind === "installer" ? "Professional installer" : "Homeowner"] });
+run({ preview, steps, data: d, persist: "scl-house-draft", account: { kind: "house", title: (x) => x.title || x.biz }, noPersist: ["photos", "email"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
 </script>
 <script src="/footer.js?v=20261106z" defer></script>
 </body>

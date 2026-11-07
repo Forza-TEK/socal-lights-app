@@ -8,13 +8,13 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261108b">
+<link rel="stylesheet" href="/addflow.css?v=20261110b">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261107b";
+import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard } from "/addflow.js?v=20261110b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
 import { CITY } from "/cities.js?v=20261107a";
 import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
@@ -85,7 +85,9 @@ const steps = [
       api.finish(`<h1>${esc(j.message)}</h1><p class="help">${j.status === "published" ? "It's on the map now." : "It is on the map shortly."}</p><div style="display:flex;gap:12px;flex-wrap:wrap">${j.status === "published" || j.status === "duplicate" ? '<a class="btn" href="/">See it on the map</a>' : ""}${IN_APP ? "" : '<a class="btn out" href="/feature">Feature your event</a>'}<a class="btn out" href="/add-event">Add another event</a></div>`);
     } },
 ];
-run({ steps, data: d, persist: "scl-event-draft", account: { kind: "event", title: (x) => x.name }, noPersist: ["email", "plan"], season: (x) => x.season, addr: { cities },
+const fmtD = (x) => { if (!x) return ""; const [y, m, dd] = x.split("-").map(Number); return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1] + " " + dd; };
+const preview = (x) => pvCard({ title: x.name, ph: "Your event name", when: x.start ? (x.end && x.end !== x.start ? fmtD(x.start) + " to " + fmtD(x.end) : fmtD(x.start)) : "", lines: [{ t: [x.venue, x.city].filter(Boolean).join(", ") || "Venue and city", e: !x.venue && !x.city }, { t: x.hours || "", e: false }], tags: [x.free === "yes" ? "Free" : (x.price || "Price"), "Expected"] });
+run({ preview, steps, data: d, persist: "scl-event-draft", account: { kind: "event", title: (x) => x.name }, noPersist: ["email", "plan"], season: (x) => x.season, addr: { cities },
   onInput: (k, x) => { if (k === "start" && (!x.end || x.end < x.start)) { x.end = x.start; const e = document.getElementById("f-end"); if (e) e.value = x.end; } if (k === "season") { x.type = ""; const t = document.getElementById("f-type"); if (t) t.innerHTML = '<option value="">Choose a type</option>' + Object.entries(SEASONS[x.season].types).map(([a, l]) => `<option value="${esc(a)}">${esc(l)}</option>`).join(""); } },
   actions: { skipurl(_, a) { d.url = ""; a.next(); } },
   after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });

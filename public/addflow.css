@@ -121,3 +121,15 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .pp-grid{display:grid;gap:12px;grid-template-columns:1fr}@media(min-width:760px){.pp-grid{grid-template-columns:repeat(2,1fr)}}
 .pp-card{display:flex;flex-direction:column;background:var(--tile);border:1px solid var(--line);border-radius:14px;padding:16px}.pp-card h3{margin:0 0 6px;font-size:18px}.pp-price b{font-size:26px;letter-spacing:-.02em}.pp-price small{color:var(--muted);font-size:14px}
 .pp-inc{margin:8px 0 4px!important;color:var(--muted);font-size:14px}.pp-card ul{margin:0 0 14px;padding-left:20px;display:grid;gap:4px;color:var(--muted);font-size:15px}.pp-card .pp-choose{margin-top:auto;align-self:flex-start}
+
+/* Live preview beside the add forms (wide screens only): fixed to the right of the 640px form */
+.pvcard{display:none}
+@media(min-width:1240px){.pvcard{display:block;position:fixed;top:132px;left:calc(50% + 370px);width:300px;z-index:1}}
+.pvcard .pvl{display:inline-block;margin:0 0 10px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pvcard .pvn{margin:10px 2px 0;font-size:13px;color:var(--muted)}
+.pvc{background:var(--bg);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 6px 22px rgba(20,22,27,.10)}:root[data-theme="dark"] .pvc{background:var(--tile)}
+.pvph{position:relative;height:150px;background:var(--tile);display:grid;place-items:center;font-size:34px}.pvph img{width:100%;height:100%;object-fit:cover;display:block}
+.pvph i{position:absolute;left:10px;top:10px;font-style:normal;font-size:12px;font-weight:800;background:var(--bg);color:var(--ink);padding:3px 10px;border-radius:999px}
+.pvb{padding:12px 14px 14px;display:grid;gap:3px}.pvb .pvh{margin:0;font-size:17px;font-weight:800;line-height:1.25;color:var(--ink)}.pvb p{margin:0;font-size:14px;color:var(--muted)}
+.pvb .empty{color:var(--muted);font-style:italic;font-weight:500}.pvb .pvh.empty{color:var(--muted);font-weight:700}
+.pvt{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.pvt b{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--tile);color:var(--muted)}

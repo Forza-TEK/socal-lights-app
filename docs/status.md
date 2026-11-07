@@ -681,3 +681,7 @@ Re-recorded `feature` (four event plans, dates and total, stops before Stripe), 
 - Privacy and Terms: `public/toc.js` builds an "On this page" list from the page's own headings (sticky on the left on desktop, above the text on a phone); the text is a 72-character column. Without scripts the pages are the plain text as before. Section links such as `/terms#paid` still work.
 - Event page (`/e/<id>`) and Installer page (`/installer/<slug>`): photo on the left (sticky), tags, title, details and buttons on the right on desktop; stacked on phones. The weekly-email box, related events and footer stay full width below. Both use `page({ wide: true })`.
 - Remaining from the plan: live preview on the add forms; one shared header and footer.
+
+## 2026-11-10 (wide layout, step 4: live preview on the add forms)
+- Add event, Add a display and Create a contest show a Preview card to the right of the 640px form on screens at least 1240px wide (`preview` option of `run()` in `public/addflow.js`, `pvCard()` builds the card, styles in `addflow.css`). It updates as people type or pick, empty fields show a greyed example, and the first photo shows on the display card. Hidden on narrower screens, so phones are unchanged.
+- Fixed in passing: the Add a display name field had no accessible label.
