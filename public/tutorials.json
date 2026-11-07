@@ -366,7 +366,7 @@
         {
           "id": "sponsors",
           "title": "Add sponsors and logos",
-          "desc": "Show sponsors by tier on the contest page.",
+          "desc": "Record a sponsor and show it on the contest page.",
           "url": "/tutorials/sponsors-add.mp4",
           "length": "1:58",
           "captions": "/tutorials/sponsors-add.vtt",
@@ -377,6 +377,13 @@
             "captions": "/tutorials/sponsors-add-mobile.vtt",
             "length": "1:58"
           }
+        },
+        {
+          "id": "sponsor-invite",
+          "title": "Invite a sponsor to your contest",
+          "desc": "Share one private link, then review and approve the request.",
+          "url": "",
+          "length": ""
         },
         {
           "id": "installer",
