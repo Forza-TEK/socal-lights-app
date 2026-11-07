@@ -37,7 +37,14 @@ export const select = (d, k, options, { label = "", blank = "", ac = "" } = {}) 
 export const tile = (d, k, v, title, desc = "", sm = false) =>
   `<button type="button" class="tile${sm ? " sm" : ""}" data-tile="${k}|${esc(v)}" aria-pressed="${String(d[k]) === String(v)}"><b>${title}</b>${desc ? `<span>${desc}</span>` : ""}</button>`;
 export const check = (d, k, text) => `<label class="chk"><input type="checkbox" data-k="${k}" ${d[k] ? "checked" : ""}> <span>${text}</span></label>`;
-export const photoField = (d, { max = 8, help = "" } = {}) =>
+// The optional monthly-update box on the last step of the add forms (only for a signed-in person). Always UNCHECKED, never saved in a draft (the pages list "nl" in noPersist).
+// It is a separate permission from the listing; the choice is sent after the listing was saved (nlSave) and never blocks it.
+export const nlCheck = (x) => `<div class="field nl-opt">${check(x, "nl", `Email me a monthly update with seasonal recommendations <span class="opt-lbl">Optional</span>`)}<p class="small muted" style="margin:2px 0 0">Separate from your listing. You can change the topics or unsubscribe any time. Sponsored or affiliate content will be identified.</p></div>`;
+export async function nlSave(x, role, page) {
+  if (!x.nl) return;
+  try { await fetch("/api/me/newsletter", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ optin: true, role, topics: [], method: "add-listing checkbox", source_page: page }) }); } catch {}
+}
+export const photoField =(d, { max = 8, help = "" } = {}) =>
   `<div class="drop" id="drop"><span>${help || `Up to ${max} photos. The first one is the cover. They shrink on your phone, so uploads are quick.`}</span><label class="btn out sm" for="f-photos" style="margin:0">Choose photos</label><input id="f-photos" data-photos type="file" accept="image/*" multiple hidden></div><div class="thumbs" id="thumbs">${thumbsHtml(d)}</div><p class="err" id="perr" role="alert" hidden></p>`;
 const thumbsHtml = (d) => (d.photos || []).map((p, i) => `<div class="t"><img src="${p.url}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button>${i === 0 ? "<em>COVER</em>" : ""}</div>`).join("");
 export const sumRow = (k, v, goto) => `<div><span>${k}</span><b>${v}</b><button class="link" type="button" data-goto="${goto}">Edit</button></div>`;
