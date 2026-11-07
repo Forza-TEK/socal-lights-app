@@ -32,7 +32,7 @@ export async function onRequestGet(context) {
   const body = `${header("Open the map")}<main><div class="tags"><span class="tag ice">${esc(c.label)}</span><span class="tag">Results locked ${esc(c.at)}</span></div><h1>${esc(c.name)}: results</h1><p class="sub">${esc(c.org)} · ${esc(c.city)}</p>
 ${c.awards.length ? `<h2>Winners</h2><div class="list">${winners}</div>` : ""}<h2>All homes that entered</h2>${n ? `<div class="list">${homes}</div>` : `<div class="note"><p>No homes entered.</p></div>`}
 <div class="foot"><a href="/past">All past results</a><a href="/contests">Contests</a><a href="/">All of Southern California</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></main>`;
-  const html = page({ title, desc, canonical: `${origin}/past/${slug}`, ld, body, origin });
+  const html = page({ title, desc, canonical: `${origin}/past/${slug}`, ld, body, origin, wide: true });
   const res = new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=600, s-maxage=3600" } });
   if (cache) context.waitUntil(cache.put(key, res.clone()));
   return res;

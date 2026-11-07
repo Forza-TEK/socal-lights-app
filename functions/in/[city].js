@@ -39,7 +39,7 @@ export async function onRequestGet(context) {
   const facts = `${conf ? `${conf} confirmed` : "None confirmed yet"}${evs.length - conf ? `, ${evs.length - conf} with expected dates` : ""}. Listings run from ${fmt(first)} to ${fmt(last)}.`;
   const indexable = isIndexable(me);
   const body = `${header("Open the map", "/#city-" + esc(params.city))}<main>${bc.html}<div class="tags"><span class="tag ice">${evs.length} upcoming event${evs.length === 1 ? "" : "s"}</span><span class="tag">${esc(county)} County</span></div><h1>Holiday lights and seasonal events in ${esc(city)}, CA</h1><p class="sub">${esc(desc)} ${esc(facts)}</p><div class="bar"><a class="btn go" href="/#city-${esc(params.city)}">See them all on the map</a>${shareBtn(`${origin}/in/${params.city}`, "Share this page")}</div>${subscribeBox({ city, src: "city", siteKey: env.TURNSTILE_SITE_KEY || "" })}<h2>What's coming up</h2><div class="list">${li}</div>${moreHtml}<div class="foot"><a href="/">All of Southern California</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></main>`;
-  const html = page({ title, desc, canonical: `${origin}/in/${params.city}`, ld: [bc.ld, ...ld], body, origin, noindex: !indexable });
+  const html = page({ title, desc, canonical: `${origin}/in/${params.city}`, ld: [bc.ld, ...ld], body, origin, noindex: !indexable, wide: true });
   const res = new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=600, s-maxage=3600" } });
   if (cache) context.waitUntil(cache.put(key, res.clone()));
   return res;
