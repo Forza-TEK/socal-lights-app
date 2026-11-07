@@ -5,7 +5,7 @@ import { STOCK } from "/stock.js?v=20261107a";
 import { SITE } from "/site-config.js?v=20261107a";
 import "/norm-ui.js?v=20261102b";
 import { me as authMe } from "/auth.js?v=20261107p";
-import "/chrome.js?v=20261110a"; // the account circle opens the same menu as on every other page
+import "/chrome.js?v=20261110b"; // the account circle opens the same menu as on every other page
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261109b";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261109c";
@@ -1327,7 +1327,7 @@ function setTheme(t, manual = true) {
   document.documentElement.dataset.theme = t;
   if (manual) { try { localStorage.setItem("socal-theme", t); localStorage.setItem("socal-theme-until", String(nextSwitch())); } catch {} }
   const night = t === "dark";
-  document.querySelector('meta[name="theme-color"]').content = night ? "#0b0d12" : "#f6f4f0";
+  document.querySelector('meta[name="theme-color"]').content = night ? "#0b0d12" : "#ffffff";
   if (map) map.setStyle(MAP_STYLES[t], { diff: false });
 }
 // A page left open flips at 6 pm / 6 am unless the toggle is overriding it

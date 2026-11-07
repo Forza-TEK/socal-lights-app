@@ -715,3 +715,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Sponsor invite form (/s/<token>): the Message box shows suggested wording in light grey (a placeholder, naming the organizer) so sponsors can tell the organizer they paid; it is not sent unless they type their own.
 
 - Contest page sponsors: logos are bigger on desktop (96px tall, up to 260px wide; presenting sponsors 128px). Test helper addUser now gives test sessions a 10-year expiry: tests that freeze the clock at Nov 6 failed once the real clock passed Nov 7 20:00 UTC (the 1-day test session had expired).
+
+- Day mode: the page background is now white (was warm off-white #f6f4f0) on the map and every page, like the admin page. Dark mode unchanged. Browser theme-colour meta updated to match. Asset ?v= values bumped (styles.css, addflow.css, chrome.js, addflow.js, appshell.js, app.js).

@@ -6,7 +6,7 @@ export const jsonScript = (v) => JSON.stringify(v).replace(/[<>&\u2028\u2029]/g,
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const CSS = `
-:root{--bg:#f6f4f0;--surface:#fff;--surface-2:#f3f1ec;--ink:#14161b;--muted:#646a7a;--line:#e7e3dc;--shadow:0 12px 32px rgba(20,22,27,.10),0 2px 6px rgba(20,22,27,.06);--free:#0b7a52;--free-soft:#dcf5ea;--paid:#b33a08;--paid-soft:#fde7da;--gold:#8a5f00;--gold-soft:#fbefcc;--ice:#2559b8;--ice-soft:#e2ecfb;--season:#c9313b;--on-season:#fff;--focus:#2a5bd7;--f:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:light}
+:root{--bg:#ffffff;--surface:#fff;--surface-2:#f3f1ec;--ink:#14161b;--muted:#646a7a;--line:#e7e3dc;--shadow:0 12px 32px rgba(20,22,27,.10),0 2px 6px rgba(20,22,27,.06);--free:#0b7a52;--free-soft:#dcf5ea;--paid:#b33a08;--paid-soft:#fde7da;--gold:#8a5f00;--gold-soft:#fbefcc;--ice:#2559b8;--ice-soft:#e2ecfb;--season:#c9313b;--on-season:#fff;--focus:#2a5bd7;--f:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:light}
 :root[data-theme=dark]{--bg:#0b0d12;--surface:#161a22;--surface-2:#1f2430;--ink:#f5f3ee;--muted:#9ba1b1;--line:#2a303c;--shadow:0 12px 32px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.35);--free:#3ddc97;--free-soft:#123628;--paid:#ff9a5c;--paid-soft:#3a2216;--gold:#f5c461;--gold-soft:#33291a;--ice:#7fb6ee;--ice-soft:#18273b;--season:#ff6b6b;--on-season:#0b0d12;--focus:#8fb0ff;color-scheme:dark}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--f);-webkit-font-smoothing:antialiased}
@@ -102,7 +102,7 @@ export function hero(slides, fallbackText = "") {
   return `<div class="hero"><div class="track">${s}</div>${many ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">&#8249;</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">&#8250;</button><span class="count">1 / ${slides.length}</span>` : ""}</div>`;
 }
 
-const CHROME = `<script type="module">import { themeBtn, mountAcct } from "/chrome.js?v=20261110a";const t=document.querySelector("[data-theme-slot]");if(t)t.innerHTML=themeBtn();const a=document.querySelector("[data-acct-slot]");if(a)mountAcct(a);</script>`;
+const CHROME = `<script type="module">import { themeBtn, mountAcct } from "/chrome.js?v=20261110b";const t=document.querySelector("[data-theme-slot]");if(t)t.innerHTML=themeBtn();const a=document.querySelector("[data-acct-slot]");if(a)mountAcct(a);</script>`;
 // Wide pages (city lists, past results): one 1160px frame for the header and the content, lists in columns, text lines capped for reading
 export const WIDE = `.top,main{max-width:1160px}.top,main{padding-left:24px;padding-right:24px}@media(min-width:1208px){.top,main{padding-left:0;padding-right:0}}main>p,main>.sub,main h1{max-width:70ch}@media(min-width:900px){main .list{grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:14px}.duo{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px;align-items:start}.duo-l{position:sticky;top:16px}.duo-r>.tags:first-child{margin-top:0}.duo .hero{max-height:560px}}`;
 export function page({ title, desc = "", canonical = "", ld = null, body, noindex = false, origin = "", image = "", ogType = "website", wide = false }) {
