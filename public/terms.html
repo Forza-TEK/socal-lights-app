@@ -14,7 +14,7 @@
 </head>
 <body class="wide">
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
-<main>
+<main id="content">
 <h1>Terms of Use</h1>
 <p class="meta">SoCal Lights (socallights.app), operated by Forza-TEK. Effective November 1, 2026. Updated November 7, 2026. Plain-language terms.</p>
 
@@ -105,8 +105,9 @@
 <p>If we change these terms, we will update the date above. Questions or removal requests: <a href="mailto:info@socallights.app">info@socallights.app</a>. See also our <a href="/privacy">Privacy Policy</a>.</p>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261110c";
-document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+import { mountShell } from "/appshell.js?v=20261110d";
+document.body.classList.add("sh-page");
+mountShell({ page: "legal", title: "Legal", items: [{ href: "/privacy", label: "Privacy Policy", icon: "file" }, { href: "/terms", label: "Terms of Use", icon: "file" }] });
 </script>
 <script src="/toc.js?v=20261110a" defer></script>
 <script src="/footer.js?v=20261110b" defer></script>

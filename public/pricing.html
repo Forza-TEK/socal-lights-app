@@ -15,11 +15,10 @@
 </head>
 <body class="wide">
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
-<main class="wide">
+<main class="wide" id="content">
 <h1>Pricing</h1>
 <p class="lede">Finding lights and events is free, and so is posting them. Paid options only make your listing easier to see. Every paid placement is labelled, and money never changes a contest result.</p>
 
-<div class="ptabs" id="ptabs" role="tablist" aria-label="Pricing for" hidden></div>
 <div class="wgrid" id="p-homeowners" data-panel="homeowners" data-label="Homeowners" style="margin-top:26px">
 <section class="wcard" id="homeowners"><h2>Homeowners</h2><div class="big">Free</div>
 <p><b>Show your lights on the map.</b> Entering a display and entering a contest are free.</p>
@@ -79,8 +78,7 @@
 </div></section>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261110c";
-document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+import { mountShell } from "/appshell.js?v=20261110d";
 import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
 import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261108a";
 import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
@@ -88,23 +86,16 @@ import { PASS_KEYS, passCopy, freeCopy, moreCopy, contactHref, dollars as passDo
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents % 100 ? (p.cents / 100).toFixed(2) : p.cents / 100);
-// Tabs: one audience at a time (without scripts every section is listed). The links /pricing#events, #contests, #banner and #homeowners open the right tab.
+// One audience at a time, chosen in the app frame's menu (without scripts every section is listed). The links /pricing#events, #contests, #banner and #homeowners open the right one.
 {
-  const ORDER = ["homeowners", "events", "contests", "banner"], panels = Object.fromEntries([...document.querySelectorAll("[data-panel]")].map((e) => [e.dataset.panel, e])), bar = $("#ptabs");
-  const keys = ORDER.filter((k) => panels[k]);
-  const ICON = { homeowners: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-6h6v6"/>', events: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', contests: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>', banner: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>' }, SHORT = { homeowners: "Homes", events: "Events", contests: "Contests", banner: "Installers" };
-  bar.innerHTML = keys.map((k) => `<button type="button" role="tab" id="ptab-${k}" data-tab="${k}" aria-controls="${panels[k].id}" aria-selected="false" tabindex="-1" aria-label="${esc(panels[k].dataset.label)}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg><span class="lbl-l">${esc(panels[k].dataset.label)}</span><span class="lbl-s" aria-hidden="true">${SHORT[k]}</span></button>`).join("");
-  keys.forEach((k) => { panels[k].setAttribute("role", "tabpanel"); panels[k].setAttribute("aria-labelledby", "ptab-" + k); panels[k].dataset.pp = "pp-" + k; });
+  const ORDER = ["homeowners", "events", "contests", "banner"], panels = Object.fromEntries([...document.querySelectorAll("[data-panel]")].map((e) => [e.dataset.panel, e]));
+  const keys = ORDER.filter((k) => panels[k]), ICON = { homeowners: "home", events: "cal", contests: "trophy", banner: "star" }, LABEL = { banner: "Installers" };
   const owner = (id) => { const e = id && document.getElementById(id); const p = e && e.closest("[data-panel]"); return p ? p.dataset.panel : ""; };
-  const pick = (k, focus) => {
-    if (!panels[k]) k = keys[0];
-    keys.forEach((x) => { const on = x === k; panels[x].hidden = !on; const b = $("#ptab-" + x); b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
-    document.documentElement.dataset.ptab = k;
-  };
-  bar.hidden = false; document.querySelector("main").classList.add("ptabs-on");
-  bar.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (!b) return; pick(b.dataset.tab); if (matchMedia("(max-width:699px)").matches) document.querySelector("h1").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" }); try { history.replaceState(null, "", "#" + (panels[b.dataset.tab].id || b.dataset.tab)); } catch {} });
-  bar.addEventListener("keydown", (e) => { const i = keys.indexOf(document.activeElement && document.activeElement.dataset.tab); const n = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? keys.length - 1 : -1; if (n < 0 || i < 0) return; e.preventDefault(); pick(keys[(n + keys.length) % keys.length], true); });
-  const fromHash = () => { const h = location.hash.slice(1); pick(owner(h) || (keys.includes(h) ? h : keys[0])); if (h && document.getElementById(h)) document.getElementById(h).scrollIntoView(); };
+  const first = () => { const h = location.hash.slice(1); return owner(h) || (keys.includes(h) ? h : keys[0]); };
+  document.body.classList.add("sh-page"); document.querySelector("main").classList.add("ptabs-on");
+  const sh = mountShell({ page: "pricing", title: "Pricing", items: keys.map((k) => ({ k, label: LABEL[k] || panels[k].dataset.label, icon: ICON[k] })), active: first(), onPick: (k) => { pick(k); try { history.replaceState(null, "", "#" + (panels[k].id || k)); } catch {} document.querySelector("h1").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" }); } });
+  const pick = (k) => { if (!panels[k]) k = keys[0]; keys.forEach((x) => { panels[x].hidden = x !== k; }); sh.setActive(k); document.documentElement.dataset.ptab = k; };
+  const fromHash = () => { const h = location.hash.slice(1); pick(first()); if (h && document.getElementById(h)) document.getElementById(h).scrollIntoView(); };
   fromHash(); addEventListener("hashchange", fromHash);
 }
 const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
