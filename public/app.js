@@ -71,7 +71,7 @@ function dirUrl(ev) { return navUrl([destOf(ev)], ""); }
 function mapsPicker() { return mapsNow(mapsApp); }
 // "Event info" links: add a text fragment (#:~:text=) so Safari/Chrome/Edge scroll to and highlight the event's name
 // on pages that list many events. If the name isn't on the page, the page simply opens at the top.
-function infoUrl(u, name) {
+function infoUrl(u, name, city = "") {
   const enc = (s) => encodeURIComponent(s).replace(/-/g, "%2D");
   const full = name.replace(/\s+/g, " ").trim();
   // a shorter, distinctive version: drop "The", ordinals like "128th", years, and anything after " at " / " – " / ":" / " ("
@@ -79,7 +79,15 @@ function infoUrl(u, name) {
   const base = full.replace(/^the\s+/i, "").replace(/\b\d+(st|nd|rd|th)\s+(annual\s+)?/i, "").replace(/\s*\b20\d\d\b/g, "");
   const at = base.split(/\s+(?:at|@)\s+/i);
   const short = (at.length > 1 ? at[at.length - 1] : base).split(/\s+[–—-]\s+|:\s+|\s+\(/)[0].trim();
-  const parts = [full]; if (short && short.length >= 6 && short.toLowerCase() !== full.toLowerCase()) parts.push(short);
+  // pages rarely repeat our full name word for word ("Belquest Drive Christmas Lights" is "22981 Belquest Drive" on the page), so also try the name
+  // without its generic closing words (Christmas Lights, Tree Lighting, Festival...). The browser scrolls to the first one it finds.
+  const GENERIC = /^(christmas|holiday|holidays|lights?|lighting|light|display|displays|tree|festival|parade|celebration|ceremony|event|walk|show|village|market|nights?|home|homes|annual|winter|wonderland|magic|spectacular|season|seasonal|&|and|the|of|at|in)$/i;
+  const words = short.split(/\s+/); while (words.length > 2 && GENERIC.test(words[words.length - 1])) words.pop();
+  const core = words.join(" ").trim();
+  const parts = [full];
+  // pages often drop the city from the title ("Lake Forest Tree Lighting Ceremony" is "Tree Lighting Ceremony" on the Lake Forest calendar)
+  const noCity = city && full.toLowerCase().startsWith(city.toLowerCase() + " ") ? full.slice(city.length).replace(/^[\s:–—-]+/, "") : "";
+  for (const t of [noCity, short, core]) if (t && t.length >= (t === core ? 12 : 6) && !parts.some((x) => x.toLowerCase() === t.toLowerCase())) parts.push(t);
   const frag = ":~:" + parts.map((t) => "text=" + enc(t)).join("&");
   return u.includes("#") ? u + frag : u + "#" + frag;
 }
@@ -576,7 +584,7 @@ function photoOf(ev, hero) {
   // each type has several stock photos; the event's id picks one, so the same event always gets the same photo
   const k = stockKey(ev), n = k ? hashOf(ev.id) % STOCK[k].length : 0, st = k && STOCK[k][n];
   const stock = k ? `/img/stock/${hero ? "" : "t/"}${k}-${n + 1}.jpg` : "", sc = k && `Photo: ${st.by} · ${st.lic}`;
-  if (ev.img) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u };
+  if (ev.img) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u ? infoUrl(ev.u, ev.n, ev.city || "") : ev.u };
   return k ? { src: stock, credit: sc, link: st.src } : null;
 }
 // A gallery: the main photo first, then any extra photos stored for the event (ev.imgs)
@@ -951,7 +959,7 @@ function loadDetail(ev) {
     .finally(() => { clearTimeout(timer); DFETCH.delete(id); });
   DFETCH.set(id, p); return p;
 }
-const infoBtn = (ev, url) => (url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : "");
+const infoBtn = (ev, url) => (url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n, ev.city || ""))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : "");
 const contestBtn = (ev, url) => (String(ev.id).startsWith("c-") && url ? `<a class="contestgo" href="${esc(url)}">Enter your home or vote &rsaquo;</a>` : "");
 // the blurb's place while it loads: a grey block as tall as a typical blurb, or (when it could not load) a short note with Try again
 const blurbPending = (err) => err
