@@ -5,7 +5,7 @@ import { CATEGORIES, CAT, KINDS, brief } from "./help.js";
 export const HELP_EMAIL = "info@socallights.app";
 
 const CSS = `
-main.help{max-width:1160px}.top{max-width:1160px}
+main.help{max-width:1160px}.top{max-width:1160px}.top,main.help{padding-left:24px;padding-right:24px}@media(min-width:1208px){.top,main.help{padding-left:0;padding-right:0}}
 .help h1{margin:8px 0 6px}
 .help .lede{color:var(--muted);font-size:18px;margin:0 0 18px;max-width:60ch}
 .hsearch{position:relative;margin:6px 0 8px}
