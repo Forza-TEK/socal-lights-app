@@ -1,6 +1,6 @@
 /* Add flow: one question at a time. Slim header, one left-aligned column, a fixed bottom bar with a segmented progress line,
    Back on the left and a black Next on the right. Black and white, light type, hairline borders; the season color is the only accent. */
-:root{--bg:#f6f4f0;--ink:#14161b;--muted:#646a7a;--line:#e7e3dc;--line2:#b0b0b0;--tile:#fff;--btn:#222;--btn-ink:#fff;--bad:#c13515;--ok:#1a7f4b;
+:root{--bg:#ffffff;--ink:#14161b;--muted:#646a7a;--line:#e7e3dc;--line2:#b0b0b0;--tile:#fff;--btn:#222;--btn-ink:#fff;--bad:#c13515;--ok:#1a7f4b;
 --s-halloween:#e8590c;--s-christmas:#c42f39;--s-newyear:#6d3fc0;--s-valentines:#b0123f;--s-spring:#c0306f;--s-summer:#1e63c4;--season:var(--s-christmas);--on-season:#fff;--font:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,Menlo,monospace}
 :root[data-theme="dark"]{--on-season:#0b0d12;--bg:#0b0d12;--ink:#f5f3ee;--muted:#9ba1b1;--line:#2a303c;--line2:#5a5a5a;--tile:#161a22;--btn:#f4f4f4;--btn-ink:#121212;--bad:#ff8a73;--ok:#4cc58a;--s-halloween:#ff8a3d;--s-christmas:#ff6b6b;--s-newyear:#a98bf0;--s-valentines:#ff5c82;--s-spring:#f07cb2;--s-summer:#6fa8f2;color-scheme:dark}
 :root[data-season="halloween"]{--season:var(--s-halloween);--on-season:#14161b}:root[data-season="christmas"]{--season:var(--s-christmas)}:root[data-season="newyear"]{--season:var(--s-newyear)}:root[data-season="valentines"]{--season:var(--s-valentines)}:root[data-season="spring"]{--season:var(--s-spring)}:root[data-season="summer"]{--season:var(--s-summer)}

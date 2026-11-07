@@ -12,7 +12,7 @@ const nextSwitch = () => { const d = new Date(); d.setMinutes(0, 0, 0); const h 
 export function toggleTheme() {
   const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = t;
   try { localStorage.setItem("socal-theme", t); localStorage.setItem("socal-theme-until", String(nextSwitch())); } catch {}
-  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t === "dark" ? "#0b0d12" : "#f6f4f0";
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t === "dark" ? "#0b0d12" : "#ffffff";
 }
 export const themeBtn = () => '<button class="tbtn" type="button" data-theme-toggle aria-label="Switch between light and dark mode" title="Light / dark"><svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg></button>';
 document.addEventListener("click", (e) => { if (e.target.closest("[data-theme-toggle]")) toggleTheme(); });
