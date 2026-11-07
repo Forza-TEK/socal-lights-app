@@ -697,3 +697,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - On a phone the Pricing tabs are a bar fixed to the bottom edge (icon above each label: Homes, Events, Contests, Installers), the same look as the contest dashboard and Profile; choosing one scrolls back to the top of the page.
 - Help Center on a phone or tablet (under 900px wide): the topics are a bottom bar like the Tutorials page: four topics with icons plus More (a sheet with the other three and their article counts); choosing one scrolls to the top. Computers keep the topic list on the left.
 - Organizer dashboard, Sponsors form on a phone: the "Paid to me" and "Donated in kind" sub-forms were nested grids that took one sixth of the width (labels wrapped a word per line, file picker squashed). They now span the full row, inputs fill the width and the receipt picker is a full-width dashed box.
+
+- Contest page Sponsors: on phones the sponsor logos are one per row and large (up to 150px tall, full width); desktop unchanged. contest.css version bumped to 20261110a on all pages.
