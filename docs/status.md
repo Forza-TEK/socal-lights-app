@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-06 (new pricing structure: event tiers with banner, installer Top of the list)_
 
+## Contest tutorial videos (2026-11-07)
+`quick`, `custom` (Review step: free first contest, "see the Pricing page") and `sponsors` (new Sponsors tab) re-recorded in place; new `sponsor-invite` video "Invite a sponsor to your contest"; all with phone versions. Migration `0191_help_sponsor_invite_video.sql` links it to the Help article `add-sponsors-to-your-contest` (seed-safe). Details: `docs/tutorial-updates.md`. `quick` (4:58) and `custom` (7:14) are over the 2:30 target, as the versions they replace were.
+
 ## Organizer-collected sponsors and sponsor invite links (2026-11-07; owner decision)
 Details: `docs/contests.md` ("Sponsors collected by the organizer"), proposal and phases: `docs/monetization/contest-sponsor-payments-proposal.md` (phases 1 and 2 built; Stripe Connect Standard is still only a proposal). Migrations `0189_contest_sponsor_records.sql`, `0190_help_contest_sponsors.sql`.
 - **The site is not a party to sponsor money.** The organizer records a paid (or in-kind) sponsor with contact, amount, "payment collected by me" (date, method) and a PRIVATE receipt (R2 `sponsor-receipt/...`, contest team and Admin only). A sponsor shows on the contest page ("Sponsor", logo, name, link) only when approved, payment confirmed (or in kind with a note), permission ticked and not hidden by Admin.

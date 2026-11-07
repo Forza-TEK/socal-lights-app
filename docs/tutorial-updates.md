@@ -2,6 +2,16 @@
 
 Written after the design pass (PRs 345 to 347) so that all recording can be done in one sitting.
 
+## Done (2026-11-07, contest monetization went live)
+Recorded in day mode against the local demo setup (Kokoro `af_heart`), each with a phone version. No dollar amounts or plan names in the narration.
+| Video | What was done |
+|---|---|
+| `quick` | Re-recorded in place (4:58 desktop, 4:57 phone). The Review step says "Your first contest in a 12-month window is free. If you run more, you choose a pass first: see the Pricing page." The demo organizer is on the free contest, so the pass picker itself is not shown. Over the 2:30 target, like the version it replaces (4:32); splitting it is a separate decision. |
+| `custom` | Re-recorded in place (7:14 desktop, 7:13 phone), same Review sentence. Same note on length (the replaced version was 6:47). |
+| `sponsors` | Re-recorded in place (2:17 / 2:19): the old script used the old Sponsors form. Now: company and logo, Sponsorship type "Paid to me", collected, date and method, permission, Show on the contest page, Save sponsor. Title is now "Record a sponsor on your contest page". |
+| `sponsor-invite` (new, Sponsors and installers) | Invite a sponsor to your contest (2:27 / 2:28): How sponsors pay you, Create invite link, Copy link, the sponsor's `/s/<token>` page with demo data, Mark payment received, Approve. The payment link is `example.com`; the sponsor is "Oak Hill Hardware" with an `.example.com` email. Linked to the Help article `add-sponsors-to-your-contest` by migration 0191. |
+No `contest-passes` video: the pass picker only appears for an organizer's second contest, and a pass video would need a paid Stripe step that is never recorded. Not linked to `contest-passes`.
+
 ## Done (2026-11-06, recorded in day mode against the local demo setup with the Kokoro `af_heart` voice, the same voice as the other 25)
 | Video | What was done |
 |---|---|

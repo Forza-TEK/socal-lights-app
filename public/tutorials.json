@@ -196,14 +196,14 @@
           "title": "Create a contest with Quick start",
           "desc": "The short setup: seven screens.",
           "url": "/tutorials/run-quick.mp4",
-          "length": "4:32",
+          "length": "4:58",
           "captions": "/tutorials/run-quick.vtt",
           "poster": "/tutorials/run-quick.jpg",
           "mobile": {
             "url": "/tutorials/run-quick-mobile.mp4",
             "poster": "/tutorials/run-quick-mobile.jpg",
             "captions": "/tutorials/run-quick-mobile.vtt",
-            "length": "4:29"
+            "length": "4:57"
           }
         },
         {
@@ -211,14 +211,14 @@
           "title": "Create a contest with Customize",
           "desc": "Judges, prizes, categories, vote counts and your own rules.",
           "url": "/tutorials/run-custom.mp4",
-          "length": "6:47",
+          "length": "7:14",
           "captions": "/tutorials/run-custom.vtt",
           "poster": "/tutorials/run-custom.jpg",
           "mobile": {
             "url": "/tutorials/run-custom-mobile.mp4",
             "poster": "/tutorials/run-custom-mobile.jpg",
             "captions": "/tutorials/run-custom-mobile.vtt",
-            "length": "6:44"
+            "length": "7:13"
           }
         },
         {
@@ -365,17 +365,32 @@
       "videos": [
         {
           "id": "sponsors",
-          "title": "Add sponsors and logos",
-          "desc": "Show sponsors by tier on the contest page.",
+          "title": "Record a sponsor on your contest page",
+          "desc": "Record a sponsor and show it on the contest page.",
           "url": "/tutorials/sponsors-add.mp4",
-          "length": "1:58",
+          "length": "2:17",
           "captions": "/tutorials/sponsors-add.vtt",
           "poster": "/tutorials/sponsors-add.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-add-mobile.mp4",
             "poster": "/tutorials/sponsors-add-mobile.jpg",
             "captions": "/tutorials/sponsors-add-mobile.vtt",
-            "length": "1:58"
+            "length": "2:19"
+          }
+        },
+        {
+          "id": "sponsor-invite",
+          "title": "Invite a sponsor to your contest",
+          "desc": "Share one private link, then review and approve the request.",
+          "url": "/tutorials/sponsors-invite.mp4",
+          "length": "2:27",
+          "captions": "/tutorials/sponsors-invite.vtt",
+          "poster": "/tutorials/sponsors-invite.jpg",
+          "mobile": {
+            "url": "/tutorials/sponsors-invite-mobile.mp4",
+            "poster": "/tutorials/sponsors-invite-mobile.jpg",
+            "captions": "/tutorials/sponsors-invite-mobile.vtt",
+            "length": "2:28"
           }
         },
         {
