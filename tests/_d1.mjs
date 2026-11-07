@@ -27,7 +27,7 @@ export function makeDB() {
     all: async () => { stats.calls++; check(sql, args); return { results: db.prepare(sql).all(...args) }; },
     first: async () => { stats.calls++; check(sql, args); return db.prepare(sql).get(...args) || null; },
     run: async () => { stats.calls++; check(sql, args); const r = db.prepare(sql).run(...args); return { meta: { changes: Number(r.changes) } }; },
-    _run: () => { check(sql, args); const r = db.prepare(sql).run(...args); return { results: [], meta: { changes: Number(r.changes) } }; },
+    _run: () => { check(sql, args); if (/^\s*select\b/i.test(sql)) return { results: db.prepare(sql).all(...args), meta: { changes: 0 } }; const r = db.prepare(sql).run(...args); return { results: [], meta: { changes: Number(r.changes) } }; }, // a SELECT in a batch returns its rows, as D1 does
   });
   const DB = {
     prepare: (sql) => stmt(sql),
