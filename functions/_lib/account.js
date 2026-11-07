@@ -2,13 +2,15 @@ import { purgeRenewals } from "./renewal.js";
 import { r2Delete, photoKeys } from "./dbchunk.js";
 import { logOp } from "./oplog.js";
 import { refundDueStatements } from "./orders.js";
+import { suppressionStatements } from "./outreach.js";
 // Removes an account and everything tied to it. Used by "delete my account" (DELETE /api/me) and the admin Users tab.
 // Removes sign-ins, drafts, profile picture, contest entries (with their photos) and votes, closes contests the person
 // runs (unannounced ones are closed; announced ones keep their frozen results, owner-less; both leave the map), and blanks their email on homes and events they posted.
 // It also clears the person's email, name and phone from every other table that holds them: judge invitations and ballots, quote requests they sent, installer profiles they
 // own (and the requests those received), edit logs, event claims, weekly-email signup, co-organizer rows in other people's contests and contact details on reports.
 // Homes the person added to a contest as its organizer stay (they belong to the contest); only posts.added_by is cleared.
-// Kept on purpose: feature_orders (financial records; only user_id is cleared), email_prefs (so an unsubscribed address is not mailed again), hashes that expire by themselves.
+// Kept on purpose: feature_orders (financial records; only user_id is cleared), email_prefs (so an unsubscribed address is not mailed again), hashes that expire by themselves,
+// and one row in outreach_suppressions: a one-way hash of the address (never the address) so a deleted account is not contacted by outreach.
 export async function deleteAccount(env, id, email) {
   const all = (sql, ...b) => env.DB.prepare(sql).bind(...b).all().then((r) => r.results);
   const contests = await all("SELECT id, event_id FROM contests WHERE owner_id = ?", id);
@@ -83,6 +85,9 @@ export async function deleteAccount(env, id, email) {
     env.DB.prepare("UPDATE contest_sponsors SET contact_name = '', phone = '', email = '', amount_cents = NULL, paid_date = '', paid_method = '', in_kind_note = '', receipt = '', receipt_name = '' WHERE contest_id IN (SELECT id FROM contests WHERE owner_id = ?)").bind(id),
     // Announced contests stay 'live' (frozen results, winner crowns and the Past results page stay); the organizer's personal data goes either way.
     env.DB.prepare("UPDATE contests SET status = CASE WHEN announced = 1 THEN 'live' ELSE 'closed' END, owner_id = '', contact_email = '', installer_email = '', event_id = NULL WHERE owner_id = ?").bind(id),
+    // Monthly update permission goes with the account. Deleting an account means "do not contact": the address goes on the shared suppression list as a one-way hash only (no plaintext kept).
+    env.DB.prepare("DELETE FROM newsletter_optins WHERE user_id = ? OR lower(email) = lower(?)").bind(id, email),
+    ...(await suppressionStatements(env, email, "manual", "account_deleted")),
     env.DB.prepare("DELETE FROM drafts WHERE user_id = ?").bind(id),
     env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id),
     env.DB.prepare("DELETE FROM login_codes WHERE email = ?").bind(email),

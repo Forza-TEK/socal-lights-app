@@ -3,6 +3,7 @@
 // POST /api/unsub?t=<token> with any other body (a mail app's one-click unsubscribe) -> turns them off
 import { json, err } from "../_lib/util.js";
 import { prefsByToken, setOptout, maskEmail } from "../_lib/emailprefs.js";
+import { suppressFromApp } from "../_lib/outreach.js";
 
 export async function onRequestGet({ request, env }) {
   const t = new URL(request.url).searchParams.get("t") || "";
@@ -17,5 +18,6 @@ export async function onRequestPost({ request, env }) {
   const p = await prefsByToken(env, t);
   if (!p) return err(404, "This unsubscribe link isn't valid.");
   await setOptout(env, t, b.optout !== false);
+  if (b.optout !== false) await suppressFromApp(env, p.email); // also the shared do-not-contact list (hash only), so outreach never mails them
   return json({ ok: true, email: maskEmail(p.email), optout: b.optout !== false });
 }

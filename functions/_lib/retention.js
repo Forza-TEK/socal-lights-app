@@ -21,6 +21,7 @@ export async function pruneIps(env) { try { await env.DB.batch(ipPruneStatements
 //   admin_log labels that name a person (Users, Reports areas) : blanked after 12 months
 //   removal_requests (address, email, note) : blanked 6 months after Admin closed the request (done or declined); open ones are kept
 //   contest_changes co-organizer rows (they hold email addresses) : old/new blanked after 12 months
+//   newsletter_optins of people who unsubscribed : deleted after 12 months; outreach_events (hashes only) : deleted after 24 months; outreach_suppressions : kept (it is the opt-out record)
 // Account deletion clears the same fields for that person at once (account.js).
 export const UNCONFIRMED_KEEP = "-30 days";
 export const RECORDS_KEEP = "-12 months";
@@ -34,6 +35,10 @@ export function retentionStatements(env) {
     env.DB.prepare(`UPDATE admin_log SET label = '' WHERE label != '' AND area IN ('users','normalize','reports','removals') AND at < ${long}`),
     env.DB.prepare(`UPDATE removal_requests SET address = '', email = '', note = '' WHERE status != 'open' AND (address != '' OR email != '' OR note != '') AND COALESCE(handled_at, created_at) < ${short}`),
     env.DB.prepare(`UPDATE contest_changes SET old = '', new = '' WHERE field = 'Co-organizers' AND (old != '' OR new != '') AND at < ${long}`),
+    // Monthly update: a row of someone who unsubscribed is the proof they opted out; it goes 12 months later (the one-way hash on the suppression list stays, so they are still not contacted).
+    env.DB.prepare(`DELETE FROM newsletter_optins WHERE unsubscribed_at IS NOT NULL AND unsubscribed_at < ${long}`),
+    // Outreach result rows hold only hashes; kept 24 months for the pilot report.
+    env.DB.prepare("DELETE FROM outreach_events WHERE created_at < datetime('now','-24 months')"),
   ];
 }
 // Best effort, like pruneIps. Called by the scheduled admin digest.
