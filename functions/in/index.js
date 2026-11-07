@@ -16,7 +16,7 @@ export async function onRequestGet(context) {
   const desc = `${total} upcoming holiday lights, tree lightings, parades and seasonal events in ${cities.length} Southern California cities, by county.`;
   const bc = crumbs(origin, [{ name: "SoCal Lights", href: "/" }, { name: "Cities" }]);
   const body = `${header("Open the map", "/")}<main>${bc.html}<h1>Holiday lights and events by city</h1><p class="sub">${esc(desc)}</p>${groups}<div class="foot"><a href="/">Open the map</a><a href="/add-event">Add an event</a><a href="/pricing">Feature your event</a><a href="/help">Help</a></div></main>`;
-  const html = page({ title: "Holiday lights and events by city | SoCal Lights", desc, canonical: `${origin}/in`, ld: bc.ld, body, origin });
+  const html = page({ title: "Holiday lights and events by city | SoCal Lights", desc, canonical: `${origin}/in`, ld: bc.ld, body, origin, wide: true });
   const res = new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=600, s-maxage=3600" } });
   if (cache) context.waitUntil(cache.put(key, res.clone()));
   return res;

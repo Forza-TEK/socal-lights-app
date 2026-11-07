@@ -668,3 +668,8 @@ Re-recorded `feature` (four event plans, dates and total, stops before Stripe), 
 - "Most popular" marker: `/api/config` returns `popularEvent` only when the last 120 days have at least 5 paid event orders and one plan leads. Until then no plan is marked.
 - Help: topics as a left rail (tabs on phones), articles in one column of rows.
 - Next steps (see the layout proposal): Contests, Past results and city pages as grids; Privacy and Terms with a table of contents; Event and Installer pages in two columns; live preview on the add forms.
+
+## 2026-11-10 (wide layout, step 2: Contests, city and past pages)
+- Contests page: 1160px frame aligned with the header; Live now as a grid of cards (3 across on desktop, 2 on a tablet, 1 on a phone); Mine as two columns; Past results with the entries in two columns; white cards with bold headings.
+- Server-written pages (`/in`, `/in/<city>`, `/past`, `/past/<slug>`): `page({ wide: true })` in `functions/_lib/shell.js` gives them the same 1160px frame and lists in columns (one column on phones). The page height of a long city list roughly halves.
+- Not yet: Privacy and Terms with a contents rail, Event and Installer pages in two columns, live preview on the add forms.
