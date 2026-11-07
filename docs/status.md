@@ -685,3 +685,6 @@ Re-recorded `feature` (four event plans, dates and total, stops before Stripe), 
 ## 2026-11-10 (wide layout, step 4: live preview on the add forms)
 - Add event, Add a display and Create a contest show a Preview card to the right of the 640px form on screens at least 1240px wide (`preview` option of `run()` in `public/addflow.js`, `pvCard()` builds the card, styles in `addflow.css`). It updates as people type or pick, empty fields show a greyed example, and the first photo shows on the display card. Hidden on narrower screens, so phones are unchanged.
 - Fixed in passing: the Add a display name field had no accessible label.
+
+## 2026-11-07 sweep group 18 (High Desert & Mountains)
+Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Barstow Turkey Trot (Nov 14) and Newberry Springs Pistachio Farm Festival (Nov 7-8) from bosd3.sbcounty.gov and the chamber page. No 2026 pages yet for Lucerne Valley Magic in the Cove, Running Springs light contest, Newberry Springs tree lighting (date not posted), Needles. No contest home addresses found. barstowca.org blocks bots (403). No photos set (candidate og:images were portrait flyers or absent).
