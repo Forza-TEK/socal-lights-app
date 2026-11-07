@@ -701,3 +701,11 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Contest page Sponsors: on phones the sponsor logos are one per row and large (up to 150px tall, full width); desktop unchanged. contest.css version bumped to 20261110a on all pages.
 
 - Map sponsor banner: still drifts like a marquee, and can now be dragged (finger on phones, mouse on computers, sideways trackpad swipe) with a little momentum; a drag never counts as a tap on a pill; hover/focus/pause still stop the drift. JS-driven (banner.js); CSS animation removed. Reduced-motion users keep native sideways scrolling.
+
+- Pricing, Contest organizers tab: Free is a slim row above the three pass cards (what is included folds away), the three passes sit in one row, "More than 20 contests" is a slim row below. The old 5-across cards were cramped.
+
+- Map: the profile circle now opens the same account menu as every other page (Your profile, Your contests, Add, Tutorials, Help, Sign out; signed out it opens the sign-in sheet). When signed in, Add, Contests, Tutorials and Help leave the three-dot menu (it is shorter); signed-out visitors still see them there. chrome.js/appshell.js/addflow.js versions bumped to 20261110a/c.
+- Help Center (/help and articles) now uses the same app frame as Tutorials and Profile: side menu of topics on desktop, icon rail on tablet, bottom bar on phones. Without scripts the plain header and topic links remain. The old Help bottom bar was removed.
+
+- Pricing, Privacy and Terms now use the app frame (side menu / icon rail / phone bottom bar): Pricing menu = Homeowners, Events, Contests, Installers; Privacy and Terms menu = those two pages. The Pricing-only tab bar was removed.
+- "Keep SoCal Lights Free" popup and menu row reworded to "Support SoCal Lights": says what is free, what paid options fund the site (Featured events, installer banners, extra contest passes), tips welcome, and links to /pricing.

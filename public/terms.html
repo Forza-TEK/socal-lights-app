@@ -9,12 +9,12 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261110d">
-<link rel="stylesheet" href="/info.css?v=20261110x">
+<link rel="stylesheet" href="/info.css?v=20261110y">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="wide">
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
-<main>
+<main id="content">
 <h1>Terms of Use</h1>
 <p class="meta">SoCal Lights (socallights.app), operated by Forza-TEK. Effective November 1, 2026. Updated November 7, 2026. Plain-language terms.</p>
 
@@ -105,8 +105,9 @@
 <p>If we change these terms, we will update the date above. Questions or removal requests: <a href="mailto:info@socallights.app">info@socallights.app</a>. See also our <a href="/privacy">Privacy Policy</a>.</p>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261110b";
-document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+import { mountShell } from "/appshell.js?v=20261110d";
+document.body.classList.add("sh-page");
+mountShell({ page: "legal", title: "Legal", items: [{ href: "/privacy", label: "Privacy Policy", icon: "file" }, { href: "/terms", label: "Terms of Use", icon: "file" }] });
 </script>
 <script src="/toc.js?v=20261110a" defer></script>
 <script src="/footer.js?v=20261110b" defer></script>

@@ -1,7 +1,7 @@
 // The signed-in pages' frame (Profile, Tutorials), built the same way as Admin:
 //   desktop: side menu | tablet: icon rail | phone: top bar + bottom bar + "More" sheet.
 // mountShell moves the page's #content into the frame and returns { setActive, setCount, setTitle }.
-import { themeBtn, mountAcct } from "/chrome.js?v=20261106y";
+import { themeBtn, mountAcct } from "/chrome.js?v=20261110a";
 const P = {
   map: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/>',
@@ -19,7 +19,7 @@ const SITE = [["map", "Map", "/", "map"], ["add", "Add", "/add", "add"], ["tut",
 // opts: { page: "tut"|"prof"|"contest"..., extra: [[key,label,href,icon]], title, items: [{k,label,icon,count?}], active, onPick(k) }
 export function mountShell({ page, title, items, active, onPick, extra = [] }) {
   const content = document.getElementById("content");
-  const item = (i) => i.href ? `<a class="sh-nv" href="${esc(i.href)}" title="${esc(i.label)}">${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span></a>` : `<button type="button" class="sh-nv" data-k="${esc(i.k)}" ${i.hidden ? "hidden" : ""} aria-current="${i.k === active}" title="${esc(i.label)}">${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span><span class="sh-cnt" data-cnt="${esc(i.k)}" ${i.count ? "" : "hidden"}>${i.count || ""}</span></button>`;
+  const item = (i) => i.href ? `<a class="sh-nv" href="${esc(i.href)}" title="${esc(i.label)}"${i.href === location.pathname ? ' aria-current="true"' : ""}>${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span></a>` : `<button type="button" class="sh-nv" data-k="${esc(i.k)}" ${i.hidden ? "hidden" : ""} aria-current="${i.k === active}" title="${esc(i.label)}">${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span><span class="sh-cnt" data-cnt="${esc(i.k)}" ${i.count ? "" : "hidden"}>${i.count || ""}</span></button>`;
   const site = [...extra, ...SITE.filter((s) => s[0] !== page && !items.some((i) => i.href === s[2]))].map(([, l, h, ic]) => `<a class="sh-nv" href="${h}" title="${l}">${svg(ic)}<span class="sh-lb">${l}</span></a>`).join("");
   const bottom = items.filter((i) => !i.href).slice(0, 4).map((i) => `<button type="button" class="sh-bb sh-own" data-k="${esc(i.k)}" aria-current="${i.k === active}">${svg(i.icon)}<span>${esc(i.label)}</span></button>`).join("");
   const root = document.createElement("div"); root.className = "sh-app";

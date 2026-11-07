@@ -42,6 +42,8 @@
 <link rel="modulepreload" href="/tour.js?v=20261109b">
 <link rel="modulepreload" href="/maps.js?v=20261109c">
 <link rel="modulepreload" href="/banner.js?v=20261110a">
+<link rel="modulepreload" href="/auth.js?v=20261107p">
+<link rel="modulepreload" href="/chrome.js?v=20261110a">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/styles.css?v=20261110a">
@@ -61,7 +63,7 @@
     </div>
     <button class="seasonbtn" id="seasonbtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Season"><span class="sico" id="seasonico" aria-hidden="true">🎃</span><span id="seasonlbl">Halloween</span><svg class="caret" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button>
     <button class="iconbtn" id="themebtn" type="button" aria-label="Switch between day and night" title="Day / night"><svg class="moon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><svg class="sun" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg></button>
-    <a class="iconbtn" id="acctbtn" href="/profile" aria-label="Sign in or your profile" title="Sign in"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></a>
+    <button class="iconbtn" id="acctbtn" type="button" data-acct-signin aria-label="Sign in" title="Sign in"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></button>
     <button class="iconbtn" id="morebtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Menu" title="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
     <button class="rtpill" id="rtpill" type="button" data-route hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8.2 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.8"/></svg><span>Route these</span></button>
   </div>
@@ -94,7 +96,7 @@
 <div class="menu" id="moremenu" role="menu" hidden></div>
 <div class="modal" id="modal" hidden></div>
 
-<script type="module" src="/app.js?v=20261110a"></script>
+<script type="module" src="/app.js?v=20261110c"></script>
 <script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script>
 </body>
 </html>

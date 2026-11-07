@@ -17,9 +17,9 @@
 <main class="main" id="content"><div id="app" class="main" style="padding:0;max-width:none"><p class="muted">Loading…</p></div></main>
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261107p";
-import { mountShell } from "/appshell.js?v=20261106zb";
+import { mountShell } from "/appshell.js?v=20261110d";
 import { homeForm, eventForm, openFormWindow } from "/forms.js?v=20261106zb";
-import { esc, input, select, attachAddress, OPT } from "/addflow.js?v=20261110b";
+import { esc, input, select, attachAddress, OPT } from "/addflow.js?v=20261110c";
 import { CITY } from "/cities.js?v=20261107a";
 const shell = mountShell({ page: "prof", title: "Your profile", active: (location.hash || "").slice(1) || "drafts", items: [{ k: "drafts", label: "Drafts", icon: "file" }, { k: "contests", label: "Contests", icon: "trophy" }, { k: "displays", label: "Displays", icon: "home" }, { k: "events", label: "Events", icon: "cal" }, { k: "badges", label: "Badges", icon: "star", hidden: true }, { k: "account", label: "Account", icon: "user" }, { k: "tutorials", label: "Tutorials", icon: "play", href: "/tutorials" }], onPick: (k) => { tab = k; history.replaceState(null, "", "#" + k); render(); window.scrollTo(0, 0); } });
 const $ = (q) => document.querySelector(q), app = $("#app"), cities = Object.keys(CITY).sort();

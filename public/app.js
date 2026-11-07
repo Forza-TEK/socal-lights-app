@@ -4,6 +4,8 @@ import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonSta
 import { STOCK } from "/stock.js?v=20261107a";
 import { SITE } from "/site-config.js?v=20261107a";
 import "/norm-ui.js?v=20261102b";
+import { me as authMe } from "/auth.js?v=20261107p";
+import "/chrome.js?v=20261110a"; // the account circle opens the same menu as on every other page
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261109b";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261109c";
@@ -1044,8 +1046,10 @@ function syncShopTab() {
 }
 function openSupport() {
   const m = $("#modal"), donate = safeUrl(SITE.donateUrl);
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Keep SoCal Lights free</h2><button class="xbtn" type="button" id="sClose" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
-    <p class="blurb">SoCal Lights is built and kept up to date by one small team: checking dates, adding events and fixing links all season long. If it helped you find something fun, you can help keep it going.</p>
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Support SoCal Lights</h2><button class="xbtn" type="button" id="sClose" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
+    <p class="blurb">Finding lights and events, search, routes, favorites and voting are free for everyone, and so is posting an event or your own home. One small team keeps it current all season: checking dates, adding events and fixing links.</p>
+    <p class="blurb">What pays for it: optional paid options, such as Featured events, installer banners and extra contest passes (your first contest is free), and tips from people it helped. Paid placements are always labelled and never change a contest result.</p>
+    <a class="btn ghost" href="/pricing">See pricing</a>
     ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
     ${shopCats().length ? `<button class="btn ghost" type="button" id="sShop">🛍️ Browse the shop</button>` : ""}
     ${!IN_APP && (SITE.amazonTag || Object.keys(SITE.ticketAffiliates).length) ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
@@ -1194,14 +1198,14 @@ function closeMore() { const m = $("#moremenu"); if (m) m.hidden = true; const b
 function moreHtml() {
   const dark = theme() === "dark";
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
-  return row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home display")
+  return (SIGNED_IN ? "" : row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home display"))
     + row("button", 'type="button" data-m="alerts"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>`, "Weekly lights email", "Lights and events near a city, once a week")
-    + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us on Cash App" : "Shop the season"))
+    + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Support SoCal Lights", SITE.donateUrl ? "Pricing, and tips on Cash App" : "Pricing and the shop"))
     + (IN_APP ? "" : row("a", 'href="/feature"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>`, "Promote your event", "For organizers: a paid Featured pin"))
-    + row("a", 'href="/contests"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`, "Contests", "Vote, enter, run one, and past results")
+    + (SIGNED_IN ? "" : row("a", 'href="/contests"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`, "Contests", "Vote, enter, run one, and past results"))
     + row("a", 'href="/in"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`, "Browse by city", "Events listed city by city")
-    + row("a", 'href="/tutorials"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>`, "Tutorials", "Short how-to videos")
-    + row("a", 'href="/help"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>`, "Help", "Answers and how-to steps")
+    + (SIGNED_IN ? "" : row("a", 'href="/tutorials"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>`, "Tutorials", "Short how-to videos"))
+    + (SIGNED_IN ? "" : row("a", 'href="/help"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>`, "Help", "Answers and how-to steps"))
     + row("a", 'href="/privacy"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>`, "Privacy & terms", "How accounts and your data are handled")
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
@@ -1235,13 +1239,14 @@ async function openAlerts() {
     btn.disabled = false;
   };
 }
+let SIGNED_IN = false; // signed in: Add, Contests, Tutorials and Help are in the account circle menu instead, so this menu is shorter
 function openMore() {
   closeFilters(); closePop(); closeSeasonMenu();
   const m = $("#moremenu"), b = $("#morebtn"); m.innerHTML = moreHtml(); m.hidden = false; b.setAttribute("aria-expanded", "true");
   const r = b.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 10 + "px"; m.style.left = Math.max(10, Math.min(r.right - w, innerWidth - w - 10)) + "px";
 }
 // Account circle: the person icon until you are signed in, then the first letter of your email. Both open /profile (which asks you to sign in).
-fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).then((j) => { const b = $("#acctbtn"); if (b && j.user) { if (j.user.avatar) b.innerHTML = `<img src="${j.user.avatar}" alt="" width="52" height="52" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`; else b.textContent = j.user.email[0].toUpperCase(); b.title = "Your profile"; b.setAttribute("aria-label", "Your profile"); } }).catch(() => {});
+authMe().then((i) => { const j = { user: i && i.user }, b = $("#acctbtn"); if (b && j.user) { SIGNED_IN = true; b.removeAttribute("data-acct-signin"); b.setAttribute("data-acct-menu", ""); b.setAttribute("aria-haspopup", "menu"); b.setAttribute("aria-expanded", "false"); if (j.user.avatar) b.innerHTML = `<img src="${j.user.avatar}" alt="" width="52" height="52" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`; else b.textContent = j.user.email[0].toUpperCase(); b.title = "Your account"; b.setAttribute("aria-label", "Your account"); } }).catch(() => {});
 $("#morebtn").onclick = () => ($("#moremenu").hidden ? openMore() : closeMore());
 $("#moremenu").addEventListener("click", (e) => {
   const b = e.target.closest("[data-m]"); if (!b) { if (e.target.closest("a")) closeMore(); return; }

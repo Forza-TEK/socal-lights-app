@@ -89,23 +89,10 @@ main.legal{display:grid;gap:0 48px;grid-template-columns:minmax(0,1fr)}
 @media(min-width:1000px){main.legal{grid-template-columns:260px minmax(0,1fr)}.toc{grid-column:1;grid-row:2;position:sticky;top:16px;align-self:start;margin:0}.legalbody{grid-column:2;grid-row:2}}
 
 /* Pricing tabs: one audience at a time */
-.ptabs{display:flex;gap:8px;margin:24px -4px 0;padding:4px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.ptabs::-webkit-scrollbar{display:none}
-.ptabs[hidden]{display:none}
-.ptabs button{flex:none;display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font:700 15px var(--f,var(--font,inherit));cursor:pointer;white-space:nowrap}
-:root[data-theme="dark"] .ptabs button{background:var(--tile)}
-.ptabs button:hover{border-color:var(--season)}.ptabs button[aria-selected="true"],:root[data-theme="dark"] .ptabs button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
-.ptabs button:focus-visible{outline:2px solid var(--season);outline-offset:2px}
-@media(min-width:700px){.ptabs{flex-wrap:wrap;overflow:visible;margin-left:0;padding:0}}
 .ptabs-on [data-panel]{margin-top:22px}.ptabs-on [data-panel][hidden]{display:none}
 
-/* Pricing tabs on a phone: a bar fixed to the bottom edge (the same look as the contest dashboard and Profile), icon above each label */
-.ptabs button svg,.ptabs .lbl-s{display:none}
-@media(max-width:699px){
-  .ptabs{position:fixed;left:0;right:0;bottom:0;z-index:65;margin:0;padding:0 0 env(safe-area-inset-bottom,0px);gap:0;display:grid;grid-template-columns:repeat(4,1fr);overflow:visible;background:var(--bg);border-top:1px solid var(--line)}
-  .ptabs[hidden]{display:none}
-  .ptabs button,:root[data-theme="dark"] .ptabs button{position:relative;display:grid;justify-items:center;align-content:center;gap:3px;min-height:62px;padding:6px 2px;border:0;border-radius:0;background:transparent;color:var(--muted);font-size:11px;font-weight:500}
-  .ptabs button svg,.ptabs .lbl-s{display:block}.ptabs .lbl-l{display:none}.ptabs .lbl-s{line-height:1.1}
-  .ptabs button[aria-selected="true"],:root[data-theme="dark"] .ptabs button[aria-selected="true"]{background:transparent;border:0;color:var(--ink);font-weight:700}
-  .ptabs button[aria-selected="true"]::before{content:"";position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--season)}
-  .ptabs-on{padding-bottom:84px}
-}
+
+#contests .pfree{align-items:flex-start}#contests .pfree .btn{align-self:center}#contests .pfree .pprice{white-space:nowrap}#contests .pdet{border-top:0;margin-top:6px}#contests #ctiers{margin-bottom:16px}#contests .pmore{padding:16px 24px}
+
+/* Pages inside the app frame (appshell.js): the frame has its own top bar and menu, so the page header goes and the content uses the frame width */
+body.sh-page .hdr{display:none}body.sh-page.wide main,body.sh-page main{max-width:1040px;margin:0 auto;padding:22px clamp(16px,3vw,32px) 72px}body.sh-page .sh-content{max-width:none}@media(max-width:699px){body.sh-page main{padding:16px 16px calc(92px + env(safe-area-inset-bottom,0px))}}
