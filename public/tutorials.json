@@ -385,7 +385,13 @@
           "url": "/tutorials/sponsors-invite.mp4",
           "length": "2:27",
           "captions": "/tutorials/sponsors-invite.vtt",
-          "poster": "/tutorials/sponsors-invite.jpg"
+          "poster": "/tutorials/sponsors-invite.jpg",
+          "mobile": {
+            "url": "/tutorials/sponsors-invite-mobile.mp4",
+            "poster": "/tutorials/sponsors-invite-mobile.jpg",
+            "captions": "/tutorials/sponsors-invite-mobile.vtt",
+            "length": "2:28"
+          }
         },
         {
           "id": "installer",
