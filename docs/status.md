@@ -676,3 +676,8 @@ Re-recorded `feature` (four event plans, dates and total, stops before Stripe), 
 - Contests page: 1160px frame aligned with the header; Live now as a grid of cards (3 across on desktop, 2 on a tablet, 1 on a phone); Mine as two columns; Past results with the entries in two columns; white cards with bold headings.
 - Server-written pages (`/in`, `/in/<city>`, `/past`, `/past/<slug>`): `page({ wide: true })` in `functions/_lib/shell.js` gives them the same 1160px frame and lists in columns (one column on phones). The page height of a long city list roughly halves.
 - Not yet: Privacy and Terms with a contents rail, Event and Installer pages in two columns, live preview on the add forms.
+
+## 2026-11-10 (wide layout, step 3: Privacy, Terms, Event and Installer pages)
+- Privacy and Terms: `public/toc.js` builds an "On this page" list from the page's own headings (sticky on the left on desktop, above the text on a phone); the text is a 72-character column. Without scripts the pages are the plain text as before. Section links such as `/terms#paid` still work.
+- Event page (`/e/<id>`) and Installer page (`/installer/<slug>`): photo on the left (sticky), tags, title, details and buttons on the right on desktop; stacked on phones. The weekly-email box, related events and footer stay full width below. Both use `page({ wide: true })`.
+- Remaining from the plan: live preview on the add forms; one shared header and footer.

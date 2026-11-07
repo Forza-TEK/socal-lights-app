@@ -20,12 +20,13 @@ export async function onRequestGet({ request, env, params }) {
   const canQuote = !!(inst.owner_email || inst.email), logoUrl = inst.logo ? `/api/installers/${inst.slug}/logo` : "";
   const heroHtml = slides.length ? hero(slides) : logoUrl ? `<div class="hero"><img class="logoimg" src="${esc(logoUrl)}" alt="${esc(inst.name)} logo"></div>` : hero([], inst.name.slice(0, 1).toUpperCase());
   const body = `${header("Open the map")}<main>
-    ${heroHtml}
+    <div class="duo"><div class="duo-l">${heroHtml}</div><div class="duo-r">
     <div class="tags"><span class="tag">Professional installer</span><span class="tag ice">${homes.length} display${homes.length === 1 ? "" : "s"} on the map</span>${confirmed ? `<span class="tag conf">${confirmed} confirmed</span>` : ""}</div>
     <div class="idrow">${logoUrl && slides.length ? `<img class="lg" src="${esc(logoUrl)}" alt="">` : ""}<div><h1>${esc(inst.name)}</h1>${inst.area ? `<p class="sub">Serving ${esc(inst.area)}</p>` : ""}</div></div>
     ${inst.blurb ? `<p class="lead">${esc(inst.blurb)}</p>` : ""}
     <dl class="facts">${inst.area ? `<dt>Service area</dt><dd>${esc(inst.area)}</dd>` : ""}${inst.phone ? `<dt>Call for Quotes</dt><dd>${telUrl ? `<a href="${esc(telUrl)}">${esc(phoneShown)}</a>` : esc(phoneShown)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener nofollow">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
     <div class="bar">${telUrl ? `<a class="btn go" href="${esc(telUrl)}">Call for a quote</a>` : web ? `<a class="btn go" href="${esc(web)}" target="_blank" rel="noopener nofollow">Visit website</a>` : `<span class="btn go" aria-disabled="true">No contact details yet</span>`}${telUrl && web ? `<a class="btn hide-s" href="${esc(web)}" target="_blank" rel="noopener nofollow">Website</a>` : ""}${canQuote ? `<button class="btn" type="button" id="quotebtn"><span class="long">Request a quote</span><span class="short">Quote</span></button>` : ""}<button class="btn ic" type="button" data-share aria-label="Share this page">${SHARE}</button></div>
+    </div></div>
     <h2>Displays on the map</h2>${homes.length ? `<div class="grid">${cards}</div>` : `<div class="note"><p class="sub" style="margin:0">No displays are on the map yet.</p></div>`}
     <div class="foot"><a href="/">All of Southern California</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>${inst.owner_email ? "" : `<button class="linkbtn" type="button" id="claimbtn">Is this your company? Claim this profile</button>`}</div></main>
     <script type="module" src="/norm-ui.js?v=20261102b"></script>
@@ -52,5 +53,5 @@ export async function onRequestGet({ request, env, params }) {
       if (j.claimed) location.href = "/installer/" + slug + "/manage"; else dialog('<h2>Thanks</h2><p>' + esc(j.message) + '</p><div class="row"><button class="btn go" type="button" data-close>OK</button></div>');
     };
     </script>`;
-  return new Response(page({ title, desc, canonical: `${origin}/installer/${inst.slug}`, ld, body, origin }), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
+  return new Response(page({ title, desc, canonical: `${origin}/installer/${inst.slug}`, ld, body, origin, wide: true }), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
 }
