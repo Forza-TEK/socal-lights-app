@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261108b">
 <link rel="stylesheet" href="/contest.css?v=20261106zb">
-<link rel="stylesheet" href="/routes.css?v=20261107b">
+<link rel="stylesheet" href="/routes.css?v=20261109a">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="sh-page">
@@ -19,7 +19,7 @@
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
 import { refreshAcct } from "/addflow.js?v=20261107b";
 import { mountShell } from "/appshell.js?v=20261106zb";
-import { tourHtml, wireTour } from "/tour.js?v=20261107b";
+import { tourHtml, wireTour } from "/tour.js?v=20261109b";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 let panel = "ballot";
 const shell = mountShell({ page: "judge", title: "Judging", active: panel, extra: [["contest", "Contest page", "/c/" + slug, "play"]], items: [{ k: "ballot", label: "Ballot", icon: "check" }],

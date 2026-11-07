@@ -47,7 +47,8 @@ function css() {
 .mpdlg label{display:flex;gap:10px;align-items:center;font-size:14px;margin-top:2px}.mpdlg input{width:20px;height:20px}
 .mpdlg .mpx{justify-self:start;border:0;background:none;color:var(--muted,#646a7a);font:600 14px inherit;font-family:inherit;padding:8px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .mapsnow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--muted,#646a7a)}.mapsnow b{color:var(--ink,#14161b)}
-.mapsnow button{border:0;background:none!important;box-shadow:none;padding:6px 4px;font:600 14px inherit;font-family:inherit;color:var(--ink,#14161b);text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:32px}`;
+.mapsnow .mpchg{-webkit-appearance:none;appearance:none;display:inline-grid;place-items:center;width:36px;height:36px;min-height:36px;padding:0;border:1.5px solid var(--line2,#b0b0b0)!important;border-radius:50%!important;background:transparent!important;color:var(--ink,#14161b);text-decoration:none}.mapsnow .mpchg:hover,.mapsnow .mpchg:focus-visible{border-color:var(--season,#c9313b)!important}
+.mapsnow button:not(.mpchg){border:0;background:none!important;box-shadow:none;padding:6px 4px;font:600 14px inherit;font-family:inherit;color:var(--ink,#14161b);text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:32px}`;
   document.head.appendChild(st);
 }
 // Ask which maps app to use. onPick(app, remember) runs when one is chosen. Nothing happens if it is dismissed.
@@ -68,7 +69,7 @@ export function askMaps(onPick, { title = "Open directions in…", cancelable = 
   const f = d.querySelector("[data-mp]"); if (f) f.focus();
 }
 // "Opens in Apple Maps · Change"
-export const mapsNow = (app = getMaps()) => `<div class="mapsnow"><span>Opens in <b data-mapsname>${esc(MAPS[app])}</b></span><button type="button" data-mapschange>Change</button></div>`;
+export const mapsNow = (app = getMaps()) => (css(), `<div class="mapsnow"><span>Opens in <b data-mapsname>${esc(MAPS[app])}</b></span><button type="button" class="mpchg" data-mapschange aria-label="Change the maps app" title="Change the maps app"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg></button></div>`);
 
 // First tap on a Directions / route link on a phone with no saved choice: ask, remember, then open the link for that app.
 document.addEventListener("click", (e) => {
@@ -82,3 +83,4 @@ document.addEventListener("click", (e) => {
   if (!e.target.closest("[data-mapschange]")) return;
   askMaps((app) => document.dispatchEvent(new CustomEvent("maps-changed", { detail: app })), { title: "Open directions in…" });
 });
+css(); // the styles of "Opens in ... Change" and the pop-up are ready as soon as this module loads

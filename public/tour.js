@@ -2,7 +2,7 @@
 // so a long list is split into the fewest routes of 9 or fewer, sized evenly, with each route starting where the last one ended.
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const MAX_STOPS = 9;
-import { MAPS, getMaps, routeUrl, placeUrl, navAttr, mapsNow, askMaps, setMaps } from "/maps.js?v=20261107b";
+import { MAPS, getMaps, routeUrl, placeUrl, navAttr, mapsNow, askMaps, setMaps } from "/maps.js?v=20261109c";
 export { routeUrl };
 
 const miles = (a, b) => { const R = 3959, r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r, h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
@@ -42,7 +42,7 @@ export function wireTour(root, opts) {
   const count = () => [...visited].filter((id) => homes.some((h) => h.id === id) || (opts.start && opts.start.id === id)).length;
   const total = () => homes.length + (opts.start ? 1 : 0);
   const prog = () => { el.querySelector("[data-tprog]").textContent = `${count()} of ${total()} visited${hint ? " · " + hint : ""}`; };
-  const row = (h, n) => `<li><label><input type="checkbox" data-tvis="${esc(h.id)}" ${visited.has(h.id) ? "checked" : ""}><span class="num">${n}</span><span class="tn"><b>${esc(h.name)}</b><small>${esc(subOf(h))}</small></span></label><span class="rowacts"><a class="link" href="${esc(routeUrl(app, [h], ""))}" ${navAttr([where(h)])} target="_blank" rel="noopener" aria-label="Directions to ${esc(h.name)}">Directions</a>${navigator.share ? `<button type="button" class="link" data-tsend="${esc(h.id)}" aria-label="Send ${esc(h.name)} to your car or Tesla app" title="Share this stop to the Tesla app or your car's app">Send to car</button>` : ""}</span></li>`;
+  const row = (h, n) => `<li><label><input type="checkbox" data-tvis="${esc(h.id)}" ${visited.has(h.id) ? "checked" : ""}><span class="num">${n}</span><span class="tn"><b>${esc(h.name)}</b><small>${esc(subOf(h))}</small></span></label><span class="rowacts"><a class="ib" href="${esc(routeUrl(app, [h], ""))}" ${navAttr([where(h)])} target="_blank" rel="noopener" aria-label="Directions to ${esc(h.name)}" title="Directions"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 21 3l-8 18-2-8z"/></svg></a>${navigator.share ? `<button type="button" class="ib" data-tsend="${esc(h.id)}" aria-label="Send ${esc(h.name)} to your Tesla or car app" title="Send to Tesla or your car"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4.2c-3.7 0-7 .8-10 2.4l1 1.9c2.6-1.4 5.5-2.1 9-2.1s6.4.7 9 2.1l1-1.9c-3-1.6-6.3-2.4-10-2.4z"/><path d="M12 8.1c-1 0-1.9.1-2.8.2L12 21l2.8-12.7c-.9-.1-1.8-.2-2.8-.2z"/></svg></button>` : ""}</span></li>`;
   const draw = () => {
     const list = opts.ordered ? homes : order(homes, from), L = legs(list); let n = opts.start ? 1 : 0;
     el.querySelectorAll("[data-mapsname]").forEach((b) => (b.textContent = MAPS[app]));
