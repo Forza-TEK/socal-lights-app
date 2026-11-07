@@ -2,6 +2,19 @@
 
 _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
 
+## Owner steps: outreach API for Grok and the monthly update opt-in (2026-11-07)
+The code is merged but **switched off until you add the key** (the API answers 503 `hold:true` without it, so Grok cannot send anything).
+- [ ] **Create the key.** Cloudflare dashboard > Workers & Pages > socal-lights > Settings > Variables and Secrets > Add > Type **Secret** > name `OUTREACH_API_KEY` > value: a long random string (at least 32 characters; generate it in your password manager, or use the dashboard's generate option) > environment **Production** > Save > then Deployments > the latest deployment > Retry deployment (secrets apply to the next deployment).
+- [ ] **Give Grok the same value** through its secret or credential store. Never paste the key in a chat, an email or a file in the repo.
+- [ ] **Hand Grok `docs/monetization/grok-outreach-api.md`** (one file; it has the endpoints, rules and curl examples) and the updated `grok-email-playbook.md`.
+- [ ] **Optional, decide BEFORE the first use: `OUTREACH_SALT`** (any random string, Pages secret, same steps). It salts the stored hashes. If you never set it the app uses `THROTTLE_SALT`, then a built-in constant. **Do not add or change a salt after outreach has started**: it changes every hash, so earlier suppressions would stop matching.
+- [ ] **Pilot (nothing is activated until you approve):** (1) Admin > Outreach > paste Grok's sent log (up to 500 at a time) and read the counts and CSV; (2) review the eligible recipients and the two follow-up templates (`grok-email-playbook.md` 5b); (3) tell Grok to start; (4) watch Admin > Outreach for registrations and listings generated, replies, bounces and unsubscribes (not opens).
+- [ ] **Rotate the key** (every few months, or if it may have leaked): create a new random value, edit the secret `OUTREACH_API_KEY` in the same place (Settings > Variables and Secrets > the secret > Edit), Save, Retry deployment, then update Grok's store. Until Grok has the new value its calls get 401 and it holds.
+- [ ] **Revoke Grok's access instantly:** delete the secret `OUTREACH_API_KEY` (Settings > Variables and Secrets > Delete) and Retry deployment. The API then answers 503 `hold:true` to everyone. Suppressions already stored stay.
+- [ ] Confirm `MAIL_POSTAL_ADDRESS` is set (marketing emails, including the future monthly update, need your postal address; the repo never holds it) and that Grok's footer has the real address, not the placeholder.
+- [ ] Attorney: privacy policy sections "Monthly update (optional)" and "Contacting businesses and organizations, and opt-outs".
+- [ ] Later task: the monthly newsletter itself (not built; sending needs an active row in `newsletter_optins`, the preferences link and `newsletterLinks()` for the headers).
+
 ## Owner steps: contest sponsors (2026-11-07)
 - [ ] Attorney: `docs/monetization/legal-redlines.md` "Organizer-collected sponsors and sponsor invite links", Terms "Sponsors collected by the organizer" and "Sponsor invite links", Privacy "Sponsors recorded by organizers".
 - [ ] Optional: tell Covina that their organizer can add a payment link (their city portal) and an invite link on the contest dashboard > Sponsors once their contest is live.

@@ -21,7 +21,7 @@ CI runs `npm test` and `npm run validate` as the **Tests** check; `main` require
 What it does faithfully:
 - The real schema and the real SQL in `functions/` (no mocks of queries).
 - A migration that does not apply **throws** (it used to be swallowed into an array nobody read). If this fails, report it and add a new migration; never edit an old one.
-- D1's 100 bound parameters per query and 100 KB per statement (throws like D1), and counts every query as one outgoing call (`DB.stats.calls`, `DB.stats.reset()`); a `batch` is one call and one transaction (rolled back on error). Tests assert paths stay under the Free-plan 50-call cap.
+- D1's 100 bound parameters per query and 100 KB per statement (throws like D1), and counts every query as one outgoing call (`DB.stats.calls`, `DB.stats.reset()`); a `batch` is one call and one transaction (rolled back on error; a SELECT inside a batch returns its rows, as on D1). Tests assert paths stay under the Free-plan 50-call cap.
 
 What it cannot do (know this before trusting a green run):
 - **No concurrency.** One synchronous connection; interleaved awaits reproduce read-then-write races, but not real multi-connection or multi-isolate contention (`signin-attempts.test.mjs` says so).
@@ -50,6 +50,7 @@ The server's "today" is the Pacific calendar date from `functions/_lib/time.js` 
 | Migration validator (`scripts/validate-migrations.mjs`): upsert/new/updated/removed, bad dates, hard vs soft rules, mass delete, destructive SQL, filenames, SQL errors, `--gate`, `--check-urls` (local server), `--base` with edited/deleted old migrations | `validate-migrations.test.mjs` |
 | Every `functions/**/*.js` imports; route files export only valid handler names; every `public/**/*.js` parses; every `<script src>` exists | `smoke.test.mjs` |
 | Pure browser logic: `norm.js` (also the server's field cleaning), `seasons.js`, `rules.js`, `sponsor-plans.js`, plan status and windows on the page against the server's checkout rule on a grid | `frontend-logic.test.mjs` |
+| Outreach API (auth, rate limit, every verdict, hold on failure, hashes only), suppression sync from app unsubscribes and account deletion, Admin > Outreach reconcile and results, monthly-update opt-in, /prefs token and one-click | `outreach.test.mjs` |
 | Payments, webhook, orders, refunds, sponsor rules and renewals, limits, mail outbox, alerts, privacy deletion, terms text, caching, event pages | the other files in `tests/` |
 
 ## Not covered (be honest in reviews)
