@@ -186,14 +186,32 @@ S.activity = { id: "activity", file: "run-activity", cookie: ck.u_org, ...MAPSPE
 ]};
 
 // ---------------- Sponsors and installers ----------------
+const dashUrl = BASE + "/c/" + SLUG + "/manage";
 S.sponsors = { id: "sponsors", file: "sponsors-add", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ES, "Add sponsors and logos", "Thank the businesses that help", "In this video, you will add a local business as a sponsor of your contest, with its logo and website, so it gets thanked on your contest page. We start on the map."),
+  hook(ES, "Record a sponsor on your contest page", "Thank the businesses that help", "In this video, you will record a local business that paid you to sponsor your contest, so its name and logo are thanked on your contest page. We start on the map."),
   ...toDash(),
-  target("Tap Sponsors", "A sponsor is a local business that supports your contest. Their name and logo show on your contest page. Tap Sponsors.", nav("sponsors"), { after: 1400 }),
-  { cap: "Name and tier", say: "Type the sponsor's name, and choose a tier. Sponsors are listed by tier, so the top tier shows first.", do: async (p, h) => { await h.type("#sp-name", "Oak Hill Hardware"); await h.move("#sp-tier"); await p.selectOption("#sp-tier", "gold"); await h.unring(); await sleep(600); } },
-  { cap: "Website and logo", say: "Add their website, so people can click through. Then choose their logo. Use a clear picture, a J P G, P N G, or WebP file under six hundred kilobytes.", do: async (p, h) => { await h.type("#sp-url", "https://oakhillhardware.example.com"); p.once("filechooser", (fc) => fc.setFiles(process.env.LOGO)); }, target: "#sp-logo", after: 1800 },
-  target("Tap Add sponsor", "Tap Add sponsor. Sponsors can support your contest directly, and any payment goes to you. One rule is important: payment never affects who wins.", '#spform button[type="submit"]', { after: 2000, poster: true }),
-  target("See it as voters do", "To check how it looks, tap See it as voters do, and you will see the sponsors on the contest page, just as your neighbors do.", 'a:has-text("See it as voters do")', { after: 2200 }),
+  target("Tap Sponsors", "A sponsor is a local business that supports your contest. This tab is where you record one. Tap Sponsors.", nav("sponsors"), { after: 1400 }),
+  { cap: "Company and logo", say: "Type the company's name. Then choose their logo, a J P G, P N G, or WebP file under six hundred kilobytes.", do: async (p, h) => { await h.scrollTo("#sp-name", 200); await h.type("#sp-name", "Oak Hill Hardware"); p.once("filechooser", (fc) => fc.setFiles(process.env.LOGO)); }, target: "#sp-logo", after: 1800 },
+  { cap: "Paid to you", say: "Now how the sponsorship counts. The sponsor paid you yourself, so choose Paid to me.", do: async (p, h) => { await h.move("#sp-basis"); await p.selectOption("#sp-basis", "paid"); await h.unring(); await sleep(900); } },
+  { cap: "Confirm the payment", say: "Tick that you collected the payment, and add the date and how it was paid. Sponsors pay you, never SoCal Lights.", do: async (p, h) => { await h.click("#sp-collected", { after: 500 }); await h.move("#sp-date"); await p.fill("#sp-date", "2026-11-05"); await h.type("#sp-method", "Check"); await h.unring(); } },
+  { cap: "Permission", say: "Tick that you have the sponsor's permission, and tick Show on the contest page.", do: async (p, h) => { await h.click("#sp-perm", { after: 500 }); await h.click("#sp-show", { after: 700 }); } },
+  target("Tap Save sponsor", "Tap Save sponsor. Payment never affects who wins.", "#sp-save", { after: 2000, poster: true }),
+  target("See it as voters do", "To check how it looks, tap See it as voters do, and you will see the sponsor on the contest page, just as your neighbors do.", 'a:has-text("See it as voters do")', { after: 2200 }),
+  nextUp(ES, "Invite a sponsor to your contest", "Share one private link and approve the request"),
+]};
+S["sponsor-invite"] = { id: "sponsor-invite", file: "sponsors-invite", cookie: ck.u_org, ...MAPSPEC, steps: [
+  hook(ES, "Invite a sponsor to your contest", "One private link, and you approve it", "In this video, you will send a sponsor one private link, then review their request and approve it. We start on the map."),
+  ...toDash(),
+  target("Tap Sponsors", "Sponsors are managed on one tab. Tap Sponsors.", nav("sponsors"), { after: 1400 }),
+  { cap: "How sponsors pay you", say: "First, tell sponsors how to pay you. Paste your own payment link, or write a few words, like where to send a check. SoCal Lights never charges sponsors. Tap Save.", do: async (p, h) => { await h.scrollTo("#su-pay", 200); await h.type("#su-pay", "https://example.com/oak-hill-neighbors-pay"); }, target: "#su-save", after: 1600 },
+  { cap: "Invite a sponsor", say: "Next, Invite a sponsor. Tap Create invite link.", do: async (p, h) => { await h.scrollTo("#su-on", 260); }, target: "#su-on", after: 1500 },
+  { cap: "Copy the link", say: "This is your private link. Tap Copy link, then send it to the sponsor by email or text. Share it only with people you want to hear from.", do: async (p, h) => { await h.hover("#su-url", 1200); }, target: "#su-copy", after: 1500 },
+  { cap: "The sponsor's page", say: "Now the sponsor's side. They open your link. No account is needed. They see who is running the contest, and how to pay you.", do: async (p, h) => { const u = BASE + "/s/" + (await p.inputValue("#su-url")).split("/s/").pop(); await h.ctx.clearCookies(); await p.route("**/challenges.cloudflare.com/**", (r) => r.abort()); await p.goto(u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#contact", { timeout: 10000 }); await sleep(1000); await h.hover("#paylink, .notice", 1400); }, pad: 0.4 },
+  { cap: "The sponsor's form", say: "They fill in their name, company and email, tick the two boxes, and tap Send to the organizer.", do: async (p, h) => { await h.type("#contact", "Sam Demo"); await h.type("#company", "Oak Hill Hardware"); await h.type("#email", "owner@oakhillhardware.example.com"); await h.scrollTo("#perm", 200); await h.click("#perm", { after: 400 }); await h.click("#und", { after: 600 }); }, target: "#go", after: 2200 },
+  { cap: "Back to your dashboard", say: "Back on your side, the request waits for you. Nothing shows on your contest page until you approve it.", do: async (p, h) => { await h.ctx.addCookies([{ name: "scl_session", value: ck.u_org, url: BASE }]); await p.goto(dashUrl + "#sponsors", { waitUntil: "networkidle" }); await p.waitForSelector("[data-edsp]", { timeout: 10000 }); await h.scrollTo("[data-edsp]", 260); await h.hover("[data-edsp]", 1200); }, pad: 0.4 },
+  { cap: "Mark payment received", say: "Once they have paid you, tap Mark payment received.", target: "[data-edsp]", after: 1200 },
+  { cap: "Confirm the payment", say: "Choose Paid to me, tick that you collected it, add the date and how it was paid, then tap Save sponsor.", do: async (p, h) => { await h.move("#sp-basis"); await p.selectOption("#sp-basis", "paid"); await h.unring(); await sleep(500); await h.click("#sp-collected", { after: 400 }); await h.move("#sp-date"); await p.fill("#sp-date", "2026-11-05"); await h.type("#sp-method", "Check"); await h.unring(); }, target: "#sp-save", after: 1800 },
+  { cap: "Approve", say: "Now tap Approve for the contest page. The sponsor appears on your contest page, labelled Sponsor.", do: async (p, h) => { await h.scrollTo("[data-apsp]", 260); await h.hover("[data-apsp]", 700); }, target: "[data-apsp]", after: 2400, poster: true },
   nextUp(ES, "Presenting installer and quote requests", "How the Get a quote button works"),
 ]};
 S.installer = { id: "installer", file: "sponsors-installer", cookie: ck.u_org, ...MAPSPEC, steps: [
