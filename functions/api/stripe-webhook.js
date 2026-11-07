@@ -10,6 +10,8 @@ import { logOp, logOpOnce } from "../_lib/oplog.js";
 import { bump } from "../_lib/funnel.js";
 import { sendFeaturePaidEmail } from "../_lib/featuremail.js";
 import { sponsorWindow } from "../_lib/sponsor.js";
+import { CONTEST_PASSES, quoteProblem } from "../_lib/passes.js";
+import { sendPassPaidEmail } from "../_lib/passmail.js";
 import { sponsorEmails } from "../_lib/sponsormail.js";
 import { enrollRenewal, pauseOnRevoke } from "../_lib/renewal.js";
 import { stripeCall } from "../_lib/stripe.js";
@@ -107,9 +109,9 @@ const orderByPi = (env, pi) => (pi ? env.DB.prepare("SELECT * FROM feature_order
 async function paid(s, env) {
   if (s.payment_status !== "paid") return { waiting: s.payment_status }; // e.g. a delayed method; Stripe sends async_payment_succeeded later
   const eventId = s.metadata && s.metadata.event_id, plan = s.metadata && s.metadata.plan;
-  const mt = s.metadata && s.metadata.target, target = mt === "home" ? "home" : mt === "installer" ? "installer" : "event"; // a home (podium finisher) and an installer's Sponsor placement are bought through the same orders
+  const mt = s.metadata && s.metadata.target, target = mt === "home" ? "home" : mt === "installer" ? "installer" : mt === "contest_pass" ? "contest_pass" : "event"; // a home (podium finisher) and an installer's Sponsor placement are bought through the same orders
   const tier = target === "event" && !!EVENT_PLANS[plan]; // one of the new event tiers (ev_pin, ev_banner, ev_top, ev_all); the old keys pin / top / season are grandfathered below
-  const price = target === "installer" ? INSTALLER_PLANS[plan] : tier ? EVENT_PLANS[plan] : PLANS[plan];
+  const price = target === "contest_pass" ? CONTEST_PASSES[plan] : target === "installer" ? INSTALLER_PLANS[plan] : tier ? EVENT_PLANS[plan] : PLANS[plan];
   if (!eventId || !price) return { ignored: "no feature metadata" };
   if (target === "home" && !PLANS[plan].days) return { ignored: "no Full run plan for homes" };
 
@@ -133,6 +135,13 @@ async function paid(s, env) {
       const ev = await env.DB.prepare("SELECT start_date, end_date, featured, featured_until, banner_until FROM events WHERE id = ?").bind(eventId).first();
       if (ev) { const q = eventQuote(ev, plan, ptToday()); if (!hasQuote) expected = q.cents || price.cents; if (!q.added.length && q.problem.startsWith("Nothing to add")) dupe = q.problem; }
     }
+  }
+  if (target === "contest_pass") {
+    // A contest pass: eventId is the organization key. The quote (window dates, pass, price) was locked at checkout and the paid amount is checked against it. A pass bought for a window that has
+    // changed, or for an organization that already holds this much (second tab, duplicate session), is held as refund due instead of being applied twice.
+    if (!hasQuote) return { ignored: "no pass quote" };
+    quote = { from: m.quote_from, to: m.quote_to, cents: Number(m.quote_cents) }; expected = quote.cents;
+    if (!(await env.DB.prepare("SELECT 1 FROM feature_orders WHERE session_id = ?").bind(s.id).first())) { const why = await quoteProblem(env, { event_id: eventId, plan, quote_from: quote.from, quote_to: quote.to }); if (why) quoteChanged = why; }
   }
   const exists = await env.DB.prepare("SELECT 1 FROM feature_orders WHERE session_id = ?").bind(s.id).first();
   if (!exists && pi) { // did a refund or dispute for this payment already arrive?
@@ -175,6 +184,10 @@ async function paid(s, env) {
   }
   const nf = await applyOrder(env.DB, order, targetId);
   if (!nf) { console.error("stripe-webhook: target not found", targetId); return err(500, (target === "home" ? "Home" : target === "installer" ? "Installer profile" : "Event") + " not found; will retry."); }
+  if (target === "contest_pass") {
+    await bump(env, "fn:pass-paid"); await sendPassPaidEmail(env, order, nf, s.amount_total); // a number only, and one email, once: a replay returns "duplicate" above
+    return { pass: nf };
+  }
   if (target === "installer") {
     await bump(env, "fn:sponsor-paid"); await sponsorEmails(env, order, nf, s, s.metadata.renewal === "1");
     if (s.metadata.renew === "1") { const e = await enrollFromSession(s, order, env); if (e instanceof Response) return e; } // the buyer ticked "renew automatically"

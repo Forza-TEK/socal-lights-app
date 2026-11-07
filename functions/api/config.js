@@ -2,6 +2,7 @@
 import { json } from "../_lib/util.js";
 import { PUBLIC_PLANS, PUBLIC_EVENT_PLANS, PUBLIC_COMPONENT_CENTS, PUBLIC_INSTALLER_PLANS, OPEN_DAYS, ptToday } from "../_lib/featured.js";
 import { sponsorWindow } from "../_lib/sponsor.js";
+import { PUBLIC_CONTEST_PASSES } from "../_lib/passes.js";
 import { CONSENT_TEXTS, CONSENT_VERSION } from "../_lib/renewal.js";
 
 // "Most popular" event plan: only when real paid orders back it (at least 5 in the last 120 days and a clear leader). Otherwise empty and no marker is shown.
@@ -15,6 +16,6 @@ async function popularEventPlan(env) {
 
 export async function onRequestGet({ env }) {
   const popularEvent = await popularEventPlan(env);
-  return json({ popularEvent, turnstileSiteKey: env.TURNSTILE_SITE_KEY || "", featureCheckout: !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET), featurePlans: PUBLIC_PLANS /* homes only: pin and top, 30 days */, eventPlans: PUBLIC_EVENT_PLANS, eventComponentCents: PUBLIC_COMPONENT_CENTS, featureOpenDays: OPEN_DAYS, installerPlans: PUBLIC_INSTALLER_PLANS, installerRenewal: { version: CONSENT_VERSION, text: CONSENT_TEXTS[CONSENT_VERSION] }, // {price} is filled in by the page from installerPlans
+  return json({ popularEvent, turnstileSiteKey: env.TURNSTILE_SITE_KEY || "", featureCheckout: !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET), featurePlans: PUBLIC_PLANS /* homes only: pin and top, 30 days */, eventPlans: PUBLIC_EVENT_PLANS, eventComponentCents: PUBLIC_COMPONENT_CENTS, featureOpenDays: OPEN_DAYS, installerPlans: PUBLIC_INSTALLER_PLANS, contestPasses: PUBLIC_CONTEST_PASSES, installerRenewal: { version: CONSENT_VERSION, text: CONSENT_TEXTS[CONSENT_VERSION] }, // {price} is filled in by the page from installerPlans
      installerSeason: (() => { const b = sponsorWindow("banner", {}, ptToday()); return { from: b.from, to: b.to, season: b.season, days: b.days }; })() }, { headers: { "cache-control": "public, max-age=300" } });
 }

@@ -67,6 +67,7 @@ test("create: flagged notes for free mail, no website and a mismatched website; 
 });
 test("create: three a day per account (429); same name gets a different slug; a mode with judges stores them and sends the invitation batch", async () => {
   const { env, raw } = newEnv({ RESEND_API_KEY: "re_test" }); const u = await addUser(raw, "u1", "o@city.gov");
+  raw.prepare("INSERT INTO contest_comps (id, org_key, allowed, valid_until) VALUES (?,?,?,?)").run("c1", "u:o@city.gov", -1, "2099-12-31"); // contest passes: this test makes several contests for one organization
   const f = stubFetch(() => new Response(JSON.stringify({ data: [] }), { status: 200 }));
   try {
     const a = await J(post(env, u.cookie, good())), b = await J(post(env, u.cookie, good({ mode: "judges", judges: "j1@example.com\nj2@example.com, bad, j1@example.com" })));

@@ -13,6 +13,7 @@ import { judgeProgress } from "../../_lib/judging.js";
 import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
 import { normName, normText } from "../../_lib/fields.js";
 import { reserveSends } from "../../_lib/sendlimit.js";
+import { liveGate, PAYWALL_MESSAGE } from "../../_lib/passkey.js";
 
 export async function onRequestGet({ params, request, env }) {
   const c = await getContest(env, params.slug);
@@ -113,6 +114,9 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
 // "Run it again next year": a new contest with the same settings, rules, prizes, sponsors and judges, and every date a year later.
 const plusYear = (d) => { const x = new Date(d + "T12:00:00Z"); x.setUTCFullYear(x.getUTCFullYear() + 1); return x.toISOString().slice(0, 10); };
 async function cloneContest(env, c, user) {
+  // Contest passes: a copy that goes live counts toward the organization's window like any other contest (a copy held for review does not count yet).
+  const gate = await liveGate(env, user.email, c.site);
+  if (c.status !== "pending" && !gate.ok) return json({ error: PAYWALL_MESSAGE, code: "pass_required", ...gate.view }, { status: 402 });
   const jn = (await env.DB.prepare("SELECT COUNT(*) AS n FROM judges WHERE contest_id = ?").bind(c.id).first()).n;
   if (jn) { const over = await reserveSends(env, user, c.id, "judge", jn); if (over) return err(429, over); }
   const closes = plusYear(c.entries_close); let vs = plusYear(c.vote_start), ve = plusYear(c.vote_end);
@@ -121,8 +125,9 @@ async function cloneContest(env, c, user) {
   const name = /\b20\d\d\b/.test(c.name) ? c.name.replace(/\b(20\d\d)\b/, (y) => String(+y + 1)) : `${c.name} ${closes.slice(0, 4)}`;
   let slug = slugify(name).slice(0, 40) || "contest";
   if (await getContest(env, slug)) slug = `${slug.slice(0, 34)}-${newId().slice(0, 5)}`;
-  const skip = new Set(["id", "slug", "name", "announced", "results", "event_id", "note", "created_at", "updated_at", "remind_open", "remind_close", "entries_close", "vote_start", "vote_end", "season", "status", "entries_open", "voting_open"]);
+  const skip = new Set(["org_key", "live_at", "id", "slug", "name", "announced", "results", "event_id", "note", "created_at", "updated_at", "remind_open", "remind_close", "entries_close", "vote_start", "vote_end", "season", "status", "entries_open", "voting_open"]);
   const row = { ...Object.fromEntries(Object.entries(c).filter(([k]) => !skip.has(k))), id: newId(), slug, name, entries_close: closes, vote_start: vs, vote_end: ve, season: seasonFor(closes), status: c.status === "pending" ? "pending" : "live", owner_id: c.owner_id };
+  row.org_key = gate.key; row.live_at = row.status === "live" ? todayPT() : "";
   const cols = Object.keys(row);
   await env.DB.prepare(`INSERT INTO contests (${cols.join(",")}) VALUES (${cols.map(() => "?").join(",")})`).bind(...cols.map((k) => row[k])).run();
   // sponsors (their logos are copied so removing one contest's logo never affects the other) and judges

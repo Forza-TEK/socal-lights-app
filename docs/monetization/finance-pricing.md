@@ -185,3 +185,20 @@ Other:
 - Avalara 1099-K: https://www.avalara.com/us/en/blog/one-big-beautiful-bill-act-1099-reporting-threshold.html
 - Thumbtack and Angi install prices (from draft, not re-checked): https://thumbtack.com/p/christmas-light-installation-prices, https://www.angi.com/articles/how-much-does-christmas-light-installation-cost/il/chicago
 - Data snapshot: `docs/monetization/data-2026-11-04.md`
+
+## Contest passes (owner decision 2026-11-07): Stripe net per pass
+Each organization gets one free contest per 12-month window; passes are the total number of contests in the window (the free one included): Up to 5, Up to 10, Up to 20. Prices live only in `functions/_lib/passes.js`. Stripe fee for a US card is 2.9% + $0.30 (same source and caveat as the table at the top of this file; the fixed fee on a refund is the open question already listed).
+
+| Pass | Price | Stripe fee | Net to us |
+|---|---|---|---|
+| Up to 5 contests | $50 | $1.75 | $48.25 |
+| Up to 10 contests | $75 | $2.48 | $72.52 |
+| Up to 20 contests | $100 | $3.20 | $96.80 |
+| Upgrade 5 to 10 or 10 to 20 (difference) | $25 | $1.03 | $23.97 |
+| Upgrade 5 to 20 (difference) | $50 | $1.75 | $48.25 |
+
+- An upgrade is two payments (the first pass, then the difference), so the fixed $0.30 is paid twice: Up to 5 then Up to 20 nets $96.50 against $96.80 for buying Up to 20 at once.
+- Per contest the passes cost $12.50 (5 contests: $50 for the four beyond the free one), $8.33 (10: $75 for nine), $5.26 (20: $100 for nineteen) at the list price, before fees. Heavy users are cheapest per contest; a city that runs more than 20 should write to us (no checkout).
+- Comps (Founding City) bring in nothing by design. Covina is expected to be the only one this season, so no revenue is assumed from contest passes in the season forecast above. One paid pass in a season is a bonus.
+- A refund before the extra contests were used revokes the pass; after they were used the order is flagged for Admin (see `legal-redlines.md`, "Contest organizer passes").
+- Sales tax and 1099-K questions are the same as for the other products (section on tax above); contest passes are a service sold to organizations, which the CPA should confirm.

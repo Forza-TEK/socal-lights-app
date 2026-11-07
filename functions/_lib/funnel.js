@@ -25,12 +25,15 @@ export const STEPS = [
   ["fn:sponsor-picked", "Sponsor page: chose an installer profile"],
   ["fn:sponsor-checkout", "Sponsor placement: payment page opened"],
   ["fn:sponsor-paid", "Sponsor placement: paid"],
+  ["fn:pass-picker-shown", "Contest pass: picker shown (a contest would go over the free one)"],
+  ["fn:pass-choose", "Contest pass: Choose tapped (picker, Pricing or the pass page)"],
+  ["fn:pass-paid", "Contest pass: paid (counted by the server)"],
   ["fn:autorenew-opt-in", "Automatic renewal: turned on"],
   ["fn:autorenew-charged", "Automatic renewal: charged"],
   ["fn:autorenew-failed", "Automatic renewal: charge failed"],
   ["fn:autorenew-cancelled", "Automatic renewal: cancelled"],
 ];
-export const CLIENT_KEYS = ["fn:visit", "fn:event-open", "fn:signin-open", "fn:event-feature-choose", "fn:event-feature-pick", "fn:pricing-choose", "fn:sponsor-shown", "fn:sponsor-picked"];
+export const CLIENT_KEYS = ["fn:visit", "fn:event-open", "fn:signin-open", "fn:event-feature-choose", "fn:event-feature-pick", "fn:pricing-choose", "fn:sponsor-shown", "fn:sponsor-picked", "fn:pass-picker-shown", "fn:pass-choose"];
 
 export async function bump(env, key, day = dayKey()) {
   try { await env.DB.prepare("INSERT INTO site_hits (day, page, n) VALUES (?, ?, 1) ON CONFLICT(day, page) DO UPDATE SET n = n + 1 WHERE n < ?").bind(day, key, DAILY_CAP).run(); } catch {}

@@ -2,6 +2,12 @@
 
 _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
 
+## Owner steps: contest passes (2026-11-07)
+- [ ] Grant the Covina founding-partner comp: Admin > Contests > Contest passes > Grant a comp (domain `covinaca.gov`, Unlimited, valid until the end of the free period, note "Founding partner: Covina"). Nothing is granted until you click.
+- [ ] Attorney: `docs/monetization/legal-redlines.md` "Contest organizer passes" and Terms `#passes`.
+- [ ] Re-record the `quick` and `custom` videos (the Review screen now mentions passes): `docs/tutorial-updates.md`.
+- [ ] Check Admin > Contests > Contest passes weekly for organizations over their limit and "more than 20" leads.
+
 ## Owner steps after the 2026-11-07 audit fixes
 - [ ] Check Admin > Reports once a day: "Remove my home" requests promise an answer within two business days; also set `ADMIN_NOTIFY_EMAIL` if the team address is not rey@forza-tek.com
 - [ ] Open a test "Remove my home" request from a private browser on a sweep home and approve it in Admin (use a copy of a real listing id only if you really want it deleted)
