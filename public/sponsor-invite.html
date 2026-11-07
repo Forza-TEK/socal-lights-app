@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Sponsor a contest · SoCal Lights</title>
+<meta name="description" content="Sponsor a neighborhood lighting contest.">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261108b">
+<link rel="stylesheet" href="/info.css?v=20261109g">
+<style>
+.sp{max-width:640px;margin:28px auto 56px;display:grid;gap:16px}.sp h1{margin:0;font-size:28px}.sp p{margin:0}.sp .meta{color:var(--muted)}
+.sp .card{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:10px}:root[data-theme="dark"] .sp .card{background:var(--tile)}
+.sp .card h2{margin:0;font-size:18px}.sp .notice{border-left:3px solid var(--season,#c8324f);padding:4px 0 4px 14px;color:var(--ink)}
+.sp label.f{display:grid;gap:6px;font-weight:600}.sp label.f span{font-weight:400;color:var(--muted)}
+.sp input[type=text],.sp input[type=email],.sp input[type=tel],.sp input[type=url],.sp textarea,.sp input[type=file]{font:inherit;padding:12px 14px;border:1.5px solid var(--line2,#b0b0b0);border-radius:12px;background:transparent;color:inherit;width:100%;box-sizing:border-box;min-height:48px}
+.sp textarea{min-height:96px;resize:vertical}
+.sp .lv{display:grid;gap:8px}.sp .lv label{display:flex;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;min-height:48px}.sp .lv label:has(input:checked){border-color:var(--ink)}
+.sp .chk{display:flex;gap:10px;align-items:flex-start;font-weight:400}.sp .chk input{margin-top:4px;width:20px;height:20px;flex:none}
+.sp .go{min-height:48px;padding:0 26px;border-radius:12px;border:1px solid var(--btn);background:var(--btn);color:var(--btn-ink);font:600 16px var(--font,inherit);cursor:pointer;justify-self:start}.sp .go[disabled]{opacity:.6;cursor:default}
+.sp a.pay{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 22px;border-radius:12px;border:1.5px solid var(--ink);color:var(--ink);text-decoration:none;font-weight:600;justify-self:start}
+.sp .err{color:var(--bad);font-weight:600}.sp .text{white-space:pre-wrap;overflow-wrap:anywhere}.sp .hp{position:absolute;left:-9999px;height:0;overflow:hidden}
+</style>
+<script src="/hit.js?v=20261107a" defer></script>
+</head>
+<body>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+<main><div class="sp" id="box"><p class="meta">Loading…</p></div></main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); }, box = $("box"), token = (location.pathname.match(/^\/s\/([A-Za-z0-9_-]{24})\/?$/) || [])[1] || "";
+  var esc = function (t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+  var nice = function (s) { return s ? new Date(s + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : ""; };
+  var money = function (c) { return c == null ? "" : " $" + (c % 100 ? (c / 100).toFixed(2) : c / 100); };
+  function dead() { box.innerHTML = '<h1>This sponsor link isn\'t active</h1><p>The link may have been switched off or replaced. Ask the contest organizer for a new one.</p><p class="meta">If you were trying to send a payment, do not pay until you have confirmed the details with the organizer.</p>'; }
+  if (!token) return dead();
+  fetch("/api/sponsor-invite/" + token, { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) { if (!d) return dead(); draw(d); }).catch(dead);
+  function draw(d) {
+    var c = d.contest, lv = d.levels || [], pay = d.pay || {}, widget = null;
+    var levels = lv.length ? '<fieldset class="lv" style="border:0;padding:0;margin:0"><legend style="font-weight:600;margin-bottom:6px">Sponsor level</legend>' + lv.map(function (l, i) { return '<label><input type="radio" name="level" value="' + esc(l.label) + '"' + (i === 0 ? " checked" : "") + '> <span><b>' + esc(l.label) + '</b>' + esc(money(l.cents)) + '</span></label>'; }).join("") + '<label><input type="radio" name="level" value="Other"> <span><b>Other</b> (tell the organizer in your message)</span></label></fieldset>' : "";
+    var how = "";
+    if (pay.url || pay.text) {
+      how = '<section class="card" aria-labelledby="hp-t"><h2 id="hp-t">How to pay</h2><p>Pay the organizer directly, using what they gave us. Then send the form below so they can confirm it.</p>'
+        + (pay.url ? '<a class="pay" id="paylink" href="' + esc(pay.url) + '" target="_blank" rel="noopener noreferrer nofollow">Open the organizer\'s payment link <span class="meta" style="font-weight:400">(' + esc(pay.host) + ')</span></a>' : "")
+        + (pay.text ? '<p class="text">' + esc(pay.text) + '</p>' : "")
+        + '<p class="meta">SoCal Lights has not verified this payment link. Only pay organizers you know.</p></section>';
+    }
+    box.innerHTML = '<h1>Sponsor ' + esc(c.name) + '</h1><p class="meta">Run by ' + esc(c.org) + ', ' + esc(c.city) + '. Entries to ' + esc(nice(c.entries_close)) + ', voting ' + esc(nice(c.vote_start)) + ' to ' + esc(nice(c.vote_end)) + '.</p>'
+      + '<p class="notice"><b>Your sponsorship goes to ' + esc(c.org) + ', not to SoCal Lights.</b> SoCal Lights does not process, hold or guarantee sponsorship payments. Sponsors do not influence who wins.</p>'
+      + how
+      + '<form class="card" id="f" novalidate><h2>Tell the organizer about your sponsorship</h2>' + levels
+      + '<label class="f">Your name<input type="text" id="contact" autocomplete="name" maxlength="80" required></label>'
+      + '<label class="f">Company name<input type="text" id="company" autocomplete="organization" maxlength="80" required></label>'
+      + '<label class="f">Website <span>(optional)</span><input type="text" inputmode="url" id="site" autocomplete="url" maxlength="200" placeholder="example.com"></label>'
+      + '<label class="f">Phone <span>(optional)</span><input type="tel" id="phone" autocomplete="tel" maxlength="40"></label>'
+      + '<label class="f">Email<input type="email" id="email" autocomplete="email" maxlength="120" required></label>'
+      + '<label class="f">Message <span>(optional)</span><textarea id="message" maxlength="500"></textarea></label>'
+      + '<label class="f">Logo <span>(optional: PNG, JPG or WebP under 1 MB)</span><input type="file" id="logo" accept="image/png,image/jpeg,image/webp"></label>'
+      + '<label class="chk"><input type="checkbox" id="perm"><span>I have permission to share my company\'s name and logo on the contest page.</span></label>'
+      + '<label class="chk"><input type="checkbox" id="und"><span>I understand my payment goes to the organizer.</span></label>'
+      + '<div class="hp" aria-hidden="true"><label>Company site <input id="cs" tabindex="-1" autocomplete="off"></label></div><div id="ts"></div>'
+      + '<p class="err" id="err" role="alert" hidden></p><button class="go" id="go" type="submit">Send to the organizer</button>'
+      + '<p class="meta">We use these details only to pass your request to the organizer and to email you a confirmation. See the <a href="/privacy">Privacy Policy</a>. Nothing appears on the contest page until the organizer approves it.</p></form>';
+    var key = d.turnstileSiteKey || "";
+    if (key) { var s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = function () { if (window.turnstile) widget = window.turnstile.render($("ts"), { sitekey: key }); }; document.head.appendChild(s); }
+    var er = $("err"), go = $("go"), show = function (m) { er.textContent = m; er.hidden = !m; };
+    $("f").onsubmit = function (e) {
+      e.preventDefault(); show(""); go.disabled = true; go.textContent = "Sending…";
+      var fd = new FormData(), lvl = document.querySelector('input[name="level"]:checked');
+      fd.append("contact_name", $("contact").value); fd.append("company", $("company").value); fd.append("website", $("site").value); fd.append("phone", $("phone").value); fd.append("email", $("email").value); fd.append("message", $("message").value);
+      if (lvl) fd.append("level", lvl.value); if ($("perm").checked) fd.append("permission", "1"); if ($("und").checked) fd.append("understand", "1"); fd.append("company_site", $("cs").value);
+      if ($("logo").files[0]) fd.append("logo", $("logo").files[0]); fd.append("cf-turnstile-response", widget != null && window.turnstile ? window.turnstile.getResponse(widget) || "" : "");
+      fetch("/api/sponsor-invite/" + token, { method: "POST", body: fd }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); }).then(function (x) {
+        if (!x.ok) { show((x.j && x.j.error) || "That didn't send. Please try again."); go.disabled = false; go.textContent = "Send to the organizer"; if (widget != null && window.turnstile) window.turnstile.reset(widget); return; }
+        box.innerHTML = '<h1>Thanks</h1><p class="notice">' + esc(c.org) + ' will confirm your payment and approve your listing. It appears on the contest page only after they approve it.</p><p class="meta">We emailed you a short confirmation. Remember: your sponsorship goes to the organizer, not to SoCal Lights.</p>';
+        window.scrollTo(0, 0);
+      }).catch(function () { show("That didn't send. Check your connection and try again."); go.disabled = false; go.textContent = "Send to the organizer"; });
+    };
+  }
+})();
+</script>
+<script src="/footer.js?v=20261106z" defer></script>
+</body>
+</html>

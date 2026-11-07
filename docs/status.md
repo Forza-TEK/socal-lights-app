@@ -2,6 +2,15 @@
 
 _Last updated: 2026-11-06 (new pricing structure: event tiers with banner, installer Top of the list)_
 
+## Organizer-collected sponsors and sponsor invite links (2026-11-07; owner decision)
+Details: `docs/contests.md` ("Sponsors collected by the organizer"), proposal and phases: `docs/monetization/contest-sponsor-payments-proposal.md` (phases 1 and 2 built; Stripe Connect Standard is still only a proposal). Migrations `0189_contest_sponsor_records.sql`, `0190_help_contest_sponsors.sql`.
+- **The site is not a party to sponsor money.** The organizer records a paid (or in-kind) sponsor with contact, amount, "payment collected by me" (date, method) and a PRIVATE receipt (R2 `sponsor-receipt/...`, contest team and Admin only). A sponsor shows on the contest page ("Sponsor", logo, name, link) only when approved, payment confirmed (or in kind with a note), permission ticked and not hidden by Admin.
+- **Safer path built:** organizer's own payment link/instructions (https only) and up to 3 display-only levels; a private invite link `/s/<token>` (on/off/new); the public sponsor form (no account, Turnstile, honeypot, rate limits, noindex, SVG refused); a review queue (Mark payment received, Approve, Decline with email, Remove); three editable emails. Only for live contests whose organizer carries no review note; Admin can switch the link off and hide payment text or a sponsor.
+- **Privacy:** privacy.html and Terms updated; account deletion and a 24-month retention purge remove receipts and contact details.
+- **Assumptions:** "trusted" means the contest has no review note (matched website or Admin "Looks fine"), which is stricter than "not free/none" because a mismatched website also carries a note; a receipt is optional; the amount is the organizer's own record; one payment link per contest; a sponsor row never carries over payment or permission when a contest is run again.
+- **Tests:** `tests/contest-sponsors.test.mjs`, `tests/sponsor-invite.test.mjs`; browser check of the organizer tab, the sponsor page, the contest page and the Admin view at 390 and 1280 px, light and dark.
+- **Not built:** Stripe Connect, Plaid, any money movement.
+
 ## Contest passes (2026-11-07; owner decision, billing starts now)
 Rules, files and Admin steps: `docs/contests.md` ("Contest passes"). Migrations `0187_contest_passes.sql` (schema, no data) and `0188_help_contest_passes.sql` (Help, seed-safe).
 - **Rule:** each organization gets 1 free contest per 12-month window; Up to 5 ($50), Up to 10 ($75), Up to 20 ($100) are TOTAL contests in the window (free one included); more than 20 is "contact us" (mailto plus an Admin-visible lead). Upgrade = price difference. Prices only in `functions/_lib/passes.js`, served by `/api/config` as `contestPasses`.

@@ -13,6 +13,7 @@ import { judgeProgress } from "../../_lib/judging.js";
 import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
 import { normName, normText } from "../../_lib/fields.js";
 import { reserveSends } from "../../_lib/sendlimit.js";
+import { isPublic, staffView, publicView } from "../../_lib/sponsors.js";
 import { liveGate, PAYWALL_MESSAGE } from "../../_lib/passkey.js";
 
 export async function onRequestGet({ params, request, env }) {
@@ -43,9 +44,9 @@ export async function onRequestGet({ params, request, env }) {
   const awards = frozen ? frozen.awards : c.announced ? awardList(c, live) : null;
   // What each award is worth, shown from the start so people know what they are competing for
   const prizes = categories.flatMap((k) => [hasPublic(c) ? { category: k, kind: "public", label: KIND_LABEL.public, prize: prizeFor(c, k, "public") } : null, hasJudges(c) ? { category: k, kind: "judge", label: KIND_LABEL.judge, prize: prizeFor(c, k, "judge") } : null]).filter((x) => x && x.prize);
-  const sponsors = (await env.DB.prepare("SELECT id,name,tier,url,logo FROM contest_sponsors WHERE contest_id = ? ORDER BY CASE tier WHEN 'presenting' THEN 0 WHEN 'gold' THEN 1 WHEN 'silver' THEN 2 ELSE 3 END, created_at").bind(c.id).all()).results;
+  const sponsors = (await env.DB.prepare("SELECT * FROM contest_sponsors WHERE contest_id = ? ORDER BY CASE tier WHEN 'presenting' THEN 0 WHEN 'gold' THEN 1 WHEN 'silver' THEN 2 ELSE 3 END, created_at").bind(c.id).all()).results;
   return json({
-    sponsors: sponsors.map((x) => ({ id: x.id, name: x.name, tier: x.tier, url: x.url, logo: !!x.logo })),
+    sponsors: sponsors.filter((x) => isOwner || isPublic(x)).map((x) => (isOwner ? staffView(x) : publicView(x))), // the public sees only sponsors that are shown (logo, name, website); the organizer team sees the records
     installer: c.installer_name ? { name: c.installer_name, url: c.installer_url || "", slug: (await env.DB.prepare("SELECT slug FROM installers WHERE lower(name) = lower(?) AND status = 'active'").bind(c.installer_name).first())?.slug || "" } : null,
     ...(isOwner ? { installerEmail: c.installer_email || "" } : {}),
     contest: { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, unpublishedByOwner: c.status === "declined" && c.unpublished_by === "owner",  entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
@@ -125,7 +126,7 @@ async function cloneContest(env, c, user) {
   const name = /\b20\d\d\b/.test(c.name) ? c.name.replace(/\b(20\d\d)\b/, (y) => String(+y + 1)) : `${c.name} ${closes.slice(0, 4)}`;
   let slug = slugify(name).slice(0, 40) || "contest";
   if (await getContest(env, slug)) slug = `${slug.slice(0, 34)}-${newId().slice(0, 5)}`;
-  const skip = new Set(["org_key", "live_at", "id", "slug", "name", "announced", "results", "event_id", "note", "created_at", "updated_at", "remind_open", "remind_close", "entries_close", "vote_start", "vote_end", "season", "status", "entries_open", "voting_open"]);
+  const skip = new Set(["sponsor_token", "sponsor_link_on", "sponsor_admin_off", "sponsor_pay_hidden", "org_key", "live_at", "id", "slug", "name", "announced", "results", "event_id", "note", "created_at", "updated_at", "remind_open", "remind_close", "entries_close", "vote_start", "vote_end", "season", "status", "entries_open", "voting_open"]);
   const row = { ...Object.fromEntries(Object.entries(c).filter(([k]) => !skip.has(k))), id: newId(), slug, name, entries_close: closes, vote_start: vs, vote_end: ve, season: seasonFor(closes), status: c.status === "pending" ? "pending" : "live", owner_id: c.owner_id };
   row.org_key = gate.key; row.live_at = row.status === "live" ? todayPT() : "";
   const cols = Object.keys(row);
@@ -135,7 +136,8 @@ async function cloneContest(env, c, user) {
   for (const x of sp) {
     const id = newId(); let logo = "";
     if (x.logo) { const obj = await env.PHOTOS.get(x.logo); if (obj) { logo = x.logo.replace(c.id, row.id).replace(/[^/]+(\.\w+)$/, id + "$1"); await env.PHOTOS.put(logo, obj.body, { httpMetadata: obj.httpMetadata }); } }
-    await env.DB.prepare("INSERT INTO contest_sponsors (id,contest_id,name,tier,url,logo) VALUES (?,?,?,?,?,?)").bind(id, row.id, x.name, x.tier, x.url, logo).run();
+    // A copy starts as an unconfirmed draft: last year's payment, receipt and permission do not carry over (the organizer confirms them again), so nothing shows until then.
+    await env.DB.prepare("INSERT INTO contest_sponsors (id,contest_id,name,contact_name,tier,url,phone,email,logo,basis,show_public,permission,hidden_by_admin,updated_at) VALUES (?,?,?,?,?,?,?,?,?,'',0,0,?,datetime('now'))").bind(id, row.id, x.name, x.contact_name || "", x.tier, x.url, x.phone || "", x.email || "", logo, x.hidden_by_admin ? 1 : 0).run();
   }
   const js = (await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all()).results;
   if (js.length) await inviteJudges(env, { id: row.id, slug, name, org: c.org, judge_method: c.judge_method }, js.map((j) => j.email));

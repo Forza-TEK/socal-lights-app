@@ -196,7 +196,7 @@ export async function judgeOf(env, c, user) {
 export async function deleteContest(env, c) {
   const all = (sql) => env.DB.prepare(sql).bind(c.id).all().then((r) => r.results).catch((e) => { logOp(env, "contest", "delete: lookup failed: " + (e && e.message)); return []; });
   const entries = await all("SELECT id, photos FROM posts WHERE contest_id = ?");
-  await r2Delete(env, [...photoKeys(entries), ...(await all("SELECT logo FROM contest_sponsors WHERE contest_id = ?")).map((x) => x.logo)], "contest photos"); // R2 delete takes a list: one call per 1000 files
+  await r2Delete(env, [...photoKeys(entries), ...(await all("SELECT logo, receipt FROM contest_sponsors WHERE contest_id = ?")).flatMap((x) => [x.logo, x.receipt])], "contest photos"); // R2 delete takes a list: one call per 1000 files
   const stmts = ["votes", "judge_picks", "judge_scores", "judge_conflicts", "judges", "contest_staff", "contest_hits", "contest_sponsors", "contest_leads", "contest_changes", "home_consents"]
     .map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE contest_id = ?`).bind(c.id));
   stmts.push(env.DB.prepare("DELETE FROM posts WHERE contest_id = ?").bind(c.id), env.DB.prepare("DELETE FROM contests WHERE id = ?").bind(c.id));

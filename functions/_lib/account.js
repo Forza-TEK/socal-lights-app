@@ -15,7 +15,9 @@ export async function deleteAccount(env, id, email) {
   const entries = await all("SELECT id, photos FROM posts WHERE user_id = ?", id);
   const installers = (await all("SELECT id FROM installers WHERE lower(owner_email) = lower(?)", email)).map((r) => r.id);
   let avatar = ""; try { avatar = ((await env.DB.prepare("SELECT avatar FROM users WHERE id = ?").bind(id).first()) || {}).avatar || ""; } catch {}
-  await r2Delete(env, [...photoKeys(entries), avatar], "account photos"); // one call per 1000 files (R2 delete takes a list), not one per file
+  // Sponsor records of contests this person ran: receipts (private) and, for contests that are not announced, logos go too (organizer-collected sponsors; contact details are cleared below)
+  const sponsorFiles = (await all("SELECT s.logo, s.receipt, c.announced FROM contest_sponsors s JOIN contests c ON c.id = s.contest_id WHERE c.owner_id = ?", id)).flatMap((r) => (r.announced ? [r.receipt] : [r.logo, r.receipt]));
+  await r2Delete(env, [...photoKeys(entries), avatar, ...sponsorFiles], "account photos"); // one call per 1000 files (R2 delete takes a list), not one per file
 
   // Homes this person entered in announced contests: scrub them from the frozen results (name, address, city, coordinates, photos) so no page
   // can show them; the placeholder is drawn wherever the snapshot is read. Vote tallies, ranks and judge values stay, so results don't change.
@@ -76,6 +78,9 @@ export async function deleteAccount(env, id, email) {
     env.DB.prepare("UPDATE contest_changes SET old = '', new = '' WHERE field = 'Co-organizers' AND contest_id IN (SELECT id FROM contests WHERE owner_id = ?)").bind(id),
     // The admin activity log labels Users rows with the person's email. Blank the labels that carry it (the action, time and admin stay).
     env.DB.prepare("UPDATE admin_log SET label = '' WHERE instr(lower(label), lower(?)) > 0").bind(email),
+    // Sponsor records (before the contests lose their owner): contact details, amounts, payment notes and receipts of every contest the person ran are removed. An unannounced contest loses its sponsors entirely; an announced one keeps the public name, logo and link.
+    env.DB.prepare("DELETE FROM contest_sponsors WHERE contest_id IN (SELECT id FROM contests WHERE owner_id = ? AND announced = 0)").bind(id),
+    env.DB.prepare("UPDATE contest_sponsors SET contact_name = '', phone = '', email = '', amount_cents = NULL, paid_date = '', paid_method = '', in_kind_note = '', receipt = '', receipt_name = '' WHERE contest_id IN (SELECT id FROM contests WHERE owner_id = ?)").bind(id),
     // Announced contests stay 'live' (frozen results, winner crowns and the Past results page stay); the organizer's personal data goes either way.
     env.DB.prepare("UPDATE contests SET status = CASE WHEN announced = 1 THEN 'live' ELSE 'closed' END, owner_id = '', contact_email = '', installer_email = '', event_id = NULL WHERE owner_id = ?").bind(id),
     env.DB.prepare("DELETE FROM drafts WHERE user_id = ?").bind(id),
