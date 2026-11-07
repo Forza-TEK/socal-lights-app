@@ -9,9 +9,10 @@ export async function onRequestGet({ env }) {
   const { results } = await env.DB.prepare(
     `SELECT o.session_id, o.event_id, o.plan, o.amount, o.currency, o.email, o.status, o.applied, o.applied_featured, o.applied_until, o.payment_intent,
             o.charge_id, o.refunded_at, o.created_at, o.note, o.user_id, o.target, o.renewal, o.applied_top_until, o.applied_banner_until, o.applied_from, ins.slug AS inst_slug, ins.banner_until AS inst_banner, ins.top_until AS inst_top, COALESCE(e.name, s.name, hp.title, ins.name) AS name, COALESCE(e.city, s.city, hp.city) AS city, e.notice,
-            e.start_date, e.end_date, COALESCE(e.featured, hp.featured) AS ev_featured, COALESCE(e.featured_until, hp.featured_until) AS ev_until, e.banner_until AS ev_banner, hc.name AS contest_name, hc.slug AS contest_slug
+            e.start_date, e.end_date, COALESCE(e.featured, hp.featured) AS ev_featured, COALESCE(e.featured_until, hp.featured_until) AS ev_until, e.banner_until AS ev_banner, hc.name AS contest_name, hc.slug AS contest_slug, cp.cap AS pass_cap, cp.window_start AS pass_from, cp.window_end AS pass_to, cp.status AS pass_status
      FROM ${ORDER_FROM} LEFT JOIN event_submissions s ON o.event_id = 'sub:' || s.id
      LEFT JOIN installers ins ON o.target = 'installer' AND ins.id = o.event_id
+     LEFT JOIN contest_passes cp ON o.target = 'contest_pass' AND cp.session_id = o.session_id
      LEFT JOIN posts hp ON o.target = 'home' AND hp.id = o.event_id LEFT JOIN contests hc ON hc.id = hp.contest_id
      ORDER BY o.created_at DESC LIMIT 500`).all();
   const rows = results.map((o) => ({ ...o, flags: orderFlags(o, today), stripe_url: stripeUrl(o.payment_intent) }));

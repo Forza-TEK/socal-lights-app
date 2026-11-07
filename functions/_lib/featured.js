@@ -1,3 +1,4 @@
+import { applyPassOrder, revokePass, isPassOrder } from "./passes.js";
 import { applyInstallerOrder, revokeInstaller, seasonOf } from "./sponsor.js";
 import { ptToday } from "./time.js";
 // PRICING (owner decision 2026-11-06). Every price is a constant in this file and nowhere else (/api/config serves them to the pages).
@@ -145,6 +146,7 @@ export const setOrderNote = (db, sessionId, text) => db.prepare("UPDATE feature_
 export const isHomeOrder = (o) => !!o && o.target === "home";
 export const isInstallerOrder = (o) => !!o && o.target === "installer";
 export async function applyOrder(db, order, targetId, today = ptToday()) {
+  if (isPassOrder(order)) return applyPassOrder(db, order); // a contest pass: an organization key, not an event (passes.js)
   if (isInstallerOrder(order)) return applyInstallerOrder(db, order, today); // an installer id, not an event: banner_until / top_until (sponsor.js)
   const home = isHomeOrder(order);
   if (!home && isEventTier(order.plan)) return applyTierOrder(db, order, targetId, today);
@@ -243,8 +245,11 @@ export async function eventFloor(db, eventId, today = ptToday()) {
 // could not be removed cleanly; the reason is also written to the order's note so Admin > Orders shows it.
 export async function revokePlan(db, order, status) {
   let manual = false;
-  if (order.applied && order.event_id && !order.event_id.startsWith("sub:") && !order.refunded_at) manual = !(await (isInstallerOrder(order) ? revokeInstaller(db, order, ptToday()) : recomputeAfterRevoke(db, order, ptToday())));
+  if (order.applied && order.event_id && !order.event_id.startsWith("sub:") && !order.refunded_at) manual = !(await (isPassOrder(order) ? revokePass(db, order, ptToday()) : isInstallerOrder(order) ? revokeInstaller(db, order, ptToday()) : recomputeAfterRevoke(db, order, ptToday())));
+  const why = isPassOrder(order)
+    ? AUTO + `manual: placement differs. The ${status} contest pass was left on because the extra contests it paid for are already live. Decide in Admin > Contests > Contest passes (grant a comp, or leave it).`
+    : AUTO + `manual: placement differs. The ${status} order did not own the current placement (comped, extended or changed by hand), so it was left on. Check it in Admin > ${isInstallerOrder(order) ? "Installers" : "Events"}.`;
   await db.prepare("UPDATE feature_orders SET status=?, refunded_at=COALESCE(refunded_at, datetime('now')), note=CASE WHEN ? THEN ? ELSE note END WHERE session_id=?")
-    .bind(status, manual ? 1 : 0, AUTO + `manual: placement differs. The ${status} order did not own the current placement (comped, extended or changed by hand), so it was left on. Check it in Admin > ${isInstallerOrder(order) ? "Installers" : "Events"}.`, order.session_id).run();
+    .bind(status, manual ? 1 : 0, why, order.session_id).run();
   return manual;
 }

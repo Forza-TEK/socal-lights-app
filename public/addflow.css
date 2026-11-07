@@ -115,3 +115,9 @@ input[aria-invalid=true],textarea[aria-invalid=true]{border-color:#b42318!import
 
 /* Dropdown lists: the browser draws them itself, so give them the page colors (otherwise light text on white in dark mode) */
 select option,select optgroup{background-color:var(--bg);color:var(--ink)}
+
+/* Contest pass picker (contest wizard, /contest-pass): full contents per pass, a Choose button aligned at the bottom of each card */
+.pp{display:grid;gap:12px;margin-top:18px}.pp p{margin:0}.pp-win,.pp-org,.pp-note{color:var(--muted);font-size:14px}.pp-comp{border-left:2px solid var(--ok);padding-left:14px;font-size:16px}
+.pp-grid{display:grid;gap:12px;grid-template-columns:1fr}@media(min-width:760px){.pp-grid{grid-template-columns:repeat(2,1fr)}}
+.pp-card{display:flex;flex-direction:column;background:var(--tile);border:1px solid var(--line);border-radius:14px;padding:16px}.pp-card h3{margin:0 0 6px;font-size:18px}.pp-price b{font-size:26px;letter-spacing:-.02em}.pp-price small{color:var(--muted);font-size:14px}
+.pp-inc{margin:8px 0 4px!important;color:var(--muted);font-size:14px}.pp-card ul{margin:0 0 14px;padding-left:20px;display:grid;gap:4px;color:var(--muted);font-size:15px}.pp-card .pp-choose{margin-top:auto;align-self:flex-start}
