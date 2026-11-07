@@ -717,3 +717,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Contest page sponsors: logos are bigger on desktop (96px tall, up to 260px wide; presenting sponsors 128px). Test helper addUser now gives test sessions a 10-year expiry: tests that freeze the clock at Nov 6 failed once the real clock passed Nov 7 20:00 UTC (the 1-day test session had expired).
 
 - Day mode: the page background is now white (was warm off-white #f6f4f0) on the map and every page, like the admin page. Dark mode unchanged. Browser theme-colour meta updated to match. Asset ?v= values bumped (styles.css, addflow.css, chrome.js, addflow.js, appshell.js, app.js).
+
+- Emails: the page behind the email card is white (was cream) and the list and code boxes are a neutral light grey, to match the white day-mode app. All 56 emails rendered and checked at 375px and 700px wide: no sideways overflow, no stray placeholders.

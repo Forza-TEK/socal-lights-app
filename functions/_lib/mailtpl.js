@@ -322,7 +322,7 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const link = (s) => s.replace(/https?:\/\/[^\s<]*[^\s<.,;:!?)"'\]]/g, (u) => `<a href="${u}" style="color:#b3261e;text-decoration:underline">${u}</a>`);
 // ---- The designed layout every email uses ----
 // Wording markers: "~ " small heading, "# " title, "[Label](url)" button, "## " + "- " lines = boxed list, "> " quote, "@ " big code, "* " small print, **bold**.
-const INK = "#1f1d1a", MUTED = "#6b6760", LINE = "#ece6dd", CREAM = "#fbf3ea", ORANGE = "#e0560a", RED = "#c8324f", FONT = "Arial,Helvetica,sans-serif";
+const INK = "#1f1d1a", MUTED = "#6b6760", LINE = "#e7e3dc", CREAM = "#f6f5f2", ORANGE = "#e0560a", RED = "#c8324f", FONT = "Arial,Helvetica,sans-serif";
 const inline = (s) => {
   // [text](https://link) becomes a link; bare web addresses and **bold** work too
   let out = "", i = 0;
@@ -350,7 +350,7 @@ export function toInviteHtml(text, subject, foot2 = {}) {
   }
   const row = (h) => `<tr><td style="padding:0 40px">${h}</td></tr>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${esc(subject)}</title></head>
-<body style="margin:0;padding:0;background:${CREAM}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${CREAM}"><tr><td align="center" style="padding:28px 12px">
+<body style="margin:0;padding:0;background:#ffffff"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff"><tr><td align="center" style="padding:28px 12px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:16px;border:1px solid ${LINE}">
 <tr><td align="center" style="padding:34px 40px 8px"><a href="${SITE}" style="text-decoration:none"><img src="${SITE}/img/icon-192.png" width="64" height="64" alt="SoCal Lights" style="display:block;border:0;border-radius:32px;margin:0 auto 10px"><span style="font:600 22px/1.2 ${FONT};color:${INK}">SoCal <span style="color:${ORANGE}">Lights</span></span></a></td></tr>
 ${row(`<p style="margin:26px 0 8px;font:600 12px/1.3 ${FONT};letter-spacing:.16em;text-transform:uppercase;color:${RED};text-align:center">${esc(eyebrow)}</p><h1 style="margin:0;font:600 28px/1.25 ${FONT};color:${INK};text-align:center">${esc(title)}</h1>`)}
