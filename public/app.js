@@ -536,6 +536,8 @@ function initSlidePill(box, selector) {
   const kick = () => { until = performance.now() + 600; if (!raf) raf = requestAnimationFrame(step); };
   new MutationObserver(kick).observe(box, { attributes: true, subtree: true, attributeFilter: ["aria-current", "aria-selected", "hidden"] });
   addEventListener("resize", () => { cur = null; kick(); });
+  // the tab bar is hidden while a map pin card is open (display: none); when it comes back the pill has to be placed again
+  if ("ResizeObserver" in window) new ResizeObserver(() => { cur = null; kick(); }).observe(box);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { cur = null; kick(); });
   kick();
 }
