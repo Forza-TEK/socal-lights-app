@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261106zb">
-<link rel="stylesheet" href="/info.css?v=20261106zb">
+<link rel="stylesheet" href="/info.css?v=20261109c">
 <style>
 .plan{background:#fff;gap:8px}:root[data-theme="dark"] .plan{background:var(--tile)}
 .plan .price{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.plan .price small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0}
@@ -27,9 +27,9 @@
 </style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
-<body>
+<body class="wide">
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
-<main>
+<main class="wide">
 <h1>Feature your event</h1>
 <p class="lede">A Featured event stands out on the SoCal Lights map with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin. You can add a banner pill at the top of the map list, and top of the list. Listing an event is free; this is optional. <a href="/pricing">See all pricing</a>.</p>
 
@@ -61,7 +61,8 @@
 </main>
 <script type="module">
 import { SITE } from "/site-config.js?v=20261107a";
-import { eventTierCopy, eventRule, EVENT_KEYS, planCopy, planBlurb, planWindow, eventEligibility, quoteLine, niceDate as fmt, ptToday } from "/feature-plans.js?v=20261108a";
+import { planCard, compareTable } from "/plan-cards.js?v=20261109a";
+import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS, planCopy, planBlurb, planWindow, eventEligibility, quoteLine, niceDate as fmt, ptToday } from "/feature-plans.js?v=20261108a";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const money = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : c / 100);
@@ -144,8 +145,11 @@ async function start() {
 
   function planCards() {
     const r = eventRule(cfg, money);
-    return `<h2>Pick a plan</h2><div class="grid">${EVENT_KEYS.filter((k) => EP[k]).map((k) => { const c = eventTierCopy(k);
-      const on = S.plan === k; return `<section class="plan${on ? " sel" : ""}" data-p="${k}"><div class="price">${money(EP[k].cents)} <small>${esc(c.unit)}</small></div><h3>${esc(c.name)}</h3><p>Includes:</p><ul>${c.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul><button class="btn pick${on ? "" : " ghost"}" type="button" data-pick="${k}" aria-pressed="${on}" aria-label="${on ? "Chosen: " : "Choose "}${esc(c.name)}, ${money(EP[k].cents)}">${on ? "\u2713 Chosen" : "Choose"}</button></section>`; }).join("")}</div>
+    const keys = EVENT_KEYS.filter((k) => EP[k]), names = {}, prices = {};
+    const cards = keys.map((k) => { const c = eventTierCopy(k), on = S.plan === k; names[k] = c.name; prices[k] = money(EP[k].cents);
+      return planCard({ key: k, price: prices[k], unit: c.unit, name: c.name, blurb: eventTierBlurb(k), popular: cfg.popularEvent === k, selected: on,
+        action: `<button class="btn pick${on ? "" : " ghost"}" type="button" data-pick="${k}" aria-pressed="${on}" aria-label="${on ? "Chosen: " : "Choose "}${esc(c.name)}, ${esc(prices[k])}">${on ? "\u2713 Chosen" : "Choose"}</button>` }); }).join("");
+    return `<h2>Pick a plan</h2><div class="pcards">${cards}</div>${compareTable(keys, names, prices)}
       <p class="meta">${esc(r.rule + r.now)}${esc(r.up)} You pay once on Stripe's secure page. No subscription. This page shows the exact dates and the total before you pay. Featuring a home that placed 1st, 2nd or 3rd in a contest is separate: 30 days, ${PL.pin ? money(PL.pin.cents) : ""} for the Featured pin or ${PL.top ? money(PL.top.cents) : ""} for Top of the list (pick your home on the next step).</p>`;
   }
 
@@ -199,7 +203,7 @@ async function start() {
   const pickEvent = (m) => { S.ev = m; S.claim = null; S.msg = ""; S.err = false; fit(); sync(); beacon("fn:event-feature-pick"); draw(); window.scrollTo({ top: 0 }); };
 
   $("#flow").addEventListener("click", async (x) => {
-    let t = x.target.closest("[data-pick],[data-mine],[data-a],[data-sw],[data-find],#si,#go,#addnew"); if (!t) { const pl = x.target.closest(".grid .plan[data-p]"); if (pl) t = pl.querySelector("[data-pick]"); } if (!t) return; // a click anywhere on a plan card chooses it
+    let t = x.target.closest("[data-pick],[data-mine],[data-a],[data-sw],[data-find],#si,#go,#addnew"); if (!t) { const pl = x.target.closest(".pcards .pcard[data-p]"); if (pl) t = pl.querySelector("[data-pick]"); } if (!t) return; // a click anywhere on a plan card chooses it
     if (t.dataset.pick) { const first = !S.plan; S.plan = t.dataset.pick; mails(); sync(); draw(); if (first) document.getElementById("nextsec")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }); return; }
     if (t.dataset.mine) { x.preventDefault(); pickEvent(S.mine.find((m) => m.id === t.dataset.mine)); return; }
     if (t.dataset.sw) { x.preventDefault(); S.plan = t.dataset.sw; S.note = ""; sync(); draw(); return; }

@@ -5,7 +5,7 @@ import { CATEGORIES, CAT, KINDS, brief } from "./help.js";
 export const HELP_EMAIL = "info@socallights.app";
 
 const CSS = `
-main.help{max-width:880px}.top{max-width:880px}
+main.help{max-width:1160px}.top{max-width:1160px}
 .help h1{margin:8px 0 6px}
 .help .lede{color:var(--muted);font-size:18px;margin:0 0 18px;max-width:60ch}
 .hsearch{position:relative;margin:6px 0 8px}
@@ -28,6 +28,11 @@ main.help{max-width:880px}.top{max-width:880px}
 .htabs a[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:var(--bg)}.htabs a[aria-selected=true] small{color:inherit;opacity:.8}
 .htabs a:focus-visible{outline:2px solid var(--season);outline-offset:2px}
 .hsec .catblurb{margin:-6px 0 14px;color:var(--muted)}
+.hlayout{display:grid;gap:8px}
+@media(min-width:900px){.hlayout{grid-template-columns:260px minmax(0,1fr);gap:0 44px;align-items:start;margin-top:24px}
+.hlayout .htabs{flex-direction:column;flex-wrap:nowrap;position:sticky;top:16px;margin:0;padding:0}
+.hlayout .htabs a{width:100%;justify-content:space-between;border-radius:14px;min-height:50px}
+.hlayout .hsec[data-cat]{max-width:780px;margin-top:0}}
 .htabs-on .hsec[data-cat]{margin-top:18px}.htabs-on .hsec[data-cat][hidden]{display:none}
 .alist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .alist a{display:flex;gap:10px;align-items:baseline;justify-content:space-between;padding:12px 16px;border-radius:14px;background:var(--surface);box-shadow:0 2px 10px rgba(20,22,27,.08);text-decoration:none;min-height:48px}
