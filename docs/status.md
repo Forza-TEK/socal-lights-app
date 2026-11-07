@@ -699,3 +699,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Organizer dashboard, Sponsors form on a phone: the "Paid to me" and "Donated in kind" sub-forms were nested grids that took one sixth of the width (labels wrapped a word per line, file picker squashed). They now span the full row, inputs fill the width and the receipt picker is a full-width dashed box.
 
 - Contest page Sponsors: on phones the sponsor logos are one per row and large (up to 150px tall, full width); desktop unchanged. contest.css version bumped to 20261110a on all pages.
+
+- Map sponsor banner: still drifts like a marquee, and can now be dragged (finger on phones, mouse on computers, sideways trackpad swipe) with a little momentum; a drag never counts as a tap on a pill; hover/focus/pause still stop the drift. JS-driven (banner.js); CSS animation removed. Reduced-motion users keep native sideways scrolling.

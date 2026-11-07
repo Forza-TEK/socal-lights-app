@@ -53,8 +53,38 @@ function paint() {
   track.style.setProperty("--win", (win.clientWidth || 360) + "px");
   track.innerHTML = `<span class="sp-set">${set}</span><span class="sp-set sp-dup" aria-hidden="true" inert>${set}</span>`;
   const w = track.firstElementChild.getBoundingClientRect().width;
-  track.style.setProperty("--sw", w + "px"); track.style.setProperty("--dur", Math.max(12, w / SPEED) + "s"); track.classList.add("go");
+  SW = w; track.classList.add("go"); nudge(0);
   watch(); changed();
+}
+
+// The strip drifts on its own and can also be dragged: a finger on a phone, the mouse on a computer. It keeps a little momentum after a flick, then drifts on again.
+// Plain scrolling of the page still works (the strip only claims sideways movement). A drag never counts as a tap on a pill.
+let SW = 0, X = 0, vel = 0, dragging = false, hovering = false, focused = false, lastT = 0, raf = 0, suppress = false;
+function nudge(dx) { if (!SW) return; X = (((X + dx) % SW) + SW) % SW; const t = el && el.querySelector(".sp-track"); if (t) t.style.transform = `translate3d(${-X}px,0,0)`; }
+function tick(t) {
+  raf = requestAnimationFrame(tick);
+  const dt = Math.min(0.1, (t - (lastT || t)) / 1000); lastT = t;
+  if (!el || el.hidden || reduced || dragging) return;
+  if (Math.abs(vel) > 8) { nudge(vel * dt); vel *= Math.pow(0.04, dt); } else vel = 0; // momentum from a flick fades in about a second
+  if (!paused && !hovering && !focused && !vel) nudge(SPEED * dt);
+}
+function drag(win) {
+  let id = null, sx = 0, sy = 0, sX = 0, moved = false, lx = 0, lt = 0;
+  win.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") hovering = true; });
+  win.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") hovering = false; });
+  win.addEventListener("focusin", () => { focused = true; }); win.addEventListener("focusout", () => { focused = false; });
+  win.addEventListener("dragstart", (e) => e.preventDefault()); // no ghost image of a pill's link
+  win.addEventListener("pointerdown", (e) => { if (reduced || (e.pointerType === "mouse" && e.button !== 0)) return; id = e.pointerId; sx = lx = e.clientX; sy = e.clientY; sX = X; moved = false; vel = 0; lt = performance.now(); });
+  win.addEventListener("pointermove", (e) => {
+    if (e.pointerId !== id) return;
+    if (!moved) { if (Math.abs(e.clientX - sx) < 6 || Math.abs(e.clientY - sy) > Math.abs(e.clientX - sx)) return; moved = true; dragging = true; try { win.setPointerCapture(id); } catch {} win.classList.add("drag"); }
+    const now = performance.now(), dx = lx - e.clientX; X = sX + (sx - e.clientX); nudge(0);
+    if (now > lt) vel = vel * 0.6 + (dx / ((now - lt) / 1000)) * 0.4; lx = e.clientX; lt = now;
+  });
+  const end = (e) => { if (e.pointerId !== id) return; id = null; if (moved) { suppress = true; setTimeout(() => (suppress = false), 60); if (performance.now() - lt > 120) vel = 0; vel = Math.max(-1800, Math.min(1800, vel)); } dragging = false; win.classList.remove("drag"); };
+  win.addEventListener("pointerup", end); win.addEventListener("pointercancel", end);
+  win.addEventListener("click", (e) => { if (suppress) { e.preventDefault(); e.stopPropagation(); } }, true);
+  win.addEventListener("wheel", (e) => { if (reduced || Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; e.preventDefault(); nudge(e.deltaX); }, { passive: false }); // trackpad two-finger sideways swipe
 }
 
 // Count a "shown" the first time an installer's pill is actually on screen.
@@ -97,7 +127,7 @@ export async function initBanner({ place, onChange, onOpenEvent }) {
     if (a) { const pl = a.closest(".sp-pill"), id = pl?.dataset.id; if (id) beat(id, a.dataset.k); if (pl?.dataset.eid && openEvent(pl.dataset.eid)) e.preventDefault(); }
     else if (pb) setPaused(!paused);
   });
-  host(el); paint();
+  host(el); paint(); drag(el.querySelector(".sp-win")); if (!reduced) raf = requestAnimationFrame(tick);
   let lastW = el.querySelector(".sp-win").clientWidth, rt; // the strip follows the list panel opening and closing, and the window size
   if ("ResizeObserver" in window) new ResizeObserver(() => { const w = el.querySelector(".sp-win").clientWidth; if (Math.abs(w - lastW) < 3) return; lastW = w; clearTimeout(rt); rt = setTimeout(paint, 150); }).observe(el.querySelector(".sp-win"));
   if (reduced) setPaused(true); // people who asked for less motion get it standing still; the play button starts it

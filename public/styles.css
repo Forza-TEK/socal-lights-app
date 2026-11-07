@@ -875,9 +875,8 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .sp-win{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent)}
 .sp-track{display:flex;align-items:center;width:max-content}
 .sp-set{display:flex;align-items:center;gap:8px;box-sizing:border-box;min-width:var(--win,0px);padding:0 14px 0 6px}
-.sp-track.go{animation:spscroll var(--dur,30s) linear infinite}
-.sp-track.go:hover,.sp-track.go:focus-within,.sponsor.paused .sp-track{animation-play-state:paused}
-@keyframes spscroll{to{transform:translateX(calc(-1 * var(--sw,0px)))}}
+.sp-track.go{will-change:transform}
+.sp-win{touch-action:pan-y;cursor:grab;-webkit-user-select:none;user-select:none}.sp-win.drag{cursor:grabbing}.sp-win.drag a{pointer-events:none}
 .sp-pill{flex:none;display:inline-flex;align-items:center;gap:7px;height:var(--sp-h);padding:0 12px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font-weight:700}
 .sp-pill a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;height:var(--sp-h)}
 .sp-pill a:hover{text-decoration:underline;text-underline-offset:3px}
