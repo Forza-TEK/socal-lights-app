@@ -1,11 +1,12 @@
 // One plan card, used by /pricing and /feature so the two pages cannot drift apart.
 //   price: "$25", unit: "per season", name, blurb (one line), bullets (optional, short lists such as installer plans),
+//   collapse: a label such as "What's included"; the bullets then sit in a closed fold-out inside the card.
 //   popular: true shows the "Most popular" marker, action: the button or link HTML (already escaped), selected: marks the chosen plan.
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-export function planCard({ key = "", price, unit = "", name, blurb = "", bullets = [], popular = false, action = "", selected = false, extra = "", cls = "" }) {
+export function planCard({ key = "", price, unit = "", name, blurb = "", bullets = [], popular = false, action = "", selected = false, extra = "", cls = "", collapse = "" }) {
   return `<section class="pcard${popular ? " popular" : ""}${selected ? " sel" : ""}${cls ? " " + cls : ""}" data-p="${esc(key)}"${popular ? ' data-popular="1"' : ""}>${popular ? '<span class="pribbon">Most popular</span>' : ""}${selected ? '<span class="pcheck" aria-hidden="true">✓</span>' : ""}
-<div class="pprice">${esc(price)}${unit ? ` <small>${esc(unit)}</small>` : ""}</div><h3 class="pname">${esc(name)}</h3>${blurb ? `<p class="pblurb">${esc(blurb)}</p>` : ""}${bullets.length ? `<ul class="pbul">${bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}${extra}<div class="pact">${action}</div></section>`;
+<div class="pprice">${esc(price)}${unit ? ` <small>${esc(unit)}</small>` : ""}</div><h3 class="pname">${esc(name)}</h3>${blurb ? `<p class="pblurb">${esc(blurb)}</p>` : ""}${bullets.length ? (collapse ? `<details class="pdet"><summary>${esc(collapse)}</summary><ul class="pbul">${bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul></details>` : `<ul class="pbul">${bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`) : ""}${extra}<div class="pact">${action}</div></section>`;
 }
 
 // Which parts each event plan includes: one row per part, one column per plan (the comparison table on /pricing)
