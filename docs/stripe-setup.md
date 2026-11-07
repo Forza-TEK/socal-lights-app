@@ -95,3 +95,10 @@ No Stripe setup changes: the same endpoint, the same webhook events, no products
 - Installer sessions use `banner`, `top` (new) or `banner_top`.
 - Homes still use `pin` and `top`.
 - Make a test purchase of the cheapest event plan on your own event, then refund it: the placement switches off, including the banner. Nothing else needs to be done in Stripe.
+
+## Contest passes (added 2026-11-07)
+Contest organizer passes go through the same Checkout, the same webhook endpoint and the same `feature_orders` table as every other paid product (`target = 'contest_pass'`, `event_id` = the organization key such as `d:covinaca.gov`, `plan` = `pass_5`, `pass_10` or `pass_20`; the window dates are in `quote_from` and `quote_to`). Nothing new to set up in Stripe: the webhook events are the same, `/api/contest-pass/checkout` opens the payment page, and the quote (window, cap, price) is locked into the session metadata.
+- **Applying:** a paid, matching order writes one `contest_passes` row (keyed by the Checkout session id, so a replay changes nothing). A pass bought for a window that has changed, or for an organization that already holds as much (second tab), becomes `refund_due` and is NOT applied: refund it in Stripe, then mark it refunded in Admin > Orders.
+- **Refunds and disputes:** before the extra contests were used the pass is revoked; after they were used the pass stays on and the order shows "Placement differs" in Admin > Orders. Decide in Admin > Contests > Contest passes (Revoke this pass) after refunding in Stripe.
+- **Testing without real money:** same as above. The test suite posts signed `checkout.session.completed` events for passes (`tests/contest-passes.test.mjs`); no real call goes to Stripe.
+- Comps and the Covina founding-partner grant: `docs/contests.md`, "Contest passes".

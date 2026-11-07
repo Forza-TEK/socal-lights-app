@@ -131,3 +131,15 @@ The owner re-records after the pricing PR is live. Videos are `public/tutorials/
 - `sponsor` (Sponsor your installer company, new, Sponsors and installers group, `sponsors-sponsor`): menu, Promote, See all pricing, Choose on the installer section, your company, the three plans, dates and the optional renewal box (off by default), stops at Continue to payment (held). Phone version too. Linked to the Help article by migration 0185.
 - `installer-profile` re-recorded (end card now leads to the sponsor video; the map list now shows the new strip with the Sponsor pill and Advertise here).
 - Left as they are: `find-map`, `find-night`, `find-app`, `find-pro` (the older takes show no strip at all, so no wrong pill or plan is visible), `add-event` (the recorder stubs `/api/config`, so the plan tiles never appear in it), `installer` (opens no placement card). The on-screen plan cards and confirm screens in `feature` and `sponsor` do show the current prices; re-record those two if prices change.
+
+## Contest passes (2026-11-07): which videos are now out of date
+The contest wizard now says where the organization stands in its 12-month window on the Review screen and, when a contest would go over what the window allows, shows the pass picker instead of creating it. Pricing has a new Contest organizers card.
+| Video (id) | Verdict | Why |
+|---|---|---|
+| Create a contest with Quick start (`quick` / `run-quick`) | **Re-record (recommended)** | Its last steps are the **Review** screen and **Create contest**. The Review screen now carries a line under the trust note ("Your first contest in a 12-month window is free", or "This is contest N of M in your 12-month window") and, for an organization that has used its free contest, the pass picker with Choose buttons. The narration "Check your details and tap Create contest" is still true for a first contest, but it never mentions the pass. Add one sentence: "Your first contest is free; to run more in a 12-month window you choose a pass." Record with an account that has no live contest (shows the free line). |
+| Create a contest with Customize (`custom` / `run-custom`) | **Re-record (recommended)** | Same Review screen and Create contest step as Quick start. |
+| Feature your event or home (`feature`) | Optional | It opens on the Pricing page, whose page layout changed: a new **Contest organizers** card (Free, three passes, More than 20) sits below Installers, so the scroll position and page length differ. The event cards it uses are unchanged. |
+| Sponsor your installer company (`sponsors-sponsor`) | Optional | Same Pricing page change. The installer cards it uses are unchanged. |
+| Unpublish and publish again (`unpublish`) | Leave | Publishing again does not count the contest a second time, so the video is still true. If the demo organization was past its free contest, "Run it again" would show the pass link; the video does not use it. |
+| Everything else | Leave | The Admin Contest passes panel is not in any video. |
+Not covered by a video, so nothing to re-record: the new `/contest-pass` page and the "Run it again" pass message.
