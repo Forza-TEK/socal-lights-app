@@ -65,3 +65,12 @@ body.wide .lede,body.wide main>p{max-width:70ch}
 .fmap li b{display:block;color:var(--ink);font-weight:800}
 /* FAQ */
 .faq{display:grid;gap:10px;align-items:start}@media(min-width:1000px){.faq{grid-template-columns:1fr 1fr;gap:12px 20px}}.faq details{border:1px solid var(--line);border-radius:14px;padding:4px 18px;background:#fff;margin:0}:root[data-theme="dark"] .faq details{background:var(--tile)}.faq summary{cursor:pointer;font-weight:700;min-height:48px;display:flex;align-items:center;color:var(--ink)}.faq details p{margin:0 0 14px}
+
+/* installer plans: a slim Free row above the paid cards; the long lists fold away inside each card */
+.pfree{display:flex;flex-wrap:wrap;align-items:center;gap:10px 24px;padding:18px 24px;background:#fff;border:2px solid var(--line);border-radius:18px;margin:0 0 16px}:root[data-theme="dark"] .pfree{background:var(--tile)}
+.pfree .pprice{font-size:30px}.pfree .ptxt{flex:1 1 360px;min-width:0}.pfree .pname{margin:0}.pfree .pblurb{margin:2px 0 0}.pfree .btn{margin-left:auto}
+@media(max-width:700px){.pfree .btn{margin-left:0;width:100%;justify-content:center}}
+.pcards.three{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));align-items:start}@media(min-width:900px){.pcards.three{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.pdet{margin:4px 0 0;border:0;border-top:1px solid var(--line);border-radius:0;padding:2px 0 0;background:none}.pdet summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-weight:700;font-size:14.5px;color:var(--ink);list-style:none}
+.pdet summary::-webkit-details-marker{display:none}.pdet summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-3px 0 0 auto;transition:transform .15s}
+.pdet[open] summary::after{transform:rotate(-135deg);margin-top:3px}.pdet .pbul{margin:2px 0 6px}

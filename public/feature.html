@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261108b">
-<link rel="stylesheet" href="/info.css?v=20261109c">
+<link rel="stylesheet" href="/info.css?v=20261109g">
 <style>
 .plan{background:#fff;gap:8px}:root[data-theme="dark"] .plan{background:var(--tile)}
 .plan .price{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.plan .price small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0}
@@ -61,7 +61,7 @@
 </main>
 <script type="module">
 import { SITE } from "/site-config.js?v=20261107a";
-import { planCard, compareTable } from "/plan-cards.js?v=20261109a";
+import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
 import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS, planCopy, planBlurb, planWindow, eventEligibility, quoteLine, niceDate as fmt, ptToday } from "/feature-plans.js?v=20261108a";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

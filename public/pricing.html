@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261108b">
-<link rel="stylesheet" href="/info.css?v=20261109c">
+<link rel="stylesheet" href="/info.css?v=20261109g">
 <style>.pcards.tight{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.wcard .big{margin:0}details summary::marker{color:var(--muted)}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
@@ -57,7 +57,8 @@
 
 <section class="wsec" id="banner"><h2>Installers</h2>
 <p class="sub">Show your company on the map and in your homes' pages. Paid placements are always labelled "Sponsor".</p>
-<div class="pcards tight" id="insttiers"><section class="pcard"><div class="pprice">Free</div><h3 class="pname">Profile card</h3><p class="pblurb">Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map.</p><div class="pact"><a class="btn ghost" href="/add-house?kind=installer">Create your free profile</a></div></section></div>
+<section class="pfree" id="instfree"><div class="pprice">Free</div><div class="ptxt"><h3 class="pname">Profile card</h3><p class="pblurb">Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map.</p></div><a class="btn ghost" href="/add-house?kind=installer">Create your free profile</a></section>
+<div class="pcards three" id="insttiers"></div>
 <p class="cmpnote paid" id="instnote">You pay on Stripe's secure page, one time for the season by default. Automatic renewal is optional: it is off unless you tick the box on the payment step (or turn it on in your dashboard), and you can cancel it any time. You can also renew or upgrade by hand from your dashboard.</p>
 <p class="cmpnote paid" id="instseason"></p>
 <p class="cmpnote paid">Questions? Email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>.</p></section>
@@ -80,7 +81,7 @@ import { themeBtn, mountAcct } from "/addflow.js?v=20261107b";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
 import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261108a";
-import { planCard, compareTable } from "/plan-cards.js?v=20261109a";
+import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
 import { PASS_KEYS, passCopy, freeCopy, moreCopy, contactHref, dollars as passDollars } from "/contest-passes.js?v=20261108a";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -96,7 +97,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({})), PL = cfg.featurePlans || {};
   const IP = cfg.installerPlans || {}, ikeys = SPONSOR_KEYS.filter((k) => IP[k]);
   if (ikeys.length) {
-    $("#insttiers").insertAdjacentHTML("beforeend", ikeys.map((k) => { const c = sponsorCopy(k); return planCard({ key: k, price: money(IP[k].cents), unit: c.unit, name: c.name, bullets: c.bullets, cls: "paid", action: `<a class="btn ghost" href="/sponsor?plan=${esc(k)}" data-choose aria-label="Choose ${esc(c.name)}, ${esc(money(IP[k].cents))}">Choose</a>` }); }).join(""));
+    $("#insttiers").insertAdjacentHTML("beforeend", ikeys.map((k) => { const c = sponsorCopy(k); return planCard({ key: k, price: money(IP[k].cents), unit: c.unit, name: c.name, bullets: c.bullets, collapse: "What's included", cls: "paid", action: `<a class="btn ghost" href="/sponsor?plan=${esc(k)}" data-choose aria-label="Choose ${esc(c.name)}, ${esc(money(IP[k].cents))}">Choose</a>` }); }).join(""));
     const r = seasonRule(cfg); $("#instseason").textContent = r.rule + " " + r.now;
     $("#insttiers").addEventListener("click", (e) => { if (e.target.closest("[data-choose]")) beacon("fn:pricing-choose"); });
   } else { $("#instnote").hidden = true; $("#instseason").hidden = true; }
