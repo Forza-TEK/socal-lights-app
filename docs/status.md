@@ -691,3 +691,11 @@ Re-recorded `feature` (four event plans, dates and total, stops before Stripe), 
 - Footer: already shared (`footer.js`, copyright and Pricing, Privacy, Terms, Contact on every page except the map); unchanged.
 ## 2026-11-07 sweep group 18 (High Desert & Mountains)
 Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Barstow Turkey Trot (Nov 14) and Newberry Springs Pistachio Farm Festival (Nov 7-8) from bosd3.sbcounty.gov and the chamber page. No 2026 pages yet for Lucerne Valley Magic in the Cove, Running Springs light contest, Newberry Springs tree lighting (date not posted), Needles. No contest home addresses found. barstowca.org blocks bots (403). No photos set (candidate og:images were portrait flyers or absent).
+
+## 2026-11-10 (Pricing tabs)
+- /pricing shows one audience at a time under the intro: Homeowners, Event organizers, Contest organizers, Installers (tab bar; arrow keys, Home and End work). `/pricing#events`, `#contests`, `#banner` (installers) and `#homeowners`, and anchors inside a section (for example `#featuredpic`), open the right tab. The FAQ stays under every tab. Without scripts every section is listed.
+- On a phone the Pricing tabs are a bar fixed to the bottom edge (icon above each label: Homes, Events, Contests, Installers), the same look as the contest dashboard and Profile; choosing one scrolls back to the top of the page.
+- Help Center on a phone or tablet (under 900px wide): the topics are a bottom bar like the Tutorials page: four topics with icons plus More (a sheet with the other three and their article counts); choosing one scrolls to the top. Computers keep the topic list on the left.
+- Organizer dashboard, Sponsors form on a phone: the "Paid to me" and "Donated in kind" sub-forms were nested grids that took one sixth of the width (labels wrapped a word per line, file picker squashed). They now span the full row, inputs fill the width and the receipt picker is a full-width dashed box.
+
+- Contest page Sponsors: on phones the sponsor logos are one per row and large (up to 150px tall, full width); desktop unchanged. contest.css version bumped to 20261110a on all pages.
