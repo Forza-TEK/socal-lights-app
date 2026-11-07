@@ -11,7 +11,7 @@ _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` op
 ## Owner steps: contest passes (2026-11-07)
 - [ ] Grant the Covina founding-partner comp: Admin > Contests > Contest passes > Grant a comp (domain `covinaca.gov`, Unlimited, valid until the end of the free period, note "Founding partner: Covina"). Nothing is granted until you click.
 - [ ] Attorney: `docs/monetization/legal-redlines.md` "Contest organizer passes" and Terms `#passes`.
-- [ ] Re-record the `quick` and `custom` videos (the Review screen now mentions passes): `docs/tutorial-updates.md`.
+- [x] Re-recorded `quick` and `custom` (Review screen mentions the free first contest) and `sponsors`; new `sponsor-invite` video (2026-11-07). Open: `quick` and `custom` are long (4:58, 7:14); consider splitting.
 - [ ] Check Admin > Contests > Contest passes weekly for organizations over their limit and "more than 20" leads.
 
 ## Owner steps after the 2026-11-07 audit fixes
