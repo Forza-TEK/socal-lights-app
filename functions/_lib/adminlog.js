@@ -5,6 +5,7 @@ const AREAS = {
   events: ["events", "name"],
   contests: ["contests", "name"],
   passes: ["contest_comps", "org_key", "id"],
+  sponsors: ["contest_sponsors", "name"],
   submissions: ["event_submissions", "name"],
   claims: ["event_claims", "event_id"],
   orders: ["feature_orders", "event_id", "session_id"],

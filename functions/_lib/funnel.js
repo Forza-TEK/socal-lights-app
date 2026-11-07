@@ -21,6 +21,7 @@ export const STEPS = [
   ["fn:subscribe-landing", "Weekly email sign-up from a city or event page (also counted above)"],
   ["fn:subscribe-confirm", "Weekly email confirmed"],
   ["fn:pricing-choose", "Installer pricing: tapped Choose (Banner, Top of the list or both)"],
+  ["fn:sponsor-invite-submitted", "Contest sponsor invite: a sponsor sent the form"],
   ["fn:sponsor-shown", "Sponsor page shown"],
   ["fn:sponsor-picked", "Sponsor page: chose an installer profile"],
   ["fn:sponsor-checkout", "Sponsor placement: payment page opened"],

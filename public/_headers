@@ -23,6 +23,11 @@
   Cache-Control: no-store
 /contest*
   X-Robots-Tag: noindex
+/sponsor-invite*
+  X-Robots-Tag: noindex, nofollow
+/s/*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /organizer*
   X-Robots-Tag: noindex
   Cache-Control: no-store

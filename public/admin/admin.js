@@ -382,7 +382,7 @@ async function renderContests() {
       facts: fact("Run by", esc(c.org) + " · " + esc(c.city)) + fact("Organizer", `<span style="user-select:all">${esc(c.owner_email || c.contact_email || "no owner")}</span>`) + fact("Website", c.site ? `<a href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site)}</a>` : "none given") + fact("Why it needs a look", esc(c.note || ""))
         + fact("Dates", `Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}`) + fact("Activity", `${fmt(c.entries)} ${c.entries === 1 ? "entry" : "entries"} · ${fmt(c.votes)} ${c.votes === 1 ? "vote" : "votes"}`)
         + fact("Pages", `<a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">Public page</a> · <a href="/c/${esc(c.slug)}/manage" target="_blank" rel="noopener">Organizer dashboard</a>`),
-      edit: btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`),
+      edit: btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`) + btn("ghost", "Sponsors", `data-csp="${esc(c.id)}"`),
       main: (c.status === "live" ? (flagged(c) ? btn("main", "Looks fine", 'data-cact="approve"') : "") + btn("ghost", "Unpublish", 'data-cact="decline"') : c.status === "closed" ? "" : btn("main", c.status === "pending" ? "Approve (goes on the map)" : "Make live again", 'data-cact="approve"')),
       danger: btn("danger", c.entries ? `Delete with ${c.entries} ${c.entries === 1 ? "entry" : "entries"}` : "Delete", 'data-cact="delete"'),
     });
@@ -422,6 +422,25 @@ async function renderPasses() {
     try { await api("/api/admin/passes", { method: "POST", body: JSON.stringify(body) }); toast(act === "merge" ? "Merged" : "Done"); renderPasses(); } catch (er) { toast(er.message); }
   }));
 }
+/* ---------- Sponsors of a contest (organizer-collected; support and abuse review: contact details, amounts, receipts, hide) ---------- */
+async function openSponsors(cid) {
+  const m = $("#modal"); m.hidden = false; m.innerHTML = modalFrame("Sponsors", "<p>Loading…</p>", true);
+  const close = () => { m.hidden = true; m.innerHTML = ""; };
+  try {
+    const d = await api("/api/admin/sponsors?contest=" + encodeURIComponent(cid));
+    const rows = d.sponsors.map((x) => `<article class="acard rec" data-sid="${esc(x.id)}"><div class="rh"><div class="rt"><h3>${esc(x.name)}</h3><span class="tag ${x.shown ? "ok" : x.hidden_by_admin ? "bad" : "warn"}">${x.hidden_by_admin ? "Hidden by you" : x.shown ? "Shown" : "Not shown"}</span></div></div>
+      <dl class="facts">${fact("Level", esc(x.tier))}${fact("Contact", esc([x.contact_name, x.phone, x.email].filter(Boolean).join(" · ")))}${fact("Website", esc(x.url))}${fact("Amount", x.amount_cents == null ? "" : esc(money(x.amount_cents, "usd")))}${fact("Basis", x.basis === "paid" ? `Paid to the organizer on ${esc(x.paid_date)} (${esc(x.paid_method)})` : x.basis === "in_kind" ? "Donated in kind: " + esc(x.in_kind_note) : esc(x.basis || "not confirmed"))}${fact("Permission ticked", x.permission ? "yes" : "no")}${fact("Receipt", x.receipt ? `<a href="/api/admin/sponsors?receipt=${esc(x.id)}" target="_blank" rel="noopener">Open receipt (private)</a>` : "none")}</dl>
+      <div class="ra">${btn("ghost", x.hidden_by_admin ? "Show again" : "Hide from the contest page", `data-sh="${x.hidden_by_admin ? "show" : "hide"}"`)}<span class="sp"></span><span class="msg" role="status"></span></div></article>`).join("");
+    const iv = d.invite, inv = `<article class="acard rec"><div class="rh"><div class="rt"><h3>Sponsor invite link and payment text</h3><span class="tag ${iv.link_on && !iv.switched_off_by_admin ? "ok" : ""}">${iv.switched_off_by_admin ? "Switched off by you" : iv.link_on ? "Link on" : "Link off"}</span></div></div>
+      <dl class="facts">${fact("Contest review note", esc(d.contest.review_note || "none (trusted)"))}${fact("Payment link", esc(iv.pay_url))}${fact("Payment text", esc(iv.pay_text))}${fact("Levels", esc(iv.levels))}${fact("Payment text hidden", iv.pay_hidden ? "yes" : "no")}</dl>
+      <div class="ra">${btn("ghost", iv.switched_off_by_admin ? "Allow the invite link again" : "Switch the invite link off", `data-cf="${iv.switched_off_by_admin ? "invite_on" : "invite_off"}"`)}${btn("ghost", iv.pay_hidden ? "Show the payment text again" : "Hide the payment link and text", `data-cf="${iv.pay_hidden ? "show_pay" : "hide_pay"}"`)}<span class="sp"></span><span class="msg" role="status"></span></div></article>`;
+    m.innerHTML = modalFrame("Sponsors of " + d.contest.name, `<p class="meta">Sponsor money goes to the organizer, not to SoCal Lights. Receipts are private to the organizer team and you.</p>${inv}${rows || `<div class="empty">No sponsors recorded.</div>`}`, true);
+    $("#mClose").onclick = close;
+    m.querySelectorAll("[data-cf]").forEach((b) => (b.onclick = async () => { try { await api("/api/admin/sponsors", { method: "POST", body: JSON.stringify({ action: b.dataset.cf, contest: cid, name: d.contest.name }) }); toast("Done"); openSponsors(cid); } catch (er) { toast(er.message, true); } }));
+    m.querySelectorAll("[data-sh]").forEach((b) => (b.onclick = async () => { try { await api("/api/admin/sponsors", { method: "POST", body: JSON.stringify({ action: b.dataset.sh, id: b.closest("[data-sid]").dataset.sid, name: d.contest.name }) }); toast(b.dataset.sh === "hide" ? "Hidden" : "Shown again"); openSponsors(cid); } catch (er) { toast(er.message, true); } }));
+  } catch (er) { m.innerHTML = modalFrame("Sponsors", `<p>${esc(er.message)}</p>`); $("#mClose").onclick = close; }
+}
+$("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-csp]"); if (b) openSponsors(b.dataset.csp); });
 const orgLabelOf = (k) => (String(k).startsWith("d:") ? String(k).slice(2) : String(k).startsWith("u:") ? String(k).slice(2) : String(k));
 const CDONE = { approve: "Contest is live", decline: "Contest unpublished", delete: "Contest deleted" };
 $("#main").addEventListener("click", async (e) => {

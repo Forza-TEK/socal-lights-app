@@ -2,6 +2,12 @@
 
 _Last updated 2026-11-06 (lighter event list). `[x]` done and verified, `[ ]` open. Detail lives in `docs/monetization/` (strategy, reports, outreach) and `docs/audit/2026-11-04/` (seven audits and the ranked gap list)._
 
+## Owner steps: contest sponsors (2026-11-07)
+- [ ] Attorney: `docs/monetization/legal-redlines.md` "Organizer-collected sponsors and sponsor invite links", Terms "Sponsors collected by the organizer" and "Sponsor invite links", Privacy "Sponsors recorded by organizers".
+- [ ] Optional: tell Covina that their organizer can add a payment link (their city portal) and an invite link on the contest dashboard > Sponsors once their contest is live.
+- [ ] Watch Admin > Contests > Sponsors for payment links or sponsors that look wrong (hide them); payment-link hosts are in the ops log as `sponsor-pay-link`.
+- [ ] Decide later whether to build Stripe Connect Standard (proposal doc, phase 3).
+
 ## Owner steps: contest passes (2026-11-07)
 - [ ] Grant the Covina founding-partner comp: Admin > Contests > Contest passes > Grant a comp (domain `covinaca.gov`, Unlimited, valid until the end of the free period, note "Founding partner: Covina"). Nothing is granted until you click.
 - [ ] Attorney: `docs/monetization/legal-redlines.md` "Contest organizer passes" and Terms `#passes`.
