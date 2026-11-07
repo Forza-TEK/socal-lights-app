@@ -640,3 +640,11 @@ Re-recorded `approve` (Add homes yourself, Added by organizer, Remove), `profile
 
 ## 2026-11-06 — Tutorials after the pricing change
 Re-recorded `feature` (four event plans, dates and total, stops before Stripe), recorded the new `sponsor` video (Sponsor your installer company) and re-recorded `installer-profile` (new map strip, end card). Computer and phone, Kokoro voice, day mode. Migration 0185 links `sponsors-sponsor` to the Help article `sponsor-your-installer-company`. Other videos left as they are (see `docs/tutorial-updates.md`, Done).
+
+## 2026-11-08 (wide layout, step 1: Pricing, Feature, Help)
+- New 1160px page frame for Pricing, Feature and Help: header and content share the same edges; paragraphs capped at about 70 characters (`body.wide` in `public/info.css`; Help in `functions/_lib/helpui.js`).
+- Pricing: free cards side by side; event plans as cards with price, name and one line, plus a comparison table (one row per part) and one footnote for the dates; a drawing of what Featured looks like (pin, strip pill, badge, listed first); installer plans as cards; a larger FAQ (season, payment and receipt, refunds, adding a part later).
+- Feature: the same plan cards and table through one shared module, `public/plan-cards.js`; the chosen plan has a checkmark badge and a "Chosen" button.
+- "Most popular" marker: `/api/config` returns `popularEvent` only when the last 120 days have at least 5 paid event orders and one plan leads. Until then no plan is marked.
+- Help: topics as a left rail (tabs on phones), articles in one column of rows.
+- Next steps (see the layout proposal): Contests, Past results and city pages as grids; Privacy and Terms with a table of contents; Event and Installer pages in two columns; live preview on the add forms.

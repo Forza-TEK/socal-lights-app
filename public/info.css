@@ -21,3 +21,47 @@ main input:focus{outline:0;border-color:var(--ink);box-shadow:0 0 0 1px var(--in
 .chosen{border-left:2px solid var(--season);padding:4px 0 4px 14px;color:var(--ink)}
 .ok{border-left:2px solid var(--ok);padding:4px 0 4px 14px;margin:16px 0;color:var(--muted)}
 .msg{margin:8px 0 0;color:var(--muted)}.msg.err{color:var(--bad)}
+
+/* ---- Wide pages (Pricing, Feature): one 1160px frame shared by the header and the content, paragraphs capped for reading ---- */
+body.wide .hdr,body.wide main{max-width:1160px}
+body.wide .lede,body.wide main>p{max-width:70ch}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wsec{margin:44px 0 0}.wsec>h2{margin:0 0 6px;font-size:24px}.wsec>.sub{margin:0 0 18px;max-width:70ch}
+.wgrid{display:grid;gap:18px}@media(min-width:800px){.wgrid.two{grid-template-columns:1fr 1fr}}
+.wcard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:10px}
+:root[data-theme="dark"] .wcard{background:var(--tile)}
+.wcard h2,.wcard h3{margin:0}.wcard p{margin:0}.wcard .btn{align-self:flex-start;margin-top:auto}
+.wcard .big{font-size:34px;font-weight:800;letter-spacing:-.02em;color:var(--ink);line-height:1.1}.wcard .big small{font-size:15px;font-weight:500;color:var(--muted);letter-spacing:0}
+.wprices{display:flex;flex-wrap:wrap;gap:8px 10px;margin:2px 0 4px}
+.wprices span{display:inline-flex;align-items:baseline;gap:6px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-size:15px;color:var(--muted)}.wprices b{color:var(--ink);font-weight:800}
+/* plan cards */
+.pcards{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));align-items:stretch}
+.pcard{position:relative;display:flex;flex-direction:column;gap:8px;padding:22px 20px;background:#fff;border:2px solid var(--line);border-radius:18px;transition:border-color .15s,box-shadow .15s,background-color .15s}
+:root[data-theme="dark"] .pcard{background:var(--tile)}
+.pcard:hover,.pcard:focus-within{border-color:var(--season);box-shadow:0 8px 22px rgba(20,22,27,.10)}
+.pcard.popular{border-color:var(--ink)}
+.pcard.sel{border-color:var(--season);background:color-mix(in srgb,var(--season) 9%,#fff)}:root[data-theme="dark"] .pcard.sel{background:color-mix(in srgb,var(--season) 16%,var(--tile))}
+.pribbon{position:absolute;top:-13px;left:18px;background:var(--season);color:var(--on-season);font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:4px 12px;border-radius:999px}
+.pcheck{position:absolute;top:14px;right:14px;width:26px;height:26px;border-radius:50%;background:var(--season);color:var(--on-season);display:grid;place-items:center;font-weight:800;font-size:15px}
+.pprice{font-size:34px;font-weight:800;letter-spacing:-.02em;color:var(--ink);line-height:1.1}.pprice small{font-size:14px;font-weight:500;color:var(--muted);letter-spacing:0}
+.pname{margin:0;font-size:19px;font-weight:800;line-height:1.25}
+.pblurb{margin:0;color:var(--muted);font-size:15px}
+.pbul{margin:4px 0 0;padding-left:20px;display:grid;gap:4px;color:var(--muted);font-size:14.5px}
+.pact{margin-top:auto;padding-top:14px}.pact .btn{width:100%;justify-content:center;text-align:center}
+.pcard.sel .pact .btn:not(.ghost){background:var(--season);border-color:var(--season);color:var(--on-season)}
+/* comparison table */
+.cmpwrap{position:relative;overflow-x:auto;margin:22px 0 0;border:1px solid var(--line);border-radius:14px;background:#fff}:root[data-theme="dark"] .cmpwrap{background:var(--tile)}
+.cmp{border-collapse:collapse;width:100%;min-width:680px;font-size:15px}
+.cmp th,.cmp td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:center}.cmp tbody tr:last-child>*{border-bottom:0}
+.cmp thead th{font-weight:800;vertical-align:bottom;color:var(--ink)}.cmp thead th small{display:block;font-weight:600;color:var(--muted);font-size:13px}
+.cmp tbody th{text-align:left;font-weight:500;color:var(--ink)}
+.cmp td{font-size:18px;font-weight:800;color:#0b7a52}:root[data-theme="dark"] .cmp td{color:#3ddc97}.cmp td.no{color:var(--muted);font-weight:400}
+.cmpnote{margin:12px 2px 0;font-size:14px;color:var(--muted);max-width:90ch}
+/* what Featured looks like (a drawing of the map, the list strip and a listing) */
+.fmap{display:grid;gap:16px;grid-template-columns:1fr;align-items:center}@media(min-width:900px){.fmap{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.fmap figure{margin:0}.fmap svg{display:block;width:100%;height:auto;border-radius:16px;border:1px solid var(--line)}
+.fmap ol{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:f}.fmap li{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;color:var(--muted);font-size:15px}
+.fmap li::before{counter-increment:f;content:counter(f);width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:800;font-size:14px}
+.fmap li b{display:block;color:var(--ink);font-weight:800}
+/* FAQ */
+.faq{display:grid;gap:10px;align-items:start}@media(min-width:1000px){.faq{grid-template-columns:1fr 1fr;gap:12px 20px}}.faq details{border:1px solid var(--line);border-radius:14px;padding:4px 18px;background:#fff;margin:0}:root[data-theme="dark"] .faq details{background:var(--tile)}.faq summary{cursor:pointer;font-weight:700;min-height:48px;display:flex;align-items:center;color:var(--ink)}.faq details p{margin:0 0 14px}
