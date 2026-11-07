@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261108b">
-<link rel="stylesheet" href="/info.css?v=20261109g">
+<link rel="stylesheet" href="/info.css?v=20261109j">
 <style>.pcards.tight{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.wcard .big{margin:0}details summary::marker{color:var(--muted)}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
@@ -51,7 +51,8 @@
 <g font-family="system-ui,sans-serif"><circle cx="730" cy="214" r="14" fill="#14161b"/><text x="730" y="219.5" font-size="15" font-weight="800" fill="#fff" text-anchor="middle">4</text></g>
 </svg></figure>
 <ol aria-label="What a Featured event gets"><li><div><b>Gold-ringed pin</b>Your event stands out on the map.</div></li><li><div><b>“Featured” pill in the strip</b>Shown at the top of the map list whenever your event is in view (banner plans).</div></li><li><div><b>“Featured” badge</b>On your listing in the list and on its page.</div></li><li><div><b>Listed first</b>Above other places when people browse your area (top of the list plans).</div></li></ol></div>
-<div class="pcards tight" id="plans" style="margin-top:34px"><section class="pcard"><div class="pprice">Free</div><h3 class="pname">Your listing</h3><p class="pblurb">A pin on the map and a card in the list.</p><div class="pact"><a class="btn ghost" href="/add-event">Add your event</a></div></section></div>
+<section class="pfree" id="evfree"><div class="pprice">Free</div><div class="ptxt"><h3 class="pname">Your listing</h3><p class="pblurb">A pin on the map and a card in the list.</p></div><a class="btn ghost" href="/add-event">Add your event</a></section>
+<div class="pcards four" id="plans"></div>
 <div id="evcompare" class="paid"></div>
 <p class="cmpnote" id="featnote">Choose a plan, sign in with an emailed code, pick your event, and pay on Stripe's secure page. <span id="evrule"></span> The exact dates and total are shown before you pay.</p></section>
 
@@ -116,7 +117,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   else {
     const r = eventRule(cfg, (c) => dollars({ cents: c })); $("#evrule").textContent = r.rule + r.now + r.up;
     const names = {}, prices = {};
-    $("#plans").insertAdjacentHTML("beforeend", keys.map((k) => { const c = eventTierCopy(k); names[k] = c.name; prices[k] = dollars(EP[k]); return planCard({ key: k, price: prices[k], unit: c.unit, name: c.name, blurb: eventTierBlurb(k), popular: cfg.popularEvent === k, cls: "paid", action: `<a class="btn ghost" href="/feature?plan=${esc(k)}" data-choose aria-label="Choose ${esc(c.name)}, ${esc(prices[k])}">Choose</a>` }); }).join(""));
+    $("#plans").insertAdjacentHTML("beforeend", keys.map((k) => { const c = eventTierCopy(k); names[k] = c.name; prices[k] = dollars(EP[k]); return planCard({ key: k, price: prices[k], unit: c.unit, name: c.name, blurb: eventTierBlurb(k), bullets: c.bullets, collapse: "What's included", popular: cfg.popularEvent === k, cls: "paid", action: `<a class="btn ghost" href="/feature?plan=${esc(k)}" data-choose aria-label="Choose ${esc(c.name)}, ${esc(prices[k])}">Choose</a>` }); }).join(""));
     document.querySelectorAll("#plans .pcard.paid").forEach((e) => e.setAttribute("data-paid", "1"));
     $("#evcompare").innerHTML = compareTable(keys, names, prices);
   }
