@@ -709,3 +709,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 
 - Pricing, Privacy and Terms now use the app frame (side menu / icon rail / phone bottom bar): Pricing menu = Homeowners, Events, Contests, Installers; Privacy and Terms menu = those two pages. The Pricing-only tab bar was removed.
 - "Keep SoCal Lights Free" popup and menu row reworded to "Support SoCal Lights": says what is free, what paid options fund the site (Featured events, installer banners, extra contest passes), tips welcome, and links to /pricing.
+
+- Map header fixes: signed-out tap on the profile circle opens /profile again (the sign-in sheet has no styles on the map, so it looked like nothing happened); the avatar is no longer squeezed into an oval (button padding); the logo circle is a true circle between 701 and 1499px wide (it was a pill with the logo pushed left).

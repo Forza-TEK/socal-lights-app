@@ -1239,6 +1239,7 @@ async function openAlerts() {
     btn.disabled = false;
   };
 }
+$("#acctbtn").addEventListener("click", () => { if (!SIGNED_IN) location.href = "/profile"; }); // signed out: /profile asks you to sign in (the sign-in sheet's styles are not loaded on the map)
 let SIGNED_IN = false; // signed in: Add, Contests, Tutorials and Help are in the account circle menu instead, so this menu is shorter
 function openMore() {
   closeFilters(); closePop(); closeSeasonMenu();
