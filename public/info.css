@@ -109,3 +109,5 @@ main.legal{display:grid;gap:0 48px;grid-template-columns:minmax(0,1fr)}
   .ptabs button[aria-selected="true"]::before{content:"";position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--season)}
   .ptabs-on{padding-bottom:84px}
 }
+
+#contests .pfree{align-items:flex-start}#contests .pfree .btn{align-self:center}#contests .pfree .pprice{white-space:nowrap}#contests .pdet{border-top:0;margin-top:6px}#contests #ctiers{margin-bottom:16px}#contests .pmore{padding:16px 24px}

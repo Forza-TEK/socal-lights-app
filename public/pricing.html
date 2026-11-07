@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261110d">
-<link rel="stylesheet" href="/info.css?v=20261110x">
+<link rel="stylesheet" href="/info.css?v=20261110y">
 <style>.pcards.tight{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.wcard .big{margin:0}details summary::marker{color:var(--muted)}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
@@ -30,7 +30,7 @@
 
 <section class="wsec" id="contests" data-panel="contests" data-label="Contest organizers"><h2>Contest organizers</h2>
 <p class="sub"><b>Your organization's first contest in every 12-month window is free.</b> Cities, HOAs, chambers and neighborhood groups: resident entries, voting, judges, and People's Choice and Judges' Choice awards. To run more contests in the same window, buy a pass. A pass only counts contests.</p>
-<div class="pcards tight" id="ctiers"><section class="pcard"><div class="pprice">Free <small>1 contest per 12 months</small></div><h3 class="pname">Free</h3><p class="pblurb">Run a decorating contest: resident entries, voting, judges, and People's Choice and Judges' Choice awards.</p><div class="pact"><a class="btn ghost" href="/add-contest" aria-label="Free, create a contest">Create a contest</a></div></section></div>
+<section class="pfree" id="cfree"><div class="pprice">Free</div><div class="ptxt"><h3 class="pname">Your first contest</h3><p class="pblurb">Run a decorating contest: resident entries, voting, judges, and People's Choice and Judges' Choice awards. 1 contest per 12 months.</p></div><a class="btn ghost" href="/add-contest" aria-label="Free, create a contest">Create a contest</a></section><div class="pcards three" id="ctiers"></div><div id="cmore"></div>
 <p class="cmpnote" id="cnote">Passes are chosen when a contest would go over your free one, or any time on the <a href="/contest-pass">contest pass page</a>. A pass is one payment on Stripe's secure page and never renews by itself. Your 12-month window starts the day your first contest goes live, and upgrading inside it costs only the difference. Passes are for the organization: the website matching your email's domain, or your own account.</p></section>
 
 <section class="wsec" id="events" data-panel="events" data-label="Event organizers"><h2>Event organizers</h2>
@@ -126,9 +126,9 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   const CP = (cfg.contestPasses || {}).plans || {}, pkeys = PASS_KEYS.filter((k) => CP[k]);
   if (pkeys.length) {
     const fc = freeCopy(cfg), mc = moreCopy();
-    $("#ctiers").innerHTML = planCard({ key: "free", price: "Free", unit: fc.unit, name: fc.name, bullets: fc.bullets, action: `<a class="btn ghost" href="/add-contest" aria-label="Free, create a contest">Create a contest</a>` })
-      + pkeys.map((k) => { const c = passCopy(k, cfg); return planCard({ key: k, price: passDollars(CP[k].cents), unit: c.unit, name: c.name, bullets: c.bullets, cls: "paid", action: `<a class="btn ghost" href="/contest-pass" data-pass-choose aria-label="Choose ${esc(c.name)}, ${passDollars(CP[k].cents)}">Choose</a>` }); }).join("")
-      + planCard({ key: "more", price: `More than ${(cfg.contestPasses || {}).contactAbove || 20}`, unit: "contests", name: mc.name, bullets: mc.bullets, cls: "paid", action: `<a class="btn ghost" href="${esc(contactHref())}" aria-label="More than 20 contests, contact us">Contact us</a>` });
+    $("#cfree").innerHTML = `<div class="pprice">Free</div><div class="ptxt"><h3 class="pname">Your first contest</h3><p class="pblurb">${esc(fc.unit)} for each organization: run a decorating contest with resident entries, voting, judges and People's Choice and Judges' Choice awards.</p><details class="pdet"><summary>What's included</summary><ul class="pbul">${fc.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul></details></div><a class="btn ghost" href="/add-contest" aria-label="Free, create a contest">Create a contest</a>`;
+    $("#ctiers").innerHTML = pkeys.map((k) => { const c = passCopy(k, cfg); return planCard({ key: k, price: passDollars(CP[k].cents), unit: c.unit, name: c.name, bullets: c.bullets, collapse: "What's included", cls: "paid", action: `<a class="btn ghost" href="/contest-pass" data-pass-choose aria-label="Choose ${esc(c.name)}, ${passDollars(CP[k].cents)}">Choose</a>` }); }).join("");
+    $("#cmore").innerHTML = `<section class="pfree pmore"><div class="ptxt"><h3 class="pname">${esc(mc.name)}</h3><p class="pblurb">${esc(mc.bullets.join(". "))}</p></div><a class="btn ghost" href="${esc(contactHref())}" aria-label="More than ${(cfg.contestPasses || {}).contactAbove || 20} contests, contact us">Contact us</a></section>`;
     $("#ctiers").addEventListener("click", (e) => { if (e.target.closest("[data-pass-choose]")) beacon("fn:pass-choose"); });
   } else $("#cnote").hidden = true;
   const EP = cfg.eventPlans || {}, keys = EVENT_KEYS.filter((k) => EP[k]);

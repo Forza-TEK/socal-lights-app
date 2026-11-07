@@ -701,3 +701,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Contest page Sponsors: on phones the sponsor logos are one per row and large (up to 150px tall, full width); desktop unchanged. contest.css version bumped to 20261110a on all pages.
 
 - Map sponsor banner: still drifts like a marquee, and can now be dragged (finger on phones, mouse on computers, sideways trackpad swipe) with a little momentum; a drag never counts as a tap on a pill; hover/focus/pause still stop the drift. JS-driven (banner.js); CSS animation removed. Reduced-motion users keep native sideways scrolling.
+
+- Pricing, Contest organizers tab: Free is a slim row above the three pass cards (what is included folds away), the three passes sit in one row, "More than 20 contests" is a slim row below. The old 5-across cards were cramped.
