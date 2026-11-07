@@ -17,6 +17,19 @@
     } catch (e) {}
   };
   if (document.readyState === "complete") skip(); else window.addEventListener("load", skip);
+  // The same "Open the map" pill in the header of every page (the server-written pages already have it; the form and account pages get it here)
+  var pill = function () {
+    try {
+      var h = document.querySelector(".hdr .hright"); if (!h || h.querySelector(".pill")) return;
+      if (/^\/add-/.test(location.pathname)) return; // the add forms keep Save & exit in that spot
+      var st = document.createElement("style");
+      st.textContent = ".hdr .pill{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;background:var(--tile,#fff);color:var(--ink);box-shadow:0 2px 12px rgba(20,22,27,.12),0 0 0 1px var(--line,rgba(128,128,128,.25));font-weight:700;font-size:15px;text-decoration:none;white-space:nowrap}.hdr .pill .short{display:none}.hdr .pill:hover{box-shadow:0 2px 12px rgba(20,22,27,.16),0 0 0 1.5px var(--season,var(--ink))}@media(max-width:480px){.hdr .pill .long{display:none}.hdr .pill .short{display:inline}.hdr .pill{padding:0 14px}}";
+      document.head.appendChild(st);
+      var a = document.createElement("a"); a.className = "pill"; a.href = "/"; a.setAttribute("aria-label", "Open the map"); a.innerHTML = "<span class=\"long\">Open the map</span><span class=\"short\">Map</span>";
+      h.insertBefore(a, h.firstChild);
+    } catch (e) {}
+  };
+  if (document.readyState === "complete") pill(); else window.addEventListener("load", pill);
   if (document.getElementById("sitefoot")) return;
   var y = new Date().getFullYear();
   var css = ".sitefoot{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 18px;margin:36px auto 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line,rgba(128,128,128,.28));font:400 13px/1.5 var(--font,system-ui,sans-serif);color:var(--muted,#6b6760);text-align:center}"

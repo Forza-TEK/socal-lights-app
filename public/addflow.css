@@ -9,7 +9,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--fon
 h1,h2,h3,p{margin:0}h1{font-weight:800;font-size:clamp(26px,5vw,36px);line-height:1.15;letter-spacing:-.02em;text-wrap:balance}h2{font-weight:800;font-size:20px;letter-spacing:-.01em;line-height:1.25}h3{font-weight:700;font-size:16px}
 .muted{color:var(--muted)}.small{font-size:14px}
 :focus-visible{outline:2px solid var(--season);outline-offset:3px}
-.hdr{display:flex;justify-content:space-between;align-items:center;padding:22px 0;max-width:1100px;margin:0 auto}.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.02em;white-space:nowrap;color:var(--ink);text-decoration:none}.brand .mark{display:block;width:40px;height:40px;border-radius:50%;flex:none}.brand .wm b{font-weight:800;background:linear-gradient(90deg,#f08a1c,var(--s-halloween) 45%,var(--s-christmas));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hdr{display:flex;justify-content:space-between;align-items:center;padding:22px 0;max-width:1160px;margin:0 auto}.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.02em;white-space:nowrap;color:var(--ink);text-decoration:none}.brand .mark{display:block;width:40px;height:40px;border-radius:50%;flex:none}.brand .wm b{font-weight:800;background:linear-gradient(90deg,#f08a1c,var(--s-halloween) 45%,var(--s-christmas));-webkit-background-clip:text;background-clip:text;color:transparent}
 .link{all:unset;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-weight:500;font-size:15px;color:var(--ink)}.link:focus-visible{outline:2px solid var(--season);outline-offset:3px}
 .main{max-width:640px;margin:0 auto;padding:6vh 0 20px;display:grid;gap:28px}
 .help{color:var(--muted);font-size:16px;margin-top:-14px;max-width:52ch}
@@ -111,7 +111,7 @@ input[aria-invalid=true],textarea[aria-invalid=true]{border-color:#b42318!import
 .hdr .tbtn svg{width:20px;height:20px}
 .hdr .tbtn:hover,.hdr .acct:hover{background:var(--tile)}
 .hdr .tbtn:focus-visible,.hdr .acct:focus-visible{outline:2.5px solid var(--ink);outline-offset:2px}
-@media(max-width:340px){.hdr .brand .wm{display:none}}
+@media(max-width:400px){.hdr .brand .wm{display:none}}
 
 /* Dropdown lists: the browser draws them itself, so give them the page colors (otherwise light text on white in dark mode) */
 select option,select optgroup{background-color:var(--bg);color:var(--ink)}
