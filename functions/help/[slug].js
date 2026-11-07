@@ -27,5 +27,5 @@ function post(y,note){return fetch("/api/help/vote",{method:"POST",headers:{"con
 document.getElementById("rb").onclick=function(e){var b=e.target.closest("button");if(!b)return;var y=b.dataset.y==="1";post(y,"").catch(function(){});document.getElementById("rb").hidden=true;
 if(y){m.textContent="Thank you. Glad it helped.";document.getElementById("rq").textContent=""}else{document.getElementById("rq").textContent="Sorry about that.";n.hidden=false;document.getElementById("rnote").focus()}};
 document.getElementById("rsend").onclick=function(){var t=document.getElementById("rnote").value.trim();post(false,t).catch(function(){});n.hidden=true;m.innerHTML='Thank you, that helps us fix it. For an answer now, <a href="#ask" onclick="document.getElementById(\\'ask\\').open=true">ask us</a>.'}})()</script>`;
-  return new Response(helpFrame({ title: `${a.title} | Help Center | SoCal Lights`, desc: a.summary, canonical: `${origin}/help/${a.slug}`, ld, origin, body }), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } });
+  return new Response(helpFrame({ cat: cat.key, title: `${a.title} | Help Center | SoCal Lights`, desc: a.summary, canonical: `${origin}/help/${a.slug}`, ld, origin, body }), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } });
 }

@@ -34,7 +34,7 @@
 <noscript><p>Turn on JavaScript to see the tutorial list.</p></noscript>
 </main>
 <script type="module">
-import { mountShell } from "/appshell.js?v=20261106zb";
+import { mountShell } from "/appshell.js?v=20261110c";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (q) => document.querySelector(q);
 // Turns a pasted video link into something we can play: YouTube, Vimeo, Cloudflare Stream, or a direct video file
