@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261110d">
-<link rel="stylesheet" href="/info.css?v=20261110b">
+<link rel="stylesheet" href="/info.css?v=20261110y">
 <style>.pcards.tight{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.wcard .big{margin:0}details summary::marker{color:var(--muted)}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
@@ -19,7 +19,8 @@
 <h1>Pricing</h1>
 <p class="lede">Finding lights and events is free, and so is posting them. Paid options only make your listing easier to see. Every paid placement is labelled, and money never changes a contest result.</p>
 
-<div class="wgrid" style="margin-top:26px">
+<div class="ptabs" id="ptabs" role="tablist" aria-label="Pricing for" hidden></div>
+<div class="wgrid" id="p-homeowners" data-panel="homeowners" data-label="Homeowners" style="margin-top:26px">
 <section class="wcard" id="homeowners"><h2>Homeowners</h2><div class="big">Free</div>
 <p><b>Show your lights on the map.</b> Entering a display and entering a contest are free.</p>
 <p>A contest winner, 2nd or 3rd place can also feature their home for 30 days:</p>
@@ -27,12 +28,12 @@
 <a class="btn" href="/add-house">Add your display</a></section>
 </div>
 
-<section class="wsec" id="contests"><h2>Contest organizers</h2>
+<section class="wsec" id="contests" data-panel="contests" data-label="Contest organizers"><h2>Contest organizers</h2>
 <p class="sub"><b>Your organization's first contest in every 12-month window is free.</b> Cities, HOAs, chambers and neighborhood groups: resident entries, voting, judges, and People's Choice and Judges' Choice awards. To run more contests in the same window, buy a pass. A pass only counts contests.</p>
 <div class="pcards tight" id="ctiers"><section class="pcard"><div class="pprice">Free <small>1 contest per 12 months</small></div><h3 class="pname">Free</h3><p class="pblurb">Run a decorating contest: resident entries, voting, judges, and People's Choice and Judges' Choice awards.</p><div class="pact"><a class="btn ghost" href="/add-contest" aria-label="Free, create a contest">Create a contest</a></div></section></div>
 <p class="cmpnote" id="cnote">Passes are chosen when a contest would go over your free one, or any time on the <a href="/contest-pass">contest pass page</a>. A pass is one payment on Stripe's secure page and never renews by itself. Your 12-month window starts the day your first contest goes live, and upgrading inside it costs only the difference. Passes are for the organization: the website matching your email's domain, or your own account.</p></section>
 
-<section class="wsec" id="events"><h2>Event organizers</h2>
+<section class="wsec" id="events" data-panel="events" data-label="Event organizers"><h2>Event organizers</h2>
 <p class="sub"><b>Listing your event is free</b> (tree lighting, parade, market, haunted house, light show). Featured placement is optional: pick one, pay once, no subscription.</p>
 <div class="fmap paid" id="featuredpic"><figure><svg viewBox="0 0 760 380" role="img" aria-label="Drawing of the SoCal Lights map. A Featured event has a gold-ringed pin on the map, a Featured pill in the strip at the top of the list, a Featured badge on its listing, and is listed first.">
 <rect width="760" height="380" fill="#f3efe6"/><rect x="0" y="0" width="470" height="380" fill="#e8efdd"/>
@@ -56,7 +57,7 @@
 <div id="evcompare" class="paid"></div>
 <p class="cmpnote" id="featnote">Choose a plan, sign in with an emailed code, pick your event, and pay on Stripe's secure page. <span id="evrule"></span> The exact dates and total are shown before you pay.</p></section>
 
-<section class="wsec" id="banner"><h2>Installers</h2>
+<section class="wsec" id="banner" data-panel="banner" data-label="Installers"><h2>Installers</h2>
 <p class="sub">Show your company on the map and in your homes' pages. Paid placements are always labelled "Sponsor".</p>
 <section class="pfree" id="instfree"><div class="pprice">Free</div><div class="ptxt"><h3 class="pname">Profile card</h3><p class="pblurb">Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map.</p></div><a class="btn ghost" href="/add-house?kind=installer">Create your free profile</a></section>
 <div class="pcards three" id="insttiers"></div>
@@ -87,6 +88,24 @@ import { PASS_KEYS, passCopy, freeCopy, moreCopy, contactHref, dollars as passDo
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents % 100 ? (p.cents / 100).toFixed(2) : p.cents / 100);
+// Tabs: one audience at a time (without scripts every section is listed). The links /pricing#events, #contests, #banner and #homeowners open the right tab.
+{
+  const ORDER = ["homeowners", "events", "contests", "banner"], panels = Object.fromEntries([...document.querySelectorAll("[data-panel]")].map((e) => [e.dataset.panel, e])), bar = $("#ptabs");
+  const keys = ORDER.filter((k) => panels[k]);
+  bar.innerHTML = keys.map((k) => `<button type="button" role="tab" id="ptab-${k}" data-tab="${k}" aria-controls="${panels[k].id}" aria-selected="false" tabindex="-1">${esc(panels[k].dataset.label)}</button>`).join("");
+  keys.forEach((k) => { panels[k].setAttribute("role", "tabpanel"); panels[k].setAttribute("aria-labelledby", "ptab-" + k); panels[k].dataset.pp = "pp-" + k; });
+  const owner = (id) => { const e = id && document.getElementById(id); const p = e && e.closest("[data-panel]"); return p ? p.dataset.panel : ""; };
+  const pick = (k, focus) => {
+    if (!panels[k]) k = keys[0];
+    keys.forEach((x) => { const on = x === k; panels[x].hidden = !on; const b = $("#ptab-" + x); b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+    document.documentElement.dataset.ptab = k;
+  };
+  bar.hidden = false; document.querySelector("main").classList.add("ptabs-on");
+  bar.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (!b) return; pick(b.dataset.tab); try { history.replaceState(null, "", "#" + (panels[b.dataset.tab].id || b.dataset.tab)); } catch {} });
+  bar.addEventListener("keydown", (e) => { const i = keys.indexOf(document.activeElement && document.activeElement.dataset.tab); const n = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? keys.length - 1 : -1; if (n < 0 || i < 0) return; e.preventDefault(); pick(keys[(n + keys.length) % keys.length], true); });
+  const fromHash = () => { const h = location.hash.slice(1); pick(owner(h) || (keys.includes(h) ? h : keys[0])); if (h && document.getElementById(h)) document.getElementById(h).scrollIntoView(); };
+  fromHash(); addEventListener("hashchange", fromHash);
+}
 const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
 // one number (no person) when Choose is tapped, to see how many reach the next step
 $("#plans").addEventListener("click", (e) => { if (e.target.closest("a.btn[data-choose]")) beacon("fn:event-feature-choose"); });

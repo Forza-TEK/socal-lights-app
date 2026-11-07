@@ -87,3 +87,13 @@ main.legal{display:grid;gap:0 48px;grid-template-columns:minmax(0,1fr)}
 .toc a:hover{background:var(--surface-2,rgba(0,0,0,.05))}.toc a[aria-current]{background:var(--ink);color:var(--bg);font-weight:700}
 .legalbody{max-width:72ch;min-width:0}.legalbody>h2{scroll-margin-top:16px}
 @media(min-width:1000px){main.legal{grid-template-columns:260px minmax(0,1fr)}.toc{grid-column:1;grid-row:2;position:sticky;top:16px;align-self:start;margin:0}.legalbody{grid-column:2;grid-row:2}}
+
+/* Pricing tabs: one audience at a time */
+.ptabs{display:flex;gap:8px;margin:24px -4px 0;padding:4px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.ptabs::-webkit-scrollbar{display:none}
+.ptabs[hidden]{display:none}
+.ptabs button{flex:none;display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font:700 15px var(--f,var(--font,inherit));cursor:pointer;white-space:nowrap}
+:root[data-theme="dark"] .ptabs button{background:var(--tile)}
+.ptabs button:hover{border-color:var(--season)}.ptabs button[aria-selected="true"],:root[data-theme="dark"] .ptabs button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.ptabs button:focus-visible{outline:2px solid var(--season);outline-offset:2px}
+@media(min-width:700px){.ptabs{flex-wrap:wrap;overflow:visible;margin-left:0;padding:0}}
+.ptabs-on [data-panel]{margin-top:22px}.ptabs-on [data-panel][hidden]{display:none}

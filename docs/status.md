@@ -691,3 +691,6 @@ Re-recorded `feature` (four event plans, dates and total, stops before Stripe), 
 - Footer: already shared (`footer.js`, copyright and Pricing, Privacy, Terms, Contact on every page except the map); unchanged.
 ## 2026-11-07 sweep group 18 (High Desert & Mountains)
 Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Barstow Turkey Trot (Nov 14) and Newberry Springs Pistachio Farm Festival (Nov 7-8) from bosd3.sbcounty.gov and the chamber page. No 2026 pages yet for Lucerne Valley Magic in the Cove, Running Springs light contest, Newberry Springs tree lighting (date not posted), Needles. No contest home addresses found. barstowca.org blocks bots (403). No photos set (candidate og:images were portrait flyers or absent).
+
+## 2026-11-10 (Pricing tabs)
+- /pricing shows one audience at a time under the intro: Homeowners, Event organizers, Contest organizers, Installers (tab bar; arrow keys, Home and End work). `/pricing#events`, `#contests`, `#banner` (installers) and `#homeowners`, and anchors inside a section (for example `#featuredpic`), open the right tab. The FAQ stays under every tab. Without scripts every section is listed.
