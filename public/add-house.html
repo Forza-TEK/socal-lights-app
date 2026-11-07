@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110b">
+<link rel="stylesheet" href="/addflow.css?v=20261110d">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
@@ -99,6 +99,6 @@ const steps = [
 const preview = (x) => pvCard({ photo: (x.photos && x.photos[0] && x.photos[0].url) || "", title: x.kind === "installer" ? (x.biz || x.title) : x.title, ph: "Your display's name", when: "Home display", lines: [{ t: [x.city, SEASONS[x.season] ? SEASONS[x.season].label : ""].filter(Boolean).join(" \u00b7 ") || "Your city", e: !x.city }, { t: x.desc ? (x.desc.length > 90 ? x.desc.slice(0, 90) + "\u2026" : x.desc) : "A line about your lights", e: !x.desc }], tags: [x.kind === "installer" ? "Professional installer" : "Homeowner"] });
 run({ preview, steps, data: d, persist: "scl-house-draft", account: { kind: "house", title: (x) => x.title || x.biz }, noPersist: ["photos", "email"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
 </script>
-<script src="/footer.js?v=20261106z" defer></script>
+<script src="/footer.js?v=20261110b" defer></script>
 </body>
 </html>
