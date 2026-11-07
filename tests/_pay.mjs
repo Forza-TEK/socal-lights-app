@@ -41,7 +41,7 @@ export const getOrder = (raw, sid = "cs_test_1") => { const r = raw.prepare("SEL
 export async function addUser(raw, id, email) {
   raw.prepare("INSERT INTO users (id,email,name) VALUES (?,?,?)").run(id, email, "");
   const token = "tok_" + id;
-  raw.prepare("INSERT INTO sessions (id,user_id,expires_at) VALUES (?,?,?)").run(await sha256(token), id, new Date(Date.now() + 86400_000).toISOString().slice(0, 19).replace("T", " "));
+  raw.prepare("INSERT INTO sessions (id,user_id,expires_at) VALUES (?,?,?)").run(await sha256(token), id, new Date(Date.now() + 3650 * 86400_000).toISOString().slice(0, 19).replace("T", " "));
   return { id, email, cookie: "scl_session=" + token };
 }
 
