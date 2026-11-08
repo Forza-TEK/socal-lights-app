@@ -202,7 +202,7 @@ const HOWTO = [
   ["How do I upload photos for my home?", "my-photo-will-not-upload"], ["How do I claim an event listing?", "claim-your-home"], ["How do I remove my home from the map?", "Remove my home"],
   ["How do I get an installer profile?", "installer-profiles"],
   // paid options and billing
-  ["How do I feature my event?", "feature-an-event-or-home"], ["How do I get a refund for a featured placement?", "Refunds and disputes"], ["How do I cancel automatic renewal of my sponsor placement?", "automatic-renewal-for-installers"],
+  ["How do I feature my event?", "feature-an-event-or-home"], ["How do I get a refund for a featured placement?", "Refund rules for paid placements"], ["How do I cancel automatic renewal of my sponsor placement?", "automatic-renewal-for-installers"],
   // map, app, notifications
   ["The map can't find my location", "location-does-not-work"], ["How do I install the app on my phone?", "install-the-app"], ["How do I unsubscribe from the weekly email?", "weekly-lights-email"],
   ["How do I plan a route for a night of lights?", "plan-a-night"], ["How do I find lights near me?", "find-lights-near-me"],
@@ -704,3 +704,12 @@ test("the assistant knows SoCal Lights is not in any app store", async () => {
   assert.match(t, /No, not yet\. SoCal Lights is not in the Apple App Store, Google Play/);
   assert.match(t, /do not promise that a store app is coming/);
 });
+
+test("refund questions get the published refund rules first, and the prompt says to give all information before handing off", async () => {
+  const { rankChunks, RULES } = await import("../functions/_lib/chatkb.js");
+  const t = rankChunks("What is your refund policy for a Featured event?", 3).map((c) => c.text).join(" ");
+  assert.match(t, /full refund/); assert.match(t, /non-refundable/); assert.match(t, /moved? your placement to another of your events|move your placement to another of your events/);
+  assert.match(RULES, /Always give the visitor everything the sources say/);
+  assert.match(RULES, /Make no promises about refunds/, "the no-promise line stays");
+});
+

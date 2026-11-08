@@ -77,15 +77,15 @@ Featuring is optional and a one-time payment, with no subscription:
 2. Choose a plan. Every plan includes the gold Featured pin; the banner adds a Featured pill at the top of the map list, and Top of the list puts your event first when people browse your area.
 3. Choose your event, check the start date, end date and total, then tap Pay on Stripe.
 - Featured listings carry a visible Featured badge. For plan prices, see https://socallights.app/pricing.
-- Refund questions are best sent to info@socallights.app.
+- Refunds: if we cannot list or feature your event for any reason, you get a full refund of every part of the plan. Once the placement is live, payments are non-refundable, but if your event is cancelled we will move your placement to another of your events or refund the unused time. Still have questions? Email info@socallights.app.
 
 **11. How do I start a contest in my neighborhood?**
 Fun! Cities, HOAs and neighborhood groups do this a lot. Your organization's first contest in a 12-month window is free. You need to be signed in.
 1. Open Add and choose Contest.
 2. Go through the four screens: Basics, Dates, Rules and Review.
-3. Sign in on the last screen. Your draft is kept while you sign in with Google.
+3. Sign in on the last screen. Your draft is kept while you sign in, with Google or an emailed code.
 4. Finish, and your contest goes live and appears on the map as an event.
-- Each contest gets its own page, and the organizer dashboard lets you approve entries, start or pause voting, share a QR poster and announce winners.
+- Each contest gets its own page, and the organizer dashboard lets you approve entries, invite judges, start or pause voting, share a QR poster and announce winners.
 
 **12. How do I invite judges to my contest?**
 Judges are a great touch. Here is how:
