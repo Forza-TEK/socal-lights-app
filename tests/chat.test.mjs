@@ -630,3 +630,11 @@ test("privacy and Terms describe the assistant", async () => {
   for (const must of ['id="ai-assistant"', "Cloudflare Workers AI", "Anthropic", "do not save what you type", "30 minutes", "Please do not type personal information"]) assert.ok(priv.includes(must) || priv.replace(/\s+/g, " ").includes(must), "privacy: " + must);
   for (const must of ['id="ai-assistant"', 'id="contests"', "automated program, not a person", "does not interpret rules", "never affects"]) assert.ok(terms.includes(must), "terms: " + must);
 });
+
+test("'how do I add my home' finds the regular add-a-home guide, not only the contest entry steps", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  for (const q of ["How do I add my home?", "how do I put my house on the map"]) {
+    const top = rankChunks(q, 2).map((c) => c.title).join(" | ");
+    assert.ok(/Adding your home to the map/.test(top), q + " => " + top);
+  }
+});
