@@ -1934,3 +1934,6 @@ Text:
     - If we cannot list or feature your event, you get a full refund of every part. Once it is live, payments are non-refundable, but if your event is cancelled, email us and we will move your placement to another of your events or refund the unused time. A refund or a payment dispute switches the placement off.
     - The map, search, routes and voting stay free. See [Is SoCal Lights free?](/help/is-it-free).
     - Featured is bought on the website, not in the app.
+
+## Drive a route: title (2026-11-08, migration 0200)
+Title: Drive a route: Route these and Visit the homes (was "...Route these, Open route and Visit the homes"). Paste into Admin > Help if you edited this article.
