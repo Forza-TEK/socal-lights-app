@@ -2,11 +2,11 @@
    Day mode is the default; night mode follows [data-theme="dark"], or the device setting on a page that does not set one. */
 .scl-chat,.scl-chat-fab{
   --c-bg:var(--surface,#fff); --c-bg2:var(--surface-2,#f3f1ec); --c-ink:var(--ink,#14161b); --c-muted:var(--muted,#646a7a); --c-line:var(--line,#e7e3dc);
-  --c-accent:var(--ice,#2559b8); --c-on-accent:#fff; --c-focus:var(--focus,#2a5bd7); --c-user:var(--ice-soft,#e2ecfb);
+  --c-accent:var(--season,var(--ice,#2559b8)); --c-on-accent:var(--on-season,#fff); --c-focus:var(--focus,#2a5bd7); --c-user:var(--season-soft,var(--ice-soft,#e2ecfb));
   font-family:var(--f-body,system-ui,-apple-system,"Segoe UI",sans-serif); color:var(--c-ink); box-sizing:border-box;
 }
-:root[data-theme="dark"] .scl-chat,:root[data-theme="dark"] .scl-chat-fab{--c-bg:var(--surface,#161a22); --c-bg2:var(--surface-2,#1f2430); --c-ink:var(--ink,#f5f3ee); --c-muted:var(--muted,#9ba1b1); --c-line:var(--line,#2a303c); --c-accent:#8fb0ff; --c-on-accent:#0b0d12; --c-focus:var(--focus,#8fb0ff); --c-user:var(--ice-soft,#18273b)}
-@media (prefers-color-scheme:dark){:root:not([data-theme]) .scl-chat,:root:not([data-theme]) .scl-chat-fab{--c-bg:#161a22; --c-bg2:#1f2430; --c-ink:#f5f3ee; --c-muted:#9ba1b1; --c-line:#2a303c; --c-accent:#8fb0ff; --c-on-accent:#0b0d12; --c-focus:#8fb0ff; --c-user:#18273b}}
+:root[data-theme="dark"] .scl-chat,:root[data-theme="dark"] .scl-chat-fab{--c-bg:var(--surface,#161a22); --c-bg2:var(--surface-2,#1f2430); --c-ink:var(--ink,#f5f3ee); --c-muted:var(--muted,#9ba1b1); --c-line:var(--line,#2a303c); --c-accent:var(--season,#8fb0ff); --c-on-accent:var(--on-season,#0b0d12); --c-focus:var(--focus,#8fb0ff); --c-user:var(--season-soft,var(--ice-soft,#18273b))}
+@media (prefers-color-scheme:dark){:root:not([data-theme]) .scl-chat,:root:not([data-theme]) .scl-chat-fab{--c-bg:#161a22; --c-bg2:#1f2430; --c-ink:#f5f3ee; --c-muted:#9ba1b1; --c-line:#2a303c; --c-accent:var(--season,#8fb0ff); --c-on-accent:var(--on-season,#0b0d12); --c-focus:#8fb0ff; --c-user:var(--season-soft,#18273b)}}
 .scl-chat *,.scl-chat-fab *{box-sizing:border-box}
 .scl-chat[hidden],.scl-chat-fab[hidden],.scl-chat [hidden]{display:none!important}
 
