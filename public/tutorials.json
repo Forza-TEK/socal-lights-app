@@ -477,8 +477,8 @@
         },
         {
           "id": "showcase",
-          "title": "Show off your house",
-          "desc": "Put your lights on the map with Showcase a House.",
+          "title": "Show off your home",
+          "desc": "Put your lights on the map so families can find your home. You do not need a contest.",
           "url": "/tutorials/post-house.mp4",
           "length": "2:49",
           "captions": "/tutorials/post-house.vtt",
