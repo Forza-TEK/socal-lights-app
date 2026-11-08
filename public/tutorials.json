@@ -25,14 +25,14 @@
           "title": "Plan a night",
           "desc": "Save favorites, build a route, share it and add it to your calendar.",
           "url": "/tutorials/find-night.mp4",
-          "length": "2:12",
+          "length": "2:36",
           "captions": "/tutorials/find-night.vtt",
           "poster": "/tutorials/find-night.jpg",
           "mobile": {
             "url": "/tutorials/find-night-mobile.mp4",
             "poster": "/tutorials/find-night-mobile.jpg",
             "captions": "/tutorials/find-night-mobile.vtt",
-            "length": "2:10"
+            "length": "2:30"
           }
         },
         {
@@ -40,14 +40,14 @@
           "title": "Weekly lights email",
           "desc": "Sign up for the weekly email and unsubscribe any time.",
           "url": "/tutorials/find-email.mp4",
-          "length": "1:24",
+          "length": "1:31",
           "captions": "/tutorials/find-email.vtt",
           "poster": "/tutorials/find-email.jpg",
           "mobile": {
             "url": "/tutorials/find-email-mobile.mp4",
             "poster": "/tutorials/find-email-mobile.jpg",
             "captions": "/tutorials/find-email-mobile.vtt",
-            "length": "1:25"
+            "length": "1:31"
           }
         },
         {
@@ -137,14 +137,14 @@
           "title": "Your profile",
           "desc": "Drafts, contests, badges and deleting your account.",
           "url": "/tutorials/profile.mp4",
-          "length": "1:54",
+          "length": "2:02",
           "captions": "/tutorials/profile.vtt",
           "poster": "/tutorials/profile.jpg",
           "mobile": {
             "url": "/tutorials/profile-mobile.mp4",
             "poster": "/tutorials/profile-mobile.jpg",
             "captions": "/tutorials/profile-mobile.vtt",
-            "length": "1:54"
+            "length": "2:04"
           }
         }
       ]
