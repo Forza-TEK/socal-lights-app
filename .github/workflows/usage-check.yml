@@ -1,8 +1,9 @@
 name: Cloudflare usage check
 
 # Every 30 minutes (GitHub's schedule can run late or skip a run: the three-a-day admin digest runs the same check too, and the digest email has a
-# "Cloudflare free-plan usage" section). Asks the site for its free-plan usage (read-only) and opens ONE issue, "Cloudflare free-plan limit reached or near",
-# when any metric is at 90% or more or a quota error was logged; it closes the issue when everything is back under 90%. GitHub emails the owner on issue creation.
+# "Cloudflare usage" section). Asks the site for its Cloudflare plan usage (read-only) and opens ONE issue, "Cloudflare usage limit reached or near",
+# when any metric is at 90% or more of its limit (free plan) or included amount (Workers Paid, where 100% means extra charges start, not that the site stops)
+# or a quota error was logged; it closes the issue when everything is back under 90%. The plan comes from CLOUDFLARE_PLAN on the site (default paid). GitHub emails the owner on issue creation.
 # Uses the same repository secret as the digest (ALERT_CRON_KEY) and the pages.dev address (socallights.app challenges GitHub's servers).
 # Needs the Pages secrets CF_ANALYTICS_TOKEN and CF_ACCOUNT_ID for the Cloudflare numbers (see docs/runbooks/cloudflare-limits.md); without them only email counts and logged quota errors are checked.
 on:

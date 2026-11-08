@@ -14,7 +14,7 @@ import { sendMail } from "../functions/_lib/auth.js";
 import { newEnv, stubFetch, freezeNow } from "./_pay.mjs";
 
 const NOW = "2026-11-06T12:00:00Z", DAY = "2026-11-06";
-const CF = { CF_ANALYTICS_TOKEN: "tok_not_real", CF_ACCOUNT_ID: "acct_not_real" };
+const CF = { CF_ANALYTICS_TOKEN: "tok_not_real", CF_ACCOUNT_ID: "acct_not_real", CLOUDFLARE_PLAN: "free" }; // these tests cover the free plan; the default plan is paid (tests/cf-usage-paid.test.mjs)
 
 // A GraphQL answer shaped like the real one (field names checked against the live schema).
 function gql({ reads = 1000, writes = 10, reqs = 500, a = 100, b = 2000, d1Size = 2_000_000, r2Size = 10_000_000, errors } = {}) {
@@ -76,7 +76,7 @@ test("numbers: today's day, R2 month to date by class (delete is free, October i
 });
 
 test("not connected: friendly state, no Cloudflare call, email counts still there", async () => {
-  const restore = freezeNow(NOW), { env, raw } = newEnv(), f = withCf(gql());
+  const restore = freezeNow(NOW), { env, raw } = newEnv({ CLOUDFLARE_PLAN: "free" }), f = withCf(gql());
   raw.prepare("INSERT INTO site_hits (day, page, n) VALUES (?, 'fn:email-sent', 72)").run(DAY);
   try {
     const u = await getUsage(env);
@@ -186,7 +186,7 @@ test("digest: usage section always shows the top metric; LIMIT in the subject at
     const watch = await runDigest(e2); assert.match(watch.text, /D1 rows read: 3,600,000 of 5,000,000 \(72%\) watch/); assert.doesNotMatch(watch.subject, /LIMIT/);
     const { env: e3 } = newEnv(CF); e3.__gql = gql({ reads: 4_700_000 });
     const hot = await runDigest(e3); assert.match(hot.text, /D1 rows read: 4,700,000 of 5,000,000 \(94%\) WARNING/); assert.match(hot.subject, /^SoCal Lights: LIMIT, /);
-    const { env: e4 } = newEnv(); const none = await runDigest(e4);
+    const { env: e4 } = newEnv({ CLOUDFLARE_PLAN: "free" }); const none = await runDigest(e4);
     assert.match(none.text, /Cloudflare free-plan usage/); assert.match(none.text, /Resend emails|not connected/i); assert.doesNotMatch(none.subject, /LIMIT/);
   } finally { restore(); }
 });
