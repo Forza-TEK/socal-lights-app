@@ -161,4 +161,4 @@ Every Help article and every tutorial video was checked against the app as it is
 - **Recorder fixes:** the long "To begin, open your web browser..." opening is used only in the map video (the others say "Start at SoCal Lights dot app"); narration is split in two parts so the tap follows the "tap" sentence (voice and picture in step); `accountMenuSteps` in `record.mjs` swaps the "..." menu for the account circle menu on signed-in videos; each recording port has its own database copy (`/tmp/state-<port>`); seeds for add-homes and feature.
 - **Title change:** `pro-filter` is now "Find professionally installed homes".
 - **Length limits:** 5:00 for every video except Customize (8:00, `maxSeconds`).
-- **Not changed (app code, out of scope):** `public/manifest.webmanifest` still has a shortcut named "My night" (the page is now Favorites).
+- **Not changed (app code, out of scope):** `public/manifest.webmanifest` had a shortcut named "My night"; renamed to "Favorites" later the same day.

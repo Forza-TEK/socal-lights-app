@@ -7,7 +7,7 @@ Paste this into Claude Code (or any agent with a browser, ffmpeg and a text-to-s
 Make a short tutorial video for **[FEATURE]** on SoCalLights.app, as a vertical Instagram short (9:16, 1080 x 1920). The three shorts are:
 1. **Add** (a lighting display, an event, and a home decorating contest)
 2. **Route these** (find homes to visit and drive to them in order)
-3. **My night, then Shop** (plan the evening, then browse the shop back home)
+3. **Favorites, then Shop** (plan the evening, then browse the shop back home)
 
 Make each as its own video.
 
@@ -37,7 +37,7 @@ Make each as its own video.
 
 **What to show**
 - Show the feature twice, back to back: first on a phone-sized screen (about 390 x 760), then on a desktop-sized screen (about 1280 x 720). Say "on your phone" and "on a computer" in the chapter titles.
-- One idea per short, under about 3 minutes. If a second idea is needed (for example "My night", then "Shop"), put it in the same short as the next part, in the order a family would use it.
+- One idea per short, under about 3 minutes. If a second idea is needed (for example "Favorites", then "Shop"), put it in the same short as the next part, in the order a family would use it.
 - If a feature has too many parts to show twice inside 3 minutes (the Add short), show each part once, alternating phone and computer, and say so in the report.
 
 **Vertical layout**

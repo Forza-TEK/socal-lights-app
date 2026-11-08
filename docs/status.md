@@ -1,6 +1,10 @@
 # Status
 
-_Last updated: 2026-11-08 (Cloudflare usage panel made plan-aware for Workers Paid)_
+_Last updated: 2026-11-08 (Help articles re-audit, second pass)_
+
+## Help articles re-audit, second pass (2026-11-08)
+Report: `docs/audit/2026-11-08-help-articles.md`. Branch work, PR to `main` (not merged by the agent). Migration `0201_help_audit_gaps_2026-11-08.sql` (from `scripts/help/updates-audit-1108b.mjs`): 5 new articles (`add-a-home-without-a-contest`, `sponsor-a-contest-with-an-invite-link`, `ask-socal-lights-ai-assistant`, `monthly-update-email`, `stop-emails-from-socal-lights`) and 8 corrections to existing ones, seed-owned articles only (`updated_by = 'seed'`). 54 articles before, 59 after. All 54 live article pages matched the migration text, so none has been edited in Admin. Help copy in `functions/_lib/help.js` and `functions/help/index.js` fixed (home wording; "Most how-tos have a video"). `chatkb-data.js` regenerated.
+- **Open decisions** (details in the report): the add-homes box says up to 100 at a time but accepts 500 lines; the Add page calls a contest "Free" although only the first in 12 months is; the monthly update is not sent yet, so the article describes only the opt-in; UI names that still say house or display; video links for the new articles are for the video audit.
 
 ## Cloudflare usage is plan-aware: Workers Paid (2026-11-08)
 The owner upgraded to Workers Paid ($5/month) after the free-tier D1 rows-read outage; the panel, digest and check had still compared against free daily limits (false "limit reached"). Branch work, PR to `main` (not merged by the agent).
@@ -15,7 +19,7 @@ The owner upgraded to Workers Paid ($5/month) after the free-tier D1 rows-read o
 ## Help and Tutorials audit (2026-11-08)
 All 54 Help articles audited (43 updated by migration `0199_help_audit_2026-11-08.sql`, 11 already accurate; seed-only, Admin edits kept) and all 31 tutorial videos re-recorded, computer and phone versions. Details and recorder fixes: `docs/tutorial-updates.md`. Progress page: the "Help and Tutorials Progress" artifact.
 - **AI assistant knowledge base:** now says where Add, Contests, Tutorials and Help are (account circle menu when signed in, three dots menu when not), section "Where to find Add, Contests, Tutorials and Help" in `docs/ai-assistant-kb.md`; `chatkb-data.js` rebuilt, test added.
-- **Open:** `public/manifest.webmanifest` shortcut "My night" should be "Favorites" (app code, not changed). The AI chat assistant is built but off by default (`docs/ai-assistant.md`).
+- The AI chat assistant is built but off by default (`docs/ai-assistant.md`).
 
 ## Outreach: sequence timing, backfill, deliverability pre-check (2026-11-08; owner decision)
 Contract: `docs/monetization/grok-outreach-api.md` (updated), loop in the playbook 5b. Migration `0196_outreach_verify.sql` (`outreach_dns_cache`: domain, result, checked_at; `outreach_invalid`: address hash, reason). Additive and backward compatible.

@@ -71,7 +71,7 @@ export function wireTour(root, opts) {
   draw();
 }
 
-// The same route list in a pop-up, for the map: "Route these" and My night. `stops` are already in driving order: [{id,name,sub,dest,lat,lng}]
+// The same route list in a pop-up, for the map: "Route these" and Favorites. `stops` are already in driving order: [{id,name,sub,dest,lat,lng}]
 export function openRouteSheet(o) {
   const m = document.getElementById("modal"); if (!m) return;
   const close = () => { m.hidden = true; m.innerHTML = ""; m.onclick = null; document.removeEventListener("keydown", onKey); };

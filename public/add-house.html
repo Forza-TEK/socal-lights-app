@@ -100,6 +100,6 @@ const steps = [
 const preview = (x) => pvCard({ photo: (x.photos && x.photos[0] && x.photos[0].url) || "", title: x.kind === "installer" ? (x.biz || x.title) : x.title, ph: "Your display's name", when: "Home display", lines: [{ t: [x.city, SEASONS[x.season] ? SEASONS[x.season].label : ""].filter(Boolean).join(" \u00b7 ") || "Your city", e: !x.city }, { t: x.desc ? (x.desc.length > 90 ? x.desc.slice(0, 90) + "\u2026" : x.desc) : "A line about your lights", e: !x.desc }], tags: [x.kind === "installer" ? "Professional installer" : "Homeowner"] });
 run({ preview, steps, data: d, persist: "scl-house-draft", account: { kind: "house", title: (x) => x.title || x.biz }, noPersist: ["photos", "email", "nl"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
 </script>
-<script src="/footer.js?v=20261110c" defer></script>
+<script src="/footer.js?v=20261110e" defer></script>
 </body>
 </html>
