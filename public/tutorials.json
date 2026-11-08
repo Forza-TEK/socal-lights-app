@@ -256,14 +256,14 @@
           "title": "Add your city's homes yourself",
           "desc": "Paste a list of addresses, check them, and put every home on the ballot.",
           "url": "/tutorials/run-add-homes.mp4",
-          "length": "2:26",
+          "length": "2:20",
           "captions": "/tutorials/run-add-homes.vtt",
           "poster": "/tutorials/run-add-homes.jpg",
           "mobile": {
             "url": "/tutorials/run-add-homes-mobile.mp4",
             "poster": "/tutorials/run-add-homes-mobile.jpg",
             "captions": "/tutorials/run-add-homes-mobile.vtt",
-            "length": "2:26"
+            "length": "2:18"
           }
         },
         {
@@ -271,14 +271,14 @@
           "title": "Edit your contest and change the dates",
           "desc": "Change the details any time before winners are announced.",
           "url": "/tutorials/run-edit.mp4",
-          "length": "1:59",
+          "length": "2:17",
           "captions": "/tutorials/run-edit.vtt",
           "poster": "/tutorials/run-edit.jpg",
           "mobile": {
             "url": "/tutorials/run-edit-mobile.mp4",
             "poster": "/tutorials/run-edit-mobile.jpg",
             "captions": "/tutorials/run-edit-mobile.vtt",
-            "length": "1:56"
+            "length": "2:24"
           }
         },
         {
@@ -480,14 +480,14 @@
           "title": "Claim your home",
           "desc": "Is this your home? Replace the automatic listing with your own photos and details.",
           "url": "/tutorials/post-claim.mp4",
-          "length": "2:15",
+          "length": "2:13",
           "captions": "/tutorials/post-claim.vtt",
           "poster": "/tutorials/post-claim.jpg",
           "mobile": {
             "url": "/tutorials/post-claim-mobile.mp4",
             "poster": "/tutorials/post-claim-mobile.jpg",
             "captions": "/tutorials/post-claim-mobile.vtt",
-            "length": "2:14"
+            "length": "2:11"
           }
         },
         {
