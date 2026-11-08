@@ -153,3 +153,12 @@ The contest wizard now says where the organization stands in its 12-month window
 | Unpublish and publish again (`unpublish`) | Leave | Publishing again does not count the contest a second time, so the video is still true. If the demo organization was past its free contest, "Run it again" would show the pass link; the video does not use it. |
 | Everything else | Leave | The Admin Contest passes panel is not in any video. |
 Not covered by a video, so nothing to re-record: the new `/contest-pass` page and the "Run it again" pass message.
+
+## Full audit and re-record (2026-11-08)
+Every Help article and every tutorial video was checked against the app as it is today.
+- **Help articles (54):** 43 updated, 11 verified accurate, by migration `0199_help_audit_2026-11-08.sql` (seed-only: `WHERE updated_by='seed'`, so Admin edits are never overwritten). Paste-ready text is in `docs/help-updates.md`.
+- **Videos (31):** all re-recorded, computer (2560x1440) and phone (1080x1920) versions, Kokoro voice `af_heart`, because the header, the account menu and the contest pages had changed. Merged in batches of three or more after a review of the first frame, the voice start, the captions and a contact sheet.
+- **Recorder fixes:** the long "To begin, open your web browser..." opening is used only in the map video (the others say "Start at SoCal Lights dot app"); narration is split in two parts so the tap follows the "tap" sentence (voice and picture in step); `accountMenuSteps` in `record.mjs` swaps the "..." menu for the account circle menu on signed-in videos; each recording port has its own database copy (`/tmp/state-<port>`); seeds for add-homes and feature.
+- **Title change:** `pro-filter` is now "Find professionally installed homes".
+- **Length limits:** 5:00 for every video except Customize (8:00, `maxSeconds`).
+- **Not changed (app code, out of scope):** `public/manifest.webmanifest` still has a shortcut named "My night" (the page is now Favorites).
