@@ -82,17 +82,17 @@
         },
         {
           "id": "pro-filter",
-          "title": "Find professionally installed displays",
+          "title": "Find professionally installed homes",
           "desc": "Use the Professionally installed filter, then open an installer's profile.",
           "url": "/tutorials/find-pro.mp4",
-          "length": "1:26",
+          "length": "1:28",
           "captions": "/tutorials/find-pro.vtt",
           "poster": "/tutorials/find-pro.jpg",
           "mobile": {
             "url": "/tutorials/find-pro-mobile.mp4",
             "poster": "/tutorials/find-pro-mobile.jpg",
             "captions": "/tutorials/find-pro-mobile.vtt",
-            "length": "1:26"
+            "length": "1:28"
           }
         }
       ]
@@ -174,14 +174,14 @@
           "title": "Judge a contest",
           "desc": "Open your judge link, score each home, and recuse yourself when you know the household.",
           "url": "/tutorials/judge.mp4",
-          "length": "1:39",
+          "length": "2:01",
           "captions": "/tutorials/judge.vtt",
           "poster": "/tutorials/judge.jpg",
           "mobile": {
             "url": "/tutorials/judge-mobile.mp4",
             "poster": "/tutorials/judge-mobile.jpg",
             "captions": "/tutorials/judge-mobile.vtt",
-            "length": "1:39"
+            "length": "2:01"
           }
         }
       ]
@@ -286,14 +286,14 @@
           "title": "Run voting",
           "desc": "Start now, pause, review votes and void a vote.",
           "url": "/tutorials/run-voting.mp4",
-          "length": "2:23",
+          "length": "2:12",
           "captions": "/tutorials/run-voting.vtt",
           "poster": "/tutorials/run-voting.jpg",
           "mobile": {
             "url": "/tutorials/run-voting-mobile.mp4",
             "poster": "/tutorials/run-voting-mobile.jpg",
             "captions": "/tutorials/run-voting-mobile.vtt",
-            "length": "2:23"
+            "length": "2:12"
           }
         },
         {
