@@ -1,1124 +1,1243 @@
 [
-  {
-    "id": "ho-a-meta",
-    "audience": "homeowners",
-    "platform": "meta",
-    "concept": "A: Put your home on the map",
-    "headline": "Put your home's lights on the map",
-    "primary_text": "If your home has lights up this season, add it to the SoCal Lights map so neighbors and visitors can find it. Free.",
-    "description": "Free to add and to browse",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-house?ref=mt-ho-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=a-onmap-v1",
-    "visual": "Real screen recording of our own add-a-home flow on a phone (cut from the existing tutorial video; see public/tutorials.json), 8-12 seconds, 4:5 and 9:16 versions. Use the demo/test address only. No real home, address, plate or person on screen.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Wording is conditional ('If your home...') so it does not assert a personal attribute (Meta personal-attributes policy). Adding a home needs an emailed-code sign-in, so expect drop-off after the click. Conversion to track: home added (fn:add-house-done).",
-    "char_counts": {
-      "headline": 33,
-      "primary_text": 115,
-      "description": 25,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
+ {
+  "id": "ho-a-meta",
+  "audience": "homeowners",
+  "platform": "meta",
+  "concept": "A: Put your home on the map",
+  "headline": "Put your home's lights on the map",
+  "primary_text": "If your home has lights up this season, add it to the SoCal Lights map so neighbors and visitors can find it. Free.",
+  "description": "Free to add and to browse",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-house?ref=mt-ho-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=a-onmap-v1",
+  "visual": "Real screen recording of our own add-a-home flow on a phone (cut from the existing tutorial video; see public/tutorials.json), 8-12 seconds, 4:5 and 9:16 versions. Use the demo/test address only. No real home, address, plate or person on screen.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Wording is conditional ('If your home...') so it does not assert a personal attribute (Meta personal-attributes policy). Adding a home needs an emailed-code sign-in, so expect drop-off after the click. Conversion to track: home added (fn:add-house-done).",
+  "char_counts": {
+   "headline": 33,
+   "primary_text": 115,
+   "description": 25,
+   "cta": 10
   },
-  {
-    "id": "ho-a-nextdoor",
-    "audience": "homeowners",
-    "platform": "nextdoor",
-    "concept": "A: Put your home on the map",
-    "headline": "Neighbors: add your home's lights to a free local map",
-    "primary_text": "Free to add. Your home shows on the SoCal Lights map for people looking for lights in your area.",
-    "description": "",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-house?ref=nd-ho-a&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=a-onmap-v1",
-    "visual": "Real screenshot of the SoCal Lights map at county zoom (no street labels or private addresses visible), 1:1 and 4:5. Our own UI only; no stock, no other site's images.",
-    "notes": "Nextdoor limits used (Nextdoor creative-specs pages disagree, UNVERIFIED): headline 70, body shown truncated after about 90 characters so the first sentence carries the message, CTA 20. Nextdoor shows ads inside neighbor feeds: no addresses or photos of identifiable homes in the creative.",
-    "char_counts": {
-      "headline": 53,
-      "primary_text": 96,
-      "description": 0,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 70,
-      "primary_text": 150,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
   },
-  {
-    "id": "ho-b-meta",
-    "audience": "homeowners",
-    "platform": "meta",
-    "concept": "B: Be on someone's route",
-    "headline": "Be on someone's lights route",
-    "primary_text": "Visitors plan routes between homes and events on the SoCal Lights map. Add your home so it can be on the route. Free.",
-    "description": "Map, search, routes: all free",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-house?ref=mt-ho-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=b-route-v1",
-    "visual": "Real screen recording of 'Route these' on public events (parks, parades, markets), not private homes. 8-12 seconds, 9:16 and 4:5.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Do not promise visits or a number of visitors. Do not use any traffic figure.",
-    "char_counts": {
-      "headline": 28,
-      "primary_text": 117,
-      "description": 29,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ho-b-nextdoor",
-    "audience": "homeowners",
-    "platform": "nextdoor",
-    "concept": "B: Be on someone's route",
-    "headline": "Your home's lights, on neighbors' routes",
-    "primary_text": "Visitors plan a night of lights on a free map. Add your home so it can be part of the route.",
-    "description": "",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-house?ref=nd-ho-b&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=b-route-v1",
-    "visual": "Real screen recording of 'Route these' on public events (parks, parades, markets), not private homes. 8-12 seconds, 9:16 and 4:5.",
-    "notes": "Nextdoor limits used (Nextdoor creative-specs pages disagree, UNVERIFIED): headline 70, body shown truncated after about 90 characters so the first sentence carries the message, CTA 20. ",
-    "char_counts": {
-      "headline": 40,
-      "primary_text": 92,
-      "description": 0,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 70,
-      "primary_text": 150,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ho-c-meta",
-    "audience": "homeowners",
-    "platform": "meta",
-    "concept": "C: You stay in control",
-    "headline": "Show your lights, on your terms",
-    "primary_text": "Add your home with your own photos and details. You choose what's shown, and you can ask us to remove it any time.",
-    "description": "Free to add",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-house?ref=mt-ho-c&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=c-control-v1",
-    "visual": "Option 1: our own add-a-home screen with demo data. Option 2: an owner-approved home photo, ONLY with the homeowner's written consent for paid ads (separate from the consent to show it on the map), address and house numbers cropped or blurred, no faces.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Claim check: removal is supported by /remove-home and the Remove my home help article; owner to confirm 'any time' matches the live process before launch. Privacy-first angle for people wary of showing an address.",
-    "char_counts": {
-      "headline": 31,
-      "primary_text": 114,
-      "description": 11,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ho-c-nextdoor",
-    "audience": "homeowners",
-    "platform": "nextdoor",
-    "concept": "C: You stay in control",
-    "headline": "Add your home's lights. You decide what shows",
-    "primary_text": "Free to add. Use your own photos and details, and ask us to remove your home any time.",
-    "description": "",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-house?ref=nd-ho-c&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=c-control-v1",
-    "visual": "Option 1: our own add-a-home screen with demo data. Option 2: an owner-approved home photo, ONLY with the homeowner's written consent for paid ads (separate from the consent to show it on the map), address and house numbers cropped or blurred, no faces.",
-    "notes": "Nextdoor limits used (Nextdoor creative-specs pages disagree, UNVERIFIED): headline 70, body shown truncated after about 90 characters so the first sentence carries the message, CTA 20. Same removal claim check as ho-c-meta.",
-    "char_counts": {
-      "headline": 45,
-      "primary_text": 86,
-      "description": 0,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 70,
-      "primary_text": 150,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ev-a-meta",
-    "audience": "event_holders",
-    "platform": "meta",
-    "concept": "A: List it free",
-    "headline": "List your holiday event for free",
-    "primary_text": "Tree lighting, boat parade, market or light show in Southern California? Add it to the SoCal Lights map. Free to list.",
-    "description": "Free to list",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-event?ref=mt-ev-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ev-nov26&utm_content=a-listfree-v1",
-    "visual": "Real screenshot of a city page (/in/<city>) showing public events, 4:5. Public venues and event names only.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Event holders include cities, chambers, parks departments and businesses. Listing needs sign-in. Conversion: event submitted (fn:add-event-done). Events are reviewed before going live, so never say 'instantly'.",
-    "char_counts": {
-      "headline": 32,
-      "primary_text": 118,
-      "description": 12,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ev-a-google",
-    "audience": "event_holders",
-    "platform": "google_search",
-    "concept": "A: List it free",
-    "headline": "List Your Holiday Event Free | Southern California Event Map | Tree Lighting? Parade? Market?",
-    "primary_text": "Add your holiday event to a free map of Southern California lights and events. Free.",
-    "description": "Your listing can link to your event page, so people can find the details.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
-    "landing_url": "https://socallights.app/add-event?ref=gg-ev-a&utm_source=google&utm_medium=cpc&utm_campaign=scl-ev-nov26&utm_content=a-listfree-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Seed keywords (phrase and exact; search volumes UNVERIFIED): 'list my christmas event', 'submit holiday event california', 'add event christmas lights map', 'tree lighting event listing'. Negatives: jobs, tickets, wholesale, kit, DIY. Geo: the seven counties, 'presence' option only.",
-    "char_counts": {
-      "headlines": [
-        28,
-        29,
-        30
-      ],
-      "descriptions": [
-        84,
-        73
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ev-b-meta",
-    "audience": "event_holders",
-    "platform": "meta",
-    "concept": "B: Be found by people nearby",
-    "headline": "Be found by people planning a night out",
-    "primary_text": "People search the SoCal Lights map by city and date. List your holiday event so it shows up for people nearby. Free.",
-    "description": "Free to list",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-event?ref=mt-ev-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ev-nov26&utm_content=b-found-v1",
-    "visual": "Real screenshot of a city page (/in/<city>) showing public events, 4:5. Public venues and event names only.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Do not quote visitor numbers. If a number is wanted, use only [LIVE NUMBER: events count] and [LIVE NUMBER: city pages count] pulled from the database the day the ad is built.",
-    "char_counts": {
-      "headline": 39,
-      "primary_text": 116,
-      "description": 12,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ev-b-google",
-    "audience": "event_holders",
-    "platform": "google_search",
-    "concept": "B: Be found by people nearby",
-    "headline": "Get Your Event on the Map | Free Holiday Event Listing | Search by City and Date",
-    "primary_text": "Visitors search our map by city and date. Add your event so it can be found. Free to list.",
-    "description": "Tree lightings, parades, markets and light shows across Southern California.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
-    "landing_url": "https://socallights.app/add-event?ref=gg-ev-b&utm_source=google&utm_medium=cpc&utm_campaign=scl-ev-nov26&utm_content=b-found-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. ",
-    "char_counts": {
-      "headlines": [
-        25,
-        26,
-        23
-      ],
-      "descriptions": [
-        90,
-        76
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ev-c-meta",
-    "audience": "event_holders",
-    "platform": "meta",
-    "concept": "C: Stand out (optional)",
-    "headline": "Want your event to stand out?",
-    "primary_text": "Listing is free. Featured placement is optional and always labelled Featured. See the options on the Pricing page.",
-    "description": "Listing is free",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/pricing#events?ref=mt-ev-c&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ev-nov26&utm_content=c-stand-v1",
-    "visual": "Real screenshot of the map with a gold Featured pin on a real public event whose organizer consented, or on our own test event. Do NOT show the Pricing page (prices would go stale in the image).",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. No price in the copy (prices come only from functions/_lib/featured.js and show live on /pricing). Paid placement is labelled, which is the disclosure. Launch only after the Stripe path is proven with one real charge (product-marketing.md, recommendation 3).",
-    "char_counts": {
-      "headline": 29,
-      "primary_text": 114,
-      "description": 15,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ev-c-google",
-    "audience": "event_holders",
-    "platform": "google_search",
-    "concept": "C: Stand out (optional)",
-    "headline": "Featured Event Placement | Optional and Clearly Labeled | Free Listing Also Available",
-    "primary_text": "List your event free, or add an optional Featured placement. Featured is always labelled.",
-    "description": "See the options on our Pricing page. Pay once on Stripe's secure page, no subscription.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
-    "landing_url": "https://socallights.app/pricing#events?ref=gg-ev-c&utm_source=google&utm_medium=cpc&utm_campaign=scl-ev-nov26&utm_content=c-stand-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. 'No subscription' matches pricing.html for event plans. Do not add a price here.",
-    "char_counts": {
-      "headlines": [
-        24,
-        28,
-        27
-      ],
-      "descriptions": [
-        89,
-        87
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ct-a-meta",
-    "audience": "contest_organizers",
-    "platform": "meta",
-    "concept": "A: First contest free",
-    "headline": "Run a home lights contest, free",
-    "primary_text": "Cities, HOAs, schools, chambers: your organization's first contest in every 12 months is free. Entering is free too.",
-    "description": "First contest free",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-contest?ref=mt-ct-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ct-nov26&utm_content=a-free-v1",
-    "visual": "Real screenshots of the demo contest (docs/contest-demo.md): entry page and results page with demo homes. Mark it 'Example contest'. No real residents.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Copy avoids 'vote', 'election' and 'ballot' on purpose: Meta may classify contests with voting as 'social issues, elections or politics' content (UNVERIFIED, Meta's policy page could not be opened) which needs advertiser authorization. If flagged, fix the wording rather than seek authorization. Meta may not offer job-title targeting for city staff (UNVERIFIED); use interest proxies or broad geo.",
-    "char_counts": {
-      "headline": 31,
-      "primary_text": 116,
-      "description": 18,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ct-a-google",
-    "audience": "contest_organizers",
-    "platform": "google_search",
-    "concept": "A: First contest free",
-    "headline": "Run a Lights Contest Free | For Cities, HOAs & Schools | First Contest Free",
-    "primary_text": "Resident entries, judges, and People's Choice and Judges' Choice awards. First one free.",
-    "description": "Your organization's first contest in every 12-month window is free. Entering is free.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
-    "landing_url": "https://socallights.app/add-contest?ref=gg-ct-a&utm_source=google&utm_medium=cpc&utm_campaign=scl-ct-nov26&utm_content=a-free-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Seed keywords (volumes UNVERIFIED): 'christmas lights contest', 'neighborhood decorating contest', 'hoa holiday lights contest', 'holiday home decorating contest city', 'lights contest software'. Negatives: jobs, kit, supplies, lottery, sweepstakes, raffle (a raffle or sweepstakes is a different legal product).",
-    "char_counts": {
-      "headlines": [
-        25,
-        26,
-        18
-      ],
-      "descriptions": [
-        88,
-        85
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ct-b-meta",
-    "audience": "contest_organizers",
-    "platform": "meta",
-    "concept": "B: Judges, awards, QR",
-    "headline": "Judges, awards and a QR poster",
-    "primary_text": "Run your neighborhood lights contest online: resident entries, judges, and People's Choice and Judges' Choice awards.",
-    "description": "First contest free",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/contests?ref=mt-ct-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ct-nov26&utm_content=b-judging-v1",
-    "visual": "A QR poster we generate from the demo contest, labelled 'Example'. Own design, no stock.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Fact check before launch that each feature named is in the free first contest; pricing.html lists entries, voting, judges and both awards. 'QR poster' comes from product-marketing.md (contest wizard); confirm it is live.",
-    "char_counts": {
-      "headline": 30,
-      "primary_text": 117,
-      "description": 18,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ct-b-google",
-    "audience": "contest_organizers",
-    "platform": "google_search",
-    "concept": "B: Judges, awards, QR",
-    "headline": "Online Lights Contest Setup | Judges and Resident Entries | Payment Never Changes Winners",
-    "primary_text": "Run a home lights contest online. Residents enter, judges score, awards are fair.",
-    "description": "Entering and voting are free for everyone. Payment never affects any contest result.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
-    "landing_url": "https://socallights.app/contests?ref=gg-ct-b&utm_source=google&utm_medium=cpc&utm_campaign=scl-ct-nov26&utm_content=b-judging-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Second description states the fairness rule from the Free Heart Promise and pricing.html. 'judges score' to be confirmed against the judge flow (public/judge.html).",
-    "char_counts": {
-      "headlines": [
-        27,
-        27,
-        29
-      ],
-      "descriptions": [
-        81,
-        84
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ct-c-meta",
-    "audience": "contest_organizers",
-    "platform": "meta",
-    "concept": "C: Contest homes on a map",
-    "headline": "Put your contest homes on a map",
-    "primary_text": "Residents and visitors can browse your contest homes on a free map and plan a route between them. Set up online.",
-    "description": "Map and routes are free",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/contests?ref=mt-ct-c&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ct-nov26&utm_content=c-map-v1",
-    "visual": "Real screenshots of the demo contest (docs/contest-demo.md): entry page and results page with demo homes. Mark it 'Example contest'. No real residents.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Route benefit came from a live city demo; do not quote that city or use it as a testimonial.",
-    "char_counts": {
-      "headline": 31,
-      "primary_text": 112,
-      "description": 23,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ct-c-google",
-    "audience": "contest_organizers",
-    "platform": "google_search",
-    "concept": "C: Contest homes on a map",
-    "headline": "Contest Homes on a Map | Free Routes for Visitors | Lights Contest for Your City",
-    "primary_text": "Show your contest homes on a free map. Visitors can browse and plan a route between them.",
-    "description": "Set up your city, HOA or school contest online. Your first contest is free.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
-    "landing_url": "https://socallights.app/contests?ref=gg-ct-c&utm_source=google&utm_medium=cpc&utm_campaign=scl-ct-nov26&utm_content=c-map-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. ",
-    "char_counts": {
-      "headlines": [
-        22,
-        24,
-        28
-      ],
-      "descriptions": [
-        89,
-        75
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "in-a-meta",
-    "audience": "installers",
-    "platform": "meta",
-    "concept": "A: Free company page",
-    "headline": "A free page for your lighting company",
-    "primary_text": "Installers: make a free SoCal Lights page with your areas, phone and website. It's linked from homes you installed.",
-    "description": "Free profile page",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-house?kind=installer&ref=mt-in-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-in-nov26&utm_content=a-page-v1",
-    "visual": "Real screenshot of an installer profile page. Use the live /installer/lights-up-today ONLY with that company's written consent; otherwise a clearly labelled example profile. No customer names or addresses visible.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Audience is small. Targeting: small-business interests plus the seven counties (installer-relevant interests UNVERIFIED). Conversion: installer or home submitted (fn:add-house-done); no separate installer-profile counter exists (see plan, tracking section).",
-    "char_counts": {
-      "headline": 37,
-      "primary_text": 115,
-      "description": 17,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "in-a-google",
-    "audience": "installers",
-    "platform": "google_search",
-    "concept": "A: Free company page",
-    "headline": "Free Page for Lighting Pros | Show Your Installed Homes | Holiday Lighting Companies",
-    "primary_text": "Create a free company page: areas served, phone, website and your installed homes.",
-    "description": "Homeowners can find your page from the homes you installed. Free to create.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
-    "landing_url": "https://socallights.app/add-house?kind=installer&ref=gg-in-a&utm_source=google&utm_medium=cpc&utm_campaign=scl-in-nov26&utm_content=a-page-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "RESERVE-FUNDED ONLY (no base budget). Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Seed keywords (volumes UNVERIFIED, likely very low): 'christmas light installer directory', 'list my holiday lighting company', 'holiday lighting business marketing'. Do NOT bid on 'christmas light installation near me' (that is homeowner intent; the Home and Home Improvement CPC benchmark is $8.33, LocaliQ/WordStream 2026).",
-    "char_counts": {
-      "headlines": [
-        27,
-        25,
-        26
-      ],
-      "descriptions": [
-        82,
-        75
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "in-b-meta",
-    "audience": "installers",
-    "platform": "meta",
-    "concept": "B: Your work on the map",
-    "headline": "Show the homes you've installed",
-    "primary_text": "Add the homes you've lit to the SoCal Lights map. Each links to your company page, which has a Request a quote button.",
-    "description": "Free profile page",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/add-house?kind=installer&ref=mt-in-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-in-nov26&utm_content=b-work-v1",
-    "visual": "Real screenshot of an installer profile page. Use the live /installer/lights-up-today ONLY with that company's written consent; otherwise a clearly labelled example profile. No customer names or addresses visible.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Installers need the homeowner's permission before posting a customer's home (the add flow has a permission step). Say so in the landing flow, not in the ad. Do not promise quotes or leads.",
-    "char_counts": {
-      "headline": 31,
-      "primary_text": 118,
-      "description": 17,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "in-b-google",
-    "audience": "installers",
-    "platform": "google_search",
-    "concept": "B: Your work on the map",
-    "headline": "Put Your Work on the Map | Free Installer Company Page | Request a Quote Button",
-    "primary_text": "Add the homes you've lit to the map. Each links back to your free company page.",
-    "description": "Your page lists areas served, phone and website. Customers can request a quote.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
-    "landing_url": "https://socallights.app/add-house?kind=installer&ref=gg-in-b&utm_source=google&utm_medium=cpc&utm_campaign=scl-in-nov26&utm_content=b-work-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "RESERVE-FUNDED ONLY. Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. ",
-    "char_counts": {
-      "headlines": [
-        24,
-        27,
-        22
-      ],
-      "descriptions": [
-        79,
-        79
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "in-c-meta",
-    "audience": "installers",
-    "platform": "meta",
-    "concept": "C: Free first, Sponsor optional",
-    "headline": "Free profile first, optional Sponsor",
-    "primary_text": "Start with a free company page. Paid Sponsor placements are optional and always labelled Sponsor. See Pricing for options.",
-    "description": "Free to start",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/pricing#banner?ref=mt-in-c&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-in-nov26&utm_content=c-sponsor-v1",
-    "visual": "Real screenshot of an installer profile page. Use the live /installer/lights-up-today ONLY with that company's written consent; otherwise a clearly labelled example profile. No customer names or addresses visible.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. No price in the copy. Do not push Sponsor while there are few homes on the map (product-marketing.md gates installer paid offers). Least recommended concept; run only if A and B both underperform.",
-    "char_counts": {
-      "headline": 36,
-      "primary_text": 122,
-      "description": 13,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "in-c-google",
-    "audience": "installers",
-    "platform": "google_search",
-    "concept": "C: Free first, Sponsor optional",
-    "headline": "Free Installer Profile | Optional Labelled Sponsor Spot | See Pricing Options",
-    "primary_text": "Start with a free company page. Paid Sponsor placements are optional and always labelled.",
-    "description": "One-time payment on Stripe's secure page. Auto-renewal is optional and off by default.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
-    "landing_url": "https://socallights.app/pricing#banner?ref=gg-in-c&utm_source=google&utm_medium=cpc&utm_campaign=scl-in-nov26&utm_content=c-sponsor-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "RESERVE-FUNDED ONLY. Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Renewal sentence matches pricing.html (off unless ticked).",
-    "char_counts": {
-      "headlines": [
-        22,
-        30,
-        19
-      ],
-      "descriptions": [
-        89,
-        86
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ho-nl-newsletter",
-    "audience": "homeowners",
-    "platform": "local_newsletter",
-    "concept": "A: Put your home on the map",
-    "headline": "Light up your street on the SoCal Lights map",
-    "primary_text": "If your home has lights up, SoCal Lights is a free map of Southern California holiday lights and events. Add your home, free, and let neighbors and visitors find it.",
-    "description": "Free to add. Map, search and routes are free to use.",
-    "cta": "Add your home",
-    "landing_url": "https://socallights.app/add-house?ref=nl-ho-a&utm_source=newsletter&utm_medium=sponsor&utm_campaign=scl-ho-nov26&utm_content=nl-a-v1",
-    "visual": "Optional single image: real map screenshot, 600px wide. Many newsletters take text only.",
-    "notes": "Sponsorship rates are not published (Patch has no public rate card; a vendor-blog benchmark of $100-$300 per placement for lists under 5,000 is UNVERIFIED). Ask for a quote; fund from the $30 reserve only if the quote fits and the audience is in our counties. Publisher must label it 'Sponsored'. Do not ask a publisher to run it as editorial.",
-    "char_counts": {
-      "headline": 44,
-      "primary_text": 165,
-      "description": 52,
-      "cta": 13
-    },
-    "status": "draft"
-  },
-  {
-    "id": "ev-nl-newsletter",
-    "audience": "event_holders",
-    "platform": "local_newsletter",
-    "concept": "A: List it free",
-    "headline": "Hosting a holiday event? List it free",
-    "primary_text": "SoCal Lights is a free map of holiday lights and events across Southern California. Add your tree lighting, parade, market or light show at no cost.",
-    "description": "Free to list.",
-    "cta": "Add your event",
-    "landing_url": "https://socallights.app/add-event?ref=nl-ev-a&utm_source=newsletter&utm_medium=sponsor&utm_campaign=scl-ev-nov26&utm_content=nl-a-v1",
-    "visual": "Optional: real city-page screenshot. Text only is fine.",
-    "notes": "Same quote and reserve rule as ho-nl-newsletter. Best fit: chamber or parks-department newsletters whose readers run events.",
-    "char_counts": {
-      "headline": 37,
-      "primary_text": 148,
-      "description": 13,
-      "cta": 14
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-a-meta",
-    "audience": "families",
-    "platform": "meta",
-    "concept": "A: Find lights near you tonight",
-    "headline": "Find holiday lights near you tonight",
-    "primary_text": "Open the free SoCal Lights map, tap Find my location, and see holiday lights and events close to you.",
-    "description": "Free map of SoCal lights",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/?ref=mt-fa-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=a-nearyou-v1",
-    "visual": "Real screen recording of our own map on a phone (8-12 seconds, 4:5 and 9:16): tap Find my location, then the list updates with events near the point. Record with a demo location (not the owner's real position), at a zoom where no private home address or house number is legible. Public events and venues only. No stock, no other site's images.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED): primary text 125 recommended, headline 40 max (27 recommended), description 30 on few placements. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Conversion to track: map opened (fn:visit), event card opened (fn:event-open), route tapped (click:route). Find my location asks the visitor for browser location permission; the ad must not claim we know where they are (Meta personal-attributes and location policies, UNVERIFIED).",
-    "char_counts": {
-      "headline": 36,
-      "primary_text": 101,
-      "description": 24,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-a-nextdoor",
-    "audience": "families",
-    "platform": "nextdoor",
-    "concept": "A: Find lights near you tonight",
-    "headline": "A free map of holiday lights near your neighborhood",
-    "primary_text": "Tap Find my location to see holiday lights and events close to you. Free to use.",
-    "description": "",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/?ref=nd-fa-a&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=a-nearyou-v1",
-    "visual": "Real screen recording of our own map on a phone (8-12 seconds, 4:5 and 9:16): tap Find my location, then the list updates with events near the point. Record with a demo location (not the owner's real position), at a zoom where no private home address or house number is legible. Public events and venues only. No stock, no other site's images.",
-    "notes": "Nextdoor limits used (specs pages disagree, UNVERIFIED): headline 70, body truncated after about 90 characters, CTA 20. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. No residents' homes or addresses in the creative.",
-    "char_counts": {
-      "headline": 51,
-      "primary_text": 80,
-      "description": 0,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 70,
-      "primary_text": 150,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-a-google",
-    "audience": "families",
-    "platform": "google_search",
-    "concept": "A: Find lights near you tonight",
-    "headline": "Christmas Lights Near You | Free Southern California Map | Find Lights Tonight",
-    "primary_text": "Search a free map of holiday lights and events in Southern California. Find your location.",
-    "description": "Filter by tonight, this weekend or free events. Plan your family night out.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /in and /help)",
-    "landing_url": "https://socallights.app/?ref=gg-fa-a&utm_source=google&utm_medium=cpc&utm_campaign=scl-fa-nov26&utm_content=a-nearyou-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page): headline 30, description 90; 3 headlines joined with ' | ', primary_text = description 1, description = description 2. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Seed keywords (volumes and CPC UNVERIFIED; no figure found for these phrases, check Keyword Planner): 'christmas lights near me', 'holiday lights near me', 'christmas lights tonight', 'christmas lights this weekend'. Use phrase and exact match, 'presence' geo only, bids capped by the daily cap. Expect heavy competition from listicle publishers and expect few clicks at $0.97 a day. Negatives: for sale, buy, outdoor string, led, solar, installation, jobs, wholesale (shoppers for lights, not viewers).",
-    "char_counts": {
-      "headlines": [
-        25,
-        28,
-        19
-      ],
-      "descriptions": [
-        90,
-        75
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-b-meta",
-    "audience": "families",
-    "platform": "meta",
-    "concept": "B: Plan a family drive route",
-    "headline": "Plan a family lights drive",
-    "primary_text": "Save favorites on the free SoCal Lights map, then tap Route these to send the stops to your maps app.",
-    "description": "Routes are free",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/?ref=mt-fa-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=b-route-v1",
-    "visual": "Real screen recording of our own Favorites tab: add 3 public events, tap 'Route these', the maps-app handoff. Public events only (parks, parades, markets), no private homes, no real addresses of residents. 9:16 and 4:5.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED): primary text 125 recommended, headline 40 max (27 recommended), description 30 on few placements. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Claim check: the Favorites tab splits long plans into routes of 9 stops or fewer for the maps app (app.js); the copy does not say how many stops. Conversion: Route these tapped (click:route).",
-    "char_counts": {
-      "headline": 26,
-      "primary_text": 101,
-      "description": 15,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-b-nextdoor",
-    "audience": "families",
-    "platform": "nextdoor",
-    "concept": "B: Plan a family drive route",
-    "headline": "Plan a family drive to see the lights",
-    "primary_text": "Save favorites on a free map, then tap Route these to open your drive in your maps app.",
-    "description": "",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/?ref=nd-fa-b&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=b-route-v1",
-    "visual": "Real screen recording of our own Favorites tab: add 3 public events, tap 'Route these', the maps-app handoff. Public events only (parks, parades, markets), no private homes, no real addresses of residents. 9:16 and 4:5.",
-    "notes": "Nextdoor limits used (specs pages disagree, UNVERIFIED): headline 70, body truncated after about 90 characters, CTA 20. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. ",
-    "char_counts": {
-      "headline": 37,
-      "primary_text": 87,
-      "description": 0,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 70,
-      "primary_text": 150,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-b-google",
-    "audience": "families",
-    "platform": "google_search",
-    "concept": "B: Plan a family drive route",
-    "headline": "Plan a Holiday Lights Drive | Route Your Family Night | Free Lights Map",
-    "primary_text": "Pick holiday lights and events, then open the route in your maps app. Free to use.",
-    "description": "Plan a family drive across Southern California. Save favorites and share the plan.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /in and /help)",
-    "landing_url": "https://socallights.app/?ref=gg-fa-b&utm_source=google&utm_medium=cpc&utm_campaign=scl-fa-nov26&utm_content=b-route-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page): headline 30, description 90; 3 headlines joined with ' | ', primary_text = description 1, description = description 2. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Seed keywords (UNVERIFIED): 'christmas lights route', 'christmas lights drive', 'christmas lights tour los angeles', 'orange county christmas lights map'. Check each against the live map before launch.",
-    "char_counts": {
-      "headlines": [
-        27,
-        23,
-        15
-      ],
-      "descriptions": [
-        82,
-        82
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-c-meta",
-    "audience": "families",
-    "platform": "meta",
-    "concept": "C: Lights this weekend",
-    "headline": "Holiday lights this weekend",
-    "primary_text": "On the free SoCal Lights map, tap This weekend to see lights and events happening near you.",
-    "description": "Free to browse",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/?ref=mt-fa-c&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=c-weekend-v1",
-    "visual": "Real screenshot of the map list with the 'This weekend' quick pick selected, public events only, 4:5. No private home cards.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED): primary text 125 recommended, headline 40 max (27 recommended), description 30 on few placements. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Quick picks on the map are Tonight, This weekend and Free (app.js quickPicks). The page opens unfiltered: the visitor taps the pick. Do not say 'best' or rank anything.",
-    "char_counts": {
-      "headline": 27,
-      "primary_text": 91,
-      "description": 14,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-c-nextdoor",
-    "audience": "families",
-    "platform": "nextdoor",
-    "concept": "C: Lights this weekend",
-    "headline": "Looking for holiday lights this weekend?",
-    "primary_text": "Tap This weekend on the free SoCal Lights map to see lights and events near you.",
-    "description": "",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/?ref=nd-fa-c&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=c-weekend-v1",
-    "visual": "Real screenshot of the map list with the 'This weekend' quick pick selected, public events only, 4:5. No private home cards.",
-    "notes": "Nextdoor limits used (specs pages disagree, UNVERIFIED): headline 70, body truncated after about 90 characters, CTA 20. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. ",
-    "char_counts": {
-      "headline": 40,
-      "primary_text": 80,
-      "description": 0,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 70,
-      "primary_text": 150,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-c-google",
-    "audience": "families",
-    "platform": "google_search",
-    "concept": "C: Lights this weekend",
-    "headline": "Holiday Lights This Weekend | Free Family Lights Map | Southern California",
-    "primary_text": "Tap This weekend to see holiday lights and events near you. A free map for families.",
-    "description": "Search by city, date or free events, then save favorites and plan your drive.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /in and /help)",
-    "landing_url": "https://socallights.app/?ref=gg-fa-c&utm_source=google&utm_medium=cpc&utm_campaign=scl-fa-nov26&utm_content=c-weekend-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page): headline 30, description 90; 3 headlines joined with ' | ', primary_text = description 1, description = description 2. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Seed keywords (UNVERIFIED): 'things to do this weekend christmas lights', 'christmas events this weekend near me', 'free christmas events for kids'. 'Free events' is a filter on the map; do not promise that every event is free.",
-    "char_counts": {
-      "headlines": [
-        27,
-        22,
-        19
-      ],
-      "descriptions": [
-        84,
-        77
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-d-meta",
-    "audience": "families",
-    "platform": "meta",
-    "concept": "D: Add favorites and share",
-    "headline": "Save favorites. Share the plan.",
-    "primary_text": "Add holiday lights and events to Favorites, then share your plan so the whole family sees the same stops.",
-    "description": "Favorites are free",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/?ref=mt-fa-d&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=d-share-v1",
-    "visual": "Real screen recording: tap the favorite on 2-3 public events, then the share button on the plan (share sheet showing, no contact names visible). 9:16 and 4:5.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED): primary text 125 recommended, headline 40 max (27 recommended), description 30 on few placements. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Share uses the phone's share sheet and a plan link (#night-...). Hold until concepts A and B have a read; this is a retention concept more than a cold-traffic one.",
-    "char_counts": {
-      "headline": 31,
-      "primary_text": 105,
-      "description": 18,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-d-nextdoor",
-    "audience": "families",
-    "platform": "nextdoor",
-    "concept": "D: Add favorites and share",
-    "headline": "Save your favorite lights and share the plan",
-    "primary_text": "Add lights and events to Favorites on a free map, then share the plan with your family.",
-    "description": "",
-    "cta": "Learn more",
-    "landing_url": "https://socallights.app/?ref=nd-fa-d&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=d-share-v1",
-    "visual": "Real screen recording: tap the favorite on 2-3 public events, then the share button on the plan (share sheet showing, no contact names visible). 9:16 and 4:5.",
-    "notes": "Nextdoor limits used (specs pages disagree, UNVERIFIED): headline 70, body truncated after about 90 characters, CTA 20. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Hold until A and B have a read.",
-    "char_counts": {
-      "headline": 44,
-      "primary_text": 87,
-      "description": 0,
-      "cta": 10
-    },
-    "char_limits": {
-      "headline": 70,
-      "primary_text": 150,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-e-meta",
-    "audience": "families",
-    "platform": "meta",
-    "concept": "E: Weekly lights email",
-    "headline": "Get the weekly lights email",
-    "primary_text": "A free weekly email from SoCal Lights with holiday lights and events near you. Choose your area and distance.",
-    "description": "Free weekly email",
-    "cta": "Sign up",
-    "landing_url": "https://socallights.app/in/mission-viejo?ref=mt-fa-e&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=e-email-v1",
-    "visual": "Real screenshot of the sign-up box on a city page (/in/<city>), 4:5. Do not use a real email example.",
-    "notes": "Meta limits used (third-party sources, UNVERIFIED): primary text 125 recommended, headline 40 max (27 recommended), description 30 on few placements. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Landing is a city page because the sign-up box lives on city and event pages (functions/_lib/shell.js subscribeBox). Match the city page to the ad set (OC: mission-viejo; for LA or Inland ad sets use /in/covina or another city that has upcoming events; check the page returns 200). The email has an unsubscribe link; confirm the opt-in is double opt-in (fn:subscribe-confirm exists). 'Choose your area and distance' per the weekly-email distance choice in status.md; confirm before launch.",
-    "char_counts": {
-      "headline": 27,
-      "primary_text": 109,
-      "description": 17,
-      "cta": 7
-    },
-    "char_limits": {
-      "headline": 40,
-      "primary_text": 125,
-      "description": 30,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-e-nextdoor",
-    "audience": "families",
-    "platform": "nextdoor",
-    "concept": "E: Weekly lights email",
-    "headline": "A weekly email of lights and events near you",
-    "primary_text": "Free from SoCal Lights. Pick your area and distance, and get holiday lights and events each week.",
-    "description": "",
-    "cta": "Sign up",
-    "landing_url": "https://socallights.app/in/mission-viejo?ref=nd-fa-e&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=e-email-v1",
-    "visual": "Real screenshot of the sign-up box on a city page (/in/<city>), 4:5. Do not use a real email example.",
-    "notes": "Nextdoor limits used (specs pages disagree, UNVERIFIED): headline 70, body truncated after about 90 characters, CTA 20. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Same landing and confirmation checks as fa-e-meta.",
-    "char_counts": {
-      "headline": 44,
-      "primary_text": 97,
-      "description": 0,
-      "cta": 7
-    },
-    "char_limits": {
-      "headline": 70,
-      "primary_text": 150,
-      "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-f-google-mission-viejo",
-    "audience": "families",
-    "platform": "google_search",
-    "concept": "F: City search (Mission Viejo)",
-    "headline": "Mission Viejo Christmas Lights | Free Local Lights Map | Find Lights and Events",
-    "primary_text": "See holiday lights and events in Mission Viejo on a free map, with dates and hours.",
-    "description": "Save favorites, plan a route and share it with your family. Free to use.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /in and /help)",
-    "landing_url": "https://socallights.app/in/mission-viejo?ref=gg-fa-f1&utm_source=google&utm_medium=cpc&utm_campaign=scl-fa-nov26&utm_content=f-city-mv-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page): headline 30, description 90; 3 headlines joined with ' | ', primary_text = description 1, description = description 2. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Seed keywords (UNVERIFIED): 'mission viejo christmas lights', 'christmas lights mission viejo', 'mission viejo holiday lights tour'. The city page's count is mostly decorated homes with expected dates from last year's lists (outreach-targets.md): the copy deliberately gives no count. Do not claim homes are confirmed.",
-    "char_counts": {
-      "headlines": [
-        30,
-        21,
-        22
-      ],
-      "descriptions": [
-        83,
-        72
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-f-google-covina",
-    "audience": "families",
-    "platform": "google_search",
-    "concept": "F: City search (Covina)",
-    "headline": "Covina Christmas Lights | Free Local Lights Map | Find Lights and Events",
-    "primary_text": "See holiday lights and events in Covina on a free map, with dates and hours.",
-    "description": "Save favorites, plan a route and share it with your family. Free to use.",
-    "cta": "n/a (Search ads have no button; add sitelinks to /in and /help)",
-    "landing_url": "https://socallights.app/in/covina?ref=gg-fa-f2&utm_source=google&utm_medium=cpc&utm_campaign=scl-fa-nov26&utm_content=f-city-cov-v1&utm_term={keyword}",
-    "visual": "None (text ad).",
-    "notes": "Google responsive search ad limits (Google help page): headline 30, description 90; 3 headlines joined with ' | ', primary_text = description 1, description = description 2. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Seed keywords (UNVERIFIED): 'covina christmas lights', 'christmas lights covina'. The city runs its own contest and registration; do not imply we run it or that the city endorses these ads. Confirm /in/covina has upcoming events before launch.",
-    "char_counts": {
-      "headlines": [
-        23,
-        21,
-        22
-      ],
-      "descriptions": [
-        76,
-        72
-      ]
-    },
-    "char_limits": {
-      "headline_each": 30,
-      "description_each": 90,
-      "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
-    },
-    "status": "draft"
-  },
-  {
-    "id": "fa-nl-newsletter",
-    "audience": "families",
-    "platform": "local_newsletter",
-    "concept": "A: Find lights near you tonight",
-    "headline": "A free map of holiday lights and events near you",
-    "primary_text": "Planning a family night out? SoCal Lights is a free map of holiday lights and events across Southern California. Tap Find my location, save favorites and plan your drive.",
-    "description": "Free to use. Routes and favorites are free.",
-    "cta": "Open the map",
-    "landing_url": "https://socallights.app/?ref=nl-fa-a&utm_source=newsletter&utm_medium=sponsor&utm_campaign=scl-fa-nov26&utm_content=nl-a-v1",
-    "visual": "Optional single image: real map screenshot, 600px wide (public events only). Many newsletters take text only.",
-    "notes": "Parent and mom-blog sponsorship: no published rates found for Mom's LA or San Diego Family; Macaroni Kid editions are run by local publishers who set their own rates (one Gig Harbor, WA edition advertises digital ads 'starting at $99'; Beverly Hills edition rates page is dated 2016; nothing for our counties verified, UNVERIFIED). Ask for quotes; fund only from the reserve. Publisher must label it sponsored. Mom's LA's own Advertise page is paid (outreach-targets.md); its editorial team is a separate free route.",
-    "char_counts": {
-      "headline": 48,
-      "primary_text": 170,
-      "description": 43,
-      "cta": 12
-    },
-    "status": "draft"
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslights #socal #holidaylights (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
   }
+ },
+ {
+  "id": "ho-a-nextdoor",
+  "audience": "homeowners",
+  "platform": "nextdoor",
+  "concept": "A: Put your home on the map",
+  "headline": "Neighbors: add your home's lights to a free local map",
+  "primary_text": "Free to add. Your home shows on the SoCal Lights map for people looking for lights in your area.",
+  "description": "",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-house?ref=nd-ho-a&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=a-onmap-v1",
+  "visual": "Real screenshot of the SoCal Lights map at county zoom (no street labels or private addresses visible), 1:1 and 4:5. Our own UI only; no stock, no other site's images.",
+  "notes": "Nextdoor limits used (Nextdoor creative-specs pages disagree, UNVERIFIED): headline 70, body shown truncated after about 90 characters so the first sentence carries the message, CTA 20. Nextdoor shows ads inside neighbor feeds: no addresses or photos of identifiable homes in the creative.",
+  "char_counts": {
+   "headline": 53,
+   "primary_text": 96,
+   "description": 0,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 70,
+   "primary_text": 150,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "ho-b-meta",
+  "audience": "homeowners",
+  "platform": "meta",
+  "concept": "B: Be on someone's route",
+  "headline": "Be on someone's lights route",
+  "primary_text": "Visitors plan routes between homes and events on the SoCal Lights map. Add your home so it can be on the route. Free.",
+  "description": "Map, search, routes: all free",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-house?ref=mt-ho-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=b-route-v1",
+  "visual": "Real screen recording of 'Route these' on public events (parks, parades, markets), not private homes. 8-12 seconds, 9:16 and 4:5.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Do not promise visits or a number of visitors. Do not use any traffic figure.",
+  "char_counts": {
+   "headline": 28,
+   "primary_text": 117,
+   "description": 29,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslights #socal #holidaylights (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "ho-b-nextdoor",
+  "audience": "homeowners",
+  "platform": "nextdoor",
+  "concept": "B: Be on someone's route",
+  "headline": "Your home's lights, on neighbors' routes",
+  "primary_text": "Visitors plan a night of lights on a free map. Add your home so it can be part of the route.",
+  "description": "",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-house?ref=nd-ho-b&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=b-route-v1",
+  "visual": "Real screen recording of 'Route these' on public events (parks, parades, markets), not private homes. 8-12 seconds, 9:16 and 4:5.",
+  "notes": "Nextdoor limits used (Nextdoor creative-specs pages disagree, UNVERIFIED): headline 70, body shown truncated after about 90 characters so the first sentence carries the message, CTA 20. ",
+  "char_counts": {
+   "headline": 40,
+   "primary_text": 92,
+   "description": 0,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 70,
+   "primary_text": 150,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "ho-c-meta",
+  "audience": "homeowners",
+  "platform": "meta",
+  "concept": "C: You stay in control",
+  "headline": "Show your lights, on your terms",
+  "primary_text": "Add your home with your own photos and details. You choose what's shown, and you can ask us to remove it any time.",
+  "description": "Free to add",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-house?ref=mt-ho-c&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=c-control-v1",
+  "visual": "Option 1: our own add-a-home screen with demo data. Option 2: an owner-approved home photo, ONLY with the homeowner's written consent for paid ads (separate from the consent to show it on the map), address and house numbers cropped or blurred, no faces.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Claim check: removal is supported by /remove-home and the Remove my home help article; owner to confirm 'any time' matches the live process before launch. Privacy-first angle for people wary of showing an address.",
+  "char_counts": {
+   "headline": 31,
+   "primary_text": 114,
+   "description": 11,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslights #socal #holidaylights (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "ho-c-nextdoor",
+  "audience": "homeowners",
+  "platform": "nextdoor",
+  "concept": "C: You stay in control",
+  "headline": "Add your home's lights. You decide what shows",
+  "primary_text": "Free to add. Use your own photos and details, and ask us to remove your home any time.",
+  "description": "",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-house?ref=nd-ho-c&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-ho-nov26&utm_content=c-control-v1",
+  "visual": "Option 1: our own add-a-home screen with demo data. Option 2: an owner-approved home photo, ONLY with the homeowner's written consent for paid ads (separate from the consent to show it on the map), address and house numbers cropped or blurred, no faces.",
+  "notes": "Nextdoor limits used (Nextdoor creative-specs pages disagree, UNVERIFIED): headline 70, body shown truncated after about 90 characters so the first sentence carries the message, CTA 20. Same removal claim check as ho-c-meta.",
+  "char_counts": {
+   "headline": 45,
+   "primary_text": 86,
+   "description": 0,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 70,
+   "primary_text": 150,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "ev-a-meta",
+  "audience": "event_holders",
+  "platform": "meta",
+  "concept": "A: List it free",
+  "headline": "List your holiday event for free",
+  "primary_text": "Tree lighting, boat parade, market or light show in Southern California? Add it to the SoCal Lights map. Free to list.",
+  "description": "Free to list",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-event?ref=mt-ev-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ev-nov26&utm_content=a-listfree-v1",
+  "visual": "Real screenshot of a city page (/in/<city>) showing public events, 4:5. Public venues and event names only.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Event holders include cities, chambers, parks departments and businesses. Listing needs sign-in. Conversion: event submitted (fn:add-event-done). Events are reviewed before going live, so never say 'instantly'.",
+  "char_counts": {
+   "headline": 32,
+   "primary_text": 118,
+   "description": 12,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #socalevents #holidayevents #christmaslights (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "ev-a-google",
+  "audience": "event_holders",
+  "platform": "google_search",
+  "concept": "A: List it free",
+  "headline": "List Your Holiday Event Free | Southern California Event Map | Tree Lighting? Parade? Market?",
+  "primary_text": "Add your holiday event to a free map of Southern California lights and events. Free.",
+  "description": "Your listing can link to your event page, so people can find the details.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
+  "landing_url": "https://socallights.app/add-event?ref=gg-ev-a&utm_source=google&utm_medium=cpc&utm_campaign=scl-ev-nov26&utm_content=a-listfree-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Seed keywords (phrase and exact; search volumes UNVERIFIED): 'list my christmas event', 'submit holiday event california', 'add event christmas lights map', 'tree lighting event listing'. Negatives: jobs, tickets, wholesale, kit, DIY. Geo: the seven counties, 'presence' option only.",
+  "char_counts": {
+   "headlines": [
+    28,
+    29,
+    30
+   ],
+   "descriptions": [
+    84,
+    73
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "ev-b-meta",
+  "audience": "event_holders",
+  "platform": "meta",
+  "concept": "B: Be found by people nearby",
+  "headline": "Be found by people planning a night out",
+  "primary_text": "People search the SoCal Lights map by city and date. List your holiday event so it shows up for people nearby. Free.",
+  "description": "Free to list",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-event?ref=mt-ev-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ev-nov26&utm_content=b-found-v1",
+  "visual": "Real screenshot of a city page (/in/<city>) showing public events, 4:5. Public venues and event names only.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Do not quote visitor numbers. If a number is wanted, use only [LIVE NUMBER: events count] and [LIVE NUMBER: city pages count] pulled from the database the day the ad is built.",
+  "char_counts": {
+   "headline": 39,
+   "primary_text": 116,
+   "description": 12,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #socalevents #holidayevents #christmaslights (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "ev-b-google",
+  "audience": "event_holders",
+  "platform": "google_search",
+  "concept": "B: Be found by people nearby",
+  "headline": "Get Your Event on the Map | Free Holiday Event Listing | Search by City and Date",
+  "primary_text": "Visitors search our map by city and date. Add your event so it can be found. Free to list.",
+  "description": "Tree lightings, parades, markets and light shows across Southern California.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
+  "landing_url": "https://socallights.app/add-event?ref=gg-ev-b&utm_source=google&utm_medium=cpc&utm_campaign=scl-ev-nov26&utm_content=b-found-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. ",
+  "char_counts": {
+   "headlines": [
+    25,
+    26,
+    23
+   ],
+   "descriptions": [
+    90,
+    76
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "ev-c-meta",
+  "audience": "event_holders",
+  "platform": "meta",
+  "concept": "C: Stand out (optional)",
+  "headline": "Want your event to stand out?",
+  "primary_text": "Listing is free. Featured placement is optional and always labelled Featured. See the options on the Pricing page.",
+  "description": "Listing is free",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/pricing#events?ref=mt-ev-c&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ev-nov26&utm_content=c-stand-v1",
+  "visual": "Real screenshot of the map with a gold Featured pin on a real public event whose organizer consented, or on our own test event. Do NOT show the Pricing page (prices would go stale in the image).",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. No price in the copy (prices come only from functions/_lib/featured.js and show live on /pricing). Paid placement is labelled, which is the disclosure. Launch only after the Stripe path is proven with one real charge (product-marketing.md, recommendation 3).",
+  "char_counts": {
+   "headline": 29,
+   "primary_text": 114,
+   "description": 15,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #socalevents #holidayevents #christmaslights (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "ev-c-google",
+  "audience": "event_holders",
+  "platform": "google_search",
+  "concept": "C: Stand out (optional)",
+  "headline": "Featured Event Placement | Optional and Clearly Labeled | Free Listing Also Available",
+  "primary_text": "List your event free, or add an optional Featured placement. Featured is always labelled.",
+  "description": "See the options on our Pricing page. Pay once on Stripe's secure page, no subscription.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
+  "landing_url": "https://socallights.app/pricing#events?ref=gg-ev-c&utm_source=google&utm_medium=cpc&utm_campaign=scl-ev-nov26&utm_content=c-stand-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. 'No subscription' matches pricing.html for event plans. Do not add a price here.",
+  "char_counts": {
+   "headlines": [
+    24,
+    28,
+    27
+   ],
+   "descriptions": [
+    89,
+    87
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "ct-a-meta",
+  "audience": "contest_organizers",
+  "platform": "meta",
+  "concept": "A: First contest free",
+  "headline": "Run a home lights contest, free",
+  "primary_text": "Cities, HOAs, schools, chambers: your organization's first contest in every 12 months is free. Entering is free too.",
+  "description": "First contest free",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-contest?ref=mt-ct-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ct-nov26&utm_content=a-free-v1",
+  "visual": "Real screenshots of the demo contest (docs/contest-demo.md): entry page and results page with demo homes. Mark it 'Example contest'. No real residents.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Copy avoids 'vote', 'election' and 'ballot' on purpose: Meta may classify contests with voting as 'social issues, elections or politics' content (UNVERIFIED, Meta's policy page could not be opened) which needs advertiser authorization. If flagged, fix the wording rather than seek authorization. Meta may not offer job-title targeting for city staff (UNVERIFIED); use interest proxies or broad geo.",
+  "char_counts": {
+   "headline": 31,
+   "primary_text": 116,
+   "description": 18,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #communityevents #socal #holidaycontest (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "ct-a-google",
+  "audience": "contest_organizers",
+  "platform": "google_search",
+  "concept": "A: First contest free",
+  "headline": "Run a Lights Contest Free | For Cities, HOAs & Schools | First Contest Free",
+  "primary_text": "Resident entries, judges, and People's Choice and Judges' Choice awards. First one free.",
+  "description": "Your organization's first contest in every 12-month window is free. Entering is free.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
+  "landing_url": "https://socallights.app/add-contest?ref=gg-ct-a&utm_source=google&utm_medium=cpc&utm_campaign=scl-ct-nov26&utm_content=a-free-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Seed keywords (volumes UNVERIFIED): 'christmas lights contest', 'neighborhood decorating contest', 'hoa holiday lights contest', 'holiday home decorating contest city', 'lights contest software'. Negatives: jobs, kit, supplies, lottery, sweepstakes, raffle (a raffle or sweepstakes is a different legal product).",
+  "char_counts": {
+   "headlines": [
+    25,
+    26,
+    18
+   ],
+   "descriptions": [
+    88,
+    85
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "ct-b-meta",
+  "audience": "contest_organizers",
+  "platform": "meta",
+  "concept": "B: Judges, awards, QR",
+  "headline": "Judges, awards and a QR poster",
+  "primary_text": "Run your neighborhood lights contest online: resident entries, judges, and People's Choice and Judges' Choice awards.",
+  "description": "First contest free",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/contests?ref=mt-ct-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ct-nov26&utm_content=b-judging-v1",
+  "visual": "A QR poster we generate from the demo contest, labelled 'Example'. Own design, no stock.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Fact check before launch that each feature named is in the free first contest; pricing.html lists entries, voting, judges and both awards. 'QR poster' comes from product-marketing.md (contest wizard); confirm it is live.",
+  "char_counts": {
+   "headline": 30,
+   "primary_text": 117,
+   "description": 18,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #communityevents #socal #holidaycontest (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "ct-b-google",
+  "audience": "contest_organizers",
+  "platform": "google_search",
+  "concept": "B: Judges, awards, QR",
+  "headline": "Online Lights Contest Setup | Judges and Resident Entries | Payment Never Changes Winners",
+  "primary_text": "Run a home lights contest online. Residents enter, judges score, awards are fair.",
+  "description": "Entering and voting are free for everyone. Payment never affects any contest result.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
+  "landing_url": "https://socallights.app/contests?ref=gg-ct-b&utm_source=google&utm_medium=cpc&utm_campaign=scl-ct-nov26&utm_content=b-judging-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Second description states the fairness rule from the Free Heart Promise and pricing.html. 'judges score' to be confirmed against the judge flow (public/judge.html).",
+  "char_counts": {
+   "headlines": [
+    27,
+    27,
+    29
+   ],
+   "descriptions": [
+    81,
+    84
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "ct-c-meta",
+  "audience": "contest_organizers",
+  "platform": "meta",
+  "concept": "C: Contest homes on a map",
+  "headline": "Put your contest homes on a map",
+  "primary_text": "Residents and visitors can browse your contest homes on a free map and plan a route between them. Set up online.",
+  "description": "Map and routes are free",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/contests?ref=mt-ct-c&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ct-nov26&utm_content=c-map-v1",
+  "visual": "Real screenshots of the demo contest (docs/contest-demo.md): entry page and results page with demo homes. Mark it 'Example contest'. No real residents.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Route benefit came from a live city demo; do not quote that city or use it as a testimonial.",
+  "char_counts": {
+   "headline": 31,
+   "primary_text": 112,
+   "description": 23,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #communityevents #socal #holidaycontest (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "ct-c-google",
+  "audience": "contest_organizers",
+  "platform": "google_search",
+  "concept": "C: Contest homes on a map",
+  "headline": "Contest Homes on a Map | Free Routes for Visitors | Lights Contest for Your City",
+  "primary_text": "Show your contest homes on a free map. Visitors can browse and plan a route between them.",
+  "description": "Set up your city, HOA or school contest online. Your first contest is free.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
+  "landing_url": "https://socallights.app/contests?ref=gg-ct-c&utm_source=google&utm_medium=cpc&utm_campaign=scl-ct-nov26&utm_content=c-map-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. ",
+  "char_counts": {
+   "headlines": [
+    22,
+    24,
+    28
+   ],
+   "descriptions": [
+    89,
+    75
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "in-a-meta",
+  "audience": "installers",
+  "platform": "meta",
+  "concept": "A: Free company page",
+  "headline": "A free page for your lighting company",
+  "primary_text": "Installers: make a free SoCal Lights page with your areas, phone and website. It's linked from homes you installed.",
+  "description": "Free profile page",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-house?kind=installer&ref=mt-in-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-in-nov26&utm_content=a-page-v1",
+  "visual": "Real screenshot of an installer profile page. Use the live /installer/lights-up-today ONLY with that company's written consent; otherwise a clearly labelled example profile. No customer names or addresses visible.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Audience is small. Targeting: small-business interests plus the seven counties (installer-relevant interests UNVERIFIED). Conversion: installer or home submitted (fn:add-house-done); no separate installer-profile counter exists (see plan, tracking section).",
+  "char_counts": {
+   "headline": 37,
+   "primary_text": 115,
+   "description": 17,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslightinstallation #holidaylighting #socal (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "in-a-google",
+  "audience": "installers",
+  "platform": "google_search",
+  "concept": "A: Free company page",
+  "headline": "Free Page for Lighting Pros | Show Your Installed Homes | Holiday Lighting Companies",
+  "primary_text": "Create a free company page: areas served, phone, website and your installed homes.",
+  "description": "Homeowners can find your page from the homes you installed. Free to create.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
+  "landing_url": "https://socallights.app/add-house?kind=installer&ref=gg-in-a&utm_source=google&utm_medium=cpc&utm_campaign=scl-in-nov26&utm_content=a-page-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "RESERVE-FUNDED ONLY (no base budget). Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Seed keywords (volumes UNVERIFIED, likely very low): 'christmas light installer directory', 'list my holiday lighting company', 'holiday lighting business marketing'. Do NOT bid on 'christmas light installation near me' (that is homeowner intent; the Home and Home Improvement CPC benchmark is $8.33, LocaliQ/WordStream 2026).",
+  "char_counts": {
+   "headlines": [
+    27,
+    25,
+    26
+   ],
+   "descriptions": [
+    82,
+    75
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "in-b-meta",
+  "audience": "installers",
+  "platform": "meta",
+  "concept": "B: Your work on the map",
+  "headline": "Show the homes you've installed",
+  "primary_text": "Add the homes you've lit to the SoCal Lights map. Each links to your company page, which has a Request a quote button.",
+  "description": "Free profile page",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/add-house?kind=installer&ref=mt-in-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-in-nov26&utm_content=b-work-v1",
+  "visual": "Real screenshot of an installer profile page. Use the live /installer/lights-up-today ONLY with that company's written consent; otherwise a clearly labelled example profile. No customer names or addresses visible.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Installers need the homeowner's permission before posting a customer's home (the add flow has a permission step). Say so in the landing flow, not in the ad. Do not promise quotes or leads.",
+  "char_counts": {
+   "headline": 31,
+   "primary_text": 118,
+   "description": 17,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslightinstallation #holidaylighting #socal (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "in-b-google",
+  "audience": "installers",
+  "platform": "google_search",
+  "concept": "B: Your work on the map",
+  "headline": "Put Your Work on the Map | Free Installer Company Page | Request a Quote Button",
+  "primary_text": "Add the homes you've lit to the map. Each links back to your free company page.",
+  "description": "Your page lists areas served, phone and website. Customers can request a quote.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
+  "landing_url": "https://socallights.app/add-house?kind=installer&ref=gg-in-b&utm_source=google&utm_medium=cpc&utm_campaign=scl-in-nov26&utm_content=b-work-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "RESERVE-FUNDED ONLY. Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. ",
+  "char_counts": {
+   "headlines": [
+    24,
+    27,
+    22
+   ],
+   "descriptions": [
+    79,
+    79
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "in-c-meta",
+  "audience": "installers",
+  "platform": "meta",
+  "concept": "C: Free first, Sponsor optional",
+  "headline": "Free profile first, optional Sponsor",
+  "primary_text": "Start with a free company page. Paid Sponsor placements are optional and always labelled Sponsor. See Pricing for options.",
+  "description": "Free to start",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/pricing#banner?ref=mt-in-c&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-in-nov26&utm_content=c-sponsor-v1",
+  "visual": "Real screenshot of an installer profile page. Use the live /installer/lights-up-today ONLY with that company's written consent; otherwise a clearly labelled example profile. No customer names or addresses visible.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. No price in the copy. Do not push Sponsor while there are few homes on the map (product-marketing.md gates installer paid offers). Least recommended concept; run only if A and B both underperform.",
+  "char_counts": {
+   "headline": 36,
+   "primary_text": 122,
+   "description": 13,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslightinstallation #holidaylighting #socal (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "in-c-google",
+  "audience": "installers",
+  "platform": "google_search",
+  "concept": "C: Free first, Sponsor optional",
+  "headline": "Free Installer Profile | Optional Labelled Sponsor Spot | See Pricing Options",
+  "primary_text": "Start with a free company page. Paid Sponsor placements are optional and always labelled.",
+  "description": "One-time payment on Stripe's secure page. Auto-renewal is optional and off by default.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
+  "landing_url": "https://socallights.app/pricing#banner?ref=gg-in-c&utm_source=google&utm_medium=cpc&utm_campaign=scl-in-nov26&utm_content=c-sponsor-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "RESERVE-FUNDED ONLY. Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Renewal sentence matches pricing.html (off unless ticked).",
+  "char_counts": {
+   "headlines": [
+    22,
+    30,
+    19
+   ],
+   "descriptions": [
+    89,
+    86
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "ho-nl-newsletter",
+  "audience": "homeowners",
+  "platform": "local_newsletter",
+  "concept": "A: Put your home on the map",
+  "headline": "Light up your street on the SoCal Lights map",
+  "primary_text": "If your home has lights up, SoCal Lights is a free map of Southern California holiday lights and events. Add your home, free, and let neighbors and visitors find it.",
+  "description": "Free to add. Map, search and routes are free to use.",
+  "cta": "Add your home",
+  "landing_url": "https://socallights.app/add-house?ref=nl-ho-a&utm_source=newsletter&utm_medium=sponsor&utm_campaign=scl-ho-nov26&utm_content=nl-a-v1",
+  "visual": "Optional single image: real map screenshot, 600px wide. Many newsletters take text only.",
+  "notes": "Sponsorship rates are not published (Patch has no public rate card; a vendor-blog benchmark of $100-$300 per placement for lists under 5,000 is UNVERIFIED). Ask for a quote; fund from the $30 reserve only if the quote fits and the audience is in our counties. Publisher must label it 'Sponsored'. Do not ask a publisher to run it as editorial.",
+  "char_counts": {
+   "headline": 44,
+   "primary_text": 165,
+   "description": 52,
+   "cta": 13
+  },
+  "status": "draft"
+ },
+ {
+  "id": "ev-nl-newsletter",
+  "audience": "event_holders",
+  "platform": "local_newsletter",
+  "concept": "A: List it free",
+  "headline": "Hosting a holiday event? List it free",
+  "primary_text": "SoCal Lights is a free map of holiday lights and events across Southern California. Add your tree lighting, parade, market or light show at no cost.",
+  "description": "Free to list.",
+  "cta": "Add your event",
+  "landing_url": "https://socallights.app/add-event?ref=nl-ev-a&utm_source=newsletter&utm_medium=sponsor&utm_campaign=scl-ev-nov26&utm_content=nl-a-v1",
+  "visual": "Optional: real city-page screenshot. Text only is fine.",
+  "notes": "Same quote and reserve rule as ho-nl-newsletter. Best fit: chamber or parks-department newsletters whose readers run events.",
+  "char_counts": {
+   "headline": 37,
+   "primary_text": 148,
+   "description": 13,
+   "cta": 14
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-a-meta",
+  "audience": "families",
+  "platform": "meta",
+  "concept": "A: Find lights near you tonight",
+  "headline": "Find holiday lights near you tonight",
+  "primary_text": "Open the free SoCal Lights map, tap Find my location, and see holiday lights and events close to you.",
+  "description": "Free map of SoCal lights",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/?ref=mt-fa-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=a-nearyou-v1",
+  "visual": "Real screen recording of our own map on a phone (8-12 seconds, 4:5 and 9:16): tap Find my location, then the list updates with events near the point. Record with a demo location (not the owner's real position), at a zoom where no private home address or house number is legible. Public events and venues only. No stock, no other site's images.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED): primary text 125 recommended, headline 40 max (27 recommended), description 30 on few placements. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Conversion to track: map opened (fn:visit), event card opened (fn:event-open), route tapped (click:route). Find my location asks the visitor for browser location permission; the ad must not claim we know where they are (Meta personal-attributes and location policies, UNVERIFIED).",
+  "char_counts": {
+   "headline": 36,
+   "primary_text": 101,
+   "description": 24,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslights #familyfun #socal (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "fa-a-nextdoor",
+  "audience": "families",
+  "platform": "nextdoor",
+  "concept": "A: Find lights near you tonight",
+  "headline": "A free map of holiday lights near your neighborhood",
+  "primary_text": "Tap Find my location to see holiday lights and events close to you. Free to use.",
+  "description": "",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/?ref=nd-fa-a&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=a-nearyou-v1",
+  "visual": "Real screen recording of our own map on a phone (8-12 seconds, 4:5 and 9:16): tap Find my location, then the list updates with events near the point. Record with a demo location (not the owner's real position), at a zoom where no private home address or house number is legible. Public events and venues only. No stock, no other site's images.",
+  "notes": "Nextdoor limits used (specs pages disagree, UNVERIFIED): headline 70, body truncated after about 90 characters, CTA 20. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. No residents' homes or addresses in the creative.",
+  "char_counts": {
+   "headline": 51,
+   "primary_text": 80,
+   "description": 0,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 70,
+   "primary_text": 150,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-a-google",
+  "audience": "families",
+  "platform": "google_search",
+  "concept": "A: Find lights near you tonight",
+  "headline": "Christmas Lights Near You | Free Southern California Map | Find Lights Tonight",
+  "primary_text": "Search a free map of holiday lights and events in Southern California. Find your location.",
+  "description": "Filter by tonight, this weekend or free events. Plan your family night out.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /in and /help)",
+  "landing_url": "https://socallights.app/?ref=gg-fa-a&utm_source=google&utm_medium=cpc&utm_campaign=scl-fa-nov26&utm_content=a-nearyou-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page): headline 30, description 90; 3 headlines joined with ' | ', primary_text = description 1, description = description 2. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Seed keywords (volumes and CPC UNVERIFIED; no figure found for these phrases, check Keyword Planner): 'christmas lights near me', 'holiday lights near me', 'christmas lights tonight', 'christmas lights this weekend'. Use phrase and exact match, 'presence' geo only, bids capped by the daily cap. Expect heavy competition from listicle publishers and expect few clicks at $0.97 a day. Negatives: for sale, buy, outdoor string, led, solar, installation, jobs, wholesale (shoppers for lights, not viewers).",
+  "char_counts": {
+   "headlines": [
+    25,
+    28,
+    19
+   ],
+   "descriptions": [
+    90,
+    75
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-b-meta",
+  "audience": "families",
+  "platform": "meta",
+  "concept": "B: Plan a family drive route",
+  "headline": "Plan a family lights drive",
+  "primary_text": "Save favorites on the free SoCal Lights map, then tap Route these to send the stops to your maps app.",
+  "description": "Routes are free",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/?ref=mt-fa-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=b-route-v1",
+  "visual": "Real screen recording of our own Favorites tab: add 3 public events, tap 'Route these', the maps-app handoff. Public events only (parks, parades, markets), no private homes, no real addresses of residents. 9:16 and 4:5.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED): primary text 125 recommended, headline 40 max (27 recommended), description 30 on few placements. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Claim check: the Favorites tab splits long plans into routes of 9 stops or fewer for the maps app (app.js); the copy does not say how many stops. Conversion: Route these tapped (click:route).",
+  "char_counts": {
+   "headline": 26,
+   "primary_text": 101,
+   "description": 15,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslights #familyfun #socal (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "fa-b-nextdoor",
+  "audience": "families",
+  "platform": "nextdoor",
+  "concept": "B: Plan a family drive route",
+  "headline": "Plan a family drive to see the lights",
+  "primary_text": "Save favorites on a free map, then tap Route these to open your drive in your maps app.",
+  "description": "",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/?ref=nd-fa-b&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=b-route-v1",
+  "visual": "Real screen recording of our own Favorites tab: add 3 public events, tap 'Route these', the maps-app handoff. Public events only (parks, parades, markets), no private homes, no real addresses of residents. 9:16 and 4:5.",
+  "notes": "Nextdoor limits used (specs pages disagree, UNVERIFIED): headline 70, body truncated after about 90 characters, CTA 20. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. ",
+  "char_counts": {
+   "headline": 37,
+   "primary_text": 87,
+   "description": 0,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 70,
+   "primary_text": 150,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-b-google",
+  "audience": "families",
+  "platform": "google_search",
+  "concept": "B: Plan a family drive route",
+  "headline": "Plan a Holiday Lights Drive | Route Your Family Night | Free Lights Map",
+  "primary_text": "Pick holiday lights and events, then open the route in your maps app. Free to use.",
+  "description": "Plan a family drive across Southern California. Save favorites and share the plan.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /in and /help)",
+  "landing_url": "https://socallights.app/?ref=gg-fa-b&utm_source=google&utm_medium=cpc&utm_campaign=scl-fa-nov26&utm_content=b-route-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page): headline 30, description 90; 3 headlines joined with ' | ', primary_text = description 1, description = description 2. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Seed keywords (UNVERIFIED): 'christmas lights route', 'christmas lights drive', 'christmas lights tour los angeles', 'orange county christmas lights map'. Check each against the live map before launch.",
+  "char_counts": {
+   "headlines": [
+    27,
+    23,
+    15
+   ],
+   "descriptions": [
+    82,
+    82
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-c-meta",
+  "audience": "families",
+  "platform": "meta",
+  "concept": "C: Lights this weekend",
+  "headline": "Holiday lights this weekend",
+  "primary_text": "On the free SoCal Lights map, tap This weekend to see lights and events happening near you.",
+  "description": "Free to browse",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/?ref=mt-fa-c&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=c-weekend-v1",
+  "visual": "Real screenshot of the map list with the 'This weekend' quick pick selected, public events only, 4:5. No private home cards.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED): primary text 125 recommended, headline 40 max (27 recommended), description 30 on few placements. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Quick picks on the map are Tonight, This weekend and Free (app.js quickPicks). The page opens unfiltered: the visitor taps the pick. Do not say 'best' or rank anything.",
+  "char_counts": {
+   "headline": 27,
+   "primary_text": 91,
+   "description": 14,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslights #familyfun #socal (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "fa-c-nextdoor",
+  "audience": "families",
+  "platform": "nextdoor",
+  "concept": "C: Lights this weekend",
+  "headline": "Looking for holiday lights this weekend?",
+  "primary_text": "Tap This weekend on the free SoCal Lights map to see lights and events near you.",
+  "description": "",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/?ref=nd-fa-c&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=c-weekend-v1",
+  "visual": "Real screenshot of the map list with the 'This weekend' quick pick selected, public events only, 4:5. No private home cards.",
+  "notes": "Nextdoor limits used (specs pages disagree, UNVERIFIED): headline 70, body truncated after about 90 characters, CTA 20. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. ",
+  "char_counts": {
+   "headline": 40,
+   "primary_text": 80,
+   "description": 0,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 70,
+   "primary_text": 150,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-c-google",
+  "audience": "families",
+  "platform": "google_search",
+  "concept": "C: Lights this weekend",
+  "headline": "Holiday Lights This Weekend | Free Family Lights Map | Southern California",
+  "primary_text": "Tap This weekend to see holiday lights and events near you. A free map for families.",
+  "description": "Search by city, date or free events, then save favorites and plan your drive.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /in and /help)",
+  "landing_url": "https://socallights.app/?ref=gg-fa-c&utm_source=google&utm_medium=cpc&utm_campaign=scl-fa-nov26&utm_content=c-weekend-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page): headline 30, description 90; 3 headlines joined with ' | ', primary_text = description 1, description = description 2. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Seed keywords (UNVERIFIED): 'things to do this weekend christmas lights', 'christmas events this weekend near me', 'free christmas events for kids'. 'Free events' is a filter on the map; do not promise that every event is free.",
+  "char_counts": {
+   "headlines": [
+    27,
+    22,
+    19
+   ],
+   "descriptions": [
+    84,
+    77
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-d-meta",
+  "audience": "families",
+  "platform": "meta",
+  "concept": "D: Add favorites and share",
+  "headline": "Save favorites. Share the plan.",
+  "primary_text": "Add holiday lights and events to Favorites, then share your plan so the whole family sees the same stops.",
+  "description": "Favorites are free",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/?ref=mt-fa-d&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=d-share-v1",
+  "visual": "Real screen recording: tap the favorite on 2-3 public events, then the share button on the plan (share sheet showing, no contact names visible). 9:16 and 4:5.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED): primary text 125 recommended, headline 40 max (27 recommended), description 30 on few placements. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Share uses the phone's share sheet and a plan link (#night-...). Hold until concepts A and B have a read; this is a retention concept more than a cold-traffic one.",
+  "char_counts": {
+   "headline": 31,
+   "primary_text": 105,
+   "description": 18,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslights #familyfun #socal (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "fa-d-nextdoor",
+  "audience": "families",
+  "platform": "nextdoor",
+  "concept": "D: Add favorites and share",
+  "headline": "Save your favorite lights and share the plan",
+  "primary_text": "Add lights and events to Favorites on a free map, then share the plan with your family.",
+  "description": "",
+  "cta": "Learn more",
+  "landing_url": "https://socallights.app/?ref=nd-fa-d&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=d-share-v1",
+  "visual": "Real screen recording: tap the favorite on 2-3 public events, then the share button on the plan (share sheet showing, no contact names visible). 9:16 and 4:5.",
+  "notes": "Nextdoor limits used (specs pages disagree, UNVERIFIED): headline 70, body truncated after about 90 characters, CTA 20. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Hold until A and B have a read.",
+  "char_counts": {
+   "headline": 44,
+   "primary_text": 87,
+   "description": 0,
+   "cta": 10
+  },
+  "char_limits": {
+   "headline": 70,
+   "primary_text": 150,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-e-meta",
+  "audience": "families",
+  "platform": "meta",
+  "concept": "E: Weekly lights email",
+  "headline": "Get the weekly lights email",
+  "primary_text": "A free weekly email from SoCal Lights with holiday lights and events near you. Choose your area and distance.",
+  "description": "Free weekly email",
+  "cta": "Sign up",
+  "landing_url": "https://socallights.app/in/mission-viejo?ref=mt-fa-e&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=e-email-v1",
+  "visual": "Real screenshot of the sign-up box on a city page (/in/<city>), 4:5. Do not use a real email example.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED): primary text 125 recommended, headline 40 max (27 recommended), description 30 on few placements. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Landing is a city page because the sign-up box lives on city and event pages (functions/_lib/shell.js subscribeBox). Match the city page to the ad set (OC: mission-viejo; for LA or Inland ad sets use /in/covina or another city that has upcoming events; check the page returns 200). The email has an unsubscribe link; confirm the opt-in is double opt-in (fn:subscribe-confirm exists). 'Choose your area and distance' per the weekly-email distance choice in status.md; confirm before launch.",
+  "char_counts": {
+   "headline": 27,
+   "primary_text": 109,
+   "description": 17,
+   "cta": 7
+  },
+  "char_limits": {
+   "headline": 40,
+   "primary_text": 125,
+   "description": 30,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft",
+  "instagram": {
+   "placements": "Facebook feed, Instagram feed, Instagram Stories and Reels (Meta Advantage+ placements, or pick these by hand in Ads Manager).",
+   "caption": "Instagram shows only the first ~125 characters of the primary text before 'more' (UNVERIFIED, third-party sources), so the first sentence must stand alone. Captions have no clickable links; the button and the ad link carry the click.",
+   "visual": "Instagram Stories and Reels are 9:16 full screen: lead with a short screen recording (8 to 12 seconds) and put the first line of the headline on screen in the first second, because many people watch with the sound off.",
+   "hashtags": "#socallights #christmaslights #familyfun #socal (optional, 3 to 4 only; Meta ads do not need them)",
+   "account": "Run through the Facebook Page; connect an Instagram business account to it in Meta Business settings so ads show under the SoCal Lights handle."
+  }
+ },
+ {
+  "id": "fa-e-nextdoor",
+  "audience": "families",
+  "platform": "nextdoor",
+  "concept": "E: Weekly lights email",
+  "headline": "A weekly email of lights and events near you",
+  "primary_text": "Free from SoCal Lights. Pick your area and distance, and get holiday lights and events each week.",
+  "description": "",
+  "cta": "Sign up",
+  "landing_url": "https://socallights.app/in/mission-viejo?ref=nd-fa-e&utm_source=nextdoor&utm_medium=paid_social&utm_campaign=scl-fa-nov26&utm_content=e-email-v1",
+  "visual": "Real screenshot of the sign-up box on a city page (/in/<city>), 4:5. Do not use a real email example.",
+  "notes": "Nextdoor limits used (specs pages disagree, UNVERIFIED): headline 70, body truncated after about 90 characters, CTA 20. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Same landing and confirmation checks as fa-e-meta.",
+  "char_counts": {
+   "headline": 44,
+   "primary_text": 97,
+   "description": 0,
+   "cta": 7
+  },
+  "char_limits": {
+   "headline": 70,
+   "primary_text": 150,
+   "source": "UNVERIFIED: third-party spec guides, 2026-11-08; check each platform's current ad specs"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-f-google-mission-viejo",
+  "audience": "families",
+  "platform": "google_search",
+  "concept": "F: City search (Mission Viejo)",
+  "headline": "Mission Viejo Christmas Lights | Free Local Lights Map | Find Lights and Events",
+  "primary_text": "See holiday lights and events in Mission Viejo on a free map, with dates and hours.",
+  "description": "Save favorites, plan a route and share it with your family. Free to use.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /in and /help)",
+  "landing_url": "https://socallights.app/in/mission-viejo?ref=gg-fa-f1&utm_source=google&utm_medium=cpc&utm_campaign=scl-fa-nov26&utm_content=f-city-mv-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page): headline 30, description 90; 3 headlines joined with ' | ', primary_text = description 1, description = description 2. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Seed keywords (UNVERIFIED): 'mission viejo christmas lights', 'christmas lights mission viejo', 'mission viejo holiday lights tour'. The city page's count is mostly decorated homes with expected dates from last year's lists (outreach-targets.md): the copy deliberately gives no count. Do not claim homes are confirmed.",
+  "char_counts": {
+   "headlines": [
+    30,
+    21,
+    22
+   ],
+   "descriptions": [
+    83,
+    72
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-f-google-covina",
+  "audience": "families",
+  "platform": "google_search",
+  "concept": "F: City search (Covina)",
+  "headline": "Covina Christmas Lights | Free Local Lights Map | Find Lights and Events",
+  "primary_text": "See holiday lights and events in Covina on a free map, with dates and hours.",
+  "description": "Save favorites, plan a route and share it with your family. Free to use.",
+  "cta": "n/a (Search ads have no button; add sitelinks to /in and /help)",
+  "landing_url": "https://socallights.app/in/covina?ref=gg-fa-f2&utm_source=google&utm_medium=cpc&utm_campaign=scl-fa-nov26&utm_content=f-city-cov-v1&utm_term={keyword}",
+  "visual": "None (text ad).",
+  "notes": "Google responsive search ad limits (Google help page): headline 30, description 90; 3 headlines joined with ' | ', primary_text = description 1, description = description 2. Families audience: parents and caregivers driving to see lights. Copy has no safety or medical claims, no 'best', 'top' or '#1' superlatives (Meta may flag unsubstantiated superlatives, secondary source, UNVERIFIED), no price, no 'vote'. Seed keywords (UNVERIFIED): 'covina christmas lights', 'christmas lights covina'. The city runs its own contest and registration; do not imply we run it or that the city endorses these ads. Confirm /in/covina has upcoming events before launch.",
+  "char_counts": {
+   "headlines": [
+    23,
+    21,
+    22
+   ],
+   "descriptions": [
+    76,
+    72
+   ]
+  },
+  "char_limits": {
+   "headline_each": 30,
+   "description_each": 90,
+   "source": "Google Ads help, responsive search ads (confirmed 2026-11-08 by search snippet)"
+  },
+  "status": "draft"
+ },
+ {
+  "id": "fa-nl-newsletter",
+  "audience": "families",
+  "platform": "local_newsletter",
+  "concept": "A: Find lights near you tonight",
+  "headline": "A free map of holiday lights and events near you",
+  "primary_text": "Planning a family night out? SoCal Lights is a free map of holiday lights and events across Southern California. Tap Find my location, save favorites and plan your drive.",
+  "description": "Free to use. Routes and favorites are free.",
+  "cta": "Open the map",
+  "landing_url": "https://socallights.app/?ref=nl-fa-a&utm_source=newsletter&utm_medium=sponsor&utm_campaign=scl-fa-nov26&utm_content=nl-a-v1",
+  "visual": "Optional single image: real map screenshot, 600px wide (public events only). Many newsletters take text only.",
+  "notes": "Parent and mom-blog sponsorship: no published rates found for Mom's LA or San Diego Family; Macaroni Kid editions are run by local publishers who set their own rates (one Gig Harbor, WA edition advertises digital ads 'starting at $99'; Beverly Hills edition rates page is dated 2016; nothing for our counties verified, UNVERIFIED). Ask for quotes; fund only from the reserve. Publisher must label it sponsored. Mom's LA's own Advertise page is paid (outreach-targets.md); its editorial team is a separate free route.",
+  "char_counts": {
+   "headline": 48,
+   "primary_text": 170,
+   "description": 43,
+   "cta": 12
+  },
+  "status": "draft"
+ }
 ]
