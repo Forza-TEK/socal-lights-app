@@ -32,7 +32,7 @@ const S = {}; // specs by video id
 // ---------------- Find and plan ----------------
 const EF = "Find and plan";
 S.map = { id: "map", file: "find-map", cookie: null, ...MAPSPEC, steps: [
-  hook(EF, "Find lights near you", "The map, seasons and filters", "In this video, you will learn how to find holiday lights and events near you. We will cover the season buttons, searching by city, getting driving routes, and narrowing the list with filters. We start on the map."),
+  hook(EF, "Find lights near me", "The map, seasons and filters", "In this video, you will learn how to find holiday lights and events near you. We will cover the season buttons, searching by city, getting driving routes, and narrowing the list with filters. We start on the map."),
   ...openSite(undefined, true),
   target("Tap the season button", "The map shows different things at different times of the year, so first choose a season. Tap the season button at the top. It shows what is on right now.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Pick the one you want. Christmas lights are the biggest, so tap Thanksgiving and Christmas Lights. Halloween, New Year, and other seasons are in the same list.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
@@ -170,6 +170,6 @@ S.judge = { id: "judge", file: "judge", cookie: ck.u_judge, start: "/offline.htm
   target("I know this household", "Do you know the household, perhaps a friend or a relative? Tap I know this household. That home is skipped for you, so your score cannot be questioned later.", `[data-conf="p_okafor"]`, { after: 1600, poster: true }),
   { cap: "Score each home", say: "Score each of the other homes from one to ten. If your contest uses picks, you would tap Pick on your favorite instead. Judge on first impression, creativity, theme, craftsmanship, and variety of lights.", do: async (p, h) => { for (const [id, n] of [["p_garcia", "9"], ["p_patel", "8"], ["p_nguyen", "7"]]) { const sel = `[data-score="${id}|Best Traditional"]`; await h.move(sel); await p.selectOption(sel, n); await h.unring(); await sleep(800); } } },
   target("Tap Ballot", "Tap Ballot to see your progress. When you have scored every home, you are done. Your scores stay private until the winners are announced.", nav("ballot"), { after: 1400 }),
-  nextUp(EV, "Create a contest in two minutes", "The short setup: seven screens"),
+  nextUp(EV, "Create a contest with Quick start", "The short setup: seven screens"),
 ]};
 export { S, ck, SLUG, BASE, hook, recap, nextUp, target, fromMap, toDash, panel, next, nav, PH, mails, MAPSPEC, EF, EE, EV, org, emailScene };

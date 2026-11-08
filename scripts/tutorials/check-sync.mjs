@@ -43,6 +43,21 @@ function tailPeak(f, total) { // loudest sample in the last 50 ms of the audio, 
   return m ? (m[1] === "-inf" ? -99 : parseFloat(m[1])) : -99;
 }
 
+// A narrated "tap ..." must be followed by a visible change within 4 s (otherwise the picture never shows what the words promise).
+function tapChecks(file, cues) {
+  const W = 64, H = 36, r = spawnSync("ffmpeg", ["-v", "error", "-i", file, "-an", "-vf", `fps=4,scale=${W}:${H},format=gray`, "-f", "rawvideo", "-"], { maxBuffer: 1 << 28 });
+  const buf = r.stdout, n = Math.floor(buf.length / (W * H)), fr = (k) => buf.subarray(k * W * H, (k + 1) * W * H);
+  const diff = (a, b) => { let t = 0; for (let i = 0; i < a.length; i++) t += Math.abs(a[i] - b[i]); return t / a.length; };
+  const out = [];
+  for (const c of cues) {
+    if (!/\b(tap|open)\b/i.test(c.text) || c.text.length > 90 || /^(?:If|When|Once|Do you|You can|Want|Need|Say)/.test(c.text)) continue;
+    const k0 = Math.max(0, Math.round((c.b - 0.3) * 4)); if (k0 >= n - 1) continue;
+    let mx = 0; for (let k = k0 + 1; k <= Math.min(n - 1, k0 + 18); k++) mx = Math.max(mx, diff(fr(k0), fr(k)));
+    if (mx < 0.6) out.push({ at: +c.a.toFixed(1), text: c.text.slice(0, 60), change: +mx.toFixed(2) });
+  }
+  return out;
+}
+
 function check(file, cap) {
   const res = { file, issues: [] };
   const p = probe(file), v = p.streams.find((s) => s.codec_type === "video"), a = p.streams.find((s) => s.codec_type === "audio");
@@ -78,6 +93,7 @@ function check(file, cap) {
     // caption start vs nearest voice onset
     const onsets = sp.map((s) => s[0]); let worst = 0, worstAt = 0;
     for (const c of cues) { const d = Math.min(...onsets.map((o) => Math.abs(o - c.a))); if (d > worst) { worst = d; worstAt = c.a; } }
+    res.noChange = tapChecks(file, cues); for (const t of res.noChange) res.issues.push(`no visible change after "${t.text}" (cue at ${t.at} s)`);
     res.maxCueOffsetMs = Math.round(worst * 1000); res.maxCueOffsetAt = +worstAt.toFixed(1);
     if (worst > CUE_TOL) res.issues.push(`a caption starts ${Math.round(worst * 1000)} ms from the nearest voice onset (at ${worstAt.toFixed(1)} s)`);
   } else res.issues.push("no captions file");

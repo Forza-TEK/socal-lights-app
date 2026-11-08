@@ -5,6 +5,7 @@ const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_PATH 
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync, readFileSync, existsSync, copyFileSync, rmSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { retimeVtt } from "./captions.mjs";
 const BASE = process.env.BASE || "http://localhost:8788";
 const VOICE = process.env.VOICE, WORK = process.env.WORK || "/tmp/tut", OUT = process.env.OUT || "public/tutorials";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -31,7 +32,8 @@ class Helper {
     const loc = typeof sel === "string" ? this.page.locator(sel).first() : sel; await loc.scrollIntoViewIfNeeded().catch(() => {}); if (MOB) await loc.evaluate((el) => { const r = el.getBoundingClientRect(); if (r.bottom > innerHeight - 110 || r.top < 60) el.scrollIntoView({ block: "center" }); }).catch(() => {}); /* phone: keep the target clear of the sticky Next bar */ let b = await loc.boundingBox(); if (MOB && b && b.y > 600 && !/bnav/.test(String(sel)) && (await this.page.locator("#bnav").count())) { await this.click('#bnav [data-tab="events"]', { after: 1200 }); b = await loc.boundingBox(); } if (!b) throw new Error("no box for " + sel);
     await this.page.evaluate((b) => { let r = document.getElementById("__hl"); if (!r) { r = document.createElement("div"); r.id = "__hl"; document.body.appendChild(r); } const g = 6; r.style.left = b.x - g + "px"; r.style.top = b.y - g + "px"; r.style.width = b.width + 2 * g + "px"; r.style.height = b.height + 2 * g + "px"; }, b);
     const tx = b.x + (opt.fx ?? 0.5) * b.width, ty = b.y + (opt.fy ?? 0.5) * b.height; const sx = this.x, sy = this.y, n = Math.hypot(tx - sx, ty - sy) < 6 ? 0 : 38; // already pointing at it: no second glide
-    for (let i = 1; i <= n; i++) { const t = i / n, e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; await this.page.mouse.move(sx + (tx - sx) * e, sy + (ty - sy) * e); await sleep(16); }
+    // The glide is timed by the clock, not by a fixed number of mouse moves: on a loaded machine each move takes 50 to 100 ms, so 38 moves took 2 to 4 s and the tap (the screen change) came seconds after the words "tap ...". Now it always takes 0.7 s.
+    if (n) { const g0 = Date.now(), GD = 700; for (;;) { const t = Math.min(1, (Date.now() - g0) / GD), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; await this.page.mouse.move(sx + (tx - sx) * e, sy + (ty - sy) * e); if (t >= 1) break; await sleep(10); } }
     this.x = tx; this.y = ty; await sleep(n ? 350 : 80); }
   async showMail(m) { await this.page.evaluate((m) => { let o = document.getElementById("__mail"); if (o) o.remove(); if (!m) return; o = document.createElement("div"); o.id = "__mail"; const inner = m.html ? m.html.replace(/^[\s\S]*?<body[^>]*>/i, "").replace(/<\/body>[\s\S]*$/i, "") : `<div class="plain">${m.text.replaceAll("https://socallights.app", location.origin).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/(https?:\/\/[^\s)]+)/g, '<a href="$1">$1</a>')}</div>`; o.innerHTML = `<div class="bar"><b>Inbox</b><span class="tag">${m.note || ""}</span></div><div class="hd"><h2>${m.subject}</h2><div class="who"><div class="av">S</div><div><b>SoCal Lights</b> &lt;login@socallights.app&gt;<small>to ${m.to || "me"} &middot; ${m.time || "Today, 9:12 AM"}</small></div></div></div><div class="body">${inner}</div>`; document.body.appendChild(o); }, m); }
   // A printed sheet shown as a sample: a dimmed backdrop and a paper-shaped page holding a picture of the real print layout
@@ -122,11 +124,11 @@ export async function record(spec) {
     if (MOB && s.target && s.optional && await page.evaluate(() => { const p = document.querySelector(".panel"); return !!p && p.getBoundingClientRect().top > innerHeight * 0.45; })) { await h.click('#bnav [data-tab="events"]', { after: 1200 }); }
     if (process.env.DBG && s.optional) console.log('optional', i, await page.evaluate(() => { const p = document.querySelector('.panel'); return p ? p.getBoundingClientRect().top + ' / ' + innerHeight : 'nopanel'; }), await page.locator(s.target).count());
     if (s.target && s.optional && !(await page.locator(s.target).count())) { s.target = null; } // an optional tap is skipped when its button is not there
-    if (s.target) { try { await h.move(s.target); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } } // act first (typing, scrolling), then glide to the thing to tap
+    if (s.target) { const tm0 = T(); try { await h.move(s.target); if (process.env.TIMING) console.log(`step ${i} t0 ${t0.toFixed(1)} voice ends ${end.toFixed(1)} glide took ${(T() - tm0).toFixed(1)}s, glide ends ${T().toFixed(1)} (${s.cap || ""})`); } catch (e) { await page.screenshot({ path: `${w}/fail-${i}.png` }); throw e; } } // act first (typing, scrolling), then glide to the thing to tap
     { const bad = await page.evaluate(() => [...document.querySelectorAll(".err, [role=alert]")].filter((e) => e.offsetParent && /couldn.t|can.t|didn.t|enter a |should |invalid|wrong|try again|isn.t|not allowed|too many/i.test(e.textContent)).map((e) => e.textContent.trim()).join(" | ")).catch(() => ""); if (bad) { await page.screenshot({ path: `${w}/error-${i}.png` }); throw new Error(`The page showed an error on step ${i} (${s.cap || "card"}): ${bad}`); } } // a recording must never show a failed action
     if (s.poster) poster = T();
     const left = end - T(); if (left > 0) await sleep(left * 1000);
-    if (s.target) { await sleep(500); if (s.beforeClick) await s.beforeClick(page, h); await h.click(s.target, { after: 0 }); await page.evaluate(() => { const c = document.getElementById("__cap"); if (c) c.remove(); }).catch(() => {}); await sleep(s.after ?? 1500); } // the caption goes the moment the screen changes, so it never describes the old screen
+    if (s.target) { await sleep(250); if (s.beforeClick) await s.beforeClick(page, h); await h.click(s.target, { after: 0 }); await page.evaluate(() => { const c = document.getElementById("__cap"); if (c) c.remove(); }).catch(() => {}); await sleep(s.after ?? 1500); } // the caption goes the moment the screen changes, so it never describes the old screen
     if (process.env.SHOTS) await page.screenshot({ path: `${w}/s${String(i).padStart(2, '0')}.png` }).catch(() => {});
     if (s.post) { try { await s.post(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-post-${i}.png` }); throw e; } }
     if (B) { const tb = T() + 0.3; marks.push({ t: tb, f: B.f, d: B.d, text: B.text }); const left2 = tb + B.d + (s.pad ?? 0.5) - T(); if (left2 > 0) await sleep(left2 * 1000); } // the explanation after the tap is spoken over the new screen
@@ -151,7 +153,7 @@ export async function record(spec) {
   lines.push(`file '${fdir}/${frames[frames.length - 1].i}.jpg'`); writeFileSync(w + "/frames.txt", lines.join("\n"));
   const webm = null;
   const inputs = marks.flatMap((m) => ["-i", m.f]);
-  const fc = marks.map((m, k) => `[${k + 1}:a]adelay=${Math.round(m.t * 1000)}|${Math.round(m.t * 1000)}[a${k}]`).join(";") + (marks.length ? ";" : "") + marks.map((_, k) => `[a${k}]`).join("") + `amix=inputs=${marks.length}:normalize=0[aout]`;
+  const fc = marks.map((m, k) => `[${k + 1}:a]adelay=${Math.round(m.t * 1000)}|${Math.round(m.t * 1000)}[a${k}]`).join(";") + (marks.length ? ";" : "") + marks.map((_, k) => `[a${k}]`).join("") + `amix=inputs=${marks.length}:normalize=0[am];[am]aresample=48000:async=1,apad[aout]`; // apad: the audio runs on as silence to the last frame (end card), so both streams are as long as the video, and both start at 0
   const vf = MOB ? "scale=1080:1920:flags=lanczos" : spec.phone ? "scale=-2:1380:flags=lanczos,pad=2560:1440:(ow-iw)/2:30:color=#fbf3ea" : "scale=2560:1440:flags=lanczos";
   const mp4 = `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.mp4`;
   execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", w + "/frames.txt", ...inputs, "-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "23", "-preset", "medium", "-vf", vf + ",fps=30", "-r", "30", "-c:a", "aac", "-b:a", "160k", "-ac", "2", "-ar", "48000", "-t", String(total2), "-movflags", "+faststart", mp4], { stdio: "inherit" });
@@ -171,6 +173,7 @@ export async function record(spec) {
   const ts = (x) => { const m = Math.floor(x / 60), sec = x - m * 60; return `00:${String(m).padStart(2, "0")}:${sec.toFixed(3).padStart(6, "0")}`; };
   const cues = []; for (const m of marks) { const text = m.text, d = m.d, parts = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text], total = parts.reduce((a, x) => a + x.length, 0); let at = m.t; for (const part of parts) { const len = d * part.length / total; cues.push(`${ts(at)} --> ${ts(at + len)}\n${part.trim()}`); at += len; } }
   writeFileSync(`${OUT}/${spec.file}${MOB ? "-mobile" : ""}.vtt`, "WEBVTT\n\n" + cues.join("\n\n") + "\n");
+  { const rt = retimeVtt(mp4, `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.vtt`, dur(mp4)); console.log("captions retimed to the voice:", rt.snapped + "/" + rt.cues, "snapped", rt.outliers.length ? "RATE OUTLIERS " + JSON.stringify(rt.outliers) : ""); } // sentence cues are placed where the voice really starts, not guessed from character counts
   execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", "0", "-i", mp4, "-frames:v", "1", "-q:v", "4", `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.jpg`]);
   const L = dur(mp4); console.log(spec.file, "length", Math.floor(L / 60) + ":" + String(Math.round(L % 60)).padStart(2, "0"));
   writeFileSync(`${w}/script.txt`, say.filter(Boolean).join("\n\n")); rmSync(fdir, { recursive: true, force: true });
