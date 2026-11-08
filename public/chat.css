@@ -42,7 +42,10 @@
 
 @media (max-width:600px){
   .scl-chat{right:0;left:0;bottom:0;width:100%;max-height:88dvh;border-radius:16px 16px 0 0;border-bottom:0}
-  .scl-chat-fab{right:12px}
+  .scl-chat-fab{right:12px;width:48px;height:48px;min-height:48px;padding:0;gap:0;justify-content:center}
+  .scl-chat-fab-ic{width:34px;height:34px;font-size:18px}
+  /* only the circle with the question mark shows; the words stay for screen readers */
+  .scl-chat-fab>span:not(.scl-chat-fab-ic){position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 }
 @media (prefers-reduced-motion:reduce){.scl-chat,.scl-chat-fab,.scl-chat *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 @media (forced-colors:active){.scl-chat,.scl-chat-fab,.scl-chat-msg,.scl-chat-send,.scl-chat-chip{border:1px solid CanvasText}}
