@@ -102,6 +102,14 @@ Each phase is its own branch and PR; nothing is switched on without the owner.
 4. **All tiers on, $10 monthly cap, alert near the cap.** See "Cost cap and alerts" below. Confirmed 2026-11-10: the cap, the 80% and 100% emails with `[SCL AI Cap]` and `X-SCL-Category: ai-cap`, and the Send-to-the-team button always shown at the cap.
 5. **Chat to form hand-off must be seamless:** the visitor is taken to the form with everything filled in, or given a link. See "Chat to form hand-off".
 
+## What was built in Phase 1 (differences from the plan above)
+- **Cards are not signed.** The browser would only be running calls it could make by hand anyway, so a signature added nothing. The protection is that cards come from code (the visitor's own words must ask for the thing), ids and links come from our lookups, and `POST /api/chat/act` re-validates everything and requires the signed chat cookie, the tier switch, an hourly limit and the allowlist.
+- **Turnstile:** the chat cookie is proof of the one check, so `/api/chat/act` calls the weekly-email and removal logic with the check treated as satisfied; their own limits still apply.
+- **Plan these:** looks open the site's own shared-plan link (`/#night-<ids>`) instead of writing Favorites from the chat, because the widget stores nothing in the browser.
+- **Human requests:** "talk to a person" is answered with the Send to the team card even off topic, with no model call.
+- **Event hand-off:** the Start this event card opens `/add-event?from=chat&...`; `public/chatprefill.js` validates the values, keeps them through sign-in, and `run()` in `addflow.js` opens the form at the first step that still needs something (Review when complete).
+- Legal wording to add: `docs/ai-assistant-actions-legal-draft.md`.
+
 ## Chat to form hand-off (seamless)
 Owner decision: when the visitor is ready to finish something in a form (a home with photos, an event with missing details, a contest, a claim), the chat takes them there with everything already filled in. It is built on what the forms already do: `public/addflow.js` keeps answers in `localStorage` under each form's `persist` key (for example `scl-contest-draft`) and reopens a saved draft with `?draft=<id>` on the step they left.
 1. **Collect.** The assistant gathers the fields in conversation (name, dates, place, free or paid, description; for a home: who is posting, display name, season, address, details). Our code validates each one with the form's own rules (lengths, enums, dates, address) as they are given.
