@@ -694,6 +694,6 @@ test("the contest wizard, accounts and favorites sources match the current app",
   const { rankChunks } = await import("../functions/_lib/chatkb.js");
   const text = (q) => rankChunks(q, 3).map((c) => c.text).join(" ");
   assert.match(text("How do I run a contest? What are the steps?"), /Quick start \(recommended\)/);
-  assert.match(text("Do I need an account to add an event?"), /sign in to add an event/);
+  assert.match(text("Do I need an account to add an event?"), /(sign in to add an event|signed in to add an event)/);
   assert.match(text("Which maps apps work with Route these in Favorites? Waze?"), /Waze/);
 });
