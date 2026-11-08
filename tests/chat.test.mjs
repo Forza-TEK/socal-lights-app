@@ -713,3 +713,13 @@ test("refund questions get the published refund rules first, and the prompt says
   assert.match(RULES, /Make no promises about refunds/, "the no-promise line stays");
 });
 
+
+test("installer questions find the installer chunks (options, add a home, claim, share, quotes, Sponsor)", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const titles = (q) => rankChunks(q, 3).map((c) => c.title).join(" | ");
+  assert.match(titles("What options do installers have?"), /What an installer can do/);
+  assert.match(titles("Can an installer add homes they worked on?"), /Installers: add a home you installed/);
+  assert.match(titles("How does an installer claim and manage their profile?"), /Installers: claim and manage/);
+  assert.match(titles("How do installers get quote requests?"), /Installers: quote requests/);
+  assert.match(titles("How do I buy an installer Sponsor placement step by step?"), /Installers: Sponsor placements/);
+});

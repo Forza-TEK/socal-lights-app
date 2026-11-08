@@ -122,12 +122,16 @@ Each organizer writes the official rules and decides who wins, so for a specific
 **16. Can I pay to improve my chances of winning?**
 No. Payment never affects votes, rankings or winners. Voting and entering are free, and always will be.
 
-**17. How does an installer get a profile?**
-A homeowner can name the company that installed their lights, which links the display to the company.
-1. Open the home and tap the company name next to Installed by.
-2. If it is your company, claim the profile with your company email.
-3. Manage your details and logo, then open the Homes tab and tap Confirm for each home you really installed. A check mark tells visitors it is true.
-- Not your job? Tap Not ours and the name is removed from that home.
+**17. How does an installer get a profile, and what else can installers do?**
+Great question! Every lighting company gets a free profile, and there is plenty you can do with it:
+1. Add homes you installed: sign in, open Add, choose A lighting display, then A professional installer. Your company details fill in from your profile, and you confirm you have the homeowner's permission to show the address.
+2. Or let homeowners name you: their home shows Installed by with your company name and links to your profile.
+3. Claim your profile: open it, tap Claim this profile, and sign in with your company email. An email at your website's address is approved at once; any other email is checked by the site owner.
+4. Manage it at your manage page: details, areas served, logo, profile views and quote requests.
+5. On the Homes tab, tap Confirm on homes you really installed (they get a check mark), or Not ours to remove your name.
+- Confirmed homes can be edited by both you and the homeowner, and you both get an email for each change.
+- Visitors can ask for quotes from your profile, or from contests that name you as presenting installer.
+- Optional Sponsor placements (Banner, Top of the list, or both) are always labelled; see the Pricing page for prices.
 
 **18. I want my home taken off the map.**
 No problem, and you do not need an account. Open https://socallights.app/remove-home, enter the listing id or street address and your email, and send the request. We email you when it is done. You can also write to info@socallights.app.
