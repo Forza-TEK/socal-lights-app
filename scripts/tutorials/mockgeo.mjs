@@ -13,7 +13,7 @@ export const GEO = {
 };
 const key = (a) => String(a).split(",")[0].trim().toLowerCase();
 const q = (s) => "'" + String(s).replace(/'/g, "''") + "'";
-const sql = (cmd) => execFileSync("npx", ["wrangler", "d1", "execute", "socal-lights", "--local", "--command", cmd], { stdio: "ignore" });
+const sql = (cmd) => execFileSync("npx", ["wrangler", "d1", "execute", "socal-lights", "--local", ...(process.env.STATE_DIR ? ["--persist-to", process.env.STATE_DIR] : []), "--command", cmd], { stdio: "ignore" }); // STATE_DIR: the database copy of the port being recorded
 export async function fakeGeocode(page, userId = "u_org") {
   await page.route(`**/api/contests/${SLUG}/entries`, async (route) => {
     const req = route.request();
