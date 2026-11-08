@@ -209,3 +209,8 @@ For events, every Featured plan includes the gold-ringed Featured pin and badge.
 url: /help#sponsors
 keywords: logo logos add a logo upload sponsor logo installer logo photo
 An installer adds a company logo on the manage page under Your details. A contest organizer adds a sponsor's logo on the Sponsors tab when recording a sponsor, or the sponsor adds it on the private invite link. Logos show only after the organizer confirms the sponsor and chooses to show it. Photos for homes and events are added in the add form (take them at night, the first is the cover), and can be edited from your profile.
+
+## Photos: formats, size and tips
+url: /help/my-photo-will-not-upload
+keywords: photo photos picture size how big resolution format jpg png webp upload limit megabytes
+You can add up to 8 photos to a home. Photos must be JPG, PNG or WebP, and each one must be under 6 MB. You do not need to resize them: the form shrinks big phone photos for you before they upload, so a normal phone photo works. Take photos at night with the lights on; the first photo is the cover people see on the map. Homes can also add photos later by email. If a photo will not upload, check that it is a JPG, PNG or WebP and under 6 MB, then try again, and see the Help Center article "My photo will not upload".

@@ -11,7 +11,7 @@ import { readSettings, isLive, usageState, capReason, recordUsage, recordGap, ne
 import { parseMessages, classify, filterOutput, MESSAGES } from "../_lib/chatguard.js";
 import { buildContext, topicOf } from "../_lib/chatkb.js";
 import { runModel } from "../_lib/chatmodel.js";
-import { cardsFor, humanCard, wantsHuman, needsAccount } from "../_lib/chatcards.js";
+import { cardsFor, humanCard, wantsHuman, needsAccount, quickIntent } from "../_lib/chatcards.js";
 import { bumpAction } from "../_lib/chatactions.js";
 import { checkCapAlerts } from "../_lib/chatmail.js";
 
@@ -59,6 +59,8 @@ export async function onRequestPost({ request, env }) {
     await recordUsage(env, { chats: first ? 1 : 0, turns: 1 }); await bumpAction(env, "ask_human", "shown");
     return say("Of course. Write what you need in the box below and tap Send to the team: the team reads every message. If you add your email, they can reply to you.", { cards: [humanCard(last)] }, headers);
   }
+  // Tier 1 requests that read as off topic to the scope filter ("subscribe me", "this listing is outdated"): answer with the card, no model call
+  { const qi = quickIntent(last, settings); if (qi && classify(last).kind === "offtopic") { await recordUsage(env, { chats: first ? 1 : 0, turns: 1 }); for (const c of qi.cards) await bumpAction(env, c.action, "shown"); return say(qi.reply, { cards: qi.cards }, headers); } }
   // scope rules: no model call, no cost
   // The newest question must be in scope; an injection or personal data anywhere in the visitor's earlier messages is refused too (it would be sent to the model as history).
   const lastIdx = messages.length - 1;

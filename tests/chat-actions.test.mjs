@@ -204,3 +204,20 @@ test("chat to form hand-off: the Start this event card, and the form side only a
   const widget = fs.readFileSync(new URL("../public/chat.js", import.meta.url), "utf8");
   assert.match(widget, /add-event\|add-house\|add-contest/); assert.doesNotMatch(widget, /localStorage/, "the widget itself stores nothing");
 });
+
+test("off-topic-sounding requests for a Tier 1 card still get the card, with no model call", async () => {
+  const { env, calls } = setup();
+  const before = calls.length;
+  const sub = await ask(env, "subscribe me"); assert.ok(sub.body.cards.some((c) => c.action === "weekly_email")); assert.match(sub.body.reply, /Sign me up/);
+  const out = await ask(env, "this listing is outdated"); assert.ok(out.body.cards.some((c) => c.action === "report_problem"));
+  assert.equal(calls.length, before, "answered without the model");
+  const no = await ask(env, "unsubscribe me"); assert.ok(!(no.body.cards || []).some((c) => c.action === "weekly_email"));
+});
+
+test("casual phrasings that are about the site are in scope (phone number, donations, QR code, photo size, code expired) and nonsense still is not", async () => {
+  const { classify } = await import("../functions/_lib/chatguard.js");
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  for (const q of ["do you have a phone number", "do you take donations", "how do I get a QR code", "what size should photos be", "my code expired", "can I have two accounts", "can I bring a dog", "how do I change my name"]) assert.equal(classify(q).kind, "ok", q);
+  for (const q of ["what is the capital of France", "write me a poem about cats", "who won the football game"]) assert.notEqual(classify(q).kind, "ok", q);
+  assert.match(rankChunks("what size should photos be", 3).map((c) => c.title).join(" | "), /Photos: formats, size and tips/);
+});
