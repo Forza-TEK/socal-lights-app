@@ -50,7 +50,21 @@ const MOBCSS = `;window.__mobplace = true;(() => { const st = document.createEle
 const MSEL = (x) => x.replace(/^#t-plan$/, '#bnav [data-tab="plan"]').replace(/^#t-events$/, '#bnav [data-tab="events"]');
 const needsSheet = (s) => /#pbody|\.panel|data-route|data-nroute|#t-plan/.test((s.target || "") + " " + (s.do ? s.do.toString() : "") + " " + (s.post ? s.post.toString() : ""));
 const DRY = process.env.DRY === "1"; // dry run: walk every step to check each button and link exists, with no voice and no video
+// Signed in, the map's three-dots menu no longer holds Add, Contests, Tutorials or Help: they moved into the account circle's menu.
+// So when a video is recorded signed in, the "three dots, then menu item" pair of steps becomes "account circle, then menu item" (with its own narration).
+const ACCT_ITEM = { add: { href: "/add", label: "Add an event, home or contest", say: " That is where you add anything new: an event, a contest, or your own home." }, contests: { href: "/contests#mine", label: "Your contests", say: " That is where the contests you run, and the homes you entered, live." }, tutorials: { href: "/tutorials", label: "Tutorials", say: "" }, help: { href: "/help", label: "Help", say: "" } };
+export function accountMenuSteps(steps) {
+  return steps.map((s, i) => {
+    const nx = steps[i + 1], m = nx && typeof nx.target === "string" && /^#moremenu a\[href="\/(add|contests|tutorials|help)"\]$/.exec(nx.target);
+    if (s.target === "#morebtn" && m) return { ...s, target: "#acctbtn", cap: String(s.cap).replace("the three dots", "your account circle"),
+      say: String(s.say).replace(/See the three dots\? That is the menu(, and it is the doorway to everything else on the site)?\. Tap them\./, "See your picture, or your initial, in a circle? That is your account menu$1. Tap it.").replace(/tap the three dots/i, (x) => x.replace(/the three dots/i, "your account circle")) };
+    const pm = i > 0 && steps[i - 1].target === "#morebtn" && typeof s.target === "string" && /^#moremenu a\[href="\/(add|contests|tutorials|help)"\]$/.exec(s.target);
+    if (pm && typeof steps[i - 1].target === "string") { const it = ACCT_ITEM[pm[1]], old = { add: "Add", contests: "Contests", tutorials: "Tutorials", help: "Help" }[pm[1]];
+      return { ...s, target: `.acctmenu a[href="${it.href}"]`, cap: String(s.cap).replace(old, it.label), say: String(s.say).replace(new RegExp(`tap ${old}\\.[^]*$`), `tap ${it.label}.${it.say}`) }; }
+    return s; });
+}
 export async function record(spec) {
+  if (spec.cookie) spec.steps = accountMenuSteps(spec.steps);
   const w = `${WORK}/${spec.id}`; mkdirSync(w + "/wav", { recursive: true });
   const say = spec.steps.map((s) => s.say || ""); writeFileSync(w + "/texts.json", JSON.stringify(say));
   // Voice and picture stay together: when a step taps something and the narration goes on explaining afterwards, the narration is spoken in two parts, the tap happens right after the sentence that says "tap", and the explanation plays over the new screen
