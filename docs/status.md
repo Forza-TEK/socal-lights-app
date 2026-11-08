@@ -2,6 +2,10 @@
 
 _Last updated: 2026-11-08 (Help and Tutorials audit, all videos re-recorded)_
 
+## 2026-11-10 (AI assistant tone and format)
+- Assistant prompt (`RULES` in `chatkb.js`) now asks for a warm, upbeat but professional tone, one short lead-in then numbered steps and `- ` bullets (plain text, no bold or headings), under about 1000 characters. Output filters unchanged. Knowledge base rebuilt. 20 target Q&As for review: `docs/ai-assistant-sample-qa.md` (includes a to-do list of missing KB chunks).
+
+
 ## Help and Tutorials audit (2026-11-08)
 All 54 Help articles audited (43 updated by migration `0199_help_audit_2026-11-08.sql`, 11 already accurate; seed-only, Admin edits kept) and all 31 tutorial videos re-recorded, computer and phone versions. Details and recorder fixes: `docs/tutorial-updates.md`. Progress page: the "Help and Tutorials Progress" artifact.
 - **Open:** `public/manifest.webmanifest` shortcut "My night" should be "Favorites" (app code, not changed). The AI chat assistant is built but off by default (`docs/ai-assistant.md`).

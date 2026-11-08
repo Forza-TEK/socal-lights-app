@@ -661,3 +661,14 @@ test("events for the chat: tonight, tomorrow, this weekend and this week mean th
   const named = await eventRows({ DB }, "Is there a Lake Forest tree lighting?", "2026-11-06");
   assert.equal(named[0].id, "a");
 });
+
+test("the prompt asks for a warm tone and numbered steps, and the output filter keeps numbered and bulleted lines", async () => {
+  const { RULES } = await import("../functions/_lib/chatkb.js");
+  assert.match(RULES, /warm, upbeat/);
+  assert.match(RULES, /numbered steps/);
+  assert.match(RULES, /at most one emoji/);
+  assert.match(RULES, /Never state a price that is not written in PRICES/, "safety lines stay");
+  const out = filterOutput("Here is how:\n1. Open Add.\n2. Choose An event.\n- It is free.", {});
+  assert.equal(out.blocked, "");
+  assert.equal(out.text, "Here is how:\n1. Open Add.\n2. Choose An event.\n- It is free.");
+});
