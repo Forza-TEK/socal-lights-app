@@ -228,7 +228,13 @@
           "url": "/tutorials/run-passes.mp4",
           "length": "4:18",
           "captions": "/tutorials/run-passes.vtt",
-          "poster": "/tutorials/run-passes.jpg"
+          "poster": "/tutorials/run-passes.jpg",
+          "mobile": {
+            "url": "/tutorials/run-passes-mobile.mp4",
+            "poster": "/tutorials/run-passes-mobile.jpg",
+            "captions": "/tutorials/run-passes-mobile.vtt",
+            "length": "4:17"
+          }
         },
         {
           "id": "share",
