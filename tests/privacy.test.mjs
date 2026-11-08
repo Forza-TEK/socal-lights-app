@@ -257,6 +257,7 @@ const NAMED = {
   "challenges.cloudflare.com": "turnstile", "accounts.google.com": "sign in with google|continue with google|sign-in, if you choose", "oauth2.googleapis.com": "google", "openidconnect.googleapis.com": "google",
   "api.geoapify.com": "geoapify", "geocoding.geo.census.gov": "census", "nominatim.openstreetmap.org": "nominatim", "api.resend.com": "resend", "api.stripe.com": "stripe",
   "www.amazon.com": "amazon", "www.youtube-nocookie.com": "youtube", "player.vimeo.com": "vimeo", "cash.app": "cash app", "gateway.ai.cloudflare.com": "workers ai", "api.anthropic.com": "anthropic",
+  "cloudflare-dns.com": "cloudflare's public dns", // outreach deliverability check: receives only a domain name (the part after the @), never an address or a visitor's data; named in the policy anyway
   "www.google.com": "google maps", "maps.apple.com": "apple maps", "waze.com": "waze", "calendar.google.com": "google calendar",
 };
 // hosts that appear in the code but are not a data recipient: standards/namespace URLs, comments, credits, examples

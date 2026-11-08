@@ -1,11 +1,20 @@
 # Status
 
-_Last updated: 2026-11-08 (AI assistant built, OFF by default)_
+_Last updated: 2026-11-08 (outreach: server-side sequence timing and deliverability pre-check)_
+
+## Outreach: sequence timing, backfill, deliverability pre-check (2026-11-08; owner decision)
+Contract: `docs/monetization/grok-outreach-api.md` (updated), loop in the playbook 5b. Migration `0196_outreach_verify.sql` (`outreach_dns_cache`: domain, result, checked_at; `outreach_invalid`: address hash, reason). Additive and backward compatible.
+- **`sequence` on every check result:** `{ next_step: 0|1|2|null, due, due_on, reason }` from the stored `sent` events (earliest per step, any segment). Original; follow-up 1 due original + 4 days; follow-up 2 due original + 10 days (Pacific dates, `time.js`); after step 2 `sequence_finished`, never restarts. Any reply/bounce/complaint/unsubscribe or a status other than clear ends it. `due` only when clear and due today or at most 14 days overdue (else `overdue_hold`). A follow-up with no original on file is `missing_original` (not sent, owner decides).
+- **Backfill:** `POST /api/outreach/event` accepts `sent_at` (only with `sent`; real date, not future, within 120 days); one `sent` row per address and step, earliest date kept, repeats answer `duplicate:true`. New event `invalid` (+ `reason`) stores a hash only, does not suppress, and makes later checks answer the reason.
+- **`verify: true`** adds `deliverability` ok | invalid_syntax | no_mail_server | disposable | unknown: strict syntax, about 50 built-in disposable domains, DNS-over-HTTPS (cloudflare-dns.com, domain only) MX then A then AAAA, 2 s timeout (`OUTREACH_DNS_TIMEOUT_MS` can only lower it, used by tests), concurrency 5, at most 38 DNS fetches per call, at most 20 distinct uncached domains (else 400 `hold:true`), cache in D1 for 24 hours (only definitive answers). Failure or timeout is `unknown`, never `no_mail_server`. Does NOT prove a mailbox exists (no SMTP probing); a paid verifier can be added if bounces pass about 2%.
+- **Admin > Outreach reconcile:** shows how many are due today per step; the CSV has next step, due, due date and reason.
+- **Privacy:** policy names Cloudflare's public DNS (domain name only), "Updated November 8, 2026"; retention deletes `outreach_invalid` after 24 months (now 9 retention statements). Tests: `tests/outreach-sequence.test.mjs`; the contract test in `outreach.test.mjs` now expects the `sequence` key.
+- **Assumptions:** the 14-day overdue and day 4/10 rules are the owner's; a backfill earlier than a real send moves that step's date earlier; the DNS cache holds business domains only (free-mail domains are not looked up). **Risks:** DoH availability (falls back to `unknown`, sends continue); a very long 20-domain worst case may leave some domains `unknown` until the next call (the budget protects the 50-subrequest cap).
 
 ## AI assistant (2026-11-08; owner approved; branch work, OFF by default)
 Full doc: `docs/ai-assistant.md`. A chat widget (`public/chat.js`, `chat.css`) and `POST /api/chat` that answer site, contest (entering, voting, judging, passes, sponsors), price and event questions from our own public sources only. Workers AI by default (binding `AI` in `wrangler.toml`); Claude Haiku 5.5 is an env-switched alternative (`CHAT_PROVIDER=claude`, secret `ANTHROPIC_API_KEY`).
 - **Off until Admin > AI assistant is switched on.** Kill switch, monthly cap (default $0 = free neuron allowance only, max $10), chats per day, usage and "unanswered topics" shown in Admin. Per-visitor and overall rate limits, Turnstile once per visit.
-- **Counters only:** no message text, no IP. Migration `0196_chat_assistant.sql` (`chat_settings`, `chat_usage`, `chat_topics`).
+- **Counters only:** no message text, no IP. Migration `0198_chat_assistant.sql` (`chat_settings`, `chat_usage`, `chat_topics`).
 - **Prices only from the code exports; dollar figures and dates stripped from retrieved text and filtered from output.** Deferrals for disputes, legal, prizes, results/predictions; fixed general answer for anti-fraud questions.
 - **Knowledge base:** Help articles, curated `docs/ai-assistant-kb.md`, tutorials, page copy, Terms (quoted), live events and contests. Rebuild `functions/_lib/chatkb-data.js` with `node scripts/build-chat-kb.mjs` after changing those pages; a test fails if stale.
 - `privacy.html` and `terms.html` have an "AI assistant" section, updated November 8, 2026.

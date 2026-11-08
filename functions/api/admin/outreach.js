@@ -1,6 +1,6 @@
 // Admin > Outreach (behind requireAdmin through functions/api/admin/_middleware.js). Everything here is computed on the fly from hashes; no prospect address is stored or returned.
 // GET  /api/admin/outreach                       -> { api, suppression: { count, last }, results: [by segment and step], totals, conversions }
-// POST /api/admin/outreach { action: "reconcile", emails: [up to 500] } -> { counts, rows: [{ i, status, reasons }] }  (the page builds the CSV from its own copy of the list)
+// POST /api/admin/outreach { action: "reconcile", emails: [up to 500] } -> { counts, due: { 0, 1, 2 }, rows: [{ i, status, reasons, sequence }] }  (the page builds the CSV from its own copy of the list)
 import { json, err } from "../../_lib/util.js";
 import { checkEmails, outreachHashes, cleanEmail, SEGMENTS } from "../../_lib/outreach.js";
 import { ptDate } from "../../_lib/time.js";
@@ -84,7 +84,8 @@ export async function onRequestPost({ request, env }) {
   let r;
   try { r = await checkEmails(env, emails); } catch (e) { await logOp(env, "outreach", "reconcile failed (" + String(e && e.message).slice(0, 80) + ")"); return err(503, "The check could not be completed. Try again in a minute."); }
   const counts = { registered: 0, listing: 0, review: 0, suppressed: 0, clear: 0 };
-  for (const x of r.results) counts[x.status]++;
+  const due = { 0: 0, 1: 0, 2: 0 }; // how many are due to send today (or overdue by at most 14 days), by step
+  for (const x of r.results) { counts[x.status]++; if (x.sequence.due) due[x.sequence.next_step]++; }
   await logOp(env, "outreach", `reconcile n=${emails.length} registered=${counts.registered} listing=${counts.listing} review=${counts.review} suppressed=${counts.suppressed} clear=${counts.clear}`);
-  return json({ counts, total: emails.length, rows: r.results.map((x, i) => ({ i, status: x.status, reasons: x.reasons })) }, { headers: { "cache-control": "no-store" } });
+  return json({ counts, due, total: emails.length, rows: r.results.map((x, i) => ({ i, status: x.status, reasons: x.reasons, sequence: x.sequence })) }, { headers: { "cache-control": "no-store" } });
 }

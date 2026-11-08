@@ -33,7 +33,7 @@ The reply is filtered: any `$` amount not in our price list, or any date not in 
 Known limit: the price filter checks that an amount exists in our price list, not that it belongs to the right product. A small model could still attach the right number to the wrong plan. The PRICES block names each plan with its price to keep that rare; review test transcripts in preview before launch.
 
 ## Privacy: counters only
-No message text, no IP address, no visitor id is stored. D1 tables (`migrations/0196_chat_assistant.sql`):
+No message text, no IP address, no visitor id is stored. D1 tables (`migrations/0198_chat_assistant.sql`):
 - `chat_settings`: the switches and caps.
 - `chat_usage`: one row per UTC day of counts (chats, questions, tokens, neurons, Claude micro-dollars, stopped, capped, errors, gaps).
 - `chat_topics`: "unanswered topics": one count per day under a fixed bucket name (accounts, submit-listing, contest-setup, contest-enter-vote, sponsors, installers, featured-billing, map-location, notifications, privacy-terms, events, app, other) when nothing matched a question. The bucket comes from our own keyword list, never the visitor's words. Admin shows the top buckets of the last 30 days: write help for those first.
@@ -65,7 +65,7 @@ The counted cost is an estimate; the Cloudflare and Anthropic dashboards are the
 | `CHAT_GLOBAL_PER_HOUR`, `CHAT_SESSION_SECRET` | optional | hourly ceiling; signing key for the cookie (falls back to `THROTTLE_SALT`) |
 
 ## Owner steps to launch
-1. Merge the PR (migrations apply automatically from `main`: `0196_chat_assistant.sql`). The site deploys with the `AI` binding from `wrangler.toml`. The assistant is still OFF.
+1. Merge the PR (migrations apply automatically from `main`: `0198_chat_assistant.sql`). The site deploys with the `AI` binding from `wrangler.toml`. The assistant is still OFF.
 2. Check the binding (click path in case the dashboard shows it missing): Cloudflare dashboard > Workers & Pages > `socal-lights` > Settings > Bindings > Add > Workers AI > Variable name `AI` > Save; do it for Production and, if you want to test there, Preview. If the Settings page says bindings are managed by `wrangler.toml`, nothing is needed.
 3. Test on a preview deployment first (preview has its own database): Admin > AI assistant > Turn the assistant on, open the preview site, ask the 20 or so questions you care about, and read the answers.
 4. Production: Admin > AI assistant > Turn the assistant on. Leave the monthly cap at $0 to stay inside the free allowance. Watch Chats today, Stopped today and Unanswered topics for a week.

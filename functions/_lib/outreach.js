@@ -6,13 +6,38 @@
 //
 // Statuses (strongest first): suppressed > registered > listing > review > clear. Anything but "clear" means: do NOT send acquisition mail.
 import { sha256, normEmail } from "./auth.js";
-import { ptToday } from "./time.js";
+import { ptToday, shiftDay } from "./time.js";
 import { clean } from "./util.js";
 
 export const SEGMENTS = ["installer", "contest", "event_host"];
 export const REASONS = ["reply", "unsubscribe", "bounce", "complaint", "manual"];
 export const EVENTS = ["sent", "reply", "bounce", "complaint", "unsubscribe"];
 export const MAX_EMAILS = 50, RATE_PER_MIN = 60;
+export const INVALID_REASONS = ["invalid_syntax", "no_mail_server", "disposable"];
+
+// ---- sequence timing (owner-approved 2026-11-08): original, follow-up 1 on day 4, follow-up 2 on day 10 (both counted from the ORIGINAL), then finished for good ----
+export const FOLLOWUP_DAYS = { 1: 4, 2: 10 }, OVERDUE_MAX_DAYS = 14;
+const STOP_EVENTS = ["reply", "bounce", "complaint", "unsubscribe"];
+const daysBetween = (a, b) => Math.round((Date.parse(a + "T12:00:00Z") - Date.parse(b + "T12:00:00Z")) / 86400_000); // a minus b, by the calendar
+// events: this address's rows [{ event, step, day }] (any segment: a segment mismatch is ignored); status: its verdict; today: the Pacific date.
+// Answers { next_step: 0|1|2|null, due, due_on, reason }. due is true only when status is "clear" and the step is due today or at most 14 days overdue.
+export function sequenceFor(events, status, today) {
+  const none = (reason) => ({ next_step: null, due: false, due_on: null, reason });
+  const stop = events.find((e) => STOP_EVENTS.includes(e.event));
+  if (stop) return none(stop.event);
+  if (status !== "clear") return none("status_" + status);
+  const first = {}; // earliest 'sent' day per step
+  for (const e of events) if (e.event === "sent" && (first[e.step] === undefined || e.day < first[e.step])) first[e.step] = e.day;
+  if (first[2] !== undefined) return none("sequence_finished");
+  let step, dueOn;
+  if (first[0] === undefined) {
+    if (first[1] !== undefined) return none("missing_original"); // a follow-up on file without an original: do not guess, the owner decides
+    step = 0; dueOn = today;
+  } else { step = first[1] === undefined ? 1 : 2; dueOn = shiftDay(first[0], FOLLOWUP_DAYS[step]); }
+  if (dueOn > today) return { next_step: step, due: false, due_on: dueOn, reason: "not_due_yet" };
+  if (daysBetween(today, dueOn) > OVERDUE_MAX_DAYS) return { next_step: step, due: false, due_on: dueOn, reason: "overdue_hold" };
+  return { next_step: step, due: true, due_on: dueOn, reason: step === 0 ? "no_original_sent_yet" : "due" };
+}
 
 const cleanEmail = (e) => String(e == null ? "" : e).trim().toLowerCase();
 const saltOf = (env) => (env && (env.OUTREACH_SALT || env.THROTTLE_SALT)) || "scl-outreach";
@@ -69,19 +94,19 @@ const qs = (n) => Array(n).fill("?").join(",");
 // At most 50 addresses per database round trip: every table is one statement of at most 90 bound parameters, and ALL statements of a slice go in ONE D1 batch (one outgoing call).
 // Throws on ANY failure: the caller must answer "hold".
 export async function checkEmails(env, emails, domains = []) {
-  const out = [], domOut = [];
+  const out = [], domOut = [], today = ptToday();
   const list = emails.map(cleanEmail);
   const doms = [...new Set(domains.map(cleanDomain).filter(Boolean))];
   const first = slices(list, MAX_EMAILS);
   for (let si = 0; si < Math.max(first.length, doms.length ? 1 : 0); si++) {
     const part = first[si] || [];
-    const r = await checkSlice(env, part, si === 0 ? doms : []);
+    const r = await checkSlice(env, part, si === 0 ? doms : [], today);
     out.push(...r.rows); domOut.push(...r.domains);
   }
   return { results: out, domains: domOut };
 }
 
-async function checkSlice(env, part, extraDomains) {
+async function checkSlice(env, part, extraDomains, today) {
   const info = part.map((e) => ({ e, ok: validEmail(e), n: validEmail(e) ? normEmail(e) || e : e }));
   const cands = [...new Set(info.filter((x) => x.ok).flatMap((x) => [x.e, x.n]))];
   const hashes = await Promise.all(info.map((x) => (x.ok ? outreachHashes(env, x.e) : { h: "", n: "" })));
@@ -96,16 +121,23 @@ async function checkSlice(env, part, extraDomains) {
     EXACT.forEach(([, , table, col, extra], i) => add("x" + i, `SELECT DISTINCT lower(${col}) AS e FROM ${table} WHERE lower(${col}) IN (${qs(chunk.length)})${extra ? " AND " + extra : ""}`, chunk));
   }
   for (const chunk of slices(hashSet, 90)) add("sup", `SELECT email_hash FROM outreach_suppressions WHERE email_hash IN (${qs(chunk.length)})`, chunk);
+  for (const chunk of slices(hashSet, 90)) {
+    add("ev1", `SELECT id, email_hash, alias_hash, event, step, day FROM outreach_events WHERE email_hash IN (${qs(chunk.length)})`, chunk);
+    add("ev2", `SELECT id, email_hash, alias_hash, event, step, day FROM outreach_events WHERE alias_hash IN (${qs(chunk.length)})`, chunk);
+    add("inv", `SELECT email_hash, reason FROM outreach_invalid WHERE email_hash IN (${qs(chunk.length)})`, chunk);
+  }
   for (const chunk of slices(domList, 90)) add("udom", `SELECT DISTINCT d FROM (SELECT lower(substr(email, instr(email, '@') + 1)) AS d FROM users) WHERE d IN (${qs(chunk.length)})`, chunk);
   for (const chunk of slices(siteDoms, 45)) SITES.forEach(([table, col], i) => add("s" + i, `SELECT lower(${col}) AS w FROM ${table} WHERE ${col} != '' AND (${chunk.map(() => `lower(${col}) LIKE ?`).join(" OR ")}) LIMIT 400`, chunk.map((d) => "%" + d.replace(/[%_]/g, "") + "%")));
 
   const res = stmts.length ? await env.DB.batch(stmts.map((s) => s.stmt)) : [];
   if (!Array.isArray(res) || res.length !== stmts.length) throw new Error("outreach lookup returned an unexpected shape");
-  const hit = EXACT.map(() => new Set()), supSet = new Set(), userDoms = new Set(), siteHosts = SITES.map(() => new Set());
+  const evByHash = new Map(), invByHash = new Map(), hit = EXACT.map(() => new Set()), supSet = new Set(), userDoms = new Set(), siteHosts = SITES.map(() => new Set());
   stmts.forEach((s, k) => {
     const rows = res[k] && res[k].results;
     if (!Array.isArray(rows)) throw new Error("outreach lookup returned no rows array");
     if (s.tag === "sup") rows.forEach((r) => supSet.add(r.email_hash));
+    else if (s.tag === "ev1" || s.tag === "ev2") rows.forEach((r) => { for (const h of [r.email_hash, r.alias_hash]) if (h) (evByHash.get(h) || evByHash.set(h, new Map()).get(h)).set(r.id, r); });
+    else if (s.tag === "inv") rows.forEach((r) => invByHash.set(r.email_hash, r.reason));
     else if (s.tag === "udom") rows.forEach((r) => userDoms.add(r.d));
     else if (s.tag[0] === "x") rows.forEach((r) => hit[+s.tag.slice(1)].add(r.e));
     else rows.forEach((r) => { const h = hostOf(r.w); if (h) siteHosts[+s.tag.slice(1)].add(h); });
@@ -121,14 +153,16 @@ async function checkSlice(env, part, extraDomains) {
 
   const rows = info.map((x, idx) => {
     const hash_prefix = x.ok ? hashes[idx].h.slice(0, 8) : "";
-    if (!x.ok) return { hash_prefix, status: "review", reasons: ["invalid_address"] };
+    if (!x.ok) return { hash_prefix, status: "review", reasons: ["invalid_address"], invalid: "", sequence: sequenceFor([], "review", today) };
     let status = "clear"; const reasons = [];
     const bump = (s, r) => { if (!reasons.includes(r)) reasons.push(r); if (RANK[s] > RANK[status]) status = s; };
     EXACT.forEach(([kind, reason], i) => { if (hit[i].has(x.e) || hit[i].has(x.n)) bump(kind, reason); });
     if (supSet.has(hashes[idx].h) || supSet.has(hashes[idx].n)) bump("suppressed", "suppression_list");
     const d = domainOf(x.e);
     if (!FREE_MAIL.has(d)) for (const r of verdict(d)) bump("review", r);
-    return { hash_prefix, status, reasons };
+    const evs = new Map(); for (const h of [hashes[idx].h, hashes[idx].n]) for (const [id, r] of evByHash.get(h) || []) evs.set(id, r);
+    const invalid = invByHash.get(hashes[idx].h) || invByHash.get(hashes[idx].n) || "";
+    return { hash_prefix, status, reasons, invalid, sequence: sequenceFor([...evs.values()], status, today) };
   });
   const domains = extraDomains.map((d) => {
     if (FREE_MAIL.has(d)) return { domain: d, status: "clear", reasons: ["free_mail_domain_not_checked"] };

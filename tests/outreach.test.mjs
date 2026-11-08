@@ -74,7 +74,7 @@ test("a person nobody knows is clear, and the response has the contract's shape"
   const r = await chk(env, ["  Nobody@Example.COM "]);
   assert.equal(r.status, 200);
   const v = r.body.results[0];
-  assert.deepEqual(Object.keys(v).sort(), ["email_hash_prefix", "i", "reasons", "status"]);
+  assert.deepEqual(Object.keys(v).sort(), ["email_hash_prefix", "i", "reasons", "sequence", "status"]); // sequence was added later (additive); deliverability only with verify
   assert.equal(v.status, "clear"); assert.deepEqual(v.reasons, []); assert.match(v.email_hash_prefix, /^[0-9a-f]{8}$/);
   assert.equal(v.email_hash_prefix, (await outreachHashes(env, "nobody@example.com")).h.slice(0, 8), "lowercased and trimmed before hashing");
 });
