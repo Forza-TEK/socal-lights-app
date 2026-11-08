@@ -368,14 +368,14 @@
           "title": "Record a sponsor on your contest page",
           "desc": "Record a sponsor and show it on the contest page.",
           "url": "/tutorials/sponsors-add.mp4",
-          "length": "2:17",
+          "length": "2:04",
           "captions": "/tutorials/sponsors-add.vtt",
           "poster": "/tutorials/sponsors-add.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-add-mobile.mp4",
             "poster": "/tutorials/sponsors-add-mobile.jpg",
             "captions": "/tutorials/sponsors-add-mobile.vtt",
-            "length": "2:19"
+            "length": "2:05"
           }
         },
         {
@@ -428,14 +428,14 @@
           "title": "Sponsor your installer company",
           "desc": "Banner, Top of the list, or both: pick your company, check the dates, and stop at the secure payment page.",
           "url": "/tutorials/sponsors-sponsor.mp4",
-          "length": "2:25",
+          "length": "2:21",
           "captions": "/tutorials/sponsors-sponsor.vtt",
           "poster": "/tutorials/sponsors-sponsor.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-sponsor-mobile.mp4",
             "poster": "/tutorials/sponsors-sponsor-mobile.jpg",
             "captions": "/tutorials/sponsors-sponsor-mobile.vtt",
-            "length": "2:24"
+            "length": "2:20"
           }
         }
       ]
@@ -450,14 +450,14 @@
           "title": "Add an event to the map",
           "desc": "Share a tree lighting, market, parade or haunted house.",
           "url": "/tutorials/post-event.mp4",
-          "length": "2:20",
+          "length": "2:34",
           "captions": "/tutorials/post-event.vtt",
           "poster": "/tutorials/post-event.jpg",
           "mobile": {
             "url": "/tutorials/post-event-mobile.mp4",
             "poster": "/tutorials/post-event-mobile.jpg",
             "captions": "/tutorials/post-event-mobile.vtt",
-            "length": "2:18"
+            "length": "2:34"
           }
         },
         {
