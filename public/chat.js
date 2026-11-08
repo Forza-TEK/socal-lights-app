@@ -5,7 +5,7 @@
   "use strict";
   if (window.__sclChat) return;
   window.__sclChat = true;
-  var CSS = "/chat.css?v=20261108b", MAX = 500, TURNS = 6;
+  var CSS = "/chat.css?v=20261108c", MAX = 500, TURNS = 6;
   var cfgP = window.__pre && window.__pre["/api/config"];
   (cfgP || fetch("/api/config").then(function (r) { return r.json(); })).then(function (c) { if (c && c.chatEnabled) start(c); }).catch(function () {});
 

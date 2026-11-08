@@ -751,3 +751,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Day mode: the page background is now white (was warm off-white #f6f4f0) on the map and every page, like the admin page. Dark mode unchanged. Browser theme-colour meta updated to match. Asset ?v= values bumped (styles.css, addflow.css, chrome.js, addflow.js, appshell.js, app.js).
 
 - Emails: the page behind the email card is white (was cream) and the list and code boxes are a neutral light grey, to match the white day-mode app. All 56 emails rendered and checked at 375px and 700px wide: no sideways overflow, no stray placeholders.
+
+- "Ask SoCal Lights" button: on phones (600px and narrower) it is only the round question-mark button (48px); the words stay for screen readers. Desktop unchanged.
