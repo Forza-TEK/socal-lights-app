@@ -1,11 +1,13 @@
 /* AI assistant widget. Loads nothing visible unless /api/config says chatEnabled (off by default; Admin > AI assistant).
    Accessible: a real button opens a modal dialog with a focus trap, Esc closes it and returns focus, replies are announced through a polite live region.
-   Nothing is stored in the browser: the conversation lives in memory only and goes when the page closes. Replies are inserted as text, never as HTML. */
+   The conversation is kept in this browser tab only (sessionStorage) so it survives moving between pages of the site; it goes when the tab closes or on "Start over". Nothing is kept on our servers.
+   Replies are inserted as text, never as HTML. */
 (function () {
   "use strict";
   if (window.__sclChat) return;
   window.__sclChat = true;
-  var CSS = "/chat.css?v=20261108c", MAX = 500, TURNS = 6;
+  var CSS = "/chat.css?v=20261110a", MAX = 500, TURNS = 6, KEEP = 40, KEY = "scl-chat";
+  var store = { get: function () { try { var v = JSON.parse(sessionStorage.getItem(KEY) || "null"); return v && Array.isArray(v.log) && Array.isArray(v.h) ? v : null; } catch (e) { return null; } }, set: function (v) { try { sessionStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} }, clear: function () { try { sessionStorage.removeItem(KEY); } catch (e) {} } };
   var cfgP = window.__pre && window.__pre["/api/config"];
   (cfgP || fetch("/api/config").then(function (r) { return r.json(); })).then(function (c) { if (c && c.chatEnabled) start(c); }).catch(function () {});
 
@@ -35,7 +37,7 @@
   function start(cfg) {
     var link = el("link", { rel: "stylesheet", href: CSS });
     document.head.appendChild(link);
-    var history = [], busy = false, verified = false, token = "", widget = null, tsKey = cfg.turnstileSiteKey || "", tsLoaded = false, opener = null;
+    var saved = store.get() || { h: [], log: [], v: false }, history = saved.h.slice(-KEEP), busy = false, verified = !!saved.v, token = "", widget = null, tsKey = cfg.turnstileSiteKey || "", tsLoaded = false, opener = null;
 
     var fab = el("button", { type: "button", class: "scl-chat-fab", "aria-haspopup": "dialog", "aria-expanded": "false", "aria-controls": "scl-chat" }, [
       el("span", { class: "scl-chat-fab-ic", "aria-hidden": "true", text: "?" }), el("span", { text: "Ask SoCal Lights" })]);
@@ -45,7 +47,7 @@
     var note = el("p", { class: "scl-chat-note" });
     note.appendChild(document.createTextNode("This is an automated AI assistant, not a person. It can be wrong, so check prices on "));
     note.appendChild(el("a", { href: "/pricing", text: "Pricing" }));
-    note.appendChild(document.createTextNode(". Please don't enter personal information. Chats are not saved. "));
+    note.appendChild(document.createTextNode(". Please don't enter personal information. Your chat stays in this browser tab only and is erased when you close the tab or tap Start over. "));
     note.appendChild(el("a", { href: "/privacy#ai-assistant", text: "Privacy" }));
     note.appendChild(document.createTextNode(" · "));
     note.appendChild(el("a", { href: "mailto:info@socallights.app", text: "Email us" }));
@@ -64,7 +66,9 @@
     document.body.appendChild(fab);
     document.body.appendChild(panel);
 
-    function say(role, text) {
+    function keep(role, text) { saved.log.push({ r: role, t: text }); saved.log = saved.log.slice(-KEEP); saved.h = history.slice(-KEEP); saved.v = verified; store.set(saved); }
+    function say(role, text, quiet) {
+      if (!quiet) keep(role, text);
       var p = el("p", { class: "scl-chat-msg scl-chat-" + role });
       var who = el("span", { class: "scl-chat-who", text: role === "user" ? "You: " : "SoCal Lights AI: " });
       p.appendChild(who);
@@ -73,6 +77,9 @@
       log.scrollTop = log.scrollHeight;
       return p;
     }
+    // coming back from another page of the site: put the earlier conversation back (the panel stays closed until the person opens it)
+    saved.log.forEach(function (m) { say(m.r, m.t, true); });
+    if (saved.log.some(function (m) { return m.r === "user"; })) chips.hidden = true;
     ["How much does it cost to feature my event?", "How do I add my home?", "What events are on this weekend?"].forEach(function (q) {
       var b = el("button", { type: "button", class: "scl-chat-chip", text: q });
       b.addEventListener("click", function () { input.value = q; submit(); });
@@ -97,8 +104,8 @@
       var q = input.value.replace(/\s+/g, " ").trim();
       if (!q || busy) return;
       if (!verified && tsKey && !token) { status.textContent = "Please finish the quick check first."; return; }
-      say("user", q.slice(0, MAX));
       history.push({ role: "user", content: q.slice(0, MAX) });
+      say("user", q.slice(0, MAX));
       input.value = "";
       chips.hidden = true;
       setBusy(true);
@@ -118,7 +125,7 @@
     }
     form.addEventListener("submit", function (e) { e.preventDefault(); submit(); });
     input.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); } });
-    reset.addEventListener("click", function () { history = []; log.textContent = ""; chips.hidden = false; status.textContent = ""; input.focus(); });
+    reset.addEventListener("click", function () { history = []; saved = { h: [], log: [], v: verified }; store.clear(); log.textContent = ""; chips.hidden = false; status.textContent = ""; input.focus(); });
 
     function focusables() { return [].slice.call(panel.querySelectorAll("a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), iframe, [tabindex]:not([tabindex='-1'])")).filter(function (n) { return !n.hidden && n.offsetParent !== null; }); }
     function open() {

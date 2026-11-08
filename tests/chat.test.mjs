@@ -615,7 +615,8 @@ test("wiring: pages load the widget with a versioned tag, the widget is inert un
   assert.ok(/<script src="\/chat\.js\?v=[0-9a-z]+" defer><\/script>/.test(idx));
   assert.ok(js.includes("c.chatEnabled") && js.includes('role: "log"') && js.includes('"aria-live": "polite"') && js.includes('"aria-modal": "true"') && js.includes("Escape"));
   assert.ok(!/innerHTML/.test(js), "replies are inserted as text, never as HTML");
-  assert.ok(!/localStorage|sessionStorage|document\.cookie/.test(js), "nothing is stored in the browser");
+  assert.ok(!/localStorage|document\.cookie/.test(js), "nothing lasting is stored in the browser: no localStorage, no cookie");
+  assert.ok(js.includes("sessionStorage") && js.includes("Start over") && /sessionStorage\.removeItem/.test(js), "the chat is kept in this tab only, so it survives page changes, and Start over erases it");
   assert.ok(/\[ai\]\s*\nbinding = "AI"/.test(toml) && /\[env\.preview\.ai\]\s*\nbinding = "AI"/.test(toml));
   const css = readFileSync("public/chat.css", "utf8");
   assert.ok(css.includes('data-theme="dark"') && css.includes("prefers-reduced-motion") && css.includes("min-height:44px"));
@@ -637,4 +638,26 @@ test("'how do I add my home' finds the regular add-a-home guide, not only the co
     const top = rankChunks(q, 2).map((c) => c.title).join(" | ");
     assert.ok(/Adding your home to the map/.test(top), q + " => " + top);
   }
+});
+
+// ---------------------------------------------------------------- "what is on this weekend?"
+test("events for the chat: tonight, tomorrow, this weekend and this week mean those dates, and only events running then are offered", async () => {
+  const { dateWindow, eventRows } = await import("../functions/_lib/chatkb.js");
+  assert.deepEqual(dateWindow("What events are on this weekend?", "2026-11-04"), ["2026-11-07", "2026-11-08"], "Wednesday: the coming Saturday and Sunday");
+  assert.deepEqual(dateWindow("anything this weekend", "2026-11-06"), ["2026-11-06", "2026-11-08"], "Friday: tonight through Sunday");
+  assert.deepEqual(dateWindow("anything this weekend", "2026-11-07"), ["2026-11-07", "2026-11-08"]);
+  assert.deepEqual(dateWindow("anything this weekend", "2026-11-08"), ["2026-11-08", "2026-11-08"], "Sunday: just today");
+  assert.deepEqual(dateWindow("what is on tomorrow", "2026-11-08"), ["2026-11-09", "2026-11-09"]);
+  assert.deepEqual(dateWindow("what is on tonight", "2026-11-08"), ["2026-11-08", "2026-11-08"]);
+  assert.deepEqual(dateWindow("events this week", "2026-11-08"), ["2026-11-08", "2026-11-14"]);
+  assert.equal(dateWindow("Lake Forest tree lighting", "2026-11-08"), null);
+  const { DB, raw } = makeDB(); raw.exec("DELETE FROM events");
+  const add = (id, name, s, e) => raw.prepare("INSERT INTO events (id,name,county,city,type,start_date,end_date,lat,lng,url,status) VALUES (?,?,?,?,?,?,?,?,?,?,?)").run(id, name, "Orange", "Lake Forest", "tree-lighting", s, e, 33.6, -117.7, "https://x.example/" + id, "confirmed");
+  add("a", "Lake Forest Tree Lighting Ceremony", "2026-11-07", "2026-11-07");
+  add("b", "Season-long Lights Walk", "2026-11-01", "2027-01-05");
+  add("c", "Next Month Parade", "2026-12-12", "2026-12-12");
+  const rows = await eventRows({ DB }, "What events are on this weekend?", "2026-11-06");
+  assert.deepEqual(rows.map((r) => r.id).sort(), ["a", "b"], "the one-day event and the season-long one, not next month's parade");
+  const named = await eventRows({ DB }, "Is there a Lake Forest tree lighting?", "2026-11-06");
+  assert.equal(named[0].id, "a");
 });

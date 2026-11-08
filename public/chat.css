@@ -47,6 +47,7 @@
   /* only the circle with the question mark shows; the words stay for screen readers */
   .scl-chat-fab>span:not(.scl-chat-fab-ic){position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 }
+@media (max-width:699px){body.sh-page .scl-chat-fab{bottom:calc(76px + env(safe-area-inset-bottom,0px))}}
 @media (prefers-reduced-motion:reduce){.scl-chat,.scl-chat-fab,.scl-chat *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 @media (forced-colors:active){.scl-chat,.scl-chat-fab,.scl-chat-msg,.scl-chat-send,.scl-chat-chip{border:1px solid CanvasText}}
 @media print{.scl-chat,.scl-chat-fab{display:none!important}}
