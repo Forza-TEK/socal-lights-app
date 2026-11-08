@@ -135,7 +135,10 @@ S["edit-entry"] = { id: "edit-entry", file: "edit-entry", cookie: ck.u_mine, ...
 S.profile = { id: "profile", file: "profile", cookie: ck.u_mine, ...MAPSPEC, steps: [
   hook(EE, "Your profile", "Drafts, contests, badges, and your account", "In this video, you will tour your profile: your saved drafts, your contests, the badges your home has won, and your account settings. We start on the map."),
   ...openShort(),
-  ...navSteps([target("Tap the person icon", "Your profile is one tap from the map. Look at the top of the map, and tap the person icon, next to the three dots.", "#acctbtn", { after: 2000 })]),
+  ...navSteps([
+    target("Tap your account circle", "Your profile is two taps from the map. Look at the top of the map, and tap your picture, or your initial, in the circle.", "#acctbtn", { after: 1200 }),
+    target("Tap Your profile", "In the menu, tap Your profile.", '.acctmenu a[href="/profile"]', { after: 2000 }),
+  ]),
   target("Drafts", "Drafts lists anything you started and saved, like an event or a contest you did not finish. Because it is saved to your account, you can finish it later, on any device.", "text=Our new light show", { after: 600, poster: true }),
   target("Tap Contests", "Tap Contests. This lists the contests you run, with buttons to manage each one or view its page, and below that, the homes you entered in other people's contests, with where each one stands.", nav("contests"), { after: 1800 }),
   target("Tap Badges", "Tap Badges. When your home wins a contest, it earns a badge, and a crown on the map. All the awards your home has won are listed here, from every year.", nav("badges"), { after: 1800 }),

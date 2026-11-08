@@ -3,6 +3,7 @@
 # Usage: [MOBILE=1] [VOICE_NAME=...] scripts/tutorials/rec1.sh <id>...
 cd /home/user/socal-lights-app
 S=${S:-/tmp/claude-0/-home-user-socal-lights-app/a6006ced-60e4-514a-904a-06730a07b2af/scratchpad}
+export STATE_DIR=/tmp/state-${PORT:-8788}
 PORT=${PORT:-8788}; SUF=""; PERSIST="--persist-to /tmp/state-$PORT"; [ "$PORT" != "8788" ] && { SUF="-$PORT"; export BASE=http://localhost:$PORT; }  # every port has its own database copy; build one with: npx wrangler d1 migrations apply socal-lights --local --persist-to /tmp/state-<port>
 OUTD=$S/out; WORKD=$S/work$SUF; [ "$MOBILE" = "1" ] && { OUTD=$S/outm; WORKD=$S/workm$SUF; }
 export PLAYWRIGHT_PATH=/usr/local/lib/node_modules_global/playwright VOICE=$([ "$TTS_ENGINE" = "kokoro" ] && echo $S/kokoro || echo ${VOICE:-$S/voice/en_US-hfc_female-medium.onnx}) COOKIES=${DEMO:-$S/demo2}/cookies.json WORK=$WORKD OUT=$OUTD LOGO=$S/assets/oak-hill-hardware.png LENGTH_SCALE=${LENGTH_SCALE:-1.15} MOBILE=${MOBILE:-0}
@@ -12,5 +13,6 @@ for id in "$@"; do
   npx wrangler d1 execute socal-lights --local $PERSIST --file ${DEMO:-$S/demo2}/seed.sql >/dev/null 2>&1
   [ "$id" = "announce" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file ${DEMO:-$S/demo2}/judged.sql >/dev/null 2>&1
   [ "$id" = "installer" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-installer.sql >/dev/null 2>&1
+  [ "$id" = "add-homes" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-add-homes.sql >/dev/null 2>&1
   echo "== $id"; node scripts/tutorials/videos2.mjs $id 2>&1 | grep -v "^\s*at \|Warning\|Reparsing\|To eliminate\|trace-warnings" | tail -5
 done
