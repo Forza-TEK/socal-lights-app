@@ -1,6 +1,16 @@
 # Status
 
-_Last updated: 2026-11-08 (Help and Tutorials audit, all videos re-recorded)_
+_Last updated: 2026-11-08 (Cloudflare usage panel made plan-aware for Workers Paid)_
+
+## Cloudflare usage is plan-aware: Workers Paid (2026-11-08)
+The owner upgraded to Workers Paid ($5/month) after the free-tier D1 rows-read outage; the panel, digest and check had still compared against free daily limits (false "limit reached"). Branch work, PR to `main` (not merged by the agent).
+- **Plan setting.** `CLOUDFLARE_PLAN` (`wrangler.toml` `[vars]`, code default `paid`; `"free"` restores the old behaviour, tested). `CLOUDFLARE_BILLING_DAY` (1-28, default 1, **unverified**: the owner must check the real cycle day in Billing). Resend stays free-plan (`RESEND_PLAN`).
+- **Numbers (`functions/_lib/cflimits.js`, sources and fetch date 2026-11-08 in the header).** Paid: D1 rows read 25 billion/month then $0.001 per million; rows written 50 million/month then $1.00 per million; D1 storage 5 GB then $0.75 per GB-month; requests 10 million/month then $0.30 per million. R2 unchanged on both plans (10 GB, 1M Class A, 10M Class B; $0.015/GB-month, $4.50 and $0.36 per million). Not tracked: Workers CPU-ms allowance (30 million/month, $0.02 per million).
+- **Query.** `buildQuery`/`parseAnalytics` take the billing-month start (UTC) and return month sums alongside today and the 7-day trend; the D1 cache is keyed by day and period start.
+- **Panel.** Header "Plan: Workers Paid ($5/month)", billing month start, estimated extra charges so far; cards read "X of Y included this month", show today, a cost estimate once past the included amount, and the tag "Extra charges start" at 100% (thresholds still 70/90/100%). Free plan shows the daily limits as before. `admin.js` `?v=20261111d`.
+- **Alerts.** Digest section "Cloudflare Workers Paid usage" with plan line and estimate, subject `USAGE` (free plan or a logged quota error: `LIMIT`); `POST /api/usage-check` also answers `plan`, `estimatedOverageUsd`, `hardStop`; `usage-issue.sh` issue is now "Cloudflare usage limit reached or near" (an open issue with the old free-plan title is reused and renamed) with paid wording.
+- **Tests.** `tests/cf-usage-paid.test.mjs` (mocked GraphQL, no real API); `tests/cf-usage.test.mjs` pins `CLOUDFLARE_PLAN: "free"`. `tests/chat.test.mjs` "generated knowledge base file is current" was already failing before this change (stale `functions/_lib/chatkb-data.js`; fix: `node scripts/build-chat-kb.mjs`), left alone.
+- **Owner to verify in Cloudflare dashboard:** Billing shows Workers Paid and the billing cycle day (set `CLOUDFLARE_BILLING_DAY`); D1 and Workers usage on the invoice roughly match the panel; the D1 rows-read count after the outage (inefficient queries still cost money past 25 billion, but at $0.001 per million); whether Pages Functions requests bill under Workers (the pricing page says so). Set a Billing notification/budget alert in Cloudflare for a safety net.
 
 ## Help and Tutorials audit (2026-11-08)
 All 54 Help articles audited (43 updated by migration `0199_help_audit_2026-11-08.sql`, 11 already accurate; seed-only, Admin edits kept) and all 31 tutorial videos re-recorded, computer and phone versions. Details and recorder fixes: `docs/tutorial-updates.md`. Progress page: the "Help and Tutorials Progress" artifact.
