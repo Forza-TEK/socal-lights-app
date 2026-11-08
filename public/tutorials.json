@@ -10,14 +10,14 @@
           "title": "Find lights near me",
           "desc": "Use your location, the seasons, city search and filters to find what is on near you.",
           "url": "/tutorials/find-map.mp4",
-          "length": "2:34",
+          "length": "2:57",
           "captions": "/tutorials/find-map.vtt",
           "poster": "/tutorials/find-map.jpg",
           "mobile": {
             "url": "/tutorials/find-map-mobile.mp4",
             "poster": "/tutorials/find-map-mobile.jpg",
             "captions": "/tutorials/find-map-mobile.vtt",
-            "length": "2:32"
+            "length": "2:55"
           }
         },
         {
@@ -107,14 +107,14 @@
           "title": "Enter your home in a contest",
           "desc": "Sign in, add photos, your address and agree to the rules.",
           "url": "/tutorials/enter.mp4",
-          "length": "2:18",
+          "length": "2:50",
           "captions": "/tutorials/enter.vtt",
           "poster": "/tutorials/enter.jpg",
           "mobile": {
             "url": "/tutorials/enter-mobile.mp4",
             "poster": "/tutorials/enter-mobile.jpg",
             "captions": "/tutorials/enter-mobile.vtt",
-            "length": "2:18"
+            "length": "2:49"
           }
         },
         {
@@ -122,14 +122,14 @@
           "title": "Edit or withdraw your entry",
           "desc": "Change your entry's name and description, or take it out.",
           "url": "/tutorials/edit-entry.mp4",
-          "length": "1:28",
+          "length": "1:32",
           "captions": "/tutorials/edit-entry.vtt",
           "poster": "/tutorials/edit-entry.jpg",
           "mobile": {
             "url": "/tutorials/edit-entry-mobile.mp4",
             "poster": "/tutorials/edit-entry-mobile.jpg",
             "captions": "/tutorials/edit-entry-mobile.vtt",
-            "length": "1:28"
+            "length": "1:31"
           }
         },
         {
