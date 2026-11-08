@@ -118,12 +118,12 @@ const rulesBlock = () => TERMS_CONTEST_RULES.map((r) => "- " + oneLine(r, 900)).
 
 // ---------- the wider knowledge base (tutorials, public-safe docs, page copy, Terms, Privacy) ----------
 // Built by scripts/build-chat-kb.mjs into chatkb-data.js; tests/chat.test.mjs fails if it is out of date.
-const CHUNK_STOP = new Set(["did", "didn't", "didn", "doesn't", "doesn", "does", "not", "why", "say", "says", "tell", "want", "need"]);
+const CHUNK_STOP = new Set(["did", "didn't", "didn", "doesn't", "doesn", "does", "not", "why", "say", "says", "tell", "want", "need", "take", "tak", "leave", "give", "get"]);
 export function rankChunks(q, limit = 3) {
   const t = tokens(q).filter((w) => !CHUNK_STOP.has(w)); if (!t.length) return [];
   const scored = [];
   for (const c of KB_CHUNKS) {
-    const title = new Set(tokens(c.title)), body = new Set(tokens(c.text)); // whole words, so "count" does not match "account"
+    const title = new Set([...tokens(c.title), ...tokens(c.kw || "")]), body = new Set(tokens(c.text)); // whole words, so "count" does not match "account"
     let score = 0, hit = 0;
     for (const w of t) { const x = (title.has(w) ? 8 : 0) + (body.has(w) ? 1 : 0); if (x) hit++; score += x; }
     if (hit && score >= 4 && hit >= Math.min(2, t.length)) scored.push({ c, score, hit });

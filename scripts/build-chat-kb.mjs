@@ -34,9 +34,9 @@ function pieces(text) {
   if (cur) out.push(cur);
   return out.flatMap((p) => (p.length > MAX * 1.5 ? p.match(new RegExp(`.{1,${MAX}}`, "g")) : [p]));
 }
-const add = (list, title, url, text) => {
+const add = (list, title, url, text, kw = "") => {
   const t = redactFraudDetail(text.replace(/\s+/g, " ").trim()); if (t.length < 40) return;
-  const ps = pieces(t); ps.forEach((p, i) => list.push({ title: ps.length > 1 ? `${title} (${i + 1} of ${ps.length})` : title, url, text: p }));
+  const ps = pieces(t); ps.forEach((p, i) => list.push({ title: ps.length > 1 ? `${title} (${i + 1} of ${ps.length})` : title, url, text: p, ...(kw ? { kw } : {}) }));
 };
 
 function fromHtml(file, url, list) {
@@ -57,7 +57,8 @@ function fromCuratedDoc(list) {
   const t = read("docs/ai-assistant-kb.md").replace(/<!--[\s\S]*?-->/g, "");
   for (const sec of t.split(/^## /m).slice(1)) {
     const lines = sec.split("\n"), title = lines[0].trim(), u = (lines[1] || "").match(/^url:\s*(\S+)/);
-    add(list, title, u ? u[1] : "/help", lines.slice(u ? 2 : 1).join(" "));
+    const k = (lines[u ? 2 : 1] || "").match(/^keywords:\s*(.+)$/i); // optional: words people use that the text does not, matched like a title
+    add(list, title, u ? u[1] : "/help", lines.slice((u ? 2 : 1) + (k ? 1 : 0)).join(" "), k ? k[1].trim() : "");
   }
 }
 function vtt(file) {

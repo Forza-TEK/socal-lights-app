@@ -102,6 +102,7 @@ Listing an event is always free; Featured placement is an optional, one-time pay
 
 ## Weekly lights email: sign up and stop
 url: /tutorials#email
+keywords: unsubscribe stop emails opt out weekly email newsletter
 The weekly lights email is free: one short email a week with lights and events near a city you choose. To sign up: tap the three dots at the top of the map, beside the search box, and choose Weekly lights email; enter your email and your city, choose how far from the city to look (5, 10 or 25 miles), and tick the box to agree; tap Sign up. We email you a confirmation link and nothing is sent until you tap it, which protects you from anyone signing you up by mistake. You can also sign up from a city page or an event page, where a small box asks only for your email. Every email ends with a one-tap link that deletes your address from the list right away. Contest emails have their own unsubscribe link, which does not stop the weekly email, and the other way round.
 
 ## Is there an app in the App Store or Google Play?
@@ -135,3 +136,76 @@ Quote requests reach an installer two ways. On your profile, visitors tap Reques
 ## Installers: Sponsor placements, step by step
 url: /sponsor
 Your free profile stays free. Paid Sponsor placements are optional, always labelled Sponsor, and never affect any contest. The Banner is a pill in the strip at the top of the map list; Top of the list puts your company card first in the installer list without the banner; the third plan has both. To buy: open Pricing and choose Installers, or open Promote your event and tap See all pricing; tap Choose on a plan; sign in with your company email; choose your company (it needs a free profile first); check the dates, which start today and end on the last day of the season; and tap Continue to payment, which opens Stripe. Automatic renewal is optional and off unless you tick the box, and you can cancel it any time from your manage page. Prices are on the Pricing page.
+
+## Seasons and kinds of events on the map
+url: /
+keywords: boat parades walk-through displays walk through drive-by seasons halloween christmas types of events categories
+The map shows one season at a time. Tap the season button at the top to switch. The seasons are: New Year's & Lunar New Year; Valentine's Day; Spring Blooms, Easter & Cinco de Mayo; Summer & Fourth of July; Halloween & Día de los Muertos; and Thanksgiving & Christmas Lights. The map opens on the season that is on now. Each season has its own kinds of events. Thanksgiving & Christmas Lights: Turkey trots & fun runs, Thanksgiving feasts & harvest, Walk-through lights, Drive-by / neighborhood displays, Boat & street parades, Theme parks & zoos, Tree lightings & villages, Tours & rides, and Shows & concerts. Halloween & Día de los Muertos: Haunted attractions, Pumpkin trails & patches, Trick-or-treat & festivals, Día de los Muertos, Shows & immersive theater, and Theme parks & zoos. New Year's & Lunar New Year: New Year's Eve & fireworks, Noon Year's & family events, Rose Parade & parades, Lunar New Year festivals, and Shows & festivals. Valentine's Day: date nights, dances, chocolate and wine tastings, Cupid runs, lights and light shows, shows and concerts, and family events. Spring: flower fields, whale watching, St. Patrick's Day, Easter egg hunts, Cinco de Mayo, and spring festivals and fairs. Summer: Fourth of July fireworks and parades, county fairs, outdoor concerts and movies, summer festivals and art shows, and theme parks and zoos. To find boat parades, choose the Thanksgiving & Christmas Lights season, tap Filters, and under Type choose Boat & street parades. Walk-through lights are displays you walk through, usually ticketed events.
+
+## Map filters: what each one does
+url: /tutorials#map
+keywords: filters filter free ticketed cost county distance miles tonight weekend type drive walk parking stroller
+Tap Filters on the map to narrow the list. When: Any date, Tonight, This weekend, or pick a day. Near: pick a city, then how far from it to look (5, 10 or 25 miles). County: choose one or more counties. Cost: All, Free, or Ticketed. Type: the kinds of events for the season, plus Home displays, Professionally installed and Contests. Visiting a home: Drive by, Walk by, Free parking and Stroller friendly. There is also Confirmed dates only, which hides events whose dates are not yet confirmed, and Clear all. The button at the bottom shows how many places match (Show N places). Active filters appear as chips you can tap to remove.
+
+## On any listing: directions, report a problem, remove a home
+url: /help
+keywords: directions get directions report wrong problem bug mistake remove home confirmed expected
+Open an event or home and tap Directions to open it in your maps app. To plan several stops use Favorites and Route these. If something looks wrong on a listing, tap Report a problem on it, or see the Help Center article Report a problem; you can also email info@socallights.app. If your own home is on the map and you would rather it were not, tap Not your listing? Remove my home on the listing, or use the Remove my home page. Events listed as Expected have dates that are not confirmed yet; Confirmed means a web page checked the name and date.
+
+## Day and night mode
+url: /
+Every page has a sun and moon button, in the header on the map and on other pages, that switches between day (light) and night (dark) mode. The site picks one for you at first, and remembers your choice on your device.
+
+## Your profile: drafts, displays, events, contests, badges and account
+url: /profile
+keywords: draft drafts badges delete event edit display edit event profile tabs save exit
+Open your profile from the account circle (Your profile). It has these tabs. Drafts: add forms keep your place when you tap Save & exit, and here you can Continue or Delete a draft. Contests: the contests you run (Manage or View page) and the homes you entered. Displays: homes you posted, each showing On the map, In review or Taken down for the season, with Edit, Take down for the season (or Put back on the map) and Delete; installers also see Manage the company profile. Events: events you added, with Edit, a notice you can set to Cancelled or Postponed, Run again next year, and Delete. Badges: winners keep a crown badge, and you choose where badges show (list card, map pop-up, details page). Account: your optional name and address (used only to fill in forms, never shown publicly), your monthly update choice, Sign out, and Delete my account. To delete an event or a home, use Delete on its row in your profile.
+
+## Signing in and out, and passwords
+url: /profile
+keywords: sign out log out logout passwords password sign in code email
+There are no passwords. Sign in with Google or with a 6-digit code emailed to you. To sign out, tap the account circle and choose Sign out, or open Your profile, Account tab, and tap Sign out. The sign-in lasts up to 30 days on your device unless you sign out. If the emailed code does not arrive, check spam, make sure the address is right, and ask for a new one; codes last 10 minutes.
+
+## How payments work: Stripe, receipts and tips
+url: /pricing
+keywords: pay payment secure receipt tip tips donate apple pay cash app card stripe
+Paid options (Featured events, installer Sponsor placements, contest passes, featuring a winning home) are paid on Stripe's secure page, with a card or Cash App Pay. We never see your card details. Stripe emails your receipt, and SoCal Lights sends a short confirmation. There are no subscriptions unless an installer ticks the optional automatic renewal box. If a payment was taken but a placement or pass has not appeared, wait a few minutes and refresh, then email info@socallights.app. Tips: tap the three dots, choose Support SoCal Lights, and use the tip link there. We do not list other payment methods.
+
+## Cancel automatic renewal for an installer Sponsor placement
+url: /sponsor
+keywords: cancel renewal automatic renew stop subscription
+Automatic renewal is optional and off unless you ticked the box when you bought. To stop it: open the cancel link in any renewal email, or open your installer manage page (/installer/<name>/manage), find Sponsor placement, and tap Turn off automatic renewal. You can turn it on again there. Cancelling stops the next renewal; the season you already paid for keeps running.
+
+## Advertising and promoting on SoCal Lights
+url: /pricing
+keywords: advertise advertising promote cost price list banner buy
+Event organizers can promote an event with a Featured pin, banner or top of the list (Promote your event). Lighting installers can buy a Sponsor Banner or Top of the list placement (Pricing, Installers). Contest organizers can record sponsors on their contest page. All paid placements are labelled and never affect a contest result. Prices are on the Pricing page. For anything else, email info@socallights.app.
+
+## Contest organizer tools: QR poster, yard signs, results download
+url: /help#run
+keywords: print qr poster yard sign download results spreadsheet
+On the organizer dashboard you can copy the contest link and print a QR poster that opens the contest page, print entry posters, and print a yard sign. In the print window turn on background graphics so colors print. After winners are announced, the dashboard has Download results (spreadsheet). You can also hide or show vote counts, and read contest activity.
+
+## The Shop tab and affiliate links
+url: /
+The map has a Shop tab next to Places and Favorites, with ideas for each season. Its cards open an Amazon search. As an Amazon Associate we earn from qualifying purchases, at no extra cost to you. Shop links never affect contests or listings.
+
+## Privacy basics: cookies, location, data and the AI assistant
+url: /privacy
+keywords: cookies cookie location stored data collect sell tracking ads advertising privacy
+We do not sell your personal information and we do not use advertising cookies or ad networks. A sign-in cookie keeps you signed in on your device for up to 30 days, and signing out removes it. Your location is used only on your own device, to show distances and directions; you can say no at any time. Page views are counted as one number per page per day, with no IP address, cookie or account. The site remembers a few choices on your device only, such as your saved places in Favorites, your day or night choice, your maps app and whether you hid the tips. The AI assistant keeps your chat only in your browser tab, and the server stores counts, never your messages. Full details are on the Privacy page.
+
+## Is SoCal Lights free? What costs money?
+url: /pricing
+keywords: free cost how much price list listing site free pay
+Using SoCal Lights is free: the map, search, routes, Favorites, voting, entering a contest, and posting an event or your own home. Your organization's first contest in every 12-month window is free. Optional paid extras are always labelled and never change a contest result: Featured placements for events, installer Sponsor placements (the Banner, Top of the list, or both), contest passes for more contests, and featuring a winning home. Prices are on the Pricing page. The site is in English.
+
+## Installer and Featured plans: what the Banner includes
+url: /pricing
+keywords: banner plan include includes top of the list pin what do i get
+For events, every Featured plan includes the gold-ringed Featured pin and badge. The banner adds your event as a Featured pill in the strip at the top of the map list, and Top of the list shows your event first when people browse your area; the plans combine these. For installers, the Sponsor Banner is a pill labelled Sponsor in that strip, Top of the list puts your company card first in the installer list without the banner, and the third plan has both. Each plan card on the Pricing page folds open with What's included and the exact price.
+
+## Adding a logo, photos and sponsor logos
+url: /help#sponsors
+keywords: logo logos add a logo upload sponsor logo installer logo photo
+An installer adds a company logo on the manage page under Your details. A contest organizer adds a sponsor's logo on the Sponsors tab when recording a sponsor, or the sponsor adds it on the private invite link. Logos show only after the organizer confirms the sponsor and chooses to show it. Photos for homes and events are added in the add form (take them at night, the first is the cover), and can be edited from your profile.

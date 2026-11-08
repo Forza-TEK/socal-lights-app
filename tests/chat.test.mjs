@@ -186,7 +186,7 @@ const HOWTO = [
   ["How do I change the contest dates?", "edit-your-contest-and-change-dates"], ["How do I unpublish my contest?", "unpublish-and-publish-again"], ["How do I invite a sponsor to my contest?", "add-sponsors-to-your-contest"],
   ["What is the sponsor invite link?", "add-sponsors-to-your-contest"], ["How do I add homes myself as a contest organizer?", "add-your-citys-homes-yourself"], ["How do I buy a contest pass?", "contest-passes"],
   ["How many contests can I run for free?", "contest-passes"], ["What are voting categories?", "Categories, winners and ties"], ["Where can I see past contest results?", "find-contests"],
-  ["How do I download the contest results?", "Announcing winners and the results page"], ["What happens when winners are announced?", "Announcing winners and the results page"],
+  ["How do I download the contest results?", "Contest organizer tools"], ["What happens when winners are announced?", "Announcing winners and the results page"],
   // entering
   ["How do I enter my home in a contest?", "enter-your-home-in-a-contest"], ["Who can enter a contest?", "enter-your-home-in-a-contest"],
   // voting
@@ -228,7 +228,7 @@ test("the question set has at least 100 questions", () => {
 
 test("a question nothing in the knowledge base matches is not sent to the model: fallback link, and only a topic bucket is counted", async () => {
   const { env, calls, raw } = setup();
-  const qs = ["Does the Zzyzx yodel app support quantum bananas?", "Can my Zzyzx flamingo account sing kazoo ringtones to zebras?"];
+  const qs = ["Does the Zzyzx yodel app handle quantum bananas?", "Can my Zzyzx flamingo account sing kazoo ringtones to zebras?"];
   for (const q of qs) {
     const r = await ask(env, q);
     assert.equal(r.body.gap, true, q); assert.equal(r.body.reply, MESSAGES.gap);
@@ -722,4 +722,20 @@ test("installer questions find the installer chunks (options, add a home, claim,
   assert.match(titles("How does an installer claim and manage their profile?"), /Installers: claim and manage/);
   assert.match(titles("How do installers get quote requests?"), /Installers: quote requests/);
   assert.match(titles("How do I buy an installer Sponsor placement step by step?"), /Installers: Sponsor placements/);
+});
+
+test("audit gaps are filled: seasons and boat parades, filters, sign out, payments, renewal, cookies, QR poster, tips", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const has = (q, re) => assert.match(rankChunks(q, 3).map((c) => c.title).join(" | "), re, q);
+  has("How do I find boat parades?", /Seasons and kinds of events/);
+  has("What do the filters do?", /Map filters/);
+  has("How do I sign out?", /Signing in and out/);
+  has("Is my payment secure and how do I get a receipt?", /How payments work/);
+  has("How do I cancel automatic renewal?", /Cancel automatic renewal/);
+  has("Do you use cookies?", /Privacy basics/);
+  has("How do I print a QR poster?", /Contest organizer tools/);
+  has("Do you take tips?", /How payments work/);
+  has("How do I save a draft?", /Your profile/);
+  has("How do I report a problem on a listing?", /On any listing/);
+  has("How do I switch to dark mode?", /Day and night mode/);
 });
