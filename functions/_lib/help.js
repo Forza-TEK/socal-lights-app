@@ -9,7 +9,7 @@ export const CATEGORIES = [
   { key: "vote", title: "Vote and judge", blurb: "Vote for your favorite homes, or score them as a judge" },
   { key: "run", title: "Run a contest", blurb: "Create, share, approve entries, change dates, voting, your team, winners" },
   { key: "sponsors", title: "Sponsors and installers", blurb: "Add sponsors, quote requests, installer profiles" },
-  { key: "post", title: "Post events and homes", blurb: "Add an event, or show off your own house" },
+  { key: "post", title: "Post events and homes", blurb: "Add an event, or show off your own home" },
   { key: "account", title: "Account, privacy and safety", blurb: "Signing in, your data, deleting your account, reporting a problem" },
 ];
 export const KINDS = { howto: "How to", fix: "Fix a problem", answer: "Answer" };
