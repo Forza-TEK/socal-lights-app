@@ -70,14 +70,14 @@
           "title": "Find contests: the Contests page",
           "desc": "Live now, Mine and Past results, and the Enter or vote button on a map card.",
           "url": "/tutorials/find-contests.mp4",
-          "length": "1:34",
+          "length": "1:52",
           "captions": "/tutorials/find-contests.vtt",
           "poster": "/tutorials/find-contests.jpg",
           "mobile": {
             "url": "/tutorials/find-contests-mobile.mp4",
             "poster": "/tutorials/find-contests-mobile.jpg",
             "captions": "/tutorials/find-contests-mobile.vtt",
-            "length": "1:34"
+            "length": "1:52"
           }
         },
         {
@@ -159,14 +159,14 @@
           "title": "Vote in a contest",
           "desc": "Use the category tabs, pick one favorite in each, and share the contest.",
           "url": "/tutorials/vote.mp4",
-          "length": "1:57",
+          "length": "2:04",
           "captions": "/tutorials/vote.vtt",
           "poster": "/tutorials/vote.jpg",
           "mobile": {
             "url": "/tutorials/vote-mobile.mp4",
             "poster": "/tutorials/vote-mobile.jpg",
             "captions": "/tutorials/vote-mobile.vtt",
-            "length": "1:56"
+            "length": "2:05"
           }
         },
         {
