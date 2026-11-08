@@ -2,6 +2,7 @@
 // and every id and link comes from our database lookups, never from model text. See docs/ai-assistant-actions-design.md.
 import { ACTIONS, cityNames } from "./chatactions.js";
 import { SEASONS } from "../../public/seasons.js";
+import { ownerCards, publishEventCard, signInCard, wantsOwnerAction } from "./chatown.js";
 
 const HUMAN = /\b(human|real person|a person|someone|somebody|staff|team|owner|support|customer service|representative)\b[^.?!]{0,50}\b(talk|speak|contact|reach|email|message|help|call)\b|\b(talk|speak|contact|reach|email|message|call)\b[^.?!]{0,50}\b(human|real person|someone|somebody|staff|team|owner|support|customer service|representative)\b|\b(human|real person|customer service|representative)\b/i;
 const REPORT = /\b(wrong|incorrect|outdated|out of date|error|mistake|inaccurate|no longer|closed|cancell?ed|has moved|broken)\b[^.?!]{0,60}\b(event|listing|home|house|display|address|date|time|hours|info|information)\b|\breport (?:a |an |this |that )?(?:problem|error|mistake|listing|event|home|house|issue)\b/i;
@@ -29,19 +30,22 @@ export function eventStartCard() {
       { name: "free", label: "Free to attend?", type: "select", required: false, options: [["yes", "Free"], ["no", "Paid"]], value: "yes" },
     ], go: "Open the form" };
 }
+export const needsAccount = (q) => wantsOwnerAction(q) || (ADD_EVENT.test(String(q || "")) && !/\b(find|search|see|go to|attend)\b/i.test(String(q || "")));
 export const wantsHuman = (q) => HUMAN.test(String(q || ""));
 export const humanCard = (question = "") => formCard("ask_human", { message: String(question).replace(/\s+/g, " ").trim().slice(0, 300) });
 
 // settings.tiers says which tiers are on. `ctx` is what buildContext found (events and contests that matched the question).
-export function cardsFor({ question, settings, ctx = {}, handoff = "" }) {
+export function cardsFor({ question, settings, ctx = {}, handoff = "", user = null, own = null }) {
   const q = String(question || ""), out = [], t = (settings && settings.tiers) || { 1: true, 2: true, 3: true };
   if (t[1]) {
     if (handoff || HUMAN.test(q)) out.push(humanCard(q));
     if (REPORT.test(q) && !out.length) out.push(formCard("report_problem", { where: (ctx.eventList && ctx.eventList.length === 1 && ctx.eventList[0].name) || "" }));
-    if (ADD_EVENT.test(q) && !/\b(find|search|see|go to|attend)\b/i.test(q)) out.push(eventStartCard());
+    if (ADD_EVENT.test(q) && !/\b(find|search|see|go to|attend)\b/i.test(q)) { if (t[3] && user) out.push(publishEventCard()); out.push(eventStartCard()); }
     if (WEEKLY.test(q) && !STOP.test(q)) out.push(formCard("weekly_email"));
     if (REMOVE.test(q)) out.push(formCard("remove_home"));
   }
+  // Tier 3: the signed-in visitor's own listings (docs/ai-assistant-actions-design.md). Signed out: one card that says to sign in first.
+  if (t[3] && (!handoff || handoff === "gap") && wantsOwnerAction(q)) { if (user) out.unshift(...ownerCards({ question: q, own: own || {} })); else out.unshift(signInCard()); }
   if (t[2] && !handoff) {
     const ev = (ctx.eventList || []).slice(0, 3);
     if (ev.length) out.push({ type: "links", label: "Open on the map", links: ev.map((e) => ({ label: e.name, sub: [e.city, e.free ? "Free" : ""].filter(Boolean).join(" · "), href: "/e/" + encodeURIComponent(e.id) })) });
