@@ -109,7 +109,10 @@ export async function onRequestPost({ request, env, waitUntil }) {
   let [lat, lng] = CITY[city];
   if (!contest) {
     const { n: mine } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NULL AND lower(contact_email) = lower(?) AND created_at > datetime('now','-1 day')").bind(email).first();
-    if (mine >= 5) return err(429, "You've posted several displays today. Try again tomorrow, or email info@socallights.app if you need more.");
+    if (mine >= 5) {
+      await Promise.all(keys.map((k) => env.PHOTOS.delete(k))); // this post is refused, so its uploaded photos must not be left behind
+      return err(429, "You've posted several displays today. Try again tomorrow, or email info@socallights.app if you need more.");
+    }
   }
   const pt = await geocodeAddress(address, city, [lat, lng]); if (pt) [lat, lng] = pt;
   const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();

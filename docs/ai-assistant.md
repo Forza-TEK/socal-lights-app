@@ -3,6 +3,8 @@
 Owner-approved 2026-11-08. Research and decisions: `docs/monetization/ai-chat-agent-research.md` (on branch `claude/quirky-goodall-yaumg1`). **It ships OFF.** Nothing is visible to visitors and no AI call is made until you turn it on in Admin > AI assistant.
 
 ## What it does
+Phase 1 of actions is built: cards for sending to the team (email subject `[SCL Ask Human]`), reporting a problem, the weekly email, removing a home, starting an event in the form, and look-up links (see the design doc; Tier 3 is not built yet). Cap: $10 a month (migration 0202), emails at 80% and 100% (`[SCL AI Cap]`). Proposed actions (send to a human, look-ups, signed-in changes the visitor confirms): `docs/ai-assistant-actions-design.md`.
+
 A button labelled "AI assistant" (bottom right on the map and on Pricing) opens a chat. It answers questions about everything on the site, using only our own public information:
 
 - how to use the site: map, location and routes, accounts and sign-in, submitting and editing events and homes, photos, claiming listings, installer profiles, Featured placements and billing how-to, notifications, privacy;

@@ -20,7 +20,7 @@
   <p class="help"><a href="/pricing" style="color:var(--ink,inherit);text-underline-offset:3px">See pricing</a>: what is free and what is optional.</p>
 </main>
 <script type="module">
-import { ICON, esc, themeBtn, mountAcct } from "/addflow.js?v=20261111a";
+import { ICON, esc, themeBtn, mountAcct } from "/addflow.js?v=20261111b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
 document.getElementById("tb").innerHTML = themeBtn() + '<span id="acct"></span>'; mountAcct(document.getElementById("acct"));
 const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
@@ -34,6 +34,6 @@ document.getElementById("opts").innerHTML =
 // Contests need sign-in. Until Google or emailed codes are switched on, hide that choice rather than send people to a dead end.
 fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (!j.methods || (!j.methods.google && !j.methods.email)) document.getElementById("o-contest")?.remove(); }).catch(() => {});
 </script>
-<script src="/footer.js?v=20261110e" defer></script>
+<script src="/footer.js?v=20261111c" defer></script>
 </body>
 </html>
