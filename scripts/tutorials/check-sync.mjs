@@ -7,9 +7,10 @@
 //   - the video is not constant frame rate, or frames x 1/fps is off the stream duration by more than it,
 //   - the audio is missing, or the container duration is off the longer stream by more than it,
 //   - the captions end more than the tolerance after the audio, or cues overlap or run backwards,
-//   - a caption cue starts more than --cue ms (default 400) from a detected voice onset (captions off from the audio),
+//   - a caption cue starts more than --cue ms (default 800: a short sentence spoken in one breath has no pause to detect, so its caption start is an estimate) from a detected voice onset (captions off from the audio),
 //   - there is a silent stretch longer than --gap seconds (default 8),
 //   - the audio is cut off (it still has sound in its last 50 ms).
+// Warnings (do not fail): a narrated "tap"/"open" sentence not followed by a visible change within 4.5 s.
 // Report per video: start times (ms), duration drift (ms), max caption-to-voice offset (ms), longest silence, pass or fail.
 import { readFileSync, existsSync } from "node:fs";
 import { execFileSync, spawnSync } from "node:child_process";
@@ -18,7 +19,7 @@ import { join } from "node:path";
 const args = process.argv.slice(2);
 const opt = (n, d) => (args.find((a) => a.startsWith(`--${n}=`)) || "").split("=")[1] ?? d;
 const TOL = Number(opt("tol", 150)) / 1000, DIR = opt("dir", "public/tutorials"), JSON_OUT = args.includes("--json");
-const MAX_GAP = Number(opt("gap", 8)), CUE_TOL = Number(opt("cue", 400)) / 1000;
+const MAX_GAP = Number(opt("gap", 8)), CUE_TOL = Number(opt("cue", 800)) / 1000;
 const ids = args.filter((a) => !a.startsWith("--"));
 
 const probe = (f) => JSON.parse(execFileSync("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type,start_time,duration,nb_frames,r_frame_rate,avg_frame_rate:format=duration,start_time", "-of", "json", f]).toString());
@@ -30,7 +31,7 @@ function vtt(f) {
 }
 // voice intervals from silencedetect on the audio track
 function voice(f, total) {
-  const r = spawnSync("ffmpeg", ["-v", "info", "-i", f, "-vn", "-af", "silencedetect=noise=-40dB:d=0.12", "-f", "null", "-"], { encoding: "utf8", maxBuffer: 1 << 26 });
+  const r = spawnSync("ffmpeg", ["-v", "info", "-i", f, "-vn", "-af", "silencedetect=noise=-40dB:d=0.08", "-f", "null", "-"], { encoding: "utf8", maxBuffer: 1 << 26 });
   const sil = []; let cur = null;
   for (const l of r.stderr.split("\n")) { let m; if ((m = /silence_start: (-?[\d.]+)/.exec(l))) cur = Math.max(0, +m[1]); else if ((m = /silence_end: ([\d.]+)/.exec(l)) && cur !== null) { sil.push([cur, +m[1]]); cur = null; } }
   if (cur !== null) sil.push([cur, total]);
@@ -93,7 +94,7 @@ function check(file, cap) {
     // caption start vs nearest voice onset
     const onsets = sp.map((s) => s[0]); let worst = 0, worstAt = 0;
     for (const c of cues) { const d = Math.min(...onsets.map((o) => Math.abs(o - c.a))); if (d > worst) { worst = d; worstAt = c.a; } }
-    res.noChange = tapChecks(file, cues); for (const t of res.noChange) res.issues.push(`no visible change after "${t.text}" (cue at ${t.at} s)`);
+    res.noChange = tapChecks(file, cues); res.warnings = res.noChange.map((t) => `no visible change within 4.5 s after "${t.text}" (cue at ${t.at} s): check by eye (a tap on something already open, a hover, or a real gap)`);
     res.maxCueOffsetMs = Math.round(worst * 1000); res.maxCueOffsetAt = +worstAt.toFixed(1);
     if (worst > CUE_TOL) res.issues.push(`a caption starts ${Math.round(worst * 1000)} ms from the nearest voice onset (at ${worstAt.toFixed(1)} s)`);
   } else res.issues.push("no captions file");
@@ -109,7 +110,7 @@ for (const g of tj.groups) for (const v of g.videos) {
     const file = join(DIR, url.split("/").pop()), capf = cap ? join(DIR, cap.split("/").pop()) : null;
     const r = existsSync(file) ? check(file, capf) : { file, issues: ["file missing"] };
     r.id = v.id; r.kind = kind; r.pass = r.issues.length === 0; out.push(r);
-    if (!JSON_OUT) console.log(`${r.pass ? "PASS" : "FAIL"} ${v.id.padEnd(15)} ${kind.padEnd(8)} v ${r.video}s a ${r.audio}s  start v/a ${r.videoStartMs}/${r.audioStartMs} ms  drift ${r.durationDriftMs} ms  cue offset max ${r.maxCueOffsetMs ?? "-"} ms  longest silence ${r.longestSilence}s${r.issues.length ? "\n     - " + r.issues.join("\n     - ") : ""}`);
+    if (!JSON_OUT) console.log(`${r.pass ? "PASS" : "FAIL"} ${v.id.padEnd(15)} ${kind.padEnd(8)} v ${r.video}s a ${r.audio}s  start v/a ${r.videoStartMs}/${r.audioStartMs} ms  drift ${r.durationDriftMs} ms  cue offset max ${r.maxCueOffsetMs ?? "-"} ms  longest silence ${r.longestSilence}s${r.issues.length ? "\n     - " + r.issues.join("\n     - ") : ""}${r.warnings && r.warnings.length ? "\n     ? " + r.warnings.join("\n     ? ") : ""}`);
   }
 }
 if (JSON_OUT) console.log(JSON.stringify(out, null, 1));

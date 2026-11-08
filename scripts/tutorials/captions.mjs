@@ -17,7 +17,7 @@ export function writeVtt(f, cues) { writeFileSync(f, "WEBVTT\n\n" + cues.map((c)
 
 // voice runs of the audio track: [{ on, off, pauseBefore }]
 export function voiceRuns(media, total) {
-  const r = spawnSync("ffmpeg", ["-v", "info", "-i", media, "-vn", "-af", "silencedetect=noise=-40dB:d=0.12", "-f", "null", "-"], { encoding: "utf8", maxBuffer: 1 << 26 });
+  const r = spawnSync("ffmpeg", ["-v", "info", "-i", media, "-vn", "-af", "silencedetect=noise=-40dB:d=0.08", "-f", "null", "-"], { encoding: "utf8", maxBuffer: 1 << 26 });
   const sil = []; let cur = null;
   for (const l of r.stderr.split("\n")) { let m; if ((m = /silence_start: (-?[\d.]+)/.exec(l))) cur = Math.max(0, +m[1]); else if ((m = /silence_end: ([\d.]+)/.exec(l)) && cur !== null) { sil.push([cur, +m[1]]); cur = null; } }
   if (cur !== null) sil.push([cur, total]);

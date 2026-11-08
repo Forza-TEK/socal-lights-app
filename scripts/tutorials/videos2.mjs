@@ -364,5 +364,22 @@ S.sponsor = { id: "sponsor", file: "sponsors-sponsor", cookie: ck.u_inst, ...MAP
   nextUp(EP, "Add an event to the map", "Share a tree lighting, market, parade or haunted house"),
 ]};
 
+// Contest passes (new 2026-11-08): the wizard's Review screen for an organization that has already used its free contest in the 12-month window.
+// The demo organizer's live contest is given a live_at date inside the window first (scripts/tutorials/seed-passes.sql). The pass picker is shown, the Choose button is
+// pointed at but never tapped (the checkout request would go to Stripe), and no price is spoken: the cards on screen show what /api/config serves.
+S["contest-passes"] = { id: "contest-passes", file: "run-passes", cookie: ck.u_org, ...MAPSPEC, maxSeconds: 300, steps: [
+  { ...hook(ER, "Contest passes", "What happens when you run more than one contest", "In this video, you will see what happens when you run a second contest in the same year. Your first contest in a 12 month window is free. After that, you choose a pass. We start on the map."), pre: authPre },
+  ...wizardStart("Oak Hill Holiday Lights 2027"),
+  { cap: "6 of 7: Quick start", say: "Choose Quick start, then tap Next.", target: '[data-tile="quick|yes"]', after: 1000, post: (p, h) => next(p, h) },
+  { cap: "7 of 7: Review", say: "This is the review. Your organization already ran a contest in the last 12 months, so this one needs a pass. Tap Create contest.", do: async (p, h) => { await h.hover(".sum", 1000); }, target: NEXT, after: 2800, poster: true },
+  { cap: "Choose a pass", say: "Instead of creating the contest, the page shows the passes. It says where your organization stands in its 12-month window, and how many contests you have used.", do: async (p, h) => { await p.locator("#pass-box .pp-card").first().waitFor({ timeout: 10000 }); await h.scrollTo("#pass-box", 200).catch(() => {}); await h.hover("#pass-box .pp-win", 1200); }, pad: 0.4 },
+  { cap: "Three passes", say: "There are three passes: Up to 5, Up to 10, and Up to 20 contests. The number counts every contest in your window, the free one included. Each card lists everything it gives you, and the price is on the card.", do: async (p, h) => { await h.hover("#pass-box .pp-card:nth-child(1)", 1200); await h.hover("#pass-box .pp-card:nth-child(2)", 1200); await h.hover("#pass-box .pp-card:nth-child(3)", 1200); }, pad: 0.4 },
+  { cap: "More than 20", say: "Running more than twenty contests? The Up to 20 card tells you what to do. You write to us, and we set it up with you.", do: async (p, h) => { await h.hover("#pass-box .pp-card:nth-child(3)", 1400); }, pad: 0.4 },
+  { cap: "Tap Choose", say: "To go on, tap Choose under the pass you want. That opens Stripe's secure payment page. We stop here, because this is only a demonstration, and we never enter card details in a video.", do: async (p, h) => { await h.hover("#pass-box [data-pass]", 1500); }, pad: 0.5 },
+  { cap: "After you pay", say: "After you pay, your contest is created by itself, with everything you typed. Your window runs for twelve months from the day your first contest went live, and a contest that is unpublished still counts. If you need more contests later, choose a bigger pass, and you pay only the difference.", do: async (p, h) => { await sleep(500); }, pad: 0.5 },
+  { cap: "Free for everyone else", say: "Entering and voting stay free for everyone, and payment never affects who wins.", do: async (p, h) => { await sleep(300); }, pad: 0.5 },
+  nextUp(ER, "Create a contest with Quick start", "The short setup: seven screens"),
+]};
+
 const id = process.argv[2];
 if (id) { if (!S[id]) throw new Error("no video " + id); await record(S[id]); }
