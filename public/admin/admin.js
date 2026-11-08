@@ -763,7 +763,7 @@ async function renderDashboard() {
   main.innerHTML = `
     <p class="hello">${hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}. ${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p>
     ${d.staleJobs && d.staleJobs.length ? `<div class="limitbanner" role="alert"><b>${d.staleJobs.length === 1 ? "A scheduled job has stopped reporting in." : d.staleJobs.length + " scheduled jobs have stopped reporting in."}</b>${d.staleJobs.slice(0, 5).map((j) => `<span>${esc(j.line)}</span>`).join("")}<span>GitHub runs scheduled jobs late or skips them. Run the workflow by hand from GitHub > Actions, or see docs/runbooks/monitoring.md.</span></div>` : ""}
-    ${d.limits && d.limits.length ? `<button type="button" class="limitbanner" data-tab="usage"><b>A Cloudflare free-plan limit was hit at ${esc(String(d.limits[0].at).slice(0, 16))} UTC.</b><span>${esc(String(d.limits[0].detail).slice(0, 140))} Open Cloudflare usage to see which one and what to do.</span></button>` : ""}
+    ${d.limits && d.limits.length ? `<button type="button" class="limitbanner" data-tab="usage"><b>A Cloudflare or email limit was hit at ${esc(String(d.limits[0].at).slice(0, 16))} UTC.</b><span>${esc(String(d.limits[0].detail).slice(0, 140))} Open Cloudflare usage to see which one and what to do.</span></button>` : ""}
     <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l]) => `<button type="button" class="tcard" data-tab="${k}"><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>` : `<div class="calm">${dico("check", "okic")}<div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests or reports are waiting.</p></div></div>`}</section>
     <h2 class="dh">Today</h2>
     <div class="stats">${tile("h", d.today.homes, "new houses")}${tile("e", d.today.events, "events submitted")}${tile("c", d.today.entries, "contest entries")}${tile("l", d.people.litToday, "lights switched on")}</div>
@@ -784,21 +784,28 @@ async function renderDashboard() {
     </div>`;
 }
 
-/* ---------- Cloudflare free-plan usage (read-only) ---------- */
+/* ---------- Cloudflare usage, plan-aware: Workers Paid (monthly included amounts, extra charges) or free (daily hard limits). Read-only. ---------- */
 const U_BYTES = (n) => (n >= 1e9 ? (n / 1e9).toFixed(2) + " GB" : n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : fmt(n) + " B");
 const U_NUM = (m, n) => (m.unit === "bytes" ? U_BYTES(n) : fmt(n));
 const U_TAG = { ok: ["ok", "OK"], watch: ["warn", "Watch"], warning: ["bad", "Warning"], limit: ["bad", "Limit reached"], unknown: ["", "No data"] };
-const U_RESET = { day: "Resets at 00:00 UTC (4 pm Pacific in winter, 5 pm in summer)", month: "Month to date (calendar month, UTC)", now: "Current size" };
-function usageCard(m) {
-  const [cls, lab] = U_TAG[m.level] || U_TAG.unknown, pct = m.pct == null ? 0 : Math.min(100, m.pct);
+const U_RESET = { day: "Resets at 00:00 UTC (4 pm Pacific in winter, 5 pm in summer)", now: "Current size" };
+const U_USD = (n) => (n > 0 && n < 0.01 ? "under $0.01" : "$" + Number(n || 0).toFixed(2));
+function usageCard(m, u) {
+  const paid = u.plan === "paid", billed = m.hardStop === false; // billed: going over costs money but does not stop the site
+  const [cls, lab0] = U_TAG[m.level] || U_TAG.unknown, lab = m.level === "limit" && billed ? "Extra charges start" : lab0, pct = m.pct == null ? 0 : Math.min(100, m.pct);
+  const incl = billed ? (m.period === "month" ? " included this month" : " included") : "";
+  const reset = m.period === "month" ? (paid ? `Billing month from ${u.periodStart} (UTC)` : "Month to date (calendar month, UTC)") : U_RESET[m.period];
   const trend = m.trend && m.trend.length ? `<details class="utrend"><summary>Last 7 days ${usageSpark(m.trend)}</summary><table><thead><tr><th scope="col">UTC day</th><th scope="col">${m.period === "month" ? "That day" : "Used"}</th></tr></thead><tbody>${m.trend.map((p) => `<tr><td>${esc(p.d)}</td><td>${fmt(p.v)}</td></tr>`).join("")}</tbody></table></details>` : "";
+  const extra = m.used != null && billed && m.over > 0 ? `<p class="meta uover"><b>Estimated extra charge: ${U_USD(m.overUsd)}</b> (${U_NUM(m, m.over)} past the included amount at ${esc(m.priceText)}). The site keeps working.</p>` : "";
+  const today = m.used != null && m.period === "month" && m.today != null ? `<p class="meta" style="margin:2px 0 0">Today (UTC): ${U_NUM(m, m.today)}</p>` : "";
   return `<article class="ucard u-${esc(m.level)}" aria-label="${esc(m.label)}">
     <div class="uh"><h3>${esc(m.label)}</h3><span class="tag ${cls}">${lab}</span></div>
-    ${m.used == null ? `<p class="meta" style="margin:6px 0 0">${esc(m.why || "No data")}</p>` : `<p class="unum"><b>${U_NUM(m, m.used)}</b> of ${U_NUM(m, m.limit)} <span class="meta">(${m.pct}%)</span></p>
-    <div class="ubar" role="progressbar" aria-label="${esc(m.label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-valuetext="${m.pct}% of the free limit"><i style="width:${pct}%"></i></div>`}
-    <p class="meta ures">${U_RESET[m.period]} · free limit ${U_NUM(m, m.limit)} ${m.verified ? "" : '<span class="tag">unverified</span>'} · <a href="${esc(m.source)}" target="_blank" rel="noopener">source</a></p>
+    ${m.used == null ? `<p class="meta" style="margin:6px 0 0">${esc(m.why || "No data")}</p>` : `<p class="unum"><b>${U_NUM(m, m.used)}</b> of ${U_NUM(m, m.limit)}${incl} <span class="meta">(${m.pct}%)</span></p>
+    <div class="ubar" role="progressbar" aria-label="${esc(m.label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-valuetext="${m.pct}% of the ${billed ? "included amount" : "limit"}"><i style="width:${pct}%"></i></div>`}
+    ${today}${extra}
+    <p class="meta ures">${reset} · ${billed ? "included" : "limit"} ${U_NUM(m, m.limit)} ${m.verified ? "" : '<span class="tag">unverified</span>'} · <a href="${esc(m.source)}" target="_blank" rel="noopener">source</a></p>
     ${trend}
-    <details class="utrend"><summary>What happens at the limit</summary><p class="meta" style="margin:6px 0 0">${esc(m.breaks)} On a paid plan: ${esc(m.paid)}.</p></details>
+    <details class="utrend"><summary>${billed ? "What happens past the included amount" : "What happens at the limit"}</summary><p class="meta" style="margin:6px 0 0">${esc(m.breaks)}${!paid && m.paid ? ` On a paid plan: ${esc(m.paid)}.` : ""}</p></details>
   </article>`;
 }
 function usageSpark(t) {
@@ -809,23 +816,27 @@ async function renderUsage() {
   const main = $("#main"), q = main.dataset.urefresh === "1" ? "?refresh=1" : "";
   main.dataset.urefresh = "";
   const u = await api("/api/admin/usage" + q);
-  const grp = (title, keys) => `<h2 class="dh">${title}</h2><div class="ugrid">${u.metrics.filter((m) => keys.includes(m.key)).map(usageCard).join("")}</div>`;
+  const grp = (title, keys) => `<h2 class="dh">${title}</h2><div class="ugrid">${u.metrics.filter((m) => keys.includes(m.key)).map((m) => usageCard(m, u)).join("")}</div>`, paid = u.plan === "paid";
   const worst = u.top ? `${esc(u.top.label)} at ${u.top.pct}%` : "no numbers yet";
   const steps = `<section class="ucard u-ok" aria-label="Connect Cloudflare analytics"><div class="uh"><h3>Not connected</h3><span class="tag">Cloudflare numbers off</span></div>
     <p class="meta" style="margin:6px 0">${u.error ? esc(u.error) : "This page needs two secrets so it can read Cloudflare's usage numbers (read-only). Email counts and logged limit errors work without them."}</p>
     <ol class="usteps"><li>Cloudflare dashboard &gt; avatar (top right) &gt; My Profile &gt; API Tokens &gt; Create Token &gt; Custom token &gt; Get started.</li><li>Permission: Account / Account Analytics / Read. Account resources: Include / this account. Continue to summary &gt; Create Token. Copy the token once.</li><li>Account ID: Workers &amp; Pages overview, right-hand column (it is also the long code in the dashboard address after /).</li><li>Workers &amp; Pages &gt; socal-lights &gt; Settings &gt; Variables and Secrets &gt; Add. Type: Secret, name <code>CF_ANALYTICS_TOKEN</code>, paste the token. Add again: Secret <code>CF_ACCOUNT_ID</code>. Environment: Production. Save.</li><li>Redeploy (Deployments &gt; the latest &gt; Retry deployment), then reload this page.</li></ol>
     <p class="meta" style="margin:0">Full steps: docs/runbooks/cloudflare-limits.md</p></section>`;
-  main.innerHTML = `<p class="meta" style="margin:0 0 12px">Free-plan limits for <b>today, UTC day ${esc(u.utcDay)}</b>. Cloudflare resets its daily limits at 00:00 UTC. Read-only: this page cannot change anything. ${u.connected && u.fetchedAt ? `Cloudflare numbers as of ${esc(String(u.fetchedAt).slice(0, 16))} UTC (cached up to 5 minutes).` : ""}
-    Colors: <span class="tag warn">Watch</span> from 70%, <span class="tag bad">Warning</span> from 90%, <span class="tag bad">Limit reached</span> at 100%. Highest right now: <b>${worst}</b>. <button type="button" class="btn ghost" id="urefresh">Refresh now</button></p>
+  const asOf = u.connected && u.fetchedAt ? `Cloudflare numbers as of ${esc(String(u.fetchedAt).slice(0, 16))} UTC (cached up to 5 minutes).` : "";
+  const planBar = paid
+    ? `<p class="meta" style="margin:0 0 6px"><b>Plan: Workers Paid</b> ($${u.planBaseUsd}/month). Included amounts are for the billing month from <b>${esc(u.periodStart)}</b> (UTC), not per day, and passing them is <b>not</b> a stop: extra use is billed. Estimated extra charges so far this month (beyond the $${u.planBaseUsd}): <b>${U_USD(u.estimatedOverageUsd)}</b>. An estimate from Cloudflare's analytics, not the invoice; check Billing. Prices checked ${esc(u.pricingVerified)}. ${asOf}</p>`
+    : `<p class="meta" style="margin:0 0 6px"><b>Plan: Cloudflare Free.</b> Daily limits for <b>today, UTC day ${esc(u.utcDay)}</b>; Cloudflare resets them at 00:00 UTC and the site stops until then. ${asOf}</p>`;
+  main.innerHTML = `${planBar}
+    <p class="meta" style="margin:0 0 12px">Read-only: this page cannot change anything. Colors: <span class="tag warn">Watch</span> from 70%, <span class="tag bad">Warning</span> from 90%, <span class="tag bad">${paid ? "Extra charges start" : "Limit reached"}</span> at 100%${paid ? " of the included amount" : ""}. Highest right now: <b>${worst}</b>. <button type="button" class="btn ghost" id="urefresh">Refresh now</button></p>
     ${u.limitHits.length ? `<div class="limitbanner" role="alert"><b>Limit hit at ${esc(String(u.limitHits[0].at).slice(0, 16))} UTC${u.limitHits.length > 1 ? ` (${u.limitHits.length} times in 24 hours)` : ""}.</b><span>${esc(String(u.limitHits[0].detail).slice(0, 200))}</span></div>` : ""}
     ${u.connected && !u.error ? "" : steps}
     ${u.missing.length ? `<p class="msg err">Cloudflare would not give some numbers: ${u.missing.map((x) => esc(x.what) + (x.permission ? ` (needs ${esc(x.permission)})` : "")).join("; ")}.</p>` : ""}
-    ${grp("Today (UTC)", ["d1_rows_read", "d1_rows_written", "requests"])}
-    ${u.cpu ? `<p class="meta">Today's Function CPU: ${fmt(u.cpu.exceeded)} requests stopped for using too much CPU, ${fmt(u.cpu.failed)} failed in all, of ${fmt(u.cpu.requests)}. The free plan allows 10 ms of CPU per request.</p>` : ""}
-    ${grp("This month", ["r2_class_a", "r2_class_b"])}
+    ${grp(paid ? "This billing month (with today)" : "Today (UTC)", ["d1_rows_read", "d1_rows_written", "requests"])}
+    ${u.cpu ? `<p class="meta">Today's Function CPU: ${fmt(u.cpu.exceeded)} requests stopped for using too much CPU, ${fmt(u.cpu.failed)} failed in all, of ${fmt(u.cpu.requests)}. ${paid ? "Workers Paid allows 30 seconds of CPU per request by default (and includes 30 million CPU milliseconds a month, then $0.02 per extra million; not tracked here)." : "The free plan allows 10 ms of CPU per request."}</p>` : ""}
+    ${grp(paid ? "R2, this billing month" : "This month", ["r2_class_a", "r2_class_b"])}
     ${grp("Storage", ["d1_storage", "r2_storage"])}
     ${grp("Email (Resend, counted by this site)", ["email_day", "email_month"])}
-    <p class="meta">Email counts only emails this site sent through Resend (one send each); Resend's own total also counts received mail. Check the Resend dashboard if the numbers disagree.</p>`;
+    <p class="meta">Email is on the Resend free plan (100 a day, 3,000 a month), separate from Cloudflare, and those limits do stop email. Email counts only emails this site sent through Resend (one send each); Resend's own total also counts received mail. Check the Resend dashboard if the numbers disagree.</p>`;
   const b = $("#urefresh"); if (b) b.onclick = () => { main.dataset.urefresh = "1"; renderUsage(); };
 }
 
