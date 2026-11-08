@@ -55,14 +55,14 @@
           "title": "Install the app and use it offline",
           "desc": "Add SoCal Lights to your phone and use it without a connection.",
           "url": "/tutorials/find-app.mp4",
-          "length": "1:11",
+          "length": "1:19",
           "captions": "/tutorials/find-app.vtt",
           "poster": "/tutorials/find-app.jpg",
           "mobile": {
             "url": "/tutorials/find-app-mobile.mp4",
             "poster": "/tutorials/find-app-mobile.jpg",
             "captions": "/tutorials/find-app-mobile.vtt",
-            "length": "1:11"
+            "length": "1:19"
           }
         },
         {
