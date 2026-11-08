@@ -6,7 +6,7 @@
 # Needs the local server running on $PORT with its own database copy (--persist-to /tmp/state-$PORT) that has all migrations applied.
 cd "$(dirname "$0")/../.."
 S=${S:-/tmp/claude-0/scratch}; SC=${SC:-/tmp/claude-0/sc}; BR=$(git branch --show-current)
-declare -A EXTRA=([approve]="$S/pre.sql" [add-homes]="scripts/tutorials/seed-add-homes.sql" [claim]="$S/claim.sql" [feature]="$S/feature.sql" [profile]="$S/profile.sql" [installer]="scripts/tutorials/seed-installer.sql")
+declare -A EXTRA=([approve]="$S/pre.sql" [add-homes]="scripts/tutorials/seed-add-homes.sql" [claim]="$S/claim.sql" [feature]="$S/feature.sql" [profile]="$S/profile.sql" [installer]="scripts/tutorials/seed-installer.sql" [contest-passes]="scripts/tutorials/seed-passes.sql")
 STATUS=$SC/queue-status.txt
 for task in $1; do
   id=${task%%:*}; kind=${task##*:}; M=0; OUT=$SC/out; INST=install.mjs; [ "$kind" = "m" ] && { M=1; OUT=$SC/outm; INST=install-mobile.mjs; }

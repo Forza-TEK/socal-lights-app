@@ -222,6 +222,13 @@
           }
         },
         {
+          "id": "contest-passes",
+          "title": "Contest passes",
+          "desc": "Your first contest is free. What the pass picker shows when you run another one, and how to choose a pass.",
+          "url": "",
+          "length": ""
+        },
+        {
           "id": "share",
           "title": "Share your contest",
           "desc": "Link, QR code, entry poster and yard sign.",
