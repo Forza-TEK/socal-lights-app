@@ -701,6 +701,6 @@ test("the contest wizard, accounts and favorites sources match the current app",
 test("the assistant knows SoCal Lights is not in any app store", async () => {
   const { rankChunks } = await import("../functions/_lib/chatkb.js");
   const t = rankChunks("Is the app in the Google Play store?", 3).map((c) => c.text).join(" ");
-  assert.match(t, /not in the Apple App Store, Google Play/);
-  assert.match(t, /Do not say or promise that a store app is coming/);
+  assert.match(t, /No, not yet\. SoCal Lights is not in the Apple App Store, Google Play/);
+  assert.match(t, /do not promise that a store app is coming/);
 });
