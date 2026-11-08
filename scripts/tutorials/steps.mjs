@@ -3,12 +3,12 @@
 export const end = (ey, t, s) => ({ card: { ey, title: "Next: " + t, sub: s }, say: `Next up: ${t}.`, pad: 1.6 });
 const LABEL = { add: "Add", contests: "Contests", tutorials: "Tutorials" };
 // What the menu row is for, said as the pointer reaches it
-const WHY = { add: " That is where you add anything new: an event, a contest, or your own house.", contests: " That is where every neighborhood contest lives: the ones you can vote in, enter, or run.", tutorials: "" };
+const WHY = { add: " That is where you add anything new: an event, a contest, or your own home.", contests: " That is where every neighborhood contest lives: the ones you can vote in, enter, or run.", tutorials: "" };
 // "Step 1: ...", "Step 2: ..." captions for a list of { cap, say, do }
 export const navSteps = (items) => items.map((it, i) => ({ ...it, cap: `Step ${i + 1}: ${it.cap}`, pad: it.pad ?? 0.3 }));
 // map -> three dots -> menu item (which: "add" | "contests" | "tutorials"), then any `more` steps for the same trail
 export const fromMap = (which, extra = "", more = [], why = true) => navSteps([
-  { cap: "Tap the three dots", say: "Now look at the top right corner of the map. See the three dots? That is the menu. Tap them." + extra, target: "#morebtn", after: 1000 },
+  { cap: "Tap the three dots", say: "Now look at the top of the map, beside the search box. See the three dots? That is the menu. Tap them." + extra, target: "#morebtn", after: 1000 },
   { cap: `Tap ${LABEL[which]}`, say: `In the menu, tap ${LABEL[which]}.` + (why ? WHY[which] || "" : ""), target: `#moremenu a[href="/${which}"]`, after: 1200 },
   ...more,
 ]);
