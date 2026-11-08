@@ -104,7 +104,8 @@ test("cards come from the visitor's own words: asking for a person gets the Ask 
   const card = r.body.cards.find((c) => c.action === "ask_human");
   assert.ok(card.fields.some((x) => x.name === "message" && /real person/.test(x.value)), "prefilled with the visitor's own question, which they can edit");
   state.reply = "To add your home, open Add.";
-  const plain = await ask(env, "How do I add my home?"); assert.ok(!plain.body.cards || plain.body.cards.length === 0, "no card for a how-to question");
+  const plain = await ask(env, "What does the gold pin mean?"); assert.ok(!plain.body.cards || plain.body.cards.length === 0, "no card for an ordinary question");
+  const addHome = await ask(env, "How do I add my home?"); assert.ok(addHome.body.cards.some((c) => c.nav === "/add-house"), "a visitor who wants to add a home gets the start card");
   const signup = await ask(env, "Please sign me up for the weekly email"); assert.ok(signup.body.cards.some((c) => c.action === "weekly_email"));
   assert.ok(signup.body.cards.find((c) => c.action === "weekly_email").fields.find((x) => x.name === "city").options.length > 50, "the city list comes with the card");
   const stop = await ask(env, "How do I unsubscribe from the weekly email?"); assert.ok(!(stop.body.cards || []).some((c) => c.action === "weekly_email"), "unsubscribing is explained, not a sign-up card");
@@ -201,5 +202,5 @@ test("chat to form hand-off: the Start this event card, and the form side only a
   assert.match(html, /capture\(SEASONS, cities\)/); assert.match(html, /prefill: \(x\) =>/);
   assert.match(flow, /o\.prefill\(d\)/); assert.match(flow, /x\.check && x\.check\(d\)/, "opens at the first step that still needs something");
   const widget = fs.readFileSync(new URL("../public/chat.js", import.meta.url), "utf8");
-  assert.match(widget, /\/add-event\?/); assert.doesNotMatch(widget, /localStorage/, "the widget itself stores nothing");
+  assert.match(widget, /add-event\|add-house\|add-contest/); assert.doesNotMatch(widget, /localStorage/, "the widget itself stores nothing");
 });

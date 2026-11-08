@@ -623,7 +623,7 @@ test("wiring: pages load the widget with a versioned tag, the widget is inert un
   assert.ok(css.includes('data-theme="dark"') && css.includes("prefers-reduced-motion") && css.includes("min-height:44px"));
   const label = js.includes('(AI assistant)');
   assert.ok(label);
-  assert.ok(!/house/i.test(js.replace(/How do I add my home\?/g, "")), "the word home, not house");
+  assert.ok(!/house/i.test(js.replace(/How do I add my home\?/g, "").replace(/add-house/g, "")), "the word home, not house");
 });
 
 test("privacy and Terms describe the assistant", async () => {

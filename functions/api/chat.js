@@ -4,19 +4,27 @@
 // limits per connection and overall, scope rules (no model call for off-topic, injection, personal data, contest rules), the cost cap, the model, the output filter.
 // Nothing is logged but anonymous daily counters: no message text and no IP address (the limits use one-way scrambled codes kept two days, as for the other forms).
 import { json, err, verifyTurnstile } from "../_lib/util.js";
-import { sameOriginStrict } from "../_lib/auth.js";
+import { sameOriginStrict, getUser } from "../_lib/auth.js";
+import { ownListings } from "../_lib/chatown.js";
 import { checkThrottle, hashKey } from "../_lib/throttle.js";
 import { readSettings, isLive, usageState, capReason, recordUsage, recordGap, neuronsFor, claudeMicroUsd, providerOf } from "../_lib/chatsettings.js";
 import { parseMessages, classify, filterOutput, MESSAGES } from "../_lib/chatguard.js";
 import { buildContext, topicOf } from "../_lib/chatkb.js";
 import { runModel } from "../_lib/chatmodel.js";
-import { cardsFor, humanCard, wantsHuman } from "../_lib/chatcards.js";
+import { cardsFor, humanCard, wantsHuman, needsAccount } from "../_lib/chatcards.js";
 import { bumpAction } from "../_lib/chatactions.js";
 import { checkCapAlerts } from "../_lib/chatmail.js";
 
 import { COOKIE, mint, validSession, cookieHeader } from "../_lib/chatsession.js";
 const NO_STORE = { "cache-control": "no-store" };
 const say = (reply, extra = {}, headers = {}) => json({ reply, ...extra }, { headers: { ...NO_STORE, ...headers } });
+
+// Tier 3 reads who is signed in only when the visitor asked to change one of their own listings or to add an event; nothing about them is stored or sent to the model.
+async function signedIn(request, env, settings, last) {
+  if (!settings.tiers[3] || !needsAccount(last)) return {};
+  const user = await getUser(request, env).catch(() => null);
+  return user ? { user, own: await ownListings(env, user) } : {};
+}
 
 export async function onRequestPost({ request, env }) {
   const settings = await readSettings(env);
@@ -72,7 +80,7 @@ export async function onRequestPost({ request, env }) {
   try {
     ctx = await buildContext(env, last);
     // nothing in the knowledge base matches: do not ask the model to improvise. Count the topic bucket (never the words) so we know what to write, and give the fallback link.
-    if (!ctx.sourced) { await recordGap(env, topicOf(last)); await recordUsage(env, { chats: first ? 1 : 0, turns: 1, gaps: 1 }); const hc = cardsFor({ question: last, settings, ctx, handoff: "gap" }); for (const c of hc) await bumpAction(env, c.action || c.type, "shown"); return say(MESSAGES.gap, { gap: true, cards: hc }, headers); }
+    if (!ctx.sourced) { await recordGap(env, topicOf(last)); await recordUsage(env, { chats: first ? 1 : 0, turns: 1, gaps: 1 }); const { user: gu, own: go } = await signedIn(request, env, settings, last); const hc = cardsFor({ question: last, settings, ctx, handoff: "gap", user: gu, own: go }); for (const c of hc) await bumpAction(env, c.action || c.type, "shown"); return say(MESSAGES.gap, { gap: true, cards: hc }, headers); }
     // earlier assistant turns come from the browser, so they get the same output filter as a fresh answer (a forged one is dropped)
     const history = messages.slice(0, -1).filter((m) => m.role === "user" || !filterOutput(m.content, ctx).blocked);
     out = await runModel(env, ctx, [...history, messages[messages.length - 1]]);
@@ -85,7 +93,9 @@ export async function onRequestPost({ request, env }) {
     chats: first ? 1 : 0, turns: 1, tokens_in: out.tin, tokens_out: out.tout, blocked_output: f.blocked ? 1 : 0,
     neurons: out.provider === "workers" ? neuronsFor(out.model, out.tin, out.tout) : 0, usd_micro: out.provider === "claude" ? claudeMicroUsd(out.tin, out.tout) : 0,
   });
-  const cards = f.blocked ? [] : cardsFor({ question: last, settings, ctx });
+  // Tier 3 reads who is signed in, only when the visitor asked to change one of their own listings; nothing about them is stored or sent to the model
+  const { user, own } = f.blocked ? {} : await signedIn(request, env, settings, last);
+  const cards = f.blocked ? [] : cardsFor({ question: last, settings, ctx, user, own });
   for (const c of cards) await bumpAction(env, c.action || c.type, "shown");
   if (settings.capUsd > 0) await checkCapAlerts(env, settings); // 80% and 100% emails, once a month each
   return say(f.text, { ...(f.blocked ? { filtered: f.blocked } : {}), ...(cards.length ? { cards } : {}) }, headers);
