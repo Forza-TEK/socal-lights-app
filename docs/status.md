@@ -1,6 +1,10 @@
 # Status
 
-_Last updated: 2026-11-08 (Cloudflare usage panel made plan-aware for Workers Paid)_
+_Last updated: 2026-11-08 (Help articles re-audit, second pass)_
+
+## Help articles re-audit, second pass (2026-11-08)
+Report: `docs/audit/2026-11-08-help-articles.md`. Branch work, PR to `main` (not merged by the agent). Migration `0201_help_audit_gaps_2026-11-08.sql` (from `scripts/help/updates-audit-1108b.mjs`): 5 new articles (`add-a-home-without-a-contest`, `sponsor-a-contest-with-an-invite-link`, `ask-socal-lights-ai-assistant`, `monthly-update-email`, `stop-emails-from-socal-lights`) and 8 corrections to existing ones, seed-owned articles only (`updated_by = 'seed'`). 54 articles before, 59 after. All 54 live article pages matched the migration text, so none has been edited in Admin. Help copy in `functions/_lib/help.js` and `functions/help/index.js` fixed (home wording; "Most how-tos have a video"). `chatkb-data.js` regenerated.
+- **Open decisions** (details in the report): the add-homes box says up to 100 at a time but accepts 500 lines; the Add page calls a contest "Free" although only the first in 12 months is; the monthly update is not sent yet, so the article describes only the opt-in; UI names that still say house or display; video links for the new articles are for the video audit.
 
 ## Cloudflare usage is plan-aware: Workers Paid (2026-11-08)
 The owner upgraded to Workers Paid ($5/month) after the free-tier D1 rows-read outage; the panel, digest and check had still compared against free daily limits (false "limit reached"). Branch work, PR to `main` (not merged by the agent).
@@ -774,3 +778,8 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - "Ask SoCal Lights" button: on phones (600px and narrower) it is only the round question-mark button (48px); the words stay for screen readers. Desktop unchanged.
 
 - AI assistant: the chat now follows the visitor between pages (kept in the browser tab only; widget loaded on content pages via footer.js); weekend/tonight/tomorrow/this-week questions use real dates; the assistant no longer names its internal blocks; new knowledge chunk on opening the contest dashboard. Privacy wording updated. Handoff for a tuning session: docs/ai-assistant-training-handoff.md.
+
+## 2026-11-08 city sweep group 14 (Western Riverside County)
+- Searched Riverside, Corona, Norco, Eastvale, Jurupa Valley, Moreno Valley, Perris, Menifee. Everything verifiable was already on the map; no migration.
+- Leads (not added; no 2026 confirmation, last-season rule): Cherrywood Circle Light Show, 1424 Cherrywood Cir, Corona (tackylighttour, "confirmed lit Dec 2025"); Coleman Family Lights, 31403 Sherman Rd, Menifee; Perris Christmas parade (2025 was Dec; 2026 date not found, city site 403); Eastvale Miracle on Citrus Street and Dos Lagos tree lighting (2026 dates not posted); Riverside Downtown Christmas Tree Lighting Dec 1 (aggregator only, no time or venue).
+- Photos: no acceptable photo found (candidate pages gave flyers or banner graphics only).

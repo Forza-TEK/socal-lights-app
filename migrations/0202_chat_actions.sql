@@ -13,4 +13,4 @@ INSERT OR IGNORE INTO chat_settings (key, value) VALUES ('chat_tier1', '1');
 INSERT OR IGNORE INTO chat_settings (key, value) VALUES ('chat_tier2', '1');
 INSERT OR IGNORE INTO chat_settings (key, value) VALUES ('chat_tier3', '1');
 -- Owner decision 2026-11-10: a $10 monthly cap. Only raises the cap from the original $0; a cap the owner already chose is left alone.
-UPDATE chat_settings SET value = '10', updated_by = 'migration 0201', updated_at = datetime('now') WHERE key = 'chat_cap_usd' AND value = '0';
+UPDATE chat_settings SET value = '10', updated_by = 'migration 0202', updated_at = datetime('now') WHERE key = 'chat_cap_usd' AND value = '0';

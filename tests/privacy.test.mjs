@@ -281,7 +281,7 @@ test("every outside host named in the policy is used by the code, and every outs
 test("the policy no longer makes the false claims and has the required sections", () => {
   const raw = readFileSync(join(root, "public/privacy.html"), "utf8");
   for (const bad of ["We do not show ads", "share it with advertisers", "not sent to our servers or stored", "within a day or two"]) assert.ok(!raw.includes(bad), bad);
-  for (const must of ["Who receives your data", "Do Not Track", "How long we keep information", "I saw it lit tonight", "Updated November 10, 2026", "Sponsors recorded by organizers", "24 months after the contest's voting ends", "Homes listed by our team or by contest organizers", "Remove my home", "street address, a name if the public source gave one", "We keep a record of that confirmation"]) assert.ok(raw.includes(must), must);
+  for (const must of ["Who receives your data", "Do Not Track", "How long we keep information", "I saw it lit tonight", "Updated November 11, 2026", "Sponsors recorded by organizers", "24 months after the contest's voting ends", "Homes listed by our team or by contest organizers", "Remove my home", "street address, a name if the public source gave one", "We keep a record of that confirmation"]) assert.ok(raw.includes(must), must);
   assert.ok(!/\d{1,5} [A-Z][a-z]+ (St|Street|Ave|Way|Blvd|Road|Rd)\b.*CA \d{5}/.test(readFileSync(join(root, "functions/_lib/mailtpl.js"), "utf8")), "no street address in the repo's mail template");
 });
 
