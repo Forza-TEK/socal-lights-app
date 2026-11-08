@@ -241,14 +241,14 @@
           "title": "Approve and decline entries",
           "desc": "Approve, decline with a reason, add homes yourself, and undo a decline.",
           "url": "/tutorials/run-approve.mp4",
-          "length": "2:24",
+          "length": "2:16",
           "captions": "/tutorials/run-approve.vtt",
           "poster": "/tutorials/run-approve.jpg",
           "mobile": {
             "url": "/tutorials/run-approve-mobile.mp4",
             "poster": "/tutorials/run-approve-mobile.jpg",
             "captions": "/tutorials/run-approve-mobile.vtt",
-            "length": "2:25"
+            "length": "2:14"
           }
         },
         {
@@ -465,14 +465,14 @@
           "title": "Show off your house",
           "desc": "Put your lights on the map with Showcase a House.",
           "url": "/tutorials/post-house.mp4",
-          "length": "2:35",
+          "length": "2:51",
           "captions": "/tutorials/post-house.vtt",
           "poster": "/tutorials/post-house.jpg",
           "mobile": {
             "url": "/tutorials/post-house-mobile.mp4",
             "poster": "/tutorials/post-house-mobile.jpg",
             "captions": "/tutorials/post-house-mobile.vtt",
-            "length": "2:37"
+            "length": "2:51"
           }
         },
         {
@@ -495,14 +495,14 @@
           "title": "Feature your event or home",
           "desc": "Pick a plan, pick your event or winning home, check the dates. Stops at the secure payment page.",
           "url": "/tutorials/post-feature.mp4",
-          "length": "2:22",
+          "length": "2:30",
           "captions": "/tutorials/post-feature.vtt",
           "poster": "/tutorials/post-feature.jpg",
           "mobile": {
             "url": "/tutorials/post-feature-mobile.mp4",
             "poster": "/tutorials/post-feature-mobile.jpg",
             "captions": "/tutorials/post-feature-mobile.vtt",
-            "length": "2:22"
+            "length": "2:28"
           }
         }
       ]
