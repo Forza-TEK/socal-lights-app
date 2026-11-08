@@ -774,3 +774,8 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - "Ask SoCal Lights" button: on phones (600px and narrower) it is only the round question-mark button (48px); the words stay for screen readers. Desktop unchanged.
 
 - AI assistant: the chat now follows the visitor between pages (kept in the browser tab only; widget loaded on content pages via footer.js); weekend/tonight/tomorrow/this-week questions use real dates; the assistant no longer names its internal blocks; new knowledge chunk on opening the contest dashboard. Privacy wording updated. Handoff for a tuning session: docs/ai-assistant-training-handoff.md.
+
+## 2026-11-08 city sweep group 14 (Western Riverside County)
+- Searched Riverside, Corona, Norco, Eastvale, Jurupa Valley, Moreno Valley, Perris, Menifee. Everything verifiable was already on the map; no migration.
+- Leads (not added; no 2026 confirmation, last-season rule): Cherrywood Circle Light Show, 1424 Cherrywood Cir, Corona (tackylighttour, "confirmed lit Dec 2025"); Coleman Family Lights, 31403 Sherman Rd, Menifee; Perris Christmas parade (2025 was Dec; 2026 date not found, city site 403); Eastvale Miracle on Citrus Street and Dos Lagos tree lighting (2026 dates not posted); Riverside Downtown Christmas Tree Lighting Dec 1 (aggregator only, no time or venue).
+- Photos: no acceptable photo found (candidate pages gave flyers or banner graphics only).
