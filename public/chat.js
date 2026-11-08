@@ -6,7 +6,7 @@
   "use strict";
   if (window.__sclChat) return;
   window.__sclChat = true;
-  var CSS = "/chat.css?v=20261110a", MAX = 500, TURNS = 6, KEEP = 40, KEY = "scl-chat";
+  var CSS = "/chat.css?v=20261110b", MAX = 500, TURNS = 6, KEEP = 40, KEY = "scl-chat";
   var store = { get: function () { try { var v = JSON.parse(sessionStorage.getItem(KEY) || "null"); return v && Array.isArray(v.log) && Array.isArray(v.h) ? v : null; } catch (e) { return null; } }, set: function (v) { try { sessionStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} }, clear: function () { try { sessionStorage.removeItem(KEY); } catch (e) {} } };
   var cfgP = window.__pre && window.__pre["/api/config"];
   (cfgP || fetch("/api/config").then(function (r) { return r.json(); })).then(function (c) { if (c && c.chatEnabled) start(c); }).catch(function () {});
