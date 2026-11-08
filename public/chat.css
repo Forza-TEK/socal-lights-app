@@ -1,0 +1,49 @@
+/* AI assistant widget (public/chat.js). Uses the site's color variables when a page defines them, with its own fallbacks so it also works on pages that do not.
+   Day mode is the default; night mode follows [data-theme="dark"], or the device setting on a page that does not set one. */
+.scl-chat,.scl-chat-fab{
+  --c-bg:var(--surface,#fff); --c-bg2:var(--surface-2,#f3f1ec); --c-ink:var(--ink,#14161b); --c-muted:var(--muted,#646a7a); --c-line:var(--line,#e7e3dc);
+  --c-accent:var(--ice,#2559b8); --c-on-accent:#fff; --c-focus:var(--focus,#2a5bd7); --c-user:var(--ice-soft,#e2ecfb);
+  font-family:var(--f-body,system-ui,-apple-system,"Segoe UI",sans-serif); color:var(--c-ink); box-sizing:border-box;
+}
+:root[data-theme="dark"] .scl-chat,:root[data-theme="dark"] .scl-chat-fab{--c-bg:var(--surface,#161a22); --c-bg2:var(--surface-2,#1f2430); --c-ink:var(--ink,#f5f3ee); --c-muted:var(--muted,#9ba1b1); --c-line:var(--line,#2a303c); --c-accent:#8fb0ff; --c-on-accent:#0b0d12; --c-focus:var(--focus,#8fb0ff); --c-user:var(--ice-soft,#18273b)}
+@media (prefers-color-scheme:dark){:root:not([data-theme]) .scl-chat,:root:not([data-theme]) .scl-chat-fab{--c-bg:#161a22; --c-bg2:#1f2430; --c-ink:#f5f3ee; --c-muted:#9ba1b1; --c-line:#2a303c; --c-accent:#8fb0ff; --c-on-accent:#0b0d12; --c-focus:#8fb0ff; --c-user:#18273b}}
+.scl-chat *,.scl-chat-fab *{box-sizing:border-box}
+.scl-chat[hidden],.scl-chat-fab[hidden],.scl-chat [hidden]{display:none!important}
+
+.scl-chat-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:1200;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 16px 8px 10px;border:1px solid var(--c-line);border-radius:999px;background:var(--c-bg);color:var(--c-ink);font-family:inherit;font-weight:600;font-size:15px;line-height:1.2;box-shadow:0 6px 20px rgba(20,22,27,.18);cursor:pointer}
+.scl-chat-fab-ic{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--c-accent);color:var(--c-on-accent);font-weight:800}
+.scl-chat-fab:hover{background:var(--c-bg2)}
+.scl-chat-fab:focus-visible,.scl-chat button:focus-visible,.scl-chat a:focus-visible,.scl-chat textarea:focus-visible,.scl-chat-log:focus-visible{outline:3px solid var(--c-focus);outline-offset:2px}
+
+.scl-chat{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:1201;display:flex;flex-direction:column;width:min(400px,calc(100vw - 32px));max-height:min(620px,calc(100dvh - 32px));background:var(--c-bg);border:1px solid var(--c-line);border-radius:16px;box-shadow:0 16px 40px rgba(20,22,27,.28);overflow:hidden;font-size:15px;line-height:1.45}
+.scl-chat-head{display:flex;align-items:center;gap:8px;padding:10px 8px 10px 14px;border-bottom:1px solid var(--c-line)}
+.scl-chat-head h2{margin:0;flex:1;font-size:17px;font-weight:700}
+.scl-chat-reset,.scl-chat-x{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--c-ink);cursor:pointer;border-radius:10px;font:inherit}
+.scl-chat-reset{font-size:13px;color:var(--c-muted);text-decoration:underline;padding:0 8px}
+.scl-chat-x{font-size:28px;line-height:1}
+.scl-chat-note{margin:0;padding:8px 14px;font-size:13px;color:var(--c-muted);background:var(--c-bg2);border-bottom:1px solid var(--c-line)}
+.scl-chat a{color:var(--c-accent);text-decoration:underline;text-underline-offset:2px}
+.scl-chat-log{flex:1;min-height:120px;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
+.scl-chat-msg{margin:0;padding:9px 12px;border-radius:12px;max-width:92%;overflow-wrap:anywhere;white-space:pre-wrap;border:1px solid var(--c-line)}
+.scl-chat-bot{background:var(--c-bg2);align-self:flex-start}
+.scl-chat-user{background:var(--c-user);align-self:flex-end}
+.scl-chat-who{font-weight:700} /* the speaker is named in words, so meaning never depends on color alone */
+.scl-chat-status{margin:0;padding:0 14px;min-height:20px;font-size:13px;color:var(--c-muted)}
+.scl-chat-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 8px}
+.scl-chat-chip{min-height:44px;padding:6px 12px;border:1px solid var(--c-line);border-radius:999px;background:var(--c-bg);color:var(--c-ink);font:inherit;font-size:14px;cursor:pointer;text-align:left}
+.scl-chat-chip:hover{background:var(--c-bg2)}
+.scl-chat-ts{padding:0 14px 8px}
+.scl-chat-tsnote{margin:0 0 6px;font-size:13px;color:var(--c-muted)}
+.scl-chat-form{display:flex;gap:8px;align-items:flex-end;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--c-line)}
+.scl-chat-form textarea{flex:1;min-height:44px;max-height:120px;resize:none;padding:10px 12px;border:1px solid var(--c-line);border-radius:12px;background:var(--c-bg);color:var(--c-ink);font:inherit;font-size:16px}
+.scl-chat-send{min-width:64px;min-height:44px;padding:0 16px;border:0;border-radius:12px;background:var(--c-accent);color:var(--c-on-accent);font:inherit;font-weight:700;cursor:pointer}
+.scl-chat-send:disabled{opacity:.55;cursor:not-allowed}
+.scl-chat-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+@media (max-width:600px){
+  .scl-chat{right:0;left:0;bottom:0;width:100%;max-height:88dvh;border-radius:16px 16px 0 0;border-bottom:0}
+  .scl-chat-fab{right:12px}
+}
+@media (prefers-reduced-motion:reduce){.scl-chat,.scl-chat-fab,.scl-chat *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media (forced-colors:active){.scl-chat,.scl-chat-fab,.scl-chat-msg,.scl-chat-send,.scl-chat-chip{border:1px solid CanvasText}}
+@media print{.scl-chat,.scl-chat-fab{display:none!important}}

@@ -1,6 +1,16 @@
 # Status
 
-_Last updated: 2026-11-06 (new pricing structure: event tiers with banner, installer Top of the list)_
+_Last updated: 2026-11-08 (AI assistant built, OFF by default)_
+
+## AI assistant (2026-11-08; owner approved; branch work, OFF by default)
+Full doc: `docs/ai-assistant.md`. A chat widget (`public/chat.js`, `chat.css`) and `POST /api/chat` that answer site, contest (entering, voting, judging, passes, sponsors), price and event questions from our own public sources only. Workers AI by default (binding `AI` in `wrangler.toml`); Claude Haiku 5.5 is an env-switched alternative (`CHAT_PROVIDER=claude`, secret `ANTHROPIC_API_KEY`).
+- **Off until Admin > AI assistant is switched on.** Kill switch, monthly cap (default $0 = free neuron allowance only, max $10), chats per day, usage and "unanswered topics" shown in Admin. Per-visitor and overall rate limits, Turnstile once per visit.
+- **Counters only:** no message text, no IP. Migration `0196_chat_assistant.sql` (`chat_settings`, `chat_usage`, `chat_topics`).
+- **Prices only from the code exports; dollar figures and dates stripped from retrieved text and filtered from output.** Deferrals for disputes, legal, prizes, results/predictions; fixed general answer for anti-fraud questions.
+- **Knowledge base:** Help articles, curated `docs/ai-assistant-kb.md`, tutorials, page copy, Terms (quoted), live events and contests. Rebuild `functions/_lib/chatkb-data.js` with `node scripts/build-chat-kb.mjs` after changing those pages; a test fails if stale.
+- `privacy.html` and `terms.html` have an "AI assistant" section, updated November 8, 2026.
+- **Tests:** `tests/chat.test.mjs` (100+ questions, mock model). **Untested:** real model answers, neuron/cost numbers against Cloudflare, AI Gateway options, Claude model id, phone layout and screen reader.
+- **Owner next:** steps in `docs/ai-assistant.md` ("Owner steps to launch").
 
 ## Outreach API for Grok, suppression list, monthly update opt-in (2026-11-07; owner decision)
 Contract and rules for Grok: `docs/monetization/grok-outreach-api.md` (hand it over as is); wording and the approved sequence (original, follow-up 1 about day 4, follow-up 2 about day 10, then stop) in `docs/monetization/grok-email-playbook.md` 5b; pilot plan in the playbook section 10. Migration `0195_outreach_newsletter.sql` (tables only, no data).

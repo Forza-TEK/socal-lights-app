@@ -22,7 +22,7 @@ test("Terms have a paid placements section covering what it is, labels, contests
 
 test("Terms make no advertising-free claims and carry an Updated date", () => {
   for (const bad of ["We do not show ads", "no ads", "ad-free", "never show ads", "do not sell", "advertisers"]) assert.ok(!text.toLowerCase().includes(bad.toLowerCase()), bad);
-  assert.ok(/Updated November 7, 2026/.test(terms));
+  assert.ok(/Updated November 8, 2026/.test(terms));
 });
 
 test("the day limits stated in the Terms match the code", () => {

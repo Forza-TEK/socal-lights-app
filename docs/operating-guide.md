@@ -47,3 +47,6 @@ The `[SCL]` routines above have no heartbeat (they are not workflows): see "Rout
 ## Known limits
 - Scheduled cloud tasks cannot open Chrome; only the browser pass (bound to the work computer) can.
 - Picking up on the home computer is set up but untested (see `docs/workstation-setup.md` in the repo).
+
+## AI assistant
+Off by default. Switch, kill switch, cost cap, usage and "unanswered topics" are in Admin > AI assistant; setup, environment variables and launch steps are in `docs/ai-assistant.md`. Weekly while it is on: open Admin > AI assistant, look at Unanswered topics and write or fix the Help Center articles they point to; after changing a listed public page, the tutorials or `docs/ai-assistant-kb.md`, run `node scripts/build-chat-kb.mjs` and commit the result.
