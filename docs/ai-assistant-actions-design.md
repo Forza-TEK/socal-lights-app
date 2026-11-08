@@ -110,6 +110,12 @@ Each phase is its own branch and PR; nothing is switched on without the owner.
 - **Event hand-off:** the Start this event card opens `/add-event?from=chat&...`; `public/chatprefill.js` validates the values, keeps them through sign-in, and `run()` in `addflow.js` opens the form at the first step that still needs something (Review when complete).
 - Legal wording to add: `docs/ai-assistant-actions-legal-draft.md`.
 
+## What was built in Phase 2 (differences from the plan above)
+- Tier 3 does not need Claude yet: the cards are chosen by code from the visitor's own words and their own listings (`functions/_lib/chatown.js`), so it works on the current model. Claude would only be needed to understand free-text details; that stays open.
+- The widget makes the call, never the server: each card carries one call on an allowlist (`CALL_OK`), shown with a two-tap confirm; the site's own endpoints re-check ownership.
+- Built: take down or put back a home, mark an event cancelled or postponed or clear the notice, run an event again next year, edit a description (one box, prefilled), withdraw a contest entry, add an event in one card (the endpoint's own rules decide), and hand-offs to the add-home form and the contest wizard. Claims stay on the listing's own Claim button. Drafts: the forms' own Save and exit keeps what the chat filled in.
+- Not built, by decision: voting, anything with money, judge or organizer actions.
+
 ## Chat to form hand-off (seamless)
 Owner decision: when the visitor is ready to finish something in a form (a home with photos, an event with missing details, a contest, a claim), the chat takes them there with everything already filled in. It is built on what the forms already do: `public/addflow.js` keeps answers in `localStorage` under each form's `persist` key (for example `scl-contest-draft`) and reopens a saved draft with `?draft=<id>` on the step they left.
 1. **Collect.** The assistant gathers the fields in conversation (name, dates, place, free or paid, description; for a home: who is posting, display name, season, address, details). Our code validates each one with the form's own rules (lengths, enums, dates, address) as they are given.

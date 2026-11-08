@@ -97,6 +97,7 @@
 
 
     // ---- action cards (docs/ai-assistant-actions-design.md): the assistant proposes, the visitor fills in and taps. Everything is inserted as text; links must stay on this site.
+    var NAV = /^\/(add-event|add-house|add-contest)$/;
     var CALL = /^\/api\/(me\/(homes|events)\/[A-Za-z0-9_-]{1,64}|submit-event|contests\/[A-Za-z0-9_-]{1,64}\/mine\?id=[A-Za-z0-9_-]{1,64}|drafts)$/;
     function callSite(call, vals) {
       var body = {}, k; for (k in (call.body || {})) body[k] = call.body[k]; for (k in vals) body[k] = vals[k];
@@ -138,7 +139,7 @@
         });
         nope.addEventListener("click", function () { box.remove(); });
         box.appendChild(cmsg); box.appendChild(el("div", { class: "scl-chat-card-btns" }, [ok, nope]));
-      } else if (card.type === "form" && Array.isArray(card.fields) && (card.nav === "/add-event" || (card.call && CALL.test(String(card.call.url || ""))) || /^[a-z_]{3,30}$/.test(String(card.action || "")))) {
+      } else if (card.type === "form" && Array.isArray(card.fields) && (NAV.test(String(card.nav || "")) || (card.call && CALL.test(String(card.call.url || ""))) || /^[a-z_]{3,30}$/.test(String(card.action || "")))) {
         var f = el("form", { class: "scl-chat-card-form", novalidate: "" }), inputs = {};
         f.appendChild(el("p", { class: "scl-chat-card-h", text: String(card.label || "Send") }));
         if (card.summary) f.appendChild(el("p", { class: "scl-chat-card-s", text: String(card.summary).slice(0, 300) }));
@@ -185,9 +186,9 @@
             });
             return;
           }
-          if (card.nav === "/add-event") { // hand-off to the form: open it with these answers; nothing is sent to our servers from here
+          if (NAV.test(String(card.nav || ""))) { // hand-off to the form: open it with these answers; nothing is sent to our servers from here
             var qs = ["from=chat"]; Object.keys(vals).forEach(function (k) { if (vals[k] !== "" && vals[k] !== false) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(String(vals[k]))); });
-            msg.textContent = "Opening the form…"; location.href = "/add-event?" + qs.join("&"); return;
+            msg.textContent = "Opening the form…"; location.href = card.nav + "?" + qs.join("&"); return;
           }
           go.disabled = true; msg.textContent = "Sending…";
           fetch("/api/chat/act", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: card.action, fields: vals, page: location.pathname, summary: lastReply || "" }) })

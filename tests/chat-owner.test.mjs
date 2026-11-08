@@ -112,3 +112,17 @@ test("no voting and no money from chat, and an injected instruction cannot produ
   assert.equal(cardsFor({ question: "take my home down", settings: { tiers: { 1: true, 2: true, 3: false } }, user: { id: "u1" }, own: { homes: [{ id: "h1", name: "A", status: "approved" }] } }).filter((c) => c.type === "call").length, 0);
   assert.ok(publishEventCard().fields.length >= 10);
 });
+
+test("home and contest hand-offs: the start cards, and the form side only takes values it would accept by hand", async () => {
+  const { homePrefill, contestPrefill } = await import("../public/chatprefill.js");
+  const { SEASONS } = await import("../public/seasons.js"), { CITY } = await import("../public/cities.js"), cities = Object.keys(CITY);
+  const { env } = setup();
+  const h = await ask(env, "How do I add my home to the map?"); assert.ok(h.cards.some((c) => c.nav === "/add-house" && c.fields.some((f) => f.name === "street")));
+  const c = await ask(env, "I want to start a decorating contest for my neighborhood"); assert.ok(c.cards.some((x) => x.nav === "/add-contest"));
+  assert.deepEqual(homePrefill(new URLSearchParams("kind=homeowner&biz=The+Garcia+family&title=Garcia+Lights&season=christmas&city=Irvine&street=12+Oak+St&zip=92618&desc=Thousands+of+lights+timed+to+music."), SEASONS, cities), { kind: "homeowner", biz: "The Garcia family", title: "Garcia Lights", desc: "Thousands of lights timed to music.", season: "christmas", city: "Irvine", street: "12 Oak St", zip: "92618" });
+  assert.deepEqual(homePrefill(new URLSearchParams("kind=admin&biz=x&season=nope&city=Gotham&zip=123"), SEASONS, cities), {}, "bad values are dropped");
+  assert.deepEqual(contestPrefill(new URLSearchParams("name=Oak+Hill+Holiday+Lights+2026&org=Oak+Hill+HOA&city=Irvine"), cities), { name: "Oak Hill Holiday Lights 2026", org: "Oak Hill HOA", city: "Irvine" });
+  assert.deepEqual(contestPrefill(new URLSearchParams("name=ab&city=Gotham"), cities), {});
+  const fs = await import("node:fs");
+  for (const page of ["add-house", "add-contest"]) { const html = fs.readFileSync(new URL(`../public/${page}.html`, import.meta.url), "utf8"); assert.match(html, /chatprefill\.js/); assert.match(html, /prefill: \(x\) =>/); }
+});

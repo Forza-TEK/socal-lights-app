@@ -11,6 +11,8 @@ const STOP = /\b(unsubscribe|stop (?:the |these |getting )?emails?|opt out|no lo
 const REMOVE = /\b(remove|delete|take (?:down|off)|get rid of|want .{0,20} off)\b[^.?!]{0,50}\b(my )?(home|house|display|listing|address|lights)\b/i;
 const FAV = /\b(favorites?|favourites?|plan (?:a |my )?night|route|drive (?:through|by)|tonight|stops?)\b/i;
 const ADD_EVENT = /\b(add|list|post|submit|put|publish|promote|register)\b[^.?!]{0,40}\b(event|parade|market|tree lighting|festival|show|haunt)\b/i;
+const ADD_HOME = /\b(add|put|show|list|post|submit|showcase|enter)\b[^.?!]{0,40}\b(my )?(home|house|display|lights|yard)\b[^.?!]{0,30}\b(on|to|in)\b[^.?!]{0,20}\bmap\b|\b(add|list|post|showcase|submit)\b[^.?!]{0,25}\b(my )?(home|house|display)\b/i;
+const ADD_CONTEST = /\b(start|create|run|host|set up|setup|launch)\b[^.?!]{0,30}\b(a |my |our )?(decorating |lighting )?contest\b/i;
 const WHERE = /\b(where|how do i (?:get to|go to|open|find)|link to|take me to)\b[^.?!]{0,40}\b(add|contests?|profile|pricing|prices|help|tutorials?|promote|feature)\b/i;
 const PAGES = [["add", "/add", "Add an event, home or contest"], ["contest", "/contests", "Contests"], ["profile", "/profile", "Your profile"], ["pric", "/pricing", "Pricing"], ["help", "/help", "Help Center"], ["tutorial", "/tutorials", "Tutorials"], ["promote", "/feature", "Promote your event"], ["feature", "/feature", "Promote your event"]];
 
@@ -30,6 +32,27 @@ export function eventStartCard() {
       { name: "free", label: "Free to attend?", type: "select", required: false, options: [["yes", "Free"], ["no", "Paid"]], value: "yes" },
     ], go: "Open the form" };
 }
+// "Start this home" and "Start this contest": the same hand-off as events, to the home form and the contest wizard (photos and the rest are finished there).
+export function homeStartCard() {
+  return { type: "form", nav: "/add-house", label: "Start my home", go: "Open the form", summary: "Tell me what you know. Tap Open the form and it opens with these filled in. You add night photos and check everything there before it goes on the map.",
+    fields: [
+      { name: "kind", label: "Who is posting?", type: "select", required: true, options: [["homeowner", "A homeowner"], ["installer", "A professional installer"]], value: "homeowner" },
+      { name: "biz", label: "Name to show (for example the Garcia family)", type: "text", required: true, max: 80 },
+      { name: "title", label: "Name of the display", type: "text", required: false, max: 90 },
+      { name: "season", label: "Season", type: "select", required: false, options: Object.entries(SEASONS).map(([k, v]) => [k, v.label]), value: "christmas" },
+      { name: "city", label: "City", type: "text", required: false, max: 60, list: "cities", options: cityNames().map((c) => [c, c]) },
+      { name: "street", label: "Street address", type: "text", required: false, max: 120 },
+      { name: "zip", label: "ZIP code", type: "text", required: false, max: 5 },
+    ] };
+}
+export function contestStartCard() {
+  return { type: "form", nav: "/add-contest", label: "Start my contest", go: "Open the wizard", summary: "Tell me the basics. Tap Open the wizard and it opens with them filled in; Quick start keeps the rest simple. Your organization's first contest in 12 months is free.",
+    fields: [
+      { name: "name", label: "Contest name", type: "text", required: true, max: 90 },
+      { name: "org", label: "Who is running it? (your group)", type: "text", required: true, max: 80 },
+      { name: "city", label: "City", type: "text", required: false, max: 60, list: "cities", options: cityNames().map((c) => [c, c]) },
+    ] };
+}
 export const needsAccount = (q) => wantsOwnerAction(q) || (ADD_EVENT.test(String(q || "")) && !/\b(find|search|see|go to|attend)\b/i.test(String(q || "")));
 export const wantsHuman = (q) => HUMAN.test(String(q || ""));
 export const humanCard = (question = "") => formCard("ask_human", { message: String(question).replace(/\s+/g, " ").trim().slice(0, 300) });
@@ -41,6 +64,8 @@ export function cardsFor({ question, settings, ctx = {}, handoff = "", user = nu
     if (handoff || HUMAN.test(q)) out.push(humanCard(q));
     if (REPORT.test(q) && !out.length) out.push(formCard("report_problem", { where: (ctx.eventList && ctx.eventList.length === 1 && ctx.eventList[0].name) || "" }));
     if (ADD_EVENT.test(q) && !/\b(find|search|see|go to|attend)\b/i.test(q)) { if (t[3] && user) out.push(publishEventCard()); out.push(eventStartCard()); }
+    if (ADD_HOME.test(q) && !/\b(find|search|see|visit|drive|directions)\b/i.test(q)) out.push(homeStartCard());
+    if (ADD_CONTEST.test(q)) out.push(contestStartCard());
     if (WEEKLY.test(q) && !STOP.test(q)) out.push(formCard("weekly_email"));
     if (REMOVE.test(q)) out.push(formCard("remove_home"));
   }
