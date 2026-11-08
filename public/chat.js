@@ -17,6 +17,15 @@
     (kids || []).forEach(function (c) { n.appendChild(c); });
     return n;
   }
+  // The AI mark: a big four-point sparkle with two small ones (built with DOM calls).
+  function sparkle() {
+    var NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("width", "18"); svg.setAttribute("height", "18"); svg.setAttribute("aria-hidden", "true"); svg.setAttribute("focusable", "false");
+    ["M10 3l1.9 5.1L17 10l-5.1 1.9L10 17l-1.9-5.1L3 10l5.1-1.9z", "M18.5 13l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z", "M18 2.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"].forEach(function (d) {
+      var path = document.createElementNS(NS, "path"); path.setAttribute("d", d); path.setAttribute("fill", "currentColor"); svg.appendChild(path);
+    });
+    return svg;
+  }
   // Turns a reply into DOM nodes: plain text, with our own links (https://socallights.app/... or the support email) made clickable. Everything else stays text.
   var LINK = /(https:\/\/(?:www\.)?socallights\.app(?:[\/?#][^\s)]*)?|info@socallights\.app)/gi;
   function fill(p, text) {
@@ -40,7 +49,7 @@
     var saved = store.get() || { h: [], log: [], v: false }, history = saved.h.slice(-KEEP), busy = false, verified = !!saved.v, token = "", widget = null, tsKey = cfg.turnstileSiteKey || "", tsLoaded = false, opener = null;
 
     var fab = el("button", { type: "button", class: "scl-chat-fab", "aria-haspopup": "dialog", "aria-expanded": "false", "aria-controls": "scl-chat" }, [
-      el("span", { class: "scl-chat-fab-ic", "aria-hidden": "true", text: "?" }), el("span", { text: "Ask SoCal Lights" })]);
+      el("span", { class: "scl-chat-fab-ic", "aria-hidden": "true" }, [sparkle()]), el("span", { text: "Ask SoCal Lights" })]);
     var title = el("h2", { id: "scl-chat-title", text: "Ask SoCal Lights (AI assistant)" });
     var close = el("button", { type: "button", class: "scl-chat-x", "aria-label": "Close the AI assistant", text: "×" });
     var reset = el("button", { type: "button", class: "scl-chat-reset", text: "Start over" });
