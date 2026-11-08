@@ -4,6 +4,7 @@ _Last updated: 2026-11-08 (Help and Tutorials audit, all videos re-recorded)_
 
 ## Help and Tutorials audit (2026-11-08)
 All 54 Help articles audited (43 updated by migration `0199_help_audit_2026-11-08.sql`, 11 already accurate; seed-only, Admin edits kept) and all 31 tutorial videos re-recorded, computer and phone versions. Details and recorder fixes: `docs/tutorial-updates.md`. Progress page: the "Help and Tutorials Progress" artifact.
+- **AI assistant knowledge base:** now says where Add, Contests, Tutorials and Help are (account circle menu when signed in, three dots menu when not), section "Where to find Add, Contests, Tutorials and Help" in `docs/ai-assistant-kb.md`; `chatkb-data.js` rebuilt, test added.
 - **Open:** `public/manifest.webmanifest` shortcut "My night" should be "Favorites" (app code, not changed). The AI chat assistant is built but off by default (`docs/ai-assistant.md`).
 
 ## Outreach: sequence timing, backfill, deliverability pre-check (2026-11-08; owner decision)

@@ -661,3 +661,11 @@ test("events for the chat: tonight, tomorrow, this weekend and this week mean th
   const named = await eventRows({ DB }, "Is there a Lake Forest tree lighting?", "2026-11-06");
   assert.equal(named[0].id, "a");
 });
+
+test("menus: a question about where Add, Contests, Tutorials and Help are gets the account circle and three dots text", async () => {
+  const { env, calls, state } = setup();
+  state.reply = "Signed in, tap the account circle at the top right. Not signed in, tap the three dots.";
+  await ask(env, "Where do I find Add, Contests, Tutorials and Help in the menu?");
+  const p = calls[0].system;
+  assert.ok(/account circle/i.test(p) && /three dots/i.test(p), "the menu section is in the prompt");
+});
