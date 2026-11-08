@@ -1,11 +1,15 @@
 // SoCal Lights Finder — public map app
-import { CITY } from "/cities.js";
+import { CITY } from "/cities.js?v=20261107a";
 import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261104a";
-import { STOCK } from "/stock.js";
-import { SITE } from "/site-config.js?v=20261031j";
+import { STOCK } from "/stock.js?v=20261107a";
+import { SITE } from "/site-config.js?v=20261107a";
 import "/norm-ui.js?v=20261102b";
+import { me as authMe } from "/auth.js?v=20261107p";
+import "/chrome.js?v=20261110b"; // the account circle opens the same menu as on every other page
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
-import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261105a";
+import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261109b";
+import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261109c";
+import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261110a";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -29,6 +33,9 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (d) => { const [, m, dd] = d.split("-").map(Number); return M[m - 1] + " " + dd; };
 const isPhone = () => matchMedia("(max-width:700px)").matches;
+// A phone turned sideways: the whole list panel scrolls as one, so the header moves away and the list gets the full height
+const isLandShort = () => matchMedia("(min-width:701px) and (max-height:500px)").matches;
+const scroller = () => (isLandShort() ? document.getElementById("panel") : document.getElementById("pbody"));
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const photoUrl = (k) => "/api/photo/" + k.split("/").map(encodeURIComponent).join("/");
 function range(ev) {
@@ -45,28 +52,28 @@ function destOf(ev) {
 // Which maps app opens for directions: Apple Maps by default on iPhone/iPad, Google Maps elsewhere; the choice is remembered.
 // The store apps add "SoCalLightsApp" to the browser string. Payments for tips and Featured placements are left out there (Apple and Google want in-app purchase for digital goods).
 const IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
+// Counts a tap on a tracked link or button: one number per kind per day on the server, no IP, cookie or account (see functions/api/visit.js).
+const tick = (k) => { try { if (navigator.webdriver) return; const body = JSON.stringify({ k }); if (!(navigator.sendBeacon && navigator.sendBeacon("/api/visit", new Blob([body], { type: "application/json" })))) fetch("/api/visit", { method: "POST", headers: { "content-type": "application/json" }, body, keepalive: true }); } catch {} };
+document.addEventListener("click", (e) => {
+  const a = e.target.closest && e.target.closest("a,[data-clk]"); if (!a) return;
+  if (a.dataset.clk) return tick(a.dataset.clk);
+  if (a.matches('.mrow[href="/feature"]')) return tick("click:promote");
+  if (a.matches(".shopcard")) return tick("click:shop");
+  if (a.matches(".actionbar a.btn.go, a.legbtn")) return tick("click:route");
+  if (a.matches('.actionbar a.abtn[aria-label="Event info"]')) { let h = a.getAttribute("href") || ""; try { h = decodeURIComponent(h); } catch {} return tick(/\/\/(?:[\w-]+\.)*(?:eventbrite|ticketmaster|fever|feverup)\.[a-z]{2,}(?:[/?#:]|$)/i.test(h) ? "click:ticket" : "click:event-link"); }
+}, true);
 if (IN_APP) document.documentElement.classList.add("in-app");
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-const MAPS = { apple: "Apple Maps", google: "Google Maps" };
-let mapsApp = IS_IOS ? "apple" : "google";
-try { const v = localStorage.getItem("socal-maps"); if (MAPS[v]) mapsApp = v; } catch {}
-function setMapsApp(v) { if (!MAPS[v]) return; mapsApp = v; try { localStorage.setItem("socal-maps", v); } catch {} renderPanel(); }
+let mapsApp = getMaps();
+function setMapsApp(v) { if (!MAPS[v]) return; mapsApp = v; setMaps(v); renderPanel(); }
+document.addEventListener("maps-changed", (e) => { if (e.detail && e.detail !== mapsApp) { mapsApp = e.detail; if (state.detail || state.tab === "plan") renderPanel(); } });
 // stops: destination strings in order (last = final destination); origin: "" means "start from where I am"
-function navUrl(stops, origin) {
-  const dest = stops[stops.length - 1], way = stops.slice(0, -1), e = encodeURIComponent;
-  if (mapsApp === "apple") {
-    // Apple's unified Maps URLs (iOS 18.4+) take repeated waypoint= params for multi-stop routes
-    return "https://maps.apple.com/directions?" + (origin ? "source=" + e(origin) + "&" : "") + "destination=" + e(dest) + way.map((w) => "&waypoint=" + e(w)).join("") + "&mode=driving";
-  }
-  return "https://www.google.com/maps/dir/?api=1" + (origin ? "&origin=" + e(origin) : "") + "&destination=" + e(dest) + (way.length ? "&waypoints=" + e(way.join("|")) : "") + "&travelmode=driving";
-}
+function navUrl(stops, origin) { return routeUrl(mapsApp, stops, origin); }
 function dirUrl(ev) { return navUrl([destOf(ev)], ""); }
-function mapsPicker() {
-  return `<div class="mapspick" role="group" aria-label="Maps app"><span>Open in</span>${Object.entries(MAPS).map(([k, l]) => `<button type="button" data-maps="${k}" aria-pressed="${k === mapsApp}">${l}</button>`).join("")}</div>`;
-}
+function mapsPicker() { return mapsNow(mapsApp); }
 // "Event info" links: add a text fragment (#:~:text=) so Safari/Chrome/Edge scroll to and highlight the event's name
 // on pages that list many events. If the name isn't on the page, the page simply opens at the top.
-function infoUrl(u, name) {
+function infoUrl(u, name, city = "") {
   const enc = (s) => encodeURIComponent(s).replace(/-/g, "%2D");
   const full = name.replace(/\s+/g, " ").trim();
   // a shorter, distinctive version: drop "The", ordinals like "128th", years, and anything after " at " / " – " / ":" / " ("
@@ -74,7 +81,15 @@ function infoUrl(u, name) {
   const base = full.replace(/^the\s+/i, "").replace(/\b\d+(st|nd|rd|th)\s+(annual\s+)?/i, "").replace(/\s*\b20\d\d\b/g, "");
   const at = base.split(/\s+(?:at|@)\s+/i);
   const short = (at.length > 1 ? at[at.length - 1] : base).split(/\s+[–—-]\s+|:\s+|\s+\(/)[0].trim();
-  const parts = [full]; if (short && short.length >= 6 && short.toLowerCase() !== full.toLowerCase()) parts.push(short);
+  // pages rarely repeat our full name word for word ("Belquest Drive Christmas Lights" is "22981 Belquest Drive" on the page), so also try the name
+  // without its generic closing words (Christmas Lights, Tree Lighting, Festival...). The browser scrolls to the first one it finds.
+  const GENERIC = /^(christmas|holiday|holidays|lights?|lighting|light|display|displays|tree|festival|parade|celebration|ceremony|event|walk|show|village|market|nights?|home|homes|annual|winter|wonderland|magic|spectacular|season|seasonal|&|and|the|of|at|in)$/i;
+  const words = short.split(/\s+/); while (words.length > 2 && GENERIC.test(words[words.length - 1])) words.pop();
+  const core = words.join(" ").trim();
+  const parts = [full];
+  // pages often drop the city from the title ("Lake Forest Tree Lighting Ceremony" is "Tree Lighting Ceremony" on the Lake Forest calendar)
+  const noCity = city && full.toLowerCase().startsWith(city.toLowerCase() + " ") ? full.slice(city.length).replace(/^[\s:–—-]+/, "") : "";
+  for (const t of [noCity, short, core]) if (t && t.length >= (t === core ? 12 : 6) && !parts.some((x) => x.toLowerCase() === t.toLowerCase())) parts.push(t);
   const frag = ":~:" + parts.map((t) => "text=" + enc(t)).join("&");
   return u.includes("#") ? u + frag : u + "#" + frag;
 }
@@ -108,6 +123,11 @@ function calParts(ev) {
 }
 function addToCalendar(id) {
   const ev = E.find((x) => x.id === id); if (!ev) return;
+  // the event's link goes in the calendar note, and it comes with the details: wait for them if they have not arrived (offline: add it without the link)
+  if (!hasDetail(ev)) { loadDetail(ev).catch(() => {}).then(() => calendarFor(ev)); return; }
+  calendarFor(ev);
+}
+function calendarFor(ev) {
   const { tr, desc, loc } = calParts(ev);
   if (mapsApp === "google") {
     const dates = tr ? `${ymd(ev.s)}T${tr[0]}/${ymd(ev.e)}T${tr[1]}` : `${ymd(ev.s)}/${ymd(nextDay(ev.e))}`;
@@ -122,7 +142,9 @@ function addToCalendar(id) {
 }
 // one-line "report a problem" link on details pages: opens an email with the event already named
 const citySlug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-const reportLink = (name, key, city) => `<p class="reportline">${city ? `<a href="/in/${citySlug(city)}">More in ${esc(city)}</a> · ` : ""}<a data-report="${esc(key)}|${esc(name)}" href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Something wrong? Tell us</a></p>`;
+// A home the sweeps found on a public contest or tour page (not a contest itself): its owner can claim it by posting their own
+const isSweepHome = (ev) => /view from the street/i.test(ev.v || "") && !String(ev.id).startsWith("c-");
+const reportLink = (name, key, city, rm) => `<p class="reportline">${city ? `<a href="/in/${citySlug(city)}">More in ${esc(city)}</a> · ` : ""}<a data-report="${esc(key)}|${esc(name)}" href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Something wrong? Tell us</a>${rm ? ` · <a class="removehome" href="/remove-home?ref=${encodeURIComponent(key.replace(/^e-/, ""))}&name=${encodeURIComponent(String(name).slice(0, 80))}">Not your listing? Remove my home</a>` : ""}</p>`;
 
 // "Something wrong? Tell us": a short form instead of an email app; falls back to the email link if scripts are off
 document.addEventListener("click", (e) => {
@@ -177,7 +199,8 @@ function weekendRange() {
   const sat = new Date(y, m - 1, d + (wd === 6 ? 0 : 6 - wd)), sun = new Date(sat.getFullYear(), sat.getMonth(), sat.getDate() + 1);
   return [f(sat), f(sun)];
 }
-const isContest = (ev) => ev._ct ?? (ev._ct = CONTEST_RE.test(ev.n + " " + (ev.b || "")));
+// The list has no blurb: the server marks an event whose blurb names a contest or competition with ct: 1 (same pattern); a full object is tested here
+const isContest = (ev) => ev._ct ?? (ev._ct = !!ev.ct || CONTEST_RE.test(ev.n + " " + (ev.b || "")));
 // Home displays have no dates or ticket prices, so the date, cost and confirmed filters pass them (they only narrow events);
 // a Type other than "Home displays" leaves them out.
 function instMatch(p) {
@@ -206,13 +229,44 @@ function placeHouses() {
 }
 
 /* ---------- map ---------- */
-const map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true, customAttribution: "\u00a9 " + new Date().getFullYear() + " Forza-TEK" }, dragRotate: false, pitchWithRotate: false, clickTolerance: 10 }); // clickTolerance: a tap with a little finger wobble still counts as a tap
-map.touchZoomRotate.disableRotation();
-map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-const geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false }, trackUserLocation: false });
-map.addControl(geo, "top-right");
-// The control only zooms to the (often wide) accuracy circle; fly in close on the user instead
-geo.on("geolocate", (e) => { const wel = document.getElementById("welcome"); if (wel) wel.remove(); state.me = { lat: e.coords.latitude, lng: e.coords.longitude }; state.meErr = ""; scheduleList(); map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }); });
+// The map library (self-hosted, same origin) is requested after the list has been drawn, so the first paint never waits for it.
+// Everything below that touches `map` runs only once the library is in (mapReady) or checks `map` first; the list works without it.
+let map = null, geo = null;
+const SOCIAL_BROWSER = /FBAN|FBAV|FB_IAB|Instagram|Snapchat|MicroMessenger|Line\/|TikTok|musical_ly/i.test(navigator.userAgent || "");
+const flyToMe = () => { if (map && state.me) map.easeTo({ center: [state.me.lng, state.me.lat], zoom: Math.max(map.getZoom(), 15), duration: 800 }); };
+document.addEventListener("click", (ev) => { const b = ev.target && ev.target.closest && ev.target.closest(".maplibregl-ctrl-geolocate"); if (b && state.me) flyToMe(); }, true); // a tap with a known position moves the map right away
+function startMap() {
+  if (map || !window.maplibregl) return;
+  map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true, customAttribution: "\u00a9 " + new Date().getFullYear() + " Forza-TEK" }, dragRotate: false, pitchWithRotate: false, clickTolerance: 10 }); // clickTolerance: a tap with a little finger wobble still counts as a tap
+  map.touchZoomRotate.disableRotation();
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+  // The locate button waited only 6 s for a fix and then failed silently, which is what some phones (slow network fixes, in-app browsers) showed: it looked like the button did nothing.
+  // Now it waits longer, flies to a position we already know at once, and says what went wrong.
+  geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 }, trackUserLocation: false });
+  map.addControl(geo, "top-right");
+  geo.on("error", (e) => {
+    if (state.me) { flyToMe(); return; } // we already know where you are (read when you allowed it)
+    const c = e && e.code;
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || ""), android = /Android/i.test(navigator.userAgent || "");
+    const blocked = SOCIAL_BROWSER ? "This app's built-in browser blocks location. Open socallights.app in Safari or Chrome."
+      : ios ? "Location is off for this site. On your iPhone: Settings > Privacy & Security > Location Services > Safari Websites (or your browser) > While Using the App. Then reload this page."
+      : android ? "Location is off for this site. Tap the lock icon in the address bar > Permissions > Location > Allow. Also make sure Location is on in your phone's quick settings. Then tap the button again."
+      : "Location is blocked for this site. Allow it in your browser's site settings, then tap the button again.";
+    toast(c === 1 ? blocked : c === 3 ? "Still looking for your location. Tap the button again in a moment." : "Couldn't find your location right now. Check that Location is on for your phone.", false, c === 1 ? 12000 : 5000);
+  });
+  // The control only zooms to the (often wide) accuracy circle; fly in close on the user instead
+  geo.on("geolocate", (e) => { const wel = document.getElementById("welcome"); if (wel) wel.remove(); state.me = { lat: e.coords.latitude, lng: e.coords.longitude }; state.meErr = ""; scheduleList(); map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }); });
+  map.on("style.load", initLayers);
+  map.on("load", initLayers);
+}
+const MAPLIB = "/vendor/maplibre-gl-4.7.1";
+function loadMapLib() {
+  if (map) return;
+  if (window.maplibregl) return startMap();
+  const css = new Promise((ok) => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = MAPLIB + ".css"; l.onload = l.onerror = ok; document.head.insertBefore(l, document.querySelector('link[href^="/styles.css"]')); }); // before our own stylesheet, as it always was: our rules for the map buttons must win
+  const js = new Promise((ok, no) => { const sc = document.createElement("script"); sc.src = MAPLIB + ".js"; sc.async = true; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+  Promise.all([css, js]).then(startMap).catch(() => { const m = $("#map"); if (m) m.innerHTML = '<p class="maperr" role="status">The map could not load. The list of places still works.</p>'; });
+}
 
 function padding() {
   const ph = isPhone();
@@ -220,15 +274,13 @@ function padding() {
 }
 // On phones the list covers the map when expanded, so "in map view" means the map above the collapsed sheet.
 function mapArea() { const p = padding(); if (isPhone()) p.bottom = peekH() + 16; return { x0: p.left - 24, y0: p.top - 10, x1: innerWidth - p.right + 24, y1: innerHeight - p.bottom + 16 }; }
-function fitSoCal(animate) { map.fitBounds(SOCAL, { padding: padding(), duration: animate ? 600 : 0 }); }
-function easeToPoint(lng, lat, minZoom = 12) { map.easeTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), minZoom), padding: padding(), duration: 600 }); }
+function fitSoCal(animate) { if (!map) return; map.fitBounds(SOCAL, { padding: padding(), duration: animate ? 600 : 0 }); }
+function easeToPoint(lng, lat, minZoom = 12) { if (!map) return; map.easeTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), minZoom), padding: padding(), duration: 600 }); }
 
 let mapReady = false;
 // Add our layers as soon as the base style is parsed ("style.load"), not on "load",
 // which waits for every base-map tile and can stall on a slow or failed tile request.
 // Switching day/night swaps the base style, which drops our layers; "style.load" then adds them back.
-map.on("style.load", initLayers);
-map.on("load", initLayers);
 const catColor = (C) => ["match", ["get", "cat"], "free", C.free, "paid", C.season, "fav", C.fav, "inst", C.inst, C.season];
 function initLayers() {
   if (map.getSource("pts")) return;
@@ -254,27 +306,25 @@ function initLayers() {
     paint: { "text-color": C.ink, "text-halo-color": C.ring, "text-halo-width": 2.2 } });
   if (mapReady) { drawMap(); return; } // base style swapped (day/night): layers are back, nothing else to set up
 
-  map.on("click", "clusters", async (e) => {
-    const f = e.features[0];
-    const z = await map.getSource("pts").getClusterExpansionZoom(f.properties.cluster_id);
-    map.easeTo({ center: f.geometry.coordinates, zoom: z + 0.3 });
+  // A finger is bigger than a pin: look for places in a box around the tap and take the nearest (cluster circles too)
+  const tapBox = (pt) => { const r = CAN_HOVER ? 6 : 20; return [[pt.x - r, pt.y - r], [pt.x + r, pt.y + r]]; };
+  const nearest = (fs, pt) => fs.map((f) => { const q = map.project(f.geometry.coordinates); return { f, d: Math.hypot(q.x - pt.x, q.y - pt.y) }; }).sort((a, b) => a.d - b.d)[0];
+  map.on("click", async (e) => {
+    const box = tapBox(e.point), pin = nearest(map.queryRenderedFeatures(box, { layers: ["pt", "stops"] }), e.point), cl = nearest(map.queryRenderedFeatures(box, { layers: ["clusters"] }), e.point);
+    if (pin && (!cl || pin.d <= cl.d)) { state.hot = null; selectKey(pin.f.properties.key, "map"); return; }
+    if (cl) { const z = await map.getSource("pts").getClusterExpansionZoom(cl.f.properties.cluster_id); map.easeTo({ center: cl.f.geometry.coordinates, zoom: z + 0.3 }); return; }
+    if (!state.sel) return;
+    // Tapped empty map: deselect (and leave a card's detail if one is open, so the panel matches the map)
+    state.sel = null; state.hot = null;
+    if (state.detail) { state.detail = null; renderPanel(); }
+    renderPreview(); drawHL(); markItems();
   });
   for (const id of ["pt", "stops"]) {
-    map.on("click", id, (e) => { e.preventDefault(); selectKey(e.features[0].properties.key, "map"); });
     map.on("mouseenter", id, (e) => { map.getCanvas().style.cursor = "pointer"; setHot(e.features[0].properties.key); });
     map.on("mouseleave", id, () => { map.getCanvas().style.cursor = ""; setHot(null); });
   }
   map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
   map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
-  map.on("click", (e) => {
-    if (e.defaultPrevented) return;
-    const hit = map.queryRenderedFeatures(e.point, { layers: ["pt", "clusters", "stops"] });
-    if (hit.length || !state.sel) return;
-    // Tapped empty map: deselect (and leave a card's detail if one is open, so the panel matches the map)
-    state.sel = null;
-    if (state.detail) { state.detail = null; renderPanel(); }
-    renderPreview(); drawHL(); markItems();
-  });
   map.on("dragstart", () => { state.keep = null; }); map.on("moveend", scheduleList); map.on("move", placePin);
   mapReady = true;
   if (state.city) fitCity(state.city, false); else fitSoCal(false); // a city link (#city-...) opens zoomed on the city
@@ -290,7 +340,7 @@ function drawMap() {
   const feats = [];
   if (state.tab !== "plan") {
     if (state.layers.events) E.filter(evMatch).forEach((e) => feats.push(pt(e.lng, e.lat, { key: "e:" + e.id, cat: favs.has(e.id) ? "fav" : e.free ? "free" : "paid", feat: e.f ? 1 : 0 })));
-    if (state.layers.inst) SHOW.filter(instMatch).forEach((p) => feats.push(pt(p.plng, p.plat, { key: "i:" + p.id, cat: favs.has(hfav(p)) ? "fav" : "inst" })));
+    if (state.layers.inst) SHOW.filter(instMatch).forEach((p) => feats.push(pt(p.plng, p.plat, { key: "i:" + p.id, cat: favs.has(hfav(p)) ? "fav" : "inst", feat: p.f ? 1 : 0 })));
   }
   map.getSource("pts").setData(fc(feats));
   // planner route
@@ -311,7 +361,8 @@ function drawHL() {
   }
   map.getSource("hl").setData(fc(out));
 }
-function setHot(k) { if (state.hot === k) return; state.hot = k; drawHL(); document.querySelectorAll(".item").forEach((el) => el.classList.toggle("hot", el.dataset.key === k)); }
+const CAN_HOVER = matchMedia("(hover:hover) and (pointer:fine)").matches;
+function setHot(k) { if (!CAN_HOVER) k = null; if (state.hot === k) return; state.hot = k; drawHL(); document.querySelectorAll(".item").forEach((el) => el.classList.toggle("hot", el.dataset.key === k)); }
 
 /* ---------- planner ---------- */
 // Where the route begins: your current location (default), a chosen city, or the first stop ("first" → null)
@@ -330,11 +381,11 @@ function locateMe(force) {
     (err) => { locating = false; state.meErr = err.code === 1 ? "Location is blocked for this site, so the route starts at your first stop. Google Maps will still start from where you are." : "Couldn't find your location right now."; if (state.tab === "plan") renderPanel(); },
     { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
 }
-// Distances use your own location. Nothing is asked up front: if you already allowed it for this site we read it quietly; otherwise it starts when you tap the locate button (or open My night).
+// Distances use your own location. Nothing is asked up front: if you already allowed it for this site we read it quietly; otherwise it starts when you tap the locate button (or open Favorites).
 try { navigator.permissions && navigator.permissions.query({ name: "geolocation" }).then((r) => { if (r.state === "granted") locateMe(false); }).catch(() => {}); } catch {}
 function routeStops() {
   // starred events plus starred houses (a house becomes a stop with its pin position and street address)
-  const ids = state.shared || favs; // a plan someone shared, until it is added to My night or closed
+  const ids = state.shared || favs; // a plan someone shared, until it is added to Favorites or closed
   const fl = [...E.filter((e) => ids.has(e.id)), ...SHOW.filter((p) => ids.has(hfav(p))).map((p) => ({ house: true, id: p.id, key: "i:" + p.id, n: p.title, lat: p.plat, lng: p.plng, a: p.address ? p.address + ", " + p.city + ", CA" : "", p }))];
   if (!fl.length) return [];
   const o = routeOrigin();
@@ -369,22 +420,23 @@ function revealItem(k) {
   const body = $("#pbody"); let el = body.querySelector(`.item[data-key="${CSS.escape(k)}"]`);
   if (!el) { const ix = listVis.findIndex((x) => x.key === k); if (ix >= 0) { moreCards(ix + 12); el = body.querySelector(`.item[data-key="${CSS.escape(k)}"]`); } }
   if (!el) return;
-  const top = body.scrollTop + el.getBoundingClientRect().top - body.getBoundingClientRect().top - 10;
-  body.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  const sc = scroller(), top = sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - 10;
+  sc.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
 }
 function renderPreview() {
   const pv = $("#preview"), it = findKey(state.sel);
   if (!it || state.detail === state.sel) { pv.hidden = true; document.body.classList.remove("pin-open"); return; }
   const k = state.sel, f = it.kind === "ev" ? favs.has(it.ev.id) : favs.has(hfav(it.p));
-  const acts = `<span class="pv-acts">${awayTag(it.kind === "ev" ? it.ev : { lat: it.p.plat, lng: it.p.plng })}<button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button></span>`;
+  const acts = `<span class="pv-acts">${awayTag(it.kind === "ev" ? it.ev : { lat: it.p.plat, lng: it.p.plng })}<button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites" title="${f ? "In my favorites" : "Add to my favorites"}">${HEART}</button></span>`;
   if (it.kind === "ev") {
     const ev = it.ev, phs = photosOf(ev), ph = phs[0], conf = ev.st === "c", hrs = hoursOf(ev), manyE = phs.length > 1;
+    if (!hasDetail(ev) && !DERR.has(ev.id)) loadDetail(ev).catch(() => {}); // the card opens the details next: fetch them now (and the photo credit names the event's site)
     pv.innerHTML = `<div class="tile pv-photo${ev.free ? " free" : ""}">${manyE ? `<div class="pvtrack" id="pvtrack">${phs.map((q, i) => `<div class="pvslide">${photoImg(q, i < 2, 900)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="pvcount">1 / ${phs.length}</span>` : ph ? photoImg(ph, false, 800) : ""}<span class="when${ev.s <= TODAY ? " now" : ""}">${whenShort(ev)}</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${esc(ev.n)}</strong>${acts}</div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div><div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div>`;
   } else {
     const p = it.p, ph = p.photos || [];
     const many = ph.length > 1;
-    pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide"><img class="evimg ld" src="${photoUrl(k2)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i < 2 ? "eager" : "lazy"}" draggable="false"></div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="pvcount" id="pvcount">1 / ${ph.length}</span>` : ph.length ? `<img class="evimg ld" src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${bPop(p).icon}${esc(p.title)}${bPop(p).sub}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
+    pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide">${photoImg({ src: photoUrl(k2) }, i < 2, 800).replace('alt=""', `alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" draggable="false"`)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="pvcount" id="pvcount">1 / ${ph.length}</span>` : ph.length ? photoImg({ src: photoUrl(ph[0]) }, true, 800) : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${bPop(p).icon}${esc(p.title)}${bPop(p).sub}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
   }
   pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); pinBox = null; if (!pinRO && window.ResizeObserver) { pinRO = new ResizeObserver(() => { pinBox = null; placePin(); }); pinRO.observe(pv); } placePin();
   const tr = $("#pvtrack");
@@ -450,7 +502,7 @@ function placePin() {
 /* ---------- panel ---------- */
 function setTab(t) { const order = ["events", "plan", "shop"], dir = order.indexOf(t) - order.indexOf(state.tab), anim = dir > 0 ? "tabin-r" : dir < 0 ? "tabin-l" : "tabin"; state.tab = t; state.detail = null; ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
   document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute();
-  for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin", "tabin-r", "tabin-l"); void el.offsetWidth; el.classList.add(anim); } // the new tab slides in from the side it sits on: Places, My night, Shop
+  for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin", "tabin-r", "tabin-l"); void el.offsetWidth; el.classList.add(anim); } // the new tab slides in from the side it sits on: Places, Favorites, Shop
   if (t === "shop") nudgeShopTabs(); }
 // On phones the category row swipes sideways; slide it out and back once when Shop opens so people notice.
 function nudgeShopTabs() {
@@ -486,14 +538,34 @@ function initSlidePill(box, selector) {
   const kick = () => { until = performance.now() + 600; if (!raf) raf = requestAnimationFrame(step); };
   new MutationObserver(kick).observe(box, { attributes: true, subtree: true, attributeFilter: ["aria-current", "aria-selected", "hidden"] });
   addEventListener("resize", () => { cur = null; kick(); });
+  // the tab bar is hidden while a map pin card is open (display: none); when it comes back the pill has to be placed again
+  if ("ResizeObserver" in window) new ResizeObserver(() => { cur = null; kick(); }).observe(box);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { cur = null; kick(); });
   kick();
 }
 initSlidePill(document.querySelector(".ptabs"), '.ptab[aria-selected="true"]');
 initSlidePill(document.getElementById("bnav"), "button[aria-current]");function fitRoute() { const st = routeStops(), og = routeOrigin(); if (st.length + (og ? 1 : 0) < 2 || !mapReady) return; const b = new maplibregl.LngLatBounds(); st.forEach((e) => b.extend([e.lng, e.lat])); if (og) b.extend([og.lng, og.lat]); map.fitBounds(b, { padding: padding(), maxZoom: 13, duration: 600 }); }
+// Installer banner: which cities and counties are in the map view right now (cities by their centre, plus where the places in view are).
+function viewRegions() {
+  const names = new Set(); if (!mapReady) return regionKey(names);
+  const a = mapArea(), inA = (lng, lat) => { const q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; };
+  const countyOf = {}; E.forEach((e) => { if (e.city && e.c) countyOf[e.city] = e.c; }); SHOW.forEach((p) => { if (p.city && p.county) countyOf[p.city] = p.county; });
+  const add = (c) => { names.add(c); if (countyOf[c]) names.add(countyOf[c]); };
+  Object.entries(CITY).forEach(([c, [lat, lng]]) => { if (inA(lng, lat)) add(c); });
+  E.forEach((e) => { if (inA(e.lng, e.lat)) { add(e.city); if (e.c) names.add(e.c); } });
+  SHOW.forEach((p) => { if (p.plat != null && inA(p.plng, p.plat)) { add(p.city); if (p.county) names.add(p.county); } });
+  const c = map.getCenter(); let best = "", bd = 1e9; Object.entries(CITY).forEach(([n, [lat, lng]]) => { const d = miles({ lat: c.lat, lng: c.lng }, { lat, lng }); if (d < bd) { bd = d; best = n; } }); if (best) add(best); // zoomed in far enough that no city centre is in view
+  return regionKey(names);
+}
+// Events whose pin is in the map view right now (their banner pill shows only then)
+function viewEventIds() { const ids = new Set(); if (!mapReady) return ids; const a = mapArea(); E.forEach((e) => { const q = map.project([e.lng, e.lat]); if (q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1) ids.add(e.id); }); return ids; }
+const bannerTick = () => updateBanner(viewRegions(), viewEventIds());
+function placeBanner(el) { const g = $("#grab"); if (el.previousElementSibling !== g) g.after(el); } // always at the top of the list panel, on phones, tablets and desktop alike
+let bannerOn = false;
+async function startBanner() { bannerOn = await initBanner({ place: (el) => { placeBanner(el); }, onOpenEvent: (id) => { if (!E.some((e) => e.id === id)) return false; openDetail("e:" + id); return true; }, onChange: () => { if (isPhone()) setSheet(sheetState); } }); if (bannerOn) { bannerTick(); if (!state.detail) renderPanel({ quiet: true }); } }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
-let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel({ quiet: true }); }, 80); }
-function counts() { $("#n-events").textContent = E.filter(evMatch).length + SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; }
+let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (bannerOn) bannerTick(); if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel({ quiet: true }); }, 80); }
+function counts() { $("#n-events").textContent = E.filter(evMatch).length + SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; const tb = $("#tb-plan"); if (tb) { tb.textContent = favs.size; tb.hidden = !favs.size; } }
 function datetile(ev) {
   // Running now: "THRU 31 OCT". One night: "OCT 31 1 night". Upcoming: "NOV 27 opens".
   const live = ev.s <= TODAY && ev.e >= TODAY && ev.s !== ev.e;
@@ -516,7 +588,7 @@ function photoOf(ev, hero) {
   // each type has several stock photos; the event's id picks one, so the same event always gets the same photo
   const k = stockKey(ev), n = k ? hashOf(ev.id) % STOCK[k].length : 0, st = k && STOCK[k][n];
   const stock = k ? `/img/stock/${hero ? "" : "t/"}${k}-${n + 1}.jpg` : "", sc = k && `Photo: ${st.by} · ${st.lic}`;
-  if (ev.img) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u };
+  if (ev.img) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u ? infoUrl(ev.u, ev.n, ev.city || "") : ev.u };
   return k ? { src: stock, credit: sc, link: st.src } : null;
 }
 // A gallery: the main photo first, then any extra photos stored for the event (ev.imgs)
@@ -529,13 +601,18 @@ const ARW_L = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" strok
 const ARW_R = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>`;
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
 // Smaller copies of photos for the list and popup, made by Cloudflare image resizing (/cdn-cgi/image). It is used only once a quick test shows it works on this site (and is remembered), otherwise the original photo loads, and a failed copy falls back to the original.
-let THUMBS = false, THUMBS_REMOTE = false; try { THUMBS = localStorage.getItem("socal-thumbs") === "1"; THUMBS_REMOTE = localStorage.getItem("socal-thumbs-remote") === "1"; } catch {}
+// Remote photos are resized from the first visit (city pages already do this unconditionally and it works; a failed copy falls back to the original). Only a remembered failed probe ("0") turns it off.
+// Our own photos (/img/events, /api/photo) are resized from the first visit too, same rule: only a remembered failed probe ("0") turns it off.
+let THUMBS = true, THUMBS_REMOTE = true; try { THUMBS = localStorage.getItem("socal-thumbs") !== "0"; THUMBS_REMOTE = localStorage.getItem("socal-thumbs-remote") !== "0"; } catch {}
 const thumbProbe = (u) => fetch("/cdn-cgi/image/width=16/" + u, { method: "HEAD" }).then((r) => r.ok && /^image\//.test(r.headers.get("content-type") || "")).catch(() => false);
 thumbProbe(location.origin + "/img/badge-160.webp").then((ok) => { THUMBS = ok; try { localStorage.setItem("socal-thumbs", ok ? "1" : "0"); } catch {} });
 // photos hosted on other sites can only be resized when Cloudflare is set to resize from any origin: test one of them once the events are loaded
 function probeRemoteThumbs() { const e = E.find((x) => /^https?:/.test(x.img || "")); if (e) thumbProbe(e.img).then((ok) => { THUMBS_REMOTE = ok; try { localStorage.setItem("socal-thumbs-remote", ok ? "1" : "0"); } catch {} }); }
-const thumbOf = (u, w) => ((THUMBS && /^\/img\/events\//.test(u || "")) || (THUMBS_REMOTE && /^https?:\/\//.test(u || "")) ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : u);
-const photoImg = (ph, eager, w = 640) => `<img class="evimg" src="${esc(thumbOf(ph.src, w))}"${thumbOf(ph.src, w) !== ph.src ? ` data-orig="${esc(ph.src)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt="" loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`;
+// Photos stored as http:// are never requested directly from an https page (mixed content): the resizer fetches them for us, and the fallback copy is the https address.
+const secure = (u) => String(u || "").replace(/^http:\/\//i, "https://");
+const thumbOf = (u, w) => { u = u || ""; return (THUMBS && /^\/(img\/events|api\/photo)\//.test(u)) || (THUMBS_REMOTE && /^https?:\/\//.test(u)) ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : secure(u); };
+// w: the width asked for (list cards 320, pop-up 800, details 900); h: when given, the box is declared so nothing moves while the photo loads. Only the first cards load at once: the rest wait until they near the screen.
+const photoImg = (ph, eager, w = 640, h = 0) => { const t = thumbOf(ph.src, w), o = secure(ph.src); return `<img class="evimg" src="${esc(t)}"${t !== o ? ` data-orig="${esc(o)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt=""${h ? ` width="${w}" height="${h}"` : ""} loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`; };
 document.addEventListener("load", (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains("evimg")) e.target.classList.add("ld"); }, true);
 document.addEventListener("error", (e) => {
   const i = e.target;
@@ -555,13 +632,13 @@ function whenShort(ev) {
 }
 const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
 let toastT;
-function toast(msg, accent) {
+function toast(msg, accent, ms) {
   let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
-  t.textContent = msg; t.classList.toggle("accent", !!accent); t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2200);
+  t.textContent = msg; t.classList.toggle("accent", !!accent); t.classList.toggle("long", (ms || 0) > 5000 || msg.length > 80); t.onclick = () => t.classList.remove("show"); /* long messages can be tapped away */ t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms || (msg.length > 80 ? 8000 : 2200));
 }
 async function shareItem(k) {
   const it = findKey(k); if (!it) return;
-  const title = it.kind === "ev" ? it.ev.n : it.p.title, url = location.origin + "/#" + (it.kind === "ev" ? "e-" + it.ev.id : "h-" + it.p.id);
+  const title = it.kind === "ev" ? it.ev.n : it.p.title, url = location.origin + (it.kind === "ev" ? "/e/" + encodeURIComponent(it.ev.id) : "/#h-" + it.p.id); // events share a server page so texts and social posts show a preview card; its button opens the map
   try { if (navigator.share) { await navigator.share({ title, text: title + " on SoCal Lights", url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
   try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { toast(url); }
 }
@@ -577,13 +654,13 @@ const hoursOf = (ev) => (ev.h && !/^check/i.test(ev.h) ? cut(ev.h, 30) : "");
 function evItem(ev, i = 99, x = null) {
   const f = favs.has(ev.id), k = "e:" + ev.id, now = ev.s <= TODAY, ph = photoOf(ev), conf = ev.st === "c", hrs = hoursOf(ev);
   // Same layout as the card that opens when you tap a dot on the map
-  return `<article class="item ev${ev.nt ? " noticed" : ""}${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 8) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts">${awayTag(ev)}<button class="shr" type="button" data-share="e:${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div>${x ? legLine(x) : ""}<div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
+  return `<article class="item ev${ev.nt ? " noticed" : ""}${state.sel === k ? " sel" : ""}" data-key="${k}"><div class="tile${ev.free ? " free" : ""}">${ph ? photoImg(ph, i < 2, 320, 120) : ""}<span class="when${now ? " now" : ""}">${whenShort(ev)}</span>${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(ev.n)}</h3><span class="pv-acts">${awayTag(ev)}<button class="shr" type="button" data-share="e:${esc(ev.id)}" aria-label="Share ${esc(ev.n)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites">${HEART}</button></span></div><div class="meta">${esc(ev.city)} · ${esc(ev.c)} County</div><div class="dates">${range(ev)}${hrs ? " · " + esc(hrs) : ""}</div>${x ? legLine(x) : ""}<div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.free ? "free" : "paid"}">${esc(priceLine(ev))}</span><span class="tag ${conf ? "conf" : "exp"}">${conf ? "Confirmed" : "Expected"}</span></div></div></article>`;
 }
-// My night help: three simple steps, which can be folded into a ? button next to the stop count (remembered on this device)
+// Favorites help: three simple steps, which can be folded into a ? button next to the stop count (remembered on this device)
 let nightHelp = true; try { nightHelp = localStorage.getItem("socal-nighthelp") !== "0"; } catch {}
 function setNightHelp(v) { nightHelp = v; try { localStorage.setItem("socal-nighthelp", v ? "1" : "0"); } catch {} renderPanel(); }
-const helpHtml = (n) => `<section class="nhelp" aria-label="How My night works"><div class="nh-top"><b>Plan your night in 3 steps</b><button type="button" class="nh-x" data-nhelp="0" aria-label="Hide these steps" title="Hide"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><ol><li class="${n ? "is-done" : ""}"><span>${n ? "✓" : "1"}</span><div><b>Tap the heart</b><small>On any place you want to visit.</small></div></li><li class="${n > 1 ? "is-done" : ""}"><span>${n > 1 ? "✓" : "2"}</span><div><b>Check your stops here</b><small>We put them in a sensible driving order.</small></div></li><li><span>3</span><div><b>Tap Open route</b><small>Your maps app takes you there.</small></div></li></ol></section>`;
-// My night: the stop number and the drive from the previous stop
+const helpHtml = (n) => `<section class="nhelp" aria-label="How Favorites work"><div class="nh-top"><b>Plan your drive in 3 steps</b><button type="button" class="nh-x" data-nhelp="0" aria-label="Hide these steps" title="Hide"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><ol><li class="${n ? "is-done" : ""}"><span>${n ? "✓" : "1"}</span><div><b>Tap the heart</b><small>On any place you want to visit.</small></div></li><li class="${n > 1 ? "is-done" : ""}"><span>${n > 1 ? "✓" : "2"}</span><div><b>Check your stops here</b><small>We put them in a sensible driving order.</small></div></li><li><span>3</span><div><b>Tap Route these</b><small>Your maps app takes you there.</small></div></li></ol></section>`;
+// Favorites: the stop number and the drive from the previous stop
 const legLine = (x) => `<div class="legline">${x.leg ? `↓ ${x.leg.mi} mi · ~${x.leg.min} min from ${esc(x.leg.from)}` : "Start here"}</div>`;
 // Winner badges: one yellow crown icon, shown where the owner chose (list card chip, map pop-up, details page)
 const CROWN_B = (n = 16) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;flex:none"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`;
@@ -609,9 +686,9 @@ const whereNow = () => new Promise((res) => {
 const instLink = (p) => (p.inst ? `<a class="instlink" href="/installer/${esc(p.inst.slug)}">${esc(p.inst.name)}</a>` : "");
 const byLine = (p) => (p.kind === "installer" ? (p.inst ? instLink(p) : esc(p.biz)) : "Posted by " + esc(p.biz));
 const instLine = (p) => (p.kind !== "installer" && p.inst ? `<div class="meta instby">Installed by ${instLink(p)}${p.inst.ok ? ` <span class="instok" title="Confirmed by the installer" aria-label="Confirmed by the installer">&#10003;</span>` : ""}</div>` : "");
-function instItem(p, x = null) {
+function instItem(p, x = null, i = 99) {
   const ph = p.photos || [], k = "i:" + p.id, f = favs.has(hfav(p)), sn = SEASONS[p.season] ? SEASONS[p.season].short : "";
-  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? `<img src="${photoUrl(ph[0])}" alt="">` : ""}<span class="when">Home display</span>${bChip(p)}${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts">${awayTag({ lat: p.plat, lng: p.plng })}<button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night">${HEART}</button></span></div><div class="meta">${byLine(p)} · ${esc(p.city)}</div>${instLine(p)}<div class="dates">${esc(sn)} display · Free to view</div>${homeTags(p)}${x ? legLine(x) : ""}<div class="tags"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
+  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? photoImg({ src: photoUrl(ph[0]) }, i < 2, 320, 120) : ""}<span class="when">Home display</span>${bChip(p)}${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts">${awayTag({ lat: p.plat, lng: p.plng })}<button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites">${HEART}</button></span></div><div class="meta">${byLine(p)} · ${esc(p.city)}</div>${instLine(p)}<div class="dates">${esc(sn)} display · Free to view</div>${homeTags(p)}${x ? legLine(x) : ""}<div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
@@ -622,7 +699,13 @@ function quickPicks() {
   return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${f === "weekend" ? state.weekend : state[f] === v}">${l}</button>`).join("")}<button type="button" class="qf${fOpen ? " open" : ""}" data-openfilters aria-haspopup="dialog" aria-expanded="${fOpen}">Filters${nf ? ` <span class="fn">${nf}</span>` : ""}</button>${isPhone() ? "" : sortHtml()}</div>`;
 }
 const LIST_PAGE = 60; let listVis = [], listShown = 0, listSig = "", listIO = null;
-function listCard(it, i) { return it.t === "e" ? evItem(it.o, i) : instItem(it.o); }
+// Paid installer cards go at the top of the list, right behind the Featured places (which sort first).
+function listWithSponsors(items, tops) {
+  const cards = items.map((it, i) => listCard(it, i)); if (!tops.length) return cards.join("");
+  let at = 0; while (at < items.length && items[at].f) at++;
+  cards.splice(at, 0, ...tops.map(sponsorCard)); return cards.join("");
+}
+function listCard(it, i) { return it.t === "e" ? evItem(it.o, i) : instItem(it.o, null, i); }
 // the next page of cards is added when the end of the list scrolls into view
 function moreCards(upTo) {
   const list = document.querySelector("#pbody .list"); if (!list || listShown >= listVis.length) return;
@@ -641,10 +724,29 @@ function routeHint(vis) {
   if (vis.length > ROUTE_CAP) return `Zoom in to ${ROUTE_CAP} or fewer places to route them (${vis.length} in view)`;
   return "";
 }
-function routeLink(vis) {
-  const hint = routeHint(vis), n = hint ? 0 : routeLegs(vis).length;
-  return `<button type="button" class="rtlink" data-route aria-disabled="${hint ? "true" : "false"}" title="${esc(hint || (n > 1 ? `Open ${n} driving routes through these places` : "Open a driving route through these places"))}" data-hint="${esc(hint)}">${ROUTE_ICON}<span>Route these</span></button>`;
+// The "Route these" pill on the map (not in the list). Desktop: right of the ••• circle. Phone: above the list, at the right, moving with it;
+// when the list is nearly full it slides into the list header. It routes the places in the map view and only shows on the Places tab.
+const rtPill = () => document.getElementById("rtpill");
+function updateRoutePill(vis) {
+  const b = rtPill(); if (!b) return;
+  const on = state.tab === "events" && !state.detail; b.hidden = !on; if (!on) return;
+  const hint = routeHint(vis || listVis), n = hint ? 0 : routeLegs(vis || listVis).length;
+  b.setAttribute("aria-disabled", hint ? "true" : "false"); b.dataset.hint = hint;
+  b.title = hint || (n > 1 ? `Open ${n} driving routes through these places` : "Open a driving route through these places");
+  positionRoutePill();
 }
+function positionRoutePill() {
+  const b = rtPill(); if (!b || b.hidden) return;
+  // On a phone the pill must sit above the list panel, so it lives at the top level of the page; elsewhere it lives in the top bar
+  if (isPhone()) { if (b.parentElement !== document.body) document.body.appendChild(b); } else { const row = document.querySelector(".searchrow"); if (row && b.parentElement !== row) row.appendChild(b); }
+  if (!isPhone()) { b.classList.remove("docked"); b.style.top = b.style.left = b.style.right = ""; return; }
+  const r = document.getElementById("panel").getBoundingClientRect(), h = document.querySelector("#phead .hrow"), c = document.querySelector("#phead .hcount");
+  b.classList.remove("docked"); b.style.top = Math.round(r.top - 48) + "px"; b.style.left = "auto"; b.style.right = "14px"; // the list stops below the pill, so the pill always rides on top of it
+}
+{ const rp = rtPill(); if (rp) rp.addEventListener("click", () => { if (rp.dataset.hint) { toast(rp.dataset.hint, true); return; } routeFromView(); }); }
+// While the list slides (drag or tap), keep the pill on it
+let rpRaf = 0;
+function followRoutePill(ms = 480) { const t0 = performance.now(); cancelAnimationFrame(rpRaf); const tick = () => { positionRoutePill(); if (performance.now() - t0 < ms) rpRaf = requestAnimationFrame(tick); }; tick(); }
 // A stop for the route pop-up: name, a short line under it, where the maps app should go, and the pin (for ordering)
 function toStop(x) {
   if (x.house) return { id: x.key, name: x.p.title, sub: [x.p.address, x.p.city].filter(Boolean).join(", "), dest: destOf(x), lat: x.lat, lng: x.lng };
@@ -653,6 +755,7 @@ function toStop(x) {
 function routeFromView() {
   const items = listVis.slice(); if (routeHint(items) || !items.length) return;
   const stops = items.map((it) => it.t === "e" ? toStop(it.o) : toStop({ house: true, key: it.key, p: it.o, lat: it.lat, lng: it.lng, a: it.o.address ? it.o.address + ", " + it.o.city + ", CA" : "" }));
+  if (!map) return;
   const c = map.getCenter(), og = state.start === "me" && state.me ? state.me : { lat: c.lat, lng: c.lng };
   let at = og; const pool = stops.slice(), ord = [];
   while (pool.length) { pool.sort((a, b) => miles(at, a) - miles(at, b)); at = pool.shift(); ord.push(at); }
@@ -663,28 +766,38 @@ function openNightRoutes() {
   const og = routeOrigin(), startStop = state.start === "first" && !og && st.length > 1 ? st[0] : null;
   const origin = startStop || state.start === "me" ? "" : og ? og.lat + "," + og.lng : "";
   const stops = st.map(toStop), n = startStop ? stops.length - 1 : stops.length;
-  openRouteSheet({ title: "Your night", key: "map", stops: startStop ? stops.slice(1) : stops, start: startStop ? stops[0] : null, origin, app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); },
-    intro: `Your maps app takes about 9 stops at a time, so ${n > 9 ? "your night is split into routes of 9 or fewer" : "this is one route"}. Each route starts where the last one ended. Tick a stop when you have been there.`,
+  openRouteSheet({ title: "Your favorites", key: "map", stops: startStop ? stops.slice(1) : stops, start: startStop ? stops[0] : null, origin, app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); },
+    intro: `Your maps app takes about 9 stops at a time, so ${n > 9 ? "your favorites are split into routes of 9 or fewer" : "this is one route"}. Each route starts where the last one ended. Tick a stop when you have been there.`,
     note: mapsApp === "apple" ? "Multi-stop routes in Apple Maps need iOS 18.4 or later. Older iPhones open with the first stop." : "" });
 }
 async function shareNight() {
   if (!favs.size) return;
-  const url = location.origin + "/#night-" + [...favs].map(encodeURIComponent).join(","), title = "My night on SoCal Lights";
+  const url = location.origin + "/#night-" + [...favs].map(encodeURIComponent).join(","), title = "My favorites on SoCal Lights";
   try { if (navigator.share) { await navigator.share({ title, text: `${favs.size} stops for a night of lights`, url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
-  try { await navigator.clipboard.writeText(url); toast("Link to your night copied"); } catch { toast(url); }
+  try { await navigator.clipboard.writeText(url); toast("Link to your favorites copied"); } catch { toast(url); }
 }
 // First visit: offer to use the location so distances and Nearest work; asked once, never up front
 function showWelcome() {
   let seen = false; try { seen = !!localStorage.getItem("socal-welcomed"); } catch {}
-  if (seen || state.me || $("#welcome")) return;
+  if (seen || state.me || $("#welcome") || state.detail || /^#[eh]-/.test(location.hash)) return; // never over an open event (it hides the Back button) or for someone who arrived on a shared link
   const w = document.createElement("div"); w.id = "welcome"; w.setAttribute("role", "region"); w.setAttribute("aria-label", "Use your location");
   w.innerHTML = `<span>See what is close to you and how far it is.</span><button type="button" data-welcome="go">Use my location</button><button type="button" class="no" data-welcome="no" aria-label="No thanks">No thanks</button>`;
   document.body.appendChild(w);
   setTimeout(() => { if (w.isConnected) { w.remove(); try { localStorage.setItem("socal-welcomed", "1"); } catch {} } }, 15000); // offered once; ignored for 15 seconds counts as "no thanks"
 }
+// The offer comes once the person has started using the page (a tap, a key or a scroll, then a moment), or after 10 seconds of looking. It is not drawn while the list is first painting:
+// a big card of text that appears at that moment becomes the page's largest paint and holds back the load measurement (Lighthouse LCP) for no reason.
+function welcomeLater() {
+  const EV = ["pointerdown", "keydown", "wheel", "touchstart", "scroll"];
+  let done = false;
+  const go = (wait) => { if (done) return; done = true; clearTimeout(idle); EV.forEach((t) => removeEventListener(t, first, true)); setTimeout(showWelcome, wait); };
+  const first = () => go(1500), idle = setTimeout(() => go(0), 10000);
+  EV.forEach((t) => addEventListener(t, first, { capture: true, passive: true }));
+}
 function renderPanel(opts) {
   counts();
   const head = $("#phead"), body = $("#pbody");
+  if (state.tab !== "events" || state.detail) { const rp = rtPill(); if (rp) rp.hidden = true; } // the map's Route these pill belongs to the Places tab
   document.body.classList.toggle("detail-open", !!state.detail);
   if (state.detail) { head.hidden = true; body.innerHTML = detailHtml(state.detail); wireDetail(); return; }
   head.hidden = false;
@@ -693,7 +806,7 @@ function renderPanel(opts) {
     const ctr = state.me || (mapReady ? map.getCenter() : null), dist = (o) => (ctr ? miles({ lat: ctr.lat, lng: ctr.lng }, { lat: o.lat, lng: o.lng }) : 0);
     const items = [
       ...E.filter(evMatch).map((e) => ({ t: "e", o: e, lat: e.lat, lng: e.lng, free: !!e.free, f: e.f === 2 ? 1 : 0, st: effStart(e), nm: e.n, key: "e:" + e.id })),
-      ...SHOW.filter(instMatch).map((h) => ({ t: "i", o: h, lat: h.plat, lng: h.plng, free: true, f: 0, st: TODAY, nm: h.title, key: "i:" + h.id })),
+      ...SHOW.filter(instMatch).map((h) => ({ t: "i", o: h, lat: h.plat, lng: h.plng, free: true, f: h.f === 2 ? 1 : 0, st: TODAY, nm: h.title, key: "i:" + h.id })),
     ];
     const lead = (a, b) => b.f - a.f; // paid "top of the list" placements stay first in every order
     const soon = (a, b) => lead(a, b) || a.st.localeCompare(b.st) || a.nm.localeCompare(b.nm);
@@ -701,19 +814,22 @@ function renderPanel(opts) {
     const vis = items.filter((it) => inView(it.lng, it.lat) || state.sel === it.key || state.keep === it.key); // keep: the card you just came back from stays listed
     const liveEl = $("#live"); if (liveEl) { const msg = vis.length + (vis.length === 1 ? " place" : " places") + " in view"; if (liveEl.textContent !== msg) liveEl.textContent = msg; }
     const act = activeFilters();
-    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span>${routeLink(vis)}${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
-    const sig = vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span>${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
+    const tops = bannerOn && !state.detail && state.tab !== "plan" ? topSponsors(viewRegions()) : [], topSig = tops.map((t) => t.id).join(",");
+    const sig = topSig + "@" + vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
     if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
-    listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE);
-    body.innerHTML = vis.length ? `<div class="list">${vis.slice(0, listShown).map((it, i) => listCard(it, i)).join("")}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
+    listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE); updateRoutePill(vis);
+    body.innerHTML = vis.length ? `<h2 class="sr">Places in view</h2><div class="list">${listWithSponsors(vis.slice(0, listShown), tops)}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
       : !state.all && !state.city && !E.some((e) => (e.sn || "christmas") === state.season) ? `<div class="empty">No ${esc((SEASONS[state.season] || {}).short || "seasonal")} events are listed yet. We start adding them about six weeks ahead, so check back soon. Know of one? <a href="/add-event">Add an event</a>.</div>`
+      : state.q ? `<div class="empty">No places match \u201c${esc(state.q)}\u201d.<button class="linkbtn" type="button" id="clearq">Clear search</button></div>`
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
+    watchTopCards(body);
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
     head.innerHTML = `<div class="hrow"><button class="chip" type="button" data-pop="shopseason" aria-haspopup="true" aria-label="Choose a season to shop for"><span class="sico" aria-hidden="true">${phaseFor(shopSeason(), TODAY).icon}</span><span>Shop for ${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</span><svg class="caret" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
     body.innerHTML = `<div class="shopgrid">${c[1].map(([em, l, q]) => `<a class="shopcard" href="${amzUrl(q)}" target="_blank" rel="sponsored noopener"><span class="shopem" aria-hidden="true">${em}</span><span class="shoptx">${esc(l)}</span><span class="shopgo">Amazon ↗</span></a>`).join("")}</div><p class="meta" style="padding:4px 14px 14px">As an Amazon Associate we earn from qualifying purchases, at no extra cost to you.</p>`;
   } else {
-    // My night uses the same layout as Places: buttons row, count line, then the cards
+    // Favorites use the same layout as Places: buttons row, count line, then the cards
     const st = routeStops();
     if (state.start === "me" && st.length) locateMe(false);
     let prev = routeOrigin(), total = 0, mins = 0;
@@ -726,8 +842,8 @@ function renderPanel(opts) {
     const nRoutes = routeLegs(startStop ? st.slice(1) : st).length;
     const dur = mins >= 60 ? Math.floor(mins / 60) + " hr" + (mins % 60 ? " " + (mins % 60) + " min" : "") : mins + " min";
     const startSel = `<label class="qsel">Start <select id="startFrom" aria-label="Start from"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
-    const mapsSel = `<label class="qsel">Maps <select id="mapsSel" aria-label="Maps app">${Object.entries(MAPS).map(([k, l]) => `<option value="${k}"${k === mapsApp ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
-    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How My night works" title="How My night works">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options"><button type="button" class="qgo" data-nroute title="Open ${nRoutes > 1 ? nRoutes + ' driving routes' : 'the driving route'} in ${MAPS[mapsApp]}">${nRoutes > 1 ? "Open " + nRoutes + " routes" : "Open route"} ↗</button>${startSel}${mapsSel}${state.shared ? "" : `<button type="button" class="qshare" data-nshare>Share</button>`}</div>` : ""}${state.shared ? `<div class="sharedbar"><span>A night shared with you</span><button type="button" data-nsave>Add to my night</button><button type="button" data-nclose>Close</button></div>` : ""}`;
+    const mapsSel = `<button type="button" class="qchg" data-mapschange aria-label="Maps app: ${MAPS[mapsApp]}. Change" title="Change the maps app">${MAPS[mapsApp]}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>`;
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How Favorites work" title="How Favorites work">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options"><button type="button" class="qgo" data-nroute title="Open ${nRoutes > 1 ? nRoutes + ' driving routes' : 'the driving route'} in ${MAPS[mapsApp]}">${ROUTE_ICON}<span>Route these${nRoutes > 1 ? " · " + nRoutes + " routes" : ""}</span></button>${startSel}${mapsSel}${state.shared ? "" : `<button type="button" class="qshare qicon" data-nshare aria-label="Share my favorites" title="Share">${SHARE}</button>`}</div>` : ""}${state.shared ? `<div class="sharedbar"><span>Favorites shared with you</span><button type="button" data-nsave>Add to my favorites</button><button type="button" data-nclose>Close</button></div>` : ""}`;
     const sf = $("#startFrom"); if (sf) sf.onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
     const ms = $("#mapsSel"); if (ms) ms.onchange = (e) => setMapsApp(e.target.value);
     if (!st.length) { body.innerHTML = nightHelp ? helpHtml(0) : `<div class="empty">No stops yet. Tap the heart on any place to add it.</div>`; return; }
@@ -736,20 +852,21 @@ function renderPanel(opts) {
     const nights = [...new Set(st.filter((e) => !e.house && e.s === e.e).map((e) => fmt(e.s)))];
     if (nights.length) notes.push(`One-night events: ${nights.join(", ")}.`);
     if (mapsApp === "apple" && st.length > 1) notes.push("Multi-stop routes in Apple Maps need iOS 18.4 or later. Older iPhones open with the first stop.");
-    body.innerHTML = (nightHelp ? helpHtml(st.length) : "") + `<div class="list">${st.map((ev, i) => (ev.house ? instItem(ev.p, { n: i + 1, leg: legs[i] }) : evItem(ev, i, { n: i + 1, leg: legs[i] }))).join("")}</div>${notes.length ? `<div class="routenotes">${notes.map((n) => `<p><span aria-hidden="true">i</span>${n}</p>`).join("")}</div>` : ""}`;
+    body.innerHTML = (nightHelp ? helpHtml(st.length) : "") + `<h2 class="sr">Your favorites</h2><div class="list">${st.map((ev, i) => (ev.house ? instItem(ev.p, { n: i + 1, leg: legs[i] }) : evItem(ev, i, { n: i + 1, leg: legs[i] }))).join("")}</div>${notes.length ? `<div class="routenotes">${notes.map((n) => `<p><span aria-hidden="true">i</span>${n}</p>`).join("")}</div>` : ""}`;
   }
-  if (listIO) listIO.disconnect(); const sen = $("#listmore"); if (sen && window.IntersectionObserver) { listIO = new IntersectionObserver((en) => { if (en.some((e) => e.isIntersecting)) moreCards(); }, { root: body, rootMargin: "600px" }); listIO.observe(sen); }
-  body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); $("#pbody").scrollTop = 0; }));
+  if (listIO) listIO.disconnect(); const sen = $("#listmore"); if (sen && window.IntersectionObserver) { listIO = new IntersectionObserver((en) => { if (en.some((e) => e.isIntersecting)) moreCards(); }, { root: scroller(), rootMargin: "600px" }); listIO.observe(sen); }
+  body.querySelectorAll("[data-goseason]").forEach((b) => (b.onclick = () => { setSeason(b.dataset.goseason); scroller().scrollTop = 0; }));
+  const cq = $("#clearq"); if (cq) cq.onclick = () => { const q = $("#q"); q.value = ""; state.q = ""; closeSuggestions(); applyFilters(); q.focus(); };
   const sa = $("#showall"); if (sa) sa.onclick = () => { state.city = ""; applyFilters(); fitSoCal(true); };
 }
 document.getElementById("panel").addEventListener("click", (e) => { const h = e.target.closest("[data-nhelp]"); if (h) setNightHelp(h.dataset.nhelp === "1"); });
 $("#pbody").addEventListener("click", (e) => {
   const mp = e.target.closest("[data-maps]"); if (mp) { e.stopPropagation(); setMapsApp(mp.dataset.maps); return; }
   const f = e.target.closest("[data-fav]");
-  if (f) { e.stopPropagation(); const id = f.dataset.fav; favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); if (state.tab === "plan" && !favs.size) { setTab("events"); if (isPhone()) setSheet("peek"); fitSoCal(true); return; } renderPanel(); drawMap(); return; }
+  if (f) { e.stopPropagation(); const id = f.dataset.fav; const was = favs.has(id); was ? favs.delete(id) : favs.add(id); saveFavs(); if (was && state.tab === "plan" && !state.detail) { state.hot = null; closePin(); } if (state.tab === "plan" && !favs.size) { setTab("events"); if (isPhone()) setSheet("peek"); fitSoCal(true); return; } renderPanel(); drawMap(); return; }
   const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) { selectKey(it.dataset.key, "list"); if (e.target.closest(".tile,.thumb") && state.detail !== it.dataset.key) openDetail(it.dataset.key); }
 });
-$("#phead").addEventListener("change", (e) => { if (e.target.id === "sortSel") { state.sort = e.target.value; renderPanel(); $("#pbody").scrollTop = 0; } });
+$("#phead").addEventListener("change", (e) => { if (e.target.id === "sortSel") { state.sort = e.target.value; renderPanel(); scroller().scrollTop = 0; } });
 $("#pbody").addEventListener("click", (e) => {
   if (e.target.closest("[data-support]")) { openSupport(); return; }
   const cl = e.target.closest("[data-cal]"); if (cl) { e.stopPropagation(); addToCalendar(cl.dataset.cal); return; }
@@ -764,7 +881,7 @@ $("#pbody").addEventListener("click", (e) => {
 });
 $("#phead").addEventListener("click", (e) => {
   const ns = e.target.closest("[data-nshare]"); if (ns) { shareNight(); return; }
-  if (e.target.closest("[data-nsave]")) { state.shared.forEach((id) => favs.add(id)); state.shared = null; saveFavs(); counts(); renderPanel(); drawMap(); toast("Added to your night"); return; }
+  if (e.target.closest("[data-nsave]")) { state.shared.forEach((id) => favs.add(id)); state.shared = null; saveFavs(); counts(); renderPanel(); drawMap(); toast("Added to your favorites"); return; }
   if (e.target.closest("[data-nclose]")) { state.shared = null; renderPanel(); drawMap(); return; }
   if (e.target.closest("[data-nroute]")) { openNightRoutes(); return; }
   const rt = e.target.closest("[data-route]");
@@ -772,7 +889,7 @@ $("#phead").addEventListener("click", (e) => {
   const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
   const cl = e.target.closest("[data-clear]"); if (cl) { clearFilter(cl.dataset.clear); return; }
   const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { toggleSeasonPick(sc, "shop"); return; }
-  const sb = e.target.closest("[data-shop]"); if (sb) { state.shopCat = +sb.dataset.shop; renderPanel(); $("#pbody").scrollTop = 0; return; }
+  const sb = e.target.closest("[data-shop]"); if (sb) { state.shopCat = +sb.dataset.shop; renderPanel(); scroller().scrollTop = 0; return; }
   const b = e.target.closest("[data-quick]"); if (!b) return;
   const f = b.dataset.quick, v = b.dataset.v;
   if (f === "date") { state.date = state.date === v ? "" : v; if (state.date) state.weekend = false; } else if (f === "weekend") { state.weekend = !state.weekend; if (state.weekend) state.date = ""; } else state.cost = state.cost === v ? "all" : v;
@@ -805,7 +922,7 @@ function openLightbox(items, start = 0, title = "") {
   closeLightbox(); lbBack = document.activeElement;
   const many = items.length > 1;
   lbEl = document.createElement("div"); lbEl.id = "lightbox"; lbEl.setAttribute("role", "dialog"); lbEl.setAttribute("aria-modal", "true"); lbEl.setAttribute("aria-label", (title || "Photos") + ", full size");
-  lbEl.innerHTML = `<div class="lbtrack">${items.map((q, i) => `<div class="lbslide" data-credit="${esc(q.credit)}" data-link="${esc(q.link)}"><img src="${esc(q.src)}"${q.fb ? ` data-fb="${esc(q.fb)}"` : ""} alt="${esc(title)}${many ? `, photo ${i + 1} of ${items.length}` : ""}" referrerpolicy="no-referrer" draggable="false"></div>`).join("")}</div>
+  lbEl.innerHTML = `<div class="lbtrack">${items.map((q, i) => `<div class="lbslide" data-credit="${esc(q.credit)}" data-link="${esc(q.link)}"><img src="${esc(secure(q.src))}"${q.fb ? ` data-fb="${esc(q.fb)}"` : ""} alt="${esc(title)}${many ? `, photo ${i + 1} of ${items.length}` : ""}" referrerpolicy="no-referrer" draggable="false"></div>`).join("")}</div>
     <button class="lbx" type="button" aria-label="Close photos">${`<svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg>`}</button>
     ${many ? `<button class="lbn l" type="button" data-lb="-1" aria-label="Previous photo">${ARW_L}</button><button class="lbn r" type="button" data-lb="1" aria-label="Next photo">${ARW_R}</button><span class="lbcount">${start + 1} / ${items.length}</span>` : ""}
     <a class="lbcredit" target="_blank" rel="noopener" hidden></a>`;
@@ -823,32 +940,79 @@ function openLightbox(items, start = 0, title = "") {
   document.addEventListener("keydown", lbKey, true);
   lbEl.querySelector(".lbx").focus({ preventScroll: true });
 }
-function openDetail(k) { state.detail = k; state.sel = k; renderPanel(); renderPreview(); $("#pbody").scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
+/* ---------- event details (blurb and link) load when an event is opened ---------- */
+// The event list leaves out each event's blurb (b) and link (u), about 40% of its bytes. GET /api/events/<id> has them: they are fetched when the details page (or the map card) opens, kept in memory for the visit,
+// and filled into the open page in place, so nothing jumps. The service worker keeps the answers for events you opened, so they still open with no signal; otherwise a short note and a Try again button show.
+const HEAVY = ["b", "u"], DETAIL = new Map(), DFETCH = new Map(), DERR = new Map();
+const hasDetail = (ev) => "b" in ev;
+function loadDetail(ev) {
+  if (hasDetail(ev)) return Promise.resolve(ev);
+  const id = ev.id, kept = DETAIL.get(id);
+  if (kept) { HEAVY.forEach((k) => (ev[k] = kept[k])); return Promise.resolve(ev); }
+  if (DFETCH.has(id)) return DFETCH.get(id);
+  DERR.delete(id);
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
+  const p = fetch("/api/events/" + encodeURIComponent(id), { signal: ctl.signal })
+    .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then((d) => {
+      const got = {}; HEAVY.forEach((k) => (got[k] = typeof d[k] === "string" ? d[k] : "")); DETAIL.set(id, got);
+      const cur = E.find((x) => x.id === id); HEAVY.forEach((k) => { ev[k] = got[k]; if (cur) cur[k] = got[k]; });
+      return ev;
+    })
+    .catch((err) => { DERR.set(id, err instanceof TypeError || (err && err.name === "AbortError") || navigator.onLine === false ? "net" : "http"); throw err; })
+    .finally(() => { clearTimeout(timer); DFETCH.delete(id); });
+  DFETCH.set(id, p); return p;
+}
+const infoBtn = (ev, url) => (url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n, ev.city || ""))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : "");
+const contestBtn = (ev, url) => (String(ev.id).startsWith("c-") && url ? `<a class="contestgo" href="${esc(url)}">Enter your home or vote &rsaquo;</a>` : "");
+// the blurb's place while it loads: a grey block as tall as a typical blurb, or (when it could not load) a short note with Try again
+const blurbPending = (err) => err
+  ? `<p class="blurb dstatus" id="dblurb">${err === "http" ? "Couldn't load the details." : "Details need a connection."} <button class="retry" type="button" id="dretry">Try again</button></p>`
+  : `<p class="blurb skel" id="dblurb" aria-busy="true"></p>`;
+const swap = (sel, html) => { const el = $(sel); if (!el) return; const t = document.createElement("template"); t.innerHTML = html.trim(); el.replaceWith(t.content); };
+function startDetail(ev) {
+  if (hasDetail(ev) || DERR.has(ev.id)) return;
+  const key = "e:" + ev.id, still = () => state.detail === key;
+  loadDetail(ev).then(() => { if (still()) showDetail(ev); }).catch(() => { if (still()) { swap("#dblurb", blurbPending(DERR.get(ev.id))); wireRetry(ev); } });
+}
+function wireRetry(ev) { const b = $("#dretry"); if (b) b.onclick = () => { DERR.delete(ev.id); swap("#dblurb", blurbPending("")); startDetail(ev); }; }
+// fill a just-loaded event into the open details page without redrawing it (the photo, scroll position and buttons stay as they are)
+function showDetail(ev) {
+  swap("#dblurb", `<p class="blurb" id="dblurb">${esc(ev.b)}</p>`);
+  const url = safeUrl(ev.u); swap("#dslot", infoBtn(ev, url)); swap("#dcontest", contestBtn(ev, url));
+  const phs = photosOf(ev, true), tr = $("#track"), cr = $("#hcredit"); // the photo credit names the event's site now that its link is known
+  if (tr) [...tr.children].forEach((sl, i) => { const q = phs[i]; if (q) { sl.dataset.credit = q.credit || ""; sl.dataset.link = safeUrl(q.link) || ""; } });
+  const q = phs[tr && tr.clientWidth ? Math.round(tr.scrollLeft / tr.clientWidth) : 0] || phs[0];
+  if (cr && q) { const l = safeUrl(q.link), n = document.createElement(l ? "a" : "span"); n.className = "credit"; n.id = "hcredit"; n.textContent = q.credit; if (l) { n.href = l; n.target = "_blank"; n.rel = "noopener"; } cr.replaceWith(n); }
+}
+function dismissWelcome() { const w = $("#welcome"); if (w) { w.remove(); try { localStorage.setItem("socal-welcomed", "1"); } catch {} } } // opening an event means "not now" to the location prompt
+function openDetail(k) { dismissWelcome(); if (k !== state.detail && /^e:/.test(k)) { tick("fn:event-open"); DERR.delete(k.slice(2)); } state.detail = k; state.sel = k; renderPanel(); renderPreview(); scroller().scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
 function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
   if (it.kind === "ev") {
-    const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u), phs = photosOf(ev, true), ph = phs[0], cl = ph && safeUrl(ph.link), manyD = phs.length > 1;
+    const ev = it.ev, f = favs.has(ev.id), url = safeUrl(ev.u), phs = photosOf(ev, true), ph = phs[0], cl = ph && safeUrl(ph.link), manyD = phs.length > 1, loading = !hasDetail(ev), derr = DERR.get(ev.id);
     return `<div class="detail">
     <div class="hero${ev.free ? " free" : ""}${ph ? " photo" : ""}">${manyD ? `<div class="pvtrack" id="track">${phs.map((q, i) => `<div class="pvslide" data-credit="${esc(q.credit || "")}" data-link="${esc(safeUrl(q.link) || "")}">${photoImg(q, i < 2, 900)}</div>`).join("")}</div><button class="pvnav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="pvnav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="pvcount" id="gcount">1 / ${phs.length}</span>` : ph ? photoImg(ph, false, 1200) : ""}<button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
       ${ph ? (cl ? `<a class="credit" id="hcredit" href="${esc(cl)}" target="_blank" rel="noopener">${esc(ph.credit)}</a>` : `<span class="credit" id="hcredit">${esc(ph.credit)}</span>`) : ""}
       <div class="htext"><div class="kicker">${esc(TYPE_SHORT[ev.t] || "Event")} · ${esc(ev.city)}${away(ev)}</div><h2>${esc(ev.n)}</h2></div></div>
     <div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
     <div class="boxes"><div><span>When</span><b>${whenShort(ev)}</b></div><div><span>Hours</span><b>${esc(ev.h)}</b></div><div><span>Cost</span><b>${esc(ev.p)}</b></div></div>
-    <p class="blurb">${esc(ev.b)}</p>
+    <div class="dlive" aria-live="polite">${loading ? blurbPending(derr) : `<p class="blurb" id="dblurb">${esc(ev.b)}</p>`}</div>
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd>${ev.lc ? `<dt>Updated</dt><dd class="meta">${esc(fmt(ev.lc))}</dd>` : ""}</dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
-    ${String(ev.id).startsWith("c-") && url ? `<a class="contestgo" href="${esc(url)}">Enter your home or vote &rsaquo;</a>` : ""}${reportLink(ev.n, "e-" + ev.id, ev.city)}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my night" title="${f ? "In my night" : "Add to my night"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : ""}<a class="btn go" href="${esc(dirUrl(ev))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
+    ${loading ? `<span id="dcontest"></span>` : contestBtn(ev, url)}${isSweepHome(ev) ? `<a class="claimhome" href="/add-house?claim=${encodeURIComponent(ev.id)}">Is this your home? Claim it &rsaquo;</a>` : ""}${reportLink(ev.n, "e-" + ev.id, ev.city, isSweepHome(ev))}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites" title="${f ? "In my favorites" : "Add to my favorites"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${loading ? `<span class="abtn" id="dslot" aria-hidden="true" style="visibility:hidden"></span>` : infoBtn(ev, url)}<a class="btn go" href="${esc(dirUrl(ev))}" ${navAttr([destOf(ev)])} target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
   return `<div class="detail">  ${ph.length ? `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="ph-none">No photos yet</div></div>`}
-  <div class="row" style="gap:6px;justify-content:flex-start;flex-wrap:wrap"><span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}</div>
+  <div class="row" style="gap:6px;justify-content:flex-start;flex-wrap:wrap">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}</div>
   <h2>${esc(p.title)}</h2><div class="meta">${p.kind === "installer" ? "" : "Posted by "}<b style="color:var(--ink)">${p.kind === "installer" && p.inst ? instLink(p) : esc(p.biz)}</b> · ${esc(p.city)}${away({ lat: p.plat, lng: p.plng })}</div>${instLine(p)}${bLines(p)}
   <p style="margin:0;white-space:pre-line">${esc(p.desc)}</p>
-  <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}</dd>` : ""}${p.lon ? `<dt>Lights on</dt><dd>${esc(p.lon)}</dd>` : ""}${VISIT[p.visit] ? `<dt>Visit</dt><dd>${VISIT[p.visit]}${PARK[p.parking] ? " · " + PARK[p.parking] : ""}${p.acc ? " · Stroller and wheelchair friendly" : ""}</dd>` : p.acc || PARK[p.parking] ? `<dt>Visit</dt><dd>${[PARK[p.parking], p.acc && "Stroller and wheelchair friendly"].filter(Boolean).join(" · ")}</dd>` : ""}${p.radio ? `<dt>Tune in</dt><dd>${esc(p.radio)}</dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.kind === "installer" && p.area ? `<dt>Service area</dt><dd>${esc(p.area)}</dd>` : ""}${p.phone ? `<dt>Call for Quotes</dt><dd>${telHref(p.phone) ? `<a href="${esc(telHref(p.phone))}">${esc(fmtPhone(p.phone))}</a>` : esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
-  ${onButton(p)}${reportLink(p.title, "h-" + p.id, p.city)}<div class="actionbar"><button class="abtn" type="button" data-share="i:${esc(p.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my night" title="${favs.has(hfav(p)) ? "In my night" : "Add to my night"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
+  <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}</dd>` : ""}${p.lon ? `<dt>Lights on</dt><dd>${esc(p.lon)}</dd>` : ""}${VISIT[p.visit] ? `<dt>Visit</dt><dd>${VISIT[p.visit]}${PARK[p.parking] ? " · " + PARK[p.parking] : ""}${p.acc ? " · Stroller and wheelchair friendly" : ""}</dd>` : p.acc || PARK[p.parking] ? `<dt>Visit</dt><dd>${[PARK[p.parking], p.acc && "Stroller and wheelchair friendly"].filter(Boolean).join(" · ")}</dd>` : ""}${p.radio ? `<dt>Tune in</dt><dd>${esc(p.radio)}</dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.kind === "installer" && p.area ? `<dt>Service area</dt><dd>${esc(p.area)}</dd>` : ""}${p.phone ? `<dt>Call for Quotes</dt><dd>${telHref(p.phone) ? `<a href="${esc(telHref(p.phone))}"${p.kind === "installer" ? ' data-clk="click:installer"' : ""}>${esc(fmtPhone(p.phone))}</a>` : esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener"${p.kind === "installer" ? ' data-clk="click:installer"' : ""}>${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
+  ${onButton(p)}${reportLink(p.title, "h-" + p.id, p.city, true)}<div class="actionbar"><button class="abtn" type="button" data-share="i:${esc(p.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${favs.has(hfav(p))}" aria-label="${favs.has(hfav(p)) ? "Remove from" : "Add to"} my favorites" title="${favs.has(hfav(p)) ? "In my favorites" : "Add to my favorites"}">${HEART}</button><a class="btn go" href="${esc(navUrl([p.address || p.plat + "," + p.plng], ""))}" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions</a></div></div>`;
 }
 function wireDetail() {
+  const it0 = findKey(state.detail); if (it0 && it0.kind === "ev") { wireRetry(it0.ev); startDetail(it0.ev); }
   const area = document.querySelector(".detail .hero.photo, .detail .gallery:has(.track)");
   if (area) area.addEventListener("click", (e) => {
     if (e.target.closest("button,a")) return;
@@ -865,7 +1029,7 @@ function wireDetail() {
 /* ---------- Showcase a House form ---------- */
 /* ---------- monetization: affiliate links, support box ---------- */
 // Add the affiliate tracking parameter to ticket links on hosts configured in site-config.js (no-op when none are set).
-function affRule(u) { try { const h = new URL(u).hostname.replace(/^www\./, ""); return SITE.ticketAffiliates[h] || SITE.ticketAffiliates[h.split(".").slice(-2).join(".")] || null; } catch { return null; } }
+function affRule(u) { if (IN_APP) return null; try { const h = new URL(u).hostname.replace(/^www\./, ""); return SITE.ticketAffiliates[h] || SITE.ticketAffiliates[h.split(".").slice(-2).join(".")] || null; } catch { return null; } }
 const isAff = (u) => !!affRule(u);
 // Two kinds of rule: add a tracking parameter ({ param, value }), or wrap the link in a network deep link ({ template: "https://…?u={url}" }, the form Impact/CJ give you).
 function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) return r.template.replace("{url}", encodeURIComponent(u)); try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
@@ -873,7 +1037,7 @@ function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) ret
 const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(SITE.shopHighEnd ? q + " " + SITE.shopHighEnd : q)}${SITE.shopSort ? "&s=" + encodeURIComponent(SITE.shopSort) : ""}&tag=${encodeURIComponent(SITE.amazonTag)}`;
 const SHOP_ICON = { halloween: "🎃", christmas: "🎄", newyear: "🎆", valentines: "💘", spring: "🌷", summer: "☀️" };
 const shopSeason = () => (SITE.shop[state.shopSeason] ? state.shopSeason : state.season); // follows the season button at the top until you pick another here
-const shopCats = () => (SITE.amazonTag ? SITE.shop[shopSeason()] || [] : []);
+const shopCats = () => (SITE.amazonTag && !IN_APP ? SITE.shop[shopSeason()] || [] : []); // no Amazon shop inside the Android/iOS wrapper
 // The Shop tab only exists when there is an Amazon tag and shop list for the season.
 function syncShopTab() {
   const on = shopCats().length > 0;
@@ -882,11 +1046,13 @@ function syncShopTab() {
 }
 function openSupport() {
   const m = $("#modal"), donate = safeUrl(SITE.donateUrl);
-  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Keep SoCal Lights free</h2><button class="xbtn" type="button" id="sClose" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
-    <p class="blurb">SoCal Lights is built and kept up to date by one small team: checking dates, adding events and fixing links all season long. There are no ads and no paywall. If it helped you find something fun, you can help keep it going.</p>
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Support SoCal Lights</h2><button class="xbtn" type="button" id="sClose" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
+    <p class="blurb">Finding lights and events, search, routes, favorites and voting are free for everyone, and so is posting an event or your own home. One small team keeps it current all season: checking dates, adding events and fixing links.</p>
+    <p class="blurb">What pays for it: optional paid options, such as Featured events, installer banners and extra contest passes (your first contest is free), and tips from people it helped. Paid placements are always labelled and never change a contest result.</p>
+    <a class="btn ghost" href="/pricing">See pricing</a>
     ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
     ${shopCats().length ? `<button class="btn ghost" type="button" id="sShop">🛍️ Browse the shop</button>` : ""}
-    ${SITE.amazonTag || Object.keys(SITE.ticketAffiliates).length ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
+    ${!IN_APP && (SITE.amazonTag || Object.keys(SITE.ticketAffiliates).length) ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
   </div>`;
   m.hidden = false; $("#sClose").onclick = closeForm; $("#sClose").focus();
   if ($("#sShop")) $("#sShop").onclick = () => { closeForm(); setTab("shop"); if (isPhone()) setSheet("full"); };
@@ -910,7 +1076,7 @@ function openPop(chip) {
   if (k === "shopseason") h = `<h4>Shop for</h4>${Object.keys(SITE.shop).filter((x) => SEASONS[x]).map((x) => `<label class="opt"><input type="radio" name="ss" value="${x}" ${x === shopSeason() ? "checked" : ""}> ${SHOP_ICON[x] || ""} ${esc(SEASONS[x].short || SEASONS[x].label)}</label>`).join("")}`;
   p.innerHTML = h; p.hidden = false;
   const r = chip.getBoundingClientRect(), pw = p.offsetWidth; p.style.top = r.bottom + 6 + "px"; p.style.left = Math.max(12, Math.min(r.left, innerWidth - pw - 12)) + "px";
-  p.querySelectorAll("input[name=ss]").forEach((r) => (r.onchange = () => { state.shopSeason = r.value; state.shopCat = 0; closePop(); renderPanel(); $("#pbody").scrollTop = 0; }));
+  p.querySelectorAll("input[name=ss]").forEach((r) => (r.onchange = () => { state.shopSeason = r.value; state.shopCat = 0; closePop(); renderPanel(); scroller().scrollTop = 0; }));
 }
 
 /* Filters: one panel for everything that narrows the list (a popover on desktop, a full-height sheet on phones) */
@@ -939,15 +1105,15 @@ function filtersHtml() {
   const ch = (on, attrs, label) => `<button type="button" class="fchip${on ? " on" : ""}" aria-pressed="${on}" ${attrs}>${label}</button>`;
   return `<div class="fhead"><h2>Filters</h2><button class="xbtn" type="button" data-fdone aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
   <div class="fbody">
-    <section><h4>When</h4><div class="fchips">${ch(!state.date && !state.weekend, 'data-fwhen="any"', "Any date")}${ch(state.date === TODAY, 'data-fwhen="today"', "Tonight")}${ch(state.weekend, 'data-fwhen="weekend"', "This weekend")}</div>
+    <section><h3>When</h3><div class="fchips">${ch(!state.date && !state.weekend, 'data-fwhen="any"', "Any date")}${ch(state.date === TODAY, 'data-fwhen="today"', "Tonight")}${ch(state.weekend, 'data-fwhen="weekend"', "This weekend")}</div>
       <label class="fdate">or pick a day<input type="date" id="fDate" min="${S.dateRange[0]}" max="${S.dateRange[1]}" value="${esc(state.date)}"></label></section>
-    <section><h4>Near</h4>${state.city ? `<div class="fchips">${ch(true, 'data-clear="city"', esc(state.city) + " ✕")}</div>` : ""}
+    <section><h3>Near</h3>${state.city ? `<div class="fchips">${ch(true, 'data-clear="city"', esc(state.city) + " ✕")}</div>` : ""}
       <input type="search" id="fCityQ" class="fq" placeholder="Type a city" aria-label="Find a city" autocomplete="off"><div class="fcities" id="fCityList"></div>
       ${state.city ? "" : `<p class="fhint">Pick a city, then choose how far from it to look.</p>`}<div class="fseg${state.city ? "" : " off"}" role="group" aria-label="Distance from the city">${[5, 10, 25].map((r) => `<button type="button" data-rad="${r}" ${state.city ? "" : "disabled"} class="${state.radius === r ? "on" : ""}">${r} mi</button>`).join("")}</div></section>
-    <section><h4>County</h4><div class="fchips">${COUNTIES.map((c) => ch(state.counties.has(c), `data-county="${esc(c)}"`, esc(c.replace(/^Los Angeles$/, "LA")))).join("")}</div></section>
-    <section><h4>Cost</h4><div class="fseg" role="group" aria-label="Cost">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-fcost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div></section>
-    <section><h4>Type</h4><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).filter(([v]) => v !== "drive").map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}${ch(state.type === "pro", 'data-ftype="pro"', "Professionally installed")}</div></section>
-    <section><h4>Visiting a home</h4><div class="fchips">${[["drive", "Drive by"], ["walk", "Walk by"], ["free", "Free parking"], ["acc", "Stroller friendly"]].map(([v, l]) => ch(state.vis.has(v), `data-fvis="${v}"`, l)).join("")}</div></section>
+    <section><h3>County</h3><div class="fchips">${COUNTIES.map((c) => ch(state.counties.has(c), `data-county="${esc(c)}"`, esc(c.replace(/^Los Angeles$/, "LA")))).join("")}</div></section>
+    <section><h3>Cost</h3><div class="fseg" role="group" aria-label="Cost">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-fcost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div></section>
+    <section><h3>Type</h3><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).filter(([v]) => v !== "drive").map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}${ch(state.type === "pro", 'data-ftype="pro"', "Professionally installed")}</div></section>
+    <section><h3>Visiting a home</h3><div class="fchips">${[["drive", "Drive by"], ["walk", "Walk by"], ["free", "Free parking"], ["acc", "Stroller friendly"]].map(([v, l]) => ch(state.vis.has(v), `data-fvis="${v}"`, l)).join("")}</div></section>
     <section class="frow"><span><b>Confirmed dates only</b></span><button type="button" class="sw${state.conf ? " on" : ""}" role="switch" aria-checked="${state.conf}" data-fconf aria-label="Confirmed dates only"><i></i></button></section>
   </div>
   <div class="ffoot"><button type="button" class="linkbtn" data-clear="all">Clear all</button><button type="button" class="btn" data-fdone>Show ${nShow.toLocaleString("en-US")} place${nShow === 1 ? "" : "s"}</button></div>`;
@@ -977,6 +1143,16 @@ function fPanel() {
       else if (e.target.dataset.layer) { state.layers[e.target.dataset.layer] = e.target.checked; applyFilters(); }
     });
     f.addEventListener("input", (e) => { if (e.target.id === "fCityQ") drawCityList(e.target.value); });
+    // it is a modal dialog, so Tab and Shift+Tab stay inside it
+    f.tabIndex = -1;
+    f.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      const els = [...f.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href]')].filter((x) => x.offsetParent !== null);
+      if (!els.length) return;
+      const first = els[0], last = els[els.length - 1], a = document.activeElement;
+      if (e.shiftKey && (a === first || a === f)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
+    });
   }
   return f;
 }
@@ -996,7 +1172,9 @@ function placeFilters() {
 function refreshFilters() {
   const f = $("#fpanel"); if (!f || f.hidden) return;
   const sc = f.querySelector(".fbody")?.scrollTop || 0, q = f.querySelector("#fCityQ")?.value || "";
+  const FOC = 'button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href]', at = [...f.querySelectorAll(FOC)].indexOf(document.activeElement); // the panel is redrawn on every choice: keep the keyboard where it was
   f.innerHTML = filtersHtml(); const b = f.querySelector(".fbody"); if (b) b.scrollTop = sc;
+  if (at >= 0) { const again = f.querySelectorAll(FOC)[at]; if (again) again.focus({ preventScroll: true }); }
   const qi = f.querySelector("#fCityQ"); if (qi && q) { qi.value = q; drawCityList(q); }
 }
 function openFilters(anchor) {
@@ -1004,8 +1182,14 @@ function openFilters(anchor) {
   fAnchor = anchor; fOpen = true;
   const f = fPanel(); f.hidden = false; f.innerHTML = filtersHtml(); $("#fback").hidden = !isPhone();
   document.body.classList.add("filters-open"); placeFilters();
+  f.focus({ preventScroll: true }); // focus moves into the dialog (a screen reader announces "Filters, dialog"); Tab then reaches the Close button first
 }
-function closeFilters() { fOpen = false; const f = $("#fpanel"); if (f) f.hidden = true; const bk = $("#fback"); if (bk) bk.hidden = true; document.body.classList.remove("filters-open"); }
+// Closing hands the keyboard back to the Filters button, but only when it was in the dialog (or nowhere): a click on some other control keeps its own focus.
+function closeFilters() {
+  const f = $("#fpanel"), back = !!f && !f.hidden && (f.contains(document.activeElement) || document.activeElement === document.body || !!document.activeElement.closest("[data-openfilters]"));
+  fOpen = false; if (f) f.hidden = true; const bk = $("#fback"); if (bk) bk.hidden = true; document.body.classList.remove("filters-open");
+  if (back) setTimeout(() => { const o = document.querySelector("[data-openfilters]"); if (o) o.focus({ preventScroll: true }); }, 0); // after the list is redrawn, which replaces the button
+}
 document.addEventListener("click", (e) => { if (!e.target.isConnected) return; if (fOpen && !isPhone() && !e.target.closest("#fpanel,[data-openfilters]")) closeFilters(); });
 addEventListener("resize", placeFilters);
 
@@ -1014,12 +1198,14 @@ function closeMore() { const m = $("#moremenu"); if (m) m.hidden = true; const b
 function moreHtml() {
   const dark = theme() === "dark";
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
-  return row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home display")
+  return (SIGNED_IN ? "" : row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home display"))
     + row("button", 'type="button" data-m="alerts"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>`, "Weekly lights email", "Lights and events near a city, once a week")
-    + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Keep SoCal Lights Free", SITE.donateUrl ? "Tip us on Cash App" : "Shop the season"))
-    + row("a", 'href="/contests"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`, "Contests", "Vote, enter, run one, and past results")
-    + row("a", 'href="/tutorials"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>`, "Tutorials", "Short how-to videos")
-    + row("a", 'href="/help"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>`, "Help", "Answers and how-to steps")
+    + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Support SoCal Lights", SITE.donateUrl ? "Pricing, and tips on Cash App" : "Pricing and the shop"))
+    + (IN_APP ? "" : row("a", 'href="/feature"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>`, "Promote your event", "For organizers: a paid Featured pin"))
+    + (SIGNED_IN ? "" : row("a", 'href="/contests"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`, "Contests", "Vote, enter, run one, and past results"))
+    + row("a", 'href="/in"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`, "Browse by city", "Events listed city by city")
+    + (SIGNED_IN ? "" : row("a", 'href="/tutorials"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>`, "Tutorials", "Short how-to videos"))
+    + (SIGNED_IN ? "" : row("a", 'href="/help"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>`, "Help", "Answers and how-to steps"))
     + row("a", 'href="/privacy"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>`, "Privacy & terms", "How accounts and your data are handled")
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
@@ -1053,13 +1239,15 @@ async function openAlerts() {
     btn.disabled = false;
   };
 }
+$("#acctbtn").addEventListener("click", () => { if (!SIGNED_IN) location.href = "/profile"; }); // signed out: /profile asks you to sign in (the sign-in sheet's styles are not loaded on the map)
+let SIGNED_IN = false; // signed in: Add, Contests, Tutorials and Help are in the account circle menu instead, so this menu is shorter
 function openMore() {
   closeFilters(); closePop(); closeSeasonMenu();
   const m = $("#moremenu"), b = $("#morebtn"); m.innerHTML = moreHtml(); m.hidden = false; b.setAttribute("aria-expanded", "true");
   const r = b.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 10 + "px"; m.style.left = Math.max(10, Math.min(r.right - w, innerWidth - w - 10)) + "px";
 }
 // Account circle: the person icon until you are signed in, then the first letter of your email. Both open /profile (which asks you to sign in).
-fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).then((j) => { const b = $("#acctbtn"); if (b && j.user) { if (j.user.avatar) b.innerHTML = `<img src="${j.user.avatar}" alt="" width="52" height="52" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`; else b.textContent = j.user.email[0].toUpperCase(); b.title = "Your profile"; b.setAttribute("aria-label", "Your profile"); } }).catch(() => {});
+authMe().then((i) => { const j = { user: i && i.user }, b = $("#acctbtn"); if (b && j.user) { SIGNED_IN = true; b.removeAttribute("data-acct-signin"); b.setAttribute("data-acct-menu", ""); b.setAttribute("aria-haspopup", "menu"); b.setAttribute("aria-expanded", "false"); if (j.user.avatar) b.innerHTML = `<img src="${j.user.avatar}" alt="" width="52" height="52" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`; else b.textContent = j.user.email[0].toUpperCase(); b.title = "Your account"; b.setAttribute("aria-label", "Your account"); } }).catch(() => {});
 $("#morebtn").onclick = () => ($("#moremenu").hidden ? openMore() : closeMore());
 $("#moremenu").addEventListener("click", (e) => {
   const b = e.target.closest("[data-m]"); if (!b) { if (e.target.closest("a")) closeMore(); return; }
@@ -1112,7 +1300,7 @@ function toggleSeasonPick(btn, mode) {
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 8 + "px"; m.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
   btn.setAttribute("aria-expanded", "true");
-  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); if (shop) { state.shopSeason = b.dataset.sp; state.shopCat = 0; renderPanel(); $("#pbody").scrollTop = 0; } else if (b.dataset.sp === "all") showAllSeasons(); else setSeason(b.dataset.sp); };
+  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); if (shop) { state.shopSeason = b.dataset.sp; state.shopCat = 0; renderPanel(); scroller().scrollTop = 0; } else if (b.dataset.sp === "all") showAllSeasons(); else setSeason(b.dataset.sp); };
   setTimeout(() => document.addEventListener("click", function off(e) { if (!$("#seasonmenu")) { document.removeEventListener("click", off); return; } if (!e.target.closest("#seasonmenu,#seasonbtn,[data-pop=shopseason]")) { closeSeasonMenu(); document.removeEventListener("click", off); } }), 0);
 }
 $("#seasonbtn").onclick = (e) => toggleSeasonPick(e.currentTarget);
@@ -1129,17 +1317,18 @@ function repaintMap() {
   map.setPaintProperty("pt", "circle-color", catColor(C));
   map.setPaintProperty("hl", "circle-color", catColor(C));
 }
-// Day / night: automatic (dark from 6 pm to 6 am, device time); the toggle overrides it until the next switch
+// Day / night: automatic (dark when the device asks for dark, and from 6 pm to 6 am by its clock); the toggle overrides it until the next switch (same rule as the script in every page head)
 // The day / night button in the top bar (the same switch every other page has)
 { const tb = document.getElementById("themebtn"); if (tb) tb.addEventListener("click", () => setTheme(theme() === "dark" ? "light" : "dark")); }
-const autoTheme = () => { const h = new Date().getHours(); return h >= 18 || h < 6 ? "dark" : "light"; };
+const darkMQ = matchMedia("(prefers-color-scheme: dark)");
+const autoTheme = () => { const h = new Date().getHours(); return h >= 18 || h < 6 || darkMQ.matches ? "dark" : "light"; };
 function nextSwitch() { const d = new Date(); d.setMinutes(0, 0, 0); const h = d.getHours(); if (h < 6) d.setHours(6); else if (h < 18) d.setHours(18); else { d.setDate(d.getDate() + 1); d.setHours(6); } return d.getTime(); }
 function setTheme(t, manual = true) {
   document.documentElement.dataset.theme = t;
   if (manual) { try { localStorage.setItem("socal-theme", t); localStorage.setItem("socal-theme-until", String(nextSwitch())); } catch {} }
   const night = t === "dark";
-  document.querySelector('meta[name="theme-color"]').content = night ? "#0b0d12" : "#f6f4f0";
-  map.setStyle(MAP_STYLES[t], { diff: false });
+  document.querySelector('meta[name="theme-color"]').content = night ? "#0b0d12" : "#ffffff";
+  if (map) map.setStyle(MAP_STYLES[t], { diff: false });
 }
 // A page left open flips at 6 pm / 6 am unless the toggle is overriding it
 setInterval(() => {
@@ -1147,6 +1336,8 @@ setInterval(() => {
   if (until > Date.now()) return;
   const t = autoTheme(); if (t !== theme()) setTheme(t, false);
 }, 60000);
+// the device switching between light and dark (a phone's own schedule, say) is followed at once, unless the toggle is overriding it
+darkMQ.addEventListener("change", () => { let until = 0; try { until = +localStorage.getItem("socal-theme-until") || 0; } catch {} if (until > Date.now()) return; const t = autoTheme(); if (t !== theme()) setTheme(t, false); });
 if (theme() === "dark") document.querySelector('meta[name="theme-color"]').content = "#0b0d12";
 // "All seasons": every upcoming event, not just the season in view (used with a city, from a city page link)
 function showAllSeasons() {
@@ -1173,7 +1364,7 @@ fitHint(); addEventListener("resize", fitHint);
 let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); showSuggestions(); }, 120); };
 // Suggestions under the search box: cities (move the map there) and places (open their details)
 let suggIdx = -1;
-function closeSuggestions() { const s = $("#sugg"); if (s) s.remove(); suggIdx = -1; $("#q").setAttribute("aria-expanded", "false"); }
+function closeSuggestions() { const s = $("#sugg"); if (s) s.remove(); suggIdx = -1; $("#q").setAttribute("aria-expanded", "false"); $("#q").removeAttribute("aria-activedescendant"); }
 function showSuggestions() {
   const q = hay($("#q").value.trim()), box = document.querySelector(".search");
   if (q.length < 2) { closeSuggestions(); return; }
@@ -1183,11 +1374,11 @@ function showSuggestions() {
   let s = $("#sugg"); if (!s) { s = document.createElement("div"); s.id = "sugg"; s.setAttribute("role", "listbox"); document.body.appendChild(s); }
   { const r = box.getBoundingClientRect(), wide = innerWidth <= 860; s.style.top = r.bottom + 8 + "px"; s.style.left = (wide ? 12 : r.left) + "px"; s.style.width = (wide ? innerWidth - 24 : r.width) + "px"; }
   $("#q").setAttribute("aria-expanded", "true"); suggIdx = -1;
-  s.innerHTML = cities.map((c) => `<button type="button" role="option" data-sc="${esc(c)}"><span class="si">📍</span><span><b>${esc(c)}</b><small>Show this city on the map</small></span></button>`).join("")
-    + places.map((e) => `<button type="button" role="option" data-se="${esc(e.id)}"><span class="si">${esc(phaseFor(e.sn && SEASONS[e.sn] ? e.sn : state.season, TODAY).icon)}</span><span><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(whenShort(e))}</small></span></button>`).join("");
+  s.innerHTML = cities.map((c, i) => `<button type="button" role="option" id="sg-c-${i}" data-sc="${esc(c)}"><span class="si">📍</span><span><b>${esc(c)}</b><small>Show this city on the map</small></span></button>`).join("")
+    + places.map((e, i) => `<button type="button" role="option" id="sg-e-${i}" data-se="${esc(e.id)}"><span class="si">${esc(phaseFor(e.sn && SEASONS[e.sn] ? e.sn : state.season, TODAY).icon)}</span><span><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(whenShort(e))}</small></span></button>`).join("");
 }
 document.addEventListener("click", (e) => {
-  const wl = e.target.closest("[data-welcome]"); if (wl) { try { localStorage.setItem("socal-welcomed", "1"); } catch {} const w = $("#welcome"); if (w) w.remove(); if (wl.dataset.welcome === "go") geo.trigger(); return; }
+  const wl = e.target.closest("[data-welcome]"); if (wl) { try { localStorage.setItem("socal-welcomed", "1"); } catch {} const w = $("#welcome"); if (w) w.remove(); if (wl.dataset.welcome === "go" && geo) geo.trigger(); return; }
   const sc = e.target.closest("[data-sc]"), se = e.target.closest("[data-se]");
   if (sc) { const c = CITY_OPTS[sc.dataset.sc]; $("#q").value = ""; state.q = ""; closeSuggestions(); applyFilters(); if (c && mapReady) map.easeTo({ center: [c[1], c[0]], zoom: 11.5, duration: 700 }); return; }
   if (se) { const id = se.dataset.se, ev = E.find((x) => x.id === id); $("#q").value = ""; state.q = ""; closeSuggestions(); applyFilters(); if (ev) { if (ev.sn && SEASONS[ev.sn] && ev.sn !== state.season) setSeason(ev.sn); selectKey("e:" + id, "list"); } return; }
@@ -1195,7 +1386,7 @@ document.addEventListener("click", (e) => {
 });
 $("#q").addEventListener("keydown", (e) => {
   const s = $("#sugg"); if (!s) return; const items = [...s.querySelectorAll("button")];
-  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); suggIdx = (suggIdx + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; items.forEach((b, i) => b.classList.toggle("on", i === suggIdx)); }
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); suggIdx = (suggIdx + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; items.forEach((b, i) => b.classList.toggle("on", i === suggIdx)); $("#q").setAttribute("aria-activedescendant", items[suggIdx].id); }
   else if (e.key === "Enter" && suggIdx >= 0) { e.preventDefault(); items[suggIdx].click(); }
   else if (e.key === "Escape") closeSuggestions();
 });
@@ -1208,7 +1399,7 @@ const PEEK = 160; // visible height at Peek: handle + the buttons row, which end
 let safeBottom = null;
 function peekH() {
   if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
-  return PEEK + safeBottom;
+  return PEEK + safeBottom + (typeof bannerHeight === "function" && isPhone() ? bannerHeight() : 0);
 }
 let sheetState = "peek";
 const fullH = () => $("#panel").offsetHeight || innerHeight * 0.85;
@@ -1218,7 +1409,7 @@ const peekY = () => Math.max(0, fullH() - stopH("peek")); // how far the sheet i
 // y = how far down the sheet is (0 = Full); the fade behind the tab bar follows
 function placeSheet(y) {
   const panel = $("#panel"), py = peekY(), v = Math.max(0, Math.min(py, y));
-  panel.style.transform = `translate3d(0,${v}px,0)`;
+  panel.style.transform = `translate3d(0,${v}px,0)`; positionRoutePill();
   const f = $("#navfade"); if (f) f.style.opacity = py ? Math.min(1, Math.max(0, v / py)) : 1;
   return v;
 }
@@ -1239,7 +1430,7 @@ function keepSelectedVisible() {
 function setSheet(s) {
   sheetState = s; const panel = $("#panel");
   if (!isPhone()) { panel.style.removeProperty("transform"); return; }
-  placeSheet(s === "peek" ? peekY() : 0);
+  placeSheet(s === "peek" ? peekY() : 0); followRoutePill();
   document.documentElement.style.setProperty("--peek", sheetVisible() + "px");
   keepSelectedVisible();
 }
@@ -1301,21 +1492,29 @@ function setSheet(s) {
 /* ---------- boot ---------- */
 async function load() {
   try {
-    const [ev, posts, cfg] = await Promise.all([fetch("/api/events").then((r) => r.json()), fetch("/api/posts").then((r) => r.json()), fetch("/api/config").then((r) => r.json()).catch(() => ({}))]);
-    E = Array.isArray(ev) ? ev : []; setTimeout(probeRemoteThumbs, 1500); SHOW = Array.isArray(posts) ? posts : []; CONFIG = cfg || {};
+    // Each list loads on its own: the events are the app (no events = the error message), but homes or settings failing leave the map working (homes retry in 10 seconds, then every 15 minutes).
+    // index.html starts these three requests while the page is still loading (window.__pre); use those answers once instead of asking again
+    const pre = window.__pre || {}; window.__pre = null;
+    const get = (u) => pre[u] || fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
+    const [evR, postsR, cfgR] = await Promise.allSettled([get("/api/events"), get("/api/posts"), get("/api/config")]);
+    if (evR.status !== "fulfilled" || !Array.isArray(evR.value)) throw new Error("events failed");
+    E = evR.value; setTimeout(probeRemoteThumbs, 1500);
+    SHOW = postsR.status === "fulfilled" && Array.isArray(postsR.value) ? postsR.value : []; CONFIG = cfgR.status === "fulfilled" && cfgR.value ? cfgR.value : {};
+    if (postsR.status !== "fulfilled") setTimeout(refreshData, 10000);
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses();
   } catch {
-    $("#pbody").innerHTML = `<div class="empty">Events couldn't load. Check your connection and refresh the page.</div>`; return;
+    $("#pbody").innerHTML = `<div class="empty">Events couldn't load. Check your connection and refresh the page.</div>`; loadMapLib(); return;
   }
-  renderSeasonBar(); applyFilters();
+  renderSeasonBar(); applyFilters(); startBanner();
+  loadMapLib(); // the list is on screen: now bring in the map library (index.html already asked the browser to fetch it quietly)
   const h = location.hash.slice(1), dl = h.match(/^([eh])-(.+)$/);
   if (dl) {
     const ev = dl[1] === "e" ? E.find((x) => x.id === dl[2]) : null, ho = dl[1] === "h" ? SHOW.find((x) => x.id === dl[2]) : null, sn = ev ? ev.sn : ho ? ho.season : "";
     if (SEASONS[sn]) setSeason(sn);
     if (ev) selectKey("e:" + ev.id, "list"); else if (ho) selectKey("i:" + ho.id, "list");
   }
-  setTimeout(showWelcome, 1500);
+  welcomeLater();
   const cm = h.match(/^city-(.+)$/);
   if (cm) { const c = Object.keys(CITY_OPTS).find((x) => citySlug(x) === cm[1]); if (c) { state.all = true; renderSeasonBar(); setCity(c); } }
   if (h === "all") { state.all = true; renderSeasonBar(); applyFilters(); }
@@ -1328,9 +1527,12 @@ async function load() {
 let loadedAt = Date.now();
 async function refreshData() {
   try {
-    const [ev, posts] = await Promise.all([fetch("/api/events", { cache: "no-cache" }).then((r) => r.json()), fetch("/api/posts", { cache: "no-cache" }).then((r) => r.json())]);
-    if (!Array.isArray(ev)) return;
-    E = ev; if (Array.isArray(posts)) SHOW = posts;
+    const get = (u) => fetch(u, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
+    const [evR, postsR] = await Promise.allSettled([get("/api/events"), get("/api/posts")]);
+    const ev = evR.status === "fulfilled" ? evR.value : null, posts = postsR.status === "fulfilled" ? postsR.value : null;
+    if (!Array.isArray(ev) && !Array.isArray(posts)) return;
+    if (Array.isArray(ev)) E = ev; if (Array.isArray(posts)) SHOW = posts;
+    E.forEach((e) => { const d = DETAIL.get(e.id); if (d) HEAVY.forEach((k) => (e[k] = d[k])); }); // keep the details already loaded (the list has none)
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses(); loadedAt = Date.now();
     if (state.detail) { counts(); drawMap(); } else { renderPanel(); drawMap(); }
@@ -1339,6 +1541,6 @@ async function refreshData() {
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - loadedAt > 5 * 60000) refreshData(); });
 setInterval(() => { if (document.visibilityState === "visible") refreshData(); }, 15 * 60000);
 setSheet("peek");
-let wasPhone = isPhone(); matchMedia("(max-width:700px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); renderPanel(); } });
+let wasPhone = isPhone(); matchMedia("(max-width:700px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); const sp = document.getElementById("sponsor"); if (sp && isPhone()) setSheet(sheetState); renderPanel(); } });
 let rT; addEventListener("resize", () => { pinBox = null; clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); renderPanel(); }, 120); });
 load();

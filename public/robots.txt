@@ -2,6 +2,8 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+Allow: /api/photo/
+Allow: /api/events$
 Disallow: /add
 Disallow: /profile
 Disallow: /c/

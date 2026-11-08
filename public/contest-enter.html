@@ -4,24 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
+<meta name="description" content="Enter your home in a neighborhood lighting contest on SoCal Lights.">
 <title>Enter your home · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102i">
-<script src="/hit.js" defer></script>
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, esc, input, area, select, check, photoField, sumRow } from "/addflow.js?v=20261103a";
-import { me, signIn } from "/auth.js?v=20261101a";
-import { CITY } from "/cities.js";
+import { run, esc, input, area, select, check, photoField, sumRow } from "/addflow.js?v=20261111a";
+import { me, signIn } from "/auth.js?v=20261107p";
+import { CITY } from "/cities.js?v=20261107a";
 import { defaultSeason } from "/seasons.js?v=20261104a";
 const slug = location.pathname.split("/")[2] || "", cities = Object.keys(CITY).sort(), app = document.getElementById("app");
-const plain = (h, t, p, btn) => { app.innerHTML = `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><a class="link" href="/c/${esc(slug)}">Back</a></div><div class="main"><h1>${h}</h1><p class="help">${p}</p>${btn || ""}</div>`; };
+const plain = (h, t, p, btn) => { app.innerHTML = `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><a class="link" href="${slug ? "/c/" + esc(slug) : "/contests"}">Back</a></div><main class="main"><h1>${h}</h1><p class="help">${p}</p>${btn || ""}</main>`; };
 const r0 = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" });
-if (!r0.ok) { plain("We can't find that contest", "The link may be mistyped, or the contest may not be public yet.", '<div><a class="btn" href="/">Back to the map</a></div>'); }
+if (!slug || !r0.ok) { plain("We can't find that contest", "The link may be mistyped, or the contest may not be public yet.", '<div><a class="btn" href="/">Back to the map</a></div>'); }
 else {
   const C = (await r0.json()).contest; document.title = "Enter: " + C.name; document.documentElement.dataset.season = defaultSeason(C.entriesClose);
   if (!C.entriesOpen) plain("Entries are closed", `${esc(C.name)} isn't taking new entries right now.`, `<div><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`);
@@ -54,6 +55,6 @@ else {
   }
 }
 </script>
-<script src="/footer.js?v=20261105a" defer></script>
+<script src="/footer.js?v=20261110b" defer></script>
 </body>
 </html>

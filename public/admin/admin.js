@@ -1,10 +1,11 @@
 // SoCal Lights admin: review houses, manage published posts, edit events.
 import { CITY } from "/cities.js";
 import { SEASONS, defaultSeason } from "/seasons.js";
-import { attachAddress } from "/addflow.js?v=20261102c";
+import { attachAddress } from "/addflow.js?v=20261111a";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261104c";
 import { renderHelp } from "/admin/help.js?v=20261104a";
+import { renderChat } from "/admin/chat.js?v=20261108a";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261103a";
 
 const $ = (s) => document.querySelector(s);
@@ -24,16 +25,16 @@ async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: "same-origin", headers: opts.body ? { "content-type": "application/json" } : {}, ...opts });
   const d = await r.json().catch(() => ({}));
   if (r.status === 401) throw new Error("You're not signed in as the admin. Open this page through your Cloudflare Access login.");
-  if (!r.ok) throw new Error(d.error || "Something went wrong. Try again.");
+  if (!r.ok) { const e = new Error(d.error || "Something went wrong. Try again."); e.status = r.status; e.data = d; throw e; }
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "emails", "help"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", emails: "Email templates", help: "Help Center" };
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "emails", "help", "chat"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
-function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; }
+function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; }
 function setTab(t, push = true) {
   if (t !== tab) PVIEW = "pending";
   tab = t;
@@ -62,14 +63,19 @@ async function render() {
     if (tab === "reports") return renderReports();
     if (tab === "events") return renderEvents();
     if (tab === "subs") return renderSubs();
+    if (tab === "claims") return renderClaims();
+    if (tab === "orders") return renderOrders();
     if (tab === "contests") return renderContests();
     if (tab === "overlaps") return renderOverlaps();
     if (tab === "installers") return renderInstallers();
     if (tab === "data") return renderData();
     if (tab === "users") return renderUsers();
     if (tab === "log") return renderLog();
+    if (tab === "usage") return renderUsage();
+    if (tab === "outreach") return renderOutreach();
     if (tab === "emails") return renderEmails(main);
     if (tab === "help") return renderHelp(main);
+    if (tab === "chat") return renderChat(main);
     const waiting = await api("/api/admin/posts?status=" + tab), declined = tab === "pending" ? await api("/api/admin/posts?status=declined") : [];
     if (tab === "pending") setCount("pending", waiting.length);
     const showing = tab === "pending" && PVIEW === "declined" ? declined : waiting;
@@ -89,7 +95,7 @@ function postCard(p) {
     lead: p.photos.length ? `<div class="pics">${p.photos.map((k) => `<a href="${photo(k)}" target="_blank" rel="noopener"><img src="${photo(k)}" alt="" loading="lazy"></a>`).join("")}</div>` : `<div class="meta">No photos</div>`,
     facts: fact("Name / business", esc(p.biz)) + fact("City", esc(p.city) + " · " + esc(p.county || "")) + fact("Contact", `<span style="user-select:all">${esc(p.contact_email || "—")}</span>`) + fact("Website", web || "—")
       + (p.inst && p.kind !== "installer" ? fact("Installed by", esc(p.inst.name) + (p.inst.ok ? " (confirmed)" : " (claimed by the homeowner, not confirmed)")) : "") + fact("Public phone", esc(p.phone || "—")) + fact("Street address", esc(p.address || "—") + ' <span class="meta">(shown on the map)</span>') + fact("Where", esc(p.where || "—")) + fact("About", `<span style="white-space:pre-line">${esc(p.desc)}</span>`),
-    body: (p.hiddenBySweep ? note(0, "<b>Not on the map.</b> You chose the sweep record for this address (Replaced records).") : "") + (p.replaces ? note(0, `<b>Replaces a sweep record.</b> When you approve this, the automatic listing at the same address is hidden: ${p.replaces.map((r) => esc(r.name)).join("; ")}.`) : "") + (p.nearby ? `<p class="meta" style="margin:0">Same street, different number (both stay listed): ${p.nearby.map((r) => esc(r.name + " (" + (r.address || "").split(",")[0] + ")")).join("; ")}.</p>` : ""),
+    body: (p.hiddenBySweep ? note(0, "<b>Not on the map.</b> You chose the sweep record for this address (Replaced records).") : "") + (p.claimed ? note(0, `<b>Says this is their home.</b> They tapped “Is this your home?” on “${esc(p.claimed.name)}”. ${p.claimed.matched ? (p.status === "pending" ? "The address matches, so approving replaces that listing." : "The address matches, so it replaces that listing on the map.") : "The addresses do not match, so it does not replace that listing. Check the street in Edit."}`) : "") + (p.replaces ? note(0, `<b>Replaces a sweep record.</b> When you approve this, the automatic listing at the same address is hidden: ${p.replaces.map((r) => esc(r.name)).join("; ")}.`) : "") + (p.nearby ? `<p class="meta" style="margin:0">Same street, different number (both stay listed): ${p.nearby.map((r) => esc(r.name + " (" + (r.address || "").split(",")[0] + ")")).join("; ")}.</p>` : ""),
     edit: btn("ghost", "Edit", `data-editpost="${esc(p.id)}"`) + btn("ghost", `Photos (${p.photos.length})`, `data-editpost="${esc(p.id)}" data-focus="photos"`),
     main: dec ? btn("main", "Restore to waiting", 'data-act="restore"') : pending ? btn("main", "Approve and publish", 'data-act="approve"') : btn("ghost", "Unpublish", 'data-act="unpublish"'),
     danger: dec ? btn("danger", "Delete", 'data-act="delete"') : pending ? btn("danger", "Decline", 'data-act="decline"') : btn("danger", "Remove from site", 'data-act="delete"'),
@@ -261,25 +267,99 @@ document.addEventListener("click", async (e) => {
     PRESET = b.dataset.name;
     if (b.dataset.recent === "home") return setTab(b.dataset.st === "pending" ? "pending" : "approved");
     if (b.dataset.st === "published" && b.dataset.eid) {
-      const all = await (await fetch("/api/events?all=1", { cache: "no-store" })).json(), ev = all.find((r) => r.id === b.dataset.eid);
+      const all = await (await fetch("/api/admin/events", { cache: "no-store" })).json(), ev = all.find((r) => r.id === b.dataset.eid);
       if (ev) { evSeason = ev.sn || "christmas"; EVQ = b.dataset.name; PRESET = ""; return setTab("events"); }
     }
     SUBVIEW = b.dataset.st === "published" ? "published" : b.dataset.st === "pending" ? "pending" : "published"; setTab("subs");
   } catch (er) { toast(er.message, true); }
 });
-const SDONE = { approve: "Published", decline: "Declined", unpublish: "Unpublished", restore: "Back in the waiting list" };
+const SDONE = { approve: "Published", decline: "Declined. If they paid for Featured, refund it under Orders.", unpublish: "Unpublished", restore: "Back in the waiting list" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-sact]"); if (!b) return;
   const card = b.closest("[data-sid]"), msg = card.querySelector(".msg"), act = b.dataset.sact, id = card.dataset.sid, name = card.querySelector("h3").textContent, x = SUBS.find((r) => r.id === id) || {}, extra = {};
-  if (act === "decline") { const r = await askReason({ title: "Decline " + name, hint: "This is emailed to the person who added it. Leave it blank to send no reason." }); if (r === null) return; extra.reason = r; }
+  if (act === "decline") { const r = await askReason({ title: "Decline " + name, hint: x.paid_plans ? `They already paid for Featured (${x.paid_plans}). After you decline, refund it in the Stripe dashboard (it is listed under Orders as refund due), then mark it refunded. This note is emailed to them.` : "This is emailed to the person who added it. Leave it blank to send no reason." }); if (r === null) return; extra.reason = r; }
   else if (act === "unpublish" && !tap(b, "unpublish")) return;
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try {
-    await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify({ action: act, status: b.dataset.st, ...extra }) });
+    const post = (more = {}) => api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify({ action: act, status: b.dataset.st, ...extra, ...more }) });
+    try { await post(); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && confirm(er.message)) await post({ confirm: true }); else throw er; } // a paid placement needs an explicit yes
     const undo = act === "decline" ? { action: "restore" } : act === "unpublish" ? { action: "approve", status: x.verified ? "confirmed" : "expected", notify: false } : null;
     toast(SDONE[act] || "Done", false, undo ? { undo: async () => { try { await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); renderSubs(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
     renderSubs(); refreshCounts();
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
+});
+
+/* ---------- event claims ("this event is mine": approving lets them buy Featured for it, nothing else) ---------- */
+let CLVIEW = "pending";
+async function renderClaims() {
+  const main = $("#main"), [pend, ok, no] = await Promise.all(["pending", "approved", "declined"].map((s) => api("/api/admin/claims?status=" + s)));
+  const rows = CLVIEW === "pending" ? pend : CLVIEW === "declined" ? no : ok;
+  setCount("claims", pend.length);
+  const bar = toolbar({ views: [{ k: "pending", label: "Waiting", n: pend.length }, { k: "approved", label: "Approved", n: ok.length }, { k: "declined", label: "Declined", n: no.length }], active: CLVIEW, count: String(rows.length) });
+  const go = () => wireToolbar(main, { onView: (v) => { CLVIEW = v; renderClaims(); }, onSearch: () => {} });
+  if (!rows.length) { main.innerHTML = bar + `<div class="empty">${CLVIEW === "pending" ? "No claims waiting. A claim only lets the person buy Featured for that event; it gives no edit rights. When you approve or decline one, the person is emailed once." : "Nothing here."}</div>`; go(); return; }
+  main.innerHTML = bar + `<div class="cards">${rows.map((x) => rec({
+    attrs: `data-clid="${esc(x.id)}"`, title: esc(x.name || x.event_id), tags: [[x.status === "pending" ? "Waiting" : x.status === "approved" ? "Approved" : "Declined", x.status === "pending" ? "warn" : x.status === "approved" ? "ok" : "bad"]], meta: esc((x.created_at || "").slice(0, 16)) + " UTC",
+    facts: fact("Claimed by", `<span style="user-select:all">${esc(x.claimant)}</span>`) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "None") + fact("Where", esc(x.city || "")) + (x.method ? fact("Approved by", esc(x.method)) : ""),
+    edit: "", main: x.status !== "approved" ? btn("main", "Approve", 'data-clact="approve"') : "", danger: x.status !== "declined" ? btn("danger", "Decline", 'data-clact="decline"') : "",
+  })).join("")}</div>`;
+  go();
+}
+$("#main").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-clact]"); if (!b) return;
+  const card = b.closest("[data-clid]"); b.disabled = true;
+  try { const r = await api("/api/admin/claims/" + card.dataset.clid, { method: "POST", body: JSON.stringify({ action: b.dataset.clact }) }); toast((b.dataset.clact === "approve" ? "Approved" : "Declined") + (r && r.emailed ? " and emailed" : " (no email sent)")); renderClaims(); refreshCounts(); } catch (er) { b.disabled = false; toast(er.message, true); }
+});
+
+/* ---------- Featured orders: money that needs the owner (refunds to make, disputes, placements that did not apply) ---------- */
+let OVIEW = "attention";
+const OFLAG = { refund_due: ["Refund due", "bad"], disputed: ["Disputed", "bad"], held: ["Partial refund", "warn"], unapplied: ["Not applied", "bad"], differs: ["Placement differs", "warn"], mismatch: ["Amount differs", "warn"], note: ["See note", "warn"], cancelled: ["Event cancelled", "warn"] };
+// Event plans (current: ev_*; old: pin, top, season stay for orders already paid) and what each contains. Installer plans have their own names (INST_PLAN).
+const PLAN_NAME = { ev_pin: "Featured pin", ev_banner: "Banner + Featured pin", ev_top: "Top of the list + Featured pin", ev_all: "Top of the list + Banner + Featured pin", pin: "Featured pin (old plan)", top: "Top of the list (old plan)", season: "Full run (old plan)" };
+const PLAN_PARTS = { ev_pin: "pin", ev_banner: "pin + banner", ev_top: "pin + top of the list", ev_all: "pin + banner + top of the list", pin: "pin", top: "pin + top of the list", season: "pin + top of the list" };
+const INST_PLAN = { banner: "Banner", top: "Top of the list", banner_top: "Banner and top of the list" };
+const OSTATUS = { paid: ["Paid", "ok"], refunded: ["Refunded", ""], disputed: ["Disputed", "bad"], dispute_won: ["Dispute won", ""], held: ["Held", "warn"], refund_due: ["Refund due", "bad"] };
+const money = (c, cur) => (c == null ? "" : (cur && cur !== "usd" ? cur.toUpperCase() + " " : "$") + (c / 100).toFixed(2));
+async function renderOrders() {
+  const main = $("#main"), all = await api("/api/admin/orders"), rn = await api("/api/admin/renewals").catch(() => null);
+  const RG = { upcoming: ["Upcoming", "ok"], failed: ["Charge failed", "bad"], overdue: ["Overdue: run the job", "bad"], lapsed: ["Lapsed", "bad"], paused: ["Paused", "warn"], cancelled: ["Cancelled", ""] };
+  const renHtml = rn && rn.rows.length ? `<h2 class="dh">Automatic renewals (read-only): ${rn.counts.upcoming} upcoming, ${rn.counts.overdue} overdue, ${rn.counts.failed} failed, ${rn.counts.lapsed} lapsed, ${rn.counts.paused} paused</h2><div class="cards">${rn.rows.map((r) => rec({ attrs: "", title: esc(r.name || r.installer_id), tags: [RG[r.group] || [r.group, ""]], meta: esc(INST_PLAN[r.plan] || "Banner") + " · " + esc(money(r.price_cents)), facts: fact("Next charge", esc(r.next_charge_date || "")) + fact("Reminder sent", r.notice_sent_for ? "yes" : "not yet") + fact("Retry", esc(r.retry_at || "")) + fact("Last error", esc(r.last_error || "")) + fact("Agreed", esc((r.consent_at || "") + (r.consent_text_version ? " · wording " + r.consent_text_version : ""))) })).join("")}</div>` : "";
+  const need = all.filter((o) => o.flags.length), rows = OVIEW === "attention" ? need : OVIEW === "paid" ? all.filter((o) => o.status === "paid") : OVIEW === "closed" ? all.filter((o) => o.status !== "paid") : all;
+  setCount("orders", need.length);
+  const bar = toolbar({ views: [{ k: "attention", label: "Needs attention", n: need.length }, { k: "paid", label: "Paid", n: all.filter((o) => o.status === "paid").length }, { k: "closed", label: "Refunded and disputed", n: all.filter((o) => o.status !== "paid").length }, { k: "all", label: "All", n: all.length }], active: OVIEW, search: { placeholder: "Search events, emails" }, count: String(rows.length) });
+  const go = () => wireToolbar(main, { onView: (v) => { OVIEW = v; renderOrders(); }, onSearch: (q) => filterCards(main, q) });
+  if (!rows.length) { main.innerHTML = bar + renHtml + `<div class="empty">${OVIEW === "attention" ? "Nothing needs you. Refunds you still have to make, disputes, partial refunds and placements that did not switch on show up here." : "No orders here yet."}</div>`; go(); return; }
+  main.innerHTML = bar + renHtml + `<div class="cards">${rows.map((o) => {
+    const st = OSTATUS[o.status] || [o.status, ""], due = ["refund_due", "held", "disputed"].includes(o.status);
+    return rec({
+      attrs: `data-oid="${esc(o.session_id)}" data-onote="${esc(o.note || "")}"`, title: esc(o.target === "contest_pass" ? orgLabelOf(o.event_id) : o.name || o.event_id), tags: [st, ...(o.target === "contest_pass" ? [["Contest pass", ""]] : o.target === "home" ? [["Featured home", ""]] : o.target === "installer" ? [["Installer: " + (INST_PLAN[o.plan] || o.plan).toLowerCase(), ""], ...(o.renewal ? [["Auto-renewal", ""]] : [])] : []), ...o.flags.filter((f) => !(f === "refund_due" || f === "disputed" || f === "held")).map((f) => OFLAG[f] || [f, "warn"])], meta: esc((o.created_at || "").slice(0, 16)) + " UTC",
+      facts: o.target === "contest_pass" ? fact("Organization", `${esc(orgLabelOf(o.event_id))} · <a href="/admin/#contests">Contest passes</a>`) + fact("Pass", `Up to ${esc(o.pass_cap)} contests · <b>${esc(money(o.amount, o.currency))}</b> <span class="meta">(${esc(o.pass_status || "not applied")})</span>`) + fact("Window", o.pass_from ? `${esc(pdate(o.pass_from))} to ${esc(pdate(o.pass_to))}` : "") + fact("Payment", o.stripe_url ? `<a href="${esc(o.stripe_url)}" target="_blank" rel="noopener">${esc(o.payment_intent)} in Stripe</a>` : "") + fact("Note", esc(o.note || ""))
+      : fact("Plan", `${esc(o.target === "installer" ? INST_PLAN[o.plan] || o.plan : PLAN_NAME[o.plan] || o.plan)} · <b>${esc(money(o.amount, o.currency))}</b>${o.target === "event" && PLAN_PARTS[o.plan] ? ` <span class="meta">(${esc(PLAN_PARTS[o.plan])})</span>` : ""}`) + fact("Placement", o.target === "installer" ? (o.applied ? `${esc(o.applied_from || "")} to ${[o.applied_until ? `banner until ${esc(o.applied_until)}` : "", o.applied_top_until ? `top of the list until ${esc(o.applied_top_until)}` : ""].filter(Boolean).join(", ")} (installer now: banner ${esc(o.inst_banner || "off")}, top ${esc(o.inst_top || "off")})` : "not on the installer yet") : o.applied ? `level ${esc(o.applied_featured)} until ${esc(o.applied_until || "the end")}${o.applied_banner_until ? `, banner until ${esc(o.applied_banner_until)}` : ""}${o.ev_featured || o.ev_banner ? ` (${o.target === "home" ? "home" : "event"} now: level ${esc(o.ev_featured || 0)} until ${esc(o.ev_until || "the end")}${o.target === "event" ? `, banner ${esc(o.ev_banner || "off")}` : ""})` : ` (${o.target === "home" ? "home" : "event"} now: not featured)`}` : `not on the ${o.target === "home" ? "home" : "event"} yet`)
+        + (o.target === "installer" ? fact("Installer", `<a href="/admin/#installers">${esc(o.name || o.event_id)}</a>${o.inst_slug ? ` · <a href="/installer/${esc(o.inst_slug)}" target="_blank" rel="noopener">public page</a>` : ""}`) : o.target === "home" ? fact("Home", esc([o.city, o.contest_name && "podium of " + o.contest_name, o.event_id].filter(Boolean).join(" · "))) : fact("Event", esc([o.city, o.start_date && o.end_date ? (o.start_date === o.end_date ? o.start_date : o.start_date + " to " + o.end_date) : "", o.notice && o.notice.toUpperCase(), String(o.event_id).startsWith("sub:") ? "waiting for approval (payment held; it switches on when you approve the event)" : o.event_id].filter(Boolean).join(" · ")))) + fact("Buyer", `<span style="user-select:all">${esc(o.email)}</span>`)
+        + fact("Payment", o.stripe_url ? `<a href="${esc(o.stripe_url)}" target="_blank" rel="noopener">${esc(o.payment_intent)} in Stripe</a>` : "") + fact("Note", esc(o.note || "")),
+      edit: btn("ghost", o.note ? "Edit note" : "Add note", 'data-oact="note"'),
+      main: due ? btn("main", "Mark refunded", 'data-oact="mark_refunded"') : o.status === "paid" && !o.applied ? btn("main", "Apply now", 'data-oact="reapply"') : "",
+    });
+  }).join("")}</div>`;
+  go();
+}
+function askNote(title, value) {
+  return new Promise((done) => {
+    const m = $("#modal"); m.hidden = false;
+    m.innerHTML = modalFrame(title, `<form class="f" id="rsForm" novalidate>${fsec("Note", "", ff("on-t", "Your note", `<textarea id="on-t" rows="4" maxlength="500">${esc(value)}</textarea>`, { hint: "Saving your own note marks an automatic warning as seen." }))}<div class="mfoot"><button class="btn ice" type="submit">Save note</button><button class="btn ghost" type="button" data-mcancel>Cancel</button></div></form>`);
+    const end = (v) => { m.hidden = true; m.innerHTML = ""; done(v); };
+    $("#mClose").onclick = () => end(null); m.querySelector("[data-mcancel]").addEventListener("click", () => end(null), { once: true });
+    $("#rsForm").onsubmit = (e) => { e.preventDefault(); end($("#on-t").value.trim()); }; $("#on-t").focus();
+  });
+}
+$("#main").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-oact]"); if (!b) return;
+  const card = b.closest("[data-oid]"), act = b.dataset.oact, name = card.querySelector("h3").textContent, msg = card.querySelector(".msg"), body = { action: act };
+  if (act === "mark_refunded" && !confirm("Mark this order refunded?\n\nOnly do this after you refunded the payment in the Stripe dashboard. This does not refund anything.")) return;
+  if (act === "note") { const v = await askNote("Note for " + name, card.dataset.onote); if (v === null) return; body.note = v; }
+  b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
+  try { const d = await api("/api/admin/orders/" + encodeURIComponent(card.dataset.oid), { method: "POST", body: JSON.stringify(body) }); toast(act === "mark_refunded" ? (d.placement_differs ? "Marked refunded. The placement was left on: check it" : "Marked refunded") : act === "reapply" ? "Applied" : "Note saved"); renderOrders(); refreshCounts(); }
+  catch (er) { b.disabled = false; msg.className = "msg err"; msg.textContent = er.message; }
 });
 
 /* ---------- contests (organizers who need a review, e.g. a Gmail address or an email that doesn't match their website) ---------- */
@@ -293,8 +373,9 @@ async function renderContests() {
   setCount("contests", n.look);
   if (!CVIEW || (CVIEW === "look" && !n.look)) CVIEW = n.look ? "look" : n.live ? "live" : n.ended ? "ended" : "declined";
   const list = g(CVIEW);
-  const bar = toolbar({ views: [{ k: "look", label: "Needs a look", n: n.look }, { k: "live", label: "Live", n: n.live }, { k: "ended", label: "Ended", n: n.ended }, { k: "declined", label: "Unpublished", n: n.declined }], active: CVIEW, search: { placeholder: "Search contests, organizers", value: CSEARCH }, right: dl("contests"), count: String(list.length) });
+  const bar = toolbar({ views: [{ k: "look", label: "Needs a look", n: n.look }, { k: "live", label: "Live", n: n.live }, { k: "ended", label: "Ended", n: n.ended }, { k: "declined", label: "Unpublished", n: n.declined }, { k: "passes", label: "Contest passes" }], active: CVIEW, search: { placeholder: "Search contests, organizers", value: CSEARCH }, right: dl("contests"), count: String(list.length) });
   const wire = () => { wireToolbar(main, { onView: (v) => { CVIEW = v; renderContests(); }, onSearch: (q) => { CSEARCH = q; filterCards(main, q); } }); if (CSEARCH) filterCards(main, CSEARCH); applyPreset(main); };
+  if (CVIEW === "passes") { main.innerHTML = bar + `<div id="passes">Loading…</div>`; wire(); return renderPasses(); }
   if (!list.length) { main.innerHTML = bar + `<div class="empty">${CVIEW === "look" ? "Nothing needs a look. New contests go live right away. One shows here when the organizer's email could not be matched to a website." : "No contests here."}</div>`; wire(); return; }
   main.innerHTML = bar + `<div class="cards">${list.map((c) => {
     const tone = c.status === "live" ? "ok" : c.status === "declined" ? "bad" : c.status === "pending" ? "warn" : "";
@@ -304,13 +385,66 @@ async function renderContests() {
       facts: fact("Run by", esc(c.org) + " · " + esc(c.city)) + fact("Organizer", `<span style="user-select:all">${esc(c.owner_email || c.contact_email || "no owner")}</span>`) + fact("Website", c.site ? `<a href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site)}</a>` : "none given") + fact("Why it needs a look", esc(c.note || ""))
         + fact("Dates", `Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}`) + fact("Activity", `${fmt(c.entries)} ${c.entries === 1 ? "entry" : "entries"} · ${fmt(c.votes)} ${c.votes === 1 ? "vote" : "votes"}`)
         + fact("Pages", `<a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">Public page</a> · <a href="/c/${esc(c.slug)}/manage" target="_blank" rel="noopener">Organizer dashboard</a>`),
-      edit: btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`),
+      edit: btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`) + btn("ghost", "Sponsors", `data-csp="${esc(c.id)}"`),
       main: (c.status === "live" ? (flagged(c) ? btn("main", "Looks fine", 'data-cact="approve"') : "") + btn("ghost", "Unpublish", 'data-cact="decline"') : c.status === "closed" ? "" : btn("main", c.status === "pending" ? "Approve (goes on the map)" : "Make live again", 'data-cact="approve"')),
       danger: btn("danger", c.entries ? `Delete with ${c.entries} ${c.entries === 1 ? "entry" : "entries"}` : "Delete", 'data-cact="delete"'),
     });
   }).join("")}</div>`;
   wire();
 }
+/* ---------- Contest passes: usage per organization, comps (free for a founding partner), passes bought, "more than 20" leads ---------- */
+const pdate = (s) => (s ? new Date(s + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "");
+async function renderPasses() {
+  const box = $("#passes"); let d;
+  try { d = await api("/api/admin/passes"); } catch (er) { box.innerHTML = `<div class="empty">${esc(er.message)}</div>`; return; }
+  const comp = fsec("Grant a comp", "A comp lets an organization run free contests without a pass. It never shows a price to the organizer: they see \"Founding partner: free through the date\". Example, the Founding City: type covinaca.gov, choose Unlimited, set the valid-until date, add the note \"Founding partner: Covina\", then Grant. Nothing is granted until you click Grant.",
+    ff("pcTarget", "Website domain or organizer email", `<input id="pcTarget" maxlength="120" placeholder="covinaca.gov" autocomplete="off">`, { c: "c3" }) + ff("pcAllowed", "Contests allowed per 12-month window", `<input id="pcAllowed" type="number" min="1" max="1000" value="5" inputmode="numeric">`, { c: "c3" })
+    + ff("pcUnl", "Unlimited", `<label class="chk"><input id="pcUnl" type="checkbox"> No limit while the comp runs</label>`, { c: "c3" }) + ff("pcUntil", "Valid until", `<input id="pcUntil" type="date">`, { c: "c3" }) + ff("pcNote", "Note (only you see it)", `<input id="pcNote" maxlength="300" placeholder="Founding partner: Covina">`, { c: "c6" }))
+    + `<div class="mfoot"><button class="btn ice" type="button" id="pcGrant">Grant comp</button><span class="msg" id="pcMsg" role="status"></span></div>`;
+  const orgs = d.orgs.length ? `<div class="cards">${d.orgs.map((o) => rec({ attrs: `data-pkey="${esc(o.key)}"`, title: esc(o.label), tags: [[o.over ? "Over its limit" : o.comp ? "Comp" : "Within limit", o.over ? "bad" : o.comp ? "ok" : ""]], meta: esc(o.key),
+    facts: fact("This window", o.windowStart ? `${esc(pdate(o.windowStart))} to ${esc(pdate(o.windowEnd))}` : "no window running (the next contest is free)") + fact("Contests counted", `<b>${o.used}</b> of ${o.unlimited ? "unlimited" : o.cap}`) + fact("Comp", o.comp ? `${o.comp.unlimited ? "unlimited" : o.comp.allowed} through ${esc(pdate(o.comp.until))}${o.comp.note ? " · " + esc(o.comp.note) : ""}` : "")
+      + fact("Contests", o.contests.map((c) => `<a href="/c/${esc(c.slug)}/manage" target="_blank" rel="noopener">${esc(c.name)}</a> (${esc(c.live_at)}${c.status === "live" ? "" : ", " + esc(c.status)})`).join("<br>")),
+    main: btn("ghost", "Merge into another key", 'data-pact="merge"') })).join("")}</div>` : `<div class="empty">No organization has a contest live yet.</div>`;
+  const comps = d.comps.length ? `<div class="cards">${d.comps.map((c) => rec({ attrs: `data-pcomp="${esc(c.id)}"`, title: esc(c.label), tags: [[c.running ? "Running" : c.revoked ? "Ended by you" : "Expired", c.running ? "ok" : ""]], meta: esc(c.created_at.slice(0, 10)),
+    facts: fact("Allowed", c.allowed < 0 ? "unlimited contests" : `${c.allowed} contests per window`) + fact("Valid until", esc(pdate(c.valid_until))) + fact("Note", esc(c.note)) + fact("Granted by", esc(c.created_by)), main: c.running ? btn("ghost", "End this comp now", 'data-pact="revoke_comp"') : "" })).join("")}</div>` : `<div class="empty">No comps yet.</div>`;
+  const passes = d.passes.length ? `<div class="cards">${d.passes.map((p) => rec({ attrs: `data-ppass="${esc(p.session_id)}"`, title: esc(orgLabelOf(p.org_key)) + " · up to " + p.cap, tags: [[p.status === "active" ? "Active" : "Revoked", p.status === "active" ? "ok" : ""]], meta: esc(p.created_at.slice(0, 10)),
+    facts: fact("Window", `${esc(pdate(p.window_start))} to ${esc(pdate(p.window_end))}`) + fact("Paid", esc(money(p.amount, "usd"))) + fact("Buyer", esc(p.email || "")) + fact("Order", esc(p.order_status || "")), main: p.status === "active" ? btn("ghost", "Revoke this pass", 'data-pact="revoke_pass"') : "" })).join("")}</div>` : `<div class="empty">No passes bought yet. Passes also show in Orders.</div>`;
+  const leads = d.leads.length ? `<div class="cards">${d.leads.map((l) => rec({ title: esc(l.email), tags: [["More than 20", "warn"]], meta: esc(l.created_at.slice(0, 10)), facts: fact("Organization", esc(l.label)) + fact("Note", esc(l.note)) })).join("")}</div>` : `<div class="empty">No "more than 20 contests" requests.</div>`;
+  box.innerHTML = `${comp}<h2 class="dh">Organizations (${d.orgs.length})</h2>${orgs}<h2 class="dh">Comps</h2>${comps}<h2 class="dh">Passes bought</h2>${passes}<h2 class="dh">More than 20 contests: leads</h2>${leads}`;
+  $("#pcUnl").onchange = (e) => { $("#pcAllowed").disabled = e.target.checked; };
+  $("#pcGrant").onclick = async () => {
+    const m = $("#pcMsg"); m.className = "msg"; m.textContent = "Working…";
+    try { await api("/api/admin/passes", { method: "POST", body: JSON.stringify({ action: "grant", name: $("#pcTarget").value, target: $("#pcTarget").value, allowed: $("#pcUnl").checked ? "unlimited" : Number($("#pcAllowed").value), until: $("#pcUntil").value, note: $("#pcNote").value }) }); toast("Comp granted"); renderPasses(); }
+    catch (er) { m.className = "msg err"; m.textContent = er.message; }
+  };
+  box.querySelectorAll("[data-pact]").forEach((b) => (b.onclick = async () => {
+    const act = b.dataset.pact, body = { action: act };
+    if (act === "merge") { const to = prompt("Count this organization's contests under which key? Type a website domain (covinaca.gov) or an email address."); if (!to) return; body.from = b.closest("[data-pkey]").dataset.pkey; body.to = to; }
+    else if (act === "revoke_comp") { if (!confirm("End this comp now?")) return; body.id = b.closest("[data-pcomp]").dataset.pcomp; }
+    else if (act === "revoke_pass") { if (!confirm("Revoke this pass? Contests already live stay live. This does not refund anything.")) return; body.session_id = b.closest("[data-ppass]").dataset.ppass; }
+    try { await api("/api/admin/passes", { method: "POST", body: JSON.stringify(body) }); toast(act === "merge" ? "Merged" : "Done"); renderPasses(); } catch (er) { toast(er.message); }
+  }));
+}
+/* ---------- Sponsors of a contest (organizer-collected; support and abuse review: contact details, amounts, receipts, hide) ---------- */
+async function openSponsors(cid) {
+  const m = $("#modal"); m.hidden = false; m.innerHTML = modalFrame("Sponsors", "<p>Loading…</p>", true);
+  const close = () => { m.hidden = true; m.innerHTML = ""; };
+  try {
+    const d = await api("/api/admin/sponsors?contest=" + encodeURIComponent(cid));
+    const rows = d.sponsors.map((x) => `<article class="acard rec" data-sid="${esc(x.id)}"><div class="rh"><div class="rt"><h3>${esc(x.name)}</h3><span class="tag ${x.shown ? "ok" : x.hidden_by_admin ? "bad" : "warn"}">${x.hidden_by_admin ? "Hidden by you" : x.shown ? "Shown" : "Not shown"}</span></div></div>
+      <dl class="facts">${fact("Level", esc(x.tier))}${fact("Contact", esc([x.contact_name, x.phone, x.email].filter(Boolean).join(" · ")))}${fact("Website", esc(x.url))}${fact("Amount", x.amount_cents == null ? "" : esc(money(x.amount_cents, "usd")))}${fact("Basis", x.basis === "paid" ? `Paid to the organizer on ${esc(x.paid_date)} (${esc(x.paid_method)})` : x.basis === "in_kind" ? "Donated in kind: " + esc(x.in_kind_note) : esc(x.basis || "not confirmed"))}${fact("Permission ticked", x.permission ? "yes" : "no")}${fact("Receipt", x.receipt ? `<a href="/api/admin/sponsors?receipt=${esc(x.id)}" target="_blank" rel="noopener">Open receipt (private)</a>` : "none")}</dl>
+      <div class="ra">${btn("ghost", x.hidden_by_admin ? "Show again" : "Hide from the contest page", `data-sh="${x.hidden_by_admin ? "show" : "hide"}"`)}<span class="sp"></span><span class="msg" role="status"></span></div></article>`).join("");
+    const iv = d.invite, inv = `<article class="acard rec"><div class="rh"><div class="rt"><h3>Sponsor invite link and payment text</h3><span class="tag ${iv.link_on && !iv.switched_off_by_admin ? "ok" : ""}">${iv.switched_off_by_admin ? "Switched off by you" : iv.link_on ? "Link on" : "Link off"}</span></div></div>
+      <dl class="facts">${fact("Contest review note", esc(d.contest.review_note || "none (trusted)"))}${fact("Payment link", esc(iv.pay_url))}${fact("Payment text", esc(iv.pay_text))}${fact("Levels", esc(iv.levels))}${fact("Payment text hidden", iv.pay_hidden ? "yes" : "no")}</dl>
+      <div class="ra">${btn("ghost", iv.switched_off_by_admin ? "Allow the invite link again" : "Switch the invite link off", `data-cf="${iv.switched_off_by_admin ? "invite_on" : "invite_off"}"`)}${btn("ghost", iv.pay_hidden ? "Show the payment text again" : "Hide the payment link and text", `data-cf="${iv.pay_hidden ? "show_pay" : "hide_pay"}"`)}<span class="sp"></span><span class="msg" role="status"></span></div></article>`;
+    m.innerHTML = modalFrame("Sponsors of " + d.contest.name, `<p class="meta">Sponsor money goes to the organizer, not to SoCal Lights. Receipts are private to the organizer team and you.</p>${inv}${rows || `<div class="empty">No sponsors recorded.</div>`}`, true);
+    $("#mClose").onclick = close;
+    m.querySelectorAll("[data-cf]").forEach((b) => (b.onclick = async () => { try { await api("/api/admin/sponsors", { method: "POST", body: JSON.stringify({ action: b.dataset.cf, contest: cid, name: d.contest.name }) }); toast("Done"); openSponsors(cid); } catch (er) { toast(er.message, true); } }));
+    m.querySelectorAll("[data-sh]").forEach((b) => (b.onclick = async () => { try { await api("/api/admin/sponsors", { method: "POST", body: JSON.stringify({ action: b.dataset.sh, id: b.closest("[data-sid]").dataset.sid, name: d.contest.name }) }); toast(b.dataset.sh === "hide" ? "Hidden" : "Shown again"); openSponsors(cid); } catch (er) { toast(er.message, true); } }));
+  } catch (er) { m.innerHTML = modalFrame("Sponsors", `<p>${esc(er.message)}</p>`); $("#mClose").onclick = close; }
+}
+$("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-csp]"); if (b) openSponsors(b.dataset.csp); });
+const orgLabelOf = (k) => (String(k).startsWith("d:") ? String(k).slice(2) : String(k).startsWith("u:") ? String(k).slice(2) : String(k));
 const CDONE = { approve: "Contest is live", decline: "Contest unpublished", delete: "Contest deleted" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-cact]"); if (!b) return;
@@ -320,8 +454,8 @@ $("#main").addEventListener("click", async (e) => {
   else if (act === "delete" && !tap(b, "delete for good")) return;
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try {
-    await api("/api/admin/contests/" + card.dataset.cid, act === "delete" ? { method: "DELETE" } : { method: "POST", body: JSON.stringify({ action: act, ...extra }) });
-    toast(CDONE[act], false, act === "decline" ? { undo: async () => { try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: "approve", notify: false }) }); toast("Undone"); renderContests(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
+    const res = await api("/api/admin/contests/" + card.dataset.cid, act === "delete" ? { method: "DELETE" } : { method: "POST", body: JSON.stringify({ action: act, ...extra }) });
+    toast(CDONE[act] + (res && res.overCap ? `. Heads up: ${res.overCap.org} is now over its contest limit (${res.overCap.used} of ${res.overCap.cap}); see Contest passes` : ""), false, act === "decline" ? { undo: async () => { try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: "approve", notify: false }) }); toast("Undone"); renderContests(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
     renderContests(); refreshCounts(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
@@ -329,7 +463,7 @@ $("#main").addEventListener("click", async (e) => {
 /* ---------- events ---------- */
 let EVQ = "", EVLIMIT = 60;
 async function renderEvents() {
-  EVENTS = await (await fetch("/api/events?all=1", { cache: "no-store" })).json();
+  EVENTS = await (await fetch("/api/admin/events", { cache: "no-store" })).json();
   const main = $("#main");
   const seasonSel = `<select id="evSeason" aria-label="Season">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === evSeason ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`;
   main.innerHTML = toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: seasonSel + `<a class="btn ghost" id="evDl" href="/api/admin/export?type=events&season=${evSeason}" download>Download CSV</a>`, add: { id: "addEv", label: "Add an event" }, count: "" }) + `<div id="evlist"></div>`;
@@ -366,6 +500,8 @@ function editEvent(ev) {
       + ff("eV", "Venue", `<input id="eV" value="${esc(e.v || "")}" maxlength="120" placeholder="Crown Valley Community Park">`, { c: "c3" }) + ff("eA", "Street address", `<input id="eA" data-addr autocomplete="off" value="${esc(e.a || "")}" maxlength="200" placeholder="29751 Crown Valley Pkwy, Laguna Niguel, CA 92677">`, { c: "c3" })
       + `<div class="ff c6"><div class="row" style="margin-bottom:8px"><button class="btn ghost" type="button" id="eGeo">Place pin from address</button><span class="meta" id="geoMsg">Or click the map, or drag the pin.</span></div><div id="pick"></div><div class="meta dates" id="ll" style="margin-top:4px"></div></div>`)}
     ${fsec("Details", "", ff("eB", "Description", `<textarea id="eB" maxlength="600" rows="4">${esc(e.b)}</textarea>`) + ff("eU", "Event website", `<input id="eU" type="url" value="${esc(e.u)}" maxlength="300" placeholder="https://">`))}
+    ${ev ? fsec("Paid placement", "Featured: 1 is the gold pin and badge, 2 also lists the event first. Banner: the event is a pill labelled Featured in the strip at the top of the map list. Organizers buy these themselves at /feature (see Orders). A level or date set here can never be lower or earlier than a paid order that is still running. Leave a date empty for no end date (Featured) or to keep the banner off.",
+      ff("eFl", "Featured level", `<select id="eFl" disabled><option value="0">Off</option><option value="1">1: pin and badge</option><option value="2">2: also listed first</option></select>`, { c: "c2" }) + ff("eFu", "Featured until", `<input id="eFu" type="date" disabled>`, { c: "c2" }) + ff("eBu", "Banner until", `<input id="eBu" type="date" disabled>`, { c: "c2", hint: "Loading…" })) : ""}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="grow"></span>${ev ? `<button class="btn ghost danger" type="button" id="eDel">Delete event</button>` : ""}<span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
   </form></div>`;
   m.hidden = false;
@@ -390,11 +526,14 @@ function editEvent(ev) {
   };
   const close = () => { pm.remove(); m.hidden = true; m.innerHTML = ""; };
   $("#mClose").onclick = close;
-  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; await api("/api/admin/events/" + encodeURIComponent(ev.id), { method: "DELETE" }); close(); toast("Event deleted"); if (tab === "events") renderEvents(); else render(); };
+  let placed = false; // the paid placement fields are sent only once they have loaded, so a failed load can never wipe a placement
+  if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
+  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && confirm(er.message)) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted"); if (tab === "events") renderEvents(); else render(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");
     const id = ev ? ev.id : $("#eN").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) + "-" + Math.random().toString(36).slice(2, 6);
     const body = { id, season: $("#eSn").value, name: $("#eN").value, county: $("#eC").value, city: $("#eCity").value, type: $("#eT").value, start: $("#eS").value, end: $("#eE").value, status: $("#eSt").value, free: $("#eF").checked, price: $("#eP").value, hours: $("#eH").value, lat, lng, blurb: $("#eB").value, url: $("#eU").value, venue: $("#eV").value, address: $("#eA").value };
+    if (ev && placed) body.placement = { featured: Number($("#eFl").value), featured_until: $("#eFu").value, banner_until: $("#eBu").value };
     try { await api("/api/admin/events", { method: "POST", body: JSON.stringify(body) }); close(); toast("Saved"); if (tab === "events") renderEvents(); else render(); }
     catch (err) { msg.className = "msg err"; msg.textContent = err.message; }
   };
@@ -461,7 +600,7 @@ async function openUser(id) {
 
 /* ---------- activity log (what the admin tools were used for) ---------- */
 const VERB = { restore: "restored", photo_remove: "removed a photo from", photo_move: "reordered the photos of", dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for", reset: "reset to default" };
-const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", normalize: "data check", emails: "email template" };
+const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", removals: "home removal", normalize: "data check", emails: "email template" };
 let LOG = { area: "", offset: 0 };
 async function renderLog() {
   const main = $("#main");
@@ -551,6 +690,7 @@ async function openInstaller(id) {
     <form class="f" id="iForm" novalidate>
     ${fsec("Company", "", ff("if-name", "Company name", `<input id="if-name" data-f="name" value="${esc(i.name)}" maxlength="80">`) + ff("if-web", "Website", `<input id="if-web" data-f="web" type="url" value="${esc(i.web || "")}" maxlength="200" placeholder="https://">`, { c: "c3" }) + ff("if-phone", "Phone", `<input id="if-phone" data-f="phone" type="tel" value="${esc(i.phone || "")}" maxlength="80">`, { c: "c3" })
       + ff("if-area", "Areas served", areaHtml({ id: "if-area", value: i.area, extra: 'data-f="area"' }), { hint: AREAS_HINT }) + ff("if-blurb", "About", `<textarea id="if-blurb" data-f="blurb" rows="3" maxlength="600">${esc(i.blurb || "")}</textarea>`, { hint: "Shown on the public profile page." }))}
+    ${fsec("Map banner and top of the list", "Banner: a thin labelled strip on the map. Top of the list: a labelled company card at the top of the list, behind Featured events. The banner plus top plan gets both, so set both dates. Installers can now buy these themselves at /sponsor; a paid order sets these dates (see Orders), and a date here can never be set earlier than a paid order that is still running. Leave a date empty to keep them off. Needs a phone number or website.", ff("if-ban", "Banner until", `<input id="if-ban" data-f="banner_until" type="date" value="${esc(i.banner_until || "")}">`, { c: "c3", hint: `Last 30 days: shown ${d.banner.imp}, company link ${d.banner.click}, phone ${d.banner.call}.` }) + ff("if-top", "Top of the list until", `<input id="if-top" data-f="top_until" type="date" value="${esc(i.top_until || "")}">`, { c: "c3", hint: `Last 30 days: shown ${d.banner.lst_imp}, taps on the card ${d.banner.lst_click + d.banner.lst_call}.` }))}
     ${fsec("Contacts", "These are private. They never appear on the public page.", ff("if-email", "Email for confirmations", `<input id="if-email" data-f="email" type="email" value="${esc(i.email || "")}" maxlength="120">`, { c: "c3", hint: "Where we send requests to confirm a home." }) + ff("if-owner", "Owner email", `<input id="if-owner" data-f="owner" type="email" value="${esc(i.owner_email || "")}" maxlength="120">`, { c: "c3", hint: "This person can edit the profile after signing in." }))}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="iMsg" role="status"></span></div></form>
     <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Merge into another profile</summary>
@@ -622,6 +762,8 @@ async function renderDashboard() {
   const kindTab = { home: "pending", event: "subs" };
   main.innerHTML = `
     <p class="hello">${hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}. ${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p>
+    ${d.staleJobs && d.staleJobs.length ? `<div class="limitbanner" role="alert"><b>${d.staleJobs.length === 1 ? "A scheduled job has stopped reporting in." : d.staleJobs.length + " scheduled jobs have stopped reporting in."}</b>${d.staleJobs.slice(0, 5).map((j) => `<span>${esc(j.line)}</span>`).join("")}<span>GitHub runs scheduled jobs late or skips them. Run the workflow by hand from GitHub > Actions, or see docs/runbooks/monitoring.md.</span></div>` : ""}
+    ${d.limits && d.limits.length ? `<button type="button" class="limitbanner" data-tab="usage"><b>A Cloudflare free-plan limit was hit at ${esc(String(d.limits[0].at).slice(0, 16))} UTC.</b><span>${esc(String(d.limits[0].detail).slice(0, 140))} Open Cloudflare usage to see which one and what to do.</span></button>` : ""}
     <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l]) => `<button type="button" class="tcard" data-tab="${k}"><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>` : `<div class="calm">${dico("check", "okic")}<div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests or reports are waiting.</p></div></div>`}</section>
     <h2 class="dh">Today</h2>
     <div class="stats">${tile("h", d.today.homes, "new houses")}${tile("e", d.today.events, "events submitted")}${tile("c", d.today.entries, "contest entries")}${tile("l", d.people.litToday, "lights switched on")}</div>
@@ -630,8 +772,11 @@ async function renderDashboard() {
     <h2 class="dh">People, last 7 days</h2>
     <div class="stats">${tile("u", d.people.users, "accounts in total")}${tile("n", d.people.newUsers, "new accounts")}${tile("v", d.people.votesWeek, "contest votes")}${tile("p", d.people.hits, "installer profile views")}</div>
     <h2 class="dh">Last 14 days</h2>
-    <div class="trends">${[["New houses", d.trends.houses], ["Contest votes", d.trends.votes], ["New accounts", d.trends.accounts], ["Page views", d.trends.views]].map(([t, v]) => { const sum = v.reduce((a, b) => a + b, 0), prev = v.slice(0, 7).reduce((a, b) => a + b, 0), now = v.slice(7).reduce((a, b) => a + b, 0), ch = prev ? Math.round(((now - prev) / prev) * 100) : null; return `<div class="tr"><div class="trh"><span>${t}</span>${ch == null ? "" : `<span class="chg ${ch >= 0 ? "up" : "dn"}" title="Last 7 days compared with the 7 days before">${ch >= 0 ? "+" : ""}${ch}%</span>`}</div><b>${fmt(sum)}</b>${sum || t !== "Page views" ? spark(v, d.trends.days, t) : '<p class="meta" style="margin:8px 0 0">Counting starts now. Visits appear here as people open pages.</p>'}</div>`; }).join("")}</div>
+    <div class="trends">${[["New houses", d.trends.houses], ["Contest votes", d.trends.votes], ["New accounts", d.trends.accounts], ["Page views*", d.trends.views]].map(([t, v]) => { const sum = v.reduce((a, b) => a + b, 0), prev = v.slice(0, 7).reduce((a, b) => a + b, 0), now = v.slice(7).reduce((a, b) => a + b, 0), ch = prev ? Math.round(((now - prev) / prev) * 100) : null; return `<div class="tr"><div class="trh"><span>${t}</span>${ch == null ? "" : `<span class="chg ${ch >= 0 ? "up" : "dn"}" title="Last 7 days compared with the 7 days before">${ch >= 0 ? "+" : ""}${ch}%</span>`}</div><b>${fmt(sum)}</b>${sum || t !== "Page views*" ? spark(v, d.trends.days, t) : '<p class="meta" style="margin:8px 0 0">Counting starts now. Visits appear here as people open pages.</p>'}</div>`; }).join("")}</div>
     ${d.trends.topPages.length ? `<h2 class="dh">Most visited pages, last 14 days</h2><ul class="dl toppg">${d.trends.topPages.map((p) => `<li><div class="dli" style="cursor:default"><span class="dt"><b>${esc(PAGE_NAMES[p.page.replace(/^\/+/, "")] || p.page.replace(/^\/+/, "").replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase()))}</b></span><span class="meta">${fmt(p.n)} view${p.n === 1 ? "" : "s"}</span></div></li>`).join("")}</ul>` : ""}
+    <p class="meta" style="margin:6px 0 0">*Page views and visits are counted by a small script in the visitor's browser, once per page per browser tab. They are not people: visitors who block scripts, and search engines and previewers that do not run them, are not counted, and a person using two tabs counts twice. Use them to see direction and which pages get used, not as a head count.</p>
+    ${d.funnel ? `<h2 class="dh">How people use the site</h2><ul class="dl toppg">${d.funnel.steps.map(([k, l]) => { const c = d.funnel.counts[k] || { today: 0, week: 0 }; return `<li><div class="dli" style="cursor:default"><span class="dt"><b>${esc(l)}</b></span><span class="meta">${fmt(c.today)} today · ${fmt(c.week)} in 7 days</span></div></li>`; }).join("")}${(d.funnel.refs || []).map((r) => `<li><div class="dli" style="cursor:default"><span class="dt"><b>Arrived from link ?ref=${esc(r.code)}</b></span><span class="meta">${fmt(r.today)} today · ${fmt(r.week)} in 7 days</span></div></li>`).join("")}</ul>` : ""}
+    <h2 class="dh">Taps on links and buttons</h2><ul class="dl toppg">${[["feature", "Opened the Feature page"], ["click:feature-checkout-start", "Continue to payment"], ["click:promote", "Promote your event menu row"], ["click:ticket", "Ticket link (Eventbrite, Ticketmaster, Fever)"], ["click:event-link", "Other event page link"], ["click:route", "Directions and route buttons"], ["click:installer", "Installer quote and contact"], ["click:shop", "Shop links"]].map(([k, l]) => { const c = (d.trends.clicks || {})[k] || { today: 0, week: 0 }; return `<li><div class="dli" style="cursor:default"><span class="dt"><b>${l}</b></span><span class="meta">${fmt(c.today)} today · ${fmt(c.week)} in 7 days</span></div></li>`; }).join("")}</ul>
     <div class="dcols">
       <section class="dbox"><h2 class="dh">Newest submissions</h2>${d.recent.length ? `<ul class="dl">${d.recent.map((r) => `<li><button type="button" class="dli" data-recent="${esc(r.kind)}" data-id="${esc(r.id)}" data-eid="${esc(r.eid || "")}" data-st="${esc(r.status)}" data-name="${esc(r.name)}">${dico(r.kind === "event" ? "event" : r.pro ? "pro" : "home")}<span class="dt"><b>${esc(r.name)}</b><small>${esc(r.city || "")} · ${r.kind === "event" ? "event" : r.pro ? "installer post" : "house"} · ${agoShort(r.at)}</small></span><span class="tag ${r.status === "pending" ? "warn" : r.status === "approved" || r.status === "published" ? "ok" : ""}">${esc(r.status)}</span></button></li>`).join("")}</ul>` : `<div class="empty">Nothing submitted yet.</div>`}</section>
       <section class="dbox"><h2 class="dh">Contests running</h2>${d.contests.length ? `<ul class="dl">${d.contests.map((c) => `<li><a class="dli" href="/c/${esc(c.slug)}" target="_blank" rel="noopener">${dico("trophy")}<span class="dt"><b>${esc(c.name)}</b><small>${esc(c.city)} · ${fmt(c.entries)} ${c.entries === 1 ? "entry" : "entries"} · ${fmt(c.votes)} ${c.votes === 1 ? "vote" : "votes"} · voting ends ${shortDate(c.vote_end)}</small></span></a></li>`).join("")}</ul>` : `<div class="empty">No contest is running right now.</div>`}
@@ -639,15 +784,127 @@ async function renderDashboard() {
     </div>`;
 }
 
+/* ---------- Cloudflare free-plan usage (read-only) ---------- */
+const U_BYTES = (n) => (n >= 1e9 ? (n / 1e9).toFixed(2) + " GB" : n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : fmt(n) + " B");
+const U_NUM = (m, n) => (m.unit === "bytes" ? U_BYTES(n) : fmt(n));
+const U_TAG = { ok: ["ok", "OK"], watch: ["warn", "Watch"], warning: ["bad", "Warning"], limit: ["bad", "Limit reached"], unknown: ["", "No data"] };
+const U_RESET = { day: "Resets at 00:00 UTC (4 pm Pacific in winter, 5 pm in summer)", month: "Month to date (calendar month, UTC)", now: "Current size" };
+function usageCard(m) {
+  const [cls, lab] = U_TAG[m.level] || U_TAG.unknown, pct = m.pct == null ? 0 : Math.min(100, m.pct);
+  const trend = m.trend && m.trend.length ? `<details class="utrend"><summary>Last 7 days ${usageSpark(m.trend)}</summary><table><thead><tr><th scope="col">UTC day</th><th scope="col">${m.period === "month" ? "That day" : "Used"}</th></tr></thead><tbody>${m.trend.map((p) => `<tr><td>${esc(p.d)}</td><td>${fmt(p.v)}</td></tr>`).join("")}</tbody></table></details>` : "";
+  return `<article class="ucard u-${esc(m.level)}" aria-label="${esc(m.label)}">
+    <div class="uh"><h3>${esc(m.label)}</h3><span class="tag ${cls}">${lab}</span></div>
+    ${m.used == null ? `<p class="meta" style="margin:6px 0 0">${esc(m.why || "No data")}</p>` : `<p class="unum"><b>${U_NUM(m, m.used)}</b> of ${U_NUM(m, m.limit)} <span class="meta">(${m.pct}%)</span></p>
+    <div class="ubar" role="progressbar" aria-label="${esc(m.label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-valuetext="${m.pct}% of the free limit"><i style="width:${pct}%"></i></div>`}
+    <p class="meta ures">${U_RESET[m.period]} · free limit ${U_NUM(m, m.limit)} ${m.verified ? "" : '<span class="tag">unverified</span>'} · <a href="${esc(m.source)}" target="_blank" rel="noopener">source</a></p>
+    ${trend}
+    <details class="utrend"><summary>What happens at the limit</summary><p class="meta" style="margin:6px 0 0">${esc(m.breaks)} On a paid plan: ${esc(m.paid)}.</p></details>
+  </article>`;
+}
+function usageSpark(t) {
+  const max = Math.max(1, ...t.map((p) => p.v)), W = 84, H = 18, step = W / (t.length - 1);
+  return `<svg class="uspark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><polyline fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" points="${t.map((p, i) => `${(i * step).toFixed(1)},${(H - 2 - (p.v / max) * (H - 4)).toFixed(1)}`).join(" ")}"/></svg>`;
+}
+async function renderUsage() {
+  const main = $("#main"), q = main.dataset.urefresh === "1" ? "?refresh=1" : "";
+  main.dataset.urefresh = "";
+  const u = await api("/api/admin/usage" + q);
+  const grp = (title, keys) => `<h2 class="dh">${title}</h2><div class="ugrid">${u.metrics.filter((m) => keys.includes(m.key)).map(usageCard).join("")}</div>`;
+  const worst = u.top ? `${esc(u.top.label)} at ${u.top.pct}%` : "no numbers yet";
+  const steps = `<section class="ucard u-ok" aria-label="Connect Cloudflare analytics"><div class="uh"><h3>Not connected</h3><span class="tag">Cloudflare numbers off</span></div>
+    <p class="meta" style="margin:6px 0">${u.error ? esc(u.error) : "This page needs two secrets so it can read Cloudflare's usage numbers (read-only). Email counts and logged limit errors work without them."}</p>
+    <ol class="usteps"><li>Cloudflare dashboard &gt; avatar (top right) &gt; My Profile &gt; API Tokens &gt; Create Token &gt; Custom token &gt; Get started.</li><li>Permission: Account / Account Analytics / Read. Account resources: Include / this account. Continue to summary &gt; Create Token. Copy the token once.</li><li>Account ID: Workers &amp; Pages overview, right-hand column (it is also the long code in the dashboard address after /).</li><li>Workers &amp; Pages &gt; socal-lights &gt; Settings &gt; Variables and Secrets &gt; Add. Type: Secret, name <code>CF_ANALYTICS_TOKEN</code>, paste the token. Add again: Secret <code>CF_ACCOUNT_ID</code>. Environment: Production. Save.</li><li>Redeploy (Deployments &gt; the latest &gt; Retry deployment), then reload this page.</li></ol>
+    <p class="meta" style="margin:0">Full steps: docs/runbooks/cloudflare-limits.md</p></section>`;
+  main.innerHTML = `<p class="meta" style="margin:0 0 12px">Free-plan limits for <b>today, UTC day ${esc(u.utcDay)}</b>. Cloudflare resets its daily limits at 00:00 UTC. Read-only: this page cannot change anything. ${u.connected && u.fetchedAt ? `Cloudflare numbers as of ${esc(String(u.fetchedAt).slice(0, 16))} UTC (cached up to 5 minutes).` : ""}
+    Colors: <span class="tag warn">Watch</span> from 70%, <span class="tag bad">Warning</span> from 90%, <span class="tag bad">Limit reached</span> at 100%. Highest right now: <b>${worst}</b>. <button type="button" class="btn ghost" id="urefresh">Refresh now</button></p>
+    ${u.limitHits.length ? `<div class="limitbanner" role="alert"><b>Limit hit at ${esc(String(u.limitHits[0].at).slice(0, 16))} UTC${u.limitHits.length > 1 ? ` (${u.limitHits.length} times in 24 hours)` : ""}.</b><span>${esc(String(u.limitHits[0].detail).slice(0, 200))}</span></div>` : ""}
+    ${u.connected && !u.error ? "" : steps}
+    ${u.missing.length ? `<p class="msg err">Cloudflare would not give some numbers: ${u.missing.map((x) => esc(x.what) + (x.permission ? ` (needs ${esc(x.permission)})` : "")).join("; ")}.</p>` : ""}
+    ${grp("Today (UTC)", ["d1_rows_read", "d1_rows_written", "requests"])}
+    ${u.cpu ? `<p class="meta">Today's Function CPU: ${fmt(u.cpu.exceeded)} requests stopped for using too much CPU, ${fmt(u.cpu.failed)} failed in all, of ${fmt(u.cpu.requests)}. The free plan allows 10 ms of CPU per request.</p>` : ""}
+    ${grp("This month", ["r2_class_a", "r2_class_b"])}
+    ${grp("Storage", ["d1_storage", "r2_storage"])}
+    ${grp("Email (Resend, counted by this site)", ["email_day", "email_month"])}
+    <p class="meta">Email counts only emails this site sent through Resend (one send each); Resend's own total also counts received mail. Check the Resend dashboard if the numbers disagree.</p>`;
+  const b = $("#urefresh"); if (b) b.onclick = () => { main.dataset.urefresh = "1"; renderUsage(); };
+}
+
+/* ---------- Outreach: reconcile Grok's sent log against the app, results by segment and step, the do-not-contact list, API health. Hashes and counts only. ---------- */
+const ORSTATUS = { registered: "Registered", listing: "Has a listing", review: "Review", suppressed: "Suppressed", clear: "Clear" };
+const ORTAG = { registered: "bad", listing: "bad", review: "warn", suppressed: "bad", clear: "ok" };
+const csvCell = (v) => { let s = String(v ?? ""); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }; // a leading = + - @ would be run as a formula in a spreadsheet
+const parseEmails = (text) => { const seen = new Set(), out = []; for (const t of String(text).split(/[\s,;"<>()\[\]]+/)) { const e = t.trim(); if (e.includes("@") && !seen.has(e.toLowerCase())) { seen.add(e.toLowerCase()); out.push(e); } } return out; };
+async function renderOutreach() {
+  const main = $("#main"), d = await api("/api/admin/outreach");
+  const a = d.api, w = a.week, t = d.totals;
+  const when = (s) => (s ? esc(String(s).slice(0, 16)) + " UTC" : "never");
+  const apiCard = `<article class="ucard ${a.configured ? "u-ok" : "u-warning"}" aria-label="API health"><div class="uh"><h3>API health</h3><span class="tag ${a.configured ? "ok" : "bad"}">${a.configured ? "Key set" : "No key: API is off"}</span></div>
+    <p class="meta" style="margin:8px 0 0">Last check: <b>${when(a.lastCheckAt)}</b>${a.lastCheck ? ` (${fmt(a.lastCheck.emails)} addresses: ${fmt(a.lastCheck.clear)} clear, ${fmt(a.lastCheck.registered + a.lastCheck.listing + a.lastCheck.review + a.lastCheck.suppressed)} not)` : ""}</p>
+    <p class="meta" style="margin:4px 0 0">Last 7 days: ${fmt(w.calls)} calls, ${fmt(w.emails)} addresses: ${fmt(w.clear)} clear, ${fmt(w.registered)} registered, ${fmt(w.listing)} listing, ${fmt(w.review)} review, ${fmt(w.suppressed)} suppressed.</p>
+    <p class="meta" style="margin:4px 0 0">Last failure: ${when(a.lastFailureAt)}. ${a.configured ? "" : "Set the OUTREACH_API_KEY secret (docs/CHECKLIST.md) to turn it on."}</p></article>`;
+  const supRows = d.suppression.last.length ? d.suppression.last.map((x) => `<tr><td><code>${esc(x.prefix)}</code></td><td>${esc(x.reason)}</td><td>${esc(x.source)}</td><td>${esc(x.date)}</td></tr>`).join("") : `<tr><td colspan="4" class="meta">Nothing on the list yet.</td></tr>`;
+  const resRows = d.results.map((c) => `<tr><td>${esc(c.segment.replace("_", " "))}</td><td>${c.step === 0 ? "Original" : "Follow-up " + c.step}</td><td>${fmt(c.sent)}</td><td>${fmt(c.replies)}</td><td>${fmt(c.bounces)}</td><td>${fmt(c.complaints)}</td><td>${fmt(c.unsubscribes)}</td><td>${fmt(c.registered)}</td><td>${fmt(c.listed)}</td></tr>`).join("");
+  main.innerHTML = `<p class="meta" style="margin:0 0 12px">Grok checks the app before every send through a narrow, key-protected API that returns only a status word. Nothing here shows a name or an address, and nothing you paste below is stored.</p>
+    <h2 class="dh">Status</h2><div class="ugrid">${apiCard}
+      <article class="ucard u-ok" aria-label="Suppression list"><div class="uh"><h3>Do-not-contact list</h3><span class="tag">${fmt(d.suppression.count)} hashed</span></div><p class="meta" style="margin:8px 0 0">One-way hashes only. Added by Grok (replies, bounces, complaints, unsubscribes), by the app (any marketing unsubscribe, deleted accounts) or by hand.</p></article></div>
+    <h2 class="dh">Reconcile a sent log</h2>
+    <p class="meta" style="margin:0 0 8px">Paste up to 500 addresses (one per line, or a whole export: any text with addresses in it) or choose a .csv or .txt file. You get counts by status and a CSV for your records. Computed now, not stored.</p>
+    <label for="orlog" class="meta">Addresses</label><textarea id="orlog" rows="6" style="width:100%;box-sizing:border-box;font:inherit;background:transparent;color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:10px" spellcheck="false" autocomplete="off"></textarea>
+    <p style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0"><button type="button" class="btn ice" id="orrun">Check these addresses</button><label class="btn ghost" for="orfile" style="cursor:pointer">Choose a file</label><input type="file" id="orfile" accept=".csv,.txt,text/plain,text/csv" hidden><span class="meta" id="ornote" role="status"></span></p>
+    <div id="orout"></div>
+    <h2 class="dh">Results by segment and step</h2>
+    <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Results by segment and step"><table style="width:100%;min-width:640px"><caption class="meta" style="text-align:left;padding:0 0 6px">Counted from what Grok reported. “Registered” and “Listed” are people who created an account or a listing after being emailed, credited to the latest step sent before that (not opens).${d.capped ? " Some very large tables were capped." : ""}</caption>
+      <thead><tr><th scope="col">Segment</th><th scope="col">Step</th><th scope="col">Sent</th><th scope="col">Replies</th><th scope="col">Bounces</th><th scope="col">Complaints</th><th scope="col">Unsubscribes</th><th scope="col">Registered after</th><th scope="col">Listed after</th></tr></thead>
+      <tbody>${resRows}<tr><th scope="row" colspan="2">All</th><td><b>${fmt(t.sent)}</b></td><td><b>${fmt(t.replies)}</b></td><td><b>${fmt(t.bounces)}</b></td><td><b>${fmt(t.complaints)}</b></td><td><b>${fmt(t.unsubscribes)}</b></td><td><b>${fmt(t.registered)}</b></td><td><b>${fmt(t.listed)}</b></td></tr></tbody></table></div>
+    <h2 class="dh">Last 20 on the do-not-contact list</h2>
+    <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Last 20 on the do-not-contact list"><table style="width:100%;min-width:420px"><thead><tr><th scope="col">Hash (first 8)</th><th scope="col">Reason</th><th scope="col">Source</th><th scope="col">Date</th></tr></thead><tbody>${supRows}</tbody></table></div>`;
+  let list = [];
+  const note = $("#ornote"), out = $("#orout");
+  $("#orfile").onchange = async (e) => { const f = e.target.files[0]; e.target.value = ""; if (!f) return; if (f.size > 2e6) { note.textContent = "That file is too big."; return; } $("#orlog").value = await f.text(); note.textContent = `${fmt(parseEmails($("#orlog").value).length)} addresses found.`; };
+  $("#orrun").onclick = async (e) => {
+    list = parseEmails($("#orlog").value); out.innerHTML = "";
+    if (!list.length) { note.textContent = "Paste some addresses first."; return; }
+    if (list.length > 500) { note.textContent = `That is ${fmt(list.length)} addresses; the limit is 500. Split the log and run it twice.`; return; }
+    const b = e.target; b.disabled = true; note.textContent = "Checking…";
+    try {
+      const r = await api("/api/admin/outreach", { method: "POST", body: JSON.stringify({ action: "reconcile", emails: list }) });
+      note.textContent = "";
+      out.innerHTML = `<div class="ugrid" style="margin:8px 0">${Object.keys(ORSTATUS).map((k) => `<article class="ucard"><div class="uh"><h3>${ORSTATUS[k]}</h3><span class="tag ${ORTAG[k]}">${k === "clear" ? "send ok" : "do not send"}</span></div><p class="unum"><b>${fmt(r.counts[k])}</b> <span class="meta">of ${fmt(r.total)}</span></p></article>`).join("")}</div>
+        <p class="meta" style="margin:6px 0"><b>Due to send today</b> (status clear, step due now or at most 14 days overdue): original <b>${fmt(r.due[0])}</b>, follow-up 1 <b>${fmt(r.due[1])}</b>, follow-up 2 <b>${fmt(r.due[2])}</b>. Taken from the sends Grok reported; nothing is sent from here.</p>
+        <p style="margin:6px 0"><button type="button" class="btn ghost" id="orcsv">Download CSV</button> <span class="meta">One row per address: address, status, reasons, and the next step with its due date. Review means the website domain matches a registered installer, organizer or account: check by hand.</span></p>`;
+      $("#orcsv").onclick = () => {
+        const csv = "email,status,reasons,next_step,due,due_on,sequence_reason\r\n" + r.rows.map((x) => [list[x.i], x.status, x.reasons.join(" "), x.sequence.next_step === null ? "" : x.sequence.next_step, x.sequence.due ? "yes" : "no", x.sequence.due_on || "", x.sequence.reason].map(csvCell).join(",")).join("\r\n") + "\r\n";
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "outreach-reconcile.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      };
+    } catch (x) { note.textContent = x.message; } finally { b.disabled = false; }
+  };
+}
+
 /* ---------- reports: "Something wrong? Tell us" from visitors ---------- */
+const rmCard = (r) => {
+  const l = r.listing, done = r.status !== "open", pick = (m) => btn("ghost", `Remove: ${m.name || m.address}${m.city ? " (" + m.city + ")" : ""}`, `data-rm="approve" data-target="${esc(m.target)}"`);
+  return rec({
+    attrs: `data-rmid="${esc(r.id)}"`, title: "Remove a home: " + esc((l && l.name) || r.address || r.ref), meta: when(r.createdAt),
+    tags: [[r.status === "open" ? "Waiting" : r.status === "done" ? "Removed" : "Declined", r.status === "open" ? "warn" : r.status === "done" ? "ok" : "bad"], ...(l && l.addedBy ? [["Added by an organizer", ""]] : [])],
+    facts: fact("Contact", `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`) + (r.ref ? fact("Listing id", `<code>${esc(r.ref)}</code>`) : "") + (r.address ? fact("Typed", esc(r.address)) : "") + (r.note ? fact("Note", esc(r.note)) : "")
+      + (l ? fact("Listing", esc([l.name, l.address, l.city].filter(Boolean).join(", "))) + (l.consent ? fact("Organizer confirmed", `${esc(l.consent.email)} on ${esc(l.consent.created_at)} (${l.consent.n} homes, wording ${esc(l.consent.version)})`) : "") : "")
+      + (done ? fact("Handled", esc(r.handledAt || "") + (r.target ? ` · ${esc(r.target)}` : "") + (r.adminNote ? ` · ${esc(r.adminNote)}` : "")) : ""),
+    body: !done && !l ? (r.matches.length ? `<p class="meta" style="margin:0">No listing id. Possible matches by address:</p><div class="row" style="gap:8px;flex-wrap:wrap">${r.matches.map(pick).join("")}</div>` : `<p class="meta" style="margin:0">No listing id and no address match. Search the Events tab by street, then close this request.</p>`) : "",
+    main: done ? "" : l ? btn("main", "Approve and remove the listing", `data-rm="approve" data-target="${esc(l.target)}"`) : btn("ghost", "Nothing to remove, close it", 'data-rm="approve" data-nothing="1"'),
+    danger: done ? "" : btn("danger", "Decline", 'data-rm="decline"'),
+  });
+};
 async function renderReports() {
-  const main = $("#main"), list = await api("/api/admin/reports");
-  setCount("reports", list.length);
-  main.innerHTML = list.length ? toolbar({ search: { placeholder: "Search reports" }, count: String(list.length) }) + `<p class="meta" style="margin:0 0 12px">From the "Something wrong? Tell us" link on events and houses. Fix the event or house, then dismiss the report.</p><div class="cards">${list.map((r) => rec({
+  const main = $("#main"), [list, rem] = await Promise.all([api("/api/admin/reports"), api("/api/admin/removals").catch(() => [])]);
+  const open = rem.filter((r) => r.status === "open").length;
+  setCount("reports", list.length + open);
+  const removals = rem.length ? `<h2 style="font-size:18px;margin:6px 0">Remove my home requests (${open} waiting)</h2><p class="meta" style="margin:0 0 12px">A resident asked us to take a home off the site. Approve deletes the listing (and any photos), marks it done and emails the person. Decline emails them your note. Aim to answer within two business days.</p><div class="cards">${rem.map(rmCard).join("")}</div>` : "";
+  const reports = list.length ? `${rem.length ? '<h2 style="font-size:18px;margin:18px 0 6px">Reports</h2>' : ""}<p class="meta" style="margin:0 0 12px">From the "Something wrong? Tell us" link on events and houses. Fix the event or house, then dismiss the report.</p><div class="cards">${list.map((r) => rec({
     attrs: `data-rid="${esc(r.id)}"`, title: esc(r.name || r.ref), tags: [["New", "warn"]], meta: when(r.created_at),
     body: `<p style="margin:0;white-space:pre-line">${esc(r.message)}</p>`, facts: fact("About", `<code>${esc(r.ref)}</code>`) + fact("Reply to", r.contact ? `<a href="mailto:${esc(r.contact)}">${esc(r.contact)}</a>` : "They left no email"),
     edit: btn("ghost", "Open Events", 'data-tab="events"'), danger: btn("danger", "Dismiss", "data-rdismiss"),
-  })).join("")}</div>` : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`;
+  })).join("")}</div>` : "";
+  main.innerHTML = list.length || rem.length ? toolbar({ search: { placeholder: "Search reports" }, count: String(list.length + open) }) + removals + reports : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`;
   wireToolbar(main, { onSearch: (q) => filterCards(main, q) }); applyPreset(main);
 }
 $("#main").addEventListener("click", async (e) => {
@@ -656,6 +913,18 @@ $("#main").addEventListener("click", async (e) => {
   const card = b.closest("[data-rid]"); b.disabled = true;
   try { await api("/api/admin/reports", { method: "POST", body: JSON.stringify({ id: card.dataset.rid, action: "dismiss" }) }); card.remove(); toast("Dismissed"); refreshCounts(); if (!document.querySelector("[data-rid]")) renderReports(); }
   catch (err) { b.disabled = false; card.querySelector(".msg").className = "msg err"; card.querySelector(".msg").textContent = err.message; }
+});
+
+$("#main").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-rm]"); if (!b) return;
+  const card = b.closest("[data-rmid]"), act = b.dataset.rm;
+  if (!tap(b, act === "approve" ? (b.dataset.nothing ? "close" : "remove") : "decline")) return;
+  const body = { id: card.dataset.rmid, action: act };
+  if (act === "approve") { if (b.dataset.target) body.target = b.dataset.target; if (b.dataset.nothing) body.nothing = true; }
+  if (act === "decline") body.reason = prompt("A note for the person who asked (optional). It is included in the email.") || "";
+  b.disabled = true;
+  try { await api("/api/admin/removals", { method: "POST", body: JSON.stringify(body) }); toast(act === "approve" ? "Done. The person was emailed." : "Declined. The person was emailed."); refreshCounts(); renderReports(); }
+  catch (err) { b.disabled = false; toast(err.message); }
 });
 
 // Every edit window closes the same way: the X, Cancel, Escape, or a tap outside it

@@ -6,25 +6,26 @@
 <title>Add your event · SoCal Lights</title>
 <meta name="description" content="Put your Halloween, holiday or seasonal event on the SoCal Lights map. It's free.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102i">
-<script src="/hit.js" defer></script>
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt } from "/addflow.js?v=20261103a";
+import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave } from "/addflow.js?v=20261111a";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
-import { CITY } from "/cities.js";
-import { me, signIn } from "/auth.js?v=20261101a";
+import { CITY } from "/cities.js?v=20261107a";
+import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
+import { me, signIn } from "/auth.js?v=20261107p";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
 const acct = (await me()).user;
 // your event belongs to the account that adds it, so sign in before anything else
 if (!acct) {
-  document.getElementById("app").innerHTML = `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
-    <div class="main"><h1>Sign in to add an event</h1><p class="help">Your event is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p>
-    <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></div>`;
+  document.getElementById("app").innerHTML = `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+    <main class="main"><h1>Sign in to add an event</h1><p class="help">Your event is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></main>`;
   await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add an event", next: location.pathname })) go(); }; });
   location.reload(); await new Promise(() => {});
 }
@@ -32,7 +33,20 @@ if (!acct) {
 const cfg = await ts.init(), pay = !!cfg.featureCheckout && !IN_APP; // paid placement is offered only when online payment is on, and never inside the store apps
 const d = { url: "", name: "", season: defaultSeason(today), type: "", start: "", end: "", hours: "", free: "yes", price: "", venue: "", street: "", city: "", blurb: "", email: "", plan: "" };
 d.email = acct.email;
-const PLANS = [["", "No thanks, just list it", "Free"], ["pin", "Featured pin: $5", "Gold-ringed pin and Featured badge for 30 days"], ["top", "Top of the list: $10", "Everything above, plus listed first for 30 days"], ["season", "Whole season: $15", "Everything above, until your event ends"]];
+{ const want = new URLSearchParams(location.search).get("plan"), LEG = { pin: "ev_pin", top: "ev_top", season: "ev_all" }, k = EVENT_KEYS.includes(want) ? want : LEG[want]; if (k) d.plan = k; } // arrived from Pricing or the Feature page with a plan chosen
+// Prices come from /api/config (functions/_lib/featured.js); the wording lives in /feature-plans.js. What each plan costs and when it would run for THIS event's dates comes from the server
+// (/api/feature/quote, the same calculation the payment uses). A plan is offered only when the event can buy it today (featuring opens 30 days before the event).
+const EP = cfg.eventPlans || {}, QUOTES = {}; // QUOTES["start|end"]: the server's quotes for those dates (null while loading)
+const money = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : c / 100), qKey = (x) => x.start + "|" + x.end;
+function loadQuotes(x) {
+  const k = qKey(x); if (QUOTES[k] !== undefined || !x.start) return; QUOTES[k] = null;
+  fetch("/api/feature/quote?start=" + encodeURIComponent(x.start) + "&end=" + encodeURIComponent(x.end || x.start)).then((r) => (r.ok ? r.json() : null)).then((j) => { QUOTES[k] = j ? j.quotes : {}; const box = document.getElementById("planbox"); if (box) box.innerHTML = plansHtml(x); }).catch(() => { QUOTES[k] = {}; });
+}
+const planOff = (x, k) => { const q = QUOTES[qKey(x)]; return !!q && (!q[k] || !!q[k].problem); };
+// Each offered plan lists everything it includes, the exact dates it would run if bought today, and the total.
+const plansFor = (x) => { const q = QUOTES[qKey(x)] || {}; return [["", "No thanks, just list it", "Free"], ...EVENT_KEYS.filter((k) => EP[k] && q[k] && !q[k].problem).map((k) => { const c = eventTierCopy(k), ql = quoteLine(q[k], money); return [k, `${c.name}: ${ql.price}`, [...c.bullets, `Starts the moment you pay, ends ${niceDate(q[k].to)} (${ql.endsBy}). Total ${ql.price}, charged once on Stripe.`].map((t) => "&bull; " + esc(t)).join("<br>")]; })]; };
+const planNote = (x) => { const q = QUOTES[qKey(x)] || {}; return [...new Set(EVENT_KEYS.filter((k) => q[k] && q[k].problem).map((k) => q[k].problem))].join(" "); };
+const plansHtml = (x) => (QUOTES[qKey(x)] ? `<div class="tiles">${plansFor(x).map(([v, t, s2]) => tile(x, "plan", v, t, s2, false)).join("")}</div>${planNote(x) ? `<p class="small muted">${esc(planNote(x))}</p>` : ""}` : `<p class="small muted">Loading the plans for your dates…</p>`);
 
 const steps = [
   { id: "url", sec: "Basics", title: "Do you have a web page for your event?", help: "If the page mentions your event's name and date, it shows as Confirmed. Without one, it still goes on the map right away, marked Expected until the dates are checked.",
@@ -55,26 +69,31 @@ const steps = [
   { id: "review", sec: "Review", title: "Check everything, then add it", cta: "Add my event", redraw: false,
     body: (x) => `<div class="sum">${sumRow("Event", esc(x.name), "name")}${sumRow("Page", x.url.trim() ? esc(x.url) : "None. A person will check it", "url")}${sumRow("When", fmt(x.start) + (x.end !== x.start ? " to " + fmt(x.end) : ""), "dates")}${sumRow("Price", x.free === "yes" ? "Free" : esc(x.price), "price")}${sumRow("Where", `${esc(x.venue)}, ${esc(x.city)}`, "where")}</div>
       <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). It is only used if something needs fixing and it is never shown publicly.</p></div>
-      ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div class="tiles">${PLANS.map(([v, t, s]) => tile(x, "plan", v, t, s, false)).join("")}</div><p class="small muted">You'll pay on Stripe's secure page right after your event is added. If it needs a quick review first, your Featured placement turns on as soon as it's approved.</p></div>` : ""}<div id="ts"></div>`,
+      ${nlCheck(x)}
+      ${pay ? `<div class="field"><span class="lab">Make it stand out ${OPT}</span><div id="planbox">${(loadQuotes(x), plansHtml(x))}</div><p class="small muted">After you tap Add my event, you go straight to Stripe's secure page to pay; there is nothing to enter again. If it needs a quick review first, your payment is held and Featured turns on the moment we approve it (a full refund if we cannot list it).</p></div>` : ""}<div id="ts"></div>`,
     submit: async (x, api) => {
       const body = { name: x.name, url: x.url, season: x.season, type: x.type, start: x.start, end: x.end, hours: x.hours, price: x.free === "yes" ? "" : x.price, free: x.free === "yes", venue: x.venue, address: x.street, city: x.city, blurb: x.blurb, email: x.email, "cf-turnstile-response": ts.token() };
       const r = await fetch("/api/submit-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
+      await nlSave(x, "host", "add-event");
+      if (x.plan && planOff(x, x.plan)) x.plan = ""; // the dates changed after the plan was chosen
       if (x.plan && pay) {
         // Straight on to Stripe. A published event is featured by its id; one in review is held until it is approved.
-        const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(j.status === "published" || j.status === "duplicate" ? { event_id: j.id, plan: x.plan } : { submission_id: j.submission_id, plan: x.plan }) });
+        const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(j.status === "published" || j.status === "duplicate" ? { event_id: j.id } : { submission_id: j.submission_id }), plan: x.plan, email: x.email }) });
         const cd = await c.json().catch(() => ({}));
         if (c.ok && cd.url) { location.href = cd.url; return; }
-        api.finish(`<h1>${esc(j.message)}</h1><p class="help">We couldn't open the payment page just now. You can <a href="/feature">feature your event from here</a> any time.</p>`); return;
+        api.finish(`<h1>${esc(j.message)}</h1><p class="help">We couldn't open the payment page just now. <a href="/feature?plan=${esc(x.plan)}&${j.status === "published" || j.status === "duplicate" ? "event=" + encodeURIComponent(j.id) : "sub=" + encodeURIComponent(j.submission_id)}">Pick up where you left off</a>: your event and plan are already chosen.</p>`); return;
       }
       api.finish(`<h1>${esc(j.message)}</h1><p class="help">${j.status === "published" ? "It's on the map now." : "It is on the map shortly."}</p><div style="display:flex;gap:12px;flex-wrap:wrap">${j.status === "published" || j.status === "duplicate" ? '<a class="btn" href="/">See it on the map</a>' : ""}${IN_APP ? "" : '<a class="btn out" href="/feature">Feature your event</a>'}<a class="btn out" href="/add-event">Add another event</a></div>`);
     } },
 ];
-run({ steps, data: d, persist: "scl-event-draft", account: { kind: "event", title: (x) => x.name }, noPersist: ["email", "plan"], season: (x) => x.season, addr: { cities },
+const fmtD = (x) => { if (!x) return ""; const [y, m, dd] = x.split("-").map(Number); return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1] + " " + dd; };
+const preview = (x) => pvCard({ title: x.name, ph: "Your event name", when: x.start ? (x.end && x.end !== x.start ? fmtD(x.start) + " to " + fmtD(x.end) : fmtD(x.start)) : "", lines: [{ t: [x.venue, x.city].filter(Boolean).join(", ") || "Venue and city", e: !x.venue && !x.city }, { t: x.hours || "", e: false }], tags: [x.free === "yes" ? "Free" : (x.price || "Price"), "Expected"] });
+run({ preview, steps, data: d, persist: "scl-event-draft", account: { kind: "event", title: (x) => x.name }, noPersist: ["email", "plan", "nl"], season: (x) => x.season, addr: { cities },
   onInput: (k, x) => { if (k === "start" && (!x.end || x.end < x.start)) { x.end = x.start; const e = document.getElementById("f-end"); if (e) e.value = x.end; } if (k === "season") { x.type = ""; const t = document.getElementById("f-type"); if (t) t.innerHTML = '<option value="">Choose a type</option>' + Object.entries(SEASONS[x.season].types).map(([a, l]) => `<option value="${esc(a)}">${esc(l)}</option>`).join(""); } },
   actions: { skipurl(_, a) { d.url = ""; a.next(); } },
   after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });
 </script>
-<script src="/footer.js?v=20261105a" defer></script>
+<script src="/footer.js?v=20261110b" defer></script>
 </body>
 </html>

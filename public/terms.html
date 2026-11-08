@@ -6,20 +6,20 @@
 <title>Terms of Use · SoCal Lights</title>
 <meta name="description" content="The rules for using SoCal Lights, including home decorating contests.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102i">
-<link rel="stylesheet" href="/info.css?v=20261031t">
-<script src="/hit.js" defer></script>
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/info.css?v=20261110y">
+<script src="/hit.js?v=20261107a" defer></script>
 </head>
-<body>
-<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
-<main>
+<body class="wide">
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<main id="content">
 <h1>Terms of Use</h1>
-<p class="meta">SoCal Lights (socallights.app), operated by Forza-TEK. Effective November 1, 2026. Plain-language terms.</p>
+<p class="meta">SoCal Lights (socallights.app), operated by Forza-TEK. Effective November 1, 2026. Updated November 8, 2026. Plain-language terms.</p>
 
 <h2>The short version</h2>
-<p>SoCal Lights is a free map of holiday events and decorated homes. Use it kindly, post only true things and your own photos, and know that contests are run by organizers, not by us.</p>
+<p>SoCal Lights is a free map of holiday events and decorated homes. Use it kindly, post only true things and your own photos, and know that contests are run by organizers, not by us. Some optional paid placements are described under "Paid placements" below.</p>
 
 <h2>Using the site</h2>
 <ul>
@@ -36,16 +36,67 @@
 <li>We may remove or edit anything that is wrong, unsafe, spam or breaks these terms.</li>
 </ul>
 
-<h2>Contests</h2>
+<h2 id="contests">Contests</h2>
 <ul>
 <li>Each contest is run by its organizer (the "Sponsor"), who writes the official rules, decides who wins, and provides and is responsible for any prize. SoCal Lights provides the website only. It is not a sponsor and is not responsible for any prize or for any dispute between an organizer and an entrant.</li>
 <li>Entering and voting are free. Votes are never sold. Fake, automated or traded votes are not allowed, and an organizer or we may void them.</li>
 <li>Organizers agree to run their contest fairly, follow the law that applies to it, honor the prizes they promise, and not charge entrants to enter or vote.</li>
+<li><b>Sponsors collected by the organizer.</b> An organizer may record a sponsor who paid them, and show its logo, name and link on the contest page, labelled "Sponsor", once the organizer confirms they collected the payment themselves (or that the sponsorship was donated in kind), have the sponsor's permission, and choose to show it. Sponsorship payments go to the organizer, not to SoCal Lights. The organizer is responsible for collecting, receipting and reporting sponsorship money. SoCal Lights does not process, hold or guarantee it and is not a party to it. The organizer must have the sponsor's permission to list their name, logo and contact details. Sponsors do not influence results. We keep the sponsor's contact details and any receipt the organizer uploads privately (visible only to the contest team and SoCal Lights staff), and we may hide a sponsor from a contest page.</li>
+<li><b>Sponsor invite links.</b> An organizer of a live contest that we have approved may share a private sponsor invite link and give sponsors their own payment link or instructions. A sponsor who uses the link sends the organizer a request; nothing is shown on the contest page until the organizer confirms the payment (or an in-kind gift) and approves it. The organizer's payment link and instructions are the organizer's own: we do not verify them, and a sponsor should pay only an organizer they know. We never take, hold or pass on sponsorship money. We may switch off an invite link, and hide a payment link or text, or a sponsor, at any time.</li>
 <li>Sponsors and installers shown on a contest page are identified as such. If you ask an installer for a quote, your details go only to that installer and the organizer, and only if you tick the box.</li>
+</ul>
+
+<h2 id="paid">Paid placements</h2>
+<p>Finding lights and events, listing an event or a home, entering a contest and voting are free. Paid placements are optional and only make a listing easier to see; contest organizers can also buy a pass to run more than one contest in a 12-month window (see Contest organizer passes below). Prices and the exact start and end dates are shown on our <a href="/pricing">Pricing</a> page and on the Feature page before you pay.</p>
+
+<h3>Featured events and homes</h3>
+<ul>
+<li><b>What it is.</b> A Featured placement gives an event or a home a gold-ringed pin on the map and a "Featured" badge in the list and on its details. For an event it is sold in parts: the Featured pin (always included in any paid plan), a banner (the event shows as a pill labelled "Featured" in the strip at the top of the map list, with its name, city and dates, while it is in the map view) and top of the list (the event is listed first when people browse the area). The plans are the pin, the banner with the pin, top of the list with the pin, and all three, at the prices on our Pricing page. A home can be featured with the pin or with top of the list.</li>
+<li><b>How you pay.</b> You pay once, by card on Stripe's payment page. There is no subscription and nothing renews by itself. We never see your card details. Stripe emails your receipt.</li>
+<li><b>Always labelled.</b> A paid placement always carries the "Featured" badge, and an event's banner pill is labelled "Featured" (for installers, the "Sponsor" label described below). A paid placement does not change the details of the listing, and the listing still has to be real and accurate.</li>
+<li><b>Contests.</b> Payment never affects any contest result or any vote. A home can be featured only after the contest winners are announced, only if it finished winner, 2nd or 3rd place, and only by the home's owner (or, for a home the organizer added, the organizer who runs that contest).</li>
+<li><b>When it runs.</b> A placement starts when your payment goes through. For an event it ends on the event's last day or on the last day of the season it was bought in (Christmas lights: Jan 6), whichever comes first. The price is flat: it does not depend on when you buy within the season, and the exact start and end dates and the total are shown before you pay. If you already have part of a plan, you pay only for the parts you add, and a purchase that adds nothing new is not sold. For a home it runs for 30 days from payment. Featuring opens 30 days before an event starts, and an event that has ended, been cancelled or been postponed cannot be featured. Buying again adds time and never shortens a placement you already have.</li>
+<li><b>Events waiting for review.</b> Most events go live right away, but we may hold one for review. If you pay for an event that is waiting, the placement switches on when we approve it.</li>
+<li><b>No guarantee of results.</b> We do not promise any number of views, visits, clicks or other results from a placement.</li>
+</ul>
+
+<h3>Installer Sponsor placements</h3>
+<ul>
+<li>Installers can buy a Banner (a strip at the top of the map list), Top of the list (a company card at the top of the list, without the banner) or both together. These are always labelled "Sponsor". That label is separate from a contest's organizer, who is called the "Sponsor" in the Contests section above.</li>
+<li>They are paid per season on Stripe as a one-time payment by default. Automatic renewal is optional and off unless you tick the box (see below); Featured events and homes never renew. A placement runs from payment to the last day of the current season on the map, and the price is the plan's price shown on the <a href="/pricing">Pricing</a> page. The exact price, start date and end date are shown again before you pay.</li>
+<li><b>Automatic renewal (optional).</b> It is off unless you tick the box on the payment step or turn it on in your installer dashboard. If you do, Stripe saves your card (we never see the card number) and we charge it on the last day of your placement, at the plan's price shown on the <a href="/pricing">Pricing</a> page at that time, so that the next season starts the next day. We email you 7 days before each charge with the amount and date. You can cancel before the charge from your dashboard or from the link in any email, with no login needed; cancelling keeps the placement you already paid for and removes the saved card. If a charge fails, we email you a link to pay or change your card and try once more 3 days later; if that fails too, automatic renewal stops and nothing more is charged automatically. A refund or a payment dispute of an automatic charge pauses automatic renewal. We sell at most one season ahead.</li>
+<li>Only the verified owner of an installer profile can buy one. The refund, dispute, removal and no-guarantee rules in this section apply to these placements too.</li>
+</ul>
+
+<h3 id="passes">Contest organizer passes</h3>
+<ul>
+<li><b>What a pass is.</b> Each organization gets one free contest in every 12-month window. To run more contests in the same window, the organization buys a pass for a total number of contests (the free first one included): Up to 5, Up to 10 or Up to 20. For more than 20 contests, write to <a href="mailto:info@socallights.app">info@socallights.app</a>. The prices are on our <a href="/pricing">Pricing</a> page, and the exact window dates and the price are shown again before you pay. A pass counts contests only. It does not change what a contest includes, and it does not limit entries or votes.</li>
+<li><b>Who the organization is.</b> It is the website of the contest when that website matches the domain of the organizer's verified email (for example, an address at the city's own website), and otherwise the organizer's own account. Co-organizers and staff do not create separate organizations. We may combine or correct an organization by hand.</li>
+<li><b>The 12-month window.</b> It starts on the day the organization's first contest goes live and ends the day before the same date a year later. A contest counts when it goes live. A draft, a contest held for our review, a declined contest and a contest that was never live do not count. A contest that was live and later unpublished still counts. When the window ends, the next contest starts a new window and is free again. A pass belongs to the window it was bought in, and you can upgrade inside the window by paying only the difference between the two passes.</li>
+<li><b>How you pay.</b> You pay once, by card on Stripe's payment page. A pass never renews by itself. We never see your card details. If a contest would go over what your organization may run, we ask you to choose a pass first, and we create the contest after the payment goes through.</li>
+<li><b>Refunds and disputes.</b> If we cannot apply your pass, you get a full refund. If a pass is refunded, or a payment dispute is lost, before the extra contests it paid for went live, the pass is switched off. If those contests are already live, we review it by hand: the contests stay live and we decide what is fair. To ask for a refund or for help, write to <a href="mailto:info@socallights.app">info@socallights.app</a>. Nothing here limits any refund right you have by law.</li>
+<li><b>Comps.</b> We may give an organization free contests for a period, for example a founding partner. That organization sees that its contests are free through a date and is not shown a price.</li>
+<li><b>Payment never affects results.</b> Entering and voting stay free for everyone. Buying a pass, or being given one, never affects any vote, judge, ranking, award or contest result.</li>
+</ul>
+
+<h3>What we can do</h3>
+<p>We may decline an event, home or placement, and we may remove or unpublish a listing or its placement, if the listing is inaccurate, the event is cancelled, or it breaks these terms. Removing or unpublishing a listing switches its placement off with it.</p>
+
+<h3>Refunds and disputes</h3>
+<ul>
+<li>If we cannot list or feature your event, for any reason, you get a full refund. This applies to every part of a plan: the pin, the banner and top of the list.</li>
+<li>Once your placement is live, payments are non-refundable. If your event is cancelled, email us and we will move your placement to another of your events or refund the unused time.</li>
+<li>A refund, or a lost payment dispute, switches the placement it paid for off: the pin, the banner and top of the list each end with the order that bought them, and time another paid order still covers stays.</li>
+<li>We make refunds ourselves through Stripe. To ask for one, or for any help with a payment, write to <a href="mailto:info@socallights.app">info@socallights.app</a>.</li>
+<li>A refund switches your placement off, and so does a payment dispute (a chargeback with your bank). Please email us before disputing a charge.</li>
+<li>Nothing here limits any refund right you have by law.</li>
 </ul>
 
 <h2>Accounts</h2>
 <p>You sign in with Google or an emailed code. Keep your email account secure. You can delete your account any time from your profile. We may suspend accounts that break these terms.</p>
+
+<h2 id="ai-assistant">AI assistant</h2>
+<p>When it is turned on, the "AI assistant" is an automated program, not a person, and it is for information only. It can be wrong or out of date. Prices on the <a href="/pricing">Pricing</a> page and the rules in these Terms and on each contest page control over anything it says. It does not give legal, safety or medical advice, when it explains contests it only repeats our help pages and these Terms and does not interpret rules, decide disputes, eligibility questions or prizes, or predict results (each contest's official rules and its organizer control), and what it says does not create a contract, a promise of a refund or approval, or a promise that an event, date or home will be available. For a firm answer use the <a href="/help">Help Center</a> or email <a href="mailto:info@socallights.app">info@socallights.app</a>. Paying for anything on this site never affects an answer from the assistant or any contest result. Do not type personal information into it. We may limit or block use of it that looks like abuse, or turn it off at any time. How it handles what you type is described in the <a href="/privacy#ai-assistant">Privacy Policy</a>.</p>
 
 <h2>No warranty, and limits on our responsibility</h2>
 <p>The site is provided as it is, without promises that it will always work or be accurate. To the extent the law allows, SoCal Lights and Forza-TEK are not responsible for losses that come from using the site, attending an event, visiting a display, or taking part in a contest, and our total responsibility to you for anything about the site is limited to $100. Some places don't allow these limits, so they may not apply to you.</p>
@@ -57,9 +108,11 @@
 <p>If we change these terms, we will update the date above. Questions or removal requests: <a href="mailto:info@socallights.app">info@socallights.app</a>. See also our <a href="/privacy">Privacy Policy</a>.</p>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261103a";
-document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+import { mountShell } from "/appshell.js?v=20261110e";
+document.body.classList.add("sh-page");
+mountShell({ page: "legal", title: "Legal", items: [{ href: "/privacy", label: "Privacy Policy", icon: "file" }, { href: "/terms", label: "Terms of Use", icon: "file" }] });
 </script>
-<script src="/footer.js?v=20261105a" defer></script>
+<script src="/toc.js?v=20261110a" defer></script>
+<script src="/footer.js?v=20261110b" defer></script>
 </body>
 </html>

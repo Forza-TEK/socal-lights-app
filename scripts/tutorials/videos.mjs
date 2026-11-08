@@ -133,13 +133,14 @@ S["edit-entry"] = { id: "edit-entry", file: "edit-entry", cookie: ck.u_mine, ...
   nextUp(EE, "Your profile", "Badges, saved drafts and deleting your account"),
 ]};
 S.profile = { id: "profile", file: "profile", cookie: ck.u_mine, ...MAPSPEC, steps: [
-  hook(EE, "Your profile", "Drafts, badges, and your account", "In this video, you will tour your profile: your saved drafts, the badges your home has won, and your account settings. We start on the map."),
+  hook(EE, "Your profile", "Drafts, contests, badges, and your account", "In this video, you will tour your profile: your saved drafts, your contests, the badges your home has won, and your account settings. We start on the map."),
   ...openShort(),
   ...navSteps([target("Tap the person icon", "Your profile is one tap from the map. Look at the top of the map, and tap the person icon, next to the three dots.", "#acctbtn", { after: 2000 })]),
   target("Drafts", "Drafts lists anything you started and saved, like an event or a contest you did not finish. Because it is saved to your account, you can finish it later, on any device.", "text=Our new light show", { after: 600, poster: true }),
+  target("Tap Contests", "Tap Contests. This lists the contests you run, with buttons to manage each one or view its page, and below that, the homes you entered in other people's contests, with where each one stands.", nav("contests"), { after: 1800 }),
   target("Tap Badges", "Tap Badges. When your home wins a contest, it earns a badge, and a crown on the map. All the awards your home has won are listed here, from every year.", nav("badges"), { after: 1800 }),
   target("Tap Account", "Tap Account. This is where you change your name and photo, and where you can delete your account, along with everything tied to it, if you ever want to.", nav("account"), { after: 1400 }),
-  recap(EE, "That is your profile", ["Drafts you saved", "Badges you won", "Account, and Delete my account"], "That is your profile: your drafts, your badges, and your account. If you ever need help, there is a Help Center in the menu, with written steps for everything in these videos."),
+  recap(EE, "That is your profile", ["Drafts you saved", "Contests you run and entered", "Badges you won", "Account, and Delete my account"], "That is your profile: your drafts, your contests, your badges, and your account. If you ever need help, there is a Help Center in the menu, with written steps for everything in these videos."),
   nextUp(EE, "Vote in a contest", "Pick one favorite in each category and share the contest"),
 ]};
 

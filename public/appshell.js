@@ -1,7 +1,7 @@
 // The signed-in pages' frame (Profile, Tutorials), built the same way as Admin:
 //   desktop: side menu | tablet: icon rail | phone: top bar + bottom bar + "More" sheet.
 // mountShell moves the page's #content into the frame and returns { setActive, setCount, setTitle }.
-import { themeBtn, mountAcct } from "/chrome.js?v=20261103b";
+import { themeBtn, mountAcct } from "/chrome.js?v=20261110b";
 const P = {
   map: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/>',
@@ -13,13 +13,13 @@ const P = {
 };
 const svg = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.file}</svg>`;
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261103a"; document.head.appendChild(l); }
+if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261106z"; document.head.appendChild(l); }
 const SITE = [["map", "Map", "/", "map"], ["add", "Add", "/add", "add"], ["tut", "Tutorials", "/tutorials", "play"], ["help", "Help", "/help", "help"], ["prof", "Your profile", "/profile", "user"]];
 
 // opts: { page: "tut"|"prof"|"contest"..., extra: [[key,label,href,icon]], title, items: [{k,label,icon,count?}], active, onPick(k) }
 export function mountShell({ page, title, items, active, onPick, extra = [] }) {
   const content = document.getElementById("content");
-  const item = (i) => i.href ? `<a class="sh-nv" href="${esc(i.href)}" title="${esc(i.label)}">${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span></a>` : `<button type="button" class="sh-nv" data-k="${esc(i.k)}" ${i.hidden ? "hidden" : ""} aria-current="${i.k === active}" title="${esc(i.label)}">${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span><span class="sh-cnt" data-cnt="${esc(i.k)}" ${i.count ? "" : "hidden"}>${i.count || ""}</span></button>`;
+  const item = (i) => i.href ? `<a class="sh-nv" href="${esc(i.href)}" title="${esc(i.label)}"${i.href === location.pathname ? ' aria-current="true"' : ""}>${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span></a>` : `<button type="button" class="sh-nv" data-k="${esc(i.k)}" ${i.hidden ? "hidden" : ""} aria-current="${i.k === active}" title="${esc(i.label)}">${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span><span class="sh-cnt" data-cnt="${esc(i.k)}" ${i.count ? "" : "hidden"}>${i.count || ""}</span></button>`;
   const site = [...extra, ...SITE.filter((s) => s[0] !== page && !items.some((i) => i.href === s[2]))].map(([, l, h, ic]) => `<a class="sh-nv" href="${h}" title="${l}">${svg(ic)}<span class="sh-lb">${l}</span></a>`).join("");
   const bottom = items.filter((i) => !i.href).slice(0, 4).map((i) => `<button type="button" class="sh-bb sh-own" data-k="${esc(i.k)}" aria-current="${i.k === active}">${svg(i.icon)}<span>${esc(i.label)}</span></button>`).join("");
   const root = document.createElement("div"); root.className = "sh-app";
@@ -29,7 +29,7 @@ export function mountShell({ page, title, items, active, onPick, extra = [] }) {
   <div class="sh-scrim" id="sh-scrim"></div>
   <div class="sh-col"><header class="sh-top"><a class="sh-tbrand" href="/" aria-label="SoCal Lights home"><img src="/img/badge-160.webp" width="36" height="36" alt=""></a><span class="sh-title" id="sh-title">${esc(title)}</span><span class="sh-grow"></span>${themeBtn()}<span id="acct"></span></header></div>
   <nav class="sh-bbar" aria-label="Quick sections">${bottom}<button type="button" class="sh-bb" id="sh-more" aria-expanded="false" aria-controls="sh-side">${svg("more")}<span>More</span></button></nav>`;
-  document.body.prepend(root);
+  document.querySelectorAll(".skiplink").forEach((a) => a.remove()); document.body.prepend(root);
   const col = root.querySelector(".sh-col"); content.classList.add("sh-content"); col.appendChild(content);
   mountAcct(root.querySelector("#acct"));
   const close = () => { document.body.classList.remove("sh-open"); root.querySelector("#sh-more").setAttribute("aria-expanded", "false"); };

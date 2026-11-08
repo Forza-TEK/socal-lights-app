@@ -2,11 +2,14 @@
 // The event is geocoded and its web page is checked. If the page really mentions the event and its year, the event
 // is published straight away; otherwise it waits in the admin's "Submitted events" tab. Either way it is logged.
 import { json, err, clean, webUrl, newId, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { bump } from "../_lib/funnel.js";
+import { ipPruneStatements } from "../_lib/retention.js";
 import { requireUser, sameOrigin } from "../_lib/auth.js";
 import { isDate, slug, upsertEvent, verifyEventPage } from "../_lib/events.js";
 import { normName, line, normEmailText } from "../_lib/fields.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
+import { ptToday } from "../_lib/time.js";
 
 const AUTO_PUBLISH_PER_DAY = 100; // safety valve: past this, everything waits for review
 const BAD = /\b(viagra|casino|porn|xxx|escort|crypto|bitcoin|loan|forex|cbd|betting)\b/i;
@@ -33,7 +36,7 @@ export async function onRequestPost({ request, env }) {
   if (!CITY[e.city]) return err(400, "Choose a city from the list.");
   if (!e.season || !SEASONS[e.season].types[e.type]) return err(400, "Choose a season and an event type.");
   if (!isDate(e.start_date) || !isDate(e.end_date) || e.end_date < e.start_date) return err(400, "Check the start and end dates.");
-  const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10); // roughly Pacific time
+  const today = ptToday(); // roughly Pacific time
   const limit = new Date(Date.now() + 500 * 86400_000).toISOString().slice(0, 10);
   if (e.end_date < today) return err(400, "That event has already ended.");
   if (e.start_date > limit) return err(400, "That date is too far in the future.");
@@ -79,12 +82,14 @@ export async function onRequestPost({ request, env }) {
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
     ).bind(id, auto ? "published" : "pending", e.name, county, e.city, e.season, e.type, e.start_date, e.end_date, e.free, e.price, e.hours, lat, lng, e.blurb, e.url, e.venue, e.address, e.email, check.ok ? 1 : 0, reasons.join("; ") || check.note, eventId),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
-    env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
+    ...ipPruneStatements(env),
   ]);
 
   if (auto) {
     await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: check.ok ? "confirmed" : "expected", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
+    await bump(env, "fn:add-event-done");
     return json({ ok: true, status: "published", id: eventId, submission_id: id, message: "Your event is on the map." });
   }
+  await bump(env, "fn:add-event-done");
   return json({ ok: true, status: "pending", submission_id: id, message: "Thanks! We'll check your event and add it shortly." });
 }

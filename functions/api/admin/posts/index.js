@@ -1,6 +1,7 @@
 // GET /api/admin/posts?status=pending|approved|declined
 import { json, rowToPost } from "../../../_lib/util.js";
 import { pairs } from "../../../_lib/addrkey.js";
+import { selectIn } from "../../../_lib/dbchunk.js";
 
 export async function onRequestGet({ request, env }) {
   const qs = new URL(request.url).searchParams, status = qs.get("status") || "pending";
@@ -20,6 +21,21 @@ export async function onRequestGet({ request, env }) {
       const { exact, near } = pairs(posts, events), by = new Map(out.map((p) => [p.id, p]));
       for (const x of exact) (by.get(x.post.id).replaces ||= []).push({ id: x.event.id, name: x.event.name, address: x.event.address });
       for (const x of near) (by.get(x.post.id).nearby ||= []).push({ id: x.event.id, name: x.event.name, address: x.event.address });
+    } catch {}
+  }
+  // A display that says it is the owner's home for an automatic listing ("Is this your home?" on the map), whatever its status.
+  // `matched` = the addresses agree, so the automatic listing is replaced (or will be, once the display is approved).
+  if (out.length) {
+    try {
+      const withClaim = results.filter((r) => r.claim_event_id);
+      if (withClaim.length) {
+        const ids = [...new Set(withClaim.map((r) => r.claim_event_id))], evs = await selectIn(env, "SELECT id, name, city, address FROM events WHERE id IN ({IN})", ids), by = new Map(out.map((p) => [p.id, p]));
+        for (const r of withClaim) {
+          const e = evs.find((x) => x.id === r.claim_event_id), p = by.get(r.id); if (!e || !p) continue;
+          const matched = pairs([{ id: r.id, street: r.street, address: r.address, city: r.city, zip: r.zip }], [e]).exact.length > 0;
+          p.claimed = { id: e.id, name: e.name, address: e.address, matched };
+        }
+      }
     } catch {}
   }
   if (status === "approved" && out.length) {

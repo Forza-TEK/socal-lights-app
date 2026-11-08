@@ -4,6 +4,7 @@ import { getUser, sameOrigin, normEmail, okEmail, sendMail } from "../../../_lib
 import { ownerOf } from "../../../_lib/contests.js";
 import { teamChanged } from "../../../_lib/changes.js";
 import { sendTemplate } from "../../../_lib/mailtpl.js";
+import { reserveSends } from "../../../_lib/sendlimit.js";
 
 export async function onRequestGet({ params, request, env }) {
   const { c, res } = await ownerOf(request, env, params.slug, getUser);
@@ -20,6 +21,8 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   const email = normEmail(b.email);
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM contest_staff WHERE contest_id = ?").bind(c.id).first();
   if (n >= 8) return err(400, "That's the most co-organizers a contest can have.");
+  const over = await reserveSends(env, user, c.id, "staff", 1);
+  if (over) return err(429, over);
   await env.DB.prepare("INSERT OR IGNORE INTO contest_staff (contest_id, email) VALUES (?, ?)").bind(c.id, email).run();
   await sendTemplate(env, "coorg_invite", String(b.email).trim(), { contest: c.name, org: c.org, link: `https://socallights.app/c/${c.slug}/manage` });
   await teamChanged(env, c, user, [{ label: "Co-organizers", old: "", new: `Added ${email}` }], waitUntil);

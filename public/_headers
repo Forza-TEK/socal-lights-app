@@ -2,6 +2,7 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(self)
+  X-Frame-Options: SAMEORIGIN
 
 /admin/*
   Cache-Control: no-store
@@ -22,6 +23,11 @@
   Cache-Control: no-store
 /contest*
   X-Robots-Tag: noindex
+/sponsor-invite*
+  X-Robots-Tag: noindex, nofollow
+/s/*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /organizer*
   X-Robots-Tag: noindex
   Cache-Control: no-store

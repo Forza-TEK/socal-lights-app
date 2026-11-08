@@ -1,66 +1,65 @@
-# Strategy: paid services, free heart
+# Strategy v2: earn the right to charge, then charge for the free heart's extras
 
-_CEO synthesis, 2026-11-04. Built from the three department reports in this folder: `finance-pricing.md`, `digital-monetization.md`, `product-marketing.md`. Every price here is a hypothesis to test, not a forecast. There is no traffic data in the repo._
+_CEO synthesis, 2026-11-04, revised after real data. Sources: `data-2026-11-04.md` (Stripe, Cloudflare and D1, read-only), and the revised `finance-pricing.md`, `digital-monetization.md`, `product-marketing.md`. This replaces the first strategy, which assumed an audience and a supply side that the data shows do not exist yet._
 
-## Verified today
-- `https://socallights.app/api/config` returns `featureCheckout: true`, so Stripe is configured in production and Featured events can already be bought.
-- Not verified: whether a real purchase completes end to end, whether the Amazon Associates account is still active, and the production state of Google/Resend sign-in for contests.
-
-## The decision in one paragraph
-Charge the people who earn from the lights (installers, contest organizers, local sponsors, event organizers) and never the families who look for them. Sell exclusive local seats priced against one booked installation job, per season, through one shared Stripe checkout. Spend the 2026 season proving demand with the features that already exist, then build the rest for 2027.
-
-## Where the three departments agree
-- First products: Featured Event (built), Installer Partner with an exclusive presenting slot and quote leads, Contest Pro.
-- Per-season pricing, not monthly. Nearly all demand is Halloween to New Year.
-- Never sell votes, entry fees or ballot position. Payment never touches contest outcomes.
-- Paid features stay web-only and out of the native apps.
-- Prices are unproven; measure one season first.
-
-## Where they differ, and my call
-| Question | Finance | Digital | Marketing | Decision |
-|---|---|---|---|---|
-| Featured $5 tier | Fixed fee eats 8.9%; make it optional | Fix webhook gaps first | Cap slots so the free list stays good | Keep all three tiers for now, lead with $10 and $15 on the page, cap Featured slots, fix refund handling before promoting |
-| How to start selling installers | Test with five installers | Stripe Payment Links plus a manual flag | Sell after free contests prove traffic | Do all three in order: five conversations, then Payment Links, then build only what they ask for |
-| Build a generic orders/entitlements layer | Not covered | Yes, one layer for every product | Not covered | Yes, but only after the first installer or sponsor pays by Payment Link, so we build what is proven |
-| Who gets sponsor money | Sponsors pay the organizer at first | Optional platform share later | Sell "Presented By" ourselves | Phase 1: sponsors pay the organizer, we charge Contest Pro only. Regional "Presented By" sold by us once there are live contests |
-
-## Free forever
-Map, search, filters, routes, browsing and starring houses, Help Center, tutorials, weekly email, voting, entering a home as a neighbor. Free search order is never changed by money except labelled Featured slots, which are capped.
-
-## Paid offers (hypothesis prices)
-| Offer | Buyer | What they get | Hypothesis price | State |
-|---|---|---|---|---|
-| Featured Event | Event organizers | Gold pin, top of list, season option | $5 / $10 / $15 | Built, Stripe on |
-| Installer Partner | Installers | Featured profile, quote button, view and quote stats, verified badge | about $299 per season (range $199-$499) | Profile exists; no payment yet |
-| Presenting Installer | One installer per city per season | Exclusive slot on contests and winner pages, opt-in leads | $300-$1,000 per city per season | Free-text field only; not exclusive |
-| Contest Pro | Cities, HOAs, chambers | Sponsor logos and tiers, prize list, branded poster, exports | about $99 per season (range $79-$149) | Unbuilt |
-| Presented By | Regional sponsors | Named presenting slot across a county's contests | unpriced | Unbuilt |
-
-## What I need fixed before promoting anything (all small)
-1. Webhook ignores refunds and disputes: a refunded event stays Featured (`functions/api/stripe-webhook.js`).
-2. `/feature` is linked from nowhere except `add-event.html`, and it lacks the native-app guard (`public/feature.html`).
-3. `/feature` shows both Stripe and the Cash App "email us" path. Pick Stripe.
-4. Prices live in three places. Make `functions/_lib/featured.js` the single source.
-5. Checkout never sets a customer email, so no receipts.
-6. Apple 3.1.3(g) describes paid "boosts" in an app. Keep `/feature` and checkout hidden in the wrapper.
-7. Privacy policy does not cover installer leads, Stripe order data or sponsor emails.
-8. Add a test that contest, vote and results queries never reference `featured`, `plan`, `pro_until` or `entitlements`.
-
-## 90-day plan
-| When | Move |
+## What the data changed
+| First plan assumed | Real data (2026-11-04) |
 |---|---|
-| This week | Owner confirms a $5 test purchase works. Fix items 1-5 on a branch. Publish the Free Heart Promise and `/pricing`. Start the eight privacy-light counts |
-| Weeks 2-4 (Nov) | Talk to five installers; ask what they pay per lead today. Link `/feature` from the site. Get 3-5 free contests live from `docs/contest-leads.md`. One hour with a CPA |
-| December | Sell the first installer and sponsor seats by Stripe Payment Link. Review counts. Fix privacy policy |
-| January | Decide on the generic orders layer and Contest Pro from the evidence. Price for 2027 |
-| 2027 | Spring and 4th of July contests, Halloween and Christmas 2027 packages |
+| Hundreds of visitors a day | Cloudflare shows 450-650 "uniques", but that includes bots. The site's own counter shows 18 and 50 human visits on Nov 2 and 3 (counter is two days old) |
+| About 450 showcased homes | 6 |
+| Installers want exclusive leads | 1 installer, 0 leads |
+| Contests drive traffic | 1 live contest, 0 votes |
+| Featured at $5-$15 is "most promising" | $0 ever paid; 1 checkout started, expired unpaid |
+| Fixed costs might force a paid plan | $0 this season; about 6% of the free Functions cap |
 
-## Decisions that need the owner
-1. Run one real $5 Featured purchase on your own event and confirm it appears and the receipt behaves. This is the cheapest check on the whole payment path.
-2. Which entity and bank account receive the money, and sales-tax treatment of listings: one hour with a CPA.
-3. A California attorney to read contest rules, sponsor terms and the privacy policy before any paid sponsor or lead product. Nothing on contest or lottery law was verified from primary sources.
-4. Are you willing to sell to installers and sponsors personally (calls and email), or self-serve only? Marketing's plan assumes you will make about five personal conversations.
-5. Approve building the small fixes (items 1-5 above) on a branch. I have not changed any code.
+**Conclusion: this season is about proof, not revenue.** Realistic 2026 revenue is $0 to $300 (Finance). The goal is a proven payment path, a measured audience and the first supply.
 
-## What I did not do
-No code, no migrations, no secrets, no outreach, nothing live. All figures from the three reports are second-hand: vendor pages for Stripe, Cloudflare, Resend, FTC and the California statutes could not be opened from this environment.
+## The rule that does not change
+Free forever: the map, search, filters, routes, browsing and starring homes, Help Center, tutorials, weekly email, voting, entering a home as a neighbor. No paid votes, no entry fees, no paid ballot order; money never touches contest outcomes. Paid placements are labelled and capped. Paid features stay web-only in the apps.
+
+## Three stages, each unlocked by counts from our own tables
+### Stage 1: Prove (now to mid-December)
+Cost: about $0 plus time. Revenue target: one real paid Featured order.
+1. **Prove the payment path.** Test-mode run, then one live $5 purchase and a refund (about 44 cents in fees). Confirm the webhook marks the event featured. The owner does the purchase; I verify it in Stripe and D1.
+2. **Fix the Featured path** (spec in `digital-monetization.md`), on a branch, reviewed before merge:
+   - Webhook bug: the order row is written before the placement is applied, and Stripe's retry then hits the "duplicate" branch, so a failed first attempt is never applied. Confirmed by me in `functions/api/stripe-webhook.js` lines 19-36.
+   - Handle `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`, `checkout.session.expired`.
+   - One price source, receipts, an idempotency key, native-app guard on `/feature`, link `/feature` from the site, retire the Cash App path.
+3. **Measure.** Add outbound-click and `/feature` view counters to the site's own counter; keep `site_hits`. Real human visits are the number every later decision rests on.
+4. **Grow the audience for free.** City pages (266 `/in/<city>` pages already exist), local press and Patch, parks-department and neighborhood-group sharing, the weekly email.
+5. **Seed supply for free.** Pursue the free contests in `docs/contest-leads.md`; help the first homes and installers sign up.
+
+### Stage 2: Earn small (Dec to Feb)
+Only these products are sold, by hand, with no new build beyond Stage 1:
+- **Featured Event, owner decision 2026-11-04: $10 (pin), $15 (top of the list), $20 (whole season)**; superseded 2026-11-06 by owner-approved window pricing: $10 / $15 run from payment to the event's last day (up to 30 days) and $25 Full run (events of 31+ days, up to 90 days); see `docs/monetization/finance-pricing.md`, sold by hand to organizers of real, ticketed events. The owner chose to move every tier up $5 instead of dropping the $5 tier (the fixed 30-cent fee had made $5 the weakest). A public `/pricing` page shows these and the free tiers (homeowners free; installers, event organizers and contest organizers "free for now"). Give the first 5 organizers a free placement in exchange for permission to quote their click counts.
+- **Affiliate links** on the 73 upcoming events that link to a ticket seller (70 Eventbrite, 3 Fever; none link to Ticketmaster). `ticketAffiliates` is empty today. Apply first to Fever (Impact), then Eventbrite only if it pays per ticket order. Expect $0-5 a month (`affiliate-plan.md`).
+
+### Stage 3: Build the business (spring 2027 onward)
+Each product unlocks only when its counts are real:
+| Product | Price hypothesis | Unlocks when |
+|---|---|---|
+| Installer Partner (profile, quote button, stats) | about $299 per season, founder-sold first | 3+ installers, 25+ homes, 20 installer clicks a week, a first real lead |
+| Contest Pro | about $99 per season, hand-sold | 3 contests with 20+ entries and 100+ votes each |
+| Presented By (regional sponsor) | unpriced | 1,000 real visits a day for 14 days |
+| Homeowner boost, newsletter sponsor | unpriced | 100 homes; 500 subscribers |
+| Cities and chambers | Stripe Invoicing, inbound only | When one asks |
+Plan-upgrade triggers for infrastructure: over 60,000 Functions requests a day, 3M D1 reads a day or 80 Resend emails a day.
+
+## Cut from the first plan
+The generic orders/entitlements/installer-slots build, exclusive "Presenting Installer", the $500 slot price, sponsor slots and a $5 headline tier. With 6 homes and 1 installer there is nothing to put in them yet.
+
+## Where the departments still disagree, and my call
+- **Installer pricing:** Finance says a founder-sold pilot, maybe with a founding discount; Digital says wait for about 10 claimed profiles. My call: have the five installer conversations in December to learn what they pay per lead, but do not take payment until the Stage 3 gate is met.
+- **Likely reasons nobody bought Featured:** nothing on the site links to `/feature`; organizers have no relationship with us (we added their events); the page claims an audience without numbers; finding your own event is a chore; the cancel URL lands on a blank page. The webhook endpoint registration is unconfirmed.
+
+## Decisions for the owner
+1. **Run the $5 test purchase** on your own event (I'll verify it in Stripe and D1), then refund it.
+2. **Check the Stripe Dashboard:** is the webhook endpoint registered at `https://socallights.app/api/stripe-webhook` with the events listed above, and is "Successful payments" email receipts on?
+3. **Approve building the Featured fixes** on a branch (nothing merged without your review).
+4. **CPA hour:** who receives the money and the sales-tax treatment of listings.
+5. **Attorney review** before any sponsor, lead or contest-prize product.
+6. **Personal outreach:** about five installer conversations and five event-organizer conversations. I draft the messages; you or I send them with your OK.
+7. **Tell me:** Amazon Associates status, and whether the Google and Resend sign-in secrets are set.
+
+## Still unverified
+Amazon and ticket-affiliate status, Stripe webhook registration and receipt setting, the expired checkout session's cause, California contest law and FTC rules (primary sites return 403 to automated visitors), and traffic beyond two days of the site's own counter.

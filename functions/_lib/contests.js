@@ -1,23 +1,63 @@
 // Shared helpers for home decorating contests.
 import { err, clean, nearestCounty } from "./util.js";
 import { upsertEvent } from "./events.js";
+import { r2Delete, photoKeys } from "./dbchunk.js";
+import { logOp } from "./oplog.js";
+import { takeOffMap, putBackOnMap, contestDeletedStatements } from "./orders.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS, defaultSeason } from "../../public/seasons.js";
+import { ptToday } from "./time.js";
 
-const FREE_DOMAINS = new Set(["gmail.com", "googlemail.com", "hotmail.com", "outlook.com", "live.com", "msn.com", "yahoo.com", "icloud.com", "me.com", "aol.com", "proton.me", "protonmail.com"]);
-export const todayPT = () => new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10); // roughly Pacific time
+// Consumer mailbox providers: an address here proves nothing about who runs a website or an event.
+export const FREE_DOMAINS = new Set([
+  "gmail.com", "googlemail.com", "hotmail.com", "outlook.com", "live.com", "msn.com", "yahoo.com", "ymail.com", "rocketmail.com", "icloud.com", "me.com", "mac.com", "aol.com",
+  "proton.me", "protonmail.com", "pm.me", "gmx.com", "gmx.net", "gmx.us", "gmx.de", "mail.com", "email.com", "zoho.com", "zohomail.com", "fastmail.com", "fastmail.fm", "hey.com", "tutanota.com", "tuta.io", "hushmail.com",
+  "comcast.net", "sbcglobal.net", "att.net", "cox.net", "verizon.net", "bellsouth.net", "charter.net", "earthlink.net", "frontier.com", "frontiernet.net", "optonline.net", "roadrunner.com", "pacbell.net", "ca.rr.com", "socal.rr.com", "centurylink.net", "windstream.net", "juno.com", "netzero.net", "prodigy.net",
+  "yandex.com", "yandex.ru", "mail.ru", "qq.com", "163.com", "126.com", "naver.com", "web.de", "t-online.de", "orange.fr", "free.fr", "laposte.net", "libero.it", "btinternet.com", "sky.com", "inbox.com", "rediffmail.com",
+]);
+// Regional editions of the big providers (yahoo.ca, hotmail.co.uk, live.com.mx, outlook.fr ...)
+const FREE_REGIONAL = /^(yahoo|hotmail|outlook|live|msn|gmx|aol|icloud)\.[a-z]{2,3}(\.[a-z]{2})?$/;
+export const isFreeMail = (dom) => FREE_DOMAINS.has(dom) || FREE_REGIONAL.test(dom);
+
+// Domains that many unrelated organizations share. An email at one of these is not a business address, and a website under one is not "their own".
+// A domain counts as someone's own only with at least one label of its own beyond these (pasadena.gov yes; gov, ca.gov, k12.ca.us no).
+const SHARED_SUFFIXES = new Set([
+  "com", "net", "org", "edu", "gov", "mil", "int", "info", "biz", "us", "co", "io", "app", "dev", "me", "tv", "ca", "mx", "uk", "co.uk", "org.uk", "ac.uk", "gov.uk", "com.au", "com.mx",
+  "ca.us", "ca.gov", "k12.ca.us", "cc.ca.us", "lib.ca.us", "state.ca.us", "ci.ca.us", "co.ca.us", "dst.ca.us", "tec.ca.us",
+  "k12.us", "state.us", "city.us", "county.us", "fed.us", "nsn.us",
+  "github.io", "pages.dev", "netlify.app", "vercel.app", "wixsite.com", "weebly.com", "blogspot.com", "wordpress.com", "squarespace.com", "herokuapp.com", "web.app", "firebaseapp.com",
+]);
+// Number of labels the name has beyond its shared suffix (the longest matching one, else the last label). pasadena.gov -> 1, ca.gov -> 0, dmv.ca.gov -> 1.
+export function ownLabels(host) {
+  const l = String(host || "").toLowerCase().replace(/\.$/, "").split(".").filter(Boolean);
+  if (l.length < 2) return 0;
+  for (let i = 0; i < l.length; i++) if (SHARED_SUFFIXES.has(l.slice(i).join("."))) return i;
+  return l.length - 1;
+}
+export const hasOwnName = (host) => ownLabels(host) >= 1;
+export const todayPT = ptToday;
 export const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || "");
 export const addDays = (s, n) => new Date(new Date(s + "T12:00:00Z").getTime() + n * 86400_000).toISOString().slice(0, 10);
 
 // Can this organizer's email be tied to the website they gave? match = goes live straight away; anything else waits for review.
 export function trustOf(email, site) {
   const dom = String(email).split("@")[1] || "";
-  if (!dom || FREE_DOMAINS.has(dom)) return "free";
+  if (!dom || isFreeMail(dom)) return "free";
   if (!site) return "none";
   let host = "";
   try { host = new URL(/^https?:/i.test(site) ? site : "https://" + site).hostname.replace(/^www\./, "").toLowerCase(); } catch { return "other"; }
-  return host === dom || host.endsWith("." + dom) || dom.endsWith("." + host) ? "match" : "other";
+  // The person's own domain must be somebody's own name (not "gov", "ca.gov" or "k12.ca.us", which every agency or school under it shares).
+  if (!hasOwnName(dom)) return "other";
+  return host === dom || host.endsWith("." + dom) || (dom.endsWith("." + host) && hasOwnName(host)) ? "match" : "other";
 }
+
+// Names that claim to be a government body, school, HOA or other official organizer ("City of Irvine Lights", "Oak Park HOA", "Official ..."). Used to hold such a contest
+// for review when its organizer cannot be tied to a website (N-02). Plain community names ("Maple Street Lights") do not match.
+const OFFICIAL = /\b(city|town of|county|counties|municipal|municipality|hoa|h\.o\.a|homeowners?|home ?owner'?s?|chamber|school|schools|unified|pta|ptsa|official|officially|sheriff|police)\b/i;
+export const officialSounding = (...texts) => texts.some((t) => OFFICIAL.test(String(t || "")));
+
+// Organizer-added homes allowed while a contest still has a review note (an organizer Admin has not vouched for yet).
+export const UNTRUSTED_ADDED_CAP = 25;
 
 export const getContest = (env, slug) => env.DB.prepare("SELECT * FROM contests WHERE slug = ?").bind(String(slug || "").toLowerCase()).first();
 
@@ -40,8 +80,10 @@ export async function listOnMap(env, c) {
   const id = `c-${c.slug}`.slice(0, 40);
   await upsertEvent(env, { id, name: c.name, county: c.county, city: c.city, type, start_date: todayPT(), end_date: c.vote_end, status: "confirmed", free: 1, price: "Free", hours: "", lat, lng, blurb: `${c.org} home decorating contest. ${c.descr}`.slice(0, 200), url: `https://socallights.app/c/${c.slug}`, season: c.season, venue: c.org, address: `${c.city}, CA` });
   await env.DB.prepare("UPDATE contests SET event_id = ? WHERE id = ?").bind(id, c.id).run();
+  await putBackOnMap(env.DB, id); // coming back after an unpublish or decline: put back what its paid orders still owe
 }
-export const unlistFromMap = (env, c) => c.event_id ? env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id).run() : null;
+// Takes the contest's map event off. A paid placement on it goes with the row, so it is flagged refund due first (restorable: listOnMap undoes it). `by` says who did it.
+export const unlistFromMap = async (env, c, by = "unpublished") => c.event_id ? takeOffMap(env.DB, c.event_id, by) : null;
 
 export async function countyFor(env, city) {
   const [lat, lng] = CITY[city];
@@ -152,12 +194,14 @@ export async function judgeOf(env, c, user) {
 // Removes a contest and everything that belongs to it: entries and their photos, votes, judges and their picks, sponsors and logos,
 // co-organizers, visit counts, quote requests, the change log and the listing on the map. Used by the admin Contests tab.
 export async function deleteContest(env, c) {
-  const all = (sql) => env.DB.prepare(sql).bind(c.id).all().then((r) => r.results).catch(() => []);
-  for (const e of await all("SELECT photos FROM posts WHERE contest_id = ?")) for (const k of JSON.parse(e.photos || "[]")) await env.PHOTOS.delete(k).catch(() => {});
-  for (const x of await all("SELECT logo FROM contest_sponsors WHERE contest_id = ?")) if (x.logo) await env.PHOTOS.delete(x.logo).catch(() => {});
-  const stmts = ["votes", "judge_picks", "judge_scores", "judge_conflicts", "judges", "contest_staff", "contest_hits", "contest_sponsors", "contest_leads", "contest_changes"]
+  const all = (sql) => env.DB.prepare(sql).bind(c.id).all().then((r) => r.results).catch((e) => { logOp(env, "contest", "delete: lookup failed: " + (e && e.message)); return []; });
+  const entries = await all("SELECT id, photos FROM posts WHERE contest_id = ?");
+  await r2Delete(env, [...photoKeys(entries), ...(await all("SELECT logo, receipt FROM contest_sponsors WHERE contest_id = ?")).flatMap((x) => [x.logo, x.receipt])], "contest photos"); // R2 delete takes a list: one call per 1000 files
+  const stmts = ["votes", "judge_picks", "judge_scores", "judge_conflicts", "judges", "contest_staff", "contest_hits", "contest_sponsors", "contest_leads", "contest_changes", "home_consents"]
     .map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE contest_id = ?`).bind(c.id));
   stmts.push(env.DB.prepare("DELETE FROM posts WHERE contest_id = ?").bind(c.id), env.DB.prepare("DELETE FROM contests WHERE id = ?").bind(c.id));
+  // Paid placements on the contest's map event and on its podium homes go with the rows: flag them refund due first, in the same batch.
+  stmts.unshift(...contestDeletedStatements(env.DB, c.event_id, entries.map((r) => r.id)));
   if (c.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id));
   await env.DB.batch(stmts);
 }

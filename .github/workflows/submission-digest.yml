@@ -8,6 +8,10 @@ on:
     - cron: "0 3,15,21 * * *"
   workflow_dispatch:
 
+permissions:
+  issues: write
+  actions: write   # only so the stale-job check can start a late nightly backup
+
 jobs:
   digest:
     runs-on: ubuntu-latest
@@ -18,5 +22,45 @@ jobs:
         run: |
           if [ -z "$ALERT_CRON_KEY" ]; then echo "ALERT_CRON_KEY is not set in the repository secrets"; exit 1; fi
           out=$(curl -sS -X POST https://socal-lights.pages.dev/api/admin-digest -H "x-alert-key: $ALERT_CRON_KEY")
-          echo "$out" | head -c 400
-          echo "$out" | grep -q '"new"' || exit 1
+          echo "$out" | head -c 400; echo
+          # A run is green only when the email was really sent ("sent":false means Resend refused it)
+          echo "$out" | grep -q '"sent":true' || { echo "::error::The digest was not sent (the site answered, but the email failed)"; exit 1; }
+      - uses: actions/checkout@v4
+        if: always()
+        with:
+          sparse-checkout: .github/scripts
+      - name: Also run the Cloudflare usage check (the 30-minute workflow can be late; this keeps the usage issue current)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash .github/scripts/usage-issue.sh
+      - name: Check that the scheduled jobs are reporting in (opens or closes the issue "Scheduled job stopped reporting"; starts a late backup)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash .github/scripts/stale-issue.sh
+      - name: Open an issue if the digest could not be sent
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          T="Admin digest failed"
+          N=$(gh issue list --state open --search "\"$T\" in:title" --json number -q '.[0].number' || true)
+          [ -n "$N" ] || gh issue create --title "$T" --body "The three-a-day admin digest did not send: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}. Check RESEND_API_KEY and ALERT_CRON_KEY. Close this when it works again."
+      - name: Report to the heartbeat (dead-man's switch; see docs/runbooks/monitoring.md)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          [ -n "$ALERT_CRON_KEY" ] || exit 0
+          s=ok; [ "$JOB_STATUS" = success ] || s=fail
+          curl -sS -m 20 --retry 2 -X POST "https://socal-lights.pages.dev/api/heartbeat?job=digest&status=$s" -H "x-alert-key: $ALERT_CRON_KEY" -o /dev/null -w "heartbeat: HTTP %{http_code}\n"

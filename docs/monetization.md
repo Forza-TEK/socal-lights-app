@@ -16,12 +16,12 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
 - To get started: apply to Amazon Associates (needs 3 qualifying sales in 180 days to stay active) and to ticket programs such as Eventbrite, Ticketmaster (via Impact), Groupon (via Impact). Each has its own approval.
 
 ## 3. Feature your event
-**Automatic (Stripe):** see `docs/stripe-setup.md`. Once the two Stripe secrets are set, visitors pick their event and pay on `/feature`, and the placement turns on by itself. The notes below describe the manual Cash App fallback that is used until then.
+**Automatic (Stripe):** see `docs/stripe-setup.md`. Once the two Stripe secrets are set, visitors pick their event and pay on `/feature`, and the placement turns on by itself. The manual SQL below is only for comping a placement by hand.
 
-- Page: `/feature` (plans: Featured pin $5 / 30 days, Top of the list $10 / 30 days, Whole season $15). Edit the copy and prices in `public/feature.html`
-  (and the matching `NAMES` in its script).
-- Payment: Cash App links in `featurePay.pin|top|season` (`https://cash.app/$RelaxationMeditation/5`, `/10`, `/15`). The customer puts their event name in
-  the Cash App note, then emails the event link to `contactEmail` (info@socallights.app). Clear a value to fall back to an email button.
+- Page: `/feature` (plans: Featured pin $10, Top of the list $15 (each from payment to the event's last day, up to 30 days), Full run $25 (events of 31+ days, up to 90 days); raised from $5 / $10 / $15 on 2026-11-04; Whole season $20 became Full run $25 on 2026-11-06). Prices are defined only in `functions/_lib/featured.js`
+  (`PLANS`) and reach the pages through `/api/config`; the HTML holds wording only. Linked from the ⋯ menu as "Promote your event" (hidden in the store apps).
+- Payment: Stripe only. The Cash App payment links (`featurePay`) were removed; if Stripe isn't switched on, `/feature` shows an email-us message to `contactEmail`.
+  Refunds and disputes switch the placement off automatically (see `docs/stripe-setup.md`).
 - Database: migration `0062_featured_events.sql` adds `featured` (0/1) and `featured_until` (YYYY-MM-DD, optional) to `events`.
   Featured events get a gold "Featured" badge, sort to the top of the list, and show a bigger gold-ringed pin. The API exposes it as `f`.
 - To turn a placement on after payment, add a new migration (never edit an old one):
@@ -29,9 +29,19 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
   ```sql
   UPDATE events SET featured=1, featured_until='2026-12-15', updated_at=datetime('now') WHERE id='the-event-id';
   ```
-  Placement ends by itself after `featured_until`. Scheduled upkeep and sweep upserts never touch these two columns.
+  Placement ends by itself after `featured_until`: there is no scheduled job. Every time the event list is built, `featuredLevel()` in `functions/_lib/util.js` reports 0 once `featured_until` is before today (Pacific date, the same one used when a plan is bought, so a 30-day plan lasts through the end of its last day). The database row keeps `featured=1/2` afterwards and is simply ignored (the admin CSV export still says "yes" for an expired placement). Scheduled upkeep and sweep upserts never touch these two columns.
+- Admin > Orders (`/api/admin/orders`) is the owner's view of every Featured order, with refunds still to make, disputes, partial refunds, unapplied payments and
+  amount mismatches first, and `refund_due` set when a paid submission is declined. See `docs/stripe-setup.md`. Full run (plan key `season`): events of 31+ days with 7+ days left. Featuring opens 30 days before the event. Copy
+  promises "listed first when people browse your area" and activation "within a few minutes" (the event list is cached up to about 3 minutes).
+- Claims: auto-approval needs the person's own business domain (not free-mail, not a bare shared suffix such as `ca.gov`, `gov`, `edu`, `k12.ca.us`) to match the
+  event's own site, which must not be an aggregator or shared host (lists in `functions/_lib/contests.js` and `functions/api/me/claims.js`). Remaining gap:
+  anyone at a real institution domain (for example `@pasadena.gov`) still auto-approves for every event linked on that domain.
 - Featured must stay honest: the event still has to be real, public and verified, and the badge is always shown.
-- History: built 2026-10-28, removed briefly the same day, then restored with Cash App payments and $5/$10/$15 pricing.
+- History: built 2026-10-28, removed briefly the same day, then restored with Cash App payments; Cash App links replaced by Stripe-only checkout 2026-11-04.
+
+### Who can pay (ownership) and claims
+Paying needs a signed-in account, and only the event's owner may pay; the checkout API enforces it (403 "Claim this event first"). Owner means: (a) they submitted it (normalized `contact_email` matches their account), (b) they hold an **approved claim** (`event_claims`), or (c) it is the map row of a contest they own or staff. The receipt goes to the account email and the order stores `user_id`.
+Swept events have no owner, so `/feature` offers **Claim this event** (`POST /api/me/claims`). It is approved automatically when the person's email is on a non-free, non-disposable domain that equals or is a parent of the event website's host and that host is not an aggregator/social/ticketing site (deny list `AGGREGATORS` in `functions/api/me/claims.js`). Otherwise it waits in the admin **Event claims** tab. Limits: 5 pending, 10 per day per person. **A claim gives no edit rights; it only lets the person buy Featured for that event.**
 
 ## 4. Add your event (free, public)
 `/add-event` lets organizers add events themselves; page-verified events publish automatically, others go to the admin "Submitted events" tab. Details in `docs/stripe-setup.md`.

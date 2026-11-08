@@ -5,23 +5,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Create a contest · SoCal Lights</title>
+<meta name="description" content="Start a neighborhood lighting contest: your first contest is free, it takes about three minutes, and you get a link and QR code to share.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102i">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
 <link rel="stylesheet" href="/printables.css?v=20261105d">
-<script src="/hit.js" defer></script>
+<script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
-import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt } from "/addflow.js?v=20261103a";
-import { me, signIn } from "/auth.js?v=20261101a";
-import { rulesDefault } from "/rules.js";
-import { printable } from "/printables.js?v=20261105c";
-import { CITY } from "/cities.js";
+import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt, pvCard, nlCheck, nlSave } from "/addflow.js?v=20261111a";
+import { me, signIn } from "/auth.js?v=20261107p";
+import { rulesDefault } from "/rules.js?v=20261107a";
+import { printable } from "/printables.js?v=20261107a";
+import { CITY } from "/cities.js?v=20261107a";
 import { defaultSeason } from "/seasons.js?v=20261104a";
+import { pickerHtml, beacon, niceDate } from "/contest-passes.js?v=20261108a";
 const FREE = new Set(["gmail.com","googlemail.com","hotmail.com","outlook.com","live.com","msn.com","yahoo.com","icloud.com","me.com","aol.com","proton.me","protonmail.com"]);
 const DEF = ["Best Overall", "Most Creative", "Best Lights & Music", "Best Traditional"], cities = Object.keys(CITY).sort();
 const dflt = () => { let y = new Date().getFullYear(); if (today > y + "-12-10") y++; return { closes: y + "-12-10", vs: y + "-12-11", ve: y + "-12-20" }; };
@@ -29,9 +31,9 @@ const d = { name: "Holiday Home Lighting Contest " + dflt().closes.slice(0, 4), 
 let cur = (await me()).user ? await me() : { user: null };
 // A contest belongs to the account that creates it, so sign in before anything else
 if (!cur.user) {
-  document.getElementById("app").innerHTML = `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
-    <div class="main"><h1>Sign in to create a contest</h1><p class="help">Your contest is saved to your account, and only you (and the site owner) can change it. Sign in with Google or an emailed code. It takes a few seconds.</p>
-    <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></div>`;
+  document.getElementById("app").innerHTML = `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+    <main class="main"><h1>Sign in to create a contest</h1><p class="help">Your contest is saved to your account, and only you (and the site owner) can change it. Sign in with Google or an emailed code. It takes a few seconds.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></main>`;
   await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to create a contest", next: location.pathname })) go(); }; });
   location.reload(); await new Promise(() => {});
 }
@@ -44,8 +46,32 @@ const kinds = () => (d.mode === "judges" ? [["judge", "Judges' Choice"]] : d.mod
 const slots = () => d.on.flatMap((c) => kinds().map(([k, l]) => ({ key: c + "|" + k, label: c + (kinds().length > 1 ? " · " + l : "") })));
 const catTiles = () => d.cats.map((c) => `<button type="button" class="tile sm" data-a="cat:${esc(c)}" aria-pressed="${d.on.includes(c)}"><b>${esc(c)}</b></button>`).join("");
 
+// ---- Contest passes: your first contest in a 12-month window is free; more need a pass. The form is kept (localStorage) across sign-in and Stripe, and the contest is created by itself after payment. ----
+const CFG = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+const passBox = () => document.getElementById("pass-box");
+function showPicker(v) {
+  const box = passBox(); if (!box) return;
+  box.innerHTML = pickerHtml(v, CFG); beacon("fn:pass-picker-shown"); box.scrollIntoView({ block: "center", behavior: "smooth" });
+  box.querySelectorAll("[data-pass]").forEach((b) => (b.onclick = async () => {
+    beacon("fn:pass-choose"); b.disabled = true; b.textContent = "Opening payment…";
+    const r = await fetch("/api/contest-pass/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: b.dataset.pass, site: d.site, back: "wizard" }) }), j = await r.json().catch(() => ({}));
+    if (r.ok && j.url) { location.href = j.url; return; }
+    b.disabled = false; b.textContent = "Choose"; api.err(j.error || "The payment page couldn't be opened. Please try again.");
+  }));
+  box.querySelectorAll("[data-pass-contact]").forEach((a) => (a.onclick = () => { fetch("/api/contest-pass/contact", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: d.site }) }).catch(() => {}); }));
+}
+async function entitlement() { const r = await fetch("/api/contest-pass/entitlement?site=" + encodeURIComponent(d.site || ""), { cache: "no-store" }); return r.ok ? r.json() : null; }
+// The review screen says where the organization stands in its window (or the founding-partner line), before anything is paid.
+async function reviewNote() {
+  const box = passBox(); if (!box || box.dataset.shown) return; box.dataset.shown = "1";
+  const v = await entitlement().catch(() => null); if (!v || !passBox() || passBox().innerHTML) return;
+  if (v.comp && v.canCreate) passBox().innerHTML = pickerHtml(v, CFG);
+  else if (v.active && v.canCreate) passBox().innerHTML = `<p class="note">This is contest ${v.used + 1} of ${v.unlimited ? "your unlimited allowance" : v.cap} in your 12-month window (${niceDate(v.windowStart)} to ${niceDate(v.windowEnd)}).</p>`;
+  else if (v.active) showPicker(v);
+  else passBox().innerHTML = `<p class="note">Your first contest in a 12-month window is free.</p>`;
+}
 const steps = [
-  { id: "name", sec: "Basics", title: "What's your contest called?", help: "This is the title everyone sees.", body: (x) => input(x, "name", { max: 90 }), check: (x) => (x.name.trim().length < 4 ? "Give your contest a name (at least 4 letters)." : "") },
+  { id: "name", sec: "Basics", title: "What's your contest called?", help: "This is the title everyone sees.", body: (x) => input(x, "name", { max: 90, aria: "Contest name" }), check: (x) => (x.name.trim().length < 4 ? "Give your contest a name (at least 4 letters)." : "") },
   { id: "org", sec: "Basics", title: "Who is running it, and where?", help: "A city, school, neighborhood group, HOA, club or business, and the city the homes are in.",
     body: (x) => `${input(x, "org", { label: "Who is running it?", ph: "e.g. Mission Viejo Activities Committee", max: 80 })}${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city" })}`,
     check: (x) => (x.org.trim().length < 3 ? "Tell us who is running it." : !x.city ? "Choose the city where the homes are." : "") },
@@ -75,14 +101,17 @@ const steps = [
   { id: "rules", sec: "Rules", title: "Official rules", help: "We drafted these for you. Edit anything. People accept them before they enter. If you offer a prize, have a lawyer read them.",
     body: (x) => { if (!x.rules) x.rules = rulesDefault(rulesArgs()); return `<div class="field"><label for="f-rules">Rules</label><textarea class="in" id="f-rules" data-k="rules" maxlength="4000" rows="14" style="min-height:300px">${esc(x.rules)}</textarea></div>`; }, check: (x) => (x.rules.trim().length < 40 ? "Add your rules." : "") },
   { id: "review", sec: "Review", title: "Review your contest", help: "Check everything, then create it. You can change any of this later.", cta: "Create contest", redraw: false,
-    body: (x) => `<div class="sum">${sumRow("Contest", esc(x.name), "name")}${sumRow("Run by", `${esc(x.org)}, ${esc(x.city)}`, "org")}${sumRow("Entries", "Now to " + fmt(x.closes), "dates")}${sumRow("Voting", fmt(x.vs) + " to " + fmt(x.ve), "dates")}${sumRow("Categories", x.on.map(esc).join(", "), "cats")}${sumRow("Who votes", x.mode === "public" ? "Everyone" : x.mode === "judges" ? "Judges only (" + parseJudges(x.judges).length + " invited)" : "Everyone and judges (" + parseJudges(x.judges).length + " invited)", "mode")}${x.mode !== "public" ? sumRow("Judges vote", x.method === "score" ? "Score every home 1 to 10" : "Pick a favorite in each category", "method") : ""}${sumRow("Prize", x.prizeMode === "each" ? "A different prize for each award (" + slots().filter((s) => (x.prizes[s.key] || "").trim()).length + " set)" : x.prizeMode === "one" && x.prize.trim() ? esc(x.prize.trim()) : "No prize", "prize")}${sumRow("New entries", x.approval === "manual" ? "You review each one" : "Published right away", "approval")}${x.mode !== "judges" ? sumRow("Vote counts", x.counts === "yes" ? "Visible while voting" : "Hidden until winners", "counts") : ""}${sumRow("Wins", x.oneWin === "yes" ? "One win per home" : "A home can win several categories", "fair")}${sumRow("Rules", "Written. Edit if you like", "rules")}</div><p class="note" id="trust">${trustNow() ? TRUST[trustNow()] : "If you sign in with an email at your organization's website, your contest goes live right away. Otherwise a person checks it first, usually within a day. Either way your link and QR code work immediately."}</p>`,
+    body: (x) => `<div class="sum">${sumRow("Contest", esc(x.name), "name")}${sumRow("Run by", `${esc(x.org)}, ${esc(x.city)}`, "org")}${sumRow("Entries", "Now to " + fmt(x.closes), "dates")}${sumRow("Voting", fmt(x.vs) + " to " + fmt(x.ve), "dates")}${sumRow("Categories", x.on.map(esc).join(", "), "cats")}${sumRow("Who votes", x.mode === "public" ? "Everyone" : x.mode === "judges" ? "Judges only (" + parseJudges(x.judges).length + " invited)" : "Everyone and judges (" + parseJudges(x.judges).length + " invited)", "mode")}${x.mode !== "public" ? sumRow("Judges vote", x.method === "score" ? "Score every home 1 to 10" : "Pick a favorite in each category", "method") : ""}${sumRow("Prize", x.prizeMode === "each" ? "A different prize for each award (" + slots().filter((s) => (x.prizes[s.key] || "").trim()).length + " set)" : x.prizeMode === "one" && x.prize.trim() ? esc(x.prize.trim()) : "No prize", "prize")}${sumRow("New entries", x.approval === "manual" ? "You review each one" : "Published right away", "approval")}${x.mode !== "judges" ? sumRow("Vote counts", x.counts === "yes" ? "Visible while voting" : "Hidden until winners", "counts") : ""}${sumRow("Wins", x.oneWin === "yes" ? "One win per home" : "A home can win several categories", "fair")}${sumRow("Rules", "Written. Edit if you like", "rules")}</div><p class="note" id="trust">${trustNow() ? TRUST[trustNow()] : "If you sign in with an email at your organization's website, your contest goes live right away. Otherwise a person checks it first, usually within a day. Either way your link and QR code work immediately."}</p><div id="pass-box" aria-live="polite"></div>${cur.user ? nlCheck(x) : ""}`,
     submit: async (x, api) => {
       if (!cur.user) { const u = await signIn({ title: "Sign in to create your contest", next: "/add-contest?resume=1" }); if (!u) throw new Error("Sign in to create your contest."); cur = await me(true); }
       const r = await fetch("/api/contests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: x.name, org: x.org, city: x.city, descr: x.descr, site: x.site, closes: x.closes, vs: x.vs, ve: x.ve, cats: x.on, rule: "cat", approval: x.approval, showCounts: x.counts === "yes", oneWin: x.oneWin === "yes", rules: x.rules, mode: x.mode, judgeMethod: x.method, judges: parseJudges(x.judges), prizeMode: x.prizeMode, prize: x.prize, prizes: x.prizes, sponsor: x.sponsor }) });
-      const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Couldn't create the contest. Please try again.");
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 402 && j.code === "pass_required") { showPicker(j); throw new Error(j.error); } // the pass picker, not a silent failure; the form stays as it is
+      if (!r.ok) throw new Error(j.error || "Couldn't create the contest. Please try again.");
+      await nlSave(x, "host", "add-contest");
       const live = j.status === "live", url = location.origin + "/c/" + j.slug, short = url.replace(/^https?:\/\//, "");
       let qr = ""; try { const q = qrcode(0, "M"); q.addData(url + "?src=qr"); q.make(); qr = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); } catch {}
-      api.finish(`<h1>${live ? "Your contest is live" : "Your contest is almost ready"}</h1><p class="help">${live ? "It's on the map and in the list. Share the link or print the poster and neighbors can start entering." : "A person will check it, usually within a day. Your link and QR code already work, so you can start on flyers. It won't be on the map and entries stay paused until it's approved."}</p>
+      api.finish(`<h1>${live ? "Your contest is live" : "Your contest is almost ready"}</h1><p class="help">${live ? "It's on the map and in the list. Share the link or print the poster and neighbors can start entering." : "We will review your contest, usually within a day, and email you when it is approved. Your link and QR code already work, so you can start on flyers. It won't be on the map and entries stay paused until it's approved."}</p>
         <div class="copy"><span>${esc(short)}</span><button class="btn out sm" type="button" data-copy="${esc(url)}">Copy link</button></div><div class="pzprev one">${printable({ kind: "poster", season: defaultSeason(x.closes), name: x.name, org: x.org, city: x.city, qr, url: short, entriesClose: x.closes, voteStart: x.vs, voteEnd: x.ve })}</div><p class="muted small" style="margin:0">Print the poster and a "VOTE!" yard sign from your dashboard.</p>
         <div><h2 style="margin-bottom:6px">What happens next</h2><div class="list"><div><b style="font-weight:500">Share the link or print the poster.</b><br><span class="muted">Put it on flyers, your website, Facebook or the city newsletter.</span></div><div><b style="font-weight:500">Neighbors enter their homes.</b><br><span class="muted">${x.approval === "manual" ? "You review each entry on your dashboard before it goes on the map." : "Entries appear on the map right away."}</span></div><div><b style="font-weight:500">The community votes ${fmt(x.vs)} to ${fmt(x.ve)}.</b><br><span class="muted">You announce the winners from your dashboard.</span></div></div></div>
         <div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/c/${esc(j.slug)}/manage">Open my dashboard</a><a class="btn out" href="/c/${esc(j.slug)}">See the contest page</a></div>`);
@@ -95,7 +124,8 @@ const steps = [
     body: (x) => `<div class="tiles">${tile(x, "quick", "yes", "Quick start (recommended)", "Public voting, four categories, you approve each entry, and we draft the official rules. About a minute.")}${tile(x, "quick", "no", "Customize everything", "Judges, prizes, categories, vote counts and your own rules.")}</div>` });
   for (const st of steps) if (["cats", "mode", "judges", "method", "approval", "counts", "fair", "prize", "rules"].includes(st.id)) { const old = st.skip; st.skip = (x) => x.quick === "yes" || (old ? old(x) : false); }
 }
-const api = run({ steps, data: d, persist: "scl-contest-draft", account: { kind: "contest", title: (x) => x.name }, noPersist: ["newcat"], season: (x) => defaultSeason(x.closes), exit: "/add",
+const preview = (x) => pvCard({ title: x.name, ph: "Your contest name", when: "Contest", lines: [{ t: [x.org, x.city].filter(Boolean).join(" \u00b7 ") || "Organizer and city", e: !x.org && !x.city }, { t: "Entries open until " + (x.closes ? fmt(x.closes) : "\u2026"), e: !x.closes }, { t: "Voting " + (x.vs ? fmt(x.vs) : "\u2026") + (x.ve ? " to " + fmt(x.ve) : ""), e: !x.vs }], tags: [x.mode === "judges" ? "Judged" : x.mode === "both" ? "Public vote and judges" : "Public vote"] });
+const api = run({ preview, steps, data: d, persist: "scl-contest-draft", account: { kind: "contest", title: (x) => x.name }, noPersist: ["newcat", "nl"], after: (s) => { if (s.id === "review") reviewNote(); }, season: (x) => defaultSeason(x.closes), exit: "/add",
   onInput: (k, x) => { if (k === "closes") { if (x.vs <= x.closes) x.vs = addDays(x.closes, 1); if (x.ve <= x.vs) x.ve = addDays(x.vs, 9); for (const f of ["vs", "ve"]) { const el = document.getElementById("f-" + f); if (el) el.value = x[f]; } } },
   actions: {
     typical(_, a) { Object.assign(d, dflt()); a.draw(); },
@@ -103,8 +133,23 @@ const api = run({ steps, data: d, persist: "scl-contest-draft", account: { kind:
     addcat(_, a) { const v = d.newcat.trim().slice(0, 30); if (v && !d.cats.includes(v)) { d.cats.push(v); d.on.push(v); } d.newcat = ""; a.draw(); },
   } });
 document.addEventListener("input", (e) => { const t = e.target; if (t.matches && t.matches("[data-prize]")) d.prizes[t.dataset.prize] = t.value; });
-api.ready.then(() => { if (new URLSearchParams(location.search).get("resume")) api.goto("review"); });
+api.ready.then(async () => {
+  const q = new URLSearchParams(location.search);
+  if (q.get("resume")) api.goto("review");
+  const back = q.get("pass");
+  if (back === "cancelled") { api.err("Payment cancelled. Nothing was charged and your contest details are saved. Tap Create contest to try again."); return; }
+  if (back !== "paid") return;
+  // Back from Stripe: the payment reaches us by webhook a moment later. Wait for the pass to show, then create the contest with the details kept in this browser.
+  history.replaceState(null, "", "/add-contest?resume=1");
+  const box = passBox(); if (box) box.innerHTML = `<p class="note" role="status">Payment received. Setting up your pass and creating your contest…</p>`;
+  for (let i = 0; i < 20; i++) {
+    const v = await entitlement().catch(() => null);
+    if (v && v.canCreate) { api.next(); return; }
+    await new Promise((go) => setTimeout(go, 1500));
+  }
+  if (passBox()) passBox().innerHTML = `<p class="note" role="status">Your payment is still being confirmed. Wait a minute, then tap Create contest. You will not be charged again.</p>`;
+});
 </script>
-<script src="/footer.js?v=20261105a" defer></script>
+<script src="/footer.js?v=20261110b" defer></script>
 </body>
 </html>

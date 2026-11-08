@@ -6,29 +6,31 @@
 <title>Privacy Policy · SoCal Lights</title>
 <meta name="description" content="How SoCal Lights handles your information.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102i">
-<link rel="stylesheet" href="/info.css?v=20261031t">
-<script src="/hit.js" defer></script>
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/info.css?v=20261110y">
+<script src="/hit.js?v=20261107a" defer></script>
 </head>
-<body>
-<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
-<main>
+<body class="wide">
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<main id="content">
 <h1>Privacy Policy</h1>
-<p class="meta">SoCal Lights (socallights.app), operated by Forza-TEK. Effective November 1, 2026.</p>
+<p class="meta">SoCal Lights (socallights.app), operated by Forza-TEK. Effective November 1, 2026. Updated November 8, 2026.</p>
+<p><b>New on November 8, 2026:</b> an optional AI assistant (a chat box) may be turned on. It sends what you type to Cloudflare, our hosting provider, so it can write an answer; we do not save the text. See <a href="#ai-assistant">AI assistant</a> below.</p>
 <p>SoCal Lights is a free map of Halloween, Christmas and other seasonal events and neighbor-decorated homes in Southern California. You do not need an account to browse the map or add an event; you only sign in to run, enter or vote in a home decorating contest. This page explains what information the website and the SoCal Lights apps handle, and what they do not.</p>
 
 <h2>What we do not do</h2>
 <ul>
 <li>We do not use passwords, and you never need an account to browse the map or add an event.</li>
-<li>We do not show ads.</li>
-<li>We do not sell your information or share it with advertisers or data brokers.</li>
-<li>We do not track you across other apps or websites.</li>
+<li>We do not sell your personal information to data brokers, and we do not use advertising cookies or ad networks.</li>
+<li>A thin banner on the map, labelled "Sponsor", shows installers whose service area is in view. We count how many times each one is shown and tapped, as daily totals only. Nothing about you is recorded or shared with the installer.</li>
+<li>We do show some paid and commissioned placements. Events marked "Featured" are paid placements; sponsors and the presenting installer on a contest page are listed as sponsors; and Shop links to Amazon earn us a commission. They are labelled where they appear. The companies behind them do not receive your information from us unless you send them a quote request (see below).</li>
+<li>We do not build profiles of you or follow you across other apps or websites. The services listed under "Who receives your data" can see your connection details when your browser loads something from them.</li>
 </ul>
 
 <h2>Your location</h2>
-<p>If you tap the location button, or choose "My location" as the starting point for a route, your device may ask to share its location. Your location is used only on your device, to center the map and to estimate drive times. It is not sent to our servers or stored. You can decline, and everything still works. When you open a route, your maps app (Google Maps or Apple Maps) receives the destinations, under its own privacy policy.</p>
+<p>If you tap the location button, or choose "My location" as the starting point for a route, your device may ask to share its location. Your location is used on your device to center the map and to estimate drive times, and is not sent to our servers for that. The one exception is the "I saw it lit tonight" button on a home: when you tap it, your device's position is sent to our server once, only to check whether you are within about a quarter mile of that home. We do not store the position; we keep only a yes or no for "near", with the one-way fingerprint described under "Spam protection and technical data". You can decline to share your location, and everything still works (the report just does not count as seen on site). When you open a route, your maps app (Google Maps or Apple Maps) receives the destinations, under its own privacy policy.</p>
 
 <h2>Information you choose to submit</h2>
 <p>If you use <b>Add an event</b> or <b>Showcase a house</b>, we receive what you type in the form:</p>
@@ -39,7 +41,15 @@
 <p>The event or home details, including the street address and photos, are shown publicly on the map. Your email address is private and is used only to contact you if something needs fixing. We store submissions and photos with Cloudflare. To ask for your event or house to be edited or removed, email <a href="mailto:info@socallights.app">info@socallights.app</a>.</p>
 
 <h2>Weekly lights email</h2>
-<p>If you sign up for the weekly email, we store your email address, the city and distance you chose, and the date we last emailed you, only to send that email. We send a confirmation link first and nothing else is sent until you tap it. Each email has a link that deletes your address immediately. We do not sell or share these addresses; the emails are sent through our email provider, Resend.</p>
+<p>If you sign up for the weekly email, we store your email address, the city and distance you chose, and the date we last emailed you, only to send that email. We send a confirmation link first and nothing else is sent until you tap it. We also keep the approximate coordinates of that city and a private link code for your unsubscribe link. Each email has a link that deletes your address immediately. We do not sell or share these addresses; the emails are sent through our email provider, Resend. Reminder, invitation and result emails about contests have their own unsubscribe link, which stops those emails but not the weekly email (and the other way round). Those emails also carry our postal address.</p>
+<p>You can also sign up for the weekly email from the city and event pages, where a small box asks for just your email address. It works exactly as described above: we send a confirmation link first, nothing else is sent until you tap it, and every email has a one-tap unsubscribe link that deletes your address.</p>
+
+<h2>Monthly update (optional)</h2>
+<p>If you tick "Email me a monthly update with seasonal recommendations", in your profile or on the last step of adding an event, home or contest, we store your email address, the role you chose (installer, event or contest host, or family), the topics you picked, when and where you agreed, and which wording you saw. The box is never ticked for you, and having an account or a listing does not sign you up. You can change your role and topics or unsubscribe from your profile or from the preferences link in each email, without signing in; every email also has a one-click unsubscribe. Sponsored or affiliate content in the update will be identified as such. If you unsubscribe, we keep the record for 12 months as proof, and your address goes on the do-not-contact list described below.</p>
+
+<h2>Contacting businesses and organizations, and opt-outs</h2>
+<p>We may email businesses and organizations (for example lighting installers, contest organizers and seasonal-event hosts) at addresses published on their own websites or other public sources, to tell them about SoCal Lights. Those emails are sent from our own mailbox, identify us and include a way to opt out. We do not buy lists. Before each message our outreach tool asks the app whether the address belongs to someone who already has an account or a listing, has opted out, or is on the do-not-contact list, and it receives only a status word back, never any of your details. For a business address, our tool may also ask Cloudflare's public DNS service (cloudflare-dns.com) whether the address's domain name (the part after the @, never the rest of the address) can receive mail; Cloudflare sees that domain name, and we keep the answer for 24 hours.</p>
+<p>To honor opt-outs, we keep a do-not-contact list that stores only a one-way hash (a scrambled code) of an email address, with the reason (for example a reply, unsubscribe, bounce or complaint), where it came from, and the date. It does not store the address itself, so it cannot be turned back into the address. An address goes on it when someone asks us to stop, unsubscribes from any SoCal Lights marketing email, or deletes their account. We also keep hashed counts of our outreach messages and replies, to see whether outreach works, for 24 months. To be added or to ask us about this, email <a href="mailto:info@socallights.app">info@socallights.app</a>.</p>
 
 <h2>Accounts, contests and voting</h2>
 <p>Creating a home decorating contest, entering a home in one, or voting in one requires signing in. You can sign in with Google or with a one-time code that we email to you. We never ask you to create a password.</p>
@@ -47,41 +57,100 @@
 <li><b>What we keep:</b> your email address, your name if Google shares it, and your sign-in sessions. If you use Google, we receive only your email address and name; we do not receive your Google password and do not read any other Google data.</li>
 <li><b>Sign-in cookie:</b> a cookie keeps you signed in on your device for up to 30 days. Signing out removes it.</li>
 <li><b>Contest organizers</b> can see the name, email address, street address and photos of people who enter their contest, so they can run it.</li>
+<li><b>Homes added by an organizer:</b> a contest organizer may add homes on residents' behalf, using addresses the residents gave the organizer, and must confirm that those residents agreed to have their address shown on the public map. We keep a record of that confirmation (the organizer, the date, the contest, how many homes and the exact wording they confirmed). The map then shows the address like any other entry, and an organizer-added entry is not linked to any account. See also "Homes listed by our team or by contest organizers" below.</li>
 <li><b>Votes</b> are stored with your account so that each person can vote once. They are not shown publicly with your name. To catch cheating, a contest's organizers (and their co-organizers) can review each vote with the voter's email address, and can void a vote that looks fake.</li>
 <li><b>Contest emails:</b> if you enter or vote, we may email you when your entry is approved or declined, when voting opens and closes, and when winners are announced. Co-organizers a contest owner adds can see the same organizer information.</li>
-<li><b>Quote requests:</b> some contests name a presenting installer. If you ask for a quote and tick the box, we send your name, email and any phone number or note you typed to that installer and to the contest organizer, and keep a copy for the organizer. Nothing is shared unless you ask.</li>
+<li><b>Quote requests:</b> this is optional and separate from entering or voting. Some contests name a presenting installer, and installers have profile pages. If you tick the box on a quote form, we send the details you typed (your name, your sign-in email address, your phone number if you entered one, and your note) to the installer named on the form, and on a contest page also to that contest's organizer. We keep a copy, which the contest organizer can see in their contest dashboard, or the installer in their profile dashboard when you asked from an installer's page. The installer and organizer use the details to respond to you and are responsible for what they do with them. We do not send quote details to anyone you did not name on the form, and nothing is sent unless you tick the box.</li>
 <li><b>Visit counts:</b> a contest page counts visits (and visits from its QR code) as totals only, with no personal information.</li>
-<li><b>Deleting your account:</b> open your profile, choose the Account tab and tap Delete my account. We delete your account, saved drafts, profile picture, contest entries and votes, close any contests you run, and remove your email from homes and events you posted. You can also email <a href="mailto:info@socallights.app">info@socallights.app</a> from the address you signed in with.</li>
+<li><b>Sponsors recorded by organizers:</b> an organizer may record a sponsor who paid them: the sponsor's company, contact name, website, phone, email, logo, an optional amount, how and when the organizer was paid, and an optional receipt or paid invoice. The contest page shows only the logo, name and website of a sponsor the organizer chose to show, with that sponsor's permission. The contact details, amount and receipt are visible only to that contest's organizers and co-organizers and to our staff, and the receipt file is stored privately, never in a public list. We keep them until 24 months after the contest's voting ends, or until the organizer removes the record or deletes their account, and then delete them. Sponsorship money goes to the organizer, not to us; we do not process or hold it. A sponsor can also fill in a form from an organizer's private invite link, with no account: we collect the same details, run the "I am human" check, keep a one-way scrambled code (not the address itself) of the connection for two days to limit abuse, and email the sponsor a short confirmation. Nothing from that form is shown on a page until the organizer approves it. The organizer may also give sponsors their own payment link or instructions; we show it on that private page and have not verified it.</li>
+<li><b>Deleting your account:</b> open your profile, choose the Account tab and tap Delete my account. We delete your account, sign-ins, saved drafts, profile picture, contest entries and votes, close any contests you run, and remove your email from homes and events you posted. We also remove your email, name and phone from judge invitations and judge ballots, co-organizer lists, edit histories, event claims, your weekly email signup and contact details on reports, and from our copy of quote requests you sent (the installer or organizer already has the email we sent them, and we cannot take that back). If you run an installer profile, we remove your email from it and delete the quote requests it received. A few things stay: order records for Featured placements (see "Payments on the website", with your account link removed), and the record that an address unsubscribed, so we do not email it again. A contest whose results were already announced keeps its results, with your home removed from them. You can also email <a href="mailto:info@socallights.app">info@socallights.app</a> from the address you signed in with.</li>
 <li><b>Optional profile details:</b> you can add a name, a home address and a profile picture to your profile. They are used only to fill in forms for you and to show your picture to you, and are never shown publicly. If you sign in with Google we save the picture Google provides until you upload your own.</li>
 </ul>
 
+<h2>Homes listed by our team or by contest organizers</h2>
+<p>Not every home on the map was added by the people who live there. Our team may list a home from a public source, for example a city, school or community holiday tour or contest page, and a contest organizer may add homes to their own contest. Such a listing can show the home's street address, a name if the public source gave one (for example a family name in the display's title), and sometimes a photo taken from the same public page or supplied by the organizer. We do not list a private home's address unless a public page or the organizer provided it.</p>
+<p><b>If you live at a listed home and want it removed,</b> use the "Not your listing? Remove my home" link on the listing, or the <a href="/remove-home">Remove my home</a> form, or email <a href="mailto:info@socallights.app">info@socallights.app</a>. You do not need an account. Tell us the address (or the listing id) and an email address where we can reach you. We reply to confirm we have the request, and once it is approved, normally within two business days, we delete the listing and any photos we hold and email you. Search engines and people who saved the page may keep a copy for a while, which we do not control. We use your email only to answer the request.</p>
+
 <h2>Spam protection and technical data</h2>
-<p>To see which pages are useful, we count page views: one number per page per day (for example, "the Tutorials page was opened 40 times today"). The count has no IP address, no cookie, no account and no way to tell who looked.</p>
-<p>Forms use Cloudflare Turnstile to tell people from bots. To limit abuse, we briefly record the network (IP) address of each submission, and of each sign-in code we send, and delete it within a day or two. Like any website, our hosting provider, Cloudflare, processes standard connection data such as IP address and browser type to deliver the site and keep it secure.</p>
+<p>To see which pages are useful, we count page views: one number per page per day (for example, "the Tutorials page was opened 40 times today"). The count has no IP address, no cookie, no account and no way to tell who looked. We also count taps on certain links and buttons, such as event ticket links, directions, shop links and the Promote your event button, as one total per day. These counts have no IP address, no cookie, no account and no way to tell who tapped.</p>
+<p>Forms use Cloudflare Turnstile to tell people from bots. To limit abuse, we briefly record the network (IP) address of each form submission, report or help message, and of each sign-in code we send. These records are deleted automatically within two days. Two other short-lived fingerprints (one-way scrambled values made from your connection, not the address itself) stop one person counting twice: one for the "I saw it lit tonight" button (kept 3 days) and one for "Was this helpful?" votes on help pages (cleared after 2 days). Like any website, our hosting provider, Cloudflare, processes standard connection data such as IP address and browser type to deliver the site and keep it secure.</p>
+
+<h2 id="ai-assistant">AI assistant</h2>
+<p>When it is turned on, a chat button labelled "AI assistant" appears on some pages. It is an automated program, not a person, and its answers can be wrong. Use the <a href="/pricing">Pricing</a> page, the <a href="/help">Help Center</a> and the <a href="/terms">Terms</a> for firm answers, or email <a href="mailto:info@socallights.app">info@socallights.app</a>.</p>
+<ul>
+<li><b>What is sent:</b> the question you type and the last few messages of that chat, together with public information from our own site that matches your question (help articles, tutorials, the Terms and this policy, the price list, upcoming events, and the names, dates and status of live contests; never votes, results, accounts or anyone's contact details). Nothing else about you is sent: no account, name, email address or location.</li>
+<li><b>Who receives it:</b> Cloudflare Workers AI, which acts as our service provider and writes the answer. According to Cloudflare, it does not keep the content of messages sent for a standard answer and does not use them to train its models. If we ever switch the assistant to Claude from Anthropic, the same text is sent to Anthropic instead; according to Anthropic it does not train its models on this kind of use by default and deletes the text from its systems within 30 days (longer only where safety or law requires). We do not use your chats to train any model.</li>
+<li><b>What we keep:</b> we do not save what you type or what the assistant answers, and we do not log your IP address for it. We keep only anonymous daily totals (how many chats and questions, how much text was processed, how many were refused or stopped). When our help pages have nothing on a question, we add one to a count under a general topic label chosen from a fixed list (for example "accounts" or "contest-setup"), so we know what help to write; the label does not contain your words. To limit abuse we use the "I am human" check once per visit, a short-lived cookie that only says you passed it (about 30 minutes, no name or account in it), and one-way scrambled codes of your connection (not the address itself) kept for two days to count how many questions one connection has asked. The conversation itself stays in your browser window and is gone when you close or reload the page.</li>
+<li><b>Please do not type personal information</b> (names, addresses, phone numbers, email addresses or card numbers). The assistant does not need it, will not look up information about people, and refuses questions that ask for it.</li>
+<li><b>Paying never changes an answer or a contest result.</b> The assistant explains how contests, entering and voting work by quoting our help pages and Terms. It does not interpret rules, settle disputes or predict results; it points to the Terms and our email address instead.</li>
+</ul>
 
 <h2>Information stored on your device</h2>
 <p>The site remembers a few choices on your device only: your saved places in My night, your day or night display choice, your preferred maps app, and whether you have hidden the My night tips. You can clear these by clearing the site's data in your browser.</p>
 
 <h2>Links to other sites and affiliate links</h2>
-<p>Event pages, ticket sellers, maps apps and Amazon are separate services with their own privacy policies. Some links in the Shop section are Amazon affiliate links: if you buy something, we may earn a small commission at no cost to you. Amazon, not SoCal Lights, receives any information from that visit.</p>
+<p>Event pages, ticket sellers, maps apps (Google Maps, Apple Maps, Waze), Google Calendar and Amazon are separate services with their own privacy policies. Some links in the Shop section are Amazon affiliate links: if you buy something, we may earn a small commission at no cost to you. Amazon, not SoCal Lights, receives any information from that visit.</p>
+
+<h2>Who receives your data</h2>
+<p>These are the companies and services that handle information on our behalf or that your browser contacts when you use the site. We do not sell your information to any of them.</p>
+<ul>
+<li><b>Cloudflare:</b> hosts the site, stores the database and photos, runs the Turnstile spam check, processes connection data (IP address, browser type), and, through Workers AI, writes the answers of the optional AI assistant from what you type into it (see "AI assistant").</li>
+<li><b>Anthropic:</b> only if we switch the AI assistant to Claude: it then receives what you type into the assistant instead of Cloudflare (see "AI assistant").</li>
+<li><b>Resend:</b> sends our emails, so it receives the recipient address and the email's contents.</li>
+<li><b>Stripe:</b> processes payments for Featured and Sponsor placements; you enter card details on Stripe's page, not ours. If you opt in to automatic renewal of a Sponsor placement, Stripe also keeps your card for the later charges; we store only Stripe's customer and payment-method ids, never the card number, and we ask Stripe to remove the card when you cancel or delete your account.</li>
+<li><b>Google:</b> sign-in, if you choose "Continue with Google"; and Google Fonts, which supplies the site's typeface (your browser asks Google for the font files, so Google sees your IP address and browser type).</li>
+<li><b>Geoapify:</b> address suggestions. When you type in an address box, the text you typed is sent from our server to Geoapify to suggest matches.</li>
+<li><b>U.S. Census Bureau geocoder and OpenStreetMap (Nominatim):</b> when you submit an event or home, its street address is sent from our server to one of these to find its map position.</li>
+<li><b>OpenFreeMap:</b> supplies the map tiles. Your browser fetches them directly, so it sees your IP address and the part of the map you view.</li>
+<li><b>Map software:</b> the open-source MapLibre library that draws the map is served from our own site, so loading it does not send your visit to another company.</li>
+<li><b>Event image hosts:</b> pictures on some event listings load directly from the event organizers' own websites, which see your IP address when a picture loads.</li>
+<li><b>YouTube (privacy-enhanced mode) and Vimeo:</b> only on the Tutorials page, if a video is embedded there.</li>
+<li><b>Amazon:</b> Shop links; only if you click one.</li>
+<li><b>Installers and contest organizers:</b> only the quote or contest details described above.</li>
+<li><b>Cash App:</b> only if you tap the optional tip button.</li>
+</ul>
+<p>Those companies may collect information about you under their own policies. We do not allow ad networks on our pages, and we cannot tell whether these services link what they see across different websites.</p>
+
+<h2>Do Not Track</h2>
+<p>Our site does not change what it does when your browser sends a "Do Not Track" signal. What we collect is described on this page: what you submit, your account details if you sign in, a brief record of your IP address for spam protection, anonymous daily totals of page views and taps, and, if you use the optional AI assistant, what you type into it (sent to produce an answer and not saved by us; see "AI assistant"). We do not use advertising or cross-site tracking cookies and do not build profiles of your browsing.</p>
+
+<h2>How long we keep information</h2>
+<ul>
+<li><b>Accounts:</b> until you delete yours. We do not delete inactive accounts automatically. A sign-in session lasts up to 30 days; a sign-in code lasts 10 minutes.</li>
+<li><b>AI assistant:</b> chat text is not saved. Anonymous daily totals are kept for 120 days. The scrambled connection codes used to limit questions are deleted after two days, and the 30-minute check cookie expires on its own.</li>
+<li><b>IP addresses and fingerprints:</b> as described above (two days, or three days for the "lit tonight" fingerprint).</li>
+<li><b>Events, homes and photos:</b> until they are removed or you ask us to remove them.</li>
+<li><b>Weekly email signup:</b> until you unsubscribe.</li>
+<li><b>Quote requests:</b> until you delete your account (your details are then removed from our copy), or the contest or installer profile that holds the copy is deleted.</li>
+<li><b>Sponsor records:</b> contact details, amounts, payment notes and receipts are deleted 24 months after the contest's voting ends, when the organizer removes the record, or when the organizer deletes their account.</li>
+<li><b>Order records:</b> financial records of Featured placements are kept as long as we need them for accounting, tax, refund and dispute purposes. They hold the event, plan, amount, your account email at the time, and Stripe's payment reference, and never card numbers.</li>
+<li><b>Removal requests and organizer confirmations:</b> a "Remove my home" request (the address or listing id, your email and note) is kept after it is handled as a record that we answered it. The record of an organizer's confirmation for homes they added is kept for as long as those homes are listed.</li>
+<li><b>Email limits:</b> to stop abuse we keep a one-way scrambled code (not the address itself) of recent sign-ups and quote requests for two days, to count how many emails one account, address or connection has asked us to send.</li>
+<li><b>Unsubscribe records:</b> the address and a private code, kept so that an address that opted out is not emailed again.</li>
+<li><b>Monthly update opt-in:</b> until you unsubscribe or delete your account; the record of an unsubscribe is deleted 12 months later.</li>
+<li><b>Do-not-contact list:</b> the one-way hash of an address, kept so that it is not contacted again; it holds no address, name or other detail. Hashed outreach counts are deleted after 24 months.</li>
+</ul>
 
 <h2>Payments on the website</h2>
-<p>On the website, event hosts can pay to feature an event. Payments are handled by Stripe, and we never see or store card details. Tips go through Cash App. Neither is offered in the store apps.</p>
+<p>On the website, event hosts can pay to feature an event. Payments are handled by Stripe, and we never see or store card details. If you buy a Featured placement we keep the order (the event, the plan, the amount, your account email and Stripe's payment reference) as a financial record, so we can handle refunds and disputes and meet accounting and tax needs; deleting your account removes the link between the order and your account but not the order itself. Card details are handled by Stripe and never reach us. The optional tip button opens a Cash App page, and Cash App handles that payment under its own policy. Neither payments nor tips are offered in the store apps.</p>
+<p>If you tell us an event is yours (a claim) so that you can feature it, we keep the claim (the event and your account email) until you delete your account, and we email you once when we approve or decline it. That is a service email, not marketing.</p>
 
 <h2>Children</h2>
 <p>SoCal Lights is a family-friendly guide but is not directed to children under 13, and we do not knowingly collect information from them.</p>
 
 <p>See also our <a href="/terms">Terms of Use</a>.</p>
 <h2>Changes</h2>
-<p>If we change this policy, we will update the date above.</p>
+<p>If we change this policy, we will update the "Updated" date at the top of this page. For a material change (for example a new kind of information collected or a new recipient), we will also say so at the top of this page and email people who have an account.</p>
 
 <h2>Contact</h2>
 <p>Questions or requests: <a href="mailto:info@socallights.app">info@socallights.app</a>.</p>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261103a";
-document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+import { mountShell } from "/appshell.js?v=20261110e";
+document.body.classList.add("sh-page");
+mountShell({ page: "legal", title: "Legal", items: [{ href: "/privacy", label: "Privacy Policy", icon: "file" }, { href: "/terms", label: "Terms of Use", icon: "file" }] });
 </script>
-<script src="/footer.js?v=20261105a" defer></script>
+<script src="/toc.js?v=20261110a" defer></script>
+<script src="/footer.js?v=20261110b" defer></script>
 </body>
 </html>

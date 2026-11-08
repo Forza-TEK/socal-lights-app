@@ -14,7 +14,7 @@ Most holiday home contests publish their entrant or winner map **after judging**
 | Hawthorne (LA) | Halloween and resident holiday contests | | cityofhawthorne.org blocks fetches |
 | Santa Maria (SB) | Christmas tour map | Dec 4 | |
 | Lompoc (SB) | City Christmas lights contest | winners map | 2025 winners collected |
-| Beaumont (Riverside) | Holiday lights contest, public GIS map | judging Dec 7-13 | |
+| Beaumont (Riverside) | Holiday lights contest, public GIS map | judging Dec 7-13, winners week of Dec 14; entry form not out as of 2026-11-04 | |
 | Menifee (Riverside) | Xtream Light Fight | | |
 | Chino Hills (SD) | Holiday lights contest | judging Dec 16 | |
 | Mission Viejo (OC) | MVAC Holiday Home Lighting Contest | tour starts Dec 11; winners PDF https://mvactivities.com/PDF/HomeLightingWinners.pdf (image PDF, read with pdftoppm) | add every winner and honorable mention |
@@ -25,3 +25,5 @@ Most holiday home contests publish their entrant or winner map **after judging**
 | Orange (OC) | OTPA Old Towne Holiday Decorating Contest | winners post around Dec | otpa.org/otpa-events/holiday-contest/; Halloween winners image already collected 2026-10-30 |
 | Costa Mesa (OC) | Holiday Lights Display Contest | entries about Dec 8 | city page blocks fetches |
 | Norwalk (LA) | Slay the Decor Holiday Competition (residential) | entries Nov 20-Dec 4, judging Dec 14; winners shared on city social media, addresses may be shared if they win | norwalkca.gov/government/commissions_and_advisory_bodies/community_promotion_commission/holiday_home_and_business_decor_contest.php |
+| Big Bear Lake (SB) | Festival of Lights holiday competition | registration deadline Nov 27, voting site with interactive map of displays launches Dec 1; prizes Jan 12 | bigbear.com/events/holiday-competition/ (checked 2026-11-04: no addresses yet) |
+| Temecula (Riverside) | Holiday Home Decorating Map | applications open in Nov | temeculaca.gov/holidays (checked 2026-11-04: map not up) |

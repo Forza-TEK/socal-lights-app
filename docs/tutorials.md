@@ -28,3 +28,6 @@ Add an entry to `public/tutorials.json` (`groups[].videos[]`, with `id`, `title`
 
 ## Merging in small batches
 Videos go live in small batches, each only after review (see `docs/tutorial-standard.md`). For a batch: `node scripts/tutorials/install.mjs <outDir> id id ...` copies each video, its thumbnail and its captions file (`.vtt`) into `public/tutorials/` and fills `url`, `poster`, `captions` and `length` in `tutorials.json`. Review copies kept by the recorder (`public/tutorials/_review/`) are git-ignored and never merged.
+
+## Keeping videos current
+After any visible UI change, list the affected videos in `docs/tutorial-updates.md` (what changed, re-record or leave). The first full list is dated 2026-11-06.

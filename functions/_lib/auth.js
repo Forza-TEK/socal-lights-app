@@ -1,6 +1,9 @@
 // Accounts: one account per verified email. People sign in with Google or an emailed one-time code; both prove
 // the same email, so both land on the same account. Sessions are a random cookie token (only its hash is stored).
 import { json, err, newId } from "./util.js";
+import { logOp } from "./oplog.js";
+import { bump } from "./funnel.js";
+import { EMAIL_KEY, utcDay } from "./cfusage.js";
 
 export const COOKIE = "scl_session";
 const SESSION_DAYS = 30;
@@ -38,6 +41,15 @@ export function sameOrigin(request) {
   return !o || o === new URL(request.url).origin;
 }
 
+// Same rule as sameOrigin (Origin must match when present), plus the Referer when there is no Origin. Used by the admin API (S-08).
+export function sameOriginStrict(request) {
+  if (!sameOrigin(request)) return false;
+  if (request.headers.get("origin")) return true;
+  const ref = request.headers.get("referer");
+  if (!ref) return true;
+  try { return new URL(ref).origin === new URL(request.url).origin; } catch { return false; }
+}
+
 export async function startSession(env, request, userId) {
   const t = token();
   const exp = new Date(Date.now() + SESSION_DAYS * 86400_000).toISOString().slice(0, 19).replace("T", " ");
@@ -45,6 +57,7 @@ export async function startSession(env, request, userId) {
     env.DB.prepare("INSERT INTO sessions (id,user_id,expires_at) VALUES (?,?,?)").bind(await sha256(t), userId, exp),
     env.DB.prepare("DELETE FROM sessions WHERE expires_at < datetime('now')"),
   ]);
+  await bump(env, "fn:signin-done"); // one more completed sign-in today (a number only; no account is recorded)
   return setCookie(request, COOKIE, t, SESSION_DAYS * 86400);
 }
 
@@ -80,15 +93,20 @@ export async function isSuspended(env, email) {
 }
 
 // Sends one email through Resend. Without RESEND_API_KEY it fails, unless local dev mode (DEV_AUTH=1) is on.
-export async function sendMail(env, { to, subject, text, html }) {
-  if (!env.RESEND_API_KEY) { if (env.DEV_AUTH === "1") console.log("[dev mail] to=" + to + " subject=" + subject); return false; } // local testing only: say what would have been sent
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({ from: env.MAIL_FROM || "SoCal Lights <login@socallights.app>", to: [to], subject, text, ...(html ? { html } : {}) }),
-  });
-  return r.ok;
+export async function sendMail(env, { to, subject, text, html, headers, tag }) {
+  if (!env.RESEND_API_KEY) { if (env.DEV_AUTH === "1") console.log("[dev mail] to=" + to + " subject=" + subject); else await logOp(env, "email", `${tag || "mail"}: RESEND_API_KEY is not set`); return false; } // local testing only: say what would have been sent
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({ from: env.MAIL_FROM || "SoCal Lights <login@socallights.app>", to: [to], subject, text, ...(html ? { html } : {}), ...(headers ? { headers } : {}) }),
+    });
+    if (!r.ok) await logOp(env, "email", `${tag || "mail"}: mail service answered ${r.status} ${(await r.text().catch(() => "")).slice(0, 120)}`);
+    if (r.ok) await bump(env, EMAIL_KEY, utcDay()); // counts toward the Resend free-plan quota shown in Admin > Usage (UTC day)
+    return r.ok;
+  } catch (e) { await logOp(env, "email", `${tag || "mail"}: could not reach the mail service (${e && e.message})`); return false; }
 }
 
-export const safeNext = (n) => (typeof n === "string" && n.startsWith("/") && !n.startsWith("//") && !n.includes("\\") ? n : "/");
+// A same-site path only. Control characters and whitespace (a tab makes "/<TAB>/evil.example" resolve to "//evil.example"), "//" and backslashes are refused.
+export const safeNext = (n) => (typeof n === "string" && /^\/(?![\/\\])[^\u0000-\u0020\u007f\\]*$/.test(n) ? n : "/");
 export { json, err };

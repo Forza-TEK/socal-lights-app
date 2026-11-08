@@ -1,79 +1,112 @@
 WEBVTT
 
-00:00:00.400 --> 00:00:05.780
-In under two minutes, you will control voting: pause it, check the votes, and void a bad one.
+00:00:00.400 --> 00:00:04.347
+In this video, you will learn how to run voting once it has started.
 
-00:00:05.780 --> 00:00:06.925
+00:00:04.347 --> 00:00:09.496
+You will pause and resume it, check the results, and remove a vote that should not count.
+
+00:00:09.496 --> 00:00:10.640
 We start on the map.
 
-00:00:07.827 --> 00:00:11.113
-Open your web browser, and go to SoCal Lights dot app.
+00:00:11.542 --> 00:00:15.604
+To begin, open your web browser, and go to SoCal Lights dot app.
 
-00:00:13.448 --> 00:00:15.879
+00:00:15.604 --> 00:00:17.729
+That is the only address you need.
+
+00:00:19.504 --> 00:00:21.911
 This is the SoCal Lights home page.
 
-00:00:15.879 --> 00:00:18.378
-A message asks to use your location.
+00:00:21.911 --> 00:00:25.655
+The first time you visit, it asks to use your location.
 
-00:00:18.378 --> 00:00:19.729
+00:00:25.655 --> 00:00:26.992
 Tap Use my location.
 
-00:00:21.694 --> 00:00:24.063
-Your browser asks for permission.
+00:00:28.754 --> 00:00:33.191
+That is how the map shows how far things are, and gives you directions.
 
-00:00:24.063 --> 00:00:24.760
-Tap Allow.
+00:00:33.191 --> 00:00:36.396
+Your browser asks permission as well, so tap Allow.
 
-00:00:29.496 --> 00:00:31.863
-Look at the top right corner of the map.
+00:00:36.396 --> 00:00:40.956
+Your location is used only on your device, and you can say no at any time.
 
-00:00:31.863 --> 00:00:33.017
+00:00:43.704 --> 00:00:46.393
+Now look at the top right corner of the map.
+
+00:00:46.393 --> 00:00:47.588
 See the three dots?
 
-00:00:33.017 --> 00:00:33.536
+00:00:47.588 --> 00:00:51.891
+That is the menu, and it is the doorway to everything else on the site.
+
+00:00:51.891 --> 00:00:52.429
 Tap them.
 
-00:00:37.080 --> 00:00:38.972
+00:00:54.030 --> 00:00:55.843
 In the menu, tap Contests.
 
-00:00:40.834 --> 00:00:41.432
-Tap Mine.
+00:00:57.561 --> 00:00:59.375
+Tap Mine, your personal page.
 
-00:00:41.432 --> 00:00:43.284
-These are the contests you run.
-
-00:00:44.993 --> 00:00:46.898
+00:01:01.072 --> 00:01:03.142
 Tap Manage, next to your contest.
 
-00:00:46.898 --> 00:00:48.186
-This is your dashboard.
+00:01:05.034 --> 00:01:08.815
+This card is where you control the contest while it is running.
 
-00:00:50.092 --> 00:00:52.408
-Voting opens and closes on your dates.
+00:01:08.815 --> 00:01:11.711
+Voting opens and closes on your dates by itself.
 
-00:00:52.408 --> 00:00:54.724
-The Controls card lets you change that.
+00:01:11.711 --> 00:01:14.783
+The Controls card lets you step in when you need to.
 
-00:00:55.625 --> 00:00:58.225
-Tap Pause voting to stop votes for a moment.
+00:01:15.687 --> 00:01:18.997
+The last row, Contest page, has an Unpublish button.
 
-00:01:00.054 --> 00:01:01.866
-Tap Resume voting to start again.
+00:01:18.997 --> 00:01:23.619
+It hides the whole contest from the public, and you can publish it again.
 
-00:01:03.691 --> 00:01:05.497
-Tap Results for the full tally.
+00:01:23.619 --> 00:01:25.180
+The next video shows how.
 
-00:01:05.497 --> 00:01:08.602
-You always see the counts, even when the public cannot.
+00:01:26.081 --> 00:01:29.569
+Say you spot something odd, or you need to fix a mistake.
 
-00:01:10.409 --> 00:01:12.454
+00:01:29.569 --> 00:01:33.718
+Tap Pause voting, and votes stop right away, until you say otherwise.
+
+00:01:35.521 --> 00:01:38.977
+When you are ready, tap Resume voting, and voting carries on.
+
+00:01:40.779 --> 00:01:41.788
+Now tap Results.
+
+00:01:41.788 --> 00:01:44.516
+Here is the full tally, category by category.
+
+00:01:44.516 --> 00:01:51.574
+You can always see the counts, even when you have hidden them from the public so people are not swayed by who is ahead.
+
+00:01:53.378 --> 00:01:55.264
 Open Review individual votes.
 
-00:01:12.454 --> 00:01:14.159
-Odd patterns are flagged.
+00:01:55.264 --> 00:01:58.532
+Every single vote is listed, with when it was cast.
 
-00:01:16.220 --> 00:01:18.728
-Tap Void next to a vote that should not count.
+00:01:58.532 --> 00:02:05.069
+The system flags odd patterns, like a burst of votes within a few seconds, so you can look more closely.
 
-00:01:20.638 --> 00:01:23.888
-Next up: Add co-organizers and judges.
+00:02:06.873 --> 00:02:09.801
+If a vote should not count, tap Void next to it.
+
+00:02:09.801 --> 00:02:14.821
+It is removed from the tally, and you can restore it later if you change your mind.
+
+00:02:14.821 --> 00:02:16.494
+This keeps the contest fair.
+
+00:02:18.376 --> 00:02:20.723
+Next up: Unpublish and publish again.

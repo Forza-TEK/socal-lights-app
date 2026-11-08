@@ -53,7 +53,7 @@ def best(url):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True); ap.add_argument("--rehost", type=int, default=150)
-    ap.add_argument("--max-events-per-page", type=int, default=3); ap.add_argument("--api", default="https://socallights.app/api/events")
+    ap.add_argument("--max-events-per-page", type=int, default=3); ap.add_argument("--api", default="https://socallights.app/api/events?full=1")
     a = ap.parse_args()
     ev = json.load(urllib.request.urlopen(urllib.request.Request(a.api, headers={"User-Agent": UA})))
     by = collections.defaultdict(list)

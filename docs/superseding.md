@@ -16,7 +16,7 @@ Installers and homeowners add their displays through the Add form. The sweeps ma
   - **Both**: both records show.
   - **Sweep record**: the sweep record shows and the person's post is hidden from the map. The post stays approved and the person is not told; switch back at any time.
   Stored in `events.keep_listed` (migration `0128`): 0 = their record, 1 = both, 2 = sweep record. Each change is written to the Activity log. A post hidden this way is marked "Not on the map" in Published houses.
-- The Events tab and its count still include hidden sweep records, so they can be edited. The public map shows `/api/events`; the admin uses `/api/events?all=1`.
+- The Events tab and its count still include hidden sweep records, so they can be edited. The public map shows `/api/events`; the admin uses `/api/admin/events` (behind Access; `/api/events?all=1` now answers 401 unless the request carries the Access login).
 - The tab counts (Waiting for review, Published houses, Submitted events, Contests, Events, Replaced records, Users) come from `/api/admin/counts`.
 
 ## Contest wins carry over (rule)
@@ -27,4 +27,11 @@ When a person's record replaces a sweep record (choice **Their record**), a cont
 - **Only while it applies:** with **Both**, the sweep record shows its own win, so nothing is added. With **Sweep record**, the person's post is hidden. Back to **Their record** and the win returns. If the sweep record is later removed, so is the line.
 - **Admin:** the Replaced records tab shows "Win shown on their listing: ..." under each person's record.
 - Code: `functions/_lib/wins.js`, `functions/api/posts.js` (field `b`, entries with `t` and `u`), `public/app.js` (`bChip`, `bPop`, `bLines`).
+
+## "Is this your home?" (claiming a sweep-made home)
+- On the map, the details of a home the sweeps found on a public contest or tour page (venue "... view from the street", not a contest itself) show **Is this your home? Claim it**. It opens **Add a display** with `?claim=<listing id>` (`public/add-house.html`).
+- The form starts with that listing's street, city and ZIP and its name, and the first screen says they are claiming it. Any earlier house draft is cleared. After the owner signs in and finishes, `/api/submit` stores the id in `posts.claim_event_id` (migration `0164`), but only if the listing exists. Contest entries ignore it.
+- Nothing new decides the replacement: it is still the same-address rule above. The claim only tells the admin which listing the person meant.
+- **Admin:** a display with a claim shows **Says this is their home** with the listing's name, on waiting and published houses (`functions/api/admin/posts/index.js`, `public/admin/admin.js`). If the addresses agree it says the listing is replaced. If they do not (a typo, another number), it says it is not replaced, and the street can be fixed in Edit.
+- Displays are published as soon as they are added, so the claim takes effect when the public map list refreshes (up to about two minutes).
 

@@ -2,7 +2,7 @@
 //  - the light / night switch
 //  - the account button: a person icon that opens the sign-in sheet when you are signed out, and your picture (or initial)
 //    that opens a small menu (profile, your contests, sign out) when you are signed in.
-import { me, signIn, signOut, esc } from "/auth.js?v=20261101a";
+import { me, signIn, signOut, esc } from "/auth.js?v=20261107p";
 
 // styles for the account menu and the signed-out button, added once (pages without our main stylesheet get them too)
 if (!document.getElementById("chrome-css")) { const l = document.createElement("link"); l.id = "chrome-css"; l.rel = "stylesheet"; l.href = "/chrome.css?v=20261103b"; document.head.appendChild(l); }
@@ -12,7 +12,7 @@ const nextSwitch = () => { const d = new Date(); d.setMinutes(0, 0, 0); const h 
 export function toggleTheme() {
   const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = t;
   try { localStorage.setItem("socal-theme", t); localStorage.setItem("socal-theme-until", String(nextSwitch())); } catch {}
-  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t === "dark" ? "#0b0d12" : "#f6f4f0";
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t === "dark" ? "#0b0d12" : "#ffffff";
 }
 export const themeBtn = () => '<button class="tbtn" type="button" data-theme-toggle aria-label="Switch between light and dark mode" title="Light / dark"><svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg></button>';
 document.addEventListener("click", (e) => { if (e.target.closest("[data-theme-toggle]")) toggleTheme(); });
@@ -32,7 +32,7 @@ const closeMenu = () => { if (menu) { menu.remove(); menu = null; } document.que
 function openMenu(btn) {
   closeMenu(); btn.setAttribute("aria-expanded", "true");
   menu = document.createElement("div"); menu.className = "acctmenu"; menu.setAttribute("role", "menu");
-  menu.innerHTML = `<div class="who" role="presentation"><b>${esc(acctUser.name || "Signed in")}</b><span>${esc(acctUser.email)}</span></div><a role="menuitem" href="/profile">Your profile</a><a role="menuitem" href="/contests#mine">Your contests</a><a role="menuitem" href="/add">Add an event, home or contest</a><a role="menuitem" href="/tutorials">Tutorials</a><button role="menuitem" type="button" data-signout>Sign out</button>`;
+  menu.innerHTML = `<div class="who" role="presentation"><b>${esc(acctUser.name || "Signed in")}</b><span>${esc(acctUser.email)}</span></div><a role="menuitem" href="/profile">Your profile</a><a role="menuitem" href="/contests#mine">Your contests</a><a role="menuitem" href="/add">Add an event, home or contest</a><a role="menuitem" href="/tutorials">Tutorials</a><a role="menuitem" href="/help">Help</a><button role="menuitem" type="button" data-signout>Sign out</button>`;
   document.body.appendChild(menu);
   const r = btn.getBoundingClientRect(); menu.style.top = r.bottom + 8 + "px"; menu.style.right = Math.max(8, innerWidth - r.right) + "px";
   menu.querySelector("a").focus();

@@ -7,7 +7,9 @@ import { getUser, sameOrigin, normEmail, okEmail, sendMail } from "../../../_lib
 import { ownerOf, computeResults, hasJudges } from "../../../_lib/contests.js";
 import { judgeProgress } from "../../../_lib/judging.js";
 import { teamChanged } from "../../../_lib/changes.js";
-import { sendTemplate } from "../../../_lib/mailtpl.js";
+import { sendNow } from "../../../_lib/mailbatch.js";
+import { logOp } from "../../../_lib/oplog.js";
+import { reserveSends } from "../../../_lib/sendlimit.js";
 
 export async function inviteJudges(env, c, emails, origin = "https://socallights.app") {
   const have = new Set((await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ?").bind(c.id).all()).results.map((r) => r.email));
@@ -15,11 +17,12 @@ export async function inviteJudges(env, c, emails, origin = "https://socallights
   for (const raw of emails) {
     if (!okEmail(raw)) continue; const email = normEmail(raw); if (have.has(email)) continue; have.add(email);
     const j = { id: newId(), email, token: newId() + newId() };
-    await env.DB.prepare("INSERT INTO judges (id,contest_id,email,token) VALUES (?,?,?,?)").bind(j.id, c.id, email, j.token).run();
     out.push({ ...j, to: String(raw).trim() });
   }
   const how = c.judge_method === "score" ? "Score every home from 1 to 10 in each category." : "Pick one favorite home in each category.";
-  for (const j of out) await sendTemplate(env, "judge_invite", j.to, { contest: c.name, org: c.org, how, link: `${origin}/c/${c.slug}/judge` }).catch(() => {});
+  if (out.length) await env.DB.batch(out.map((j) => env.DB.prepare("INSERT INTO judges (id,contest_id,email,token) VALUES (?,?,?,?)").bind(j.id, c.id, j.email, j.token))); // one call, not one per judge
+  try { await sendNow(env, out.map((j) => ({ id: "judge_invite", to: j.to, vars: { contest: c.name, org: c.org, how, link: `${origin}/c/${c.slug}/judge` } })), "judge_invite"); }
+  catch (e) { await logOp(env, "mail", "judge invitations could not be sent: " + (e && e.message)); }
   return out.length;
 }
 
@@ -41,6 +44,8 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   const emails = (Array.isArray(b.emails) ? b.emails : String(b.emails || "").split(/[\n,;]+/)).map((x) => String(x).trim()).filter(Boolean);
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM judges WHERE contest_id = ?").bind(c.id).first();
   if (n + emails.length > 15) return err(400, "A contest can have up to 15 judges.");
+  const over = await reserveSends(env, user, c.id, "judge", emails.length);
+  if (over) return err(429, over);
   const added = await inviteJudges(env, c, emails);
   if (added) await teamChanged(env, c, user, [{ label: "Judges", old: "", new: `Invited ${added} judge${added === 1 ? "" : "s"}` }], waitUntil);
   return json({ ok: true, added });

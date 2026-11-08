@@ -20,7 +20,18 @@ jobs:
           for i in $(seq 1 30); do
             out=$(curl -sS -X POST https://socal-lights.pages.dev/api/alerts/send -H "x-alert-key: $ALERT_CRON_KEY")
             echo "batch $i: $(echo "$out" | head -c 300)"
+            if echo "$out" | grep -q '"sent":0' && echo "$out" | grep -qE '"failed":[1-9]'; then echo "::error::Every email in this batch failed to send (mail service problem). Nothing was marked as sent; the next run retries."; exit 1; fi
             echo "$out" | grep -q '"remaining":0' && exit 0
             echo "$out" | grep -q '"remaining"' || exit 1
             sleep 2
           done
+      - name: Report to the heartbeat (dead-man's switch; see docs/runbooks/monitoring.md)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          [ -n "$ALERT_CRON_KEY" ] || exit 0
+          s=ok; [ "$JOB_STATUS" = success ] || s=fail
+          curl -sS -m 20 --retry 2 -X POST "https://socal-lights.pages.dev/api/heartbeat?job=alerts&status=$s" -H "x-alert-key: $ALERT_CRON_KEY" -o /dev/null -w "heartbeat: HTTP %{http_code}\n"

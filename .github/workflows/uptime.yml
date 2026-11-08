@@ -1,0 +1,74 @@
+# Free uptime check. Every 15 minutes: (1) the app itself is tested through its pages.dev address (same code and database as the
+# real site, but not behind the zone's bot protection, which answers GitHub's data-center addresses with 403); (2) the real
+# domain must answer at all, proving DNS, TLS and Cloudflare are alive (200 = fine; 403 = Cloudflare's bot rule for cloud addresses,
+# also fine; no answer or a server error = a failure). A failed run makes GitHub email the repository owners.
+# A failed run also opens ONE GitHub issue ("Site is down"), which emails the owner, and the first healthy run closes it.
+# No third-party actions. The last step reports to the site's heartbeat with the ALERT_CRON_KEY secret (optional: skipped without it). GitHub runs this late or skips runs (6 to 8 hours apart in practice),
+# so the REAL 5-minute uptime monitor is an external one: docs/runbooks/monitoring.md. Cloudflare Health Checks are not offered on the Free plan.
+name: Uptime check
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+permissions:
+  issues: write   # only to open or close the "Site is down" issue
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check the site
+        run: |
+          fail=0
+          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+          check() { # url, text the page must contain
+            code=000
+            for try in 1 2 3; do
+              code=$(curl -sS -m 25 -A "$UA" -o /tmp/body -w "%{http_code}" "$1" 2>/dev/null || echo 000)
+              if [ "$code" = "200" ] && grep -q "$2" /tmp/body; then echo "ok   $1"; return 0; fi
+              echo "try $try failed: $1 -> $code"; [ "$try" = 3 ] || sleep 20
+            done
+            echo "::error::$1 is not healthy (last status $code)"; fail=1
+          }
+          reach() { # url: any answer other than a connection failure or a 5xx counts
+            code=000
+            for try in 1 2 3; do
+              code=$(curl -sS -m 25 -A "$UA" -o /dev/null -w "%{http_code}" "$1" 2>/dev/null || echo 000)
+              case "$code" in 200|301|302|403) echo "ok   $1 (status $code)"; return 0;; esac
+              echo "try $try failed: $1 -> $code"; [ "$try" = 3 ] || sleep 20
+            done
+            echo "::error::$1 is not answering (last status $code)"; fail=1
+          }
+          check "https://socal-lights.pages.dev/" "SoCal Lights"
+          check "https://socal-lights.pages.dev/api/config" "turnstileSiteKey"
+          check "https://socal-lights.pages.dev/api/events" '"id"'
+          check "https://socal-lights.pages.dev/in/irvine" "Irvine"
+          reach "https://socallights.app/"
+          exit $fail
+      - name: Open an issue while the site is down
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          T="Site is down (uptime check)"
+          N=$(gh issue list --state open --search "\"$T\" in:title" --json number -q '.[0].number' || true)
+          [ -n "$N" ] || gh issue create --title "$T" --body "The uptime check failed at $(date -u +%FT%TZ). Details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}. This issue closes itself when the check passes again."
+      - name: Close the issue when the site is back
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          T="Site is down (uptime check)"
+          for N in $(gh issue list --state open --search "\"$T\" in:title" --json number -q '.[].number' || true); do gh issue close "$N" --reason completed --comment "Healthy again at $(date -u +%FT%TZ)."; done
+      - name: Report to the heartbeat (dead-man's switch; see docs/runbooks/monitoring.md)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          [ -n "$ALERT_CRON_KEY" ] || exit 0
+          s=ok; [ "$JOB_STATUS" = success ] || s=fail
+          curl -sS -m 20 --retry 2 -X POST "https://socal-lights.pages.dev/api/heartbeat?job=uptime&status=$s" -H "x-alert-key: $ALERT_CRON_KEY" -o /dev/null -w "heartbeat: HTTP %{http_code}\n"

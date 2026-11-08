@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Contest passes · SoCal Lights</title>
+<meta name="description" content="Your first contest in a 12-month window is free. Buy a pass to run more.">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/info.css?v=20261110y">
+<script src="/hit.js?v=20261107a" defer></script>
+</head>
+<body>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<main>
+<h1>Contest passes</h1>
+<p class="lede">Your organization's first contest in every 12-month window is free. A pass lets you run more contests inside the same window. It only counts contests: entering and voting stay free, and payment never affects any result, vote, judge or ranking.</p>
+<div id="app"><p class="muted">Loading…</p></div>
+<p class="meta" id="msg" role="status"></p>
+</main>
+<script type="module">
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111a";
+import { me, signIn } from "/auth.js?v=20261107p";
+import { pickerHtml, beacon, niceDate, esc } from "/contest-passes.js?v=20261108a";
+document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+const $ = (q) => document.querySelector(q), q = new URLSearchParams(location.search);
+const back = /^manage:[a-z0-9-]{1,60}$/.test(q.get("back") || "") ? q.get("back") : "pass";
+const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+const entitlement = async () => { const r = await fetch("/api/contest-pass/entitlement", { cache: "no-store" }); return r.ok ? r.json() : null; };
+if (/SoCalLightsApp/.test(navigator.userAgent)) { $("#app").innerHTML = `<p>Contest passes are bought on the website, socallights.app/contest-pass.</p>`; }
+else if (!(await me()).user) {
+  $("#app").innerHTML = `<p>Sign in to see where your organization stands and to choose a pass.</p><button class="btn" id="in" type="button">Sign in</button>`;
+  $("#in").onclick = async () => { if (await signIn({ title: "Sign in to choose a pass", next: location.pathname + location.search })) location.reload(); };
+} else {
+  const paint = (v) => {
+    if (!v) { $("#app").innerHTML = `<p>We could not load your contest allowance. Please try again in a moment.</p>`; return; }
+    const lead = v.comp && v.canCreate ? "" : v.active
+      ? `<p><b>${esc(v.org)}</b> has used <b>${v.used}</b> of <b>${v.unlimited ? "unlimited" : v.cap}</b> contests in its 12-month window (${esc(niceDate(v.windowStart))} to ${esc(niceDate(v.windowEnd))}).${v.canCreate ? " You can still start a contest." : ""}</p>`
+      : `<p><b>${esc(v.org)}</b> has no running window. Your next contest starts a new 12-month window and is free, so you do not need a pass yet.</p>`;
+    $("#app").innerHTML = lead + (v.active || v.comp ? pickerHtml(v, cfg) : "") + `<p><a class="btn out" href="/add-contest">Create a contest</a></p>`;
+    document.querySelectorAll("[data-pass]").forEach((b) => (b.onclick = async () => {
+      beacon("fn:pass-choose"); b.disabled = true; b.textContent = "Opening payment…";
+      const r = await fetch("/api/contest-pass/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: b.dataset.pass, back }) }), j = await r.json().catch(() => ({}));
+      if (r.ok && j.url) { location.href = j.url; return; }
+      b.disabled = false; b.textContent = "Choose"; $("#msg").textContent = j.error || "The payment page couldn't be opened. Please try again.";
+    }));
+    document.querySelectorAll("[data-pass-contact]").forEach((a) => (a.onclick = () => { fetch("/api/contest-pass/contact", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }).catch(() => {}); }));
+    if (v.active && !v.comp) beacon("fn:pass-picker-shown");
+  };
+  if (q.get("pass") === "cancelled") $("#msg").textContent = "Payment cancelled. Nothing was charged.";
+  let v = await entitlement();
+  if (q.get("pass") === "paid") {
+    $("#msg").textContent = "Payment received. Confirming your pass…";
+    for (let i = 0; i < 20 && v && !v.holdsPass; i++) { await new Promise((go) => setTimeout(go, 1500)); v = await entitlement(); }
+    $("#msg").textContent = v && v.holdsPass ? "Your pass is active. A receipt is on its way to your email." : "Your payment is still being confirmed. Refresh this page in a minute. You will not be charged again.";
+    const m = (q.get("back") || "").match(/^manage:([a-z0-9-]+)$/);
+    if (v && v.holdsPass && m) $("#msg").insertAdjacentHTML("beforeend", ` <a href="/c/${esc(m[1])}/manage">Back to your contest</a>`);
+  }
+  paint(v);
+}
+</script>
+<script src="/footer.js?v=20261110b" defer></script>
+</body>
+</html>

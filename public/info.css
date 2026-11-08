@@ -1,7 +1,7 @@
 /* Privacy and Feature pages in the add forms' look (loaded after addflow.css). */
 body{padding-bottom:80px}
 main{max-width:760px;margin:0 auto;padding:2vh 0 20px}
-main h1{margin:8px 0 12px}main h2{font-weight:400;font-size:24px;letter-spacing:-.015em;margin:38px 0 10px}
+main h1{margin:8px 0 12px}main h2{font-weight:800;font-size:20px;letter-spacing:-.01em;margin:38px 0 10px}
 main a{color:var(--ink);text-underline-offset:3px}main a.btn{text-decoration:none}
 main p,main li{color:var(--muted)}main p{margin:0 0 12px}main ul,main ol{padding-left:20px;margin:0 0 12px;display:grid;gap:6px}
 main b,main strong{color:var(--ink);font-weight:500}
@@ -9,7 +9,7 @@ main b,main strong{color:var(--ink);font-weight:500}
 .grid{display:grid;gap:14px}@media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}}
 .plan{border:1px solid var(--line);border-radius:12px;padding:22px;display:grid;gap:10px;align-content:start}
 .plan.pop{border-color:var(--ink)}.plan.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-.plan h3{font-weight:500;font-size:18px}.price{font-size:32px;font-weight:300;letter-spacing:-.02em;color:var(--ink)}.price small{font-size:14px;font-weight:400;color:var(--muted)}
+.plan h3{font-weight:500;font-size:18px}.price{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.price small{font-size:14px;font-weight:400;color:var(--muted)}
 .plan ul{margin:0}
 main .btn{border-radius:8px}.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
 .tag{display:inline-block;font-size:12px;font-weight:500;border-radius:999px;padding:2px 10px;border:1px solid var(--season);color:var(--season)}.tag::before{content:"★ "}
@@ -21,3 +21,78 @@ main input:focus{outline:0;border-color:var(--ink);box-shadow:0 0 0 1px var(--in
 .chosen{border-left:2px solid var(--season);padding:4px 0 4px 14px;color:var(--ink)}
 .ok{border-left:2px solid var(--ok);padding:4px 0 4px 14px;margin:16px 0;color:var(--muted)}
 .msg{margin:8px 0 0;color:var(--muted)}.msg.err{color:var(--bad)}
+
+/* ---- Wide pages (Pricing, Feature): one 1160px frame shared by the header and the content, paragraphs capped for reading ---- */
+body.wide .hdr,body.wide main{max-width:1160px}
+body.wide .lede,body.wide main>p{max-width:70ch}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wsec{margin:44px 0 0}.wsec>h2{margin:0 0 6px;font-size:24px}.wsec>.sub{margin:0 0 18px;max-width:70ch}
+.wgrid{display:grid;gap:18px}@media(min-width:800px){.wgrid.two{grid-template-columns:1fr 1fr}}
+.wcard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:10px}
+:root[data-theme="dark"] .wcard{background:var(--tile)}
+.wcard h2,.wcard h3{margin:0}.wcard p{margin:0}.wcard .btn{align-self:flex-start;margin-top:auto}
+.wcard .big{font-size:34px;font-weight:800;letter-spacing:-.02em;color:var(--ink);line-height:1.1}.wcard .big small{font-size:15px;font-weight:500;color:var(--muted);letter-spacing:0}
+.wprices{display:flex;flex-wrap:wrap;gap:8px 10px;margin:2px 0 4px}
+.wprices span{display:inline-flex;align-items:baseline;gap:6px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-size:15px;color:var(--muted)}.wprices b{color:var(--ink);font-weight:800}
+/* plan cards */
+.pcards{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));align-items:stretch}
+.pcard{position:relative;display:flex;flex-direction:column;gap:8px;padding:22px 20px;background:#fff;border:2px solid var(--line);border-radius:18px;transition:border-color .15s,box-shadow .15s,background-color .15s}
+:root[data-theme="dark"] .pcard{background:var(--tile)}
+.pcard:hover,.pcard:focus-within{border-color:var(--season);box-shadow:0 8px 22px rgba(20,22,27,.10)}
+.pcard.popular{border-color:var(--ink)}
+.pcard.sel{border-color:var(--season);background:color-mix(in srgb,var(--season) 9%,#fff)}:root[data-theme="dark"] .pcard.sel{background:color-mix(in srgb,var(--season) 16%,var(--tile))}
+.pribbon{position:absolute;top:-13px;left:18px;background:var(--season);color:var(--on-season);font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:4px 12px;border-radius:999px}
+.pcheck{position:absolute;top:14px;right:14px;width:26px;height:26px;border-radius:50%;background:var(--season);color:var(--on-season);display:grid;place-items:center;font-weight:800;font-size:15px}
+.pprice{font-size:34px;font-weight:800;letter-spacing:-.02em;color:var(--ink);line-height:1.1}.pprice small{font-size:14px;font-weight:500;color:var(--muted);letter-spacing:0}
+.pname{margin:0;font-size:19px;font-weight:800;line-height:1.25}
+.pblurb{margin:0;color:var(--muted);font-size:15px}
+.pbul{margin:4px 0 0;padding-left:20px;display:grid;gap:4px;color:var(--muted);font-size:14.5px}
+.pact{margin-top:auto;padding-top:14px}.pact .btn{width:100%;justify-content:center;text-align:center}
+.pcard.sel .pact .btn:not(.ghost){background:var(--season);border-color:var(--season);color:var(--on-season)}
+/* comparison table */
+.cmpwrap{position:relative;overflow-x:auto;margin:22px 0 0;border:1px solid var(--line);border-radius:14px;background:#fff}:root[data-theme="dark"] .cmpwrap{background:var(--tile)}
+.cmp{border-collapse:collapse;width:100%;min-width:680px;font-size:15px}
+.cmp th,.cmp td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:center}.cmp tbody tr:last-child>*{border-bottom:0}
+.cmp thead th{font-weight:800;vertical-align:bottom;color:var(--ink)}.cmp thead th small{display:block;font-weight:600;color:var(--muted);font-size:13px}
+.cmp tbody th{text-align:left;font-weight:500;color:var(--ink)}
+.cmp td{font-size:18px;font-weight:800;color:#0b7a52}:root[data-theme="dark"] .cmp td{color:#3ddc97}.cmp td.no{color:var(--muted);font-weight:400}
+.cmpnote{margin:12px 2px 0;font-size:14px;color:var(--muted);max-width:90ch}
+/* what Featured looks like (a drawing of the map, the list strip and a listing) */
+.fmap{display:grid;gap:16px;grid-template-columns:1fr;align-items:center}@media(min-width:900px){.fmap{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+.fmap figure{margin:0}.fmap svg{display:block;width:100%;height:auto;border-radius:16px;border:1px solid var(--line)}
+.fmap ol{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:f}.fmap li{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;color:var(--muted);font-size:15px}
+.fmap li::before{counter-increment:f;content:counter(f);width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:800;font-size:14px}
+.fmap li b{display:block;color:var(--ink);font-weight:800}
+/* FAQ */
+.faq{display:grid;gap:10px;align-items:start}@media(min-width:1000px){.faq{grid-template-columns:1fr 1fr;gap:12px 20px}}.faq details{border:1px solid var(--line);border-radius:14px;padding:4px 18px;background:#fff;margin:0}:root[data-theme="dark"] .faq details{background:var(--tile)}.faq summary{cursor:pointer;font-weight:700;min-height:48px;display:flex;align-items:center;color:var(--ink)}.faq details p{margin:0 0 14px}
+
+/* installer plans: a slim Free row above the paid cards; the long lists fold away inside each card */
+.pfree{display:flex;flex-wrap:wrap;align-items:center;gap:10px 24px;padding:18px 24px;background:#fff;border:2px solid var(--line);border-radius:18px;margin:0 0 16px}:root[data-theme="dark"] .pfree{background:var(--tile)}
+.pfree .pprice{font-size:30px}.pfree .ptxt{flex:1 1 360px;min-width:0}.pfree .pname{margin:0}.pfree .pblurb{margin:2px 0 0}.pfree .btn{margin-left:auto}
+@media(max-width:700px){.pfree .btn{margin-left:0;width:100%;justify-content:center}}
+.pcards.three{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));align-items:start}@media(min-width:900px){.pcards.three{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.pdet{margin:4px 0 0;border:0;border-top:1px solid var(--line);border-radius:0;padding:2px 0 0;background:none}.pdet summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-weight:700;font-size:14.5px;color:var(--ink);list-style:none}
+.pdet summary::-webkit-details-marker{display:none}.pdet summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-3px 0 0 auto;transition:transform .15s}
+.pdet[open] summary::after{transform:rotate(-135deg);margin-top:3px}.pdet .pbul{margin:2px 0 6px}
+.pcards.four{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));align-items:stretch}@media(min-width:1000px){.pcards.four{grid-template-columns:repeat(4,minmax(0,1fr))}}
+#events .pcards{margin-top:16px}
+#evfree{margin-top:34px}
+
+/* Long text pages (Privacy, Terms): the text in a readable column with a list of sections beside it */
+main.legal{display:grid;gap:0 48px;grid-template-columns:minmax(0,1fr)}
+.legalhead{grid-column:1/-1}
+.toc{margin:6px 0 18px;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:#fff}:root[data-theme="dark"] .toc{background:var(--tile)}
+.toc .toch{display:block;margin:0 0 6px;font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}.toc a{display:flex;align-items:center;min-height:36px;padding:0 10px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:15px}
+.toc a:hover{background:var(--surface-2,rgba(0,0,0,.05))}.toc a[aria-current]{background:var(--ink);color:var(--bg);font-weight:700}
+.legalbody{max-width:72ch;min-width:0}.legalbody>h2{scroll-margin-top:16px}
+@media(min-width:1000px){main.legal{grid-template-columns:260px minmax(0,1fr)}.toc{grid-column:1;grid-row:2;position:sticky;top:16px;align-self:start;margin:0}.legalbody{grid-column:2;grid-row:2}}
+
+/* Pricing tabs: one audience at a time */
+.ptabs-on [data-panel]{margin-top:22px}.ptabs-on [data-panel][hidden]{display:none}
+
+
+#contests .pfree{align-items:flex-start}#contests .pfree .btn{align-self:center}#contests .pfree .pprice{white-space:nowrap}#contests .pdet{border-top:0;margin-top:6px}#contests #ctiers{margin-bottom:16px}#contests .pmore{padding:16px 24px}
+
+/* Pages inside the app frame (appshell.js): the frame has its own top bar and menu, so the page header goes and the content uses the frame width */
+body.sh-page .hdr{display:none}body.sh-page.wide main,body.sh-page main{max-width:1040px;margin:0 auto;padding:22px clamp(16px,3vw,32px) 72px}body.sh-page .sh-content{max-width:none}@media(max-width:699px){body.sh-page main{padding:16px 16px calc(92px + env(safe-area-inset-bottom,0px))}}

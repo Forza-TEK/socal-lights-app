@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sponsor placement for installers · SoCal Lights</title>
+<meta name="description" content="Installers: put your company in the labelled Sponsor banner on the SoCal Lights map, and optionally at the top of the list. A one-time payment for the season, or renew automatically if you choose.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/info.css?v=20261110y">
+<style>
+.plan,details,.pick{background:#fff}:root[data-theme="dark"] .plan,:root[data-theme="dark"] details,:root[data-theme="dark"] .pick{background:var(--tile)}
+.plan{gap:8px;border:2px solid var(--line);display:flex;flex-direction:column;transition:border-color .15s,background-color .15s}.plan>.btn{margin-top:auto;align-self:flex-start}
+.plan.sel{border-color:var(--season);background:color-mix(in srgb,var(--season) 9%,#fff)}:root[data-theme="dark"] .plan.sel{background:color-mix(in srgb,var(--season) 16%,var(--tile))}
+.plan .price{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.plan .price small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0}.plan .price s{font-size:18px;font-weight:400;color:var(--muted)}
+.plan p{margin:0;color:var(--muted)}.plan p b{color:var(--ink)}.plan ul{margin:6px 0 12px;padding-left:20px;color:var(--ink)}.plan li{margin:3px 0}
+.plan .btn.pickbtn:not(.ghost){background:var(--season);border-color:var(--season);color:var(--on-season)}
+.plan.off{opacity:.65}
+.grid{grid-template-columns:1fr!important}@media(min-width:700px){.grid{grid-template-columns:1fr 1fr!important}}
+.pick{display:block;width:100%;text-align:left;border:2px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 10px;font:inherit;color:var(--ink);cursor:pointer}.pick[aria-pressed="true"]{border-color:var(--season)}.pick small{display:block;color:var(--muted);margin-top:2px}.pick:disabled{opacity:.7;cursor:default}
+.step{margin:26px 0 8px}.step span{display:inline-block;min-width:28px;height:28px;line-height:28px;text-align:center;border-radius:14px;background:var(--ink);color:var(--bg,#fff);font-size:14px;margin-right:8px}
+.gap{margin:8px 0 12px;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:#fff}:root[data-theme="dark"] .gap{background:var(--tile)}.gap b{color:var(--ink)}
+.sum{border:2px solid var(--season);border-radius:12px;padding:16px 18px;background:#fff;margin:0 0 14px}:root[data-theme="dark"] .sum{background:var(--tile)}.sum dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px}.sum dt{color:var(--muted)}.sum dd{margin:0;color:var(--ink);font-weight:600}
+.renew{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 14px;background:#fff}:root[data-theme="dark"] .renew{background:var(--tile)}.rcheck{display:flex;gap:12px;align-items:flex-start;cursor:pointer;color:var(--ink)}.rcheck input{width:24px;height:24px;flex:none;margin:2px 0 0;accent-color:var(--season)}
+.srch{display:flex;gap:8px;flex-wrap:wrap}.srch input{flex:1;min-width:200px}
+</style>
+<script src="/hit.js?v=20261107a" defer></script>
+</head>
+<body>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<main id="content">
+<h1>Sponsor placement for installers</h1>
+<p class="lede">Put your company where people planning a drive look: the labelled <b>Sponsor</b> banner at the top of the list on the map, your company card at the top of the list, or both. Pay one time for the season. Automatic renewal is optional and off unless you tick the box before paying. The map and your free profile stay free, and money never changes a contest result.</p>
+
+<div id="paid" class="ok" hidden><b>Thank you!</b> Your payment went through. Your placement turns on automatically within a few minutes (refresh the map to see it), and the dates are in your <a id="dashlink" href="/profile">dashboard</a>. A receipt is on its way from Stripe.</div>
+<div id="cancelled" class="ok" hidden><b>No payment was made.</b> Your company and plan are still chosen below, so you can pick up where you left off.</div>
+<p id="inapp" class="lede" hidden>Paid placement isn't available in the app. Open socallights.app in your browser.</p>
+<div id="manual" hidden><h2>Online payment isn't switched on yet</h2><p>Email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a> and we'll set up your placement by hand.</p></div>
+
+<div id="flow">
+<h2 class="step"><span>1</span>Sign in</h2>
+<div id="s1"><p class="meta">Loading…</p></div>
+
+<div id="s2box" hidden>
+<h2 class="step"><span>2</span>Choose your company profile</h2>
+<div id="s2"></div>
+</div>
+
+<div id="s3box" hidden>
+<h2 class="step"><span>3</span>Choose a plan</h2>
+<p class="meta" id="rule"></p>
+<div class="grid" id="plans"></div>
+</div>
+
+<div id="s4box" hidden>
+<h2 class="step"><span>4</span>Check the dates and pay</h2>
+<div class="sum" id="sum" aria-live="polite"></div>
+<div class="renew" id="renewbox"><label class="rcheck"><input type="checkbox" id="renew"><span id="renewtxt"></span></label></div>
+<p><button class="btn" id="go" type="button" disabled>Continue to payment</button></p>
+<p class="meta" id="gomsg">You pay on Stripe's secure page with a card; your placement turns on automatically within a few minutes. We never see your card details.</p>
+</div>
+</div>
+
+<h2>How it works</h2>
+<details open><summary>How long does a season last, and what does it cost?</summary><p id="rule2"></p></details>
+<details><summary>Can I renew or upgrade?</summary><p><b>Renew:</b> buy the same plan again while it is running and the new season starts the day after the current one ends, at the plan's price. Time is only ever added, and we sell at most one season ahead. Automatic renewal renews the same plan: a Top of the list placement renews as Top of the list. <b>Upgrade:</b> Banner and Top of the list are different products, and Banner and top of the list is both. If you have the Banner or Top of the list running to the end of the season and want both, choose Banner and top of the list: you pay the difference between that plan and the one you hold, the missing one starts today and runs to the end of the season, and what you have stays as it is. Buying the other single product instead is a full, separate purchase. This page shows the exact dates and price before you pay.</p></details>
+<details><summary>Is it labelled as an ad?</summary><p>Yes. Paid placements are always labelled "Sponsor" in the banner and on the list card, and your profile still has to be real and accurate.</p></details>
+<details><summary>Can I get a refund?</summary><p>If we cannot put your placement on for any reason, you get a full refund. Once it is running, payments are non-refundable, but email us if something is wrong. A refund switches the placement off, and so does a payment dispute, so please email us before disputing a charge with your bank.</p></details>
+<details><summary>Does paying change a contest?</summary><p>No. Payment never affects who wins or any contest result, and finding lights and events on the map stays free for everyone.</p></details>
+<p class="meta">Questions? Email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>. <a href="/pricing#banner">Back to pricing</a>.</p>
+</main>
+<script type="module">
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111a";
+import { me, signIn } from "/auth.js?v=20261107p";
+import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord, renewalText } from "/sponsor-plans.js?v=20261108a";
+document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+const $ = (q) => document.querySelector(q);
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
+const qs = new URLSearchParams(location.search), KEY = "scl-sponsor-sel";
+let plan = SPONSOR_KEYS.includes(qs.get("plan")) ? qs.get("plan") : "", slug = qs.get("installer") || "", data = null, user = null;
+try { const s = JSON.parse(sessionStorage.getItem(KEY) || "{}"); if (!plan && SPONSOR_KEYS.includes(s.plan)) plan = s.plan; if (!slug && s.slug) slug = s.slug; } catch {}
+const save = () => { try { sessionStorage.setItem(KEY, JSON.stringify({ plan, slug })); } catch {} };
+beacon("fn:sponsor-shown");
+
+if (qs.get("paid")) { try { sessionStorage.removeItem(KEY); } catch {} $("#paid").hidden = false; if (slug) $("#dashlink").href = "/installer/" + encodeURIComponent(slug) + "/manage"; }
+if (qs.get("cancelled")) $("#cancelled").hidden = false;
+
+const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+const IP = cfg.installerPlans || {};
+if (/SoCalLightsApp/.test(navigator.userAgent)) { $("#flow").hidden = true; $("#inapp").hidden = false; $("#cancelled").hidden = true; }
+else if (!cfg.featureCheckout || !SPONSOR_KEYS.every((k) => IP[k])) { $("#flow").hidden = true; $("#manual").hidden = false; }
+else start();
+
+async function start() {
+  const r = seasonRule(cfg); $("#rule").textContent = r.rule + " " + r.now; $("#rule2").textContent = r.rule + " " + r.now;
+  user = (await me()).user;
+  if (!user) {
+    $("#s1").innerHTML = `<p>Sign in with the email you use for your company. Your plan choice will be waiting for you.</p><p><button class="btn" id="si" type="button">Sign in to continue</button></p>`;
+    $("#si").onclick = async () => { save(); if (await signIn({ title: "Sign in to sponsor your company", next: "/sponsor" + (plan ? "?plan=" + plan : "") })) { location.reload(); } };
+    return;
+  }
+  $("#s1").innerHTML = `<p class="meta">Signed in as <b>${esc(user.email)}</b>.</p>`;
+  $("#s2box").hidden = false;
+  const res = await fetch("/api/me/sponsor", { cache: "no-store" });
+  data = res.ok ? await res.json() : { installers: [] };
+  renderProfiles();
+}
+
+function renderProfiles() {
+  const list = data.installers;
+  if (!list.length) { noProfile(); return; }
+  if (!slug || !list.find((i) => i.slug === slug)) slug = list.length === 1 && !list[0].blocking.length ? list[0].slug : "";
+  $("#s2").innerHTML = list.map((i) => {
+    const bad = i.blocking.length;
+    return `<button type="button" class="pick" data-slug="${esc(i.slug)}" aria-pressed="${i.slug === slug}"${bad ? " disabled" : ""}><b>${esc(i.name)}</b><small>${esc([i.area || "No areas listed", i.phone, i.web].filter(Boolean).join(" · "))}${i.placement.banner_until ? " · Banner runs until " + esc(niceDate(i.placement.banner_until)) : ""}${i.placement.top_until ? " · Top of the list until " + esc(niceDate(i.placement.top_until)) : ""}</small></button>`
+      + (bad ? `<div class="gap"><b>${esc(i.name)} is not ready yet.</b> ${i.blocking.map((g) => esc(g.text)).join(" ")} <a href="/installer/${esc(i.slug)}/manage#details">Fix it in your profile</a>, then come back to this page.</div>` : "");
+  }).join("") + `<p class="meta">Not listed? <a href="/add-house?kind=installer">Create a free profile</a> or find yours below.</p>`;
+  $("#s2").querySelectorAll("[data-slug]").forEach((b) => (b.onclick = () => { slug = b.dataset.slug; save(); beacon("fn:sponsor-picked"); renderProfiles(); }));
+  const i = list.find((x) => x.slug === slug);
+  $("#s3box").hidden = !i; $("#s4box").hidden = !i || !plan;
+  if (i) { renderPlans(i); renderSummary(i); }
+}
+
+function noProfile() {
+  $("#s2").innerHTML = `<div class="gap"><b>You don't have an installer profile on this account yet.</b> A free profile comes first: it is the page your placement links to.</div>
+  <p><a class="btn" href="/add-house?kind=installer">Create your free profile first</a></p>
+  <p class="meta">Already on the map? Find your company and claim it (an email at your company's website claims it right away; otherwise a person checks). Then come back to this page.</p>
+  <div class="srch"><input id="q" type="search" placeholder="Your company's name" aria-label="Search for your company" autocomplete="off"></div><ul class="res" id="res"></ul><p class="meta" id="cm" role="status"></p>`;
+  let t; $("#q").addEventListener("input", () => { clearTimeout(t); t = setTimeout(async () => { const q = $("#q").value.trim(); if (q.length < 2) { $("#res").innerHTML = ""; return; } const r = await fetch("/api/installers?q=" + encodeURIComponent(q)).then((x) => x.json()).catch(() => []); $("#res").innerHTML = r.map((i) => `<li><button type="button" data-claim="${esc(i.slug)}">${esc(i.name)}<small>Claim this profile</small></button></li>`).join("") || `<li><small class="meta">No match. Create a free profile instead.</small></li>`; }, 250); });
+  $("#res").addEventListener("click", async (e) => { const b = e.target.closest("[data-claim]"); if (!b) return; b.disabled = true; const r = await fetch("/api/installers/" + encodeURIComponent(b.dataset.claim) + "/claim", { method: "POST" }), j = await r.json().catch(() => ({})); if (j.claimed) { slug = b.dataset.claim; save(); location.reload(); } else { $("#cm").textContent = j.message || j.error || "That didn't work."; b.disabled = false; } });
+}
+
+function renderPlans(i) {
+  $("#plans").innerHTML = SPONSOR_KEYS.map((k) => {
+    const c = sponsorCopy(k), q = i.quotes[k], off = !!q.problem;
+    const held = (q.covered || []).map((c) => (c === "banner" ? "the Banner until " + niceDate(i.placement.banner_until) : "Top of the list until " + niceDate(i.placement.top_until))).join(" and ");
+    const upg = q.upgrade ? `<p class="meta">You already have ${esc(held)}, so you pay only the difference (${money(q.cents)} instead of ${money(IP[k].cents)}). What you already have stays as it is.</p>` : "";
+    // Banner and Top of the list are different products: buying the other one is a full separate purchase. When the installer holds one, say what both together cost.
+    const other = k === "banner" ? i.placement.top_until : k === "top" ? i.placement.banner_until : "", bt = i.quotes.banner_top;
+    const both = other && bt && bt.upgrade && !bt.problem ? `<p class="meta"><b>Both together are ${money(IP.banner_top.cents)}: upgrade for ${money(bt.cents)}.</b> You already have ${k === "banner" ? "Top of the list" : "the Banner"} until ${esc(niceDate(other))}; choose Banner and top of the list to add the other for ${money(bt.cents)} instead of ${money(q.cents)} on its own.</p>` : "";
+    return `<section class="plan${plan === k ? " sel" : ""}${off ? " off" : ""}" data-p="${k}"><div class="price">${money(q.cents)} <small>${esc(c.unit)}</small></div><p><b>${esc(c.name)}.</b> ${q.renewal ? "Renewal: " : ""}runs ${esc(niceDate(q.from))} to ${esc(niceDate(q.to))}.</p><p class="meta">${esc(runsText(q))}</p><p>Includes:</p><ul>${c.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>${upg}${both}${off ? `<p class="meta">${esc(q.problem)}</p>` : ""}<button class="btn ghost pickbtn" type="button" data-pick="${k}" aria-pressed="${plan === k}" aria-label="Choose ${esc(c.name)}, ${money(q.cents)}"${off ? " disabled" : ""}>${plan === k ? "✓ Chosen" : "Choose"}</button></section>`;
+  }).join("");
+  $("#plans").querySelectorAll("[data-pick]").forEach((b) => b.classList.toggle("ghost", b.dataset.pick !== plan));
+  $("#plans").querySelectorAll("[data-pick]").forEach((b) => (b.onclick = () => { plan = b.dataset.pick; save(); renderProfiles(); $("#s4box").scrollIntoView({ block: "nearest", behavior: "smooth" }); }));
+}
+
+function renderSummary(i) {
+  const q = plan && i.quotes[plan];
+  if (!q || q.problem) { $("#s4box").hidden = true; return; }
+  $("#s4box").hidden = false; const c = sponsorCopy(plan);
+  $("#sum").innerHTML = `<dl><dt>Company</dt><dd>${esc(i.name)}</dd><dt>Plan</dt><dd>${esc(c.name)}</dd><dt>Starts</dt><dd>${esc(niceDate(q.from))}${q.renewal ? " (the day after your current placement ends)" : " (today)"}</dd><dt>Ends</dt><dd>${esc(niceDate(q.to))}, the last day of the ${esc(q.season)} season (${dayWord(q.days)})</dd><dt>Price</dt><dd>${money(q.cents)}, one-time payment${q.upgrade ? " (the upgrade difference)" : ""}</dd></dl><p class="meta">${esc(runsText(q))}${q.upgrade ? " You already have part of this plan to the end of the season, so you pay only the difference." : ""}</p>`;
+  $("#renewtxt").textContent = renewalText(cfg, IP[plan].cents); // unticked by default: the box is never pre-ticked
+  const go = $("#go"); go.disabled = false;
+  go.onclick = async () => {
+    go.disabled = true; $("#gomsg").className = "meta"; $("#gomsg").textContent = "Opening the payment page…"; save();
+    try {
+      const r = await fetch("/api/sponsor/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ installer: slug, plan, renew: $("#renew").checked }) }), j = await r.json().catch(() => ({}));
+      if (r.status === 401) { if (await signIn({ title: "Sign in to pay", next: "/sponsor?plan=" + plan })) location.reload(); go.disabled = false; return; }
+      if (!r.ok || !j.url) throw new Error(j.error || "The payment page couldn't be opened. Please try again.");
+      location.href = j.url;
+    } catch (e) { go.disabled = false; $("#gomsg").className = "meta err"; $("#gomsg").setAttribute("role", "alert"); $("#gomsg").textContent = e.message; }
+  };
+}
+</script>
+<script src="/footer.js?v=20261110b" defer></script>
+</body>
+</html>

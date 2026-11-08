@@ -2,6 +2,7 @@
 import { S, ck, SLUG, BASE, hook, recap, nextUp, target, fromMap, toDash, panel, next, nav, mails, MAPSPEC } from "./videos.mjs";
 import { record, sleep } from "./record.mjs";
 import { openSite, openShort, navSteps, emailScene } from "./steps.mjs";
+import { fakeGeocode } from "./mockgeo.mjs";
 const NEXT = "#nextbtn", ER = "Run a contest", ES = "Sponsors and installers", EP = "Post events and homes";
 const toWizard = (full) => [...(full ? openSite() : openShort()), ...fromMap("add", [target("Tap A contest", "Three choices. Tap A contest.", 'a[href="/add-contest"]', { after: 1800 })])];
 const screens = (nm) => [
@@ -42,7 +43,7 @@ S.quick = { id: "quick", file: "run-quick", cookie: ck.u_org, ...MAPSPEC, maxSec
   { cap: "6 of 7: Quick start", say: "It lets you approve every entry before it reaches the map. And it writes your official rules for you. Everything can still be changed later.", do: async (p, h) => { await h.hover('[data-tile="quick|yes"]', 600); }, pad: 0.3 },
   { cap: "6 of 7: Customize", say: "If you would rather choose judges, prizes, or your own categories, pick Customize everything. We cover that in the next video.", do: async (p, h) => { await h.hover('[data-tile="quick|no"]', 1100); }, pad: 0.3 },
   { cap: "6 of 7: Quick start", say: "For now, choose Quick start, then tap Next.", target: '[data-tile="quick|yes"]', after: 1000, post: (p, h) => next(p, h) },
-  { cap: "7 of 7: Review", say: "The last screen is the review. It lists everything you chose: the name, who runs it, the dates, the categories, and who can vote.", do: async (p, h) => { await h.hover(".sum", 1500); }, pad: 0.3 },
+  { cap: "7 of 7: Review", say: "The last screen is the review. It lists everything you chose: the name, who runs it, the dates, the categories, and who can vote. Your first contest in a 12-month window is free. If you run more, you choose a pass first: see the Pricing page.", do: async (p, h) => { await h.hover(".sum", 1500); await p.locator("#pass-box").first().waitFor({ timeout: 8000 }).catch(() => {}); await h.scrollTo("#pass-box", 320).catch(() => {}); await h.hover("#pass-box", 1400).catch(() => {}); }, pad: 0.3 },
   { cap: "7 of 7: Review", say: "If something is not right, tap Edit next to it. Nothing is public until you tap Create contest. When you are happy, tap Create contest.", do: async (p, h) => { await h.scroll(160); }, target: NEXT, after: 2600, poster: true },
   { cap: "Your contest is live", say: "That is it. Your contest is live. This page explains what happens next. You share your link or your QR code. Neighbors enter their homes. You look over each entry before it goes on the map. Then the community votes, on the dates you set, and you announce the winners. Tap Open my dashboard.", target: "text=Open my dashboard", after: 2000 },
   { cap: "Your dashboard", say: "This is your dashboard. It is where you run the contest. Up here are the numbers that matter: your entries, the ones waiting for you, and the votes.", do: async (p, h) => { await h.hover(".stats", 1200); }, pad: 0.3 },
@@ -80,7 +81,7 @@ S.custom = { id: "custom", file: "run-custom", cookie: ck.u_org, ...MAPSPEC, max
   { cap: "14 of 16: Prize", say: "Describe it, for example, a fifty dollar gift card. If a local business is providing it, you can name them here too. Then tap Next.", do: async (p, h) => { await h.type("#f-prize", "A 50 dollar gift card"); }, target: NEXT, after: 1200 },
   { cap: "15 of 16: Official rules", say: "These are your official rules. We drafted them for you, and people have to accept them before they enter. They cover who can enter, how winners are chosen, and what the prize terms are.", do: async (p, h) => { await h.hover("#f-rules", 1800); }, pad: 0.3 },
   { cap: "15 of 16: Official rules", say: "You can edit anything. If you offer a prize, it is a good idea to have a lawyer read them. Tap Next.", do: async (p, h) => { await h.scroll(200, 900); }, target: NEXT, after: 1200 },
-  { cap: "16 of 16: Review", say: "Last is the review. Everything you chose is listed here, and each line has an Edit link if you want to change it. Nothing is public until you tap Create contest.", do: async (p, h) => { await h.hover(".sum", 1500); }, pad: 0.3 },
+  { cap: "16 of 16: Review", say: "Last is the review. Everything you chose is listed here, and each line has an Edit link if you want to change it. Your first contest in a 12-month window is free. If you run more, you choose a pass first: see the Pricing page. Nothing is public until you tap Create contest.", do: async (p, h) => { await h.hover(".sum", 1500); await p.locator("#pass-box").first().waitFor({ timeout: 8000 }).catch(() => {}); await h.scrollTo("#pass-box", 320).catch(() => {}); await h.hover("#pass-box", 1400).catch(() => {}); }, pad: 0.3 },
   { cap: "16 of 16: Create contest", say: "When you are happy with it, tap Create contest.", do: async (p, h) => { await h.scroll(260, 1000); }, target: NEXT, after: 2600, poster: true },
   { cap: "Your contest is live", say: "Your contest is live. This page explains what happens next. Share your link, neighbors enter, you approve the entries, the community and your judges vote, and you announce the winners. Tap Open my dashboard.", target: "text=Open my dashboard", after: 2000 },
   { cap: "Your dashboard", say: "This is your dashboard, where you run the contest, with your link and QR code ready to share. Sharing is the next video.", do: async (p, h) => { await h.hover(".stats", 1200); }, pad: 0.8 },
@@ -108,15 +109,29 @@ S.share = { id: "share", file: "run-share", cookie: ck.u_org, ...MAPSPEC, steps:
   emailScene(mails.neighbor, "This is what each neighbor receives. It has your contest name, your note, and one clear button that takes them straight to the contest. They do not need to hunt for anything.", "neighbor@example.com"),
   nextUp(ER, "Approve and decline entries", "Approve, decline with a reason, and undo a decline"),
 ]};
+const shortDash = () => toDash().map((x) => /Contests$/.test(x.cap || "") ? { ...x, say: "In the menu, tap Contests." } : /Mine$/.test(x.cap || "") ? { ...x, say: "Tap Mine, your personal page." } : /Manage$/.test(x.cap || "") ? { ...x, say: "Tap Manage, next to your contest." } : x);
+const ADD = "1 Civic Center Plaza, Irvine, 92606 | The Ortiz Family\n14301 Yale Ave, Irvine, 92604 | The Lin Family\n6950 Marine Way, Irvine, 92618 | The Brooks Family\n9999 Nowhere Lane, Irvine | The Moore Family\n412 Maple Street";
+const addHomes = (long) => [
+  target("Tap Add homes yourself", "At the top is Add homes yourself, for homes you already know about. Tap it to open.", "#addcard summary", { after: 1200, pre: async (p) => { await fakeGeocode(p); } }),
+  { cap: "Paste the addresses", say: "Paste one address per line, with a name after a bar, if you like.", do: async (p, h) => { await h.type("#add-list", ADD, { fill: true, after: 1200 }); } },
+  target("Tap Check addresses", "Then tap Check addresses. Nothing is added yet.", "#add-check", { after: 2600 }),
+  { cap: "Found, not found, already in", say: "Each line is looked up. Found means ready. Not found means a typo. Already in means it is in your contest.", do: async (p, h) => { await h.hover("#add-res .rowi >> nth=0", 800); await h.hover("#add-res .rowi >> nth=3", 800); await h.hover("#add-res .rowi >> nth=4", 800); } },
+  target("Tap the box", "Tick the box to confirm the residents agreed to have their address shown.", "#add-ok", { after: 900 }),
+  target("Tap Add 3 homes", "Then tap Add 3 homes.", "#add-go", { after: 2600 }),
+];
 S.approve = { id: "approve", file: "run-approve", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ER, "Approve and decline entries", "Review each home", "In this video, you will review the homes your neighbors enter. You will approve the good ones, decline the ones that do not fit, and learn how to undo a mistake. We start on the map."),
-  ...toDash(),
-  target("Tap Entries", "Now tap Entries. This is where you review every home that neighbors enter. Nothing goes on the map until you approve it, which protects your contest from photos that do not belong.", nav("entries"), { after: 1500 }),
-  target("Tap Approve", "Each entry shows the photos, the address, and who sent it. If it looks right, tap Approve. The home joins the contest, appears on the map, and shows up on every voter's ballot. The neighbor is emailed to say they are in.", '[data-entry="approve:p_pend1"]', { after: 1800, poster: true }),
-  target("Tap Decline", "If an entry does not belong, for example, the photo is not a home, or it is a duplicate, tap Decline.", '[data-entry="decline:p_pend2"]', { after: 1200 }),
-  { cap: "Give a reason", say: "A small window asks why. The reason is optional, but a kind note helps the neighbor fix the problem and try again. It is emailed to them. Then tap Decline entry.", do: async (p, h) => { await h.type("#rsn", "The photo is too dark to see the lights."); }, target: "#rs-go", after: 1800 },
-  target("Tap Restore", "Changed your mind? A declined entry is not gone. Tap Restore and it goes back to waiting for your review, so you can approve it.", '[data-entry="restore:p_pend2"]', { after: 1800 }),
-  nextUp(ER, "Edit your contest and change the dates", "Change the details any time before winners are announced"),
+  hook(ER, "Approve and decline entries", "Review homes, and add your own", "In this video, you will review the homes your neighbors enter, add homes yourself, and undo a mistake. We start on the map."),
+  ...toDash().map((x) => /Contests$/.test(x.cap || "") ? { ...x, say: "In the menu, tap Contests." } : /Mine$/.test(x.cap || "") ? { ...x, say: "Tap Mine, your personal page." } : /Manage$/.test(x.cap || "") ? { ...x, say: "Tap Manage, next to your contest." } : x),
+  target("Tap Entries", "Now tap Entries. Nothing goes on the map until you approve it.", nav("entries"), { after: 1500 }),
+  ...addHomes(false),
+  { cap: "Added by organizer", say: "The new homes are on the map and the ballot, tagged Added by organizer.", do: async (p, h) => { await h.scrollTo("[data-rmadded] >> nth=0", 320); await h.hover(".pill:has-text('Added by organizer') >> nth=0", 900); }, pad: 0.6 },
+  target("Tap Remove", "Added one by mistake? Tap Remove, then tap again to confirm.", "[data-rmadded] >> nth=2", { after: 1000 }),
+  target("Tap again to remove", "Tap again.", "[data-rmadded] >> nth=2", { after: 2000 }),
+  target("Tap Approve", "Homes your neighbors enter wait for you. If one looks right, tap Approve. It joins the contest, and the neighbor is emailed.", '[data-entry="approve:p_pend1"]', { after: 1800, poster: true, pre: async (p) => { await p.locator('[data-entry="approve:p_pend1"]').first().evaluate((el) => el.scrollIntoView({ block: 'center' })); } }),
+  target("Tap Decline", "If one does not belong, tap Decline.", '[data-entry="decline:p_pend2"]', { after: 1200, pre: async (p) => { await p.locator('[data-entry="decline:p_pend2"]').first().evaluate((el) => el.scrollIntoView({ block: 'center' })); } }),
+  { cap: "Give a reason", say: "A kind note helps the neighbor try again. Then tap Decline entry.", do: async (p, h) => { await h.type("#rsn", "The photo is too dark to see the lights."); }, target: "#rs-go", after: 1800 },
+  target("Tap Undo decline", "Changed your mind? Tap Undo decline.", '[data-entry="restore:p_pend2"]', { after: 1800, pre: async (p) => { await p.locator('[data-entry="restore:p_pend2"]').first().evaluate((el) => el.scrollIntoView({ block: 'center' })); } }),
+  nextUp(ER, "Add your city's homes yourself", "Paste a whole list of addresses and put every home on the ballot"),
 ]};
 S.edit = { id: "edit", file: "run-edit", cookie: ck.u_org, ...MAPSPEC, steps: [
   hook(ER, "Edit your contest", "Change the dates and details", "In this video, you will change your contest after you have created it: the dates, the name, the message, the prize, and the rules. Plans change, and the site is built for that. We start on the map."),
@@ -129,14 +144,15 @@ S.edit = { id: "edit", file: "run-edit", cookie: ck.u_org, ...MAPSPEC, steps: [
 ]};
 S.voting = { id: "voting", file: "run-voting", cookie: ck.u_org, ...MAPSPEC, steps: [
   hook(ER, "Run voting", "Pause, review, and void a vote", "In this video, you will learn how to run voting once it has started. You will pause and resume it, check the results, and remove a vote that should not count. We start on the map."),
-  ...toDash(),
+  ...shortDash(),
   { cap: "Controls", say: "This card is where you control the contest while it is running. Voting opens and closes on your dates by itself. The Controls card lets you step in when you need to.", do: async (p, h) => { await h.scrollTo("text=Controls", 100); } },
+  { cap: "Contest page", say: "The last row, Contest page, has an Unpublish button. It hides the whole contest from the public, and you can publish it again. The next video shows how.", do: async (p, h) => { await h.hover(".sw:has-text('Contest page')", 1000); } },
   target("Tap Pause voting", "Say you spot something odd, or you need to fix a mistake. Tap Pause voting, and votes stop right away, until you say otherwise.", '[data-act="pause_voting"]', { after: 1500, poster: true }),
   target("Tap Resume voting", "When you are ready, tap Resume voting, and voting carries on.", '[data-act="resume_voting"]', { after: 1500 }),
   target("Tap Results", "Now tap Results. Here is the full tally, category by category. You can always see the counts, even when you have hidden them from the public so people are not swayed by who is ahead.", nav("results"), { after: 1500 }),
   target("Review individual votes", "Open Review individual votes. Every single vote is listed, with when it was cast. The system flags odd patterns, like a burst of votes within a few seconds, so you can look more closely.", "#votecard summary", { after: 1500, pre: async (p, h) => { await h.scrollTo("#votecard summary", 140); } }),
   target("Tap Void", "If a vote should not count, tap Void next to it. It is removed from the tally, and you can restore it later if you change your mind. This keeps the contest fair.", "#votecard button:has-text('Void') >> nth=0", { after: 1800 }),
-  nextUp(ER, "Add co-organizers and judges", "Invite people to help run the contest"),
+  nextUp(ER, "Unpublish and publish again", "Hide your contest, then bring it back"),
 ]};
 S.team = { id: "team", file: "run-team", cookie: ck.u_org, ...MAPSPEC, steps: [
   hook(ER, "Add co-organizers and judges", "Invite people to help", "In this video, you will bring in help. You will add co-organizers, who share the work of running the contest, and judges, who score the homes. We start on the map."),
@@ -170,14 +186,32 @@ S.activity = { id: "activity", file: "run-activity", cookie: ck.u_org, ...MAPSPE
 ]};
 
 // ---------------- Sponsors and installers ----------------
+const dashUrl = BASE + "/c/" + SLUG + "/manage";
 S.sponsors = { id: "sponsors", file: "sponsors-add", cookie: ck.u_org, ...MAPSPEC, steps: [
-  hook(ES, "Add sponsors and logos", "Thank the businesses that help", "In this video, you will add a local business as a sponsor of your contest, with its logo and website, so it gets thanked on your contest page. We start on the map."),
+  hook(ES, "Record a sponsor on your contest page", "Thank the businesses that help", "In this video, you will record a local business that paid you to sponsor your contest, so its name and logo are thanked on your contest page. We start on the map."),
   ...toDash(),
-  target("Tap Sponsors", "A sponsor is a local business that supports your contest. Their name and logo show on your contest page. Tap Sponsors.", nav("sponsors"), { after: 1400 }),
-  { cap: "Name and tier", say: "Type the sponsor's name, and choose a tier. Sponsors are listed by tier, so the top tier shows first.", do: async (p, h) => { await h.type("#sp-name", "Oak Hill Hardware"); await h.move("#sp-tier"); await p.selectOption("#sp-tier", "gold"); await h.unring(); await sleep(600); } },
-  { cap: "Website and logo", say: "Add their website, so people can click through. Then choose their logo. Use a clear picture, a J P G, P N G, or WebP file under six hundred kilobytes.", do: async (p, h) => { await h.type("#sp-url", "https://oakhillhardware.example.com"); p.once("filechooser", (fc) => fc.setFiles(process.env.LOGO)); }, target: "#sp-logo", after: 1800 },
-  target("Tap Add sponsor", "Tap Add sponsor. Sponsors can support your contest directly, and any payment goes to you. One rule is important: payment never affects who wins.", '#spform button[type="submit"]', { after: 2000, poster: true }),
-  target("See it as voters do", "To check how it looks, tap See it as voters do, and you will see the sponsors on the contest page, just as your neighbors do.", 'a:has-text("See it as voters do")', { after: 2200 }),
+  target("Tap Sponsors", "A sponsor is a local business that supports your contest. This tab is where you record one. Tap Sponsors.", nav("sponsors"), { after: 1400 }),
+  { cap: "Company and logo", say: "Type the company's name. Then choose their logo, a J P G, P N G, or WebP file under six hundred kilobytes.", do: async (p, h) => { await h.scrollTo("#sp-name", 200); await h.type("#sp-name", "Oak Hill Hardware"); p.once("filechooser", (fc) => fc.setFiles(process.env.LOGO)); }, target: "#sp-logo", after: 1800 },
+  { cap: "Paid to you", say: "Now how the sponsorship counts. The sponsor paid you yourself, so choose Paid to me.", do: async (p, h) => { await h.move("#sp-basis"); await p.selectOption("#sp-basis", "paid"); await h.unring(); await sleep(900); } },
+  { cap: "Confirm the payment", say: "Tick that you collected the payment, and add the date and how it was paid. Sponsors pay you, never SoCal Lights.", do: async (p, h) => { await h.click("#sp-collected", { after: 500 }); await h.move("#sp-date"); await p.fill("#sp-date", "2026-11-05"); await h.type("#sp-method", "Check"); await h.unring(); } },
+  { cap: "Permission", say: "Tick that you have the sponsor's permission, and tick Show on the contest page.", do: async (p, h) => { await h.click("#sp-perm", { after: 500 }); await h.click("#sp-show", { after: 700 }); } },
+  target("Tap Save sponsor", "Tap Save sponsor. Payment never affects who wins.", "#sp-save", { after: 2000, poster: true }),
+  target("See it as voters do", "To check how it looks, tap See it as voters do, and you will see the sponsor on the contest page, just as your neighbors do.", 'a:has-text("See it as voters do")', { after: 2200 }),
+  nextUp(ES, "Invite a sponsor to your contest", "Share one private link and approve the request"),
+]};
+S["sponsor-invite"] = { id: "sponsor-invite", file: "sponsors-invite", cookie: ck.u_org, ...MAPSPEC, steps: [
+  hook(ES, "Invite a sponsor to your contest", "One private link, and you approve it", "In this video, you will send a sponsor one private link, then review their request and approve it. We start on the map."),
+  ...toDash(),
+  target("Tap Sponsors", "Tap Sponsors.", nav("sponsors"), { after: 1400 }),
+  { cap: "How sponsors pay you", say: "First, tell sponsors how to pay you. Paste your own payment link, or write where to send a check. Tap Save.", do: async (p, h) => { await h.scrollTo("#su-pay", 200); await h.type("#su-pay", "https://example.com/oak-hill-neighbors-pay"); }, target: "#su-save", after: 1600 },
+  { cap: "Invite a sponsor", say: "Next, Invite a sponsor. Tap Create invite link.", do: async (p, h) => { await h.scrollTo("#su-on", 260); }, target: "#su-on", after: 1500 },
+  { cap: "Copy the link", say: "This is your private link. Tap Copy link, then send it to the sponsor.", do: async (p, h) => { await h.hover("#su-url", 1200); }, target: "#su-copy", after: 1500 },
+  { cap: "The sponsor's page", say: "Now the sponsor's side. They open your link, no account needed, and see how to pay you.", do: async (p, h) => { const u = BASE + "/s/" + (await p.inputValue("#su-url")).split("/s/").pop(); await h.ctx.clearCookies(); await p.route("**/challenges.cloudflare.com/**", (r) => r.abort()); await p.goto(u, { waitUntil: "domcontentloaded" }); await p.waitForSelector("#contact", { timeout: 10000 }); await sleep(1000); await h.hover("#paylink, .notice", 1400); }, pad: 0.4 },
+  { cap: "The sponsor's form", say: "They fill in a short form, and tap Send to the organizer.", do: async (p, h) => { await h.type("#contact", "Sam Demo"); await h.type("#company", "Oak Hill Hardware"); await h.type("#email", "owner@oakhillhardware.example.com"); await h.scrollTo("#perm", 200); await h.click("#perm", { after: 400 }); await h.click("#und", { after: 600 }); }, target: "#go", after: 2200 },
+  { cap: "Back to your dashboard", say: "Back on your side, the request waits for you. Nothing shows until you approve it.", do: async (p, h) => { await h.ctx.addCookies([{ name: "scl_session", value: ck.u_org, url: BASE }]); await p.goto(dashUrl + "#sponsors", { waitUntil: "networkidle" }); await p.waitForSelector("[data-edsp]", { timeout: 10000 }); await h.scrollTo("[data-edsp]", 260); await h.hover("[data-edsp]", 1200); }, pad: 0.4 },
+  { cap: "Mark payment received", say: "Once they have paid you, tap Mark payment received.", target: "[data-edsp]", after: 1200 },
+  { cap: "Confirm the payment", say: "Choose Paid to me, tick that you collected it, add the date, then tap Save sponsor.", do: async (p, h) => { await h.move("#sp-basis"); await p.selectOption("#sp-basis", "paid"); await h.unring(); await sleep(500); await h.click("#sp-collected", { after: 400 }); await h.move("#sp-date"); await p.fill("#sp-date", "2026-11-05"); await h.type("#sp-method", "Check"); await h.unring(); }, target: "#sp-save", after: 1800 },
+  { cap: "Approve", say: "Now tap Approve. The sponsor appears on your contest page, labelled Sponsor.", do: async (p, h) => { await h.scrollTo("[data-apsp]", 260); await h.hover("[data-apsp]", 700); }, target: "[data-apsp]", after: 2400, poster: true },
   nextUp(ES, "Presenting installer and quote requests", "How the Get a quote button works"),
 ]};
 S.installer = { id: "installer", file: "sponsors-installer", cookie: ck.u_org, ...MAPSPEC, steps: [
@@ -200,7 +234,7 @@ S["installer-profile"] = { id: "installer-profile", file: "sponsors-profile", co
   target("Tap the company name", "Tap the company's name to open its profile page.", "a.instlink >> nth=0", { after: 2400, poster: true }),
   { cap: "Manage your profile", say: "If this is your company, claim the profile with your company email. That proves it is yours. Then you manage it here, with your company details and logo. Homes that name your company are listed on the Homes tab.", do: async (p, h) => { await p.goto(BASE + "/installer/bright-nights-lighting/manage#homes", { waitUntil: "networkidle" }); await sleep(1200); await h.hover("[data-claim^='confirm']", 900); } },
   target("Tap Confirm", "Tap Confirm for each home you really installed. It gets a check mark, which tells visitors it is true. If it is not yours, tap Not ours, and the name is removed from that home.", "[data-claim^='confirm']", { after: 2000 }),
-  nextUp(ES, "Add an event to the map", "Share a tree lighting, market, parade or haunted house"),
+  nextUp(ES, "Sponsor your installer company", "Banner, Top of the list, or both"),
 ]};
 
 // ---------------- Post events and homes ----------------
@@ -232,6 +266,90 @@ S.showcase = { id: "showcase", file: "post-house", cookie: ck.u_enter, routes: N
   { cap: "Photos", say: "Add photos. Take them at night, with the lights on. The first photo is the cover people see on the map.", pre: async (p) => p.once("filechooser", (fc) => fc.setFiles(["public/img/stock/tree-3.jpg", "public/img/stock/walk-2.jpg"])), target: "label[for=f-photos]", after: 2200, post: (p, h) => next(p, h) },
   { cap: "Put it on the map", say: "Finally, check everything, and tap Put it on the map. Your house is now part of the map, for any family in Southern California to find.", target: NEXT, after: 2400, poster: true },
   nextUp(EP, "Find lights near you", "Use the map, filters, seasons and All seasons to find what is on near you"),
+]};
+
+
+// ---------------- New videos (2026-11-06) ----------------
+S["add-homes"] = { id: "add-homes", file: "run-add-homes", cookie: ck.u_org, ...MAPSPEC, steps: [
+  hook(ER, "Add your city's homes yourself", "Paste a list of addresses", "In this video, you will add a whole list of homes to your contest yourself, for example when your city already collects registrations somewhere else. We start on the map."),
+  ...shortDash(),
+  target("Tap Entries", "Now tap Entries. Homes can be added here until voting starts.", nav("entries"), { after: 1500 }),
+  target("Tap Add homes yourself", "Open Add homes yourself. Each home goes straight onto the ballot and the routes, with no photo, and no sign in.", "#addcard summary", { after: 1200, pre: async (p) => { await fakeGeocode(p); } }),
+  { cap: "One home per line", say: "Paste one home per line: the street address, city and ZIP, then a bar, and the family name. The city, ZIP and name are optional.", do: async (p, h) => { await h.hover("#addcard code >> nth=0", 1000); await h.scrollTo("#add-list", 260); } },
+  { cap: "Paste the addresses", say: "Paste your list, up to a hundred at a time.", do: async (p, h) => { await h.type("#add-list", ADD, { fill: true, after: 1200 }); } },
+  target("Tap Check addresses", "Tap Check addresses. This looks up each address, and adds nothing yet.", "#add-check", { after: 2600 }),
+  { cap: "Found, not found, already in", say: "Found means ready. Not found means a typo, so fix it and check again. Already in means it is in your contest.", do: async (p, h) => { await h.hover("#add-res .rowi >> nth=0", 900); await h.hover("#add-res .rowi >> nth=3", 1100); await h.hover("#add-res .rowi >> nth=4", 1100); } },
+  target("Tap the box", "Tick the box to confirm that the residents agreed to have their address shown on the public map.", "#add-ok", { after: 900 }),
+  target("Tap Add 3 homes", "The button now says how many homes it will add. Tap Add 3 homes.", "#add-go", { after: 2600 }),
+  { cap: "Added by organizer", say: "The new homes are on the map and the ballot, tagged Added by organizer.", do: async (p, h) => { await h.scrollTo("[data-rmadded] >> nth=0", 320); await h.hover(".pill:has-text('Added by organizer') >> nth=0", 1200); }, pad: 0.6 },
+  target("Tap Remove", "Added one by mistake? Tap Remove.", "[data-rmadded] >> nth=2", { after: 1000 }),
+  target("Tap again to remove", "Then tap again to confirm.", "[data-rmadded] >> nth=2", { after: 2000 }),
+  recap(ER, "Your homes are on the ballot", ["Paste one home per line", "Check addresses", "Tick the box, then add", "Tagged Added by organizer"], "That is how you put a whole neighborhood on the ballot. Homes can be added until voting starts."),
+  nextUp(ER, "Edit your contest and change the dates", "Change the details any time before winners are announced"),
+]};
+S.unpublish = { id: "unpublish", file: "run-unpublish", cookie: ck.u_org, ...MAPSPEC, steps: [
+  hook(ER, "Unpublish and publish again", "Hide your contest, then bring it back", "In this video, you will hide your contest from the public with two taps, and bring it back when you are ready. Nothing is deleted. We start on the map."),
+  ...shortDash(),
+  { cap: "Controls", say: "On the Overview, the Controls card has a row called Contest page. It says Public and on the map. That means anyone can find the contest.", do: async (p, h) => { await h.scrollTo("text=Controls", 100); await h.hover(".sw:has-text('Contest page')", 1000); } },
+  target("Tap Unpublish", "Need to stop everything for a moment, for example to fix a mistake? Tap Unpublish.", '[data-act="unpublish"]', { after: 1000, poster: true }),
+  target("Tap again to confirm", "It asks you to tap again, so it cannot happen by accident. Entries and votes stop, and the contest leaves the map. Tap again to unpublish.", '[data-act="unpublish"]', { after: 2200 }),
+  { cap: "", say: "A red notice now sits at the top. It says the contest is hidden, and that nothing has been deleted. Your team can still open this dashboard.", do: async (p, h) => { await p.evaluate(() => scrollTo(0, 0)); await sleep(800); await h.hover(".status.no", 1200); } },
+  target("Tap Publish it again", "When you are ready, tap Publish it again.", '.status.no [data-act="publish_again"]', { after: 2200 }),
+  { cap: "Public again", say: "The notice is gone, the Contest page row says Public and on the map again, and entries and votes carry on, with everything still in place.", do: async (p, h) => { await h.hover(".sw:has-text('Contest page')", 1200); } },
+  recap(ER, "Hide it, bring it back", ["Controls, then Contest page", "Unpublish, tap again", "Publish it again"], "That is Unpublish: hide the contest, fix what you need to, and publish it again. Nothing is lost."),
+  nextUp(ER, "Add co-organizers and judges", "Invite people to help run the contest"),
+]};
+S.claim = { id: "claim", file: "post-claim", cookie: ck.u_enter, routes: NOCFG, ...MAPSPEC, steps: [
+  hook(EP, "Claim your home", "Is this your home?", "In this video, you will claim a home that is already on the map, so your own photos and details replace the automatic listing. We start on the map."),
+  ...openShort(),
+  { cap: "Search for your street", say: "Say you spot your own home on the map, listed from a public list of homes. Search for your street, and open your home's card.", do: async (p, h) => { await h.type("#q", "Juniper Lane"); }, target: "#pbody .item >> nth=0", after: 2200 },
+  target("Tap Is this your home?", "Homes we found on public lists have a link at the bottom of the card. Tap Is this your home? Claim it.", ".claimhome", { after: 2200, pre: async (p, h) => { await p.locator(".claimhome").first().evaluate((el) => el.scrollIntoView({ block: "center" })); } }),
+  { cap: "You are claiming", say: "The form opens with your address already filled in, and tells you which listing you are claiming. Tap A homeowner, then Next.", do: async (p, h) => { await h.hover(".help", 1500); }, target: '[data-tile="kind|homeowner"]', after: 800, post: (p, h) => next(p, h) },
+  { cap: "Name to show", say: "Type the name to show, like the Park family, then tap Next.", do: async (p, h) => { await h.type("#f-biz", "The Park family"); }, target: NEXT, after: 1400 },
+  { cap: "Did a company install it?", say: "If a company installed your lights, you can name them here. We did it ourselves, so tap No, then Next.", target: '[data-tile="hadPro|no"]', after: 800, post: (p, h) => next(p, h) },
+  { cap: "Season", say: "Tap Christmas, then Next.", target: '[data-tile="season|christmas"]', after: 800, post: (p, h) => next(p, h) },
+  { cap: "About your home", say: "The name is filled in from the listing. Change it if you like, and tell families what makes your lights special. Then tap Next.", do: async (p, h) => { await h.type("#f-desc", "Ten thousand lights on the roof and trees, and a candy cane walkway."); }, target: NEXT, after: 1400 },
+  { cap: "Address", say: "Check the address. It is already filled in, so just tap Next.", do: async (p, h) => { await h.hover("#f-street", 900); }, target: NEXT, after: 1400 },
+  { cap: "Plan a visit", say: "Telling families when your lights are on is optional. Tap Next.", target: NEXT, after: 1400 },
+  { cap: "Photos", say: "Add photos of your own lights, taken at night. They replace the picture on the automatic listing.", pre: async (p) => p.once("filechooser", (fc) => fc.setFiles(["public/img/stock/tree-3.jpg", "public/img/stock/walk-2.jpg"])), target: "label[for=f-photos]", after: 2200, post: (p, h) => next(p, h) },
+  { cap: "Put it on the map", say: "Finally, check everything, and tap Put it on the map.", target: NEXT, after: 2600, poster: true },
+  recap(EP, "Claimed", ["Open the card, tap Is this your home?", "Add your own photos and details", "Once approved, it replaces the automatic listing"], "That is it. Once the site owner approves your home, it replaces the automatic listing, with your own photos and details."),
+  nextUp(EP, "Feature your event or home", "A gold pin on the map, for events and winning homes"),
+]};
+S.feature = { id: "feature", file: "post-feature", cookie: ck.u_mine, ...MAPSPEC, steps: [
+  hook(EP, "Feature your event or home", "Stand out on the map", "In this video, you will see how to feature an event, or a winning home, so it stands out on the map. We go as far as the secure payment page, and stop there. We start on the map."),
+  ...openShort(),
+  ...navSteps([
+    target("Tap the three dots", "Look at the top right corner of the map, and tap the three dots.", "#morebtn", { after: 900 }),
+    target("Tap Promote your event", "In the menu, tap Promote your event. Listing an event is always free. This is for organizers who want to stand out.", '#moremenu a[href="/feature"]', { after: 2200 }),
+  ]),
+  { cap: "Pick a plan", say: "First, pick a plan. There are four, and each one lists everything it includes. Every plan includes the gold Featured pin on the map. The banner adds your event as a Featured pill, in the strip at the top of the map list. And Top of the list puts your event first when people browse your area. For prices, see the Pricing page.", do: async (p, h) => { await p.locator("#flow .plan[data-p]").first().waitFor({ timeout: 10000 }); await h.scrollTo("#flow .plan[data-p] >> nth=0", 150); for (const n of [0, 1, 2, 3]) await h.hover(`#flow .plan[data-p] >> nth=${n}`, 1300); } },
+  target("Tap Choose", "Tap Choose on the plan you want. We will take the banner with the pin.", '[data-pick="ev_banner"]', { after: 1600 }),
+  { cap: "Which event?", say: "Next, pick what to feature. This list shows your events, and homes that finished first, second or third in an announced contest.", do: async (p, h) => { await p.locator("#mylist").first().waitFor({ timeout: 10000 }); await h.scrollTo("#mylist", 200); await h.hover("#mylist li >> nth=0", 1000); await h.hover("#mylist li >> nth=1", 1000); } },
+  target("Tap your event", "Tap your event.", '[data-mine="ev-oak-hill-tree-lighting"]', { after: 1800 }),
+  { cap: "Check the dates", say: "This page shows exactly what you get, when it starts, when it ends, and the total, before you pay.", do: async (p, h) => { await h.hover("#flow .plan.sel ul", 1200); await h.hover("#flow .plan.sel p:has-text('Starts')", 1800); } },
+  { cap: "Tap Pay on Stripe", say: "Then tap Pay on Stripe. This opens Stripe's secure page, where you pay with a card or Cash App Pay. We stop here, because this is only a demonstration, and we never enter card details in a video.", target: "#go", after: 3500, pre: async (p) => { await p.route("**/api/feature/checkout", () => new Promise(() => {})); }, poster: true }, // the request is held: nothing is sent to Stripe
+  { cap: "", say: "After you pay, your placement turns on by itself within a few minutes, and a receipt arrives by email. There is no subscription. A winning home works the same way.", do: async (p, h) => { await sleep(600); } },
+  recap(EP, "Featured, in a few taps", ["Menu, then Promote your event", "Pick a plan", "Pick your event or winning home", "Check the dates, then pay on Stripe"], "That is how you feature an event or a winning home. Listing is always free, and a Featured placement is optional."),
+  nextUp(EP, "Find lights near you", "Use the map, filters, seasons and All seasons to find what is on near you"),
+]};
+S.sponsor = { id: "sponsor", file: "sponsors-sponsor", cookie: ck.u_inst, ...MAPSPEC, steps: [
+  hook(ES, "Sponsor your installer company", "Banner, Top of the list, or both", "In this video, you will sponsor your installer company, so it stands out at the top of the map list, in the installer list, or both. We go as far as the secure payment page, and stop there. We start on the map."),
+  ...openShort(),
+  ...navSteps([
+    target("Tap the three dots", "Look at the top right corner of the map, and tap the three dots.", "#morebtn", { after: 900 }),
+    target("Tap Promote your event", "In the menu, tap Promote your event. This page is for paid placements.", '#moremenu a[href="/feature"]', { after: 2200 }),
+    target("Tap See all pricing", "At the top, tap See all pricing.", 'main a[href="/pricing"] >> nth=0', { after: 2200 }),
+  ]),
+  { cap: "Installers", say: "Scroll to Installers. Paid placements are always labelled Sponsor. The Banner is a pill in the strip at the top of the map list. Top of the list puts your company first in the installer list. Or take both. The prices are on this page.", do: async (p, h) => { await h.scrollTo("#insttiers", 140); for (const n of [0, 1, 2, 3]) await h.hover(`#insttiers .tier >> nth=${n}`, 1100); } },
+  target("Tap Choose", "Under Banner, tap Choose.", 'a[href="/sponsor?plan=banner"]', { after: 2400 }),
+  { cap: "Your company", say: "If you are not signed in, it asks you to sign in with your company email. Your company is picked here. It needs a free profile first.", do: async (p, h) => { await p.locator("#s2 .pick").first().waitFor({ timeout: 10000 }); await h.hover("#s2 .pick", 1500); } },
+  { cap: "The three plans", say: "These are the three plans: Banner, Top of the list, and both together. Your choice is marked, and each one lists everything it includes.", do: async (p, h) => { await h.scrollTo("#plans", 160); for (const n of [0, 1, 2]) await h.hover(`#plans .plan >> nth=${n}`, 1200); } },
+  { cap: "Check the dates", say: "Below is a summary with the exact dates. It starts today, and ends on the last day of the season. Automatic renewal is optional. It is off unless you tick this box, and you can cancel it any time.", do: async (p, h) => { await h.scrollTo("#sum", 160); await h.hover("#sum", 1800); await h.hover("#renewbox", 1500); } },
+  { cap: "Tap Continue to payment", say: "Then tap Continue to payment. This opens Stripe's secure page. We stop here, because this is only a demonstration, and we never enter card details in a video.", target: "#go", after: 3500, pre: async (p) => { await p.route("**/api/sponsor/checkout", () => new Promise(() => {})); }, poster: true }, // the request is held: nothing is sent to Stripe
+  { cap: "", say: "After you pay, your placement turns on within a few minutes, and a receipt arrives by email.", do: async (p, h) => { await sleep(600); } },
+  recap(ES, "Sponsored, in a few taps", ["Menu, Promote, See all pricing", "Choose Banner, Top of the list, or both", "Pick your company and check the dates", "Pay on Stripe's secure page"], "That is how you sponsor your installer company. Every paid placement is labelled Sponsor, and renewal is always your choice."),
+  nextUp(EP, "Add an event to the map", "Share a tree lighting, market, parade or haunted house"),
 ]};
 
 const id = process.argv[2];

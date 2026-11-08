@@ -2,6 +2,8 @@
 // Saves the post as 'pending' and its photos under pending/<id>/ in R2.
 import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
 import { sendTemplate } from "../_lib/mailtpl.js";
+import { bump } from "../_lib/funnel.js";
+import { ipPruneStatements } from "../_lib/retention.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 import { getUser } from "../_lib/auth.js";
@@ -119,8 +121,14 @@ export async function onRequestPost({ request, env, waitUntil }) {
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'CA',?,?,?,?,?,${contest ? "(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?)" : "NULL"},${autoApprove ? "datetime('now')" : "NULL"})`
     ).bind(id, autoApprove ? "approved" : "pending", biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area, contest ? contest.id : null, "", cu.id, ...(contest ? [contest.id] : [])),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
-    env.DB.prepare("DELETE FROM submit_log WHERE created_at < datetime('now','-1 day')"),
+    ...ipPruneStatements(env),
   ]);
+
+  // "Is this your home?" from the map: remember which automatic listing this display claims (shown to Admin when reviewing)
+  try {
+    const claim = clean(form.get("claim"), 60);
+    if (claim && !contest && (await env.DB.prepare("SELECT 1 FROM events WHERE id = ?").bind(claim).first())) await env.DB.prepare("UPDATE posts SET claim_event_id = ? WHERE id = ?").bind(claim, id).run();
+  } catch {}
 
   // Visiting details for families (all optional)
   try {
@@ -130,12 +138,22 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // Installer profile: an installer's own post makes (or joins) their profile; a homeowner can name the company that installed their lights
   try {
     if (pro) {
-      const inst = await findOrCreateInstaller(env, { name: biz, web, phone, area, email, trusted: true });
-      if (inst) await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 1 WHERE id = ?").bind(inst.id, id).run();
+      // S-04: posting under the name of a company that already has a profile never changes that profile. The post is confirmed at once only when the poster owns
+      // (or created) the profile; otherwise it shows as unverified until the profile's owner confirms it from the email we send them.
+      const r = await findOrCreateInstaller(env, { name: biz, web, phone, area, email, trusted: true });
+      if (r && r.owned) await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 1 WHERE id = ?").bind(r.inst.id, id).run();
+      else if (r) {
+        const token = newId() + newId(), to = r.inst.owner_email || r.inst.email;
+        await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 0, installer_token = ? WHERE id = ?").bind(r.inst.id, token, id).run();
+        if (to) {
+          const job = sendTemplate(env, "installer_listed", to, { title, biz: `Someone posting as ${r.inst.name}`, installer: r.inst.name, city, confirm: `https://socallights.app/api/installers/confirm?t=${token}` }).catch(() => {});
+          if (waitUntil) waitUntil(job);
+        }
+      }
     } else {
       const iname = normName(clean(form.get("installer_name"), 80)), iwebRaw = clean(form.get("installer_web"), 200);
       if (iname.length >= 2) {
-        const inst = await findOrCreateInstaller(env, { name: iname, web: iwebRaw ? webUrl(iwebRaw) || "" : "" });
+        const found = await findOrCreateInstaller(env, { name: iname, web: iwebRaw ? webUrl(iwebRaw) || "" : "" }), inst = found && found.inst;
         if (inst) {
           const token = newId() + newId();
           await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 0, installer_token = ? WHERE id = ?").bind(inst.id, token, id).run();
@@ -161,5 +179,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const job = sendTemplate(env, "entry_new", contest.contact_email, { title, street, city, contest: contest.name, link: `https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});
     if (waitUntil) waitUntil(job);
   }
+  await bump(env, contest ? "fn:contest-entry-done" : "fn:add-house-done");
   return json({ ok: true, id, status: published ? "published" : "pending" });
 }

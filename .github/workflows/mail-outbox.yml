@@ -1,0 +1,44 @@
+name: Send queued emails
+
+# Contest results and voting reminders go to a small queue (mail_outbox) and are sent in batches, because a Cloudflare request on the free plan can only make 50 outgoing calls.
+# The first batch goes out right away when the organizer announces; this hourly run sends the rest and retries anything that failed (delay 10 minutes, then 2 hours, up to 8 tries).
+# Calls the pages.dev address because socallights.app puts a bot check in front of GitHub's servers. Uses the same repository secret as the weekly email (ALERT_CRON_KEY).
+on:
+  schedule:
+    - cron: "41 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mail-outbox
+  cancel-in-progress: false
+
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Send queued emails until the queue is empty
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+        run: |
+          if [ -z "$ALERT_CRON_KEY" ]; then echo "ALERT_CRON_KEY is not set in the repository secrets"; exit 1; fi
+          for i in $(seq 1 40); do
+            out=$(curl -sS -X POST https://socal-lights.pages.dev/api/mail/drain -H "x-alert-key: $ALERT_CRON_KEY")
+            echo "$out" | head -c 300; echo
+            echo "$out" | grep -q '"remaining"' || exit 1
+            echo "$out" | grep -q '"progress":true' || break
+            echo "$out" | grep -q '"remaining":0' && break
+          done
+      - name: Report to the heartbeat (dead-man's switch; see docs/runbooks/monitoring.md)
+        if: always()
+        continue-on-error: true
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          [ -n "$ALERT_CRON_KEY" ] || exit 0
+          s=ok; [ "$JOB_STATUS" = success ] || s=fail
+          curl -sS -m 20 --retry 2 -X POST "https://socal-lights.pages.dev/api/heartbeat?job=mail-outbox&status=$s" -H "x-alert-key: $ALERT_CRON_KEY" -o /dev/null -w "heartbeat: HTTP %{http_code}\n"

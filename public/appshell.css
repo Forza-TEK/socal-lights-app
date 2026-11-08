@@ -23,7 +23,7 @@ body.sh-page{padding:0}
 :root[data-theme="dark"] .sh-cnt.act{color:#121212}
 .sh-foot{display:grid;gap:2px;padding-top:10px;border-top:1px solid var(--line)}
 .sh-top{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;min-height:64px;padding:8px clamp(16px,3vw,32px);background:var(--bg);border-bottom:1px solid var(--line)}
-.sh-title{font:500 clamp(18px,2.4vw,22px)/1.2 var(--font);letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh-title{font:800 clamp(18px,2.4vw,22px)/1.2 var(--font);letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sh-grow{flex:1}.sh-tbrand{display:none}.sh-tbrand img{display:block;border-radius:50%}
 
 .sh-content{width:100%;max-width:1120px;box-sizing:border-box;margin:0 auto;padding:22px clamp(16px,3vw,32px) 72px}

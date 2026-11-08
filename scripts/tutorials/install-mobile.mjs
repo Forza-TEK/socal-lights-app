@@ -6,7 +6,8 @@ import { execFileSync } from "node:child_process";
 const FILE = { map: "find-map", night: "find-night", email: "find-email", app: "find-app", contests: "find-contests", "pro-filter": "find-pro",
   enter: "enter", "edit-entry": "edit-entry", profile: "profile", vote: "vote", judge: "judge",
   quick: "run-quick", custom: "run-custom", share: "run-share", approve: "run-approve", edit: "run-edit", voting: "run-voting", team: "run-team", announce: "run-announce", activity: "run-activity",
-  sponsors: "sponsors-add", installer: "sponsors-installer", "installer-profile": "sponsors-profile", "add-event": "post-event", showcase: "post-house" };
+  sponsors: "sponsors-add", installer: "sponsors-installer", "installer-profile": "sponsors-profile", "add-event": "post-event", showcase: "post-house",
+  "add-homes": "run-add-homes", unpublish: "run-unpublish", claim: "post-claim", feature: "post-feature", sponsor: "sponsors-sponsor", "sponsor-invite": "sponsors-invite" };
 mkdirSync("public/tutorials", { recursive: true });
 const out = process.argv[2], only = process.argv.slice(3), J = "public/tutorials.json", d = JSON.parse(readFileSync(J, "utf8")); let n = 0;
 for (const g of d.groups) for (const v of g.videos) {

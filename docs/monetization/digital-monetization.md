@@ -1,138 +1,147 @@
-# Digital monetization: how money is collected and how paid features are enforced
+# Digital monetization: revision 2 (2026-11-04)
 
-Author: Digital Monetization lead, 2026-11-04. Not legal or financial advice. All prices are **hypotheses** unless a repo file or cited source says otherwise. The repo has no traffic numbers, so there are no revenue forecasts here. Production secrets were not reachable, so anything that depends on them is marked UNKNOWN.
+Author: Digital Monetization lead. Not legal or financial advice. Revised after `docs/monetization/data-2026-11-04.md`, which wins wherever it disagrees with my first draft. Vendor claims below were checked against the vendor's own pages on 2026-11-04 unless marked UNVERIFIED. All prices are still hypotheses; nothing has ever sold.
 
 ## Recommendations
 
-1. **Verify and switch on Featured today.** Open `https://socallights.app/api/config` and check for `"featureCheckout":true` (it is `!!(STRIPE_SECRET_KEY && STRIPE_WEBHOOK_SECRET)`, `functions/api/config.js`). If false, follow `docs/stripe-setup.md`. This needs no code. Do one real $5 test purchase on your own event and confirm the pin appears.
-2. **Fix three small gaps in Featured before promoting it** (all S): add a discoverable `/feature` link and an in-app guard on the page, handle refunds in the webhook, and add Stripe Tax/receipt settings. Details in the audit.
-3. **Add an `orders` + `entitlements` layer in D1, then sell everything else through the same Checkout + webhook path.** Do not build a new payment path per product. Today `feature_orders` is hard-wired to events.
-4. **Sell the installer product against a booked job, not a click:** per-season listing, an exclusive "Presenting Installer" slot per city/county, and opt-in quote leads. Start with Stripe Payment Links plus a manual flag in admin, because the lead plumbing already exists (`installer_leads`, `contests.installer_*`). Validate price with five installers first (`docs/contest-business-model.md` already says this).
-5. **Keep a hard separation in code between money and rankings.** Paid flags may touch only event/home *discovery lists* (labelled). They must never be read by anything under `functions/_lib/contests.js`, vote, or judging code. Add a test and a code-review rule for this.
+1. **Prove the payment path before anything else.** Stripe shows $0 ever paid, and `featureCheckout` is already true. The webhook has never received a real paid event, so we do not know it works. Do a Stripe test-mode run, then one live $10 purchase on one of our own events, then refund it and confirm the pin appears and (after fix 1 below) disappears. Stripe does not return its original processing fee on a refund; at the published 2.9% + 30 cents for domestic cards (stripe.com/pricing) a $5 test costs about 44 cents.
+2. **Ship the five Featured fixes (spec in section 4), then stop building Featured.** They are all S-sized. Do not build the generic `orders`/`entitlements` layer from my first draft yet; there is nothing to put in it.
+3. **Grow the free side first and measure.** With about 50 real visits a day, 6 homes and 1 installer, no paid placement can show value. The paid products that survive are the ones that do not depend on our own audience: ticket affiliates on the 84 ticket-linked events, and hand-sold Featured to commercial organizers.
+4. **Sell only to buyers who already exist.** Ticketed organizers (the 84) for Featured; chambers or cities by invoice only if they ask; installers only after at least about 10 have claimed free profiles and one lead has arrived. Everything else waits for numbers.
+5. **Keep the guardrail.** The free map stays free. Paid flags touch only labelled discovery lists, never contest entries, votes, order, judging or results (add the test described in section 3).
 
-## 1. Audit: revenue mechanisms in code today
+## 1. Why nobody has bought Featured (diagnosis from code)
 
-| Mechanism | State | Where | Notes / gaps |
-|---|---|---|---|
-| Featured event, Stripe Checkout ($5 pin / $10 top / $15 season) | **Built; live status UNKNOWN** (needs `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`) | `functions/api/feature/checkout.js`, `functions/api/stripe-webhook.js`, `functions/_lib/featured.js`, `public/feature.html`, migrations `0062`, `0065` | Complete loop: Checkout, signature-verified webhook (5-minute tolerance), idempotent via `feature_orders.session_id`, expiry via `featured_until`, "Featured" badge (`app.js` ~line 835), list-first sorting for level 2 (`app.js` line 695-698). Prices are in `featured.js` *and* repeated in `feature.html` text and `NAMES`, so they can drift. |
-| Featured via Cash App fallback | **Live** whenever `featureCheckout` is false | `public/site-config.js` `featurePay`, `feature.html` | Manual: customer pays, then emails the event link; owner adds a migration by hand. Not scalable and no receipt record in D1. |
-| Featured on `/add-event` | Built; shows only when `featureCheckout` is true and not in-app | `public/add-event.html` lines 32, 58-68 | Handles paid-while-pending via `sub:<id>`. If an admin declines a paid submission, refund is manual (docs say so). |
-| Tip jar (Cash App) | **Live** | `site-config.js` `donateUrl`; `app.js` line 1019 hides it in-app | Low and unpredictable. |
-| Amazon Associates | **Live in config** (tag `socallightsap-20`) | `site-config.js` | Disclosure line appears automatically per `docs/monetization.md`. Associates' 3-sales-in-180-days rule is from the repo doc, not independently checked. |
-| Ticket affiliates | **Unbuilt in effect** (`ticketAffiliates: {}`); plumbing only | `site-config.js`, `app.js` | Only 22 of 1,302 events link to a ticket seller (repo doc, 2026-10-28). Low priority. |
-| Installer profiles | **Built, free** | `functions/installer/[slug].js`, `functions/_lib/installers.js`, `functions/api/installers/*`, migration `0140` | Claim flow, logo, manage page, views, homes list. No paid flag in the `installers` table (columns: id, slug, name, web, phone, area, blurb, email, status, created_at, plus later owner fields). |
-| Installer quote leads | **Built, free, consent-gated** | `functions/api/installers/[slug]/quote.js`, table `installer_leads` (migration `0142`) | Signed-in + consent tick + 2 per day limit. Leads are emailed to the owner or `email`. No lead status, no billing, no Turnstile on this endpoint (relies on sign-in). |
-| Contest presenting installer + "Get a quote" | **Built, free** (contest area is "branch work, not live yet" per `CLAUDE.md`) | `contests.installer_name/_email/_url` (migration `0139`), `functions/api/contests/[slug]/quote.js` | Free text fields set by the organizer, so it is not exclusive and not verified or paid. Lead email goes to the installer *and* the organizer (`contest_quote_sent`). |
-| Contest sponsors (tiers presenting/gold/silver/prize, logo) | **Built, free** | `functions/api/contests/[slug]/sponsors.js`, `contest_sponsors` | Cap of 12 sponsors, logo under 600 KB. No paid gate: every contest gets everything. |
-| Contest Pro / organizer subscription | **Unbuilt** | none | Only analysis in `docs/contest-business-model.md`. |
-| Printables (poster, VOTE! yard sign) | **Built, free** | `public/printables.js` | Theme per season; print is client-side HTML/SVG. No branded/sponsor variant yet. |
-| Display ads | Not used | | Correct for a map-first product. |
+One expired unpaid session and zero `feature_orders` rows. Evidence-backed causes, most likely first:
 
-### Gaps and bugs seen in code
+1. **Nothing links to `/feature`.** A grep of `public/` and `functions/` finds `/feature` only in `add-event.html` (a post-submit button at line 70 and an error fallback at line 68) and in the checkout success/cancel URLs. `footer.js`, `robots.txt` and `_headers` do not mention it, and `public/` has no sitemap. The post-submit button is only reached by someone who submits an event, and `event_submissions` has 0 rows. So the only way in is a URL we hand out by hand.
+2. **The buyer side has no relationship with us.** The 2,013 events were collected by us from public sources, not submitted by organizers. Organizers do not know the site exists, so no one is looking for a way to promote.
+3. **The offer cannot show value.** `feature.html` promises "Southern Californians use SoCal Lights to decide where to go this weekend" with no numbers, and we have none to give: roughly 18 and 50 visits on Nov 2 and 3. A buyer who asks "how many people will see this?" has no answer.
+4. **Friction on the page.** `feature.html` loads the whole `/api/events` list, makes the visitor search for their own event by typing, pick a plan, then click through to Stripe. No email field and no account, which is fine, but the cancel URL returns to a blank `/feature` (selection lost) and `success_url` carries no session id.
+5. **The one expired session is a drop-off or a test.** Stripe's docs say a Checkout Session's `expires_at` can be 30 minutes to 24 hours after creation, default 24 hours, and `checkout.session.expired` fires when it lapses. Someone opened the Stripe page and did not pay within 24 hours, or it was a developer test. The code cannot tell which (we do not store sessions that never complete).
+6. **Competing and untrusted payment path.** `site-config.js` line 98 still holds Cash App links (`$RelaxationMeditation/5`, `/10`, `/15`). They show only when `featureCheckout` is false, and `/api/config` is cached 5 minutes. If someone received those links earlier by email, they bypass Stripe, leave no D1 record and would never turn on a placement. Whether any outreach used them is UNKNOWN.
+7. **No promise we can keep.** `feature.html` says "A receipt is on its way from Stripe." Per Stripe's receipts page, Stripe creates receipts for all successful payments but emails them only if "Successful payments" is switched on in Dashboard > Settings > Business > Customer emails, or `payment_intent_data.receipt_email` is set. Our checkout sets neither. Whether the Dashboard setting is on is UNKNOWN.
+8. **Latent webhook bug that would hide a first sale.** In `stripe-webhook.js` the order row is inserted first (`INSERT OR IGNORE`), and later steps can return early ("submission not found", "event not found") or fail. Stripe's retry then hits the `duplicate` branch and the placement is never applied. A first real sale could silently not turn on.
 
-- **No webhook handling for refunds or disputes.** `stripe-webhook.js` ignores everything except the two checkout events. A refund in Stripe leaves the event featured. Needs `charge.refunded` / `charge.dispute.created` handling that shortens or clears `featured_until`.
-- **No link to `/feature` anywhere in the app UI.** A search of `public/**/*.js,html` and `functions/` found `/feature` referenced only from `add-event.html` and the checkout redirect URLs. So even with Stripe on, organizers only find it through `/add-event` or a direct link. UNKNOWN whether other pages (static footers, emails) link to it.
-- **`/feature` itself has no in-app guard.** The in-app check (`SoCalLightsApp` user agent) is in `app.js` and `add-event.html`, but `feature.html` has none. The Cash App fallback and Stripe buttons render if someone reaches the URL inside the wrapper. Risk is low (no link), but add the same guard.
-- **Price duplicated in three places** (`featured.js`, `feature.html` text, `NAMES`). Drift risk.
-- **Edge cache:** `/api/events` is cached 2 minutes at the edge and 60 seconds in browsers (`events.js`). A new paid pin can take up to about 3 minutes to appear. Fine, but tell buyers.
-- **Webhook does not store the Stripe customer, payment intent or currency**, so refunds, receipts and reconciliation need extra lookups. `feature_orders` stores only session id, event, plan, amount, email.
-- **Customer email may be blank** if Checkout is not asked to collect one for some payment methods (`customer_details.email` is read but `customer_email` is never set). UNKNOWN in practice.
-- **Quote endpoint has no per-installer fee gate and no spam check beyond sign-in**, so once leads are sold, add Turnstile and duplicate-lead rules.
-- `docs/monetization.md` says `0062_featured_events.sql`; the webhook handles `sub:` ids, so `0065` is also required for checkout. Both exist in `migrations/`.
-- Surprise: `docs/monetization-analysis.md` lists the Amazon tag as live; confirmed in `site-config.js`, but whether Associates approval is still active is UNKNOWN.
+Also unproven: whether the Stripe webhook endpoint is registered in the live account with the right events. The code comment lists only `checkout.session.completed` and `checkout.session.async_payment_succeeded`.
 
-## 2. Product catalog
+## 2. Re-ranked build order for a tiny audience
 
-Free forever, for every product below: the map, search, filters, routing, browsing and starring homes, voting, entering a home in a contest, viewing sponsor lines and installer profiles.
+Principle: money only where a buyer already exists, and free growth first.
 
-| # | Product | Buyer | They get | Billing | Enforcement | Effort |
-|---|---|---|---|---|---|---|
-| 1 | **Featured event** (exists) | Event organizers | Gold pin, "Featured" badge, optional top-of-list | One-time ($5/30d, $10/30d, $15 season: existing prices) | `events.featured` 0/1/2 + `featured_until`, read by `featuredLevel()` in `util.js`; always labelled | Exists; fix gaps above (S) |
-| 2 | **Installer Listing** | Installers | Verified badge, logo and bigger profile card, priority in the "find an installer" list for a city, link and call buttons, lead inbox with status | Per season (hypothesis $99-$249); per-season fits the Halloween-to-New Year demand curve noted in `monetization-analysis.md` | `installers.plan` + `plan_until`; badge shown only while active; profile still visible and claimable for free | M |
-| 3 | **Presenting Installer** (exclusive per city or county per season) | Installers | "Presented by" label on contest pages and city pages, "Get a quote" button, grand-prize provider credit, first call on opt-in leads | Per season, exclusivity is the product (hypothesis $300-$1,000, from `contest-business-model.md`; test with 5 installers) | `installer_slots(region, season, installer_id)` with `UNIQUE(region, season)`; contest/city pages read the slot instead of the free-text `contests.installer_*` | M |
-| 4 | **Opt-in quote leads** | Installers (add-on or included in 2/3) | Name, email, phone and note from a user who ticked consent; lead inbox and CSV | Included in plans, or pay-per-lead later (no per-lead market price was found, so ask installers) | `installer_leads` plus `consent_text_version`, `lead_status`, routing to the slot owner only; no resale to anyone else | M (table exists) |
-| 5 | **Contest Pro** | Cities, chambers, HOAs, schools | Sponsor tiers and logos beyond a basic limit, per-award prizes, branded poster/yard sign with sponsor strip, results export, extra judges, emailed results, rules template | Per contest per season (hypothesis $79-$149, `contest-business-model.md`) | `contests.pro_until`; gates only **presentation and tooling** (sponsor count, export, branding). Never entries, votes, order, counts or results | M |
-| 6 | **Local sponsor slots** | Hardware, roofing, solar, real estate | Labelled "Sponsored by" line on a contest or city page (`/in/<city>`), logo, link | Per contest or per city per season; start with sponsor paying the organizer (no money through us), later Stripe with a platform share (hypothesis 10-20%) | `contest_sponsors` already holds data. Add `paid_order_id`/`approved` and a visible "Sponsor" label. City-page slot needs a new table | S-M |
-| 7 | **Featured home boost** | Homeowners, installers | Gold ring and "Featured" tag on the map/list card for their home | One-time per season (hypothesis $5-$15, mirroring events) | `posts.featured_until` read only by `app.js` list/map code; **must not** appear in `contests.js` queries (entries use `ORDER BY entry_no`, line 105) | S (copy of events path) |
-| 8 | **Yard-sign / poster pack** | Homeowners, organizers, installers | Print-ready PDF or high-res files with own name, QR, sponsor strip | One-time $ (hypothesis); basic printable stays free | Entitlement on order; reuse `public/printables.js` | S-M (reuses existing code) |
-| 9 | **Season newsletter sponsor** | Local sponsors | One labelled sponsor block in the weekly lights email (`alert_subs`, migration `0134`) | Per send/season | Template slot in `functions/api/alerts/send.js`; subscribers consented only to lights emails, so confirm wording first | S, but legal review |
-| 10 | **City / chamber white-label and data access** | Cities, chambers, tourism boards | Branded contest or city portal, embed, event data export | Invoice (Stripe Invoicing), annual | Manual entitlement; API keys in a table | L, validate demand first |
+**A. Free, do now (grows supply and audience, no billing)**
+1. Measurement: count outbound clicks on ticket and organizer links and views of `/feature`, using the existing `site_hits` pattern (`functions/api/visit.js`). Without this nobody can be told what Featured delivers. Wait until at least 3-4 weeks of `site_hits` before quoting numbers.
+2. Supply loops that already exist and cost nothing: installer claim flow, printables with a QR code, "add a house" prompts for installer customers, weekly lights email (`alert_subs`). Goal for the next review: 20+ homes, 5+ installer profiles. These belong to the product team; I only note they gate the paid installer products.
+3. Organizer outreach with a free correction offer ("your event is listed, fix anything here") to the commercial events first. This builds the buyer relationship that is missing (cause 2).
 
-Low-effort extensions of existing code: 1 (fixes), 4 (table exists), 6 (table exists), 7 (copy of events path), 8 (`printables.js`), 9 (existing email job).
-
-## 3. Collection architecture
-
-Use **Stripe Checkout + webhook + an orders/entitlements table**, all on Pages Functions with `fetch` to the Stripe REST API (as `checkout.js` already does, no SDK or build step needed).
-
-**Flow.** One endpoint `POST /api/checkout` takes `{ sku, subject_type, subject_id }`, validates ownership (signed-in user owns the installer/contest/post) and price from a server-side `PRODUCTS` map (extend `featured.js`), creates a Checkout Session with `client_reference_id = order_id` and `metadata`, and writes an `orders` row with `status='pending'`. `stripe-webhook.js` verifies the signature (existing `verifyStripeSignature`), upserts the order by session id (idempotent, as today), sets `paid`, and inserts or extends an `entitlements` row. Add `charge.refunded` and `checkout.session.expired`.
-
-**Schema sketch (not a migration):**
-
-```
-orders(id PK, stripe_session_id UNIQUE, stripe_payment_intent, stripe_customer,
-       user_id, email, sku, subject_type, subject_id, amount_cents, currency,
-       status[pending|paid|refunded|failed], created_at, paid_at, refunded_at)
-entitlements(id PK, order_id FK, subject_type[event|post|installer|contest|region],
-       subject_id, sku, level, starts_on, ends_on, revoked_at)   -- INDEX(subject_type,subject_id,ends_on)
-installer_slots(region, season, installer_id, order_id, UNIQUE(region,season))
-installers: + plan, plan_until          contests: + pro_until
-leads: installer_leads + consent_version, status, routed_to, source[profile|contest|slot]
-```
-
-Keep `events.featured/featured_until` as the denormalized read path (fast, already cached) and have the webhook write both the entitlement and that column. Read paths never join to Stripe or to `orders`.
-
-**One-time per season versus subscription.** Default to **one-time per season**: demand is seasonal (repo analysis), refunds are simpler, no dunning. Offer **Stripe subscriptions + Customer Portal** only for installers who want to keep a listing year-round or for Contest Pro organizers who run several contests; Portal gives cancel, card update and invoices without code (Stripe docs, unverified here). Subscription state arrives through `customer.subscription.updated/deleted` and `invoice.paid` webhooks into `entitlements.ends_on`.
-
-**Invoices for cities and chambers.** Stripe Invoicing (net-30, PO number) rather than card Checkout; the owner creates the invoice by hand, and an `invoice.paid` webhook sets the entitlement. No code needed for the first customer: set `ends_on` by an admin action.
-
-**Payment Links for no-code starts.** Create one per SKU in the Stripe dashboard with a `client_reference_id` convention and a post-payment admin step. Webhook can't match a Payment Link to a subject without metadata, so for the first sales the owner checks the email and flips the flag in admin (this is exactly the Cash App flow today but with receipts and refunds).
-
-**Refunds.** Do them in the Stripe dashboard; the webhook revokes the entitlement. Write a public refund policy (terms page change needed).
-
-**Cloudflare constraints.** No cron beyond Actions/Pages; expiry is checked at read time (`ends_on`), as `featuredLevel()` does, so nothing needs to run. Keep Stripe secrets in Pages secrets (never committed). Add an admin "Orders" tab modeled on the existing admin tabs.
-
-## 4. Free/paid boundary
-
-**Free forever:** map, search, filters, routes, "My night", browsing and starring homes, event details, Help Center, voting, entering a home in a contest, basic contest creation (page, QR, voting, one prize line, basic printable), basic installer profile (claim, edit, logo, homes list), submitting an event or home, weekly email, all existing data on pages.
-
-**Paid:** placement and visibility upgrades (labelled), installer verification/exclusivity/leads inbox, contest presentation tooling (sponsor tiers beyond basics, branding, exports), extra print packs, sponsor slots, invoiced portals.
-
-**Technical guardrails:**
-- Paid state is a column read at render time. No paid path may add a network request on map load; `featured*` columns already come in the one `/api/events` payload.
-- Only the existing sort lead (`lead = (a,b) => b.f - a.f`) may use paid fields; keep it level-2 only and limited (cap the number of top slots per view, hypothesis: a few) so the free list is not drowned.
-- Add a unit test: contest entry, vote, and results queries must not reference `featured`, `plan`, `pro_until`, or `entitlements`.
-- Paid UI hidden when `IN_APP` (`/SoCalLightsApp/` user agent), plus server-side refusal: `/api/checkout` and `/feature` should reject requests whose user agent matches the wrapper.
-- Stripe/checkout code lives only in `functions/api/*checkout*` and the `/feature` area; no Stripe script is loaded on the map page.
-- The map stays cached (2 min edge) and public; paid data has no auth-only variants.
-
-## 5. Build order
-
-| Step | What | Effort |
+**B. Paid, in order**
+| # | Product | Decision |
 |---|---|---|
-| 0 | **First ship, no code:** verify `featureCheckout`; if off, set the two Stripe secrets (`docs/stripe-setup.md`). Create Stripe **Payment Links** for "Installer Listing (season)" and "Presenting Installer (city, season)" and a "Contest Pro" link; fulfil by hand and record in a spreadsheet. Sell to 5 installers and 3 organizers already on `docs/contest-leads.md`. | S, 0 code |
-| 1 | Featured fixes: refund webhook, `/feature` link and in-app guard, collect email, single price source | S |
-| 2 | `orders` + `entitlements` tables, generic `/api/checkout`, admin Orders tab | M |
-| 3 | Installer plan flag, verified badge, lead status and inbox, Turnstile on quote | M |
-| 4 | `installer_slots`, "Presented by" replacing free-text `contests.installer_*` | M |
-| 5 | Contest Pro flag (sponsor tiers, branding, export) and labelled sponsor slots | M |
-| 6 | Featured home boost and print packs | S-M |
-| 7 | Subscriptions + Customer Portal; invoice flow for cities | M |
-| 8 | Data/white-label | L (only if asked for) |
+| 1 | **Featured event** ($10/$15/$20, exists; prices live in `functions/_lib/featured.js`) | Fix, link quietly, sell by hand to the 84 ticket-linked events' organizers. Offer the first 5 free in exchange for permission to quote their click counts. |
+| 2 | **Ticket affiliate links** | 84 events (not 22) already link to Eventbrite, Ticketmaster or Fever and `ticketAffiliates` is `{}` in `site-config.js`. Zero buyer, zero billing. Which programs accept a site this size, and their terms, are UNVERIFIED (not checked). Needs the FTC-style disclosure line near each link. |
+| 3 | **Installer Listing** | Do not build billing. At 1 installer, 0 leads, nothing to sell. When the first installer asks, use a Stripe Payment Link plus a manual admin flag. |
+| 4 | **Presenting Installer, Contest Pro, sponsor slots** | Defer. 1 contest, 0 votes, 0 sponsors: nothing to present against. Revisit after a contest has entries. |
+| 5 | **Featured home boost, yard-sign pack, newsletter sponsor** | Drop for now. 6 homes; subscriber count unknown. |
+| 6 | **City/chamber invoice or data feed** | Inbound only, by Stripe Invoicing created in the Dashboard. No code. |
 
-Measure first (from `docs/monetization-analysis.md`): outbound clicks, quote requests, checkout starts, contests and entries. Set final prices after one season of numbers.
+Removed from my first draft: the generic `orders` + `entitlements` + `installer_slots` build (steps 2-4 and 7). It is the right shape if installers and contests ever sell, but building it with zero customers is waste.
 
-## 6. Compliance and platform risks
+Payment mechanics I can now stand behind (Stripe docs):
+- **Payment Links** can limit the number of payments and then deactivate automatically ("When the payment link reaches the limit, it automatically deactivates"); they accept `metadata`, which "will automatically be copied to checkout sessions created by this payment link"; a `client_reference_id` URL parameter ("up to 200 characters", alphanumerics, dashes, underscores) is "sent in the checkout.session.completed webhook"; confirmation can be a redirect that can include `{CHECKOUT_SESSION_ID}`. This corrects my first draft's claim that the webhook cannot match a Payment Link to a subject.
+- **Payment Links expiry:** I found no expiry-date parameter in the create-API parameter list. Documented controls are payment-count limit and deactivation (`active`, `inactive_message`). Treat "expires at a date" as unavailable.
+- **Our webhook and Payment Links:** the handler ignores sessions without `metadata.event_id` and a valid plan ("no feature metadata"), so Payment Link sales for installers would be ignored harmlessly and found only in the Dashboard. Fine for the first few.
+- **Customer Portal:** Dashboard no-code activation; customers manage billing info, payment methods and subscription status. Only useful once we sell subscriptions; we do not.
+- **Invoicing:** Dashboard no-code; invoices are Stripe-hosted, can be emailed, shared by link, sent as PDF, or auto-charged. Net-30 terms, PO numbers and bank-transfer rails for cities are UNVERIFIED (not found on the page I read).
+- **Idempotency:** `Idempotency-Key` header, keys up to 255 characters, saved response returned on retry (including 500s), keys may be pruned after 24 hours, and a reused key with different parameters errors.
 
-- **Apple.** Guideline 3.1.1: apps that "unlock features or functionality" must use in-app purchase. 3.1.3(g) says "buying advertisements to display in the same app (such as sales of 'boosts' for posts in a social media app) must use in-app purchase", which describes Featured and the home boost directly. 3.1.1(a): entitlements for external links "are not required for developers to include buttons, external links, or other calls to action in their United States storefront apps", but all other storefronts still prohibit them. The page I read shows no version date. 5.3.1/5.3.2: contests "must be sponsored by the developer of the app" and rules must say Apple is not a sponsor; `rules.js` item 13 already says so, but 5.3.1 is a tension for organizer-run contests inside the wrapper (flag for counsel). **Decision: keep every paid screen web-only and hidden in the wrapper**, even though US external links are allowed, because the apps ship to other storefronts and reviewers vary. Google Play's rules were **not checked**.
-- **Contest law.** Cal. Bus. & Prof. Code 17539.1 restricts contests with direct or indirect consideration; a 2012 legal guide says violation is a misdemeanor under 17534; 17539.3 has a skill-contest carve-out that may be limited to in-person contests; a 2025 act amending 17539.1 may have changed things. I could not reach leginfo.ca.gov and could not confirm current text. **Attorney review required** before charging organizers or letting sponsors fund prizes. Keep: free entry, free voting, no purchase advantage, official rules posted. Selling Contest Pro to *organizers* is not an entry fee, but a lawyer should confirm and review sponsor terms.
-- **FTC.** The 2023 revised Endorsement Guides (16 CFR Part 255) treat affiliate links as a material connection needing clear, conspicuous disclosure near the link (secondary sources only; the FTC site was not reachable here). So: "Featured", "Sponsored by", "Presented by" and "affiliate" labels on or beside every paid element, with plain wording ("We earn a commission if you buy through this link"), never only in the footer. Also 16 CFR Part 465 (reviews and testimonials, effective Oct 21, 2024, per a secondary source): do not publish invented testimonials for installers.
-- **Privacy and lead sharing.** `public/privacy.html` line 52 covers contest quote requests (sent to the installer and the organizer; copy kept for the organizer). It does **not** yet cover: leads from installer profiles (`installers/[slug]/quote.js`), Stripe order data and retention, sponsor email blocks, or any installer using leads for their own marketing. The "We do not sell your information" line (line 26) must stay true: never sell or rent leads beyond the consented one-to-one routing, and describe routing to a *paid* exclusive installer plainly. Update privacy and terms (refunds, placement not a guarantee, installer claims are the installer's own) and have the consent text versioned in `installer_leads`. CCPA/CPRA applicability thresholds were not checked: flag for counsel.
-- **Trust.** Featured events must remain real, public and verified (`docs/monetization.md` rule). Installer claims stay unverified unless the badge says verified; do not sell "verified" without a real check.
+## 3. Free/paid boundary (unchanged, tightened)
+
+Free forever: map, search, filters, routes, My night, browsing and starring homes, event details, voting, entering contests, basic contest and installer pages, submitting events and homes, weekly email.
+
+Paid only affects labelled discovery: the Featured badge/pin and level-2 list ordering (`app.js` `lead` sort, level 2 only). Guardrails: no paid code on map load; no Stripe script on the map page; paid UI hidden in the store apps; a unit test that contest entry, vote and results queries never reference `featured`, `featured_until`, any plan column, or `feature_orders`.
+
+## 4. Exact spec: five small Featured fixes (no code written here)
+
+Prerequisite in the Stripe Dashboard (no code): on the live webhook endpoint `https://socallights.app/api/stripe-webhook`, subscribe to exactly these events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired` (optional, for abandoned-checkout counts), `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`. Turn on Settings > Business > Customer emails > Successful payments.
+
+### Migration `00NN_feature_orders_status.sql` (next number; never edit 0065)
+```
+ALTER TABLE feature_orders ADD COLUMN payment_intent TEXT;     -- from session.payment_intent
+ALTER TABLE feature_orders ADD COLUMN currency TEXT;
+ALTER TABLE feature_orders ADD COLUMN status TEXT DEFAULT 'paid';  -- paid | refunded | disputed | held
+ALTER TABLE feature_orders ADD COLUMN applied INTEGER DEFAULT 0;   -- 1 once events row was updated
+ALTER TABLE feature_orders ADD COLUMN applied_featured INTEGER;    -- what we wrote
+ALTER TABLE feature_orders ADD COLUMN applied_until TEXT;
+ALTER TABLE feature_orders ADD COLUMN refunded_at TEXT;
+CREATE INDEX idx_feature_orders_pi ON feature_orders(payment_intent);
+CREATE TABLE IF NOT EXISTS stripe_events (id TEXT PRIMARY KEY, type TEXT, received_at TEXT DEFAULT (datetime('now')));
+```
+Existing rows: none (0 orders), so no backfill. Defaults keep the migration safe.
+
+### Fix 1: refund and dispute handling, `functions/api/stripe-webhook.js` and `functions/_lib/featured.js`
+- Dedupe every event: `INSERT OR IGNORE INTO stripe_events(id,type)` using `evt.id`; if no change, return `{ok:true, duplicate:true}`.
+- Extend the type allow-list beyond the two checkout events.
+- **Paid path fix (cause 8):** store `payment_intent`, `currency`; keep the `INSERT OR IGNORE` but treat a duplicate as done only if `applied = 1`. Set `applied=1`, `applied_featured`, `applied_until` in the same `db.batch` as the `UPDATE events`. If the event or submission is not found, leave `applied=0` and return a non-2xx (500) so Stripe retries; log once.
+- **`charge.refunded`** (Stripe: "Occurs whenever a charge is refunded, including partial refunds"; Stripe itself recommends listening to `refund.created` for refund detail). Use the charge object: find the order by `payment_intent = charge.payment_intent`. Revoke only if `charge.refunded === true` (verified on the Charge object page: "Whether the charge has been fully refunded. If the charge is only partially refunded, this attribute will still be false."; `amount_refunded` is also on the object). Partial refund: set `status='held'` and do nothing else; admin decides.
+- **`charge.dispute.created`**: the Dispute object has a `charge` id (verified; a `payment_intent` field on it was not confirmed). Orders are keyed by `payment_intent`, so look up the charge with `GET /v1/charges/{charge}` to read its `payment_intent`, then find the order, set `status='disputed'`, and revoke. Stripe says a dispute "immediately reverses the payment" (and the published dispute fee is $15.00 each, three times a $5 sale; refund rather than fight), so do not wait. On `charge.dispute.closed` with status `won`, leave it revoked and show it in admin for a manual re-grant (do not auto-restore).
+- **Revoke rule, shared helper `revokePlan(db, order)` in `featured.js`:** only if the event's current `featured_until` equals the order's `applied_until` and `featured` equals `applied_featured`, set `featured=0, featured_until=NULL, updated_at=datetime('now')` and `status`, `refunded_at`. If it does not match (the admin set Featured by hand, or a later order extended it), do not touch the event; set `status` and return `{ok:true, manual:"placement differs"}`. This protects comped placements. Pending-submission orders (`event_id` starting `sub:`) are only marked, not applied.
+- Order rows are never deleted; no PII beyond the existing `email`.
+
+### Fix 2: single price source
+- `featured.js` `PLANS` stays the only definition. Add `export const PUBLIC_PLANS = Object.fromEntries(Object.entries(PLANS).map(([k,p])=>[k,{label:p.label,cents:p.cents,days:p.days,level:p.level}]))`.
+- `functions/api/config.js` returns `featurePlans: PUBLIC_PLANS` (cache stays 300 seconds).
+- `public/feature.html`: render the three `.plan` sections and `NAMES` from `cfg.featurePlans` in JS; delete any hard-coded `$10/$15/$20` strings and the `NAMES` constant. `public/add-event.html`: replace its own `PLANS` tile list the same way (line 58 uses a local list; contents not read). Checkout continues to read `PLANS` server-side only, so a tampered client price is impossible (already true: the client sends only the plan key).
+- Bump the `?v=` on any CSS/JS tags touched, per `CLAUDE.md`.
+
+### Fix 3: customer email and receipt, `functions/api/feature/checkout.js` and `feature.html`
+- Stripe's docs: if `customer_email` is not given, Checkout asks for an email; so my first draft's "email may be blank" was mostly wrong. The real gap is the receipt. 
+- Add a required `<input type=email id=em>` on step 3 of `feature.html` and in the add-event flow (it already collects `email`; reuse it). Send `email` in the POST body; validate shape and length server-side with `clean`.
+- In the Checkout call add `customer_email = email` and `payment_intent_data[receipt_email] = email`. Leave `customer_creation` at its default (`if_required`; for one-time payments no Customer object is made, which is fine because refunds key off `payment_intent`).
+- Add `Idempotency-Key: feature-<sha256(event_id|plan|10-minute bucket)>` header to the Stripe POST so double clicks do not create two sessions. No email in the key (Stripe advises against sensitive data in keys).
+- `cancel_url = /feature?event=<id>&plan=<plan>`; `feature.html` reads those params and preselects. Keep `success_url` as is.
+
+### Fix 4: native-app guard
+- `public/feature.html`, first lines of the module: `if (/SoCalLightsApp/.test(navigator.userAgent))` hide `#auto`, `#manual` and the plan grid, and show only "Event promotion isn't available in the app." No link, no call to action (Apple 3.1.3 forbids encouraging other purchase methods outside the US storefront).
+- `functions/api/feature/checkout.js`: if `request.headers.get("user-agent")` matches `/SoCalLightsApp/`, return `err(403, "Not available in the app.")`. A UA check is soft (spoofable), so also keep the UI guard.
+
+### Fix 5: link `/feature` from the site (web only)
+- `public/footer.js`: add "Promote your event" to the footer, hidden when the user agent matches the wrapper.
+- `public/add-event.html`: add one line near the top of the form, "Want it featured? You can add that after you submit."
+- Event detail card in `public/app.js`: for events without `featured`, a small "Organizer? Feature this event" link to `/feature?event=<id>` (needs the `?event=` preselect from fix 3) hidden in-app. Bump `?v=` for `app.js` in `index.html`.
+- Add `/feature` to a new `public/sitemap.xml` only if we create one; not required.
+
+### Fix 6: remove the competing Cash App path when Stripe is on
+- `public/feature.html`: delete the `#manual` block and the `featurePay` loop. When `!cfg.featureCheckout`, show only an email-us message (no payment links).
+- `public/site-config.js`: delete the `featurePay` object (line 98). The tip jar `donateUrl` is separate and stays, hidden in the app.
+- Stripe's own Cash App Pay (async path) is already handled by `checkout.session.async_payment_succeeded`.
+- Hand-pasted Cash App links in any prior outreach are outside the repo and cannot be revoked from here (UNKNOWN).
+
+## 5. Compliance (re-verified)
+
+**Apple App Review Guidelines (developer.apple.com, "Last Updated: October 16, 2026").**
+- 3.1.3(g), verbatim: "Digital purchases for content that is experienced or consumed in an app, including buying advertisements to display in the same app (such as sales of "boosts" for posts in a social media app) must use in-app purchase." The title is "Advertising Management Apps", and the exemption it grants is for apps whose sole purpose is managing campaigns, which ours is not. Featured and a home boost fit the "boost" example, so they cannot be sold inside the wrapper by non-IAP means.
+- 3.1.3 intro, verbatim: "Apps in this section cannot, within the app, encourage users to use a purchasing method other than in-app purchase, except for apps on the United States storefront and as set forth in 3.1.1(a) and 3.1.3(a)."
+- 3.1.1(a), verbatim: "These entitlements are not required for developers to include buttons, external links, or other calls to action in their United States storefront apps." In "all other storefronts, except for the United States storefront" such links "may not" appear.
+- 5.3.1: "Sweepstakes and contests must be sponsored by the developer of the app." 5.3.2: official rules "must be presented in the app and make clear that Apple is not a sponsor".
+- Decision stands: every paid screen stays web-only and hidden in the wrapper, because the apps ship in non-US storefronts. 5.3.1 still sits awkwardly with organizer-run contests; counsel should look.
+
+**Still not verified:** Google Play payment policy; California contest law (leginfo returns 403, so Cal. Bus. & Prof. Code 17539.1 text, and whether a 2025 amendment changed it, was not read); FTC Endorsement Guides primary text (ftc.gov 403; secondary sources only); CCPA thresholds. Attorney review is required before charging organizers around contests or letting sponsors fund prizes.
+
+## 6. What remains unverified
+
+- Whether the live webhook endpoint exists, its signing secret matches, and which events it is subscribed to.
+- Whether the Dashboard "Successful payments" receipt email is on.
+- Whether a `payment_intent` field exists on the Dispute object, and the exact Payment Links `restrictions` payment-limit field name.
+- Stripe fees on our account may differ from the public list price.
+- Net-30 and PO details for Invoicing.
+- Ticket-affiliate program eligibility; Amazon Associates status.
+- Whether the one expired session was a real visitor or a test, and whether any earlier outreach pointed at Cash App.
+- Economics: at 2.9% + 30 cents a $10 sale nets about $9.41 and a $20 sale about $19.12.
+- Real traffic: `site_hits` has two days. Treat everything about audience as unknown until it has a month.
 
 ## Sources
 
+- Stripe (fetched 2026-11-04; API version shown on pages `2026-10-28.endive`): Create a payment link https://docs.stripe.com/payment-links/api ; Payment Link create API https://docs.stripe.com/api/payment-link/create ; Customize/limit payments https://docs.stripe.com/payment-links/customize ; Post-payment behavior https://docs.stripe.com/payment-links/post-payment ; URL parameters https://docs.stripe.com/payment-links/url-parameters ; Checkout Session create https://docs.stripe.com/api/checkout/sessions/create ; Idempotent requests https://docs.stripe.com/api/idempotent_requests ; Customer portal https://docs.stripe.com/customer-management ; Invoicing https://docs.stripe.com/invoicing ; Refunds https://docs.stripe.com/refunds ; Disputes https://docs.stripe.com/disputes/how-disputes-work ; Event types https://docs.stripe.com/api/events/types ; Charge object https://docs.stripe.com/api/charges/object ; Dispute object https://docs.stripe.com/api/disputes/object ; Pricing https://stripe.com/pricing ; Receipts https://docs.stripe.com/receipts
 - Apple App Review Guidelines (3.1.1, 3.1.1(a), 3.1.3, 5.3): https://developer.apple.com/app-store/review/guidelines/
-- FTC endorsement guides summaries (secondary; FTC site unreachable from this session): https://www.infolawgroup.com/insights/2023/7/31/ftc-releases-updated-endorsement-guides-10-key-takeaways , https://manatt.com/insights/newsletters/advertising-law/an-in-depth-look-at-the-ftcs-updates-2 , https://everything-pr.com/ftc-affiliate-disclosure-rules
-- Cal. B&P 17539.1 text: https://california.public.law/codes/business_and_professions_code_section_17539.1 ; 17539.3: https://codes.findlaw.com/ca/business-and-professions-code/bpc-sect-17539-3/ ; commentary on 17534: https://terms.law/2012/12/26/legal-guide-for-sweepstakes-contests-and-giveaways ; 2025 amendment (advocacy PDF, unverified): https://gamblingharm.org/wp-content/uploads/2025/09/California-Sweepstakes-Casino-Ban.pdf
-- Repo docs: `docs/monetization.md`, `docs/monetization-analysis.md`, `docs/contest-business-model.md`, `docs/stripe-setup.md`, `docs/installers.md`, `docs/voting-standards.md`, `docs/app-store.md`; code as cited above.
-- Stripe Checkout, Payment Links, Customer Portal, Invoicing docs (https://docs.stripe.com) were **not fetched**; behaviors described are from general knowledge and should be confirmed there.
+- Repo: `docs/monetization/data-2026-11-04.md`, `functions/api/feature/checkout.js`, `functions/api/stripe-webhook.js`, `functions/_lib/featured.js`, `functions/api/config.js`, `public/feature.html`, `public/add-event.html`, `public/site-config.js`, `migrations/0062`, `0065`.
+- Not reached: ftc.gov, leginfo.ca.gov, Google Play policy. Note that the WebFetch tool could not resolve docs.stripe.com in this session; the Stripe pages were retrieved with curl through the session proxy and read as text.

@@ -1,4 +1,5 @@
 // Shared helpers for the API functions.
+import { ptToday } from "./time.js";
 
 export const json = (data, init = {}) =>
   new Response(JSON.stringify(data), {
@@ -53,6 +54,7 @@ export function rowToPost(r, admin = false) {
     address: r.address || "", // a home's street address is always public: the pin sits on it and visitors drive by (search finds it too)
     tonight: r.on_n || 0, tonightNear: r.on_near || 0, lon: r.lights_on || "", visit: r.visit || "", parking: r.parking || "", acc: !!r.accessible, radio: r.radio || "",
     inst: r.inst_slug ? { slug: r.inst_slug, name: r.inst_name, ok: !!r.installer_confirmed } : null, // the installer profile this home links to; ok = the installer confirmed it
+    f: featuredLevel(r), // paid Featured home (podium finishers only); 0 for every other home
     kind: r.poster_type === "installer" ? "installer" : "homeowner", street: r.street || "", state: r.state || "CA", zip: r.zip || "", area: r.service_area || "",
   };
   if (admin) { p.status = r.status; p.contact_email = r.contact_email || ""; p.approved = r.approved_at; p.show_address = !!r.show_address; }
@@ -62,7 +64,8 @@ export function rowToPost(r, admin = false) {
 // Paid "Featured" placement. featured: 0 = off, 1 = gold pin + badge, 2 = also listed first. Ends after featured_until (YYYY-MM-DD, inclusive).
 function featuredLevel(r) {
   if (!r.featured) return 0;
-  if (r.featured_until && r.featured_until < new Date().toISOString().slice(0, 10)) return 0;
+  // Same "today" as when a plan is bought (roughly Pacific time), so a 30-day placement lasts through the end of its last day, not until 4 pm.
+  if (r.featured_until && r.featured_until < ptToday()) return 0;
   return r.featured >= 2 ? 2 : 1;
 }
 
@@ -78,9 +81,28 @@ export function rowToEvent(r) {
   };
 }
 
+// The public list leaves out the fields only the event's detail view reads (the blurb "b" and the link "u": about 40% of the list's bytes).
+// GET /api/events/<id> returns the whole object. Everything else the list needs stays: search matches name, city, county and address; routes and directions use address and venue; cards use hours, price and the photo.
+export const DETAIL_ONLY = ["b", "u"];
+// The map's "Contests" type filter also matches a contest or competition named in the blurb, so the list carries that answer as ct: 1 instead of the blurb. Same pattern as public/app.js.
+export const CONTEST_RE = /\b(contests?|competitions?)\b/i;
+export function rowToListEvent(r) {
+  const e = rowToEvent(r);
+  if (CONTEST_RE.test(e.n + " " + e.b)) e.ct = 1;
+  for (const k of DETAIL_ONLY) delete e[k];
+  return e;
+}
+
+// ETag helpers shared by the JSON endpoints (a weak tag from a hash of the body; If-None-Match may list several tags)
+export async function etagOf(text) {
+  const d = new Uint8Array(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(text)));
+  return 'W/"' + Array.from(d.slice(0, 12), (b) => b.toString(16).padStart(2, "0")).join("") + '"';
+}
+export const etagMatches = (header, tag) => !!header && (header.trim() === "*" || header.split(",").some((t) => t.trim().replace(/^W\//, "") === tag.replace(/^W\//, "")));
+
 /* ---------- Cloudflare Turnstile ---------- */
 export async function verifyTurnstile(env, token, ip) {
-  if (!env.TURNSTILE_SECRET) return true; // not configured yet: allow (README explains turning it on)
+  if (!env.TURNSTILE_SECRET) return env.TURNSTILE_REQUIRED !== "1"; // not configured yet: allow (README explains turning it on), except where TURNSTILE_REQUIRED = "1" (preview deployments, wrangler.toml [env.preview.vars]): no secret means no posts
   if (!token) return false;
   const body = new FormData();
   body.append("secret", env.TURNSTILE_SECRET);
@@ -153,25 +175,34 @@ const kmBetween = (a, b) => {
 };
 // Looks the address up (US Census first, OpenStreetMap as a fallback) and returns [lat, lng], or null when
 // nothing is found. A match more than maxKm from the chosen city is rejected as a wrong hit.
-export async function geocodeAddress(address, city, cityPoint, maxKm = 30, doFetch = fetch) {
+// `info` (optional) is filled in for callers that explain the result: info.matched (the address the geocoder matched), info.far (a hit was
+// rejected for being too far from the city) and info.down (no geocoder answered at all).
+export async function geocodeAddress(address, city, cityPoint, maxKm = 30, doFetch = fetch, info = {}) {
   const q = `${address}, ${city}, CA`;
   const attempts = [
     async () => {
       const r = await doFetch(`https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=json&address=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(4000) });
-      const c = (await r.json())?.result?.addressMatches?.[0]?.coordinates;
+      const m = (await r.json())?.result?.addressMatches?.[0], c = m?.coordinates;
+      if (c) info.pending = m.matchedAddress || "";
       return c ? [Number(c.y), Number(c.x)] : null;
     },
     async () => {
       const r = await doFetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=us&q=${encodeURIComponent(q)}`, { headers: { "user-agent": "SoCalLights.app (rey@forza-tek.com)" }, signal: AbortSignal.timeout(4000) });
       const h = (await r.json())?.[0];
+      if (h) info.pending = String(h.display_name || "").split(",").slice(0, 4).join(",").trim();
       return h ? [Number(h.lat), Number(h.lon)] : null;
     },
   ];
+  let errors = 0;
   for (const go of attempts) {
     try {
       const pt = await go();
-      if (pt && Number.isFinite(pt[0]) && Number.isFinite(pt[1]) && kmBetween(pt, cityPoint) <= maxKm) return pt;
-    } catch { /* try the next geocoder */ }
+      if (pt && Number.isFinite(pt[0]) && Number.isFinite(pt[1])) {
+        if (kmBetween(pt, cityPoint) <= maxKm) { info.matched = info.pending || ""; return pt; }
+        info.far = true;
+      }
+    } catch { errors++; /* try the next geocoder */ }
   }
+  if (errors === attempts.length) info.down = true;
   return null;
 }

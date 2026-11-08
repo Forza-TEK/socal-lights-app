@@ -11,7 +11,9 @@ import { json, err, clean, webUrl } from "../../../_lib/util.js";
 import { requireUser, sameOrigin, normEmail } from "../../../_lib/auth.js";
 import { SEASONS } from "../../../../public/seasons.js";
 import { movePhotos } from "../../../_lib/posts.js";
+import { r2Delete, photoKeys } from "../../../_lib/dbchunk.js";
 import { diff, logHome, lines, notify, HOME_FIELDS } from "../../../_lib/changes.js";
+import { refundDueStatements } from "../../../_lib/orders.js";
 import { phoneField, normName, normText, normRadio, line } from "../../../_lib/fields.js";
 
 // Which side of the listing is this person on? Returns { row, inst, role: "homeowner" | "installer" } or { res }.
@@ -108,7 +110,7 @@ export async function onRequestDelete({ params, request, env }) {
   if (a.res) return a.res;
   const { row } = a;
   if (!(row.user_id === user.id || normEmail(row.contact_email) === user.email)) return err(403, "Only the person who posted this listing can delete it.");
-  for (const k of JSON.parse(row.photos || "[]")) await env.PHOTOS.delete(k).catch(() => {});
-  await env.DB.batch([env.DB.prepare("DELETE FROM lights_on WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM listing_changes WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(row.id)]);
+  await r2Delete(env, photoKeys([row]), "home photos");
+  await env.DB.batch([...refundDueStatements(env.DB, { homes: [row.id] }, "The owner deleted the home while a paid Featured placement was running. Refund it in Stripe, then mark it refunded here."), env.DB.prepare("DELETE FROM lights_on WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM listing_changes WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(row.id)]);
   return json({ ok: true });
 }

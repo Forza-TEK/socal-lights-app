@@ -1,9 +1,9 @@
 // Step-by-step engine shared by the add forms (event, home display, contest). One question per screen, a segmented
 // progress bar, Back and Next. Each form supplies its steps; this file does the rest (state, validation, photos,
 // address suggestions, "I am human" check, saved drafts).
-import { me, signIn } from "/auth.js?v=20261101a";
+import { me, signIn } from "/auth.js?v=20261107p";
 import "/norm-ui.js?v=20261102b";
-import { CITY } from "/cities.js";
+import { CITY } from "/cities.js?v=20261107a";
 export const $ = (q, r = document) => r.querySelector(q);
 export const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -24,12 +24,12 @@ export function validSite(s) {
 }
 
 /* ---------- light / night switch and account button: shared with every page (see chrome.js) ---------- */
-import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome.js?v=20261103b";
+import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome.js?v=20261110b";
 export { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct };
 
 /* ---------- field builders ---------- */
-export const input = (d, k, { label = "", ph = "", max = 200, type = "text", opt = false, ac = "", mode = "", addr = false } = {}) =>
-  `<div class="field${addr ? " combo" : ""}">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<input class="in" id="f-${k}" data-k="${k}" ${addr ? "data-addr" : ""} type="${type}" maxlength="${max}" ${ac ? `autocomplete="${ac}"` : 'autocomplete="off"'} ${mode ? `inputmode="${mode}"` : ""} placeholder="${esc(ph)}" value="${esc(d[k] ?? "")}"></div>`;
+export const input = (d, k, { label = "", ph = "", max = 200, type = "text", opt = false, ac = "", mode = "", addr = false, aria = "" } = {}) =>
+  `<div class="field${addr ? " combo" : ""}">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<input class="in" id="f-${k}" data-k="${k}" ${aria && !label ? `aria-label="${esc(aria)}"` : ""} ${addr ? "data-addr" : ""} type="${type}" maxlength="${max}" ${ac ? `autocomplete="${ac}"` : 'autocomplete="off"'} ${mode ? `inputmode="${mode}"` : ""} placeholder="${esc(ph)}" value="${esc(d[k] ?? "")}"></div>`;
 export const area = (d, k, { label = "", ph = "", max = 300, opt = false } = {}) =>
   `<div class="field">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<textarea class="in" id="f-${k}" data-k="${k}" maxlength="${max}" placeholder="${esc(ph)}">${esc(d[k] ?? "")}</textarea></div>`;
 export const select = (d, k, options, { label = "", blank = "", ac = "" } = {}) =>
@@ -37,7 +37,14 @@ export const select = (d, k, options, { label = "", blank = "", ac = "" } = {}) 
 export const tile = (d, k, v, title, desc = "", sm = false) =>
   `<button type="button" class="tile${sm ? " sm" : ""}" data-tile="${k}|${esc(v)}" aria-pressed="${String(d[k]) === String(v)}"><b>${title}</b>${desc ? `<span>${desc}</span>` : ""}</button>`;
 export const check = (d, k, text) => `<label class="chk"><input type="checkbox" data-k="${k}" ${d[k] ? "checked" : ""}> <span>${text}</span></label>`;
-export const photoField = (d, { max = 8, help = "" } = {}) =>
+// The optional monthly-update box on the last step of the add forms (only for a signed-in person). Always UNCHECKED, never saved in a draft (the pages list "nl" in noPersist).
+// It is a separate permission from the listing; the choice is sent after the listing was saved (nlSave) and never blocks it.
+export const nlCheck = (x) => `<div class="field nl-opt">${check(x, "nl", `Email me a monthly update with seasonal recommendations <span class="opt-lbl">Optional</span>`)}<p class="small muted" style="margin:2px 0 0">Separate from your listing. You can change the topics or unsubscribe any time. Sponsored or affiliate content will be identified.</p></div>`;
+export async function nlSave(x, role, page) {
+  if (!x.nl) return;
+  try { await fetch("/api/me/newsletter", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ optin: true, role, topics: [], method: "add-listing checkbox", source_page: page }) }); } catch {}
+}
+export const photoField =(d, { max = 8, help = "" } = {}) =>
   `<div class="drop" id="drop"><span>${help || `Up to ${max} photos. The first one is the cover. They shrink on your phone, so uploads are quick.`}</span><label class="btn out sm" for="f-photos" style="margin:0">Choose photos</label><input id="f-photos" data-photos type="file" accept="image/*" multiple hidden></div><div class="thumbs" id="thumbs">${thumbsHtml(d)}</div><p class="err" id="perr" role="alert" hidden></p>`;
 const thumbsHtml = (d) => (d.photos || []).map((p, i) => `<div class="t"><img src="${p.url}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button>${i === 0 ? "<em>COVER</em>" : ""}</div>`).join("");
 export const sumRow = (k, v, goto) => `<div><span>${k}</span><b>${v}</b><button class="link" type="button" data-goto="${goto}">Edit</button></div>`;
@@ -105,24 +112,28 @@ export function run(o) {
   } catch {}
   let dirty = false;
   const save = () => { if (!o.persist) return; try { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && typeof v !== "function") c[k] = v; localStorage.setItem(o.persist, JSON.stringify({ d: c, i: S.i })); } catch {} };
-  const hdr = (done) => `<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? "" : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
+  const hdr = (done) => `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? "" : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
   function draw(focus) {
-    if (S.done !== null) { root.innerHTML = `${hdr(true)}<div class="main">${S.done}</div>`; window.scrollTo(0, 0); return; }
+    if (S.done !== null) { root.innerHTML = `${hdr(true)}<main class="main">${S.done}</main>`; window.scrollTo(0, 0); return; }
     const st = steps(); S.i = Math.max(0, Math.min(S.i, st.length - 1)); const s = st[S.i];
     if (o.season) document.documentElement.dataset.season = o.season(d);
     const secs = [...new Set(st.map((x) => x.sec))], cur = secs.indexOf(s.sec);
     const segs = secs.map((sc, k) => { const inSec = st.filter((x) => x.sec === sc), idx = inSec.indexOf(s), f = k < cur ? 1 : k > cur ? 0 : (idx + 1) / inSec.length; return `<div class="seg" aria-hidden="true"><i style="width:${f * 100}%"></i></div>`; }).join("");
     const last = !!s.submit;
-    root.innerHTML = `${hdr()}<div class="main"><h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<p class="err" id="err" role="alert" ${S.err ? "" : "hidden"}>${esc(S.err)}</p></div>
-    <div class="bar"><div class="segs" role="progressbar" aria-label="Progress: ${esc(s.sec)}">${segs}</div><div class="nav"><button class="link" type="button" data-a="back">${S.i === 0 ? "Cancel" : "Back"}</button><button class="btn" type="button" data-a="next" id="nextbtn">${esc(T(s.cta) || (last ? "Submit" : "Next"))}</button></div></div>`;
+    root.innerHTML = `${hdr()}<main class="main"><h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<p class="err" id="err" role="alert" ${S.err ? "" : "hidden"}>${esc(S.err)}</p></main>${o.preview ? `<aside class="pvcard" id="pvcard" aria-label="Preview of your listing"><span class="pvl">Preview</span><div id="pvbody">${o.preview(d)}</div><p class="pvn">This is how it will look to people. It updates as you type.</p></aside>` : ""}
+    <div class="bar" role="navigation" aria-label="Steps"><div class="segs" role="progressbar" aria-label="Progress: ${esc(s.sec)}">${segs}</div><div class="nav"><button class="link" type="button" data-a="back">${S.i === 0 ? "Cancel" : "Back"}</button><button class="btn" type="button" data-a="next" id="nextbtn">${esc(T(s.cta) || (last ? "Submit" : "Next"))}</button></div></div>`;
     if (focus) { const f = root.querySelector(".in,[data-tile]"); if (f && f.classList.contains("in")) f.focus({ preventScroll: true }); window.scrollTo(0, 0); }
     if (o.after) o.after(s, d);
   }
+  // Tie the message to the field it is about: the first empty field on the step gets aria-invalid and aria-describedby="err" (cleared when the person types)
+  const flagField = () => { unflag(); const f = [...root.querySelectorAll("input[data-k],textarea[data-k],select[data-k]")].find((x) => x.type !== "checkbox" && x.type !== "radio" && x.type !== "file" && !String(x.value || "").trim()); if (f) { f.setAttribute("aria-invalid", "true"); f.setAttribute("aria-describedby", "err"); } };
+  const unflag = () => root.querySelectorAll("[aria-describedby=\"err\"][data-k]").forEach((x) => { x.removeAttribute("aria-invalid"); x.removeAttribute("aria-describedby"); });
   const showErr = (t) => { S.err = t; const e = $("#err"); if (e) { e.textContent = t; e.hidden = !t; if (t) e.scrollIntoView({ block: "center", behavior: "smooth" }); } };
+  const pv = () => { const b = $("#pvbody"); if (b && o.preview) b.innerHTML = o.preview(d); };
   const api = { next: () => next(), draw: () => draw(), err: showErr, finish(html) { S.done = html; if (d._draftId) fetch("/api/drafts/" + d._draftId, { method: "DELETE" }).catch(() => {}); if (o.persist) try { localStorage.removeItem(o.persist); } catch {} draw(); }, goto(id) { const i = steps().findIndex((x) => x.id === id); if (i > -1) { S.i = i; S.err = ""; save(); draw(true); } }, data: d, step: () => steps()[S.i] };
   async function next() {
     if (S.busy) return;
-    const s = steps()[S.i], e = s.check ? s.check(d) : ""; if (e) return showErr(e); showErr("");
+    const s = steps()[S.i], e = s.check ? s.check(d) : ""; if (e) { showErr(e); flagField(); return; } showErr(""); unflag();
     if (s.submit) {
       S.busy = true; const b = $("#nextbtn"), label = b.textContent; b.disabled = true; b.textContent = "Sending…";
       try { await s.submit(d, api); } catch (x) { S.busy = false; if (S.done === null) { showErr(x.message || "Something went wrong. Please try again."); const bb = $("#nextbtn"); if (bb) { bb.disabled = false; bb.textContent = label; } ts.reset(); } return; }
@@ -163,8 +174,8 @@ export function run(o) {
 
   // typing, choosing, clicking
   const onValue = (t) => {
-    const k = t.dataset.k; dirty = true; d[k] = t.type === "checkbox" ? t.checked : t.value; if (t.getAttribute("aria-invalid")) t.removeAttribute("aria-invalid");
-    save(); if (o.onInput) o.onInput(k, d, api);
+    const k = t.dataset.k; dirty = true; d[k] = t.type === "checkbox" ? t.checked : t.value; if (t.getAttribute("aria-invalid")) { t.removeAttribute("aria-invalid"); t.removeAttribute("aria-describedby"); }
+    save(); if (o.onInput) o.onInput(k, d, api); pv();
     const s = steps()[S.i]; if (s && s.redraw && (t.type === "checkbox" || t.tagName === "SELECT")) { draw(); }
   };
   document.addEventListener("input", (e) => { if (root.contains(e.target) && e.target.matches("[data-k]") && e.target.type !== "checkbox" && e.target.tagName !== "SELECT") onValue(e.target); });
@@ -180,10 +191,10 @@ export function run(o) {
       const [k, ...v] = t.dataset.tile.split("|"); dirty = true; d[k] = v.join("|"); save();
       const s = steps()[S.i];
       if (s && s.redraw) draw(); else root.querySelectorAll(`[data-tile^="${k}|"]`).forEach((x) => x.setAttribute("aria-pressed", x === t));
-      if (o.onInput) o.onInput(k, d, api); return;
+      if (o.onInput) o.onInput(k, d, api); pv(); return;
     }
     if (t.dataset.goto) return api.goto(t.dataset.goto);
-    if (t.dataset.rm) { const i = +t.dataset.rm; URL.revokeObjectURL(d.photos[i].url); d.photos.splice(i, 1); $("#thumbs").innerHTML = thumbsHtml(d); return; }
+    if (t.dataset.rm) { const i = +t.dataset.rm; URL.revokeObjectURL(d.photos[i].url); d.photos.splice(i, 1); $("#thumbs").innerHTML = thumbsHtml(d); pv(); return; }
     if (t.dataset.copy) { const old = t.textContent; navigator.clipboard.writeText(t.dataset.copy).then(() => (t.textContent = "Copied"), () => (t.textContent = "Select it")); setTimeout(() => (t.textContent = old), 1500); return; }
     const [a, p] = (t.dataset.a || "").split(/:(.*)/s);
     if (a === "next") return next(); if (a === "back") return back(); if (a === "saveexit") return saveExit();
@@ -198,7 +209,7 @@ export function run(o) {
     for (const f of list) {
       if (d.photos.length >= 8) { say("That's the limit of 8 photos."); break; }
       if (!f.type.startsWith("image/")) { say("Skipped a file that isn't a photo."); continue; }
-      try { const b = await shrink(f); dirty = true; d.photos.push({ blob: b, url: URL.createObjectURL(b) }); } catch { say("One photo couldn't be read. Try a JPG or PNG."); }
+      try { const b = await shrink(f); dirty = true; d.photos.push({ blob: b, url: URL.createObjectURL(b) }); pv(); } catch { say("One photo couldn't be read. Try a JPG or PNG."); }
       const th = $("#thumbs"); if (th) th.innerHTML = thumbsHtml(d);
     }
   }
@@ -218,4 +229,10 @@ export function run(o) {
     draw(true);
   })();
   return api;
+}
+
+// A listing card for the live preview beside the add forms (empty fields show a greyed example, so people see what is still missing)
+export function pvCard({ photo = "", when = "", title = "", ph = "Your title", lines = [], tags = [] }) {
+  const ln = lines.filter((l) => l && l.t);
+  return `<article class="pvc"><div class="pvph">${photo ? `<img src="${esc(photo)}" alt="">` : `<span aria-hidden="true">✨</span>`}${when ? `<i>${esc(when)}</i>` : ""}</div><div class="pvb"><p class="pvh${title ? "" : " empty"}">${esc(title || ph)}</p>${ln.map((l) => `<p class="${l.e ? "empty" : ""}">${esc(l.t)}</p>`).join("")}${tags.length ? `<div class="pvt">${tags.map((t) => `<b>${esc(t)}</b>`).join("")}</div>` : ""}</div></article>`;
 }

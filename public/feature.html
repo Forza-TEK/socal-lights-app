@@ -4,54 +4,55 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Feature your event · SoCal Lights</title>
-<meta name="description" content="Put your Southern California Halloween, holiday or seasonal event at the top of SoCal Lights with a Featured pin on the map.">
+<meta name="description" content="Put your Southern California Halloween, holiday or seasonal event in front of people on SoCal Lights: a Featured pin, a banner pill at the top of the map list, and top of the list.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102i">
-<link rel="stylesheet" href="/info.css?v=20261031t">
-<script src="/hit.js" defer></script>
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/info.css?v=20261110y">
+<style>
+.plan{background:#fff;gap:8px}:root[data-theme="dark"] .plan{background:var(--tile)}
+.plan .price{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.plan .price small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0}
+.plan p{margin:0;color:var(--muted)}.plan p b{color:var(--ink)}.plan>.btn{margin-top:6px;justify-self:start}
+.plan{border:2px solid var(--line);transition:border-color .15s,background-color .15s}.plan.sel{border-color:var(--season);background:color-mix(in srgb,var(--season) 9%,#fff);box-shadow:none}:root[data-theme="dark"] .plan.sel{background:color-mix(in srgb,var(--season) 16%,var(--tile))}
+.plan .btn.pick:not(.ghost){background:var(--season);border-color:var(--season);color:var(--on-season)}
+.grid+.meta{margin-top:14px}
+.grid .plan{cursor:pointer}.grid .plan:hover,.grid .plan:focus-within{border-color:var(--season);background:color-mix(in srgb,var(--season) 9%,#fff);box-shadow:0 6px 18px rgba(20,22,27,.10)}:root[data-theme="dark"] .grid .plan:hover,:root[data-theme="dark"] .grid .plan:focus-within{background:color-mix(in srgb,var(--season) 16%,var(--tile))}
+.grid .plan:hover .btn.pick{background:var(--season);border-color:var(--season);color:var(--on-season)}
+.fsteps{display:flex;gap:6px;list-style:none;margin:0 0 18px;padding:0;flex-wrap:wrap}.fsteps li{font-size:14px;color:var(--muted);padding:4px 12px;border:1px solid var(--line);border-radius:999px}.fsteps li.on{color:var(--ink);border-color:var(--ink);font-weight:600}
+.plan ul{margin:0;padding-left:20px;display:grid;gap:4px}.plan h3{margin:0;font-size:18px}.plan .chosen{margin:0}.plan .btn.pick{margin-top:6px}
+.res small.why{color:var(--muted)}.res button:disabled{opacity:.7;cursor:default}.res button:disabled:hover{border-color:var(--line)}
+.opts{display:grid;gap:12px;margin:16px 0}.opts .btn{justify-self:start}.opts details{background:#fff}:root[data-theme="dark"] .opts details{background:var(--tile)}.opts details p,.opts details .res{margin-top:10px}
+.paidbox{border:2px solid var(--ok);border-radius:12px;padding:18px 20px;margin:16px 0;background:#fff}:root[data-theme="dark"] .paidbox{background:var(--tile)}.paidbox h2{margin-top:0}.paidbox ul{padding-left:20px;display:grid;gap:8px}.paidbox .btn{margin:4px 8px 0 0}
+</style>
+<script src="/hit.js?v=20261107a" defer></script>
 </head>
-<body>
-<div class="hdr"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
-<main>
-<h1>Feature your event on SoCal Lights</h1>
-<p class="lede">Southern Californians use SoCal Lights to decide where to go this weekend. A Featured listing stands out, with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin on the map.</p>
+<body class="wide">
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<main class="wide">
+<h1>Feature your event</h1>
+<p class="lede">A Featured event stands out on the SoCal Lights map with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin. You can add a banner pill at the top of the map list, and top of the list. Listing an event is free; this is optional. <a href="/pricing">See all pricing</a>.</p>
 
-<div id="paid" class="ok" hidden><b>Thank you!</b> <span id="paidmsg">Your payment went through. Your event is being featured now; refresh the map in a minute to see the gold badge.</span> A receipt is on its way from Stripe.</div>
+<div id="paid" hidden></div>
+<div id="cancelled" class="ok" hidden><b>No payment was made.</b> Your event and plan are still chosen below, so you can pick up where you left off.</div>
+<p id="inapp" class="lede" hidden>Event promotion isn't available in the app.</p>
 
 <div id="auto">
-<h2>1. Find your event</h2>
-<div id="pick"><input id="q" type="search" placeholder="Type your event's name or city" autocomplete="off" aria-label="Search for your event"><ul class="res" id="res"></ul></div>
-<p class="meta">Not on the map yet? <a href="/add-event">Add your event for free</a> first, then come back here.</p>
-<div id="chosen" class="chosen" hidden></div>
-
-<h2>2. Pick a plan</h2>
-<div class="grid">
-  <section class="plan" data-p="pin"><h3>Featured pin</h3><div class="price">$5 <small>/ 30 days</small></div><ul><li>Gold-ringed pin on the map</li><li>Featured badge in the list</li></ul><button class="btn ghost" type="button" data-pick="pin">Choose</button></section>
-  <section class="plan pop" data-p="top"><h3>Top of the list</h3><div class="price">$10 <small>/ 30 days</small></div><ul><li>Everything in Featured pin</li><li>Listed first in your city, county and season</li></ul><button class="btn" type="button" data-pick="top">Choose</button></section>
-  <section class="plan" data-p="season"><h3>Whole season</h3><div class="price">$15 <small>/ season</small></div><ul><li>Everything in Top of the list</li><li>Featured from now until your event ends</li></ul><button class="btn ghost" type="button" data-pick="season">Choose</button></section>
-</div>
-<h2>3. Pay securely</h2>
-<p><button class="btn" id="go" type="button" disabled>Continue to payment</button></p>
-<p class="meta" id="gomsg">Choose your event and a plan above. You pay on Stripe's secure page with a card or Cash App Pay; your Featured placement turns on automatically within a minute.</p>
+<ol class="fsteps" id="fsteps" aria-label="Steps"></ol>
+<div id="flow" aria-live="polite"></div>
 </div>
 
 <div id="manual" hidden>
-<h2>Pick a plan</h2>
-<div class="grid">
-  <section class="plan"><h3>Featured pin</h3><div class="price">$5 <small>/ 30 days</small></div><ul><li>Gold-ringed pin on the map</li><li>Featured badge in the list</li></ul><a class="btn ghost" data-plan="pin" href="#">Get started</a></section>
-  <section class="plan pop"><h3>Top of the list</h3><div class="price">$10 <small>/ 30 days</small></div><ul><li>Everything in Featured pin</li><li>Listed first in your city, county and season</li></ul><a class="btn" data-plan="top" href="#">Get started</a></section>
-  <section class="plan"><h3>Whole season</h3><div class="price">$15 <small>/ season</small></div><ul><li>Everything in Top of the list</li><li>Featured from now until your event ends</li></ul><a class="btn ghost" data-plan="season" href="#">Get started</a></section>
-</div>
-<h2>How it works</h2>
-<ol><li>Make sure your event is on the map. If it is missing, <a href="/add-event">add it for free</a>.</li><li>Choose a plan above and pay with Cash App. Put your <b>event name</b> in the Cash App note.</li><li>Email us the link to your event on the map. We turn on your Featured placement, usually within one business day.</li></ol>
+<h2>Online payment isn't switched on yet</h2>
+<p>Email us your event's name and its link on the map and we'll set up your Featured placement by hand. If it is missing, <a href="/add-event">add it for free</a> first.</p>
+<p><a class="btn" id="mail2" href="#">Email us to get started</a></p>
 </div>
 
 <h2>Good to know</h2>
-<details><summary>Is it labeled as an ad?</summary><p>Featured events carry a visible Featured badge, so nobody is misled. We only list real, public events, and a Featured event still has to be accurate: dates, venue and address are checked like every other listing.</p></details>
+<details><summary>Is it labeled as an ad?</summary><p>Featured events and homes carry a visible Featured badge, and an event's banner pill at the top of the map list is labelled "Featured", so nobody is misled. We only list real, public events, and a Featured event still has to be accurate: dates, venue and address are checked like every other listing.</p></details>
 <details><summary>What can I feature?</summary><p>Public Halloween, Día de los Muertos, Thanksgiving, Christmas and holiday, New Year's, spring, and summer events in Southern California: haunts, pumpkin patches, tree lightings, light shows, parades, markets and more. We reserve the right to decline events that are not open to the public or that we cannot verify.</p></details>
-<details><summary>Can I get a refund?</summary><p>If we cannot feature your event for any reason, you get a full refund. Once your placement is live, payments are non-refundable, but if your event is cancelled we will move your placement to another event of yours or refund the unused time.</p></details>
+<details><summary>Can I get a refund?</summary><p>If we cannot list or feature your event for any reason, you get a full refund, for every part of your plan: the pin, the banner and top of the list. Once your placement is live, payments are non-refundable, but if your event is cancelled, email us and we will move your placement to another of your events or refund the unused time. A refund switches your Featured placement off (the pin, the banner and top of the list), and so does a payment dispute, so please email <a href="mailto:info@socallights.app">info@socallights.app</a> before disputing a charge with your bank. The same rules are in our <a href="/terms#paid">Terms</a>.</p></details>
+<details><summary>How long does it run, and what does an upgrade cost?</summary><p>It runs from the moment you pay until your event ends or the season ends (Christmas lights: Jan 6), whichever comes first, and the price is the same whenever you buy. Each part (the Featured pin, the banner, top of the list) has the same price: if you already have some of them, you pay only for the parts you add, and a purchase that adds nothing new is not sold. This page shows the exact dates and the total before you pay.</p></details>
 <details><summary>Does Featured change my event's details?</summary><p>No. Your event keeps its dates, hours and link. Send us corrections any time at no charge.</p></details>
 
 <h2>Questions?</h2>
@@ -59,56 +60,233 @@
 <p class="meta">SoCal Lights is a small independent project. Thanks for helping keep it free for everyone.</p>
 </main>
 <script type="module">
-import { SITE } from "/site-config.js";
+import { SITE } from "/site-config.js?v=20261107a";
+import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
+import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS, planCopy, planBlurb, planWindow, eventEligibility, quoteLine, niceDate as fmt, ptToday } from "/feature-plans.js?v=20261108a";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const NAMES = { pin: "Featured pin ($5 / 30 days)", top: "Top of the list ($10 / 30 days)", season: "Whole season ($15)" };
-const mail = (plan) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent("Feature my event" + (plan ? " – " + NAMES[plan] : ""))}&body=${encodeURIComponent("Event name:\nLink to my event on socallights.app (or its own web page):\nPlan: " + (plan ? NAMES[plan] : "") + "\nMy name and phone:\n")}`;
-const safe = (u) => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } };
-$("#mail").href = mail("");
-if (new URLSearchParams(location.search).get("paid")) { $("#paid").hidden = false; if (new URLSearchParams(location.search).get("pending")) $("#paidmsg").textContent = "Your payment went through. Your event is waiting for a quick review; its Featured placement turns on the moment it is approved."; }
+const money = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : c / 100);
+const dollars = (p) => money(p.cents);
+let PL = {}, EP = {}; // PL: the home plans (pin, top: 30 days). EP: the event plans (ev_pin, ev_banner, ev_top, ev_all).
+const LEG = { pin: "ev_pin", top: "ev_top", season: "ev_all" }; // an old link (?plan=pin) lands on the nearest current event plan
+const mail = (plan) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent("Feature my event" + (plan && (EP[plan] || PL[plan]) ? " – " + (EP[plan] || PL[plan]).label : ""))}&body=${encodeURIComponent("Event name:\nLink to my event on socallights.app (or its own web page):\nMy name and phone:\n")}`;
+const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
+const qs = new URLSearchParams(location.search);
 
 const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
-if (!cfg.featureCheckout) {
-  // Online payment isn't switched on: fall back to the Cash App + email flow.
-  $("#auto").hidden = true; $("#manual").hidden = false;
-  document.querySelectorAll("[data-plan]").forEach((a) => {
-    const plan = a.dataset.plan, pay = safe(SITE.featurePay[plan]);
-    if (pay) { a.href = pay; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Pay with Cash App"; } else { a.href = mail(plan); a.textContent = "Email to get started"; }
+PL = cfg.featurePlans || {}; EP = cfg.eventPlans || {};
+$("#mail").href = $("#mail2").href = mail("");
+const OPEN = cfg.featureOpenDays || 30, KEY = "scl-feature-sel", today = ptToday();
+const inApp = /SoCalLightsApp/.test(navigator.userAgent);
+if (inApp) { $("#auto").hidden = true; $("#inapp").hidden = false; }
+else if (!cfg.featureCheckout) { $("#auto").hidden = true; $("#manual").hidden = false; }
+else await start();
+
+async function start() {
+  const { me, signIn } = await import("/auth.js?v=20261107p");
+  const user = (await me()).user;
+  const wantPlan = (k) => (EP[k] ? k : EP[LEG[k]] ? LEG[k] : "");
+  const S = { plan: wantPlan(qs.get("plan")), ev: null, mine: [], user, busy: false, msg: "", changing: false, claim: null, claimMsg: "", found: [] };
+  let all = null; // every public event, loaded only when someone searches to claim one
+  try { const s = JSON.parse(sessionStorage.getItem(KEY) || "{}") || {}; if (!S.plan && wantPlan(s.plan)) S.plan = wantPlan(s.plan); S.saved = s.id || ""; } catch {}
+  const saveSel = () => { try { sessionStorage.setItem(KEY, JSON.stringify({ id: S.ev && S.ev.id, plan: S.plan })); } catch {} };
+  const evParam = (e) => (e.id.startsWith("sub:") ? ["sub", e.id.slice(4)] : [e.home ? "home" : "event", e.id]);
+  const urlState = () => { const p = new URLSearchParams(); if (S.plan) p.set("plan", S.plan); if (S.ev) p.set(...evParam(S.ev)); return "/feature" + ([...p].length ? "?" + p : ""); };
+  const sync = () => { saveSel(); try { history.replaceState(null, "", urlState()); } catch {} };
+  const mails = () => { $("#mail").href = $("#mail2").href = mail(S.plan); };
+
+  if (user) {
+    const f = await fetch("/api/me/featurable", { cache: "no-store" }).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+    S.mine = [...(f.homes || []), ...(f.contests || []), ...(f.events || [])].map((m) => ({ ...m, home: m.kind === "home", elig: m.kind === "home" ? { ok: true, plans: ["pin", "top"], reason: "" } : eventEligibility({ state: m.state }, m.quotes) }));
+  }
+  const WHO = (m) => (m && m.home ? "home" : "event");
+  const when = (m) => (m.start && m.end && m.start !== m.end ? `${fmt(m.start)} to ${fmt(m.end)}` : m.end ? fmt(m.end) : "");
+  const running = (m) => [m.featured ? `Featured until ${m.until ? fmt(m.until) : "the event ends"}` : "", m.banner_until ? `banner until ${fmt(m.banner_until)}` : ""].filter(Boolean).join(", ").replace(/^./, (c) => c.toUpperCase());
+
+  if (qs.get("paid")) return paidView(S);
+  if (qs.get("cancelled")) $("#cancelled").hidden = false;
+
+  // Restore the choice: from the link (?event= ?sub= ?home=) or from before sign-in
+  const want = qs.get("sub") ? "sub:" + qs.get("sub") : qs.get("event") || qs.get("home") || S.saved || "";
+  if (want && user) {
+    const m = S.mine.find((x) => x.id === want);
+    if (m) S.ev = m;
+    else if (!want.startsWith("sub:")) { // an event that is not theirs (yet): offer to claim it
+      const e = await fetch("/api/events/" + encodeURIComponent(want)).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      if (e && e.e >= today) S.claim = { id: e.id, n: e.n, city: e.city, s: e.s, e: e.e };
+    }
+  }
+  // Exactly one event they can feature: choose it for them (they can still change it)
+  if (user && !S.ev && !S.claim) { const ok = S.mine.filter((m) => m.elig.ok); if (ok.length === 1 && !qs.get("cancelled")) { S.ev = ok[0]; beacon("fn:event-feature-pick"); } }
+
+  // When the chosen event cannot buy the chosen plan (nothing new to add, or the date rules), move to the one that fits and say so. A home has its own 30-day plans.
+  function fit() {
+    S.note = "";
+    if (!S.ev) return;
+    if (S.ev.home) {
+      if (EP[S.plan]) { S.note = `A home is featured for 30 days with the Featured pin or Top of the list; the event plans (pin, banner, top of the list for a season) are for events. We chose ${planCopy(S.plan === "ev_pin" ? "pin" : "top", PL).name} for your home.`; S.plan = S.plan === "ev_pin" ? "pin" : "top"; }
+      if (!PL[S.plan]) S.plan = "top";
+      return;
+    }
+    if (PL[S.plan] && !EP[S.plan]) S.plan = LEG[S.plan] || "";
+    const ok = S.ev.elig.plans, qs_ = S.ev.quotes || {};
+    if (S.plan && ok.length && !ok.includes(S.plan)) {
+      const old = S.plan, nxt = ["ev_all", "ev_top", "ev_banner", "ev_pin"].find((k) => ok.includes(k)) || ok[0];
+      const why = String((qs_[old] && qs_[old].problem) || "").replace(/^Nothing to add: /, "");
+      S.note = `${eventTierCopy(old).name} isn't available for this event. ${why ? why.replace(/^./, (c) => c.toUpperCase()) : ""} We chose ${eventTierCopy(nxt).name} instead.`.replace(/\s+/g, " ");
+      S.plan = nxt;
+    }
+    if (!S.plan && ok.length) S.plan = ok.includes("ev_all") ? "ev_all" : ok[0];
+  }
+  const steps = () => {
+    const at = !S.plan ? 0 : !user || !S.ev ? 1 : 2, names = ["Plan", "Event", "Pay"];
+    $("#fsteps").innerHTML = names.map((n, i) => `<li${i === at ? ' class="on" aria-current="step"' : ""}>${i + 1}. ${n}</li>`).join("");
+  };
+
+  function planCards() {
+    const r = eventRule(cfg, money);
+    const keys = EVENT_KEYS.filter((k) => EP[k]), names = {}, prices = {};
+    const cards = keys.map((k) => { const c = eventTierCopy(k), on = S.plan === k; names[k] = c.name; prices[k] = money(EP[k].cents);
+      return planCard({ key: k, price: prices[k], unit: c.unit, name: c.name, blurb: eventTierBlurb(k), popular: cfg.popularEvent === k, selected: on,
+        action: `<button class="btn pick${on ? "" : " ghost"}" type="button" data-pick="${k}" aria-pressed="${on}" aria-label="${on ? "Chosen: " : "Choose "}${esc(c.name)}, ${esc(prices[k])}">${on ? "\u2713 Chosen" : "Choose"}</button>` }); }).join("");
+    return `<h2>Pick a plan</h2><div class="pcards">${cards}</div>${compareTable(keys, names, prices)}
+      <p class="meta">${esc(r.rule + r.now)}${esc(r.up)} You pay once on Stripe's secure page. No subscription. This page shows the exact dates and the total before you pay. Featuring a home that placed 1st, 2nd or 3rd in a contest is separate: 30 days, ${PL.pin ? money(PL.pin.cents) : ""} for the Featured pin or ${PL.top ? money(PL.top.cents) : ""} for Top of the list (pick your home on the next step).</p>`;
+  }
+
+  function signInBox() {
+    return `<div id="nextsec"></div><h2>Sign in to continue</h2><p>Sign in with Google or an emailed 6-digit code, so we know which events are yours. You'll come right back here with your plan chosen.</p><p><button class="btn" id="si" type="button">Sign in</button></p>`;
+  }
+
+  function whichBox() {
+    const rows = S.mine;
+    const li = (m) => { const ok = m.elig.ok, bits = [m.kind === "contest" ? "Contest" : m.kind === "home" ? `Home · ${m.placeText} in ${m.contest}` : m.city, when(m), running(m)].filter(Boolean).join(" · ");
+      const state = m.state === "pending" ? "Waiting for our review. You can pay now; it turns on when we approve it." : ok ? "" : m.elig.reason;
+      return `<li><button type="button" data-mine="${esc(m.id)}"${ok ? "" : " disabled"}><b>${esc(m.name)}</b><small>${esc(bits)}</small>${state ? `<small class="${ok ? "" : "why"}">${esc(state)}</small>` : ""}${ok ? `<small><b>${m.featured ? "Extend or upgrade" : "Feature this " + WHO(m)}</b></small>` : ""}</button></li>`; };
+    return `<div id="nextsec"></div><h2>Which event?</h2>${rows.length ? `<ul class="res" id="mylist">${rows.map(li).join("")}</ul>` : `<p>You don't have an event on this account yet. Add it (free), or claim a listing that is already on the map.</p>`}
+      <div class="opts"><a class="btn out" id="addnew" href="/add-event?plan=${esc(S.plan)}">Add a new event</a>
+      <details id="claimbox"${S.claim ? " open" : ""}><summary>Claim an existing listing</summary>${claimBox()}</details></div>`;
+  }
+  function claimBox() {
+    if (S.claim) return `<div class="chosen"><b>${esc(S.claim.n)}</b><br><span class="meta">${esc(S.claim.city || "")} · ${esc(S.claim.s)}${S.claim.e !== S.claim.s ? " to " + esc(S.claim.e) : ""}</span></div><p>Only an event's organizer can feature it. Tell us this one is yours and we'll check. If your email matches the event's own website it is approved right away; otherwise we review it and email you. Claiming does not let you edit the listing.</p><p><button class="btn" data-a="claim" type="button"${S.claimDone ? " hidden" : ""}>This is my event: claim it</button> <a href="#" data-a="unclaim">pick another</a></p><p class="msg${S.claimErr ? " err" : ""}">${esc(S.claimMsg)}</p>`;
+    return `<p class="meta">Find the listing by name or city.</p><input id="q" type="search" placeholder="Type your event's name or city" autocomplete="off" aria-label="Search for your event"><ul class="res" id="res">${S.found.map((e) => `<li><button type="button" data-find="${esc(e.id)}"><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}</small></button></li>`).join("")}</ul>`;
+  }
+
+  function confirmBox() {
+    const m = S.ev, pend = m.state === "pending", home = !!m.home;
+    let c, price, bl, body;
+    if (home) {
+      c = planCopy(S.plan, PL, "home"); price = dollars(PL[S.plan]); bl = c.bullets; const w = planWindow(S.plan, {}, PL, today);
+      body = `<p><b>Starts:</b> today, ${esc(fmt(w.from))}<br><b>Ends:</b> ${esc(fmt(w.until))} (${w.days} days from today)<br><b>Total:</b> ${price}, charged once on Stripe</p>`;
+    } else {
+      const q = m.quotes[S.plan], ql = quoteLine(q, money); c = eventTierCopy(S.plan); price = ql.price; bl = c.bullets;
+      body = `<p><b>Starts:</b> the moment you pay (today, ${esc(fmt(q.from))})<br><b>Ends:</b> ${esc(ql.ends)}, ${esc(ql.endsBy)}, whichever comes first (${q.days} day${q.days === 1 ? "" : "s"}, counting today)<br><b>Total:</b> ${price}, charged once on Stripe</p>
+      ${ql.partial ? `<p class="meta">This ${esc("event")} already has part of this plan through ${esc(fmt(q.to))}, so you pay only for what you add: ${esc(ql.adds.join(", "))} (${price}).</p>` : ""}`;
+    }
+    const others = home ? [] : m.elig.plans.filter((k) => k !== S.plan);
+    return `${S.note ? `<p class="msg">${esc(S.note)}</p>` : ""}<h2>Confirm and pay</h2>
+    <div class="plan sel"><p class="chosen"><b>${esc(m.name)}</b><br><span class="meta">${esc([m.kind === "contest" ? "Contest" : m.city, when(m)].filter(Boolean).join(" · "))}</span> · <a href="#" data-a="event">change event</a></p>
+    <div class="price">${price} <small>one time</small></div><h3>${esc(c.name)}</h3><ul>${bl.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>
+    ${body}
+    ${running(m) ? `<p class="meta">This ${WHO(m)} is already: ${esc(running(m))}. This purchase adds to it; it never shortens what you have.</p>` : ""}
+    ${pend ? `<p class="meta"><b>We'll review your event first.</b> Your payment is held and Featured switches on the moment we approve it. If we can't list the event, you get a full refund.</p>` : ""}
+    ${others.length ? `<p class="meta">Other plans for this event: ${others.map((k) => `<a href="#" data-sw="${k}">${esc(eventTierCopy(k).name)} (${money(m.quotes[k].cents)})</a>`).join(" · ")}</p>` : ""}
+    <p><button class="btn" id="go" type="button"${S.busy ? " disabled" : ""}>${S.busy ? "Opening Stripe…" : `Pay ${price} on Stripe`}</button></p>
+    <p class="msg${S.err ? " err" : ""}" id="gomsg">${S.msg ? esc(S.msg) : `The receipt goes to ${esc(user.email)}. You pay on Stripe's secure page with a card or Cash App Pay. No subscription.`}</p></div>`;
+  }
+
+  function draw() {
+    steps();
+    const f = $("#flow");
+    // The plan cards stay open after a plan is chosen; the next section (sign in, or Which event?) follows them
+    f.innerHTML = S.ev ? confirmBox() : planCards() + (!S.plan ? "" : !user ? signInBox() : whichBox());
+  }
+  const pickEvent = (m) => { S.ev = m; S.claim = null; S.msg = ""; S.err = false; fit(); sync(); beacon("fn:event-feature-pick"); draw(); window.scrollTo({ top: 0 }); };
+
+  $("#flow").addEventListener("click", async (x) => {
+    let t = x.target.closest("[data-pick],[data-mine],[data-a],[data-sw],[data-find],#si,#go,#addnew"); if (!t) { const pl = x.target.closest(".pcards .pcard[data-p]"); if (pl) t = pl.querySelector("[data-pick]"); } if (!t) return; // a click anywhere on a plan card chooses it
+    if (t.dataset.pick) { const first = !S.plan; S.plan = t.dataset.pick; mails(); sync(); draw(); if (first) document.getElementById("nextsec")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }); return; }
+    if (t.dataset.mine) { x.preventDefault(); pickEvent(S.mine.find((m) => m.id === t.dataset.mine)); return; }
+    if (t.dataset.sw) { x.preventDefault(); S.plan = t.dataset.sw; S.note = ""; sync(); draw(); return; }
+    if (t.dataset.find) { S.claim = (all || []).find((e) => e.id === t.dataset.find) || null; S.claimMsg = ""; S.claimErr = false; S.claimDone = false; draw(); return; }
+    const a = t.dataset.a;
+    if (a) x.preventDefault();
+    if (a === "plans") { S.plan = ""; S.ev = null; mails(); sync(); draw(); }
+    else if (a === "event") { S.ev = null; S.note = ""; sync(); draw(); }
+    else if (a === "unclaim") { S.claim = null; draw(); }
+    else if (a === "claim") await claim();
+    else if (t.id === "si") {
+      saveSel();
+      if (await signIn({ title: "Sign in to feature your event", next: urlState() })) location.reload();
+    } else if (t.id === "go") await pay();
   });
-} else {
-  const events = (await fetch("/api/events").then((r) => r.json()).catch(() => [])).filter((e) => e.e >= new Date().toISOString().slice(0, 10));
-  let ev = null, plan = "";
-  const upd = () => { $("#go").disabled = !(ev && plan); document.querySelectorAll("[data-p]").forEach((p) => p.classList.toggle("sel", p.dataset.p === plan)); };
-  $("#q").addEventListener("input", () => {
-    const q = $("#q").value.trim().toLowerCase();
-    if (q.length < 2) { $("#res").innerHTML = ""; return; }
-    const hits = events.filter((e) => (e.n + " " + e.city).toLowerCase().includes(q)).slice(0, 8);
-    $("#res").innerHTML = hits.map((e) => `<li><button type="button" data-id="${esc(e.id)}">${esc(e.n)}<small>${esc(e.city)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}</small></button></li>`).join("") || `<li class="meta">No match. <a href="/add-event">Add your event</a>.</li>`;
+  $("#flow").addEventListener("input", async (x) => {
+    if (x.target.id !== "q") return;
+    if (!all) all = (await fetch("/api/events").then((r) => r.json()).catch(() => [])).filter((e) => e.e >= today);
+    const q = x.target.value.trim().toLowerCase();
+    S.found = q.length < 2 ? [] : all.filter((e) => (e.n + " " + e.city).toLowerCase().includes(q)).slice(0, 8);
+    $("#res").innerHTML = S.found.map((e) => `<li><button type="button" data-find="${esc(e.id)}"><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}</small></button></li>`).join("") || (q.length < 2 ? "" : `<li class="meta">No match. <a href="/add-event?plan=${esc(S.plan)}">Add your event</a>.</li>`);
   });
-  $("#res").addEventListener("click", (x) => {
-    const b = x.target.closest("[data-id]"); if (!b) return;
-    ev = events.find((e) => e.id === b.dataset.id); $("#res").innerHTML = ""; $("#q").value = "";
-    $("#chosen").hidden = false; $("#chosen").innerHTML = `<b>${esc(ev.n)}</b><br><span class="meta">${esc(ev.city)} · ${esc(ev.s)}</span> · <a href="#" id="chg">change</a>`;
-    $("#chg").onclick = (y) => { y.preventDefault(); ev = null; $("#chosen").hidden = true; upd(); };
-    upd();
-  });
-  document.querySelectorAll("[data-pick]").forEach((b) => b.addEventListener("click", () => { plan = b.dataset.pick; upd(); }));
-  $("#go").addEventListener("click", async () => {
-    $("#go").disabled = true; $("#gomsg").className = "msg"; $("#gomsg").textContent = "Opening the secure payment page…";
+
+  fit(); sync(); draw();
+
+  async function claim() {
+    S.claimMsg = "Sending…"; S.claimErr = false; draw();
     try {
-      const r = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event_id: ev.id, plan }) });
+      const r = await fetch("/api/me/claims", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event_id: S.claim.id }) });
       const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Couldn't send your claim.");
+      if (d.status === "approved") { S.ev = null; const id = S.claim.id; history.replaceState(null, "", "/feature?" + new URLSearchParams({ ...(S.plan ? { plan: S.plan } : {}), event: id })); location.reload(); return; } // the event is now theirs: back here with it chosen
+      S.claimDone = true; S.claimMsg = d.status === "pending" ? "Thanks. Your claim is waiting for our approval, usually within a day. We will email you when it has been reviewed, with a link back to this page." : "Your claim was declined. Write to " + SITE.contactEmail + " if that is a mistake.";
+    } catch (e) { S.claimErr = true; S.claimMsg = e.message; }
+    draw();
+  }
+  async function pay() {
+    beacon("click:feature-checkout-start");
+    S.busy = true; S.err = false; S.msg = "Opening the secure payment page…"; draw();
+    const m = S.ev;
+    try {
+      const body = m.home ? { home_id: m.id, plan: S.plan } : m.id.startsWith("sub:") ? { submission_id: m.id.slice(4), plan: S.plan } : { event_id: m.id, plan: S.plan };
+      const r = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const d = await r.json().catch(() => ({}));
+      if (r.status === 401) { S.busy = false; saveSel(); if (await signIn({ title: "Sign in to pay", next: urlState() })) location.reload(); draw(); return; }
       if (!r.ok || !d.url) throw new Error(d.error || "The payment page couldn't be opened.");
       location.href = d.url;
-    } catch (e) { $("#gomsg").className = "msg err"; $("#gomsg").textContent = e.message + " You can also email " + SITE.contactEmail + "."; upd(); }
-  });
+    } catch (e) { S.busy = false; S.err = true; S.msg = e.message + " You can also email " + SITE.contactEmail + "."; draw(); }
+  }
+}
+
+// After paying: say exactly what happens next. The placement is switched on by Stripe's message to us, which can take a few seconds.
+async function paidView(S) {
+  try { sessionStorage.removeItem(KEY); } catch {}
+  $("#auto").hidden = true;
+  const id = qs.get("sub") ? "sub:" + qs.get("sub") : qs.get("event") || "", home = !!qs.get("home"), plan = PL[qs.get("plan")] ? qs.get("plan") : "";
+  const box = $("#paid"); box.hidden = false; box.className = "paidbox";
+  const find = async () => { if (!S.user) return null; const f = await fetch("/api/me/featurable", { cache: "no-store" }).then((r) => (r.ok ? r.json() : {})).catch(() => ({})); return [...(f.homes || []), ...(f.events || []), ...(f.contests || [])].find((m) => m.id === id) || null; };
+  const paint = (m) => {
+    const pname = plan ? (EP[plan] ? eventTierCopy(plan).name : planCopy(plan, PL).name) : "Featured", waiting = m && m.state === "pending", on = m && (m.featured || m.banner_until), thing = home ? "home" : "event";
+    const head = waiting ? "Payment received. We're checking your event first." : on ? `Thank you. ${m.name} is Featured.` : "Thank you. Your payment went through.";
+    const when1 = waiting ? "As soon as we approve your event, usually within a day. You don't need to do anything. If we can't list it, you get a full refund." : on ? `It is on now${m.until ? " and runs through " + fmt(m.until) : ""}. Refresh the map if you don't see the gold pin yet.` : `Within a few minutes. We're switching it on now; refresh this page or the map in a minute.`;
+    const see = id && !id.startsWith("sub:") && !home ? `<a href="/#e-${esc(id)}">See it on the map</a> or ` : "";
+    box.innerHTML = `<h2>${esc(head)}</h2><p class="meta">${esc(pname)}${m && m.name && !on ? " · " + esc(m.name) : ""}</p>
+      <h3>What happens next</h3><ul>
+      <li><b>On the map:</b> ${esc(when1)}${home ? " Your contest result is unchanged." : ""}</li>
+      <li><b>The badge:</b> a gold-ringed pin on the map and a Featured badge on your ${thing}${plan === "top" || plan === "ev_top" || plan === "ev_all" ? ", and it is listed first when people browse your area" : ""}.</li>
+      ${plan === "ev_banner" || plan === "ev_all" ? `<li><b>The banner:</b> your event is a "Featured" pill in the strip at the top of the map list while it is in the map view${m && m.banner_until ? ", through " + fmt(m.banner_until) : ""}. ${m && m.banner ? `So far it was shown ${m.banner.shown} time${m.banner.shown === 1 ? "" : "s"} and tapped ${m.banner.taps} time${m.banner.taps === 1 ? "" : "s"}.` : "Come back to this page to see how many times it was shown and tapped."}</li>` : ""}
+      <li><b>Receipt:</b> Stripe emails your card receipt${S.user ? ` to ${esc(S.user.email)}` : ""}, and we send a short confirmation from SoCal Lights.</li>
+      <li><b>Where to see it:</b> ${see}<a href="/profile#events">Your profile</a>.</li>
+      <li><b>Help or a refund:</b> write to <a href="mailto:${esc(SITE.contactEmail)}">${esc(SITE.contactEmail)}</a>.</li>
+      <li><b>Renew or upgrade:</b> come back to <a href="/feature">this page</a> any time and pick the same event. Adding the banner or top of the list, or time, never shortens what you have; you pay only for the parts you add.</li></ul>
+      <p><a class="btn" href="/">Back to the map</a> <a class="btn out" href="/feature">Feature another event</a></p>`;
+    return !!(on || waiting);
+  };
+  let m = await find(); if (paint(m)) return;
+  for (let i = 0; i < 5; i++) { await new Promise((r) => setTimeout(r, 3000)); m = await find(); if (paint(m)) return; }
 }
 </script>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261103a";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 </script>
-<script src="/footer.js?v=20261105a" defer></script>
+<script src="/footer.js?v=20261110b" defer></script>
 </body>
 </html>

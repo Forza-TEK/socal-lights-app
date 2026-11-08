@@ -42,6 +42,10 @@ Read `docs/updating-events.md` before touching events. Key rules:
 
 Contests, accounts and sign-in (branch work, not live yet): `docs/contests.md`.
 
+Outreach API for Grok (key-protected, verdict only), the suppression list and the monthly-update opt-in: `docs/monetization/grok-outreach-api.md`, `docs/monetization/grok-email-playbook.md`.
+
+AI assistant (chat widget, off by default): `docs/ai-assistant.md`. Run `node scripts/build-chat-kb.mjs` after changing public pages it reads.
+
 Other docs: `docs/coverage-cities.md` (where to search), `docs/city-sweep.md`, `docs/confirmation-plan.md` (turning `expected` events into `confirmed`).
 
 ## Rules

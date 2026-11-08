@@ -6,24 +6,24 @@
 <meta name="robots" content="noindex">
 <title>Installer profile · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261102i">
-<link rel="stylesheet" href="/contest.css?v=20261105b">
-<link rel="stylesheet" href="/forms.css?v=20261102e">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/contest.css?v=20261110b">
+<link rel="stylesheet" href="/forms.css?v=20261106zb">
 <style>main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
-<script src="/hit.js" defer></script>
+<script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="sh-page">
 <main class="cmain" id="content">
 <div id="app"><p class="loading">Loading your profile…</p></div>
 </main>
 <script type="module">
-import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261101a";
-import { refreshAcct } from "/addflow.js?v=20261103a";
-import { mountShell } from "/appshell.js?v=20261104a";
+import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
+import { refreshAcct } from "/addflow.js?v=20261111a";
+import { mountShell } from "/appshell.js?v=20261110e";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
-import { homeForm, fsec, ff, openFormWindow } from "/forms.js?v=20261102b";
+import { homeForm, fsec, ff, openFormWindow } from "/forms.js?v=20261106zb";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], fmt = (s) => { const [, m, d] = String(s).split("-").map(Number); return MON[m - 1] + " " + d; };
 let D = null, panel = (location.hash || "").slice(1) || "overview";
@@ -44,11 +44,31 @@ async function load() {
   D = await r.json(); document.title = "Manage " + D.installer.name; render();
 }
 const post = async (body) => { const r = await fetch(`/api/installers/${encodeURIComponent(slug)}/manage`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "That didn't work."); return j; };
+// Sponsor placement status and the way into the buy flow (hidden in the app: paid placement is web-only). Dates and numbers come from the server.
+function renewalBlock() {
+  const r = D.renewal; if (!r) return "";
+  const note = new URLSearchParams(location.search).get("renewal");
+  const msg = note === "on" ? `<p class="small" role="status">Thanks. Your card is saved with Stripe and automatic renewal is being turned on. Refresh in a minute if it still says Off.</p>` : note === "cancelled" ? `<p class="small" role="status">Nothing was saved. Automatic renewal is still off.</p>` : "";
+  if (r.on) return `<div id="renewbox" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)"><h3 style="font-size:16px;margin:0 0 6px">Automatic renewal: On</h3>${msg}<p class="small" style="margin:0 0 10px">Next charge: <b>${esc(r.price)}</b> on <b>${esc(r.next_charge_date)}</b> for the ${esc(r.plan)} plan (at the plan price shown then). We email you 7 days before each charge. Cancelling keeps the placement you already paid for.</p><button class="btn ghost sm" type="button" id="renewoff">Turn off automatic renewal</button><p class="err small" id="renewerr" role="alert" hidden></p></div>`;
+  return `<div id="renewbox" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)"><h3 style="font-size:16px;margin:0 0 6px">Automatic renewal: Off</h3>${msg}${r.status === "lapsed" ? `<p class="small" style="margin:0 0 8px">The last automatic renewal could not be charged, so it stopped.</p>` : ""}${r.canTurnOn ? `<label style="display:flex;gap:10px;align-items:flex-start;margin:0 0 10px;cursor:pointer"><input type="checkbox" id="renewok" style="width:24px;height:24px;flex:none;margin:2px 0 0"><span class="small">${esc(r.consent.replace("{price}", r.price))}</span></label><button class="btn org sm" type="button" id="renewon" disabled>Turn on automatic renewal</button><p class="muted small" style="margin:8px 0 0">You will save a card on Stripe's secure page. Nothing is charged today.</p>` : `<p class="muted small" style="margin:0">Buy a placement first, then you can turn this on. It is off unless you turn it on.</p>`}<p class="err small" id="renewerr" role="alert" hidden></p></div>`;
+}
+function sponsorCard() {
+  if (/SoCalLightsApp/.test(navigator.userAgent)) return "";
+  const p = D.placement || {}, b = D.banner || {}, run = p.banner_until || p.top_until, to = "/sponsor?installer=" + encodeURIComponent(slug);
+  return `<div class="card" id="sponsorcard"><h2 style="font-size:19px">Sponsor placement</h2>${run ? `<p class="small" style="margin:0 0 6px">Banner: <b>${p.banner_until ? "running until " + esc(p.banner_until) : "not running"}</b>${p.banner_until ? ` · shown ${b.imp || 0} times, ${(b.click || 0) + (b.call || 0)} taps (30 days)` : ""}</p><p class="small" style="margin:0 0 12px">Top of the list: <b>${p.top_until ? "running until " + esc(p.top_until) : "not running"}</b>${p.top_until ? ` · shown ${b.lst_imp || 0} times, ${b.lst_taps || 0} taps (30 days)` : ""}</p>` : `<p class="muted small">Your company is not on the map banner or the top of the list. Pay for the season to show your name and phone in the labelled Sponsor banner, your company card at the top of the list, or both.</p>`}<a class="btn org" href="${to}">${run ? "Renew or upgrade" : "See the options"}</a>${renewalBlock()}</div>`;
+}
+document.addEventListener("change", (e) => { if (e.target && e.target.id === "renewok") document.getElementById("renewon").disabled = !e.target.checked; });
+document.addEventListener("click", async (e) => {
+  const on = e.target.closest && e.target.closest("#renewon"), off = e.target.closest && e.target.closest("#renewoff"); if (!on && !off) return;
+  const btn = on || off, er = document.getElementById("renewerr"); btn.disabled = true; er.hidden = true;
+  try { const j = await post(on ? { action: "renewal_on", consent: document.getElementById("renewok").checked === true } : { action: "renewal_off" }); if (on) location.href = j.url; else { await load(); } }
+  catch (x) { er.textContent = x.message; er.hidden = false; btn.disabled = false; }
+});
 function render() {
   const x = D.installer, mx = Math.max(1, ...D.views.map((v) => v.n));
   $("#app").innerHTML = `<section data-p="overview"><div class="card"><div class="banner"><div class="logo" aria-hidden="true">${x.hasLogo ? `<img src="/api/installers/${esc(slug)}/logo?${Date.now()}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:inherit">` : esc(x.name.slice(0, 1))}</div><div><h1>${esc(x.name)}</h1><span>Your installer profile · <a href="/installer/${esc(slug)}">view the public page</a></span></div></div>
-   <div class="stats"><div class="stat"><b>${D.viewsTotal}</b><span>Profile views (30 days)</span></div><div class="stat"><b>${D.homes}</b><span>Homes on the map</span></div><div class="stat"><b>${D.leads.length}</b><span>Quote requests</span></div></div></div>
-  </section><section data-p="homes">${!D.claims.length && !(D.shared && D.shared.length) ? `<div class="card"><p class="muted" style="margin:0">No homes need your attention. Homes that name your company, and homes you share with homeowners, appear here.</p></div>` : ""}${D.claims.length ? `<div class="card"><h2 style="font-size:19px">Homes that name your company</h2><p class="muted small">Homeowners said you installed these. Confirm the ones you did (they get a check mark) or remove the ones you didn't.</p><div class="list">${D.claims.map((c) => `<div class="rowi"><div><b>${esc(c.title)}</b><br><span class="small muted">${esc(c.city)} · posted by ${esc(c.biz)}</span></div><div class="acts"><button class="btn org sm" type="button" data-claim="confirm:${esc(c.id)}">Confirm</button><button class="btn ghost sm" type="button" data-claim="remove:${esc(c.id)}">Not ours</button></div></div>`).join("")}</div></div>` : ""}
+   <div class="stats"><div class="stat"><b>${D.viewsTotal}</b><span>Profile views (30 days)</span></div><div class="stat"><b>${D.homes}</b><span>Homes on the map</span></div><div class="stat"><b>${D.leads.length}</b><span>Quote requests</span></div>${D.banner ? `<div class="stat"><b>${D.banner.imp}</b><span>Map banner: times shown (30 days)</span></div><div class="stat"><b>${D.banner.click + D.banner.call}</b><span>Map banner: taps on your name or phone</span></div>${D.banner.top ? `<div class="stat"><b>${D.banner.lst_imp}</b><span>Top-of-list card: times shown (30 days)</span></div><div class="stat"><b>${D.banner.lst_taps}</b><span>Top-of-list card: taps</span></div>` : ""}` : ""}</div></div>
+  ${sponsorCard()}</section><section data-p="homes">${!D.claims.length && !(D.shared && D.shared.length) ? `<div class="card"><p class="muted" style="margin:0">No homes need your attention. Homes that name your company, and homes you share with homeowners, appear here.</p></div>` : ""}${D.claims.length ? `<div class="card"><h2 style="font-size:19px">Homes that name your company</h2><p class="muted small">Homeowners said you installed these. Confirm the ones you did (they get a check mark) or remove the ones you didn't.</p><div class="list">${D.claims.map((c) => `<div class="rowi"><div><b>${esc(c.title)}</b><br><span class="small muted">${esc(c.city)} · posted by ${esc(c.biz)}</span></div><div class="acts"><button class="btn org sm" type="button" data-claim="confirm:${esc(c.id)}">Confirm</button><button class="btn ghost sm" type="button" data-claim="remove:${esc(c.id)}">Not ours</button></div></div>`).join("")}</div></div>` : ""}
   ${D.shared && D.shared.length ? `<div class="card"><h2 style="font-size:19px">Homes you share with homeowners</h2><p class="muted small">Once you confirm you installed a home, you and the homeowner can both edit its listing. Each of you is emailed when the other changes something, and every change is listed here with who made it.</p><div class="list">${D.shared.map(sharedRow).join("")}</div></div>` : ""}
   </section><section data-p="details"><div class="card"><h2 style="font-size:19px">Your details</h2><form id="df" class="f" novalidate>${fsec("How people reach you", "Shown on your public page so families can ask for a quote.", ff("Phone for quotes", `<input id="dp" value="${esc(x.phone)}" maxlength="80" inputmode="tel" type="tel">`, { c: "c3" }) + ff("Website", `<input id="dw" value="${esc(x.web)}" maxlength="200" type="url" placeholder="https://">`, { c: "c3" }) + `<div class="ff c6"><div class="ffl"><span class="lt">Areas served</span>${areaHtml({ id: "da", value: x.area })}</div><small class="fhint">The cities or counties you work in, such as Orange County and Los Angeles.</small></div>`)}${fsec("About", "", ff("About your company", `<textarea id="db" rows="4" maxlength="600">${esc(x.blurb)}</textarea>`, { hint: "Shown on your public page." }))}<p class="err" id="de" role="alert" hidden></p><div class="mfoot"><button class="btn org" type="submit">Save</button></div></form></div>
   <div class="card"><h2 style="font-size:19px">Logo</h2><p class="muted small">JPG, PNG or WebP under 600 KB. It shows on your profile page.</p><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input id="lf" type="file" accept="image/jpeg,image/png,image/webp">${x.hasLogo ? `<button class="btn ghost sm" type="button" id="lr">Remove logo</button>` : ""}</div><p class="err" id="le" role="alert" hidden></p></div>
@@ -70,6 +90,6 @@ function render() {
 }
 noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261105a" defer></script>
+<script src="/footer.js?v=20261110b" defer></script>
 </body>
 </html>

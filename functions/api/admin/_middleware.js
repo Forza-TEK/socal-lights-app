@@ -1,6 +1,7 @@
 // Every /api/admin/* request must carry a valid Cloudflare Access login. Changes (anything but a read) are logged.
 import { requireAdmin, err } from "../../_lib/util.js";
 import { parseTarget, labelFor, actionName, record } from "../../_lib/adminlog.js";
+import { sameOriginStrict } from "../../_lib/auth.js";
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -8,6 +9,8 @@ export async function onRequest(context) {
   if (!who) return err(401, "Sign in through Cloudflare Access to use the admin tools.");
   context.data.admin = who;
   if (request.method === "GET" || request.method === "HEAD") return context.next();
+  // S-08: a change must come from our own pages. Browsers always send Origin (or at least Referer) on a cross-site POST/PUT/PATCH/DELETE; scripts without either still work.
+  if (!sameOriginStrict(request)) return err(403, "Not allowed: this change did not come from the admin page.");
 
   const t = parseTarget(new URL(request.url).pathname);
   if (!t) return context.next();

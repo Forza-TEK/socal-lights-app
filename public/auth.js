@@ -5,7 +5,7 @@ let cache = null;
 
 export async function me(force) {
   if (cache && !force) return cache;
-  cache = await fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ user: null, methods: {} }));
+  cache = await fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ user: null, methods: {}, down: true }));
   return cache;
 }
 export async function signOut() { await fetch("/api/auth/logout", { method: "POST", body: "{}", headers: { "content-type": "application/json" } }); cache = null; }
@@ -28,6 +28,7 @@ export function noteSigninResult() {
 export function signIn({ title = "Sign in to continue", next = location.pathname + location.search } = {}) {
   return new Promise(async (resolve) => {
     const info = await me(true);
+    try { if (!navigator.webdriver) { const tb = JSON.stringify({ k: "fn:signin-open" }); if (!(navigator.sendBeacon && navigator.sendBeacon("/api/visit", new Blob([tb], { type: "application/json" })))) fetch("/api/visit", { method: "POST", headers: { "content-type": "application/json" }, body: tb, keepalive: true }); } } catch {}
     const host = document.createElement("div");
     const close = (v) => { host.remove(); document.removeEventListener("keydown", onKey); resolve(v); };
     const onKey = (e) => { if (e.key === "Escape") close(null); };
@@ -42,7 +43,8 @@ export function signIn({ title = "Sign in to continue", next = location.pathname
         body = `${m.google ? `<a class="gbtn" href="/api/auth/google/start?next=${encodeURIComponent(next)}">${G} Continue with Google</a>` : ""}
           ${m.google && m.email ? `<div class="or">or</div>` : ""}
           ${m.email ? `<div><label for="si-email">Use your email instead</label><p class="help">We'll email you a 6-digit code. No password.</p><input id="si-email" type="email" inputmode="email" autocomplete="email" value="${esc(email)}"${err ? ' aria-invalid="true"' : ""}>${err ? `<p class="err">${esc(err)}</p>` : ""}<div id="si-ts" style="margin-top:8px"></div></div><button class="ebtn" id="si-send" type="button">Email me a code</button>` : ""}
-          ${!m.google && !m.email ? `<p class="status no">Sign-in isn't switched on for this site yet.</p>` : ""}`;
+          ${info.down || info.degraded ? `<p class="status no">Sign-in is having trouble right now. Please try again in a few minutes.</p>` : ""}
+          ${!info.down && !m.google && !m.email ? `<p class="status no">Sign-in isn't switched on for this site yet.</p>` : ""}`;
       } else {
         body = `<p class="muted small">We sent a 6-digit code to <b>${esc(email)}</b>. It works for 10 minutes.</p>
           ${devCode ? `<div class="hint">Local test mode: your code is <b>${esc(devCode)}</b>.</div>` : ""}

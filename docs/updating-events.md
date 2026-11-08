@@ -8,6 +8,7 @@ live database (the site itself redeploys on every push through Cloudflare Pages)
 
 ## Rules
 
+0. **Residents can ask us to remove their home** (Admin > Reports > "Remove my home requests"; the listing is then deleted from the live database, not from the old migrations). Do not add a private home back that a request removed: before adding "Private home (view from the street)" listings, ask the owner for the handled-requests list in Admin > Reports (or check that the address was not in a recent request). Never add a private home's address unless a public page published it.
 1. **Never edit an existing migration.** Add a new file with the next number:
    `migrations/0006_<short-name>.sql`, `0007_...`, and so on. Check `ls migrations` for the last number.
 2. **Upsert, don't insert.** Use this form so a file can add new events *and* update existing ones:
@@ -32,6 +33,7 @@ live database (the site itself redeploys on every push through Cloudflare Pages)
 4. **Price wording:** use `Free`, a real price or range (`$12`, `From $10`, `$10-$25`), `Price not listed` (no price anywhere), or `Check listing` (the source says to see its page). Do not invent other phrases such as "Not listed" or "Check site".
 5. **Removing an event:** `DELETE FROM events WHERE id='…';` — only when it's cancelled for good.
 4. Events that have ended disappear from the site automatically; don't delete them.
+6. **No homes from last season's winner or entry lists.** A city or HOA list of last year's contest winners (or entries) says nothing about which homes are lit this season, so do not add those homes as listings. Add a home only when a source from the current season (a map or list published this season, the organizer, or the homeowner posting it on the site) shows it is taking part. Migration `0186_remove_last_season_home_listings.sql` removed 128 such homes (Mission Viejo, Ladera Ranch, Glendora, Yorba Linda, Lompoc, Jurupa Valley, Chino, Montclair, Coronado) that were listed as "Expected" for 2026.
 
 ## Field rules
 

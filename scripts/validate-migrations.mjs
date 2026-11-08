@@ -81,15 +81,25 @@ for (const f of newFiles) {
   if (!allow) for (const [re, label] of bad) if (re.test(s)) err("destructive-sql", f, `${label}. If intentional, add a comment line "-- validate: allow-destructive" and explain why.`, true);
 }
 
+// ---------- duplicate numbers (warning only) ----------
+// Migrations apply in file-name order, so two files with the same number run in alphabetical order of the rest of the name. About 19 historical numbers are shared and are left alone;
+// this only warns when a NEW file takes a number another file already has (usually two branches that picked the same "next" number: rebase and rename the newer one).
+{
+  const byNum = {};
+  for (const f of allFiles) (byNum[f.slice(0, 4)] ||= []).push(f);
+  for (const f of newFiles) { const same = (byNum[f.slice(0, 4)] || []).filter((x) => x !== f); if (same.length) warn("duplicate-number", f, `Number ${f.slice(0, 4)} is also used by ${same.join(", ")}. Rebase and take the next free number (a duplicate runs in file-name order, which can break a dependent pair).`); }
+}
+
 // ---------- replay migrations in a scratch database ----------
 const db = new DatabaseSync(":memory:");
 const rowsOf = () => Object.fromEntries(db.prepare("SELECT * FROM events").all().map((r) => [r.id, { ...r }]));
 const hasEvents = () => !!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='events'").get();
-const strip = (r) => { const c = { ...r }; delete c.updated_at; return JSON.stringify(c); };
+// Compare only the columns the BEFORE row has: a migration that adds a column (ALTER TABLE events ADD COLUMN, e.g. 0183 banner_until) gives every row a new key, which is not an event edit.
+const strip = (r, like = r) => { const c = {}; for (const k of Object.keys(like)) if (k !== "updated_at") c[k] = r[k]; return JSON.stringify(c); };
 
 function diff(before, after) {
   const changed = [], removed = [];
-  for (const id of Object.keys(after)) { if (!before[id]) changed.push({ id, row: after[id], kind: "added" }); else if (strip(before[id]) !== strip(after[id])) changed.push({ id, row: after[id], kind: "updated", prev: before[id] }); }
+  for (const id of Object.keys(after)) { if (!before[id]) changed.push({ id, row: after[id], kind: "added" }); else if (strip(before[id]) !== strip(after[id], before[id])) changed.push({ id, row: after[id], kind: "updated", prev: before[id] }); }
   for (const id of Object.keys(before)) if (!after[id]) removed.push(id);
   return { changed, removed };
 }
@@ -168,7 +178,8 @@ if (!failedSql) {
     else if (a.length > 1 && r.address) warn("duplicate", `row ${r.id}`, `same address and start date as ${a.filter((x) => x !== r.id).join(", ")}`);
   }
   if (removed.length) {
-    const msg = `removes ${removed.length} event(s): ${removed.slice(0, 8).join(", ")}${removed.length > 8 ? ", ..." : ""}`;
+    // This check cannot see production, so it cannot know whether a removed event has a paid Featured order. Say so, with the query that answers it.
+    const msg = `removes ${removed.length} event(s): ${removed.slice(0, 8).join(", ")}${removed.length > 8 ? ", ..." : ""}. Before merging, make sure none has a paid Featured order (a deleted event loses its placement): SELECT session_id, event_id, plan, status FROM feature_orders WHERE event_id IN (<these ids>)`;
     if (removed.length > 15) err("mass-delete", "migration", msg + ". More than 15 deletions in one change needs a human look.", true); else warn("deletes", "migration", msg);
   }
   if (changed.length > 120) warn("large-change", "migration", `${changed.length} rows changed in one go (the upkeep runs cap at 60)`);
