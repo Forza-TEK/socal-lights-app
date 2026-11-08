@@ -301,14 +301,14 @@
           "title": "Unpublish and publish again",
           "desc": "Hide your contest from the public, then bring it back.",
           "url": "/tutorials/run-unpublish.mp4",
-          "length": "2:04",
+          "length": "1:54",
           "captions": "/tutorials/run-unpublish.vtt",
           "poster": "/tutorials/run-unpublish.jpg",
           "mobile": {
             "url": "/tutorials/run-unpublish-mobile.mp4",
             "poster": "/tutorials/run-unpublish-mobile.jpg",
             "captions": "/tutorials/run-unpublish-mobile.vtt",
-            "length": "2:05"
+            "length": "1:53"
           }
         },
         {
@@ -316,14 +316,14 @@
           "title": "Add co-organizers and judges",
           "desc": "Invite people to help run the contest.",
           "url": "/tutorials/run-team.mp4",
-          "length": "2:08",
+          "length": "2:21",
           "captions": "/tutorials/run-team.vtt",
           "poster": "/tutorials/run-team.jpg",
           "mobile": {
             "url": "/tutorials/run-team-mobile.mp4",
             "poster": "/tutorials/run-team-mobile.jpg",
             "captions": "/tutorials/run-team-mobile.vtt",
-            "length": "2:08"
+            "length": "2:21"
           }
         },
         {
@@ -331,14 +331,14 @@
           "title": "Announce winners",
           "desc": "Close voting, announce, export results and see the archive.",
           "url": "/tutorials/run-announce.mp4",
-          "length": "1:58",
+          "length": "2:12",
           "captions": "/tutorials/run-announce.vtt",
           "poster": "/tutorials/run-announce.jpg",
           "mobile": {
             "url": "/tutorials/run-announce-mobile.mp4",
             "poster": "/tutorials/run-announce-mobile.jpg",
             "captions": "/tutorials/run-announce-mobile.vtt",
-            "length": "2:27"
+            "length": "2:41"
           }
         },
         {
