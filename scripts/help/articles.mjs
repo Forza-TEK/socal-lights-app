@@ -19,16 +19,16 @@ The list is sorted nearest first once the site knows where you are.
 ## Driving to what you see
 Tap **Route these**, under the list. See [Drive a route](/help/drive-a-route).` },
   { slug: "plan-a-night", category: "find", kind: "howto", video: "find-night", sort: 20, title: "Plan a night of lights",
-    summary: "Tap the heart on places you like, open My night, then open the route in your maps app.",
+    summary: "Tap the heart on places you like, open Favorites, then tap Route these to open the route in your maps app.",
     keywords: "plan night route hearts favorites share calendar my night directions maps stops",
     body: `1. On the map, choose a season, then tap the **heart** on each place you want to visit.
-2. Tap **My night**. Your stops are listed in a sensible driving order, with the miles and the time.
-3. Tap **Open route**. A long night is split into routes of nine stops or fewer, and each route starts where the last one ended.
+2. Tap **Favorites**. Your stops are listed in a sensible driving order, with the miles and the time.
+3. Tap **Route these**. A long night is split into routes of nine stops or fewer, and each route starts where the last one ended.
 4. Tick each stop when you have been there. Tap a route's button to open it in your maps app.
 5. Tap **Share** to send your night to a friend.
 
 See [Drive a route](/help/drive-a-route) for how the routes work.` },
-  { slug: "drive-a-route", category: "find", kind: "howto", video: "find-night", sort: 25, title: "Drive a route: Route these, Open route and Visit the homes",
+  { slug: "drive-a-route", category: "find", kind: "howto", video: "find-night", sort: 25, title: "Drive a route: Route these and Visit the homes",
     summary: "A long list is split into routes of 9 stops or fewer. Each route starts where the last one ended, and you can tick off stops as you go.",
     keywords: "route routes nine 9 stops open route route these visit the homes tick off maps google apple split long list 20 homes",
     body: `Your maps app takes about nine stops at a time, so a long list is split into routes of nine stops or fewer. For example, 20 homes become three routes of 7, 7 and 6.
@@ -39,7 +39,7 @@ See [Drive a route](/help/drive-a-route) for how the routes work.` },
 
 ## Where you find it
 - On the map, under the list: **Route these**.
-- In **My night**: **Open route**.
+- In **Favorites**: **Route these**.
 - On a contest page, for voters and judges: **Visit the homes**.
 
 When you are done, tap the X to close.` },
