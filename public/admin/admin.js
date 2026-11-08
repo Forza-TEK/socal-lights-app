@@ -5,6 +5,7 @@ import { attachAddress } from "/addflow.js?v=20261111a";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261104c";
 import { renderHelp } from "/admin/help.js?v=20261104a";
+import { renderChat } from "/admin/chat.js?v=20261108a";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261103a";
 
 const $ = (s) => document.querySelector(s);
@@ -28,8 +29,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "emails", "help"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", emails: "Email templates", help: "Help Center" };
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "emails", "help", "chat"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
@@ -74,6 +75,7 @@ async function render() {
     if (tab === "outreach") return renderOutreach();
     if (tab === "emails") return renderEmails(main);
     if (tab === "help") return renderHelp(main);
+    if (tab === "chat") return renderChat(main);
     const waiting = await api("/api/admin/posts?status=" + tab), declined = tab === "pending" ? await api("/api/admin/posts?status=declined") : [];
     if (tab === "pending") setCount("pending", waiting.length);
     const showing = tab === "pending" && PVIEW === "declined" ? declined : waiting;

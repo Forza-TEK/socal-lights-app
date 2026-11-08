@@ -13,6 +13,10 @@ migrations_dir = "migrations"
 binding = "PHOTOS"
 bucket_name = "socal-lights-photos"
 
+# Workers AI, used only by the AI assistant (functions/api/chat.js), which is OFF until Admin > AI assistant turns it on. The binding costs nothing by itself; usage is capped in the app (docs/ai-assistant.md).
+[ai]
+binding = "AI"
+
 [vars]
 # Cloudflare Access (protects /admin). Fill in after setting up Access; see README step 6.
 ACCESS_TEAM_DOMAIN = "still-rice-29b5.cloudflareaccess.com"      # e.g. "yourteam.cloudflareaccess.com"
@@ -35,6 +39,9 @@ migrations_dir = "migrations"
 [[env.preview.r2_buckets]]
 binding = "PHOTOS"
 bucket_name = "socal-lights-photos-preview"
+
+[env.preview.ai]
+binding = "AI"
 
 [env.preview.vars]
 ACCESS_TEAM_DOMAIN = "still-rice-29b5.cloudflareaccess.com"
