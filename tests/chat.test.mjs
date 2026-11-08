@@ -689,3 +689,11 @@ test("menus: a question about where Add, Contests, Tutorials and Help are gets t
   const p = calls[0].system;
   assert.ok(/account circle/i.test(p) && /three dots/i.test(p), "the menu section is in the prompt");
 });
+
+test("the contest wizard, accounts and favorites sources match the current app", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const text = (q) => rankChunks(q, 3).map((c) => c.text).join(" ");
+  assert.match(text("How do I run a contest? What are the steps?"), /Quick start \(recommended\)/);
+  assert.match(text("Do I need an account to add an event?"), /sign in to add an event/);
+  assert.match(text("Which maps apps work with Route these in Favorites? Waze?"), /Waze/);
+});

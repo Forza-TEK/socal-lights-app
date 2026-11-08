@@ -18,7 +18,7 @@ Happy to help you find some sparkle! Here is the quickest way:
 Great idea, a good route makes the night. Try this:
 1. On the map, tap the heart on every place you want to visit.
 2. Open the Favorites tab (heart icon). Your stops are put in a sensible driving order, with miles and time between them.
-3. Tap Route these and choose Google Maps or Apple Maps.
+3. Tap Route these and choose Apple Maps, Google Maps or Waze.
 4. Tick off each stop as you go so you can pick up where you left off after dinner.
 - Maps apps handle about nine stops at a time, so long nights are split into routes of nine or fewer. Each one starts where the last ended.
 - Tap Share to send your night to family or friends.
@@ -30,12 +30,12 @@ I do not see a listed event for this weekend that matches, but the map updates a
 
 **4. How do I add my event to the map?**
 Love it, more events means more fun for families. It is free, and nothing goes public until the last step:
-1. Open Add (from the three-dot menu, or your account circle if you are signed in) and choose An event.
+1. Sign in (you need an account to add an event), then open the account circle and tap Add an event, home or contest, and choose An event.
 2. If your event has a web page, paste the address. If the page shows the name and date, the event is marked Confirmed. No page? Tap No, Next, it still goes on the map.
 3. Enter the name, season and type, then the first and last day (same day twice for a one-day event).
 4. Say whether it is free or paid, then add the place, city and street address so the pin lands in the right spot.
 5. Write a sentence or two about what families will see and do.
-6. Review (you can edit any line) and tap Add my event.
+6. Review (you can edit any line). "Make it stand out" is optional: pick a Featured plan or just list for free. Then tap Add my event.
 
 **5. How do I put my home on the map?**
 Show it off! You do not need a contest, and it is free:
@@ -53,7 +53,7 @@ Easy fix, and you get to show your own photos:
 2. Tap Is this your home? Claim it at the bottom.
 3. Follow the form (your address is already filled in): choose A homeowner, confirm the name, season and description.
 4. Add your own night photos, then tap Put it on the map.
-- Once approved, your details and photos replace the automatic listing.
+- It usually goes live at once and replaces the automatic listing; if it is held for a quick check, it goes live once the site owner has looked it over.
 
 **7. Can I install the app on my phone, and does it work offline?**
 Yes, and there is nothing to download from an app store:
@@ -80,7 +80,7 @@ Featuring is optional and a one-time payment, with no subscription:
 - Refund questions are best sent to info@socallights.app.
 
 **11. How do I start a contest in my neighborhood?**
-Fun! Cities, HOAs and neighborhood groups do this a lot. Your organization's first contest in a 12-month window is free.
+Fun! Cities, HOAs and neighborhood groups do this a lot. Your organization's first contest in a 12-month window is free. You need to be signed in.
 1. Open Add and choose Contest.
 2. Go through the four screens: Basics, Dates, Rules and Review.
 3. Sign in on the last screen. Your draft is kept while you sign in with Google.
