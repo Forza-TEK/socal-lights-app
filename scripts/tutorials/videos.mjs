@@ -33,7 +33,7 @@ const S = {}; // specs by video id
 const EF = "Find and plan";
 S.map = { id: "map", file: "find-map", cookie: null, ...MAPSPEC, steps: [
   hook(EF, "Find lights near you", "The map, seasons and filters", "In this video, you will learn how to find holiday lights and events near you. We will cover the season buttons, searching by city, getting driving routes, and narrowing the list with filters. We start on the map."),
-  ...openSite(),
+  ...openSite(undefined, true),
   target("Tap the season button", "The map shows different things at different times of the year, so first choose a season. Tap the season button at the top. It shows what is on right now.", "#seasonbtn", { after: 800 }),
   target("Tap Thanksgiving and Christmas Lights", "Pick the one you want. Christmas lights are the biggest, so tap Thanksgiving and Christmas Lights. Halloween, New Year, and other seasons are in the same list.", '[data-sp]:has-text("Christmas")', { after: 1500 }),
   { cap: "Search a city", say: "You can also search for a city. Type its name, and tap it in the list. The map jumps there, which is handy if you are planning a trip to a different part of Southern California.", do: async (p, h) => { await h.type("#q", "Irvine"); }, target: 'button:has-text("Show this city on the map")', after: 1800 },
