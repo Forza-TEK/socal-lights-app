@@ -41,7 +41,7 @@ Only offered when `/api/auth/me` says the visitor is signed in; otherwise the as
 | `run_event_again` | existing run-again route | creates a draft for next year |
 | `withdraw_entry` | existing entry delete | two-tap confirm |
 | `start_draft` | `/api/drafts` | creates an add-event or add-home draft from what the visitor said and links to the form |
-| `publish_event` / `publish_home` | the normal submit endpoints (`/api/submit-event`, `/api/submit`) | **Only when every required field is present and valid** (the same validation the form uses; address must geocode, photos for homes as the form requires). The card shows the full listing as it will appear (name, dates, place, free or paid, description) and needs one confirm tap. Anything missing or invalid: the assistant asks for it, or hands the visitor to the form. Same review rules as the form (a listing the form would hold for review is held). Photos cannot be sent through chat, so a home with photos is finished in the form |
+| `publish_event` / `publish_home` | the normal submit endpoints (`/api/submit-event`, `/api/submit`) | **Only when every required field is present and valid** (the same validation the form uses; address must geocode, photos for homes as the form requires). The card shows the full listing as it will appear (name, dates, place, free or paid, description) and needs one confirm tap. Anything missing or invalid: the assistant asks for it, or hands the visitor to the form. Same review rules as the form (a listing the form would hold for review is held). Photos cannot be sent through chat, so a home is finished in the form through the hand-off below |
 | `sign_in` | `/auth.js` `signIn()` | opens the normal sign-in sheet |
 
 Because the call runs in the visitor's browser, the server's own ownership and rate checks are the authority. The assistant cannot reach anything the visitor could not already do by hand.
@@ -98,8 +98,19 @@ Each phase is its own branch and PR; nothing is switched on without the owner.
 ## Decisions (owner, 2026-11-10)
 1. **`ask_human` emails the owner directly**, and also lands in Admin > Reports and the daily digest. See "The Ask Human email" below.
 2. **Publishing is allowed** when all the information is there (`publish_event`, `publish_home`), with one confirm tap and the same validation and review rules as the form.
-3. **No voting from chat.** The assistant explains and links to the contest page.
-4. **All tiers on, $10 monthly cap, alert near the cap.** See "Cost cap and alerts" below.
+3. **No voting from chat.** The assistant explains and links to the contest page. Confirmed again 2026-11-10.
+4. **All tiers on, $10 monthly cap, alert near the cap.** See "Cost cap and alerts" below. Confirmed 2026-11-10: the cap, the 80% and 100% emails with `[SCL AI Cap]` and `X-SCL-Category: ai-cap`, and the Send-to-the-team button always shown at the cap.
+5. **Chat to form hand-off must be seamless:** the visitor is taken to the form with everything filled in, or given a link. See "Chat to form hand-off".
+
+## Chat to form hand-off (seamless)
+Owner decision: when the visitor is ready to finish something in a form (a home with photos, an event with missing details, a contest, a claim), the chat takes them there with everything already filled in. It is built on what the forms already do: `public/addflow.js` keeps answers in `localStorage` under each form's `persist` key (for example `scl-contest-draft`) and reopens a saved draft with `?draft=<id>` on the step they left.
+1. **Collect.** The assistant gathers the fields in conversation (name, dates, place, free or paid, description; for a home: who is posting, display name, season, address, details). Our code validates each one with the form's own rules (lengths, enums, dates, address) as they are given.
+2. **Prefill.** Our code builds the form's data object. Signed in: it is saved as a draft with `POST /api/drafts` (visitor's own session), which returns an id. Signed out: it is written to that form's `localStorage` key in the visitor's browser (same origin; nothing is sent to the server). Only the visitor's own fields are written; nothing from the model's text outside the validated fields.
+3. **Go.** The chat shows one card: "Finish in the form" with a one-line summary. Tapping it opens the form straight to the first step that still needs something, for a complete event that is the Review step. The visitor can also copy the plain link (`/add-event?draft=<id>`, or the form page for signed-out visitors, whose answers are in their browser). The page navigation keeps the chat available on the next page, as it does today (`scl-chat` in `sessionStorage`), closed until they open it.
+4. **Signed out.** The form already asks for sign-in only at the point the site requires it, and keeps the answers while the visitor signs in with Google or an emailed code.
+5. **Publish.** In the form the visitor taps the normal final button (Add my event, Put it on the map). If the event is complete the card may instead offer `publish_event` directly with one confirm; a home with photos always goes to the form, so photos are added there.
+6. **Same for other forms:** claim a listing (`/add-house?claim=...`), create a contest (`/add-contest`, Quick start), and the installer Sponsor purchase (opens the plan with the company already chosen; payment stays on Stripe and is never started by the assistant).
+Failure handling: if a prefilled value no longer passes the form's validation, the form shows its normal message on that step; nothing is lost. Drafts can be reopened and deleted from Your profile, Drafts. A test per form checks the prefilled object matches what the form would have produced by hand.
 
 ## The Ask Human email
 Sent with the existing mailer (`sendTemplate`, new template `chat_ask_human`, group `admin`) to `ADMIN_NOTIFY_EMAIL` (default rey@forza-tek.com). Every one of these emails has all of the following, so one Outlook rule catches them reliably:
