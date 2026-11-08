@@ -868,9 +868,10 @@ async function renderOutreach() {
       const r = await api("/api/admin/outreach", { method: "POST", body: JSON.stringify({ action: "reconcile", emails: list }) });
       note.textContent = "";
       out.innerHTML = `<div class="ugrid" style="margin:8px 0">${Object.keys(ORSTATUS).map((k) => `<article class="ucard"><div class="uh"><h3>${ORSTATUS[k]}</h3><span class="tag ${ORTAG[k]}">${k === "clear" ? "send ok" : "do not send"}</span></div><p class="unum"><b>${fmt(r.counts[k])}</b> <span class="meta">of ${fmt(r.total)}</span></p></article>`).join("")}</div>
-        <p style="margin:6px 0"><button type="button" class="btn ghost" id="orcsv">Download CSV</button> <span class="meta">One row per address: address, status, reasons. Review means the website domain matches a registered installer, organizer or account: check by hand.</span></p>`;
+        <p class="meta" style="margin:6px 0"><b>Due to send today</b> (status clear, step due now or at most 14 days overdue): original <b>${fmt(r.due[0])}</b>, follow-up 1 <b>${fmt(r.due[1])}</b>, follow-up 2 <b>${fmt(r.due[2])}</b>. Taken from the sends Grok reported; nothing is sent from here.</p>
+        <p style="margin:6px 0"><button type="button" class="btn ghost" id="orcsv">Download CSV</button> <span class="meta">One row per address: address, status, reasons, and the next step with its due date. Review means the website domain matches a registered installer, organizer or account: check by hand.</span></p>`;
       $("#orcsv").onclick = () => {
-        const csv = "email,status,reasons\r\n" + r.rows.map((x) => [list[x.i], x.status, x.reasons.join(" ")].map(csvCell).join(",")).join("\r\n") + "\r\n";
+        const csv = "email,status,reasons,next_step,due,due_on,sequence_reason\r\n" + r.rows.map((x) => [list[x.i], x.status, x.reasons.join(" "), x.sequence.next_step === null ? "" : x.sequence.next_step, x.sequence.due ? "yes" : "no", x.sequence.due_on || "", x.sequence.reason].map(csvCell).join(",")).join("\r\n") + "\r\n";
         const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "outreach-reconcile.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       };
     } catch (x) { note.textContent = x.message; } finally { b.disabled = false; }

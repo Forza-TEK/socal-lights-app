@@ -51,6 +51,7 @@ The server's "today" is the Pacific calendar date from `functions/_lib/time.js` 
 | Every `functions/**/*.js` imports; route files export only valid handler names; every `public/**/*.js` parses; every `<script src>` exists | `smoke.test.mjs` |
 | Pure browser logic: `norm.js` (also the server's field cleaning), `seasons.js`, `rules.js`, `sponsor-plans.js`, plan status and windows on the page against the server's checkout rule on a grid | `frontend-logic.test.mjs` |
 | Outreach API (auth, rate limit, every verdict, hold on failure, hashes only), suppression sync from app unsubscribes and account deletion, Admin > Outreach reconcile and results, monthly-update opt-in, /prefs token and one-click | `outreach.test.mjs` |
+| Outreach sequence timing (every case incl. Pacific boundaries), `sent_at` backfill, deliverability pre-check (syntax, disposable, stubbed DNS-over-HTTPS, cache, 20-domain cap, subrequest budget), `invalid` event | `outreach-sequence.test.mjs` |
 | Payments, webhook, orders, refunds, sponsor rules and renewals, limits, mail outbox, alerts, privacy deletion, terms text, caching, event pages | the other files in `tests/` |
 
 ## Not covered (be honest in reviews)

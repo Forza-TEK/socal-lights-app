@@ -39,6 +39,8 @@ export function retentionStatements(env) {
     env.DB.prepare(`DELETE FROM newsletter_optins WHERE unsubscribed_at IS NOT NULL AND unsubscribed_at < ${long}`),
     // Outreach result rows hold only hashes; kept 24 months for the pilot report.
     env.DB.prepare("DELETE FROM outreach_events WHERE created_at < datetime('now','-24 months')"),
+    // Hashes of addresses reported undeliverable (not the do-not-contact list): 24 months too.
+    env.DB.prepare("DELETE FROM outreach_invalid WHERE created_at < datetime('now','-24 months')"),
   ];
 }
 // Best effort, like pruneIps. Called by the scheduled admin digest.

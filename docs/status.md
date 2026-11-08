@@ -1,6 +1,15 @@
 # Status
 
-_Last updated: 2026-11-06 (new pricing structure: event tiers with banner, installer Top of the list)_
+_Last updated: 2026-11-08 (outreach: server-side sequence timing and deliverability pre-check)_
+
+## Outreach: sequence timing, backfill, deliverability pre-check (2026-11-08; owner decision)
+Contract: `docs/monetization/grok-outreach-api.md` (updated), loop in the playbook 5b. Migration `0196_outreach_verify.sql` (`outreach_dns_cache`: domain, result, checked_at; `outreach_invalid`: address hash, reason). Additive and backward compatible.
+- **`sequence` on every check result:** `{ next_step: 0|1|2|null, due, due_on, reason }` from the stored `sent` events (earliest per step, any segment). Original; follow-up 1 due original + 4 days; follow-up 2 due original + 10 days (Pacific dates, `time.js`); after step 2 `sequence_finished`, never restarts. Any reply/bounce/complaint/unsubscribe or a status other than clear ends it. `due` only when clear and due today or at most 14 days overdue (else `overdue_hold`). A follow-up with no original on file is `missing_original` (not sent, owner decides).
+- **Backfill:** `POST /api/outreach/event` accepts `sent_at` (only with `sent`; real date, not future, within 120 days); one `sent` row per address and step, earliest date kept, repeats answer `duplicate:true`. New event `invalid` (+ `reason`) stores a hash only, does not suppress, and makes later checks answer the reason.
+- **`verify: true`** adds `deliverability` ok | invalid_syntax | no_mail_server | disposable | unknown: strict syntax, about 50 built-in disposable domains, DNS-over-HTTPS (cloudflare-dns.com, domain only) MX then A then AAAA, 2 s timeout (`OUTREACH_DNS_TIMEOUT_MS` can only lower it, used by tests), concurrency 5, at most 38 DNS fetches per call, at most 20 distinct uncached domains (else 400 `hold:true`), cache in D1 for 24 hours (only definitive answers). Failure or timeout is `unknown`, never `no_mail_server`. Does NOT prove a mailbox exists (no SMTP probing); a paid verifier can be added if bounces pass about 2%.
+- **Admin > Outreach reconcile:** shows how many are due today per step; the CSV has next step, due, due date and reason.
+- **Privacy:** policy names Cloudflare's public DNS (domain name only), "Updated November 8, 2026"; retention deletes `outreach_invalid` after 24 months (now 9 retention statements). Tests: `tests/outreach-sequence.test.mjs`; the contract test in `outreach.test.mjs` now expects the `sequence` key.
+- **Assumptions:** the 14-day overdue and day 4/10 rules are the owner's; a backfill earlier than a real send moves that step's date earlier; the DNS cache holds business domains only (free-mail domains are not looked up). **Risks:** DoH availability (falls back to `unknown`, sends continue); a very long 20-domain worst case may leave some domains `unknown` until the next call (the budget protects the 50-subrequest cap).
 
 ## Outreach API for Grok, suppression list, monthly update opt-in (2026-11-07; owner decision)
 Contract and rules for Grok: `docs/monetization/grok-outreach-api.md` (hand it over as is); wording and the approved sequence (original, follow-up 1 about day 4, follow-up 2 about day 10, then stop) in `docs/monetization/grok-email-playbook.md` 5b; pilot plan in the playbook section 10. Migration `0195_outreach_newsletter.sql` (tables only, no data).
