@@ -3,7 +3,7 @@
 _Last updated: 2026-11-08 (Help and Tutorials audit, all videos re-recorded)_
 
 ## 2026-11-10 (AI assistant tone and format)
-- Assistant prompt (`RULES` in `chatkb.js`) now asks for a warm, upbeat but professional tone, one short lead-in then numbered steps and `- ` bullets (plain text, no bold or headings), under about 1000 characters. Output filters unchanged. Knowledge base rebuilt. 20 target Q&As for review: `docs/ai-assistant-sample-qa.md` (includes a to-do list of missing KB chunks).
+- Assistant prompt (`RULES` in `chatkb.js`) now asks for a warm, upbeat but professional tone, one short lead-in then numbered steps and `- ` bullets (plain text, no bold or headings), under about 1000 characters. Output filters unchanged. New KB chunks: menus (three dots vs account circle), Favorites, Remove my home, Promote your event, Weekly lights email. "My night" and "Open route" are rewritten to "Favorites" and "Route these" in anything shown to the model; privacy.html now says Favorites. Knowledge base rebuilt. 20 target Q&As for review: `docs/ai-assistant-sample-qa.md` (includes a to-do list of missing KB chunks).
 
 
 ## Help and Tutorials audit (2026-11-08)

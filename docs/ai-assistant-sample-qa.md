@@ -17,8 +17,8 @@ Happy to help you find some sparkle! Here is the quickest way:
 **2. How do I plan a night of light-viewing with a route?**
 Great idea, a good route makes the night. Try this:
 1. On the map, tap the heart on every place you want to visit.
-2. Tap My night. Your stops are put in a sensible driving order, with miles and time between them.
-3. Tap Open route and choose Google Maps or Apple Maps.
+2. Open the Favorites tab (heart icon). Your stops are put in a sensible driving order, with miles and time between them.
+3. Tap Route these and choose Google Maps or Apple Maps.
 4. Tick off each stop as you go so you can pick up where you left off after dinner.
 - Maps apps handle about nine stops at a time, so long nights are split into routes of nine or fewer. Each one starts where the last ended.
 - Tap Share to send your night to family or friends.
@@ -140,7 +140,7 @@ Sounds like a perfect night for lights, but weather is outside what I can help w
 
 ---
 
-## To do (found while writing these)
-- `docs/ai-assistant-kb.md` has no chunk for the signed-in menu: say "Add, Contests, Tutorials and Help are under the three dots when signed out, and under the account circle when signed in".
-- Add chunks for: Remove my home (`/remove-home`), Promote your event steps, and weekly email steps (currently only in the video-tutorial chunks, which are long).
-- Answers are capped at 1200 characters by the output filter; step lists of 7 or more may be cut at a word boundary. Only fix if real transcripts show it.
+## Done and still open
+- Done: KB chunks for the two menus (three dots vs account circle), Favorites (was My night; Open route is now Route these), Remove my home, Promote your event, Weekly lights email. Old names are also rewritten to the new ones in anything shown to the model (`renamed` in `chatkb.js`).
+- Open: `public/manifest.webmanifest` shortcut still says "My night" (app code); tutorial videos and Help articles (migrations) still say My night and Open route until re-recorded or updated.
+- Answers are cut at 1200 characters by the output filter; long step lists may be trimmed. Only fix if real transcripts show it.

@@ -56,7 +56,7 @@ export function rankArticles(list, q, limit = 3) {
 }
 const oneLine = (s, n) => stripFigures(redactFraudDetail(String(s ?? ""))).replace(/<[^>]*>/g, " ").replace(/[<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, n);
 export function helpBlock(hits) {
-  return hits.map((a) => `ARTICLE https://socallights.app/help/${a.slug}\nTitle: ${oneLine(a.title, 120)}\nSummary: ${oneLine(a.summary, 300)}\nText: ${oneLine(plainText(a.body), 700)}`).join("\n\n");
+  return renamed(hits.map((a) => `ARTICLE https://socallights.app/help/${a.slug}\nTitle: ${oneLine(a.title, 120)}\nSummary: ${oneLine(a.summary, 300)}\nText: ${oneLine(plainText(a.body), 700)}`).join("\n\n"));
 }
 
 // ---------- events ----------
@@ -131,7 +131,9 @@ export function rankChunks(q, limit = 3) {
   scored.sort((x, y) => y.score - x.score || y.hit - x.hit);
   return scored.slice(0, limit).map((x) => x.c);
 }
-export const kbBlock = (hits) => hits.map((c) => `SOURCE ${c.url} (${oneLine(c.title, 100)})\n${oneLine(c.text, 900)}`).join("\n\n");
+// The Favorites tab used to be called "My night"; older videos and Help text still say so (and "Open route", now "Route these"), so the model is only ever shown the current name.
+const renamed = (t) => t.replace(/\bMy night\b/g, "Favorites").replace(/\bOpen route\b/g, "Route these");
+export const kbBlock = (hits) => hits.map((c) => `SOURCE ${c.url} (${oneLine(c.title, 100)})\n${renamed(oneLine(c.text, 900))}`).join("\n\n");
 
 // A fixed list of topic buckets for the "unanswered topics" counter. Only the bucket name is ever stored, never the question.
 const TOPICS = [

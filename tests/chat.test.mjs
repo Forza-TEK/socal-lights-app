@@ -672,3 +672,16 @@ test("the prompt asks for a warm tone and numbered steps, and the output filter 
   assert.equal(out.blocked, "");
   assert.equal(out.text, "Here is how:\n1. Open Add.\n2. Choose An event.\n- It is free.");
 });
+
+test("new knowledge chunks are found, and the old name My night is never shown to the model", async () => {
+  const { rankChunks, kbBlock, helpBlock } = await import("../functions/_lib/chatkb.js");
+  const top = (q) => rankChunks(q, 3).map((c) => c.title);
+  assert.ok(top("How do I plan a night and open a route in Favorites?").some((t) => /^Favorites: plan a night/.test(t)));
+  assert.ok(top("How do I remove my home from the map?").some((t) => /^Remove my home/.test(t)));
+  assert.ok(top("How do I promote my event with a Featured pin?").some((t) => /^Promote your event/.test(t)));
+  assert.ok(top("How do I sign up for the weekly lights email and stop it?").some((t) => /^Weekly lights email: sign up/.test(t)));
+  assert.ok(top("Where is the Add button when I am signed in? Where is the menu?").some((t) => /^Where to find things/.test(t)));
+  const shown = kbBlock([{ url: "/x", title: "t", text: "Now tap My night, then tap Open route." }]);
+  assert.match(shown, /Tap Favorites|tap Favorites/); assert.doesNotMatch(shown, /My night|Open route/);
+  assert.doesNotMatch(helpBlock([{ slug: "s", title: "T", summary: "Open My night", body: "<p>Tap My night</p>" }]), /My night/);
+});

@@ -83,3 +83,23 @@ After winners are announced, the owner of a home that finished first, second or 
 ## Accounts and sign-in
 url: /help#account
 You never need an account to browse the map or add an event. You sign in to run, enter or vote in a contest. There are no passwords: sign in with Google or with a 6-digit code emailed to you. Both reach the same account for the same email address. A sign-in lasts up to 30 days and a code lasts 10 minutes. You can delete your account from your profile, Account tab.
+
+## Where to find things: the menus (three dots and account circle)
+url: /help
+On the map, the three-dot menu at the top right holds: Add (an event, a contest or a home display), Weekly lights email, Support SoCal Lights, Promote your event, Contests, Browse by city, Tutorials, Help, Privacy and terms, and Contact us. When you are signed in, the person circle next to the three dots opens your account menu instead: Your profile, Your contests, Add an event, home or contest, Tutorials, Help and Sign out. So signed in, Add, Contests, Tutorials and Help are under the account circle; signed out, they are under the three dots. Weekly lights email and Promote your event stay under the three dots. On other pages the same account circle is in the header, and an Open the map button goes back to the map.
+
+## Favorites: plan a night of lights and open a route
+url: /tutorials#night
+The Favorites tab (heart icon, next to Places and Shop) is where you plan a night. It used to be called My night; it is now called Favorites. Steps: tap the heart on every place you want to visit; open the Favorites tab; check your stops, which are put in a sensible driving order with the miles and time between them ("Start here", then "from" the previous stop); choose where to Start (My location, First stop or a city) and your maps app (Google Maps or Apple Maps); then tap Route these. Your maps app takes about 9 stops at a time, so a longer night is split into routes of 9 or fewer and each route starts where the last one ended (the button shows how many routes). Tick off stops as you go. Tap the share icon to send your favorites to family or friends, who open the same list on their phone. A question-mark button beside the stop count shows or hides a short three-step guide: tap the heart, check your stops, tap Route these. Favorites are saved on your own device only.
+
+## Remove my home from the map
+url: /remove-home
+If your home is on SoCal Lights and you would rather it were not, open the Remove my home page (socallights.app/remove-home). You do not need an account. Enter which home (the listing id from its page, or the street address) and your email so we can confirm and tell you when it is removed, add anything else we should know if you like, and tap Send my request. We email you when it is done. We use your email only to answer this request. You can also write to info@socallights.app.
+
+## Promote your event: how to pay for a Featured pin
+url: /feature
+Listing an event is always free; Featured placement is an optional, one-time payment with no subscription. To feature an event: open the three-dot menu and tap Promote your event, or go to the Feature page. Pick a plan: every plan includes the gold Featured pin on the map; the banner adds a Featured pill in the strip at the top of the map list, and Top of the list puts your event first when people browse your area. Choose your event from your list (a home that finished first, second or third in an announced contest can be featured the same way), check the start date, end date and total, and tap Pay on Stripe, where you pay by card or Cash App Pay. Featured events carry a visible Featured badge and still have to be accurate. Plan prices are on the Pricing page.
+
+## Weekly lights email: sign up and stop
+url: /tutorials#email
+The weekly lights email is free: one short email a week with lights and events near a city you choose. To sign up: tap the three dots on the map and choose Weekly lights email; enter your email and your city, and tick the box to agree; tap Sign up. We email you a confirmation link and nothing is sent until you tap it, which protects you from anyone signing you up by mistake. You can also sign up from a city page or an event page, where a small box asks only for your email. Every email ends with a one-tap link that deletes your address from the list right away. Contest emails have their own unsubscribe link, which does not stop the weekly email, and the other way round.
