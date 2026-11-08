@@ -24,7 +24,7 @@ Status: **proposal, nothing built.** Owner choice 2026-11-10: Tiers 1, 2 and 3. 
 | Action | Source | Returns |
 |---|---|---|
 | `find_places` | existing events and posts queries (the `eventRows` logic, widened: city, county, date window, type, free, distance) | up to 5 cards: name, city, when, link to the listing |
-| `build_night` | favorites/route logic | a link that opens the Favorites tab pre-filled with those stops (`/#night=...`), so the visitor opens it in their maps app |
+| `build_favorites` | favorites and route logic | a link that opens the Favorites tab pre-filled with those places, so the visitor taps Route these to open them in their maps app. The card is labelled "Add to Favorites"; the old name "My night" is never used |
 | `contest_status` | `contests` table | voting open, paused or closed, entry deadline. **Never** counts, rankings or results |
 | `plan_picker` | `priceFacts()` | which plan fits (event, installer, home, contest pass), with the price list |
 | `where_is` | `docs/ai-assistant-kb.md` menu chunk | a deep link to the right page (Add, Contests, Profile, Pricing, Help) |

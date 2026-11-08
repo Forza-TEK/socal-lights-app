@@ -146,5 +146,5 @@ Sounds like a perfect night for lights, but weather is outside what I can help w
 
 ## Done and still open
 - Done: KB chunks for the two menus (three dots vs account circle), Favorites (was My night; Open route is now Route these), Remove my home, Promote your event, Weekly lights email. Old names are also rewritten to the new ones in anything shown to the model (`renamed` in `chatkb.js`).
-- Open: `public/manifest.webmanifest` shortcut still says "My night" (app code); tutorial videos and Help articles (migrations) still say My night and Open route until re-recorded or updated.
+- Done by the Tutorials and Help agent (PR 478 and the re-records): the manifest shortcut, privacy page, tutorial videos and Help articles now say Favorites and Route these.
 - Answers are cut at 1200 characters by the output filter; long step lists may be trimmed. Only fix if real transcripts show it.
