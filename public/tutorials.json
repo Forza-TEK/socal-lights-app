@@ -398,14 +398,14 @@
           "title": "Presenting installer and quote requests",
           "desc": "How the Get a quote button works.",
           "url": "/tutorials/sponsors-installer.mp4",
-          "length": "2:12",
+          "length": "2:33",
           "captions": "/tutorials/sponsors-installer.vtt",
           "poster": "/tutorials/sponsors-installer.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-installer-mobile.mp4",
             "poster": "/tutorials/sponsors-installer-mobile.jpg",
             "captions": "/tutorials/sponsors-installer-mobile.vtt",
-            "length": "2:13"
+            "length": "2:33"
           }
         },
         {

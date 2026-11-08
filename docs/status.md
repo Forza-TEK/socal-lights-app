@@ -1,6 +1,10 @@
 # Status
 
-_Last updated: 2026-11-08 (outreach: server-side sequence timing and deliverability pre-check)_
+_Last updated: 2026-11-08 (Help and Tutorials audit, all videos re-recorded)_
+
+## Help and Tutorials audit (2026-11-08)
+All 54 Help articles audited (43 updated by migration `0199_help_audit_2026-11-08.sql`, 11 already accurate; seed-only, Admin edits kept) and all 31 tutorial videos re-recorded, computer and phone versions. Details and recorder fixes: `docs/tutorial-updates.md`. Progress page: the "Help and Tutorials Progress" artifact.
+- **Open:** `public/manifest.webmanifest` shortcut "My night" should be "Favorites" (app code, not changed). The AI chat assistant is built but off by default (`docs/ai-assistant.md`).
 
 ## Outreach: sequence timing, backfill, deliverability pre-check (2026-11-08; owner decision)
 Contract: `docs/monetization/grok-outreach-api.md` (updated), loop in the playbook 5b. Migration `0196_outreach_verify.sql` (`outreach_dns_cache`: domain, result, checked_at; `outreach_invalid`: address hash, reason). Additive and backward compatible.
