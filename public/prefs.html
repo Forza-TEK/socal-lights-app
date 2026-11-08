@@ -48,6 +48,6 @@
   fetch("/api/prefs?t=" + encodeURIComponent(t)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); }).then(function (j) { S = j; draw(""); }).catch(function (e) { fail(e.message || "Something went wrong."); });
 })();
 </script>
-<script src="/footer.js?v=20261110c" defer></script>
+<script src="/footer.js?v=20261111a" defer></script>
 </body>
 </html>

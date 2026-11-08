@@ -1,7 +1,7 @@
 // AI assistant: settings (Admin > AI assistant), the daily counters and the hard cost cap. See docs/ai-assistant.md.
 // Counters only: nothing here holds message text, an IP address or any visitor id.
 
-export const DEFAULTS = { chat_enabled: "0", chat_kill: "0", chat_cap_usd: "0", chat_daily_max: "300" };
+export const DEFAULTS = { chat_enabled: "0", chat_kill: "0", chat_cap_usd: "0", chat_daily_max: "300", chat_tier1: "1", chat_tier2: "1", chat_tier3: "1" };
 export const CAP_MAX_USD = 10; // the highest monthly cap Admin accepts
 export const DAILY_MAX_LIMIT = 5000;
 
@@ -33,6 +33,7 @@ export function normalize(raw) {
     kill: r.chat_kill === "1",
     capUsd: Math.round(num(r.chat_cap_usd, 0, CAP_MAX_USD, 0) * 100) / 100,
     dailyMax: Math.round(num(r.chat_daily_max, 0, DAILY_MAX_LIMIT, 300)),
+    tiers: { 1: r.chat_tier1 !== "0", 2: r.chat_tier2 !== "0", 3: r.chat_tier3 !== "0" }, // which kinds of action cards may appear (docs/ai-assistant-actions-design.md)
   };
 }
 // Never throws: any problem reads as "off".
@@ -51,6 +52,7 @@ export async function writeSettings(env, patch, who = "") {
   if ("enabled" in patch) set("chat_enabled", patch.enabled ? "1" : "0");
   if ("kill" in patch) set("chat_kill", patch.kill ? "1" : "0");
   if ("capUsd" in patch) set("chat_cap_usd", num(patch.capUsd, 0, CAP_MAX_USD, 0));
+  if (patch.tiers) for (const t of [1, 2, 3]) if (t in patch.tiers) set("chat_tier" + t, patch.tiers[t] ? "1" : "0");
   if ("dailyMax" in patch) set("chat_daily_max", Math.round(num(patch.dailyMax, 0, DAILY_MAX_LIMIT, 300)));
   if (out.length) await env.DB.batch(out);
 }

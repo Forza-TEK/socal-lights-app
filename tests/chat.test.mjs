@@ -28,6 +28,7 @@ function setup(extra = {}, { enabled = true } = {}) {
   const state = { reply: "OK" };
   const env = { DB, CHAT_TEST_MODEL: async (a) => { calls.push(a); return { text: typeof state.reply === "function" ? state.reply(a) : state.reply }; }, ...extra };
   if (enabled) raw.prepare("UPDATE chat_settings SET value = '1' WHERE key = 'chat_enabled'").run();
+  raw.prepare("UPDATE chat_settings SET value = '0' WHERE key = 'chat_cap_usd'").run(); // migration 0201 raises the production cap to $10; these tests start from the original $0 (free allowance only)
   addEvent(raw, "ev-zz", { name: "Zzyzx Light Show", city: "Zzyzx", county: "San Bernardino", start_date: START, end_date: END }); // a made-up city, so the real events in the test database never crowd it out
   raw.prepare("UPDATE events SET status = 'confirmed', free = 1, hours = '5-9 pm' WHERE id = 'ev-zz'").run();
   return { env, raw, calls, state };
