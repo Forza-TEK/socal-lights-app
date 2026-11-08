@@ -38,8 +38,8 @@
     var history = [], busy = false, verified = false, token = "", widget = null, tsKey = cfg.turnstileSiteKey || "", tsLoaded = false, opener = null;
 
     var fab = el("button", { type: "button", class: "scl-chat-fab", "aria-haspopup": "dialog", "aria-expanded": "false", "aria-controls": "scl-chat" }, [
-      el("span", { class: "scl-chat-fab-ic", "aria-hidden": "true", text: "?" }), el("span", { text: "Ask AI assistant" })]);
-    var title = el("h2", { id: "scl-chat-title", text: "AI assistant" });
+      el("span", { class: "scl-chat-fab-ic", "aria-hidden": "true", text: "?" }), el("span", { text: "Ask SoCal Lights" })]);
+    var title = el("h2", { id: "scl-chat-title", text: "Ask SoCal Lights (AI assistant)" });
     var close = el("button", { type: "button", class: "scl-chat-x", "aria-label": "Close the AI assistant", text: "×" });
     var reset = el("button", { type: "button", class: "scl-chat-reset", text: "Start over" });
     var note = el("p", { class: "scl-chat-note" });
@@ -66,7 +66,7 @@
 
     function say(role, text) {
       var p = el("p", { class: "scl-chat-msg scl-chat-" + role });
-      var who = el("span", { class: "scl-chat-who", text: role === "user" ? "You: " : "AI assistant: " });
+      var who = el("span", { class: "scl-chat-who", text: role === "user" ? "You: " : "SoCal Lights AI: " });
       p.appendChild(who);
       fill(p, text);
       log.appendChild(p);
