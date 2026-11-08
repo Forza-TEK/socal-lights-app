@@ -26,7 +26,7 @@ Each reports to the site's heartbeat; a quiet one raises a banner, an issue and 
 |---|---|---|
 | `uptime.yml` | every 15 min (really 6 to 8 h) | site check, issue "Site is down" |
 | `deploy-watch.yml` | every 10 min | Pages stalled-deploy check, issue "Production deploy stalled" |
-| `usage-check.yml` | every 30 min | free-plan limits issue, stale-job issue, late-backup catch-up |
+| `usage-check.yml` | every 30 min | Cloudflare usage issue (plan-aware: Workers Paid = extra charges, free = hard limits), stale-job issue, late-backup catch-up |
 | `mail-outbox.yml` | hourly | queued emails |
 | `submission-digest.yml` | 03:00, 15:00, 21:00 | owner digest (fails if the email was not sent) |
 | `backup.yml` | 10:17 daily | D1 export, restore test, private R2 copy, external ping |

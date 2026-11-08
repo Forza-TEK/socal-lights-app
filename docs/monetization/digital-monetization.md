@@ -56,7 +56,7 @@ Payment mechanics I can now stand behind (Stripe docs):
 
 ## 3. Free/paid boundary (unchanged, tightened)
 
-Free forever: map, search, filters, routes, My night, browsing and starring homes, event details, voting, entering contests, basic contest and installer pages, submitting events and homes, weekly email.
+Free forever: map, search, filters, routes, Favorites, browsing and starring homes, event details, voting, entering contests, basic contest and installer pages, submitting events and homes, weekly email.
 
 Paid only affects labelled discovery: the Featured badge/pin and level-2 list ordering (`app.js` `lead` sort, level 2 only). Guardrails: no paid code on map load; no Stripe script on the map page; paid UI hidden in the store apps; a unit test that contest entry, vote and results queries never reference `featured`, `featured_until`, any plan column, or `feature_orders`.
 

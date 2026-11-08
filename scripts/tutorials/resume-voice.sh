@@ -1,6 +1,7 @@
 #!/bin/bash
-# Relaunch both voice re-recording chains (computer + phone for each video). Finished ids are skipped, so it is safe to run any time.
-# Round 2 (sync fix + short opening): chain A takes judge vote approve share quick custom, chain B takes edit voting team announce activity; then both continue with the rest.
+# Relaunch both re-recording chains (computer + phone version of each video). Finished ids are skipped, so it is safe to run any time.
+# Round 4 (2026-11-08, after the Help and Tutorials audit): chain A on port 8788, chain B on port 8789, each with its own database copy in /tmp/state-<port>.
 cd /home/user/socal-lights-app
-ps -eo args | grep -q "[s]upervisor-voice.sh judge" || (setsid nohup scripts/tutorials/supervisor-voice.sh judge approve vote share quick custom map night email app contests pro-filter > /tmp/sv-a.log 2>&1 &)
-ps -eo args | grep -q "[s]upervisor-voice.sh edit " || (PORT=8789 setsid nohup scripts/tutorials/supervisor-voice.sh edit pro-filter contests app > /tmp/sv-b.log 2>&1 &)
+export TTS_ENGINE=kokoro KOKORO_VOICE=af_heart
+pgrep -f "supervisor-voice.sh map " >/dev/null || (setsid nohup scripts/tutorials/supervisor-voice.sh map night email app contests pro-filter quick custom share approve add-homes edit sponsors installer sponsor add-event claim > /tmp/sv-a.log 2>&1 &)
+pgrep -f "supervisor-voice.sh enter " >/dev/null || (PORT=8789 setsid nohup scripts/tutorials/supervisor-voice.sh enter edit-entry profile vote judge voting unpublish team announce activity sponsor-invite installer-profile showcase feature > /tmp/sv-b.log 2>&1 &)
