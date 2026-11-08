@@ -697,3 +697,10 @@ test("the contest wizard, accounts and favorites sources match the current app",
   assert.match(text("Do I need an account to add an event?"), /(sign in to add an event|signed in to add an event)/);
   assert.match(text("Which maps apps work with Route these in Favorites? Waze?"), /Waze/);
 });
+
+test("the assistant knows SoCal Lights is not in any app store", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const t = rankChunks("Is the app in the Google Play store?", 3).map((c) => c.text).join(" ");
+  assert.match(t, /not in the Apple App Store, Google Play/);
+  assert.match(t, /Do not say or promise that a store app is coming/);
+});
