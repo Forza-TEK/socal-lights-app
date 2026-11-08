@@ -105,7 +105,7 @@
         });
         if (!ul.childNodes.length) return;
         box.appendChild(ul);
-      } else if (card.type === "form" && Array.isArray(card.fields) && /^[a-z_]{3,30}$/.test(String(card.action || ""))) {
+      } else if (card.type === "form" && Array.isArray(card.fields) && (card.nav === "/add-event" || /^[a-z_]{3,30}$/.test(String(card.action || "")))) {
         var f = el("form", { class: "scl-chat-card-form", novalidate: "" }), inputs = {};
         f.appendChild(el("p", { class: "scl-chat-card-h", text: String(card.label || "Send") }));
         if (card.summary) f.appendChild(el("p", { class: "scl-chat-card-s", text: String(card.summary).slice(0, 300) }));
@@ -119,7 +119,7 @@
             if (fd.type === "textarea") { ctl = el("textarea", { id: id, rows: "3", maxlength: String(fd.max || 600) }); }
             else if (fd.type === "select" && Array.isArray(fd.options)) { ctl = el("select", { id: id }); fd.options.forEach(function (o) { ctl.appendChild(el("option", { value: String(o[0]), text: String(o[1]) })); }); }
             else {
-              ctl = el("input", { id: id, type: fd.type === "email" ? "email" : "text", maxlength: String(fd.max || 200), autocomplete: fd.type === "email" ? "email" : "off" });
+              ctl = el("input", { id: id, type: fd.type === "email" ? "email" : fd.type === "date" ? "date" : "text", maxlength: String(fd.max || 200), autocomplete: fd.type === "email" ? "email" : "off" });
               if (fd.list && Array.isArray(fd.options)) { var dl = el("datalist", { id: id + "-l" }); fd.options.slice(0, 400).forEach(function (o) { dl.appendChild(el("option", { value: String(o[0]) })); }); ctl.setAttribute("list", id + "-l"); wrap.appendChild(dl); }
             }
             if (fd.value != null) ctl.value = String(fd.value);
@@ -130,7 +130,7 @@
           f.appendChild(wrap);
         });
         var msg = el("p", { class: "scl-chat-card-msg", role: "status" });
-        var go = el("button", { type: "submit", class: "scl-chat-card-go", text: String(card.label || "Send") });
+        var go = el("button", { type: "submit", class: "scl-chat-card-go", text: String(card.go || card.label || "Send") });
         var no = el("button", { type: "button", class: "scl-chat-card-no", text: "Not now" });
         f.appendChild(msg); f.appendChild(el("div", { class: "scl-chat-card-btns" }, [go, no]));
         no.addEventListener("click", function () { box.remove(); });
@@ -143,6 +143,10 @@
             vals[k] = v;
           });
           if (bad) { msg.textContent = bad; return; }
+          if (card.nav === "/add-event") { // hand-off to the form: open it with these answers; nothing is sent to our servers from here
+            var qs = ["from=chat"]; Object.keys(vals).forEach(function (k) { if (vals[k] !== "" && vals[k] !== false) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(String(vals[k]))); });
+            msg.textContent = "Opening the form…"; location.href = "/add-event?" + qs.join("&"); return;
+          }
           go.disabled = true; msg.textContent = "Sending…";
           fetch("/api/chat/act", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: card.action, fields: vals, page: location.pathname, summary: lastReply || "" }) })
             .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; }); })

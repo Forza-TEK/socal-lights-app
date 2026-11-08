@@ -14,12 +14,14 @@
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave } from "/addflow.js?v=20261111a";
+import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave } from "/addflow.js?v=20261111b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
 import { CITY } from "/cities.js?v=20261107a";
 import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
 import { me, signIn } from "/auth.js?v=20261107p";
+import { capture, take } from "/chatprefill.js?v=20261111a";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
+capture(SEASONS, cities); // arrived from the AI assistant's "Start this event" card: remember the values (they survive sign-in) and tidy the address bar
 const acct = (await me()).user;
 // your event belongs to the account that adds it, so sign in before anything else
 if (!acct) {
@@ -89,11 +91,11 @@ const steps = [
 ];
 const fmtD = (x) => { if (!x) return ""; const [y, m, dd] = x.split("-").map(Number); return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1] + " " + dd; };
 const preview = (x) => pvCard({ title: x.name, ph: "Your event name", when: x.start ? (x.end && x.end !== x.start ? fmtD(x.start) + " to " + fmtD(x.end) : fmtD(x.start)) : "", lines: [{ t: [x.venue, x.city].filter(Boolean).join(", ") || "Venue and city", e: !x.venue && !x.city }, { t: x.hours || "", e: false }], tags: [x.free === "yes" ? "Free" : (x.price || "Price"), "Expected"] });
-run({ preview, steps, data: d, persist: "scl-event-draft", account: { kind: "event", title: (x) => x.name }, noPersist: ["email", "plan", "nl"], season: (x) => x.season, addr: { cities },
+run({ preview, steps, data: d, persist: "scl-event-draft", prefill: (x) => { const v = take(); if (!v || !Object.keys(v).length) return false; Object.assign(x, v); return true; }, account: { kind: "event", title: (x) => x.name }, noPersist: ["email", "plan", "nl"], season: (x) => x.season, addr: { cities },
   onInput: (k, x) => { if (k === "start" && (!x.end || x.end < x.start)) { x.end = x.start; const e = document.getElementById("f-end"); if (e) e.value = x.end; } if (k === "season") { x.type = ""; const t = document.getElementById("f-type"); if (t) t.innerHTML = '<option value="">Choose a type</option>' + Object.entries(SEASONS[x.season].types).map(([a, l]) => `<option value="${esc(a)}">${esc(l)}</option>`).join(""); } },
   actions: { skipurl(_, a) { d.url = ""; a.next(); } },
   after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });
 </script>
-<script src="/footer.js?v=20261111a" defer></script>
+<script src="/footer.js?v=20261111b" defer></script>
 </body>
 </html>

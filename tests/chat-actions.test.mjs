@@ -181,3 +181,25 @@ test("Admin: tier switches save and are read back, the actions table shows count
   const sec = await import("node:fs").then((fs) => fs.readFileSync(new URL("../public/admin/chat.js", import.meta.url), "utf8"));
   assert.match(sec, /data-tier/); assert.doesNotMatch(sec, /message text:/i);
 });
+
+test("chat to form hand-off: the Start this event card, and the form side only accepts values it would accept by hand", async () => {
+  const { eventPrefill } = await import("../public/chatprefill.js");
+  const { SEASONS } = await import("../public/seasons.js");
+  const { CITY } = await import("../public/cities.js");
+  const cities = Object.keys(CITY);
+  const card = cardsFor({ question: "How do I add my tree lighting event to the map?", settings: { tiers: { 1: true, 2: true } } }).find((c) => c.nav === "/add-event");
+  assert.ok(card, "the card appears for a visitor who wants to add an event");
+  assert.deepEqual(card.fields.map((f) => f.name), ["name", "season", "start", "end", "city", "free"]);
+  assert.ok(!cardsFor({ question: "Where can I find events to attend tonight?", settings: { tiers: { 1: true, 2: true } } }).some((c) => c.nav), "not for someone looking for events");
+  assert.equal(cardsFor({ question: "How do I add my event?", settings: { tiers: { 1: false, 2: true } } }).some((c) => c.nav), false, "off with Tier 1");
+  const ok = eventPrefill(new URLSearchParams("from=chat&name=Oak+Hill+Tree+Lighting&season=christmas&start=2026-12-05&end=2026-12-06&city=Irvine&free=yes&hours=5-9+pm"), SEASONS, cities);
+  assert.deepEqual(ok, { name: "Oak Hill Tree Lighting", season: "christmas", start: "2026-12-05", end: "2026-12-06", city: "Irvine", free: "yes", hours: "5-9 pm" });
+  const bad = eventPrefill(new URLSearchParams("name=ab&season=nope&type=x&start=12/05/2026&end=2020-01-01&city=Gotham&free=maybe&blurb=%3Cscript%3Ealert(1)%3C%2Fscript%3E"), SEASONS, cities);
+  assert.deepEqual(bad, { blurb: "script alert(1) /script" }, "invalid values are dropped and markup characters are stripped");
+  assert.equal(eventPrefill(new URLSearchParams("name=Fine+Event&start=2026-12-05&end=2026-12-01"), SEASONS, cities).end, "2026-12-05", "an end before the start becomes the start");
+  const fs = await import("node:fs"), html = fs.readFileSync(new URL("../public/add-event.html", import.meta.url), "utf8"), flow = fs.readFileSync(new URL("../public/addflow.js", import.meta.url), "utf8");
+  assert.match(html, /capture\(SEASONS, cities\)/); assert.match(html, /prefill: \(x\) =>/);
+  assert.match(flow, /o\.prefill\(d\)/); assert.match(flow, /x\.check && x\.check\(d\)/, "opens at the first step that still needs something");
+  const widget = fs.readFileSync(new URL("../public/chat.js", import.meta.url), "utf8");
+  assert.match(widget, /\/add-event\?/); assert.doesNotMatch(widget, /localStorage/, "the widget itself stores nothing");
+});

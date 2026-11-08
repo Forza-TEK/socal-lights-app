@@ -22,7 +22,7 @@
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
 import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
-import { refreshAcct } from "/addflow.js?v=20261111a";
+import { refreshAcct } from "/addflow.js?v=20261111b";
 import { mountShell } from "/appshell.js?v=20261110e";
 import { fsec, ff } from "/forms.js?v=20261106zb";
 import { printable } from "/printables.js?v=20261107a";
@@ -346,6 +346,6 @@ function render() {
 }
 noteSigninResult(); load(); { const pq = new URLSearchParams(location.search).get("pass"); if (pq === "paid") toast("Payment received. Your contest pass is active in a moment; then you can run your contest again."); else if (pq === "cancelled") toast("Payment cancelled. Nothing was charged."); }
 </script>
-<script src="/footer.js?v=20261111a" defer></script>
+<script src="/footer.js?v=20261111b" defer></script>
 </body>
 </html>
