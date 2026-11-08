@@ -15,6 +15,7 @@ const formCard = (id, extra = {}) => {
   const a = ACTIONS[id];
   return { type: "form", action: id, label: a.label, summary: a.summary, done: a.done, fields: a.fields.map((f) => ({ ...f, ...(extra[f.name] != null ? { value: extra[f.name] } : {}), ...(f.list ? { options: cityNames().map((c) => [c, c]) } : {}) })) };
 };
+export const wantsHuman = (q) => HUMAN.test(String(q || ""));
 export const humanCard = (question = "") => formCard("ask_human", { message: String(question).replace(/\s+/g, " ").trim().slice(0, 300) });
 
 // settings.tiers says which tiers are on. `ctx` is what buildContext found (events and contests that matched the question).

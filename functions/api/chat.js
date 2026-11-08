@@ -10,7 +10,7 @@ import { readSettings, isLive, usageState, capReason, recordUsage, recordGap, ne
 import { parseMessages, classify, filterOutput, MESSAGES } from "../_lib/chatguard.js";
 import { buildContext, topicOf } from "../_lib/chatkb.js";
 import { runModel } from "../_lib/chatmodel.js";
-import { cardsFor, humanCard } from "../_lib/chatcards.js";
+import { cardsFor, humanCard, wantsHuman } from "../_lib/chatcards.js";
 import { bumpAction } from "../_lib/chatactions.js";
 import { checkCapAlerts } from "../_lib/chatmail.js";
 
@@ -46,6 +46,11 @@ export async function onRequestPost({ request, env }) {
   ]);
   if (slow) { await recordUsage(env, { blocked_limit: 1 }); return json({ error: slow, limited: true }, { status: 429, headers: { ...NO_STORE, ...headers } }); }
 
+  // "Can I talk to a person?": always answered with the Send to the team card, even off topic, at the cap, or with no model call (owner decision: always reachable)
+  if (settings.tiers[1] && wantsHuman(last)) {
+    await recordUsage(env, { chats: first ? 1 : 0, turns: 1 }); await bumpAction(env, "ask_human", "shown");
+    return say("Of course. Write what you need in the box below and tap Send to the team: the team reads every message. If you add your email, they can reply to you.", { cards: [humanCard(last)] }, headers);
+  }
   // scope rules: no model call, no cost
   // The newest question must be in scope; an injection or personal data anywhere in the visitor's earlier messages is refused too (it would be sent to the model as history).
   const lastIdx = messages.length - 1;

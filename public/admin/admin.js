@@ -5,7 +5,7 @@ import { attachAddress } from "/addflow.js?v=20261111a";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261104c";
 import { renderHelp } from "/admin/help.js?v=20261104a";
-import { renderChat } from "/admin/chat.js?v=20261108a";
+import { renderChat } from "/admin/chat.js?v=20261111a";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261103a";
 
 const $ = (s) => document.querySelector(s);
