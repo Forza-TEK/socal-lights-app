@@ -1,0 +1,25 @@
+{
+ "version": 1,
+ "files": [
+  {
+   "asset_id": "a01-page-images",
+   "path": "a01-page-images/a01-facebook-cover-1640x624.png",
+   "content_type": "image/png",
+   "bytes": 434868,
+   "sha256": "c2970b4dd8ab5a0798a83d5c9a91bf6643a6f107c4f02e79dda3094c1ae431aa",
+   "width": 1640,
+   "height": 624,
+   "ratio": ""
+  },
+  {
+   "asset_id": "a01-page-images",
+   "path": "a01-page-images/a01-facebook-profile-1080x1080.png",
+   "content_type": "image/png",
+   "bytes": 671207,
+   "sha256": "7b3e4705b738da88d4ca62a784a5866c92a889ef2730bed15389e2db13ef6657",
+   "width": 1080,
+   "height": 1080,
+   "ratio": ""
+  }
+ ]
+}

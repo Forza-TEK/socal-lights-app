@@ -29,8 +29,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "emails", "help", "chat"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "emails", "help", "chat"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
@@ -41,7 +41,7 @@ function setTab(t, push = true) {
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
   $("#ptitle").textContent = TITLES[t] || "";
   closeSheet(); window.scrollTo(0, 0);
-  if (push && location.hash !== "#" + t) history.replaceState(null, "", "#" + t);
+  if (push && location.hash.split("/")[0] !== "#" + t) history.replaceState(null, "", "#" + t);
   render();
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) setTab(b.dataset.tab); });
@@ -51,7 +51,7 @@ function closeSheet() { document.body.classList.remove("sheet-open"); $("#moreBt
 $("#moreBtn").onclick = () => (document.body.classList.contains("sheet-open") ? closeSheet() : openSheet());
 $("#scrim").onclick = closeSheet;
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
-window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (TABS.includes(h) && h !== tab) setTab(h, false); });
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1).split("/")[0]; if (TABS.includes(h) && h !== tab) setTab(h, false); else if (h === "ads" && tab === "ads") renderAds(); });
 
 // The numbers on the menu, from one request, so they are right on arrival and after every change
 async function refreshCounts() { try { const c = await api("/api/admin/counts"); for (const k of Object.keys(c)) setCount(k, c[k]); } catch {} }
@@ -73,6 +73,7 @@ async function render() {
     if (tab === "log") return renderLog();
     if (tab === "usage") return renderUsage();
     if (tab === "outreach") return renderOutreach();
+    if (tab === "ads") return renderAds();
     if (tab === "emails") return renderEmails(main);
     if (tab === "help") return renderHelp(main);
     if (tab === "chat") return renderChat(main);
@@ -540,7 +541,7 @@ function editEvent(ev) {
 }
 
 (async () => {
-  try { const me = await api("/api/admin/me"); $("#who").textContent = me.email; $("#whoi").textContent = (me.email || "?")[0].toUpperCase(); const h = location.hash.slice(1); setTab(TABS.includes(h) ? h : "dashboard", false); }
+  try { const me = await api("/api/admin/me"); $("#who").textContent = me.email; $("#whoi").textContent = (me.email || "?")[0].toUpperCase(); const h = location.hash.slice(1).split("/")[0]; setTab(TABS.includes(h) ? h : "dashboard", false); }
   catch (e) { $("#who").textContent = ""; $("#main").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 })();
 
@@ -889,6 +890,176 @@ async function renderOutreach() {
       };
     } catch (x) { note.textContent = x.message; } finally { b.disabled = false; }
   };
+}
+
+/* ---------- Ads: what Grok reported for the Facebook and Instagram ads, against the $300 budget. Read-only; copy and status change only by migration. ---------- */
+const usd = (c) => "$" + (Number(c || 0) / 100).toFixed(2);
+const ADPILL = { draft: "", in_review: "warn", active: "ok", paused: "", disapproved: "bad", ended: "" };
+const ADWARN = { over_total_budget: "Over $300", over_loaded_budget: "Over $280", campaign_over_budget: "Campaign over budget", not_in_launch_set: "Not in launch set", active_after_dec8: "Running past Dec 8", past_campaign_end: "Past campaign end", disapproved: "Disapproved", stale_report: "No report in 48 hours", spend_decreased: "Spend went down" };
+// The ads table, built with the DOM and textContent only (no HTML from data). Each ad id links to the ad Grok reported; a button expands the approved copy.
+const adEl = (tag, text, cls, attrs = {}) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+const adSafeUrl = (u) => { try { const x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch { return ""; } };
+function adRows(tbody, ads, campaigns) {
+  const when = (t) => (t ? String(t).slice(0, 16).replace("T", " ") + " UTC" : "");
+  ads.forEach((a, n) => {
+    const r = a.report, tr = adEl("tr"), id = "adx-" + n, c = campaigns.find((x) => x.audience === a.audience) || {};
+    const idc = adEl("td"), btn = adEl("button", "Details", "btn ghost", { type: "button", "aria-expanded": "false", "aria-controls": id });
+    btn.style.cssText = "padding:2px 8px;font-size:12px;margin-right:6px";
+    const url = r && adSafeUrl(r.ad_url);
+    idc.append(btn);
+    if (url) { const l = adEl("a", a.id, null, { href: url, target: "_blank", rel: "noopener noreferrer" }); const code = adEl("code"); code.append(l); idc.append(code); }
+    else { idc.append(adEl("code", a.id)); if (a.status === "approved") idc.append(adEl("span", " link not reported yet", "meta")); }
+    idc.append(adEl("br"), adEl("span", a.headline, "meta"));
+    const st = a.status === "approved" ? (r ? adEl("span", r.status.replace("_", " "), "tag " + (ADPILL[r.status] || "")) : adEl("span", "no report", "tag")) : adEl("span", a.status.replace(/_/g, " "), "tag");
+    const cell = (v) => adEl("td", v);
+    const stc = adEl("td"); stc.append(st);
+    tr.append(idc, stc, cell(r ? usd(r.spend_cents) : ""), cell(r ? fmt(r.impressions) : ""), cell(r ? fmt(r.clicks) : ""), cell(a.status === "approved" ? fmt(a.landings) : ""), cell(r ? when(r.received_at) : ""));
+    const dt = adEl("tr", null, null, { id, hidden: "" }), dc = adEl("td", null, null, { colspan: "7" });
+    const line = (k, v) => { const p = adEl("p", null, "meta"); p.style.margin = "4px 0"; p.append(adEl("b", k + ": "), document.createTextNode(v || "(none)")); return p; };
+    dc.append(line("Headline", a.headline), line("Text", a.primary_text), line("Description", a.description), line("Button", a.cta), line("Tracked link", a.landing_url),
+      line("Files expected", a.asset_id ? a.asset_id + " (see /api/ads/assets)" : "none yet"),
+      line("Campaign", `${(c.name || a.audience)}, budget ${usd(a.budget_cents)}, ${a.starts} to ${a.ends}`),
+      line("Last status message", r ? `${r.status}${r.disapproval_reason ? ": " + r.disapproval_reason : ""} (as of ${r.as_of})` : "No report yet"));
+    dt.append(dc);
+    btn.onclick = () => { const open = btn.getAttribute("aria-expanded") === "true"; btn.setAttribute("aria-expanded", String(!open)); dt.hidden = open; };
+    tbody.append(tr, dt);
+  });
+}
+// Creative files: every file in /ad-assets/manifest.json, grouped by asset id, with the ads that use it. DOM and textContent only.
+function adCreative(box, c) {
+  box.textContent = "";
+  box.append(adEl("p", "These files are public if someone knows the address; the site does not link to them and asks search engines not to index them.", "meta"));
+  const groups = new Map();
+  for (const f of c.files) (groups.get(f.asset_id) || groups.set(f.asset_id, []).get(f.asset_id)).push(f);
+  if (!groups.size) box.append(adEl("p", "No creative files are published yet.", "meta"));
+  for (const [id, list] of groups) {
+    const g = adEl("section", null, "ucard"); g.style.margin = "10px 0";
+    const used = [...new Set(list.flatMap((f) => f.ad_ids))];
+    g.append(adEl("h3", id), adEl("p", used.length ? "Used by: " + used.join(", ") : "Not used by an ad (Page images or spare)", "meta"));
+    for (const f of list) {
+      const row = adEl("div"); row.style.cssText = "display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;margin:10px 0;padding-top:10px;border-top:1px solid var(--line2)";
+      const isVid = /^video\//.test(f.content_type), thumb = f.url ? f.url.replace(/^https?:\/\/[^/]+/, "") : "";
+      let media;
+      if (isVid) media = adEl("video", null, null, { controls: "", preload: "metadata", src: thumb, "aria-label": f.path });
+      else media = adEl("img", null, null, { loading: "lazy", src: thumb, alt: "Preview of " + f.path });
+      media.style.cssText = "width:120px;max-height:150px;object-fit:contain;background:var(--tile);border-radius:8px";
+      const info = adEl("div"); info.style.cssText = "flex:1 1 240px;min-width:0;overflow-wrap:anywhere";
+      const line = (k, v) => { const p = adEl("p", null, "meta"); p.style.margin = "2px 0"; p.append(adEl("b", k + ": "), document.createTextNode(v)); return p; };
+      const name = f.path.split("/").pop();
+      info.append(adEl("b", name), line("Size", `${f.width && f.height ? f.width + " x " + f.height : "unknown"}${f.ratio ? " (" + f.ratio + ")" : ""}, ${Math.max(1, Math.round(f.bytes / 1024)).toLocaleString("en-US")} KB, ${f.content_type}`), line("Ads", f.ad_ids.length ? f.ad_ids.join(", ") : "none"));
+      const sp = adEl("p", null, "meta"); sp.style.margin = "2px 0"; sp.append(adEl("b", "sha256: "), adEl("code", (f.sha256 || "").slice(0, 12) + "...", null, { title: f.sha256 || "" })); info.append(sp);
+      const up = adEl("p", f.url, "meta"); up.style.cssText = "margin:4px 0;font-family:monospace;font-size:12px"; info.append(up);
+      const acts = adEl("p"); acts.style.margin = "4px 0";
+      const copy = adEl("button", "Copy", "btn ghost", { type: "button" });
+      copy.onclick = async () => { try { await navigator.clipboard.writeText(f.url); copy.textContent = "Copied"; } catch { copy.textContent = "Copy failed"; } setTimeout(() => (copy.textContent = "Copy"), 1500); };
+      const open = adEl("a", "Open", "btn ghost", { href: f.url, target: "_blank", rel: "noopener noreferrer" });
+      acts.append(copy, document.createTextNode(" "), open); info.append(acts);
+      row.append(media, info); g.append(row);
+    }
+    box.append(g);
+  }
+  if (c.missing.length || c.no_asset.length) {
+    const g = adEl("section", null, "ucard u-warning"); g.style.margin = "10px 0"; g.append(adEl("h3", "Not published yet"));
+    for (const m of c.missing) g.append(adEl("p", `${m.ad_id}: ${m.asset_id} not published yet`, "meta"));
+    for (const id of c.no_asset) g.append(adEl("p", `${id}: no creative assigned yet`, "meta"));
+    box.append(g);
+  }
+}
+const ADSEC = [["overview", "Overview"], ["ads", "Ads"], ["campaigns", "Campaigns"], ["creative", "Creative files"], ["reports", "Reports"], ["setup", "Setup"]];
+const adUtc = (s) => (s ? String(s).slice(0, 16).replace("T", " ") + " UTC" : "never");
+const adBar = (label, pct) => { const b = adEl("div", null, "ubar", { role: "progressbar", "aria-label": label, "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(Math.round(pct)) }); const i = adEl("i"); i.style.width = pct + "%"; b.append(i); return b; };
+const adTable = (label, heads, rows, min = 560) => {
+  const wrap = adEl("div", null, null, { tabindex: "0", role: "region", "aria-label": label }); wrap.style.overflowX = "auto";
+  const t = adEl("table"); t.style.cssText = `width:100%;min-width:${min}px`;
+  const tr = adEl("tr"); for (const h of heads) tr.append(adEl("th", h, null, { scope: "col" }));
+  t.append(adEl("thead")); t.firstChild.append(tr);
+  const tb = adEl("tbody"); for (const r of rows) { const row = adEl("tr"); for (const c of r) row.append(adEl("td", c)); tb.append(row); }
+  t.append(tb); wrap.append(t); return { wrap, tbody: tb };
+};
+const adPara = (text, cls = "meta") => { const p = adEl("p", text, cls); p.style.margin = "0 0 10px"; return p; };
+const adDownloadCsv = (d) => {
+  const csv = "ad_id,campaign,item_status,reported_status,spend_usd,impressions,clicks,landings,ref,as_of,received_at,ad_url\r\n" + d.ads.map((a) => { const r = a.report || {}; return [a.id, a.audience, a.status, r.status || "", r.spend_cents == null ? "" : (r.spend_cents / 100).toFixed(2), r.impressions ?? "", r.clicks ?? "", a.landings, a.ref, r.as_of || "", r.received_at || "", r.ad_url || ""].map(csvCell).join(","); }).join("\r\n") + "\r\n";
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "ads-status.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+function adAlerts(list) {
+  const ul = adEl("ul", null, "meta", { "aria-label": "Alerts" }); ul.style.cssText = "list-style:none;padding:0;margin:0 0 10px;display:grid;gap:6px";
+  if (!list.length) ul.append(adEl("li", "No alerts."));
+  for (const w of list) { const li = adEl("li"); li.append(adEl("span", ADWARN[w.code] || w.code, "tag bad"), document.createTextNode(" " + w.message)); ul.append(li); }
+  return ul;
+}
+const ADPANELS = {
+  overview(d) {
+    const t = d.totals, f = document.createDocumentFragment(), pct = Math.min(100, (t.spend_cents / t.budget_cents) * 100);
+    f.append(adPara("Grok builds the Facebook and Instagram ads and reports status every 2 days through a key-protected API. This page is read-only: ad copy and status change only by migration, and budgets are set by you in Meta Ads Manager."));
+    const card = adEl("article", null, "ucard " + (t.spend_cents > t.budget_cents ? "u-limit" : t.spend_cents > t.loaded_cents ? "u-warning" : "u-ok"), { "aria-label": "Total spend" });
+    const uh = adEl("div", null, "uh"); uh.append(adEl("h3", "Total spend"), adEl("span", d.configured ? "Key set" : "No key: API is off", "tag " + (d.configured ? "ok" : "bad")));
+    const num = adEl("p", null, "unum"); num.append(adEl("b", usd(t.spend_cents)), adEl("span", ` of ${usd(t.budget_cents)} (loaded ${usd(t.loaded_cents)}, reserve ${usd(t.reserve_cents)})`, "meta"));
+    const lp = adEl("p", `${fmt(t.impressions)} impressions, ${fmt(t.clicks)} clicks. Last report: ${adUtc(d.last_report_at)}.`, "meta"); lp.style.margin = "6px 0 0";
+    card.append(uh, num, adBar("Spend against the $300 budget", pct), lp);
+    const h = adEl("h2", "Alerts", "dh");
+    f.append(card, h, adAlerts(d.warnings));
+    return f;
+  },
+  ads(d) {
+    const f = document.createDocumentFragment(), tb = adTable("Ads", ["Ad", "Status", "Spend", "Impressions", "Clicks", "Landings", "Last report"], [], 640);
+    f.append(adPara("Landings are visits counted under each ad's ref code since the first start date (no people are identified). Select Details to see the approved copy."), tb.wrap);
+    adRows(tb.tbody, d.ads, d.campaigns); return f;
+  },
+  campaigns(d) {
+    const f = document.createDocumentFragment(), g = adEl("div", null, "ugrid"), today = new Date().toISOString().slice(0, 10);
+    for (const c of d.campaigns) {
+      const p = c.budget_cents ? Math.min(100, (c.spend_cents / c.budget_cents) * 100) : 0, card = adEl("article", null, "ucard " + (c.spend_cents > c.budget_cents ? "u-limit" : "u-ok"), { "aria-label": c.name });
+      const uh = adEl("div", null, "uh"); uh.append(adEl("h3", c.audience.replace("_", " ")), adEl("span", `${c.starts} to ${c.ends}`, "tag"));
+      const num = adEl("p", null, "unum"); num.append(adEl("b", usd(c.spend_cents)), adEl("span", ` of ${usd(c.budget_cents)} budget`, "meta"));
+      const days = Math.max(0, Math.floor((Date.parse((today < c.ends ? today : c.ends) + "T12:00:00Z") - Date.parse(c.starts + "T12:00:00Z")) / 86400000) + 1);
+      const pace = adEl("p", `Planned pace about ${usd(c.daily_hint_cents)} a day (lifetime budget with an end date).${today >= c.starts && c.spend_cents ? ` Actual about ${usd(c.spend_cents / days)} a day over ${days} days.` : ""} Wave ${c.wave}; ${fmt(c.reported_ads)} of ${fmt(c.ads.length)} ads reported.`, "meta"); pace.style.margin = "6px 0 0";
+      card.append(uh, num, adBar(c.audience + " spend", p), pace); g.append(card);
+    }
+    f.append(adPara(`Budgets add up to ${usd(d.totals.campaign_budget_cents)}; the total limit is ${usd(d.totals.budget_cents)} and every ad ends by Dec 8, 2026.`), g); return f;
+  },
+  creative(d) { const box = adEl("div"); adCreative(box, d.creative); return box; },
+  reports(d) {
+    const f = document.createDocumentFragment(), b = adEl("button", "Download CSV", "btn ghost", { type: "button" });
+    b.onclick = () => adDownloadCsv(d);
+    const p = adEl("p"); p.style.margin = "0 0 10px"; p.append(b, adEl("span", " One row per ad with its latest report and landings.", "meta"));
+    const tb = adTable("Last reports received", ["Received", "As of", "Ad", "Status", "Spend", "Impressions", "Clicks"], d.log.map((x) => [adUtc(x.received_at), adUtc(x.as_of), x.ad_id, x.status.replace("_", " "), usd(x.spend_cents), fmt(x.impressions), fmt(x.clicks)]), 560);
+    if (!d.log.length) { const tr = adEl("tr"); tr.append(adEl("td", "No report received yet.", "meta", { colspan: "7" })); tb.tbody.append(tr); }
+    f.append(p, adEl("h2", "Warnings", "dh"), adAlerts(d.warnings), adEl("h2", "Last 30 reports", "dh"), tb.wrap); return f;
+  },
+  setup(d) {
+    const f = document.createDocumentFragment(), sec = (h, ...ps) => { f.append(adEl("h2", h, "dh")); ps.forEach((x) => f.append(typeof x === "string" ? adPara(x) : x)); };
+    const st = adEl("p"); st.style.margin = "0 0 10px"; st.append(adEl("span", d.configured ? "Key set" : "No key: the API answers 503", "tag " + (d.configured ? "ok" : "bad")), document.createTextNode(" ADS_API_KEY is a Cloudflare Pages secret. It is never shown here."));
+    sec("Key status", st);
+    sec("Contract for Grok", "Hand Grok the file docs/monetization/grok-ads-api.md (endpoints, header, examples, rules).");
+    const ul = adEl("ul", null, "meta"); ul.style.cssText = "margin:0 0 10px;padding-left:18px";
+    for (const r of d.rules || []) ul.append(adEl("li", r));
+    sec("The Grok brief", "Grok reads GET /api/ads/brief (approved launch ads, campaigns, budgets, rules and file links), GET /api/ads/assets (files with sha256) and GET /api/ads/status, and reports with POST /api/ads/report about every 2 days. Rules it receives:", ul);
+    const ol = adEl("ol", null, "meta"); ol.style.cssText = "margin:0 0 10px;padding-left:20px";
+    for (const s of ["Generate a long random value (32+ characters) in a password manager.", "Cloudflare dashboard > Workers & Pages > socal-lights > Settings > Variables and Secrets > Production > Add secret named ADS_API_KEY, paste the value, Save.", "Redeploy (Deployments > latest production > Retry deployment).", "Give Grok the same value through its secret store. Never paste it in a chat or a file in the repo."]) ol.append(adEl("li", s));
+    sec("Owner steps (once)", ol);
+    sec("User-Agent note", "Grok must send a custom User-Agent (for example SoCalLights-Grok-Ads/1.0). Cloudflare's Browser Integrity Check has blocked the default Python-urllib agent before; the symptom is a 403 with an HTML page.");
+    return f;
+  },
+};
+async function renderAds() {
+  const main = $("#main"), d = await api("/api/admin/ads");
+  const ids = ADSEC.map((x) => x[0]), fromHash = () => { const p = location.hash.slice(1).split("/"); return p[0] === "ads" && ids.includes(p[1]) ? p[1] : "overview"; };
+  main.textContent = "";
+  const bar = adEl("div", null, "emtabs", { role: "tablist", "aria-label": "Ads sections" }), panels = {}, tabs = {};
+  const show = (id, focus) => {
+    for (const k of ids) { const on = k === id; tabs[k].setAttribute("aria-selected", String(on)); tabs[k].tabIndex = on ? 0 : -1; panels[k].hidden = !on; if (on && !panels[k].childNodes.length) panels[k].append(ADPANELS[k](d)); }
+    if (location.hash !== "#ads/" + id) history.replaceState(null, "", "#ads/" + id);
+    if (focus) tabs[id].focus();
+  };
+  for (const [id, label] of ADSEC) {
+    const b = adEl("button", label, "emtab", { type: "button", role: "tab", id: "adtab-" + id, "aria-controls": "adpanel-" + id, "aria-selected": "false" });
+    b.onclick = () => show(id);
+    b.onkeydown = (e) => { const i = ids.indexOf(id), n = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: ids.length - 1 }[e.key]; if (n === undefined) return; e.preventDefault(); show(ids[(n + ids.length) % ids.length], true); };
+    tabs[id] = b; bar.append(b);
+    panels[id] = adEl("div", null, null, { role: "tabpanel", id: "adpanel-" + id, "aria-labelledby": "adtab-" + id, tabindex: "0" });
+  }
+  main.append(bar, ...ids.map((k) => panels[k]));
+  show(fromHash());
 }
 
 /* ---------- reports: "Something wrong? Tell us" from visitors ---------- */

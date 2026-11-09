@@ -50,3 +50,6 @@ The `[SCL]` routines above have no heartbeat (they are not workflows): see "Rout
 
 ## AI assistant
 Off by default. Switch, kill switch, cost cap, usage and "unanswered topics" are in Admin > AI assistant; setup, environment variables and launch steps are in `docs/ai-assistant.md`. Weekly while it is on: open Admin > AI assistant, look at Unanswered topics and write or fix the Help Center articles they point to; after changing a listed public page, the tutorials or `docs/ai-assistant-kb.md`, run `node scripts/build-chat-kb.mjs` and commit the result.
+
+## Ads link (Grok builds the Facebook and Instagram ads)
+Grok reads the approved ads from `GET /api/ads/brief` and reports status to `POST /api/ads/report` about every 2 days (contract: `docs/monetization/grok-ads-api.md`; Bearer `ADS_API_KEY`, a Pages secret, 503 until you create it). Watch Admin > Ads: spend against the $300 budget ($280 loaded, $20 reserve), per-ad status, alerts (over budget, disapproved, running past Dec 8, no report in 48 hours) and a CSV. Grok never creates or changes a budget without you. Ad copy and status change only by a new migration. Creative files are served from `/ad-assets/` (not linked, noindex) after `node scripts/build-ad-assets.mjs --from docs/marketing/ad-assets`.
