@@ -35,8 +35,8 @@
    "asset_id": "a03-contest-screens",
    "path": "a03-contest-screens/a03-contest-entry-page-4x5-1080x1350.png",
    "content_type": "image/png",
-   "bytes": 244909,
-   "sha256": "4b87b57cc5656c5149324a35f3712b4bb5bdfdc74a21d16c0809fb73e0b0c2f7",
+   "bytes": 251648,
+   "sha256": "06f2c2e36a6d9565b841982fb84202b0f3dfc35920c402fdfb896be34ca275fb",
    "width": 1080,
    "height": 1350,
    "ratio": "4:5"
@@ -205,8 +205,8 @@
    "asset_id": "a11-story-versions",
    "path": "a11-story-versions/a11-story-a03-contest-entry-page-9x16.png",
    "content_type": "image/png",
-   "bytes": 346104,
-   "sha256": "c8efb7fe939a1e7c240d0f5a24dc0e7daa3f72ec9ac75626cc87acf94134235b",
+   "bytes": 339402,
+   "sha256": "d061f9edd60fc0a0e4297b16f9acacfe163c0def72fc052f6c7c7e2adb1c9e0d",
    "width": null,
    "height": null,
    "ratio": "9:16"
