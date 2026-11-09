@@ -41,7 +41,7 @@ const S = {
       h.cap("Tap Route these");
       await h.tap(h.page.locator("#phead, #pbody").getByText("Route these").first(), { ms: 450 * T, after: 900 * T });
       h.cap("Stops go to your maps app");
-      await h.wait(1700 * T);
+      await h.wait(3200);
     });
   },
   async a07() {
@@ -58,7 +58,7 @@ const S = {
       h.cap("Tap Route these");
       await h.tap(h.page.locator("#phead, #pbody").getByText("Route these").first(), { ms: 450 * T, after: 800 * T });
       h.cap("Stops go to a maps app");
-      await h.wait(2300);
+      await h.wait(3200);
     });
   },
 };
