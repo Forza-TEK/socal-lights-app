@@ -1,7 +1,7 @@
 // Records the REAL add-a-home form of the LOCAL copy of the app (current origin/main, wrangler pages dev, local demo database) in an iPhone 17 Pro Max
 // emulation: 440 x 956 CSS px, touch, iOS Safari user agent, captured at 1080 px wide. Signed in with the local demo homeowner cookie. Nothing is hidden,
 // reworded or covered (only a thin tap ripple is drawn). Sample values: a public building (Irvine City Hall, from scripts/tutorials/mockgeo.mjs) and a made-up family name.
-// The flow stops on the review screen: "Put it on the map" is NEVER pressed, nothing is submitted.
+// The flow ends by pressing "Put it on the map" (saved only in the LOCAL demo database), then shows the map zoomed on the new home's pin via the app's own #h-<id> link.
 // Usage: WORK=<dir> COOKIE=<demo homeowner session> node rec-local.mjs   -> <WORK>/a06-source.mp4 and a06-actions.json (tap times in seconds)
 import { createRequire } from "node:module";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -36,7 +36,12 @@ await p.selectOption("#f-city", "Irvine"); await sleep(250);
 await type("#f-street", "1 Civic Center Plaza", "street"); await type("#f-zip", "92606", "zip"); await tap("#nextbtn", "next6", 700);
 await tap("#nextbtn", "next7", 700);   // lights-on and visiting options: left empty (all optional)
 await tap("#nextbtn", "next8", 700);   // photos: skipped (optional)
-act.review = +T().toFixed(3); await sleep(2500);
+act.review = +T().toFixed(3); await sleep(2200);
+let newId = null; p.on("response", async (r) => { if (r.url().includes("/api/submit") && r.request().method() === "POST") { try { const j = await r.json(); newId = j.id || j.post?.id || null; console.log("submit", JSON.stringify(j).slice(0, 200)); } catch {} } });
+await tap("#nextbtn", "submit", 1500); await sleep(2500);
+act.done = +T().toFixed(3);
+await tap("text=See it on the map", "map", 400); await p.waitForSelector("#back", { timeout: 15000 }); await sleep(3000);
+act.card = +T().toFixed(3); await tap("#grab", "pin", 900); await sleep(5000);
 const total = T(); await cdp.send("Page.stopScreencast"); await br.close();
 const f0 = frames.findIndex((f) => f.t >= t0 - 0.05), fr = frames.slice(Math.max(0, f0 - 1)), lines = [];
 fr.forEach((f, k) => { const t = Math.max(0, f.t - t0), nx = k + 1 < fr.length ? Math.max(0, fr[k + 1].t - t0) : total; lines.push(`file '${dir}/${f.i}.jpg'`, `duration ${Math.max(0.001, nx - t).toFixed(4)}`); });

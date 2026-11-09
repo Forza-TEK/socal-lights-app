@@ -10,8 +10,8 @@ LINES = {
     "a08r": ["Looking for holiday lights tonight?", "Tap Find my location,", "and see what is lighting up near you.", "Tap a place to see the details.", "Free on SoCal Lights."],
     "a09": ["Plan your whole night.", "Tap the heart on the places you love,", "then tap Route these.", "SoCal Lights, free for families."],
     "a09r": ["Plan your whole night.", "Tap the heart on the places you love,", "then tap Route these.", "Your stops open in the maps app you choose.", "SoCal Lights, free for families."],
-    "a06": ["Is your home all lit up?", "Put it on the map in a few minutes.", "Free on SoCal Lights."],
-    "a06r": ["Is your home all lit up?", "Put it on the map in a few minutes.", "Add a name, a few words, and a street.", "Free on SoCal Lights."],
+    "a06": ["Is your home all lit up?", "Put it on the map in a few minutes.", "And there it is, on the map.", "Free on SoCal Lights."],
+    "a06r": ["Is your home all lit up?", "Put it on the map in a few minutes.", "Add a name, a few words, and a street.", "And there it is, on the map.", "Free on SoCal Lights."],
     "a07": ["One tap, one route.", "Route these opens your stops in the maps app you choose.", "SoCal Lights."],
     "a07r": ["One tap, one route.", "Route these opens your stops in the maps app you choose.", "Pick your stops, and go.", "SoCal Lights."],
 }

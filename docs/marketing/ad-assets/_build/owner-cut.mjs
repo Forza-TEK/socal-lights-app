@@ -15,8 +15,8 @@ const OWN = ROOT + "/../owner-videos/";
 // action = source time of the on-screen action the words describe (measured from the recording); at = source time for lines with no action
 const V = {
   a06: { folder: "a06-add-home-video", stem: "a06-add-home", src: process.env.WORK + "/a06-source.mp4", srcH: 2346, head: "Put your home's lights on the map", noteFrom: null,
-    short: { id: "a06", seg: [[0, 3.6, 1], [9.9, 12.9, 1.25], [14.9, 17.3, 1]], cues: [{ i: 0, at: 0.05 }, { i: 1, action: 2.262, what: "name field tapped, form filling starts" }, { i: 2, action: 15.275, what: "review screen with Put it on the map button" }] },
-    reel: { id: "a06r", seg: [[0, 3.6, 1], [3.6, 5.8, 1.25], [9.9, 12.9, 1], [14.5, 17.5, 1]], cues: [{ i: 0, at: 0.05 }, { i: 1, action: 2.262, what: "name field tapped, form filling starts" }, { i: 2, at: 10.4 }, { i: 3, action: 15.275, what: "review screen with Put it on the map button" }] } },
+    short: { id: "a06", seg: [[0, 3.0, 1], [10.8, 13.0, 1.25], [15.2, 17.8, 1], [26.0, 28.8, 1]], cues: [{ i: 0, at: 0.05 }, { i: 1, action: 2.251, what: "name field tapped, form filling starts" }, { i: 2, action: 26.4, what: "map with the new home's pin appears" }, { i: 3, at: 27.9 }] },
+    reel: { id: "a06r", seg: [[0, 3.6, 1], [3.6, 5.8, 1.25], [9.9, 12.9, 1], [14.5, 18.0, 1], [25.6, 29.2, 1]], cues: [{ i: 0, at: 0.05 }, { i: 1, action: 2.251, what: "name field tapped, form filling starts" }, { i: 2, at: 10.4 }, { i: 3, action: 26.4, what: "map with the new home's pin appears" }, { i: 4, at: 28.4 }] } },
   a08: { folder: "a08-find-location-video", stem: "a08-find-location", src: OWN + "favorites-owner.mp4", head: "Find holiday lights near you tonight", noteFrom: 12.0,
     short: { id: "a08", seg: [[0.4, 2.8, 1], [2.8, 5.4, 1.25], [5.4, 6.0, 1], [6.0, 11.6, 1.25], [11.6, 12.8, 1]], cues: [{ i: 0, at: 0.5 }, { i: 1, action: 2.4, what: "Find my location tapped (permission prompt appears)" }, { i: 2, action: 5.6, what: "map zooms to the user, nearby dots fill" }, { i: 3, action: 12.0, what: "place card opens" }] },
     reel: { id: "a08r", seg: [[0.4, 2.8, 1], [2.8, 5.4, 1.25], [5.4, 6.0, 1], [6.0, 11.6, 1.25], [11.6, 16.0, 1]], cues: [{ i: 0, at: 0.5 }, { i: 1, action: 2.4, what: "Find my location tapped (permission prompt appears)" }, { i: 2, action: 5.6, what: "map zooms to the user, nearby dots fill" }, { i: 3, action: 12.0, what: "place card opens" }, { i: 4, at: 14.2 }] } },
@@ -29,7 +29,7 @@ const V = {
 };
 const [vid, place] = process.argv.slice(2), v = V[vid], reel = place === "reel", sp = reel ? v.reel : v.short;
 const FMT = place === "feed" ? { W: 1080, H: 1350, PH: 1150, y: 200, h: { y: 8, s: 42 }, c: { y: 64, s: 32 }, n: { y: 120, s: 27 }, tag: "4x5" }
-  : { W: 1080, H: 1920, PH: 1416, y: 504, h: { y: 258, s: 54 }, c: { y: 338, s: 36 }, n: { y: 408, s: 29 }, tag: "9x16" };
+  : { W: 1080, H: 1920, PH: 1460, y: 460, h: { y: 272, s: 46 }, c: { y: 334, s: 32 }, n: { y: 392, s: 26 }, tag: "9x16" };
 FMT.PW = Math.round((1080 * FMT.PH / (v.srcH || 2314)) / 2) * 2;
 const LEAD = 0.1, mkdir = (d) => mkdirSync(d, { recursive: true }), D = `${WORK}/${vid}-${place}`; mkdir(D);
 // source time -> output time
@@ -55,7 +55,7 @@ async function layer(html, file) {
   await p.setContent(`<!doctype html><meta charset=utf-8>${FONT}<style>html,body{margin:0;width:${FMT.W}px;height:${FMT.H}px;overflow:hidden;background:transparent;font-family:"Plus Jakarta Sans",system-ui,sans-serif}.t{position:absolute;left:50px;right:50px;text-align:center;color:#fff;font-weight:800;line-height:1.12;text-wrap:balance}</style>${html}`, { waitUntil: "networkidle" });
   await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(250); await p.screenshot({ path: file, omitBackground: true }); await p.close();
 }
-const pill = (t) => `<div class="t" style="top:${FMT.c.y}px;font-size:${FMT.c.s}px"><span style="display:inline-block;background:#ffd166;color:#14161b;padding:${FMT.c.s * .18}px ${FMT.c.s * .7}px;border-radius:99px;font-weight:800">${t}</span></div>`;
+const pill = (t) => `<div class="t" style="top:${FMT.c.y}px;font-size:${t.length > 44 ? Math.round(FMT.c.s * 0.8) : FMT.c.s}px;white-space:nowrap"><span style="display:inline-block;background:#ffd166;color:#14161b;padding:${FMT.c.s * .18}px ${FMT.c.s * .7}px;border-radius:99px;font-weight:800">${t}</span></div>`;
 await layer(`<div class="t" style="top:${FMT.h.y}px;font-size:${FMT.h.s}px">${v.head}</div>`, D + "/head.png");
 for (const c of clips) await layer(pill(c.text), `${D}/cap${c.i}.png`);
 await layer(`<div class="t" style="top:${FMT.n.y}px;font-size:${FMT.n.s}px;font-weight:500;color:#e8ecf4">${NOTE}</div>`, D + "/note.png");

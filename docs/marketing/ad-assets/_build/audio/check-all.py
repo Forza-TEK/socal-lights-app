@@ -2,7 +2,7 @@
 Usage: python3 check-all.py <ad-assets dir> <WORK dir> <vosk model dir>"""
 import sys, json, subprocess, os
 root, work, model = sys.argv[1:4]
-V = {"a07": ("a07-route-video", "a07-route"), "a08": ("a08-find-location-video", "a08-find-location"), "a09": ("a09-favorites-video", "a09-favorites")}
+V = {"a06": ("a06-add-home-video", "a06-add-home"), "a07": ("a07-route-video", "a07-route"), "a08": ("a08-find-location-video", "a08-find-location"), "a09": ("a09-favorites-video", "a09-favorites")}
 here = os.path.dirname(os.path.abspath(__file__))
 rows, sync_rows = [], []
 for vid, (folder, stem) in V.items():

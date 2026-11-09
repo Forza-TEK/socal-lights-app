@@ -1,4 +1,1 @@
-a02 https://socallights.app/in/san-diego captured 2026-11-09T08:18:15.894Z (1320x2868 source)
-a03e https://socallights.app/c/holiday-home-lighting-contest-2026-5f5a0 captured 2026-11-09T08:18:33.290Z (1320x2868 source)
-a05 https://socallights.app/installer/lights-up-today captured 2026-11-09T08:18:50.355Z (1320x2868 source)
-a10 https://socallights.app/ captured 2026-11-09T08:19:19.056Z (1320x2868 source)
+a10 https://socallights.app/ captured 2026-11-09T08:36:37.140Z (1320x2868 source)
