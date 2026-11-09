@@ -18,7 +18,7 @@ import { onRequestPost as adminContest } from "../functions/api/admin/contests/[
 import { CONTEST_PASSES, LEGACY_PASSES, PASS_KEYS, PUBLIC_CONTEST_PASSES, FREE_CONTESTS, PAID_FROM, windowEnd, windowFromDates, entitlementOf, offersFor, passQuote } from "../functions/_lib/passes.js";
 import { rawOrgKey, registrable, keyFromInput, orgKeyFor } from "../functions/_lib/passkey.js";
 import { STEPS, CLIENT_KEYS, dayKey } from "../functions/_lib/funnel.js";
-import { passCopy, moreCopy, capLine } from "../public/contest-passes.js";
+import { passCopy, moreCopy, capLine, appPassHtml, passPageUrl } from "../public/contest-passes.js";
 import { newEnv, addUser, stubFetch, stripeEvent, sendWebhook, session, getOrder, freezeNow, ptToday } from "./_pay.mjs";
 
 const NOW = "2026-11-10T20:00:00Z", T = "2026-11-10"; // a Tuesday afternoon Pacific, the first day contests are paid (PAID_FROM)
@@ -481,3 +481,29 @@ test("pages state that payment never affects results, and the Terms have the Con
   const lib = readFileSync("public/contest-passes.js", "utf8"); assert.ok(lib.includes("Payment never affects any result, vote, judge or ranking"));
   assert.ok(readFileSync("public/contest-pass.html", "utf8").includes("payment never affects any result, vote, judge or ranking"));
 });
+
+test("in the store apps there is no price and no Stripe: the picker is replaced by 'Continue on socallights.app' and 'I have my pass'; the server still refuses checkout from the app", () => withNow(async () => {
+  const html = appPassHtml({ org: "covinaca.gov" }, "clerk@covinaca.gov", "https://www.covinaca.gov");
+  assert.ok(!/\$\s?\d/.test(html) && !/data-pass="/.test(html) && !/>Choose</.test(html), "no price and no Choose button in the app");
+  assert.ok(html.includes("Continue on socallights.app") && html.includes("I have my pass") && html.includes("data-pass-web") && html.includes("data-pass-check"));
+  assert.ok(html.includes("https://socallights.app/contest-pass?site=https%3A%2F%2Fwww.covinaca.gov") && html.includes("clerk@covinaca.gov"), "the website decides the organization; the same email is asked for");
+  assert.equal(passPageUrl(""), "https://socallights.app/contest-pass");
+  const wiz = readFileSync("public/add-contest.html", "utf8");
+  for (const must of ["IN_APP", "showAppPass", "openWeb", "data-pass-check", "api.next()"]) assert.ok(wiz.includes(must), "wizard: " + must);
+  const page = readFileSync("public/contest-pass.html", "utf8"); assert.ok(page.includes("Continue on socallights.app") && page.includes('q.get("site")'), "the pass page keeps ?site=");
+  const { env, raw, me } = await setup(); const f = stubFetch();
+  try { assert.equal((await buy(env, { plan: "pass_1" }, me.cookie, "SoCalLightsApp/1.0")).status, 403); assert.equal(f.calls.length, 0, "nothing reaches Stripe from the app"); } finally { f.restore(); }
+  // the pass bought in the browser (with ?site= so it is the same organization) lets the app's next create go through
+  const body = good(nameN(1)), tryIt = () => J(createContest({ request: rq("/api/contests", body, me.cookie), env }));
+  assert.equal((await tryIt()).status, 402);
+  assert.equal((await pay(env, "web", "pass_1", T, END, P1)).status, 200);
+  assert.equal((await ent(env, me.cookie, "")).body.canCreate, true); assert.equal((await tryIt()).status, 200);
+}));
+
+test("pass checkout keeps ?site= through Stripe on the pass page (so the return page finds the same organization)", () => withNow(async () => {
+  const { env, raw, me } = await setup(); const f = stubFetch();
+  try {
+    assert.equal((await buy(env, { plan: "pass_1", site: "https://www.covinaca.gov" }, me.cookie)).status, 200);
+    assert.equal(new URLSearchParams(String(f.calls[0].init.body)).get("success_url"), O + "/contest-pass?site=" + encodeURIComponent("https://www.covinaca.gov") + "&pass=paid&plan=pass_1");
+  } finally { f.restore(); }
+}));

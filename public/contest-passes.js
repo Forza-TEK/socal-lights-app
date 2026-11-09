@@ -43,5 +43,17 @@ export function pickerHtml(v, cfg) {
   return `<div class="pp"><p class="pp-win">${esc(win)}</p><p class="pp-org">Organization: <b>${esc(v.org)}</b></p><div class="pp-grid">${cards}${more}</div><p class="pp-note">${esc(WINDOW_RULE)} ${esc(FAIR)}</p></div>`;
 }
 
+// ---- Inside the store apps (Capacitor wrappers whose browser string has "SoCalLightsApp"): no payment and no price. Apple and Google want in-app purchase for digital goods
+// (docs/app-store.md), so the app never shows a pass price or opens Stripe. The organizer continues on socallights.app in the system browser, buys the pass there, and comes back.
+export const IN_APP = typeof navigator !== "undefined" && /SoCalLightsApp/.test(navigator.userAgent);
+export const passPageUrl = (site) => "https://socallights.app/contest-pass" + (site ? "?site=" + encodeURIComponent(site) : "");
+// Opens a page in the system browser: the Capacitor Browser plugin when the app has it, otherwise a new window.
+export function openWeb(url) { try { const B = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser; if (B && B.open) { B.open({ url }); return; } } catch {} window.open(url, "_blank", "noopener"); }
+// What the app shows instead of the pass picker. No price, no Choose button, no checkout. v: the entitlement view; email: the signed-in account; site: the contest website typed in the wizard.
+export function appPassHtml(v, email, site) {
+  const who = email ? `Sign in there with the same email, <b>${esc(email)}</b>, so the pass goes to your organization.` : "Sign in there with the same email you use here, so the pass goes to your organization.";
+  return `<div class="pp pp-app"><p><b>Running this contest needs a contest pass.</b> Passes are bought on our website, in your browser, not inside the app.</p><ol><li>Tap <b>Continue on socallights.app</b>. ${who}</li><li>Choose a pass there.</li><li>Come back to the app and tap <b>I have my pass</b>. Your contest details are kept here, and your contest is created.</li></ol><p><a class="btn" href="${esc(passPageUrl(site))}" data-pass-web target="_blank" rel="noopener">Continue on socallights.app</a> <button class="btn out" type="button" data-pass-check>I have my pass</button></p><p class="pp-org">Organization: <b>${esc((v && v.org) || "")}</b></p><p class="pp-note">${esc(FAIR)}</p></div>`;
+}
+
 // One number (no person) for the funnel counters; skipped for automated browsers.
 export function beacon(k) { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} }

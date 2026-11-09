@@ -1,5 +1,7 @@
 # Contest pricing change: what in marketing now says "free" or the old prices
 
+> **Re-checked 2026-11-09 after main merged #514 (ads, organic post and picture copy):** sections 1 (paid ads), 2 (organic posts) and 3 (pictures a03 and its Story version) are DONE on main; a search of `ads-content.json`, `organic-posts-2026-11.json/.md` and `ads-launch-handoff.md` finds no remaining "first contest free" text (the remaining "free map", "free routes" lines are true). They are kept below as the record of what was changed. Still open: section 4 (tutorial captions, narration and frames, to be re-recorded) and the database ad rows only if they were not part of #514. Section 5 (Grok emails) is done in this PR.
+
 Owner decision 2026-11-09 (after meeting the City of Eastvale, who recommended charging): contest organizers pay from the first contest. Single contest $149, up to 5 contests in a 12-month window $299, up to 20 contests $499, more than 20 contact us. The old rule was 1 free contest per organization per 12 months, with passes $50 / $75 / $100 for up to 5 / 10 / 20. Entering and voting stay free for residents, and payment never affects results.
 
 **Nothing in this file was edited in the ads, posts, pictures or videos.** This is the list of what to change, with the exact current text and a proposed replacement, for the owner to apply on the go-live day (the new pricing goes live when the PR `contest-pricing-2026-11` is merged and `PAID_FROM` in `functions/_lib/passes.js` is set to that day).
