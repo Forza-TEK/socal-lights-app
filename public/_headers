@@ -31,3 +31,7 @@
 /organizer*
   X-Robots-Tag: noindex
   Cache-Control: no-store
+
+/ad-assets/*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: public, max-age=300

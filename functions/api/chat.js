@@ -4,29 +4,27 @@
 // limits per connection and overall, scope rules (no model call for off-topic, injection, personal data, contest rules), the cost cap, the model, the output filter.
 // Nothing is logged but anonymous daily counters: no message text and no IP address (the limits use one-way scrambled codes kept two days, as for the other forms).
 import { json, err, verifyTurnstile } from "../_lib/util.js";
-import { sameOriginStrict, readCookie } from "../_lib/auth.js";
+import { sameOriginStrict, getUser } from "../_lib/auth.js";
+import { ownListings } from "../_lib/chatown.js";
 import { checkThrottle, hashKey } from "../_lib/throttle.js";
 import { readSettings, isLive, usageState, capReason, recordUsage, recordGap, neuronsFor, claudeMicroUsd, providerOf } from "../_lib/chatsettings.js";
 import { parseMessages, classify, filterOutput, MESSAGES } from "../_lib/chatguard.js";
 import { buildContext, topicOf } from "../_lib/chatkb.js";
 import { runModel } from "../_lib/chatmodel.js";
+import { cardsFor, humanCard, wantsHuman, needsAccount, quickIntent } from "../_lib/chatcards.js";
+import { bumpAction } from "../_lib/chatactions.js";
+import { checkCapAlerts } from "../_lib/chatmail.js";
 
-const COOKIE = "scl_chat", TTL = 1800;
-const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-async function sign(env, msg) {
-  const secret = env.CHAT_SESSION_SECRET || env.THROTTLE_SALT || env.TURNSTILE_SECRET || "scl-chat";
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return hex(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode("chat|" + msg))).slice(0, 40);
-}
-const mint = async (env) => { const exp = Math.floor(Date.now() / 1000) + TTL; return `${exp}.${await sign(env, String(exp))}`; };
-async function validSession(env, request) {
-  const v = readCookie(request, COOKIE), [exp, sig] = v.split(".");
-  if (!exp || !sig || !/^\d{9,12}$/.test(exp) || Number(exp) < Date.now() / 1000) return false;
-  return (await sign(env, exp)) === sig;
-}
-const cookieHeader = (request, value) => `${COOKIE}=${value}; Path=/api/chat; HttpOnly; SameSite=Lax; Max-Age=${TTL}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
+import { COOKIE, mint, validSession, cookieHeader } from "../_lib/chatsession.js";
 const NO_STORE = { "cache-control": "no-store" };
 const say = (reply, extra = {}, headers = {}) => json({ reply, ...extra }, { headers: { ...NO_STORE, ...headers } });
+
+// Tier 3 reads who is signed in only when the visitor asked to change one of their own listings or to add an event; nothing about them is stored or sent to the model.
+async function signedIn(request, env, settings, last) {
+  if (!settings.tiers[3] || !needsAccount(last)) return {};
+  const user = await getUser(request, env).catch(() => null);
+  return user ? { user, own: await ownListings(env, user) } : {};
+}
 
 export async function onRequestPost({ request, env }) {
   const settings = await readSettings(env);
@@ -56,6 +54,13 @@ export async function onRequestPost({ request, env }) {
   ]);
   if (slow) { await recordUsage(env, { blocked_limit: 1 }); return json({ error: slow, limited: true }, { status: 429, headers: { ...NO_STORE, ...headers } }); }
 
+  // "Can I talk to a person?": always answered with the Send to the team card, even off topic, at the cap, or with no model call (owner decision: always reachable)
+  if (settings.tiers[1] && wantsHuman(last) && !(["injection", "typedPersonal", "personal"].includes(classify(last).kind))) { // "the owner's phone number" is a personal-data ask, not a request for the team
+    await recordUsage(env, { chats: first ? 1 : 0, turns: 1 }); await bumpAction(env, "ask_human", "shown");
+    return say("Of course. Write what you need in the box below and tap Send to the team: the team reads every message. If you add your email, they can reply to you.", { cards: [humanCard(last)] }, headers);
+  }
+  // Tier 1 requests that read as off topic to the scope filter ("subscribe me", "this listing is outdated"): answer with the card, no model call
+  { const qi = quickIntent(last, settings); if (qi && classify(last).kind === "offtopic") { await recordUsage(env, { chats: first ? 1 : 0, turns: 1 }); for (const c of qi.cards) await bumpAction(env, c.action, "shown"); return say(qi.reply, { cards: qi.cards }, headers); } }
   // scope rules: no model call, no cost
   // The newest question must be in scope; an injection or personal data anywhere in the visitor's earlier messages is refused too (it would be sent to the model as history).
   const lastIdx = messages.length - 1;
@@ -71,13 +76,13 @@ export async function onRequestPost({ request, env }) {
   // hard cost cap and daily chat limit
   const provider = providerOf(env), state = await usageState(env);
   const why = capReason(state, settings, provider);
-  if (why) { await recordUsage(env, { capped: 1 }); return say(MESSAGES.capped, { capped: why }, headers); }
+  if (why) { await recordUsage(env, { capped: 1 }); const hc = settings.tiers[1] ? [humanCard(last)] : []; if (hc.length) await bumpAction(env, "ask_human", "shown"); return say(MESSAGES.capped, { capped: why, cards: hc }, headers); }
 
   let ctx, out;
   try {
     ctx = await buildContext(env, last);
     // nothing in the knowledge base matches: do not ask the model to improvise. Count the topic bucket (never the words) so we know what to write, and give the fallback link.
-    if (!ctx.sourced) { await recordGap(env, topicOf(last)); await recordUsage(env, { chats: first ? 1 : 0, turns: 1, gaps: 1 }); return say(MESSAGES.gap, { gap: true }, headers); }
+    if (!ctx.sourced) { await recordGap(env, topicOf(last)); await recordUsage(env, { chats: first ? 1 : 0, turns: 1, gaps: 1 }); const { user: gu, own: go } = await signedIn(request, env, settings, last); const hc = cardsFor({ question: last, settings, ctx, handoff: "gap", user: gu, own: go }); for (const c of hc) await bumpAction(env, c.action || c.type, "shown"); return say(MESSAGES.gap, { gap: true, cards: hc }, headers); }
     // earlier assistant turns come from the browser, so they get the same output filter as a fresh answer (a forged one is dropped)
     const history = messages.slice(0, -1).filter((m) => m.role === "user" || !filterOutput(m.content, ctx).blocked);
     out = await runModel(env, ctx, [...history, messages[messages.length - 1]]);
@@ -90,5 +95,10 @@ export async function onRequestPost({ request, env }) {
     chats: first ? 1 : 0, turns: 1, tokens_in: out.tin, tokens_out: out.tout, blocked_output: f.blocked ? 1 : 0,
     neurons: out.provider === "workers" ? neuronsFor(out.model, out.tin, out.tout) : 0, usd_micro: out.provider === "claude" ? claudeMicroUsd(out.tin, out.tout) : 0,
   });
-  return say(f.text, f.blocked ? { filtered: f.blocked } : {}, headers);
+  // Tier 3 reads who is signed in, only when the visitor asked to change one of their own listings; nothing about them is stored or sent to the model
+  const { user, own } = f.blocked ? {} : await signedIn(request, env, settings, last);
+  const cards = f.blocked ? [] : cardsFor({ question: last, settings, ctx, user, own });
+  for (const c of cards) await bumpAction(env, c.action || c.type, "shown");
+  if (settings.capUsd > 0) await checkCapAlerts(env, settings); // 80% and 100% emails, once a month each
+  return say(f.text, { ...(f.blocked ? { filtered: f.blocked } : {}), ...(cards.length ? { cards } : {}) }, headers);
 }

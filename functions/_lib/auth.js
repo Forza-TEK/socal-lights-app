@@ -93,13 +93,13 @@ export async function isSuspended(env, email) {
 }
 
 // Sends one email through Resend. Without RESEND_API_KEY it fails, unless local dev mode (DEV_AUTH=1) is on.
-export async function sendMail(env, { to, subject, text, html, headers, tag }) {
+export async function sendMail(env, { to, subject, text, html, headers, tag, replyTo }) {
   if (!env.RESEND_API_KEY) { if (env.DEV_AUTH === "1") console.log("[dev mail] to=" + to + " subject=" + subject); else await logOp(env, "email", `${tag || "mail"}: RESEND_API_KEY is not set`); return false; } // local testing only: say what would have been sent
   try {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-      body: JSON.stringify({ from: env.MAIL_FROM || "SoCal Lights <login@socallights.app>", to: [to], subject, text, ...(html ? { html } : {}), ...(headers ? { headers } : {}) }),
+      body: JSON.stringify({ from: env.MAIL_FROM || "SoCal Lights <login@socallights.app>", to: [to], subject, text, ...(html ? { html } : {}), ...(headers ? { headers } : {}), ...(replyTo ? { reply_to: replyTo } : {}) }),
     });
     if (!r.ok) await logOp(env, "email", `${tag || "mail"}: mail service answered ${r.status} ${(await r.text().catch(() => "")).slice(0, 120)}`);
     if (r.ok) await bump(env, EMAIL_KEY, utcDay()); // counts toward the Resend free-plan quota shown in Admin > Usage (UTC day)

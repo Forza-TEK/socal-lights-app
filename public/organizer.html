@@ -22,7 +22,7 @@
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
 import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
-import { refreshAcct } from "/addflow.js?v=20261111a";
+import { refreshAcct } from "/addflow.js?v=20261111b";
 import { mountShell } from "/appshell.js?v=20261110e";
 import { fsec, ff } from "/forms.js?v=20261106zb";
 import { printable } from "/printables.js?v=20261107a";
@@ -317,7 +317,7 @@ function render() {
     box.oninput = stale; ok.onchange = sync;
     ck.onclick = async () => {
       stale(); const list = parse(); if (!list.length) return fail("Paste at least one address.");
-      if (list.length > 500) return fail("That is a lot at once. Add up to 500 lines, then paste the rest.");
+      if (list.length > 100) return fail("That is a lot at once. Add up to 100 lines, then paste the rest.");
       ck.disabled = true; const o = ck.textContent;
       const r = await send(list, { dryRun: true }, (i) => (ck.textContent = `Checking ${Math.min(i + CHUNK, list.length)} of ${list.length}…`));
       ck.disabled = false; ck.textContent = o;
@@ -346,6 +346,6 @@ function render() {
 }
 noteSigninResult(); load(); { const pq = new URLSearchParams(location.search).get("pass"); if (pq === "paid") toast("Payment received. Your contest pass is active in a moment; then you can run your contest again."); else if (pq === "cancelled") toast("Payment cancelled. Nothing was charged."); }
 </script>
-<script src="/footer.js?v=20261110e" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

@@ -28,6 +28,7 @@ function setup(extra = {}, { enabled = true } = {}) {
   const state = { reply: "OK" };
   const env = { DB, CHAT_TEST_MODEL: async (a) => { calls.push(a); return { text: typeof state.reply === "function" ? state.reply(a) : state.reply }; }, ...extra };
   if (enabled) raw.prepare("UPDATE chat_settings SET value = '1' WHERE key = 'chat_enabled'").run();
+  raw.prepare("UPDATE chat_settings SET value = '0' WHERE key = 'chat_cap_usd'").run(); // migration 0201 raises the production cap to $10; these tests start from the original $0 (free allowance only)
   addEvent(raw, "ev-zz", { name: "Zzyzx Light Show", city: "Zzyzx", county: "San Bernardino", start_date: START, end_date: END }); // a made-up city, so the real events in the test database never crowd it out
   raw.prepare("UPDATE events SET status = 'confirmed', free = 1, hours = '5-9 pm' WHERE id = 'ev-zz'").run();
   return { env, raw, calls, state };
@@ -186,7 +187,7 @@ const HOWTO = [
   ["How do I change the contest dates?", "edit-your-contest-and-change-dates"], ["How do I unpublish my contest?", "unpublish-and-publish-again"], ["How do I invite a sponsor to my contest?", "add-sponsors-to-your-contest"],
   ["What is the sponsor invite link?", "add-sponsors-to-your-contest"], ["How do I add homes myself as a contest organizer?", "add-your-citys-homes-yourself"], ["How do I buy a contest pass?", "contest-passes"],
   ["How many contests can I run for free?", "contest-passes"], ["What are voting categories?", "Categories, winners and ties"], ["Where can I see past contest results?", "find-contests"],
-  ["How do I download the contest results?", "Announcing winners and the results page"], ["What happens when winners are announced?", "Announcing winners and the results page"],
+  ["How do I download the contest results?", "Contest organizer tools"], ["What happens when winners are announced?", "Announcing winners and the results page"],
   // entering
   ["How do I enter my home in a contest?", "enter-your-home-in-a-contest"], ["Who can enter a contest?", "enter-your-home-in-a-contest"],
   // voting
@@ -202,7 +203,7 @@ const HOWTO = [
   ["How do I upload photos for my home?", "my-photo-will-not-upload"], ["How do I claim an event listing?", "claim-your-home"], ["How do I remove my home from the map?", "Remove my home"],
   ["How do I get an installer profile?", "installer-profiles"],
   // paid options and billing
-  ["How do I feature my event?", "feature-an-event-or-home"], ["How do I get a refund for a featured placement?", "Refunds and disputes"], ["How do I cancel automatic renewal of my sponsor placement?", "automatic-renewal-for-installers"],
+  ["How do I feature my event?", "feature-an-event-or-home"], ["How do I get a refund for a featured placement?", "Refund rules for paid placements"], ["How do I cancel automatic renewal of my sponsor placement?", "automatic-renewal-for-installers"],
   // map, app, notifications
   ["The map can't find my location", "location-does-not-work"], ["How do I install the app on my phone?", "install-the-app"], ["How do I unsubscribe from the weekly email?", "weekly-lights-email"],
   ["How do I plan a route for a night of lights?", "plan-a-night"], ["How do I find lights near me?", "find-lights-near-me"],
@@ -228,7 +229,7 @@ test("the question set has at least 100 questions", () => {
 
 test("a question nothing in the knowledge base matches is not sent to the model: fallback link, and only a topic bucket is counted", async () => {
   const { env, calls, raw } = setup();
-  const qs = ["Does the Zzyzx yodel app support quantum bananas?", "Can my Zzyzx flamingo account sing kazoo ringtones to zebras?"];
+  const qs = ["Does the Zzyzx yodel app handle quantum bananas?", "Can my Zzyzx flamingo account sing kazoo ringtones to zebras?"];
   for (const q of qs) {
     const r = await ask(env, q);
     assert.equal(r.body.gap, true, q); assert.equal(r.body.reply, MESSAGES.gap);
@@ -622,7 +623,7 @@ test("wiring: pages load the widget with a versioned tag, the widget is inert un
   assert.ok(css.includes('data-theme="dark"') && css.includes("prefers-reduced-motion") && css.includes("min-height:44px"));
   const label = js.includes('(AI assistant)');
   assert.ok(label);
-  assert.ok(!/house/i.test(js.replace(/How do I add my home\?/g, "")), "the word home, not house");
+  assert.ok(!/house/i.test(js.replace(/How do I add my home\?/g, "").replace(/add-house/g, "")), "the word home, not house");
 });
 
 test("privacy and Terms describe the assistant", async () => {
@@ -662,10 +663,80 @@ test("events for the chat: tonight, tomorrow, this weekend and this week mean th
   assert.equal(named[0].id, "a");
 });
 
+test("the prompt asks for a warm tone and numbered steps, and the output filter keeps numbered and bulleted lines", async () => {
+  const { RULES } = await import("../functions/_lib/chatkb.js");
+  assert.match(RULES, /warm, upbeat/);
+  assert.match(RULES, /numbered steps/);
+  assert.match(RULES, /at most one emoji/);
+  assert.match(RULES, /Never state a price that is not written in PRICES/, "safety lines stay");
+  const out = filterOutput("Here is how:\n1. Open Add.\n2. Choose An event.\n- It is free.", {});
+  assert.equal(out.blocked, "");
+  assert.equal(out.text, "Here is how:\n1. Open Add.\n2. Choose An event.\n- It is free.");
+});
+
+test("new knowledge chunks are found, and the Favorites and Route these names are used", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const top = (q) => rankChunks(q, 3).map((c) => c.title);
+  assert.ok(top("How do I plan a night and open a route in Favorites?").some((t) => /^Favorites: plan a night/.test(t)));
+  assert.ok(top("How do I remove my home from the map?").some((t) => /^Remove my home/.test(t)));
+  assert.ok(top("How do I promote my event with a Featured pin?").some((t) => /^Promote your event/.test(t)));
+  assert.ok(top("How do I sign up for the weekly lights email and stop it?").some((t) => /^Weekly lights email: sign up/.test(t)));
+});
+
 test("menus: a question about where Add, Contests, Tutorials and Help are gets the account circle and three dots text", async () => {
   const { env, calls, state } = setup();
   state.reply = "Signed in, tap the account circle at the top right. Not signed in, tap the three dots.";
   await ask(env, "Where do I find Add, Contests, Tutorials and Help in the menu?");
   const p = calls[0].system;
   assert.ok(/account circle/i.test(p) && /three dots/i.test(p), "the menu section is in the prompt");
+});
+
+test("the contest wizard, accounts and favorites sources match the current app", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const text = (q) => rankChunks(q, 3).map((c) => c.text).join(" ");
+  assert.match(text("How do I run a contest? What are the steps?"), /Quick start \(recommended\)/);
+  assert.match(text("Do I need an account to add an event?"), /(sign in to add an event|signed in to add an event)/);
+  assert.match(text("Which maps apps work with Route these in Favorites? Waze?"), /Waze/);
+});
+
+test("the assistant knows SoCal Lights is not in any app store", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const t = rankChunks("Is the app in the Google Play store?", 3).map((c) => c.text).join(" ");
+  assert.match(t, /No, not yet\. SoCal Lights is not in the Apple App Store, Google Play/);
+  assert.match(t, /do not promise that a store app is coming/);
+});
+
+test("refund questions get the published refund rules first, and the prompt says to give all information before handing off", async () => {
+  const { rankChunks, RULES } = await import("../functions/_lib/chatkb.js");
+  const t = rankChunks("What is your refund policy for a Featured event?", 3).map((c) => c.text).join(" ");
+  assert.match(t, /full refund/); assert.match(t, /non-refundable/); assert.match(t, /moved? your placement to another of your events|move your placement to another of your events/);
+  assert.match(RULES, /Always give the visitor everything the sources say/);
+  assert.match(RULES, /Make no promises about refunds/, "the no-promise line stays");
+});
+
+
+test("installer questions find the installer chunks (options, add a home, claim, share, quotes, Sponsor)", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const titles = (q) => rankChunks(q, 3).map((c) => c.title).join(" | ");
+  assert.match(titles("What options do installers have?"), /What an installer can do/);
+  assert.match(titles("Can an installer add homes they worked on?"), /Installers: add a home you installed/);
+  assert.match(titles("How does an installer claim and manage their profile?"), /Installers: claim and manage/);
+  assert.match(titles("How do installers get quote requests?"), /Installers: quote requests/);
+  assert.match(titles("How do I buy an installer Sponsor placement step by step?"), /Installers: Sponsor placements/);
+});
+
+test("audit gaps are filled: seasons and boat parades, filters, sign out, payments, renewal, cookies, QR poster, tips", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const has = (q, re) => assert.match(rankChunks(q, 3).map((c) => c.title).join(" | "), re, q);
+  has("How do I find boat parades?", /Seasons and kinds of events/);
+  has("What do the filters do?", /Map filters/);
+  has("How do I sign out?", /Signing in and out/);
+  has("Is my payment secure and how do I get a receipt?", /How payments work/);
+  has("How do I cancel automatic renewal?", /Cancel automatic renewal/);
+  has("Do you use cookies?", /Privacy basics/);
+  has("How do I print a QR poster?", /Contest organizer tools/);
+  has("Do you take tips?", /How payments work/);
+  has("How do I save a draft?", /Your profile/);
+  has("How do I report a problem on a listing?", /On any listing/);
+  has("How do I switch to dark mode?", /Day and night mode/);
 });

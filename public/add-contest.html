@@ -17,7 +17,8 @@
 <div id="app"></div>
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
-import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt, pvCard, nlCheck, nlSave } from "/addflow.js?v=20261111a";
+import { run, esc, input, area, select, tile, sumRow, validSite, today, addDays, fmt, pvCard, nlCheck, nlSave } from "/addflow.js?v=20261111b";
+import { capture, take } from "/chatprefill.js?v=20261111b";
 import { me, signIn } from "/auth.js?v=20261107p";
 import { rulesDefault } from "/rules.js?v=20261107a";
 import { printable } from "/printables.js?v=20261107a";
@@ -25,6 +26,7 @@ import { CITY } from "/cities.js?v=20261107a";
 import { defaultSeason } from "/seasons.js?v=20261104a";
 import { pickerHtml, beacon, niceDate } from "/contest-passes.js?v=20261108a";
 const FREE = new Set(["gmail.com","googlemail.com","hotmail.com","outlook.com","live.com","msn.com","yahoo.com","icloud.com","me.com","aol.com","proton.me","protonmail.com"]);
+capture(null, null, "contest");
 const DEF = ["Best Overall", "Most Creative", "Best Lights & Music", "Best Traditional"], cities = Object.keys(CITY).sort();
 const dflt = () => { let y = new Date().getFullYear(); if (today > y + "-12-10") y++; return { closes: y + "-12-10", vs: y + "-12-11", ve: y + "-12-20" }; };
 const d = { name: "Holiday Home Lighting Contest " + dflt().closes.slice(0, 4), org: "", city: "", descr: "Show us your best lights! Enter your home, then neighbors vote for their favorites.", site: "", ...dflt(), cats: [...DEF], on: [...DEF], newcat: "", approval: "manual", counts: "no", oneWin: "no", rules: "", mode: "public", judges: "", method: "pick", prizeMode: "none", prize: "", prizes: {}, sponsor: "", quick: "yes" };
@@ -125,7 +127,7 @@ const steps = [
   for (const st of steps) if (["cats", "mode", "judges", "method", "approval", "counts", "fair", "prize", "rules"].includes(st.id)) { const old = st.skip; st.skip = (x) => x.quick === "yes" || (old ? old(x) : false); }
 }
 const preview = (x) => pvCard({ title: x.name, ph: "Your contest name", when: "Contest", lines: [{ t: [x.org, x.city].filter(Boolean).join(" \u00b7 ") || "Organizer and city", e: !x.org && !x.city }, { t: "Entries open until " + (x.closes ? fmt(x.closes) : "\u2026"), e: !x.closes }, { t: "Voting " + (x.vs ? fmt(x.vs) : "\u2026") + (x.ve ? " to " + fmt(x.ve) : ""), e: !x.vs }], tags: [x.mode === "judges" ? "Judged" : x.mode === "both" ? "Public vote and judges" : "Public vote"] });
-const api = run({ preview, steps, data: d, persist: "scl-contest-draft", account: { kind: "contest", title: (x) => x.name }, noPersist: ["newcat", "nl"], after: (s) => { if (s.id === "review") reviewNote(); }, season: (x) => defaultSeason(x.closes), exit: "/add",
+const api = run({ preview, steps, data: d, persist: "scl-contest-draft", prefill: (x) => { const v = take("contest"); if (!v || !Object.keys(v).length) return false; Object.assign(x, v); return true; }, account: { kind: "contest", title: (x) => x.name }, noPersist: ["newcat", "nl"], after: (s) => { if (s.id === "review") reviewNote(); }, season: (x) => defaultSeason(x.closes), exit: "/add",
   onInput: (k, x) => { if (k === "closes") { if (x.vs <= x.closes) x.vs = addDays(x.closes, 1); if (x.ve <= x.vs) x.ve = addDays(x.vs, 9); for (const f of ["vs", "ve"]) { const el = document.getElementById("f-" + f); if (el) el.value = x[f]; } } },
   actions: {
     typical(_, a) { Object.assign(d, dflt()); a.draw(); },
@@ -150,6 +152,6 @@ api.ready.then(async () => {
   if (passBox()) passBox().innerHTML = `<p class="note" role="status">Your payment is still being confirmed. Wait a minute, then tap Create contest. You will not be charged again.</p>`;
 });
 </script>
-<script src="/footer.js?v=20261110e" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

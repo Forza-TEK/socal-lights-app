@@ -97,8 +97,8 @@ test("house post: 5 per hour per connection (429), 5 displays a day per account"
     assert.equal((await postHome(env, homeForm(), u2.cookie, "192.0.2.2")).status, 200, "another account on that connection is fine");
   } finally { f.restore(); }
 });
-// KNOWN BUG (reported, not fixed here: tests may not change behavior): submit.js uploads photos before the per-account daily check, and that 429 path returns without deleting them.
-test("house post: the per-account daily limit does not leave uploaded photos behind in R2", { todo: "BUG submit.js: photos uploaded before the per-account daily limit check are orphaned on 429" }, async () => {
+// submit.js uploads photos before the per-account daily check; the 429 path deletes them again.
+test("house post: the per-account daily limit does not leave uploaded photos behind in R2", async () => {
   const bucket = r2(), { env, raw } = newEnv({ PHOTOS: bucket }); const u = await addUser(raw, "u1", "owner@example.com"), f = geo({ census: PASADENA });
   try {
     for (let i = 0; i < 5; i++) await postHome(env, homeForm({ biz: "B" + i }), u.cookie, "192.0.2." + (10 + i));

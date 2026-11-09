@@ -6,7 +6,7 @@
   "use strict";
   if (window.__sclChat) return;
   window.__sclChat = true;
-  var CSS = "/chat.css?v=20261110b", MAX = 500, TURNS = 6, KEEP = 40, KEY = "scl-chat";
+  var CSS = "/chat.css?v=20261111c", MAX = 500, TURNS = 6, KEEP = 40, KEY = "scl-chat";
   var store = { get: function () { try { var v = JSON.parse(sessionStorage.getItem(KEY) || "null"); return v && Array.isArray(v.log) && Array.isArray(v.h) ? v : null; } catch (e) { return null; } }, set: function (v) { try { sessionStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} }, clear: function () { try { sessionStorage.removeItem(KEY); } catch (e) {} } };
   var cfgP = window.__pre && window.__pre["/api/config"];
   (cfgP || fetch("/api/config").then(function (r) { return r.json(); })).then(function (c) { if (c && c.chatEnabled) start(c); }).catch(function () {});
@@ -56,7 +56,7 @@
     var note = el("p", { class: "scl-chat-note" });
     note.appendChild(document.createTextNode("This is an automated AI assistant, not a person. It can be wrong, so check prices on "));
     note.appendChild(el("a", { href: "/pricing", text: "Pricing" }));
-    note.appendChild(document.createTextNode(". Please don't enter personal information. Your chat stays in this browser tab only and is erased when you close the tab or tap Start over. "));
+    note.appendChild(document.createTextNode(". Please don't enter personal information in your questions; buttons below an answer ask only for what they need. Your chat stays in this browser tab only and is erased when you close the tab or tap Start over. "));
     note.appendChild(el("a", { href: "/privacy#ai-assistant", text: "Privacy" }));
     note.appendChild(document.createTextNode(" · "));
     note.appendChild(el("a", { href: "mailto:info@socallights.app", text: "Email us" }));
@@ -95,6 +95,116 @@
       chips.appendChild(b);
     });
 
+
+    // ---- action cards (docs/ai-assistant-actions-design.md): the assistant proposes, the visitor fills in and taps. Everything is inserted as text; links must stay on this site.
+    var NAV = /^\/(add-event|add-house|add-contest)$/;
+    var CALL = /^\/api\/(me\/(homes|events)\/[A-Za-z0-9_-]{1,64}|submit-event|contests\/[A-Za-z0-9_-]{1,64}\/mine\?id=[A-Za-z0-9_-]{1,64}|drafts)$/;
+    function callSite(call, vals) {
+      var body = {}, k; for (k in (call.body || {})) body[k] = call.body[k]; for (k in vals) body[k] = vals[k];
+      if (body.free === "true" || body.free === "false") body.free = body.free === "true"; // the Free or Paid choice
+      var m = String(call.method || "POST").toUpperCase(); if (m !== "POST" && m !== "DELETE") m = "POST";
+      return fetch(call.url, { method: m, credentials: "same-origin", headers: { "content-type": "application/json" }, body: m === "DELETE" ? undefined : JSON.stringify(body) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok && d.error == null, d: d, msg: r.status === 401 ? "Please sign in first (open Your profile), then ask me again." : (d.error || "That did not go through. Please try again, or email info@socallights.app.") }; }); })
+        .catch(function () { return { ok: false, msg: "I couldn't reach the server. Please try again, or email info@socallights.app." }; });
+    }
+    var SAFE = /^\/(?!\/)[A-Za-z0-9\-_\/#?=.&%,]*$/;
+    var seq = 0;
+    function addCard(card, lastReply) {
+      if (!card || typeof card !== "object") return;
+      var box = el("div", { class: "scl-chat-card" });
+      if (card.type === "links" && Array.isArray(card.links)) {
+        box.appendChild(el("p", { class: "scl-chat-card-h", text: String(card.label || "Open") }));
+        var ul = el("ul", { class: "scl-chat-card-list" });
+        card.links.slice(0, 4).forEach(function (l) {
+          if (!l || !SAFE.test(String(l.href || ""))) return;
+          var li = el("li"), a = el("a", { href: l.href, text: String(l.label || l.href).slice(0, 80) });
+          li.appendChild(a);
+          if (l.sub) li.appendChild(el("span", { class: "scl-chat-card-sub", text: " " + String(l.sub).slice(0, 60) }));
+          ul.appendChild(li);
+        });
+        if (!ul.childNodes.length) return;
+        box.appendChild(ul);
+      } else if (card.type === "call" && card.call && CALL.test(String(card.call.url || ""))) {
+        // one confirmed call to the site's own endpoint, made with the visitor's own sign-in; the endpoint checks that the listing is theirs
+        box.appendChild(el("p", { class: "scl-chat-card-h", text: String(card.label || "Confirm").slice(0, 120) }));
+        if (card.summary) box.appendChild(el("p", { class: "scl-chat-card-s", text: String(card.summary).slice(0, 300) }));
+        var cmsg = el("p", { class: "scl-chat-card-msg", role: "status" }), ok = el("button", { type: "button", class: "scl-chat-card-go", text: "Do it" }), nope = el("button", { type: "button", class: "scl-chat-card-no", text: "Not now" });
+        ok.addEventListener("click", function () {
+          if (!ok.dataset.sure) { ok.dataset.sure = "1"; ok.textContent = "Tap again to confirm"; return; }
+          ok.disabled = true; cmsg.textContent = "Working…";
+          callSite(card.call, {}).then(function (x) {
+            if (x.ok) { box.textContent = ""; box.appendChild(el("p", { class: "scl-chat-card-done", role: "status", text: String(card.done || "Done.") })); keep("bot", String(card.done || "Done.")); history.push({ role: "assistant", content: String(card.done || "Done.") }); }
+            else { ok.disabled = false; delete ok.dataset.sure; ok.textContent = "Do it"; cmsg.textContent = x.msg; }
+          });
+        });
+        nope.addEventListener("click", function () { box.remove(); });
+        box.appendChild(cmsg); box.appendChild(el("div", { class: "scl-chat-card-btns" }, [ok, nope]));
+      } else if (card.type === "form" && Array.isArray(card.fields) && (NAV.test(String(card.nav || "")) || (card.call && CALL.test(String(card.call.url || ""))) || /^[a-z_]{3,30}$/.test(String(card.action || "")))) {
+        var f = el("form", { class: "scl-chat-card-form", novalidate: "" }), inputs = {};
+        f.appendChild(el("p", { class: "scl-chat-card-h", text: String(card.label || "Send") }));
+        if (card.summary) f.appendChild(el("p", { class: "scl-chat-card-s", text: String(card.summary).slice(0, 300) }));
+        card.fields.forEach(function (fd) {
+          var id = "scl-cf-" + (++seq), wrap = el("div", { class: "scl-chat-card-f" }), ctl;
+          if (fd.type === "checkbox") {
+            ctl = el("input", { type: "checkbox", id: id });
+            var lab = el("label", { for: id, class: "scl-chat-card-cb", text: " " + String(fd.label || "") }); lab.insertBefore(ctl, lab.firstChild); wrap.appendChild(lab);
+          } else {
+            wrap.appendChild(el("label", { for: id, text: String(fd.label || "") }));
+            if (fd.type === "textarea") { ctl = el("textarea", { id: id, rows: "3", maxlength: String(fd.max || 600) }); }
+            else if (fd.type === "select" && Array.isArray(fd.options)) { ctl = el("select", { id: id }); fd.options.forEach(function (o) { ctl.appendChild(el("option", { value: String(o[0]), text: String(o[1]) })); }); }
+            else {
+              ctl = el("input", { id: id, type: fd.type === "email" ? "email" : fd.type === "date" ? "date" : "text", maxlength: String(fd.max || 200), autocomplete: fd.type === "email" ? "email" : "off" });
+              if (fd.list && Array.isArray(fd.options)) { var dl = el("datalist", { id: id + "-l" }); fd.options.slice(0, 400).forEach(function (o) { dl.appendChild(el("option", { value: String(o[0]) })); }); ctl.setAttribute("list", id + "-l"); wrap.appendChild(dl); }
+            }
+            if (fd.value != null) ctl.value = String(fd.value);
+            wrap.appendChild(ctl);
+          }
+          if (fd.required) ctl.setAttribute("aria-required", "true");
+          inputs[fd.name] = { ctl: ctl, fd: fd };
+          f.appendChild(wrap);
+        });
+        var msg = el("p", { class: "scl-chat-card-msg", role: "status" });
+        var go = el("button", { type: "submit", class: "scl-chat-card-go", text: String(card.go || card.label || "Send") });
+        var no = el("button", { type: "button", class: "scl-chat-card-no", text: "Not now" });
+        f.appendChild(msg); f.appendChild(el("div", { class: "scl-chat-card-btns" }, [go, no]));
+        no.addEventListener("click", function () { box.remove(); });
+        f.addEventListener("submit", function (e) {
+          e.preventDefault();
+          var vals = {}, bad = "";
+          Object.keys(inputs).forEach(function (k) {
+            var c = inputs[k].ctl, fd = inputs[k].fd, v = c.type === "checkbox" ? c.checked : String(c.value || "").trim();
+            if (fd.required && (v === "" || v === false) && !bad) bad = c.type === "checkbox" ? "Please tick the box to continue." : "Please fill in: " + String(fd.label || k);
+            vals[k] = v;
+          });
+          if (bad) { msg.textContent = bad; return; }
+          if (card.call && CALL.test(String(card.call.url || ""))) { // a form that saves through the site's own endpoint with the visitor's sign-in
+            go.disabled = true; msg.textContent = "Saving…";
+            var cv = {}; Object.keys(vals).forEach(function (k) { if (vals[k] !== "" || (inputs[k] && inputs[k].fd.required)) cv[k] = vals[k]; });
+            callSite(card.call, cv).then(function (x) {
+              if (x.ok) { var dn = String((x.d && x.d.message) || card.done || "Saved."); f.remove(); box.appendChild(el("p", { class: "scl-chat-card-done", role: "status", text: dn })); keep("bot", dn); history.push({ role: "assistant", content: dn }); }
+              else { go.disabled = false; msg.textContent = x.msg; }
+            });
+            return;
+          }
+          if (NAV.test(String(card.nav || ""))) { // hand-off to the form: open it with these answers; nothing is sent to our servers from here
+            var qs = ["from=chat"]; Object.keys(vals).forEach(function (k) { if (vals[k] !== "" && vals[k] !== false) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(String(vals[k]))); });
+            msg.textContent = "Opening the form…"; location.href = card.nav + "?" + qs.join("&"); return;
+          }
+          go.disabled = true; msg.textContent = "Sending…";
+          fetch("/api/chat/act", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: card.action, fields: vals, page: location.pathname, summary: lastReply || "" }) })
+            .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; }); })
+            .then(function (x) {
+              if (x.r.ok && x.d.ok) { f.remove(); box.appendChild(el("p", { class: "scl-chat-card-done", role: "status", text: String(x.d.done || "Done. Thank you.") })); keep("bot", String(x.d.done || "Done. Thank you.")); history.push({ role: "assistant", content: String(x.d.done || "Done.") }); return; }
+              go.disabled = false; msg.textContent = x.d.error || "That did not go through. Please try again, or email info@socallights.app.";
+            })
+            .catch(function () { go.disabled = false; msg.textContent = "I couldn't reach the server. Please try again, or email info@socallights.app."; });
+        });
+        box.appendChild(f);
+      } else return;
+      log.appendChild(box);
+      log.scrollTop = log.scrollHeight;
+    }
+
     function gate() {
       // the "I am human" check is needed once, before the first message of a visit
       var need = !verified && !!tsKey;
@@ -129,6 +239,7 @@
           var reply = String(x.d.reply || "");
           history.push({ role: "assistant", content: reply });
           say("bot", reply);
+          if (Array.isArray(x.d.cards)) x.d.cards.slice(0, 3).forEach(function (c) { addCard(c, reply); });
         })
         .catch(function () { setBusy(false); history.pop(); say("bot", "I couldn't reach the server. Please try again, or email info@socallights.app."); });
     }
