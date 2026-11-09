@@ -3,6 +3,9 @@ import { S, ck, SLUG, BASE, hook, recap, nextUp, target, fromMap, toDash, panel,
 import { record, sleep } from "./record.mjs";
 import { openSite, openShort, navSteps, emailScene } from "./steps.mjs";
 import { fakeGeocode } from "./mockgeo.mjs";
+// On a phone the dashboard's "See it as voters do" link lives in the More sheet (bottom bar), so the step opens More first; on a computer it is in the side menu
+const MOREHINT = process.env.MOBILE === "1" ? "open More, then " : "";
+const openMore = async (p, h) => { if (await p.locator("#sh-more").isVisible().catch(() => false)) await h.click("#sh-more", { after: 1200 }); };
 const NEXT = "#nextbtn", ER = "Run a contest", ES = "Sponsors and installers", EP = "Post events and homes";
 const toWizard = (full) => [...(full ? openSite() : openShort()), ...fromMap("add", [target("Tap A contest", "Three choices. Tap A contest.", 'a[href="/add-contest"]', { after: 1800 })])];
 const screens = (nm) => [
@@ -173,7 +176,7 @@ S.announce = { id: "announce", file: "run-announce", cookie: ck.u_org, ...MAPSPE
   target("Tap Download results", "Tap Download results to save everything to a spreadsheet. It is a good idea to keep a copy for your records.", "text=Download results", { after: 800, pre: async (p, h) => { await h.scrollTo("text=Download results", 300); } }),
   target("Close voting and announce winners", "When you are ready, tap Close voting and announce winners.", '[data-act="announce"]', { after: 1400, poster: true }),
   target("Tap again to confirm", "It asks you to tap again, because this cannot be undone. Once you confirm, the results are saved and locked. Everyone who entered is emailed, and so are your judges and you, and the winners get a congratulations message. Voters are not emailed. If voting has not started, nobody has voted, or the judges are not finished, the button first asks, Announce anyway, as a warning.", '[data-act="announce"]', { after: 2400 }),
-  target("See it as voters do", "To see what everyone else sees, tap See it as voters do.", 'a:has-text("See it as voters do")', { after: 1800 }),
+  target("See it as voters do", "To see what everyone else sees, " + MOREHINT + "tap See it as voters do.", 'a:has-text("See it as voters do")', { after: 1800, pre: openMore }),
   { cap: "The winners", say: "Here are the winners, with their awards. Winning homes keep a crown on the map and in their owners' profiles, so the recognition lasts all year.", do: async (p, h) => { await h.scrollTo("h2:has-text('Winners')", 140).catch(() => {}); await h.hover("h2:has-text('Winners')", 1200).catch(() => {}); await sleep(800); }, pad: 0.6 },
   nextUp(ER, "Read your contest activity", "Visits, QR scans, voters and votes per day"),
 ]};
@@ -197,7 +200,7 @@ S.sponsors = { id: "sponsors", file: "sponsors-add", cookie: ck.u_org, ...MAPSPE
   { cap: "Confirm the payment", say: "Tick that you collected the payment, and add the date and how it was paid. Sponsors pay you, never SoCal Lights.", do: async (p, h) => { await h.click("#sp-collected", { after: 500 }); await h.move("#sp-date"); await p.fill("#sp-date", "2026-11-05"); await h.type("#sp-method", "Check"); await h.unring(); } },
   { cap: "Permission", say: "Tick that you have the sponsor's permission, and tick Show on the contest page.", do: async (p, h) => { await h.click("#sp-perm", { after: 500 }); await h.click("#sp-show", { after: 700 }); } },
   target("Tap Save sponsor", "Tap Save sponsor. Payment never affects who wins.", "#sp-save", { after: 2000, poster: true }),
-  target("See it as voters do", "To check how it looks, tap See it as voters do, and you will see the sponsor on the contest page, just as your neighbors do.", 'a:has-text("See it as voters do")', { after: 2200 }),
+  target("See it as voters do", "To check how it looks, " + MOREHINT + "tap See it as voters do, and you will see the sponsor on the contest page, just as your neighbors do.", 'a:has-text("See it as voters do")', { after: 2200, pre: openMore }),
   nextUp(ES, "Invite a sponsor to your contest", "Share one private link and approve the request"),
 ]};
 S["sponsor-invite"] = { id: "sponsor-invite", file: "sponsors-invite", cookie: ck.u_org, ...MAPSPEC, steps: [
@@ -256,10 +259,10 @@ S["add-event"] = { id: "add-event", file: "post-event", cookie: ck.u_enter, rout
   { cap: "5 of 6: Where", say: "Now where. Type the name of the place, the city, and the street address. The street address puts a pin in the right spot on the map, so families can get directions.", do: async (p, h) => { await h.type("#f-venue", "Oak Hill Community Park"); await h.move("#f-city"); await p.selectOption("#f-city", "Irvine"); await h.unring(); await h.type("#f-street", "100 Oak Hill Way"); }, target: NEXT, after: 1400 },
   { cap: "6 of 6: Describe it", say: "Describe it in a sentence or two. What will families see and do? That is the text people read before they decide to come.", do: async (p, h) => { await h.type("#f-blurb", "Join the neighborhood for cocoa, carols and the lighting of the tree. Free and open to everyone."); }, target: NEXT, after: 1400 },
   { cap: "Add my event", say: "Last, check everything. You can change any line with its Edit link. Below that, Make it stand out is optional. You can pick a Featured plan, or just list your event for free. Nothing is public until you tap Add my event. Your event then goes on the map.", do: async (p, h) => { await h.hover(".sum", 900); await p.locator("#planbox .tile").first().waitFor({ timeout: 10000 }); await h.scrollTo("#planbox", 200); await h.hover("#planbox", 1800); }, target: NEXT, after: 2400, poster: true },
-  nextUp(EP, "Show off your house", "Put your lights on the map with Showcase a House"),
+  nextUp(EP, "Show off your home", "Put your lights on the map with Showcase a House"),
 ]};
 S.showcase = { id: "showcase", file: "post-house", cookie: ck.u_enter, routes: NOCFG, ...MAPSPEC, steps: [
-  hook(EP, "Show off your house", "Put your lights on the map", "In this video, you will put your own home on the map, so families can find your lights and drive by. You will add the address, a description, and photos. You need to be signed in to add a home, and in this video we already are. We start on the map."),
+  hook(EP, "Show off your home", "Put your lights on the map", "In this video, you will put your own home on the map, so families can find your lights and drive by. You will add the address, a description, and photos. You need to be signed in to add a home, and in this video we already are. We start on the map."),
   ...openShort(),
   ...fromMap("add", [target("Tap A lighting display", "Now tap A lighting display. This is for showing off your own home, or a home you decorated for a customer, so families can drive by and see it.", 'a[href="/add-house"]', { after: 1800 })]),
   { cap: "Who is posting", say: "Who is posting? A homeowner is for your own home. A professional installer is for a home your company did. We are a homeowner, so tap A homeowner, then Next.", target: '[data-tile="kind|homeowner"]', after: 800, post: (p, h) => next(p, h) },
@@ -271,7 +274,7 @@ S.showcase = { id: "showcase", file: "post-house", cookie: ck.u_enter, routes: N
   { cap: "Plan a visit", say: "Tell families when the lights are on, and how to enjoy them, like drive by, walk by, or where to park. Good directions make for happier visitors, and happier neighbors.", do: async (p, h) => { await h.type("#f-lightsOn", "5 to 10 pm nightly"); await h.click('[data-tile="visit|both"]', { after: 800 }); }, target: NEXT, after: 1400 },
   { cap: "Photos", say: "Add photos. Take them at night, with the lights on. The first photo is the cover people see on the map.", pre: async (p) => p.once("filechooser", (fc) => fc.setFiles(["public/img/stock/tree-3.jpg", "public/img/stock/walk-2.jpg"])), target: "label[for=f-photos]", after: 2200, post: (p, h) => next(p, h) },
   { cap: "Put it on the map", say: "Finally, check everything, and tap Put it on the map. Your home usually goes on the map right away, for any family in Southern California to find. If it is held for a quick check, it appears once the site owner has looked it over.", target: NEXT, after: 2400, poster: true },
-  nextUp(EP, "Find lights near you", "Use the map, filters, seasons and All seasons to find what is on near you"),
+  nextUp(EP, "Find lights near me", "Use the map, filters, seasons and All seasons to find what is on near you"),
 ]};
 
 
@@ -338,7 +341,7 @@ S.feature = { id: "feature", file: "post-feature", cookie: ck.u_mine, ...MAPSPEC
   { cap: "Tap Pay on Stripe", say: "Then tap Pay on Stripe. This opens Stripe's secure page, where you pay with a card or Cash App Pay. We stop here, because this is only a demonstration, and we never enter card details in a video.", target: "#go", after: 3500, pre: async (p) => { await p.route("**/api/feature/checkout", () => new Promise(() => {})); }, poster: true }, // the request is held: nothing is sent to Stripe
   { cap: "", say: "After you pay, your placement turns on by itself within a few minutes, and a receipt arrives by email. There is no subscription. If your event is cancelled, email us, and we will move your placement to another of your events or refund the unused time. A winning home works the same way.", do: async (p, h) => { await sleep(600); } },
   recap(EP, "Featured, in a few taps", ["Menu, then Promote your event", "Pick a plan", "Pick your event or winning home", "Check the dates, then pay on Stripe"], "That is how you feature an event or a winning home. Listing is always free, and a Featured placement is optional."),
-  nextUp(EP, "Find lights near you", "Use the map, filters, seasons and All seasons to find what is on near you"),
+  nextUp(EP, "Find lights near me", "Use the map, filters, seasons and All seasons to find what is on near you"),
 ]};
 S.sponsor = { id: "sponsor", file: "sponsors-sponsor", cookie: ck.u_inst, ...MAPSPEC, steps: [
   hook(ES, "Sponsor your installer company", "Banner, Top of the list, or both", "In this video, you will sponsor your installer company, so it stands out at the top of the map list, in the installer list, or both. We go as far as the secure payment page, and stop there. We start on the map."),
@@ -359,6 +362,23 @@ S.sponsor = { id: "sponsor", file: "sponsors-sponsor", cookie: ck.u_inst, ...MAP
   { cap: "", say: "After you pay, your placement turns on within a few minutes, and a receipt arrives by email.", do: async (p, h) => { await sleep(600); } },
   recap(ES, "Sponsored, in a few taps", ["Menu, Promote, See all pricing", "Choose Banner, Top of the list, or both", "Pick your company and check the dates", "Pay on Stripe's secure page"], "That is how you sponsor your installer company. Every paid placement is labelled Sponsor, and renewal is always your choice."),
   nextUp(EP, "Add an event to the map", "Share a tree lighting, market, parade or haunted house"),
+]};
+
+// Contest passes (new 2026-11-08): the wizard's Review screen for an organization that has already used its free contest in the 12-month window.
+// The demo organizer's live contest is given a live_at date inside the window first (scripts/tutorials/seed-passes.sql). The pass picker is shown, the Choose button is
+// pointed at but never tapped (the checkout request would go to Stripe), and no price is spoken: the cards on screen show what /api/config serves.
+S["contest-passes"] = { id: "contest-passes", file: "run-passes", cookie: ck.u_org, ...MAPSPEC, maxSeconds: 300, steps: [
+  { ...hook(ER, "Contest passes", "What happens when you run more than one contest", "In this video, you will see what happens when you run a second contest in the same year. Your first contest in a 12 month window is free. After that, you choose a pass. We start on the map."), pre: authPre },
+  ...wizardStart("Oak Hill Holiday Lights 2027"),
+  { cap: "6 of 7: Quick start", say: "Choose Quick start, then tap Next.", target: '[data-tile="quick|yes"]', after: 1000, post: (p, h) => next(p, h) },
+  { cap: "7 of 7: Review", say: "This is the review. Your organization already ran a contest in the last 12 months, so this one needs a pass. Tap Create contest.", do: async (p, h) => { await h.hover(".sum", 1000); }, target: NEXT, after: 2800, poster: true },
+  { cap: "Choose a pass", say: "Instead of creating the contest, the page shows the passes. It says where your organization stands in its 12-month window, and how many contests you have used.", do: async (p, h) => { await p.locator("#pass-box .pp-card").first().waitFor({ timeout: 10000 }); await h.scrollTo("#pass-box", 200).catch(() => {}); await h.hover("#pass-box .pp-win", 1200); }, pad: 0.4 },
+  { cap: "Three passes", say: "There are three passes: Up to 5, Up to 10, and Up to 20 contests. The number counts every contest in your window, the free one included. Each card lists everything it gives you, and the price is on the card.", do: async (p, h) => { await h.hover("#pass-box .pp-card:nth-child(1)", 1200); await h.hover("#pass-box .pp-card:nth-child(2)", 1200); await h.hover("#pass-box .pp-card:nth-child(3)", 1200); }, pad: 0.4 },
+  { cap: "More than 20", say: "Running more than twenty contests? The Up to 20 card tells you what to do. You write to us, and we set it up with you.", do: async (p, h) => { await h.hover("#pass-box .pp-card:nth-child(3)", 1400); }, pad: 0.4 },
+  { cap: "Tap Choose", say: "To go on, tap Choose under the pass you want. That opens Stripe's secure payment page. We stop here, because this is only a demonstration, and we never enter card details in a video.", do: async (p, h) => { await h.hover("#pass-box [data-pass]", 1500); }, pad: 0.5 },
+  { cap: "After you pay", say: "After you pay, your contest is created by itself, with everything you typed. Your window runs for twelve months from the day your first contest went live, and a contest that is unpublished still counts. If you need more contests later, choose a bigger pass, and you pay only the difference.", do: async (p, h) => { await sleep(500); }, pad: 0.5 },
+  { cap: "Free for everyone else", say: "Entering and voting stay free for everyone, and payment never affects who wins.", do: async (p, h) => { await sleep(300); }, pad: 0.5 },
+  nextUp(ER, "Create a contest with Quick start", "The short setup: seven screens"),
 ]};
 
 const id = process.argv[2];
