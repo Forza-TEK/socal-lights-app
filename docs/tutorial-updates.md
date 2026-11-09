@@ -171,3 +171,6 @@ Full report: `docs/audit/2026-11-08-tutorial-videos.md` (verdict per video, sync
 - **Before you record again.** The local server needs its own database copy with every migration applied and the demo photos in R2; a 7-minute video needs about 2 GB of free disk for frames; `Route these` needs 45 or fewer places in view (the spec zooms in).
 - **Help links.** Migration `0202_help_video_links_2026-11-08.sql`. The `contest-passes` article still has no video: link `run-passes`.
 - **Open.** Split recommendation for Quick start 4:43, Customize 6:58 and Contest passes 4:18 (shared "Start a contest" video); duplicate "Tap Open contest." in `edit-entry`; `app` describes phone menus it cannot show; the product still says "display" in a few labels the videos read aloud.
+
+## Audio check (2026-11-09)
+A speech-recognition check of all 62 recordings (`scripts/tutorials/audio-check/`) found two with wrong narration in the computer version: Find lights near me (opening doubled, a line skipped) and Edit your contest (lines from another video in the middle). Both re-recorded and rechecked. Every line's voice starts within 0.3 s of its caption in all 62 videos. The recorder now clears old voice clips before each run and stops if a clip does not fit its text. The picture-to-voice match (does the voice say "tap" when the tap happens) is not covered by this check.
