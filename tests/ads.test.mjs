@@ -269,3 +269,27 @@ test("nothing personal: tables hold no email, name or free text beyond a short p
   const { raw } = mk();
   for (const t of ["ads_reports", "ads_report_log"]) assert.deepEqual(raw.prepare(`SELECT name FROM pragma_table_info('${t}')`).all().map((c) => c.name).filter((n) => /mail|name|phone|ip|user|audience_detail/i.test(n)), []);
 });
+
+test("ad_url: only https Facebook and Instagram links, no tokens, kept when a later report leaves it out", async () => {
+  await withNow(NOW, async () => {
+    const { env, raw } = mk();
+    const bad = ["http://www.facebook.com/ads/1", "https://evil.example.com/x", "https://facebook.com.evil.com/x", "https://www.facebook.com@evil.com/x", "https://user:pw@www.facebook.com/x",
+      "https://www.facebook.com/x?access_token=abc", "https://business.facebook.com/x?token=abc", "https://www.instagram.com/p/1/?code=zz", "https://www.facebook.com:8443/x", "javascript:alert(1)", "https://www.facebook.com/" + "a".repeat(500), "", 5, "ftp://www.facebook.com/x"];
+    for (const u of bad) assert.equal((await send(env, [row({ ad_url: u })])).status, 400, String(u).slice(0, 60));
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM ads_reports").get().n, 0);
+    for (const u of ["https://business.facebook.com/adsmanager/manage/ads?act=1", "https://www.facebook.com/SoCalLights/posts/1", "https://fb.me/abc", "https://www.instagram.com/p/xyz/", "https://adsmanager.facebook.com/x", "https://facebook.com/x", "https://instagram.com/x"])
+      assert.equal((await send(env, [row({ ad_url: u, as_of: "2026-11-20T08:00:00Z" })])).status, 200, u);
+    await send(env, [row({ ad_url: "https://fb.me/keep", as_of: "2026-11-20T10:00:00Z" })]);
+    await send(env, [row({ spend_cents: 900, as_of: "2026-11-20T11:00:00Z" })]);
+    assert.equal(raw.prepare("SELECT ad_url FROM ads_reports").get().ad_url, "https://fb.me/keep");
+    const d = await (await adminAds({ env })).json(), a = d.ads.find((x) => x.id === "ct-a-meta");
+    assert.equal(a.report.ad_url, "https://fb.me/keep"); assert.ok(a.primary_text.length > 10); assert.equal(a.budget_cents, 5500); assert.ok(a.landing_url.includes("ref=mt-ct-a"));
+    const s = await call(status, env, "status"); assert.equal(s.body.ads.find((x) => x.ad_id === "ct-a-meta").report.ad_url, "https://fb.me/keep");
+  });
+});
+
+test("admin page: ads table is built with textContent and links open safely", () => {
+  const js = readFileSync("public/admin/admin.js", "utf8"), fn = js.slice(js.indexOf("function adRows"), js.indexOf("async function renderAds"));
+  assert.ok(fn.length > 500); assert.doesNotMatch(fn, /innerHTML|insertAdjacentHTML/);
+  assert.match(fn, /target: "_blank", rel: "noopener noreferrer"/); assert.match(fn, /aria-expanded/); assert.match(fn, /link not reported yet/);
+});

@@ -20,7 +20,7 @@ export async function onRequestGet({ env }) {
     last_report_at: last || null,
     totals: s.totals,
     campaigns: s.campaigns,
-    ads: all.items.map((i) => ({ id: i.id, audience: i.audience, concept: i.concept, headline: i.headline, status: i.status, wave: i.wave, starts: i.starts, ends: i.ends, ref: refOf(i.landing_url), landings: land[refOf(i.landing_url)] || 0, report: rep.get(i.id) || null })),
+    ads: all.items.map((i) => ({ id: i.id, audience: i.audience, concept: i.concept, headline: i.headline, primary_text: i.primary_text, description: i.description, cta: i.cta, landing_url: i.landing_url, asset_id: i.asset_id, budget_cents: (all.campaigns.find((c) => c.audience === i.audience) || {}).budget_cents || 0, status: i.status, wave: i.wave, starts: i.starts, ends: i.ends, ref: refOf(i.landing_url), landings: land[refOf(i.landing_url)] || 0, report: rep.get(i.id) || null })),
     warnings: computeWarnings(all),
     log,
   }, { headers: { "cache-control": "no-store" } });

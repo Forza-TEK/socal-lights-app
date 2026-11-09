@@ -896,6 +896,35 @@ async function renderOutreach() {
 const usd = (c) => "$" + (Number(c || 0) / 100).toFixed(2);
 const ADPILL = { draft: "", in_review: "warn", active: "ok", paused: "", disapproved: "bad", ended: "" };
 const ADWARN = { over_total_budget: "Over $300", over_loaded_budget: "Over $280", campaign_over_budget: "Campaign over budget", not_in_launch_set: "Not in launch set", active_after_dec8: "Running past Dec 8", past_campaign_end: "Past campaign end", disapproved: "Disapproved", stale_report: "No report in 48 hours", spend_decreased: "Spend went down" };
+// The ads table, built with the DOM and textContent only (no HTML from data). Each ad id links to the ad Grok reported; a button expands the approved copy.
+const adEl = (tag, text, cls, attrs = {}) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+const adSafeUrl = (u) => { try { const x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch { return ""; } };
+function adRows(tbody, ads, campaigns) {
+  const when = (t) => (t ? String(t).slice(0, 16).replace("T", " ") + " UTC" : "");
+  ads.forEach((a, n) => {
+    const r = a.report, tr = adEl("tr"), id = "adx-" + n, c = campaigns.find((x) => x.audience === a.audience) || {};
+    const idc = adEl("td"), btn = adEl("button", "Details", "btn ghost", { type: "button", "aria-expanded": "false", "aria-controls": id });
+    btn.style.cssText = "padding:2px 8px;font-size:12px;margin-right:6px";
+    const url = r && adSafeUrl(r.ad_url);
+    idc.append(btn);
+    if (url) { const l = adEl("a", a.id, null, { href: url, target: "_blank", rel: "noopener noreferrer" }); const code = adEl("code"); code.append(l); idc.append(code); }
+    else { idc.append(adEl("code", a.id)); if (a.status === "approved") idc.append(adEl("span", " link not reported yet", "meta")); }
+    idc.append(adEl("br"), adEl("span", a.headline, "meta"));
+    const st = a.status === "approved" ? (r ? adEl("span", r.status.replace("_", " "), "tag " + (ADPILL[r.status] || "")) : adEl("span", "no report", "tag")) : adEl("span", a.status.replace(/_/g, " "), "tag");
+    const cell = (v) => adEl("td", v);
+    const stc = adEl("td"); stc.append(st);
+    tr.append(idc, stc, cell(r ? usd(r.spend_cents) : ""), cell(r ? fmt(r.impressions) : ""), cell(r ? fmt(r.clicks) : ""), cell(a.status === "approved" ? fmt(a.landings) : ""), cell(r ? when(r.received_at) : ""));
+    const dt = adEl("tr", null, null, { id, hidden: "" }), dc = adEl("td", null, null, { colspan: "7" });
+    const line = (k, v) => { const p = adEl("p", null, "meta"); p.style.margin = "4px 0"; p.append(adEl("b", k + ": "), document.createTextNode(v || "(none)")); return p; };
+    dc.append(line("Headline", a.headline), line("Text", a.primary_text), line("Description", a.description), line("Button", a.cta), line("Tracked link", a.landing_url),
+      line("Files expected", a.asset_id ? a.asset_id + " (see /api/ads/assets)" : "none yet"),
+      line("Campaign", `${(c.name || a.audience)}, budget ${usd(a.budget_cents)}, ${a.starts} to ${a.ends}`),
+      line("Last status message", r ? `${r.status}${r.disapproval_reason ? ": " + r.disapproval_reason : ""} (as of ${r.as_of})` : "No report yet"));
+    dt.append(dc);
+    btn.onclick = () => { const open = btn.getAttribute("aria-expanded") === "true"; btn.setAttribute("aria-expanded", String(!open)); dt.hidden = open; };
+    tbody.append(tr, dt);
+  });
+}
 async function renderAds() {
   const main = $("#main"), d = await api("/api/admin/ads"), t = d.totals;
   const pct = Math.min(100, (t.spend_cents / t.budget_cents) * 100), cls = t.spend_cents > t.budget_cents ? "u-limit" : t.spend_cents > t.loaded_cents ? "u-warning" : "u-ok";
@@ -905,7 +934,6 @@ async function renderAds() {
     <p class="unum"><b>${usd(c.spend_cents)}</b> <span class="meta">of ${usd(c.budget_cents)} budget</span></p>
     <div class="ubar" role="progressbar" aria-label="${esc(c.audience)} spend" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p)}"><i style="width:${p}%"></i></div>
     <p class="meta" style="margin:6px 0 0">${fmt(c.reported_ads)} of ${fmt(c.ads.length)} ads reported</p></article>`; }).join("");
-  const rows = d.ads.map((a) => { const r = a.report; return `<tr><td><code>${esc(a.id)}</code><br><span class="meta">${esc(a.headline)}</span></td><td>${a.status === "approved" ? (r ? `<span class="tag ${ADPILL[r.status] || ""}">${esc(r.status.replace("_", " "))}</span>` : `<span class="tag">no report</span>`) : `<span class="tag">${esc(a.status.replace(/_/g, " "))}</span>`}</td><td>${r ? usd(r.spend_cents) : ""}</td><td>${r ? fmt(r.impressions) : ""}</td><td>${r ? fmt(r.clicks) : ""}</td><td>${a.status === "approved" ? fmt(a.landings) : ""}</td><td>${r ? at(r.received_at) : ""}</td></tr>`; }).join("");
   main.innerHTML = `<p class="meta" style="margin:0 0 12px">Grok builds the Facebook and Instagram ads and reports status every 2 days through a key-protected API. Read-only here: the ad copy and its status change only by migration, and budgets are set by you in Meta Ads Manager. Contract: <code>docs/monetization/grok-ads-api.md</code>.</p>
     <h2 class="dh">Budget</h2>
     <div class="ugrid"><article class="ucard ${cls}" aria-label="Total spend"><div class="uh"><h3>Total spend</h3><span class="tag ${d.configured ? "ok" : "bad"}">${d.configured ? "Key set" : "No key: API is off"}</span></div>
@@ -916,7 +944,8 @@ async function renderAds() {
     <h2 class="dh">Campaigns</h2><div class="ugrid">${camp}</div>
     <h2 class="dh">Ads</h2>
     <p style="margin:0 0 8px"><button type="button" class="btn ghost" id="adcsv">Download CSV</button> <span class="meta">Landings are visits counted under each ad's ref code since the first start date (no people are identified).</span></p>
-    <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Ads"><table style="width:100%;min-width:640px"><thead><tr><th scope="col">Ad</th><th scope="col">Status</th><th scope="col">Spend</th><th scope="col">Impressions</th><th scope="col">Clicks</th><th scope="col">Landings</th><th scope="col">Last report</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Ads"><table style="width:100%;min-width:640px"><thead><tr><th scope="col">Ad</th><th scope="col">Status</th><th scope="col">Spend</th><th scope="col">Impressions</th><th scope="col">Clicks</th><th scope="col">Landings</th><th scope="col">Last report</th></tr></thead><tbody id="adrows"></tbody></table></div>`;
+  adRows($("#adrows"), d.ads, d.campaigns);
   $("#adcsv").onclick = () => {
     const csv = "ad_id,campaign,item_status,reported_status,spend_usd,impressions,clicks,landings,ref,as_of,received_at\r\n" + d.ads.map((a) => { const r = a.report || {}; return [a.id, a.audience, a.status, r.status || "", r.spend_cents == null ? "" : (r.spend_cents / 100).toFixed(2), r.impressions ?? "", r.clicks ?? "", a.landings, a.ref, r.as_of || "", r.received_at || ""].map(csvCell).join(","); }).join("\r\n") + "\r\n";
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "ads-status.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);

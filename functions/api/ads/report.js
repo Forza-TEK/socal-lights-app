@@ -33,7 +33,7 @@ export async function onRequest({ request, env }) {
     const asOf = normAsOf(r.as_of), prev = have.get(r.ad_id);
     if (prev && asOf < prev.as_of) { skipped.push({ ad_id: r.ad_id, reason: `older than the stored report (${prev.as_of}); kept the newer one` }); continue; }
     const vals = [r.ad_id, r.campaign, r.status, r.spend_cents, r.impressions, r.clicks, cleanReason(r.disapproval_reason), asOf, receivedAt];
-    st.push(env.DB.prepare("INSERT INTO ads_reports (ad_id, campaign, status, spend_cents, impressions, clicks, disapproval_reason, as_of, received_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(ad_id) DO UPDATE SET campaign = excluded.campaign, status = excluded.status, spend_cents = excluded.spend_cents, impressions = excluded.impressions, clicks = excluded.clicks, disapproval_reason = excluded.disapproval_reason, as_of = excluded.as_of, received_at = excluded.received_at").bind(...vals));
+    st.push(env.DB.prepare("INSERT INTO ads_reports (ad_id, campaign, status, spend_cents, impressions, clicks, disapproval_reason, as_of, received_at, ad_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(ad_id) DO UPDATE SET campaign = excluded.campaign, status = excluded.status, spend_cents = excluded.spend_cents, impressions = excluded.impressions, clicks = excluded.clicks, disapproval_reason = excluded.disapproval_reason, as_of = excluded.as_of, received_at = excluded.received_at, ad_url = COALESCE(NULLIF(excluded.ad_url, ''), ads_reports.ad_url)").bind(...vals, r.ad_url || ""));
     st.push(env.DB.prepare("INSERT INTO ads_report_log (ad_id, campaign, status, spend_cents, impressions, clicks, disapproval_reason, as_of, received_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(...vals));
     accepted++;
   }
