@@ -162,3 +162,12 @@ Every Help article and every tutorial video was checked against the app as it is
 - **Title change:** `pro-filter` is now "Find professionally installed homes".
 - **Length limits:** 5:00 for every video except Customize (8:00, `maxSeconds`).
 - **Not changed (app code, out of scope):** `public/manifest.webmanifest` had a shortcut named "My night"; renamed to "Favorites" later the same day.
+
+## Sync audit and re-record (2026-11-08, evening)
+Full report: `docs/audit/2026-11-08-tutorial-videos.md` (verdict per video, sync numbers per file).
+- **What was wrong.** In the computer versions the screen change after "tap X" came 1.5 to 5.8 s after the words (cursor glide made of 38 mouse moves, slow under load); every file had audio 1.9 s shorter than video (silent end card); captions were guessed from character counts (up to 1.2 s off); the phone versions of `announce` and `sponsors` never left the screen the words had moved on from ("See it as voters do" is in the More sheet on a phone); end cards said "Create a contest in two minutes", "Show off your house", "Find lights near you".
+- **Done.** All 31 computer versions and 7 phone versions (`announce`, `sponsors`, `judge`, `showcase`, `add-event`, `feature`, `map`) re-recorded; the other 24 phone versions repaired with `scripts/tutorials/fix-sync.mjs` (video copied). New video `contest-passes` (file `run-passes`, 4:18 / 4:17), in the Run a contest group after Customize. `showcase` is now titled "Show off your home". `check-sync.mjs` passes on all 64 files.
+- **Recorder.** Clock-timed cursor glide, audio padded to the last frame, captions retimed to the voice (`captions.mjs`), `rerecord-queue.sh` (one video at a time, commit and push after each), `TIMING=1` log. `seed-passes.sql` makes the demo organization's free contest used so the pass picker shows.
+- **Before you record again.** The local server needs its own database copy with every migration applied and the demo photos in R2; a 7-minute video needs about 2 GB of free disk for frames; `Route these` needs 45 or fewer places in view (the spec zooms in).
+- **Help links.** Migration `0202_help_video_links_2026-11-08.sql`. The `contest-passes` article still has no video: link `run-passes`.
+- **Open.** Split recommendation for Quick start 4:43, Customize 6:58 and Contest passes 4:18 (shared "Start a contest" video); duplicate "Tap Open contest." in `edit-entry`; `app` describes phone menus it cannot show; the product still says "display" in a few labels the videos read aloud.
