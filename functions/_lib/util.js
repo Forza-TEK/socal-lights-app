@@ -78,6 +78,7 @@ export function rowToEvent(r) {
     lat: r.lat, lng: r.lng, b: r.blurb || "", u: r.url || "", sn: r.season || "christmas",
     v: r.venue || "", a: r.address || "", img: r.image || "", imgs: parseImgs(r.images),
     f: featuredLevel(r), nt: r.notice || "", lc: String(r.updated_at || "").slice(0, 10),
+    ...(r.partner_until && r.partner_until >= ptToday() ? { ep: 1, ...(r.partner_verified ? { epv: 1 } : {}) } : {}), // Event Partner badge (partner.js); epv: the organization is a website domain matched by its organizer's email
   };
 }
 

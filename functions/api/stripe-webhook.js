@@ -12,6 +12,8 @@ import { sendFeaturePaidEmail } from "../_lib/featuremail.js";
 import { sponsorWindow } from "../_lib/sponsor.js";
 import { CONTEST_PASSES, quoteProblem } from "../_lib/passes.js";
 import { sendPassPaidEmail } from "../_lib/passmail.js";
+import { EVENT_PARTNER, partnerQuoteProblem } from "../_lib/partner.js";
+import { sendPartnerPaidEmail } from "../_lib/partnermail.js";
 import { sponsorEmails } from "../_lib/sponsormail.js";
 import { enrollRenewal, pauseOnRevoke } from "../_lib/renewal.js";
 import { stripeCall } from "../_lib/stripe.js";
@@ -109,9 +111,9 @@ const orderByPi = (env, pi) => (pi ? env.DB.prepare("SELECT * FROM feature_order
 async function paid(s, env) {
   if (s.payment_status !== "paid") return { waiting: s.payment_status }; // e.g. a delayed method; Stripe sends async_payment_succeeded later
   const eventId = s.metadata && s.metadata.event_id, plan = s.metadata && s.metadata.plan;
-  const mt = s.metadata && s.metadata.target, target = mt === "home" ? "home" : mt === "installer" ? "installer" : mt === "contest_pass" ? "contest_pass" : "event"; // a home (podium finisher) and an installer's Sponsor placement are bought through the same orders
+  const mt = s.metadata && s.metadata.target, target = mt === "home" ? "home" : mt === "installer" ? "installer" : mt === "contest_pass" ? "contest_pass" : mt === "event_partner" ? "event_partner" : "event"; // a home (podium finisher) and an installer's Sponsor placement are bought through the same orders
   const tier = target === "event" && !!EVENT_PLANS[plan]; // one of the new event tiers (ev_pin, ev_banner, ev_top, ev_all); the old keys pin / top / season are grandfathered below
-  const price = target === "contest_pass" ? CONTEST_PASSES[plan] : target === "installer" ? INSTALLER_PLANS[plan] : tier ? EVENT_PLANS[plan] : PLANS[plan];
+  const price = target === "event_partner" ? (plan === "partner" ? EVENT_PARTNER : null) : target === "contest_pass" ? CONTEST_PASSES[plan] : target === "installer" ? INSTALLER_PLANS[plan] : tier ? EVENT_PLANS[plan] : PLANS[plan];
   if (!eventId || !price) return { ignored: "no feature metadata" };
   if (target === "home" && !PLANS[plan].days) return { ignored: "no Full run plan for homes" };
 
@@ -142,6 +144,13 @@ async function paid(s, env) {
     if (!hasQuote) return { ignored: "no pass quote" };
     quote = { from: m.quote_from, to: m.quote_to, cents: Number(m.quote_cents) }; expected = quote.cents;
     if (!(await env.DB.prepare("SELECT 1 FROM feature_orders WHERE session_id = ?").bind(s.id).first())) { const why = await quoteProblem(env, { event_id: eventId, plan, quote_from: quote.from, quote_to: quote.to }); if (why) quoteChanged = why; }
+  }
+  if (target === "event_partner") {
+    // An Event Partner plan: eventId is the organization key. Same handling as a contest pass: the quote (season dates, price) was locked at checkout, the paid amount is checked against it, and a plan bought
+    // for a season that changed, or by an organization that already holds one or is under a comp (second tab, duplicate session), is held as refund due instead of being applied twice.
+    if (!hasQuote) return { ignored: "no partner quote" };
+    quote = { from: m.quote_from, to: m.quote_to, cents: Number(m.quote_cents) }; expected = quote.cents;
+    if (!(await env.DB.prepare("SELECT 1 FROM feature_orders WHERE session_id = ?").bind(s.id).first())) { const why = await partnerQuoteProblem(env, { event_id: eventId, quote_from: quote.from, quote_to: quote.to }); if (why) quoteChanged = why; }
   }
   const exists = await env.DB.prepare("SELECT 1 FROM feature_orders WHERE session_id = ?").bind(s.id).first();
   if (!exists && pi) { // did a refund or dispute for this payment already arrive?
@@ -184,6 +193,10 @@ async function paid(s, env) {
   }
   const nf = await applyOrder(env.DB, order, targetId);
   if (!nf) { console.error("stripe-webhook: target not found", targetId); return err(500, (target === "home" ? "Home" : target === "installer" ? "Installer profile" : "Event") + " not found; will retry."); }
+  if (target === "event_partner") {
+    await bump(env, "fn:partner-paid"); await sendPartnerPaidEmail(env, order, nf, s.amount_total); // once: a replay returns "duplicate" above
+    return { partner: nf };
+  }
   if (target === "contest_pass") {
     await bump(env, "fn:pass-paid"); await sendPassPaidEmail(env, order, nf, s.amount_total); // a number only, and one email, once: a replay returns "duplicate" above
     return { pass: nf };

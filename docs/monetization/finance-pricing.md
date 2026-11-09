@@ -88,6 +88,23 @@ Every price lives only in code: `COMPONENT_CENTS` / `EVENT_PLANS` (events) and `
 ### 2d. Optional automatic renewal for installers (2026-11-07)
 Off by default, installers only. Charged on the last day of the running placement at the plan's CURRENT price (the reminder says when the price changed). Stripe fee about 2.9% + 30c per charge ($50 nets about $48.25, $75 about $72.52); a card saved off-session adds no fee. A failed charge is retried once 3 days later and then lapses: expect some involuntary churn (cards expire) and no revenue from a lapsed renewal. No refund or credit for timing, as for any Sponsor purchase.
 
+### 2f. Event Partner plan (2026-11-09, owner decision after meeting the City of Eastvale)
+Listing an event stays FREE for everyone (the approved ads say "List your holiday event for free"). The per-event prices in 2e do not change ($25 Featured pin, $50 banner + pin, $50 top + pin, $75 all three). 2f adds one plan for organizations that run several events.
+
+| Plan | Who | Price | Covers | Stripe fee (2.9% + 30c) | Net |
+|---|---|---|---|---|---|
+| Event Partner (`partner`, target `event_partner`) | cities, chambers, nonprofits, event producers | $149 per season | up to 10 of the organization's events that season | $4.62 | $144.38 |
+
+- The price and the cap exist only in `functions/_lib/partner.js` (`EVENT_PARTNER`), re-exported by `featured.js` and served by `/api/config` as `eventPartner`.
+- What each covered event gets: the Featured pin (level 1, the same as `ev_pin`) for its run window under the existing rules (`eventQuote`): featuring opens 30 days before the event starts, it runs from the day the plan is applied to the event's last day or the last day of the season (Christmas lights: Jan 6), whichever comes first. An event that already holds the pin for the whole window is refused, so it does not waste one of the 10. Plus an "Event Partner" badge on the event page (`events.partner_until`). The badge does not imply endorsement, and carries "Verified email domain" only when the organization key is a website domain matched by the buyer's email (`trustOf`, organization key `d:<domain>`); otherwise it says only "Event Partner".
+- Season = the sponsor season of the payment day (`seasonOf`). Bought once per organization per season; a second payment for the same season is recorded as refund due, not applied twice. Value check: ten events at $25 would be $250 a season, so the plan is $101 (about 40%) cheaper than ten single pins; an organization with 6 or more events saves money, with 5 or fewer the single pins are cheaper.
+- Organization key: as for contest passes (`passkey.js`): `d:eastvaleca.gov` when the sign-in email matches the website (the email's own domain is used when no website is typed), else `u:<email>`.
+- Founder cities (comps): `event_partner_comps`, granted in Admin > Event Partners or by migration. Migration 0208 grants `d:eastvaleca.gov` and `d:covinaca.gov` 10 events per season, free **through 2026-12-31 only** (this year; owner decision, was first drafted as 2028-12-31). An organization under a comp never sees a price (the entitlement answer has `offer: null`); after the comp ends it sees the normal $149. No order exists for a comp, so there is no Stripe fee and no revenue.
+- Tables (migration 0208): `event_partner_plans` (one row per paid plan), `event_partner_comps`, `event_partner_events` (one row per covered event and season = a slot used), columns `events.partner_until`, `events.partner_verified`. Paid plans are `feature_orders` rows with `target = 'event_partner'`, so Admin > Orders, the refund flags and the daily digest cover them.
+- Refund or lost dispute: the plan is revoked and the pins it applied are taken back through the same recompute as any order; a pin that something else also explains (another order, or Admin extended it) is left on and the order is flagged "[auto] manual: placement differs". The badge always goes and the slots come back.
+- Funnel counters: `fn:partner-checkout`, `fn:partner-paid`, `fn:partner-applied`.
+- Open question for the owner: if organizations with more than 10 events a season ask for more, add a contact-us line like contest passes (more than 20) rather than a second tier, until there is demand.
+
 ## 3. Revenue scenarios from real traffic
 
 Season window: Nov 4 to Jan 2, about 60 days. Humans per day: 20 (low), 50 (high; Nov 3's count). Visits in window: **1,200 to 3,000**. Cloudflare's 450-650 "uniques" are not used.

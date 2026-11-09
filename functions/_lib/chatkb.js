@@ -3,6 +3,7 @@
 // field is length-limited before it reaches the model.
 import { PUBLIC_PLANS, PUBLIC_EVENT_PLANS, PUBLIC_COMPONENT_CENTS, PUBLIC_INSTALLER_PLANS, OPEN_DAYS } from "./featured.js";
 import { PUBLIC_CONTEST_PASSES } from "./passes.js";
+import { PUBLIC_EVENT_PARTNER } from "./partner.js";
 import { loadArticles, plainText, tokens } from "./help.js";
 import { stripFigures, redactFraudDetail } from "./chatguard.js";
 import { ptToday } from "./time.js";
@@ -26,6 +27,7 @@ export function priceFacts() {
     `Installer Sponsor placements, per season: ${inst}.`,
     `Featuring a home (only homes that finished 1st, 2nd or 3rd in a contest whose winners were announced): ${home}.`,
     `Contest organizer passes (each organization's first contest in a ${PUBLIC_CONTEST_PASSES.windowMonths}-month window is free; a pass is one payment, covers the total contests in that window, and never renews by itself): ${pass}. More than ${PUBLIC_CONTEST_PASSES.contactAbove} contests: contact us.`,
+    `Event Partner plan for cities, chambers, nonprofits and event producers: ${add(PUBLIC_EVENT_PARTNER.cents)} per season, covers up to ${PUBLIC_EVENT_PARTNER.cap} of the organization's events that season, each with the Featured pin for its run window and an Event Partner badge. Listing stays free. Founding cities have it free this year.`,
     "Payment never affects who wins a contest or any contest result.",
     "Full details: https://socallights.app/pricing",
   ].join("\n");

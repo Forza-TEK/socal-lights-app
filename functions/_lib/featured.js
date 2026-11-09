@@ -1,4 +1,5 @@
 import { applyPassOrder, revokePass, isPassOrder } from "./passes.js";
+import { applyPartnerOrder, revokePartner, isPartnerOrder, EVENT_PARTNER, PUBLIC_EVENT_PARTNER } from "./partner.js";
 import { applyInstallerOrder, revokeInstaller, seasonOf } from "./sponsor.js";
 import { ptToday } from "./time.js";
 // PRICING (owner decision 2026-11-06). Every price is a constant in this file and nowhere else (/api/config serves them to the pages).
@@ -12,6 +13,8 @@ import { ptToday } from "./time.js";
 //   UPGRADES cost COMPONENT_CENTS per component the event does not already hold for the whole window; a purchase that adds nothing new is refused (400).
 // The OLD event keys pin / top / season (PLANS below) are never offered for events any more. They stay so orders already paid or in flight keep working (amount checks, refunds, restore).
 // HOMES keep their own 30-day plans, unchanged: PLANS.pin $10 and PLANS.top $15, podium finishers of an announced contest only (HOME_PLANS in podium.js).
+// EVENT PARTNER ($149 a season, up to 10 events, the Featured pin on each): its price and cap are in partner.js (a small module imported here) and re-exported below.
+export { EVENT_PARTNER, PUBLIC_EVENT_PARTNER };
 export const OPEN_DAYS = 30;
 export const LEGACY_SEASON_CENTS = 2000; // the old "Whole season" price: a paid or in-flight order at this amount is grandfathered (no 90-day cap, no amount-mismatch flag)
 export const PLANS = {
@@ -146,6 +149,7 @@ export const setOrderNote = (db, sessionId, text) => db.prepare("UPDATE feature_
 export const isHomeOrder = (o) => !!o && o.target === "home";
 export const isInstallerOrder = (o) => !!o && o.target === "installer";
 export async function applyOrder(db, order, targetId, today = ptToday()) {
+  if (isPartnerOrder(order)) return applyPartnerOrder(db, order); // an Event Partner plan: an organization key, not an event (partner.js)
   if (isPassOrder(order)) return applyPassOrder(db, order); // a contest pass: an organization key, not an event (passes.js)
   if (isInstallerOrder(order)) return applyInstallerOrder(db, order, today); // an installer id, not an event: banner_until / top_until (sponsor.js)
   const home = isHomeOrder(order);
@@ -245,8 +249,10 @@ export async function eventFloor(db, eventId, today = ptToday()) {
 // could not be removed cleanly; the reason is also written to the order's note so Admin > Orders shows it.
 export async function revokePlan(db, order, status) {
   let manual = false;
-  if (order.applied && order.event_id && !order.event_id.startsWith("sub:") && !order.refunded_at) manual = !(await (isPassOrder(order) ? revokePass(db, order, ptToday()) : isInstallerOrder(order) ? revokeInstaller(db, order, ptToday()) : recomputeAfterRevoke(db, order, ptToday())));
-  const why = isPassOrder(order)
+  if (order.applied && order.event_id && !order.event_id.startsWith("sub:") && !order.refunded_at) manual = !(await (isPartnerOrder(order) ? revokePartner(db, order, ptToday(), recomputeAfterRevoke) : isPassOrder(order) ? revokePass(db, order, ptToday()) : isInstallerOrder(order) ? revokeInstaller(db, order, ptToday()) : recomputeAfterRevoke(db, order, ptToday())));
+  const why = isPartnerOrder(order)
+    ? AUTO + `manual: placement differs. The ${status} Event Partner plan was revoked, but a Featured placement it applied to an event is also explained by something else (another order or Admin), so it was left on. Check it in Admin > Event Partners.`
+    : isPassOrder(order)
     ? AUTO + `manual: placement differs. The ${status} contest pass was left on because the extra contests it paid for are already live. Decide in Admin > Contests > Contest passes (grant a comp, or leave it).`
     : AUTO + `manual: placement differs. The ${status} order did not own the current placement (comped, extended or changed by hand), so it was left on. Check it in Admin > ${isInstallerOrder(order) ? "Installers" : "Events"}.`;
   await db.prepare("UPDATE feature_orders SET status=?, refunded_at=COALESCE(refunded_at, datetime('now')), note=CASE WHEN ? THEN ? ELSE note END WHERE session_id=?")

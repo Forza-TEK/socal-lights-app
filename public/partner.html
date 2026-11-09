@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Event Partner · SoCal Lights</title>
+<meta name="description" content="Event Partner for cities, chambers, nonprofits and event producers: one price per season covers up to 10 of your events with the Featured pin and an Event Partner badge. Listing an event stays free.">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/info.css?v=20261110y">
+<style>.plist{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}.plist li{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.plist small{display:block;color:var(--muted)}.pbox{border:2px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}.pbox ul{padding-left:20px;display:grid;gap:4px}.pbox .price{font-size:32px;font-weight:700}.pbox .price small{font-size:14px;font-weight:400;color:var(--muted)}</style>
+<script src="/hit.js?v=20261107a" defer></script>
+</head>
+<body>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<main>
+<h1>Event Partner</h1>
+<p class="lede">For cities, chambers of commerce, nonprofits and event producers that run several events in a season. One price covers up to 10 of your organization's events with the Featured pin and an Event Partner badge. Listing an event stays free for everyone. <a href="/pricing#events">See all pricing</a>.</p>
+<div id="app"><p class="muted">Loading…</p></div>
+<p class="meta" id="msg" role="status"></p>
+<h2>Good to know</h2>
+<details><summary>What does the badge mean?</summary><p>The Event Partner badge shows that the organization has this plan. It is not an endorsement by SoCal Lights. When your sign-in email is at the same website as your organization, the badge also says so with "Verified email domain".</p></details>
+<details><summary>How long does each event stay Featured?</summary><p>Featuring opens 30 days before an event starts. Once you apply the plan to an event, it runs to the event's last day, or to the end of the season, whichever comes first (Christmas lights season ends Jan 6).</p></details>
+<details><summary>Can I get a refund?</summary><p>If we cannot apply what you paid for, you get a full refund. Once your events are featured, payments are non-refundable, but write to <a href="mailto:info@socallights.app">info@socallights.app</a> if something is wrong, and please do that before disputing a charge. A refund or dispute switches the Featured pins it applied off.</p></details>
+</main>
+<script type="module">
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111b";
+import { me, signIn } from "/auth.js?v=20261107p";
+import { partnerCopy, dollars, niceDate, esc, BADGE_NOTE } from "/partner-copy.js?v=20261109a";
+document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
+const $ = (q) => document.querySelector(q), q = new URLSearchParams(location.search);
+const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
+const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+const copy = partnerCopy(cfg);
+const view = async () => { const r = await fetch("/api/partner/entitlement", { cache: "no-store" }); return r.ok ? r.json() : null; };
+const eventsOf = async () => { const f = await fetch("/api/me/featurable", { cache: "no-store" }).then((r) => (r.ok ? r.json() : {})).catch(() => ({})); return [...(f.events || []), ...(f.contests || [])].filter((m) => m.state === "live" && m.id); };
+const msg = (t) => { $("#msg").textContent = t; };
+if (/SoCalLightsApp/.test(navigator.userAgent)) $("#app").innerHTML = `<p>Event Partner is bought on the website, socallights.app/partner.</p>`;
+else if (!(await me()).user) {
+  $("#app").innerHTML = `<div class="pbox"><h2>${esc(copy.name)}${cfg.eventPartner ? ` <span class="price">${esc(dollars(cfg.eventPartner.cents))} <small>${esc(copy.unit)}</small></span>` : ""}</h2><p>${esc(copy.blurb)}</p><ul>${copy.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul><p class="meta">${esc(copy.note)}</p></div><p>Sign in to see where your organization stands.</p><button class="btn" id="in" type="button">Sign in</button>`;
+  $("#in").onclick = async () => { if (await signIn({ title: "Sign in for Event Partner", next: "/partner" })) location.reload(); };
+} else {
+  const paint = async (v) => {
+    if (!v) { $("#app").innerHTML = `<p>We could not load your organization. Please try again in a moment.</p>`; return; }
+    const evs = await eventsOf(), covered = new Set(v.events.map((e) => e.id));
+    const standing = v.comp ? `<p><b>Founding partner: free through ${esc(niceDate(v.comp.until))}.</b></p>` : "";
+    const head = `<p><b>${esc(v.org)}</b>${v.verified ? ` <span class="tag">Verified email domain</span>` : ""}</p>`;
+    const buy = !v.covered && v.offer ? `<div class="pbox"><h2>${esc(copy.name)} <span class="price">${esc(dollars(v.offer.cents))} <small>${esc(copy.unit)}</small></span></h2><p>${esc(copy.blurb)} The ${esc(v.season.label)} season ends ${esc(niceDate(v.season.end))}.</p><ul>${copy.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul><p><button class="btn" id="buy" type="button">Pay ${esc(dollars(v.offer.cents))} on Stripe</button></p><p class="meta">${esc(copy.note)} The receipt goes to your account email.</p></div>` : "";
+    const used = v.covered ? `<p><b>${v.used}</b> of <b>${v.unlimited ? "unlimited" : v.cap}</b> events used for the ${esc(v.season.label)} season (through ${esc(niceDate(v.season.end))}).</p>` : "";
+    const done = v.events.length ? `<h3>Covered events</h3><ul class="plist">${v.events.map((e) => `<li><span><b>${esc(e.name || e.id)}</b><small>Featured ${esc(niceDate(e.from_day))} to ${esc(niceDate(e.until))}</small></span><a href="/#e-${esc(e.id)}">See it</a></li>`).join("")}</ul>` : "";
+    const open = v.covered ? evs.filter((m) => !covered.has(m.id)) : [];
+    const pick = v.covered ? `<h3>Choose an event</h3>${v.canApply ? "" : `<p class="msg">All of your events for this season are used. Write to info@socallights.app if you need more.</p>`}${open.length ? `<ul class="plist">${open.map((m) => { const qt = (m.quotes || {}).ev_pin || {}, why = qt.problem ? String(qt.problem).replace(/^Nothing to add: /, "") : ""; return `<li><span><b>${esc(m.name)}</b><small>${esc([m.city, m.start && m.end ? niceDate(m.start) + (m.end !== m.start ? " to " + niceDate(m.end) : "") : ""].filter(Boolean).join(" · "))}${why ? " · " + esc(why) : ""}</small></span><button class="btn ghost" type="button" data-ap="${esc(m.id)}"${why || !v.canApply ? " disabled" : ""}>Use the plan</button></li>`; }).join("")}</ul>` : `<p>You have no other live event on this account. <a href="/add-event">Add an event</a> (free) first, or <a href="/feature">claim a listing</a>.</p>`}<p class="meta">${esc(BADGE_NOTE)}</p>` : "";
+    $("#app").innerHTML = head + standing + buy + used + done + pick;
+    const b = $("#buy"); if (b) b.onclick = async () => {
+      beacon("fn:pricing-choose"); b.disabled = true; b.textContent = "Opening payment…";
+      const r = await fetch("/api/partner/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }), j = await r.json().catch(() => ({}));
+      if (r.ok && j.url) { location.href = j.url; return; }
+      b.disabled = false; b.textContent = "Pay on Stripe"; msg(j.error || "The payment page couldn't be opened. Please try again.");
+    };
+    document.querySelectorAll("[data-ap]").forEach((x) => (x.onclick = async () => {
+      x.disabled = true; msg("Applying…");
+      const r = await fetch("/api/partner/apply", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event_id: x.dataset.ap }) }), j = await r.json().catch(() => ({}));
+      if (!r.ok) { x.disabled = false; msg(j.error || "Couldn't apply the plan."); return; }
+      msg(`Done. ${j.event} is Featured through ${niceDate(j.to)}.`); paint(await view());
+    }));
+  };
+  if (q.get("cancelled")) msg("Payment cancelled. Nothing was charged.");
+  let v = await view();
+  if (q.get("paid")) {
+    msg("Payment received. Confirming your plan…");
+    for (let i = 0; i < 20 && v && !v.hasPlan; i++) { await new Promise((go) => setTimeout(go, 1500)); v = await view(); }
+    msg(v && v.hasPlan ? "Your Event Partner plan is active. A receipt is on its way to your email. Choose your events below." : "Your payment is still being confirmed. Refresh this page in a minute. You will not be charged again.");
+  }
+  await paint(v);
+}
+</script>
+<script src="/footer.js?v=20261111e" defer></script>
+</body>
+</html>
