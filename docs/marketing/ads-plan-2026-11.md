@@ -310,3 +310,10 @@ Cost: small; each touches code that must go through a PR and the usual migration
 ## Instagram (owner question, Nov 8 2026)
 
 The Meta lines in the budget table are Facebook and Instagram together: one Meta Ads Manager account, one budget, one set of ad sets. Instagram is not a separate line, so Meta can move spend to whichever surface performs better. Each Meta item in `ads-content.json` now carries an `instagram` block (placements, caption limit, vertical video, hashtags, account link). Setup: connect an Instagram business account to the Facebook Page in Meta Business settings. Caption length and format guidance is from third-party sources and UNVERIFIED against Meta's own pages.
+
+## Owner decisions, Nov 8 2026 (second pass)
+
+- **End date: December 8 for every ad, families included.** Budget stays $300 total. Family flights now run Nov 24 to Dec 8 (15 days): Families Meta $55 = $3.67 a day; Families Google Search $30 = $2.00 a day; Families Nextdoor $15, moved from Dec 9-23 to Nov 24 to Dec 8 = $1.00 a day. All other lines are unchanged. Nothing runs after Dec 8, so the reserve is the only money that could extend a winner, and only if the owner releases it.
+- **Accounts:** the Meta Business account already exists under the Forza-TEK account; a new Page for SoCalLights.app is being created. Google Ads and Nextdoor Business accounts are still to do.
+- **Claims confirmed on the live site by the owner:** "remove it any time", "QR poster", the "Request a quote" button and the judge flow.
+- **Help decisions:** add-homes limit is 100 per paste; the Add page contest tile wording stays as is.
