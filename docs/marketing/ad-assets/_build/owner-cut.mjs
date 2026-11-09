@@ -46,8 +46,8 @@ for (const c of sp.cues) {
 }
 const lastEnd = Math.max(...clips.map((c) => c.end)); let core = Math.max(acc, lastEnd + 0.7);
 const q30 = (x) => Math.ceil(x * 30 - 1e-6) / 30; core = q30(core); const endCard = reel ? 3 : 0, total = core + endCard, hold = core - acc;
-if (!reel && total > 36) throw new Error(`feed/story cut too long: ${total}`);
-if (reel && (total < 24 || total > 46)) throw new Error(`reel length ${total}`);
+if (!reel && total > 38) throw new Error(`feed/story cut too long: ${total}`);
+if (reel && (total < 24 || total > 48)) throw new Error(`reel length ${total}`);
 const sync = clips.map((c) => ({ cue: c.text, narration_start_s: +c.start.toFixed(3), action_s: c.action == null ? null : +c.action.toFixed(3), what: c.what, offset_ms: c.action == null ? null : Math.round((c.action - c.start) * 1000), pass: c.action == null ? "n/a" : (c.action - c.start) * 1000 >= -100 && (c.action - c.start) * 1000 <= 400 }));
 // overlay layers (PNG) -------------------------------------------------------------------------------------------------------------
 const FONT = `<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;800&display=swap" rel="stylesheet">`;

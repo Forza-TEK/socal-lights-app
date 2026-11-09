@@ -188,11 +188,6 @@
         "core": true
       },
       {
-        "id": "photos",
-        "say": "Photos are optional.",
-        "core": false
-      },
-      {
         "id": "put",
         "say": "Check everything, then tap Put it on the map.",
         "core": true
@@ -205,11 +200,6 @@
       {
         "id": "card",
         "say": "Tap your home to open its details.",
-        "core": false
-      },
-      {
-        "id": "dirs",
-        "say": "Anyone can find it, and tap Directions.",
         "core": false
       }
     ]

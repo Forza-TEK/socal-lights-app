@@ -61,15 +61,18 @@ cdp.on("Page.screencastFrame", (f) => { const i = n++; frames.push({ i, t: f.met
 await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, maxWidth: 1080, maxHeight: Math.round(956 * 1080 / 440), everyNthFrame: 1 });
 await sleep(500); T0 = Date.now() / 1000;
 const rec = []; // per step: start, action time, end
+const SKIP = new Set(["photos"]); // recorded but cut out (no narration)
 const HAS_APPLE = SCR.steps.some((x) => x.id === "apple");
-for (const s of SCR.steps) {
+const STEPS = W === "w06" ? [...SCR.steps.slice(0, 7), { id: "photos", say: "", core: false, silent: true }, ...SCR.steps.slice(7)] : SCR.steps;
+for (const s of STEPS) {
   if (s.id === "apple") continue; // the finished route in Apple Maps is spliced in from the owner's real recording below
-  const t0 = T(), dur = durOf(s.say), act = SC.act[s.id]; tapMark = null;
+  const t0 = T(), dur = s.silent ? 1.2 : durOf(s.say), act = SC.act[s.id]; tapMark = null;
   if (act) { await sleep(300); await act(); }
   const hold = (SC.hold && SC.hold[s.id]) ?? 0.9, end = Math.max(t0 + dur + hold, T() + 0.4);
   await sleep(Math.max(0, (end - T()) * 1000));
-  rec.push({ id: s.id, say: s.say, core: s.core, t0, action: tapMark, end: T() });
+  rec.push({ id: s.id, say: s.say, core: s.core, silent: !!s.silent, t0, action: tapMark, end: T() });
 }
+writeFileSync(`${WORK}/${ID}-rec.json`, JSON.stringify({ rec, MK }));
 const closingDur = META[W + "r"][META[W + "r"].length - 1].sec;
 if (!HAS_APPLE) await sleep((closingDur + 0.6) * 1000);
 const total = T(); await cdp.send("Page.stopScreencast"); await br.close();
@@ -80,7 +83,7 @@ lines.push(`file '${dir}/${frames[frames.length - 1].i}.jpg'`); writeFileSync(`$
 execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", `${WORK}/${ID}-frames.txt`, "-vf", "fps=30,scale=1080:2346:flags=lanczos", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", `${WORK}/${ID}-${HAS_APPLE ? "local" : "source"}.mp4`]);
 // cut plan
 const APPLE = { from: 32.2, len: 2.8 }; // clean part of the owner's real iPhone recording: Apple Maps Directions with the route line, stop count and time (before any turn-by-turn street screen)
-const real = rec.filter((r) => r.id !== "apple"), coreReal = real.filter((r) => r.core), noteStep = rec.find((r) => r.id === SC.note);
+const recN = rec.filter((r) => !r.silent), real = recN.filter((r) => r.id !== "apple"), coreReal = real.filter((r) => r.core), noteStep = rec.find((r) => r.id === SC.note);
 const cue = (r, i) => (r.action != null ? { i, action: +r.action.toFixed(3), what: r.id + " tapped" } : { i, at: +Math.max(r.t0, 0.35).toFixed(3) });
 let plan;
 if (HAS_APPLE) {
@@ -96,7 +99,7 @@ if (HAS_APPLE) {
   const core = coreReal;
   plan = { src: `${WORK}/${ID}-source.mp4`, srcH: 2346, head: HEAD, noteFrom: null,
     short: { id: W, seg: ivs(core).map(([a, b]) => [+a.toFixed(3), +b.toFixed(3), 1]), noteFrom: noteStep && noteStep.core ? +(noteStep.action ?? noteStep.t0).toFixed(3) : null, cues: [...core.map((r, i) => cue(r, i)), { i: core.length, at: +(core[core.length - 1].end - 0.05).toFixed(3) }] },
-    reel: { id: W + "r", seg: (() => { const r = ivs(rec); r[r.length - 1][1] = total; return r.map(([a, b]) => [+a.toFixed(3), +b.toFixed(3), 1]); })(), noteFrom: noteStep ? +(noteStep.action ?? noteStep.t0).toFixed(3) : null, cues: [...rec.map((r, i) => cue(r, i)), { i: rec.length, at: +(total - closingDur - 0.45).toFixed(3) }] } };
+    reel: { id: W + "r", seg: (() => { const r = ivs(recN); r[r.length - 1][1] = total; return r.map(([a, b]) => [+a.toFixed(3), +b.toFixed(3), 1]); })(), noteFrom: noteStep ? +(noteStep.action ?? noteStep.t0).toFixed(3) : null, cues: [...recN.map((r, i) => cue(r, i)), { i: recN.length, at: +(total - closingDur - 0.45).toFixed(3) }] } };
 }
 writeFileSync(`${WORK}/${ID}-plan.json`, JSON.stringify(plan, null, 1)); console.log(JSON.stringify({ total, rec: rec.map((r) => [r.id, r.t0 && +r.t0.toFixed(1), r.action && +r.action.toFixed(2)]) }));
 rmSync(dir, { recursive: true, force: true });
