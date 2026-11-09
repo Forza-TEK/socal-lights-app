@@ -1,4 +1,4 @@
-/home/user/socal-lights-app/.claude/worktrees/agent-aba65bd57898bdb3d/docs/marketing/ad-assets/a02-city-page/a02-city-page-san-diego-4x5-1080x1350.png captured 2026-11-09T07:49:19.927Z
-/home/user/socal-lights-app/.claude/worktrees/agent-aba65bd57898bdb3d/docs/marketing/ad-assets/a11-story-versions/a11-story-a02-city-page-san-diego-9x16.png captured 2026-11-09T07:49:28.114Z
-/home/user/socal-lights-app/.claude/worktrees/agent-aba65bd57898bdb3d/docs/marketing/ad-assets/a10-weekend-list/a10-weekend-list-4x5-1080x1350.png captured 2026-11-09T07:49:46.702Z
-/home/user/socal-lights-app/.claude/worktrees/agent-aba65bd57898bdb3d/docs/marketing/ad-assets/a11-story-versions/a11-story-a10-weekend-list-9x16.png captured 2026-11-09T07:50:05.492Z
+a02 https://socallights.app/in/san-diego captured 2026-11-09T08:18:15.894Z (1320x2868 source)
+a03e https://socallights.app/c/holiday-home-lighting-contest-2026-5f5a0 captured 2026-11-09T08:18:33.290Z (1320x2868 source)
+a05 https://socallights.app/installer/lights-up-today captured 2026-11-09T08:18:50.355Z (1320x2868 source)
+a10 https://socallights.app/ captured 2026-11-09T08:19:19.056Z (1320x2868 source)
