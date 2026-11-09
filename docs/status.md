@@ -1,6 +1,9 @@
 # Status
 
-_Last updated: 2026-11-09 (Ads link for Grok)_
+_Last updated: 2026-11-09 (Ads link: ad_url and expandable rows)_
+
+## Ads link follow-up: ad_url and expandable rows (2026-11-09)
+Migration `0205_ads_report_url.sql` adds `ads_reports.ad_url`. `POST /api/ads/report` accepts optional `ad_url` (https, exact Facebook/Instagram hosts, 500 chars, no login, no token/code parameters; last value kept). Admin > Ads: ad id links to it (new tab, noopener noreferrer) or shows "link not reported yet"; a Details button (aria-expanded) shows the approved copy, files, budget, dates and last status message; table built with textContent only. admin.js `?v=20261112b`. Tests added to `tests/ads.test.mjs`.
 
 ## Ads link for Grok: brief, assets, status reports, Admin > Ads (2026-11-09)
 Branch `ads-link`, PR to `main` (not merged by the agent). Contract: `docs/monetization/grok-ads-api.md`. Meta (Facebook and Instagram) only; total $300, $280 loaded, $20 reserve, every ad ends Dec 8, county targeting.

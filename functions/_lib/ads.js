@@ -12,7 +12,8 @@ export const STATUSES = ["draft", "in_review", "active", "paused", "disapproved"
 export const ITEM_STATUSES = ["approved", "hold", "rejected", "not_in_launch"];
 export const AUDIENCES = ["contest_organizers", "event_holders", "installers", "families", "homeowners"];
 export const COUNTIES = ["Los Angeles", "Orange", "San Diego", "Riverside", "San Bernardino", "Ventura", "Santa Barbara"];
-export const FIELDS = ["ad_id", "campaign", "status", "spend_cents", "impressions", "clicks", "disapproval_reason", "as_of"];
+export const FIELDS = ["ad_id", "campaign", "status", "spend_cents", "impressions", "clicks", "disapproval_reason", "as_of", "ad_url"];
+export const AD_URL_HOSTS = ["business.facebook.com", "www.facebook.com", "facebook.com", "adsmanager.facebook.com", "fb.me", "www.instagram.com", "instagram.com"];
 const MAX_SPEND = 5_000_000, MAX_COUNT = 2_000_000_000, MAX_ADS_STORED = 100;
 
 export const RULES = [
@@ -61,7 +62,7 @@ export async function loadAds(env) {
   const [campaigns, items, reports] = (await env.DB.batch([
     env.DB.prepare("SELECT audience, name, budget_cents, starts, ends, wave, daily_hint_cents FROM ads_campaigns ORDER BY wave, starts, audience"),
     env.DB.prepare("SELECT * FROM ads_items ORDER BY wave = 0, wave, audience, id"),
-    env.DB.prepare("SELECT ad_id, campaign, status, spend_cents, impressions, clicks, disapproval_reason, as_of, received_at FROM ads_reports ORDER BY ad_id"),
+    env.DB.prepare("SELECT ad_id, campaign, status, spend_cents, impressions, clicks, disapproval_reason, as_of, received_at, ad_url FROM ads_reports ORDER BY ad_id"),
   ])).map((r) => r.results);
   return { campaigns, items, reports };
 }
@@ -147,11 +148,23 @@ export function validateRow(r, i, now = Date.now()) {
     else if (/[^\s@]+@[^\s@]+\.[^\s@]+/.test(r.disapproval_reason) || /\d{3}[-.\s)]*\d{3}[-.\s]*\d{4}/.test(r.disapproval_reason)) bad("disapproval_reason must not contain an email address or phone number");
   }
   if (r.status === "disapproved" && !String(r.disapproval_reason || "").trim()) bad("status disapproved needs a disapproval_reason (Meta's wording is fine)");
+  if (r.ad_url !== undefined) { const p = adUrlProblem(r.ad_url); if (p) bad(p); }
   const t = typeof r.as_of === "string" && /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2}))?$/.test(r.as_of) ? Date.parse(r.as_of.length === 10 ? r.as_of + "T12:00:00Z" : r.as_of) : NaN;
   if (Number.isNaN(t)) bad("as_of must be a date (2026-11-14) or an ISO time with a zone (2026-11-14T09:30:00-08:00)");
   else if (t > now + 36 * 3600_000) bad("as_of is in the future");
   else if (t < now - 60 * 86400_000) bad("as_of is more than 60 days old");
   return e;
+}
+// null when fine, else the reason. https only, an exact Facebook or Instagram host, no credentials, no token-like parameters.
+export function adUrlProblem(v) {
+  if (typeof v !== "string" || !v || v.length > 500) return "ad_url must be a link of at most 500 characters";
+  let u; try { u = new URL(v); } catch { return "ad_url is not a valid link"; }
+  if (u.protocol !== "https:" || !/^https:\/\//i.test(v)) return "ad_url must start with https://";
+  if (u.username || u.password) return "ad_url must not contain a login";
+  if (u.port) return "ad_url must not set a port";
+  if (!AD_URL_HOSTS.includes(u.hostname)) return `ad_url host must be one of ${AD_URL_HOSTS.join(", ")}`;
+  if (/access_token|token=|code=/i.test(v) || /(^|[?&#])(token|code|access_token)\b/i.test(u.search + u.hash)) return "ad_url must not contain a token or code; send the plain link";
+  return null;
 }
 export const cleanReason = (s) => String(s || "").replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, 300);
 export const nowIso = (now = Date.now()) => new Date(now).toISOString().replace(/\.\d+Z$/, "Z");

@@ -57,7 +57,7 @@ Send the latest numbers per ad. **Lifetime** spend so far (not today's), in whol
 ```sh
 curl -s https://socallights.app/api/ads/report -X POST -H "Authorization: Bearer $ADS_API_KEY" -H "User-Agent: SoCalLights-Grok-Ads/1.0" -H "Content-Type: application/json" -d '{
   "rows": [
-    { "ad_id": "ct-a-meta", "campaign": "contest_organizers", "status": "active", "spend_cents": 1240, "impressions": 5120, "clicks": 61, "as_of": "2026-11-14T09:30:00-08:00" },
+    { "ad_id": "ct-a-meta", "campaign": "contest_organizers", "status": "active", "spend_cents": 1240, "impressions": 5120, "clicks": 61, "ad_url": "https://business.facebook.com/adsmanager/manage/ads?act=123&selected_ad_ids=456", "as_of": "2026-11-14T09:30:00-08:00" },
     { "ad_id": "ct-b-meta", "campaign": "contest_organizers", "status": "disapproved", "spend_cents": 0, "impressions": 0, "clicks": 0, "disapproval_reason": "Personal attributes policy", "as_of": "2026-11-14" }
   ] }'
 ```
@@ -68,6 +68,7 @@ curl -s https://socallights.app/api/ads/report -X POST -H "Authorization: Bearer
 | `status` | `draft`, `in_review`, `active`, `paused`, `disapproved`, `ended` |
 | `spend_cents`, `impressions`, `clicks` | whole numbers from 0; clicks cannot exceed impressions |
 | `disapproval_reason` | optional text up to 300 characters; **required** with `disapproved`; no email or phone number |
+| `ad_url` | optional but please send it: a link to the ad so the owner can open it from Admin > Ads. Use the Ads Manager link of the ad (for example `https://business.facebook.com/adsmanager/manage/ads?act=...&selected_ad_ids=...`), or the ad's preview or the post's permalink (`https://www.facebook.com/<Page>/posts/<id>`, `https://www.instagram.com/p/<code>/`). `https` only; host exactly one of `business.facebook.com`, `www.facebook.com`, `facebook.com`, `adsmanager.facebook.com`, `fb.me`, `www.instagram.com`, `instagram.com`; at most 500 characters; no login in the link and no `access_token`, `token=` or `code=` (copy the plain link, never a link with a token). Anything else rejects the batch. The last value you sent is kept if a later row leaves it out |
 | `as_of` | when the numbers were true: `2026-11-14` or an ISO time with zone. Not in the future, not older than 60 days. A row older than the one stored is skipped |
 
 Answer:
@@ -85,7 +86,7 @@ What the site currently holds from you: the latest row per ad, totals, campaigns
 Every 2 days: `GET /api/ads/status` (what is on file), read Meta's numbers, `POST /api/ads/report` for every ad in the brief (including paused and ended ones), act on `warnings`. After Dec 8 report each ad once as `ended` and stop.
 
 ## What the owner sees
-Admin > Ads: each campaign's spend against its budget, a progress bar to $300, each ad's status, spend, clicks, last report time, landings per ref code (counted by the site, not by Meta), alerts (over budget, disapproved, running past Dec 8, no report in 48 hours) and a CSV. Ad copy and status change only by migration; there is no way to edit an ad through this API.
+Admin > Ads: each campaign's spend against its budget, a progress bar to $300, each ad's status (the ad id links to the ad you reported with `ad_url`; a Details button shows the approved copy, files, budget, dates and last status message), spend, clicks, last report time, landings per ref code (counted by the site, not by Meta), alerts (over budget, disapproved, running past Dec 8, no report in 48 hours) and a CSV. Ad copy and status change only by migration; there is no way to edit an ad through this API.
 
 ## Owner steps: create the key (once)
 1. Generate a long random value (at least 32 characters) in your password manager. Do not type it into a chat, an email or a file in the repo.
