@@ -110,6 +110,11 @@ export function run(o) {
     const sv = JSON.parse(localStorage.getItem(o.persist) || "null");
     if (sv && sv.d) { Object.assign(d, sv.d); S.i = sv.i || 0; }
   } catch {}
+  // o.prefill(d): optional. Fills answers that came from somewhere else (for example the AI assistant's hand-off) and returns true if it did; the form then opens at the first step
+  // that still needs something, or the last (review) step when everything passes, instead of the first.
+  if (o.prefill) try {
+    if (o.prefill(d)) { const all = steps(); let k = all.findIndex((x) => x.check && x.check(d)); S.i = k < 0 ? all.length - 1 : k; }
+  } catch {}
   let dirty = false;
   const save = () => { if (!o.persist) return; try { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && typeof v !== "function") c[k] = v; localStorage.setItem(o.persist, JSON.stringify({ d: c, i: S.i })); } catch {} };
   const hdr = (done) => `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? "" : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
