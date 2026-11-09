@@ -19,10 +19,10 @@ Paste into a Claude in Chrome session or give to Grok. The owner is signed in to
 
 ### Contest organizers on Facebook and Instagram: budget $55, Nov 12 to Dec 8, about $2.04 a day
 
-**ct-a-meta** (A: First contest free)
-- Headline: Run a home lights contest, free
-- Text: Cities, HOAs, schools, chambers: your organization's first contest in every 12 months is free. Entering is free too.
-- Description: First contest free
+**ct-a-meta** (A: Run a contest)
+- Headline: Run a home lights contest
+- Text: Cities, HOAs, schools, chambers: set up a home lights contest in minutes. Entering is free for residents.
+- Description: Free for residents to enter
 - Button: Learn more
 - Link: https://socallights.app/add-contest?ref=mt-ct-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ct-nov26&utm_content=a-free-v1
 - Visual: Real screenshots of the demo contest (docs/contest-demo.md): entry page and results page with demo homes. Mark it 'Example contest'. No real residents.
@@ -31,7 +31,7 @@ Paste into a Claude in Chrome session or give to Grok. The owner is signed in to
 **ct-b-meta** (B: Judges, awards, QR)
 - Headline: Judges, awards and a QR poster
 - Text: Run your neighborhood lights contest online: resident entries, judges, and People's Choice and Judges' Choice awards.
-- Description: First contest free
+- Description: Free for residents to enter
 - Button: Learn more
 - Link: https://socallights.app/contests?ref=mt-ct-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ct-nov26&utm_content=b-judging-v1
 - Visual: A QR poster we generate from the demo contest, labelled 'Example'. Own design, no stock.
