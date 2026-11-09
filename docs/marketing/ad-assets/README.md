@@ -1,44 +1,118 @@
-# Facebook and Instagram ad creative (2026-11-09)
+# Facebook and Instagram ad creative (rebuilt 2026-11-09, PR 501)
 
-Made only from our own product (live https://socallights.app, or the local demo contest from `scripts/tutorials/seed-demo.mjs`) and our own logo (`public/img/icon-512.png`). No stock images, no other sites' images, no residents, plates or faces. New files only; no app code changed. Nothing is uploaded to Meta.
+Everything is the app's own rendering: the live site https://socallights.app, the local copy of the current `origin/main` with the tutorial demo data, or the owner's real iPhone recordings. No stock images, no illustrations, no hidden or reworded UI, no "Example" labels. Nothing is uploaded to Meta.
 
-## Rules applied
-- Every phone picture is a **true phone view**: a 390 css px wide page (real mobile layout) captured at 2.77x so it is exactly 1080 px wide and fills the frame (no device border, no desktop layout shrunk into a portrait frame). Body text is therefore at least ~28 px in the final image.
-- 9:16: headline bar starts below the top 14%; key text stays out of the bottom 20% (call-to-action lines end at y 1480 of 1920; only the phone's own icon bar sits lower). Text overlays are under 20% of the area except the headline bar on the videos (about 15%).
-- Words: "home", not "house"/"display". On the add-home video (a06) the app's own words "house" and "display" are replaced with "home" on screen, because the live add-home form still says "house" in places. Product text on the other pictures is the app's own.
-- No prices. Prices, photos of third-party events, and street-number home cards on the live list are hidden in the shots. Demo homes show "Maple Street" without house numbers.
-- Demo location for the location video: Fashion Island, Newport Beach (a public shopping centre), set in the browser. No one's real position.
+## Sources and layout proof
+| Asset | Source | Captured | Layout comparison (iPhone 17 Pro Max 440x956, live vs local copy) |
+|---|---|---|---|
+| a02 city page (San Diego, 46 upcoming events, the most of the cities checked in /api/events) | live site | 2026-11-09 | live only |
+| a03 contest entry page (real "Holiday Home Lighting Contest 2026", Mission Viejo) | live site | 2026-11-09 | live only |
+| a05 installer profile, Lights Up Today | live site | 2026-11-09 | live only. **Needs the company's written okay before it runs as a paid ad (owner to confirm).** |
+| a10 "This weekend" list | live site | 2026-11-09 | live only |
+| a04 QR poster | local demo contest, app-drawn poster from the organizer dashboard; QR encodes https://socallights.app/contests?src=qr; no banner | 2026-11-09 | same `public/printables.js` as production; the live site has no organizer view to compare |
+| a06 add-a-home | local copy (demo homeowner cookie, iPhone 17 Pro Max emulation). Sample values: Irvine City Hall address, "The Sample family". It presses "Put it on the map" on the LOCAL database only, then finds the home by search; the map flies to street level and shows its card | 2026-11-09 | /in/san-diego: 0.23 % of pixels differ (live also shows the assistant button); same CSS/JS versions on both (`styles.css?v=20261110d`, `app.js?v=20261110e`); the installer page cannot be compared (the demo database has no such installer) |
+| a07, a08, a09 | the owner's real iPhone recordings (`docs/marketing/owner-videos/`), used as recorded | 2026-11-09 | n/a (real device) |
 
-## Files and placements
-| Asset | Folder / file | Ad ids | Placement | Size | Shows |
+Difference found between live and local: only the assistant button's stylesheet (`chat.css`) is loaded on the live site. Nothing was fixed by editing UI.
+
+## Files, placements, sizes
+Stills: 1080x1350 (feed, 4:5) and 1080x1920 (Story, 9:16, in `a11-story-versions/`). The whole 1320x2868 phone capture is placed uncropped on a blurred copy of itself, headline and call to action only on the background. Stories keep text below the top 14% and away from the bottom 20%.
+
+| Asset | Files | Ad ids | Placement |
+|---|---|---|---|
+| a01 | `a01-page-images/a01-facebook-profile-1080x1080.png`, `a01-facebook-cover-1640x624.png` | Page | Page |
+| a02 | `a02-city-page/a02-city-page-san-diego-4x5-1080x1350.png`, Story in `a11-story-versions/` | ev-a-meta, ev-b-meta | feed, Story |
+| a03 | `a03-contest-screens/a03-contest-entry-page-4x5-1080x1350.png`, Story in a11 | ct-a-meta, ct-c-meta | feed, Story |
+| a04 | `a04-qr-poster/a04-qr-poster-4x5-1080x1350.png`, Story in a11 | ct-b-meta | feed, Story |
+| a05 | `a05-installer-profile/a05-installer-profile-lights-up-today-4x5-1080x1350.png`, Story in a11 | in-a-meta, in-b-meta | feed, Story |
+| a10 | `a10-weekend-list/a10-weekend-list-4x5-1080x1350.png`, Story in a11 | fa-c-meta | feed, Story |
+| a06 add a home | `a06-add-home-video/a06-add-home-{feed-4x5,story-9x16,reel-9x16}.mp4` | ho-a-meta, ho-c-meta | feed, Story, Reel |
+| a07 route | `a07-route-video/a07-route-{feed-4x5,story-9x16,reel-9x16}.mp4` | ho-b-meta | feed, Story, Reel |
+| a08 find lights | `a08-find-location-video/a08-find-location-{...}.mp4` | fa-a-meta | feed, Story, Reel |
+| a09 favorites and route | `a09-favorites-video/a09-favorites-{...}.mp4` | fa-b-meta | feed, Story, Reel |
+
+## Videos: audio, sync, checks
+- Narration: Kokoro `af_heart` (the tutorial voice), one clip per sentence (`_build/audio/narration.py`). The route line reads "Route these opens your stops in the maps app you choose." Route and favorites videos show the caption "Your phone switches to the map app you choose: Apple Maps, Google Maps or Waze." in the background area from the handoff on.
+- Music: original and license-free, made with code (`_build/audio/`, see its README). Owner mapping: a06 and a08 = A "Bright bells pop", a09 = C "Cozy sparkle", a07 = B "Swing-along". Re-mix one video with another track: `WORK=.. TTS=.. sh _build/remix-all.sh <video> <track.mp3>`. I cannot hear audio: levels were measured, taste is the owner's call.
+- Mix: music about 18 dB under the voice, about 10 dB under when alone, fade-out, loudnorm -14 LUFS, true peak below -1 dBTP, AAC 192k 48 kHz stereo, 30 fps H.264. Original phone audio is not used.
+- Every cut shows the whole recorded frame (scaled to fit on a blurred background, nothing cropped): whole frame visible: yes. Captions equal the spoken words. Reels end on a plain "socallights.app" card (3 s). Frames were extracted and viewed for every video (Story cuts, with feed and Reel spot checks).
+- a07 and a09 end on the Apple Maps directions of the owner's recording (finished route and stops). **Those Apple Maps screens, and the turn-by-turn part if included, show the owner's current street "Galway Dr" only in the a07 and a09 sources; the cuts end before turn-by-turn begins, but the owner should confirm no street name is legible.** a06 and a08 contain no Apple Maps.
+
+### Loudness, durations, speech-recognition match (vosk small model; "SoCal" is heard as "so cow", expected)
+| Cut | Size | Video / audio duration | Streams aligned (start 0, within 40 ms) | LUFS | True peak dBFS | Script words recognised | File |
+|---|---|---|---|---|---|---|---|
+| a06 feed | 1080x1350 | 11.80 / 11.80 s | yes | -14.2 | -1.3 | 25/26 | 0.90 MB |
+| a06 story | 1080x1920 | 11.80 / 11.80 s | yes | -14.2 | -1.3 | 25/26 | 1.04 MB |
+| a06 reel | 1080x1920 | 19.47 / 19.47 s | yes | -14.5 | -1.4 | 34/35 | 1.49 MB |
+| a07 feed | 1080x1350 | 11.47 / 11.43 s | yes | -14.1 | -1.3 | 16/17 | 1.68 MB |
+| a07 story | 1080x1920 | 11.47 / 11.43 s | yes | -14.1 | -1.3 | 16/17 | 2.16 MB |
+| a07 reel | 1080x1920 | 16.43 / 16.43 s | yes | -14.2 | -1.4 | 21/22 | 2.41 MB |
+| a08 feed | 1080x1350 | 12.00 / 12.00 s | yes | -14.2 | -1.5 | 20/21 | 2.15 MB |
+| a08 story | 1080x1920 | 12.00 / 12.00 s | yes | -14.2 | -1.5 | 20/21 | 2.73 MB |
+| a08 reel | 1080x1920 | 17.33 / 17.30 s | yes | -14.5 | -1.4 | 27/28 | 3.18 MB |
+| a09 feed | 1080x1350 | 11.67 / 11.63 s | yes | -14.3 | -1.4 | 20/21 | 2.12 MB |
+| a09 story | 1080x1920 | 11.67 / 11.63 s | yes | -14.3 | -1.4 | 20/21 | 2.72 MB |
+| a09 reel | 1080x1920 | 18.63 / 18.63 s | yes | -14.4 | -1.4 | 29/30 | 3.33 MB |
+
+| Cut | Cue (narration) | Spoken at (ASR, s) | On-screen action (s) | Action minus words (ms) | Result (target -100 to +400) |
 |---|---|---|---|---|---|
-| a01 | `a01-page-images/a01-facebook-profile-1080x1080.png` | Page profile picture | Page | 1080x1080 | Logo |
-| a01 | `a01-page-images/a01-facebook-cover-1640x624.png` | Page cover | Page | 1640x624 | Logo, "SoCal Lights", "Find Christmas lights near you", map |
-| a02 | `a02-city-page/a02-city-page-newport-beach-4x5-1080x1350.png` | ev-a-meta, ev-b-meta | Feed | 1080x1350 | /in/newport-beach, 25 public events (most active city by upcoming events, from /api/events), Free / Confirmed tags |
-| a03 | `a03-contest-screens/a03-contest-entry-page-4x5-1080x1350.png` | ct-a-meta, ct-c-meta | Feed | 1080x1350 | Demo contest page with "Enter my home", label "Example contest" |
-| a03 | `a03-contest-screens/a03-contest-results-page-4x5-1080x1350.png` | ct-a-meta, ct-c-meta | Feed | 1080x1350 | Demo results (Winners), label "Example contest" |
-| a04 | `a04-qr-poster/a04-qr-poster-example-4x5-1080x1350.png` | ct-b-meta | Feed | 1080x1350 | The app's own entry poster for the demo contest, label "Example poster"; QR points to socallights.app/contests |
-| a05 | `a05-installer-profile/a05-installer-profile-example-4x5-1080x1350.png` | in-a-meta, in-b-meta | Feed | 1080x1350 | Demo installer "Bright Nights Lighting" (made-up, `.example.com`, 555 phone), label "Example installer profile" |
-| a10 | `a10-weekend-list/a10-weekend-list-4x5-1080x1350.png` | fa-c-meta | Feed | 1080x1350 | Map list with "This weekend" selected, public events only |
-| a11 | `a11-story-versions/a11-story-a02-city-page-9x16.png`, `...a03-contest-entry-9x16.png`, `...a03-contest-results-9x16.png`, `...a04-qr-poster-9x16.png`, `...a05-installer-profile-9x16.png`, `...a10-weekend-list-9x16.png` | same as the 4:5 versions | Story | 1080x1920 | Same screens, headline bar on top (ad headline), plain call-to-action line above the bottom 20%, no fake buttons |
-| a06 | `a06-add-home-video/a06-add-home-{feed-4x5,story-9x16,reel-9x16}.mp4` | ho-a-meta (also ho-c-meta) | Feed / Story / Reel | 1080x1350 (11.8 s), 1080x1920 (11.8 s), 1080x1920 (19.5 s) | Add-a-home flow on the local demo server, example name and street, stops before "Put it on the map" (nothing submitted). Headline "Put your home's lights on the map" |
-| a07 | `a07-route-video/a07-route-{...}.mp4` | ho-b-meta | Feed / Story / Reel | 9.1 s / 9.1 s / 14.4 s | 3 public events saved, Favorites, "Route these", maps-app handoff. Headline "Be on someone's lights route" |
-| a08 | `a08-find-location-video/a08-find-location-{...}.mp4` | fa-a-meta | Feed / Story / Reel | 9.7 s / 8.4 s / 13.4 s | Tap Find my location, list of nearby public events. Headline "Find holiday lights near you tonight" |
-| a09 | `a09-favorites-video/a09-favorites-{...}.mp4` | fa-b-meta | Feed / Story / Reel | 9.9 s / 9.9 s / 16.1 s | Heart three public events, Favorites, "Route these". Headline "Plan a family lights drive" |
+| a06 feed | Is your home all lit up? | 0.15 | no on-screen cue | - | - |
+| a06 feed | Put it on the map in a few minutes. | 2.16 | 2.246 | 86 | PASS |
+| a06 feed | And there it is, on the map. | 6.39 | 6.46 | 70 | PASS |
+| a06 feed | Free on SoCal Lights. | 9.69 | no on-screen cue | - | - |
+| a06 story | Is your home all lit up? | 0.15 | no on-screen cue | - | - |
+| a06 story | Put it on the map in a few minutes. | 2.16 | 2.246 | 86 | PASS |
+| a06 story | And there it is, on the map. | 6.39 | 6.46 | 70 | PASS |
+| a06 story | Free on SoCal Lights. | 9.69 | no on-screen cue | - | - |
+| a06 reel | Is your home all lit up? | 0.15 | no on-screen cue | - | - |
+| a06 reel | Put it on the map in a few minutes. | 2.16 | 2.246 | 86 | PASS |
+| a06 reel | Add a name, a few words, and a street. | 5.1 | no on-screen cue | - | - |
+| a06 reel | And there it is, on the map. | 9.54 | 9.62 | 80 | PASS |
+| a06 reel | Free on SoCal Lights. | 14.34 | no on-screen cue | - | - |
+| a07 feed | One tap, one route. | 1.02 | 1.1 | 80 | PASS |
+| a07 feed | Route these opens your stops in the maps app you choose. | 5.64 | 5.72 | 80 | PASS |
+| a07 feed | SoCal Lights. | 10.08 | no on-screen cue | - | - |
+| a07 story | One tap, one route. | 1.02 | 1.1 | 80 | PASS |
+| a07 story | Route these opens your stops in the maps app you choose. | 5.64 | 5.72 | 80 | PASS |
+| a07 story | SoCal Lights. | 10.08 | no on-screen cue | - | - |
+| a07 reel | One tap, one route. | 1.83 | 1.9 | 70 | PASS |
+| a07 reel | Route these opens your stops in the maps app you choose. | 7.32 | 7.4 | 80 | PASS |
+| a07 reel | Pick your stops, and go. | 10.17 | no on-screen cue | - | - |
+| a07 reel | SoCal Lights. | 12.09 | no on-screen cue | - | - |
+| a08 feed | Looking for holiday lights tonight? | 0.12 | no on-screen cue | - | - |
+| a08 feed | Tap Find my location, | 2.01 | 2 | -10 | PASS |
+| a08 feed | and see what is lighting up near you. | 4.59 | 4.68 | 90 | PASS |
+| a08 feed | Free on SoCal Lights. | 9.9 | 9.96 | 60 | PASS |
+| a08 story | Looking for holiday lights tonight? | 0.12 | no on-screen cue | - | - |
+| a08 story | Tap Find my location, | 2.01 | 2 | -10 | PASS |
+| a08 story | and see what is lighting up near you. | 4.59 | 4.68 | 90 | PASS |
+| a08 story | Free on SoCal Lights. | 9.9 | 9.96 | 60 | PASS |
+| a08 reel | Looking for holiday lights tonight? | 0.12 | no on-screen cue | - | - |
+| a08 reel | Tap Find my location, | 2.01 | 2 | -10 | PASS |
+| a08 reel | and see what is lighting up near you. | 4.59 | 4.68 | 90 | PASS |
+| a08 reel | Tap a place to see the details. | 9.87 | 9.96 | 90 | PASS |
+| a08 reel | Free on SoCal Lights. | 12.18 | no on-screen cue | - | - |
+| a09 feed | Plan your whole night. | 0.09 | no on-screen cue | - | - |
+| a09 feed | Tap the heart on the places you love, | 1.29 | 1.4 | 110 | PASS |
+| a09 feed | then tap Route these. | 4.62 | 4.7 | 80 | PASS |
+| a09 feed | SoCal Lights, free for families. | 9.45 | no on-screen cue | - | - |
+| a09 story | Plan your whole night. | 0.09 | no on-screen cue | - | - |
+| a09 story | Tap the heart on the places you love, | 1.29 | 1.4 | 110 | PASS |
+| a09 story | then tap Route these. | 4.62 | 4.7 | 80 | PASS |
+| a09 story | SoCal Lights, free for families. | 9.45 | no on-screen cue | - | - |
+| a09 reel | Plan your whole night. | 0.12 | no on-screen cue | - | - |
+| a09 reel | Tap the heart on the places you love, | 1.8 | 1.9 | 100 | PASS |
+| a09 reel | then tap Route these. | 7.23 | 7.3 | 70 | PASS |
+| a09 reel | Your stops open in the maps app you choose. | 10.53 | 10.62 | 90 | PASS |
+| a09 reel | SoCal Lights, free for families. | 13.44 | no on-screen cue | - | - |
 
-Video details: H.264 High, 30 fps, silent AAC track (no music), burned-in headline and step captions, first line on screen from the first frame. Reel = the Story cut, its last frame held 1.5 s, then a plain end card (logo, "SoCal Lights", "socallights.app"; no price, no claim). All files are under 1 MB (limit 15 MB). The 4:5 feed cuts of a06, a07 and a09 are cropped from the 9:16 recording (bottom part of the screen), so the top of the page is cut off there.
-
-## How it was made
-- Stills: Playwright with the installed Chrome, mobile emulation (390 css px, 2.77x), live site or the local demo (`wrangler pages dev` with the demo seed), then CSS/JS tweaks to hide private or third-party content. Scripts in `_build/`: `shoot.mjs`, `a02.*`, `a03.*`, `a05.js`, `a04-poster.mjs`, `a10-weekend.mjs`, `a11-stories.mjs`, `a01-*.html`, `render-html.mjs`.
-- Demo home pictures: six simple night illustrations drawn by `_build/make-demo-art.py` (own artwork, no photos), uploaded to the LOCAL storage only so the stock demo photos (which are third-party photos) never appear.
-- Videos: `_build/adrec.mjs` (Chrome screencast at device pixels, tap highlight, hides third-party event photos, the sponsor bar, the assistant button and street-number cards), `scenarios.mjs` (the four scripts), `compose.mjs` (headline bar, captions, stall trimming to keep each cut at most 12 s), `reel.mjs` and `build-videos.sh` (Reel with end card). The existing tutorial pipeline (`scripts/tutorials/`) was not reused: it needs a TTS voice and records desktop widths, so a lighter recorder was written with the same look (cursor ring and tap ripple).
-- Recordings of a07 to a09 ran on the live site read-only: only the browser's own favourites (local storage) were touched. The clock was set to Nov 27 5 pm Pacific in the browser so "Tonight" shows real tree lightings; the data is the live data. a10 uses Nov 12 as "today" so "This weekend" is Nov 14 and 15.
+Sync target: on-screen action within -100 to +400 ms of the spoken cue. 28 of 28 cues that have an on-screen action pass; none fail. Cues without an on-screen action are marked "no on-screen cue". The transcript of the mixed audio (voice plus music) matches the script in all twelve cuts apart from "SoCal" and a one-word slip.
 
 ## Needs the owner
-- Look at every file before upload. A reviewer must confirm no event photo of a person appears (event photos are hidden in all shots; the small SoCal Lights badge is our own logo).
-- a02 and a10 name real public events and venues (Fashion Island, Roger's Gardens, Dana Point harbor events). These are public listings; no organizer consent is needed for a map listing, but check the ad policy wording if an organizer objects.
-- The demo contest and installer are made up (Maple Street, "Bright Nights Lighting", example.com). Each is labelled "Example". Do not describe them as real.
-- a05 uses a made-up profile, not the live Lights Up Today page (that needs written consent).
-- a06: the form text was reworded on screen from "house/display" to "home". If you prefer the untouched app text, the app itself should be reworded first.
-- The Page profile picture and cover use our logo as it is in `public/img/icon-512.png`.
-- Meta may still crop edges differently per placement; the Reel and Story files keep text inside 14% top / 20% bottom, the feed files keep text away from the edges.
+- a05: Lights Up Today must agree to paid use (written okay).
+- Apple Maps screens in a07 and a09 (street name "Galway Dr").
+- Confirm the music mapping (I cannot hear it).
+- a04 and a06 are made on the local demo copy (the owner's decision) and are not labelled as demo.
+
+## How it was made
+Scripts in `_build/`: `live-stills.mjs`, `a04-poster.mjs`, `rec-local.mjs` (a06), `owner-cut.mjs` (cuts the owner recordings, narration, music, sync), `remix-all.sh`, `compare-layout.mjs`, `audio/` (music, narration, mix, checks), `a01-*.html` with `render-html.mjs` (Page images). Earlier-round files were removed; they are in git history.
