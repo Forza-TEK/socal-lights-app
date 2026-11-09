@@ -39,136 +39,136 @@ All four videos (a06 add a home, a07 route, a08 find lights, a09 favorites) are 
 - a06 add a home: Sign in (emailed code: the email box is shown, the code step is not recorded, a demo session stands in for it), who is posting, name, season, details, street and ZIP, Put it on the map (local database only), the map at street level with the home's card. The photos step is recorded but cut.
 - Every cut shows the whole recorded frame; Reels end on a plain `socallights.app` card. Handoff caption "Your phone switches to the map app you choose: Apple Maps, Google Maps or Waze." from the Route/Directions step on.
 - Narration: Kokoro `af_heart`, speed 0.88, "SoCal Lights dot app", short pause after "Free" (owner-approved settings, commit 17c9568). Music: owner mapping a06 and a08 = A, a09 = C, a07 = B (original, license-free). Mix about -14 LUFS, true peak under -1 dBTP, AAC 192k 48 kHz.
-- Honest limits: the Apple Maps scenes show the destination address of a public place ("28000 Rancho Pkwy") and the owner's real phone status bar. The a07 route sheet lists public events and also the "Ring of Lights contest" home entries near Newport Beach with their street numbers as the live app lists them (public listings, nothing hidden or edited); owner to confirm that is acceptable for paid ads.
+- Privacy scan (added 2026-11-09): `walk.mjs` scans every visible text line after every step for street-address-like titles and "Ring of Lights" contest homes and logs them (`PRIVACY-SCAN` in the recording output). a07 filters to Filters > Tree lightings and villages first, so its route sheet lists three public events only; a09's sheet lists the three events the viewer saved; a08's only match is the public venue address of Roger's Gardens (a business) on the place card; a06 shows only the demo form values (Irvine City Hall address, "The Sample family") and the demo account's prefilled name. Route sheets of a09, a08 and the a07 Reel were also checked in a full-resolution frame.
+- The Apple Maps scenes (a07, a09) show the destination "28000 Rancho Pkwy" (a public place) and the owner's phone status bar; they stop before any turn-by-turn or messages screen.
+- a06 sign-in uses the fake address demo@example.com, the email code step is not recorded, and the local copy's spam-check widget is replaced by nothing (it cannot load locally).
 
 ### Loudness, durations, speech-recognition match (vosk small model; "SoCal" is heard as "so cow", expected)
 | Cut | Size | Video / audio duration | Streams aligned (start 0, within 40 ms) | LUFS | True peak dBFS | Script words recognised | File |
 |---|---|---|---|---|---|---|---|
-| a06 feed | 1080x1350 | 34.60 / 34.57 s | yes | -14.0 | -1.4 | 61/63 | 2.12 MB |
-| a06 story | 1080x1920 | 34.60 / 34.57 s | yes | -14.0 | -1.4 | 61/63 | 2.60 MB |
-| a06 reel | 1080x1920 | 43.77 / 43.73 s | yes | -14.0 | -1.4 | 74/76 | 2.87 MB |
-| a07 feed | 1080x1350 | 32.00 / 32.00 s | yes | -14.1 | -1.4 | 54/57 | 3.21 MB |
-| a07 story | 1080x1920 | 32.00 / 32.00 s | yes | -14.1 | -1.4 | 54/57 | 4.21 MB |
-| a07 reel | 1080x1920 | 43.40 / 43.37 s | yes | -14.0 | -1.4 | 72/75 | 4.60 MB |
-| a08 feed | 1080x1350 | 28.97 / 28.93 s | yes | -14.1 | -1.3 | 48/49 | 3.00 MB |
-| a08 story | 1080x1920 | 28.97 / 28.93 s | yes | -14.1 | -1.3 | 48/49 | 3.88 MB |
-| a08 reel | 1080x1920 | 40.40 / 40.40 s | yes | -14.0 | -1.4 | 62/63 | 4.41 MB |
-| a09 feed | 1080x1350 | 32.73 / 32.70 s | yes | -14.0 | -1.5 | 66/67 | 3.02 MB |
-| a09 story | 1080x1920 | 32.73 / 32.70 s | yes | -14.0 | -1.5 | 66/67 | 3.81 MB |
-| a09 reel | 1080x1920 | 43.03 / 43.03 s | yes | -14.0 | -1.4 | 78/81 | 4.22 MB |
+| a06 feed | 1080x1350 | 34.50 / 34.47 s | yes | -14.0 | -1.4 | 61/63 | 2.08 MB |
+| a06 story | 1080x1920 | 34.50 / 34.47 s | yes | -14.0 | -1.4 | 61/63 | 2.57 MB |
+| a06 reel | 1080x1920 | 43.60 / 43.57 s | yes | -14.0 | -1.3 | 74/76 | 2.92 MB |
+| a07 feed | 1080x1350 | 30.60 / 30.57 s | yes | -14.2 | -1.2 | 49/51 | 3.47 MB |
+| a07 story | 1080x1920 | 30.60 / 30.57 s | yes | -14.2 | -1.2 | 49/51 | 4.48 MB |
+| a07 reel | 1080x1920 | 45.53 / 45.53 s | yes | -14.0 | -1.2 | 72/75 | 5.24 MB |
+| a08 feed | 1080x1350 | 28.60 / 28.57 s | yes | -14.1 | -1.4 | 48/49 | 2.98 MB |
+| a08 story | 1080x1920 | 28.60 / 28.57 s | yes | -14.1 | -1.4 | 48/49 | 3.82 MB |
+| a08 reel | 1080x1920 | 40.03 / 40.03 s | yes | -14.0 | -1.2 | 62/63 | 4.35 MB |
+| a09 feed | 1080x1350 | 32.60 / 32.60 s | yes | -14.0 | -1.4 | 66/67 | 3.03 MB |
+| a09 story | 1080x1920 | 32.60 / 32.60 s | yes | -14.0 | -1.4 | 66/67 | 3.83 MB |
+| a09 reel | 1080x1920 | 43.00 / 42.97 s | yes | -14.0 | -1.3 | 78/81 | 4.25 MB |
 
 | Cut | Cue (narration) | Spoken at (ASR, s) | On-screen action (s) | Action minus words (ms) | Result (target -100 to +400) |
 |---|---|---|---|---|---|
 | a06 feed | Is your home all lit up? | 0.12 | no on-screen cue | - | - |
 | a06 feed | Tap Sign in, and use an emailed code. | 1.95 | 2.039 | 89 | PASS |
-| a06 feed | Choose who is posting: a homeowner. | 7.71 | 7.813 | 103 | PASS |
-| a06 feed | Add the name to show. | 10.47 | 10.492 | 22 | PASS |
-| a06 feed | Name your home, and say what makes it special. | 12.81 | 12.872 | 62 | PASS |
-| a06 feed | Add the street, and the ZIP code. | 16.53 | 16.572 | 42 | PASS |
-| a06 feed | Check everything, then tap Put it on the map. | 19.56 | 19.664 | 104 | PASS |
-| a06 feed | And there it is, on the map. | 22.47 | 22.534 | 64 | PASS |
-| a06 feed | Free, on SoCal Lights dot app. | 31.65 | no on-screen cue | - | - |
+| a06 feed | Choose who is posting: a homeowner. | 7.77 | 7.879 | 109 | PASS |
+| a06 feed | Add the name to show. | 10.56 | 10.565 | 5 | PASS |
+| a06 feed | Name your home, and say what makes it special. | 12.9 | 12.942 | 42 | PASS |
+| a06 feed | Add the street, and the ZIP code. | 16.53 | 16.563 | 33 | PASS |
+| a06 feed | Check everything, then tap Put it on the map. | 19.53 | 19.624 | 94 | PASS |
+| a06 feed | And there it is, on the map. | 22.44 | 22.494 | 54 | PASS |
+| a06 feed | Free, on SoCal Lights dot app. | 31.56 | no on-screen cue | - | - |
 | a06 story | Is your home all lit up? | 0.12 | no on-screen cue | - | - |
 | a06 story | Tap Sign in, and use an emailed code. | 1.95 | 2.039 | 89 | PASS |
-| a06 story | Choose who is posting: a homeowner. | 7.71 | 7.813 | 103 | PASS |
-| a06 story | Add the name to show. | 10.47 | 10.492 | 22 | PASS |
-| a06 story | Name your home, and say what makes it special. | 12.81 | 12.872 | 62 | PASS |
-| a06 story | Add the street, and the ZIP code. | 16.53 | 16.572 | 42 | PASS |
-| a06 story | Check everything, then tap Put it on the map. | 19.56 | 19.664 | 104 | PASS |
-| a06 story | And there it is, on the map. | 22.47 | 22.534 | 64 | PASS |
-| a06 story | Free, on SoCal Lights dot app. | 31.65 | no on-screen cue | - | - |
+| a06 story | Choose who is posting: a homeowner. | 7.77 | 7.879 | 109 | PASS |
+| a06 story | Add the name to show. | 10.56 | 10.565 | 5 | PASS |
+| a06 story | Name your home, and say what makes it special. | 12.9 | 12.942 | 42 | PASS |
+| a06 story | Add the street, and the ZIP code. | 16.53 | 16.563 | 33 | PASS |
+| a06 story | Check everything, then tap Put it on the map. | 19.53 | 19.624 | 94 | PASS |
+| a06 story | And there it is, on the map. | 22.44 | 22.494 | 54 | PASS |
+| a06 story | Free, on SoCal Lights dot app. | 31.56 | no on-screen cue | - | - |
 | a06 reel | Is your home all lit up? | 0.12 | no on-screen cue | - | - |
 | a06 reel | Tap Sign in, and use an emailed code. | 1.95 | 2.039 | 89 | PASS |
-| a06 reel | Choose who is posting: a homeowner. | 7.71 | 7.813 | 103 | PASS |
-| a06 reel | Add the name to show. | 10.47 | 10.492 | 22 | PASS |
-| a06 reel | Pick the season for your lights. | 12.84 | 12.877 | 37 | PASS |
-| a06 reel | Name your home, and say what makes it special. | 15.66 | 15.718 | 58 | PASS |
-| a06 reel | Add the street, and the ZIP code. | 19.38 | 19.418 | 38 | PASS |
-| a06 reel | Check everything, then tap Put it on the map. | 22.41 | 22.51 | 100 | PASS |
-| a06 reel | And there it is, on the map. | 25.32 | 25.38 | 60 | PASS |
-| a06 reel | Tap your home to open its details. | 34.8 | 34.889 | 89 | PASS |
-| a06 reel | Free, on SoCal Lights dot app. | 37.83 | no on-screen cue | - | - |
+| a06 reel | Choose who is posting: a homeowner. | 7.77 | 7.879 | 109 | PASS |
+| a06 reel | Add the name to show. | 10.56 | 10.565 | 5 | PASS |
+| a06 reel | Pick the season for your lights. | 12.87 | 12.939 | 69 | PASS |
+| a06 reel | Name your home, and say what makes it special. | 15.69 | 15.75 | 60 | PASS |
+| a06 reel | Add the street, and the ZIP code. | 19.35 | 19.371 | 21 | PASS |
+| a06 reel | Check everything, then tap Put it on the map. | 22.32 | 22.432 | 112 | PASS |
+| a06 reel | And there it is, on the map. | 25.23 | 25.302 | 72 | PASS |
+| a06 reel | Tap your home to open its details. | 34.62 | 34.732 | 112 | PASS |
+| a06 reel | Free, on SoCal Lights dot app. | 37.68 | no on-screen cue | - | - |
 | a07 feed | One tap, one route. | 0.09 | no on-screen cue | - | - |
-| a07 feed | Open the map near you, and find places you like. | 2.34 | 2.348 | 8 | PASS |
-| a07 feed | Tap Route these on the map. | 11.88 | 11.949 | 69 | PASS |
-| a07 feed | Here are your stops, nine at a time. | 14.43 | no on-screen cue | - | - |
-| a07 feed | Tap the arrows to choose your maps app. | 19.38 | 19.433 | 53 | PASS |
-| a07 feed | Apple Maps, Google Maps or Waze. | 22.23 | no on-screen cue | - | - |
-| a07 feed | Your phone opens the route in the maps app you choose. | 26.58 | no on-screen cue | - | - |
-| a07 feed | SoCal Lights dot app. | 30.21 | no on-screen cue | - | - |
+| a07 feed | Open the map near you, and find places you like. | 2.31 | 2.332 | 22 | PASS |
+| a07 feed | Tap Filters, and choose Tree lightings and villages. | 11.67 | 11.759 | 89 | PASS |
+| a07 feed | Tap Route these on the map. | 17.88 | 17.928 | 48 | PASS |
+| a07 feed | Here are your stops, nine at a time. | 20.43 | no on-screen cue | - | - |
+| a07 feed | Your phone opens the route in the maps app you choose. | 25.17 | no on-screen cue | - | - |
+| a07 feed | SoCal Lights dot app. | 28.8 | no on-screen cue | - | - |
 | a07 story | One tap, one route. | 0.09 | no on-screen cue | - | - |
-| a07 story | Open the map near you, and find places you like. | 2.34 | 2.348 | 8 | PASS |
-| a07 story | Tap Route these on the map. | 11.88 | 11.949 | 69 | PASS |
-| a07 story | Here are your stops, nine at a time. | 14.43 | no on-screen cue | - | - |
-| a07 story | Tap the arrows to choose your maps app. | 19.38 | 19.433 | 53 | PASS |
-| a07 story | Apple Maps, Google Maps or Waze. | 22.23 | no on-screen cue | - | - |
-| a07 story | Your phone opens the route in the maps app you choose. | 26.58 | no on-screen cue | - | - |
-| a07 story | SoCal Lights dot app. | 30.21 | no on-screen cue | - | - |
+| a07 story | Open the map near you, and find places you like. | 2.31 | 2.332 | 22 | PASS |
+| a07 story | Tap Filters, and choose Tree lightings and villages. | 11.67 | 11.759 | 89 | PASS |
+| a07 story | Tap Route these on the map. | 17.88 | 17.928 | 48 | PASS |
+| a07 story | Here are your stops, nine at a time. | 20.43 | no on-screen cue | - | - |
+| a07 story | Your phone opens the route in the maps app you choose. | 25.17 | no on-screen cue | - | - |
+| a07 story | SoCal Lights dot app. | 28.8 | no on-screen cue | - | - |
 | a07 reel | One tap, one route. | 0.09 | no on-screen cue | - | - |
-| a07 reel | Open the map near you, and find places you like. | 2.34 | 2.348 | 8 | PASS |
-| a07 reel | Tap Route these on the map. | 11.88 | 11.949 | 69 | PASS |
-| a07 reel | Here are your stops, nine at a time. | 14.43 | no on-screen cue | - | - |
-| a07 reel | Tap the arrows to choose your maps app. | 19.38 | 19.433 | 53 | PASS |
-| a07 reel | Apple Maps, Google Maps or Waze. | 22.23 | no on-screen cue | - | - |
-| a07 reel | Then tap Open, and your phone switches to that app. | 26.55 | no on-screen cue | - | - |
-| a07 reel | A longer trip is split into more routes. | 31.14 | no on-screen cue | - | - |
-| a07 reel | Your phone opens the route in the maps app you choose. | 34.95 | no on-screen cue | - | - |
-| a07 reel | SoCal Lights dot app. | 38.605833 | no on-screen cue | - | - |
+| a07 reel | Open the map near you, and find places you like. | 2.31 | 2.332 | 22 | PASS |
+| a07 reel | Tap Filters, and choose Tree lightings and villages. | 11.67 | 11.759 | 89 | PASS |
+| a07 reel | Tap Route these on the map. | 17.88 | 17.928 | 48 | PASS |
+| a07 reel | Here are your stops, nine at a time. | 20.43 | no on-screen cue | - | - |
+| a07 reel | Tap the arrows to choose your maps app. | 25.41 | 25.489 | 79 | PASS |
+| a07 reel | Apple Maps, Google Maps or Waze. | 28.23 | no on-screen cue | - | - |
+| a07 reel | Then tap Open, and your phone switches to that app. | 32.55 | no on-screen cue | - | - |
+| a07 reel | Your phone opens the route in the maps app you choose. | 37.11 | no on-screen cue | - | - |
+| a07 reel | SoCal Lights dot app. | 40.766111 | no on-screen cue | - | - |
 | a08 feed | Looking for holiday lights tonight? | 0.06 | no on-screen cue | - | - |
-| a08 feed | Tap Find my location. | 2.88 | 2.96 | 80 | PASS |
-| a08 feed | Pull up the list to see what is near you. | 12.3 | 12.416 | 116 | PASS |
-| a08 feed | Tap This weekend to see what is on soon. | 15.54 | 15.617 | 77 | PASS |
-| a08 feed | Or tap Free to see only free places. | 18.99 | 19.079 | 89 | PASS |
-| a08 feed | Tap a place to open its details. | 22.47 | 22.527 | 57 | PASS |
-| a08 feed | Free, on SoCal Lights dot app. | 26.04 | no on-screen cue | - | - |
+| a08 feed | Tap Find my location. | 2.88 | 2.959 | 79 | PASS |
+| a08 feed | Pull up the list to see what is near you. | 12.06 | 12.148 | 88 | PASS |
+| a08 feed | Tap This weekend to see what is on soon. | 15.24 | 15.32 | 80 | PASS |
+| a08 feed | Or tap Free to see only free places. | 18.72 | 18.817 | 97 | PASS |
+| a08 feed | Tap a place to open its details. | 22.14 | 22.226 | 86 | PASS |
+| a08 feed | Free, on SoCal Lights dot app. | 25.65 | no on-screen cue | - | - |
 | a08 story | Looking for holiday lights tonight? | 0.06 | no on-screen cue | - | - |
-| a08 story | Tap Find my location. | 2.88 | 2.96 | 80 | PASS |
-| a08 story | Pull up the list to see what is near you. | 12.3 | 12.416 | 116 | PASS |
-| a08 story | Tap This weekend to see what is on soon. | 15.54 | 15.617 | 77 | PASS |
-| a08 story | Or tap Free to see only free places. | 18.99 | 19.079 | 89 | PASS |
-| a08 story | Tap a place to open its details. | 22.47 | 22.527 | 57 | PASS |
-| a08 story | Free, on SoCal Lights dot app. | 26.04 | no on-screen cue | - | - |
+| a08 story | Tap Find my location. | 2.88 | 2.959 | 79 | PASS |
+| a08 story | Pull up the list to see what is near you. | 12.06 | 12.148 | 88 | PASS |
+| a08 story | Tap This weekend to see what is on soon. | 15.24 | 15.32 | 80 | PASS |
+| a08 story | Or tap Free to see only free places. | 18.72 | 18.817 | 97 | PASS |
+| a08 story | Tap a place to open its details. | 22.14 | 22.226 | 86 | PASS |
+| a08 story | Free, on SoCal Lights dot app. | 25.65 | no on-screen cue | - | - |
 | a08 reel | Looking for holiday lights tonight? | 0.06 | no on-screen cue | - | - |
-| a08 reel | Tap Find my location. | 2.88 | 2.96 | 80 | PASS |
-| a08 reel | Pull up the list to see what is near you. | 12.3 | 12.416 | 116 | PASS |
-| a08 reel | Tap This weekend to see what is on soon. | 15.54 | 15.617 | 77 | PASS |
-| a08 reel | Or tap Free to see only free places. | 18.99 | 19.079 | 89 | PASS |
-| a08 reel | Tap a place to open its details. | 22.44 | 22.527 | 87 | PASS |
-| a08 reel | Then tap Directions to go. | 26.1 | no on-screen cue | - | - |
-| a08 reel | Your phone switches to the maps app you choose. | 29.85 | no on-screen cue | - | - |
-| a08 reel | Free, on SoCal Lights dot app. | 34.5 | no on-screen cue | - | - |
+| a08 reel | Tap Find my location. | 2.88 | 2.959 | 79 | PASS |
+| a08 reel | Pull up the list to see what is near you. | 12.03 | 12.148 | 118 | PASS |
+| a08 reel | Tap This weekend to see what is on soon. | 15.24 | 15.32 | 80 | PASS |
+| a08 reel | Or tap Free to see only free places. | 18.72 | 18.817 | 97 | PASS |
+| a08 reel | Tap a place to open its details. | 22.14 | 22.226 | 86 | PASS |
+| a08 reel | Then tap Directions to go. | 25.71 | no on-screen cue | - | - |
+| a08 reel | Your phone switches to the maps app you choose. | 29.46 | no on-screen cue | - | - |
+| a08 reel | Free, on SoCal Lights dot app. | 34.11 | no on-screen cue | - | - |
 | a09 feed | Plan your whole night with Favorites. | 0.06 | no on-screen cue | - | - |
-| a09 feed | Tap the heart on a place to save it. | 2.85 | 2.89 | 40 | PASS |
-| a09 feed | Save a few more places you like. | 5.79 | 5.893 | 103 | PASS |
-| a09 feed | Tap the heart in the bottom menu to open Favorites. | 10.14 | 10.221 | 81 | PASS |
-| a09 feed | Your stops are listed in driving order. | 14.04 | no on-screen cue | - | - |
-| a09 feed | Tap Route these. | 18.99 | 19.107 | 117 | PASS |
-| a09 feed | Here is your route, with every stop listed. | 21.63 | no on-screen cue | - | - |
-| a09 feed | Your phone opens the route in the maps app you choose. | 26.64 | no on-screen cue | - | - |
-| a09 feed | Free, on SoCal Lights dot app. | 29.79 | no on-screen cue | - | - |
+| a09 feed | Tap the heart on a place to save it. | 2.82 | 2.875 | 55 | PASS |
+| a09 feed | Save a few more places you like. | 5.82 | 5.933 | 113 | PASS |
+| a09 feed | Tap the heart in the bottom menu to open Favorites. | 10.05 | 10.151 | 101 | PASS |
+| a09 feed | Your stops are listed in driving order. | 13.98 | no on-screen cue | - | - |
+| a09 feed | Tap Route these. | 18.93 | 19.023 | 93 | PASS |
+| a09 feed | Here is your route, with every stop listed. | 21.54 | no on-screen cue | - | - |
+| a09 feed | Your phone opens the route in the maps app you choose. | 26.55 | no on-screen cue | - | - |
+| a09 feed | Free, on SoCal Lights dot app. | 29.7 | no on-screen cue | - | - |
 | a09 story | Plan your whole night with Favorites. | 0.06 | no on-screen cue | - | - |
-| a09 story | Tap the heart on a place to save it. | 2.85 | 2.89 | 40 | PASS |
-| a09 story | Save a few more places you like. | 5.79 | 5.893 | 103 | PASS |
-| a09 story | Tap the heart in the bottom menu to open Favorites. | 10.14 | 10.221 | 81 | PASS |
-| a09 story | Your stops are listed in driving order. | 14.04 | no on-screen cue | - | - |
-| a09 story | Tap Route these. | 18.99 | 19.107 | 117 | PASS |
-| a09 story | Here is your route, with every stop listed. | 21.63 | no on-screen cue | - | - |
-| a09 story | Your phone opens the route in the maps app you choose. | 26.64 | no on-screen cue | - | - |
-| a09 story | Free, on SoCal Lights dot app. | 29.79 | no on-screen cue | - | - |
+| a09 story | Tap the heart on a place to save it. | 2.82 | 2.875 | 55 | PASS |
+| a09 story | Save a few more places you like. | 5.82 | 5.933 | 113 | PASS |
+| a09 story | Tap the heart in the bottom menu to open Favorites. | 10.05 | 10.151 | 101 | PASS |
+| a09 story | Your stops are listed in driving order. | 13.98 | no on-screen cue | - | - |
+| a09 story | Tap Route these. | 18.93 | 19.023 | 93 | PASS |
+| a09 story | Here is your route, with every stop listed. | 21.54 | no on-screen cue | - | - |
+| a09 story | Your phone opens the route in the maps app you choose. | 26.55 | no on-screen cue | - | - |
+| a09 story | Free, on SoCal Lights dot app. | 29.7 | no on-screen cue | - | - |
 | a09 reel | Plan your whole night with Favorites. | 0.06 | no on-screen cue | - | - |
-| a09 reel | Tap the heart on a place to save it. | 2.85 | 2.89 | 40 | PASS |
-| a09 reel | Save a few more places you like. | 5.79 | 5.893 | 103 | PASS |
-| a09 reel | Tap the heart in the bottom menu to open Favorites. | 10.11 | 10.221 | 111 | PASS |
-| a09 reel | Your stops are listed in driving order. | 14.04 | no on-screen cue | - | - |
-| a09 reel | Tap Route these. | 18.99 | 19.107 | 117 | PASS |
-| a09 reel | Here is your route, with every stop listed. | 21.63 | no on-screen cue | - | - |
-| a09 reel | Tap the arrows to pick your maps app. | 26.82 | 26.902 | 82 | PASS |
-| a09 reel | Apple Maps, Google Maps or Waze. | 29.64 | no on-screen cue | - | - |
-| a09 reel | Your phone opens the route in the maps app you choose. | 33.99 | no on-screen cue | - | - |
-| a09 reel | Free, on SoCal Lights dot app. | 37.14 | no on-screen cue | - | - |
+| a09 reel | Tap the heart on a place to save it. | 2.82 | 2.875 | 55 | PASS |
+| a09 reel | Save a few more places you like. | 5.82 | 5.933 | 113 | PASS |
+| a09 reel | Tap the heart in the bottom menu to open Favorites. | 10.05 | 10.151 | 101 | PASS |
+| a09 reel | Your stops are listed in driving order. | 13.98 | no on-screen cue | - | - |
+| a09 reel | Tap Route these. | 18.93 | 19.023 | 93 | PASS |
+| a09 reel | Here is your route, with every stop listed. | 21.54 | no on-screen cue | - | - |
+| a09 reel | Tap the arrows to pick your maps app. | 26.73 | 26.821 | 91 | PASS |
+| a09 reel | Apple Maps, Google Maps or Waze. | 29.55 | no on-screen cue | - | - |
+| a09 reel | Your phone opens the route in the maps app you choose. | 33.9 | no on-screen cue | - | - |
+| a09 reel | Free, on SoCal Lights dot app. | 37.05 | no on-screen cue | - | - |
 
 
-Sync target -100 to +400 ms between spoken cue and on-screen action: all cues with an on-screen action pass (60 pass, 0 fail). The ASR transcript of the mixed audio (voice plus music) matches the script in every cut apart from "SoCal" and one-word slips.
+Sync target -100 to +400 ms between spoken cue and on-screen action: all cues with an on-screen action pass (61 pass, 0 fail). The ASR transcript of the mixed audio (voice plus music) matches the script in every cut apart from "SoCal" and one-word slips.
 
 ## Needs the owner
 - a05: Lights Up Today must agree to paid use (written okay).
