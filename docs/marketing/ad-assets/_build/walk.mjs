@@ -23,7 +23,7 @@ const p = await ctx.newPage();
 let T0 = 0; const T = () => Date.now() / 1000 - T0; let tapMark = null;
 const tapXY = async (x, y) => { await p.evaluate(([x, y]) => window.__tap(x, y), [x, y]); if (tapMark == null) tapMark = T(); await p.touchscreen.tap(x, y); };
 const tap = async (sel, o = {}) => { const l = typeof sel === "string" ? p.locator(sel).first() : sel.first(); await l.waitFor({ state: "visible", timeout: 20000 }); const b = await l.boundingBox(); await tapXY(b.x + b.width / 2, b.y + b.height * (o.fy ?? .5)); await sleep(o.after ?? 500); };
-const type = async (sel, text) => { await tap(sel, { after: 150 }); await p.locator(sel).first().fill(""); await p.locator(sel).first().pressSequentially(text, { delay: 45 }); await sleep(250); };
+const type = async (sel, text) => { await tap(sel, { after: 150 }); await p.locator(sel).first().fill(""); await p.locator(sel).first().pressSequentially(text, { delay: W === "w06" ? 22 : 45 }); await sleep(250); };
 const next = (after = 700) => tap("#nextbtn", { after });
 const geoStart = async () => { await p.goto(BASE + "/", { waitUntil: "networkidle" }); await sleep(5500); try { await p.getByText("No thanks").first().click({ timeout: 3000 }); await sleep(600); } catch {} };
 const pickHeart = () => p.evaluate(() => { const pb = document.querySelector("#pbody").getBoundingClientRect(), L = [...document.querySelectorAll("article.item")].filter((a) => a.offsetParent !== null).map((a) => a.querySelector(".star")); const i = L.findIndex((s) => s.getAttribute("aria-pressed") !== "true" && s.getBoundingClientRect().top > pb.top + 4 && s.getBoundingClientRect().bottom < Math.min(pb.bottom, innerHeight - 80)); return i; });
@@ -41,7 +41,7 @@ const SC = {
       free: () => tap('[data-quick="cost"]', { after: 2000 }), card: async () => { if (!(await p.locator("article.item:visible").count())) { await tap('[data-quick="cost"]', { after: 1500 }); } if (!(await p.locator("article.item:visible").count())) { await tap('[data-quick="weekend"]', { after: 1500 }); } await tap("article.item", { after: 3000 }); } }, hold: { dir: 2.0, apps: 2.0 }, note: "dir" },
   w06: { prep: async () => { await p.goto(BASE + "/add-house", { waitUntil: "networkidle" }); await sleep(2500); },
     act: {
-      signin: async () => { await tap(p.getByText("Sign in", { exact: true }), { after: 1800 }); await tap("#si-email", { after: 300 }); await p.locator("#si-email").pressSequentially("you@example.com", { delay: 50 }); await sleep(400);
+      signin: async () => { await tap(p.getByText("Sign in", { exact: true }), { after: 1800 }); await tap("#si-email", { after: 300 }); await p.locator("#si-email").pressSequentially("you@example.com", { delay: 25 }); await sleep(400);
         await ctx.addCookies([{ name: "scl_session", value: ENTER, url: BASE }]); await p.goto(BASE + "/add-house", { waitUntil: "networkidle" }); await sleep(1200); }, // the emailed code is not recorded: the demo session cookie stands in for it
       who: async () => { await tap('[data-tile="kind|homeowner"]', { after: 500 }); await next(); },
       name: async () => { await type("#f-biz", "The Sample family"); await next(); },
@@ -68,7 +68,7 @@ for (const s of STEPS) {
   if (s.id === "apple") continue; // the finished route in Apple Maps is spliced in from the owner's real recording below
   const t0 = T(), dur = s.silent ? 1.2 : durOf(s.say), act = SC.act[s.id]; tapMark = null;
   if (act) { await sleep(300); await act(); }
-  const hold = (SC.hold && SC.hold[s.id]) ?? 0.9, end = Math.max(t0 + dur + hold, T() + 0.4);
+  const hold = (SC.hold && SC.hold[s.id]) ?? (W === "w06" ? 0.35 : 0.9), end = Math.max(t0 + dur + hold, T() + 0.4);
   await sleep(Math.max(0, (end - T()) * 1000));
   rec.push({ id: s.id, say: s.say, core: s.core, silent: !!s.silent, t0, action: tapMark, end: T() });
 }
