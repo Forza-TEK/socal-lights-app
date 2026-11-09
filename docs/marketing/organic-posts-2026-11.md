@@ -94,7 +94,7 @@ Posted by Grok after the owner approves each post. Not paid. All times Pacific; 
 - Where: Facebook + Instagram · Feed post (4:5)
 - Picture or video: a02 city page (4:5), city must have active events that day
 - Headline: Holiday lights and events near you.
-- Caption: Every city page lists what is on now. Find yours and plan a night out. (Pick a city with active events on the day, and say its name.)
+- Caption: Every city page lists what is on now. Find yours and plan a night out.
 - Link: https://socallights.app/?utm_source=meta&utm_medium=organic_social&utm_campaign=scl-organic-nov26&utm_content=city-page
 - Post on 2026-12-01 (Pacific). Hashtags (optional, 3 to 4): #socallights #christmaslights #socal. Rules: the word 'home'; no prices; no invented numbers; nothing implying payment affects contest results. Posted by Grok from the SoCalLights.app Page and Instagram account, only after the owner approves this post.
 
