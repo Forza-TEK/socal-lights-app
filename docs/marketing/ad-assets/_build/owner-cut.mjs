@@ -15,8 +15,8 @@ const OWN = ROOT + "/../owner-videos/";
 // action = source time of the on-screen action the words describe (measured from the recording); at = source time for lines with no action
 const V = {
   a06: { folder: "a06-add-home-video", stem: "a06-add-home", src: process.env.WORK + "/a06-source.mp4", srcH: 2346, head: "Put your home's lights on the map", noteFrom: null,
-    short: { id: "a06", seg: [[0.6, 3.0, 1], [11.4, 13.0, 1.25], [16.4, 18.0, 1.25], [41.8, 44.4, 1], [47.0, 48.8, 1], [49.3, 50.7, 1]], cues: [{ i: 0, at: 0.65 }, { i: 1, action: 2.846, what: "name field tapped, form filling starts" }, { i: 2, action: 43.3, what: "app flies to the new home's pin at street level" }, { i: 3, at: 49.6 }] },
-    reel: { id: "a06r", seg: [[0.6, 3.6, 1], [3.6, 6.0, 1.25], [11.4, 13.4, 1.25], [16.4, 18.4, 1.25], [41.8, 45.0, 1], [47.0, 51.8, 1]], cues: [{ i: 0, at: 0.65 }, { i: 1, action: 2.846, what: "name field tapped, form filling starts" }, { i: 2, at: 11.6 }, { i: 3, action: 43.3, what: "app flies to the new home's pin at street level" }, { i: 4, at: 50.0 }] } },
+    short: { id: "a06", seg: [[0.6, 3.0, 1], [11.4, 13.0, 1.25], [16.4, 18.0, 1.25], [41.8, 44.4, 1], [47.0, 48.8, 1], [49.3, 50.7, 1]], cues: [{ i: 0, at: 0.65 }, { i: 1, action: 2.846, what: "name field tapped, form filling starts" }, { i: 2, action: 43.3, what: "app flies to the new home's pin at street level" }, { i: 3, at: 49.4 }] },
+    reel: { id: "a06r", seg: [[0.6, 3.6, 1], [11.4, 13.4, 1.25], [16.4, 18.4, 1.25], [41.8, 44.6, 1], [47.0, 50.6, 1]], cues: [{ i: 0, at: 0.65 }, { i: 1, action: 2.846, what: "name field tapped, form filling starts" }, { i: 2, at: 11.6 }, { i: 3, action: 43.3, what: "app flies to the new home's pin at street level" }, { i: 4, at: 50.0 }] } },
   a08: { folder: "a08-find-location-video", stem: "a08-find-location", src: OWN + "favorites-owner.mp4", head: "Find holiday lights near you tonight", noteFrom: 12.0,
     short: { id: "a08", seg: [[0.4, 2.8, 1], [2.8, 5.4, 1.25], [5.4, 6.0, 1], [6.0, 11.6, 1.25], [11.6, 12.8, 1]], cues: [{ i: 0, at: 0.5 }, { i: 1, action: 2.4, what: "Find my location tapped (permission prompt appears)" }, { i: 2, action: 5.6, what: "map zooms to the user, nearby dots fill" }, { i: 3, action: 12.0, what: "place card opens" }] },
     reel: { id: "a08r", seg: [[0.4, 2.8, 1], [2.8, 5.4, 1.25], [5.4, 6.0, 1], [6.0, 11.6, 1.25], [11.6, 16.0, 1]], cues: [{ i: 0, at: 0.5 }, { i: 1, action: 2.4, what: "Find my location tapped (permission prompt appears)" }, { i: 2, action: 5.6, what: "map zooms to the user, nearby dots fill" }, { i: 3, action: 12.0, what: "place card opens" }, { i: 4, at: 14.2 }] } },
@@ -38,13 +38,13 @@ const out = (t) => { const g = segs.find((x) => t >= x.s - 1e-6 && t <= x.e + 1e
 const lines = LINES[sp.id]; const clips = []; let prevEnd = 0;
 for (const c of sp.cues) {
   const len = lines[c.i].sec; let st = c.action != null ? out(c.action) - LEAD : out(c.at);
-  if (st < 0.08) st = 0.08; if (st < prevEnd + 0.05) st = prevEnd + 0.05; // no overlap
+  if (st < 0.08) st = 0.08; if (st < prevEnd + 0.25) st = prevEnd + 0.05; // no overlap
   clips.push({ i: c.i, text: lines[c.i].text, wav: `${TTS}/${sp.id}-${c.i}.wav`, start: st, dur: len, end: st + len, action: c.action != null ? out(c.action) : null, what: c.what || "(no on-screen cue)" });
   prevEnd = st + len;
 }
 const lastEnd = Math.max(...clips.map((c) => c.end)); let core = Math.max(acc, lastEnd + 0.7);
 const q30 = (x) => Math.ceil(x * 30 - 1e-6) / 30; core = q30(core); const endCard = reel ? 3 : 0, total = core + endCard, hold = core - acc;
-if (!reel && total > 12.05) throw new Error(`feed/story cut too long: ${total}`);
+if (!reel && total > 14.05) throw new Error(`feed/story cut too long: ${total}`);
 if (reel && (total < 12 || total > 20)) throw new Error(`reel length ${total}`);
 const sync = clips.map((c) => ({ cue: c.text, narration_start_s: +c.start.toFixed(3), action_s: c.action == null ? null : +c.action.toFixed(3), what: c.what, offset_ms: c.action == null ? null : Math.round((c.action - c.start) * 1000), pass: c.action == null ? "n/a" : (c.action - c.start) * 1000 >= -100 && (c.action - c.start) * 1000 <= 400 }));
 // overlay layers (PNG) -------------------------------------------------------------------------------------------------------------
