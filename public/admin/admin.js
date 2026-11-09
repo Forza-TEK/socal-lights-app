@@ -29,8 +29,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "emails", "help", "chat"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "emails", "help", "chat"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
@@ -73,6 +73,7 @@ async function render() {
     if (tab === "log") return renderLog();
     if (tab === "usage") return renderUsage();
     if (tab === "outreach") return renderOutreach();
+    if (tab === "ads") return renderAds();
     if (tab === "emails") return renderEmails(main);
     if (tab === "help") return renderHelp(main);
     if (tab === "chat") return renderChat(main);
@@ -888,6 +889,37 @@ async function renderOutreach() {
         const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "outreach-reconcile.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       };
     } catch (x) { note.textContent = x.message; } finally { b.disabled = false; }
+  };
+}
+
+/* ---------- Ads: what Grok reported for the Facebook and Instagram ads, against the $300 budget. Read-only; copy and status change only by migration. ---------- */
+const usd = (c) => "$" + (Number(c || 0) / 100).toFixed(2);
+const ADPILL = { draft: "", in_review: "warn", active: "ok", paused: "", disapproved: "bad", ended: "" };
+const ADWARN = { over_total_budget: "Over $300", over_loaded_budget: "Over $280", campaign_over_budget: "Campaign over budget", not_in_launch_set: "Not in launch set", active_after_dec8: "Running past Dec 8", past_campaign_end: "Past campaign end", disapproved: "Disapproved", stale_report: "No report in 48 hours", spend_decreased: "Spend went down" };
+async function renderAds() {
+  const main = $("#main"), d = await api("/api/admin/ads"), t = d.totals;
+  const pct = Math.min(100, (t.spend_cents / t.budget_cents) * 100), cls = t.spend_cents > t.budget_cents ? "u-limit" : t.spend_cents > t.loaded_cents ? "u-warning" : "u-ok";
+  const at = (s) => (s ? esc(String(s).slice(0, 16).replace("T", " ")) + " UTC" : "never");
+  const alerts = d.warnings.length ? d.warnings.map((w) => `<li><span class="tag bad">${esc(ADWARN[w.code] || w.code)}</span> ${esc(w.message)}</li>`).join("") : `<li class="meta">No alerts.</li>`;
+  const camp = d.campaigns.map((c) => { const p = c.budget_cents ? Math.min(100, (c.spend_cents / c.budget_cents) * 100) : 0; return `<article class="ucard ${c.spend_cents > c.budget_cents ? "u-limit" : "u-ok"}" aria-label="${esc(c.name)}"><div class="uh"><h3>${esc(c.audience.replace("_", " "))}</h3><span class="tag">${esc(c.starts)} to ${esc(c.ends)}</span></div>
+    <p class="unum"><b>${usd(c.spend_cents)}</b> <span class="meta">of ${usd(c.budget_cents)} budget</span></p>
+    <div class="ubar" role="progressbar" aria-label="${esc(c.audience)} spend" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p)}"><i style="width:${p}%"></i></div>
+    <p class="meta" style="margin:6px 0 0">${fmt(c.reported_ads)} of ${fmt(c.ads.length)} ads reported</p></article>`; }).join("");
+  const rows = d.ads.map((a) => { const r = a.report; return `<tr><td><code>${esc(a.id)}</code><br><span class="meta">${esc(a.headline)}</span></td><td>${a.status === "approved" ? (r ? `<span class="tag ${ADPILL[r.status] || ""}">${esc(r.status.replace("_", " "))}</span>` : `<span class="tag">no report</span>`) : `<span class="tag">${esc(a.status.replace(/_/g, " "))}</span>`}</td><td>${r ? usd(r.spend_cents) : ""}</td><td>${r ? fmt(r.impressions) : ""}</td><td>${r ? fmt(r.clicks) : ""}</td><td>${a.status === "approved" ? fmt(a.landings) : ""}</td><td>${r ? at(r.received_at) : ""}</td></tr>`; }).join("");
+  main.innerHTML = `<p class="meta" style="margin:0 0 12px">Grok builds the Facebook and Instagram ads and reports status every 2 days through a key-protected API. Read-only here: the ad copy and its status change only by migration, and budgets are set by you in Meta Ads Manager. Contract: <code>docs/monetization/grok-ads-api.md</code>.</p>
+    <h2 class="dh">Budget</h2>
+    <div class="ugrid"><article class="ucard ${cls}" aria-label="Total spend"><div class="uh"><h3>Total spend</h3><span class="tag ${d.configured ? "ok" : "bad"}">${d.configured ? "Key set" : "No key: API is off"}</span></div>
+      <p class="unum"><b>${usd(t.spend_cents)}</b> <span class="meta">of ${usd(t.budget_cents)} (loaded ${usd(t.loaded_cents)}, reserve ${usd(t.reserve_cents)})</span></p>
+      <div class="ubar" role="progressbar" aria-label="Spend against the $300 budget" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}"><i style="width:${pct}%"></i></div>
+      <p class="meta" style="margin:6px 0 0">${fmt(t.impressions)} impressions, ${fmt(t.clicks)} clicks. Last report: <b>${at(d.last_report_at)}</b>.${d.configured ? "" : " Create the ADS_API_KEY secret (docs/monetization/grok-ads-api.md) to turn it on."}</p></article></div>
+    <h2 class="dh">Alerts</h2><ul class="meta" style="list-style:none;padding:0;margin:0 0 8px;display:grid;gap:6px" aria-label="Alerts">${alerts}</ul>
+    <h2 class="dh">Campaigns</h2><div class="ugrid">${camp}</div>
+    <h2 class="dh">Ads</h2>
+    <p style="margin:0 0 8px"><button type="button" class="btn ghost" id="adcsv">Download CSV</button> <span class="meta">Landings are visits counted under each ad's ref code since the first start date (no people are identified).</span></p>
+    <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Ads"><table style="width:100%;min-width:640px"><thead><tr><th scope="col">Ad</th><th scope="col">Status</th><th scope="col">Spend</th><th scope="col">Impressions</th><th scope="col">Clicks</th><th scope="col">Landings</th><th scope="col">Last report</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  $("#adcsv").onclick = () => {
+    const csv = "ad_id,campaign,item_status,reported_status,spend_usd,impressions,clicks,landings,ref,as_of,received_at\r\n" + d.ads.map((a) => { const r = a.report || {}; return [a.id, a.audience, a.status, r.status || "", r.spend_cents == null ? "" : (r.spend_cents / 100).toFixed(2), r.impressions ?? "", r.clicks ?? "", a.landings, a.ref, r.as_of || "", r.received_at || ""].map(csvCell).join(","); }).join("\r\n") + "\r\n";
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "ads-status.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   };
 }
 

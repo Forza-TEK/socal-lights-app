@@ -1,6 +1,15 @@
 # Status
 
-_Last updated: 2026-11-08 (Help articles re-audit, second pass)_
+_Last updated: 2026-11-09 (Ads link for Grok)_
+
+## Ads link for Grok: brief, assets, status reports, Admin > Ads (2026-11-09)
+Branch `ads-link`, PR to `main` (not merged by the agent). Contract: `docs/monetization/grok-ads-api.md`. Meta (Facebook and Instagram) only; total $300, $280 loaded, $20 reserve, every ad ends Dec 8, county targeting.
+- **Migration `0204_ads_link.sql`:** `ads_campaigns` (5 audiences: contest organizers $55 Nov 12 to Dec 8, event holders $45 to Dec 1, installers $20 to Nov 23, families $100 Nov 24 to Dec 8, homeowners $60 Nov 24 to Dec 8), `ads_items` (11 launch ads `approved`, 6 `not_in_launch`: ct-c, ho-c, ev-c, in-c, fa-d, fa-e; no Google, Nextdoor or newsletter items; copy word for word from `docs/marketing/ads-content.json`), `ads_reports` (latest per ad), `ads_report_log` (append-only, pruned after 90 days on each report). 0202 already existed twice; 0203 and 0204 were free on every remote branch at the time.
+- **API** (`functions/api/ads/{brief,assets,report,status}.js`, `functions/_lib/ads.js`): Bearer `ADS_API_KEY` (Pages secret, 16+ chars, 503 until it exists), constant-time digest compare, 60 calls a minute per key (counter shares `outreach_rate` under its own key id), strict validation (unknown fields rejected, 100 rows at most, whole batch rejected if any row is wrong, no personal data). Warnings: over $280 / over $300, campaign over budget, ad not in launch set, active after Dec 8, active past its campaign end, disapproved, no report in 48 hours, spend decreased.
+- **Admin > Ads** (`functions/api/admin/ads.js`, read-only GET; tab in `public/admin/admin.js`, `?v=20261112a`): campaigns with budget vs spend, progress bar to $300, per-ad status, spend, impressions, clicks, last report, landings per ref code from `site_hits` (`ref:mt-*`), alerts, CSV.
+- **Creative:** `public/ad-assets/` (README, empty `manifest.json`), `_headers` noindex rule, `robots.txt` Disallow, `scripts/build-ad-assets.mjs` (copies from `docs/marketing/ad-assets`, writes sha256 manifest, 20 MiB cap). **Not copied yet:** the creative on `origin/ads-creative` (a01 to a10, about 4.9 MB, 13 files) is not final; run the script when the owner approves it. ho-a-meta has no asset yet (add-a-home recording not built).
+- **Owner steps:** create the Pages secret `ADS_API_KEY` (steps in the contract, "Owner steps"), redeploy, give Grok the same value and the contract. Nothing live until then.
+- **Tests:** `tests/ads.test.mjs` (18).
 
 ## Help articles re-audit, second pass (2026-11-08)
 Report: `docs/audit/2026-11-08-help-articles.md`. Branch work, PR to `main` (not merged by the agent). Migration `0201_help_audit_gaps_2026-11-08.sql` (from `scripts/help/updates-audit-1108b.mjs`): 5 new articles (`add-a-home-without-a-contest`, `sponsor-a-contest-with-an-invite-link`, `ask-socal-lights-ai-assistant`, `monthly-update-email`, `stop-emails-from-socal-lights`) and 8 corrections to existing ones, seed-owned articles only (`updated_by = 'seed'`). 54 articles before, 59 after. All 54 live article pages matched the migration text, so none has been edited in Admin. Help copy in `functions/_lib/help.js` and `functions/help/index.js` fixed (home wording; "Most how-tos have a video"). `chatkb-data.js` regenerated.

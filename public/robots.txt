@@ -7,5 +7,6 @@ Allow: /api/events$
 Disallow: /add
 Disallow: /profile
 Disallow: /c/
+Disallow: /ad-assets/
 
 Sitemap: https://socallights.app/sitemap.xml
