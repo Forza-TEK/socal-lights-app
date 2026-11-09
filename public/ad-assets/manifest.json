@@ -23,10 +23,10 @@
   },
   {
    "asset_id": "a02-city-page",
-   "path": "a02-city-page/a02-city-page-san-diego-4x5-1080x1350.png",
+   "path": "a02-city-page/a02-city-page-los-angeles-4x5-1080x1350.png",
    "content_type": "image/png",
-   "bytes": 261710,
-   "sha256": "812b80dd895b5b1cbb5a39d6c256aaf07f48bbd243600b45b313c2cc8efd8cf7",
+   "bytes": 423327,
+   "sha256": "1875a3b96bd8537c7c328dad0ce656ef6bd0fadf9d4009c984218036a773c848",
    "width": 1080,
    "height": 1350,
    "ratio": "4:5"
@@ -62,11 +62,71 @@
    "ratio": "4:5"
   },
   {
+   "asset_id": "a06-add-home-video",
+   "path": "a06-add-home-video/a06-add-home-feed-4x5.mp4",
+   "content_type": "video/mp4",
+   "bytes": 2077723,
+   "sha256": "53840f4161d032765603e14c323fe7e31bb8cf63b4faea69f5de447ffceae286",
+   "width": null,
+   "height": null,
+   "ratio": "4:5"
+  },
+  {
+   "asset_id": "a06-add-home-video",
+   "path": "a06-add-home-video/a06-add-home-reel-9x16.mp4",
+   "content_type": "video/mp4",
+   "bytes": 2924184,
+   "sha256": "94a48dec54ee35e9c113ca9dcfce5d59035d6c32611bc27385544b5f7258f56b",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a06-add-home-video",
+   "path": "a06-add-home-video/a06-add-home-story-9x16.mp4",
+   "content_type": "video/mp4",
+   "bytes": 2565135,
+   "sha256": "0d95c22fdc2afe5616a0984e9ac07e9fc6eadce587b7f4eff47274dfda2c2fa9",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a07-route-video",
+   "path": "a07-route-video/a07-route-feed-4x5.mp4",
+   "content_type": "video/mp4",
+   "bytes": 3469237,
+   "sha256": "dc54f93145e1d2436de50f105725151f586e35651d7fa2390a6ebfaf421053c4",
+   "width": null,
+   "height": null,
+   "ratio": "4:5"
+  },
+  {
+   "asset_id": "a07-route-video",
+   "path": "a07-route-video/a07-route-reel-9x16.mp4",
+   "content_type": "video/mp4",
+   "bytes": 5238073,
+   "sha256": "5d1c84de26ac4ec5e4b5f889d04af0f4e1f59d792bb9aed2698462eb2e22fc45",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a07-route-video",
+   "path": "a07-route-video/a07-route-story-9x16.mp4",
+   "content_type": "video/mp4",
+   "bytes": 4477162,
+   "sha256": "3b234e962be433a9ec4e2a7bd938883d94694aceecabdbc5c15ef79bba299cfe",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
    "asset_id": "a08-find-location-video",
    "path": "a08-find-location-video/a08-find-location-feed-4x5.mp4",
    "content_type": "video/mp4",
-   "bytes": 2153161,
-   "sha256": "62987ea5a52a0e4f8759334d40e40f42c097ba2c2eb80c2b0f2497a997b676d4",
+   "bytes": 2975317,
+   "sha256": "802ae550d4d78a8ca18b9fa98f061894fef4cfbdf99fa0d21330ebe103912ecd",
    "width": null,
    "height": null,
    "ratio": "4:5"
@@ -75,8 +135,8 @@
    "asset_id": "a08-find-location-video",
    "path": "a08-find-location-video/a08-find-location-reel-9x16.mp4",
    "content_type": "video/mp4",
-   "bytes": 3178218,
-   "sha256": "dd54c3a9f742da26a6d8ccbda62c4cd02e53ce04c9d2f040cfc67d0f5811d0ae",
+   "bytes": 4348073,
+   "sha256": "9da3bef1e57f823939558b44c662bd39784d3a5b3fa3d26f3f9f370cbe111176",
    "width": null,
    "height": null,
    "ratio": "9:16"
@@ -85,8 +145,38 @@
    "asset_id": "a08-find-location-video",
    "path": "a08-find-location-video/a08-find-location-story-9x16.mp4",
    "content_type": "video/mp4",
-   "bytes": 2729114,
-   "sha256": "ce16805219888c25d7e2c68fffbdc16c690d24875eca91af41ec457dbab6c3d1",
+   "bytes": 3817778,
+   "sha256": "0a7bf2bd48a08c83ed58e5091355c24807102e59840a5ec116516a1e43a5461f",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a09-favorites-video",
+   "path": "a09-favorites-video/a09-favorites-feed-4x5.mp4",
+   "content_type": "video/mp4",
+   "bytes": 3025320,
+   "sha256": "a763c8205eabdba704982abf2c3dc16642e6b5d43455ac4f12bccb0a03a32df8",
+   "width": null,
+   "height": null,
+   "ratio": "4:5"
+  },
+  {
+   "asset_id": "a09-favorites-video",
+   "path": "a09-favorites-video/a09-favorites-reel-9x16.mp4",
+   "content_type": "video/mp4",
+   "bytes": 4247468,
+   "sha256": "238d47406c523a87ddb4ffd723d6d9790aa8a19135f859f42a803aee9b238c74",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a09-favorites-video",
+   "path": "a09-favorites-video/a09-favorites-story-9x16.mp4",
+   "content_type": "video/mp4",
+   "bytes": 3829473,
+   "sha256": "82e57de3e7299e5298d813b60004aabc824aaa3aaa935b7e95e25cf9a3db8c5b",
    "width": null,
    "height": null,
    "ratio": "9:16"
@@ -100,6 +190,56 @@
    "width": 1080,
    "height": 1350,
    "ratio": "4:5"
+  },
+  {
+   "asset_id": "a11-story-versions",
+   "path": "a11-story-versions/a11-story-a02-city-page-los-angeles-9x16.png",
+   "content_type": "image/png",
+   "bytes": 548477,
+   "sha256": "34c0234e0011c79b505337a557cbfa743a0bb4ddf859466e9ef33198983a7520",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a11-story-versions",
+   "path": "a11-story-versions/a11-story-a03-contest-entry-page-9x16.png",
+   "content_type": "image/png",
+   "bytes": 335774,
+   "sha256": "639509394978d90d18359daccaf610b4d2e886250335a73a43611f431ae1b9c7",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a11-story-versions",
+   "path": "a11-story-versions/a11-story-a04-qr-poster-9x16.png",
+   "content_type": "image/png",
+   "bytes": 517198,
+   "sha256": "44adb48dcf44d52e5be8ed213e3b2fc988402a8c7939156c723b26988f55ee47",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a11-story-versions",
+   "path": "a11-story-versions/a11-story-a05-installer-profile-lights-up-today-9x16.png",
+   "content_type": "image/png",
+   "bytes": 872093,
+   "sha256": "5d3717d99ee10957eaa36d92d38b031257972c215aa8ba808b8c5f4f1a60969c",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a11-story-versions",
+   "path": "a11-story-versions/a11-story-a10-weekend-list-9x16.png",
+   "content_type": "image/png",
+   "bytes": 914913,
+   "sha256": "9094bc269ccaf94fb4d49add6e1b7fe7458645420f1621b0973b9fef6e33d6e3",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
   }
  ]
 }
