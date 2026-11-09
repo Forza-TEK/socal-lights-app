@@ -10,7 +10,7 @@ const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_PATH 
 const [root, ...only] = process.argv.slice(2), SITE = "https://socallights.app";
 const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1"; // Playwright preset "iPhone 17 Pro Max" (viewport set to the full 440 x 956 screen)
 const JOBS = {
-  a02: { dir: "a02-city-page", stem: "a02-city-page-san-diego", url: "/in/san-diego", scrollTo: "What's coming up", head: "List your holiday event for free", cta: "Free to list: socallights.app" },
+  a02: { dir: "a02-city-page", stem: "a02-city-page-los-angeles", url: "/in/los-angeles", scrollTo: "What's coming up", head: "List your holiday event for free", cta: "Free to list: socallights.app" },
   a03e: { dir: "a03-contest-screens", stem: "a03-contest-entry-page", url: "/c/holiday-home-lighting-contest-2026-5f5a0", head: "Run a home lights contest, free", cta: "Start at socallights.app" },
   a05: { dir: "a05-installer-profile", stem: "a05-installer-profile-lights-up-today", url: "/installer/lights-up-today", head: "A free page for your lighting company", cta: "Start at socallights.app" },
   a10: { dir: "a10-weekend-list", stem: "a10-weekend-list", url: "/", map: true, head: "Holiday lights this weekend", cta: "Free map: socallights.app" },
