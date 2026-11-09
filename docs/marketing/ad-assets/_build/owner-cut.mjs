@@ -14,6 +14,9 @@ const LINES = JSON.parse(readFileSync(TTS + "/lines.json", "utf8"));
 const OWN = ROOT + "/../owner-videos/";
 // action = source time of the on-screen action the words describe (measured from the recording); at = source time for lines with no action
 const V = {
+  a06: { folder: "a06-add-home-video", stem: "a06-add-home", src: process.env.WORK + "/a06-source.mp4", srcH: 2346, head: "Put your home's lights on the map", noteFrom: null,
+    short: { id: "a06", seg: [[0, 3.6, 1], [9.9, 12.9, 1.25], [14.9, 17.3, 1]], cues: [{ i: 0, at: 0.05 }, { i: 1, action: 2.262, what: "name field tapped, form filling starts" }, { i: 2, action: 15.275, what: "review screen with Put it on the map button" }] },
+    reel: { id: "a06r", seg: [[0, 3.6, 1], [3.6, 5.8, 1.25], [9.9, 12.9, 1], [14.5, 17.5, 1]], cues: [{ i: 0, at: 0.05 }, { i: 1, action: 2.262, what: "name field tapped, form filling starts" }, { i: 2, at: 10.4 }, { i: 3, action: 15.275, what: "review screen with Put it on the map button" }] } },
   a08: { folder: "a08-find-location-video", stem: "a08-find-location", src: OWN + "favorites-owner.mp4", head: "Find holiday lights near you tonight", noteFrom: 12.0,
     short: { id: "a08", seg: [[0.4, 2.8, 1], [2.8, 5.4, 1.25], [5.4, 6.0, 1], [6.0, 11.6, 1.25], [11.6, 12.8, 1]], cues: [{ i: 0, at: 0.5 }, { i: 1, action: 2.4, what: "Find my location tapped (permission prompt appears)" }, { i: 2, action: 5.6, what: "map zooms to the user, nearby dots fill" }, { i: 3, action: 12.0, what: "place card opens" }] },
     reel: { id: "a08r", seg: [[0.4, 2.8, 1], [2.8, 5.4, 1.25], [5.4, 6.0, 1], [6.0, 11.6, 1.25], [11.6, 16.0, 1]], cues: [{ i: 0, at: 0.5 }, { i: 1, action: 2.4, what: "Find my location tapped (permission prompt appears)" }, { i: 2, action: 5.6, what: "map zooms to the user, nearby dots fill" }, { i: 3, action: 12.0, what: "place card opens" }, { i: 4, at: 14.2 }] } },
@@ -27,7 +30,7 @@ const V = {
 const [vid, place] = process.argv.slice(2), v = V[vid], reel = place === "reel", sp = reel ? v.reel : v.short;
 const FMT = place === "feed" ? { W: 1080, H: 1350, PH: 1150, y: 200, h: { y: 8, s: 42 }, c: { y: 64, s: 32 }, n: { y: 120, s: 27 }, tag: "4x5" }
   : { W: 1080, H: 1920, PH: 1416, y: 504, h: { y: 258, s: 54 }, c: { y: 338, s: 36 }, n: { y: 408, s: 29 }, tag: "9x16" };
-FMT.PW = Math.round((1080 * FMT.PH / 2314) / 2) * 2;
+FMT.PW = Math.round((1080 * FMT.PH / (v.srcH || 2314)) / 2) * 2;
 const LEAD = 0.1, mkdir = (d) => mkdirSync(d, { recursive: true }), D = `${WORK}/${vid}-${place}`; mkdir(D);
 // source time -> output time
 let acc = 0; const segs = sp.seg.map(([s, e, k]) => { const o = acc; acc += (e - s) / k; return { s, e, k, o }; });
@@ -39,8 +42,8 @@ for (const c of sp.cues) {
   clips.push({ i: c.i, text: lines[c.i].text, wav: `${TTS}/${sp.id}-${c.i}.wav`, start: st, dur: len, end: st + len, action: c.action != null ? out(c.action) : null, what: c.what || "(no on-screen cue)" });
   prevEnd = st + len;
 }
-const lastEnd = Math.max(...clips.map((c) => c.end)), core = Math.max(acc, lastEnd + 0.7);
-const endCard = reel ? 3 : 0, total = core + endCard, hold = core - acc;
+const lastEnd = Math.max(...clips.map((c) => c.end)); let core = Math.max(acc, lastEnd + 0.7);
+const q30 = (x) => Math.ceil(x * 30 - 1e-6) / 30; core = q30(core); const endCard = reel ? 3 : 0, total = core + endCard, hold = core - acc;
 if (!reel && total > 12.05) throw new Error(`feed/story cut too long: ${total}`);
 if (reel && (total < 12 || total > 20)) throw new Error(`reel length ${total}`);
 const sync = clips.map((c) => ({ cue: c.text, narration_start_s: +c.start.toFixed(3), action_s: c.action == null ? null : +c.action.toFixed(3), what: c.what, offset_ms: c.action == null ? null : Math.round((c.action - c.start) * 1000), pass: c.action == null ? "n/a" : (c.action - c.start) * 1000 >= -100 && (c.action - c.start) * 1000 <= 400 }));
@@ -72,7 +75,7 @@ filt.push(`[${last}][1:v]overlay=0:0[v${n}]`); last = `v${n++}`;
 let idx = 2;
 for (const c of clips) { inputs.push("-loop", "1", "-i", `${D}/cap${c.i}.png`); filt.push(`[${last}][${idx}:v]overlay=0:0:enable='between(t,${(c.start - 0.05).toFixed(3)},${(c.end + 0.25).toFixed(3)})'[v${n}]`); last = `v${n++}`; idx++; }
 inputs.push("-loop", "1", "-i", D + "/note.png");
-const noteStart = out(v.noteFrom); filt.push(`[${last}][${idx}:v]overlay=0:0:enable='gte(t,${noteStart.toFixed(3)})'[v${n}]`); last = `v${n++}`; idx++;
+const noteStart = v.noteFrom == null ? null : out(v.noteFrom); if (noteStart != null) { filt.push(`[${last}][${idx}:v]overlay=0:0:enable='gte(t,${noteStart.toFixed(3)})'[v${n}]`); last = `v${n++}`; idx++; } else idx++;
 let vmap = last;
 if (reel) { inputs.push("-loop", "1", "-i", D + "/end.png");
   filt.push(`[${last}]trim=duration=${core.toFixed(3)},setpts=PTS-STARTPTS,fps=30[main]`, `[${idx}:v]scale=${FMT.W}:${FMT.H},setsar=1,fps=30,trim=duration=${endCard},setpts=PTS-STARTPTS[endc]`, `[main][endc]concat=n=2:v=1:a=0[vo]`); vmap = "vo"; }

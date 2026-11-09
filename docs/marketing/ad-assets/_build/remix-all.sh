@@ -7,6 +7,7 @@
 C="$(dirname "$0")/audio/candidates"
 run() { for p in feed story reel; do node owner-cut.mjs "$1" $p --music "$2"; done; }
 if [ -n "$1" ]; then run "$1" "$2"; exit; fi
+run a06 "$C/A-bright-bells-pop.mp3"
 run a08 "$C/A-bright-bells-pop.mp3"
 run a09 "$C/C-cozy-sparkle.mp3"
 run a07 "$C/B-swing-along.mp3"

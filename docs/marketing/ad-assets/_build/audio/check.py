@@ -30,6 +30,7 @@ hits = sum(1 for x in iw if x in hw)
 meas = []
 for c in sync["sync"]:
     fw = norm(c["cue"])[0]
+    if fw == "socal": fw = "lights"  # the small recogniser hears "so cow"; "lights" is reliable
     cand = [x for x in words if x["word"] == fw and x["start"] >= c["narration_start_s"] - 0.6]
     ms = cand[0]["start"] if cand else None
     meas.append({"cue": c["cue"], "planned_start": c["narration_start_s"], "asr_start": ms, "action_s": c["action_s"],
