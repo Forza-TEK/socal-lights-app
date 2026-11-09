@@ -55,7 +55,8 @@
 <section class="pfree" id="evfree"><div class="pprice">Free</div><div class="ptxt"><h3 class="pname">Your listing</h3><p class="pblurb">A pin on the map and a card in the list.</p></div><a class="btn ghost" href="/add-event">Add your event</a></section>
 <div class="pcards four" id="plans"></div>
 <div id="evcompare" class="paid"></div>
-<p class="cmpnote" id="featnote">Choose a plan, sign in with an emailed code, pick your event, and pay on Stripe's secure page. <span id="evrule"></span> The exact dates and total are shown before you pay.</p></section>
+<p class="cmpnote" id="featnote">Choose a plan, sign in with an emailed code, pick your event, and pay on Stripe's secure page. <span id="evrule"></span> The exact dates and total are shown before you pay.</p>
+<div id="partnerbox" class="paid" hidden><h3>Event Partner: for organizations with several events</h3><div class="pcards" id="partnercard"></div><p class="cmpnote" id="partnernote"></p></div></section>
 
 <section class="wsec" id="banner" data-panel="banner" data-label="Installers"><h2>Installers</h2>
 <p class="sub">Show your company on the map and in your homes' pages. Paid placements are always labelled "Sponsor".</p>
@@ -83,6 +84,7 @@ import { mountShell } from "/appshell.js?v=20261110e";
 import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
 import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261108a";
 import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
+import { partnerCopy, dollars as partnerDollars } from "/partner-copy.js?v=20261109a";
 import { PASS_KEYS, passCopy, freeCopy, moreCopy, contactHref, dollars as passDollars } from "/contest-passes.js?v=20261109a";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -123,6 +125,13 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
     $("#cmore").innerHTML = `<section class="pfree pmore"><div class="ptxt"><h3 class="pname">${esc(mc.name)}</h3><p class="pblurb">${esc(mc.bullets.join(". "))}</p></div><a class="btn ghost" href="${esc(contactHref())}" aria-label="More than ${(cfg.contestPasses || {}).contactAbove || 20} contests, contact us">Contact us</a></section>`;
     $("#ctiers").addEventListener("click", (e) => { if (e.target.closest("[data-pass-choose]")) beacon("fn:pass-choose"); });
   } else $("#cnote").hidden = true;
+  // Event Partner: one price per season for an organization's events (cities, chambers, nonprofits, event producers). Price and cap come from /api/config.
+  if (cfg.eventPartner && cfg.eventPartner.cents) {
+    const pc = partnerCopy(cfg), pp = partnerDollars(cfg.eventPartner.cents);
+    $("#partnerbox").hidden = false;
+    $("#partnercard").innerHTML = planCard({ key: "partner", price: pp, unit: pc.unit, name: pc.name, blurb: pc.blurb, bullets: pc.bullets, collapse: "What's included", cls: "paid", action: `<a class="btn ghost" href="/partner" aria-label="Choose Event Partner, ${esc(pp)} per season">Choose</a>` });
+    $("#partnernote").textContent = pc.note + " Founding cities have it free this year.";
+  }
   const EP = cfg.eventPlans || {}, keys = EVENT_KEYS.filter((k) => EP[k]);
   if (PL.pin && PL.top) $("#homeprices").innerHTML = `<span><b>Featured pin</b> ${esc(dollars(PL.pin))}</span><span><b>Top of the list</b> ${esc(dollars(PL.top))}</span>`;
   if (!keys.length) { $("#featnote").hidden = true; $("#featuredpic").hidden = true; }
