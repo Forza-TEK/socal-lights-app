@@ -1,3 +1,4 @@
 [class*="chat"],#chat-fab,#chatfab{display:none!important}
 img:not([src*="icon"]):not([src*="badge"]){display:none!important}
 .ev{grid-template-columns:1fr!important}.ev .ph{display:none!important}
+h2{display:none!important}.top{display:none!important}

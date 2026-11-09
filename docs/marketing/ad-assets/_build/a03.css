@@ -1,3 +1,4 @@
 [class*="chat"],#chat-fab,#chatfab{display:none!important}
-#exlabel{position:fixed;z-index:99999;left:0;right:0;top:0;background:#ffd166;color:#14161b;font:800 22px/1 "Plus Jakarta Sans",system-ui,sans-serif;text-align:center;padding:14px 10px;letter-spacing:.3px}
-body{padding-top:48px!important}
+.top{display:none!important}
+#exlabel{position:fixed;z-index:99999;left:0;right:0;top:0;background:#ffd166;color:#14161b;font:800 17px/1 "Plus Jakarta Sans",system-ui,sans-serif;text-align:center;padding:11px 8px;letter-spacing:.2px}
+body{padding-top:38px!important}
