@@ -37,8 +37,8 @@ Posted by Grok after the owner approves each post. Not paid. All times Pacific; 
 ## 2026-11-17 (Tue): Run a home decorating contest
 - Where: Facebook + Instagram · Feed post (4:5)
 - Picture or video: a03 demo contest entry (4:5)
-- Headline: Want a neighborhood lights contest? Your first one is free.
-- Caption: Set up a home decorating contest in minutes: a link and a QR code to share, with entries, judges and a results page. The first contest for your organization in a 12-month window is free.
+- Headline: Want a neighborhood lights contest? Set one up in minutes.
+- Caption: Set up a home decorating contest in minutes: a link and a QR code to share, with entries, judges and a results page. Residents enter for free; organizers choose a contest pass (see the Pricing page).
 - Link: https://socallights.app/add-contest?utm_source=meta&utm_medium=organic_social&utm_campaign=scl-organic-nov26&utm_content=contest-first-free
 - Post on 2026-11-17 (Pacific). Hashtags (optional, 3 to 4): #socallights #communityevents #holidaycontest. Rules: the word 'home'; no prices; no invented numbers; nothing implying payment affects contest results. Posted by Grok from the SoCalLights.app Page and Instagram account, only after the owner approves this post.
 

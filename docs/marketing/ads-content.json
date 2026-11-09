@@ -366,18 +366,18 @@
   "id": "ct-a-meta",
   "audience": "contest_organizers",
   "platform": "meta",
-  "concept": "A: First contest free",
-  "headline": "Run a home lights contest, free",
-  "primary_text": "Cities, HOAs, schools, chambers: your organization's first contest in every 12 months is free. Entering is free too.",
-  "description": "First contest free",
+  "concept": "A: Run a contest",
+  "headline": "Run a home lights contest",
+  "primary_text": "Cities, HOAs, schools, chambers: set up a home lights contest in minutes. Entering is free for residents.",
+  "description": "Free for residents to enter",
   "cta": "Learn more",
   "landing_url": "https://socallights.app/add-contest?ref=mt-ct-a&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ct-nov26&utm_content=a-free-v1",
   "visual": "Real screenshots of the demo contest (docs/contest-demo.md): entry page and results page with demo homes. Mark it 'Example contest'. No real residents.",
   "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Copy avoids 'vote', 'election' and 'ballot' on purpose: Meta may classify contests with voting as 'social issues, elections or politics' content (UNVERIFIED, Meta's policy page could not be opened) which needs advertiser authorization. If flagged, fix the wording rather than seek authorization. Meta may not offer job-title targeting for city staff (UNVERIFIED); use interest proxies or broad geo.",
   "char_counts": {
-   "headline": 31,
-   "primary_text": 116,
-   "description": 18,
+   "headline": 25,
+   "primary_text": 105,
+   "description": 27,
    "cta": 10
   },
   "char_limits": {
@@ -399,23 +399,23 @@
   "id": "ct-a-google",
   "audience": "contest_organizers",
   "platform": "google_search",
-  "concept": "A: First contest free",
-  "headline": "Run a Lights Contest Free | For Cities, HOAs & Schools | First Contest Free",
-  "primary_text": "Resident entries, judges, and People's Choice and Judges' Choice awards. First one free.",
-  "description": "Your organization's first contest in every 12-month window is free. Entering is free.",
+  "concept": "A: Run a contest",
+  "headline": "Run a Lights Contest Online | For Cities, HOAs & Schools | Residents Enter for Free",
+  "primary_text": "Resident entries, judges, and People's Choice and Judges' Choice awards. Choose a pass.",
+  "description": "Entering is free for residents. Organizers choose a contest pass; see our Pricing page.",
   "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
   "landing_url": "https://socallights.app/add-contest?ref=gg-ct-a&utm_source=google&utm_medium=cpc&utm_campaign=scl-ct-nov26&utm_content=a-free-v1&utm_term={keyword}",
   "visual": "None (text ad).",
   "notes": "Google responsive search ad limits (Google help page, confirmed by search snippet 2026-11-08): headline 30, description 90, up to 15 headlines and 4 descriptions per ad; this item gives 3 headlines (joined with ' | ') and 2 descriptions (primary_text = description 1, description = description 2). Add more variants in the console if wanted. Seed keywords (volumes UNVERIFIED): 'christmas lights contest', 'neighborhood decorating contest', 'hoa holiday lights contest', 'holiday home decorating contest city', 'lights contest software'. Negatives: jobs, kit, supplies, lottery, sweepstakes, raffle (a raffle or sweepstakes is a different legal product).",
   "char_counts": {
    "headlines": [
-    25,
+    27,
     26,
-    18
+    24
    ],
    "descriptions": [
-    88,
-    85
+    87,
+    87
    ]
   },
   "char_limits": {
@@ -432,15 +432,15 @@
   "concept": "B: Judges, awards, QR",
   "headline": "Judges, awards and a QR poster",
   "primary_text": "Run your neighborhood lights contest online: resident entries, judges, and People's Choice and Judges' Choice awards.",
-  "description": "First contest free",
+  "description": "Free for residents to enter",
   "cta": "Learn more",
   "landing_url": "https://socallights.app/contests?ref=mt-ct-b&utm_source=meta&utm_medium=paid_social&utm_campaign=scl-ct-nov26&utm_content=b-judging-v1",
   "visual": "A QR poster we generate from the demo contest, labelled 'Example'. Own design, no stock.",
-  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Fact check before launch that each feature named is in the free first contest; pricing.html lists entries, voting, judges and both awards. 'QR poster' comes from product-marketing.md (contest wizard); confirm it is live.",
+  "notes": "Meta limits used (third-party sources, UNVERIFIED against Meta's own page): primary text 125 recommended, headline 40 max (27 recommended to avoid cut-off), description 30 and shown on few placements. Fact check before launch that each feature named is in every contest pass; pricing.html lists entries, voting, judges and both awards. 'QR poster' comes from product-marketing.md (contest wizard); confirm it is live.",
   "char_counts": {
    "headline": 30,
    "primary_text": 117,
-   "description": 18,
+   "description": 27,
    "cta": 10
   },
   "char_limits": {
@@ -528,7 +528,7 @@
   "concept": "C: Contest homes on a map",
   "headline": "Contest Homes on a Map | Free Routes for Visitors | Lights Contest for Your City",
   "primary_text": "Show your contest homes on a free map. Visitors can browse and plan a route between them.",
-  "description": "Set up your city, HOA or school contest online. Your first contest is free.",
+  "description": "Set up your city, HOA or school contest online. Residents enter free; passes on Pricing.",
   "cta": "n/a (Search ads have no button; add sitelinks to /pricing and /help)",
   "landing_url": "https://socallights.app/contests?ref=gg-ct-c&utm_source=google&utm_medium=cpc&utm_campaign=scl-ct-nov26&utm_content=c-map-v1&utm_term={keyword}",
   "visual": "None (text ad).",
@@ -541,7 +541,7 @@
    ],
    "descriptions": [
     89,
-    75
+    88
    ]
   },
   "char_limits": {
