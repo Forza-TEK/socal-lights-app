@@ -53,10 +53,11 @@ const priceQs = [
   ["What does an installer top of the list placement cost?", `Top of the list is ${dollars(inst.top.cents)} per season.`],
   ["Banner and top of the list for installers, what price?", `Banner and top of the list is ${dollars(inst.banner_top.cents)} per season.`],
   ["How much to feature my home after I place in a contest?", `A Featured pin for a home is ${dollars(home.pin.cents)} for ${home.pin.days} days. Top of the list is ${dollars(home.top.cents)}.`],
+  ["What does a single contest cost?", `A single contest is ${dollars(pass.pass_1.cents)}.`],
   ["What does a contest pass for 5 contests cost?", `Up to 5 contests is ${dollars(pass.pass_5.cents)}.`],
   ["How much is the 20 contest pass?", `Up to 20 contests is ${dollars(pass.pass_20.cents)}.`],
   ["Is it free to list my event on the map?", "Yes, listing an event is free. Optional Featured options are on https://socallights.app/pricing."],
-  ["Is my first contest free?", "Yes, your organization's first contest in every 12-month window is free."],
+  ["Do I pay for my first contest?", `Yes. Running a contest needs a contest pass; a single contest is ${dollars(pass.pass_1.cents)}. Residents enter and vote for free.`],
 ];
 const badPriceQs = [
   ["How much is a pin?", "A pin is $17 for an event."],
@@ -103,7 +104,7 @@ test("prices: the answer a model gives from the PRICES block reaches the visitor
     assert.equal(r.body.filtered, undefined, q);
   }
   const prompt = calls[0].system;
-  for (const c of [ev.ev_pin.cents, ev.ev_banner.cents, ev.ev_top.cents, ev.ev_all.cents, inst.banner.cents, inst.top.cents, inst.banner_top.cents, home.pin.cents, home.top.cents, pass.pass_5.cents, pass.pass_10.cents, pass.pass_20.cents, PUBLIC_COMPONENT_CENTS.pin])
+  for (const c of [ev.ev_pin.cents, ev.ev_banner.cents, ev.ev_top.cents, ev.ev_all.cents, inst.banner.cents, inst.top.cents, inst.banner_top.cents, home.pin.cents, home.top.cents, pass.pass_1.cents, pass.pass_5.cents, pass.pass_20.cents, PUBLIC_COMPONENT_CENTS.pin])
     assert.ok(prompt.includes(dollars(c)), "PRICES has " + dollars(c));
 });
 
@@ -186,7 +187,7 @@ const HOWTO = [
   ["How do I create a contest for my neighborhood?", "create-a-contest-quick-start"], ["How do I add judges to my contest?", "add-co-organizers-and-judges"], ["How do I add a co-organizer to my contest?", "add-co-organizers-and-judges"],
   ["How do I change the contest dates?", "edit-your-contest-and-change-dates"], ["How do I unpublish my contest?", "unpublish-and-publish-again"], ["How do I invite a sponsor to my contest?", "add-sponsors-to-your-contest"],
   ["What is the sponsor invite link?", "add-sponsors-to-your-contest"], ["How do I add homes myself as a contest organizer?", "add-your-citys-homes-yourself"], ["How do I buy a contest pass?", "contest-passes"],
-  ["How many contests can I run for free?", "contest-passes"], ["What are voting categories?", "Categories, winners and ties"], ["Where can I see past contest results?", "find-contests"],
+  ["How much does it cost to run a contest?", "contest-passes"], ["What are voting categories?", "Categories, winners and ties"], ["Where can I see past contest results?", "find-contests"],
   ["How do I download the contest results?", "Contest organizer tools"], ["What happens when winners are announced?", "Announcing winners and the results page"],
   // entering
   ["How do I enter my home in a contest?", "enter-your-home-in-a-contest"], ["Who can enter a contest?", "enter-your-home-in-a-contest"],

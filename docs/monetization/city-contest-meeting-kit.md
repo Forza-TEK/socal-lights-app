@@ -31,7 +31,7 @@ From the Covina call (Nov 5): the **driving routes** (nine stops at a time, Goog
 - Who else should be on the call or the account (a second staff member, the parks district)?
 
 ## Honest answers
-- **Cost:** free for now. No entry fees and no paid votes, ever; payment never affects who wins. Paid extras may come later and would be optional. Never say "free forever".
+- **Cost:** (Updated 2026-11-09: organizers pay from the first contest; the City of Eastvale recommended charging.) Residents enter and vote for free, with no entry fees and no paid votes, and payment never affects who wins. The organizer chooses a contest pass: a single contest, up to 5 contests in a 12-month window, or up to 20; more than 20, contact us. Prices are on socallights.app/pricing and in `functions/_lib/passes.js`; say them only once the new pricing is live. Admin can give a founding partner contests for a period. Never say "free forever".
 - **Public vs private:** entries appear on the public map with the address the resident enters. A resident who deletes their account is removed from live data and scrubbed from the locked results.
 - **Integrity:** one vote per person per category tied to a verified email; throwaway addresses blocked; no self-voting; counts hidden until winners are announced; results lock when announced; judges vote on their own ballot and can recuse.
 - **Rules and prizes:** recommend their attorney reads the rules before launch.

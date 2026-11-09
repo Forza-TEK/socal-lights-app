@@ -22,6 +22,8 @@ const founderOf = async (env, slug) => (await J(detailGet({ params: { slug }, re
 const listed = async (env) => Object.fromEntries((await J(listGet({ env }))).body.map((c) => [c.slug, c.founder]));
 async function setup() {
   const { env, raw } = newEnv(); const a = await addUser(raw, "ua", "clerk@covinaca.gov"), g = await addUser(raw, "ug", "someone@gmail.com");
+  // contests are paid from the first one: the gmail organizer is given a plain comp (no badge) so the "other organization" contest can exist
+  raw.prepare("INSERT INTO contest_comps (id, org_key, allowed, valid_until, note) VALUES ('t-gmail', 'u:someone@gmail.com', -1, '2099-12-31', 'test')").run();
   const mk = async (u, o) => (await J(createContest({ request: rq("/api/contests", good(o), u.cookie), env }))).body.slug;
   const city = await mk(a, { name: "Covina Holiday Lights", site: "https://www.covinaca.gov" }), other = await mk(g, { name: "Gmail Street Lights" });
   raw.prepare("UPDATE contests SET created_at = datetime('now', '-3 days')").run();

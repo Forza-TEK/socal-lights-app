@@ -19,7 +19,8 @@ import { officialSounding, trustOf } from "../functions/_lib/contests.js";
 import { CONSENT_TEXT, CONSENT_VERSION } from "../functions/_lib/homes.js";
 import { findOrCreateInstaller } from "../functions/_lib/installers.js";
 import { TEMPLATES } from "../functions/_lib/mailtpl.js";
-import { newEnv, addUser, stubFetch, ptToday } from "./_pay.mjs";
+import { newEnv as baseEnv, addUser, stubFetch, ptToday, compEveryone } from "./_pay.mjs";
+const newEnv = (extra) => { const r = baseEnv(extra); compEveryone(r.raw); return r; }; // these tests are not about contest passes: every organizer is comped (see compEveryone)
 
 const origin = "https://socallights.app";
 const jbody = async (r) => ({ status: r.status, body: await r.json().catch(() => ({})) });

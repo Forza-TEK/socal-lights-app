@@ -50,7 +50,7 @@ export function homeStartCard() {
     ] };
 }
 export function contestStartCard() {
-  return { type: "form", nav: "/add-contest", label: "Start my contest", go: "Open the wizard", summary: "Tell me the basics. Tap Open the wizard and it opens with them filled in; Quick start keeps the rest simple. Your organization's first contest in 12 months is free.",
+  return { type: "form", nav: "/add-contest", label: "Start my contest", go: "Open the wizard", summary: "Tell me the basics. Tap Open the wizard and it opens with them filled in; Quick start keeps the rest simple. Running a contest needs a contest pass, and the wizard shows it before the contest goes live.",
     fields: [
       { name: "name", label: "Contest name", type: "text", required: true, max: 90 },
       { name: "org", label: "Who is running it? (your group)", type: "text", required: true, max: 80 },

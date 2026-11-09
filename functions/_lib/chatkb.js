@@ -26,7 +26,7 @@ export function priceFacts() {
     `Optional Featured options for an event, paid once, no subscription: ${ev}. Each part costs the same (${comp}); the Featured pin is always included. Buying opens ${OPEN_DAYS} days before the event starts, and the placement runs from payment until the event's last day or the end of the season, whichever comes first.`,
     `Installer Sponsor placements, per season: ${inst}.`,
     `Featuring a home (only homes that finished 1st, 2nd or 3rd in a contest whose winners were announced): ${home}.`,
-    `Contest organizer passes (each organization's first contest in a ${PUBLIC_CONTEST_PASSES.windowMonths}-month window is free; a pass is one payment, covers the total contests in that window, and never renews by itself): ${pass}. More than ${PUBLIC_CONTEST_PASSES.contactAbove} contests: contact us.`,
+    `Contest organizer passes (an organizer pays for a pass before a contest goes live; a pass is one payment, covers the total contests in a ${PUBLIC_CONTEST_PASSES.windowMonths}-month window, and never renews by itself; residents enter and vote for free): ${pass}. More than ${PUBLIC_CONTEST_PASSES.contactAbove} contests: contact us.`,
     `Event Partner plan for cities, chambers, nonprofits and event producers: ${add(PUBLIC_EVENT_PARTNER.cents)} per season, covers up to ${PUBLIC_EVENT_PARTNER.cap} of the organization's events that season, each with the Featured pin for its run window and an Event Partner badge. Listing stays free. Founding cities have it free this year.`,
     "Payment never affects who wins a contest or any contest result.",
     "Full details: https://socallights.app/pricing",

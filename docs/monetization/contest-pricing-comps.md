@@ -1,5 +1,8 @@
 # Contest organizer pricing: competitor comparison (2026-11-07)
 
+> **UPDATE 2026-11-09 (owner decision, after meeting the City of Eastvale who recommended charging): organizers pay from the first contest.** The plan analyzed below (1 free contest per 12 months; $50 / $75 / $100) is **superseded**. New prices: **single contest $149, up to 5 contests in a 12-month window $299, up to 20 contests $499**, more than 20 contact us; residents still enter and vote free and payment never affects results. Against the comparables in this file: HOA voting software TownSq charges about **$250 per voting event** (a single contest at $149 is below it; 5 contests at $299 is about $60 each, against $1,250 at TownSq's rate), and Woobox's cheapest paid plan is **$29 per month** (about $348 a year, with entry and vote caps; our $299 covers 5 contests with no caps). The new prices stay under the strictest small-purchase card limit found below (Turlock, $500 per transaction): $499 is the ceiling that analysis named. The tables below keep the old figures for the record; read "Ours: $0 / $50 / $100" as "Ours now: $149 / $299 / $499".
+
+
 Purpose: sanity-check our planned organizer prices (1 free contest per 12 months; passes for total contests in the year: up to 5 = $50, up to 10 = $75, up to 20 = $100, over 20 = contact us; residents enter and vote free; payment never affects results). All "accessed" dates are 2026-11-07. "Verified" means the figure was read on the vendor's own page. "Low confidence" means a third-party listing or search snippet only. Nothing here is guessed; gaps are marked "not public" or "not verified". Prices are USD unless noted.
 
 ## Summary

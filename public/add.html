@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Add to SoCal Lights</title>
-<meta name="description" content="Add an event, a contest or your lights display to the SoCal Lights map. It's free.">
+<meta name="description" content="Add an event or your lights display to the SoCal Lights map for free, or start a contest.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
@@ -27,10 +27,13 @@ const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
 document.documentElement.dataset.season = defaultSeason(today);
 const row = (id, href, t, d, tm) => `<a class="tile opt" ${id ? `id="${id}"` : ""} href="${href}"><span class="ico">${ICON[id === "o-contest" ? "contest" : id === "o-event" ? "event" : "display"]}</span><b style="font-size:20px">${t}</b><span>${d}</span><span style="margin-top:6px;font-size:13px">${tm}</span></a>`;
 const qs = new URLSearchParams(location.search).get("s"), s = SEASONS[qs] ? "?s=" + esc(qs) : "";
+const contestTime = "About 3 minutes";
 document.getElementById("opts").innerHTML =
   row("o-event", "/add-event", "An event", "A tree lighting, parade, market, haunted house or other seasonal event.", "Free · about 1 minute") +
-  row("o-contest", "/add-contest", "A contest", "Neighbors enter their homes and the community votes. You get a link and a QR code to share.", "Free · about 3 minutes") +
+  row("o-contest", "/add-contest", "A contest", "Neighbors enter their homes and the community votes. You get a link and a QR code to share.", contestTime) +
   row("o-house", "/add-house" + s, "A lighting display", "Homeowners and professional installers: show your lights on the map so families can drive by.", "Free · about 2 minutes");
+// The contest tile shows the lowest pass price from /api/config (the only place prices are set). Passes are bought on the website, so the app shows no price.
+if (!/SoCalLightsApp/.test(navigator.userAgent)) fetch("/api/config").then((r) => r.json()).then((c) => { const p = Object.values((c.contestPasses || {}).plans || {}).map((x) => x.cents).sort((a, b) => a - b)[0]; if (p) { const t = document.querySelector("#o-contest span:last-child"); if (t) t.textContent = "From $" + (p % 100 ? (p / 100).toFixed(2) : p / 100) + " · about 3 minutes"; } }).catch(() => {});
 // Contests need sign-in. Until Google or emailed codes are switched on, hide that choice rather than send people to a dead end.
 fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (!j.methods || (!j.methods.google && !j.methods.email)) document.getElementById("o-contest")?.remove(); }).catch(() => {});
 </script>

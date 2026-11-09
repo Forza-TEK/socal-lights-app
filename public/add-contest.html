@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Create a contest · SoCal Lights</title>
-<meta name="description" content="Start a neighborhood lighting contest: your first contest is free, it takes about three minutes, and you get a link and QR code to share.">
+<meta name="description" content="Start a neighborhood lighting contest: it takes about three minutes, you choose a contest pass, and you get a link and QR code to share. Residents enter and vote for free.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
@@ -24,7 +24,7 @@ import { rulesDefault } from "/rules.js?v=20261107a";
 import { printable } from "/printables.js?v=20261107a";
 import { CITY } from "/cities.js?v=20261107a";
 import { defaultSeason } from "/seasons.js?v=20261104a";
-import { pickerHtml, beacon, niceDate } from "/contest-passes.js?v=20261109a";
+import { pickerHtml, beacon, niceDate, IN_APP, appPassHtml, openWeb } from "/contest-passes.js?v=20261109d";
 const FREE = new Set(["gmail.com","googlemail.com","hotmail.com","outlook.com","live.com","msn.com","yahoo.com","icloud.com","me.com","aol.com","proton.me","protonmail.com"]);
 capture(null, null, "contest");
 const DEF = ["Best Overall", "Most Creative", "Best Lights & Music", "Best Traditional"], cities = Object.keys(CITY).sort();
@@ -48,11 +48,12 @@ const kinds = () => (d.mode === "judges" ? [["judge", "Judges' Choice"]] : d.mod
 const slots = () => d.on.flatMap((c) => kinds().map(([k, l]) => ({ key: c + "|" + k, label: c + (kinds().length > 1 ? " · " + l : "") })));
 const catTiles = () => d.cats.map((c) => `<button type="button" class="tile sm" data-a="cat:${esc(c)}" aria-pressed="${d.on.includes(c)}"><b>${esc(c)}</b></button>`).join("");
 
-// ---- Contest passes: your first contest in a 12-month window is free; more need a pass. The form is kept (localStorage) across sign-in and Stripe, and the contest is created by itself after payment. ----
+// ---- Contest passes: every new contest needs a pass (or an Admin comp). The form is kept (localStorage) across sign-in and Stripe, and the contest is created by itself after payment. ----
 const CFG = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
 const passBox = () => document.getElementById("pass-box");
 function showPicker(v) {
   const box = passBox(); if (!box) return;
+  if (IN_APP) return showAppPass(v, box); // the store apps never show a price or open Stripe: the website does the buying
   box.innerHTML = pickerHtml(v, CFG); beacon("fn:pass-picker-shown"); box.scrollIntoView({ block: "center", behavior: "smooth" });
   box.querySelectorAll("[data-pass]").forEach((b) => (b.onclick = async () => {
     beacon("fn:pass-choose"); b.disabled = true; b.textContent = "Opening payment…";
@@ -62,6 +63,17 @@ function showPicker(v) {
   }));
   box.querySelectorAll("[data-pass-contact]").forEach((a) => (a.onclick = () => { fetch("/api/contest-pass/contact", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: d.site }) }).catch(() => {}); }));
 }
+// In the app: "Continue on socallights.app" opens the pass page in the system browser (with this contest's website, so the pass goes to the same organization); "I have my pass" checks and creates the contest.
+async function showAppPass(v, box) {
+  const email = ((await me().catch(() => null)) || {}).user; box.innerHTML = appPassHtml(v, email && email.email, d.site); beacon("fn:pass-picker-shown"); box.scrollIntoView({ block: "center", behavior: "smooth" });
+  box.querySelectorAll("[data-pass-web]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); beacon("fn:pass-choose"); openWeb(a.href); }));
+  box.querySelectorAll("[data-pass-check]").forEach((b) => (b.onclick = async () => {
+    b.disabled = true; b.textContent = "Checking…";
+    const now = await entitlement().catch(() => null);
+    if (now && now.canCreate) { api.next(); return; }
+    b.disabled = false; b.textContent = "I have my pass"; api.err("We do not see a pass for this organization yet. Finish choosing it on socallights.app, then tap again.");
+  }));
+}
 async function entitlement() { const r = await fetch("/api/contest-pass/entitlement?site=" + encodeURIComponent(d.site || ""), { cache: "no-store" }); return r.ok ? r.json() : null; }
 // The review screen says where the organization stands in its window (or the founding-partner line), before anything is paid.
 async function reviewNote() {
@@ -69,8 +81,7 @@ async function reviewNote() {
   const v = await entitlement().catch(() => null); if (!v || !passBox() || passBox().innerHTML) return;
   if (v.comp && v.canCreate) passBox().innerHTML = pickerHtml(v, CFG);
   else if (v.active && v.canCreate) passBox().innerHTML = `<p class="note">This is contest ${v.used + 1} of ${v.unlimited ? "your unlimited allowance" : v.cap} in your 12-month window (${niceDate(v.windowStart)} to ${niceDate(v.windowEnd)}).</p>`;
-  else if (v.active) showPicker(v);
-  else passBox().innerHTML = `<p class="note">Your first contest in a 12-month window is free.</p>`;
+  else showPicker(v); // no pass with room: choose one now, before the last screen
 }
 const steps = [
   { id: "name", sec: "Basics", title: "What's your contest called?", help: "This is the title everyone sees.", body: (x) => input(x, "name", { max: 90, aria: "Contest name" }), check: (x) => (x.name.trim().length < 4 ? "Give your contest a name (at least 4 letters)." : "") },

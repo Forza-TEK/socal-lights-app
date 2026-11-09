@@ -10,7 +10,7 @@ import { sha256hex, checkoutLimit, createCheckoutSession } from "../../_lib/stri
 import { bump } from "../../_lib/funnel.js";
 
 // Where the buyer lands after Stripe: back = "wizard" (it creates the contest by itself), "manage:<slug>" (a contest dashboard) or the pass page. Never an outside address.
-const backPath = (b) => (b === "wizard" ? "/add-contest?resume=1" : /^manage:[a-z0-9-]{1,60}$/.test(String(b)) ? `/c/${String(b).slice(7)}/manage` : "/contest-pass");
+const backPath = (b, site) => (b === "wizard" ? "/add-contest?resume=1" : /^manage:[a-z0-9-]{1,60}$/.test(String(b)) ? `/c/${String(b).slice(7)}/manage` : "/contest-pass" + (site ? "?site=" + encodeURIComponent(site) : ""));
 
 export async function onRequestPost({ request, env }) {
   // Paid placement is web-only (store rules). The UI is hidden in the app too; this is the soft server-side check.
@@ -24,7 +24,7 @@ export async function onRequestPost({ request, env }) {
   const key = await keyForUser(env, user, b && b.site !== undefined && b.site !== null ? clean(b.site, 200) : null), ent = await orgState(env, key), q = passQuote(ent, plan);
   if (q.problem) return err(400, q.problem);
 
-  const p = CONTEST_PASSES[plan], origin = new URL(request.url).origin, back = backPath(b.back), sep = back.includes("?") ? "&" : "?";
+  const p = CONTEST_PASSES[plan], origin = new URL(request.url).origin, back = backPath(b.back, b.site ? clean(b.site, 200) : ""), sep = back.includes("?") ? "&" : "?";
   const goodEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email || "") ? user.email : ""; // the account email, never one typed in
   const f = new URLSearchParams({
     mode: "payment",

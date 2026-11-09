@@ -12,7 +12,8 @@ import { onRequestGet as adminGet, onRequestPost as adminPost } from "../functio
 import { onRequestPost as adminContest } from "../functions/api/admin/contests/[id].js";
 import { payLink, parseLevels, plainText, newToken, TOKEN_RE, selfServiceReason } from "../functions/_lib/sponsors.js";
 import { renderTemplate, byId } from "../functions/_lib/mailtpl.js";
-import { newEnv, addUser, stubFetch, ptToday } from "./_pay.mjs";
+import { newEnv as baseEnv, addUser, stubFetch, ptToday, compEveryone } from "./_pay.mjs";
+const newEnv = (extra) => { const r = baseEnv(extra); compEveryone(r.raw); return r; }; // these tests are not about contest passes: every organizer is comped (see compEveryone)
 
 const O = "https://socallights.app";
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);

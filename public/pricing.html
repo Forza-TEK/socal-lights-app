@@ -22,16 +22,16 @@
 
 <div class="wgrid" id="p-homeowners" data-panel="homeowners" data-label="Homeowners" style="margin-top:26px">
 <section class="wcard" id="homeowners"><h2>Homeowners</h2><div class="big">Free</div>
-<p><b>Show your lights on the map.</b> Entering a display and entering a contest are free.</p>
+<p><b>Show your home's lights on the map.</b> Adding your home and entering a contest are free.</p>
 <p>A contest winner, 2nd or 3rd place can also feature their home for 30 days:</p>
 <div class="wprices paid" id="homeprices"><span><b>Featured pin</b></span><span><b>Top of the list</b></span></div>
 <a class="btn" href="/add-house">Add your display</a></section>
 </div>
 
 <section class="wsec" id="contests" data-panel="contests" data-label="Contest organizers"><h2>Contest organizers</h2>
-<p class="sub"><b>Your organization's first contest in every 12-month window is free.</b> Cities, HOAs, chambers and neighborhood groups: resident entries, voting, judges, and People's Choice and Judges' Choice awards. To run more contests in the same window, buy a pass. A pass only counts contests.</p>
-<section class="pfree" id="cfree"><div class="pprice">Free</div><div class="ptxt"><h3 class="pname">Your first contest</h3><p class="pblurb">Run a decorating contest: resident entries, voting, judges, and People's Choice and Judges' Choice awards. 1 contest per 12 months.</p></div><a class="btn ghost" href="/add-contest" aria-label="Free, create a contest">Create a contest</a></section><div class="pcards three" id="ctiers"></div><div id="cmore"></div>
-<p class="cmpnote" id="cnote">Passes are chosen when a contest would go over your free one, or any time on the <a href="/contest-pass">contest pass page</a>. A pass is one payment on Stripe's secure page and never renews by itself. Your 12-month window starts the day your first contest goes live, and upgrading inside it costs only the difference. Passes are for the organization: the website matching your email's domain, or your own account.</p></section>
+<p class="sub"><b>Contest organizers choose a pass for their contests.</b> Cities, HOAs, chambers and neighborhood groups: resident entries, voting, judges, and People's Choice and Judges' Choice awards. Residents enter and vote for free. A pass only counts contests.</p>
+<div class="pcards three" id="ctiers"></div><div id="cmore"></div>
+<p class="cmpnote" id="cnote">Passes are chosen when you create a contest, or any time on the <a href="/contest-pass">contest pass page</a>. A pass is one payment on Stripe's secure page and never renews by itself. Your 12-month window starts the day you buy your pass (or the day your first contest goes live, if that comes first), and upgrading inside it costs only the difference. Passes are for the organization: the website matching your email's domain, or your own account.</p></section>
 
 <section class="wsec" id="events" data-panel="events" data-label="Event organizers"><h2>Event organizers</h2>
 <p class="sub"><b>Listing your event is free</b> (tree lighting, parade, market, haunted house, light show). Featured placement is optional: pick one, pay once, no subscription.</p>
@@ -74,7 +74,7 @@
 <details><summary>Can I add a part later?</summary><p>Yes. Each part (the Featured pin, the banner, top of the list) has the same price: if you already have some of them, you pay only for the parts you add.</p></details>
 <details><summary>Can paying change who wins a contest?</summary><p>No. Contests are free to enter and free to vote in, and payment never affects who wins or any contest result. A home can only be featured after the winners are announced, and only if it finished winner, 2nd or 3rd place.</p></details>
 <details><summary>Is a Featured event labelled?</summary><p>Yes. Featured events and homes carry a visible Featured badge, and the banner pill is labelled "Featured", so nobody is misled. They still have to be real, public and accurate.</p></details>
-<details><summary>How do contest passes work?</summary><p>An organization gets one free contest in each 12-month window. The window starts the day its first contest goes live. To run more contests in that window, it buys a pass for a total number of contests (the free one included), and can upgrade later by paying only the difference. A contest counts when it goes live. Drafts, contests held for review and contests that were never live do not count. When the window ends, your next contest starts a new window and is free again. A pass counts contests only: entering and voting stay free, and payment never affects any result.</p></details>
+<details><summary>How do contest passes work?</summary><p>An organization chooses a pass before a contest goes live: a single contest, up to 5 contests or up to 20 contests in a 12-month window. The window starts the day you buy the pass, or the day the organization's first contest goes live if that comes first. You can upgrade later by paying only the difference. A contest counts when it goes live. Drafts, contests held for review and contests that were never live do not count. When the window ends, your next contest needs a new pass. A pass counts contests only: entering and voting stay free, and payment never affects any result. We sometimes give a founding partner contests for a period; that organization sees "Founding partner: free through" a date and no price.</p></details>
 <details><summary>Will finding lights ever cost money?</summary><p>Finding events and lights, search, routes, favorites and voting in contests are meant to stay free for everyone. That is what the site is for.</p></details>
 <details><summary>Questions?</summary><p>Email <a href="mailto:info@socallights.app">info@socallights.app</a>.</p></details>
 </div></section>
@@ -85,7 +85,7 @@ import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-p
 import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261108a";
 import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
 import { partnerCopy, dollars as partnerDollars } from "/partner-copy.js?v=20261109a";
-import { PASS_KEYS, passCopy, freeCopy, moreCopy, contactHref, dollars as passDollars } from "/contest-passes.js?v=20261109a";
+import { PASS_KEYS, passCopy, moreCopy, contactHref, dollars as passDollars } from "/contest-passes.js?v=20261109d";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents % 100 ? (p.cents / 100).toFixed(2) : p.cents / 100);
@@ -116,11 +116,10 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
     const r = seasonRule(cfg); $("#instseason").textContent = r.rule + " " + r.now;
     $("#insttiers").addEventListener("click", (e) => { if (e.target.closest("[data-choose]")) beacon("fn:pricing-choose"); });
   } else { $("#instnote").hidden = true; $("#instseason").hidden = true; }
-  // Contest organizers: Free (1 contest per 12 months), three passes and "more than 20: contact us", each with its full contents. Prices and caps come from /api/config.
+  // Contest organizers: three passes and "more than 20: contact us", each with its full contents. Prices and caps come from /api/config.
   const CP = (cfg.contestPasses || {}).plans || {}, pkeys = PASS_KEYS.filter((k) => CP[k]);
   if (pkeys.length) {
-    const fc = freeCopy(cfg), mc = moreCopy();
-    $("#cfree").innerHTML = `<div class="pprice">Free</div><div class="ptxt"><h3 class="pname">Your first contest</h3><p class="pblurb">${esc(fc.unit)} for each organization: run a decorating contest with resident entries, voting, judges and People's Choice and Judges' Choice awards.</p><details class="pdet"><summary>What's included</summary><ul class="pbul">${fc.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul></details></div><a class="btn ghost" href="/add-contest" aria-label="Free, create a contest">Create a contest</a>`;
+    const mc = moreCopy();
     $("#ctiers").innerHTML = pkeys.map((k) => { const c = passCopy(k, cfg); return planCard({ key: k, price: passDollars(CP[k].cents), unit: c.unit, name: c.name, bullets: c.bullets, collapse: "What's included", cls: "paid", action: `<a class="btn ghost" href="/contest-pass" data-pass-choose aria-label="Choose ${esc(c.name)}, ${passDollars(CP[k].cents)}">Choose</a>` }); }).join("");
     $("#cmore").innerHTML = `<section class="pfree pmore"><div class="ptxt"><h3 class="pname">${esc(mc.name)}</h3><p class="pblurb">${esc(mc.bullets.join(". "))}</p></div><a class="btn ghost" href="${esc(contactHref())}" aria-label="More than ${(cfg.contestPasses || {}).contactAbove || 20} contests, contact us">Contact us</a></section>`;
     $("#ctiers").addEventListener("click", (e) => { if (e.target.closest("[data-pass-choose]")) beacon("fn:pass-choose"); });

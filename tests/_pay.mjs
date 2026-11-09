@@ -11,6 +11,15 @@ export function newEnv(extra = {}) {
   return { env: { DB, STRIPE_WEBHOOK_SECRET: SECRET, STRIPE_SECRET_KEY: "sk_test_fake", ...extra }, raw };
 }
 
+// For tests about something other than the contest pass (sponsors, votes, the wizard's fields): every user added afterwards gets an unlimited Admin comp on both of the organization
+// keys that user can have ("u:<email>" and "d:<email domain>"), so creating a contest needs no pass. The pass rules are tested in contest-passes.test.mjs, never with this.
+export function compEveryone(raw) {
+  raw.exec(`CREATE TRIGGER IF NOT EXISTS test_comp_everyone AFTER INSERT ON users BEGIN
+    INSERT OR IGNORE INTO contest_comps (id, org_key, allowed, valid_until, note) VALUES ('tc1-' || NEW.id, 'u:' || lower(NEW.email), -1, '2099-12-31', 'test comp');
+    INSERT OR IGNORE INTO contest_comps (id, org_key, allowed, valid_until, note) VALUES ('tc2-' || NEW.id, 'd:' || substr(lower(NEW.email), instr(NEW.email, '@') + 1), -1, '2099-12-31', 'test comp');
+  END;`);
+}
+
 // Signs exactly like Stripe: t=<unix>,v1=HMAC_SHA256(secret, t + "." + body)
 export function sign(body, { t = Math.floor(Date.now() / 1000), secret = SECRET } = {}) {
   return `t=${t},v1=${createHmac("sha256", secret).update(`${t}.${body}`).digest("hex")}`;

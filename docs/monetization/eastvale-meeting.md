@@ -17,7 +17,7 @@ _Prepared by the CEO session, 2026-11-04. The first organizer to answer the cont
 1. Eastvale creates its 2026 contest on SoCal Lights (or agrees dates and a day to create it together).
 2. JCSD Parks and Recreation is brought in (ask Amanda to invite them or share their contact).
 3. A link to the contest from the city's or JCSD's events page.
-4. Permission to describe the contest publicly afterwards. Do not ask for money, and do not mention Featured unless they ask.
+4. Permission to describe the contest publicly afterwards. Do not ask for money in this first meeting. (Superseded 2026-11-09: after the meeting the owner decided organizers pay from the first contest, so a follow-up should state the contest pass price once the new pricing is live.) Do not mention Featured unless they ask.
 
 ## Agenda (20 minutes)
 1. Their goals and last year's process (3 min). **Ask before showing.**
@@ -35,7 +35,7 @@ _Prepared by the CEO session, 2026-11-04. The first organizer to answer the cont
 - Any privacy limits: should street addresses be public, are minors involved, do you need photo releases?
 
 ## Honest answers to the likely questions
-- **Cost.** Free for now. No entry fees and no paid votes, ever; payment never affects who wins. Paid extras may be added later and would be optional. Do not promise "free forever".
+- **Cost.** (Updated 2026-11-09, after this meeting: the City recommended charging organizers, and the owner decided that organizers pay from the first contest.) Residents enter and vote for free, and payment never affects who wins. The organizer chooses a contest pass: a single contest, up to 5 contests in a 12-month window, or up to 20 (current prices are on socallights.app/pricing and in `functions/_lib/passes.js`; say them only after the new pricing is live). Founding partners can be given contests for a period by Admin. Do not promise "free forever".
 - **Who sees the homes?** Entries appear on the public map with the street address the resident enters (the same as the Past results). Residents can delete their account and their entry is removed from live data and scrubbed from the locked results.
 - **Voting integrity.** One vote per person per category, tied to a verified email; throwaway email domains blocked; nobody can vote for their own home; counts are hidden until winners are announced; results lock when announced.
 - **Prizes and rules.** The city supplies prizes. The law requires stating the prize's approximate value; our default rules text still says prizes have no cash value, **so have the city set its own rules text, or edit it, before launch**. Recommend city attorney review. We have not had a lawyer review our template.

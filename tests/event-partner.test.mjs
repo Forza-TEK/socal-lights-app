@@ -40,7 +40,7 @@ test("the price and the cap live in partner.js only: $149 per season, up to 10 e
   const hits = [];
   const walk = (d) => readdirSync(d, { withFileTypes: true }).forEach((e) => { const p = d + "/" + e.name; if (e.isDirectory()) { if (!["vendor", "img", "tutorials", "ad-assets"].includes(e.name)) walk(p); } else if (/\.(js|html)$/.test(e.name) && /14900/.test(readFileSync(p, "utf8"))) hits.push(p); });
   walk("functions"); walk("public");
-  assert.deepEqual(hits.filter((p) => !/chatkb-data/.test(p)), ["functions/_lib/partner.js"], "no other file holds the price");
+  assert.deepEqual(hits.filter((p) => !/chatkb-data|_lib\/passes\.js/.test(p)), ["functions/_lib/partner.js"], "no other file holds the price (passes.js holds the same number for the single-contest pass, a different product)");
 });
 
 test("/api/config serves the plan; the existing event plans are untouched", async () => {

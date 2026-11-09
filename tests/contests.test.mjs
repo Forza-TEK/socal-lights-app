@@ -6,7 +6,8 @@ import { onRequestPost as create, onRequestGet as list } from "../functions/api/
 import { onRequestPatch as patch, onRequestGet as contestGet } from "../functions/api/contests/[slug].js";
 import { trustOf, windows, seasonFor } from "../functions/_lib/contests.js";
 import { podium } from "../functions/_lib/podium.js";
-import { newEnv, addUser, stubFetch, ptToday } from "./_pay.mjs";
+import { newEnv as baseEnv, addUser, stubFetch, ptToday, compEveryone } from "./_pay.mjs";
+const newEnv = (extra) => { const r = baseEnv(extra); compEveryone(r.raw); return r; }; // these tests are not about contest passes: every organizer is comped (see compEveryone)
 
 const O = "https://socallights.app";
 const post = (env, cookie, b, headers = {}) => create({ request: new Request(O + "/api/contests", { method: "POST", headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}), ...headers }, body: JSON.stringify(b) }), env });

@@ -23,7 +23,7 @@ export async function onRequestGet({ env }) {
   for (const c of cs.results) (byKey.get(c.org_key) || byKey.set(c.org_key, []).get(c.org_key)).push(c);
   for (const k of new Set([...ps.results.map((p) => p.org_key), ...cm.results.map((c) => c.org_key)])) if (!byKey.has(k)) byKey.set(k, []);
   const orgs = [...byKey].map(([key, list]) => {
-    const w = windowFromDates(list.map((c) => c.live_at), today);
+    const w = windowFromDates(list.map((c) => c.live_at), today, ps.results.filter((p) => p.org_key === key && p.status === "active" && p.window_end >= today).map((p) => p.window_start));
     const ent = entitlementOf(w, ps.results.filter((p) => p.org_key === key && p.status === "active" && w.active && p.window_start === w.start), cm.results.filter((c) => c.org_key === key && !c.revoked && c.valid_until >= today));
     return { key, label: orgLabel(key), used: ent.used, cap: ent.cap, unlimited: ent.unlimited, windowStart: ent.windowStart, windowEnd: ent.windowEnd, over: !ent.unlimited && ent.used > ent.cap, comp: ent.comp, contests: list.filter((c) => !w.active || (c.live_at >= w.start && c.live_at <= w.end)).map((c) => ({ id: c.id, slug: c.slug, name: c.name, live_at: c.live_at, status: c.status })) };
   }).sort((a, b) => (b.over - a.over) || b.used - a.used);
