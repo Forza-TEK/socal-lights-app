@@ -4,14 +4,15 @@ import { ACTIONS, cityNames } from "./chatactions.js";
 import { SEASONS } from "../../public/seasons.js";
 import { ownerCards, publishEventCard, signInCard, wantsOwnerAction } from "./chatown.js";
 
-const HUMAN = /\b(human|real person|a person|someone|somebody|staff|team|owner|support|customer service|representative)\b[^.?!]{0,50}\b(talk|speak|contact|reach|email|message|help|call)\b|\b(talk|speak|contact|reach|email|message|call)\b[^.?!]{0,50}\b(human|real person|someone|somebody|staff|team|owner|support|customer service|representative)\b|\b(human|real person|customer service|representative)\b/i;
-const REPORT = /\b(wrong|incorrect|outdated|out of date|error|mistake|inaccurate|no longer|closed|cancell?ed|has moved|broken)\b[^.?!]{0,60}\b(event|listing|home|house|display|address|date|time|hours|info|information)\b|\breport (?:a |an |this |that )?(?:problem|error|mistake|listing|event|home|house|issue)\b/i;
+const HUMAN = /\b(human|real person|a person|someone|somebody|staff|team|owner|support|customer service|representative)\b[^.?!]{0,50}\b(talk|speak|contact|reach|email|message|help|call)\b|\b(talk|speak|contact|reach|email|message|call)\b[^.?!]{0,50}\b(human|real person|someone|somebody|staff|team|owner|support|customer service|representative)\b|\b(human|real person|customer service|representative)\b|\b(contact|reach|email|call|phone|message)\s+(you|us|the team|your team)\b|\b(your|a) (phone number|email address|contact)\b/i;
+const REPORT = /\b(wrong|incorrect|outdated|out of date|error|mistake|inaccurate|no longer|closed|cancell?ed|has moved|broken)\b[^.?!]{0,60}\b(event|listing|home|house|display|address|date|time|hours|info|information)\b|\breport (?:a |an |this |that )?(?:problem|error|mistake|listing|event|home|house|issue)\b|\b(event|listing|home|house|display|address|date|time|hours|info|information)\b[^.?!]{0,40}\b(wrong|incorrect|outdated|out of date|inaccurate|not right|not correct|has changed)\b/i;
 const WEEKLY = /\b(weekly (?:lights )?email|newsletter|sign me up|sign up for (?:the |your )?(?:weekly|email|emails|alerts?)|subscribe|email me|email alerts?)\b/i;
 const STOP = /\b(unsubscribe|stop (?:the |these |getting )?emails?|opt out|no longer want)\b/i;
 const REMOVE = /\b(remove|delete|take (?:down|off)|get rid of|want .{0,20} off)\b[^.?!]{0,50}\b(my )?(home|house|display|listing|address|lights)\b/i;
+const REMOVE2 = /\b(remove|delete|take|taken|get|off)\b[^.?!]{0,40}\b(my )?(home|house|display|listing|address|lights)\b[^.?!]{0,30}\b(off|from)\b[^.?!]{0,15}\b(the )?(map|site|website|app)\b|\b(my )?(home|house|display|listing|address)\b[^.?!]{0,30}\b(off|removed from|taken off)\b[^.?!]{0,15}\b(the )?(map|site|website)\b/i;
 const FAV = /\b(favorites?|favourites?|plan (?:a |my )?night|route|drive (?:through|by)|tonight|stops?)\b/i;
 const ADD_EVENT = /\b(add|list|post|submit|put|publish|promote|register)\b[^.?!]{0,40}\b(event|parade|market|tree lighting|festival|show|haunt)\b/i;
-const ADD_HOME = /\b(add|put|show|list|post|submit|showcase|enter)\b[^.?!]{0,40}\b(my )?(home|house|display|lights|yard)\b[^.?!]{0,30}\b(on|to|in)\b[^.?!]{0,20}\bmap\b|\b(add|list|post|showcase|submit)\b[^.?!]{0,25}\b(my )?(home|house|display)\b/i;
+const ADD_HOME = /\b(add|put|show|list|post|submit|showcase|enter)\b[^.?!]{0,40}\b(my )?(home|house|display|lights|yard)\b[^.?!]{0,30}\b(on|to|in)\b[^.?!]{0,20}\bmap\b|\b(add|list|post|showcase|submit)\b[^.?!]{0,25}\b(my )?(home|house|display)\b|\b(show|share|showcase|display)\b( off)? my (christmas |holiday )?(lights|home|house|display|yard)\b/i;
 const ADD_CONTEST = /\b(start|create|run|host|set up|setup|launch)\b[^.?!]{0,30}\b(a |my |our )?(decorating |lighting )?contest\b/i;
 const WHERE = /\b(where|how do i (?:get to|go to|open|find)|link to|take me to)\b[^.?!]{0,40}\b(add|contests?|profile|pricing|prices|help|tutorials?|promote|feature)\b/i;
 const PAGES = [["add", "/add", "Add an event, home or contest"], ["contest", "/contests", "Contests"], ["profile", "/profile", "Your profile"], ["pric", "/pricing", "Pricing"], ["help", "/help", "Help Center"], ["tutorial", "/tutorials", "Tutorials"], ["promote", "/feature", "Promote your event"], ["feature", "/feature", "Promote your event"]];
@@ -53,6 +54,15 @@ export function contestStartCard() {
       { name: "city", label: "City", type: "text", required: false, max: 60, list: "cities", options: cityNames().map((c) => [c, c]) },
     ] };
 }
+// Phrases that ask for a Tier 1 card but read as off topic to the scope filter ("subscribe me", "this listing is outdated"). Returns { reply, cards } or null.
+export function quickIntent(question, settings) {
+  const q = String(question || ""), t = (settings && settings.tiers) || {};
+  if (!t[1] || STOP.test(q)) return null;
+  if (WEEKLY.test(q)) return { reply: "Happy to set that up. Fill in the box below and tap Sign me up: it is one short free email a week, and we send a link to confirm first.", cards: [formCard("weekly_email")] };
+  if (REPORT.test(q)) return { reply: "Thank you for flagging it. Tell us which listing and what is wrong below, and the team will look at it.", cards: [formCard("report_problem")] };
+  if (REMOVE.test(q) || REMOVE2.test(q)) return { reply: "I can pass that on. Fill in the box below and tap Send removal request, and we will email you when it is done. You do not need an account.", cards: [formCard("remove_home")] };
+  return null;
+}
 export const needsAccount = (q) => wantsOwnerAction(q) || (ADD_EVENT.test(String(q || "")) && !/\b(find|search|see|go to|attend)\b/i.test(String(q || "")));
 export const wantsHuman = (q) => HUMAN.test(String(q || ""));
 export const humanCard = (question = "") => formCard("ask_human", { message: String(question).replace(/\s+/g, " ").trim().slice(0, 300) });
@@ -67,7 +77,7 @@ export function cardsFor({ question, settings, ctx = {}, handoff = "", user = nu
     if (ADD_HOME.test(q) && !/\b(find|search|see|visit|drive|directions)\b/i.test(q)) out.push(homeStartCard());
     if (ADD_CONTEST.test(q)) out.push(contestStartCard());
     if (WEEKLY.test(q) && !STOP.test(q)) out.push(formCard("weekly_email"));
-    if (REMOVE.test(q)) out.push(formCard("remove_home"));
+    if (REMOVE.test(q) || REMOVE2.test(q)) out.push(formCard("remove_home"));
   }
   // Tier 3: the signed-in visitor's own listings (docs/ai-assistant-actions-design.md). Signed out: one card that says to sign in first.
   if (t[3] && (!handoff || handoff === "gap") && wantsOwnerAction(q)) { if (user) out.unshift(...ownerCards({ question: q, own: own || {} })); else out.unshift(signInCard()); }
