@@ -72,7 +72,7 @@ filt.push(`[a]scale=${FMT.W}:${FMT.H}:force_original_aspect_ratio=increase,crop=
 filt.push(`[b]scale=${FMT.PW}:${FMT.PH}:flags=lanczos[fg]`);
 filt.push(`[bg][fg]overlay=${(FMT.W - FMT.PW) / 2}:${FMT.y}[v0]`);
 let last = "v0", n = 1;
-const inputs = ["-i", v.src, "-loop", "1", "-i", D + "/head.png"]; // input 1 = headline
+const inputs = ["-i", sp.src || v.src, "-loop", "1", "-i", D + "/head.png"]; // input 1 = headline
 filt.push(`[${last}][1:v]overlay=0:0[v${n}]`); last = `v${n++}`;
 let idx = 2;
 for (const c of clips) { inputs.push("-loop", "1", "-i", `${D}/cap${c.i}.png`); filt.push(`[${last}][${idx}:v]overlay=0:0:enable='between(t,${(c.start - 0.05).toFixed(3)},${(c.end + 0.25).toFixed(3)})'[v${n}]`); last = `v${n++}`; idx++; }

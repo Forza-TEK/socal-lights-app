@@ -28,6 +28,7 @@ const next = (after = 700) => tap("#nextbtn", { after });
 const geoStart = async () => { await p.goto(BASE + "/", { waitUntil: "networkidle" }); await sleep(5500); try { await p.getByText("No thanks").first().click({ timeout: 3000 }); await sleep(600); } catch {} };
 const pickHeart = () => p.evaluate(() => { const pb = document.querySelector("#pbody").getBoundingClientRect(), L = [...document.querySelectorAll("article.item")].filter((a) => a.offsetParent !== null).map((a) => a.querySelector(".star")); const i = L.findIndex((s) => s.getAttribute("aria-pressed") !== "true" && s.getBoundingClientRect().top > pb.top + 4 && s.getBoundingClientRect().bottom < Math.min(pb.bottom, innerHeight - 80)); return i; });
 const heartNext = async () => { let i = await pickHeart(); for (let t = 0; i < 0 && t < 6; t++) { await p.evaluate(() => document.querySelector("#pbody").scrollBy({ top: 140, behavior: "smooth" })); await sleep(600); i = await pickHeart(); } await tap(p.locator("article.item:visible .star").nth(i)); };
+const MK = {}; // times inside the long 'there' step, used to cut out the waiting
 const ENTER = process.env.COOKIE_ENTER || "AjmUsqDKzYVPNwj0uA9p-_hofhGpm9AV";
 // per scenario: prepare (not recorded) and one action per step id
 const SC = {
@@ -36,21 +37,21 @@ const SC = {
       route: () => tap('#phead >> text=Route these', { after: 2000 }), pick: () => tap(".mpchg", { after: 1200 }) }, hold: { list: 2.2, sheet: 2.4, apps: 2.0 }, note: "route" },
   w07: { prep: async () => { await geoStart(); }, act: { locate: async () => { await tap(".maplibregl-ctrl-geolocate", { after: 4500 }); await tap(".maplibregl-ctrl-zoom-out", { after: 900 }); await tap(".maplibregl-ctrl-zoom-out", { after: 2500 }); },
       route: () => tap("#rtpill", { after: 2000 }), pick: () => tap(".mpchg", { after: 1200 }) }, hold: { sheet: 2.4, apps: 2.0, open: 1.5, next: 1.5 }, note: "route" },
-  w08: { prep: async () => { await geoStart(); }, act: { locate: () => tap(".maplibregl-ctrl-geolocate", { after: 4500 }), pull: () => tap("#grab", { after: 1500 }), weekend: () => tap('[data-quick="weekend"]', { after: 2000 }),
-      free: () => tap('[data-quick="cost"]', { after: 2000 }), card: () => tap("article.item", { after: 3000 }) }, hold: { dir: 2.0, apps: 2.0 }, note: "dir" },
+  w08: { prep: async () => { await geoStart(); }, act: { locate: async () => { await tap(".maplibregl-ctrl-geolocate", { after: 4500 }); await tap(".maplibregl-ctrl-zoom-out", { after: 900 }); await tap(".maplibregl-ctrl-zoom-out", { after: 2500 }); }, pull: () => tap("#grab", { after: 1500 }), weekend: () => tap('[data-quick="weekend"]', { after: 2000 }),
+      free: () => tap('[data-quick="cost"]', { after: 2000 }), card: async () => { if (!(await p.locator("article.item:visible").count())) { await tap('[data-quick="cost"]', { after: 1500 }); } if (!(await p.locator("article.item:visible").count())) { await tap('[data-quick="weekend"]', { after: 1500 }); } await tap("article.item", { after: 3000 }); } }, hold: { dir: 2.0, apps: 2.0 }, note: "dir" },
   w06: { prep: async () => { await p.goto(BASE + "/add-house", { waitUntil: "networkidle" }); await sleep(2500); },
     act: {
-      signin: async () => { await tap("text=Sign in", { after: 1800 }); await tap("#si-email", { after: 300 }); await p.locator("#si-email").pressSequentially("you@example.com", { delay: 50 }); await sleep(600);
-        await ctx.addCookies([{ name: "scl_session", value: ENTER, url: BASE }]); await p.goto(BASE + "/add-house", { waitUntil: "networkidle" }); await sleep(2000); }, // the emailed code is not recorded: the demo session cookie stands in for it
+      signin: async () => { await tap(p.getByText("Sign in", { exact: true }), { after: 1800 }); await tap("#si-email", { after: 300 }); await p.locator("#si-email").pressSequentially("you@example.com", { delay: 50 }); await sleep(400);
+        await ctx.addCookies([{ name: "scl_session", value: ENTER, url: BASE }]); await p.goto(BASE + "/add-house", { waitUntil: "networkidle" }); await sleep(1200); }, // the emailed code is not recorded: the demo session cookie stands in for it
       who: async () => { await tap('[data-tile="kind|homeowner"]', { after: 500 }); await next(); },
       name: async () => { await type("#f-biz", "The Sample family"); await next(); },
       season: async () => { await tap('[data-tile="hadPro|no"]', { after: 400 }); await next(450); await tap('[data-tile="season|christmas"]', { after: 400 }); await next(); },
-      title: async () => { await type("#f-title", "Sample Family Lights"); await type("#f-desc", "Lights on the roof and the trees."); await next(); },
+      title: async () => { await type("#f-title", "Sample Family Lights"); await type("#f-desc", "Lights on the roof."); await next(); },
       street: async () => { await p.selectOption("#f-city", "Irvine"); await sleep(250); await type("#f-street", "1 Civic Center Plaza"); await type("#f-zip", "92606"); await next(); },
       photos: async () => { await next(500); await next(700); },
       put: async () => { await tap("#nextbtn", { after: 1500 }); },
-      there: async () => { await tap("text=See it on the map", { after: 400 }); await p.waitForSelector("#back", { timeout: 15000 }); await sleep(1500); await p.goto(BASE + "/", { waitUntil: "networkidle" }); await sleep(4500); try { await p.getByText("No thanks").first().click({ timeout: 2500 }); } catch {}
-        await type("#q", "Sample Family"); await p.keyboard.press("Enter"); await sleep(2500); await tap("#grab", { after: 1200 }); await tap("article.item", { after: 400 }); await p.waitForSelector("#back", { timeout: 15000 }); await sleep(5000); await tap("#grab", { after: 1500 }); },
+      there: async () => { await tap("text=See it on the map", { after: 400 }); MK.see = T(); await p.waitForSelector("#back", { timeout: 15000 }); await sleep(600); await p.goto(BASE + "/", { waitUntil: "networkidle" }); await sleep(3000); try { await p.getByText("No thanks").first().click({ timeout: 2500 }); } catch {}
+        await type("#q", "Sample Family"); await p.keyboard.press("Enter"); await sleep(1500); await tap("#grab", { after: 900 }); MK.item = T(); await tap("article.item", { after: 400 }); await p.waitForSelector("#back", { timeout: 15000 }); await sleep(3500); await tap("#grab", { after: 1500 }); },
       card: () => tap("#grab", { after: 1500 }), dirs: async () => { await sleep(800); } }, hold: { there: 1.5, card: 1.0, dirs: 2.0 }, note: "dirs" },
 }[W];
 await SC.prep();
@@ -60,7 +61,9 @@ cdp.on("Page.screencastFrame", (f) => { const i = n++; frames.push({ i, t: f.met
 await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, maxWidth: 1080, maxHeight: Math.round(956 * 1080 / 440), everyNthFrame: 1 });
 await sleep(500); T0 = Date.now() / 1000;
 const rec = []; // per step: start, action time, end
+const HAS_APPLE = SCR.steps.some((x) => x.id === "apple");
 for (const s of SCR.steps) {
+  if (s.id === "apple") continue; // the finished route in Apple Maps is spliced in from the owner's real recording below
   const t0 = T(), dur = durOf(s.say), act = SC.act[s.id]; tapMark = null;
   if (act) { await sleep(300); await act(); }
   const hold = (SC.hold && SC.hold[s.id]) ?? 0.9, end = Math.max(t0 + dur + hold, T() + 0.4);
@@ -68,18 +71,32 @@ for (const s of SCR.steps) {
   rec.push({ id: s.id, say: s.say, core: s.core, t0, action: tapMark, end: T() });
 }
 const closingDur = META[W + "r"][META[W + "r"].length - 1].sec;
-await sleep((closingDur + 0.6) * 1000);
+if (!HAS_APPLE) await sleep((closingDur + 0.6) * 1000);
 const total = T(); await cdp.send("Page.stopScreencast"); await br.close();
 const start = T0; // screencast frame times are wall-clock seconds, like Date.now() / 1000
 const lines = [];
 frames.forEach((f, k) => { const t = Math.max(0, f.t - start), nx = k + 1 < frames.length ? Math.max(0, frames[k + 1].t - start) : total; if (nx > t || k === frames.length - 1) lines.push(`file '${dir}/${f.i}.jpg'`, `duration ${Math.max(0.001, nx - t).toFixed(4)}`); });
 lines.push(`file '${dir}/${frames[frames.length - 1].i}.jpg'`); writeFileSync(`${WORK}/${ID}-frames.txt`, lines.join("\n"));
-execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", `${WORK}/${ID}-frames.txt`, "-vf", "fps=30,scale=1080:2346:flags=lanczos", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", `${WORK}/${ID}-source.mp4`]);
+execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", `${WORK}/${ID}-frames.txt`, "-vf", "fps=30,scale=1080:2346:flags=lanczos", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", `${WORK}/${ID}-${HAS_APPLE ? "local" : "source"}.mp4`]);
 // cut plan
-const core = rec.filter((r) => r.core), coreEnd = core[core.length - 1].end, noteStep = rec.find((r) => r.id === SC.note);
-const cue = (arr, r, i) => (r.action != null ? { i, action: +r.action.toFixed(3), what: r.id + " tapped" } : { i, at: +Math.max(r.t0, 0.35).toFixed(3) });
-const plan = { src: `${WORK}/${ID}-source.mp4`, srcH: 2346, head: HEAD, noteFrom: null,
-  short: { id: W, seg: [[0.3, +coreEnd.toFixed(3), 1]], noteFrom: noteStep && noteStep.core ? +(noteStep.action ?? noteStep.t0).toFixed(3) : null, cues: [...core.map((r, i) => cue(core, r, i)), { i: core.length, at: +(coreEnd - 0.05).toFixed(3) }] },
-  reel: { id: W + "r", seg: [[0.3, +total.toFixed(3), 1]], noteFrom: noteStep ? +(noteStep.action ?? noteStep.t0).toFixed(3) : null, cues: [...rec.map((r, i) => cue(rec, r, i)), { i: rec.length, at: +(total - closingDur - 0.45).toFixed(3) }] } };
-writeFileSync(`${WORK}/${ID}-plan.json`, JSON.stringify(plan, null, 1)); console.log(JSON.stringify({ total, coreEnd, rec: rec.map((r) => [r.id, +r.t0.toFixed(1), r.action && +r.action.toFixed(2)]) }));
+const APPLE = { from: 32.2, len: 2.8 }; // clean part of the owner's real iPhone recording: Apple Maps Directions with the route line, stop count and time (before any turn-by-turn street screen)
+const real = rec.filter((r) => r.id !== "apple"), coreReal = real.filter((r) => r.core), noteStep = rec.find((r) => r.id === SC.note);
+const cue = (r, i) => (r.action != null ? { i, action: +r.action.toFixed(3), what: r.id + " tapped" } : { i, at: +Math.max(r.t0, 0.35).toFixed(3) });
+let plan;
+if (HAS_APPLE) {
+  const lastCore = coreReal[coreReal.length - 1].end, L = APPLE.len, own = resolve(HERE, "../../owner-videos/favorites-owner.mp4");
+  const join = (srcName, upto) => execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${WORK}/${ID}-local.mp4`, "-ss", String(APPLE.from), "-t", String(L), "-i", own, "-filter_complex", `[0:v]trim=0:${upto.toFixed(3)},setpts=PTS-STARTPTS,fps=30,setsar=1[a];[1:v]scale=1080:2346,setpts=PTS-STARTPTS,fps=30,setsar=1[b];[a][b]concat=n=2:v=1:a=0[v]`, "-map", "[v]", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", `${WORK}/${srcName}`]);
+  join(`${ID}-source-short.mp4`, lastCore); join(`${ID}-source.mp4`, total);
+  const nc = coreReal.length;
+  plan = { src: `${WORK}/${ID}-source.mp4`, srcH: 2346, head: HEAD, noteFrom: null,
+    short: { id: W, src: `${WORK}/${ID}-source-short.mp4`, seg: [[0.3, +(lastCore + L).toFixed(3), 1]], noteFrom: noteStep && noteStep.core ? +(noteStep.action ?? noteStep.t0).toFixed(3) : null, cues: [...coreReal.map((r, i) => cue(r, i)), { i: nc, at: +(lastCore + 0.05).toFixed(3) }, { i: nc + 1, at: +(lastCore + L - 0.05).toFixed(3) }] },
+    reel: { id: W + "r", seg: [[0.3, +(total + L).toFixed(3), 1]], noteFrom: noteStep ? +(noteStep.action ?? noteStep.t0).toFixed(3) : null, cues: [...real.map((r, i) => cue(r, i)), { i: real.length, at: +(total + 0.05).toFixed(3) }, { i: real.length + 1, at: +(total + L - 0.05).toFixed(3) }] } };
+} else {
+  const ivs = (list) => { const out = []; for (const r of list) { const parts = r.id === "there" && MK.item ? [[r.t0, MK.see + 1.5], [MK.item - 0.8, r.end]] : [[r.t0, r.end]]; for (const [a, b] of parts) { const A = Math.max(a, 0.3); if (out.length && A - out[out.length - 1][1] < 0.05) out[out.length - 1][1] = b; else out.push([A, b]); } } return out; };
+  const core = coreReal;
+  plan = { src: `${WORK}/${ID}-source.mp4`, srcH: 2346, head: HEAD, noteFrom: null,
+    short: { id: W, seg: ivs(core).map(([a, b]) => [+a.toFixed(3), +b.toFixed(3), 1]), noteFrom: noteStep && noteStep.core ? +(noteStep.action ?? noteStep.t0).toFixed(3) : null, cues: [...core.map((r, i) => cue(r, i)), { i: core.length, at: +(core[core.length - 1].end - 0.05).toFixed(3) }] },
+    reel: { id: W + "r", seg: (() => { const r = ivs(rec); r[r.length - 1][1] = total; return r.map(([a, b]) => [+a.toFixed(3), +b.toFixed(3), 1]); })(), noteFrom: noteStep ? +(noteStep.action ?? noteStep.t0).toFixed(3) : null, cues: [...rec.map((r, i) => cue(r, i)), { i: rec.length, at: +(total - closingDur - 0.45).toFixed(3) }] } };
+}
+writeFileSync(`${WORK}/${ID}-plan.json`, JSON.stringify(plan, null, 1)); console.log(JSON.stringify({ total, rec: rec.map((r) => [r.id, r.t0 && +r.t0.toFixed(1), r.action && +r.action.toFixed(2)]) }));
 rmSync(dir, { recursive: true, force: true });
