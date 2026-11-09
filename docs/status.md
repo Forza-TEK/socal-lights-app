@@ -799,3 +799,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Searched Riverside, Corona, Norco, Eastvale, Jurupa Valley, Moreno Valley, Perris, Menifee. Everything verifiable was already on the map; no migration.
 - Leads (not added; no 2026 confirmation, last-season rule): Cherrywood Circle Light Show, 1424 Cherrywood Cir, Corona (tackylighttour, "confirmed lit Dec 2025"); Coleman Family Lights, 31403 Sherman Rd, Menifee; Perris Christmas parade (2025 was Dec; 2026 date not found, city site 403); Eastvale Miracle on Citrus Street and Dos Lagos tree lighting (2026 dates not posted); Riverside Downtown Christmas Tree Lighting Dec 1 (aggregator only, no time or venue).
 - Photos: no acceptable photo found (candidate pages gave flyers or banner graphics only).
+
+- Admin greeting: between midnight and 5 AM (Pacific) it says "Hello" instead of "Good morning". The "scheduled job stopped" banner names the Cloudflare usage check (workflow usage-check.yml); GitHub runs it late or skips runs, so it was started by hand again.
