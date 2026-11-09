@@ -255,7 +255,7 @@ test("admin: read-only data with landings per ref code, alerts and no write hand
     const { env, raw } = mk();
     await send(env, [row({ status: "disapproved", disapproval_reason: "Policy" })]);
     raw.prepare("INSERT INTO site_hits (day, page, n) VALUES ('2026-11-15', 'ref:mt-ct-a', 7), ('2026-11-16', 'ref:mt-ct-a', 3), ('2026-11-16', 'ref:other', 99), ('2026-11-01', 'ref:mt-ct-a', 50)").run();
-    const r = await adminAds({ env });
+    const r = await adminAds({ env, request: new Request("https://socallights.app/api/admin/ads") });
     const d = await r.json();
     assert.equal(d.configured, true); assert.equal(d.ads.length, 17);
     assert.equal(d.ads.find((a) => a.id === "ct-a-meta").landings, 10, "only since the first start date, only its own ref");
@@ -282,7 +282,7 @@ test("ad_url: only https Facebook and Instagram links, no tokens, kept when a la
     await send(env, [row({ ad_url: "https://fb.me/keep", as_of: "2026-11-20T10:00:00Z" })]);
     await send(env, [row({ spend_cents: 900, as_of: "2026-11-20T11:00:00Z" })]);
     assert.equal(raw.prepare("SELECT ad_url FROM ads_reports").get().ad_url, "https://fb.me/keep");
-    const d = await (await adminAds({ env })).json(), a = d.ads.find((x) => x.id === "ct-a-meta");
+    const d = await (await adminAds({ env, request: new Request("https://socallights.app/api/admin/ads") })).json(), a = d.ads.find((x) => x.id === "ct-a-meta");
     assert.equal(a.report.ad_url, "https://fb.me/keep"); assert.ok(a.primary_text.length > 10); assert.equal(a.budget_cents, 5500); assert.ok(a.landing_url.includes("ref=mt-ct-a"));
     const s = await call(status, env, "status"); assert.equal(s.body.ads.find((x) => x.ad_id === "ct-a-meta").report.ad_url, "https://fb.me/keep");
   });
@@ -292,4 +292,29 @@ test("admin page: ads table is built with textContent and links open safely", ()
   const js = readFileSync("public/admin/admin.js", "utf8"), fn = js.slice(js.indexOf("function adRows"), js.indexOf("async function renderAds"));
   assert.ok(fn.length > 500); assert.doesNotMatch(fn, /innerHTML|insertAdjacentHTML/);
   assert.match(fn, /target: "_blank", rel: "noopener noreferrer"/); assert.match(fn, /aria-expanded/); assert.match(fn, /link not reported yet/);
+});
+
+test("admin: creative files merged with ad ids, missing and unassigned ads listed, built without innerHTML", async () => {
+  const { env } = mk();
+  const r = await adminAds({ env, request: new Request("https://socallights.app/api/admin/ads") }), d = await r.json();
+  const f = d.creative.files.find((x) => x.asset_id === "a03-contest-screens");
+  assert.deepEqual(f.ad_ids, ["ct-a-meta"]); assert.equal(f.url, "https://socallights.app/ad-assets/a03-contest-screens/a03%20entry.png"); assert.equal(f.sha256, "ab".repeat(32));
+  assert.deepEqual(d.creative.files.find((x) => x.asset_id === "a01-page-images").ad_ids, []);
+  assert.ok(d.creative.missing.some((m) => m.ad_id === "fa-a-meta")); assert.deepEqual(d.creative.no_asset, ["ho-a-meta"]);
+  const js = readFileSync("public/admin/admin.js", "utf8"), fn = js.slice(js.indexOf("function adCreative"), js.indexOf("async function renderAds"));
+  assert.ok(fn.length > 800); assert.doesNotMatch(fn, /innerHTML|insertAdjacentHTML/);
+  for (const t of ["loading: \"lazy\"", "preload: \"metadata\"", "noopener noreferrer", "not published yet", "public if someone knows the address"]) assert.ok(fn.includes(t), t);
+  const man = JSON.parse(readFileSync("public/ad-assets/manifest.json", "utf8"));
+  assert.ok(man.files.every((x) => x.sha256 && x.path.startsWith(x.asset_id + "/")));
+});
+
+test("admin page: Ads sub-tabs are accessible, keyboard driven, remembered in the hash, and DOM only", async () => {
+  const js = readFileSync("public/admin/admin.js", "utf8"), a = js.indexOf("const ADSEC"), fn = js.slice(a, js.indexOf("/* ---------- reports:"));
+  assert.doesNotMatch(fn, /innerHTML|insertAdjacentHTML/);
+  for (const sec of ["overview", "ads", "campaigns", "creative", "reports", "setup"]) assert.ok(fn.includes(`["${sec}",`), sec);
+  for (const t of ['role: "tablist"', 'role: "tab"', 'role: "tabpanel"', "aria-selected", "aria-controls", "aria-labelledby", "ArrowRight", "ArrowLeft", "Home", "End", '"#ads/"', "grok-ads-api.md", "User-Agent", "Download CSV"]) assert.ok(fn.includes(t), t);
+  assert.match(js, /location\.hash\.slice\(1\)\.split\("\/"\)\[0\]/, "the main tab router understands #ads/<section>");
+  const { env } = mk(), { onRequestGet } = await import("../functions/api/admin/ads.js");
+  const d = await (await onRequestGet({ env, request: new Request("https://socallights.app/api/admin/ads") })).json();
+  assert.ok(d.rules.length > 5); assert.equal(d.campaigns.find((c) => c.audience === "families").daily_hint_cents, 667);
 });

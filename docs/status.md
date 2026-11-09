@@ -1,6 +1,9 @@
 # Status
 
-_Last updated: 2026-11-09 (Ads link: ad_url and expandable rows)_
+_Last updated: 2026-11-09 (Admin > Ads: Creative files section)_
+
+## Admin > Ads: Creative files section (2026-11-09)
+Where the published ad pictures and videos are. `GET /api/admin/ads` now returns `creative` (manifest files with absolute URL, sha256, size and the ad ids from `ads_items.asset_id`, plus approved ads whose asset is not published yet or has none). The tab shows them grouped by asset id: thumbnail (lazy image or `<video controls preload=metadata>`), file name, dimensions and ratio, KB, ads, short sha256 (full in the title), the public URL with Copy and Open (new tab, noopener). Note on the page: files are public if someone knows the address; not linked, not indexed. DOM and textContent only; GET only. Admin > Ads now has sub-tabs (role tablist/tab/tabpanel, arrow keys, Home/End, hash `#ads/<section>`): Overview, Ads, Campaigns (planned and actual daily pace), Creative files, Reports (last 30 reports, warnings, CSV), Setup (key status, contract path, Grok rules, owner steps, User-Agent note). admin.js `?v=20261112d`.
 
 ## Ads link follow-up: ad_url and expandable rows (2026-11-09)
 Migration `0205_ads_report_url.sql` adds `ads_reports.ad_url`. `POST /api/ads/report` accepts optional `ad_url` (https, exact Facebook/Instagram hosts, 500 chars, no login, no token/code parameters; last value kept). Admin > Ads: ad id links to it (new tab, noopener noreferrer) or shows "link not reported yet"; a Details button (aria-expanded) shows the approved copy, files, budget, dates and last status message; table built with textContent only. admin.js `?v=20261112b`. Tests added to `tests/ads.test.mjs`.
