@@ -17,6 +17,7 @@ const durOf = (say) => META[W + "r"].find((x) => x.text === say).sec;
 const dir = WORK + "/" + ID + "-frames"; rmSync(dir, { recursive: true, force: true }); mkdirSync(dir, { recursive: true });
 const br = await chromium.launch({ executablePath: "/usr/bin/google-chrome", args: ["--no-sandbox", "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
 const ctx = await br.newContext({ viewport: { width: 440, height: 956 }, deviceScaleFactor: 1080 / 440, isMobile: true, hasTouch: true, userAgent: UA, colorScheme: "dark", permissions: ["geolocation"], geolocation: { latitude: 33.6162, longitude: -117.8745 } }); // Fashion Island, Newport Beach: a public shopping centre
+await ctx.route("**/challenges.cloudflare.com/**", (r) => r.fulfill({ contentType: "application/javascript", body: "window.turnstile={render:function(){return 0},reset:function(){},remove:function(){},getResponse:function(){return ''}};" })); // the spam-check widget cannot load on the local copy; it is replaced by nothing, as in the tutorials
 await ctx.route("**/api/config", (r) => r.fulfill({ json: {} })); // hides the spam-check widget on the local copy, as the tutorials do
 await ctx.addInitScript(`(() => { const add = () => { if (!document.head) return setTimeout(add, 20); const s = document.createElement("style"); s.textContent = ".__rip{position:fixed;z-index:2147483646;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:5px solid rgba(255,107,107,.95);background:rgba(255,255,255,.3);pointer-events:none;animation:__r .7s ease-out forwards}@keyframes __r{to{transform:scale(2.8);opacity:0}}"; document.head.appendChild(s); }; add(); window.__tap = (x, y) => { const r = document.createElement("div"); r.className = "__rip"; r.style.left = x + "px"; r.style.top = y + "px"; document.body.appendChild(r); setTimeout(() => r.remove(), 750); }; })();`);
 const p = await ctx.newPage();
@@ -28,6 +29,8 @@ const next = (after = 700) => tap("#nextbtn", { after });
 const geoStart = async () => { await p.goto(BASE + "/", { waitUntil: "networkidle" }); await sleep(5500); try { await p.getByText("No thanks").first().click({ timeout: 3000 }); await sleep(600); } catch {} };
 const pickHeart = () => p.evaluate(() => { const pb = document.querySelector("#pbody").getBoundingClientRect(), L = [...document.querySelectorAll("article.item")].filter((a) => a.offsetParent !== null).map((a) => a.querySelector(".star")); const i = L.findIndex((s) => s.getAttribute("aria-pressed") !== "true" && s.getBoundingClientRect().top > pb.top + 4 && s.getBoundingClientRect().bottom < Math.min(pb.bottom, innerHeight - 80)); return i; });
 const heartNext = async () => { let i = await pickHeart(); for (let t = 0; i < 0 && t < 6; t++) { await p.evaluate(() => document.querySelector("#pbody").scrollBy({ top: 140, behavior: "smooth" })); await sleep(600); i = await pickHeart(); } await tap(p.locator("article.item:visible .star").nth(i)); };
+const FLAGS = [];
+const scan = async (id) => { const hits = await p.evaluate(() => { const out = []; for (const e of document.querySelectorAll("body *")) { if (e.children.length) continue; const t = (e.innerText || "").trim(); if (!t || t.length > 160) continue; const r = e.getBoundingClientRect(); if (r.width === 0 || r.bottom < 0 || r.top > innerHeight) continue; const st = getComputedStyle(e); if (st.visibility === "hidden" || st.display === "none") continue; if (/^\d{2,5} [A-Z]/.test(t) || /Ring of Lights|Bayside Dr|Bay Front/i.test(t)) out.push(t.slice(0, 90)); } return [...new Set(out)]; }); for (const h of hits) FLAGS.push(id + ": " + h); };
 const MK = {}; // times inside the long 'there' step, used to cut out the waiting
 const ENTER = process.env.COOKIE_ENTER || "AjmUsqDKzYVPNwj0uA9p-_hofhGpm9AV";
 // per scenario: prepare (not recorded) and one action per step id
@@ -36,12 +39,13 @@ const SC = {
     act: { heart1: () => heartNext(), heart2: async () => { await heartNext(); await sleep(500); await heartNext(); }, nav: () => tap('#bnav [data-tab="plan"]', { after: 1500 }),
       route: () => tap('#phead >> text=Route these', { after: 2000 }), pick: () => tap(".mpchg", { after: 1200 }) }, hold: { list: 2.2, sheet: 2.4, apps: 2.0 }, note: "route" },
   w07: { prep: async () => { await geoStart(); }, act: { locate: async () => { await tap(".maplibregl-ctrl-geolocate", { after: 4500 }); await tap(".maplibregl-ctrl-zoom-out", { after: 900 }); await tap(".maplibregl-ctrl-zoom-out", { after: 2500 }); },
+      filter: async () => { await tap(".qf", { after: 1500 }); await tap("text=Tree lightings & villages", { after: 900 }); await tap("text=/^Show \\d+ places?$/", { after: 2500 }); },
       route: () => tap("#rtpill", { after: 2000 }), pick: () => tap(".mpchg", { after: 1200 }) }, hold: { sheet: 2.4, apps: 2.0, open: 1.5, next: 1.5 }, note: "route" },
   w08: { prep: async () => { await geoStart(); }, act: { locate: async () => { await tap(".maplibregl-ctrl-geolocate", { after: 4500 }); await tap(".maplibregl-ctrl-zoom-out", { after: 900 }); await tap(".maplibregl-ctrl-zoom-out", { after: 2500 }); }, pull: () => tap("#grab", { after: 1500 }), weekend: () => tap('[data-quick="weekend"]', { after: 2000 }),
       free: () => tap('[data-quick="cost"]', { after: 2000 }), card: async () => { if (!(await p.locator("article.item:visible").count())) { await tap('[data-quick="cost"]', { after: 1500 }); } if (!(await p.locator("article.item:visible").count())) { await tap('[data-quick="weekend"]', { after: 1500 }); } await tap("article.item", { after: 3000 }); } }, hold: { dir: 2.0, apps: 2.0 }, note: "dir" },
   w06: { prep: async () => { await p.goto(BASE + "/add-house", { waitUntil: "networkidle" }); await sleep(2500); },
     act: {
-      signin: async () => { await tap(p.getByText("Sign in", { exact: true }), { after: 1800 }); await tap("#si-email", { after: 300 }); await p.locator("#si-email").pressSequentially("you@example.com", { delay: 25 }); await sleep(400);
+      signin: async () => { await tap(p.getByText("Sign in", { exact: true }), { after: 1800 }); await tap("#si-email", { after: 300 }); await p.locator("#si-email").pressSequentially("demo@example.com", { delay: 25 }); await sleep(400);
         await ctx.addCookies([{ name: "scl_session", value: ENTER, url: BASE }]); await p.goto(BASE + "/add-house", { waitUntil: "networkidle" }); await sleep(1200); }, // the emailed code is not recorded: the demo session cookie stands in for it
       who: async () => { await tap('[data-tile="kind|homeowner"]', { after: 500 }); await next(); },
       name: async () => { await type("#f-biz", "The Sample family"); await next(); },
@@ -68,11 +72,13 @@ for (const s of STEPS) {
   if (s.id === "apple") continue; // the finished route in Apple Maps is spliced in from the owner's real recording below
   const t0 = T(), dur = s.silent ? 1.2 : durOf(s.say), act = SC.act[s.id]; tapMark = null;
   if (act) { await sleep(300); await act(); }
+  await scan(s.id);
   const hold = (SC.hold && SC.hold[s.id]) ?? (W === "w06" ? 0.35 : 0.9), end = Math.max(t0 + dur + hold, T() + 0.4);
   await sleep(Math.max(0, (end - T()) * 1000));
   rec.push({ id: s.id, say: s.say, core: s.core, silent: !!s.silent, t0, action: tapMark, end: T() });
 }
-writeFileSync(`${WORK}/${ID}-rec.json`, JSON.stringify({ rec, MK }));
+writeFileSync(`${WORK}/${ID}-rec.json`, JSON.stringify({ rec, MK, FLAGS }));
+console.log('PRIVACY-SCAN', JSON.stringify(FLAGS));
 const closingDur = META[W + "r"][META[W + "r"].length - 1].sec;
 if (!HAS_APPLE) await sleep((closingDur + 0.6) * 1000);
 const total = T(); await cdp.send("Page.stopScreencast"); await br.close();

@@ -68,6 +68,11 @@
         "core": true
       },
       {
+        "id": "filter",
+        "say": "Tap Filters, and choose Tree lightings and villages.",
+        "core": true
+      },
+      {
         "id": "route",
         "say": "Tap Route these on the map.",
         "core": true
@@ -80,21 +85,16 @@
       {
         "id": "pick",
         "say": "Tap the arrows to choose your maps app.",
-        "core": true
+        "core": false
       },
       {
         "id": "apps",
         "say": "Apple Maps, Google Maps or Waze.",
-        "core": true
+        "core": false
       },
       {
         "id": "open",
         "say": "Then tap Open, and your phone switches to that app.",
-        "core": false
-      },
-      {
-        "id": "next",
-        "say": "A longer trip is split into more routes.",
         "core": false
       },
       {
