@@ -1,6 +1,6 @@
 import sys, json, re, os, difflib, glob, statistics
 P=os.environ.get("VTT_DIR","public/tutorials")
-S="/tmp/asr"
+S=os.environ.get("ASR_DIR","/tmp/asr")
 def norm(w):
     w=w.lower().replace("’","'")
     return re.sub(r"[^a-z0-9']","",w)
