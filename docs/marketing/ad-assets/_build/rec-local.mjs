@@ -40,8 +40,14 @@ act.review = +T().toFixed(3); await sleep(2200);
 let newId = null; p.on("response", async (r) => { if (r.url().includes("/api/submit") && r.request().method() === "POST") { try { const j = await r.json(); newId = j.id || j.post?.id || null; console.log("submit", JSON.stringify(j).slice(0, 200)); } catch {} } });
 await tap("#nextbtn", "submit", 1500); await sleep(2500);
 act.done = +T().toFixed(3);
-await tap("text=See it on the map", "map", 400); await p.waitForSelector("#back", { timeout: 15000 }); await sleep(3000);
-act.card = +T().toFixed(3); await tap("#grab", "pin", 900); await sleep(5000);
+// the confirmation page's "See it on the map" opens the map; then search for the home by name, as a user would, and open it: the app flies to street level
+await tap("text=See it on the map", "map", 400); await p.waitForSelector("#back", { timeout: 15000 }); await sleep(2500);
+await p.goto(BASE + "/", { waitUntil: "networkidle" }); await sleep(4500); act.map = +T().toFixed(3);
+try { await tap("text=No thanks", null, 500); } catch {}
+await type("#q", "Sample Family", "search"); await p.keyboard.press("Enter"); await sleep(2500);
+await tap("#grab", "list", 1200);
+await tap("article.item", "pin", 400); await p.waitForSelector("#back", { timeout: 15000 }); await sleep(6000); act.card = +T().toFixed(3);
+await tap("#grab", "mapview", 900); await sleep(3500);
 const total = T(); await cdp.send("Page.stopScreencast"); await br.close();
 const f0 = frames.findIndex((f) => f.t >= t0 - 0.05), fr = frames.slice(Math.max(0, f0 - 1)), lines = [];
 fr.forEach((f, k) => { const t = Math.max(0, f.t - t0), nx = k + 1 < fr.length ? Math.max(0, fr[k + 1].t - t0) : total; lines.push(`file '${dir}/${f.i}.jpg'`, `duration ${Math.max(0.001, nx - t).toFixed(4)}`); });
