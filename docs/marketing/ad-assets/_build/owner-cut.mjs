@@ -27,6 +27,8 @@ const V = {
     short: { id: "a07", seg: [[24.8, 26.6, 1], [26.6, 31.0, 1.25], [31.0, 36.6, 1]], cues: [{ i: 0, action: 25.9, what: "Route these tapped, panel opens" }, { i: 1, action: 31.4, what: "Open in Apple Maps tapped, Apple Maps opens" }, { i: 2, at: 35.3 }] },
     reel: { id: "a07r", seg: [[24.0, 26.6, 1], [26.6, 31.0, 1], [31.0, 36.6, 1]], cues: [{ i: 0, action: 25.9, what: "Route these tapped, panel opens" }, { i: 1, action: 31.4, what: "Open in Apple Maps tapped, Apple Maps opens" }, { i: 2, at: 28.6 }, { i: 3, at: 35.3 }] } },
 };
+// walkthrough plans written by walk.mjs replace the older cuts
+for (const [k, f, st] of [["a06", "a06-add-home-video", "a06-add-home"], ["a07", "a07-route-video", "a07-route"], ["a08", "a08-find-location-video", "a08-find-location"], ["a09", "a09-favorites-video", "a09-favorites"]]) { try { V[k] = { folder: f, stem: st, ...JSON.parse(readFileSync(`${WORK}/${k}-plan.json`, "utf8")) }; } catch {} }
 const [vid, place] = process.argv.slice(2), v = V[vid], reel = place === "reel", sp = reel ? v.reel : v.short;
 const FMT = place === "feed" ? { W: 1080, H: 1350, PH: 1150, y: 200, h: { y: 8, s: 42 }, c: { y: 64, s: 32 }, n: { y: 120, s: 27 }, tag: "4x5" }
   : { W: 1080, H: 1920, PH: 1460, y: 460, h: { y: 272, s: 46 }, c: { y: 334, s: 32 }, n: { y: 392, s: 26 }, tag: "9x16" };
@@ -44,8 +46,8 @@ for (const c of sp.cues) {
 }
 const lastEnd = Math.max(...clips.map((c) => c.end)); let core = Math.max(acc, lastEnd + 0.7);
 const q30 = (x) => Math.ceil(x * 30 - 1e-6) / 30; core = q30(core); const endCard = reel ? 3 : 0, total = core + endCard, hold = core - acc;
-if (!reel && total > 14.05) throw new Error(`feed/story cut too long: ${total}`);
-if (reel && (total < 12 || total > 20)) throw new Error(`reel length ${total}`);
+if (!reel && total > 36) throw new Error(`feed/story cut too long: ${total}`);
+if (reel && (total < 24 || total > 46)) throw new Error(`reel length ${total}`);
 const sync = clips.map((c) => ({ cue: c.text, narration_start_s: +c.start.toFixed(3), action_s: c.action == null ? null : +c.action.toFixed(3), what: c.what, offset_ms: c.action == null ? null : Math.round((c.action - c.start) * 1000), pass: c.action == null ? "n/a" : (c.action - c.start) * 1000 >= -100 && (c.action - c.start) * 1000 <= 400 }));
 // overlay layers (PNG) -------------------------------------------------------------------------------------------------------------
 const FONT = `<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;800&display=swap" rel="stylesheet">`;
@@ -75,7 +77,7 @@ filt.push(`[${last}][1:v]overlay=0:0[v${n}]`); last = `v${n++}`;
 let idx = 2;
 for (const c of clips) { inputs.push("-loop", "1", "-i", `${D}/cap${c.i}.png`); filt.push(`[${last}][${idx}:v]overlay=0:0:enable='between(t,${(c.start - 0.05).toFixed(3)},${(c.end + 0.25).toFixed(3)})'[v${n}]`); last = `v${n++}`; idx++; }
 inputs.push("-loop", "1", "-i", D + "/note.png");
-const noteStart = v.noteFrom == null ? null : out(v.noteFrom); if (noteStart != null) { filt.push(`[${last}][${idx}:v]overlay=0:0:enable='gte(t,${noteStart.toFixed(3)})'[v${n}]`); last = `v${n++}`; idx++; } else idx++;
+const nf = sp.noteFrom !== undefined ? sp.noteFrom : v.noteFrom, noteStart = nf == null ? null : out(nf); if (noteStart != null) { filt.push(`[${last}][${idx}:v]overlay=0:0:enable='gte(t,${noteStart.toFixed(3)})'[v${n}]`); last = `v${n++}`; idx++; } else idx++;
 let vmap = last;
 if (reel) { inputs.push("-loop", "1", "-i", D + "/end.png");
   filt.push(`[${last}]trim=duration=${core.toFixed(3)},setpts=PTS-STARTPTS,fps=30[main]`, `[${idx}:v]scale=${FMT.W}:${FMT.H},setsar=1,fps=30,trim=duration=${endCard},setpts=PTS-STARTPTS[endc]`, `[main][endc]concat=n=2:v=1:a=0[vo]`); vmap = "vo"; }

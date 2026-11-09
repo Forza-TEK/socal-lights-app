@@ -19,6 +19,14 @@ folder, out = sys.argv[1], sys.argv[2]
 os.makedirs(out, exist_ok=True)
 k = Kokoro(folder + "/kokoro-v1.0.onnx", folder + "/voices-v1.0.bin")
 meta = {}
+# walkthrough scripts (walk-scripts.json): id "w09" = core steps + closing (feed and Story), "w09r" = all steps + closing (Reel)
+W = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "walk-scripts.json")))
+for wid, w in W.items():
+    LINES[wid] = [s["say"] for s in w["steps"] if s["core"]] + [w["closing"]]
+    LINES[wid + "r"] = [s["say"] for s in w["steps"]] + [w["closing"]]
+if os.environ.get("WALK_ONLY") == "1":
+    LINES = {k: v for k, v in LINES.items() if k.startswith("w")}
+if os.path.exists(out + "/lines.json"): meta = json.load(open(out + "/lines.json"))
 for vid, lines in LINES.items():
     meta[vid] = []
     for i, t in enumerate(lines):
