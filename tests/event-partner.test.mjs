@@ -60,11 +60,11 @@ test("entitlement math: a plan or a comp covers up to its cap; the larger wins; 
   assert.match(partnerQuote(plan, T).problem, /already has an Event Partner plan/); assert.match(partnerQuote(comp, T).problem, /Founding partner/);
 });
 
-test("migration 0208 grants the two founder-city comps through 2026-12-31, with stable ids, once", () => {
+test("migration 0211 grants the two founder-city comps through 2026-12-31, with stable ids, once", () => {
   const { raw } = newEnv();
   const rows = raw.prepare("SELECT id, org_key, allowed, valid_until, revoked FROM event_partner_comps ORDER BY id").all().map((r) => ({ ...r }));
   assert.deepEqual(rows, [{ id: "founder-covinaca-gov", org_key: "d:covinaca.gov", allowed: 10, valid_until: "2026-12-31", revoked: 0 }, { id: "founder-eastvaleca-gov", org_key: "d:eastvaleca.gov", allowed: 10, valid_until: "2026-12-31", revoked: 0 }]);
-  const sql = readFileSync("migrations/0208_event_partner.sql", "utf8");
+  const sql = readFileSync("migrations/0211_event_partner.sql", "utf8");
   assert.doesNotMatch(sql, /2028/, "this year only");
   const ins = sql.slice(sql.indexOf("INSERT OR IGNORE INTO event_partner_comps"));
   raw.exec(ins); assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM event_partner_comps").get().n, 2, "running it again adds nothing");
@@ -236,10 +236,10 @@ test("Admin: lists organizations with used x of cap, grants and ends a comp", ()
 }));
 
 test("wording: the pricing page, the plan page, the help article and the assistant say it right", () => {
-  const files = ["public/partner.html", "public/partner-copy.js", "public/pricing.html", "migrations/0209_help_event_partner.sql", "docs/ai-assistant-kb.md"];
+  const files = ["public/partner.html", "public/partner-copy.js", "public/pricing.html", "migrations/0212_help_event_partner.sql", "docs/ai-assistant-kb.md"];
   for (const p of files) { const t = readFileSync(p, "utf8"); assert.doesNotMatch(t, /Everything (in|above)/, p); assert.doesNotMatch(t, /free forever/i, p); }
   const copy = readFileSync("public/partner-copy.js", "utf8"); assert.match(copy, /not an endorsement/); assert.match(copy, /stays free/); assert.doesNotMatch(copy, /\bverified\b/i);
-  const help = readFileSync("migrations/0209_help_event_partner.sql", "utf8");
+  const help = readFileSync("migrations/0212_help_event_partner.sql", "utf8");
   assert.doesNotMatch(help, /\$\d/, "no prices in the help article: they are on /pricing"); assert.match(help, /through the end of 2026/);
   assert.doesNotMatch(readFileSync("public/partner.html", "utf8"), /\bhouse\b/i);
 });
