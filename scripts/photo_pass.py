@@ -19,7 +19,17 @@ BAD = re.compile(r"logo|icon|favicon|sprite|avatar|blank|spacer|banner|header|fo
 def get(u, n=20_000_000):
     return urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": UA}), timeout=20).read(n)
 
-def candidates(url):
+GENERIC = set("event events annual free city park the and for with night lights light show display displays village celebration".split())
+def words(t): return set(re.findall(r"[a-z]{4,}", urllib.parse.unquote(t).lower()))
+def rank(cands, name):
+    """A photo whose file name shares words with the event's name (or sits in an Event/Gallery folder) goes before the page's og:image,
+    which many sites set to one site-wide picture for every page (SAMLARC's og:image is a movie-night photo on every event page)."""
+    nw = words(name or "") - GENERIC
+    def sc(c): return len(nw & words(c.rsplit("/", 1)[-1])) * 3 + (2 if re.search(r"galler|/event", c, re.I) else 0)
+    hit = sorted([c for c in cands if sc(c) >= 6], key=sc, reverse=True)
+    return hit + [c for c in cands if c not in hit], len(hit)
+
+def candidates(url, name=""):
     h = get(url, 700_000).decode("utf8", "ignore")
     out = []
     for pat in (r'<meta[^>]+(?:property|name)=["\']og:image(?::secure_url)?["\'][^>]+content=["\']([^"\']+)', r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\']og:image', r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)'):
@@ -35,17 +45,20 @@ def candidates(url):
         if c in seen or "--" in c or BAD.search(urllib.parse.unquote(c.rsplit("/", 1)[-1])): continue
         if not re.search(r"\.(jpe?g|png|webp)|format=|/image", c, re.I): continue
         seen.add(c); res.append(c)
-    return res[:9]
+    out, n = rank(res, name)
+    return out[:9], min(n, 9)
 
-def best(url):
+def best(url, name=""):
     pick = None
-    for c in candidates(url):
+    cands, nhit = candidates(url, name)
+    for k, c in enumerate(cands):
         try:
             b = get(c); im = Image.open(io.BytesIO(b)); w, h = im.size
         except Exception: continue
         if len(b) < 20000 or w < 480 or h < 260 or not (0.8 <= w / h <= 2.8): continue
         big = len(b) > 1_500_000
         if big and (w < 800 or len(b) > 15_000_000): continue
+        if k < nhit: return (c, w * h, big, b)  # a photo named for this event beats the page's og:image
         score = w * h
         if pick is None or (not big, score) > (not pick[2], pick[1]): pick = (c, score, big, b)
     return pick
@@ -56,13 +69,13 @@ def main():
     ap.add_argument("--max-events-per-page", type=int, default=3); ap.add_argument("--api", default="https://socallights.app/api/events?full=1")
     a = ap.parse_args()
     ev = json.load(urllib.request.urlopen(urllib.request.Request(a.api, headers={"User-Agent": UA})))
-    by = collections.defaultdict(list)
+    by = collections.defaultdict(list); nm = {}
     for e in ev:
-        if not e.get("img") and (e.get("u") or "").startswith("http"): by[e["u"].split("#")[0]].append(e["id"])
+        if not e.get("img") and (e.get("u") or "").startswith("http"): (by[e["u"].split("#")[0]].append(e["id"]), nm.setdefault(e["u"].split("#")[0], e.get("n", "")))
     urls = [u for u, ids in by.items() if len(ids) <= a.max_events_per_page]
     print(len(urls), "pages to try")
     def go(u):
-        try: return u, best(u)
+        try: return u, best(u, nm.get(u, ""))
         except Exception: return u, None
     with ThreadPoolExecutor(10) as ex: res = list(ex.map(go, urls))
     cnt = collections.Counter(p[0] for _, p in res if p)

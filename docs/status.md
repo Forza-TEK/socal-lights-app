@@ -801,3 +801,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Photos: no acceptable photo found (candidate pages gave flyers or banner graphics only).
 
 - Admin greeting: between midnight and 5 AM (Pacific) it says "Hello" instead of "Good morning". The "scheduled job stopped" banner names the Cloudflare usage check (workflow usage-check.yml); GitHub runs it late or skips runs, so it was started by hand again.
+
+- Photo accuracy sweep (2026-11-09): checked the 584 upcoming events that have a photo against their own pages. Fixed SAMLARC (a site-wide movie-night og:image replaced by the page's own tree-lighting photo) and Culver City (newsletter cover replaced by the tree-lighting photo); removed 8 photos that are 404, blank or transparent logos (stock photo shows instead): migration 0206. photo_pass.py now prefers a photo named for the event over og:image. About 11 photos could not be checked because their sites block bots (429/403): not proven dead.
