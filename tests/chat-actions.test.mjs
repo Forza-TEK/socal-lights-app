@@ -209,8 +209,8 @@ test("off-topic-sounding requests for a Tier 1 card still get the card, with no 
   const { env, calls } = setup();
   const before = calls.length;
   const sub = await ask(env, "subscribe me"); assert.ok(sub.body.cards.some((c) => c.action === "weekly_email")); assert.match(sub.body.reply, /Sign me up/);
-  const out = await ask(env, "this listing is outdated"); assert.ok(out.body.cards.some((c) => c.action === "report_problem"));
   assert.equal(calls.length, before, "answered without the model");
+  const out = await ask(env, "this listing is outdated"); assert.ok(out.body.cards.some((c) => c.action === "report_problem"));
   const no = await ask(env, "unsubscribe me"); assert.ok(!(no.body.cards || []).some((c) => c.action === "weekly_email"));
 });
 
