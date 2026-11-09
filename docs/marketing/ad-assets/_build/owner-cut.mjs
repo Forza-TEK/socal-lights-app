@@ -82,7 +82,7 @@ let r = spawnSync("ffmpeg", ["-v", "error", "-y", ...inputs, "-filter_complex", 
 if (r.status) throw new Error(r.stderr.slice(0, 800));
 // audio ----------------------------------------------------------------------------------------------------------------------------
 // the music bed is ONE swappable file: pass --music <file> (wav, mp3 or m4a, any length of 12 s or more) to re-mix with the same ducking and loudness
-const mi = process.argv.indexOf("--music"), MUSIC = mi > 0 ? resolve(process.argv[mi + 1]) : HERE + "/audio/festive-jingle-original-110bpm.m4a";
+const mi = process.argv.indexOf("--music"), MUSIC = mi > 0 ? resolve(process.argv[mi + 1]) : HERE + "/audio/candidates/A-bright-bells-pop.mp3";
 execFileSync("ffmpeg", ["-v", "error", "-y", "-i", MUSIC, "-ar", "48000", "-ac", "2", `${WORK}/music-${process.pid}.wav`]);
 writeFileSync(D + "/spec.json", JSON.stringify({ total: total, report: D + "/duck.json", clips: clips.map((c) => ({ wav: c.wav, start: c.start, dur: c.dur })) }));
 execFileSync("python3", ["-I", HERE + "/audio/mix.py", D + "/spec.json", D + "/mix.wav", `${WORK}/music-${process.pid}.wav`]);
