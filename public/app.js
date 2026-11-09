@@ -1048,7 +1048,7 @@ function openSupport() {
   const m = $("#modal"), donate = safeUrl(SITE.donateUrl);
   m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Support SoCal Lights</h2><button class="xbtn" type="button" id="sClose" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
     <p class="blurb">Finding lights and events, search, routes, favorites and voting are free for everyone, and so is posting an event or your own home. One small team keeps it current all season: checking dates, adding events and fixing links.</p>
-    <p class="blurb">What pays for it: optional paid options, such as Featured events, installer banners and extra contest passes (your first contest is free), and tips from people it helped. Paid placements are always labelled and never change a contest result.</p>
+    <p class="blurb">What pays for it: optional paid options, such as Featured events, installer banners and contest passes for organizers, and tips from people it helped. Paid placements are always labelled and never change a contest result.</p>
     <a class="btn ghost" href="/pricing">See pricing</a>
     ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
     ${shopCats().length ? `<button class="btn ghost" type="button" id="sShop">🛍️ Browse the shop</button>` : ""}

@@ -61,9 +61,12 @@ function fromCuratedDoc(list) {
     add(list, title, u ? u[1] : "/help", lines.slice((u ? 2 : 1) + (k ? 1 : 0)).join(" "), k ? k[1].trim() : "");
   }
 }
+// Captions recorded before the 2026-11-09 contest pricing still say the first contest is free and name the old passes. Until those videos are re-recorded (docs/marketing/contest-pricing-impact.md),
+// the assistant must not learn those lines, so they are left out of its knowledge. Delete this filter after the re-recording.
+const OLD_PRICING_LINE = /first contest in a 12[- ]month window is free|free one included|Up to 5, Up to 10,? and Up to 20|window runs for twelve months from the day your first contest went live/i;
 function vtt(file) {
   if (!existsSync(path.join(ROOT, "public", file.replace(/^\//, "")))) return "";
-  return read("public/" + file.replace(/^\//, "")).split("\n").filter((l) => l && !/^WEBVTT|-->|^\d+$|^NOTE/.test(l)).join(" ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  return read("public/" + file.replace(/^\//, "")).split("\n").filter((l) => l && !/^WEBVTT|-->|^\d+$|^NOTE/.test(l) && !OLD_PRICING_LINE.test(l)).join(" ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 }
 function fromTutorials(list) {
   const j = JSON.parse(read("public/tutorials.json"));

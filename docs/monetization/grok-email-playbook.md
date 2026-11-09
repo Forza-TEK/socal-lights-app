@@ -19,12 +19,12 @@ Every link ends with its `?ref=` code. Never link the bare homepage.
 ## 3. Approved facts (say only these)
 - Posting a home is free for now. It goes live right away unless spam checks stop it.
 - Installers get a profile page (company, service area, phone, website, every home posted) and a "Call for a quote" button.
-- Creating a contest is free. Residents enter, neighbors vote, one vote per person per category. People's Choice and Judges' Choice. Contest page, QR code, poster and yard sign, organizer dashboard, results emailed to entrants. The organizer approves entries.
+- Running a contest needs a contest pass (owner decision 2026-11-09: organizers pay from the first contest): a single contest is $149, up to 5 contests in a 12-month window $299, up to 20 $499; more than 20, contact us. Prices are on https://socallights.app/pricing. Residents enter and neighbors vote for free, one vote per person per category, and payment never affects who wins. Do not say a contest is free, and never 'free forever'. People's Choice and Judges' Choice. Contest page, QR code, poster and yard sign, organizer dashboard, results emailed to entrants. The organizer approves entries.
 - **Driving routes (what Covina's city staff liked most):** judges and visitors can build driving routes of nine stops or fewer to the homes, opened in Google Maps or Apple Maps, with each home tick-off-able. For a judged contest, judges get an emailed link, score or pick on their own ballot, and use the routes to drive the homes in order.
 - An organizer who already has its own registration can enter the homes' addresses itself by pasting a list.
 - The site is a free map of holiday lights and events across Southern California (1,244 upcoming listings in 266 cities).
 
-**Never say:** any visitor, traffic or "popular" claim; leads, customers or territory for installers; prizes, money or sponsors from us; future prices or paid plans; "free forever", "always free" or "no ads"; endorsement by a city or company; that payment affects winners. **Never ask an organization to confirm, check or fix individual events.**
+**Never say:** any visitor, traffic or "popular" claim; leads, customers or territory for installers; prizes, money or sponsors from us; future prices or paid plans (the contest pass prices in section 3 are current and may be said); "free forever", "always free" or "no ads"; endorsement by a city or company; that payment affects winners. **Never ask an organization to confirm, check or fix individual events.**
 
 ## 4. Required footer (every email, no exceptions)
 ```
@@ -50,18 +50,18 @@ Subject options: `Your [city] installs on SoCal Lights` or `A free spot on SoCal
 Same body as A. Add this as the first line only when verified: `I saw on [source_domain] that [verified_fact].`
 
 ### Organizer A (agency or chamber)
-Subject options: `A free home for the [contest_name], from entries to winners` or `Hosting [contest_name] online, free`
+Subject options: `A home for the [contest_name], from entries to winners` or `Hosting [contest_name] online`
 > Hi [first_name or department] team,
 > I'm Rey. I run SoCal Lights, a free map where families find holiday light displays across Southern California. [If our events database lists it: We already list [contest_or_event_name] on our [city] page: [city_page_url].]
-> SoCal Lights can host a decorating contest for free. Judges get driving routes to every home in Google or Apple Maps and score from their phones; you can add a public vote too (People's Choice, Judges' Choice or both). You get a contest page, QR code, printable poster and a dashboard, and results go out by email.
+> SoCal Lights can host a decorating contest for your organization; a single contest is $149. Judges get driving routes to every home in Google or Apple Maps and score from their phones; you can add a public vote too (People's Choice, Judges' Choice or both). You get a contest page, QR code, printable poster and a dashboard, and results go out by email.
 > Would a 20-minute walkthrough work? Reply with a day that suits you. Or you can start it yourself: https://socallights.app/add-contest?ref=cont
 > [FOOTER]
 
 ### Organizer B (HOA or community group)
-Subject options: `Run your [community] lights contest in a few minutes` or `A free way to run the [community] holiday lights contest`
+Subject options: `Run your [community] lights contest in a few minutes` or `An easy way to run the [community] holiday lights contest`
 > Hi [first_name or board] team,
 > I'm Rey, and I run SoCal Lights, a free map where families find holiday light displays across Southern California.
-> If [community] runs or is thinking of a lights contest, you can set one up for free: neighbors enter their homes, everyone votes once per category, and you approve entries. There is a QR code and printable yard sign.
+> If [community] runs or is thinking of a lights contest, you can set one up (a single contest is $149): neighbors enter their homes for free, everyone votes once per category, and you approve entries. There is a QR code and printable yard sign.
 > Start here (about 5 minutes): https://socallights.app/add-contest?ref=cont. Prefer a quick walkthrough? Reply and I will send two times.
 > [FOOTER]
 
@@ -87,7 +87,7 @@ Wording (merge fields in square brackets; separate wording per segment; reply **
 > [FOOTER]
 
 **Follow-up 1, contest organizers**
-> Hi [first_name or department] team, a quick reminder of my note from [date]. Here is a contest page as neighbors and judges see it: [listing_example_url]. You can start one for free: https://socallights.app/add-contest?ref=cont. No reply needed if it is not a fit.
+> Hi [first_name or department] team, a quick reminder of my note from [date]. Here is a contest page as neighbors and judges see it: [listing_example_url]. You can start one yourself (a single contest is $149): https://socallights.app/add-contest?ref=cont. No reply needed if it is not a fit.
 > [FOOTER]
 
 **Follow-up 1, seasonal-event hosts**

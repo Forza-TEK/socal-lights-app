@@ -224,7 +224,7 @@
         {
           "id": "contest-passes",
           "title": "Contest passes",
-          "desc": "Your first contest is free. What the pass picker shows when you run another one, and how to choose a pass.",
+          "desc": "What the pass picker shows when you run a contest, and how to choose a pass.",
           "url": "/tutorials/run-passes.mp4",
           "length": "4:18",
           "captions": "/tutorials/run-passes.vtt",

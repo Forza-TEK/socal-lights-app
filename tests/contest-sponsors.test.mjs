@@ -11,7 +11,8 @@ import { deleteAccount } from "../functions/_lib/account.js";
 import { deleteContest } from "../functions/_lib/contests.js";
 import { pruneRetention, pruneSponsorRecords } from "../functions/_lib/retention.js";
 import { isPublic, PUBLIC_WHERE } from "../functions/_lib/sponsors.js";
-import { newEnv, addUser, ptToday } from "./_pay.mjs";
+import { newEnv as baseEnv, addUser, ptToday, compEveryone } from "./_pay.mjs";
+const newEnv = (extra) => { const r = baseEnv(extra); compEveryone(r.raw); return r; }; // these tests are not about contest passes: every organizer is comped (see compEveryone)
 
 const O = "https://socallights.app";
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]), PDF = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 1, 2]), WEBP = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]);

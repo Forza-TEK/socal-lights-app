@@ -18,7 +18,7 @@ Use the `?ref=` ending on every link the agents send. It counts anonymous landin
 - Say "free to post". Do NOT say "free forever" or "always free": paid options for installers are planned and nothing is promised.
 
 **For contest organizers**
-- Creating a contest is free. Residents enter their home, neighbors vote, and the organizer can invite judges.
+- Running a contest needs a contest pass (organizers pay from the first contest, owner decision 2026-11-09): a single contest is $149, up to 5 in a 12-month window $299, up to 20 $499, more than 20 contact us (https://socallights.app/pricing). Residents enter their home and neighbors vote for free, and the organizer can invite judges. Never say a contest is free.
 - Awards: People's Choice (public votes) and Judges' Choice (judges). One or both.
 - A contest page, a QR code, a printable poster and yard sign, an organizer dashboard, and results emailed to entrants.
 - One vote per person per category; nobody can vote for their own home; vote counts can be hidden until winners are announced.

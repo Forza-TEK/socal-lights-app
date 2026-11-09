@@ -10,7 +10,7 @@ import { logOp, logOpOnce } from "../_lib/oplog.js";
 import { bump } from "../_lib/funnel.js";
 import { sendFeaturePaidEmail } from "../_lib/featuremail.js";
 import { sponsorWindow } from "../_lib/sponsor.js";
-import { CONTEST_PASSES, quoteProblem } from "../_lib/passes.js";
+import { passOf, quoteProblem } from "../_lib/passes.js";
 import { sendPassPaidEmail } from "../_lib/passmail.js";
 import { EVENT_PARTNER, partnerQuoteProblem } from "../_lib/partner.js";
 import { sendPartnerPaidEmail } from "../_lib/partnermail.js";
@@ -113,7 +113,7 @@ async function paid(s, env) {
   const eventId = s.metadata && s.metadata.event_id, plan = s.metadata && s.metadata.plan;
   const mt = s.metadata && s.metadata.target, target = mt === "home" ? "home" : mt === "installer" ? "installer" : mt === "contest_pass" ? "contest_pass" : mt === "event_partner" ? "event_partner" : "event"; // a home (podium finisher) and an installer's Sponsor placement are bought through the same orders
   const tier = target === "event" && !!EVENT_PLANS[plan]; // one of the new event tiers (ev_pin, ev_banner, ev_top, ev_all); the old keys pin / top / season are grandfathered below
-  const price = target === "event_partner" ? (plan === "partner" ? EVENT_PARTNER : null) : target === "contest_pass" ? CONTEST_PASSES[plan] : target === "installer" ? INSTALLER_PLANS[plan] : tier ? EVENT_PLANS[plan] : PLANS[plan];
+  const price = target === "event_partner" ? (plan === "partner" ? EVENT_PARTNER : null) : target === "contest_pass" ? passOf(plan) : target === "installer" ? INSTALLER_PLANS[plan] : tier ? EVENT_PLANS[plan] : PLANS[plan];
   if (!eventId || !price) return { ignored: "no feature metadata" };
   if (target === "home" && !PLANS[plan].days) return { ignored: "no Full run plan for homes" };
 

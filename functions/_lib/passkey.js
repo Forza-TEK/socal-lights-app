@@ -35,4 +35,4 @@ export async function liveGate(env, email, site, today = todayPT()) {
   const key = await orgKeyFor(env, email, site), ent = await orgState(env, key, today);
   return { key, ent, ok: ent.canCreate, view: entitlementView(key, ent) };
 }
-export const PAYWALL_MESSAGE = "This would be more contests than your organization has in its current 12-month window. Choose a pass to continue.";
+export const PAYWALL_MESSAGE = "Running this contest needs a contest pass with room for it. Choose a pass to continue.";

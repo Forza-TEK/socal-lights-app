@@ -80,7 +80,7 @@ Featuring is optional and a one-time payment, with no subscription:
 - Refunds: if we cannot list or feature your event for any reason, you get a full refund of every part of the plan. Once the placement is live, payments are non-refundable, but if your event is cancelled we will move your placement to another of your events or refund the unused time. Still have questions? Email info@socallights.app.
 
 **11. How do I start a contest in my neighborhood?**
-Fun! Cities, HOAs and neighborhood groups do this a lot. Your organization's first contest in a 12-month window is free. You need to be signed in.
+Fun! Cities, HOAs and neighborhood groups do this a lot. Running a contest needs a contest pass (see https://socallights.app/pricing), and residents enter and vote for free. You need to be signed in.
 1. Open Add and choose Contest.
 2. Go through the four screens: Basics, Dates, Rules and Review.
 3. Sign in on the last screen. Your draft is kept while you sign in, with Google or an emailed code.

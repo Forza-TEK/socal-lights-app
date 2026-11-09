@@ -42,7 +42,7 @@ Organizers can set a prize per award. To help keep voting fair, organizers can r
 
 ## Who can vote and how often
 url: /help/who-can-vote
-Anyone with an account can vote in a contest that has public voting; voting is free and always will be. You sign in with Google or an emailed code, so your vote belongs to your account (your verified email address), not to a device. You get one vote per category: pick one favorite home in each category, and the contest page says if that contest gives one vote in total instead. You cannot vote for your own home. A judge in the contest votes on the judges' ballot instead of the public vote. Voting is open only between the contest's voting dates, or when the organizer starts it early, and the organizer can pause it. It closes when the winners are announced.
+Anyone with an account can vote in a contest that has public voting; voting is free. You sign in with Google or an emailed code, so your vote belongs to your account (your verified email address), not to a device. You get one vote per category: pick one favorite home in each category, and the contest page says if that contest gives one vote in total instead. You cannot vote for your own home. A judge in the contest votes on the judges' ballot instead of the public vote. Voting is open only between the contest's voting dates, or when the organizer starts it early, and the organizer can pause it. It closes when the winners are announced.
 
 ## Changing a vote
 url: /help/can-i-change-my-vote
@@ -70,7 +70,7 @@ The person who created a contest can unpublish it from the dashboard: Overview, 
 
 ## Contest passes: how they work
 url: /contest-pass
-Each organization gets one free contest in every 12-month window, counted from the day its first contest goes live. To run more contests inside the window, the organization buys a pass: Up to 5, Up to 10 or Up to 20 contests in total, and the free one counts. More than 20: contact us. A pass is one payment on Stripe's secure page and never renews by itself. You can buy ahead of time on the contest pass page, or the contest wizard offers it when a new contest would go over your allowance. Passes only count contests: they do not change entries, features or results. Entering and voting stay free, and payment never affects who wins.
+Running a contest needs a contest pass, starting with the first contest. The organizer chooses a pass before the contest goes live: a single contest, up to 5 contests or up to 20 contests in a 12-month window (the total counts every contest in the window). The window starts the day the pass is bought, or the day the organization's first contest goes live if that comes first. Upgrading inside the window costs only the difference. When the window ends, the next contest needs a new pass. Contests that were already live or announced before passes began are not affected. More than 20: contact us. Some organizations, such as a founding partner, are given contests for a period and then see "Founding partner: free through" a date instead of a price. A pass is one payment on Stripe's secure page and never renews by itself. You can buy ahead of time on the contest pass page, or the contest wizard offers it before a new contest goes live. Passes only count contests: they do not change entries, features or results. Entering and voting stay free, and payment never affects who wins.
 
 ## Sponsors of a contest
 url: /help#sponsors
@@ -202,7 +202,7 @@ We do not sell your personal information and we do not use advertising cookies o
 ## Is SoCal Lights free? What costs money?
 url: /pricing
 keywords: free cost how much price list listing site free pay
-Using SoCal Lights is free: the map, search, routes, Favorites, voting, entering a contest, and posting an event or your own home. Your organization's first contest in every 12-month window is free. Optional paid extras are always labelled and never change a contest result: Featured placements for events, installer Sponsor placements (the Banner, Top of the list, or both), contest passes for more contests, and featuring a winning home. Prices are on the Pricing page. The site is in English.
+Using SoCal Lights is free: the map, search, routes, Favorites, voting, entering a contest, and posting an event or your own home. Residents and visitors use it for free, and organizers pay for a contest pass to run a contest. Optional paid extras are always labelled and never change a contest result: Featured placements for events, installer Sponsor placements (the Banner, Top of the list, or both), contest passes, and featuring a winning home. Prices are on the Pricing page. The site is in English.
 
 ## Installer and Featured plans: what the Banner includes
 url: /pricing

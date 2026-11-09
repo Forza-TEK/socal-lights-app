@@ -203,19 +203,21 @@ Other:
 - Thumbtack and Angi install prices (from draft, not re-checked): https://thumbtack.com/p/christmas-light-installation-prices, https://www.angi.com/articles/how-much-does-christmas-light-installation-cost/il/chicago
 - Data snapshot: `docs/monetization/data-2026-11-04.md`
 
-## Contest passes (owner decision 2026-11-07): Stripe net per pass
-Each organization gets one free contest per 12-month window; passes are the total number of contests in the window (the free one included): Up to 5, Up to 10, Up to 20. Prices live only in `functions/_lib/passes.js`. Stripe fee for a US card is 2.9% + $0.30 (same source and caveat as the table at the top of this file; the fixed fee on a refund is the open question already listed).
+## Contest passes (owner decision 2026-11-09, replaces 2026-11-07): Stripe net per pass
+Organizers pay from the first contest (nothing is free; `FREE_CONTESTS` is 0). Passes are the total number of contests in a 12-month window: Single contest, Up to 5, Up to 20. The earlier rule (1 free contest per window; Up to 5 $50, Up to 10 $75, Up to 20 $100) is superseded. Prices live only in `functions/_lib/passes.js`. Stripe fee for a US card is 2.9% + $0.30 (same source and caveat as the table at the top of this file; the fixed fee on a refund is the open question already listed).
 
 | Pass | Price | Stripe fee | Net to us |
 |---|---|---|---|
-| Up to 5 contests | $50 | $1.75 | $48.25 |
-| Up to 10 contests | $75 | $2.48 | $72.52 |
-| Up to 20 contests | $100 | $3.20 | $96.80 |
-| Upgrade 5 to 10 or 10 to 20 (difference) | $25 | $1.03 | $23.97 |
-| Upgrade 5 to 20 (difference) | $50 | $1.75 | $48.25 |
+| Single contest | $149 | $4.62 | $144.38 |
+| Up to 5 contests | $299 | $8.97 | $290.03 |
+| Up to 20 contests | $499 | $14.77 | $484.23 |
+| Upgrade Single to Up to 5 (difference) | $150 | $4.65 | $145.35 |
+| Upgrade Up to 5 to Up to 20 (difference) | $200 | $6.10 | $193.90 |
+| Upgrade Single to Up to 20 (difference) | $350 | $10.45 | $339.55 |
 
-- An upgrade is two payments (the first pass, then the difference), so the fixed $0.30 is paid twice: Up to 5 then Up to 20 nets $96.50 against $96.80 for buying Up to 20 at once.
-- Per contest the passes cost $12.50 (5 contests: $50 for the four beyond the free one), $8.33 (10: $75 for nine), $5.26 (20: $100 for nineteen) at the list price, before fees. Heavy users are cheapest per contest; a city that runs more than 20 should write to us (no checkout).
-- Comps (Founding City) bring in nothing by design. Covina is expected to be the only one this season, so no revenue is assumed from contest passes in the season forecast above. One paid pass in a season is a bonus.
+- An upgrade is two payments (the first pass, then the difference), so the fixed $0.30 is paid twice: Single then Up to 20 nets $144.38 + $339.55 = $483.93 against $484.23 for buying Up to 20 at once.
+- Per contest at list price, before fees: $149 (1), $59.80 (5 contests: $299), $24.95 (20 contests: $499). Heavy users are cheapest per contest; a city that runs more than 20 should write to us (no checkout).
+- Comps (Founding City) bring in nothing by design. Covina is expected to be the only comp this season. The 2026-11-09 decision means any other organizer pays, so contest passes are now a revenue line, but no revenue is assumed in the season forecast above until a first pass is sold: there are few live contests and organizers must still be found. Eastvale recommended charging; whether it buys is not yet known.
+- Organizations that used their free contest under the old rule are treated as new: their old contest is not counted and their next contest needs a pass (see `docs/contests.md`).
 - A refund before the extra contests were used revokes the pass; after they were used the order is flagged for Admin (see `legal-redlines.md`, "Contest organizer passes").
 - Sales tax and 1099-K questions are the same as for the other products (section on tax above); contest passes are a service sold to organizations, which the CPA should confirm.

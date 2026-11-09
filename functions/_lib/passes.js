@@ -1,28 +1,39 @@
-// CONTEST PASSES (owner decision 2026-11-07). The only place a pass price is set; /api/config serves it, the pages and the email read it from there.
+// CONTEST PASSES. The only place a pass price is set; /api/config serves it, the pages and the email read it from there.
+// Owner decision 2026-11-09 (after meeting the City of Eastvale): organizers pay from the first contest. This replaces the decision of 2026-11-07 (1 free contest per 12 months,
+// passes $50 / $75 / $100). PR "contest-pricing-2026-11": nothing here is live until it is merged; the go-live date is the owner's.
 //
 // RULES
-//   Each ORGANIZATION gets FREE_CONTESTS (1) free contest per 12-month window. To run more contests inside the window it buys a pass by cap. A cap counts TOTAL contests in the
-//   window, the free first one included: Up to 5 ($50) = the free one plus 4 more, Up to 10 ($75), Up to 20 ($100). More than 20: contact us (no checkout).
-//   Upgrading inside the window costs the price difference ($25 from $50 to $75, $25 from $75 to $100, $50 from $50 to $100).
+//   FREE_CONTESTS is 0: every NEW contest needs a pass (or an Admin comp). Single contest $149 (pass_1), up to 5 contests $299 (pass_5), up to 20 contests $499 (pass_20).
+//   More than 20: contact us (no checkout). A cap counts TOTAL contests in the window. pass_10 ($75, "Up to 10") is retired: it is no longer offered, and is kept only so a pass
+//   already bought under it (none were sold, as far as is known) still counts in its window.
+//   Upgrading inside the window costs the price difference ($150 from $149 to $299, $200 from $299 to $499, $350 from $149 to $499).
 //   Contest COUNT only: no entry caps, no feature differences. Entering and voting stay free. Payment never affects any result, vote, judge or ranking.
-//   WINDOW: 12 months starting the day the organization's first contest goes live (Pacific date); it ends the day before the same date a year later. When it has ended, the next contest
-//   starts a new window (free again). A pass belongs to the window it was bought in.
+//   WINDOW: 12 months. It starts the day the organization's first contest goes live OR the day it buys a pass, whichever comes first (Pacific date), and ends the day before the same
+//   date a year later. When it has ended, the next contest needs a new pass. A pass belongs to the window it was bought in.
 //   COUNTING: a contest counts when it goes live (contests.live_at is set: live or announced). Drafts, held-for-review, declined and unpublished-before-ever-live do not count;
 //   a contest that was live and later unpublished still counts.
+//   CONTESTS BEFORE PRICING (PAID_FROM): contests that went live before PAID_FROM were run under the old rule (one free contest per organization per 12 months). They are never counted and
+//   never need a pass; they do not shrink a new window. An organization that already used its free contest is therefore treated like a new one: its next contest needs a pass and the
+//   pass starts a new 12-month window. Contests already live or announced are not touched at all.
 //   COMPS (Admin): allowed = total contests per window (-1 = unlimited) until a date, granted to an organization key by hand. Organizers see "Founding partner: free through <date>", never a price.
-//   REFUND / DISPUTE: before the extra contests were used the pass is revoked; after they were used it stays and the order is flagged for Admin (revokePass).
+//   REFUND / DISPUTE: before the contests were used the pass is revoked; after they were used it stays and the order is flagged for Admin (revokePass).
 // This file is imported by featured.js, so it must not import contests.js (see passkey.js for the organization key).
 import { ptToday, shiftDay } from "./time.js";
 
-export const FREE_CONTESTS = 1;
+export const FREE_CONTESTS = 0;
+// The first day contests are paid. Set it to the go-live date before merging: a contest that went live on an earlier day was run under the old free rule and is never counted.
+export const PAID_FROM = "2026-11-09";
 export const WINDOW_MONTHS = 12;
 export const CONTACT_ABOVE = 20; // more than this many contests in a window: contact us, no checkout
 export const CONTEST_PASSES = {
-  pass_5: { label: "Up to 5 contests", cap: 5, cents: 5000 },
-  pass_10: { label: "Up to 10 contests", cap: 10, cents: 7500 },
-  pass_20: { label: "Up to 20 contests", cap: 20, cents: 10000 },
+  pass_1: { label: "Single contest", cap: 1, cents: 14900 },
+  pass_5: { label: "Up to 5 contests", cap: 5, cents: 29900 },
+  pass_20: { label: "Up to 20 contests", cap: 20, cents: 49900 },
 };
+// Retired: never offered, only honored for an order already paid (applyPassOrder, revokePass, windows). It is not in CONTEST_PASSES, so nothing can buy it.
+export const LEGACY_PASSES = { pass_10: { label: "Up to 10 contests", cap: 10, cents: 7500 } };
 export const PASS_KEYS = Object.keys(CONTEST_PASSES);
+export const passOf = (k) => CONTEST_PASSES[k] || LEGACY_PASSES[k];
 export const isPassPlan = (p) => !!CONTEST_PASSES[p];
 export const PUBLIC_CONTEST_PASSES = { free: FREE_CONTESTS, windowMonths: WINDOW_MONTHS, contactAbove: CONTACT_ABOVE, plans: Object.fromEntries(Object.entries(CONTEST_PASSES).map(([k, p]) => [k, { label: p.label, cap: p.cap, cents: p.cents }])) };
 export const isPassOrder = (o) => !!o && o.target === "contest_pass";
@@ -31,9 +42,11 @@ export const isPassOrder = (o) => !!o && o.target === "contest_pass";
 export function windowEnd(start) { const d = new Date(start + "T12:00:00Z"); d.setUTCFullYear(d.getUTCFullYear() + WINDOW_MONTHS / 12); return shiftDay(d.toISOString().slice(0, 10), -1); }
 
 // The current window from the dates (YYYY-MM-DD, any order) on which this organization's contests went live. A contest that goes live after the window ended starts a new window.
-export function windowFromDates(dates, today = ptToday()) {
-  const wins = [];
-  for (const d of [...dates].filter(Boolean).sort()) { if (!wins.length || d > wins[wins.length - 1].end) wins.push({ start: d, end: windowEnd(d), used: 0 }); wins[wins.length - 1].used++; }
+// `starts` are days on which a pass was bought: like a first contest they start a window (a pass bought before any contest), but they are not contests and are not counted.
+// Dates before `since` (PAID_FROM) are contests run under the old free rule and are ignored.
+export function windowFromDates(dates, today = ptToday(), starts = [], since = PAID_FROM) {
+  const wins = [], items = [...dates].filter((d) => d && d >= since).map((d) => [d, 1]).concat([...starts].filter(Boolean).map((d) => [d, 0])).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : b[1] - a[1]));
+  for (const [d, n] of items) { if (!wins.length || d > wins[wins.length - 1].end) wins.push({ start: d, end: windowEnd(d), used: 0 }); wins[wins.length - 1].used += n; }
   const last = wins[wins.length - 1];
   return last && last.end >= today ? { ...last, active: true } : { start: "", end: "", used: 0, active: false };
 }
@@ -52,12 +65,13 @@ export function offersFor(ent) {
   return PASS_KEYS.map((k) => ({ key: k, ...CONTEST_PASSES[k], pay: Math.max(0, CONTEST_PASSES[k].cents - ent.passCents), upgrade: ent.passCents > 0 })).filter((o) => o.cap > have);
 }
 // What one pass costs this organization now, and the window it covers; problem = "" when it can be bought.
-export function passQuote(ent, plan) {
+export function passQuote(ent, plan, today = ptToday()) {
   const p = CONTEST_PASSES[plan];
   if (!p) return { plan, problem: "Choose a pass." };
-  const q = { plan, label: p.label, cap: p.cap, cents: ent.passCents > 0 ? p.cents - ent.passCents : p.cents, price: p.cents, from: ent.windowStart, to: ent.windowEnd, upgrade: ent.passCents > 0, problem: "" };
-  if (!ent.active) q.problem = "Your next contest starts a new 12-month window and is free, so you do not need a pass yet.";
-  else if (ent.unlimited || p.cap <= ent.cap) q.problem = `Your organization already has room for ${ent.unlimited ? "any number of" : "up to " + ent.cap} contests in this window.`;
+  // No window running: the pass starts one today (12 months). Otherwise it covers the window that is running.
+  const from = ent.active ? ent.windowStart : today, to = ent.active ? ent.windowEnd : windowEnd(today);
+  const q = { plan, label: p.label, cap: p.cap, cents: ent.passCents > 0 ? p.cents - ent.passCents : p.cents, price: p.cents, from, to, upgrade: ent.passCents > 0, problem: "" };
+  if (ent.unlimited || p.cap <= ent.cap) q.problem = `Your organization already has room for ${ent.unlimited ? "any number of" : "up to " + ent.cap} contests in this window.`;
   return q;
 }
 
@@ -67,7 +81,9 @@ export const orgLabel = (key) => (String(key).startsWith("d:") ? String(key).sli
 // One organization's current window, passes and comps.
 export async function orgState(env, key, today = ptToday()) {
   const dates = (await env.DB.prepare("SELECT live_at FROM contests WHERE org_key = ? AND live_at != ''").bind(key).all()).results.map((r) => r.live_at);
-  const w = windowFromDates(dates, today);
+  // A pass bought before any contest started the window on the day it was bought (window_start), so those days start windows too.
+  const bought = (await env.DB.prepare("SELECT window_start FROM contest_passes WHERE org_key = ? AND status = 'active' AND window_end >= ?").bind(key, today).all()).results.map((r) => r.window_start);
+  const w = windowFromDates(dates, today, bought);
   const passes = w.active ? (await env.DB.prepare("SELECT cap, cents FROM contest_passes WHERE org_key = ? AND window_start = ? AND status = 'active'").bind(key, w.start).all()).results : [];
   const comps = (await env.DB.prepare("SELECT allowed, valid_until, note FROM contest_comps WHERE org_key = ? AND revoked = 0 AND valid_until >= ?").bind(key, today).all()).results;
   return entitlementOf(w, passes, comps);
@@ -83,7 +99,7 @@ export function entitlementView(key, ent) {
 // ---- orders (feature_orders rows with target = 'contest_pass'; event_id holds the organization key; quote_from / quote_to the window) ----
 // Records the pass for the order's window and marks the order applied. Both statements act only while the order is unapplied, so a replay changes nothing.
 export async function applyPassOrder(db, order) {
-  const p = CONTEST_PASSES[order.plan];
+  const p = passOf(order.plan);
   if (!p || !order.quote_from || !order.quote_to) return null;
   await db.batch([
     db.prepare("INSERT OR IGNORE INTO contest_passes (session_id, org_key, cap, window_start, window_end, cents, status, user_id) SELECT ?1, ?2, ?3, ?4, ?5, ?6, 'active', ?7 WHERE EXISTS (SELECT 1 FROM feature_orders WHERE session_id = ?1 AND applied = 0)")
@@ -109,9 +125,11 @@ export async function revokePass(db, order, today = ptToday()) {
 
 // "" when what the buyer was quoted still fits: the window is the same and the organization does not already hold this much (a second tab, a duplicate session).
 export async function quoteProblem(env, order, today = ptToday()) {
-  const ent = await orgState(env, order.event_id, today), p = CONTEST_PASSES[order.plan];
+  const ent = await orgState(env, order.event_id, today), p = passOf(order.plan);
   if (!p) return "that pass does not exist";
-  if (!ent.active || ent.windowStart !== order.quote_from) return `the 12-month window changed (quoted ${order.quote_from} to ${order.quote_to})`;
+  // No window was running when the buyer was quoted: the pass starts one. It still fits if no window started since and the quoted window has not ended.
+  if (!ent.active) return order.quote_to >= today ? "" : `the 12-month window changed (quoted ${order.quote_from} to ${order.quote_to})`;
+  if (ent.windowStart !== order.quote_from) return `the 12-month window changed (quoted ${order.quote_from} to ${order.quote_to})`;
   if (ent.unlimited || p.cap <= ent.cap) return `the organization already has room for ${ent.unlimited ? "any number of" : "up to " + ent.cap} contests in this window`;
   return "";
 }
