@@ -68,7 +68,7 @@ export function accountMenuSteps(steps) {
 }
 export async function record(spec) {
   if (spec.cookie) spec.steps = accountMenuSteps(spec.steps);
-  const w = `${WORK}/${spec.id}`; mkdirSync(w + "/wav", { recursive: true });
+  const w = `${WORK}/${spec.id}`; rmSync(w + "/wav", { recursive: true, force: true }); mkdirSync(w + "/wav", { recursive: true }); // start clean: a leftover clip from an earlier run must never be mistaken for a new one
   const say = spec.steps.map((s) => s.say || ""); writeFileSync(w + "/texts.json", JSON.stringify(say));
   // Voice and picture stay together: when a step taps something and the narration goes on explaining afterwards, the narration is spoken in two parts, the tap happens right after the sentence that says "tap", and the explanation plays over the new screen
   const sentences = (t) => t.match(/[^.!?]+[.!?]+(\s|$)/g) || [t];
@@ -85,7 +85,7 @@ export async function record(spec) {
     todo.forEach((t, i) => copyFileSync(`${w}/wav/${i}.wav`, `${cacheDir}/${keyOf(t)}.wav`)); }
   if (!DRY) texts.forEach((t, n) => { copyFileSync(`${cacheDir}/${keyOf(t)}.wav`, `${w}/wav/${n}.wav`); });
   const soft = KOKORO ? "highpass=f=60,loudnorm=I=-17:TP=-2:LRA=9" : "highpass=f=70,lowpass=f=7000,equalizer=f=250:t=q:w=1:g=2.5,equalizer=f=5000:t=q:w=1:g=-2,aecho=0.8:0.4:35:0.1,loudnorm=I=-17:TP=-2:LRA=9";
-  const audio = plan.map(() => []); items.forEach((it, n) => { if (DRY) { audio[it.i][it.j] = { f: null, d: 0.3, text: it.text }; return; } const o = `${w}/wav/s${n}.wav`; execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${w}/wav/${n}.wav`, "-af", soft, "-ar", "44100", o]); audio[it.i][it.j] = { f: o, d: dur(o), text: it.text }; });
+  const audio = plan.map(() => []); items.forEach((it, n) => { if (DRY) { audio[it.i][it.j] = { f: null, d: 0.3, text: it.text }; return; } const o = `${w}/wav/s${n}.wav`; execFileSync("ffmpeg", ["-v", "error", "-y", "-i", `${w}/wav/${n}.wav`, "-af", soft, "-ar", "44100", o]); audio[it.i][it.j] = { f: o, d: dur(o), text: it.text }; const cps = it.text.length / audio[it.i][it.j].d; if (it.text.length >= 25 && (cps < 8.5 || cps > 26)) throw new Error(`voice clip does not fit its text (${cps.toFixed(1)} characters a second): "${it.text.slice(0, 60)}"; delete its cached clip in ${cacheDir} and record again`); });
   const vp = MOB ? { width: 360, height: 640 } : spec.phone ? { width: 390, height: 680 } : { width: 1280, height: 720 };
   const br = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
   const SC = MOB || spec.phone ? 3 : 2; // device pixels per CSS pixel: desktop frames are 2560x1440, phone frames 1170x2040
