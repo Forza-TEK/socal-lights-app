@@ -795,6 +795,10 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 
 - AI assistant: the chat now follows the visitor between pages (kept in the browser tab only; widget loaded on content pages via footer.js); weekend/tonight/tomorrow/this-week questions use real dates; the assistant no longer names its internal blocks; new knowledge chunk on opening the contest dashboard. Privacy wording updated. Handoff for a tuning session: docs/ai-assistant-training-handoff.md.
 
+## 2026-11-09 Founder city badge (branch `founder-city-badge`, PR open, not merged)
+- Migration 0208: `contest_comps.badge` and `badge_until`; seeds founding comps for eastvaleca.gov and covinaca.gov (allowed 1 = one free contest per window, valid through 2026-12-31; badge through 2028-12-31). 0209: Help article "What is the Founder city badge?". Badge on the contest page, contests list, results pages and organizer dashboard; Admin grant form checkbox. Display only. See docs/contests.md.
+- Note: allowed = 1 equals the normal free allowance, so these comps add no extra contests today; they carry the badge and the "Founding partner" message. Owner may want a higher number.
+
 ## 2026-11-08 city sweep group 14 (Western Riverside County)
 - Searched Riverside, Corona, Norco, Eastvale, Jurupa Valley, Moreno Valley, Perris, Menifee. Everything verifiable was already on the map; no migration.
 - Leads (not added; no 2026 confirmation, last-season rule): Cherrywood Circle Light Show, 1424 Cherrywood Cir, Corona (tackylighttour, "confirmed lit Dec 2025"); Coleman Family Lights, 31403 Sherman Rd, Menifee; Perris Christmas parade (2025 was Dec; 2026 date not found, city site 403); Eastvale Miracle on Citrus Street and Dos Lagos tree lighting (2026 dates not posted); Riverside Downtown Christmas Tree Lighting Dec 1 (aggregator only, no time or venue).

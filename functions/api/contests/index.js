@@ -11,11 +11,13 @@ import { inviteJudges } from "./[slug]/judges.js";
 import { normName, normText } from "../../_lib/fields.js";
 import { reserveSends } from "../../_lib/sendlimit.js";
 import { tell } from "../../_lib/notify.js";
+import { founderKeys, isFounder } from "../../_lib/founder.js";
 import { liveGate, PAYWALL_MESSAGE } from "../../_lib/passkey.js";
 
 export async function onRequestGet({ env }) {
-  const { results } = await env.DB.prepare("SELECT slug,name,org,city,county,entries_close,vote_start,vote_end,announced,status,entries_open,voting_open FROM contests WHERE status='live' ORDER BY created_at DESC LIMIT 100").all();
-  return json(results.map((c) => ({ slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, entries_close: c.entries_close, vote_start: c.vote_start, vote_end: c.vote_end, announced: !!c.announced, ...windows(c) })), { headers: { "cache-control": "public, max-age=60" } });
+  const { results } = await env.DB.prepare("SELECT slug,name,org,org_key,city,county,entries_close,vote_start,vote_end,announced,status,entries_open,voting_open FROM contests WHERE status='live' ORDER BY created_at DESC LIMIT 100").all();
+  const fk = await founderKeys(env);
+  return json(results.map((c) => ({ founder: isFounder(fk, c.org_key), slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, entries_close: c.entries_close, vote_start: c.vote_start, vote_end: c.vote_end, announced: !!c.announced, ...windows(c) })), { headers: { "cache-control": "public, max-age=60" } });
 }
 
 export async function onRequestPost({ request, env, waitUntil }) {
