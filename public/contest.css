@@ -9,6 +9,7 @@ body{padding-bottom:60px}
 .logo{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-weight:500;font-size:15px;color:var(--ink)}
 .pill{display:inline-block;font-size:13px;font-weight:500;padding:3px 11px;border-radius:999px;white-space:nowrap;border:1px solid var(--line2);color:var(--muted)}
 .p-ok{color:var(--ok);border-color:var(--ok)}.p-wait{color:var(--season);border-color:var(--season)}.p-no{color:var(--bad);border-color:var(--bad)}
+.p-founder{color:var(--ice,#2559b8);border-color:var(--ice,#2559b8)}.p-founder::before{content:"\2605 ";font-size:12px}
 .status{border-left:2px solid var(--season);padding:2px 0 2px 14px;font-size:15px;color:var(--muted)}.status.no{border-color:var(--season)}.status.ok{border-color:var(--ok)}
 .actions{display:flex;gap:12px;flex-wrap:wrap}
 .btn.org{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}.btn.bad{background:transparent;color:var(--bad);border-color:var(--bad)}

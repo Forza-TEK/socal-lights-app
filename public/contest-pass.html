@@ -24,7 +24,7 @@
 <script type="module">
 import { themeBtn, mountAcct } from "/addflow.js?v=20261111b";
 import { me, signIn } from "/auth.js?v=20261107p";
-import { pickerHtml, beacon, niceDate, esc } from "/contest-passes.js?v=20261108a";
+import { pickerHtml, beacon, niceDate, esc } from "/contest-passes.js?v=20261109a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 const $ = (q) => document.querySelector(q), q = new URLSearchParams(location.search);
 const back = /^manage:[a-z0-9-]{1,60}$/.test(q.get("back") || "") ? q.get("back") : "pass";

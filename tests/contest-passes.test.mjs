@@ -299,6 +299,7 @@ test("Admin 'Mark refunded' on a pass order revokes it (when unused) and 'reappl
 
 test("comps: Admin grants unlimited or a number until a date; organizers see 'Founding partner: free through <date>' and no price; expiry and ending a comp end it; usage is visible", () => withNow(async () => {
   const { env, raw } = newEnv(); const a = await addUser(raw, "ua", "clerk@covinaca.gov"), g = await addUser(raw, "ug", "someone@gmail.com");
+  raw.prepare("DELETE FROM contest_comps").run(); // the founder-city comps (migration 0208) are covered in tests/founder-city.test.mjs; this test grants its own
   const adm = (b) => J(passesPost({ request: rq("/api/admin/passes", b), env, data: { admin: { email: "owner@forza-tek.com" } } }));
   assert.equal((await adm({ action: "grant", target: "", allowed: "unlimited", until: "2027-03-01" })).status, 400);
   assert.equal((await adm({ action: "grant", target: "covinaca.gov", allowed: "unlimited", until: "2026-01-01" })).status, 400, "a date that has passed");
@@ -323,7 +324,8 @@ test("comps: Admin grants unlimited or a number until a date; organizers see 'Fo
 test("Admin passes panel: usage over its limit is marked, merge moves contests and future ones, set_key, the Founding City comp needs no seed data", () => withNow(async () => {
   const { env, raw } = newEnv(); const a = await addUser(raw, "ua", "clerk@covinaca.gov"), b = await addUser(raw, "ub", "intern@gmail.com");
   const adm = (body) => J(passesPost({ request: rq("/api/admin/passes", body), env, data: { admin: { email: "o@x.org" } } }));
-  assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM contest_comps").get().n, 0, "no production data is seeded");
+  assert.deepEqual(raw.prepare("SELECT org_key FROM contest_comps ORDER BY org_key").all().map((r) => r.org_key), ["d:covinaca.gov", "d:eastvaleca.gov"], "only the two founder-city comps (migration 0208) are seeded");
+  raw.prepare("DELETE FROM contest_comps").run();
   await make(env, a.cookie, { site: "https://covinaca.gov" }); await make(env, b.cookie, nameN(1));
   assert.equal((await adm({ action: "merge", from: "u:intern@gmail.com", to: "covinaca.gov" })).status, 200);
   assert.equal(row(raw, raw.prepare("SELECT slug FROM contests WHERE owner_id='ub'").get().slug).org_key, "d:covinaca.gov");

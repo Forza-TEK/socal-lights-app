@@ -10,7 +10,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/contest.css?v=20261110b">
+<link rel="stylesheet" href="/contest.css?v=20261110c">
 <style>
 .ctop{flex-wrap:wrap;gap:12px}.ctop>div{min-width:0}body.wide .hdr{max-width:1160px}.cmain.wide{max-width:1160px}.cmain.wide .help,.cmain.wide .ctop p{max-width:70ch}
 .cmain .card{background:#fff;border-radius:18px}:root[data-theme="dark"] .cmain .card{background:var(--tile)}
@@ -52,7 +52,7 @@ async function loadLive() {
   const box = $("#live"); box.innerHTML = `<p class="loading">Loading…</p>`;
   const L = await fetch("/api/contests").then((r) => r.json()).catch(() => []);
   const open = L.filter((c) => !c.announced);
-  box.innerHTML = open.length ? open.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)}</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="pill ${c.entriesOpen ? "p-ok" : "p-wait"}">${c.entriesOpen ? "Entries open until " + fmt(c.entries_close) : "Entries closed"}</span><span class="pill ${c.votingOpen ? "p-ok" : "p-wait"}">${c.votingOpen ? "Voting open until " + fmt(c.vote_end) : "Voting " + (c.vote_start > new Date().toISOString().slice(0, 10) ? "opens " + fmt(c.vote_start) : "closed")}</span></div><div class="actions"><a class="btn org" href="/c/${esc(c.slug)}">${c.votingOpen ? "Vote" : "See the contest"}</a>${c.entriesOpen ? `<a class="btn ghost" href="/c/${esc(c.slug)}/enter">Enter my home</a>` : ""}</div></section>`).join("")
+  box.innerHTML = open.length ? open.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)}</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${c.founder ? `<span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span>` : ""}<span class="pill ${c.entriesOpen ? "p-ok" : "p-wait"}">${c.entriesOpen ? "Entries open until " + fmt(c.entries_close) : "Entries closed"}</span><span class="pill ${c.votingOpen ? "p-ok" : "p-wait"}">${c.votingOpen ? "Voting open until " + fmt(c.vote_end) : "Voting " + (c.vote_start > new Date().toISOString().slice(0, 10) ? "opens " + fmt(c.vote_start) : "closed")}</span></div><div class="actions"><a class="btn org" href="/c/${esc(c.slug)}">${c.votingOpen ? "Vote" : "See the contest"}</a>${c.entriesOpen ? `<a class="btn ghost" href="/c/${esc(c.slug)}/enter">Enter my home</a>` : ""}</div></section>`).join("")
     : `<div class="card"><h2>No contests are running right now</h2><p class="muted">Want one in your neighborhood, school or HOA? It takes about a minute.</p><div class="actions"><a class="btn org" href="/add-contest">Start a contest</a></div></div>`;
 }
 
@@ -84,7 +84,7 @@ const rows = (c) => c.entries.map((e) => {
 function draw(labels) {
   const cs = ALL.filter((c) => c.label === sel);
   $("#past").innerHTML = `<div class="field" style="max-width:340px"><label for="arch">Season | Year</label><select class="in" id="arch">${labels.map((l) => `<option ${l === sel ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>
-  ${cs.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)} · ${c.entries.length} contestant${c.entries.length === 1 ? "" : "s"} · results locked ${esc(c.at)}</p></div>
+  ${cs.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)} · ${c.entries.length} contestant${c.entries.length === 1 ? "" : "s"} · results locked ${esc(c.at)}</p>${c.founder ? `<p><span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span></p>` : ""}</div>
     ${c.awards.length ? `<div><h3 style="margin-bottom:10px">Winners</h3><div class="wins">${c.awards.map((a) => a.winners.map((w) => `<div class="win"><div class="ph">${w.photo ? `<img src="/api/photo/${esc(w.photo)}" alt="${esc(w.name)} lights" loading="lazy">` : ""}</div><div class="b"><span class="small" style="display:flex;gap:6px;align-items:center">${CROWN} ${esc(a.category)}</span><span class="m">${esc(a.label)}</span><b>${esc(w.name)}</b><span class="m">${esc(w.address || w.city || "")}</span>${a.prize ? `<span class="m" style="margin-top:6px">Prize: ${esc(a.prize)}</span>` : ""}</div></div>`).join("")).join("")}</div></div>` : ""}
     <div><h3 style="margin-bottom:6px">All contestants and results</h3>${c.entries.length ? `<div class="entries">${rows(c)}</div>` : `<p class="muted">No contestants.</p>`}</div>
     <div><a class="btn ghost sm" href="/c/${esc(c.slug)}">See the full contest</a> <a class="small muted" href="/past/${esc(c.slug)}">Permanent page</a></div></section>`).join("")}`;
