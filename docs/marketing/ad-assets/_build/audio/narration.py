@@ -6,12 +6,12 @@ import numpy as np, soundfile as sf
 from kokoro_onnx import Kokoro
 
 LINES = {
-    "a08": ["Looking for holiday lights tonight?", "Tap Find my location,", "and see what is lighting up near you.", "Free on SoCal Lights dot app."],
-    "a08r": ["Looking for holiday lights tonight?", "Tap Find my location,", "and see what is lighting up near you.", "Tap a place to see the details.", "Free on SoCal Lights dot app."],
+    "a08": ["Looking for holiday lights tonight?", "Tap Find my location,", "and see what is lighting up near you.", "Free, on SoCal Lights dot app."],
+    "a08r": ["Looking for holiday lights tonight?", "Tap Find my location,", "and see what is lighting up near you.", "Tap a place to see the details.", "Free, on SoCal Lights dot app."],
     "a09": ["Plan your whole night.", "Tap the heart on the places you love,", "then tap Route these.", "SoCal Lights dot app, free for families."],
     "a09r": ["Plan your whole night.", "Tap the heart on the places you love,", "then tap Route these.", "Your stops open in the maps app you choose.", "SoCal Lights dot app, free for families."],
-    "a06": ["Is your home all lit up?", "Put it on the map in a few minutes.", "And there it is, on the map.", "Free on SoCal Lights dot app."],
-    "a06r": ["Is your home all lit up?", "Put it on the map in a few minutes.", "Add a name, a few words, and a street.", "And there it is, on the map.", "Free on SoCal Lights dot app."],
+    "a06": ["Is your home all lit up?", "Put it on the map in a few minutes.", "And there it is, on the map.", "Free, on SoCal Lights dot app."],
+    "a06r": ["Is your home all lit up?", "Put it on the map in a few minutes.", "Add a name, a few words, and a street.", "And there it is, on the map.", "Free, on SoCal Lights dot app."],
     "a07": ["One tap, one route.", "Route these opens your stops in the maps app you choose.", "SoCal Lights dot app."],
     "a07r": ["One tap, one route.", "Route these opens your stops in the maps app you choose.", "Pick your stops, and go.", "SoCal Lights dot app."],
 }
