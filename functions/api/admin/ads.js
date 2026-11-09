@@ -1,9 +1,9 @@
 // Admin > Ads (behind requireAdmin through functions/api/admin/_middleware.js). READ-ONLY: ad copy and status change only by migration; Grok's numbers arrive through /api/ads/report.
 // GET /api/admin/ads -> { configured, totals, campaigns, ads: [{ ...item, report, landings }], warnings, last_report_at, log: [recent reports] }
 import { json } from "../../_lib/util.js";
-import { loadAds, computeWarnings, summarize, refOf } from "../../_lib/ads.js";
+import { loadAds, loadManifest, fileOut, RULES, computeWarnings, summarize, refOf } from "../../_lib/ads.js";
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ env, request }) {
   const all = await loadAds(env), s = summarize(all), rep = new Map(all.reports.map((r) => [r.ad_id, r]));
   const refs = all.items.filter((i) => i.status === "approved").map((i) => refOf(i.landing_url)).filter((r) => /^[a-z0-9-]{1,20}$/.test(r));
   const since = all.campaigns.reduce((m, c) => (c.starts < m ? c.starts : m), "2026-11-12"), land = {};
@@ -15,7 +15,15 @@ export async function onRequestGet({ env }) {
   }
   const log = (await env.DB.prepare("SELECT ad_id, status, spend_cents, impressions, clicks, as_of, received_at FROM ads_report_log ORDER BY id DESC LIMIT 30").all()).results;
   const last = all.reports.reduce((m, r) => (r.received_at > m ? r.received_at : m), "");
+  const files = await loadManifest(env, request), origin = new URL(request.url).origin, approved = all.items.filter((i) => i.status === "approved");
+  const creative = {
+    files: files.map((f) => ({ ...fileOut(f, origin), ad_ids: all.items.filter((i) => i.asset_id === f.asset_id).map((i) => i.id) })),
+    missing: approved.filter((i) => i.asset_id && !files.some((f) => f.asset_id === i.asset_id)).map((i) => ({ ad_id: i.id, asset_id: i.asset_id })),
+    no_asset: approved.filter((i) => !i.asset_id).map((i) => i.id),
+  };
   return json({
+    creative,
+    rules: RULES,
     configured: !!(env.ADS_API_KEY && String(env.ADS_API_KEY).length >= 16),
     last_report_at: last || null,
     totals: s.totals,

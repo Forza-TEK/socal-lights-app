@@ -124,7 +124,7 @@ export function summarize({ campaigns, items, reports }) {
   const per = campaigns.map((c) => {
     const ads = items.filter((i) => i.audience === c.audience && i.status === "approved").map((i) => i.id);
     const spend = reports.filter((r) => r.campaign === c.audience).reduce((s, r) => s + r.spend_cents, 0);
-    return { audience: c.audience, name: c.name, budget_cents: c.budget_cents, spend_cents: spend, starts: c.starts, ends: c.ends, wave: c.wave, ads, reported_ads: ads.filter((a) => rep.has(a)).length };
+    return { audience: c.audience, name: c.name, budget_cents: c.budget_cents, spend_cents: spend, starts: c.starts, ends: c.ends, wave: c.wave, daily_hint_cents: c.daily_hint_cents || 0, ads, reported_ads: ads.filter((a) => rep.has(a)).length };
   });
   const sum = (k) => reports.reduce((s, r) => s + r[k], 0);
   return { campaigns: per, totals: { spend_cents: sum("spend_cents"), impressions: sum("impressions"), clicks: sum("clicks"), budget_cents: TOTAL_BUDGET_CENTS, loaded_cents: LOADED_BUDGET_CENTS, reserve_cents: RESERVE_CENTS, campaign_budget_cents: campaigns.reduce((s, c) => s + c.budget_cents, 0) } };
