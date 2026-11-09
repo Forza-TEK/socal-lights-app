@@ -15,7 +15,7 @@ Paste into a Claude in Chrome session or give to Grok. The owner is signed in to
 - If an identity check or policy flag appears, or an ad is disapproved, stop and tell the owner.
 - Links already contain tracking codes (ref and utm). Do not edit them.
 
-## Wave 1: submit for review by Nov 10; starts Nov 12
+## Wave 1: submit for review by Nov 9; starts Nov 12
 
 ### Contest organizers on Facebook and Instagram: budget $55, Nov 12 to Dec 8, about $2.04 a day
 
