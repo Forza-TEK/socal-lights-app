@@ -317,3 +317,7 @@ The Meta lines in the budget table are Facebook and Instagram together: one Meta
 - **Accounts:** the Meta Business account already exists under the Forza-TEK account; a new Page for SoCalLights.app is being created. Google Ads and Nextdoor Business accounts are still to do.
 - **Claims confirmed on the live site by the owner:** "remove it any time", "QR poster", the "Request a quote" button and the judge flow.
 - **Help decisions:** add-homes limit is 100 per paste; the Add page contest tile wording stays as is.
+
+## Owner decision, Nov 9 2026: Facebook and Instagram only
+
+No Google Ads and no Nextdoor. Everything runs on Meta (Facebook and Instagram together), with the same approved Meta ads and the same $300 cap and Dec 8 end date. Re-split: contest organizers $55 (Nov 12 to Dec 8, about $2.04 a day); event holders $45 (Nov 12 to Dec 1, about $2.25 a day); installers $20 (Nov 12 to 23, about $1.67 a day); families $100 (Nov 24 to Dec 8, about $6.67 a day); homeowners $60 (Nov 24 to Dec 8, about $4.00 a day); reserve $20 not loaded. Meta account spending limit $280. Dropped: all Google Search and Nextdoor items (the Google and Nextdoor accounts stay open, unused). Tracking is unchanged (ref codes and funnel counters). Meta daily-minimum figures are UNVERIFIED; check in Ads Manager.
