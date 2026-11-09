@@ -1,50 +1,64 @@
-// The four ad screen recordings. Usage: WORK=<dir> node scenarios.mjs a06|a07|a08|a09
+// The ad screen recordings, in the TRUE PHONE VIEW only: a 390 css px wide page (real mobile layout) captured at 2.77x (1080 px wide, filling the frame).
+// Usage: FMT=916|45 WORK=<dir> node scenarios.mjs a06|a07|a08|a09
+//   FMT=916 records a 390 x 693 page (= the 1080x1920 frame), FMT=45 a 390 x 487 page (= the 1080x1350 frame).
 // a07, a08, a09 run on the LIVE site (read-only: nothing is saved or posted). a06 runs on the LOCAL demo server (BASE=http://localhost:8788).
 import { record, sleep } from "./adrec.mjs";
+const FMT = process.env.FMT || "916", VH = FMT === "916" ? 693 : 487;
+const T = FMT === "45" ? 0.65 : 0.75; // the 4:5 feed cut must stay within 12 s, so its taps and pauses are quicker
 const CLOCK = "2026-11-27T17:00:00-08:00"; // Friday of Thanksgiving week, 5 pm PT: the same real events, with "Tonight" showing tree lightings
 const H = { // ad headlines, word for word from docs/marketing/ads-content.json
   a06: "Put your home's lights on the map", a07: "Be on someone's lights route", a08: "Find holiday lights near you tonight", a09: "Plan a family lights drive" };
 const near = async (p) => { await p.click(".maplibregl-ctrl-geolocate"); await sleep(3000); for (let i = 0; i < 3; i++) { await p.click(".maplibregl-ctrl-zoom-out"); await sleep(500); } await sleep(2500); };
-const compact = `.tile{background-image:none!important;height:40px!important;min-height:0!important}.tile .when{top:8px!important}`;
+const compact = `.tile{background-image:none!important;height:36px!important;min-height:0!important}.tile .when{top:6px!important}` + (FMT === "45" ? ".rtpill{display:none!important}" : ""); // in the short 4:5 page the map's Route these pill floats over the list, so it is hidden there
 const css = async (p) => { await p.addStyleTag({ content: compact }); };
 const star = (h, i) => h.page.locator("article.item:visible .star").nth(i);
 const raise = async (p) => { await p.click("#grab"); await sleep(1200); };
+// index of the first not-yet-saved heart that sits in the open middle of the list (clear of the Route these pill and the bottom bar)
+// first not-yet-saved heart, and how far to scroll the list so that heart sits in the open middle of it (clear of the bottom bar)
+const pick = (h) => h.page.evaluate(() => { const L = [...document.querySelectorAll("article.item")].filter((a) => a.offsetParent !== null).map((a) => a.querySelector(".star")); const idx = L.findIndex((s) => s.getAttribute("aria-pressed") !== "true"); if (idx < 0) return { idx, delta: 0 }; const pb = document.querySelector("#pbody").getBoundingClientRect(), r = L[idx].getBoundingClientRect(), want = pb.top + Math.min(60, (Math.min(pb.bottom, innerHeight - 75) - pb.top) / 2) - r.height / 2; return { idx, delta: Math.abs(r.top - want) > 8 ? r.top - want : 0 }; });
+const scrollList = (p, top) => p.evaluate((top) => document.querySelector("#pbody").scrollBy({ top, behavior: "smooth" }), top);
+const O = (id, extra) => [`${id}-${FMT}`, { vh: VH, settle: 9000, clock: CLOCK, headline: H[id], ...extra }];
 const S = {
   async a08() {
-    await record("a08", { clock: CLOCK, headline: H.a08, prep: css }, async (h) => {
+    await record(...O("a08", { prep: css }), async (h) => {
       h.cap("Tap Find my location");
-      await h.tap(".maplibregl-ctrl-geolocate", { after: 2600 });
+      await h.tap(".maplibregl-ctrl-geolocate", { after: 2200 });
       h.cap("The list shows events near you");
-      await h.tap("#grab", { after: 1200 });
-      await h.wait(2600);
+      await h.tap("#grab", { after: 900 });
+      await h.wait(2200);
     });
   },
   async a09() {
-    await record("a09", { clock: CLOCK, headline: H.a09, prep: async (p) => { await css(p); await near(p); await raise(p); } }, async (h) => {
+    await record(...O("a09", { prep: async (p) => { await css(p); await near(p); await raise(p); } }), async (h) => {
       h.cap("Tap the heart on public events");
-      const pick = () => h.page.evaluate(() => { const L = [...document.querySelectorAll("article.item")].filter((a) => a.offsetParent !== null).map((a) => a.querySelector(".star")); return L.findIndex((s) => { const r = s.getBoundingClientRect(); return s.getAttribute("aria-pressed") !== "true" && r.top > 300 && r.bottom < 515; }); });
       for (let k = 0; k < 3; k++) {
-        let idx = await pick();
-        for (let t = 0; idx < 0 && t < 4; t++) { await h.page.evaluate(() => document.querySelector("#pbody").scrollBy({ top: 140, behavior: "smooth" })); await h.wait(500); idx = await pick(); }
-        await h.tap(star(h, idx), { ms: k ? 300 : 450, after: 150 });
+        const { idx, delta } = await pick(h);
+        if (delta) { await scrollList(h.page, delta); await h.wait(550 * T); }
+        await h.tap(star(h, idx), { ms: (k ? 300 : 450) * T, after: 450 });
       }
       h.cap("Open your favorites");
-      await h.tap('#bnav [data-tab="plan"]', { ms: 450, after: 600 });
+      await h.tap('#bnav [data-tab="plan"]', { ms: 450 * T, after: 600 * T });
       h.cap("Tap Route these");
-      await h.tap(h.page.locator("#phead, #pbody").getByText("Route these").first(), { ms: 450, after: 900 });
+      await h.tap(h.page.locator("#phead, #pbody").getByText("Route these").first(), { ms: 450 * T, after: 900 * T });
       h.cap("Stops go to your maps app");
-      await h.wait(1700);
+      await h.wait(1700 * T);
     });
   },
   async a07() {
-    await record("a07", { clock: CLOCK, headline: H.a07, prep: async (p) => { await css(p); await near(p); await raise(p); for (let i = 0; i < 3; i++) { await p.locator("article.item:visible .star").nth(i).click(); await sleep(300); if (i === 1) { await p.evaluate(() => document.querySelector("#pbody").scrollBy({ top: 190 })); await sleep(500); } } await p.evaluate(() => document.querySelector("#pbody").scrollTo({ top: 0 })); await sleep(600); } }, async (h) => {
+    await record(...O("a07", { prep: async (p) => {
+      await css(p); await near(p); await raise(p);
+      for (let i = 0; i < 3; i++) { // save three public events (not recorded)
+        const idx = await p.evaluate(() => { const L = [...document.querySelectorAll("article.item")].filter((a) => a.offsetParent !== null).map((a) => a.querySelector(".star")); return L.findIndex((s) => s.getAttribute("aria-pressed") !== "true"); });
+        await p.evaluate((idx) => [...document.querySelectorAll("article.item")].filter((a) => a.offsetParent !== null)[idx].querySelector(".star").click(), idx); await sleep(300);
+      }
+      await p.evaluate(() => document.querySelector("#pbody").scrollTo({ top: 0 })); await sleep(600); } }), async (h) => {
       h.cap("Visitors save places to see");
-      await h.wait(1300);
-      await h.tap('#bnav [data-tab="plan"]', { after: 1000 });
+      await h.wait(900 * T);
+      await h.tap('#bnav [data-tab="plan"]', { ms: 450 * T, after: 500 * T });
       h.cap("Tap Route these");
-      await h.tap(h.page.locator("#phead, #pbody").getByText("Route these").first(), { after: 1400 });
+      await h.tap(h.page.locator("#phead, #pbody").getByText("Route these").first(), { ms: 450 * T, after: 800 * T });
       h.cap("Stops go to a maps app");
-      await h.wait(2200);
+      await h.wait(2300);
     });
   },
 };

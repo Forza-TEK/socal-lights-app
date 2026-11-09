@@ -36,7 +36,7 @@ export async function record(id, opts, run) {
   const BASE = process.env.BASE || "https://socallights.app", WORK = process.env.WORK, dir = `${WORK}/${id}`;
   rmSync(dir, { recursive: true, force: true }); mkdirSync(dir + "/frames", { recursive: true });
   const br = await chromium.launch({ executablePath: "/usr/bin/google-chrome", args: ["--no-sandbox", "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
-  const ctx = await br.newContext({ viewport: { width: 360, height: 620 }, deviceScaleFactor: 1.58, colorScheme: "dark", isMobile: true, hasTouch: true,
+  const ctx = await br.newContext({ viewport: { width: 390, height: opts.vh }, deviceScaleFactor: 1080 / 390, colorScheme: "dark", isMobile: true, hasTouch: true,
     permissions: ["geolocation"], geolocation: opts.geo || { latitude: 33.6162, longitude: -117.8745 } }); // Fashion Island, Newport Beach: a public shopping centre, not a person's position
   if (opts.clock) await ctx.clock.setFixedTime(new Date(opts.clock));
   if (opts.cookie) await ctx.addCookies([{ name: "scl_session", value: opts.cookie, url: BASE }]);
@@ -48,7 +48,7 @@ export async function record(id, opts, run) {
   if (opts.prep) await opts.prep(page);
   const cdp = await ctx.newCDPSession(page), frames = []; let n = 0;
   cdp.on("Page.screencastFrame", (f) => { const i = n++; frames.push({ i, t: f.metadata.timestamp }); writeFileSync(`${dir}/frames/${i}.jpg`, Buffer.from(f.data, "base64")); cdp.send("Page.screencastFrameAck", { sessionId: f.sessionId }).catch(() => {}); });
-  await cdp.send("Page.startScreencast", { format: "jpeg", quality: 90, maxWidth: 569, maxHeight: 980, everyNthFrame: 1 });
+  await cdp.send("Page.startScreencast", { format: "jpeg", quality: 90, maxWidth: 1080, maxHeight: Math.round(opts.vh * 1080 / 390), everyNthFrame: 1 });
   await sleep(300);
   const start = Date.now() / 1000, caps = []; let cur = null;
   const T = () => Date.now() / 1000 - start;
