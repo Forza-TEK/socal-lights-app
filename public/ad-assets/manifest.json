@@ -20,66 +20,6 @@
    "width": 1080,
    "height": 1080,
    "ratio": ""
-  },
-  {
-   "asset_id": "a02-city-page",
-   "path": "a02-city-page/a02-city-page-newport-beach-4x5-1080x1350.png",
-   "content_type": "image/png",
-   "bytes": 341686,
-   "sha256": "eff8ff50d80654742b5b1db8b2bd5adcd974ff50d19c29e3901dc42024f9bfe7",
-   "width": 1080,
-   "height": 1350,
-   "ratio": "4:5"
-  },
-  {
-   "asset_id": "a03-contest-screens",
-   "path": "a03-contest-screens/a03-contest-entry-page-4x5-1080x1350.png",
-   "content_type": "image/png",
-   "bytes": 217581,
-   "sha256": "ba8309dada00149eaa934d73c10da02d4207b9bedca62b0c5d2e210ae636d984",
-   "width": 1080,
-   "height": 1350,
-   "ratio": "4:5"
-  },
-  {
-   "asset_id": "a03-contest-screens",
-   "path": "a03-contest-screens/a03-contest-results-page-4x5-1080x1350.png",
-   "content_type": "image/png",
-   "bytes": 206011,
-   "sha256": "99825c91181738fb65f64c20a70b3c102e6c9aca521306c68e8eee056d24e9be",
-   "width": 1080,
-   "height": 1350,
-   "ratio": "4:5"
-  },
-  {
-   "asset_id": "a04-qr-poster",
-   "path": "a04-qr-poster/a04-qr-poster-example-4x5-1080x1350.png",
-   "content_type": "image/png",
-   "bytes": 305051,
-   "sha256": "6fd39f42abbd137c0e2797ebf4698d6ef5dddba54600e1126c7a28db52d34079",
-   "width": 1080,
-   "height": 1350,
-   "ratio": "4:5"
-  },
-  {
-   "asset_id": "a05-installer-profile",
-   "path": "a05-installer-profile/a05-installer-profile-example-4x5-1080x1350.png",
-   "content_type": "image/png",
-   "bytes": 247360,
-   "sha256": "8ed0c6eea49b0c3a284162807aca94884f08a3d8f9fd222796072edfd635c12b",
-   "width": 1080,
-   "height": 1350,
-   "ratio": "4:5"
-  },
-  {
-   "asset_id": "a10-weekend-list",
-   "path": "a10-weekend-list/a10-weekend-list-4x5-1080x1350.png",
-   "content_type": "image/png",
-   "bytes": 270771,
-   "sha256": "dbce5f2117777f262088caa20dfb382e6030ecf9c6abeec74085a603e8a5ddee",
-   "width": 1080,
-   "height": 1350,
-   "ratio": "4:5"
   }
  ]
 }
