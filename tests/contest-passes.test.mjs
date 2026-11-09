@@ -87,8 +87,8 @@ test("window: starts the day the first contest goes live, ends the day before th
   assert.equal(windowFromDates(["2026-11-10"], "2027-11-10").active, false, "no contest yet in the new window: nothing is running");
   assert.equal(windowFromDates([], T).active, false);
   // contests that went live before pricing began (PAID_FROM) were run under the old free rule: never counted, they do not start a window
-  assert.equal(PAID_FROM, "2026-11-10");
-  assert.equal(windowFromDates(["2026-11-08", "2026-11-09"], T).active, false, "an organization that already used its free contest starts clean");
+  assert.equal(PAID_FROM, "2026-11-09", "pricing starts the day the owner decided it (Pacific)");
+  assert.equal(windowFromDates(["2026-11-07", "2026-11-08"], T).active, false, "an organization that already used its free contest starts clean");
   const mixed = windowFromDates(["2026-11-08", "2026-11-12"], "2026-11-12"); assert.deepEqual([mixed.start, mixed.used], ["2026-11-12", 1]);
   // a pass bought before any contest starts the window on the day it was bought, and is not itself a contest
   const bought = windowFromDates(["2026-11-14"], "2026-11-14", ["2026-11-12"]); assert.deepEqual([bought.start, bought.end, bought.used, bought.active], ["2026-11-12", "2027-11-11", 1, true]);
@@ -150,7 +150,7 @@ test("the first contest needs a pass: without one the paywall answers 402 with t
 test("an organization that already used its free contest under the old rule starts clean: its old contest is not counted, it needs a pass for the next one, and the pass starts a new window", () => withNow(async () => {
   const { env, raw, me } = await setup();
   // the old free contest went live the day before pricing began; it stays live and untouched
-  raw.prepare("INSERT INTO contests (id,slug,owner_id,name,org,city,county,descr,site,contact_email,season,status,entries_close,vote_start,vote_end,categories,vote_rule,approval,rules,org_key,live_at) VALUES ('old1','old-one','u1','Old free contest','Maple','Pasadena','Los Angeles','d','','owner@gmail.com','christmas','live','2026-12-01','2026-12-02','2026-12-20','[\"Best Overall\"]','cat','manual','r',?,?)").run(KEY, "2026-11-08");
+  raw.prepare("INSERT INTO contests (id,slug,owner_id,name,org,city,county,descr,site,contact_email,season,status,entries_close,vote_start,vote_end,categories,vote_rule,approval,rules,org_key,live_at) VALUES ('old1','old-one','u1','Old free contest','Maple','Pasadena','Los Angeles','d','','owner@gmail.com','christmas','live','2026-12-01','2026-12-02','2026-12-20','[\"Best Overall\"]','cat','manual','r',?,?)").run(KEY, "2026-11-08"); // the day before pricing began
   const e = await ent(env, me.cookie, ""); assert.deepEqual([e.body.active, e.body.used, e.body.cap, e.body.canCreate], [false, 0, 0, false], "not counted, but a new contest needs a pass");
   assert.equal(row(raw, "old-one").status, "live", "the contest that is already live is not touched");
   assert.equal((await make(env, me.cookie)).status, 402);
@@ -205,7 +205,7 @@ test("a window that has ended: the next contest needs a new pass, and the new pa
 });
 
 test("a domain-matched organizer is counted by the website's organization, so a co-worker at the same organization shares it; a gmail owner is separate", () => withNow(async () => {
-  const { env, raw } = newEnv(); const a = await addUser(raw, "ua", "clerk@covinaca.gov"), b = await addUser(raw, "ub", "intern@covinaca.gov"), g = await addUser(raw, "ug", "someone@gmail.com");
+  const { env, raw } = newEnv(); raw.prepare("DELETE FROM contest_comps").run(); /* the founder-city comps seeded by migration 0208 would cover covinaca.gov */ const a = await addUser(raw, "ua", "clerk@covinaca.gov"), b = await addUser(raw, "ub", "intern@covinaca.gov"), g = await addUser(raw, "ug", "someone@gmail.com");
   const site = "https://www.covinaca.gov";
   assert.equal((await make(env, a.cookie, { site })).status, 402, "the first contest needs a pass");
   assert.equal((await pay(env, 1, "pass_1", T, END, P1, { key: "d:covinaca.gov", email: "clerk@covinaca.gov" })).status, 200);
@@ -246,7 +246,7 @@ test("pass checkout: signed out 401, the app and a missing key refused, bad plan
 }));
 
 test("pass checkout with ?site: the organization comes from the website like a new contest; an upgrade costs the difference; the same or a smaller cap is refused", () => withNow(async () => {
-  const { env, raw } = newEnv(); const a = await addUser(raw, "u1", "clerk@covinaca.gov"); const f = stubFetch();
+  const { env, raw } = newEnv(); raw.prepare("DELETE FROM contest_comps").run(); /* the founder-city comps seeded by migration 0208 would cover covinaca.gov */ const a = await addUser(raw, "u1", "clerk@covinaca.gov"); const f = stubFetch();
   try {
     const amount = () => new URLSearchParams(String(f.calls[f.calls.length - 1].init.body)).get("line_items[0][price_data][unit_amount]");
     const site = "https://www.covinaca.gov", K = { key: "d:covinaca.gov", email: "clerk@covinaca.gov" };
