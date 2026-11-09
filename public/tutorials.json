@@ -10,7 +10,7 @@
           "title": "Find lights near me",
           "desc": "Use your location, the seasons, city search and filters to find what is on near you.",
           "url": "/tutorials/find-map.mp4",
-          "length": "2:56",
+          "length": "3:02",
           "captions": "/tutorials/find-map.vtt",
           "poster": "/tutorials/find-map.jpg",
           "mobile": {
@@ -286,7 +286,7 @@
           "title": "Edit your contest and change the dates",
           "desc": "Change the details any time before winners are announced.",
           "url": "/tutorials/run-edit.mp4",
-          "length": "2:26",
+          "length": "2:24",
           "captions": "/tutorials/run-edit.vtt",
           "poster": "/tutorials/run-edit.jpg",
           "mobile": {
