@@ -28,6 +28,29 @@ const S = {
       await h.wait(2200);
     });
   },
+  async a06() { // LOCAL demo server only (signed in as the demo user "u_enter"): nothing is submitted; the flow stops on the review screen
+    const ART = new URL("./demo-art/home-1.jpg", import.meta.url).pathname;
+    await record(...O("a06", { clock: undefined, settle: 2500, cookie: process.env.COOKIE_ENTER || "AjmUsqDKzYVPNwj0uA9p-_hofhGpm9AV", start: "/add-house", geo: undefined, prep: async (p) => { await p.addStyleTag({ content: "main,#app,.flow,.wrap{padding-top:118px!important}" }); await p.evaluate(() => { const fix = () => { const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const v = n.nodeValue.replace(/\bhouse\b/g, "home").replace(/\bDisplay name\b/g, "Home name").replace(/\bdisplay\b/g, "home").replace(/\bTaylor Kim\b/g, "Your name"); if (v !== n.nodeValue) n.nodeValue = v; } document.querySelectorAll("input").forEach((i) => { if (i.value === "Taylor Kim") i.value = ""; }); }; fix(); setInterval(fix, 200); }); }, routes: [{ url: "**/api/config", json: {} }] }), async (h) => {
+      const nx = (after = 450) => h.tap("#nextbtn", { ms: 350, after });
+      const clearType = async (sel, text) => { await h.tap(sel, { ms: 350, after: 100 }); await h.page.fill(sel, ""); await h.page.locator(sel).first().pressSequentially(text, { delay: 35 }); await h.wait(250); };
+      h.cap("Tap A homeowner");
+      await h.tap('[data-tile="kind|homeowner"]', { ms: 450, after: 350 }); await nx();
+      h.cap("Add a name");
+      await clearType("#f-biz", "The Example family"); await nx();
+      h.cap("Choose the season");
+      await h.tap('[data-tile="hadPro|no"]', { ms: 300, after: 250 }); await nx(350);
+      await h.tap('[data-tile="season|christmas"]', { ms: 300, after: 250 }); await nx(350);
+      h.cap("Name your home");
+      await clearType("#f-title", "Example Family Lights"); await clearType("#f-desc", "Lights on the roof and the trees."); await nx();
+      h.cap("Add the street");
+      await h.page.selectOption("#f-city", "Irvine"); await clearType("#f-street", "Example Street"); await clearType("#f-zip", "92602"); await nx();
+      await nx(350);
+      h.cap("Add photos");
+      const [fc] = await Promise.all([h.page.waitForEvent("filechooser"), h.tap("label[for=f-photos]", { ms: 350, after: 200 })]); await fc.setFiles([ART]); await h.wait(1500); await nx(600);
+      h.cap("Then put it on the map");
+      await h.wait(1800);
+    });
+  },
   async a09() {
     await record(...O("a09", { prep: async (p) => { await css(p); await near(p); await raise(p); } }), async (h) => {
       h.cap("Tap the heart on public events");
