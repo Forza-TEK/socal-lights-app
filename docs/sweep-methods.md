@@ -20,6 +20,7 @@ Before adding, normalize street addresses (lowercase, `Drive`->`dr`, `Street`->`
 
 ## 5. Photos
 - For every event you add or touch, try to set `image`. Sources, in order: the event/contest page's own gallery photo for that home (for example the winners galleries on mvactivities.com, files are named with the street address), then the page's `og:image`.
+- **Prefer the event's own photo over `og:image`.** Many sites set `og:image` to one site-wide picture for every page (SAMLARC's is a movie-night photo on its tree-lighting page). If the page has a photo whose file name shares words with the event's name, or sits in an Event or Gallery folder, use that. `scripts/photo_pass.py` does this. To audit existing photos, open the card, compare it with the event page, and remove or replace a photo that is a logo, a newsletter cover, blank, a 404 or of another event (see migration 0206 for an example).
 - Use the image URL as is (hotlink, do not re-host). Accept it when it is a real image under 1.5 MB, at least 500 px wide, not a logo or site-wide default, and the page belongs to at most 3 events (a roundup page would put one photo on many events). Do not use an image URL containing `--` (split it with `'…-' || '-…'`).
 - Set it with `UPDATE events SET image='…', updated_at=datetime('now') WHERE id='…' AND (image IS NULL OR image='');`.
 - Do not copy photos out of people's private or logged-in social posts.
