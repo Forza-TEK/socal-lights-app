@@ -31,13 +31,13 @@ const pick = (list, question) => {
   return (hit.length ? hit : list).slice(0, 3);
 };
 
-const PAUSE = /\b(take|taking|put)\b[^.?!]{0,30}\b(down|off)\b|\bpause\b|\b(hide|remove)\b[^.?!]{0,30}\b(for the season|temporar\w+|until next year)\b|\bturn(ed)? off\b/i;
-const RESUME = /\b(put|bring|turn|show)\b[^.?!]{0,30}\b(back|again|on again)\b|\bresume\b|\bre-?list\b|\bmake it live again\b/i;
-const NOTICE = /\b(cancell?ed|called off|postponed|rescheduled|delayed)\b/i;
+const PAUSE = /\bunlist\b|\b(disable|deactivate|stop showing)\b[^.?!]{0,30}\b(my )?(home|house|display|listing|lights)\b|\b(take|taking|put)\b[^.?!]{0,30}\b(down|off)\b|\bpause\b|\b(hide|remove)\b[^.?!]{0,30}\b(for the season|temporar\w+|until next year)\b|\bturn(ed)? off\b/i;
+const RESUME = /\bre-?enable\b|\bback online\b|\b(lights?|display|home|house) (is|are) (on|live) again\b|\b(put|bring|turn|show)\b[^.?!]{0,30}\b(back|again|on again)\b|\bresume\b|\bre-?list\b|\bmake (it|my \w+|the \w+) live again\b/i;
+const NOTICE = /\b(cancell?ed|called off|postponed|rescheduled|delayed)\b|\b(had to|have to|need to|want to|going to|must|will|gonna)\s+(cancel|postpone|reschedule|delay)\b|\bcancel (my|the|our)\b[^.?!]{0,15}\b(event|parade|market|lighting|festival|show)\b/i;
 const CLEAR = /\b(no longer|not) (cancell?ed|postponed)\b|\bclear (the )?(notice|tag)\b|\bis back on\b/i;
-const AGAIN = /\b(run|do|repeat|copy|renew)\b[^.?!]{0,25}\b(again|next year)\b|\bsame event next year\b/i;
-const WITHDRAW = /\bwithdraw\b|\b(pull|take|get)\b[^.?!]{0,25}\b(entry|my home)\b[^.?!]{0,20}\bout\b/i;
-const EDIT = /\b(edit|change|update|fix|correct|rewrite)\b[^.?!]{0,40}\b(description|blurb|text|hours|details|info|wording)\b/i;
+const AGAIN = /\b(set up|schedule|create)\b[^.?!]{0,30}\bnext year\b|\brepeat\b[^.?!]{0,20}\bnext year\b|\b(run|do|repeat|copy|renew|duplicate|clone)\b[^.?!]{0,25}\b(again|next year|20\d\d)\b|\bsame event next year\b|\b(duplicate|clone|copy)\b[^.?!]{0,15}\b(my )?event\b/i;
+const WITHDRAW = /\bwithdraw\b|\b(pull|take|remove|get)\b[^.?!]{0,20}\b(my )?(home|house|entry)\b[^.?!]{0,15}\b(from|out of)\b[^.?!]{0,10}\bcontest\b|\b(out of|leave|quit|exit|drop out of)\b[^.?!]{0,15}\b(the |this |a )?contest\b|\b(remove|delete|cancel)\b[^.?!]{0,15}\b(my )?entry\b|\b(pull|take|get)\b[^.?!]{0,25}\b(entry|my home)\b[^.?!]{0,20}\bout\b/i;
+const EDIT = /\b(edit|change|update|fix|correct|rewrite)\b[^.?!]{0,40}\b(description|blurb|text|hours|details|info|wording)\b|\b(change|update|edit|rewrite)\b[^.?!]{0,30}\b(what|how)\b[^.?!]{0,25}\b(says|reads|shows)\b/i;
 const OWN_INTENT = [PAUSE, RESUME, NOTICE, CLEAR, AGAIN, WITHDRAW, EDIT];
 export const wantsOwnerAction = (q) => OWN_INTENT.some((r) => r.test(String(q || "")));
 

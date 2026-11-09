@@ -55,7 +55,7 @@ export async function onRequestPost({ request, env }) {
   if (slow) { await recordUsage(env, { blocked_limit: 1 }); return json({ error: slow, limited: true }, { status: 429, headers: { ...NO_STORE, ...headers } }); }
 
   // "Can I talk to a person?": always answered with the Send to the team card, even off topic, at the cap, or with no model call (owner decision: always reachable)
-  if (settings.tiers[1] && wantsHuman(last)) {
+  if (settings.tiers[1] && wantsHuman(last) && !(["injection", "typedPersonal", "personal"].includes(classify(last).kind))) { // "the owner's phone number" is a personal-data ask, not a request for the team
     await recordUsage(env, { chats: first ? 1 : 0, turns: 1 }); await bumpAction(env, "ask_human", "shown");
     return say("Of course. Write what you need in the box below and tap Send to the team: the team reads every message. If you add your email, they can reply to you.", { cards: [humanCard(last)] }, headers);
   }
