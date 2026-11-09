@@ -31,3 +31,9 @@ Videos go live in small batches, each only after review (see `docs/tutorial-stan
 
 ## Keeping videos current
 After any visible UI change, list the affected videos in `docs/tutorial-updates.md` (what changed, re-record or leave). The first full list is dated 2026-11-06.
+
+## Checking sync and repairing (added 2026-11-08)
+- `node scripts/tutorials/check-sync.mjs [id ...]` ffprobes every published video (computer and phone): stream durations, start offsets, frame rate, captions against the voice, silent stretches, cut-off audio. Exit 1 on any failure; "tap" sentences with no visible change are warnings. Run it before merging any video.
+- `node scripts/tutorials/fix-sync.mjs [id ...]` pads the audio to the video length and retimes the captions of a rendered file without re-recording.
+- `scripts/tutorials/rerecord-queue.sh "id:d id:m ..."` records, checks, installs, commits and pushes one video at a time.
+- Contest passes video: `scripts/tutorials/seed-passes.sql` (local database only) before recording `contest-passes`.

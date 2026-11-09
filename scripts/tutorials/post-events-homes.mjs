@@ -21,13 +21,13 @@ const addEvent = {
     { cap: "Describe it", say: "Describe it in a sentence or two, in your own words. This shows on the map card.", do: async (p, h) => { await h.type("#f-blurb", "Join the neighborhood for cocoa, carols and the lighting of the tree. Free and open to everyone."); }, post: (p, h) => next(p, h) },
     { cap: "Check and add", say: "Check everything, then tap Add my event. It goes on the map right away, marked Expected until the dates are checked.", do: async (p, h) => { await h.hover(".sum", 2200); }, poster: true, post: (p, h) => h.click(NEXT, { after: 3200 }) },
     { cap: "Your event is on the map", say: "That is it. Your event is added. You can find it, and edit it, from your profile.", do: async (p, h) => { await sleep(1500); } },
-    end("Show off your house", "Put your lights on the map with Showcase a House"),
+    end("Show off your home", "Put your lights on the map with Showcase a House"),
   ],
 };
 const showcase = {
   id: "showcase", file: "post-house", cookie: ck.u_enter, start: "/", routes: NOCFG,
   steps: [
-    { ...card("Show off your house", "Put your lights on the map with Showcase a House"), say: "Show off your house. In this video, you put your own lights on the map.", pad: 1.2 },
+    { ...card("Show off your home", "Put your lights on the map with Showcase a House"), say: "Show off your home. In this video, you put your own lights on the map.", pad: 1.2 },
     ...fromMap("add", "", [{ cap: "Tap A lighting display", say: "Last, tap A lighting display.", do: async (p, h) => { await h.click('a[href="/add-house"]', { after: 2200 }); } }]),
     { cap: "Who is posting?", say: "Choose who is posting. We will choose A homeowner. Professional installers can show their work here too.", do: async (p, h) => { await h.click('[data-tile="kind|homeowner"]', { after: 1600 }); }, post: (p, h) => next(p, h) },
     { cap: "Name to show", say: "Type the name to show, for example, The Kim family. It appears as Posted by.", do: async (p, h) => { await h.type("#f-biz", "The Kim family"); }, post: (p, h) => next(p, h) },
