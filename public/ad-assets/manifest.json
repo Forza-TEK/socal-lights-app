@@ -20,6 +20,86 @@
    "width": 1080,
    "height": 1080,
    "ratio": ""
+  },
+  {
+   "asset_id": "a02-city-page",
+   "path": "a02-city-page/a02-city-page-san-diego-4x5-1080x1350.png",
+   "content_type": "image/png",
+   "bytes": 261710,
+   "sha256": "812b80dd895b5b1cbb5a39d6c256aaf07f48bbd243600b45b313c2cc8efd8cf7",
+   "width": 1080,
+   "height": 1350,
+   "ratio": "4:5"
+  },
+  {
+   "asset_id": "a03-contest-screens",
+   "path": "a03-contest-screens/a03-contest-entry-page-4x5-1080x1350.png",
+   "content_type": "image/png",
+   "bytes": 236755,
+   "sha256": "b6737d6e0c05f3daa72c4894d5429042d126604dcc456bb3f87812438666159d",
+   "width": 1080,
+   "height": 1350,
+   "ratio": "4:5"
+  },
+  {
+   "asset_id": "a04-qr-poster",
+   "path": "a04-qr-poster/a04-qr-poster-4x5-1080x1350.png",
+   "content_type": "image/png",
+   "bytes": 393379,
+   "sha256": "8238c3530bda0fdd2f03a712dc2148c87af1c604d006fc6646f0c8d32fcb23fa",
+   "width": 1080,
+   "height": 1350,
+   "ratio": "4:5"
+  },
+  {
+   "asset_id": "a05-installer-profile",
+   "path": "a05-installer-profile/a05-installer-profile-lights-up-today-4x5-1080x1350.png",
+   "content_type": "image/png",
+   "bytes": 627681,
+   "sha256": "79c72079fae061ee19059f0c57cc8ce501b6283d3ef3e3ed50dbc89f0b5daff6",
+   "width": 1080,
+   "height": 1350,
+   "ratio": "4:5"
+  },
+  {
+   "asset_id": "a08-find-location-video",
+   "path": "a08-find-location-video/a08-find-location-feed-4x5.mp4",
+   "content_type": "video/mp4",
+   "bytes": 2153161,
+   "sha256": "62987ea5a52a0e4f8759334d40e40f42c097ba2c2eb80c2b0f2497a997b676d4",
+   "width": null,
+   "height": null,
+   "ratio": "4:5"
+  },
+  {
+   "asset_id": "a08-find-location-video",
+   "path": "a08-find-location-video/a08-find-location-reel-9x16.mp4",
+   "content_type": "video/mp4",
+   "bytes": 3178218,
+   "sha256": "dd54c3a9f742da26a6d8ccbda62c4cd02e53ce04c9d2f040cfc67d0f5811d0ae",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a08-find-location-video",
+   "path": "a08-find-location-video/a08-find-location-story-9x16.mp4",
+   "content_type": "video/mp4",
+   "bytes": 2729114,
+   "sha256": "ce16805219888c25d7e2c68fffbdc16c690d24875eca91af41ec457dbab6c3d1",
+   "width": null,
+   "height": null,
+   "ratio": "9:16"
+  },
+  {
+   "asset_id": "a10-weekend-list",
+   "path": "a10-weekend-list/a10-weekend-list-4x5-1080x1350.png",
+   "content_type": "image/png",
+   "bytes": 683902,
+   "sha256": "ce766c879ce4d3a4f0ed30090b4811197afa6f73e7b96f943951677cd612402d",
+   "width": 1080,
+   "height": 1350,
+   "ratio": "4:5"
   }
  ]
 }
