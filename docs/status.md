@@ -868,3 +868,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 
 - Admin > Contests > Contest passes: one list of organizations (name, status, "n of cap contests"), each opens a detail view with its contests, comps (end, grant), passes bought (revoke) and merge; "Grant a comp" is a button above the list; leads are in a collapsed section; the owner's free domains show as "Free domain".
 - Check addresses: "25961 Galway Dr. Lake Forest, CA. 92630" (no comma before the city, "CA." with a period) is read correctly; a trailing known city after a street suffix is taken as the city; "CA."/"Calif." count as the state.
+
+- Organizer dashboard > Entries: the table is now a list of entry rows (photo or "No photo" with the entry number, name with status and "Added by organizer" tags, address, contact or "The homeowner has not linked this home yet", and the buttons together on the right; they drop under the text on a phone).
