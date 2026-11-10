@@ -6,7 +6,7 @@
   "use strict";
   if (window.__sclChat) return;
   window.__sclChat = true;
-  var CSS = "/chat.css?v=20261111c", MAX = 500, TURNS = 6, KEEP = 40, KEY = "scl-chat";
+  var CSS = "/chat.css?v=20261111e", MAX = 500, TURNS = 6, KEEP = 40, KEY = "scl-chat";
   var store = { get: function () { try { var v = JSON.parse(sessionStorage.getItem(KEY) || "null"); return v && Array.isArray(v.log) && Array.isArray(v.h) ? v : null; } catch (e) { return null; } }, set: function (v) { try { sessionStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} }, clear: function () { try { sessionStorage.removeItem(KEY); } catch (e) {} } };
   var cfgP = window.__pre && window.__pre["/api/config"];
   (cfgP || fetch("/api/config").then(function (r) { return r.json(); })).then(function (c) { if (c && c.chatEnabled) start(c); }).catch(function () {});
@@ -53,13 +53,19 @@
     var title = el("h2", { id: "scl-chat-title", text: "Ask SoCal Lights (AI assistant)" });
     var close = el("button", { type: "button", class: "scl-chat-x", "aria-label": "Close the AI assistant", text: "×" });
     var reset = el("button", { type: "button", class: "scl-chat-reset", text: "Start over" });
-    var note = el("p", { class: "scl-chat-note" });
-    note.appendChild(document.createTextNode("This is an automated AI assistant, not a person. It can be wrong, so check prices on "));
-    note.appendChild(el("a", { href: "/pricing", text: "Pricing" }));
-    note.appendChild(document.createTextNode(". Please don't enter personal information in your questions; buttons below an answer ask only for what they need. Your chat stays in this browser tab only and is erased when you close the tab or tap Start over. "));
-    note.appendChild(el("a", { href: "/privacy#ai-assistant", text: "Privacy" }));
-    note.appendChild(document.createTextNode(" · "));
-    note.appendChild(el("a", { href: "mailto:info@socallights.app", text: "Email us" }));
+    // Short notice with a "More info" button: the longer privacy details open only when asked for
+    var note = el("div", { class: "scl-chat-note" }), noteTop = el("p", {}), more = el("button", { type: "button", class: "scl-chat-more", "aria-expanded": "false", "aria-controls": "scl-chat-more", text: "More info" });
+    noteTop.appendChild(document.createTextNode("Automated AI assistant, not a person. It can be wrong, so check prices on "));
+    noteTop.appendChild(el("a", { href: "/pricing", text: "Pricing" }));
+    noteTop.appendChild(document.createTextNode(". "));
+    noteTop.appendChild(more);
+    var moreBox = el("p", { id: "scl-chat-more", hidden: "" });
+    moreBox.appendChild(document.createTextNode("Please don't enter personal information in your questions; buttons below an answer ask only for what they need. Your chat stays in this browser tab only and is erased when you close the tab or tap Start over. "));
+    moreBox.appendChild(el("a", { href: "/privacy#ai-assistant", text: "Privacy" }));
+    moreBox.appendChild(document.createTextNode(" · "));
+    moreBox.appendChild(el("a", { href: "mailto:info@socallights.app", text: "Email us" }));
+    note.appendChild(noteTop); note.appendChild(moreBox);
+    more.addEventListener("click", function () { var open = moreBox.hidden; moreBox.hidden = !open; more.setAttribute("aria-expanded", String(open)); more.textContent = open ? "Less info" : "More info"; });
     var log = el("div", { class: "scl-chat-log", role: "log", "aria-live": "polite", "aria-relevant": "additions", "aria-label": "Conversation", tabindex: "0" });
     var status = el("p", { class: "scl-chat-status", role: "status" });
     var chips = el("div", { class: "scl-chat-chips" });
@@ -83,7 +89,7 @@
       p.appendChild(who);
       fill(p, text);
       log.appendChild(p);
-      log.scrollTop = log.scrollHeight;
+      log.scrollTop = log.scrollHeight; panel.scrollTop = panel.scrollHeight; // a short window scrolls the whole panel: keep the newest message and the box in view
       return p;
     }
     // coming back from another page of the site: put the earlier conversation back (the panel stays closed until the person opens it)
