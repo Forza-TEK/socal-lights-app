@@ -64,6 +64,8 @@ function contestRow(c) {
   return `<div class="rowi"><div><b>${esc(c.name)}</b><br><span class="small muted">${c.role === "owner" ? "You run it" : "You help run it"} · ${dot(c.status, st)}${c.vote_start ? ` · Voting ${dshort(c.vote_start)} to ${dshort(c.vote_end)}` : ""}${c.waiting ? ` · <span class="waitnote">${c.waiting} ${c.waiting === 1 ? "entry" : "entries"} waiting for you</span>` : ""}</span></div>
    <div class="acts"><a class="btn out sm" href="/c/${esc(c.slug)}/manage">Manage</a><a class="btn out sm" href="/c/${esc(c.slug)}">View page</a></div></div>`;
 }
+// A home an organizer added to a contest that you linked to your account from their link: shown under Displays as well as under Contests
+const linked = () => (O.entries || []).filter((e) => e.manage && e.status === "approved");
 // A home you entered in someone's contest
 function entryRow(e) {
   const st = e.status === "approved" ? ["live", "In the contest"] : e.status === "pending" ? ["warn", "Waiting for the organizer"] : e.status === "declined" ? ["", "Not accepted"] : ["", e.status];
@@ -103,7 +105,7 @@ function panel() {
   if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}</span></div><div class="acts"><a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
   if (tab === "contests") return head("Contests you run", ["+ Add a contest", "/add-contest"]) + list(o.contests.map(contestRow), 'You do not run or help run a contest yet. <a href="/add-contest">Create one</a>.')
     + head("Homes you entered") + list(o.entries.map(entryRow), 'You have not entered a home in a contest yet. <a href="/contests">See contests to enter</a>.');
-  if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + (o.installers || []).map((i) => `<p class="small"><a class="btn out sm" href="/installer/${esc(i.slug)}/manage">Manage the ${esc(i.name)} profile</a></p>`).join("") + list(o.homes.map(homeRow), "None yet.");
+  if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + (o.installers || []).map((i) => `<p class="small"><a class="btn out sm" href="/installer/${esc(i.slug)}/manage">Manage the ${esc(i.name)} profile</a></p>`).join("") + list([...o.homes.map(homeRow), ...linked().map(entryRow)], "None yet.");
   if (tab === "events") return head("Events you added", ["+ Add an event", "/add-event"]) + list(o.events.map(eventRow), "None yet.");
   if (tab === "badges") {
     const bs = BD.badges, on = (id, s) => BD.master && !BD.off[id + "|" + s];
@@ -127,7 +129,7 @@ function panel() {
 }
 
 function render() {
-  const o = O, em = o.user.email, n = { badges: BD.badges.length, drafts: o.drafts.length, contests: o.contests.length, entries: o.entries.length, displays: o.homes.length, events: o.events.length };
+  const o = O, em = o.user.email, n = { badges: BD.badges.length, drafts: o.drafts.length, contests: o.contests.length, entries: o.entries.length, displays: o.homes.length + linked().length, events: o.events.length };
   const T = [["drafts", "Drafts"], ["contests", "Contests"], ["displays", "Displays"], ["events", "Events"], ...(BD.badges.length ? [["badges", "Badges"]] : []), ["account", "Account"]];
   if (!T.some((t) => t[0] === tab)) tab = "drafts";
   shell.own(true); shell.setHidden("badges", !BD.badges.length); shell.setActive(tab); for (const [k] of T) shell.setCount(k, n[k]);
