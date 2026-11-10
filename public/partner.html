@@ -45,7 +45,7 @@ else if (!(await me()).user) {
   const paint = async (v) => {
     if (!v) { $("#app").innerHTML = `<p>We could not load your organization. Please try again in a moment.</p>`; return; }
     const evs = await eventsOf(), covered = new Set(v.events.map((e) => e.id));
-    const standing = v.comp ? `<p><b>Founding partner: free through ${esc(niceDate(v.comp.until))}.</b></p>` : "";
+    const standing = v.comp ? `<p><b>${v.comp.until >= "2099" ? "Free for your organization." : "Founding partner: free through " + esc(niceDate(v.comp.until)) + "."}</b></p>` : "";
     const head = `<p><b>${esc(v.org)}</b>${v.verified ? ` <span class="tag">Verified email domain</span>` : ""}</p>`;
     const buy = !v.covered && v.offer ? `<div class="pbox"><h2>${esc(copy.name)} <span class="price">${esc(dollars(v.offer.cents))} <small>${esc(copy.unit)}</small></span></h2><p>${esc(copy.blurb)} The ${esc(v.season.label)} season ends ${esc(niceDate(v.season.end))}.</p><ul>${copy.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul><p><button class="btn" id="buy" type="button">Pay ${esc(dollars(v.offer.cents))} on Stripe</button></p><p class="meta">${esc(copy.note)} The receipt goes to your account email.</p></div>` : "";
     const used = v.covered ? `<p><b>${v.used}</b> of <b>${v.unlimited ? "unlimited" : v.cap}</b> events used for the ${esc(v.season.label)} season (through ${esc(niceDate(v.season.end))}).</p>` : "";

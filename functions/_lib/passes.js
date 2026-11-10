@@ -21,6 +21,16 @@
 import { ptToday, shiftDay } from "./time.js";
 
 export const FREE_CONTESTS = 0;
+// FREE DOMAINS (owner decision 2026-11-10): organizations whose organization key is one of these domains (or a subdomain), or whose key is an account email at one of them, run contests
+// free and without a limit: no pass, no price. It works like an unlimited comp that never ends, so every pass rule and page treats it as "covered". A lookalike such as
+// notforza-tek.com or forza-tek.com.evil.com is NOT free (the match is on whole labels). To add a domain, add it here and ship it (tests/free-domains.test.mjs).
+export const FREE_DOMAINS = ["zerae.com", "forza-tek.com"];
+export const FREE_UNTIL = "2099-12-31";
+export function freeDomain(orgKey) {
+  const k = String(orgKey || "").toLowerCase();
+  const host = k.startsWith("d:") ? k.slice(2) : k.startsWith("u:") ? k.slice(k.lastIndexOf("@") + 1) : "";
+  return !!host && FREE_DOMAINS.some((d) => host === d || host.endsWith("." + d));
+}
 // The first day contests are paid. Set it to the go-live date before merging: a contest that went live on an earlier day was run under the old free rule and is never counted.
 export const PAID_FROM = "2026-11-09";
 export const WINDOW_MONTHS = 12;
@@ -86,6 +96,7 @@ export async function orgState(env, key, today = ptToday()) {
   const w = windowFromDates(dates, today, bought);
   const passes = w.active ? (await env.DB.prepare("SELECT cap, cents FROM contest_passes WHERE org_key = ? AND window_start = ? AND status = 'active'").bind(key, w.start).all()).results : [];
   const comps = (await env.DB.prepare("SELECT allowed, valid_until, note FROM contest_comps WHERE org_key = ? AND revoked = 0 AND valid_until >= ?").bind(key, today).all()).results;
+  if (freeDomain(key)) comps.push({ allowed: -1, valid_until: FREE_UNTIL, note: "Free for this organization" });
   return entitlementOf(w, passes, comps);
 }
 
@@ -116,7 +127,7 @@ export async function revokePass(db, order, today = ptToday()) {
   if (!row || row.status !== "active") return true;
   const others = (await db.prepare("SELECT cap FROM contest_passes WHERE org_key = ? AND window_start = ? AND status = 'active' AND session_id != ?").bind(row.org_key, row.window_start, order.session_id).all()).results;
   const comps = (await db.prepare("SELECT allowed FROM contest_comps WHERE org_key = ? AND revoked = 0 AND valid_until >= ?").bind(row.org_key, today).all()).results;
-  const rank = (a) => (a < 0 ? Infinity : a), remaining = Math.max(FREE_CONTESTS, ...others.map((o) => o.cap), ...comps.map((c) => rank(c.allowed)));
+  const rank = (a) => (a < 0 ? Infinity : a), remaining = Math.max(FREE_CONTESTS, ...others.map((o) => o.cap), ...comps.map((c) => rank(c.allowed)), freeDomain(row.org_key) ? Infinity : 0);
   const { n } = await db.prepare("SELECT COUNT(*) AS n FROM contests WHERE org_key = ? AND live_at >= ? AND live_at <= ?").bind(row.org_key, row.window_start, row.window_end).first();
   if (n > remaining) return false;
   await db.prepare("UPDATE contest_passes SET status = 'revoked' WHERE session_id = ? AND status = 'active'").bind(order.session_id).run();

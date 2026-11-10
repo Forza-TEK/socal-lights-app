@@ -85,7 +85,7 @@ import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-p
 import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261108a";
 import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
 import { partnerCopy, dollars as partnerDollars } from "/partner-copy.js?v=20261109a";
-import { PASS_KEYS, passCopy, moreCopy, contactHref, dollars as passDollars } from "/contest-passes.js?v=20261109d";
+import { PASS_KEYS, passCopy, moreCopy, contactHref, dollars as passDollars } from "/contest-passes.js?v=20261111a";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents % 100 ? (p.cents / 100).toFixed(2) : p.cents / 100);
