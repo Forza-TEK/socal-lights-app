@@ -426,7 +426,7 @@ function revealItem(k) {
 }
 function renderPreview() {
   const pv = $("#preview"), it = findKey(state.sel);
-  if (!it || state.detail === state.sel) { pv.hidden = true; document.body.classList.remove("pin-open"); updateRoutePill(); return; }
+  if (!it || state.detail === state.sel) { pv.hidden = true; document.body.classList.remove("pin-open"); updateRoutePill(); if (isPhone()) followRoutePill(700); return; }
   const k = state.sel, f = it.kind === "ev" ? favs.has(it.ev.id) : favs.has(hfav(it.p));
   const acts = `<span class="pv-acts">${awayTag(it.kind === "ev" ? it.ev : { lat: it.p.plat, lng: it.p.plng })}<button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites" title="${f ? "In my favorites" : "Add to my favorites"}">${HEART}</button></span>`;
   if (it.kind === "ev") {
@@ -458,7 +458,7 @@ function renderPreview() {
 let pvSwiped = false; // a swipe through the photos must not count as a tap that opens the details
 document.addEventListener("touchmove", (e) => { if (e.target.closest && e.target.closest("#pvtrack")) pvSwiped = true; }, { passive: true });
 document.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#pvtrack")) pvSwiped = false; }, { passive: true });
-function closePin() { state.sel = null; $("#preview").hidden = true; document.body.classList.remove("pin-open"); drawHL(); markItems(); updateRoutePill(); }
+function closePin() { state.sel = null; $("#preview").hidden = true; document.body.classList.remove("pin-open"); drawHL(); markItems(); updateRoutePill(); if (isPhone()) followRoutePill(700); }
 // Desktop: the card sits next to its dot (below it, or above when there is no room) and follows the map as it moves
 // The pop-up card is placed next to its dot. Its size is measured once (and when it changes), so moving the map never forces a layout.
 let pinBox = null, pinRaf = 0, pinRO = null;
