@@ -118,6 +118,11 @@
           }
         },
         {
+          "id": "owner-photos",
+          "title": "Add photos and details to your home",
+          "desc": "Your city entered your home: link it to your account, check the details and add your own photos."
+        },
+        {
           "id": "edit-entry",
           "title": "Edit or withdraw your entry",
           "desc": "Change your entry's name and description, or take it out.",
@@ -310,6 +315,16 @@
             "captions": "/tutorials/run-add-homes-mobile.vtt",
             "length": "2:18"
           }
+        },
+        {
+          "id": "entry-edit",
+          "title": "Fix a home you added",
+          "desc": "Correct a misspelled name, a description or an address on a home you added to your contest."
+        },
+        {
+          "id": "entry-photos",
+          "title": "Add photos to a home and send the owner a link",
+          "desc": "Add photos to a home you added, and send the homeowner a private link to add their own."
         },
         {
           "id": "edit",
