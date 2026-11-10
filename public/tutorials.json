@@ -465,7 +465,7 @@
           "title": "Add an event to the map",
           "desc": "Share a tree lighting, market, parade or haunted house.",
           "url": "/tutorials/post-event.mp4",
-          "length": "2:33",
+          "length": "2:32",
           "captions": "/tutorials/post-event.vtt",
           "poster": "/tutorials/post-event.jpg",
           "mobile": {
@@ -480,7 +480,7 @@
           "title": "Show off your home",
           "desc": "Put your lights on the map so families can find your home. You do not need a contest.",
           "url": "/tutorials/post-house.mp4",
-          "length": "2:49",
+          "length": "2:50",
           "captions": "/tutorials/post-house.vtt",
           "poster": "/tutorials/post-house.jpg",
           "mobile": {
@@ -495,14 +495,14 @@
           "title": "Claim your home",
           "desc": "Is this your home? Replace the automatic listing with your own photos and details.",
           "url": "/tutorials/post-claim.mp4",
-          "length": "2:10",
+          "length": "2:13",
           "captions": "/tutorials/post-claim.vtt",
           "poster": "/tutorials/post-claim.jpg",
           "mobile": {
             "url": "/tutorials/post-claim-mobile.mp4",
             "poster": "/tutorials/post-claim-mobile.jpg",
             "captions": "/tutorials/post-claim-mobile.vtt",
-            "length": "2:11"
+            "length": "2:10"
           }
         },
         {
@@ -510,14 +510,14 @@
           "title": "Feature your event or home",
           "desc": "Pick a plan, pick your event or winning home, check the dates. Stops at the secure payment page.",
           "url": "/tutorials/post-feature.mp4",
-          "length": "2:27",
+          "length": "2:30",
           "captions": "/tutorials/post-feature.vtt",
           "poster": "/tutorials/post-feature.jpg",
           "mobile": {
             "url": "/tutorials/post-feature-mobile.mp4",
             "poster": "/tutorials/post-feature-mobile.jpg",
             "captions": "/tutorials/post-feature-mobile.vtt",
-            "length": "2:27"
+            "length": "2:28"
           }
         }
       ]
