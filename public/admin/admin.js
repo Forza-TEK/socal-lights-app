@@ -5,7 +5,7 @@ import { attachAddress } from "/addflow.js?v=20261111b";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261104c";
 import { renderHelp } from "/admin/help.js?v=20261104a";
-import { renderPartner } from "/admin/partner.js?v=20261109a";
+import { renderPartner } from "/admin/partner.js?v=20261112g";
 import { renderChat } from "/admin/chat.js?v=20261111g";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261103a";
 
@@ -404,7 +404,7 @@ async function renderPasses() {
   const comp = fsec("Grant a comp", "A comp lets an organization run contests without paying for a pass. It never shows a price to the organizer: they see \"Founding partner: free through the date\". Example, the Founding City: type covinaca.gov, choose Unlimited, set the valid-until date, add the note \"Founding partner: Covina\", then Grant. Nothing is granted until you click Grant.",
     ff("pcTarget", "Website domain or organizer email", `<input id="pcTarget" maxlength="120" placeholder="covinaca.gov" autocomplete="off">`, { c: "c3" }) + ff("pcAllowed", "Contests allowed per 12-month window", `<input id="pcAllowed" type="number" min="1" max="1000" value="5" inputmode="numeric">`, { c: "c3" })
     + ff("pcUnl", "Unlimited", `<label class="chk"><input id="pcUnl" type="checkbox"> No limit while the comp runs</label>`, { c: "c3" }) + ff("pcBadge", "Founder city badge", `<label class="chk"><input id="pcBadge" type="checkbox"> Show a Founder city badge</label>`, { c: "c3", hint: "A small label on this organization's contests while the comp runs. It never affects votes or results." }) + ff("pcBadgeUntil", "Badge until (optional)", `<input id="pcBadgeUntil" type="date">`, { c: "c3", hint: "Blank = the valid-until date. The badge can outlast the free contests." }) + ff("pcUntil", "Valid until", `<input id="pcUntil" type="date">`, { c: "c3" }) + ff("pcNote", "Note (only you see it)", `<input id="pcNote" maxlength="300" placeholder="Founding partner: Covina">`, { c: "c6" }))
-    + `<div class="mfoot"><button class="btn ice" type="button" id="pcGrant">Grant comp</button><span class="msg" id="pcMsg" role="status"></span></div>`;
+    + `<div class="mfoot grantfoot"><button class="btn ice" type="button" id="pcGrant">Grant comp</button><span class="msg" id="pcMsg" role="status"></span></div>`;
   const orgs = d.orgs.length ? `<div class="cards">${d.orgs.map((o) => rec({ attrs: `data-pkey="${esc(o.key)}"`, title: esc(o.label), tags: [[o.over ? "Over its limit" : o.comp ? "Comp" : "Within limit", o.over ? "bad" : o.comp ? "ok" : ""]], meta: esc(o.key),
     facts: fact("This window", o.windowStart ? `${esc(pdate(o.windowStart))} to ${esc(pdate(o.windowEnd))}` : "no window running (the next contest needs a pass)") + fact("Contests counted", `<b>${o.used}</b> of ${o.unlimited ? "unlimited" : o.cap}`) + fact("Comp", o.comp ? `${o.comp.unlimited ? "unlimited" : o.comp.allowed} through ${esc(pdate(o.comp.until))}${o.comp.note ? " · " + esc(o.comp.note) : ""}` : "")
       + fact("Contests", o.contests.map((c) => `<a href="/c/${esc(c.slug)}/manage" target="_blank" rel="noopener">${esc(c.name)}</a> (${esc(c.live_at)}${c.status === "live" ? "" : ", " + esc(c.status)})`).join("<br>")),

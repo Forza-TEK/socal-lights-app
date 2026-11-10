@@ -863,3 +863,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Contests are free (no pass, no limit) for organizations on zerae.com and forza-tek.com (and their subdomains and account emails at them): FREE_DOMAINS in functions/_lib/passes.js, treated as an unlimited comp that never ends; organizers see "Contests are free for your organization." covinaca.gov and eastvaleca.gov keep their Founder city comps (one free contest until 2026-12-31).
 
 - Organizer-added homes (migration 0220): photos from the organizer's dashboard; the homeowner signs in through a private link, LINKS the home to their account (their email is collected), edits it, adds/deletes their own photos and can hide (not delete) the organizer's photos; they cannot delete the home. Details: docs/contests.md.
+
+- Admin > Contests > Contest passes: the "Grant comp" button has space above it and below it (it hugged the Note field and the list under it). Same fix on the Event Partners grant form.
