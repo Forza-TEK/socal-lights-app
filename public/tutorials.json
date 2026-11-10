@@ -196,14 +196,14 @@
           "title": "Create a contest with Quick start",
           "desc": "The short setup: seven screens.",
           "url": "/tutorials/run-quick.mp4",
-          "length": "4:43",
+          "length": "4:53",
           "captions": "/tutorials/run-quick.vtt",
           "poster": "/tutorials/run-quick.jpg",
           "mobile": {
             "url": "/tutorials/run-quick-mobile.mp4",
             "poster": "/tutorials/run-quick-mobile.jpg",
             "captions": "/tutorials/run-quick-mobile.vtt",
-            "length": "4:41"
+            "length": "4:52"
           }
         },
         {
@@ -211,14 +211,14 @@
           "title": "Create a contest with Customize",
           "desc": "Judges, prizes, categories, vote counts and your own rules.",
           "url": "/tutorials/run-custom.mp4",
-          "length": "6:58",
+          "length": "7:06",
           "captions": "/tutorials/run-custom.vtt",
           "poster": "/tutorials/run-custom.jpg",
           "mobile": {
             "url": "/tutorials/run-custom-mobile.mp4",
             "poster": "/tutorials/run-custom-mobile.jpg",
             "captions": "/tutorials/run-custom-mobile.vtt",
-            "length": "6:57"
+            "length": "7:05"
           }
         },
         {
@@ -226,14 +226,14 @@
           "title": "Contest passes",
           "desc": "What the pass picker shows when you run a contest, and how to choose a pass.",
           "url": "/tutorials/run-passes.mp4",
-          "length": "4:18",
+          "length": "4:12",
           "captions": "/tutorials/run-passes.vtt",
           "poster": "/tutorials/run-passes.jpg",
           "mobile": {
             "url": "/tutorials/run-passes-mobile.mp4",
             "poster": "/tutorials/run-passes-mobile.jpg",
             "captions": "/tutorials/run-passes-mobile.vtt",
-            "length": "4:17"
+            "length": "4:12"
           }
         },
         {
@@ -286,14 +286,14 @@
           "title": "Edit your contest and change the dates",
           "desc": "Change the details any time before winners are announced.",
           "url": "/tutorials/run-edit.mp4",
-          "length": "2:24",
+          "length": "2:26",
           "captions": "/tutorials/run-edit.vtt",
           "poster": "/tutorials/run-edit.jpg",
           "mobile": {
             "url": "/tutorials/run-edit-mobile.mp4",
             "poster": "/tutorials/run-edit-mobile.jpg",
             "captions": "/tutorials/run-edit-mobile.vtt",
-            "length": "2:24"
+            "length": "2:25"
           }
         },
         {
