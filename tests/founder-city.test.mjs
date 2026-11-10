@@ -104,3 +104,19 @@ test("the results pages: /api/archive and /past/<slug> carry the badge for the f
   const html = (f) => readFileSync(new URL("../public/" + f, import.meta.url), "utf8");
   for (const f of ["contest.html", "contests.html", "organizer.html"]) assert.match(html(f), /Founder city: one of the first cities to run contests on SoCal Lights/, f);
 }));
+
+test("a founder-city organizer with NO website is still the comp organization (email domain), a free-mail or other-domain organizer is not", () => withNow(async () => {
+  const { env, raw } = newEnv();
+  const e = await addUser(raw, "ue", "analyst@eastvaleca.gov"), o = await addUser(raw, "uo", "someone@example-city.gov"), g = await addUser(raw, "ug2", "someone2@gmail.com");
+  const ent = async (u, site) => (await J(entitlementGet({ request: rq("/api/contest-pass/entitlement?site=" + encodeURIComponent(site), null, u.cookie), env }))).body;
+  const a = await ent(e, ""), b = await ent(e, "https://somewhere-else.org"), c = await ent(o, ""), d = await ent(g, "");
+  assert.equal(a.key, "d:eastvaleca.gov"); assert.equal(a.canCreate, true); assert.ok(a.comp); assert.deepEqual(a.offers, []);
+  assert.equal(b.key, "d:eastvaleca.gov"); // a different website does not lose the comp (the verified email domain decides)
+  assert.equal(c.key, "u:someone@example-city.gov"); assert.equal(c.canCreate, false); // no comp for that domain: normal rules
+  assert.equal(d.key, "u:someone2@gmail.com");
+  const made = await J(createContest({ request: rq("/api/contests", good({ name: "Eastvale Holiday Lights", site: "" }), e.cookie), env }));
+  assert.equal(made.status, 200); // covered: no payment step
+  assert.equal(raw.prepare("SELECT org_key FROM contests WHERE slug = ?").get(made.body.slug).org_key, "d:eastvaleca.gov");
+  raw.prepare("UPDATE contest_comps SET revoked = 1 WHERE org_key = 'd:eastvaleca.gov'").run();
+  assert.equal((await ent(e, "")).key, "u:analyst@eastvaleca.gov"); // revoked comp: back to the normal account organization
+}));
