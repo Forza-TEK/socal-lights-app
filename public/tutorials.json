@@ -519,6 +519,11 @@
             "captions": "/tutorials/post-feature-mobile.vtt",
             "length": "2:28"
           }
+        },
+        {
+          "id": "event-partner",
+          "title": "Event Partner for cities, chambers and event producers",
+          "desc": "One plan covers up to 10 of your events a season: what it is, how you get it, and how you use it on each event."
         }
       ]
     }

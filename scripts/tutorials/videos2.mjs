@@ -381,5 +381,40 @@ S["contest-passes"] = { id: "contest-passes", file: "run-passes", cookie: ck.u_o
   nextUp(ER, "Create a contest with Quick start", "The short setup: seven screens"),
 ]};
 
+// Event Partner (new 2026-11-10): the plan for organizations with several events. The buy screen and the Founding-partner screen use the real page with the entitlement answer
+// swapped (nothing is bought); the "plan" screens are real: a seeded plan and one covered event (scripts/tutorials/seed-partner.sql), and Use the plan really applies it.
+// No price is spoken: the card on screen shows what /api/config serves. The checkout request is held, so nothing goes to Stripe.
+const partnerMock = (st) => async (p) => {
+  await p.route("**/api/partner/entitlement**", async (r) => {
+    if (st.mode === "plan") return r.fallback();
+    const res = await r.fetch(), j = await res.json().catch(() => ({})), cfg = await (await p.request.get(BASE + "/api/config")).json().catch(() => ({}));
+    const cents = (cfg.eventPartner || {}).cents || 14900;
+    if (st.mode === "buy") return r.fulfill({ json: { ...j, covered: false, hasPlan: false, comp: null, used: 0, cap: null, unlimited: false, remaining: null, canApply: false, offer: { cents, cap: 10 }, buyProblem: "", events: [] } });
+    return r.fulfill({ json: { ...j, covered: true, hasPlan: false, comp: { until: "2026-12-31", unlimited: false }, used: 0, cap: 10, unlimited: false, remaining: 10, canApply: true, offer: null, buyProblem: "", events: [] } });
+  });
+};
+const PST = { mode: "buy" };
+S["event-partner"] = { id: "event-partner", file: "post-partner", cookie: ck.u_mine, ...MAPSPEC, steps: [
+  { ...hook(EP, "Event Partner", "One plan for all your events", "In this video, you will see Event Partner, the plan for cities, chambers of commerce, nonprofits and event producers that run several events in a season. You will see what it is, how an organization gets it, and how you use it on your events. We start on the map."), pre: async (p) => { PST.mode = "buy"; await partnerMock(PST)(p); } },
+  ...openShort(),
+  ...navSteps([
+    target("Tap the three dots", "Look at the top right corner of the map, and tap the three dots.", "#morebtn", { after: 900 }),
+    target("Tap Promote your event", "In the menu, tap Promote your event. Listing an event is always free. This is for organizers who want to stand out.", '#moremenu a[href="/feature"]', { after: 2200 }),
+  ]),
+  { cap: "Look at the top", say: "This page features one event. Look at the sentence at the top: Run several events a season as a city, chamber, nonprofit or event producer? See Event Partner.", do: async (p, h) => { await h.hover('.lede a[href="/partner"]', 1600); }, pad: 0.4 },
+  target("Tap Event Partner", "Tap Event Partner.", '.lede a[href="/partner"]', { after: 2400 }),
+  { cap: "What it is", say: "This is the Event Partner page. It is for an organization that runs several events in a season. One payment covers up to ten of your events for the season. Each covered event gets the gold Featured pin on the map, and an Event Partner badge on its page.", do: async (p, h) => { await p.locator(".pbox").first().waitFor({ timeout: 10000 }); await h.hover(".pbox h2", 1200); await h.hover(".pbox ul", 1600); }, pad: 0.4, poster: true },
+  { cap: "Listing stays free", say: "Listing an event stays free for everyone. Event Partner is only for events you want to stand out. The price is on the card, and you pay once for the season, with no subscription.", do: async (p, h) => { await h.hover(".pbox .price", 1600); }, pad: 0.4 },
+  { cap: "Tap Pay on Stripe", say: "To buy it, you tap Pay on Stripe. That opens Stripe's secure payment page. We stop here, because this is only a demonstration, and we never enter card details in a video.", target: "#buy", after: 3000, pre: async (p) => { await p.route("**/api/partner/checkout", () => new Promise(() => {})); }, poster: true },
+  { cap: "After you pay", say: "After you pay, the page shows your plan. It counts how many of your ten events you have used this season, and lists the events it already covers.", do: async (p, h) => { PST.mode = "plan"; await p.reload({ waitUntil: "domcontentloaded" }); await p.locator("#app .plist").first().waitFor({ timeout: 15000 }); await h.hover("#app p:has-text('events used')", 1500); await h.hover("#app .plist", 1400); }, pad: 0.4 },
+  { cap: "Choose an event", say: "Under Choose an event are your other live events. Tap Use the plan next to the event you want to cover.", do: async (p, h) => { await h.scrollTo('[data-ap="ev-oak-hill-tree-lighting"]', 300).catch(() => {}); await h.hover('[data-ap="ev-oak-hill-tree-lighting"]', 900); }, target: '[data-ap="ev-oak-hill-tree-lighting"]', after: 2600 },
+  { cap: "It is covered", say: "The page says the event is Featured through its last day, and the count goes up by one. Featuring opens thirty days before an event starts, and it runs to the event's last day, or to the end of the season, whichever comes first.", do: async (p, h) => { await h.hover("#msg", 1500); await h.hover("#app p:has-text('events used')", 1400); }, pad: 0.4 },
+  { cap: "See it on the map", say: "Tap See it, to open a covered event on the map.", target: '.plist a[href="/#e-ev-oak-hill-tree-lighting"]', after: 3200 },
+  { cap: "The Event Partner badge", say: "On the event, you see the Featured badge, and an Event Partner badge. The badge only shows that the organization has this plan. It is not an endorsement by SoCal Lights.", do: async (p, h) => { await p.locator('.tag:has-text("Event Partner")').first().waitFor({ timeout: 10000 }); await h.hover('.tag:has-text("Event Partner")', 2200); }, pad: 0.5, poster: true },
+  { cap: "Founding partners", say: "Some founding cities have Event Partner free this year. Then the page says Founding partner, free through a date, and shows no price at all.", do: async (p, h) => { PST.mode = "comp"; await p.goto(BASE + "/partner", { waitUntil: "domcontentloaded" }); await p.locator("#app p:has-text('Founding partner')").first().waitFor({ timeout: 15000 }); await h.hover("#app p:has-text('Founding partner')", 2200); }, pad: 0.5 },
+  recap(EP, "Event Partner, in short", ["Menu, Promote your event, Event Partner", "One payment covers up to ten events a season", "Tap Use the plan on each event", "Covered events show an Event Partner badge"], "That is Event Partner. Listing stays free, the plan is for events you want to feature, and the badge is not an endorsement."),
+  nextUp(EP, "Feature your event or home", "Pick a plan for one event, then pay on Stripe"),
+]};
+
 const id = process.argv[2];
 if (id) { if (!S[id]) throw new Error("no video " + id); await record(S[id]); }
