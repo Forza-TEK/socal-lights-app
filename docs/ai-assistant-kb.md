@@ -14,7 +14,7 @@ You do not need a contest to put your home on the map. Adding a home, also calle
 
 ## Entering a home in a contest
 url: /help#enter
-To enter, open the contest page and choose Enter. You must sign in, add photos, the home's address and a name, and accept the contest's official rules. You must be 18 or older to enter a home. A home does not pick a category: it competes in every category. If the organizer approves entries by hand, your photos stay private until the organizer approves your entry; if entries are approved automatically, your home appears right away. You can edit or withdraw your entry from your profile while the contest allows it.
+To enter, open the contest page and choose Enter. You must sign in, add photos, the home's address and a name, and accept the contest's official rules. You must be 18 or older to enter a home. A home does not pick a category: it competes in every category. If the organizer approves entries by hand, your photos stay private until the organizer approves your entry; if entries are approved automatically, your home appears right away. You can edit or withdraw your entry from your profile while the contest allows it. If you are the organizer and your city already has a list of homes, you can add them yourself instead: see Organizer-added homes.
 
 ## Voting in a contest
 url: /help#vote
@@ -61,8 +61,14 @@ url: /past
 When the organizer announces winners, the results are saved as a fixed snapshot and votes are locked. Every entrant is emailed, and winners get a congratulations email. The permanent results page is at /past/<name>, and /past lists every announced contest. Winners can show a crown badge on their listings; each person can hide badges from the Badges tab on their profile.
 
 ## Organizer-added homes
-url: /help#run
-For cities that collect resident entries on their own form or spreadsheet, the organizer or a co-organizer can add homes themselves: on the dashboard, open the Entries tab and choose Add homes yourself. Paste one home per line (street address, optionally with city, ZIP and a name). Choose Check addresses first to see which were found, tick the box confirming the residents agreed to have their address shown on the public map, then add them. Up to 10 homes can be added at a time. Homes that cannot be found are not added. Added homes have no photo and no resident account. This can be done before voting starts. A mistake can be removed from the entries list before the home has votes.
+url: /help/add-your-citys-homes-yourself
+keywords: add homes yourself organizer adds homes spreadsheet city form paste addresses residents no photo no account entries tab check addresses
+For cities that collect resident sign-ups somewhere else, such as a city form, a spreadsheet or email, the organizer or a co-organizer can put those homes in the contest themselves. The resident does not need a photo or an account. Steps: open your dashboard (account circle, Your contests, Manage), tap Entries, and open Add homes yourself. Paste one home per line, like this: Street address, City, ZIP | Name. The city, ZIP and name are optional, and without a city the contest's city is used. A column pasted from a spreadsheet works too. Tap Check addresses: every line is marked Found, or says what is wrong, such as Already in this contest. Tick "These residents agreed to have their address shown on the public map" (only if they did), then tap Add homes; the button shows how many it will add. Each home goes straight onto the ballot and the driving routes with an Added by organizer tag. Homes that cannot be found are not added. To take one out, tap Remove on its row, then tap again to confirm. Limits: up to 100 homes pasted at a time, up to 500 added this way to one contest, and up to 25 while a new contest is waiting for our quick review (the limit lifts when we approve it). Homes can be added once the contest is live and until voting starts, because after that it would change the ballot under the voters.
+
+## All the ways a home gets into a contest
+url: /help/add-your-citys-homes-yourself
+keywords: how do homes get into my contest ways to enter homes add homes to my contest city list residents sign up enter a home organizer enters homes for residents
+There are two ways to get homes into a contest. 1) Residents enter their own home: they open the contest page (the link, QR code, poster or yard sign you share) and tap Enter, sign in, add photos, the home's address and a name, and accept the contest's official rules. They must be 18 or older. If you approve entries by hand, a new entry waits for you on the Entries tab; if entries are approved automatically, the home appears right away. 2) You add homes yourself, which is the way to go when your city already collects sign-ups on a form, a spreadsheet or email: on your dashboard open Entries, then Add homes yourself, paste one address per line, tap Check addresses, then Add homes. Residents need no photo or account for that. You can use both ways in the same contest. All the steps, the formats and the limits are in the chunk "Organizer-added homes" and the Help article "Add your city's homes yourself". Either way, voting opens on the contest's start date and every approved home is on the ballot and the driving routes.
 
 ## Unpublish a contest and publish it again
 url: /help#run
@@ -218,3 +224,13 @@ An installer adds a company logo on the manage page under Your details. A contes
 url: /help/my-photo-will-not-upload
 keywords: photo photos picture size how big resolution format jpg png webp upload limit megabytes
 You can add up to 8 photos to a home. Photos must be JPG, PNG or WebP, and each one must be under 6 MB. You do not need to resize them: the form shrinks big phone photos for you before they upload, so a normal phone photo works. Take photos at night with the lights on; the first photo is the cover people see on the map. Homes can also add photos later by email. If a photo will not upload, check that it is a JPG, PNG or WebP and under 6 MB, then try again, and see the Help Center article "My photo will not upload".
+
+## Every route for a home at a glance
+url: /add-house
+keywords: all the ways options routes several ways different ways claim installer organizer adds enter contest
+There are several ways a home gets onto SoCal Lights. 1) A homeowner adds it: sign in, open Add, choose A lighting display, and fill in the form with night photos; it is free. 2) A professional installer adds homes they put up for customers, choosing A professional installer in the same form. 3) A home that is already on the map from a public list can be claimed: open its card, tap Is this your home? Claim it, and add your own photos and details. 4) A contest organizer can add residents' homes to their own contest from a list (Entries tab, Add homes yourself), with no photo or account needed. 5) A resident can enter a home in a contest from the contest page. The first three put a home on the map for everyone; the last two put it in a contest.
+
+## Every route for an event at a glance
+url: /add-event
+keywords: all the ways options routes several ways different ways claim an existing event web page confirmed expected
+To list an event, sign in, open Add, and choose An event. If your event has a web page that mentions its name and date, the event is marked Confirmed; without a page it still goes on the map, marked Expected until the dates are checked. If your event is already on the map but not on your account, open Promote your event (or its listing) and use Claim an existing listing: if your email matches the event's own website it is approved at once, otherwise the team checks it. Contest organizers who create a contest also get it on the map as an event automatically. Listing an event is always free.
