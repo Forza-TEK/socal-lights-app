@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
+- New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+
 ## 2026-11-10 (editing a contest entry record)
 - Owner could not fix a misspelled name on an organizer-added home. Added: organizer **Edit** (name, description, address with re-lookup) on added homes; Admin **Contest entries** view (Houses > Published) that opens the usual Edit form; the homeowner button on the contest page now reads **Edit details and photos**. Homeowner editing of name/description already existed. Address stays organizer/Admin only. Tests in `tests/entry-photos.test.mjs`.
 - A home linked from an organizer link now also shows under Displays on the profile (as well as under Contests), with Manage and Open contest buttons.
