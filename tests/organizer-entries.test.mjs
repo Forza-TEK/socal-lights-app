@@ -157,8 +157,8 @@ test("limits: 10 homes a call (the free plan allows 50 outgoing calls a request)
     const ok = await t.add({ homes: many(10) });
     assert.equal(ok.status, 200); assert.equal(ok.body.added.length, 10);
     // 500 per contest: seed up to 499 added homes, then 2 more is refused and 1 more works
-    const ins = t.raw.prepare("INSERT INTO posts (id,status,biz,title,city,lat,lng,descr,photos,season,address,street,contest_id,user_id,added_by,entry_no) VALUES (?,'approved','b','t','Pasadena',34.1,-118.1,'d','[]','christmas',?,?,'c1','','uO',?)");
-    for (let i = 0; i < 489; i++) ins.run("seed" + i, `${5000 + i} Seed Way`, `${5000 + i} Seed Way`, 200 + i);
+    const ins = t.raw.prepare("INSERT INTO posts (id,status,biz,title,city,lat,lng,descr,photos,season,address,street,contest_id,user_id,added_by,entry_no,photo_token) VALUES (?,'approved','b','t','Pasadena',34.1,-118.1,'d','[]','christmas',?,?,'c1','','uO',?,?)");
+    for (let i = 0; i < 489; i++) ins.run("seed" + i, `${5000 + i} Seed Way`, `${5000 + i} Seed Way`, 200 + i, "seedtoken" + i); // an added home always carries its photo link token
     const over = await t.add({ homes: many(2, 500) });
     assert.equal(over.status, 400); assert.match(over.body.error, /up to 500.*room for 1 more/);
     assert.equal((await t.add({ homes: many(1, 500) })).body.added.length, 1);

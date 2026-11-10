@@ -858,3 +858,8 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Help Center: articles are cards in a grid (title, "Category · How to", and "Video and steps" or "Written steps"; section titles show how many). Tutorials: each video card's play button, title and Computer/Phone buttons now open its Help article (/help/<article>?play=1[&v=w|p]), which plays the bigger player and starts the video; videos with no article still play on the Tutorials page. New GET /api/help/videos maps each video file to its first Help article.
 
 - AI chat panel: the message box is no longer cut off in a short window (the panel scrolls as a whole at every width; header and message box stay in view; new messages scroll into view). The notice is two lines with a "More info" / "Less info" button that opens the privacy details (personal information, tab-only storage, Privacy, Email us).
+
+
+- Contests are free (no pass, no limit) for organizations on zerae.com and forza-tek.com (and their subdomains and account emails at them): FREE_DOMAINS in functions/_lib/passes.js, treated as an unlimited comp that never ends; organizers see "Contests are free for your organization." covinaca.gov and eastvaleca.gov keep their Founder city comps (one free contest until 2026-12-31).
+
+- Organizer-added homes (migration 0220): photos from the organizer's dashboard; the homeowner signs in through a private link, LINKS the home to their account (their email is collected), edits it, adds/deletes their own photos and can hide (not delete) the organizer's photos; they cannot delete the home. Details: docs/contests.md.

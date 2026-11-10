@@ -14,7 +14,16 @@ import { suppressionStatements } from "./outreach.js";
 export async function deleteAccount(env, id, email) {
   const all = (sql, ...b) => env.DB.prepare(sql).bind(...b).all().then((r) => r.results);
   const contests = await all("SELECT id, event_id FROM contests WHERE owner_id = ?", id);
-  const entries = await all("SELECT id, photos FROM posts WHERE user_id = ?", id);
+  // Homes an organizer added that this person linked to their account stay (they belong to the contest): they are unlinked, the person's own photos go, and photos they hid stay hidden.
+  const claimed = await all("SELECT id, photos, photos_hidden, photos_org FROM posts WHERE user_id = ? AND photo_token IS NOT NULL", id);
+  const own = [], arr = (x) => { try { const a = JSON.parse(x || "[]"); return Array.isArray(a) ? a : []; } catch { return []; } };
+  for (const h of claimed) {
+    const org = arr(h.photos_org), keepVis = arr(h.photos).filter((k) => org.includes(String(k).split("/").pop())), keepHid = arr(h.photos_hidden).filter((n) => org.includes(n));
+    own.push(...arr(h.photos).filter((k) => !keepVis.includes(k)), ...arr(h.photos_hidden).filter((n) => !keepHid.includes(n)).map((n) => `h/${h.id}/${n}`));
+    await env.DB.prepare("UPDATE posts SET user_id = '', contact_email = '', claimed_at = NULL, photos = ?, photos_hidden = ? WHERE id = ?").bind(JSON.stringify(keepVis), JSON.stringify(keepHid), h.id).run();
+  }
+  if (own.length) await r2Delete(env, own, "unlinked home photos");
+  const entries = await all("SELECT id, photos, photos_hidden FROM posts WHERE user_id = ?", id);
   const installers = (await all("SELECT id FROM installers WHERE lower(owner_email) = lower(?)", email)).map((r) => r.id);
   let avatar = ""; try { avatar = ((await env.DB.prepare("SELECT avatar FROM users WHERE id = ?").bind(id).first()) || {}).avatar || ""; } catch {}
   // Sponsor records of contests this person ran: receipts (private) and, for contests that are not announced, logos go too (organizer-collected sponsors; contact details are cleared below)

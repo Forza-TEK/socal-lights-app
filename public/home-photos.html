@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Your home in the contest · SoCal Lights</title>
+<meta name="description" content="Manage your home in a neighborhood lighting contest.">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/info.css?v=20261110y">
+<style>
+.hp{max-width:640px;margin:28px auto 56px;display:grid;gap:16px}.hp h1{margin:0;font-size:28px}.hp p{margin:0}.hp .meta{color:var(--muted)}
+.hp .card{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:12px}:root[data-theme="dark"] .hp .card{background:var(--tile)}
+.hp .card h2{margin:0;font-size:18px}.hp .notice{border-left:3px solid var(--season,#c8324f);padding:4px 0 4px 14px;color:var(--ink)}
+.hp .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.hp .ph{position:relative;border-radius:12px;overflow:hidden;background:var(--tile,#eee);aspect-ratio:4/3}.hp .ph img{display:block;width:100%;height:100%;object-fit:cover}
+.hp .ph button{position:absolute;top:6px;right:6px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:20px;line-height:1;cursor:pointer}
+.hp .ph button:focus-visible,.hp .go:focus-visible,.hp .pick:focus-within{outline:3px solid var(--season,#c8324f);outline-offset:2px}
+.hp .pick{display:grid;gap:8px;border:2px dashed var(--line2,#b0b0b0);border-radius:14px;padding:18px;text-align:center;cursor:pointer}.hp .pick input{position:absolute;opacity:0;width:1px;height:1px}
+.hp .pick b{font-size:17px}.hp .go{min-height:48px;padding:0 26px;border-radius:12px;border:1px solid var(--btn);background:var(--btn);color:var(--btn-ink);font:600 16px var(--font,inherit);cursor:pointer;justify-self:start}.hp .go[disabled]{opacity:.6;cursor:default}
+.hp .fm{display:grid;gap:12px}.hp label.f{display:grid;gap:6px;font-weight:600}.hp input[type=text],.hp input:not([type]),.hp textarea,.hp select{font:inherit;padding:12px 14px;border:1.5px solid var(--line2,#b0b0b0);border-radius:12px;background:transparent;color:inherit;width:100%;box-sizing:border-box}.hp textarea{min-height:80px;resize:vertical}.hp .chk{display:flex;gap:10px;align-items:center;font-weight:400}.hp .chk input{width:20px;height:20px}.hp .ph.hid img{opacity:.45}.hp .ph .hb{position:absolute;top:auto;right:6px;bottom:6px;left:auto;width:auto;height:34px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#14161b}.hp .ph .ptg{position:absolute;left:6px;top:6px;right:48px;background:rgba(0,0,0,.72);color:#fff;font-size:12px;line-height:1.3;padding:3px 8px;border-radius:10px;width:fit-content;max-width:calc(100% - 54px)}.hp .ph .ptgh{background:#8a5f00;right:6px;max-width:calc(100% - 12px)}.hp .err{color:var(--bad);font-weight:600}.hp .ok{color:var(--ok);font-weight:600}
+</style>
+<script src="/hit.js?v=20261107a" defer></script>
+</head>
+<body>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+<main><div class="hp" id="box"><p class="meta">Loading…</p></div></main>
+<script type="module">
+import { shrink } from "/shrink.js?v=20261111a";
+import { signIn, noteSigninResult } from "/auth.js?v=20261107p";
+const box = document.getElementById("box"), token = (location.pathname.match(/^\/photos\/([A-Za-z0-9_-]{20,64})\/?$/) || [])[1] || "";
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], nice = (d) => { const [, m, x] = String(d).split("-").map(Number); return m ? MON[m - 1] + " " + x : ""; };
+const api = "/api/home-photos/" + token;
+const dead = () => { box.innerHTML = '<h1>This link isn\'t active</h1><p class="notice">The link may have been replaced, or the home is no longer in the contest. Ask the organizer of the contest for a new link.</p>'; };
+let msg = "", busy = false, D = null;
+const say = (m) => { msg = m; const e = document.getElementById("msg"); if (e) { e.textContent = m.replace(/^!/, ""); e.className = m.startsWith("!") ? "err" : "ok"; } };
+noteSigninResult();
+async function call(method, body, search = "") {
+  const init = { method, credentials: "same-origin" };
+  if (body instanceof FormData) init.body = body; else if (body) { init.body = JSON.stringify(body); init.headers = { "content-type": "application/json" }; }
+  const r = await fetch(api + search, init), j = await r.json().catch(() => ({}));
+  return { r, j };
+}
+async function load() {
+  if (!token) return dead();
+  const r = await fetch(api, { cache: "no-store", credentials: "same-origin" }).catch(() => null); if (!r || !r.ok) return dead();
+  D = await r.json(); draw();
+}
+const head = () => `<p class="meta"><b>${esc(D.home.title)}</b>, ${esc(D.home.address)}<br>Part of <b>${esc(D.contest.name)}</b>, run by ${esc(D.contest.org)}, ${esc(D.contest.city)}.</p>`;
+function draw() {
+  if (D.state === "other") {
+    box.innerHTML = `<h1>This home is linked to another account</h1>${head()}<p class="notice">${D.signedIn ? `You are signed in as ${esc(D.email)}.` : ""} If this is your home and you think this is a mistake, ask ${esc(D.contest.org)} to unlink it and send you a new link.</p>`; return;
+  }
+  if (D.state === "unclaimed") {
+    box.innerHTML = `<h1>Is this your home?</h1>${head()}
+    <p class="notice">${esc(D.contest.org)} entered your home in <b>${esc(D.contest.name)}</b>. Link it to your account to manage it: change its details, add your own photos, and hide any photos the organizer added. We use your email address to send you contest updates and results, and the organizer can see it. You can't delete the home from the contest yourself; ask the organizer if it should come off.</p>
+    ${D.canLink ? (D.signedIn ? `<div class="card"><p>You are signed in as <b>${esc(D.email)}</b>.</p><button class="go" id="claim" type="button">Yes, this is my home: link it to my account</button><p id="msg" role="status" class="${msg.startsWith("!") ? "err" : "ok"}">${esc(msg.replace(/^!/, ""))}</p></div>` : `<div class="card"><p>Sign in with your email (we send a code) or with Google.</p><button class="go" id="signin" type="button">Sign in to continue</button></div>`) : `<p class="notice">The winners have been announced, so this home can't be linked any more.</p>`}`;
+    const si = document.getElementById("signin"); if (si) si.onclick = async () => { const u = await signIn({ title: "Sign in to link your home", next: location.pathname }); if (u) load(); };
+    const cl = document.getElementById("claim"); if (cl) cl.onclick = async () => { cl.disabled = true; const { r, j } = await call("POST", { action: "claim" }); if (r.ok) { D = j; msg = "Linked. This home is now on your account."; draw(); } else { cl.disabled = false; say("!" + (j.error || "That didn't work. Please try again.")); } };
+    return;
+  }
+  // mine
+  const d = D.details, ph = D.photos, total = ph.length, room = D.max - total, open = D.open;
+  box.innerHTML = `<h1>Your home</h1>${head()}
+  <p class="meta">Signed in as ${esc(D.email)}. ${open ? `You can change this until voting ends on <b>${esc(nice(D.voteEnd))}</b>.` : ""}</p>
+  ${open ? "" : `<p class="notice">${D.announced ? "The winners have been announced" : "Voting has closed"}, so this home can't be changed any more.</p>`}
+  <div class="card"><h2>Details</h2>
+    <form id="edit" class="fm" novalidate><label class="f">Name of your home<input name="title" maxlength="90" value="${esc(d.title)}" ${open ? "" : "disabled"}></label>
+    <label class="f">About your display<textarea name="desc" rows="3" maxlength="1200" ${open ? "" : "disabled"}>${esc(/^Entry in /.test(d.desc) ? "" : d.desc)}</textarea></label>
+    <label class="f">When the lights are on <input name="lights_on" maxlength="60" value="${esc(d.lights_on)}" placeholder="Every night 5 to 10 pm" ${open ? "" : "disabled"}></label>
+    <label class="f">Tips for visitors <input name="where" maxlength="120" value="${esc(d.where)}" ${open ? "" : "disabled"}></label>
+    <label class="f">How to see it <select name="visit" ${open ? "" : "disabled"}>${[["", "Not set"], ["drive", "Drive by"], ["walk", "Walk by"], ["both", "Drive or walk"]].map(([v, l]) => `<option value="${v}" ${d.visit === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+    <label class="f">Parking <select name="parking" ${open ? "" : "disabled"}>${[["", "Not set"], ["free", "Free parking nearby"], ["street", "Street parking"], ["none", "No parking"]].map(([v, l]) => `<option value="${v}" ${d.parking === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+    <label class="f">Radio station <input name="radio" maxlength="40" value="${esc(d.radio)}" ${open ? "" : "disabled"}></label>
+    <label class="chk"><input type="checkbox" name="accessible" ${d.accessible ? "checked" : ""} ${open ? "" : "disabled"}> Stroller and wheelchair friendly</label>
+    ${open ? '<button class="go" type="submit">Save changes</button>' : ""}</form></div>
+  <div class="card"><h2>Photos (${total} of ${D.max})</h2><p class="meta" style="margin:0">Photos from ${esc(D.contest.org)} can be hidden but not deleted. Your own photos can be deleted.</p>
+    ${total ? `<div class="grid">${ph.map((p) => `<div class="ph${p.hidden ? " hid" : ""}"><img src="${esc(p.url)}" alt="A photo of your home" loading="lazy">${p.hidden ? '<span class="ptg ptgh">Hidden: only you and the organizer can see it</span>' : p.city ? `<span class="ptg">From ${esc(D.contest.org)}</span>` : ""}${open ? (p.city ? `<button type="button" class="hb" data-${p.hidden ? "show" : "hide"}="${esc(p.name)}">${p.hidden ? "Show again" : "Hide"}</button>` : `<button type="button" data-rm="${esc(p.name)}" aria-label="Delete this photo" title="Delete this photo">&times;</button>`) : ""}</div>`).join("")}</div>` : '<p class="meta">No photos yet.</p>'}
+    ${open ? (room > 0 ? `<label class="pick"><input type="file" id="files" accept="image/jpeg,image/png,image/webp" multiple><b>Add your own photos</b><span class="meta">From your phone or computer. You can add ${room} more.</span></label>` : `<p class="meta">This home has ${D.max} photos. Delete one of your own to add another.</p>`) : ""}
+    <p id="msg" role="status" class="${msg.startsWith("!") ? "err" : "ok"}">${esc(msg.replace(/^!/, ""))}</p></div>`;
+  const form = document.getElementById("edit");
+  form.onsubmit = async (e) => {
+    e.preventDefault(); if (busy) return; busy = true; say("Saving…"); const f = new FormData(form);
+    const { r, j } = await call("POST", { action: "edit", title: f.get("title"), desc: f.get("desc"), lights_on: f.get("lights_on"), where: f.get("where"), visit: f.get("visit"), parking: f.get("parking"), radio: f.get("radio"), accessible: form.accessible.checked });
+    busy = false; if (r.ok) { D = j; msg = "Saved."; draw(); } else say("!" + (j.error || "That didn't save. Please try again."));
+  };
+  const fi = document.getElementById("files");
+  if (fi) fi.onchange = async () => {
+    const list = [...fi.files].slice(0, room); if (!list.length || busy) return; busy = true; say("Uploading…");
+    try {
+      const fd = new FormData(); for (const file of list) fd.append("photos", await shrink(file), "photo.jpg");
+      const { r, j } = await call("POST", fd);
+      busy = false; if (r.ok) { D = j; msg = list.length === 1 ? "Photo added." : list.length + " photos added."; draw(); } else say("!" + (j.error || "That didn't upload. Please try again."));
+    } catch { busy = false; say("!Those photos couldn't be read. Try JPG, PNG or WebP photos."); }
+  };
+  const act = async (action, name) => { if (busy) return; busy = true; const { r, j } = await call("POST", { action, name }); busy = false; if (r.ok) { D = j; msg = action === "hide" ? "Photo hidden from the public." : "Photo shown again."; draw(); } else say("!" + (j.error || "That didn't work.")); };
+  box.querySelectorAll("[data-hide]").forEach((b) => (b.onclick = () => act("hide", b.dataset.hide)));
+  box.querySelectorAll("[data-show]").forEach((b) => (b.onclick = () => act("show", b.dataset.show)));
+  box.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = async () => {
+    if (busy || !confirm("Delete this photo? This can't be undone.")) return; busy = true;
+    const { r, j } = await call("DELETE", null, "?name=" + encodeURIComponent(b.dataset.rm)); busy = false;
+    if (r.ok) { D = j; msg = "Photo deleted."; draw(); } else say("!" + (j.error || "That didn't work."));
+  }));
+}
+load();
+</script>
+<script src="/footer.js?v=20261111g" defer></script>
+</body>
+</html>
