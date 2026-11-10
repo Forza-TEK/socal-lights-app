@@ -399,7 +399,7 @@ S["event-partner"] = { id: "event-partner", file: "post-partner", cookie: ck.u_m
   ...openShort(),
   ...navSteps([
     target("Tap the three dots", "Look at the top right corner of the map, and tap the three dots.", "#morebtn", { after: 900 }),
-    target("Tap Promote your event", "In the menu, tap Promote your event. Listing an event is always free. This is for organizers who want to stand out.", '#moremenu a[href="/feature"]', { after: 2200 }),
+    target("Tap Promote your event", "In the menu, tap Promote your event. Listing an event is always free. This is for organizers who want to stand out.", '#moremenu a[href="/feature"]', { after: 2200, pre: payOn }),
   ]),
   { cap: "Look at the top", say: "This page features one event. Look at the sentence at the top: Run several events a season as a city, chamber, nonprofit or event producer? See Event Partner.", do: async (p, h) => { await h.hover('.lede a[href="/partner"]', 1600); }, pad: 0.4 },
   target("Tap Event Partner", "Tap Event Partner.", '.lede a[href="/partner"]', { after: 2400 }),
