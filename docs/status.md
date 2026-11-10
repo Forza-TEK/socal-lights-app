@@ -849,3 +849,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Map on phones: when a dot is selected and its card opens at the bottom, the "Route these" pill now sits just above that card (it used to float over the card's photo). It follows the card as it slides in and goes back to the list when the card closes.
 
 - Map: with a dot's card open, the pill says "Route this" and opens a route to that one place only (works even when too many places are in view for "Route these"); closing the card puts "Route these" back.
+
+- Map on phones: tapping away from a dot (card closes) no longer leaves the "Route these" pill below the screen; it follows the list back up (it was only placed once, while the list was still off screen).
