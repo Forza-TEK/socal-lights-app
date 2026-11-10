@@ -845,3 +845,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Santa Photos at The Shops at Mission Viejo (soc-shops-mv-santa) had no photo (stock photo showed); set to the Santa photo on its simon.com page (migration 0217). simon.com blocks scripts with a bot check, so the photo was found through a normal page read, not scraped around the check.
 
 - Photo sweep for events with no photo (2026-11-10): 531 upcoming events had none; the tool found a photo on 61, I viewed all of them and kept 12 (flyers, posters, logos, maps, ads, blank images and photos shared by several events were rejected): migration 0218. The other ~470 either have no page, a page behind a bot check, or a page with no usable photo, and keep the stock photo for their type.
+
+- Map on phones: when a dot is selected and its card opens at the bottom, the "Route these" pill now sits just above that card (it used to float over the card's photo). It follows the card as it slides in and goes back to the list when the card closes.

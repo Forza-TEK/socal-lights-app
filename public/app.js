@@ -438,7 +438,7 @@ function renderPreview() {
     const many = ph.length > 1;
     pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide">${photoImg({ src: photoUrl(k2) }, i < 2, 800).replace('alt=""', `alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" draggable="false"`)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="pvcount" id="pvcount">1 / ${ph.length}</span>` : ph.length ? photoImg({ src: photoUrl(ph[0]) }, true, 800) : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${bPop(p).icon}${esc(p.title)}${bPop(p).sub}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
   }
-  pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); pinBox = null; if (!pinRO && window.ResizeObserver) { pinRO = new ResizeObserver(() => { pinBox = null; placePin(); }); pinRO.observe(pv); } placePin();
+  pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); pinBox = null; if (!pinRO && window.ResizeObserver) { pinRO = new ResizeObserver(() => { pinBox = null; placePin(); positionRoutePill(); }); pinRO.observe(pv); } placePin();
   const tr = $("#pvtrack");
   if (tr) tr.addEventListener("scroll", () => { const i = Math.round(tr.scrollLeft / tr.clientWidth); $("#pvcount").textContent = i + 1 + " / " + tr.children.length; }, { passive: true });
   pv.onclick = (e) => {
@@ -453,11 +453,12 @@ function renderPreview() {
     if (e.target.closest("[data-pvfav]")) { const id = it.kind === "ev" ? it.ev.id : hfav(it.p); favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); renderPreview(); return; }
     openDetail(k);
   };
+  positionRoutePill(); if (isPhone()) followRoutePill(400); // the card slides in: keep the "Route these" pill on top of it
 }
 let pvSwiped = false; // a swipe through the photos must not count as a tap that opens the details
 document.addEventListener("touchmove", (e) => { if (e.target.closest && e.target.closest("#pvtrack")) pvSwiped = true; }, { passive: true });
 document.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#pvtrack")) pvSwiped = false; }, { passive: true });
-function closePin() { state.sel = null; $("#preview").hidden = true; document.body.classList.remove("pin-open"); drawHL(); markItems(); }
+function closePin() { state.sel = null; $("#preview").hidden = true; document.body.classList.remove("pin-open"); drawHL(); markItems(); positionRoutePill(); }
 // Desktop: the card sits next to its dot (below it, or above when there is no room) and follows the map as it moves
 // The pop-up card is placed next to its dot. Its size is measured once (and when it changes), so moving the map never forces a layout.
 let pinBox = null, pinRaf = 0, pinRO = null;
@@ -741,7 +742,9 @@ function positionRoutePill() {
   if (isPhone()) { if (b.parentElement !== document.body) document.body.appendChild(b); } else { const row = document.querySelector(".searchrow"); if (row && b.parentElement !== row) row.appendChild(b); }
   if (!isPhone()) { b.classList.remove("docked"); b.style.top = b.style.left = b.style.right = ""; return; }
   const r = document.getElementById("panel").getBoundingClientRect(), h = document.querySelector("#phead .hrow"), c = document.querySelector("#phead .hcount");
-  b.classList.remove("docked"); b.style.top = Math.round(r.top - 48) + "px"; b.style.left = "auto"; b.style.right = "14px"; // the list stops below the pill, so the pill always rides on top of it
+  // a dot is selected: its card covers the list, so the pill rides on top of that card instead
+  const pv = document.getElementById("preview"), pinCard = pv && !pv.hidden && document.body.classList.contains("pin-open") ? pv.getBoundingClientRect().top : null;
+  b.classList.remove("docked"); b.style.top = Math.round((pinCard != null ? pinCard : r.top) - 48) + "px"; b.style.left = "auto"; b.style.right = "14px"; // the list stops below the pill, so the pill always rides on top of it
 }
 { const rp = rtPill(); if (rp) rp.addEventListener("click", () => { if (rp.dataset.hint) { toast(rp.dataset.hint, true); return; } routeFromView(); }); }
 // While the list slides (drag or tap), keep the pill on it
