@@ -7,7 +7,7 @@
 //                        { action: "revoke_pass", session_id }                          take a pass off after the extra contests were used and Admin decided (the order is not refunded here)
 // Nothing here calls Stripe or writes any production data by itself. The admin middleware has already required the Access login and logs the POST to admin_log.
 import { json, err, clean, newId } from "../../_lib/util.js";
-import { windowFromDates, entitlementOf, orgLabel, FREE_CONTESTS } from "../../_lib/passes.js";
+import { windowFromDates, entitlementOf, orgLabel, FREE_CONTESTS, freeDomain, FREE_UNTIL } from "../../_lib/passes.js";
 import { keyFromInput } from "../../_lib/passkey.js";
 import { todayPT, isDate } from "../../_lib/contests.js";
 
@@ -24,8 +24,8 @@ export async function onRequestGet({ env }) {
   for (const k of new Set([...ps.results.map((p) => p.org_key), ...cm.results.map((c) => c.org_key)])) if (!byKey.has(k)) byKey.set(k, []);
   const orgs = [...byKey].map(([key, list]) => {
     const w = windowFromDates(list.map((c) => c.live_at), today, ps.results.filter((p) => p.org_key === key && p.status === "active" && p.window_end >= today).map((p) => p.window_start));
-    const ent = entitlementOf(w, ps.results.filter((p) => p.org_key === key && p.status === "active" && w.active && p.window_start === w.start), cm.results.filter((c) => c.org_key === key && !c.revoked && c.valid_until >= today));
-    return { key, label: orgLabel(key), used: ent.used, cap: ent.cap, unlimited: ent.unlimited, windowStart: ent.windowStart, windowEnd: ent.windowEnd, over: !ent.unlimited && ent.used > ent.cap, comp: ent.comp, contests: list.filter((c) => !w.active || (c.live_at >= w.start && c.live_at <= w.end)).map((c) => ({ id: c.id, slug: c.slug, name: c.name, live_at: c.live_at, status: c.status })) };
+    const ent = entitlementOf(w, ps.results.filter((p) => p.org_key === key && p.status === "active" && w.active && p.window_start === w.start), [...cm.results.filter((c) => c.org_key === key && !c.revoked && c.valid_until >= today), ...(freeDomain(key) ? [{ allowed: -1, valid_until: FREE_UNTIL, note: "Free domain (set in code)" }] : [])]);
+    return { key, free: freeDomain(key), label: orgLabel(key), used: ent.used, cap: ent.cap, unlimited: ent.unlimited, windowStart: ent.windowStart, windowEnd: ent.windowEnd, over: !ent.unlimited && ent.used > ent.cap, comp: ent.comp, contests: list.filter((c) => !w.active || (c.live_at >= w.start && c.live_at <= w.end)).map((c) => ({ id: c.id, slug: c.slug, name: c.name, live_at: c.live_at, status: c.status })) };
   }).sort((a, b) => (b.over - a.over) || b.used - a.used);
   return json({ today, free: FREE_CONTESTS, orgs, passes: ps.results, comps: cm.results.map((c) => ({ ...c, badge: !!c.badge, badge_running: !!c.badge && !c.revoked && (c.badge_until || c.valid_until) >= today, label: orgLabel(c.org_key), running: !c.revoked && c.valid_until >= today })), leads: ld.results.map((l) => ({ ...l, label: orgLabel(l.org_key) })) }, { headers: { "cache-control": "no-store" } });
 }

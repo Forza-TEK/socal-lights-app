@@ -98,6 +98,13 @@ test("parseHome reads the formats the card documents", () => {
   assert.deepEqual(p("- 123 Main St Apt 4, Pasadena"), { street: "123 Main St Apt 4", city: "Pasadena", zip: "" });
   assert.deepEqual(p("123 Main St, Apt 4, Pasadena"), { street: "123 Main St Apt 4", city: "Pasadena", zip: "" });
   assert.deepEqual(p("123 Main St Pasadena CA 91101"), { street: "123 Main St", city: "Pasadena", zip: "91101" }, "no commas at all");
+  // the line the owner pasted: no comma before the city, and "CA." with a period
+  assert.deepEqual(p("25961 Galway Dr. Lake Forest, CA. 92630"), { street: "25961 Galway Dr", city: "Lake Forest", zip: "92630" });
+  assert.deepEqual(p("25961 Galway Dr Lake Forest CA 92630"), { street: "25961 Galway Dr", city: "Lake Forest", zip: "92630" });
+  assert.deepEqual(p("25961 Galway Dr., Lake Forest, Calif. 92630"), { street: "25961 Galway Dr", city: "Lake Forest", zip: "92630" });
+  assert.deepEqual(p("100 Orange Ave"), { street: "100 Orange Ave", city: "Pasadena", zip: "" }, "a street named like a city is left alone");
+  assert.deepEqual(p("100 Main St Orange, CA 92866"), { street: "100 Main St", city: "Orange", zip: "92866" });
+  assert.deepEqual(p("500 Lake Forest Dr, Irvine"), { street: "500 Lake Forest Dr", city: "Irvine", zip: "" });
   assert.ok(p("Candy Cane Lane, Pasadena").error, "a house number is required");
   assert.ok(p("   ").error);
   assert.equal(homeKey("5 Oak Street, Pasadena"), homeKey("5 oak st."));
