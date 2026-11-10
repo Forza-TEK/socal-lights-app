@@ -398,36 +398,77 @@ async function renderContests() {
 }
 /* ---------- Contest passes: usage per organization, comps (free for a founding partner), passes bought, "more than 20" leads ---------- */
 const pdate = (s) => (s ? new Date(s + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "");
+let PD = null; // the last /api/admin/passes answer, so a detail view can open without another request
+const grantFields = (pre, withTarget) => fsec(withTarget ? "Grant a comp" : "Grant a comp to this organization", "A comp lets an organization run contests without paying for a pass. It never shows a price to the organizer: they see \"Founding partner: free through the date\". Nothing is granted until you click Grant.",
+  (withTarget ? ff(pre + "Target", "Website domain or organizer email", `<input id="${pre}Target" maxlength="120" placeholder="covinaca.gov" autocomplete="off">`, { c: "c6" }) : "")
+  + ff(pre + "Allowed", "Contests allowed per 12-month window", `<input id="${pre}Allowed" type="number" min="1" max="1000" value="5" inputmode="numeric">`, { c: "c3" })
+  + ff(pre + "Unl", "Unlimited", `<label class="chk"><input id="${pre}Unl" type="checkbox"> No limit while the comp runs</label>`, { c: "c3" })
+  + ff(pre + "Until", "Valid until", `<input id="${pre}Until" type="date">`, { c: "c3" })
+  + ff(pre + "Badge", "Founder city badge", `<label class="chk"><input id="${pre}Badge" type="checkbox"> Show a Founder city badge</label>`, { c: "c3", hint: "A small label on this organization's contests while the comp runs. It never affects votes or results." })
+  + ff(pre + "BadgeUntil", "Badge until (optional)", `<input id="${pre}BadgeUntil" type="date">`, { c: "c3", hint: "Blank = the valid-until date. The badge can outlast the free contests." })
+  + ff(pre + "Note", "Note (only you see it)", `<input id="${pre}Note" maxlength="300" placeholder="Founding partner: Covina">`, { c: "c6" }))
+  + `<div class="mfoot grantfoot"><button class="btn ice" type="button" id="${pre}Go">Grant comp</button><span class="msg" id="${pre}Msg" role="status"></span></div>`;
+// Wires one grant form; key = the organization it belongs to ("" = the form asks for it). onDone runs after a successful grant.
+function wireGrant(root, pre, key, onDone) {
+  const q = (id) => root.querySelector("#" + pre + id);
+  q("Unl").onchange = (e) => { q("Allowed").disabled = e.target.checked; };
+  q("Go").onclick = async () => {
+    const m = q("Msg"); m.className = "msg"; m.textContent = "Working…";
+    const target = key || q("Target").value;
+    try { await api("/api/admin/passes", { method: "POST", body: JSON.stringify({ action: "grant", name: target, target, allowed: q("Unl").checked ? "unlimited" : Number(q("Allowed").value), until: q("Until").value, badge: q("Badge").checked, badge_until: q("BadgeUntil").value, note: q("Note").value }) }); toast("Comp granted"); await onDone(); }
+    catch (er) { m.className = "msg err"; m.textContent = er.message; }
+  };
+}
+const orgStatus = (o) => (o.free ? ["Free domain", "ok"] : o.over ? ["Over its limit", "bad"] : o.comp ? ["Comp", "ok"] : o.cap ? ["Pass", "ok"] : ["Needs a pass", ""]);
+function orgRow(o) {
+  const [t, tone] = orgStatus(o), cap = o.unlimited ? "unlimited" : o.cap;
+  const sub = `${o.used} of ${cap} contest${cap === 1 ? "" : "s"}${o.comp && !o.free ? ` · comp through ${pdate(o.comp.until)}` : ""}${o.windowStart ? ` · window to ${pdate(o.windowEnd)}` : ""}`;
+  return rec({ compact: true, attrs: `data-pkey="${esc(o.key)}"`, title: esc(o.label), tags: [[t, tone]], lead: `<span class="sub">${esc(sub)}</span>`, main: btn("ghost", "Open", 'data-popen="1"') });
+}
+async function reloadPasses() { await renderPasses(); }
+function openGrant() {
+  const m = $("#modal"); m.hidden = false; m.innerHTML = modalFrame("Grant a comp", `<div class="f">${grantFields("pg", true)}</div>`, true);
+  const close = () => { m.hidden = true; m.innerHTML = ""; }; $("#mClose").onclick = close;
+  wireGrant(m, "pg", "", async () => { close(); await reloadPasses(); });
+}
+function openOrg(key) {
+  const o = PD.orgs.find((x) => x.key === key); if (!o) return;
+  const m = $("#modal"); m.hidden = false;
+  const comps = PD.comps.filter((c) => c.org_key === key), passes = PD.passes.filter((x) => x.org_key === key), [t, tone] = orgStatus(o);
+  const compCards = comps.length ? comps.map((c) => rec({ attrs: `data-pcomp="${esc(c.id)}"`, title: c.allowed < 0 ? "Unlimited contests" : `${c.allowed} contests per window`, tags: [[c.running ? "Running" : c.revoked ? "Ended by you" : "Expired", c.running ? "ok" : ""], ...(c.badge ? [[c.badge_running ? "Founder city badge" : "Founder city badge (not showing)"]] : [])], meta: esc(c.created_at.slice(0, 10)),
+    facts: fact("Valid until", esc(pdate(c.valid_until))) + (c.badge ? fact("Badge until", esc(pdate(c.badge_until || c.valid_until))) : "") + fact("Note", esc(c.note)) + fact("Granted by", esc(c.created_by)), main: c.running ? btn("ghost", "End this comp now", 'data-pact="revoke_comp"') : "" })).join("") : `<div class="empty">No comps for this organization.</div>`;
+  const passCards = passes.length ? passes.map((x) => rec({ attrs: `data-ppass="${esc(x.session_id)}"`, title: "Up to " + x.cap + " contests", tags: [[x.status === "active" ? "Active" : "Revoked", x.status === "active" ? "ok" : ""]], meta: esc(x.created_at.slice(0, 10)),
+    facts: fact("Window", `${esc(pdate(x.window_start))} to ${esc(pdate(x.window_end))}`) + fact("Paid", esc(money(x.amount, "usd"))) + fact("Buyer", esc(x.email || "")) + fact("Order", esc(x.order_status || "")), main: x.status === "active" ? btn("ghost", "Revoke this pass", 'data-pact="revoke_pass"') : "" })).join("") : `<div class="empty">No passes bought. Passes also show in Orders.</div>`;
+  const contests = o.contests.length ? `<ul class="plist">${o.contests.map((c) => `<li><a href="/c/${esc(c.slug)}/manage" target="_blank" rel="noopener">${esc(c.name)}</a> <span class="meta">${esc(c.live_at)}${c.status === "live" ? "" : ", " + esc(c.status)}</span></li>`).join("")}</ul>` : `<div class="empty">No contest has gone live under this organization yet.</div>`;
+  m.innerHTML = modalFrame(o.label, `<p class="meta">${esc(o.key)} <span class="tag ${tone}">${esc(t)}</span></p>
+    <dl class="facts">${fact("This window", o.windowStart ? `${esc(pdate(o.windowStart))} to ${esc(pdate(o.windowEnd))}` : "no window running (the next contest needs a pass)")}${fact("Contests counted", `<b>${o.used}</b> of ${o.unlimited ? "unlimited" : o.cap}`)}${o.free ? fact("Free domain", "Contests are free for this domain. It is set in the code (FREE_DOMAINS), so it is not a comp you can end here.") : ""}</dl>
+    <h3 class="dh">Contests</h3>${contests}
+    <h3 class="dh">Comps</h3><div class="cards">${compCards}</div>
+    <details class="pgrant"><summary>Grant a comp to this organization</summary><div class="f">${grantFields("po", false)}</div></details>
+    <h3 class="dh">Passes bought</h3><div class="cards">${passCards}</div>
+    <h3 class="dh">Other</h3><div class="ra" style="margin:0">${btn("ghost", "Merge into another key", 'data-pact="merge"')}<span class="msg" id="poMsgTop" role="status"></span></div>
+    <p class="meta">Merging counts this organization's past and future contests, passes and comps under another key (a domain like covinaca.gov, or an email address).</p>`, true);
+  const close = () => { m.hidden = true; m.innerHTML = ""; };
+  $("#mClose").onclick = close;
+  wireGrant(m, "po", key, async () => { await reloadPasses(); openOrg(key); });
+  m.querySelectorAll("[data-pact]").forEach((b) => (b.onclick = async () => {
+    const act = b.dataset.pact, body = { action: act };
+    if (act === "merge") { const to = prompt("Count this organization's contests under which key? Type a website domain (covinaca.gov) or an email address."); if (!to) return; body.from = key; body.to = to; }
+    else if (act === "revoke_comp") { if (!confirm("End this comp now?")) return; body.id = b.closest("[data-pcomp]").dataset.pcomp; }
+    else if (act === "revoke_pass") { if (!confirm("Revoke this pass? Contests already live stay live. This does not refund anything.")) return; body.session_id = b.closest("[data-ppass]").dataset.ppass; }
+    try { await api("/api/admin/passes", { method: "POST", body: JSON.stringify(body) }); toast(act === "merge" ? "Merged" : "Done"); await reloadPasses(); if (act === "merge") close(); else openOrg(key); } catch (er) { toast(er.message, true); }
+  }));
+}
 async function renderPasses() {
   const box = $("#passes"); let d;
   try { d = await api("/api/admin/passes"); } catch (er) { box.innerHTML = `<div class="empty">${esc(er.message)}</div>`; return; }
-  const comp = fsec("Grant a comp", "A comp lets an organization run contests without paying for a pass. It never shows a price to the organizer: they see \"Founding partner: free through the date\". Example, the Founding City: type covinaca.gov, choose Unlimited, set the valid-until date, add the note \"Founding partner: Covina\", then Grant. Nothing is granted until you click Grant.",
-    ff("pcTarget", "Website domain or organizer email", `<input id="pcTarget" maxlength="120" placeholder="covinaca.gov" autocomplete="off">`, { c: "c3" }) + ff("pcAllowed", "Contests allowed per 12-month window", `<input id="pcAllowed" type="number" min="1" max="1000" value="5" inputmode="numeric">`, { c: "c3" })
-    + ff("pcUnl", "Unlimited", `<label class="chk"><input id="pcUnl" type="checkbox"> No limit while the comp runs</label>`, { c: "c3" }) + ff("pcBadge", "Founder city badge", `<label class="chk"><input id="pcBadge" type="checkbox"> Show a Founder city badge</label>`, { c: "c3", hint: "A small label on this organization's contests while the comp runs. It never affects votes or results." }) + ff("pcBadgeUntil", "Badge until (optional)", `<input id="pcBadgeUntil" type="date">`, { c: "c3", hint: "Blank = the valid-until date. The badge can outlast the free contests." }) + ff("pcUntil", "Valid until", `<input id="pcUntil" type="date">`, { c: "c3" }) + ff("pcNote", "Note (only you see it)", `<input id="pcNote" maxlength="300" placeholder="Founding partner: Covina">`, { c: "c6" }))
-    + `<div class="mfoot grantfoot"><button class="btn ice" type="button" id="pcGrant">Grant comp</button><span class="msg" id="pcMsg" role="status"></span></div>`;
-  const orgs = d.orgs.length ? `<div class="cards">${d.orgs.map((o) => rec({ attrs: `data-pkey="${esc(o.key)}"`, title: esc(o.label), tags: [[o.over ? "Over its limit" : o.comp ? "Comp" : "Within limit", o.over ? "bad" : o.comp ? "ok" : ""]], meta: esc(o.key),
-    facts: fact("This window", o.windowStart ? `${esc(pdate(o.windowStart))} to ${esc(pdate(o.windowEnd))}` : "no window running (the next contest needs a pass)") + fact("Contests counted", `<b>${o.used}</b> of ${o.unlimited ? "unlimited" : o.cap}`) + fact("Comp", o.comp ? `${o.comp.unlimited ? "unlimited" : o.comp.allowed} through ${esc(pdate(o.comp.until))}${o.comp.note ? " · " + esc(o.comp.note) : ""}` : "")
-      + fact("Contests", o.contests.map((c) => `<a href="/c/${esc(c.slug)}/manage" target="_blank" rel="noopener">${esc(c.name)}</a> (${esc(c.live_at)}${c.status === "live" ? "" : ", " + esc(c.status)})`).join("<br>")),
-    main: btn("ghost", "Merge into another key", 'data-pact="merge"') })).join("")}</div>` : `<div class="empty">No organization has a contest live yet.</div>`;
-  const comps = d.comps.length ? `<div class="cards">${d.comps.map((c) => rec({ attrs: `data-pcomp="${esc(c.id)}"`, title: esc(c.label), tags: [[c.running ? "Running" : c.revoked ? "Ended by you" : "Expired", c.running ? "ok" : ""], ...(c.badge ? [[c.badge_running ? "Founder city badge" : "Founder city badge (not showing)"]] : [])], meta: esc(c.created_at.slice(0, 10)),
-    facts: fact("Allowed", c.allowed < 0 ? "unlimited contests" : `${c.allowed} contests per window`) + fact("Valid until", esc(pdate(c.valid_until))) + (c.badge ? fact("Badge until", esc(pdate(c.badge_until || c.valid_until))) : "") + fact("Note", esc(c.note)) + fact("Granted by", esc(c.created_by)), main: c.running ? btn("ghost", "End this comp now", 'data-pact="revoke_comp"') : "" })).join("")}</div>` : `<div class="empty">No comps yet.</div>`;
-  const passes = d.passes.length ? `<div class="cards">${d.passes.map((p) => rec({ attrs: `data-ppass="${esc(p.session_id)}"`, title: esc(orgLabelOf(p.org_key)) + " · up to " + p.cap, tags: [[p.status === "active" ? "Active" : "Revoked", p.status === "active" ? "ok" : ""]], meta: esc(p.created_at.slice(0, 10)),
-    facts: fact("Window", `${esc(pdate(p.window_start))} to ${esc(pdate(p.window_end))}`) + fact("Paid", esc(money(p.amount, "usd"))) + fact("Buyer", esc(p.email || "")) + fact("Order", esc(p.order_status || "")), main: p.status === "active" ? btn("ghost", "Revoke this pass", 'data-pact="revoke_pass"') : "" })).join("")}</div>` : `<div class="empty">No passes bought yet. Passes also show in Orders.</div>`;
-  const leads = d.leads.length ? `<div class="cards">${d.leads.map((l) => rec({ title: esc(l.email), tags: [["More than 20", "warn"]], meta: esc(l.created_at.slice(0, 10)), facts: fact("Organization", esc(l.label)) + fact("Note", esc(l.note)) })).join("")}</div>` : `<div class="empty">No "more than 20 contests" requests.</div>`;
-  box.innerHTML = `${comp}<h2 class="dh">Organizations (${d.orgs.length})</h2>${orgs}<h2 class="dh">Comps</h2>${comps}<h2 class="dh">Passes bought</h2>${passes}<h2 class="dh">More than 20 contests: leads</h2>${leads}`;
-  $("#pcUnl").onchange = (e) => { $("#pcAllowed").disabled = e.target.checked; };
-  $("#pcGrant").onclick = async () => {
-    const m = $("#pcMsg"); m.className = "msg"; m.textContent = "Working…";
-    try { await api("/api/admin/passes", { method: "POST", body: JSON.stringify({ action: "grant", name: $("#pcTarget").value, target: $("#pcTarget").value, allowed: $("#pcUnl").checked ? "unlimited" : Number($("#pcAllowed").value), until: $("#pcUntil").value, badge: $("#pcBadge").checked, badge_until: $("#pcBadgeUntil").value, note: $("#pcNote").value }) }); toast("Comp granted"); renderPasses(); }
-    catch (er) { m.className = "msg err"; m.textContent = er.message; }
-  };
-  box.querySelectorAll("[data-pact]").forEach((b) => (b.onclick = async () => {
-    const act = b.dataset.pact, body = { action: act };
-    if (act === "merge") { const to = prompt("Count this organization's contests under which key? Type a website domain (covinaca.gov) or an email address."); if (!to) return; body.from = b.closest("[data-pkey]").dataset.pkey; body.to = to; }
-    else if (act === "revoke_comp") { if (!confirm("End this comp now?")) return; body.id = b.closest("[data-pcomp]").dataset.pcomp; }
-    else if (act === "revoke_pass") { if (!confirm("Revoke this pass? Contests already live stay live. This does not refund anything.")) return; body.session_id = b.closest("[data-ppass]").dataset.ppass; }
-    try { await api("/api/admin/passes", { method: "POST", body: JSON.stringify(body) }); toast(act === "merge" ? "Merged" : "Done"); renderPasses(); } catch (er) { toast(er.message); }
-  }));
+  PD = d;
+  const leads = d.leads.length ? `<details class="pleads"><summary>Requests for more than 20 contests (${d.leads.length})</summary><div class="cards">${d.leads.map((l) => rec({ title: esc(l.email), tags: [["More than 20", "warn"]], meta: esc(l.created_at.slice(0, 10)), facts: fact("Organization", esc(l.label)) + fact("Note", esc(l.note)) })).join("")}</div></details>` : "";
+  box.innerHTML = `<div class="dhrow"><h2 class="dh">Organizations (${d.orgs.length})</h2>${btn("main", "Grant a comp", 'id="pcNew"')}</div>
+    <p class="meta">Every organization with a contest, a pass or a comp. Open one for its contests, comps, passes and merge options.</p>
+    ${d.orgs.length ? `<div class="cards">${d.orgs.map(orgRow).join("")}</div>` : `<div class="empty">No organization has a contest live yet.</div>`}${leads}`;
+  $("#pcNew").onclick = openGrant;
+  box.querySelectorAll("[data-pkey]").forEach((card) => (card.onclick = (e) => { if (e.target.closest("a")) return; openOrg(card.dataset.pkey); }));
 }
 /* ---------- Sponsors of a contest (organizer-collected; support and abuse review: contact details, amounts, receipts, hide) ---------- */
 async function openSponsors(cid) {

@@ -865,3 +865,6 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Organizer-added homes (migration 0220): photos from the organizer's dashboard; the homeowner signs in through a private link, LINKS the home to their account (their email is collected), edits it, adds/deletes their own photos and can hide (not delete) the organizer's photos; they cannot delete the home. Details: docs/contests.md.
 
 - Admin > Contests > Contest passes: the "Grant comp" button has space above it and below it (it hugged the Note field and the list under it). Same fix on the Event Partners grant form.
+
+- Admin > Contests > Contest passes: one list of organizations (name, status, "n of cap contests"), each opens a detail view with its contests, comps (end, grant), passes bought (revoke) and merge; "Grant a comp" is a button above the list; leads are in a collapsed section; the owner's free domains show as "Free domain".
+- Check addresses: "25961 Galway Dr. Lake Forest, CA. 92630" (no comma before the city, "CA." with a period) is read correctly; a trailing known city after a street suffix is taken as the city; "CA."/"Calif." count as the state.

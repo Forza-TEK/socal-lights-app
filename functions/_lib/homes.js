@@ -19,6 +19,7 @@ export const HOMES_PER_HOUR = 1000;
 
 const ZIP = /^(?:CA|California)?\s*(\d{5})(?:-\d{4})?$/i;
 const UNIT = /^(apt|apartment|unit|ste|suite|bldg|building|#)/i;
+const STREET_END = /^(st|street|ave|avenue|av|dr|drive|rd|road|ln|lane|ct|court|cir|circle|pl|place|blvd|boulevard|ter|terrace|pkwy|parkway|hwy|highway|trl|trail|way|loop|sq|square|path|walk|row|run|pass|cv|cove|xing|crossing)\.?$/i;
 const cityKey = (s) => String(s || "").toLowerCase().replace(/\bsaint\b/g, "st").replace(/\bmt\b/g, "mount").replace(/[^a-z]/g, "");
 const CITY_BY_KEY = new Map(Object.keys(CITY).map((k) => [cityKey(k), k]));
 
@@ -26,7 +27,7 @@ const CITY_BY_KEY = new Map(Object.keys(CITY).map((k) => [cityKey(k), k]));
 // -> { street, city, zip } using the contest's city when the line has none; { error } when it can't be a home address.
 export function parseHome(raw, contestCity) {
   let s = String(raw ?? "").replace(/\t/g, ", ").replace(/^\s*(?:\d{1,3}[.)]|[-*•])\s+/, "");
-  s = tidy(clean(s, 200));
+  s = tidy(clean(s, 200)).replace(/\b(CA|Calif)\.(?=\s|,|$)/gi, "CA"); // "CA." and "Calif." are the state too
   const parts = s.split(",").map((x) => x.trim()).filter(Boolean);
   if (!parts.length) return { error: "Empty line." };
   let street = parts[0], city = "", zip = "";
@@ -43,6 +44,14 @@ export function parseHome(raw, contestCity) {
     street = street.replace(/\s+(?:CA|California)$/i, "");
     const end = new RegExp("\\s+" + String(contestCity || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i");
     if (contestCity && end.test(street)) street = street.replace(end, "");
+  }
+  // No comma before the city ("25961 Galway Dr. Lake Forest, CA 92630"): when the street part ends with a city we know, right after a street suffix, that is the city.
+  if (!city) {
+    const w = street.split(/\s+/);
+    for (let n = Math.min(4, w.length - 2); n >= 1; n--) {
+      const c = CITY_BY_KEY.get(cityKey(w.slice(-n).join(" "))), rest = w.slice(0, -n);
+      if (c && rest.length >= 2 && STREET_END.test(rest[rest.length - 1])) { street = rest.join(" "); city = c; break; }
+    }
   }
   street = normStreet(street);
   if (!/^\d+[A-Za-z]?\b/.test(street) || street.length < 5) return { error: "Start with the house number and street, like 123 Main St." };
