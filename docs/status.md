@@ -851,3 +851,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Map: with a dot's card open, the pill says "Route this" and opens a route to that one place only (works even when too many places are in view for "Route these"); closing the card puts "Route these" back.
 
 - Map on phones: tapping away from a dot (card closes) no longer leaves the "Route these" pill below the screen; it follows the list back up (it was only placed once, while the list was still off screen).
+
+- Help Center: articles are cards in a grid (title, "Category · How to", and "Video and steps" or "Written steps"; section titles show how many). Tutorials: each video card's play button, title and Computer/Phone buttons now open its Help article (/help/<article>?play=1[&v=w|p]), which plays the bigger player and starts the video; videos with no article still play on the Tutorials page. New GET /api/help/videos maps each video file to its first Help article.
