@@ -21,8 +21,8 @@ const live = (label) => [
 ];
 // The opening screens every contest shares (explained in full in both the Quick start and Customize videos)
 const authPre = async (p) => { await p.route('**/api/auth/me', async (r) => { const res = await r.fetch(); const j = await res.json().catch(() => ({})); j.methods = { ...(j.methods || {}), google: true, email: true }; await r.fulfill({ response: res, json: j }); }); };
-const wizardStart = (nameText, total = 7) => [
-  ...openSite(), ...fromMap("add", [
+const wizardStart = (nameText, total = 7, opening = openSite()) => [
+  ...opening, ...fromMap("add", [
     { cap: "Three choices", say: "This is the Add page. It has three choices. An event, like a tree lighting or a holiday parade. A contest, where neighbors enter their homes, and the community votes for a favorite. Or a lighting display, to show off your own home.", do: async (p, h) => { await sleep(1500); await p.evaluate(() => { if (!document.getElementById('o-contest')) location.reload(); }); }, pad: 0.4 },
     { cap: "Tap A contest", say: "We are creating a contest, so tap A contest.", do: async (p, h) => { await h.click('a[href="/add-contest"]', { after: 400 }); await p.waitForURL(/add-contest/, { timeout: 8000 }).catch(() => {}); await p.waitForSelector("#f-name", { timeout: 10000 }); await sleep(1200); }, pad: 0.4 },
   ]),
@@ -379,6 +379,72 @@ S["contest-passes"] = { id: "contest-passes", file: "run-passes", cookie: ck.u_o
   { cap: "After you pay", say: "After you pay, your contest is created by itself, with everything you typed. Your window runs for twelve months from the day you buy your pass, or the day your first contest goes live if that comes first, and a contest that is unpublished still counts. If you need more contests later, choose a bigger pass, and you pay only the difference.", do: async (p, h) => { await sleep(500); }, pad: 0.5 },
   { cap: "Free for everyone else", say: "Entering and voting stay free for everyone, and payment never affects who wins.", do: async (p, h) => { await sleep(300); }, pad: 0.5 },
   nextUp(ER, "Create a contest with Quick start", "The short setup: seven screens"),
+]};
+
+// Event Partner (new 2026-11-10): the plan for organizations with several events. The buy screen and the Founding-partner screen use the real page with the entitlement answer
+// swapped (nothing is bought); the "plan" screens are real: a seeded plan and one covered event (scripts/tutorials/seed-partner.sql), and Use the plan really applies it.
+// No price is spoken: the card on screen shows what /api/config serves. The checkout request is held, so nothing goes to Stripe.
+const partnerMock = (st) => async (p) => {
+  await p.route("**/api/partner/entitlement**", async (r) => {
+    if (st.mode === "plan") return r.fallback();
+    const res = await r.fetch(), j = await res.json().catch(() => ({})), cfg = await (await p.request.get(BASE + "/api/config")).json().catch(() => ({}));
+    const cents = (cfg.eventPartner || {}).cents || 14900;
+    if (st.mode === "buy") return r.fulfill({ json: { ...j, covered: false, hasPlan: false, comp: null, used: 0, cap: null, unlimited: false, remaining: null, canApply: false, offer: { cents, cap: 10 }, buyProblem: "", events: [] } });
+    return r.fulfill({ json: { ...j, covered: true, hasPlan: false, comp: { until: "2026-12-31", unlimited: false }, used: 0, cap: 10, unlimited: false, remaining: 10, canApply: true, offer: null, buyProblem: "", events: [] } });
+  });
+};
+const PST = { mode: "buy" };
+S["event-partner"] = { id: "event-partner", file: "post-partner", cookie: ck.u_mine, ...MAPSPEC, steps: [
+  { ...hook(EP, "Event Partner", "One plan for all your events", "In this video, you will see Event Partner, the plan for cities, chambers of commerce, nonprofits and event producers that run several events in a season. You will see what it is, how an organization gets it, and how you use it on your events. We start on the map."), pre: async (p) => { PST.mode = "buy"; await partnerMock(PST)(p); } },
+  ...openShort(),
+  ...navSteps([
+    target("Tap the three dots", "Look at the top right corner of the map, and tap the three dots.", "#morebtn", { after: 900 }),
+    target("Tap Promote your event", "In the menu, tap Promote your event. Listing an event is always free. This is for organizers who want to stand out.", '#moremenu a[href="/feature"]', { after: 2200, pre: payOn }),
+  ]),
+  { cap: "Look at the top", say: "This page features one event. Look at the sentence at the top: Run several events a season as a city, chamber, nonprofit or event producer? See Event Partner.", do: async (p, h) => { await h.hover('.lede a[href="/partner"]', 1600); }, pad: 0.4 },
+  target("Tap Event Partner", "Tap Event Partner.", '.lede a[href="/partner"]', { after: 2400 }),
+  { cap: "What it is", say: "This is the Event Partner page. It is for an organization that runs several events in a season. One payment covers up to ten of your events for the season. Each covered event gets the gold Featured pin on the map, and an Event Partner badge on its page.", do: async (p, h) => { await p.locator(".pbox").first().waitFor({ timeout: 10000 }); await h.hover(".pbox h2", 1200); await h.hover(".pbox ul", 1600); }, pad: 0.4, poster: true },
+  { cap: "Listing stays free", say: "Listing an event stays free for everyone. Event Partner is only for events you want to stand out. The price is on the card, and you pay once for the season, with no subscription.", do: async (p, h) => { await h.hover(".pbox .price", 1600); }, pad: 0.4 },
+  { cap: "Tap Pay on Stripe", say: "To buy it, you tap Pay on Stripe. That opens Stripe's secure payment page. We stop here, because this is only a demonstration, and we never enter card details in a video.", target: "#buy", after: 3000, pre: async (p) => { await p.route("**/api/partner/checkout", () => new Promise(() => {})); }, poster: true },
+  { cap: "After you pay", say: "After you pay, the page shows your plan. It counts how many of your ten events you have used this season, and lists the events it already covers.", do: async (p, h) => { PST.mode = "plan"; await p.reload({ waitUntil: "domcontentloaded" }); await p.locator("#app .plist").first().waitFor({ timeout: 15000 }); await h.hover("#app p:has-text('events used')", 1500); await h.hover("#app .plist", 1400); }, pad: 0.4 },
+  { cap: "Choose an event", say: "Under Choose an event are your other live events. Tap Use the plan next to the event you want to cover.", do: async (p, h) => { await h.scrollTo('[data-ap="ev-oak-hill-tree-lighting"]', 300).catch(() => {}); await h.hover('[data-ap="ev-oak-hill-tree-lighting"]', 900); }, target: '[data-ap="ev-oak-hill-tree-lighting"]', after: 2600 },
+  { cap: "It is covered", say: "The page says the event is Featured through its last day, and the count goes up by one. Featuring opens thirty days before an event starts, and it runs to the event's last day, or to the end of the season, whichever comes first.", do: async (p, h) => { await h.hover("#msg", 1500); await h.hover("#app p:has-text('events used')", 1400); }, pad: 0.4 },
+  { cap: "See it on the map", say: "Tap See it, to open a covered event on the map.", target: '.plist a[href="/#e-ev-oak-hill-holiday-market"]', after: 3200 },
+  { cap: "The Event Partner badge", say: "On the event, you see the Featured badge, and an Event Partner badge. The badge only shows that the organization has this plan. It is not an endorsement by SoCal Lights.", do: async (p, h) => { await p.locator('.tag:has-text("Event Partner")').first().waitFor({ timeout: 10000 }); await h.hover('.tag:has-text("Event Partner")', 2200); }, pad: 0.5, poster: true },
+  { cap: "Founding partners", say: "Some founding cities have Event Partner free this year. Then the page says Founding partner, free through a date, and shows no price at all.", do: async (p, h) => { PST.mode = "comp"; await p.goto(BASE + "/partner", { waitUntil: "domcontentloaded" }); await p.locator("#app p:has-text('Founding partner')").first().waitFor({ timeout: 15000 }); await h.hover("#app p:has-text('Founding partner')", 2200); }, pad: 0.5 },
+  recap(EP, "Event Partner, in short", ["Menu, Promote your event, Event Partner", "One payment covers up to ten events a season", "Tap Use the plan on each event", "Covered events show an Event Partner badge"], "That is Event Partner. Listing stays free, the plan is for events you want to feature, and the badge is not an endorsement."),
+  nextUp(EP, "Feature your event or home", "Pick a plan for one event, then pay on Stripe"),
+]};
+
+// Founder city badge (new 2026-11-10): what the label is and where it shows. The demo organizer's contests carry it (scripts/tutorials/seed-founder.sql, a local comp with badge = 1).
+S["founder-city-badge"] = { id: "founder-city-badge", file: "run-founder", cookie: ck.u_org, ...MAPSPEC, steps: [
+  hook(ER, "The Founder city badge", "What it is and where you see it", "In this video, you will see the Founder city badge: what it means, and where it shows. We start on the map."),
+  ...shortDash(),
+  { cap: "On the dashboard", say: "This is a contest dashboard. At the top, under the contest's name, is a small label: Founder city. It marks a city that is one of the first to run home decorating contests on SoCal Lights.", do: async (p, h) => { await p.locator(".pill.p-founder:visible").first().waitFor({ timeout: 10000 }); await h.hover(".pill.p-founder:visible", 2400); }, pad: 0.5, poster: true },
+  { cap: "What it means", say: "The label only says the city is one of the first. It never changes votes, judging, results, or the order homes are listed in, and every home is treated the same way. It is not an endorsement, by the city or by SoCal Lights.", do: async (p, h) => { await h.hover(".pill.p-founder:visible", 2600); }, pad: 0.5 },
+  { cap: "The contests list", say: "You see the same label on the Contests page, beside each of the city's contests.", do: async (p, h) => { await p.goto(BASE + "/contests", { waitUntil: "domcontentloaded" }); await p.locator(".pill.p-founder:visible").first().waitFor({ timeout: 10000 }); await h.hover(".pill.p-founder:visible", 2200); }, pad: 0.5 },
+  target("Tap the contest", "Tap the contest's button to open it.", "section.card a.btn.org >> nth=0", { after: 2600 }),
+  { cap: "The contest page", say: "On the contest page, the label is at the top, next to the contest's status.", do: async (p, h) => { await p.locator(".pill.p-founder:visible").first().waitFor({ timeout: 10000 }); await h.hover(".pill.p-founder:visible", 2400); }, pad: 0.5 },
+  { cap: "Past results", say: "And in Past results, a finished contest keeps its label next to the winners.", do: async (p, h) => { await p.goto(BASE + "/contests", { waitUntil: "domcontentloaded" }); await h.click("[data-tab=past]", { after: 1500 }); await p.locator(".pill.p-founder:visible").first().waitFor({ timeout: 10000 }); await h.hover(".pill.p-founder:visible", 2400); }, pad: 0.5, poster: true },
+  { cap: "Only while it is active", say: "The label shows only while it is active, and only on that city's own contests. If your city would like to run a contest, you can start one from the Add page.", do: async (p, h) => { await sleep(500); }, pad: 0.5 },
+  recap(ER, "The Founder city badge", ["It marks one of the first cities to run contests here", "It shows on the dashboard, the Contests page, the contest page and Past results", "It never changes votes, judging or results", "It is not an endorsement"], "That is the Founder city badge. It is a label, and nothing more."),
+  nextUp(ER, "Contest passes", "How you choose a pass before your contest goes live"),
+]};
+
+// Buying a contest pass from inside the app (new 2026-11-10): the app is the same site opened with the SoCalLightsApp user agent; it never shows a price or opens Stripe.
+// The Continue button opens the pass page in the browser, so it is pointed at but not tapped; "I have my pass" is tapped before any pass exists, which shows the app's "we do not see a pass" line.
+const appOpen = () => openSite("", false).map((x, i) => (i === 0 ? { ...x, card: { ey: "Start here", title: "Open the SoCal Lights app" }, say: "Open the SoCal Lights app on your phone." } : x));
+S["contest-pass-app"] = { id: "contest-pass-app", file: "run-pass-app", cookie: ck.u_org, ua: "Mozilla/5.0 SoCalLightsApp/1.0", ...MAPSPEC, maxSeconds: 300, steps: [
+  { ...hook(ER, "Contest passes in the app", "Get your pass on the website, then come back", "In this video, you will see what happens when you create a contest in the SoCal Lights app. Contest passes are bought on our website, in your browser, not inside the app. We start on the map."), pre: authPre },
+  ...wizardStart("Oak Hill Holiday Lights 2027", 7, appOpen()),
+  { cap: "6 of 7: Quick start", say: "Choose Quick start, then tap Next.", target: '[data-tile="quick|yes"]', after: 1000, post: (p, h) => next(p, h) },
+  { cap: "7 of 7: Review", say: "This is the review. Your organization has no pass yet, so the app tells you how to get one.", do: async (p, h) => { await h.hover(".sum", 1000); await p.locator(".pp-app").first().waitFor({ timeout: 10000 }); await h.scrollTo(".pp-app", 200).catch(() => {}); await h.hover(".pp-app p >> nth=0", 1400); }, pad: 0.4, poster: true },
+  { cap: "Passes are bought on the website", say: "Running a contest needs a contest pass. Passes are bought on our website, in your browser, not inside the app. The app shows no prices, and it never opens a payment page.", do: async (p, h) => { await h.hover(".pp-app ol", 1800); }, pad: 0.4 },
+  { cap: "Continue on socallights.app", say: "Tap Continue on socallights.app. It opens the pass page in your browser, with this contest's website, so the pass goes to the same organization. Choose a pass there, and pay on Stripe's secure page.", do: async (p, h) => { await h.hover("[data-pass-web]", 2200); }, pad: 0.4 },
+  { cap: "I have my pass", say: "Then come back to the app. Your contest details are kept here. Tap I have my pass, and your contest is created.", do: async (p, h) => { await h.hover("[data-pass-check]", 2000); }, pad: 0.4 },
+  { cap: "Tap I have my pass", say: "If you tap it before you have a pass, the app tells you it does not see one yet. Finish on the website, then tap again.", target: "[data-pass-check]", after: 3000, poster: true },
+  recap(ER, "Passes in the app", ["Create your contest as usual", "The Review screen says a pass is needed", "Tap Continue on socallights.app and choose a pass there", "Come back and tap I have my pass"], "That is how a contest pass works in the app. You choose it on the website, and then come back."),
+  nextUp(ER, "Contest passes", "How you choose a pass on the website"),
 ]};
 
 const id = process.argv[2];

@@ -237,6 +237,36 @@
           }
         },
         {
+          "id": "founder-city-badge",
+          "title": "The Founder city badge",
+          "desc": "What the label means, where you see it, and what it never changes.",
+          "captions": "/tutorials/run-founder.vtt",
+          "url": "/tutorials/run-founder.mp4",
+          "poster": "/tutorials/run-founder.jpg",
+          "length": "1:58",
+          "mobile": {
+            "url": "/tutorials/run-founder-mobile.mp4",
+            "poster": "/tutorials/run-founder-mobile.jpg",
+            "captions": "/tutorials/run-founder-mobile.vtt",
+            "length": "1:58"
+          }
+        },
+        {
+          "id": "contest-pass-app",
+          "title": "Contest passes in the app",
+          "desc": "Create a contest in the app, then get your pass on the website and come back.",
+          "captions": "/tutorials/run-pass-app.vtt",
+          "url": "/tutorials/run-pass-app.mp4",
+          "poster": "/tutorials/run-pass-app.jpg",
+          "length": "3:55",
+          "mobile": {
+            "url": "/tutorials/run-pass-app-mobile.mp4",
+            "poster": "/tutorials/run-pass-app-mobile.jpg",
+            "captions": "/tutorials/run-pass-app-mobile.vtt",
+            "length": "3:54"
+          }
+        },
+        {
           "id": "share",
           "title": "Share your contest",
           "desc": "Link, QR code, entry poster and yard sign.",
@@ -518,6 +548,21 @@
             "poster": "/tutorials/post-feature-mobile.jpg",
             "captions": "/tutorials/post-feature-mobile.vtt",
             "length": "2:28"
+          }
+        },
+        {
+          "id": "event-partner",
+          "title": "Event Partner for cities, chambers and event producers",
+          "desc": "One plan covers up to 10 of your events a season: what it is, how you get it, and how you use it on each event.",
+          "captions": "/tutorials/post-partner.vtt",
+          "url": "/tutorials/post-partner.mp4",
+          "poster": "/tutorials/post-partner.jpg",
+          "length": "2:50",
+          "mobile": {
+            "url": "/tutorials/post-partner-mobile.mp4",
+            "poster": "/tutorials/post-partner-mobile.jpg",
+            "captions": "/tutorials/post-partner-mobile.vtt",
+            "length": "2:50"
           }
         }
       ]
