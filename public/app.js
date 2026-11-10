@@ -426,7 +426,7 @@ function revealItem(k) {
 }
 function renderPreview() {
   const pv = $("#preview"), it = findKey(state.sel);
-  if (!it || state.detail === state.sel) { pv.hidden = true; document.body.classList.remove("pin-open"); return; }
+  if (!it || state.detail === state.sel) { pv.hidden = true; document.body.classList.remove("pin-open"); updateRoutePill(); return; }
   const k = state.sel, f = it.kind === "ev" ? favs.has(it.ev.id) : favs.has(hfav(it.p));
   const acts = `<span class="pv-acts">${awayTag(it.kind === "ev" ? it.ev : { lat: it.p.plat, lng: it.p.plng })}<button type="button" data-pvshare aria-label="Share" title="Share">${SHARE}</button><button type="button" data-pvfav aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites" title="${f ? "In my favorites" : "Add to my favorites"}">${HEART}</button></span>`;
   if (it.kind === "ev") {
@@ -453,12 +453,12 @@ function renderPreview() {
     if (e.target.closest("[data-pvfav]")) { const id = it.kind === "ev" ? it.ev.id : hfav(it.p); favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); renderPreview(); return; }
     openDetail(k);
   };
-  positionRoutePill(); if (isPhone()) followRoutePill(400); // the card slides in: keep the "Route these" pill on top of it
+  updateRoutePill(); if (isPhone()) followRoutePill(400); // the card slides in: keep the "Route these" pill on top of it
 }
 let pvSwiped = false; // a swipe through the photos must not count as a tap that opens the details
 document.addEventListener("touchmove", (e) => { if (e.target.closest && e.target.closest("#pvtrack")) pvSwiped = true; }, { passive: true });
 document.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#pvtrack")) pvSwiped = false; }, { passive: true });
-function closePin() { state.sel = null; $("#preview").hidden = true; document.body.classList.remove("pin-open"); drawHL(); markItems(); positionRoutePill(); }
+function closePin() { state.sel = null; $("#preview").hidden = true; document.body.classList.remove("pin-open"); drawHL(); markItems(); updateRoutePill(); }
 // Desktop: the card sits next to its dot (below it, or above when there is no room) and follows the map as it moves
 // The pop-up card is placed next to its dot. Its size is measured once (and when it changes), so moving the map never forces a layout.
 let pinBox = null, pinRaf = 0, pinRO = null;
@@ -728,12 +728,15 @@ function routeHint(vis) {
 // The "Route these" pill on the map (not in the list). Desktop: right of the ••• circle. Phone: above the list, at the right, moving with it;
 // when the list is nearly full it slides into the list header. It routes the places in the map view and only shows on the Places tab.
 const rtPill = () => document.getElementById("rtpill");
+// A dot is selected and its card is open: the pill then routes to that one place ("Route this") instead of every place in view.
+const pinnedPlace = () => { const pv = document.getElementById("preview"); if (!pv || pv.hidden || !state.sel || state.detail) return null; const it = findKey(state.sel); return it || null; };
 function updateRoutePill(vis) {
   const b = rtPill(); if (!b) return;
   const on = state.tab === "events" && !state.detail; b.hidden = !on; if (!on) return;
-  const hint = routeHint(vis || listVis), n = hint ? 0 : routeLegs(vis || listVis).length;
+  const one = pinnedPlace(), lbl = b.querySelector("span"); if (lbl) lbl.textContent = one ? "Route this" : "Route these";
+  const hint = one ? (mapReady ? "" : "The map is still loading") : routeHint(vis || listVis), n = hint || one ? 0 : routeLegs(vis || listVis).length;
   b.setAttribute("aria-disabled", hint ? "true" : "false"); b.dataset.hint = hint;
-  b.title = hint || (n > 1 ? `Open ${n} driving routes through these places` : "Open a driving route through these places");
+  b.title = hint || (one ? "Open a driving route to this place" : n > 1 ? `Open ${n} driving routes through these places` : "Open a driving route through these places");
   positionRoutePill();
 }
 function positionRoutePill() {
@@ -756,6 +759,12 @@ function toStop(x) {
   return { id: "e:" + x.id, name: x.n, sub: [x.v, x.city].filter(Boolean).join(", "), dest: destOf(x), lat: x.lat, lng: x.lng };
 }
 function routeFromView() {
+  const one = pinnedPlace();
+  if (one && map) { // the open card's place only
+    const stop = one.kind === "ev" ? toStop(one.ev) : toStop({ house: true, key: state.sel, p: one.p, lat: one.p.plat, lng: one.p.plng, a: one.p.address ? one.p.address + ", " + one.p.city + ", CA" : "" });
+    openRouteSheet({ title: "Route to this place", intro: "Your maps app opens a driving route to this place. Tick it when you have been there.", stops: [stop], app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); } });
+    return;
+  }
   const items = listVis.slice(); if (routeHint(items) || !items.length) return;
   const stops = items.map((it) => it.t === "e" ? toStop(it.o) : toStop({ house: true, key: it.key, p: it.o, lat: it.lat, lng: it.lng, a: it.o.address ? it.o.address + ", " + it.o.city + ", CA" : "" }));
   if (!map) return;

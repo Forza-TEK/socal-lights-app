@@ -847,3 +847,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Photo sweep for events with no photo (2026-11-10): 531 upcoming events had none; the tool found a photo on 61, I viewed all of them and kept 12 (flyers, posters, logos, maps, ads, blank images and photos shared by several events were rejected): migration 0218. The other ~470 either have no page, a page behind a bot check, or a page with no usable photo, and keep the stock photo for their type.
 
 - Map on phones: when a dot is selected and its card opens at the bottom, the "Route these" pill now sits just above that card (it used to float over the card's photo). It follows the card as it slides in and goes back to the list when the card closes.
+
+- Map: with a dot's card open, the pill says "Route this" and opens a route to that one place only (works even when too many places are in view for "Route these"); closing the card puts "Route these" back.
