@@ -841,3 +841,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 ## 2026-11-09 city sweep group 18 (High Desert & Mountains)
 - Searched all 21 cities/areas (Victorville to Needles). Already well covered by earlier runs. Added Big Bear Grand Menorah Lighting (Dec 6, confirmed, photo set).
 - Leads (not added): Magic in the Cove, 30125 Cherwell St, Lucerne Valley (only a Dec 2025 county listing; Nominatim has no house-number match); Big Bear Festival of Lights map (voting site with addresses opens Dec 1); Needles Fun Fair/Festival of Trees and Oak Glen Apple Butter Festival (no 2026 pages found). No decorating-contest home addresses published yet in this group.
+
+- Santa Photos at The Shops at Mission Viejo (soc-shops-mv-santa) had no photo (stock photo showed); set to the Santa photo on its simon.com page (migration 0217). simon.com blocks scripts with a bot check, so the photo was found through a normal page read, not scraped around the check.
