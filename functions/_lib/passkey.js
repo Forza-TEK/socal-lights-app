@@ -2,7 +2,7 @@
 //   ORGANIZATION KEY: the registrable host of the contest website when it matches the organizer's verified email domain (trustOf, contests.js): "d:covinaca.gov".
 //   Otherwise the organizer's own account email: "u:someone@gmail.com". Co-organizers and staff never create separate organizations (the creator's key is used).
 //   Admin can merge keys (contest_org_alias) and rewrite them by hand.
-import { trustOf, ownLabels, todayPT } from "./contests.js";
+import { trustOf, ownLabels, todayPT, isFreeMail, hasOwnName } from "./contests.js";
 import { normEmail } from "./auth.js";
 import { orgState, entitlementView } from "./passes.js";
 
@@ -18,8 +18,18 @@ export function keyFromInput(s) {
   return h ? "d:" + h : "";
 }
 export function rawOrgKey(email, site) { return trustOf(email, site) === "match" ? "d:" + registrable(hostOf(site)) : "u:" + normEmail(email); }
+// A city's staff may not enter a website. If the verified email domain (registrable, not a free-mail or shared agency domain) has a running comp, its organization is that
+// domain: "d:eastvaleca.gov" for clerk@eastvaleca.gov even with a blank or different website. Only domains that already hold an unrevoked, unexpired comp are affected.
+async function compDomainKey(env, email) {
+  const dom = String(email || "").split("@")[1] || "";
+  if (!dom || isFreeMail(dom.toLowerCase()) || !hasOwnName(dom.toLowerCase())) return "";
+  const key = "d:" + registrable(dom.toLowerCase());
+  const c = await env.DB.prepare("SELECT 1 AS x FROM contest_comps WHERE org_key = ? AND revoked = 0 AND valid_until >= ? LIMIT 1").bind(key, todayPT()).first();
+  return c ? key : "";
+}
 export async function orgKeyFor(env, email, site) {
-  const k = rawOrgKey(email, site);
+  let k = rawOrgKey(email, site);
+  if (k.startsWith("u:")) k = (await compDomainKey(env, email)) || k;
   const a = await env.DB.prepare("SELECT to_key FROM contest_org_alias WHERE from_key = ?").bind(k).first();
   return a ? a.to_key : k;
 }
