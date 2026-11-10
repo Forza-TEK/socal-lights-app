@@ -829,3 +829,7 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Admin greeting: between midnight and 5 AM (Pacific) it says "Hello" instead of "Good morning". The "scheduled job stopped" banner names the Cloudflare usage check (workflow usage-check.yml); GitHub runs it late or skips runs, so it was started by hand again.
 
 - Photo accuracy sweep (2026-11-09): checked the 584 upcoming events that have a photo against their own pages. Fixed SAMLARC (a site-wide movie-night og:image replaced by the page's own tree-lighting photo) and Culver City (newsletter cover replaced by the tree-lighting photo); removed 8 photos that are 404, blank or transparent logos (stock photo shows instead): migration 0206. photo_pass.py now prefers a photo named for the event over og:image. About 11 photos could not be checked because their sites block bots (429/403): not proven dead.
+
+## 2026-11-09 city sweep group 18 (High Desert & Mountains)
+- Searched all 21 cities/areas (Victorville to Needles). Already well covered by earlier runs. Added Big Bear Grand Menorah Lighting (Dec 6, confirmed, photo set).
+- Leads (not added): Magic in the Cove, 30125 Cherwell St, Lucerne Valley (only a Dec 2025 county listing; Nominatim has no house-number match); Big Bear Festival of Lights map (voting site with addresses opens Dec 1); Needles Fun Fair/Festival of Trees and Oak Glen Apple Butter Festival (no 2026 pages found). No decorating-contest home addresses published yet in this group.
