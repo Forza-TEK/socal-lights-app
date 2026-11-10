@@ -40,10 +40,12 @@ main.help{max-width:1160px}.top{max-width:1160px}.top,main.help{padding-left:24p
 body.sh-page .top,body.sh-page .htabs{display:none}body.sh-page main.help{max-width:980px;margin:0 auto;padding:22px clamp(16px,3vw,32px) 72px}body.sh-page .hlayout{display:block;margin-top:8px}body.sh-page .hlayout .hsec[data-cat]{max-width:none;margin-top:18px}
 @media(max-width:699px){body.sh-page main.help{padding:16px 16px calc(92px + env(safe-area-inset-bottom,0px))}}
 
-.alist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.alist a{display:flex;gap:10px;align-items:baseline;justify-content:space-between;padding:12px 16px;border-radius:14px;background:var(--surface);box-shadow:0 2px 10px rgba(20,22,27,.08);text-decoration:none;min-height:48px}
-.alist a:hover{box-shadow:inset 0 0 0 1.5px var(--season)}
-.alist .k{flex:none;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.alist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.alist a{display:flex;flex-direction:column;gap:5px;height:100%;box-sizing:border-box;padding:16px 18px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-decoration:none;min-height:48px}
+.alist a:hover,.alist a:focus-visible{border-color:var(--season);outline:none}
+.alist .at{font-weight:700;font-size:16px;line-height:1.3;color:var(--ink)}
+.alist .am{font-size:13px;color:var(--ink)}.alist .av{font-size:13px;color:var(--muted);margin-top:auto;padding-top:2px}
+.hsec h2 .ct{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
 .crumb{font-size:14px;color:var(--muted);margin:6px 0 0}.crumb a{color:inherit}
 .art .sum{font-size:19px;margin:10px 0 18px;max-width:62ch}
 .art .body{max-width:66ch}.art .body p,.art .body ul,.art .body ol{margin:0 0 14px}.art .body ol,.art .body ul{padding-left:24px}.art .body li{margin:6px 0}
@@ -86,7 +88,7 @@ i.addEventListener("input",function(){clearTimeout(t);clearTimeout(lg);t=setTime
 f.addEventListener("submit",function(e){e.preventDefault();clearTimeout(t);clearTimeout(lg);go(true)});
 if(i.value)go(false)})()</script>`;
 
-export const articleLink = (a) => `<li><a href="/help/${esc(a.slug)}"><span>${esc(a.title)}</span><span class="k">${esc(KINDS[a.kind] || "")}</span></a></li>`;
+export const articleLink = (a) => `<li><a href="/help/${esc(a.slug)}"><b class="at">${esc(a.title)}</b><span class="am">${esc((CAT[a.category] || {}).title || "Help")} &middot; ${esc(KINDS[a.kind] || "")}</span><span class="av">${/^[a-z0-9-]+$/.test(a.video || "") ? "&#9654; Video and steps" : "Written steps"}</span></a></li>`;
 
 // "Still stuck? Ask us": a short form that goes to the owner's Reports list and, if an email is left, can be answered.
 export const askForm = (ref = "help") => `<details class="ask" id="ask"><summary>Still stuck? Ask us</summary><form id="askf" novalidate>
