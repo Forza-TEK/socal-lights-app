@@ -92,6 +92,32 @@ function photosDialog(id) {
   };
   draw();
 }
+// Fix the name, description or address of a home the organizer added (a misspelled name, a wrong number)
+function editDialog(id) {
+  const e = M.entries.find((x) => x.id === id); if (!e) return;
+  const o = document.createElement("div"); o.className = "phscrim"; document.body.appendChild(o);
+  const prevFocus = document.activeElement;
+  o.innerHTML = `<form class="phdlg" role="dialog" aria-modal="true" aria-labelledby="ed-t" novalidate><div class="phh"><h2 id="ed-t">Edit this home</h2><button class="btn ghost sm" type="button" id="ed-x">Close</button></div>
+    <label class="small" for="ed-name"><b>Name of the home</b></label><input id="ed-name" maxlength="90" value="${esc(e.title || e.biz)}" autocomplete="off">
+    <label class="small" for="ed-desc"><b>Description</b></label><textarea id="ed-desc" maxlength="300" rows="3">${esc(e.descr || "")}</textarea>
+    <label class="small" for="ed-addr"><b>Address</b></label><input id="ed-addr" value="${esc(e.address)}" maxlength="200" autocomplete="off"${D.contest.announced ? " disabled" : ""}>
+    <p class="muted small" style="margin:0">${D.contest.announced ? "The address is locked once results are announced." : "Changing the address moves the pin, so we look it up again."}</p>
+    <p id="ed-note" class="small muted" role="status"></p><div style="display:flex;gap:8px"><button class="btn org" type="submit">Save</button><button class="btn ghost" type="button" id="ed-c">Cancel</button></div></form>`;
+  const close = () => { o.remove(); document.removeEventListener("keydown", onKey); if (prevFocus && prevFocus.focus) prevFocus.focus(); };
+  const onKey = (ev) => { if (ev.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey); o.addEventListener("click", (ev) => { if (ev.target === o) close(); });
+  o.querySelector("#ed-x").onclick = close; o.querySelector("#ed-c").onclick = close; o.querySelector("#ed-name").focus();
+  o.querySelector("form").onsubmit = async (ev) => {
+    ev.preventDefault(); const n = o.querySelector("#ed-note"), btn = o.querySelector("button[type=submit]"); n.className = "small muted"; n.textContent = "Saving…"; btn.disabled = true;
+    const body = { action: "edit", name: o.querySelector("#ed-name").value, desc: o.querySelector("#ed-desc").value }; if (!D.contest.announced) body.address = o.querySelector("#ed-addr").value;
+    try {
+      const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/entries/${id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
+      if (r.ok) { close(); load(); return; }
+      n.className = "small bad"; n.textContent = j.error || "That didn't save. Please try again.";
+    } catch { n.className = "small bad"; n.textContent = "That didn't save. Check your connection and try again."; }
+    btn.disabled = false;
+  };
+}
 async function load() {
   const i = await me(true);
   if (!i.user) { shell.own(false); $("#app").innerHTML = `<div class="card center"><h1>Organizer sign-in</h1><p class="muted" style="max-width:44ch">Only the person who created this contest can see its entries and results.</p><button class="btn org" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to manage your contest", next: location.pathname })) { refreshAcct($("#acct")); load(); } }; return; }
@@ -248,6 +274,7 @@ function render() {
     const open = e.status === "approved" && !c.announced, st = e.status === "approved" ? '<span class="pill p-ok">On the map</span>' : e.status === "declined" ? '<span class="pill p-no">Declined</span>' : '<span class="pill p-wait">Needs your OK</span>';
     const who = e.byOrganizer ? (e.claimed ? `Homeowner: ${esc(e.contact || "")}` : "The homeowner has not linked this home yet") : esc(e.contact || "");
     const acts = (e.status === "pending" ? `<button class="btn org sm" data-entry="approve:${e.id}" type="button">Approve</button><button class="btn bad sm" data-entry="decline:${e.id}" type="button">Decline</button>` : "")
+      + (e.byOrganizer && e.status !== "declined" ? `<button class="btn ghost sm" data-edithome="${e.id}" type="button">Edit</button>` : "")
       + (e.byOrganizer && open ? `<button class="btn ghost sm" data-photos="${e.id}" type="button">Photos (${e.photos.length})</button>` : "")
       + (e.status === "declined" && e.photos.length ? `<button class="btn ghost sm" data-entry="restore:${e.id}" type="button">Undo decline</button>` : "")
       + (open ? `<button class="btn ghost sm" data-entry="${e.dq ? "unflag" : "flag"}:${e.id}" type="button">${e.dq ? "Undo flag" : "Disqualify at close"}</button>` : "")
@@ -405,6 +432,7 @@ function render() {
   document.querySelectorAll("[data-rmadded]").forEach((b) => (b.onclick = () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to remove"; return; } act(`/api/contests/${encodeURIComponent(slug)}/entries/${b.dataset.rmadded}`, { action: "decline" }, "Removed."); }));
   document.querySelectorAll("[data-entry]").forEach((b) => (b.onclick = async () => { const [a, id] = b.dataset.entry.split(":"); let reason = ""; if (a === "decline") { reason = await askReason(); if (reason === null) return; } act(`/api/contests/${encodeURIComponent(slug)}/entries/${id}`, { action: a, reason }, ({ approve: "Approved. It's on the map, and the entrant was emailed.", restore: "Back in the review list.", decline: "Declined. The entrant was emailed.", flag: "Flagged. It stays on the ballot and is removed from the winners when you announce.", unflag: "Flag removed." })[a]); }));
   document.querySelectorAll("[data-void]").forEach((b) => (b.onclick = () => { const [id, v] = b.dataset.void.split(":"); act(`/api/contests/${encodeURIComponent(slug)}/votes`, { vote_id: id, voided: v === "1" }, v === "1" ? "Vote voided. It no longer counts." : "Vote restored."); }));
+  document.querySelectorAll("[data-edithome]").forEach((b) => (b.onclick = () => editDialog(b.dataset.edithome)));
   document.querySelectorAll("[data-photos]").forEach((b) => (b.onclick = () => photosDialog(b.dataset.photos)));
   document.querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => { const o = b.textContent; try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; } catch { b.textContent = "Select it"; } setTimeout(() => (b.textContent = o), 1500); }));
 }

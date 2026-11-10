@@ -8,7 +8,7 @@ export async function onRequestGet({ params, request, env }) {
   const { c, res } = await ownerOf(request, env, params.slug, getUser);
   if (res) return res;
   const { results } = await env.DB.prepare(
-    `SELECT p.id,p.status,p.title,p.biz,p.address,p.photos,p.entry_no,p.created_at,p.dq,u.email AS contact,(p.photo_token IS NOT NULL) AS byOrganizer,p.photo_token,p.photos_hidden,p.photos_org,p.claimed_at,(p.user_id != '') AS claimed,
+    `SELECT p.id,p.status,p.title,p.biz,p.address,p.descr,p.photos,p.entry_no,p.created_at,p.dq,u.email AS contact,(p.photo_token IS NOT NULL) AS byOrganizer,p.photo_token,p.photos_hidden,p.photos_org,p.claimed_at,(p.user_id != '') AS claimed,
             (SELECT COUNT(*) FROM votes v WHERE v.post_id = p.id AND v.voided = 0) AS votes
      FROM posts p LEFT JOIN users u ON u.id = p.user_id WHERE p.contest_id = ? ORDER BY p.entry_no`).bind(c.id).all();
   const origin = new URL(request.url).origin, open = photosOpen(c);

@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-10 (editing a contest entry record)
+- Owner could not fix a misspelled name on an organizer-added home. Added: organizer **Edit** (name, description, address with re-lookup) on added homes; Admin **Contest entries** view (Houses > Published) that opens the usual Edit form; the homeowner button on the contest page now reads **Edit details and photos**. Homeowner editing of name/description already existed. Address stays organizer/Admin only. Tests in `tests/entry-photos.test.mjs`.
+
 ## 2026-11-10 (assistant: ways to get homes into a contest)
 - A Covina contest organizer asked the assistant how to enter homes and was not told she could add them from a list. Reproduced: 7 of 12 phrasings missed the organizer route. Fixed: the knowledge chunk "Organizer-added homes" now matches the Help article (100 pasted at a time, 500 per contest, 25 while a new contest waits for review; it said 10 at a time), new chunk "All the ways a home gets into a contest" (residents Enter, organizer Add homes yourself, both in one contest), a pointer from the entering chunk, and a `RULES` line to list every route. Also "Every route for a home at a glance" and "Every route for an event at a glance". `tests/chat-contest-homes.test.mjs`. Next: look for other places where there are several routes and the assistant might give one.
 

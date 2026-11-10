@@ -14,6 +14,8 @@ import { onRequestGet as hpGet, onRequestPost as hpPost, onRequestDelete as hpDe
 import { onRequestGet as photoServe } from "../functions/api/photo/[[path]].js";
 import { onRequestGet as pageGet } from "../functions/photos/[token].js";
 import { deleteAccount } from "../functions/_lib/account.js";
+import { onRequestGet as adminPosts } from "../functions/api/admin/posts/index.js";
+import { onRequestPost as adminPost } from "../functions/api/admin/posts/[id].js";
 import { newEnv, addUser, stubFetch, ptToday } from "./_pay.mjs";
 
 const SLUG = "light-up", origin = "https://socallights.app", TOKEN = "T".repeat(10) + "t".repeat(14), TOKEN2 = "U".repeat(24);
@@ -285,4 +287,43 @@ test("adding homes gives each a photo link", async () => {
     assert.equal(r.status, 200); assert.equal(r.body.added.length, 1);
     assert.match(t.raw.prepare("SELECT photo_token FROM posts WHERE id = ?").get(r.body.added[0].id).photo_token, /^[A-Za-z0-9_-]{24,64}$/);
   } finally { stub.restore(); }
+});
+
+test("organizer edit: fixes the name and description of an added home; short names, resident entries and strangers are refused", async () => {
+  const t = await setup();
+  assert.equal((await t.act(t.users.other, "paaaaaaaa", { action: "edit", name: "The D'Angelo's" })).status, 404);
+  assert.equal((await t.act(t.users.owner, "prrrrrrrr", { action: "edit", name: "Nope" })).status, 400, "a resident's own entry is edited by the resident");
+  assert.equal((await t.act(t.users.owner, "paaaaaaaa", { action: "edit", name: "A" })).status, 400);
+  const r = await t.act(t.users.staff, "paaaaaaaa", { action: "edit", name: "The D'Angelo's", desc: "Lights and music" });
+  assert.equal(r.status, 200);
+  const row = t.raw.prepare("SELECT biz, title, descr, address, lat FROM posts WHERE id = 'paaaaaaaa'").get();
+  assert.deepEqual([row.biz, row.title, row.descr, row.address, row.lat], ["The D'Angelo's", "The D'Angelo's", "Lights and music", "10 Elm Ave, Pasadena, CA", 34.1], "the address and pin are untouched");
+});
+
+test("organizer edit: a new address is looked up again and moves the pin; a taken or unfindable address is refused", async () => {
+  const t = await setup();
+  const stub = stubFetch((url) => {
+    const u = String(url), a = decodeURIComponent((u.match(/address=([^&]*)/) || u.match(/[?&]q=([^&]*)/) || [])[1] || "");
+    if (/Nowhere/.test(a)) return u.includes("census.gov") ? new Response(JSON.stringify({ result: { addressMatches: [] } }), { headers: { "content-type": "application/json" } }) : new Response("[]", { headers: { "content-type": "application/json" } });
+    if (u.includes("census.gov")) return new Response(JSON.stringify({ result: { addressMatches: [{ matchedAddress: a.toUpperCase(), coordinates: { y: 34.15, x: -118.05 }, addressComponents: { zip: "91101" } }] } }), { headers: { "content-type": "application/json" } });
+    return new Response(JSON.stringify([{ lat: "34.15", lon: "-118.05", display_name: a }]), { headers: { "content-type": "application/json" } });
+  });
+  try {
+    assert.equal((await t.act(t.users.owner, "paaaaaaaa", { action: "edit", name: "Ten Elm", address: "12 Elm Ave, Pasadena, CA" })).status, 400, "another home has it");
+    assert.equal((await t.act(t.users.owner, "paaaaaaaa", { action: "edit", name: "Ten Elm", address: "1 Nowhere Rd, Pasadena, CA" })).status, 400);
+    const ok = await t.act(t.users.owner, "paaaaaaaa", { action: "edit", name: "Ten Elm", address: "11 Elm Ave, Pasadena, CA 91101" });
+    assert.equal(ok.status, 200);
+    const row = t.raw.prepare("SELECT street, address, lat, lng FROM posts WHERE id = 'paaaaaaaa'").get();
+    assert.deepEqual([row.street, row.address, row.lat, row.lng], ["11 Elm Ave", "11 Elm Ave, Pasadena, CA 91101", 34.15, -118.05]);
+  } finally { stub.restore(); }
+});
+
+test("Admin sees contest entries in their own list and can fix a name", async () => {
+  const t = await setup();
+  const list = await json(await adminPosts({ request: new Request(`${origin}/api/admin/posts?contest=1`), env: t.env }));
+  assert.equal(list.status, 200); assert.equal(list.body.length, 3);
+  const a = list.body.find((p) => p.id === "paaaaaaaa"); assert.deepEqual([a.contest, a.byOrganizer, a.linked], ["Light Up the Town", true, false]);
+  assert.equal((await json(await adminPosts({ request: new Request(`${origin}/api/admin/posts?status=approved`), env: t.env }))).body.length, 0, "they stay out of the Published list");
+  const r = await json(await adminPost({ params: { id: "paaaaaaaa" }, request: new Request(`${origin}/api/admin/posts/paaaaaaaa`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "edit", title: "The D'Angelo's", biz: "The D'Angelo's" }) }), env: t.env }));
+  assert.equal(r.status, 200); assert.equal(t.raw.prepare("SELECT title FROM posts WHERE id = 'paaaaaaaa'").get().title, "The D'Angelo's");
 });
