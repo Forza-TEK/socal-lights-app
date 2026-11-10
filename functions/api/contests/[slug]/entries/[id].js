@@ -4,6 +4,8 @@ import { sendTemplate } from "../../../../_lib/mailtpl.js";
 import { getUser, sameOrigin } from "../../../../_lib/auth.js";
 import { ownerOf, approveEntry } from "../../../../_lib/contests.js";
 import { newPhotoToken, photoLink } from "../../../../_lib/entryphotos.js";
+import { parseHome, homeKey, locate } from "../../../../_lib/homes.js";
+import { normName, normText } from "../../../../_lib/fields.js";
 
 export async function onRequestPost({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -12,6 +14,28 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   const row = await env.DB.prepare("SELECT * FROM posts WHERE id = ? AND contest_id = ?").bind(params.id, c.id).first();
   if (!row) return err(404, "That entry doesn't exist.");
   const b = await request.json().catch(() => ({}));
+  if (b.action === "edit") {
+    // Fix the name, description or address of a home the organizer added herself (a typo in a name, a wrong number). Name and description stay editable after
+    // the winners are announced (a misspelled winner's name matters); the address is locked then, because it moves the pin.
+    if (!row.photo_token) return err(400, "Only homes you added yourself can be edited here. A resident edits their own entry from the contest page.");
+    const name = b.name === undefined ? row.title : normName(clean(b.name, 90));
+    if (name.length < 2) return err(400, "Give the home a name of at least 2 letters.");
+    const descr = b.desc === undefined ? row.descr : normText(clean(b.desc, 300));
+    let sql = "UPDATE posts SET biz = ?, title = ?, descr = ?", args = [name, name, descr];
+    if (b.address !== undefined && clean(b.address, 200) !== (row.address || "")) {
+      if (c.announced) return err(409, "The address is locked once results are announced.");
+      const h = parseHome(clean(b.address, 200), c.city);
+      if (h.error) return err(400, h.error);
+      const taken = (await env.DB.prepare("SELECT id, street, address FROM posts WHERE contest_id = ? AND status != 'declined' AND id != ?").bind(c.id, row.id).all()).results;
+      if (taken.some((p) => homeKey(p.street || p.address) === homeKey(h.street))) return err(400, "Another home in this contest already has that address.");
+      const r = await locate(h, c);
+      if (r.reason) return err(400, r.reason);
+      sql += ", street = ?, city = ?, zip = ?, address = ?, lat = ?, lng = ?";
+      args.push(h.street, h.city, h.zip, `${h.street}, ${h.city}, CA${h.zip ? " " + h.zip : ""}`, r.pt[0], r.pt[1]);
+    }
+    await env.DB.prepare(sql + " WHERE id = ?").bind(...args, row.id).run();
+    return json({ ok: true });
+  }
   // Once winners are announced the results are frozen: no entry can be approved, restored, declined or flagged any more.
   if (c.announced) return err(409, "Results are locked.");
   const page = `https://socallights.app/c/${c.slug}`, tell = (id, vars) => { if (!row.contact_email) return; const job = sendTemplate(env, id, row.contact_email, vars).catch(() => {}); if (waitUntil) waitUntil(job); };

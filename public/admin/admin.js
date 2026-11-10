@@ -79,10 +79,16 @@ async function render() {
     if (tab === "emails") return renderEmails(main);
     if (tab === "help") return renderHelp(main);
     if (tab === "chat") return renderChat(main);
+    if (tab === "approved" && PVIEW === "contest") {
+      const list = await api("/api/admin/posts?contest=1"); POSTS = list;
+      const cbar = toolbar({ views: [{ k: "pending", label: "Published" }, { k: "contest", label: "Contest entries", n: list.length }], active: "contest", search: { placeholder: "Search entries, people, cities" } });
+      main.innerHTML = cbar + (list.length ? `<div class="cards">${list.map(postCard).join("")}</div>` : `<div class="empty">No contest entries yet.</div>`);
+      wireToolbar(main, { onView: (v) => { PVIEW = v; render(); }, onSearch: (q) => filterCards(main, q) }); applyPreset(main); return;
+    }
     const waiting = await api("/api/admin/posts?status=" + tab), declined = tab === "pending" ? await api("/api/admin/posts?status=declined") : [];
     if (tab === "pending") setCount("pending", waiting.length);
     const showing = tab === "pending" && PVIEW === "declined" ? declined : waiting;
-    const bar = toolbar({ views: tab === "pending" ? [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "declined", label: "Declined", n: declined.length }] : [], active: PVIEW, search: { placeholder: "Search houses, people, cities" }, right: dl("houses" + (tab === "pending" ? (PVIEW === "declined" ? "&status=declined" : "&status=pending") : "&status=approved")), count: String(showing.length) });
+    const bar = toolbar({ views: tab === "pending" ? [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "declined", label: "Declined", n: declined.length }] : tab === "approved" ? [{ k: "pending", label: "Published" }, { k: "contest", label: "Contest entries" }] : [], active: PVIEW, search: { placeholder: "Search houses, people, cities" }, right: dl("houses" + (tab === "pending" ? (PVIEW === "declined" ? "&status=declined" : "&status=pending") : "&status=approved")), count: String(showing.length) });
     const go = () => { wireToolbar(main, { onView: (v) => { PVIEW = v; render(); }, onSearch: (q) => filterCards(main, q) }); applyPreset(main); };
     if (!showing.length) { main.innerHTML = bar + `<div class="empty">${tab !== "pending" ? "No published houses yet." : PVIEW === "declined" ? "Nothing declined." : "Nothing waiting for review."}</div>`; go(); return; }
     const bulk = tab === "pending" && PVIEW !== "declined" ? `<div class="bulk" id="bulk"><label class="chk"><input type="checkbox" id="selAll"> Select all</label><span class="grow"></span><span class="meta" id="selN"></span><button class="btn ice" type="button" id="bulkGo" hidden></button><button class="btn ghost" type="button" id="bulkClear" hidden>Clear</button></div>` : "";
@@ -92,7 +98,12 @@ async function render() {
 function postCard(p) {
   const web = p.web ? `<a href="${esc(p.web)}" target="_blank" rel="noopener">${esc(p.web)}</a>` : "";
   const note = (c, t) => `<p class="meta" style="margin:0;color:var(--ink)">${t}</p>`;
-  const pending = tab === "pending", dec = pending && PVIEW === "declined";
+  const pending = tab === "pending", dec = pending && PVIEW === "declined", ce = !!p.contest;
+  if (ce) return rec({
+    attrs: `data-id="${esc(p.id)}"`, title: esc(p.title), tags: [["Contest entry"], p.byOrganizer ? [p.linked ? "Linked by homeowner" : "Added by organizer", p.linked ? "ok" : "warn"] : ["Resident entry"]], meta: esc(p.contest),
+    facts: fact("Name shown as Posted by", esc(p.biz)) + fact("Title", esc(p.title)) + fact("Contact", `<span style="user-select:all">${esc(p.contact_email || "—")}</span>`) + fact("Street address", esc(p.address || "—")) + fact("About", `<span style="white-space:pre-line">${esc(p.desc)}</span>`),
+    edit: btn("ghost", "Edit", `data-editpost="${esc(p.id)}"`),
+  });
   return rec({
     attrs: `data-id="${esc(p.id)}"`, title: (pending && !dec ? `<input type="checkbox" class="rsel" data-sel="${esc(p.id)}" aria-label="Select ${esc(p.title)}">` : "") + esc(p.title), tags: [[p.kind === "installer" ? "Installer" : "Homeowner"], [dec ? "Declined" : pending ? "Waiting" : "Published", dec ? "bad" : pending ? "warn" : "ok"]], meta: esc((p.created || "").slice(0, 16)) + " UTC",
     lead: p.photos.length ? `<div class="pics">${p.photos.map((k) => `<a href="${photo(k)}" target="_blank" rel="noopener"><img src="${photo(k)}" alt="" loading="lazy"></a>`).join("")}</div>` : `<div class="meta">No photos</div>`,
