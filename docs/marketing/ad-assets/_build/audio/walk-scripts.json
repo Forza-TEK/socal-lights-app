@@ -1,0 +1,202 @@
+{
+  "w09": {
+    "closing": "Free, on SoCal Lights dot app.",
+    "steps": [
+      {
+        "id": "intro",
+        "say": "Plan your whole night with Favorites.",
+        "core": true
+      },
+      {
+        "id": "heart1",
+        "say": "Tap the heart on a place to save it.",
+        "core": true
+      },
+      {
+        "id": "heart2",
+        "say": "Save the other places you like.",
+        "core": true
+      },
+      {
+        "id": "nav",
+        "say": "Tap the heart in the bottom menu to open Favorites.",
+        "core": true
+      },
+      {
+        "id": "list",
+        "say": "Your stops are listed in driving order.",
+        "core": true
+      },
+      {
+        "id": "route",
+        "say": "Tap Route these.",
+        "core": true
+      },
+      {
+        "id": "sheet",
+        "say": "Here is your route, with every stop listed.",
+        "core": true
+      },
+      {
+        "id": "pick",
+        "say": "Tap the arrows to pick your maps app.",
+        "core": false
+      },
+      {
+        "id": "apps",
+        "say": "Apple Maps, Google Maps or Waze.",
+        "core": false
+      },
+      {
+        "id": "apple",
+        "say": "Your phone opens the route in the maps app you choose.",
+        "core": true
+      }
+    ]
+  },
+  "w07": {
+    "closing": "SoCal Lights dot app.",
+    "steps": [
+      {
+        "id": "intro",
+        "say": "One tap, one route.",
+        "core": true
+      },
+      {
+        "id": "locate",
+        "say": "Open the map near you, and find places you like.",
+        "core": true
+      },
+      {
+        "id": "filter",
+        "say": "Tap Filters, and choose Tree lightings and villages.",
+        "core": true
+      },
+      {
+        "id": "route",
+        "say": "Tap Route these on the map.",
+        "core": true
+      },
+      {
+        "id": "sheet",
+        "say": "Here are your stops, in driving order.",
+        "core": true
+      },
+      {
+        "id": "pick",
+        "say": "Tap the arrows to choose your maps app.",
+        "core": false
+      },
+      {
+        "id": "apps",
+        "say": "Apple Maps, Google Maps or Waze.",
+        "core": false
+      },
+      {
+        "id": "apple",
+        "say": "Your phone opens the route in the maps app you choose.",
+        "core": true
+      }
+    ]
+  },
+  "w08": {
+    "closing": "Free, on SoCal Lights dot app.",
+    "steps": [
+      {
+        "id": "intro",
+        "say": "Looking for holiday lights tonight?",
+        "core": true
+      },
+      {
+        "id": "locate",
+        "say": "Tap Find my location.",
+        "core": true
+      },
+      {
+        "id": "pull",
+        "say": "Pull up the list to see what is near you.",
+        "core": true
+      },
+      {
+        "id": "weekend",
+        "say": "Tap This weekend to see what is on soon.",
+        "core": true
+      },
+      {
+        "id": "free",
+        "say": "Or tap Free to see only free places.",
+        "core": true
+      },
+      {
+        "id": "card",
+        "say": "Tap a place to open its details.",
+        "core": true
+      },
+      {
+        "id": "dir",
+        "say": "Then tap Directions to go.",
+        "core": false
+      },
+      {
+        "id": "apps",
+        "say": "Your phone switches to the maps app you choose.",
+        "core": false
+      }
+    ]
+  },
+  "w06": {
+    "closing": "Free, on SoCal Lights dot app.",
+    "steps": [
+      {
+        "id": "intro",
+        "say": "Is your home all lit up?",
+        "core": true
+      },
+      {
+        "id": "signin",
+        "say": "Tap Sign in, and use an emailed code.",
+        "core": true
+      },
+      {
+        "id": "who",
+        "say": "Choose who is posting: a homeowner.",
+        "core": true
+      },
+      {
+        "id": "name",
+        "say": "Add the name to show.",
+        "core": true
+      },
+      {
+        "id": "season",
+        "say": "Pick the season for your lights.",
+        "core": false
+      },
+      {
+        "id": "title",
+        "say": "Name your home, and say what makes it special.",
+        "core": true
+      },
+      {
+        "id": "street",
+        "say": "Add the street, and the ZIP code.",
+        "core": true
+      },
+      {
+        "id": "put",
+        "say": "Check everything, then tap Put it on the map.",
+        "core": true
+      },
+      {
+        "id": "there",
+        "say": "And there it is, on the map.",
+        "core": true
+      },
+      {
+        "id": "card",
+        "say": "Tap your home to open its details.",
+        "core": false
+      }
+    ]
+  }
+}
