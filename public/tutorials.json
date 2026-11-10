@@ -120,7 +120,17 @@
         {
           "id": "owner-photos",
           "title": "Add photos and details to your home",
-          "desc": "Your city entered your home: link it to your account, check the details and add your own photos."
+          "desc": "Your city entered your home: link it to your account, check the details and add your own photos.",
+          "captions": "/tutorials/enter-city-home.vtt",
+          "url": "/tutorials/enter-city-home.mp4",
+          "poster": "/tutorials/enter-city-home.jpg",
+          "length": "1:32",
+          "mobile": {
+            "url": "/tutorials/enter-city-home-mobile.mp4",
+            "poster": "/tutorials/enter-city-home-mobile.jpg",
+            "captions": "/tutorials/enter-city-home-mobile.vtt",
+            "length": "1:32"
+          }
         },
         {
           "id": "edit-entry",
@@ -319,12 +329,32 @@
         {
           "id": "entry-edit",
           "title": "Fix a home you added",
-          "desc": "Correct a misspelled name, a description or an address on a home you added to your contest."
+          "desc": "Correct a misspelled name, a description or an address on a home you added to your contest.",
+          "captions": "/tutorials/run-edit-home.vtt",
+          "url": "/tutorials/run-edit-home.mp4",
+          "poster": "/tutorials/run-edit-home.jpg",
+          "length": "1:45",
+          "mobile": {
+            "url": "/tutorials/run-edit-home-mobile.mp4",
+            "poster": "/tutorials/run-edit-home-mobile.jpg",
+            "captions": "/tutorials/run-edit-home-mobile.vtt",
+            "length": "1:46"
+          }
         },
         {
           "id": "entry-photos",
           "title": "Add photos to a home and send the owner a link",
-          "desc": "Add photos to a home you added, and send the homeowner a private link to add their own."
+          "desc": "Add photos to a home you added, and send the homeowner a private link to add their own.",
+          "captions": "/tutorials/run-home-photos.vtt",
+          "url": "/tutorials/run-home-photos.mp4",
+          "poster": "/tutorials/run-home-photos.jpg",
+          "length": "2:06",
+          "mobile": {
+            "url": "/tutorials/run-home-photos-mobile.mp4",
+            "poster": "/tutorials/run-home-photos-mobile.jpg",
+            "captions": "/tutorials/run-home-photos-mobile.vtt",
+            "length": "2:05"
+          }
         },
         {
           "id": "edit",
