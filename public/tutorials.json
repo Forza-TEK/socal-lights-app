@@ -242,6 +242,11 @@
           "desc": "What the label means, where you see it, and what it never changes."
         },
         {
+          "id": "contest-pass-app",
+          "title": "Contest passes in the app",
+          "desc": "Create a contest in the app, then get your pass on the website and come back."
+        },
+        {
           "id": "share",
           "title": "Share your contest",
           "desc": "Link, QR code, entry poster and yard sign.",

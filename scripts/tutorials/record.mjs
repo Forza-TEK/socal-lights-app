@@ -91,7 +91,7 @@ export async function record(spec) {
   const vp = MOB ? { width: 360, height: 640 } : spec.phone ? { width: 390, height: 680 } : { width: 1280, height: 720 };
   const br = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
   const SC = MOB || spec.phone ? 3 : 2; // device pixels per CSS pixel: desktop frames are 2560x1440, phone frames 1170x2040
-  const ctx = await br.newContext({ viewport: vp, deviceScaleFactor: SC, colorScheme: "light", hasTouch: MOB, isMobile: MOB, permissions: ["clipboard-read", "clipboard-write", ...(spec.geo && !spec.lateGeo ? ["geolocation"] : [])], geolocation: spec.geo });
+  const ctx = await br.newContext({ ...(spec.ua ? { userAgent: spec.ua } : {}), viewport: vp, deviceScaleFactor: SC, colorScheme: "light", hasTouch: MOB, isMobile: MOB, permissions: ["clipboard-read", "clipboard-write", ...(spec.geo && !spec.lateGeo ? ["geolocation"] : [])], geolocation: spec.geo });
   const until = Date.now() + 864e5;
   await ctx.addInitScript(`try{localStorage.setItem("socal-theme","light");${spec.welcome ? "" : 'localStorage.setItem("socal-welcomed","1");'}localStorage.setItem("socal-theme-until","${until}")}catch(e){}`);
   await ctx.addInitScript(OVERLAY.replaceAll("__BOT__", MOB ? "150" : spec.phone ? "92" : "22") + (MOB ? MOBCSS : ""));

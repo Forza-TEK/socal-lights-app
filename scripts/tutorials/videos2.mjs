@@ -21,8 +21,8 @@ const live = (label) => [
 ];
 // The opening screens every contest shares (explained in full in both the Quick start and Customize videos)
 const authPre = async (p) => { await p.route('**/api/auth/me', async (r) => { const res = await r.fetch(); const j = await res.json().catch(() => ({})); j.methods = { ...(j.methods || {}), google: true, email: true }; await r.fulfill({ response: res, json: j }); }); };
-const wizardStart = (nameText, total = 7) => [
-  ...openSite(), ...fromMap("add", [
+const wizardStart = (nameText, total = 7, opening = openSite()) => [
+  ...opening, ...fromMap("add", [
     { cap: "Three choices", say: "This is the Add page. It has three choices. An event, like a tree lighting or a holiday parade. A contest, where neighbors enter their homes, and the community votes for a favorite. Or a lighting display, to show off your own home.", do: async (p, h) => { await sleep(1500); await p.evaluate(() => { if (!document.getElementById('o-contest')) location.reload(); }); }, pad: 0.4 },
     { cap: "Tap A contest", say: "We are creating a contest, so tap A contest.", do: async (p, h) => { await h.click('a[href="/add-contest"]', { after: 400 }); await p.waitForURL(/add-contest/, { timeout: 8000 }).catch(() => {}); await p.waitForSelector("#f-name", { timeout: 10000 }); await sleep(1200); }, pad: 0.4 },
   ]),
@@ -429,6 +429,22 @@ S["founder-city-badge"] = { id: "founder-city-badge", file: "run-founder", cooki
   { cap: "Only while it is active", say: "The label shows only while it is active, and only on that city's own contests. If your city would like to run a contest, you can start one from the Add page.", do: async (p, h) => { await sleep(500); }, pad: 0.5 },
   recap(ER, "The Founder city badge", ["It marks one of the first cities to run contests here", "It shows on the dashboard, the Contests page, the contest page and Past results", "It never changes votes, judging or results", "It is not an endorsement"], "That is the Founder city badge. It is a label, and nothing more."),
   nextUp(ER, "Contest passes", "How you choose a pass before your contest goes live"),
+]};
+
+// Buying a contest pass from inside the app (new 2026-11-10): the app is the same site opened with the SoCalLightsApp user agent; it never shows a price or opens Stripe.
+// The Continue button opens the pass page in the browser, so it is pointed at but not tapped; "I have my pass" is tapped before any pass exists, which shows the app's "we do not see a pass" line.
+const appOpen = () => openSite("", false).map((x, i) => (i === 0 ? { ...x, card: { ey: "Start here", title: "Open the SoCal Lights app" }, say: "Open the SoCal Lights app on your phone." } : x));
+S["contest-pass-app"] = { id: "contest-pass-app", file: "run-pass-app", cookie: ck.u_org, ua: "Mozilla/5.0 SoCalLightsApp/1.0", ...MAPSPEC, maxSeconds: 300, steps: [
+  { ...hook(ER, "Contest passes in the app", "Get your pass on the website, then come back", "In this video, you will see what happens when you create a contest in the SoCal Lights app. Contest passes are bought on our website, in your browser, not inside the app. We start on the map."), pre: authPre },
+  ...wizardStart("Oak Hill Holiday Lights 2027", 7, appOpen()),
+  { cap: "6 of 7: Quick start", say: "Choose Quick start, then tap Next.", target: '[data-tile="quick|yes"]', after: 1000, post: (p, h) => next(p, h) },
+  { cap: "7 of 7: Review", say: "This is the review. Your organization has no pass yet, so the app tells you how to get one.", do: async (p, h) => { await h.hover(".sum", 1000); await p.locator(".pp-app").first().waitFor({ timeout: 10000 }); await h.scrollTo(".pp-app", 200).catch(() => {}); await h.hover(".pp-app p >> nth=0", 1400); }, pad: 0.4, poster: true },
+  { cap: "Passes are bought on the website", say: "Running a contest needs a contest pass. Passes are bought on our website, in your browser, not inside the app. The app shows no prices, and it never opens a payment page.", do: async (p, h) => { await h.hover(".pp-app ol", 1800); }, pad: 0.4 },
+  { cap: "Continue on socallights.app", say: "Tap Continue on socallights.app. It opens the pass page in your browser, with this contest's website, so the pass goes to the same organization. Choose a pass there, and pay on Stripe's secure page.", do: async (p, h) => { await h.hover("[data-pass-web]", 2200); }, pad: 0.4 },
+  { cap: "I have my pass", say: "Then come back to the app. Your contest details are kept here. Tap I have my pass, and your contest is created.", do: async (p, h) => { await h.hover("[data-pass-check]", 2000); }, pad: 0.4 },
+  { cap: "Tap I have my pass", say: "If you tap it before you have a pass, the app tells you it does not see one yet. Finish on the website, then tap again.", target: "[data-pass-check]", after: 3000, poster: true },
+  recap(ER, "Passes in the app", ["Create your contest as usual", "The Review screen says a pass is needed", "Tap Continue on socallights.app and choose a pass there", "Come back and tap I have my pass"], "That is how a contest pass works in the app. You choose it on the website, and then come back."),
+  nextUp(ER, "Contest passes", "How you choose a pass on the website"),
 ]};
 
 const id = process.argv[2];
