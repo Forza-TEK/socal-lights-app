@@ -1,6 +1,9 @@
 # Status
 
-_Last updated: 2026-11-09 (contest pricing: organizers pay from the first contest; Event Partner plan)_
+_Last updated: 2026-11-10 (tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
+
+## Tutorial videos re-recorded for the new contest pricing (2026-11-10, branch `tutorials-contest-pricing`)
+`contest-passes`, `quick`, `custom` and `edit`, computer and phone, re-recorded in day mode against a local copy of main (Kokoro `af_heart`, same pipeline). Narration names no price and no "free first contest". `contest-passes` now shows a new organization with no live contest and no comp: the passes (single contest, up to 5, up to 20, price on each card) appear on the Review screen; `seed-passes.sql` changed accordingly. `quick` and `custom` use `seed-comp.sql` (a local comp for the demo organizer), so the Review screen shows the founding-partner line and the narration says so. `edit` says "A new contest needs room in your pass." Lengths: contest-passes 4:12/4:12, quick 4:53/4:52, custom 7:06/7:05, edit 2:26/2:25. `check-sync.mjs`: 8 of 8 pass; Vosk transcripts of the changed passages match the captions. The chat knowledge base no longer skips old caption lines (filter removed in `scripts/build-chat-kb.mjs`; KB regenerated). `add-event`, `showcase`, `feature` and `claim` (the old "Free" contest tile is visible in the first two) and the two create-a-contest Help articles are handled in another session.
 
 ## Contest pricing: organizers pay from the first contest (2026-11-09)
 Branch `contest-pricing-2026-11`, PR to `main`, go-live 2026-11-09 (owner decision). Owner decision after meeting the City of Eastvale (who recommended charging). Replaces the 2026-11-07 rule (1 free contest per 12 months; $50 / $75 / $100).
