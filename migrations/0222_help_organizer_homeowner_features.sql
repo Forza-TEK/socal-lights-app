@@ -19,7 +19,7 @@ The change shows everywhere at once: the ballot, the judges'' ballot, the drivin
 - Added a home by mistake? Tap **Remove** on its row, as described in [Add your city''s homes yourself](/help/add-your-citys-homes-yourself).
 
 See also [Add photos to homes you added](/help/add-photos-to-homes-you-added).', 'edit home, fix name, misspelled name, wrong address, change address, organizer added, edit entry, correct a mistake', 'run-edit-home', 46, 'published', 'seed');
-INSERT OR IGNORE INTO help_articles (slug, title, category, kind, summary, body, keywords, video, sort, status, updated_by) VALUES ('add-photos-to-homes-you-added', 'Add photos to homes you added, and send the owner a link', 'run', 'howto', 'On the Entries tab, tap Photos on a home to add photos, and tap Copy link or Email link to send the homeowner a private link.', 'Homes you add yourself start with no photo. You can add photos yourself, and you can send the homeowner a private link so they can add their own.
+INSERT OR IGNORE INTO help_articles (slug, title, category, kind, summary, body, keywords, video, sort, status, updated_by) VALUES ('add-photos-to-homes-you-added', 'Add photos to homes you added, and send the owner a link', 'run', 'howto', 'On the Entries tab, tap Photos on a home to add photos, and tap Copy link or Email link to send the homeowner a private link.', 'Homes you add yourself start with no photo, and the residents do not need an account. (Residents who enter their own home tap **Enter** on the contest page and add their own photos.) You can add photos yourself, and you can send the homeowner a private link so they can add their own.
 
 ## Add photos yourself
 
@@ -47,7 +47,7 @@ The homeowner opens it, signs in, and links the home to their account: see [Your
 - A home can have up to eight photos. Photos the homeowner hides still count.
 - The homeowner can hide the photos you added, but cannot delete them.
 
-See also [Fix a home you added to your contest](/help/edit-a-home-you-added).', 'add photos, home photos, organizer photos, homeowner link, private link, email link, copy link, new link, unlink homeowner, photos for added homes', 'run-home-photos', 47, 'published', 'seed');
+See also [Fix a home you added to your contest](/help/edit-a-home-you-added).', 'homeowner link, private link, email link, copy link, make a new link, unlink homeowner, photos button, send the owner a link', 'run-home-photos', 47, 'published', 'seed');
 INSERT OR IGNORE INTO help_articles (slug, title, category, kind, summary, body, keywords, video, sort, status, updated_by) VALUES ('your-city-added-your-home', 'Your city added your home: add photos and details', 'enter', 'howto', 'Open the private link from your city, tap Yes, this is my home, then check the details and add your own photos.', 'If a city or neighborhood group put your home in a contest, they can send you a private link. It lets you link the home to your account, check its details, and add your own photos. You do not need to enter again.
 
 1. Open the link from your email. It opens a private page for your home.
@@ -72,7 +72,7 @@ The home is now on your profile, under Contests and under Displays.
 - A link that says it is not active was replaced. Ask the organizer for a new one.
 - You can change your home until voting ends.
 
-See also [Edit or withdraw your entry](/help/edit-or-withdraw-your-entry).', 'city added my home, private link, link my home, homeowner link, add photos, edit details, claim home, organizer added my home, photos link', 'enter-city-home', 15, 'published', 'seed');
+See also [Edit or withdraw your entry](/help/edit-or-withdraw-your-entry).', 'city added my home, private link, link my home, homeowner link, claim home, organizer added my home', 'enter-city-home', 15, 'published', 'seed');
 UPDATE help_articles SET body = body || '
 
 ## After you add the homes

@@ -2292,7 +2292,7 @@ See also [Add photos to homes you added](/help/add-photos-to-homes-you-added).
 ### Add photos to homes you added, and send the owner a link  (slug `add-photos-to-homes-you-added`, category run, video `run-home-photos`)
 Summary: On the Entries tab, tap Photos on a home to add photos, and tap Copy link or Email link to send the homeowner a private link.
 
-Homes you add yourself start with no photo. You can add photos yourself, and you can send the homeowner a private link so they can add their own.
+Homes you add yourself start with no photo, and the residents do not need an account. (Residents who enter their own home tap **Enter** on the contest page and add their own photos.) You can add photos yourself, and you can send the homeowner a private link so they can add their own.
 
 ## Add photos yourself
 
