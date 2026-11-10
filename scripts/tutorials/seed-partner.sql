@@ -2,6 +2,8 @@
 -- so the Partner page shows "1 of 10 events used", the covered event with its badge, and "Use the plan" next to the other event. Both candidate organization keys are seeded
 -- (an email at a website is matched as "d:<domain>", otherwise the person's own "u:<email>"; here it is d:demo.example, "Verified email domain"). One covered event (event id is the key). Never run against the live database.
 DELETE FROM event_partner_plans WHERE session_id LIKE 'demo-plan-%';
+DELETE FROM event_partner_events WHERE event_id IN ('ev-oak-hill-tree-lighting', 'ev-oak-hill-holiday-market');
+UPDATE events SET featured = 0, featured_until = NULL, banner_until = NULL, partner_until = NULL, partner_verified = 0 WHERE id IN ('ev-oak-hill-tree-lighting', 'ev-oak-hill-holiday-market');
 DELETE FROM event_partner_events WHERE org_key IN ('d:demo.example', 'u:jamie@demo.example');
 DELETE FROM event_partner_comps WHERE org_key IN ('d:demo.example', 'u:jamie@demo.example');
 INSERT INTO event_partner_plans (session_id, org_key, season_key, season_start, season_end, cap, cents, status, user_id) VALUES ('demo-plan-d', 'd:demo.example', 'christmas', '2026-11-03', '2027-01-06', 10, 14900, 'active', 'u_mine');
