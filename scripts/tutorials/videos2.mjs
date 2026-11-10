@@ -447,5 +447,52 @@ S["contest-pass-app"] = { id: "contest-pass-app", file: "run-pass-app", cookie: 
   nextUp(ER, "Contest passes", "How you choose a pass on the website"),
 ]};
 
+// ---- Today's organizer and homeowner features (2026-11-10): editing a home the organizer added, photos and the homeowner's private link, and the homeowner's own page ----
+// Seeds: scripts/tutorials/seed-ownhomes.sql (three homes the organizer added, each with a private link, no photos, nobody linked). Demo photos come from public/img.
+const PHOTO = (n) => new URL(`../../public/img/${n}`, import.meta.url).pathname;
+const OWNLINK = "/photos/DemoLynnLinkTokenAAAAAAAAAAAAA1";
+S["entry-edit"] = { id: "entry-edit", file: "run-edit-home", cookie: ck.u_org, ...MAPSPEC, steps: [
+  hook(ER, "Fix a home you added", "Correct a name or a description", "In this video, you will fix a mistake in a home you added to your contest yourself, such as a misspelled family name. We start on the map."),
+  ...shortDash(),
+  target("Tap Entries", "Now tap Entries.", nav("entries"), { after: 1500 }),
+  { cap: "Added by organizer", say: "Every home is a row. The homes you added yourself are tagged Added by organizer, and each one has an Edit button.", do: async (p, h) => { await p.locator(".entr").first().waitFor({ timeout: 10000 }); await h.scrollTo("[data-edithome] >> nth=0", 300).catch(() => {}); await h.hover(".pill:has-text('Added by organizer') >> nth=0", 1600); } },
+  target("Tap Edit", "Tap Edit on the home with the mistake.", "[data-edithome] >> nth=0", { after: 1500, pre: async (p) => { await fakeGeocode(p); } }),
+  { cap: "Fix the name", say: "Fix the name here. A misspelled family name is the most common mistake.", do: async (p, h) => { await p.locator("#ed-name").waitFor({ timeout: 8000 }); await h.type("#ed-name", "The Lin Family", { fill: true, after: 900 }); } },
+  { cap: "Description and address", say: "You can also change the description, and the address. If you change the address, we look it up again, and move the pin on the map.", do: async (p, h) => { await h.hover("#ed-desc", 1200); await h.hover("#ed-addr", 1400); } },
+  target("Tap Save", "Tap Save.", ".phdlg button[type=submit]", { after: 2400 }),
+  { cap: "Fixed everywhere", say: "The home is fixed everywhere, on the ballot, on the routes, and on the map. You can change a name or a description until the winners are announced. After that, the address is locked.", do: async (p, h) => { await h.hover(".entname b >> nth=0", 1600); }, pad: 0.5, poster: true },
+  recap(ER, "Fix a home you added", ["Dashboard, then Entries", "Tap Edit on the home", "Fix the name, the description or the address", "Tap Save"], "That is how you fix a home you added. The Edit button is there for as long as the contest runs."),
+  nextUp(ER, "Add photos to a home and send the owner a link", "Add photos yourself, and send the homeowner a private link"),
+]};
+S["entry-photos"] = { id: "entry-photos", file: "run-home-photos", cookie: ck.u_org, ...MAPSPEC, steps: [
+  hook(ER, "Add photos to a home and send the owner a link", "Photos, and a private link for the homeowner", "In this video, you will add photos to a home you added yourself, and send the homeowner a private link, so they can add their own. We start on the map."),
+  ...shortDash(),
+  target("Tap Entries", "Now tap Entries.", nav("entries"), { after: 1500 }),
+  { cap: "Copy link and Email link", say: "Each home you added shows two buttons for the homeowner: Copy link, and Email link. The link is private to that home. The homeowner signs in with it, and links the home to their account.", do: async (p, h) => { await p.locator(".entlk").first().waitFor({ timeout: 10000 }); await h.scrollTo(".entlk >> nth=0", 320).catch(() => {}); await h.hover(".entlk button >> nth=0", 1400); await h.hover(".entlk a >> nth=0", 1400); } },
+  { cap: "Email link", say: "Email link opens an email with the link and a short message already written. Add the homeowner's address, and send it.", do: async (p, h) => { await h.hover(".entlk a >> nth=0", 1600); }, pad: 0.4 },
+  target("Tap Photos", "To add a photo yourself, tap Photos.", "[data-photos] >> nth=0", { after: 1500 }),
+  { cap: "Add photos", say: "Add up to eight photos, from your phone or your computer. They are made smaller for you, so they load fast.", do: async (p, h) => { await p.locator("#ph-files").waitFor({ state: "attached", timeout: 8000 }); await h.hover(".phpick", 1200); await p.setInputFiles("#ph-files", PHOTO("events/ramona-tree-lighting.jpg")); await p.locator(".phone img").first().waitFor({ timeout: 20000 }); await sleep(1200); } },
+  { cap: "The photo is added", say: "The photo shows right away, on the contest page, the ballot and the map. As the organizer, you can remove any photo, with the cross.", do: async (p, h) => { await h.hover(".phone img >> nth=0", 1400); await h.hover(".phone button >> nth=0", 1400); }, poster: true },
+  { cap: "The homeowner's link", say: "Below the photos is the homeowner's link. If you sent it to the wrong person, tap Make a new link, and the old one stops working. Once the homeowner links the home, you can unlink them, and send a new link to someone else.", do: async (p, h) => { await h.scrollTo(".phlink", 200).catch(() => {}); await h.hover(".phlink .copy", 1600); await h.hover("#ph-new", 1600); }, pad: 0.4 },
+  { cap: "Until voting closes", say: "Photos can be added and removed until voting closes. After that, they are locked.", do: async (p, h) => { await sleep(500); }, pad: 0.5 },
+  recap(ER, "Photos for a home you added", ["Dashboard, then Entries", "Copy link or Email link, for the homeowner", "Tap Photos to add or remove photos", "Make a new link, or unlink, if needed"], "That is how you add photos, and invite the homeowner. Photos stay open until voting closes."),
+  nextUp(ER, "Add photos and details to your home", "What the homeowner sees when they open the link"),
+]};
+S["owner-photos"] = { id: "owner-photos", file: "enter-city-home", cookie: ck.u_mine, ...MAPSPEC, steps: [
+  hook("Enter a home", "Add photos and details to your home", "When your city entered your home", "In this video, you will see what to do when your city entered your home in a contest, and sent you a private link. You will link the home to your account, check its details, and add your own photos. We start from the email."),
+  { cap: "The email", say: "Your city sends you an email with a private link for your home. Tap the link.", mail: { subject: "Your home in Maple Street Holiday Lights 2026", to: "jamie@demo.example", note: "Example email", html: `<p>Hello,</p><p>Your home (The Lynn Family) is entered in Maple Street Holiday Lights 2026. Use this private link to sign in, link the home to your account, check the details and add photos:</p><p><a href="${BASE}${OWNLINK}">Open the private link for your home</a></p><p>Thank you,<br>Maple Street Neighbors</p>` }, target: '#__mail a[href*="/photos/"]', after: 2600, pad: 0.4 },
+  { cap: "Is this your home?", say: "The link opens a private page for your home. It says which contest your home is in, and who entered it.", do: async (p, h) => { await p.locator(".hp .notice").first().waitFor({ timeout: 15000 }); await h.hover(".hp .meta", 1600); await h.hover(".hp .notice", 1600); }, pad: 0.4 },
+  { cap: "Sign in", say: "If you are not signed in yet, the page asks you to sign in with your email, or with Google. We use your email to send you contest updates and results, and the organizer can see it.", do: async (p, h) => { await h.hover("#claim", 1800); }, pad: 0.4 },
+  target("Tap Yes, this is my home", "Tap, Yes, this is my home, link it to my account.", "#claim", { after: 2600 }),
+  { cap: "Your home", say: "Now the home is on your account. You can change it until voting ends.", do: async (p, h) => { await p.locator("#edit").waitFor({ timeout: 15000 }); await h.hover("#edit", 1600); }, pad: 0.4, poster: true },
+  { cap: "Edit the details", say: "Change the name, the description, when the lights are on, a tip for visitors, how to see it, parking, and the radio station.", do: async (p, h) => { await h.type("#edit [name=desc]", "Ten thousand lights on the roof, a candy cane walkway, and music at six.", { after: 900 }); await h.type("#edit [name=lights_on]", "Every night, 5 to 10 pm", { after: 900 }); } },
+  target("Tap Save changes", "Tap Save changes.", "#edit button[type=submit]", { after: 2200 }),
+  { cap: "Photos", say: "Under Photos are the photos your city added. You can hide them, but you cannot delete them. Your own photos, you can delete.", do: async (p, h) => { await h.scrollTo("#files", 260).catch(() => {}); await h.hover(".pick", 1600); }, pad: 0.4 },
+  { cap: "Add your own photos", say: "Tap Add your own photos, and choose pictures from your phone or computer. A home can have up to eight photos.", do: async (p, h) => { await p.setInputFiles("#files", PHOTO("events/lake-elsinore-tree-lighting.jpg")); await p.locator(".grid .ph img").first().waitFor({ timeout: 20000 }); await sleep(1400); await h.hover(".grid .ph img >> nth=0", 1400); }, poster: true },
+  { cap: "On your profile", say: "The home now shows on your profile, under Contests, and under Displays.", do: async (p, h) => { await p.goto(BASE + "/profile#displays", { waitUntil: "domcontentloaded" }); await p.locator("text=Manage your home").first().waitFor({ timeout: 15000 }); await h.hover("text=Manage your home", 2200); }, pad: 0.5 },
+  recap("Enter a home", "Your home, added by your city", ["Open the private link in your email", "Link the home to your account", "Check the details, and save", "Add your own photos"], "That is how you take over a home your city entered. You can change it until voting ends."),
+  nextUp("Enter a home", "Edit or withdraw your entry", "Change your entry, or take it out of the contest"),
+]};
+
 const id = process.argv[2];
 if (id) { if (!S[id]) throw new Error("no video " + id); await record(S[id]); }
