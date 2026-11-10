@@ -853,3 +853,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Map on phones: tapping away from a dot (card closes) no longer leaves the "Route these" pill below the screen; it follows the list back up (it was only placed once, while the list was still off screen).
 
 - Help Center: articles are cards in a grid (title, "Category · How to", and "Video and steps" or "Written steps"; section titles show how many). Tutorials: each video card's play button, title and Computer/Phone buttons now open its Help article (/help/<article>?play=1[&v=w|p]), which plays the bigger player and starts the video; videos with no article still play on the Tutorials page. New GET /api/help/videos maps each video file to its first Help article.
+
+- AI chat panel: the message box is no longer cut off in a short window (the panel scrolls as a whole at every width; header and message box stay in view; new messages scroll into view). The notice is two lines with a "More info" / "Less info" button that opens the privacy details (personal information, tab-only storage, Privacy, Email us).

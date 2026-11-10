@@ -15,13 +15,18 @@
 .scl-chat-fab:hover{background:var(--c-bg2)}
 .scl-chat-fab:focus-visible,.scl-chat button:focus-visible,.scl-chat a:focus-visible,.scl-chat textarea:focus-visible,.scl-chat-log:focus-visible{outline:3px solid var(--c-focus);outline-offset:2px}
 
-.scl-chat{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:1201;display:flex;flex-direction:column;width:min(400px,calc(100vw - 32px));max-height:min(620px,calc(100dvh - 32px));background:var(--c-bg);border:1px solid var(--c-line);border-radius:16px;box-shadow:0 16px 40px rgba(20,22,27,.28);overflow:hidden;font-size:15px;line-height:1.45}
+.scl-chat{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:1201;display:flex;flex-direction:column;width:min(400px,calc(100vw - 32px));max-height:min(620px,calc(100dvh - 32px));background:var(--c-bg);border:1px solid var(--c-line);border-radius:16px;box-shadow:0 16px 40px rgba(20,22,27,.28);overflow-y:auto;overscroll-behavior:contain;font-size:15px;line-height:1.45}
 .scl-chat-head{display:flex;align-items:center;gap:8px;padding:10px 8px 10px 14px;border-bottom:1px solid var(--c-line)}
 .scl-chat-head h2{margin:0;flex:1;font-size:17px;font-weight:700}
 .scl-chat-reset,.scl-chat-x{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--c-ink);cursor:pointer;border-radius:10px;font:inherit}
 .scl-chat-reset{font-size:13px;color:var(--c-muted);text-decoration:underline;padding:0 8px}
 .scl-chat-x{font-size:28px;line-height:1}
+.scl-chat-head{position:sticky;top:0;z-index:2;background:var(--c-bg)}
+.scl-chat-form{position:sticky;bottom:0;z-index:2;background:var(--c-bg)}
+.scl-chat-log{flex:1 0 auto}
 .scl-chat-note{margin:0;padding:8px 14px;font-size:13px;color:var(--c-muted);background:var(--c-bg2);border-bottom:1px solid var(--c-line)}
+.scl-chat-note p{margin:0}.scl-chat-note #scl-chat-more{margin-top:6px}
+.scl-chat-more{border:0;background:none;padding:0 2px;min-height:24px;font:inherit;color:var(--c-accent);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .scl-chat a{color:var(--c-accent);text-decoration:underline;text-underline-offset:2px}
 .scl-chat-log{flex:1;min-height:120px;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
 .scl-chat-msg{margin:0;padding:9px 12px;border-radius:12px;max-width:92%;overflow-wrap:anywhere;white-space:pre-wrap;border:1px solid var(--c-line)}
