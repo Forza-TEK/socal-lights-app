@@ -843,3 +843,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Leads (not added): Magic in the Cove, 30125 Cherwell St, Lucerne Valley (only a Dec 2025 county listing; Nominatim has no house-number match); Big Bear Festival of Lights map (voting site with addresses opens Dec 1); Needles Fun Fair/Festival of Trees and Oak Glen Apple Butter Festival (no 2026 pages found). No decorating-contest home addresses published yet in this group.
 
 - Santa Photos at The Shops at Mission Viejo (soc-shops-mv-santa) had no photo (stock photo showed); set to the Santa photo on its simon.com page (migration 0217). simon.com blocks scripts with a bot check, so the photo was found through a normal page read, not scraped around the check.
+
+- Photo sweep for events with no photo (2026-11-10): 531 upcoming events had none; the tool found a photo on 61, I viewed all of them and kept 12 (flyers, posters, logos, maps, ads, blank images and photos shared by several events were rejected): migration 0218. The other ~470 either have no page, a page behind a bot check, or a page with no usable photo, and keep the stock photo for their type.
