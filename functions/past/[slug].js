@@ -5,7 +5,7 @@ import { founderKeys, isFounder } from "../_lib/founder.js";
 import { FOUNDER_LABEL, FOUNDER_TIP } from "../_lib/founder.js";
 import { ARCHIVE_COLS, ARCHIVE_WHERE, shapeContest } from "../_lib/archive.js";
 
-const PHOTO = /^p\/[a-z0-9]{8,32}\/\d{1,2}\.(jpg|png|webp)$/;
+const PHOTO = /^p\/[a-z0-9]{8,32}\/\d{1,10}\.(jpg|png|webp)$/;
 const img = (k, alt, size) => (PHOTO.test(k || "") ? `<img src="/api/photo/${esc(k)}" alt="${esc(alt)}" loading="lazy" width="${size}" height="${size}">` : "");
 const CROWN = "&#128081; ";
 

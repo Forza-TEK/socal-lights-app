@@ -3,6 +3,7 @@ import { json, err, clean } from "../../../../_lib/util.js";
 import { sendTemplate } from "../../../../_lib/mailtpl.js";
 import { getUser, sameOrigin } from "../../../../_lib/auth.js";
 import { ownerOf, approveEntry } from "../../../../_lib/contests.js";
+import { newPhotoToken, photoLink } from "../../../../_lib/entryphotos.js";
 
 export async function onRequestPost({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -38,6 +39,13 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     await env.DB.batch([env.DB.prepare(`UPDATE posts SET status='declined'${wasPending ? "" : ", photos='[]'"} WHERE id = ?`).bind(row.id), env.DB.prepare("DELETE FROM votes WHERE post_id = ?").bind(row.id)]);
     tell("entry_declined", { name, contest: c.name, org: c.org, reason, link: `${page}/enter` });
     return json({ ok: true });
+  }
+  if (b.action === "newlink") {
+    // A new private photo link for a home the organizer added herself; the old link stops working at once (use it if a link was shared by mistake)
+    if (row.user_id !== "" || row.status !== "approved") return err(400, "Only homes you added yourself have a photo link.");
+    const t = newPhotoToken();
+    await env.DB.prepare("UPDATE posts SET photo_token = ? WHERE id = ?").bind(t, row.id).run();
+    return json({ ok: true, link: photoLink(new URL(request.url).origin, t) }, { headers: { "cache-control": "no-store" } });
   }
   return err(400, "Unknown action.");
 }

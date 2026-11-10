@@ -4,6 +4,7 @@
 // (user_id = '', added_by = the organizer), so nobody is blocked from voting or judging it and deleting the organizer's account never deletes it.
 // Answer: { ok, dryRun, found: [..] (dry run), added: [..], failed: [{ index, address, reason }], skipped: [{ index, address, reason }] }
 import { json, err, clean, newId } from "../../../../_lib/util.js";
+import { newPhotoToken } from "../../../../_lib/entryphotos.js";
 import { getUser, sameOrigin } from "../../../../_lib/auth.js";
 import { getContest, isStaff, todayPT, UNTRUSTED_ADDED_CAP } from "../../../../_lib/contests.js";
 import { teamChanged } from "../../../../_lib/changes.js";
@@ -72,14 +73,14 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   failed.sort(byIndex); skipped.sort(byIndex);
   if (dryRun) return json({ ok: true, dryRun: true, found: found.map(view), failed, skipped }, NO_STORE);
 
-  const rows = found.map((h) => ({ ...h, id: newId() }));
+  const rows = found.map((h) => ({ ...h, id: newId(), token: newPhotoToken() }));
   if (rows.length) {
     // PL-01: keep who confirmed, when, for which contest, how many homes and the exact wording, and link each home to that record. Written in the same batch as the homes.
     const consentId = newId();
     await env.DB.batch([env.DB.prepare("INSERT INTO home_consents (id, contest_id, user_id, email, n, version, text) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(consentId, c.id, user.id, String(user.email || "").toLowerCase(), rows.length, CONSENT_VERSION, CONSENT_TEXT), ...rows.map((h) => env.DB.prepare(
-      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,added_by,entry_no,approved_at,consent_id)
-       VALUES (?,'approved',?,?,?,?,?,?,'','','',?,'[]','',?,?,1,'homeowner',?,'CA',?,'',?,'','',?,(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?),datetime('now'),?)`
-    ).bind(h.id, h.title, h.title, h.city, c.county || "", h.pt[0], h.pt[1], h.descr, c.season, `${h.street}, ${h.city}, CA${h.zip ? " " + h.zip : ""}`, h.street, h.zip, c.id, user.id, c.id, consentId))]);
+      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,added_by,entry_no,approved_at,consent_id,photo_token)
+       VALUES (?,'approved',?,?,?,?,?,?,'','','',?,'[]','',?,?,1,'homeowner',?,'CA',?,'',?,'','',?,(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?),datetime('now'),?,?)`
+    ).bind(h.id, h.title, h.title, h.city, c.county || "", h.pt[0], h.pt[1], h.descr, c.season, `${h.street}, ${h.city}, CA${h.zip ? " " + h.zip : ""}`, h.street, h.zip, c.id, user.id, c.id, consentId, h.token))]);
     await teamChanged(env, c, user, [{ label: "Entries", old: "", new: `Added ${rows.length} ${rows.length === 1 ? "home" : "homes"}` }], waitUntil);
   }
   const nos = new Map((await env.DB.prepare(`SELECT id, entry_no FROM posts WHERE id IN (${rows.map(() => "?").join(",") || "''"})`).bind(...rows.map((r) => r.id)).all()).results.map((r) => [r.id, r.entry_no]));

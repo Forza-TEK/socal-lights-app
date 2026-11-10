@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Add photos of your home · SoCal Lights</title>
+<meta name="description" content="Add photos of your home to a neighborhood lighting contest.">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/info.css?v=20261110y">
+<style>
+.hp{max-width:640px;margin:28px auto 56px;display:grid;gap:16px}.hp h1{margin:0;font-size:28px}.hp p{margin:0}.hp .meta{color:var(--muted)}
+.hp .card{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:12px}:root[data-theme="dark"] .hp .card{background:var(--tile)}
+.hp .card h2{margin:0;font-size:18px}.hp .notice{border-left:3px solid var(--season,#c8324f);padding:4px 0 4px 14px;color:var(--ink)}
+.hp .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.hp .ph{position:relative;border-radius:12px;overflow:hidden;background:var(--tile,#eee);aspect-ratio:4/3}.hp .ph img{display:block;width:100%;height:100%;object-fit:cover}
+.hp .ph button{position:absolute;top:6px;right:6px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:20px;line-height:1;cursor:pointer}
+.hp .ph button:focus-visible,.hp .go:focus-visible,.hp .pick:focus-within{outline:3px solid var(--season,#c8324f);outline-offset:2px}
+.hp .pick{display:grid;gap:8px;border:2px dashed var(--line2,#b0b0b0);border-radius:14px;padding:18px;text-align:center;cursor:pointer}.hp .pick input{position:absolute;opacity:0;width:1px;height:1px}
+.hp .pick b{font-size:17px}.hp .go{min-height:48px;padding:0 26px;border-radius:12px;border:1px solid var(--btn);background:var(--btn);color:var(--btn-ink);font:600 16px var(--font,inherit);cursor:pointer;justify-self:start}.hp .go[disabled]{opacity:.6;cursor:default}
+.hp .err{color:var(--bad);font-weight:600}.hp .ok{color:var(--ok);font-weight:600}
+</style>
+<script src="/hit.js?v=20261107a" defer></script>
+</head>
+<body>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+<main><div class="hp" id="box"><p class="meta">Loading…</p></div></main>
+<script type="module">
+import { shrink } from "/shrink.js?v=20261111a";
+const box = document.getElementById("box"), token = (location.pathname.match(/^\/photos\/([A-Za-z0-9_-]{20,64})\/?$/) || [])[1] || "";
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], nice = (d) => { const [, m, x] = String(d).split("-").map(Number); return m ? MON[m - 1] + " " + x : ""; };
+const api = "/api/home-photos/" + token;
+const dead = () => { box.innerHTML = '<h1>This link isn\'t active</h1><p class="notice">The photo link may have been replaced, or the home is no longer in the contest. Ask the organizer of the contest for a new link.</p>'; };
+let msg = "", busy = false, D = null;
+async function load() {
+  if (!token) return dead();
+  const r = await fetch(api, { cache: "no-store" }).catch(() => null); if (!r || !r.ok) return dead();
+  D = await r.json(); draw();
+}
+function draw() {
+  const room = D.max - D.photos.length;
+  box.innerHTML = `<h1>${D.open ? "Add photos of your home" : "Photos for your home"}</h1>
+  <p class="meta"><b>${esc(D.home.title)}</b>, ${esc(D.home.address)}<br>Part of <b>${esc(D.contest.name)}</b>, run by ${esc(D.contest.org)}, ${esc(D.contest.city)}.</p>
+  ${D.open ? `<p class="notice">${esc(D.contest.org)} entered your home in this contest. Add up to ${D.max} photos that show your lights. They appear on the contest page right away, and you can add or remove photos any time until voting ends on <b>${esc(nice(D.voteEnd))}</b>.</p>` : `<p class="notice">${D.announced ? "The winners have been announced" : "Voting has closed"}, so photos can't be changed any more.</p>`}
+  <div class="card"><h2>Your photos (${D.photos.length} of ${D.max})</h2>${D.photos.length ? `<div class="grid">${D.photos.map((p) => `<div class="ph"><img src="${esc(p.url)}" alt="A photo of your home" loading="lazy">${D.open ? `<button type="button" data-rm="${esc(p.key)}" aria-label="Remove this photo" title="Remove this photo">&times;</button>` : ""}</div>`).join("")}</div>` : `<p class="meta">No photos yet.</p>`}</div>
+  ${D.open ? `<div class="card"><h2>Add photos</h2>${room > 0 ? `<label class="pick"><input type="file" id="files" accept="image/jpeg,image/png,image/webp" multiple><b>Choose photos</b><span class="meta">From your phone or computer. You can add ${room} more.</span></label>` : `<p class="meta">This home has ${D.max} photos. Remove one to add another.</p>`}<p id="msg" role="status" class="${msg.startsWith("!") ? "err" : "ok"}">${esc(msg.replace(/^!/, ""))}</p></div>` : ""}`;
+  const f = document.getElementById("files");
+  if (f) f.onchange = async () => {
+    const list = [...f.files].slice(0, room); if (!list.length || busy) return; busy = true;
+    const say = (m) => { const e = document.getElementById("msg"); if (e) { e.textContent = m.replace(/^!/, ""); e.className = m.startsWith("!") ? "err" : "ok"; } };
+    say("Uploading…");
+    try {
+      const fd = new FormData(); for (const file of list) fd.append("photos", await shrink(file), "photo.jpg");
+      const r = await fetch(api, { method: "POST", body: fd }), j = await r.json().catch(() => ({}));
+      if (!r.ok) { say("!" + (j.error || "That didn't upload. Please try again.")); busy = false; return; }
+      D = j; msg = list.length === 1 ? "Photo added." : list.length + " photos added."; busy = false; draw();
+    } catch { say("!Those photos couldn't be read. Try JPG, PNG or WebP photos."); busy = false; }
+  };
+  box.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = async () => {
+    if (busy || !confirm("Remove this photo?")) return; busy = true;
+    const r = await fetch(api + "?key=" + encodeURIComponent(b.dataset.rm), { method: "DELETE" }), j = await r.json().catch(() => ({}));
+    busy = false; if (r.ok) { D = j; msg = "Photo removed."; draw(); } else { msg = "!" + (j.error || "That didn't work. Please try again."); draw(); }
+  }));
+}
+load();
+</script>
+<script src="/footer.js?v=20261111g" defer></script>
+</body>
+</html>
