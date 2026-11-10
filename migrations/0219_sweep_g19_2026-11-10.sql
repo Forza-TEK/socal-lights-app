@@ -1,0 +1,12 @@
+-- City sweep group 19 (Ventura County) 2026-11-10
+INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address)
+VALUES
+('g19-fillmore-tree-lighting-night-market','Fillmore Tree Lighting & Night Market','Ventura','Fillmore','tree','2026-11-29','2026-11-29','confirmed',1,'Price not listed','5:00-8:00pm',34.3977955,-118.9133086,'The City of Fillmore''s annual tree lighting paired with a night market at Central Park on Sunday, Nov 29.','http://www.fillmoreca.gov/Calendar.aspx?EID=881','christmas','Central Park','250 Central Ave, Fillmore, CA 93015'),
+('g19-strathearn-holiday-open-house','Holiday Open House at Strathearn Historical Park','Ventura','Simi Valley','tree','2026-12-06','2026-12-06','confirmed',1,'Free','11am-2pm',34.2752485,-118.8013819,'Decorated historic buildings, live holiday music, face painting and Santa photos until 2pm, hosted by the Simi Valley Historical Society.','https://conejovalleyguide.com/local-events/holiday-open-house-at-strathearn-historical-park-in-simi-valley','christmas','Strathearn Historical Park and Museum','137 Strathearn Pl, Simi Valley, CA 93065'),
+('g19-ice-at-the-oaks','Ice at The Oaks','Ventura','Thousand Oaks','tour','2026-11-20','2027-01-10','confirmed',0,'$22 with skate rental','Daily; session times at iceattheoaks.com',34.1787413,-118.8807883,'Inaugural outdoor holiday ice rink next to The Oaks mall with a Cocoa Cabin, running daily through Jan 10.','https://iceattheoaks.com/','christmas','Ice at The Oaks','147 W Thousand Oaks Blvd, Thousand Oaks, CA 91360'),
+('g19-lakes-holiday-ice-rink','Holiday Ice Rink at The Lakes at Thousand Oaks','Ventura','Thousand Oaks','tour','2026-11-06','2027-01-11','confirmed',0,'$20; $25 with skates','Varies by date; see site',34.1740188,-118.8462579,'Seasonal holiday ice rink returning to The Lakes shopping center, open Nov 6 through Jan 11; reservations recommended.','https://shoplakes.com/','christmas','The Lakes at Thousand Oaks','2200 E Thousand Oaks Blvd, Thousand Oaks, CA 91362')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city,
+  type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status,
+  free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng,
+  blurb=excluded.blurb, url=excluded.url, season=excluded.season,
+  venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
