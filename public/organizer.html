@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/contest.css?v=20261110c">
 <link rel="stylesheet" href="/printables.css?v=20261105d">
 <link rel="stylesheet" href="/forms.css?v=20261106zb">
-<style>.small.bad,p.bad{color:var(--bad,#b42318)}.phscrim{position:fixed;inset:0;z-index:2200;background:rgba(10,12,18,.55);display:grid;place-items:center;padding:16px;overflow:auto}.phdlg{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:18px;width:min(560px,100%);max-height:calc(100dvh - 32px);overflow:auto;display:grid;gap:12px}.phh{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.phh h2{margin:0;font-size:19px}.phgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}.phone{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:4/3;background:var(--tile,#eee)}.phone img{width:100%;height:100%;object-fit:cover;display:block}.phone button{position:absolute;top:4px;right:4px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:20px;cursor:pointer}.phpick{justify-self:start;cursor:pointer}.phdlg>*{min-width:0}.phlink{border-top:1px solid var(--line);padding-top:12px}.phlink .copy{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.phlink .copy span{flex:1 1 220px;min-width:0;overflow-wrap:anywhere;white-space:normal}.sp-sub{grid-column:1/-1}.sp-sub .ff.c3{min-width:0}#spform input:not([type=checkbox]):not([type=radio]):not([type=file]),#spform select{width:100%;box-sizing:border-box}#spform input[type=file]{width:100%;max-width:100%;box-sizing:border-box;padding:10px 12px;border:1px dashed var(--line2,#b0b0b0);border-radius:12px;background:transparent;min-height:56px;font:inherit}#spform .fhint{overflow-wrap:anywhere}main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
+<style>.small.bad,p.bad{color:var(--bad,#b42318)}.phscrim{position:fixed;inset:0;z-index:2200;background:rgba(10,12,18,.55);display:grid;place-items:center;padding:16px;overflow:auto}.phdlg{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:18px;width:min(560px,100%);max-height:calc(100dvh - 32px);overflow:auto;display:grid;gap:12px}.phh{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.phh h2{margin:0;font-size:19px}.phgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}.phone{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:4/3;background:var(--tile,#eee)}.phone img{width:100%;height:100%;object-fit:cover;display:block}.phone.phhid img{opacity:.4}.phtag{position:absolute;left:4px;bottom:4px;right:4px;background:rgba(0,0,0,.72);color:#fff;font-size:11px;padding:2px 6px;border-radius:999px;text-align:center}.phone button{position:absolute;top:4px;right:4px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:20px;cursor:pointer}.phpick{justify-self:start;cursor:pointer}.phdlg>*{min-width:0}.phlink{border-top:1px solid var(--line);padding-top:12px}.phlink .copy{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.phlink .copy span{flex:1 1 220px;min-width:0;overflow-wrap:anywhere;white-space:normal}.sp-sub{grid-column:1/-1}.sp-sub .ff.c3{min-width:0}#spform input:not([type=checkbox]):not([type=radio]):not([type=file]),#spform select{width:100%;box-sizing:border-box}#spform input[type=file]{width:100%;max-width:100%;box-sizing:border-box;padding:10px 12px;border:1px dashed var(--line2,#b0b0b0);border-radius:12px;background:transparent;min-height:56px;font:inherit}#spform .fhint{overflow-wrap:anywhere}main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="sh-page">
@@ -40,11 +40,12 @@ let D = null, M = null, V = null, J = { judges: [] }, CH = [], SF = { staff: [],
 const CROWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>';
 const photoUrl = (k) => (k.startsWith("p/") ? "/api/photo/" + k : `/api/contests/${encodeURIComponent(slug)}/photo/${k}`);
 
-// Photos for a home the organizer added herself: add or remove them here, and copy the private link the homeowner can use for the same (until voting closes).
+// Photos for a home the organizer added herself: add or remove them here. The homeowner gets a private link: they sign in, link the home to their account and can then edit it,
+// add their own photos and hide (not delete) the photos added here. Until voting closes.
 function photosDialog(id) {
   const e = M.entries.find((x) => x.id === id); if (!e) return;
   const base = `/api/contests/${encodeURIComponent(slug)}/entries/${id}`, open = !!M.photosOpen;
-  let photos = e.photos.slice(), link = e.photoLink || "", busy = false, note = "";
+  let list = (e.photoList || []).slice(), link = e.photoLink || "", claimed = !!e.claimed, who = e.contact || "", busy = false, note = "";
   const o = document.createElement("div"); o.className = "phscrim"; o.innerHTML = '<div class="phdlg" role="dialog" aria-modal="true" aria-labelledby="ph-t"></div>'; document.body.appendChild(o);
   const dlg = o.firstChild, prevFocus = document.activeElement;
   const close = () => { o.remove(); document.removeEventListener("keydown", onKey); if (prevFocus && prevFocus.focus) prevFocus.focus(); load(); };
@@ -55,38 +56,42 @@ function photosDialog(id) {
     dlg.innerHTML = `<div class="phh"><h2 id="ph-t">Photos for ${esc(e.title || e.biz || "this home")}</h2><button class="btn ghost sm" type="button" id="ph-x" aria-label="Close">Close</button></div>
     <p class="muted small" style="margin:0">${esc(e.address)}</p>
     ${open ? "" : '<p class="small bad">Voting has closed, so photos can no longer be changed.</p>'}
-    <div class="phgrid">${photos.length ? photos.map((k) => `<div class="phone"><img src="${esc(photoUrl(k))}" alt="">${open ? `<button type="button" data-rm="${esc(k)}" aria-label="Remove this photo" title="Remove this photo">&times;</button>` : ""}</div>`).join("") : '<p class="muted small">No photos yet.</p>'}</div>
-    ${open ? `<label class="btn org phpick"><input type="file" id="ph-files" accept="image/jpeg,image/png,image/webp" multiple hidden>Add photos (${photos.length} of 8)</label>` : ""}
+    <div class="phgrid">${list.length ? list.map((p) => `<div class="phone${p.hidden ? " phhid" : ""}"><img src="${esc(p.url)}" alt="">${p.hidden ? '<span class="phtag">Hidden by the homeowner</span>' : !p.city ? '<span class="phtag">Added by the homeowner</span>' : ""}${open ? `<button type="button" data-rm="${esc(p.name)}" aria-label="Remove this photo" title="Remove this photo">&times;</button>` : ""}</div>`).join("") : '<p class="muted small">No photos yet.</p>'}</div>
+    ${open ? `<label class="btn org phpick"><input type="file" id="ph-files" accept="image/jpeg,image/png,image/webp" multiple hidden>Add photos (${list.length} of 8)</label>` : ""}
     <p id="ph-note" class="small muted" role="status">${esc(note)}</p>
-    ${link ? `<div class="phlink"><b>Link for the homeowner</b><p class="muted small" style="margin:4px 0 8px">Send this to the homeowner so they can add or remove photos of their home themselves, with no sign-in. It works until voting ends on ${esc(fmt(D.contest.voteEnd))}. If it was shared by mistake, make a new link: the old one stops working.</p><div class="copy"><span>${esc(link)}</span><button class="btn ghost sm" type="button" id="ph-copy">Copy link</button></div>${open ? '<button class="btn ghost sm" type="button" id="ph-new" style="margin-top:8px">Make a new link</button>' : ""}</div>` : ""}`;
+    <div class="phlink"><b>The homeowner</b>
+      ${claimed ? `<p class="small" style="margin:4px 0 8px">Linked to <b>${esc(who)}</b>. They can edit this home, add their own photos and hide the photos you add, but not delete the home or your photos. If the wrong person linked it, unlink it.</p>${open ? '<button class="btn ghost sm" type="button" id="ph-unlink">Unlink this homeowner</button>' : ""}` : `<p class="muted small" style="margin:4px 0 8px">Send this link to the homeowner. They sign in, link the home to their account (we collect their email) and can then edit it, add their own photos and hide the photos you add. The first person to link it keeps it.</p>`}
+      ${link ? `<div class="copy" style="margin-top:8px"><span>${esc(link)}</span><button class="btn ghost sm" type="button" id="ph-copy">Copy link</button></div>${open && !claimed ? '<button class="btn ghost sm" type="button" id="ph-new" style="margin-top:8px">Make a new link</button>' : ""}` : ""}</div>`;
     dlg.querySelector("#ph-x").onclick = close; dlg.querySelector("#ph-x").focus();
     const f = dlg.querySelector("#ph-files");
     if (f) f.onchange = async () => {
-      const list = [...f.files].slice(0, 8 - photos.length); if (!list.length || busy) return; busy = true; say("Uploading…");
+      const files = [...f.files].slice(0, 8 - list.length); if (!files.length || busy) return; busy = true; say("Uploading…");
       try {
-        const fd = new FormData(); for (const file of list) fd.append("photos", await shrink(file), "photo.jpg");
+        const fd = new FormData(); for (const file of files) fd.append("photos", await shrink(file), "photo.jpg");
         const r = await fetch(base + "/photos", { method: "POST", body: fd }), j = await r.json().catch(() => ({}));
-        if (r.ok) { photos = j.photos; note = list.length === 1 ? "Photo added." : list.length + " photos added."; } else note = j.error || "That didn't upload. Please try again.";
+        if (r.ok) { list = j.photos; note = files.length === 1 ? "Photo added." : files.length + " photos added."; } else note = j.error || "That didn't upload. Please try again.";
       } catch { note = "Those photos couldn't be read. Try JPG, PNG or WebP photos."; }
       busy = false; draw();
     };
     dlg.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = async () => {
       if (busy || !confirm("Remove this photo?")) return; busy = true;
-      const r = await fetch(base + "/photos?key=" + encodeURIComponent(b.dataset.rm), { method: "DELETE" }), j = await r.json().catch(() => ({}));
-      if (r.ok) { photos = j.photos; note = "Photo removed."; } else note = j.error || "That didn't work.";
+      const r = await fetch(base + "/photos?name=" + encodeURIComponent(b.dataset.rm), { method: "DELETE" }), j = await r.json().catch(() => ({}));
+      if (r.ok) { list = j.photos; note = "Photo removed."; } else note = j.error || "That didn't work.";
       busy = false; draw();
     }));
     const cp = dlg.querySelector("#ph-copy"); if (cp) cp.onclick = async () => { try { await navigator.clipboard.writeText(link); say("Link copied."); } catch { say("Select the link and copy it."); } };
+    const post = async (action) => { const r = await fetch(base, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) }); return { r, j: await r.json().catch(() => ({})) }; };
     const nw = dlg.querySelector("#ph-new"); if (nw) nw.onclick = async () => {
       if (!confirm("Make a new link? The old link will stop working.")) return;
-      const r = await fetch(base, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "newlink" }) }), j = await r.json().catch(() => ({}));
-      if (r.ok) { link = j.link; note = "New link made. The old one no longer works."; } else note = j.error || "That didn't work.";
-      draw();
+      const { r, j } = await post("newlink"); if (r.ok) { link = j.link; note = "New link made. The old one no longer works."; } else note = j.error || "That didn't work."; draw();
+    };
+    const ul = dlg.querySelector("#ph-unlink"); if (ul) ul.onclick = async () => {
+      if (!confirm("Unlink this homeowner? They will lose access to this home, and you get a new link to send.")) return;
+      const { r, j } = await post("unclaim"); if (r.ok) { link = j.link; claimed = false; who = ""; note = "Unlinked. Send the new link to the right person."; } else note = j.error || "That didn't work."; draw();
     };
   };
   draw();
 }
-
 async function load() {
   const i = await me(true);
   if (!i.user) { shell.own(false); $("#app").innerHTML = `<div class="card center"><h1>Organizer sign-in</h1><p class="muted" style="max-width:44ch">Only the person who created this contest can see its entries and results.</p><button class="btn org" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to manage your contest", next: location.pathname })) { refreshAcct($("#acct")); load(); } }; return; }

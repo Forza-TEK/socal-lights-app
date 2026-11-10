@@ -40,11 +40,16 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     tell("entry_declined", { name, contest: c.name, org: c.org, reason, link: `${page}/enter` });
     return json({ ok: true });
   }
-  if (b.action === "newlink") {
-    // A new private photo link for a home the organizer added herself; the old link stops working at once (use it if a link was shared by mistake)
-    if (row.user_id !== "" || row.status !== "approved") return err(400, "Only homes you added yourself have a photo link.");
+  if (b.action === "newlink" || b.action === "unclaim") {
+    // newlink: a new private link for a home the organizer added herself; the old link stops working at once (use it if a link was shared by mistake). The homeowner who already
+    //   linked the home keeps it (their profile shows the current link).
+    // unclaim: lets go of the homeowner who linked the home (a wrong person linked it): the home goes back to the organizer, with a new link.
+    if (!row.photo_token || row.status !== "approved") return err(400, "Only homes you added yourself have a photo link.");
     const t = newPhotoToken();
-    await env.DB.prepare("UPDATE posts SET photo_token = ? WHERE id = ?").bind(t, row.id).run();
+    if (b.action === "unclaim") {
+      if (!row.user_id) return err(400, "No homeowner has linked this home yet.");
+      await env.DB.prepare("UPDATE posts SET user_id = '', contact_email = '', claimed_at = NULL, photo_token = ? WHERE id = ?").bind(t, row.id).run();
+    } else await env.DB.prepare("UPDATE posts SET photo_token = ? WHERE id = ?").bind(t, row.id).run();
     return json({ ok: true, link: photoLink(new URL(request.url).origin, t) }, { headers: { "cache-control": "no-store" } });
   }
   return err(400, "Unknown action.");

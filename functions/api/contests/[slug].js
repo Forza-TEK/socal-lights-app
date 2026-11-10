@@ -27,7 +27,8 @@ export async function onRequestGet({ params, request, env }) {
   const categories = frozen ? frozen.categories : live.categories;
   const showCounts = !!c.show_counts || !!c.announced || isOwner;
   const mine = user ? (await env.DB.prepare("SELECT post_id, category FROM votes WHERE contest_id = ? AND user_id = ?").bind(c.id, user.id).all()).results : [];
-  const own = new Set(user ? (await env.DB.prepare("SELECT id FROM posts WHERE contest_id = ? AND user_id = ?").bind(c.id, user.id).all()).results.map((r) => r.id) : []);
+  const ownRows = user ? (await env.DB.prepare("SELECT id, photo_token FROM posts WHERE contest_id = ? AND user_id = ?").bind(c.id, user.id).all()).results : [];
+  const own = new Set(ownRows.map((r) => r.id)), ownTok = Object.fromEntries(ownRows.filter((r) => r.photo_token).map((r) => [r.id, "/photos/" + r.photo_token])); // the link to manage a home an organizer added: shown only to the person who linked it
   const jrow = await judgeOf(env, c, user);
   const w = windows(c);
   const jshow = (id) => { // judges' picks or scores for one home: only the organizer sees them before winners are announced
@@ -39,7 +40,7 @@ export async function onRequestGet({ params, request, env }) {
     ? frozen.entries.map((e) => ({ ...publicEntry(e), mine: own.has(e.id) }))
     : live.posts.map((p) => ({
         id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, descr: /^Entry in /.test(p.descr || "") ? "" : (p.descr || "").slice(0, 300),
-        votes: showCounts && hasPublic(c) ? Object.fromEntries(categories.map((k) => [k, (live.counts[p.id] || {})[k] || 0])) : null, mine: own.has(p.id), flagged: isOwner ? !!p.dq : undefined,
+        votes: showCounts && hasPublic(c) ? Object.fromEntries(categories.map((k) => [k, (live.counts[p.id] || {})[k] || 0])) : null, mine: own.has(p.id), manage: ownTok[p.id], flagged: isOwner ? !!p.dq : undefined,
         jv: isOwner && hasJudges(c) ? jshow(p.id) : undefined,
       }));
   const awards = frozen ? frozen.awards : c.announced ? awardList(c, live) : null;

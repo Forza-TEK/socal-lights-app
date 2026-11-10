@@ -68,7 +68,7 @@ function contestRow(c) {
 function entryRow(e) {
   const st = e.status === "approved" ? ["live", "In the contest"] : e.status === "pending" ? ["warn", "Waiting for the organizer"] : e.status === "declined" ? ["", "Not accepted"] : ["", e.status];
   return `<div class="rowi"><div><b>${esc(e.title || e.biz)}</b><br><span class="small muted">${esc(e.contest)} · ${dot(e.status, st)}</span></div>
-   <div class="acts"><a class="btn out sm" href="/c/${esc(e.slug)}">Open contest</a></div></div>`;
+   <div class="acts">${e.manage ? `<a class="btn sm" href="${esc(e.manage)}">Manage your home</a>` : ""}<a class="btn out sm" href="/c/${esc(e.slug)}">Open contest</a></div></div>`;
 }
 // An event you added: edit, cancelled or postponed tag, run again next year
 function eventRow(e) {

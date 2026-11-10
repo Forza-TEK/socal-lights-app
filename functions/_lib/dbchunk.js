@@ -15,7 +15,9 @@ export async function selectIn(env, sql, ids, extra = []) {
 
 // R2 delete() takes an array of up to 1000 keys and counts as ONE outgoing call; one call per key would hit the free plan's 50 per request after 50 photos.
 // A failure is logged to ops_log (kind "r2") and never thrown: the caller carries on, and the leftover files are only wasted space.
-export const photoKeys = (rows, col = "photos") => rows.flatMap((r) => { try { const v = JSON.parse(r[col] || "[]"); return Array.isArray(v) ? v : [v]; } catch { return typeof r[col] === "string" && r[col] ? [r[col]] : []; } }).filter((k) => typeof k === "string" && k);
+// Photos a homeowner hid (posts.photos_hidden: file names) sit at h/<id>/<name>; they are collected too when the row carries them.
+const hiddenKeys = (r) => { try { const v = JSON.parse(r.photos_hidden || "[]"); return r.id && Array.isArray(v) ? v.map((n) => `h/${r.id}/${n}`) : []; } catch { return []; } };
+export const photoKeys = (rows, col = "photos") => rows.flatMap((r) => { try { const v = JSON.parse(r[col] || "[]"); return [...(Array.isArray(v) ? v : [v]), ...(col === "photos" ? hiddenKeys(r) : [])]; } catch { return typeof r[col] === "string" && r[col] ? [r[col]] : []; } }).filter((k) => typeof k === "string" && k);
 export async function r2Delete(env, keys, what = "photos") {
   const list = [...new Set(keys.filter(Boolean))];
   for (let i = 0; i < list.length; i += 1000) {

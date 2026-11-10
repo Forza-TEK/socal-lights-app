@@ -33,7 +33,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   if (b.homes.length > MAX_HOMES_PER_CALL) return err(400, `Add up to ${MAX_HOMES_PER_CALL} homes at a time.`);
   if (!b.homes.every((h) => h && typeof h === "object" && typeof h.address === "string")) return err(400, "Each home needs an address.");
   if (!dryRun) {
-    const { n: have } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id = ? AND user_id = '' AND status != 'declined'").bind(c.id).first();
+    const { n: have } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id = ? AND photo_token IS NOT NULL AND status != 'declined'").bind(c.id).first();
     // N-02: until Admin has looked at a contest whose organizer we could not tie to a website (contests.note), the organizer may add only a few homes of their own
     const cap = c.note ? UNTRUSTED_ADDED_CAP : MAX_ADDED_PER_CONTEST;
     if (have + b.homes.length > cap) return err(400, c.note ? `Until we have looked at your contest (usually within a day), you can add up to ${UNTRUSTED_ADDED_CAP} homes this way. This one has room for ${Math.max(0, UNTRUSTED_ADDED_CAP - have)} more.` : `A contest can have up to ${MAX_ADDED_PER_CONTEST} homes added this way. This one has room for ${Math.max(0, MAX_ADDED_PER_CONTEST - have)} more.`);
