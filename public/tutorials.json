@@ -237,6 +237,11 @@
           }
         },
         {
+          "id": "founder-city-badge",
+          "title": "The Founder city badge",
+          "desc": "What the label means, where you see it, and what it never changes."
+        },
+        {
           "id": "share",
           "title": "Share your contest",
           "desc": "Link, QR code, entry poster and yard sign.",
