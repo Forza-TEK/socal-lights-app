@@ -13,6 +13,7 @@ import { buildContext, topicOf } from "../_lib/chatkb.js";
 import { runModel } from "../_lib/chatmodel.js";
 import { cardsFor, humanCard, wantsHuman, needsAccount, quickIntent } from "../_lib/chatcards.js";
 import { bumpAction } from "../_lib/chatactions.js";
+import { directAnswer } from "../_lib/chatanswers.js";
 import { checkCapAlerts } from "../_lib/chatmail.js";
 
 import { COOKIE, mint, validSession, cookieHeader } from "../_lib/chatsession.js";
@@ -72,6 +73,10 @@ export async function onRequestPost({ request, env }) {
       return say(c.reply, { refused: c.kind }, headers);
     }
   }
+
+  // Curated complete answers for the contest flows that must list every route and step (organizer adding homes, entering a home, fixing an added home, the homeowner link).
+  // Sent without a model call, so they cost nothing, work at the cost cap, and are the same every time. See functions/_lib/chatanswers.js.
+  { const da = directAnswer(last); if (da) { await recordUsage(env, { chats: first ? 1 : 0, turns: 1 }); await bumpAction(env, "direct_" + da.id, "shown"); return say(da.reply, { direct: da.id, ...(da.cards.length ? { cards: da.cards } : {}) }, headers); } }
 
   // hard cost cap and daily chat limit
   const provider = providerOf(env), state = await usageState(env);

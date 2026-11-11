@@ -218,6 +218,7 @@ test("how-to questions across every area get sources that contain the answer, an
     const r = await ask(env, q, { ip: "172.16." + (++ipN % 250) + "." + (ipN % 199) });
     assert.equal(r.status, 200, q);
     assert.ok(!r.body.refused && !r.body.gap, "should be answered: " + q + " (" + (r.body.refused || "gap") + ")");
+    if (r.body.direct) { assert.equal(calls.length, before, "a curated answer needs no model call: " + q); continue; } // chatanswers.js: the complete contest answers
     assert.equal(calls.length, before + 1, "model called for: " + q);
     assert.ok(calls[calls.length - 1].system.includes(want), `sources for "${q}" should include "${want}"`);
   }

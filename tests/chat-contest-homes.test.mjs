@@ -31,3 +31,16 @@ test("the at-a-glance route chunks exist and do not push the step-by-step guides
   assert.match(rankChunks("what are all the ways to get my home on the map", 3).map((c) => c.title).join(" | "), /Every route for a home at a glance/);
   assert.match(rankChunks("how do I add my home?", 2).map((c) => c.title).join(" | "), /Adding your home to the map/);
 });
+
+test("the newest organizer and homeowner features are found: edit an added home, the private link, the homeowner's page, the Founder city badge", async () => {
+  const { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const has = (q, re) => assert.match(rankChunks(q, 3).map((c) => c.title).join(" | "), re, q);
+  has("I typed the wrong street number for a home I added, how do I fix it?", /Fix a home you added/);
+  has("can I edit the name of a home I added to my contest", /Fix a home you added/);
+  has("how do I send the homeowner a link to add her own photos", /Send the homeowner a private link/);
+  has("the wrong person got the link, how do I make a new one", /Send the homeowner a private link/);
+  has("my city added my home to a contest, what do I do now", /Your city added your home/);
+  has("I got a link from the city, how do I link my home to my account", /Your city added your home/);
+  has("what does the Founder city badge mean", /Founder city badge/);
+  has("can the homeowner delete the photos I added", /Send the homeowner a private link|Your city added your home/);
+});

@@ -14,11 +14,13 @@ You do not need a contest to put your home on the map. Adding a home, also calle
 
 ## Entering a home in a contest
 url: /help#enter
+keywords: approve entries by hand manual automatic approval how entries are approved ways to approve entries
 To enter, open the contest page and choose Enter. You must sign in, add photos, the home's address and a name, and accept the contest's official rules. You must be 18 or older to enter a home. A home does not pick a category: it competes in every category. If the organizer approves entries by hand, your photos stay private until the organizer approves your entry; if entries are approved automatically, your home appears right away. You can edit or withdraw your entry from your profile while the contest allows it. If you are the organizer and your city already has a list of homes, you can add them yourself instead: see Organizer-added homes.
 
 ## Voting in a contest
 url: /help#vote
-Voting is free and needs a sign-in. Every approved home is listed in every voting category (for example Best Overall or Most Creative). Each voter picks one favorite home in each category. Voting again in a category moves your vote. Some contests give one vote in total instead; the contest page says which. Nobody can vote for their own home. Voting opens on the contest's start date (or when the organizer starts it early) and stops when the winners are announced. Fake, automated or traded votes are not allowed and may be voided. Votes are never sold.
+keywords: who votes options ways to vote
+Voting is free and needs a sign-in. Every approved home is listed in every voting category (for example Best Overall or Most Creative). Each voter picks one favorite home in each category. Voting again in a category moves your vote. Some contests give one vote in total instead; the contest page says which. Nobody can vote for their own home. Voting opens on the contest's start date (or when the organizer starts it early) and stops when the winners are announced. Fake, automated or traded votes are not allowed and may be voided. Votes are never sold. Who votes is the organizer's choice: public voting only, judges only (judges vote on a separate judges' ballot), or both.
 
 ## Categories, winners and ties
 url: /help#run
@@ -30,6 +32,7 @@ The organizer dashboard is where you run your contest: approve entries, add co-o
 
 ## Judges and how judging works
 url: /help/judge-a-contest
+keywords: how can someone become a judge how do judges get invited who can judge
 A contest can be public voting only (People's Choice), judges only (Judges' Choice), or both. The organizer adds judges by email from the dashboard. Each judge gets an email with a private link to the judges' ballot at /c/<name>/judge and signs in with the email they were invited at. Judges vote on the judges' ballot, not in the public vote. The organizer chooses one of two methods. Pick: each judge picks one favorite home in every category. Score: each judge scores every home from 1 to 10 in every category; there is no separate rubric or criteria list. When 5 or more judges score a home, the highest and lowest score for it are dropped before averaging (a trimmed average), so one very generous or very harsh judge cannot swing it. A judge cannot judge their own home, and a judge can mark a home as a conflict and skip it; skipped homes do not count for that judge. Judging happens during the contest's voting dates.
 
 ## How votes, judge results and ties decide winners
@@ -58,18 +61,39 @@ Vote counts are hidden until the winners are announced unless the organizer choo
 
 ## Announcing winners and the results page
 url: /past
+keywords: who won a contest find the winners results page what happens at the end of a contest after voting ends winners announced
 When the organizer announces winners, the results are saved as a fixed snapshot and votes are locked. Every entrant is emailed, and winners get a congratulations email. The permanent results page is at /past/<name>, and /past lists every announced contest. Winners can show a crown badge on their listings; each person can hide badges from the Badges tab on their profile.
 
 ## Organizer-added homes
 url: /help/add-your-citys-homes-yourself
-keywords: add homes yourself organizer adds homes spreadsheet city form paste addresses residents no photo no account entries tab check addresses
+keywords: how do I add homes to my contest add homes to a contest add homes yourself organizer adds homes spreadsheet city form paste addresses residents no photo no account entries tab check addresses
 For cities that collect resident sign-ups somewhere else, such as a city form, a spreadsheet or email, the organizer or a co-organizer can put those homes in the contest themselves. The resident does not need a photo or an account. Steps: open your dashboard (account circle, Your contests, Manage), tap Entries, and open Add homes yourself. Paste one home per line, like this: Street address, City, ZIP | Name. The city, ZIP and name are optional, and without a city the contest's city is used. A column pasted from a spreadsheet works too. Tap Check addresses: every line is marked Found, or says what is wrong, such as Already in this contest. Tick "These residents agreed to have their address shown on the public map" (only if they did), then tap Add homes; the button shows how many it will add. Each home goes straight onto the ballot and the driving routes with an Added by organizer tag. Homes that cannot be found are not added. To take one out, tap Remove on its row, then tap again to confirm. Limits: up to 100 homes pasted at a time, up to 500 added this way to one contest, and up to 25 while a new contest is waiting for our quick review (the limit lifts when we approve it). Homes can be added once the contest is live and until voting starts, because after that it would change the ballot under the voters.
 
 A home the organizer added has no photo at first. The organizer can add photos from the dashboard: on the Entries tab, tap Photos on that home (up to 8 photos, until voting ends). The Photos box also shows a private link the organizer can send to the homeowner. The homeowner opens it, signs in with their email (or Google) and links the home to their account. Then they can edit the home's details, add their own photos, delete their own photos and hide the photos the organizer added, until voting ends. They cannot delete the home or the organizer's photos; the organizer can unlink a homeowner or make a new link if a link was shared by mistake.
 
+## Fix a home you added to your contest
+url: /help/edit-a-home-you-added
+keywords: edit a home fix name misspelled wrong address change address typo correct a mistake organizer added edit button entries tab save
+If you added a home yourself and typed a name wrong or pasted the wrong street number, you can fix it. Open your dashboard and tap Entries. Homes you added carry an Added by organizer tag and an Edit button. Tap Edit, change the name, the description or the address, and tap Save. The change shows everywhere at once: the ballot, the judges' ballot, the driving routes and the map. Changing the address moves the pin, so we look the new address up again, and it cannot be the same as another home already in your contest. After the winners are announced the address is locked, but the name and description can still be fixed. The Edit button is only on homes you added; a home a resident entered themselves is edited by that resident from their profile. Co-organizers can edit these homes too. Added a home by mistake? Tap Remove on its row.
+
+## Send the homeowner a private link (organizer)
+url: /help/add-photos-to-homes-you-added
+keywords: homeowner link private link copy link email link make a new link unlink homeowner wrong person got the link send the owner a link photos button
+Each home you added has its own private link so the homeowner can link it to their account and add their own photos. On the home's row on the Entries tab, tap Copy link to copy it, or Email link to open an email with the link and a short message already written. The same link is in the Photos box (tap Photos on the home). The homeowner opens it, signs in and links the home; after that the entry shows their email like any other entrant's. If the link went to the wrong person and nobody has linked the home yet, tap Make a new link and the old link stops working. If someone already linked it, tap Unlink this homeowner, which removes them and gives you a new link to send. You can also add up to eight photos yourself with Photos, then Add photos; they are made smaller on your device before they upload. As the organizer you can remove any photo, including the homeowner's. Photos can be added and removed until voting closes. The homeowner can hide the photos you added but cannot delete them.
+
+## Your city added your home: what to do (homeowner)
+url: /help/your-city-added-your-home
+keywords: my city added my home to a contest what do I do now city added my home organizer added my home private link link my home to my account yes this is my home add my own photos edit details homeowner entered by my city
+If a city or neighborhood group put your home in a contest, they can send you a private link. You do not need to enter again. Open the link from your email, sign in with your email or Google if it asks, and tap "Yes, this is my home: link it to my account". Then check the details (the name, a description, when the lights are on, a tip for visitors, how to see it, parking and the radio station) and tap Save changes. Under Photos, tap Add your own photos and choose pictures from your phone or computer. The home is then on your profile, under Contests and under Displays. You can change the details, add your own photos and delete your own photos. You can hide the photos the organizer added but not delete them. You cannot change the home's address (ask the organizer), delete the home from the contest or change the contest. The first account to link the home keeps it, so do not post the link. If the page says the home is linked to another account, or that the link is not active, ask the organizer to unlink it or send a new link. You can change your home until voting ends. We use your email to send you contest updates and results, and the organizer can see it.
+
+## What is the Founder city badge?
+url: /help/founder-city-badge
+keywords: founder city badge founding partner label contest badge city contest endorsement
+A small Founder city label can show on a contest page, in the contests list or on a results page. It marks a contest run by one of the first cities to run home decorating contests on SoCal Lights, a founding partner. It shows only on that city's own contests, while the badge is active. It does not change votes, judging, results, ranking or the order homes are listed in; every home in every contest is treated the same way. It is not an endorsement: SoCal Lights does not say the city endorses it, and the label does not say SoCal Lights endorses the city.
+
 ## All the ways a home gets into a contest
 url: /help/add-your-citys-homes-yourself
-keywords: how do homes get into my contest ways to enter homes add homes to my contest city list residents sign up enter a home organizer enters homes for residents
+keywords: how do I add homes to my contest how do homes get into my contest ways to enter homes add homes to my contest enter homes city list residents sign up enter a home organizer enters homes for residents
 There are two ways to get homes into a contest. 1) Residents enter their own home: they open the contest page (the link, QR code, poster or yard sign you share) and tap Enter, sign in, add photos, the home's address and a name, and accept the contest's official rules. They must be 18 or older. If you approve entries by hand, a new entry waits for you on the Entries tab; if entries are approved automatically, the home appears right away. 2) You add homes yourself, which is the way to go when your city already collects sign-ups on a form, a spreadsheet or email: on your dashboard open Entries, then Add homes yourself, paste one address per line, tap Check addresses, then Add homes. Residents need no photo or account for that. You can use both ways in the same contest. All the steps, the formats and the limits are in the chunk "Organizer-added homes" and the Help article "Add your city's homes yourself". Either way, voting opens on the contest's start date and every approved home is on the ballot and the driving routes.
 
 ## Unpublish a contest and publish it again
@@ -236,3 +260,13 @@ There are several ways a home gets onto SoCal Lights. 1) A homeowner adds it: si
 url: /add-event
 keywords: all the ways options routes several ways different ways claim an existing event web page confirmed expected
 To list an event, sign in, open Add, and choose An event. If your event has a web page that mentions its name and date, the event is marked Confirmed; without a page it still goes on the map, marked Expected until the dates are checked. If your event is already on the map but not on your account, open Promote your event (or its listing) and use Claim an existing listing: if your email matches the event's own website it is approved at once, otherwise the team checks it. Contest organizers who create a contest also get it on the map as an event automatically. Listing an event is always free.
+
+## Sharing a home, an event or your night
+url: /tutorials#night
+keywords: tell someone about my display share a listing share an event share my favorites send a link to a friend share my night
+Every event and home card has a Share button that sends a link to that place; an event has its own page that opens for anyone, and a home opens on the map. In Favorites, tap the share icon to send your whole list of favorites, and the person you send it to opens the same list on their own phone and can add it to their own favorites. If you run a contest, share it with the link, the QR code, the poster or the yard sign from your dashboard.
+
+## Using the map: the main controls
+url: /tutorials#map
+keywords: ways to use the map how do I use the map use the map on my phone map controls what can I do on the map getting started
+On the map you can: tap Use my location (and Allow) so distances and directions work; tap the season button to switch between Thanksgiving and Christmas Lights, Halloween, New Year and the other seasons; type a city in the search to jump there, or tap Show all of Southern California; tap Filters to narrow by date (tonight, this weekend), distance, county, free or ticketed, kind of event, home displays, professionally installed, and how to visit a home (drive by, walk by, free parking, stroller friendly); tap a card or a dot for details, directions and Share; tap the heart on places you like and open Favorites to plan a night, then Route these to open the stops in your maps app; and use the three dots or the account circle for Add, Contests, the weekly email, Tutorials and Help.
