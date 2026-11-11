@@ -7,6 +7,29 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 - Pages: contest plans on `/contest-pass` for signed-out visitors (prices from /api/config, hidden in the app); payment messages on `/contest-pass` above the picker and scrolled into view; Pricing FAQ shows only the open tab's items, paid items and a "Paid options are available at socallights.app" line in the app, Event Partner link at the top of the Event organizers tab, cards shrink at 220px; `/sponsor?paid=1` and `/feature?paid=1` no longer claim a payment that is not there; Stripe page descriptions use "Nov 11, 2026"; wizard review says the contest goes live after you choose a pass, if you need one; "Run it again" mentions a pass and shows the allowance on the first tap.
 - Wording: Privacy payments section covers every paid product (DRAFT, lawyer review). Owner decisions: no sales tax ("The price you see is the price you pay. We do not add sales tax.", not reviewed by an accountant; no Stripe Tax) and payment methods (card, Apple Pay, Google Pay, Amazon Pay, Cash App Pay, Link; renewal needs a card), on Pricing, Terms, /feature, /sponsor and (migration 0225) the four payment Help articles. Old prices removed from comments and docs; `tests/old-prices.test.mjs` fails if they come back.
 
+## 2026-11-11 (add flows, the rest: branch fix-add-rest, PR on top of fix-add-flows, not merged)
+- From the same audit: ADD-11, 13, 16, 17, 18, 19, 20, 22, 23. ADD-12 (Step n of N, aria values) and ADD-14 (grey Optional) were already in fix-add-flows. ADD-08, ADD-15, ADD-21 left alone on purpose.
+- Photos (ADD-11): remove target and the recheck after each shrink were already 44 px / done; added the sentence that iPhone HEIC photos are converted, and a specific message when a computer browser cannot open a HEIC file.
+- Review (ADD-13): every answer is listed (event: season, type, hours, description, street; home: description, visit tips, installer or contact details). The whole row is the tap target (the Edit button stretches over it); an empty optional answer reads "Not added".
+- Counter (ADD-16): "n/200" under the event description and "n/1200" under the home description, with "at least 20 / 10 characters" until reached.
+- I-am-human check (ADD-17): CHOSE TO VERIFY ON THE SERVER. New events and new homes now send the Turnstile token and `functions/api/submit-event.js` and `submit.js` check it with `verifyTurnstile` (contest entries are not asked: that page has no widget). Reason: sign-in alone (Google especially) does not stop a script that holds a session. Same fail-open rule as every other form: no `TURNSTILE_SECRET` means allowed (local dev), `TURNSTILE_REQUIRED=1` previews refuse. Risk: a visitor whose browser blocks challenges.cloudflare.com cannot post; the form says to turn off the content blocker. To undo, remove the two `verifyTurnstile` lines and `ts.need()` in the pages.
+- Signed-out (ADD-18): the /add tiles say "You'll sign in first (free, no password)"; the sign-in gate pages show the theme and account buttons.
+- Header (ADD-19): Save & exit appears once something is typed or chosen (before that, a plain Exit); a "Need help?" link (new tab, "Help" on phones) goes to the matching Help article. At 480 px and below the wordmark hides so the header does not overflow.
+- Declined email (ADD-20): `functions/_lib/declined.js` saves the declined home's answers as a draft on the account (not for contest entries, not past 10 drafts) and the mail links to `/add-house?draft=<id>`, which opens on the review screen; otherwise the blank form as before. Photos are not part of a draft, the mail says so. The sign-in gate now keeps `?draft=` through sign-in.
+- Wide screens (ADD-22): from 900 px the progress line, Back and Next sit under the form instead of fixed to the bottom. Skip link and main landmark on the add pages and gates (ADD-23).
+- Tests: `tests/add-rest.test.mjs`. Browser check done locally (phone, 360, desktop) with the challenge script stubbed.
+
+## 2026-11-11 (add flows and sign-in fixes, branch fix-add-flows, PR open, not merged)
+- From the owner-reviewed audit `docs/audit/2026-11-11-add-flows-and-signin.md` (branch audit-add): ADD-01 to ADD-07, ADD-09, ADD-10 (ADD-08 wording left alone on purpose).
+- Photos (ADD-01): kept in IndexedDB on the device with the draft (`public/drafts-local.js`), so they survive reload, Save & exit and a sign-in round trip; real thumbnails and a Remove button on the review screen. They are NOT uploaded until the form is sent (no R2 cost, no clean-up job); they stay on the device where they were added.
+- Edit sheet (ADD-02): the profile's Edit now has season, photos (add, remove, make cover, shrunk on the phone first) and address (re-geocoded; events also season, type, city). Same checks as a new submission (`functions/_lib/moderation.js` is the shared "needs a look" rule): spam words put an edited home back in review and say so on screen. Events: spam words are refused as for a new event; a changed web page, name or first day is re-checked (Confirmed or Expected).
+- Receipts (ADD-03): `home_live`, `home_received`, `event_live`, `event_received`, `contest_live_now`, `contest_received` templates, sent by `functions/_lib/receipt.js` (service mail: unsubscribed and removed people still get them; skipped only for hard bounces, complaints, invalid addresses and deleted accounts; 20 a day per address). Done screens say what happens next and link to Your profile. Contest ENTRIES get no receipt. Resend free plan is 100 a day: each submission is now one more mail.
+- Duplicate event (ADD-04): server answers mine / not mine / featurable; one screen per real state; Feature only for your own live, featurable event.
+- Limits (ADD-07): `functions/_lib/submitlimit.js`. Per account (homes 5 a day, events 5 an hour and 8 a day) is the real limit; the per-connection cap went from 5 to 30 an hour so shared Wi-Fi is not blocked. Every 429 says which limit and when it resets, with Retry-After and the contact address. Quote emails: per-connection 10 to 30 a day (account still 5). Weekly-alert per-connection stays 20. Network failures show a plain sentence and a Try again button.
+- Sign-in sheet (ADD-05): focus trap, inert page behind, Escape and focus return, role=alert errors tied by aria-describedby, email and code checked before any request. Wizards (ADD-06): focus goes to the field the message is about (`bad(msg, field)` in step checks), every earlier step is re-checked before sending.
+- Drafts (ADD-09): keyed by account, removed at sign-out and account deletion, "Start over" (tap again) and the saved time shown. Profile (ADD-10): opens on what was just posted, Save & exit lands on Drafts; delete names the item and has an 8 second Undo (the request is sent after the window: the database has no soft delete).
+- Browser checks: `tests/e2e/*.mjs` (by hand, local dev only). Server tests: `tests/add-flows.test.mjs`, `tests/submit.test.mjs`.
+
 ## 2026-11-11 (assistant: forms ask first)
 - Owner feedback: asking how to add an event brought up two forms at once. Now every form card starts as a button ("Would you like me to help with that?" then the action), and the form opens only after the visitor taps it. Signed-in visitors get one event option (add it now, with a link to the step-by-step form inside), not two. A visitor who asks for a person gets that box open straight away; offers (no answer found, cost cap) stay collapsed. The one-tap confirm cards (take down a home, mark cancelled...) are unchanged.
 
@@ -20,6 +43,21 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (Contests tab: Needs a look)
+- Clicking "Needs a look" on Admin > Contests did nothing when it was empty, because the page jumped straight back to Live. It now stays and shows "Nothing needs a look..." (the page still picks Live on first open when nothing needs a look).
+
+## 2026-11-11 (End this comp button)
+- "End this comp now" (Event Partners and Contest passes) sits at the right end of the comp card and is red, like other destructive buttons in Admin.
+
+## 2026-11-11 (edit an Event Partner comp)
+- Event Partners comps can be edited again: **Edit** on a running comp opens events per season (or unlimited), valid-until date and note, saved with `edit_comp` in `/api/admin/partner` (a running comp only; an ended one needs a new grant). Tests in `tests/event-partner.test.mjs`.
+
+## 2026-11-11 (Admin Event Partners page)
+- Event Partners now looks like Contest passes: an "Organizations (N)" header with a Grant a comp button, compact rows (name, Comp or Plan tag, events used and comp date) with an Open button, and a detail view for each organization (events and free a slot, its comps with End this comp, grant a comp to it, plans bought). Ended comps and past plans are in a collapsed section. Same actions and API as before.
+
+## 2026-11-11 (Admin usage page header)
+- The Usage page header is now four small tiles (plan, billing month, extra charges so far, highest right now), a legend row with the Refresh button on the right, and one footnote, instead of two dense paragraphs.
+
 ## 2026-11-11 (On map button)
 - "On map" on a contest home (map card) did nothing because the link only changed the address bar of a page that was already open. Clicks on in-app `/#h-<id>` and `/#e-<id>` links now open that place in the map (the map moves to it and its card opens). If the place is not in the loaded list the link behaves as before.
 

@@ -8,20 +8,22 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/addflow.css?v=20261111zb">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, check, photoField, sumRow, validSite, isEmail, PRIV, OPT, today, pvCard, nlCheck, nlSave } from "/addflow.js?v=20261111d";
+import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, check, photoField, photoRow, sumRow, validSite, isEmail, PRIV, OPT, today, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261111zb";
+import { draftKey } from "/drafts-local.js?v=20261111z";
 import { capture, take } from "/chatprefill.js?v=20261111b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
 import { normPhone, PHONE_HELP } from "/norm.js?v=20261102b";
-import { me, signIn } from "/auth.js?v=20261107p";
+import { me, signIn } from "/auth.js?v=20261111z";
 import { CITY } from "/cities.js?v=20261107a";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
 capture(SEASONS, cities, "home"); // arrived from the AI assistant: remember the values (they survive sign-in) and tidy the address bar
+const cfg = await ts.init(); // the "I am human" check on the last step (the server verifies it; sign-in alone does not prove a person is posting)
 const d = { kind: qs.get("kind") === "installer" ? "installer" : "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", lightsOn: "", visit: "", parking: "", accessible: false, radio: "", hadPro: "no", instName: "", instWeb: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
 const pro = (x) => x.kind === "installer";
 
@@ -30,10 +32,11 @@ const acct = (await me()).user; if (acct) { try { const ov = await (await fetch(
 
 // your display belongs to the account that adds it, so sign in before anything else
 if (!acct) {
-  document.getElementById("app").innerHTML = `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
-    <main class="main"><h1>Sign in to add your lights display</h1><p class="help">Your display is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p>
+  document.getElementById("app").innerHTML = `<a class="skipl" href="#main">Skip to the form</a><div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>
+    <main class="main" id="main" tabindex="-1"><h1>Sign in to add your lights display</h1><p class="help">Your display is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></main>`;
-  await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add your lights display", next: location.pathname })) go(); }; });
+  mountAcct(document.getElementById("acct"));
+  await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add your lights display", next: location.pathname + location.search })) go(); }; });
   location.reload(); await new Promise(() => {});
 }
 if (acct) { d.email = acct.email; if (!d.biz && acct.name) d.biz = acct.name; if (acct.city && cities.includes(acct.city)) { d.city = acct.city; d.street = acct.street || ""; d.zip = acct.zip || ""; } }
@@ -45,7 +48,7 @@ if (claimId) {
   try {
     const j = await (await fetch("/api/events")).json(), ev = (Array.isArray(j) ? j : j.events || []).find((e) => e.id === claimId);
     if (ev) {
-      localStorage.removeItem("scl-house-draft");
+      localStorage.removeItem(draftKey("scl-house-draft", acct.id));
       const addr = String(ev.a || ""), zip = (addr.match(/\b(\d{5})\b/) || [])[1] || "";
       Object.assign(d, { claim: ev.id, claimName: ev.n, street: addr.split(",")[0].trim(), city: cities.includes(ev.city) ? ev.city : d.city, zip: zip || d.zip, title: ev.n.replace(/\s*\([^)]*\)\s*$/, "") });
     }
@@ -63,44 +66,49 @@ const steps = [
   { id: "name", sec: "About you", title: (x) => (pro(x) ? "What's your business called?" : "What name should we show?"),
     help: (x) => (pro(x) ? "Families will see this with a way to ask for a quote." : "For example, The Garcia family. It appears as “Posted by”."),
     body: (x) => { if (pro(x) && x.mine && !x._pre) { Object.assign(x, { biz: x.mine.name, web: x.mine.web || "", phone: x.mine.phone || "", area: x.mine.area || "", _pre: true }); } return input(x, "biz", { max: 80, ph: pro(x) ? "e.g. Glow Pros Lighting" : "e.g. The Garcia family", ac: "name", aria: pro(x) ? "Company name" : "Your name or family name" }); },
-    check: (x) => (x.biz.trim().length < 2 ? "Add the name to show." : "") },
+    check: (x) => (x.biz.trim().length < 2 ? bad("Add the name to show.", "biz") : "") },
   { id: "installer", sec: "About you", skip: (x) => pro(x), redraw: true, title: "Did a professional install your lights?",
     help: "If a company installed them, tell us. Their name shows on your listing and links to their profile. This is optional.",
     body: (x) => `<div class="tiles">${tile(x, "hadPro", "no", "No", "I put them up myself.")}${tile(x, "hadPro", "yes", "Yes, a company did", "Name the company that installed them.")}</div>${x.hadPro === "yes" ? input(x, "instName", { label: "Installer company", ph: "e.g. Glow Pros Lighting", max: 80 }).replace('data-k="instName"', 'data-k="instName" list="instlist"') + '<datalist id="instlist"></datalist>' + input(x, "instWeb", { label: "Their website", ph: "glowpros.com", max: 200, mode: "url", opt: true }) : ""}`,
-    check: (x) => (x.hadPro === "yes" && x.instName.trim().length < 2 ? "Add the installer's name, or choose No." : x.hadPro === "yes" && !validSite(x.instWeb) ? "That doesn't look like a website address. Try something like glowpros.com." : "") },
+    check: (x) => (x.hadPro === "yes" && x.instName.trim().length < 2 ? bad("Add the installer's name, or choose No.", "instName") : x.hadPro === "yes" && !validSite(x.instWeb) ? bad("That doesn't look like a website address. Try something like glowpros.com.", "instWeb") : "") },
   { id: "biz", sec: "About you", skip: (x) => !pro(x), title: "How can people reach you?", help: "A website or a phone number, so families can ask for a quote.",
     body: (x) => `${input(x, "web", { label: "Website", ph: "yourbusiness.com", max: 200, type: "text", mode: "url", opt: true })}${input(x, "phone", { label: "Phone for quotes", max: 80, ac: "tel", type: "tel", opt: true })}${input(x, "area", { label: "Service area", ph: "e.g. Orange and Los Angeles counties", max: 120, opt: true })}${check(x, "perm", "I have the homeowner's permission to show this address.")}`,
-    check: (x) => (!validSite(x.web) ? "That doesn't look like a website address. Try something like yourbusiness.com." : x.phone.trim() && !normPhone(x.phone) ? PHONE_HELP : !x.web.trim() && !x.phone.trim() ? "Add a website or a phone number." : !x.perm ? "Please confirm you have the homeowner's permission to show this address." : "") },
+    check: (x) => (!validSite(x.web) ? bad("That doesn't look like a website address. Try something like yourbusiness.com.", "web") : x.phone.trim() && !normPhone(x.phone) ? bad(PHONE_HELP, "phone") : !x.web.trim() && !x.phone.trim() ? bad("Add a website or a phone number.", "web") : !x.perm ? "Please confirm you have the homeowner's permission to show this address." : "") },
   { id: "season", sec: "Your display", title: "Which season is this display for?", help: "It shows up under that season on the map.", redraw: true,
     body: (x) => `<div class="tiles g2">${Object.entries(SEASONS).map(([k, v]) => tile(x, "season", k, esc(v.label), "", true)).join("")}</div>` },
   { id: "about", sec: "Your display", title: "Tell us about the display", help: "A name for it, and a few sentences about what makes it special.",
-    body: (x) => `${input(x, "title", { label: "Display name", max: 90, ph: "e.g. Music-synced rooftop show" })}${area(x, "desc", { label: pro(x) ? "About this installation" : "About this house", max: 1200, ph: "What you installed, how many lights, what makes it special" })}`,
-    check: (x) => (x.title.trim().length < 3 ? "Give the display a name." : x.desc.trim().length < 10 ? "Add a sentence or two about it." : "") },
+    body: (x) => `${input(x, "title", { label: "Display name", max: 90, ph: "e.g. Music-synced rooftop show" })}${area(x, "desc", { label: pro(x) ? "About this installation" : "About this house", max: 1200, min: 10, count: true, ph: "What you installed, how many lights, what makes it special" })}`,
+    check: (x) => (x.title.trim().length < 3 ? bad("Give the display a name.", "title") : x.desc.trim().length < 10 ? bad("Add a sentence or two about it.", "desc") : "") },
   { id: "addr", sec: "Location", title: "Where is it?", help: "The pin goes on this address and visitors see it, so they can drive by.",
     body: (x) => `${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city", ac: "address-level2" })}${input(x, "street", { label: "Street address", max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}${input(x, "zip", { label: "ZIP", max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}`,
-    check: (x) => (!x.street.trim() ? "Add your street address." : !x.city ? "Choose the city." : !/^\d{5}$/.test(x.zip.trim()) ? "The ZIP code needs 5 digits." : "") },
+    check: (x) => (!x.street.trim() ? bad("Add your street address.", "street") : !x.city ? bad("Choose the city.", "city") : !/^\d{5}$/.test(x.zip.trim()) ? bad("The ZIP code needs 5 digits.", "zip") : "") },
   { id: "where", sec: "Location", title: "Help families plan their visit", help: "All optional. It shows on your listing and lets people filter for what they need.", redraw: true,
     body: (x) => `${input(x, "lightsOn", { max: 60, ph: "e.g. 5 to 10 pm nightly", label: "Lights are on", opt: true })}<div class="field"><span class="lab">How can people see it? ${OPT}</span><div class="tiles g2">${tile(x, "visit", "drive", "Drive by", "", true)}${tile(x, "visit", "walk", "Walk by", "", true)}${tile(x, "visit", "both", "Drive or walk", "", true)}</div></div><div class="field"><span class="lab">Parking ${OPT}</span><div class="tiles g2">${tile(x, "parking", "free", "Free parking nearby", "", true)}${tile(x, "parking", "street", "Street parking", "", true)}${tile(x, "parking", "none", "Hard to park", "", true)}</div></div>${check(x, "accessible", "Stroller and wheelchair friendly")}${input(x, "radio", { max: 40, ph: "e.g. 88.1 FM", label: "Radio station for the music", opt: true })}${input(x, "where", { max: 120, ph: "e.g. Visible from Main St on weekend nights", label: "Other tips", opt: true })}` },
-  { id: "photos", sec: "Photos", title: "Add photos", help: "Photos help families find the right house. You can skip this and add them later by email.", body: (x) => photoField(x) },
+  { id: "photos", sec: "Photos", title: "Add photos", help: "Photos help families find the right house. You can skip this and add them any time from Your profile (open your home and choose Edit).", body: (x) => photoField(x) },
   { id: "review", sec: "Review", title: "Check everything, then send it", help: "It goes on the map right away. You can ask us to change or remove it any time.", cta: "Put it on the map",
-    body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${!pro(x) && x.hadPro === "yes" ? sumRow("Installed by", esc(x.instName), "installer") : ""}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${sumRow("Photos", String(x.photos.length), "photos")}</div>
-      <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). Only the site owner sees it.</p></div>${nlCheck(x)}`,
+    body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${!pro(x) && x.hadPro === "yes" ? sumRow("Installed by", esc([x.instName.trim(), x.instWeb.trim()].filter(Boolean).join(" · ")), "installer") : ""}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow(pro(x) ? "About this installation" : "About this house", esc(x.desc), "about")}${pro(x) ? sumRow("How to reach you", esc([x.web.trim(), x.phone.trim(), x.area.trim() ? "Serves " + x.area.trim() : ""].filter(Boolean).join(" · ")), "biz") : ""}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${sumRow("Visit tips", esc([x.lightsOn.trim() && "Lights on " + x.lightsOn.trim(), { drive: "Drive by", walk: "Walk by", both: "Drive or walk" }[x.visit], { free: "Free parking nearby", street: "Street parking", none: "Hard to park" }[x.parking], x.accessible && "Stroller and wheelchair friendly", x.radio.trim() && "Radio " + x.radio.trim(), x.where.trim()].filter(Boolean).join(" · ")), "where")}${photoRow(x)}</div>
+      <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). Only the site owner sees it.</p></div>${nlCheck(x)}<div id="ts"></div>`,
     submit: async (x, api) => {
+      ts.need();
       const fd = new FormData(), set = { kind: x.kind, biz: x.biz.trim(), email: x.email.trim(), title: x.title.trim(), season: x.season, lights_on: x.lightsOn.trim(), visit: x.visit, parking: x.parking, radio: x.radio.trim(), ...(x.accessible ? { accessible: "1" } : {}), street: x.street.trim(), city: x.city, state: "CA", zip: x.zip.trim(), where: x.where.trim(), desc: x.desc.trim() };
       if (pro(x)) Object.assign(set, { web: x.web.trim(), phone: x.phone.trim(), area: x.area.trim(), permission: "1" });
       if (!pro(x) && x.hadPro === "yes") Object.assign(set, { installer_name: x.instName.trim(), installer_web: x.instWeb.trim() });
       if (x.claim) set.claim = x.claim;
       for (const [k, v] of Object.entries(set)) fd.append(k, v);
+      fd.append("cf-turnstile-response", ts.token());
       x.photos.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
       
       const r = await fetch("/api/submit", { method: "POST", body: fd }), j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "Couldn't send that. Try again in a moment.");
+      if (!r.ok) throw apiError(r, j, "Couldn't send that. Try again in a moment.");
       await nlSave(x, pro(x) ? "installer" : "family", "add-house");
-      api.finish(j.status === "published" ? `<h1>You're on the map!</h1><p class="help">Your display is live now. The site owner may look it over and email you if anything needs fixing.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/#h-${esc(j.id)}">See it on the map</a><a class="btn out" href="/add-house">Add another</a></div>` : `<h1>Thanks! You're in review.</h1><p class="help">The site owner will look it over and publish it to the map. They may email you with questions.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/">Back to the map</a><a class="btn out" href="/add-house">Add another</a></div>`);
+      const mail = j.receipt === "sent" ? `<p class="small muted" role="status">We emailed a confirmation to <b>${esc(j.email || x.email)}</b>.</p>` : "", row = (b, t) => `<div><b style="font-weight:500">${b}</b><br><span class="muted">${t}</span></div>`;
+      api.finish(j.status === "published"
+        ? `<h1>You're on the map!</h1><p class="help">Your display is live now. The site owner may look it over and email you if anything needs fixing.</p>${mail}<div><h2 style="margin-bottom:6px">What happens next</h2><div class="list">${row("Families can find it now.", "Open it on the map to see how it looks.")}${row("Add photos or fix details any time.", "Open Your profile, find the home and choose Edit. You can change the photos, the address, the season and the text.")}${row("We may look it over.", "If anything needs fixing we email you.")}</div></div><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/#h-${esc(j.id)}">See it on the map</a><a class="btn out" href="/profile#displays">Edit it or add photos</a><a class="btn out" href="/add-house">Add another</a></div>`
+        : `<h1>Thanks! You're in review.</h1><p class="help">The site owner will look it over and publish it to the map. They may email you with questions.</p>${mail}<div><h2 style="margin-bottom:6px">What happens next</h2><div class="list">${row("A person looks it over.", "Nothing is public until it is approved.")}${row("We email you.", "You hear from us when it is on the map, or if we need something from you.")}${row("You can still change it.", "Open Your profile, find the home and choose Edit to add photos or fix details while you wait.")}</div></div><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/profile#displays">See it in Your profile</a><a class="btn out" href="/">Back to the map</a><a class="btn out" href="/add-house">Add another</a></div>`);
     } },
 ];
 const preview = (x) => pvCard({ photo: (x.photos && x.photos[0] && x.photos[0].url) || "", title: x.kind === "installer" ? (x.biz || x.title) : x.title, ph: "Your display's name", when: "Home display", lines: [{ t: [x.city, SEASONS[x.season] ? SEASONS[x.season].label : ""].filter(Boolean).join(" \u00b7 ") || "Your city", e: !x.city }, { t: x.desc ? (x.desc.length > 90 ? x.desc.slice(0, 90) + "\u2026" : x.desc) : "A line about your lights", e: !x.desc }], tags: [x.kind === "installer" ? "Professional installer" : "Homeowner"] });
-run({ preview, steps, data: d, persist: "scl-house-draft", prefill: (x) => { const v = take("home"); if (!v || !Object.keys(v).length) return false; Object.assign(x, v); return true; }, account: { kind: "house", title: (x) => x.title || x.biz }, noPersist: ["photos", "email", "nl"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
+run({ preview, steps, data: d, persist: "scl-house-draft", uid: acct.id, prefill: (x) => { const v = take("home"); if (!v || !Object.keys(v).length) return false; Object.assign(x, v); return true; }, help: "/help/show-off-your-house", account: { kind: "house", title: (x) => x.title || x.biz }, noPersist: ["photos", "email", "nl"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
 </script>
 <script src="/footer.js?v=20261111h" defer></script>
 </body>

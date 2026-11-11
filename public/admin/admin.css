@@ -323,3 +323,10 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .rec[data-pkey]{cursor:pointer}.rec[data-pkey]:hover{border-color:var(--ice,var(--line2))}
 .pgrant{margin:10px 0;border:1px solid var(--line);border-radius:12px;padding:10px 14px}.pgrant summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;align-items:center}
 .plist{margin:0 0 8px;padding-left:18px;display:grid;gap:4px}.pleads{margin:22px 0}.pleads summary{cursor:pointer;font-weight:600;min-height:40px;display:flex;align-items:center}
+
+/* Usage page header: small tiles, a legend with the refresh button, one footnote */
+.ustats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 12px}.ustats .ustat{display:grid;gap:4px;align-content:start;padding:14px 16px;border:1px solid var(--line);border-radius:12px;min-width:0}
+.ustat span{font-size:13px;color:var(--muted)}.ustat b{font-size:20px;font-weight:600;line-height:1.2;letter-spacing:-.01em;overflow-wrap:anywhere}.ustat small{font-size:12.5px;color:var(--muted);line-height:1.35}
+.uhbar{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;margin:0 0 8px}.ulegend{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap}.ulegend .meta{margin:0 8px 0 0}
+.ufoot{margin:0 0 16px;max-width:90ch}
+@media (max-width:1099px){.ustats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:480px){.ustats{gap:8px}.ustats .ustat{padding:12px}.ustat b{font-size:17px}}

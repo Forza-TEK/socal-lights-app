@@ -230,7 +230,16 @@ test("Admin: lists organizations with used x of cap, grants and ends a comp", ()
     const d = await J(adminGet({ env })); const o = d.body.orgs.find((x) => x.key === KEY);
     assert.deepEqual([o.used, o.cap, o.comp.until, o.events.length], [1, 5, "2026-12-31", 1]);
     assert.ok(d.body.comps.some((c) => c.org_key === "d:eastvaleca.gov" && c.running));
+    const ed = (body) => J(adminPost({ request: rq("/api/admin/partner", { action: "edit_comp", id: g.body.id, ...body }), env, data: { admin: { email: "owner@x.org" } } }));
+    assert.equal((await ed({ allowed: 0, until: "2027-01-08" })).status, 400, "events per season must be 1 or more");
+    assert.equal((await ed({ allowed: 5, until: "2020-01-01" })).status, 400, "a date that has passed");
+    assert.equal((await J(adminPost({ request: rq("/api/admin/partner", { action: "edit_comp", id: "nope", allowed: 5, until: "2027-01-08" }), env, data: {} }))).status, 404);
+    assert.equal((await ed({ allowed: 7, until: "2027-01-08", note: "changed" })).status, 200);
+    let o2 = (await J(adminGet({ env }))).body.orgs.find((x) => x.key === KEY); assert.deepEqual([o2.cap, o2.comp.until, o2.comp.note], [7, "2027-01-08", "changed"], "the comp was edited");
+    assert.equal((await ed({ allowed: "unlimited", until: "2027-01-08" })).status, 200);
+    o2 = (await J(adminGet({ env }))).body.orgs.find((x) => x.key === KEY); assert.equal(o2.unlimited, true);
     await J(adminPost({ request: rq("/api/admin/partner", { action: "revoke_comp", id: g.body.id }), env, data: {} }));
+    assert.equal((await ed({ allowed: 5, until: "2027-01-08" })).status, 400, "an ended comp cannot be edited");
     assert.equal((await view(env, me.cookie)).body.covered, false);
   } finally { stub.restore(); }
 }));
