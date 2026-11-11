@@ -69,7 +69,7 @@ export const helpFrame = ({ title, desc, canonical, ld, body, noindex, origin, c
   page({ title, desc, canonical, ld, noindex, origin, body: `${header("Open the map", "/")}<main class="help" id="content" data-hcat="${esc(cat)}"><style>${CSS}</style>${body}</main>${frameScript(cats)}` });
 
 // With scripts the page moves into the app frame (the same one Profile and Tutorials use); without them it keeps the plain header and the topic links.
-const frameScript = (cats) => `<script type="module">import { mountShell } from "/appshell.js?v=20261110e";
+const frameScript = (cats) => `<script type="module">import { mountShell } from "/appshell.js?v=20261111a";
 const C = ${jsonScript(CATEGORIES.filter((c) => cats.includes(c.key)).map((c) => ({ k: c.key, label: c.title })))}, IC = { find: "map", enter: "pencil", vote: "check", run: "trophy", sponsors: "star", post: "homeplus", account: "user" };
 const m = document.getElementById("content"), index = !!document.querySelector(".hsec[data-cat]"), here = () => (location.hash || "").slice(1);
 document.body.classList.add("sh-page");

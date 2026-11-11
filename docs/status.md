@@ -15,6 +15,9 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (pricing menu)
+- Pricing page no longer scrolls when you switch between Homeowners, Event organizers, Contest organizers and Installers (it only returns to the top if you were scrolled down). The selected menu item on every app-frame page (Pricing, Help, Profile, Tutorials, Privacy, Terms) now shows the same soft grey highlight as the Admin menu in light mode; before, it was white on white.
+
 ## 2026-11-11 (navigate to contest homes)
 - Every home shown for a contest now has **Directions** (opens the person's maps app, same chooser as elsewhere) and **On map** (`/#h-<id>`): the map card strip, the `/e/c-<slug>` grid and the contest page rows. The card and the city page also have **Route all N homes**, which opens the contest page's existing route builder (`/c/<slug>#tour`, routes every home in stops of 9). Fixed the map card overflowing sideways on phones (the home strip was widening the whole card).
 

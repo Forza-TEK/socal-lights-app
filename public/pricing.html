@@ -80,7 +80,7 @@
 </div></section>
 </main>
 <script type="module">
-import { mountShell } from "/appshell.js?v=20261110e";
+import { mountShell } from "/appshell.js?v=20261111a";
 import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
 import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261108a";
 import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
@@ -96,9 +96,9 @@ const dollars = (p) => "$" + (p.cents % 100 ? (p.cents / 100).toFixed(2) : p.cen
   const owner = (id) => { const e = id && document.getElementById(id); const p = e && e.closest("[data-panel]"); return p ? p.dataset.panel : ""; };
   const first = () => { const h = location.hash.slice(1); return owner(h) || (keys.includes(h) ? h : keys[0]); };
   document.body.classList.add("sh-page"); document.querySelector("main").classList.add("ptabs-on");
-  const sh = mountShell({ page: "pricing", title: "Pricing", items: keys.map((k) => ({ k, label: LABEL[k] || panels[k].dataset.label, icon: ICON[k] })), active: first(), onPick: (k) => { pick(k); try { history.replaceState(null, "", "#" + (panels[k].id || k)); } catch {} document.querySelector("h1").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" }); } });
+  const sh = mountShell({ page: "pricing", title: "Pricing", items: keys.map((k) => ({ k, label: LABEL[k] || panels[k].dataset.label, icon: ICON[k] })), active: first(), onPick: (k) => { pick(k); try { history.replaceState(null, "", "#" + (panels[k].id || k)); } catch {} if (scrollY > 0) scrollTo(0, 0); } });
   const pick = (k) => { if (!panels[k]) k = keys[0]; keys.forEach((x) => { panels[x].hidden = x !== k; }); sh.setActive(k); document.documentElement.dataset.ptab = k; };
-  const fromHash = () => { const h = location.hash.slice(1); pick(first()); if (h && document.getElementById(h)) document.getElementById(h).scrollIntoView(); };
+  const fromHash = () => { const h = location.hash.slice(1); pick(first()); const t = h && document.getElementById(h); if (t && !t.matches("[data-panel]")) t.scrollIntoView(); };
   fromHash(); addEventListener("hashchange", fromHash);
 }
 const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
