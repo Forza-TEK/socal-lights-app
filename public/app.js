@@ -9,6 +9,7 @@ import "/chrome.js?v=20261111z"; // the account circle opens the same menu as on
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261111d";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261111a";
+import { contestImage } from "/contesticon.js?v=20261111a";
 import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261110a";
 
 /* ---------- constants & helpers ---------- */
@@ -986,7 +987,8 @@ const infoBtn = (ev, url) => (url ? `<a class="abtn" href="${esc(infoUrl(affUrl(
 // The homes entered in a contest (the first 12 and the total, from GET /api/events/c-<slug>): a swipeable strip on the details card
 const homesBox = (ev) => {
   const h = ev.ch; if (!h) return "";
-  const tile = (x) => { const dest = x.address || (x.lat + "," + x.lng); return `<div class="chm"><a class="chl" href="/c/${esc(h.slug)}">${x.photo ? `<img src="/api/photo/${esc(x.photo)}" alt="${esc(x.name)} lights" loading="lazy" width="180" height="135" onerror="this.onerror=null;this.src='/img/badge-160.webp';this.className='fb'">` : '<span class="chn"><img src="/img/badge-160.webp" alt="" width="56" height="56" loading="lazy"></span>'}<b>${esc(x.name)}</b><span>${esc(x.address)}</span></a><span class="chb"><a class="chd" href="${esc(routeUrl(mapsApp, [dest], ""))}" ${navAttr([dest], "")} target="_blank" rel="noopener" aria-label="Directions to ${esc(x.name)}">Directions</a><a class="chd" href="/#h-${esc(x.id)}" aria-label="Show ${esc(x.name)} on the map">On map</a></span></div>`; };
+  const ph = contestImage(h.name || ev.n, h.logo); // a home with no photo shows the contest's logo, or an icon drawn from its name
+  const tile = (x) => { const dest = x.address || (x.lat + "," + x.lng); return `<div class="chm"><a class="chl" href="/c/${esc(h.slug)}">${x.photo ? `<img src="/api/photo/${esc(x.photo)}" alt="${esc(x.name)} lights" loading="lazy" width="180" height="135" onerror="this.onerror=null;this.src='${esc(ph)}';this.className='fb'">` : '<span class="chn"><img src="${esc(ph)}" alt="" width="56" height="56" loading="lazy"></span>'}<b>${esc(x.name)}</b><span>${esc(x.address)}</span></a><span class="chb"><a class="chd" href="${esc(routeUrl(mapsApp, [dest], ""))}" ${navAttr([dest], "")} target="_blank" rel="noopener" aria-label="Directions to ${esc(x.name)}">Directions</a><a class="chd" href="/#h-${esc(x.id)}" aria-label="Show ${esc(x.name)} on the map">On map</a></span></div>`; };
   return `<section class="chomes" id="dhomes" aria-label="Homes entered"><h3>Homes entered${h.total ? ` (${h.total})` : ""}</h3>${h.homes.length ? `<div class="chstrip">${h.homes.map(tile).join("")}</div><div class="chlinks">${h.total > h.homes.length ? `<a class="chall" href="/c/${esc(h.slug)}">See all ${h.total} homes &rsaquo;</a>` : ""}<a class="chall" href="/c/${esc(h.slug)}#tour">Route all ${h.total} homes &rsaquo;</a></div>` : `<p class="meta">No homes entered yet. Be the first to enter.</p>`}</section>`;
 };
 const contestBtn = (ev, url) => (String(ev.id).startsWith("c-") && url ? `<a class="contestgo" href="${esc(url)}">Enter your home or vote &rsaquo;</a>` : "");

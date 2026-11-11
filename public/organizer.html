@@ -9,7 +9,7 @@
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/addflow.css?v=20261111zb">
-<link rel="stylesheet" href="/contest.css?v=20261111c">
+<link rel="stylesheet" href="/contest.css?v=20261111d">
 <link rel="stylesheet" href="/printables.css?v=20261105d">
 <link rel="stylesheet" href="/forms.css?v=20261106zb">
 <style>.entl{list-style:none;margin:0;padding:0}.entr{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:8px 16px;align-items:center;padding:16px 0;border-top:1px solid var(--line)}.entr:first-child{border-top:0}.entph{position:relative;width:76px;height:57px;border-radius:10px;background:var(--tile,#eee);overflow:hidden;display:grid;place-items:center}.entph img{width:100%;height:100%;object-fit:cover;display:block}.entnone{font-size:11px;color:var(--muted);text-align:center;padding:0 4px}.entn{position:absolute;left:4px;top:4px;min-width:22px;height:22px;padding:0 6px;box-sizing:border-box;border-radius:11px;background:rgba(0,0,0,.68);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}.entname{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}.entname b{font-size:16px;font-weight:600}.entaddr{margin-top:2px}.entlk{display:inline-flex;gap:6px;margin-left:8px;vertical-align:middle;flex-wrap:wrap}.entlk .btn{padding:3px 11px;min-height:0;font-size:13px;text-decoration:none}.entmeta{margin-top:2px;color:var(--muted);font-size:13.5px;overflow-wrap:anywhere}.enta{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:360px}@media(max-width:699px){.entr{grid-template-columns:76px minmax(0,1fr)}.enta{grid-column:1/-1;justify-content:flex-start;max-width:none}}.small.bad,p.bad{color:var(--bad,#b42318)}.phscrim{position:fixed;inset:0;z-index:2200;background:rgba(10,12,18,.55);display:grid;place-items:center;padding:16px;overflow:auto}.phdlg{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:18px;width:min(560px,100%);max-height:calc(100dvh - 32px);overflow:auto;display:grid;gap:12px}.phh{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.phh h2{margin:0;font-size:19px}.phgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}.phone{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:4/3;background:var(--tile,#eee)}.phone img{width:100%;height:100%;object-fit:cover;display:block}.phone.phhid img{opacity:.4}.phtag{position:absolute;left:4px;bottom:4px;right:4px;background:rgba(0,0,0,.72);color:#fff;font-size:11px;padding:2px 6px;border-radius:999px;text-align:center}.phone button{position:absolute;top:4px;right:4px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:20px;cursor:pointer}.phpick{justify-self:start;cursor:pointer}
@@ -22,6 +22,7 @@
 </main>
 <script src="/vendor/qrcode.js"></script>
 <script type="module">
+import { contestImage } from "/contesticon.js?v=20261111a";
 import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261111z";
 import { refreshAcct } from "/addflow.js?v=20261111zb";
 import { mountShell } from "/appshell.js?v=20261111z";
@@ -92,6 +93,38 @@ function photosDialog(id) {
     };
   };
   draw();
+}
+// The contest's logo: shown on its page and on homes that have no photo. No upload = an icon drawn from the contest's name.
+function logoCard() {
+  const c = D.contest;
+  return `<div class="card" id="logocard"><h2 style="font-size:19px;margin:0 0 6px">Contest logo</h2>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="logo has" style="width:72px;height:72px"><img id="lg-img" src="${esc(contestImage(c.name, c.logo))}" alt="" width="72" height="72"></div>
+    <div style="display:grid;gap:8px;flex:1;min-width:220px"><p class="muted small" style="margin:0">${c.logo ? "Your logo is on your contest page and on every home that has no photo." : "Upload your city or group logo. Until then, we draw an icon from your contest name. A logo also stands in for homes that have no photo yet."}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn org sm phpick"><input type="file" id="lg-file" accept="image/jpeg,image/png,image/webp" hidden>${c.logo ? "Replace logo" : "Upload a logo"}</label>${c.logo ? '<button class="btn ghost sm" type="button" id="lg-rm">Remove logo</button>' : ""}</div>
+    <p id="lg-note" class="small muted" role="status" style="margin:0">JPG, PNG or WebP. Big images are shrunk for you.</p></div></div></div>`;
+}
+// A logo under 600 KB goes up as it is; a bigger or very large one is redrawn at up to 512 px (PNG keeps a see-through background)
+async function prepLogo(file) {
+  if (file.size <= 600 * 1024) return file;
+  const bmp = await createImageBitmap(file), k = Math.min(1, 512 / Math.max(bmp.width, bmp.height)), cv = document.createElement("canvas");
+  cv.width = Math.max(1, Math.round(bmp.width * k)); cv.height = Math.max(1, Math.round(bmp.height * k)); cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+  let blob = await new Promise((r) => cv.toBlob(r, "image/png")); if (blob && blob.size > 600 * 1024) blob = await new Promise((r) => cv.toBlob(r, "image/jpeg", 0.85));
+  return blob || file;
+}
+function wireLogo() {
+  const f = $("#lg-file"), rm = $("#lg-rm"), say = (m, bad) => { const n = $("#lg-note"); if (n) { n.textContent = m; n.className = "small " + (bad ? "bad" : "muted"); } };
+  if (f) f.onchange = async () => {
+    const file = f.files[0]; if (!file) return; say("Uploading…");
+    try {
+      const body = new FormData(); body.append("logo", await prepLogo(file), "logo");
+      const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/logo`, { method: "POST", body }), j = await r.json().catch(() => ({}));
+      if (r.ok) { say("Logo saved."); load(); } else say(j.error || "That didn't upload. Please try again.", true);
+    } catch { say("That image couldn't be read. Try a JPG, PNG or WebP.", true); }
+  };
+  if (rm) rm.onclick = async () => {
+    if (!confirm("Remove your logo? The pages go back to an icon drawn from your contest name.")) return;
+    const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/logo`, { method: "DELETE" }); if (r.ok) load(); else say("That didn't work.", true);
+  };
 }
 // Fix the name, description or address of a home the organizer added (a misspelled name, a wrong number)
 function editDialog(id) {
@@ -259,7 +292,7 @@ function render() {
     ${(J.judges || []).length ? `<div class="list">${J.judges.map((j) => `<div class="rowi"><div><b>${esc(j.email)}</b><br><span class="small muted">${j.joined ? "Signed in" : "Invited"} · ${j.done} of ${j.total} done</span></div><div class="acts"><button class="btn ghost sm" type="button" data-copy="${esc(location.origin + "/c/" + c.slug + "/judge")}">Copy link</button>${c.announced ? "" : `<button class="btn ghost sm" type="button" data-rmjudge="${esc(j.id)}">Remove</button>`}</div></div>`).join("")}</div>` : `<p class="muted">No judges yet.</p>`}
     ${!c.announced && (J.judges || []).some((j) => j.done < j.total) ? `<div style="margin-top:6px"><button class="btn ghost sm" type="button" id="nudgejudges">Remind the judges who have not finished</button></div>` : ""}${c.announced ? "" : `<div class="f">${fsec("Add a judge", "", ff("Their email", `<input id="newjudge" type="email" inputmode="email" placeholder="judge@example.com">`, { hint: "They get an invitation with a link to their ballot." }))}<p class="err" id="jerr" role="alert" hidden></p><div class="mfoot"><button class="btn org" type="button" id="addjudge">Add judge</button></div></div>`}</div>`;
   $("#app").innerHTML = `<section data-p="overview">${c.status !== "live" ? `<div class="status no"><span>${c.unpublishedByOwner ? `<span><b>You unpublished this contest.</b> It is hidden from the public and new entries and votes are paused. Your team can still open this dashboard, and nothing has been deleted. <button class="btn org sm" type="button" data-act="publish_again" style="margin-left:6px">Publish it again</button></span>` : `<span><b>${c.status === "pending" ? "We will review your contest, usually within a day." : c.status === "declined" ? "This contest is not showing." : "This contest has ended."}</b> ${c.status === "pending" ? "A person is checking that you run it. We will email you as soon as it is approved." : c.status === "declined" ? "It was taken off the map. Contact us if you think that is a mistake." : ""} Your link and QR code still work, but the contest is not on the map and new entries are paused.</span>`}</div>` : ""}
-  <div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(c.org))}</div><div><h1>${esc(c.name)}</h1><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>${c.founder ? `<div><span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span></div>` : ""}
+  <div class="card"><div class="banner"><div class="logo has" aria-hidden="true"><img src="${esc(contestImage(c.name, c.logo))}" alt="" width="46" height="46"></div><div><h1>${esc(c.name)}</h1><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>${c.founder ? `<div><span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span></div>` : ""}
   <div class="stats"><div class="stat"><b>${entries.length}</b><span>Entries</span></div><div class="stat"><b>${waiting}</b><span>Waiting for you</span></div><div class="stat"><b>${votes}</b><span>Votes</span></div></div>
   ${teamBanner()}
   ${c.announced ? "" : `<ol class="steps" aria-label="Next steps">${[[entries.length > 0, "Share your link or QR code (Share it, below)"], [entries.length > 0 && !waiting, waiting ? `Approve the ${waiting} waiting ${waiting > 1 ? "entries" : "entry"}` : "Approve entries as they arrive"], [votes > 0, "Voting: neighbors vote for their favorites"], [false, "Announce the winners when voting ends"]].map(([d, t]) => `<li class="${d ? "done" : ""}">${d ? "✓ " : ""}${t}</li>`).join("")}</ol>`}
@@ -271,7 +304,7 @@ function render() {
     ${sw("Vote counts", c.showCounts ? "Visible to everyone" : "Hidden until winners", c.showCounts, c.showCounts ? "hide_counts" : "show_counts", "Show counts", "Hide counts")}
     ${c.status === "live" ? `<div class="sw"><span>Contest page<small>Public and on the map</small></span><button class="btn ghost sm danger" type="button" data-act="unpublish">Unpublish</button></div>` : c.unpublishedByOwner ? `<div class="sw"><span>Contest page<small>Hidden from the public</small></span><button class="btn ghost sm" type="button" data-act="publish_again">Publish again</button></div>` : ""}</div></div>
    <div class="card"><h2 style="font-size:19px">Share it</h2><div class="copy"><span>${esc(short)}</span><button class="btn ghost sm" type="button" data-copy="${esc(url)}">Copy link</button></div><div class="pzprev"><figure>${pz("poster")}<figcaption>Entry poster</figcaption></figure><figure>${pz("sign")}<figcaption>Yard sign</figcaption></figure></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn ghost sm" type="button" id="printposter">Print entry poster</button><button class="btn ghost sm" type="button" id="printsign">Print yard sign</button></div><p class="muted small" style="margin:8px 0 0">Prints on one letter page. In the print window, turn on "Background graphics" so the colors show.</p></div></div>
-  </section><section data-p="details">${editCard()}${againCard()}</section><section data-p="promote">${inviteCard()}${statsCard()}</section><section data-p="entries">
+  </section><section data-p="details">${logoCard()}${editCard()}${againCard()}</section><section data-p="promote">${inviteCard()}${statsCard()}</section><section data-p="entries">
   ${addHomesCard()}<div class="card"><h2 style="font-size:19px">Entries</h2>${entries.length ? `<ul class="entl">${entries.map((e) => {
     const open = e.status === "approved" && !c.announced, st = e.status === "approved" ? '<span class="pill p-ok">On the map</span>' : e.status === "declined" ? '<span class="pill p-no">Declined</span>' : '<span class="pill p-wait">Needs your OK</span>';
     const who = e.byOrganizer ? (e.claimed ? `Homeowner: ${esc(e.contact || "")}` : "The homeowner has not linked this home yet") : esc(e.contact || "");
@@ -436,6 +469,7 @@ function render() {
   document.querySelectorAll("[data-rmadded]").forEach((b) => (b.onclick = () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to remove"; return; } act(`/api/contests/${encodeURIComponent(slug)}/entries/${b.dataset.rmadded}`, { action: "decline" }, "Removed."); }));
   document.querySelectorAll("[data-entry]").forEach((b) => (b.onclick = async () => { const [a, id] = b.dataset.entry.split(":"); let reason = ""; if (a === "decline") { reason = await askReason(); if (reason === null) return; } act(`/api/contests/${encodeURIComponent(slug)}/entries/${id}`, { action: a, reason }, ({ approve: "Approved. It's on the map, and the entrant was emailed.", restore: "Back in the review list.", decline: "Declined. The entrant was emailed.", flag: "Flagged. It stays on the ballot and is removed from the winners when you announce.", unflag: "Flag removed." })[a]); }));
   document.querySelectorAll("[data-void]").forEach((b) => (b.onclick = () => { const [id, v] = b.dataset.void.split(":"); act(`/api/contests/${encodeURIComponent(slug)}/votes`, { vote_id: id, voided: v === "1" }, v === "1" ? "Vote voided. It no longer counts." : "Vote restored."); }));
+  wireLogo();
   document.querySelectorAll("[data-edithome]").forEach((b) => (b.onclick = () => editDialog(b.dataset.edithome)));
   document.querySelectorAll("[data-photos]").forEach((b) => (b.onclick = () => photosDialog(b.dataset.photos)));
   document.querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => { const o = b.textContent; try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; } catch { b.textContent = "Select it"; } setTimeout(() => (b.textContent = o), 1500); }));

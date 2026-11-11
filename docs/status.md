@@ -38,6 +38,12 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (contest logo and drawn icon)
+- Organizers can upload a **contest logo** (Dashboard > Details, "Contest logo"; JPG, PNG or WebP under 600 KB, bigger images are shrunk in the browser). It replaces the "CO" initials circle on the contest page and the organizer banner, and it is the picture shown for homes that have no photo (map card strip, `/e/c-<slug>` grid, contest page and judge rows) instead of the SoCal Lights logo. Endpoint `/api/contests/<slug>/logo` (GET public while live, POST/DELETE organizer team), file in R2 `contestlogo/<contest id>/<ms>.<ext>`, column `contests.logo` (migration 0224). Deleting a contest deletes the file.
+- **No logo uploaded:** an icon is drawn from the contest title (`public/contesticon.js`: first letters of the first two words, color picked from the name, so each contest looks different and stays the same). Same function in the browser and on the server.
+- Founder city badge: bigger star with a gap before the text.
+- Tests: `tests/contest-logo.test.mjs`. Not done: the logo does not show on the `/contests` list cards or on past-results pages.
+
 ## 2026-11-11 (Contests tab: Needs a look)
 - Clicking "Needs a look" on Admin > Contests did nothing when it was empty, because the page jumped straight back to Live. It now stays and shows "Nothing needs a look..." (the page still picks Live on first open when nothing needs a look).
 
