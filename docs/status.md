@@ -15,6 +15,9 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (End this comp button)
+- "End this comp now" (Event Partners and Contest passes) sits at the right end of the comp card and is red, like other destructive buttons in Admin.
+
 ## 2026-11-11 (edit an Event Partner comp)
 - Event Partners comps can be edited again: **Edit** on a running comp opens events per season (or unlimited), valid-until date and note, saved with `edit_comp` in `/api/admin/partner` (a running comp only; an ended one needs a new grant). Tests in `tests/event-partner.test.mjs`.
 

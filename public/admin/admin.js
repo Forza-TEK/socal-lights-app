@@ -5,7 +5,7 @@ import { attachAddress } from "/addflow.js?v=20261111d";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261104c";
 import { renderHelp } from "/admin/help.js?v=20261104a";
-import { renderPartner } from "/admin/partner.js?v=20261112l";
+import { renderPartner } from "/admin/partner.js?v=20261112m";
 import { renderChat } from "/admin/chat.js?v=20261111h";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261103a";
 
@@ -447,7 +447,7 @@ function openOrg(key) {
   const m = $("#modal"); m.hidden = false;
   const comps = PD.comps.filter((c) => c.org_key === key), passes = PD.passes.filter((x) => x.org_key === key), [t, tone] = orgStatus(o);
   const compCards = comps.length ? comps.map((c) => rec({ attrs: `data-pcomp="${esc(c.id)}"`, title: c.allowed < 0 ? "Unlimited contests" : `${c.allowed} contests per window`, tags: [[c.running ? "Running" : c.revoked ? "Ended by you" : "Expired", c.running ? "ok" : ""], ...(c.badge ? [[c.badge_running ? "Founder city badge" : "Founder city badge (not showing)"]] : [])], meta: esc(c.created_at.slice(0, 10)),
-    facts: fact("Valid until", esc(pdate(c.valid_until))) + (c.badge ? fact("Badge until", esc(pdate(c.badge_until || c.valid_until))) : "") + fact("Note", esc(c.note)) + fact("Granted by", esc(c.created_by)), main: c.running ? btn("ghost", "End this comp now", 'data-pact="revoke_comp"') : "" })).join("") : `<div class="empty">No comps for this organization.</div>`;
+    facts: fact("Valid until", esc(pdate(c.valid_until))) + (c.badge ? fact("Badge until", esc(pdate(c.badge_until || c.valid_until))) : "") + fact("Note", esc(c.note)) + fact("Granted by", esc(c.created_by)), danger: c.running ? btn("danger", "End this comp now", 'data-pact="revoke_comp"') : "" })).join("") : `<div class="empty">No comps for this organization.</div>`;
   const passCards = passes.length ? passes.map((x) => rec({ attrs: `data-ppass="${esc(x.session_id)}"`, title: "Up to " + x.cap + " contests", tags: [[x.status === "active" ? "Active" : "Revoked", x.status === "active" ? "ok" : ""]], meta: esc(x.created_at.slice(0, 10)),
     facts: fact("Window", `${esc(pdate(x.window_start))} to ${esc(pdate(x.window_end))}`) + fact("Paid", esc(money(x.amount, "usd"))) + fact("Buyer", esc(x.email || "")) + fact("Order", esc(x.order_status || "")), main: x.status === "active" ? btn("ghost", "Revoke this pass", 'data-pact="revoke_pass"') : "" })).join("") : `<div class="empty">No passes bought. Passes also show in Orders.</div>`;
   const contests = o.contests.length ? `<ul class="plist">${o.contests.map((c) => `<li><a href="/c/${esc(c.slug)}/manage" target="_blank" rel="noopener">${esc(c.name)}</a> <span class="meta">${esc(c.live_at)}${c.status === "live" ? "" : ", " + esc(c.status)}</span></li>`).join("")}</ul>` : `<div class="empty">No contest has gone live under this organization yet.</div>`;
