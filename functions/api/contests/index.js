@@ -11,6 +11,7 @@ import { normName, normText } from "../../_lib/fields.js";
 import { reserveSends } from "../../_lib/sendlimit.js";
 import { tell } from "../../_lib/notify.js";
 import { founderKeys, isFounder } from "../../_lib/founder.js";
+import { sendReceipt } from "../../_lib/receipt.js";
 import { liveGate, PAYWALL_MESSAGE } from "../../_lib/passkey.js";
 
 export async function onRequestGet({ env }) {
@@ -76,5 +77,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (live) await listOnMap(env, c);
   if (judgeEmails.length) await inviteJudges(env, { id: c.id, slug, name, org, judge_method: method }, judgeEmails);
   if (c.note) tell(env, waitUntil, env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", "contest_review", { name, org, city, email: user.email, note: c.note, what: official ? "It is not live yet: it waits for you, cannot add organizer-added homes and cannot buy a paid placement until you approve it." : "It is live, but until you click Looks fine the organizer can add only a few homes of their own (25) and cannot buy a paid placement.", link: "https://socallights.app/admin/" });
-  return json({ ok: true, slug, status: c.status, trust, review: !!c.note });
+  const receipt = await sendReceipt(env, waitUntil, { id: c.status === "live" ? "contest_live_now" : "contest_received", to: user.email, vars: { name, link: `https://socallights.app/c/${slug}/manage`, page: `https://socallights.app/c/${slug}` } });
+  return json({ ok: true, slug, status: c.status, trust, review: !!c.note, receipt: receipt === "queued" ? "sent" : "", email: user.email });
 }

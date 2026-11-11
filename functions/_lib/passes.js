@@ -1,6 +1,6 @@
 // CONTEST PASSES. The only place a pass price is set; /api/config serves it, the pages and the email read it from there.
 // Owner decision 2026-11-09 (after meeting the City of Eastvale): organizers pay from the first contest. This replaces the decision of 2026-11-07 (1 free contest per 12 months,
-// passes $50 / $75 / $100). PR "contest-pricing-2026-11": nothing here is live until it is merged; the go-live date is the owner's.
+// the old passes, since replaced). PR "contest-pricing-2026-11": nothing here is live until it is merged; the go-live date is the owner's.
 //
 // RULES
 //   FREE_CONTESTS is 0: every NEW contest needs a pass (or an Admin comp). Single contest $149 (pass_1), up to 5 contests $299 (pass_5), up to 20 contests $499 (pass_20).
@@ -12,7 +12,7 @@
 //   date a year later. When it has ended, the next contest needs a new pass. A pass belongs to the window it was bought in.
 //   COUNTING: a contest counts when it goes live (contests.live_at is set: live or announced). Drafts, held-for-review, declined and unpublished-before-ever-live do not count;
 //   a contest that was live and later unpublished still counts.
-//   CONTESTS BEFORE PRICING (PAID_FROM): contests that went live before PAID_FROM were run under the old rule (one free contest per organization per 12 months). They are never counted and
+//   CONTESTS BEFORE PRICING (PAID_FROM): contests that went live before PAID_FROM were run under the old rule (an earlier rule, now replaced). They are never counted and
 //   never need a pass; they do not shrink a new window. An organization that already used its free contest is therefore treated like a new one: its next contest needs a pass and the
 //   pass starts a new 12-month window. Contests already live or announced are not touched at all.
 //   COMPS (Admin): allowed = total contests per window (-1 = unlimited) until a date, granted to an organization key by hand. Organizers see "Founding partner: free through <date>", never a price.

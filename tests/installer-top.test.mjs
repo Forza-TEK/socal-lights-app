@@ -67,7 +67,7 @@ test("checkout and webhook: Top of the list writes top_until only, the banner st
     const r = await buy(env, { installer: "bright-nights", plan: "top" }, me.cookie); assert.equal(r.status, 200);
     const sent = new URLSearchParams(String(f.calls[0].init.body));
     assert.deepEqual([sent.get("line_items[0][price_data][unit_amount]"), sent.get("metadata[plan]"), sent.get("metadata[quote_to]"), sent.get("metadata[quote_cents]")], ["5000", "top", "2027-01-06", "5000"]);
-    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /^Top of the list · 2026-11-06 to 2027-01-06/);
+    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /^Top of the list · Nov 6, 2026 to Jan 6, 2027/);
   } finally { f.restore(); }
   assert.equal((await pay(env, 1, "top", 5000)).status, 200);
   assert.deepEqual([getInst(raw).banner_until, getInst(raw).top_until], ["2026-12-01", "2027-01-06"], "banner untouched");

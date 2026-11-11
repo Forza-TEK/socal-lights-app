@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/contest.css?v=20261111ca">
+<link rel="stylesheet" href="/addflow.css?v=20261111x553">
+<link rel="stylesheet" href="/contest.css?v=20261111x556">
 <link rel="stylesheet" href="/forms.css?v=20261106zb">
 <style>main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
 <script src="/hit.js?v=20261107a" defer></script>
@@ -19,11 +19,11 @@
 <div id="app"><p class="loading">Loading your profile…</p></div>
 </main>
 <script type="module">
-import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
-import { refreshAcct } from "/addflow.js?v=20261111d";
-import { mountShell } from "/appshell.js?v=20261111a";
+import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261111z";
+import { refreshAcct } from "/addflow.js?v=20261111zb";
+import { mountShell } from "/appshell.js?v=20261111z";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
-import { homeForm, fsec, ff, openFormWindow } from "/forms.js?v=20261106zb";
+import { homeForm, fsec, ff, openFormWindow } from "/forms.js?v=20261111z";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], fmt = (s) => { const [, m, d] = String(s).split("-").map(Number); return MON[m - 1] + " " + d; };
 let D = null, panel = (location.hash || "").slice(1) || "overview";
@@ -55,7 +55,7 @@ function renewalBlock() {
 function sponsorCard() {
   if (/SoCalLightsApp/.test(navigator.userAgent)) return "";
   const p = D.placement || {}, b = D.banner || {}, run = p.banner_until || p.top_until, to = "/sponsor?installer=" + encodeURIComponent(slug);
-  return `<div class="card" id="sponsorcard"><h2 style="font-size:19px">Sponsor placement</h2>${run ? `<p class="small" style="margin:0 0 6px">Banner: <b>${p.banner_until ? "running until " + esc(p.banner_until) : "not running"}</b>${p.banner_until ? ` · shown ${b.imp || 0} times, ${(b.click || 0) + (b.call || 0)} taps (30 days)` : ""}</p><p class="small" style="margin:0 0 12px">Top of the list: <b>${p.top_until ? "running until " + esc(p.top_until) : "not running"}</b>${p.top_until ? ` · shown ${b.lst_imp || 0} times, ${b.lst_taps || 0} taps (30 days)` : ""}</p>` : `<p class="muted small">Your company is not on the map banner or the top of the list. Pay for the season to show your name and phone in the labelled Sponsor banner, your company card at the top of the list, or both.</p>`}<a class="btn org" href="${to}">${run ? "Renew or upgrade" : "See the options"}</a>${renewalBlock()}</div>`;
+  return `<div class="card" id="sponsorcard"><h2 style="font-size:19px">Sponsor placement</h2>${run ? `<p class="small" style="margin:0 0 6px">Banner: <b>${p.banner_until ? "running until " + esc(p.banner_until) : "not running"}</b>${p.banner_until ? ` · shown ${b.imp || 0} times, ${(b.click || 0) + (b.call || 0)} taps (30 days)` : ""}</p><p class="small" style="margin:0 0 12px">Top of the list: <b>${p.top_until ? "running until " + esc(p.top_until) : "not running"}</b>${p.top_until ? ` · shown ${b.lst_imp || 0} times, ${b.lst_taps || 0} taps (30 days)` : ""}</p>` : `<p class="muted small">Your company is not on the map banner or the top of the list. Pay for the season to show your name and phone in the labeled Sponsor banner, your company card at the top of the list, or both.</p>`}<a class="btn org" href="${to}">${run ? "Renew or upgrade" : "See the options"}</a>${renewalBlock()}</div>`;
 }
 document.addEventListener("change", (e) => { if (e.target && e.target.id === "renewok") document.getElementById("renewon").disabled = !e.target.checked; });
 document.addEventListener("click", async (e) => {
@@ -90,6 +90,6 @@ function render() {
 }
 noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

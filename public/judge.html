@@ -8,17 +8,18 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/contest.css?v=20261111ca">
+<link rel="stylesheet" href="/addflow.css?v=20261111x553">
+<link rel="stylesheet" href="/contest.css?v=20261111x556">
 <link rel="stylesheet" href="/routes.css?v=20261109a">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="sh-page">
 <main class="cmain" id="content"><div id="app"><p class="loading">Loading the ballot…</p></div></main>
 <script type="module">
-import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
-import { refreshAcct } from "/addflow.js?v=20261111d";
-import { mountShell } from "/appshell.js?v=20261111a";
+import { contestImage } from "/contesticon.js?v=20261111a";
+import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261111z";
+import { refreshAcct } from "/addflow.js?v=20261111zb";
+import { mountShell } from "/appshell.js?v=20261111z";
 import { tourHtml, wireTour } from "/tour.js?v=20261111d";
 import { fmtDate } from "/contestfmt.js?v=20261111a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
@@ -51,7 +52,7 @@ function render() {
         : !open ? `<span class="pill">${cur ? "Your score: " + cur : "No score"}</span>`
         : `<div class="chips" role="group" aria-label="Score for ${esc(e.name)}, ${esc(k)}"><span class="small muted chiphd">${cur ? `Your score: ${cur} of 10` : "Tap a score from 1 to 10"}</span>${[1,2,3,4,5,6,7,8,9,10].map((n) => `<button type="button" class="chip" data-chip="${esc(e.id)}|${esc(k)}|${n}" aria-pressed="${cur === n}" aria-label="${n} of 10">${n}</button>`).join("")}</div>`)
       : `<button class="btn ${isPick ? "ghost" : "org"} sm" type="button" data-pick="${esc(e.id)}|${esc(k)}" ${open && !blocked && !isPick ? "" : "disabled"}>${e.mine ? "Your home" : cf ? "Recused" : isPick ? "Picked" : pickOf(k) ? "Move my pick" : "Pick"}</button>`;
-    return `<div class="vrow${isPick ? " mine" : ""}">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"><img src="/img/badge-160.webp" alt="" width="40" height="40" loading="lazy"></span>`}<div><b>${esc(e.name)}</b><span class="meta">${esc(e.address || e.city)}</span>${e.mine || !open ? "" : `<button class="link" type="button" data-conf="${esc(e.id)}" style="font-size:14px;margin-top:4px">${cf ? "Conflict declared. Undo" : "I know this household"}</button>`}</div>${ctl}</div>`;
+    return `<div class="vrow${isPick ? " mine" : ""}">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"><img src="${esc(contestImage(D.contest.name, D.contest.logo))}" alt="" width="40" height="40" loading="lazy"></span>`}<div><b>${esc(e.name)}</b><span class="meta">${esc(e.address || e.city)}</span>${e.mine || !open ? "" : `<button class="link" type="button" data-conf="${esc(e.id)}" style="font-size:14px;margin-top:4px">${cf ? "Conflict declared. Undo" : "I know this household"}</button>`}</div>${ctl}</div>`;
   }).join("")}</section>`).join("");
   $("#app").innerHTML = `<section data-p="ballot"><div class="card"><h1 style="font-size:clamp(26px,5vw,34px)">${esc(c.name)}</h1><p class="muted">${esc(c.org)} · Judges' ballot</p>
     <p>${score ? "Score every home from 1 to 10 in each category." : "Pick one favorite home in each category."} Judge on first impression, creativity, theme, craftsmanship and variety of lights. Your ${score ? "scores are" : "picks are"} private until winners are announced, and you can change them until voting closes.</p>
@@ -73,6 +74,6 @@ function render() {
 }
 noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

@@ -55,5 +55,15 @@ export function appPassHtml(v, email, site) {
   return `<div class="pp pp-app"><p><b>Running this contest needs a contest pass.</b> Passes are bought on our website, in your browser, not inside the app.</p><ol><li>Tap <b>Continue on socallights.app</b>. ${who}</li><li>Choose a pass there.</li><li>Come back to the app and tap <b>I have my pass</b>. Your contest details are kept here, and your contest is created.</li></ol><p><a class="btn" href="${esc(passPageUrl(site))}" data-pass-web target="_blank" rel="noopener">Continue on socallights.app</a> <button class="btn out" type="button" data-pass-check>I have my pass</button></p><p class="pp-org">Organization: <b>${esc((v && v.org) || "")}</b></p><p class="pp-note">${esc(FAIR)}</p></div>`;
 }
 
+// The three plans with their prices, for someone who is not signed in (the picker needs an organization). No Choose button: signing in comes next. Prices and caps come from /api/config.
+// Never shown in the store apps (IN_APP): the callers check it.
+export function plansPreviewHtml(cfg) {
+  const plans = ((cfg && cfg.contestPasses) || {}).plans || {}, keys = PASS_KEYS.filter((k) => plans[k]);
+  if (!keys.length) return "";
+  const cards = keys.map((k) => { const c = passCopy(k, cfg); return `<div class="pp-card"><h3>${esc(c.name)}</h3><p class="pp-price"><b>${dollars(plans[k].cents)}</b> <small>${esc(c.unit)}</small></p><p class="pp-inc">Includes:</p><ul>${c.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul></div>`; }).join("");
+  const more = moreCopy();
+  return `<div class="pp pp-preview"><div class="pp-grid">${cards}<div class="pp-card"><h3>${esc(more.name)}</h3><ul>${more.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul><a class="btn out pp-choose" href="${esc(contactHref())}">Contact us</a></div></div><p class="pp-note">${esc(WINDOW_RULE)} ${esc(FAIR)}</p></div>`;
+}
+
 // One number (no person) for the funnel counters; skipped for automated browsers.
 export function beacon(k) { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} }

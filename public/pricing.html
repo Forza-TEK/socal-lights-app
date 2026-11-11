@@ -8,33 +8,37 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/info.css?v=20261110y">
-<style>.pcards.tight{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.wcard .big{margin:0}details summary::marker{color:var(--muted)}</style>
+<link rel="stylesheet" href="/addflow.css?v=20261111x553">
+<link rel="stylesheet" href="/info.css?v=20261111x553">
+<style>.pcards.tight{grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr))}.pcard,.wcard,.pfree{min-width:0;overflow-wrap:anywhere}.faq details[hidden],.faq details[data-appoff]{display:none}.wcard .big{margin:0}details summary::marker{color:var(--muted)}</style>
 <script src="/hit.js?v=20261107a" defer></script>
-<script src="/chat.js?v=20261111h" defer></script>
+<script src="/chat.js?v=20261111e" defer></script>
 </head>
 <body class="wide">
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
 <main class="wide" id="content">
 <h1>Pricing</h1>
-<p class="lede">Finding lights and events is free, and so is posting them. Paid options only make your listing easier to see. Every paid placement is labelled, and money never changes a contest result.</p>
+<p class="lede">Finding lights and events is free, and so is posting them. Paid options only make your listing easier to see. Every paid placement is labeled, and money never changes a contest result.</p>
 
 <div class="wgrid" id="p-homeowners" data-panel="homeowners" data-label="Homeowners" style="margin-top:26px">
 <section class="wcard" id="homeowners"><h2>Homeowners</h2><div class="big">Free</div>
 <p><b>Show your home's lights on the map.</b> Adding your home and entering a contest are free.</p>
-<p>A contest winner, 2nd or 3rd place can also feature their home for 30 days:</p>
+<p>A contest winner, 2nd or 3rd place can also feature their home for 30 days<span id="homecolon">:</span></p>
 <div class="wprices paid" id="homeprices"><span><b>Featured pin</b></span><span><b>Top of the list</b></span></div>
+<p class="cmpnote appnote" hidden>Paid options are available at socallights.app.</p>
 <a class="btn" href="/add-house">Add your display</a></section>
 </div>
 
 <section class="wsec" id="contests" data-panel="contests" data-label="Contest organizers"><h2>Contest organizers</h2>
-<p class="sub"><b>Contest organizers choose a pass for their contests.</b> Cities, HOAs, chambers and neighborhood groups: resident entries, voting, judges, and People's Choice and Judges' Choice awards. Residents enter and vote for free. A pass only counts contests.</p>
+<p class="sub"><b>Contest organizers choose a pass for their contests.</b> Cities, homeowners associations (HOAs), chambers of commerce and neighborhood groups: resident entries, voting, judges, and People's Choice and Judges' Choice awards. Residents enter and vote for free. A pass only counts contests.</p>
+<p class="cmpnote appnote" hidden>Contest passes are bought on socallights.app in a browser, not inside the app.</p>
 <div class="pcards three" id="ctiers"></div><div id="cmore"></div>
 <p class="cmpnote" id="cnote">Passes are chosen when you create a contest, or any time on the <a href="/contest-pass">contest pass page</a>. A pass is one payment on Stripe's secure page and never renews by itself. Your 12-month window starts the day you buy your pass (or the day your first contest goes live, if that comes first), and upgrading inside it costs only the difference. Passes are for the organization: the website matching your email's domain, or your own account.</p></section>
 
 <section class="wsec" id="events" data-panel="events" data-label="Event organizers"><h2>Event organizers</h2>
 <p class="sub"><b>Listing your event is free</b> (tree lighting, parade, market, haunted house, light show). Featured placement is optional: pick one, pay once, no subscription.</p>
+<p class="cmpnote paid" id="partnerlink" hidden>An organization with several events? See the <a href="#partnerbox">Event Partner plan</a>.</p>
+<p class="cmpnote appnote" hidden>Paid options are available at socallights.app.</p>
 <div class="fmap paid" id="featuredpic"><figure><svg viewBox="0 0 760 380" role="img" aria-label="Drawing of the SoCal Lights map. A Featured event has a gold-ringed pin on the map, a Featured pill in the strip at the top of the list, a Featured badge on its listing, and is listed first.">
 <rect width="760" height="380" fill="#f3efe6"/><rect x="0" y="0" width="470" height="380" fill="#e8efdd"/>
 <path d="M0 90 C120 70 200 130 470 100 M0 250 C140 230 260 300 470 270 M120 0 C140 120 100 260 150 380 M330 0 C300 140 360 240 320 380" stroke="#f6c46a" stroke-width="7" fill="none" opacity=".85"/>
@@ -59,33 +63,35 @@
 <div id="partnerbox" class="paid" hidden><h3>Event Partner: for organizations with several events</h3><div class="pcards" id="partnercard"></div><p class="cmpnote" id="partnernote"></p></div></section>
 
 <section class="wsec" id="banner" data-panel="banner" data-label="Installers"><h2>Installers</h2>
-<p class="sub">Show your company on the map and in your homes' pages. Paid placements are always labelled "Sponsor".</p>
+<p class="sub">Show your company on the map and in your homes' pages. Paid placements are always labeled "Sponsor".</p>
 <section class="pfree" id="instfree"><div class="pprice">Free</div><div class="ptxt"><h3 class="pname">Profile card</h3><p class="pblurb">Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map.</p></div><a class="btn ghost" href="/add-house?kind=installer">Create your free profile</a></section>
 <div class="pcards three" id="insttiers"></div>
 <p class="cmpnote paid" id="instnote">You pay on Stripe's secure page, one time for the season by default. Automatic renewal is optional: it is off unless you tick the box on the payment step (or turn it on in your dashboard), and you can cancel it any time. You can also renew or upgrade by hand from your dashboard.</p>
 <p class="cmpnote paid" id="instseason"></p>
+<p class="cmpnote appnote" hidden>Paid options are available at socallights.app.</p>
 <p class="cmpnote paid">Questions? Email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>.</p></section>
 
 <section class="wsec"><h2>Good to know</h2>
 <div class="faq">
-<details><summary>What does "season" mean?</summary><p>A placement runs from the moment you pay until your event ends or the season ends (Christmas lights: Jan 6), whichever comes first. The price is the same whenever you buy in a season, so the exact end date is shown before you pay.</p></details>
-<details><summary>How do I pay, and do I get a receipt?</summary><p>You pay on Stripe's secure page with a card or Cash App Pay. Stripe emails the receipt, and we send a confirmation. There is no subscription for event plans.</p></details>
-<details><summary>Can I get a refund?</summary><p>If we cannot list or feature your event for any reason, you get a full refund. Once your placement is live, payments are non-refundable, but if your event is cancelled, email us and we will move your placement to another of your events or refund the unused time. See our <a href="/terms#paid">Terms</a>.</p></details>
-<details><summary>Can I add a part later?</summary><p>Yes. Each part (the Featured pin, the banner, top of the list) has the same price: if you already have some of them, you pay only for the parts you add.</p></details>
-<details><summary>Can paying change who wins a contest?</summary><p>No. Contests are free to enter and free to vote in, and payment never affects who wins or any contest result. A home can only be featured after the winners are announced, and only if it finished winner, 2nd or 3rd place.</p></details>
-<details><summary>Is a Featured event labelled?</summary><p>Yes. Featured events and homes carry a visible Featured badge, and the banner pill is labelled "Featured", so nobody is misled. They still have to be real, public and accurate.</p></details>
-<details><summary>How do contest passes work?</summary><p>An organization chooses a pass before a contest goes live: a single contest, up to 5 contests or up to 20 contests in a 12-month window. The window starts the day you buy the pass, or the day the organization's first contest goes live if that comes first. You can upgrade later by paying only the difference. A contest counts when it goes live. Drafts, contests held for review and contests that were never live do not count. When the window ends, your next contest needs a new pass. A pass counts contests only: entering and voting stay free, and payment never affects any result. We sometimes give a founding partner contests for a period; that organization sees "Founding partner: free through" a date and no price.</p></details>
-<details><summary>Will finding lights ever cost money?</summary><p>Finding events and lights, search, routes, favorites and voting in contests are meant to stay free for everyone. That is what the site is for.</p></details>
-<details><summary>Questions?</summary><p>Email <a href="mailto:info@socallights.app">info@socallights.app</a>.</p></details>
+<details data-for="events banner" data-paidfaq><summary>What does "season" mean?</summary><p>A placement runs from the moment you pay until your event ends or the season ends (Christmas lights: Jan 6), whichever comes first. The price is the same whenever you buy in a season, so the exact end date is shown before you pay.</p></details>
+<details data-for="homeowners events contests banner" data-paidfaq><summary>How do I pay, and do I get a receipt?</summary><p>You pay on Stripe's secure page. You can pay by card, Apple Pay, Google Pay, Amazon Pay, Cash App Pay or Link. Which options you see depends on your device and location. Stripe emails the receipt, and we send a confirmation. There is no subscription for event plans. The price you see is the price you pay. We do not add sales tax. Prices are in US dollars.</p></details>
+<details data-for="homeowners events contests banner" data-paidfaq id="faqrefund"><summary>Can I get a refund?</summary><p id="refundtext">If we cannot list or feature your event for any reason, you get a full refund. Once your placement is live it is non-refundable, but if your event is cancelled we will move it to another of your events or refund the unused time. See our <a href="/terms#refunds">Terms</a>.</p></details>
+<details data-for="events" data-paidfaq><summary>Can I add a part later?</summary><p>Yes. Each part (the Featured pin, the banner, top of the list) has the same price: if you already have some of them, you pay only for the parts you add.</p></details>
+<details data-for="homeowners events contests"><summary>Can paying change who wins a contest?</summary><p>No. Contests are free to enter and free to vote in, and payment never affects who wins or any contest result. A home can only be featured after the winners are announced, and only if it finished winner, 2nd or 3rd place.</p></details>
+<details data-for="homeowners events banner" data-paidfaq><summary>Is a Featured event labeled?</summary><p>Yes. Featured events and homes carry a visible Featured badge, and the banner pill is labeled "Featured", so nobody is misled. They still have to be real, public and accurate.</p></details>
+<details data-for="contests" data-paidfaq><summary>How do contest passes work?</summary><p>An organization chooses a pass before a contest goes live: a single contest, up to 5 contests or up to 20 contests in a 12-month window. The window starts the day you buy the pass, or the day the organization's first contest goes live if that comes first. You can upgrade later by paying only the difference. A contest counts when it goes live. Drafts, contests held for review and contests that were never live do not count. When the window ends, your next contest needs a new pass. A pass counts contests only: entering and voting stay free, and payment never affects any result. We sometimes give a founding partner contests for a period; that organization sees "Founding partner: free through" a date and no price.</p></details>
+<details data-for="homeowners events contests banner"><summary>Will finding lights ever cost money?</summary><p>Finding events and lights, search, routes, favorites and voting in contests are meant to stay free for everyone. That is what the site is for.</p></details>
+<details data-for="homeowners events contests banner"><summary>Questions?</summary><p>Email <a href="mailto:info@socallights.app">info@socallights.app</a>.</p></details>
 </div></section>
 </main>
 <script type="module">
-import { mountShell } from "/appshell.js?v=20261111a";
-import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
-import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261108a";
+import { mountShell } from "/appshell.js?v=20261111z";
+import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-plans.js?v=20261111x553";
+import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261111x553";
 import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
 import { partnerCopy, dollars as partnerDollars } from "/partner-copy.js?v=20261109a";
-import { PASS_KEYS, passCopy, moreCopy, contactHref, dollars as passDollars } from "/contest-passes.js?v=20261111a";
+import { REFUND, REFUND_ANCHOR } from "/refund-terms.js?v=20261111a";
+import { PASS_KEYS, passCopy, moreCopy, contactHref, dollars as passDollars } from "/contest-passes.js?v=20261111b";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents % 100 ? (p.cents / 100).toFixed(2) : p.cents / 100);
@@ -97,14 +103,16 @@ const dollars = (p) => "$" + (p.cents % 100 ? (p.cents / 100).toFixed(2) : p.cen
   const first = () => { const h = location.hash.slice(1); return owner(h) || (keys.includes(h) ? h : keys[0]); };
   document.body.classList.add("sh-page"); document.querySelector("main").classList.add("ptabs-on");
   const sh = mountShell({ page: "pricing", title: "Pricing", items: keys.map((k) => ({ k, label: LABEL[k] || panels[k].dataset.label, icon: ICON[k] })), active: first(), onPick: (k) => { pick(k); try { history.replaceState(null, "", "#" + (panels[k].id || k)); } catch {} if (scrollY > 0) scrollTo(0, 0); } });
-  const pick = (k) => { if (!panels[k]) k = keys[0]; keys.forEach((x) => { panels[x].hidden = x !== k; }); sh.setActive(k); document.documentElement.dataset.ptab = k; };
+  const REF = { homeowners: ["home", REFUND.home], events: ["event", REFUND.event + " An Event Partner plan: " + REFUND.partner], contests: ["pass", REFUND.pass], banner: ["installer", REFUND.installer] };
+  const faq = (k) => { document.querySelectorAll("details[data-for]").forEach((d) => { d.hidden = !d.dataset.for.split(" ").includes(k); }); const r = REF[k], p = document.getElementById("refundtext"); if (r && p) { p.textContent = r[1] + " See our "; const a = document.createElement("a"); a.href = "/terms#" + REFUND_ANCHOR[r[0]]; a.textContent = "Terms"; p.append(a, "."); } };
+  const pick = (k) => { if (!panels[k]) k = keys[0]; keys.forEach((x) => { panels[x].hidden = x !== k; }); sh.setActive(k); document.documentElement.dataset.ptab = k; faq(k); };
   const fromHash = () => { const h = location.hash.slice(1); pick(first()); const t = h && document.getElementById(h); if (t && !t.matches("[data-panel]")) t.scrollIntoView(); };
   fromHash(); addEventListener("hashchange", fromHash);
 }
 const beacon = (k) => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k })], { type: "application/json" })); } catch {} };
 // one number (no person) when Choose is tapped, to see how many reach the next step
 $("#plans").addEventListener("click", (e) => { if (e.target.closest("a.btn[data-choose]")) beacon("fn:event-feature-choose"); });
-const PAID = (on) => { document.querySelectorAll(".paid,#featnote,#cnote").forEach((e) => (e.hidden = !on)); document.querySelectorAll("#plans .pcard[data-paid]").forEach((e) => (e.hidden = !on)); };
+const PAID = (on) => { document.querySelectorAll("[data-paidfaq]").forEach((e) => e.setAttribute("data-appoff", on ? "" : "1")); document.querySelectorAll(".appnote").forEach((e) => (e.hidden = on)); if (!on) $("#homecolon").textContent = "."; document.querySelectorAll(".paid,#featnote,#cnote").forEach((e) => (e.hidden = !on)); document.querySelectorAll("#plans .pcard[data-paid]").forEach((e) => (e.hidden = !on)); };
 if (/SoCalLightsApp/.test(navigator.userAgent)) {
   // Paid placement is web-only (store rules): the paid options are not shown in the app.
   PAID(false);
@@ -127,7 +135,7 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   // Event Partner: one price per season for an organization's events (cities, chambers, nonprofits, event producers). Price and cap come from /api/config.
   if (cfg.eventPartner && cfg.eventPartner.cents) {
     const pc = partnerCopy(cfg), pp = partnerDollars(cfg.eventPartner.cents);
-    $("#partnerbox").hidden = false;
+    $("#partnerbox").hidden = false; $("#partnerlink").hidden = false;
     $("#partnercard").innerHTML = planCard({ key: "partner", price: pp, unit: pc.unit, name: pc.name, blurb: pc.blurb, bullets: pc.bullets, collapse: "What's included", cls: "paid", action: `<a class="btn ghost" href="/partner" aria-label="Choose Event Partner, ${esc(pp)} per season">Choose</a>` });
     $("#partnernote").textContent = pc.note + " Founding cities have it free this year.";
   }
@@ -143,6 +151,6 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   }
 }
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

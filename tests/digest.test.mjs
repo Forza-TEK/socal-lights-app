@@ -33,6 +33,7 @@ test("digest: lists refunds due, disputes, unapplied, mismatched and cancelled-e
   order(raw, "stuck", "ev1", "paid", { applied: 0, until: null, age: "-3 hours" });
   order(raw, "mm", "ev1", "paid", { note: "[auto] amount mismatch: paid 12.00 USD" });
   order(raw, "can", "gone", "paid");
+  raw.exec("UPDATE feature_orders SET not_applied_notice_at = 'test'"); // the buyer notice is tested in order-notices.test.mjs; here only the admin digest is captured
   const r = await run(env);
   assert.match(r.text, /Payments that need you \(6\)/);
   for (const w of ["refund it in Stripe", "disputed", "partial refund", "paid but not applied", "amount differs", "cancelled or postponed"]) assert.match(r.text, new RegExp(w));

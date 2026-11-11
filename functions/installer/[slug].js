@@ -34,7 +34,7 @@ export async function onRequestGet({ request, env, params }) {
     const slug = ${jsonScript(inst.slug)}, name = ${jsonScript(inst.name)}, $ = (q) => document.querySelector(q);
     try { fetch("/api/installers/" + slug + "/hit", { method: "POST", keepalive: true }); } catch {}
     const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    async function ready() { const a = await import("/auth.js?v=20261107p"); let i = await a.me(); if (!i.user) { const u = await a.signIn({ title: "Sign in to continue", next: location.pathname }); if (!u) return null; } return a; }
+    async function ready() { const a = await import("/auth.js?v=20261111z"); let i = await a.me(); if (!i.user) { const u = await a.signIn({ title: "Sign in to continue", next: location.pathname }); if (!u) return null; } return a; }
     function dialog(html) { const o = document.createElement("div"); o.className = "scrim"; o.innerHTML = '<div class="dlg" role="dialog" aria-modal="true">' + html + '</div>'; o.onclick = (e) => { if (e.target === o || e.target.closest("[data-close]")) o.remove(); }; document.body.appendChild(o); return o; }
     // counts taps on the contact buttons and links (one number per day; nothing about you)
     document.addEventListener("click", (e) => { if (e.target.closest(".bar a.btn, .facts a, #quotebtn")) try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k: "click:installer" })], { type: "application/json" })); } catch {} });

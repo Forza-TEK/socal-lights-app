@@ -1,4 +1,4 @@
-// Seasons the site covers, in calendar order. Each event and showcased house belongs to one season.
+// Seasons the site covers, in calendar order. Each event and home belongs to one season.
 // The site opens on the season whose window contains today, and teases the one after it.
 // To add a season, add an entry here (in calendar order), give it a color in styles.css, and tag events with its key.
 export const SEASONS = {
@@ -21,10 +21,6 @@ export const SEASONS = {
       ["2027-02-13", "Golden Dragon Parade (Feb 13)"],
     ],
     dateRange: ["2026-12-20", "2027-02-28"],
-    showcase: {
-      title: "Showcase a House",
-      pitch: "Lights still glowing for New Year's, or lanterns and red-and-gold for Lunar New Year? Put your house on the map so neighbors can stop by.",
-    },
   },
   valentines: {
     label: "Valentine's Day",
@@ -45,10 +41,6 @@ export const SEASONS = {
       ["2027-02-14", "Valentine's Day (Sun, Feb 14)"],
     ],
     dateRange: ["2027-01-30", "2027-02-21"],
-    showcase: {
-      title: "Showcase a House",
-      pitch: "Hearts on the roofline, pink and red lights, or a sweetheart display? Put your house on the map so couples and families can stop by on Valentine's night.",
-    },
   },
   spring: {
     label: "Spring Blooms, Easter & Cinco de Mayo",
@@ -68,10 +60,6 @@ export const SEASONS = {
       ["2027-05-01", "Cinco de Mayo weekend (May 1)"],
     ],
     dateRange: ["2027-02-01", "2027-05-31"],
-    showcase: {
-      title: "Showcase a House",
-      pitch: "Giant egg displays, a front yard in full bloom, or a garden worth a detour? Share it on the map for spring wanderers.",
-    },
   },
   summer: {
     label: "Summer & Fourth of July",
@@ -89,10 +77,6 @@ export const SEASONS = {
       ["2027-07-04", "Fourth of July (Sun)"],
     ],
     dateRange: ["2027-05-01", "2027-09-06"],
-    showcase: {
-      title: "Showcase a House",
-      pitch: "Red, white and blue from the roofline to the curb? Put your Fourth of July house on the map so parade-goers can swing by.",
-    },
   },
   halloween: {
     label: "Halloween & Día de los Muertos",
@@ -113,10 +97,6 @@ export const SEASONS = {
       ["2026-11-02", "Día de los Muertos (Mon, Nov 2)"],
     ],
     dateRange: ["2026-08-15", "2026-11-15"],
-    showcase: {
-      title: "Showcase a House",
-      pitch: "Built a full graveyard, a 12-foot skeleton crew or a music-synced haunt in the driveway? Put it on the map so trick-or-treaters can find it.",
-    },
   },
   christmas: {
     label: "Thanksgiving & Christmas Lights",
@@ -142,10 +122,6 @@ export const SEASONS = {
       ["2026-12-31", "New Year's Eve"],
     ],
     dateRange: ["2026-11-01", "2027-01-15"],
-    showcase: {
-      title: "Showcase a House",
-      pitch: "Spent your weekends on a ladder getting it just right? Put your lights on the map. Families use this map to plan their nights out, and your house can sit right alongside the season's big shows.",
-    },
   },
 };
 

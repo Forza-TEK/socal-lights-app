@@ -1,5 +1,6 @@
 // POST /api/feature/checkout  { event_id | submission_id | home_id, plan: "ev_pin" | "ev_banner" | "ev_top" | "ev_all" (events) | "pin" | "top" (a home: podium finishers of an announced contest, 30 days) }  ->  { url } (Stripe Checkout page).
 // Needs a signed-in account; the receipt goes to its email. An event's price and dates come from eventQuote (featured.js) and are locked into the payment (metadata quote_*); the old event keys pin / top / season are no longer sold for events.
+import { niceYmd } from "../../_lib/money.js";
 import { json, err, clean } from "../../_lib/util.js";
 import { bump } from "../../_lib/funnel.js";
 import { PLANS, EVENT_PLANS, eventQuote } from "../../_lib/featured.js";
@@ -73,7 +74,7 @@ export async function onRequestPost({ request, env }) {
     "line_items[0][price_data][currency]": "usd",
     "line_items[0][price_data][unit_amount]": String(p.cents), // an event: the quote's price for what it adds; a home: the plan's price. Never from the browser
     "line_items[0][price_data][product_data][name]": `Featured on SoCal Lights: ${ev.name}`.slice(0, 120),
-    "line_items[0][price_data][product_data][description]": (q ? `${p.label} · ${ev.city} · ${q.from} to ${q.to} (${q.season} season${q.capped === "event" ? ", your event's last day" : ""})${q.added.length < q.components.length ? " · adds " + q.added.join(", ") : ""}` : `${p.label} · ${ev.city}${home ? " · " + placeWord(home.standing.place) + ": " + home.row.cname : ""}`).slice(0, 200),
+    "line_items[0][price_data][product_data][description]": (q ? `${p.label} · ${ev.city} · ${niceYmd(q.from)} to ${niceYmd(q.to)} (${q.season} season${q.capped === "event" ? ", your event's last day" : ""})${q.added.length < q.components.length ? " · adds " + q.added.join(", ") : ""}` : `${p.label} · ${ev.city}${home ? " · " + placeWord(home.standing.place) + ": " + home.row.cname : ""}`).slice(0, 200),
     "metadata[event_id]": ev.id,
     ...(home ? { "metadata[target]": "home" } : {}),
     ...(q ? { "metadata[quote_from]": q.from, "metadata[quote_to]": q.to, "metadata[quote_cents]": String(q.cents) } : {}), // what the buyer was quoted: the webhook applies this window and checks the amount against it

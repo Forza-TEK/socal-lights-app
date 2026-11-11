@@ -16,7 +16,7 @@ const C = [
  ["how can I sign in", ["Google", "emailed|6-digit|code"]],
  ["what are all the ways to find lights near me", ["Use my location", "city", "Filters"]],
  ["how can I get my event on the map", ["Add", "web page|Confirmed", "claim|Claim"]],
- ["what are all the ways to promote my event", ["Featured", "banner|Banner", "Event Partner|Promote your event"]],
+ ["what are all the ways to promote my event", ["Featured", "banner|Banner", "Event Partner|Feature your event"]],
  ["how can I pay for a contest", ["pass", "Stripe"]],
  ["how can I contact SoCal Lights", ["info@socallights.app", "Send"]],
  ["what are the ways to get emails from SoCal Lights", ["weekly", "confirm"]],

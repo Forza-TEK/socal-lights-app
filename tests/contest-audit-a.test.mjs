@@ -88,7 +88,7 @@ test("CON-08: the default rules and every date a person reads say Pacific and us
   const t = rulesDefault({ name: "Maple Showdown", org: "Maple HOA", city: "Pasadena", closes: "2026-12-10", vs: "2026-12-11", ve: "2026-12-20", mode: "public" });
   assert.match(t, /Enter by Dec 10, 2026 \(Pacific time; entries are accepted through 11:59 pm that day\)/);
   assert.match(t, /Voting runs Dec 11, 2026 to Dec 20, 2026 \(Pacific time; voting opens at 12:00 am on the first day and closes at 11:59 pm on the last day\)/);
-  assert.match(t, /Winners are determined when voting closes on Dec 20, 2026 \(11:59 pm Pacific\) and are announced on the contest page and by email when the Sponsor announces them/);
+  assert.match(t, /Winners are determined when voting closes on Dec 20, 2026 \(11:59 pm Pacific\) and are announced on the contest page and by email when the Organizer announces them/);
   assert.ok(!/\d{4}-\d{2}-\d{2}/.test(t), "no ISO dates in the rules");
   assert.equal(fmtDate("2026-12-10"), "Dec 10, 2026"); assert.equal(fmtDate("2026-12-10", false), "Dec 10"); assert.equal(fmtDate("soon"), "soon");
   const env = { DB: { prepare: () => ({ bind: () => ({ first: async () => null }) }) } };

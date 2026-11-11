@@ -1,3 +1,4 @@
+// SUPERSEDED by scripts/help/updates-contest-pricing.mjs (migration 0213): the old $50 / $75 / $100 passes and "first contest is free" are gone. Kept only so the history of migration 0188 can be regenerated.
 // Help Center update for contest passes (2026-11-07). `node scripts/help/updates-contest-passes.mjs` writes migrations/<NUM>_help_contest_passes.sql and adds the paste-ready text to docs/help-updates.md.
 // Same safe pattern as 0167/0168/0184: UPDATE ... WHERE updated_by = 'seed' only touches articles nobody edited in Admin > Help Center (an Admin save sets updated_by to the admin's email), so an
 // edited article is skipped (its new text is in docs/help-updates.md to paste), and INSERT OR IGNORE never replaces an existing slug. Existing articles are changed by one appended paragraph or one

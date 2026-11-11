@@ -1,15 +1,16 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js?v=20261107a";
-import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261104a";
+import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261111x553";
 import { STOCK } from "/stock.js?v=20261107a";
 import { SITE } from "/site-config.js?v=20261107a";
 import "/norm-ui.js?v=20261102b";
-import { me as authMe } from "/auth.js?v=20261107p";
-import "/chrome.js?v=20261111a"; // the account circle opens the same menu as on every other page
+import { me as authMe } from "/auth.js?v=20261111z";
+import "/chrome.js?v=20261111z"; // the account circle opens the same menu as on every other page
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261111d";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261111a";
-import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261110a";
+import { contestImage } from "/contesticon.js?v=20261111a";
+import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261111x553";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -54,15 +55,23 @@ function destOf(ev) {
 const IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
 // Counts a tap on a tracked link or button: one number per kind per day on the server, no IP, cookie or account (see functions/api/visit.js).
 const tick = (k) => { try { if (navigator.webdriver) return; const body = JSON.stringify({ k }); if (!(navigator.sendBeacon && navigator.sendBeacon("/api/visit", new Blob([body], { type: "application/json" })))) fetch("/api/visit", { method: "POST", headers: { "content-type": "application/json" }, body, keepalive: true }); } catch {} };
+// Show a place on the map the way tapping its dot does: zoom to it and open its card on the map. The map library loads a moment after the list, so wait for it.
+function showOnMap(k) {
+  const it = findKey(k); if (!it) return false;
+  const [lng, lat] = it.kind === "ev" ? [it.ev.lng, it.ev.lat] : [it.p.plng, it.p.plat], sn = it.kind === "ev" ? it.ev.sn : it.p.season;
+  if (SEASONS[sn] && sn !== state.season) setSeason(sn);
+  selectKey(k, "map");
+  let tries = 0; const go = () => { if (map && mapReady) easeToPoint(lng, lat, 16.5); else if (tries++ < 60) setTimeout(go, 250); };
+  go(); return true;
+}
 document.addEventListener("click", (e) => {
   const a = e.target.closest && e.target.closest("a,[data-clk]"); if (!a) return;
   if (a.dataset.clk) return tick(a.dataset.clk);
-  // "On map" links (/#h-<home id>, /#e-<event id>) inside the app: the page is already open, so a hash change alone does nothing. Open that place here.
-  const dl = (a.getAttribute && a.getAttribute("href") || "").match(/^\/#([eh])-(.+)$/);
+  // "On map" links (/#m-<home id>) inside the app: the page is already open, so a hash change alone does nothing. Zoom to the home and open its card on the map.
+  const dl = (a.getAttribute && a.getAttribute("href") || "").match(/^\/#m-(.+)$/);
   if (dl && location.pathname === "/" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
-    let id = dl[2]; try { id = decodeURIComponent(id); } catch {}
-    const k = (dl[1] === "e" ? "e:" : "i:") + id, it = findKey(k);
-    if (it) { e.preventDefault(); const sn = it.kind === "ev" ? it.ev.sn : it.p.season; if (SEASONS[sn] && sn !== state.season) setSeason(sn); selectKey(k, "list"); try { history.replaceState(null, "", "/#" + dl[1] + "-" + dl[2]); } catch {} return; }
+    let id = dl[1]; try { id = decodeURIComponent(id); } catch {}
+    if (showOnMap("i:" + id)) { e.preventDefault(); try { history.replaceState(null, "", "/#m-" + dl[1]); } catch {} return; }
   }
   if (a.matches('.mrow[href="/feature"]')) return tick("click:promote");
   if (a.matches(".shopcard")) return tick("click:shop");
@@ -798,7 +807,7 @@ async function shareNight() {
 // First visit: offer to use the location so distances and Nearest work; asked once, never up front
 function showWelcome() {
   let seen = false; try { seen = !!localStorage.getItem("socal-welcomed"); } catch {}
-  if (seen || state.me || $("#welcome") || state.detail || /^#[eh]-/.test(location.hash)) return; // never over an open event (it hides the Back button) or for someone who arrived on a shared link
+  if (seen || state.me || $("#welcome") || state.detail || /^#[ehm]-/.test(location.hash)) return; // never over an open event (it hides the Back button) or for someone who arrived on a shared link
   const w = document.createElement("div"); w.id = "welcome"; w.setAttribute("role", "region"); w.setAttribute("aria-label", "Use your location");
   w.innerHTML = `<span>See what is close to you and how far it is.</span><button type="button" data-welcome="go">Use my location</button><button type="button" class="no" data-welcome="no" aria-label="No thanks">No thanks</button>`;
   document.body.appendChild(w);
@@ -986,7 +995,8 @@ const infoBtn = (ev, url) => (url ? `<a class="abtn" href="${esc(infoUrl(affUrl(
 // The homes entered in a contest (the first 12 and the total, from GET /api/events/c-<slug>): a swipeable strip on the details card
 const homesBox = (ev) => {
   const h = ev.ch; if (!h) return "";
-  const tile = (x) => { const dest = x.address || (x.lat + "," + x.lng); return `<div class="chm"><a class="chl" href="/c/${esc(h.slug)}">${x.photo ? `<img src="/api/photo/${esc(x.photo)}" alt="${esc(x.name)} lights" loading="lazy" width="180" height="135" onerror="this.onerror=null;this.src='/img/badge-160.webp';this.className='fb'">` : '<span class="chn"><img src="/img/badge-160.webp" alt="" width="56" height="56" loading="lazy"></span>'}<b>${esc(x.name)}</b><span>${esc(x.address)}</span></a><span class="chb"><a class="chd" href="${esc(routeUrl(mapsApp, [dest], ""))}" ${navAttr([dest], "")} target="_blank" rel="noopener" aria-label="Directions to ${esc(x.name)}">Directions</a><a class="chd" href="/#h-${esc(x.id)}" aria-label="On map: ${esc(x.name)}">On map</a></span></div>`; };
+  const ph = contestImage(h.name || ev.n, h.logo); // a home with no photo shows the contest's logo, or an icon drawn from its name
+  const tile = (x) => { const dest = x.address || (x.lat + "," + x.lng); return `<div class="chm"><a class="chl" href="/c/${esc(h.slug)}">${x.photo ? `<img src="/api/photo/${esc(x.photo)}" alt="${esc(x.name)} lights" loading="lazy" width="180" height="135" onerror="this.onerror=null;this.src='${esc(ph)}';this.className='fb'">` : `<span class="chn"><img src="${esc(ph)}" alt="" width="56" height="56" loading="lazy"></span>`}<b>${esc(x.name)}</b><span>${esc(x.address)}</span></a><span class="chb"><a class="chd" href="${esc(routeUrl(mapsApp, [dest], ""))}" ${navAttr([dest], "")} target="_blank" rel="noopener" aria-label="Directions to ${esc(x.name)}">Directions</a><a class="chd" href="/#m-${esc(x.id)}" aria-label="On map: ${esc(x.name)}">On map</a></span></div>`; };
   return `<section class="chomes" id="dhomes" aria-label="Homes entered"><h3>Homes entered${h.total ? ` (${h.total})` : ""}</h3>${h.homes.length ? `<div class="chstrip">${h.homes.map(tile).join("")}</div><div class="chlinks">${h.total > h.homes.length ? `<a class="chall" href="/c/${esc(h.slug)}">See all ${h.total} homes &rsaquo;</a>` : ""}<a class="chall" href="/c/${esc(h.slug)}#tour">Route all ${h.total} homes &rsaquo;</a></div>` : `<p class="meta">No homes entered yet. Be the first to enter.</p>`}</section>`;
 };
 const contestBtn = (ev, url) => (String(ev.id).startsWith("c-") && url ? `<a class="contestgo" href="${esc(url)}">Enter your home or vote &rsaquo;</a>` : "");
@@ -1073,7 +1083,7 @@ function openSupport() {
   const m = $("#modal"), donate = safeUrl(SITE.donateUrl);
   m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Support SoCal Lights</h2><button class="xbtn" type="button" id="sClose" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
     <p class="blurb">Finding lights and events, search, routes, favorites and voting are free for everyone, and so is posting an event or your own home. One small team keeps it current all season: checking dates, adding events and fixing links.</p>
-    <p class="blurb">What pays for it: optional paid options, such as Featured events, installer banners and contest passes for organizers, and tips from people it helped. Paid placements are always labelled and never change a contest result.</p>
+    <p class="blurb">What pays for it: optional paid options, such as Featured events, installer banners and contest passes for organizers, and tips from people it helped. Paid placements are always labeled and never change a contest result.</p>
     <a class="btn ghost" href="/pricing">See pricing</a>
     ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
     ${shopCats().length ? `<button class="btn ghost" type="button" id="sShop">🛍️ Browse the shop</button>` : ""}
@@ -1226,7 +1236,7 @@ function moreHtml() {
   return (SIGNED_IN ? "" : row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home display"))
     + row("button", 'type="button" data-m="alerts"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>`, "Weekly lights email", "Lights and events near a city, once a week")
     + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Support SoCal Lights", SITE.donateUrl ? "Pricing, and tips on Cash App" : "Pricing and the shop"))
-    + (IN_APP ? "" : row("a", 'href="/feature"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>`, "Promote your event", "For organizers: a paid Featured pin"))
+    + (IN_APP ? "" : row("a", 'href="/feature"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>`, "Feature your event", "For organizers: a paid Featured pin"))
     + (SIGNED_IN ? "" : row("a", 'href="/contests"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`, "Contests", "Vote, enter, run one, and past results"))
     + row("a", 'href="/in"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`, "Browse by city", "Events listed city by city")
     + (SIGNED_IN ? "" : row("a", 'href="/tutorials"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>`, "Tutorials", "Short how-to videos"))
@@ -1533,11 +1543,12 @@ async function load() {
   }
   renderSeasonBar(); applyFilters(); startBanner();
   loadMapLib(); // the list is on screen: now bring in the map library (index.html already asked the browser to fetch it quietly)
-  const h = location.hash.slice(1), dl = h.match(/^([eh])-(.+)$/);
+  const h = location.hash.slice(1), dl = h.match(/^([ehm])-(.+)$/);
   if (dl) {
-    const ev = dl[1] === "e" ? E.find((x) => x.id === dl[2]) : null, ho = dl[1] === "h" ? SHOW.find((x) => x.id === dl[2]) : null, sn = ev ? ev.sn : ho ? ho.season : "";
+    const ev = dl[1] === "e" ? E.find((x) => x.id === dl[2]) : null, ho = dl[1] !== "e" ? SHOW.find((x) => x.id === dl[2]) : null, sn = ev ? ev.sn : ho ? ho.season : "";
     if (SEASONS[sn]) setSeason(sn);
-    if (ev) selectKey("e:" + ev.id, "list"); else if (ho) selectKey("i:" + ho.id, "list");
+    if (dl[1] === "m") { if (ho) showOnMap("i:" + ho.id); } // an "On map" link: the map zooms to the home and shows its card
+    else if (ev) selectKey("e:" + ev.id, "list"); else if (ho) selectKey("i:" + ho.id, "list");
   }
   welcomeLater();
   const cm = h.match(/^city-(.+)$/);
