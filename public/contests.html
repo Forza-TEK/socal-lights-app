@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Contests · SoCal Lights</title>
 <meta name="description" content="Home decorating contests in Southern California: vote, enter, run your own, and see past results.">
-<meta property="og:title" content="Contests · SoCal Lights"><meta property="og:description" content="Home decorating contests in Southern California: vote, enter, run your own, and see past results."><meta property="og:image" content="https://socallights.app/img/share.png"><meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://socallights.app/contests"><meta property="og:title" content="Contests · SoCal Lights"><meta property="og:description" content="Home decorating contests in Southern California: vote, enter, run your own, and see past results."><meta property="og:url" content="https://socallights.app/contests"><meta property="og:type" content="website"><meta property="og:site_name" content="SoCal Lights"><meta property="og:image" content="https://socallights.app/img/share.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://socallights.app/img/share.png">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/tokens.css?v=20261111fe1">
-<link rel="stylesheet" href="/addflow.css?v=20261111fe1">
-<link rel="stylesheet" href="/contest.css?v=20261111fe1">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/contest.css?v=20261111x560">
 <style>
 .ctop{flex-wrap:wrap;gap:12px}.ctop>div{min-width:0}body.wide .hdr{max-width:1160px}.cmain.wide{max-width:1160px}.cmain.wide .help,.cmain.wide .ctop p{max-width:70ch}
 .cmain .card{background:#fff;border-radius:18px}:root[data-theme="dark"] .cmain .card{background:var(--tile)}
@@ -35,12 +35,13 @@
 <div id="live" hidden></div><div id="mine" hidden></div><div id="past" hidden></div>
 </main>
 <script type="module">
-import { me, signIn, esc } from "/auth.js?v=20261107p";
-import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111fe1";
+import { me, signIn, esc } from "/auth.js?v=20261111z";
+import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111x560";
+import { fmtDate, statusChips } from "/contestfmt.js?v=20261111a";
 const $ = (q) => document.querySelector(q);
 const CROWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>';
 $("#tb").innerHTML = themeBtn(); mountAcct($("#acct"));
-const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], fmt = (s) => { const [, m, d] = String(s).split("-").map(Number); return MON[m - 1] + " " + d; };
+const fmt = (s) => fmtDate(s, false);
 const TABS = ["live", "mine", "past"], loaded = {};
 let tab = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "live";
 function show(t) {
@@ -56,7 +57,7 @@ async function loadLive() {
   const box = $("#live"); box.innerHTML = `<p class="loading">Loading…</p>`;
   const L = await fetch("/api/contests").then((r) => r.json()).catch(() => []);
   const open = L.filter((c) => !c.announced);
-  box.innerHTML = open.length ? open.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)}</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${c.founder ? `<span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span>` : ""}<span class="pill ${c.entriesOpen ? "p-ok" : "p-wait"}">${c.entriesOpen ? "Entries open until " + fmt(c.entries_close) : "Entries closed"}</span><span class="pill ${c.votingOpen ? "p-ok" : "p-wait"}">${c.votingOpen ? "Voting open until " + fmt(c.vote_end) : "Voting " + (c.vote_start > new Date().toISOString().slice(0, 10) ? "opens " + fmt(c.vote_start) : "closed")}</span></div><div class="actions"><a class="btn org" href="/c/${esc(c.slug)}">${c.votingOpen ? "Vote" : "See the contest"}</a>${c.entriesOpen ? `<a class="btn ghost" href="/c/${esc(c.slug)}/enter">Enter my home</a>` : ""}</div></section>`).join("")
+  box.innerHTML = open.length ? open.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)}</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${c.founder ? `<span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span>` : ""}${statusChips(c).map((p) => `<span class="pill ${p.tone === "ok" ? "p-ok" : p.tone === "bad" ? "p-no" : "p-idle"}">${esc(p.text)}</span>`).join("")}</div><div class="actions"><a class="btn org" href="/c/${esc(c.slug)}">${c.votingOpen ? "Vote" : "See the contest"}</a>${c.entriesOpen ? `<a class="btn ghost" href="/c/${esc(c.slug)}/enter">Enter my home</a>` : ""}</div></section>`).join("")
     : `<div class="card"><h2>No contests are running right now</h2><p class="muted">Want one in your neighborhood, school or HOA? It takes about a minute.</p><div class="actions"><a class="btn org" href="/add-contest">Start a contest</a></div></div>`;
 }
 
@@ -88,14 +89,14 @@ const rows = (c) => c.entries.map((e) => {
 function draw(labels) {
   const cs = ALL.filter((c) => c.label === sel);
   $("#past").innerHTML = `<div class="field" style="max-width:340px"><label for="arch">Season | Year</label><select class="in" id="arch">${labels.map((l) => `<option ${l === sel ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>
-  ${cs.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)} · ${c.entries.length} contestant${c.entries.length === 1 ? "" : "s"} · results locked ${esc(c.at)}</p>${c.founder ? `<p><span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span></p>` : ""}</div>
-    ${c.awards.length ? `<div><h3 style="margin-bottom:10px">Winners</h3><div class="wins">${c.awards.map((a) => a.winners.map((w) => `<div class="win"><div class="ph">${w.photo ? `<img src="/api/photo/${esc(w.photo)}" alt="${esc(w.name)} lights" loading="lazy">` : ""}</div><div class="b"><span class="small" style="display:flex;gap:6px;align-items:center">${CROWN} ${esc(a.category)}</span><span class="m">${esc(a.label)}</span><b>${esc(w.name)}</b><span class="m">${esc(w.address || w.city || "")}</span>${a.prize ? `<span class="m" style="margin-top:6px">Prize: ${esc(a.prize)}</span>` : ""}</div></div>`).join("")).join("")}</div></div>` : ""}
+  ${cs.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)} · ${c.entries.length} contestant${c.entries.length === 1 ? "" : "s"} · results locked ${esc(fmtDate(c.at))}</p>${c.founder ? `<p><span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span></p>` : ""}</div>
+    ${c.awards.length ? `<div><h3 style="margin-bottom:10px">Winners</h3><div class="wins">${c.awards.map((a) => a.winners.map((w) => `<div class="win"><div class="ph">${w.photo ? `<img src="/api/photo/${esc(w.photo)}" alt="${esc(w.name)} lights" loading="lazy">` : ""}</div><div class="b"><span class="small" style="display:flex;gap:6px;align-items:center">${CROWN} ${esc(a.category)}</span><span class="m">${esc(a.label)}${a.tie ? " · " + esc(a.tie) : ""}</span><b>${esc(w.name)}</b><span class="m">${esc(w.address || w.city || "")}</span>${a.prize ? `<span class="m" style="margin-top:6px">Prize: ${esc(a.prize)}</span>` : ""}</div></div>`).join("")).join("")}</div></div>` : ""}
     <div><h3 style="margin-bottom:6px">All contestants and results</h3>${c.entries.length ? `<div class="entries">${rows(c)}</div>` : `<p class="muted">No contestants.</p>`}</div>
     <div><a class="btn ghost sm" href="/c/${esc(c.slug)}">See the full contest</a> <a class="small muted" href="/past/${esc(c.slug)}">Permanent page</a></div></section>`).join("")}`;
   $("#arch").onchange = (e) => { sel = e.target.value; draw(labels); };
 }
 show(tab);
 </script>
-<script src="/footer.js?v=20261111fe1" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

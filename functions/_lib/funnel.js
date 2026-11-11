@@ -26,7 +26,7 @@ export const STEPS = [
   ["fn:sponsor-picked", "Sponsor page: chose an installer profile"],
   ["fn:sponsor-checkout", "Sponsor placement: payment page opened"],
   ["fn:sponsor-paid", "Sponsor placement: paid"],
-  ["fn:pass-picker-shown", "Contest pass: picker shown (a contest would go over the free one)"],
+  ["fn:pass-picker-shown", "Contest pass: picker shown (a contest needs a pass)"],
   ["fn:pass-choose", "Contest pass: Choose tapped (picker, Pricing or the pass page)"],
   ["fn:pass-paid", "Contest pass: paid (counted by the server)"],
   ["fn:partner-checkout", "Event Partner: payment page opened"],

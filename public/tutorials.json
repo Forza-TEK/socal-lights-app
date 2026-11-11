@@ -22,8 +22,8 @@
         },
         {
           "id": "night",
-          "title": "Plan a night",
-          "desc": "Save favorites, build a route, share it and add it to your calendar.",
+          "title": "Plan a night of lights",
+          "desc": "Save favorites, build a route and share it.",
           "url": "/tutorials/find-night.mp4",
           "length": "2:31",
           "captions": "/tutorials/find-night.vtt",
@@ -37,7 +37,7 @@
         },
         {
           "id": "email",
-          "title": "Weekly lights email",
+          "title": "Get the weekly lights email",
           "desc": "Sign up for the weekly email and unsubscribe any time.",
           "url": "/tutorials/find-email.mp4",
           "length": "1:31",
@@ -52,7 +52,7 @@
         },
         {
           "id": "app",
-          "title": "Install the app and use it offline",
+          "title": "Put SoCal Lights on your phone and use it offline",
           "desc": "Add SoCal Lights to your phone and use it without a connection.",
           "url": "/tutorials/find-app.mp4",
           "length": "1:20",
@@ -67,7 +67,7 @@
         },
         {
           "id": "contests",
-          "title": "Find contests: the Contests page",
+          "title": "Find a contest to vote in or enter",
           "desc": "Live now, Mine and Past results, and the Enter or vote button on a map card.",
           "url": "/tutorials/find-contests.mp4",
           "length": "1:53",
@@ -119,7 +119,7 @@
         },
         {
           "id": "owner-photos",
-          "title": "Add photos and details to your home",
+          "title": "Your city added your home: add photos and details",
           "desc": "Your city entered your home: link it to your account, check the details and add your own photos.",
           "captions": "/tutorials/enter-city-home.vtt",
           "url": "/tutorials/enter-city-home.mp4",
@@ -149,7 +149,7 @@
         },
         {
           "id": "profile",
-          "title": "Your profile",
+          "title": "Your profile: drafts, contests, badges and your account",
           "desc": "Drafts, contests, badges and deleting your account.",
           "url": "/tutorials/profile.mp4",
           "length": "2:02",
@@ -238,7 +238,7 @@
         },
         {
           "id": "contest-passes",
-          "title": "Contest passes",
+          "title": "Contest passes: what running a contest costs",
           "desc": "What the pass picker shows when you run a contest, and how to choose a pass.",
           "url": "/tutorials/run-passes.mp4",
           "length": "4:12",
@@ -249,21 +249,6 @@
             "poster": "/tutorials/run-passes-mobile.jpg",
             "captions": "/tutorials/run-passes-mobile.vtt",
             "length": "4:12"
-          }
-        },
-        {
-          "id": "founder-city-badge",
-          "title": "The Founder city badge",
-          "desc": "What the label means, where you see it, and what it never changes.",
-          "captions": "/tutorials/run-founder.vtt",
-          "url": "/tutorials/run-founder.mp4",
-          "poster": "/tutorials/run-founder.jpg",
-          "length": "1:58",
-          "mobile": {
-            "url": "/tutorials/run-founder-mobile.mp4",
-            "poster": "/tutorials/run-founder-mobile.jpg",
-            "captions": "/tutorials/run-founder-mobile.vtt",
-            "length": "1:58"
           }
         },
         {
@@ -282,8 +267,23 @@
           }
         },
         {
+          "id": "founder-city-badge",
+          "title": "What is the Founder city badge?",
+          "desc": "What the label means, where you see it, and what it never changes.",
+          "captions": "/tutorials/run-founder.vtt",
+          "url": "/tutorials/run-founder.mp4",
+          "poster": "/tutorials/run-founder.jpg",
+          "length": "1:58",
+          "mobile": {
+            "url": "/tutorials/run-founder-mobile.mp4",
+            "poster": "/tutorials/run-founder-mobile.jpg",
+            "captions": "/tutorials/run-founder-mobile.vtt",
+            "length": "1:58"
+          }
+        },
+        {
           "id": "share",
-          "title": "Share your contest",
+          "title": "Share your contest: link, QR code, poster, yard sign",
           "desc": "Link, QR code, entry poster and yard sign.",
           "url": "/tutorials/run-share.mp4",
           "length": "3:18",
@@ -328,7 +328,7 @@
         },
         {
           "id": "entry-edit",
-          "title": "Fix a home you added",
+          "title": "Fix a home you added to your contest",
           "desc": "Correct a misspelled name, a description or an address on a home you added to your contest.",
           "captions": "/tutorials/run-edit-home.vtt",
           "url": "/tutorials/run-edit-home.mp4",
@@ -343,7 +343,7 @@
         },
         {
           "id": "entry-photos",
-          "title": "Add photos to a home and send the owner a link",
+          "title": "Add photos to homes you added, and send the owner a link",
           "desc": "Add photos to a home you added, and send the homeowner a private link to add their own.",
           "captions": "/tutorials/run-home-photos.vtt",
           "url": "/tutorials/run-home-photos.mp4",
@@ -373,7 +373,7 @@
         },
         {
           "id": "voting",
-          "title": "Run voting",
+          "title": "Run voting: pause, check results and void a vote",
           "desc": "Start now, pause, review votes and void a vote.",
           "url": "/tutorials/run-voting.mp4",
           "length": "2:11",
@@ -388,7 +388,7 @@
         },
         {
           "id": "unpublish",
-          "title": "Unpublish and publish again",
+          "title": "Unpublish a contest and publish it again",
           "desc": "Hide your contest from the public, then bring it back.",
           "url": "/tutorials/run-unpublish.mp4",
           "length": "1:55",
@@ -455,7 +455,7 @@
       "videos": [
         {
           "id": "sponsors",
-          "title": "Record a sponsor on your contest page",
+          "title": "Add sponsors and logos to your contest",
           "desc": "Record a sponsor and show it on the contest page.",
           "url": "/tutorials/sponsors-add.mp4",
           "length": "2:02",
@@ -470,7 +470,7 @@
         },
         {
           "id": "sponsor-invite",
-          "title": "Invite a sponsor to your contest",
+          "title": "Add sponsors to your contest",
           "desc": "Share one private link, then review and approve the request.",
           "url": "/tutorials/sponsors-invite.mp4",
           "length": "2:13",
@@ -485,7 +485,7 @@
         },
         {
           "id": "installer",
-          "title": "Presenting installer and quote requests",
+          "title": "Add a presenting installer and quote requests",
           "desc": "How the Get a quote button works.",
           "url": "/tutorials/sponsors-installer.mp4",
           "length": "2:32",
@@ -552,7 +552,7 @@
         },
         {
           "id": "showcase",
-          "title": "Show off your home",
+          "title": "Show off your home on the map",
           "desc": "Put your lights on the map so families can find your home. You do not need a contest.",
           "url": "/tutorials/post-house.mp4",
           "length": "2:50",
@@ -567,7 +567,7 @@
         },
         {
           "id": "claim",
-          "title": "Claim your home",
+          "title": "Is this your home? Claim it",
           "desc": "Is this your home? Replace the automatic listing with your own photos and details.",
           "url": "/tutorials/post-claim.mp4",
           "length": "2:13",
@@ -582,7 +582,7 @@
         },
         {
           "id": "feature",
-          "title": "Feature your event or home",
+          "title": "Feature an event or a home",
           "desc": "Pick a plan, pick your event or winning home, check the dates. Stops at the secure payment page.",
           "url": "/tutorials/post-feature.mp4",
           "length": "2:30",
@@ -597,7 +597,7 @@
         },
         {
           "id": "event-partner",
-          "title": "Event Partner for cities, chambers and event producers",
+          "title": "Event Partner for cities, chambers and nonprofits",
           "desc": "One plan covers up to 10 of your events a season: what it is, how you get it, and how you use it on each event.",
           "captions": "/tutorials/post-partner.vtt",
           "url": "/tutorials/post-partner.mp4",

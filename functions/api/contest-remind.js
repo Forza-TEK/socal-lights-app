@@ -5,6 +5,7 @@ import { json, err } from "../_lib/util.js";
 import { enqueueMail, drainMail } from "../_lib/mailbatch.js";
 import { logOp } from "../_lib/oplog.js";
 import { todayPT, addDays } from "../_lib/contests.js";
+import { fmtDate } from "../../public/contestfmt.js";
 
 // Reminders go to the mail outbox (functions/_lib/mailbatch.js): one request can only make 50 outgoing calls on the free plan, so they are queued (a dedupe key makes a repeat harmless),
 // the first 100 are sent now and the hourly outbox workflow sends the rest and retries failures. A contest is marked "reminded" once its messages are safely queued.
@@ -29,7 +30,7 @@ export async function onRequestPost({ request, env }) {
       if (!due) continue;
       try {
         const to = await emails(sql, c.id, tpl);
-        const n = await enqueueMail(env, to.map((e) => ({ id: tpl, to: e, dedupe: `${flag}:${c.id}:${String(e).toLowerCase()}`, vars: { contest: c.name, vote_end: c.vote_end, link: page } })));
+        const n = await enqueueMail(env, to.map((e) => ({ id: tpl, to: e, dedupe: `${flag}:${c.id}:${String(e).toLowerCase()}`, vars: { contest: c.name, vote_end: fmtDate(c.vote_end), link: page } })));
         queued[kind] += n;
         await env.DB.prepare(`UPDATE contests SET ${flag} = 1 WHERE id = ?`).bind(c.id).run();
       } catch (e) { failed[kind]++; await logOp(env, "mail", `${tpl} for contest ${c.id} could not be queued (will retry tomorrow): ` + (e && e.message)); }

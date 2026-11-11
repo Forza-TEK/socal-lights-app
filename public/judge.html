@@ -11,25 +11,27 @@
 <meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/tokens.css?v=20261111fe1">
-<link rel="stylesheet" href="/addflow.css?v=20261111fe1">
-<link rel="stylesheet" href="/contest.css?v=20261111fe1">
-<link rel="stylesheet" href="/routes.css?v=20261111fe1">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/contest.css?v=20261111x560">
+<link rel="stylesheet" href="/routes.css?v=20261111x560">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="sh-page">
 <main class="cmain" id="content"><div id="app"><p class="loading">Loading the ballot…</p></div></main>
 <script type="module">
-import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
-import { refreshAcct } from "/addflow.js?v=20261111fe1";
-import { mountShell } from "/appshell.js?v=20261111fe1";
+import { contestImage } from "/contesticon.js?v=20261111a";
+import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261111z";
+import { refreshAcct } from "/addflow.js?v=20261111x560";
+import { mountShell } from "/appshell.js?v=20261111x560";
 import { tourHtml, wireTour } from "/tour.js?v=20261111d";
+import { fmtDate } from "/contestfmt.js?v=20261111a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 let panel = "ballot";
 const shell = mountShell({ page: "judge", title: "Judging", active: panel, extra: [["contest", "Contest page", "/c/" + slug, "play"]], items: [{ k: "ballot", label: "Ballot", icon: "check" }],
   onPick: (k) => { panel = k; showPanel(); window.scrollTo(0, 0); } });
 const showPanel = () => { document.querySelectorAll("#app [data-p]").forEach((el) => (el.hidden = el.dataset.p !== panel)); shell.setActive(panel); };
-const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };
+const fmt = (s) => fmtDate(s, false);
 let D = null;
 const api = (b) => fetch(`/api/contests/${encodeURIComponent(slug)}/judge`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) }).then(async (r) => ({ ok: r.ok, j: await r.json().catch(() => ({})) }));
 
@@ -45,28 +47,37 @@ function render() {
   const homes = D.entries.filter((e) => !e.mine && !conf.has(e.id));
   const total = score ? homes.length * c.categories.length : c.categories.length;
   const done = score ? D.scores.filter((s) => homes.some((e) => e.id === s.post_id)).length : c.categories.filter((k) => pickOf(k)).length;
-  const sections = c.categories.map((k, ci) => `<section class="card" data-p="c${ci}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap"><h2>${esc(k)}</h2><span class="pill">${score ? "Score each home" : "Pick one favorite"}</span></div>${D.entries.map((e) => {
+  const mine = (k) => (score ? homes.filter((e) => scoreOf(e.id, k)).length : pickOf(k) ? 1 : 0), need = score ? homes.length : 1;
+  const sections = c.categories.map((k, ci) => `<section class="card" data-p="c${ci}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap"><h2>${esc(k)}</h2><span class="small muted">${score ? `Score each home from 1 to 10. ${mine(k)} of ${need} done.` : "Pick one favorite."}</span></div>${D.entries.map((e) => {
     const cf = conf.has(e.id), blocked = e.mine || cf, isPick = pickOf(k) === e.id;
+    const cur = scoreOf(e.id, k);
     const ctl = score
-      ? `<select class="in" data-score="${esc(e.id)}|${esc(k)}" ${open && !blocked ? "" : "disabled"} aria-label="Score for ${esc(e.name)}, ${esc(k)}" style="width:140px;min-height:44px;padding:8px 30px 8px 12px"><option value="">${e.mine ? "Your home" : cf ? "Recused" : "Score 1-10"}</option>${[1,2,3,4,5,6,7,8,9,10].map((n) => `<option value="${n}" ${scoreOf(e.id, k) === n ? "selected" : ""}>${n}</option>`).join("")}</select>`
+      ? (blocked ? `<span class="pill">${e.mine ? "Your home" : "Recused"}</span>`
+        : !open ? `<span class="pill">${cur ? "Your score: " + cur : "No score"}</span>`
+        : `<div class="chips" role="group" aria-label="Score for ${esc(e.name)}, ${esc(k)}"><span class="small muted chiphd">${cur ? `Your score: ${cur} of 10` : "Tap a score from 1 to 10"}</span>${[1,2,3,4,5,6,7,8,9,10].map((n) => `<button type="button" class="chip" data-chip="${esc(e.id)}|${esc(k)}|${n}" aria-pressed="${cur === n}" aria-label="${n} of 10">${n}</button>`).join("")}</div>`)
       : `<button class="btn ${isPick ? "ghost" : "org"} sm" type="button" data-pick="${esc(e.id)}|${esc(k)}" ${open && !blocked && !isPick ? "" : "disabled"}>${e.mine ? "Your home" : cf ? "Recused" : isPick ? "Picked" : pickOf(k) ? "Move my pick" : "Pick"}</button>`;
-    return `<div class="vrow${isPick ? " mine" : ""}">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"><img src="/img/badge-160.webp" alt="" width="40" height="40" loading="lazy"></span>`}<div><b>${esc(e.name)}</b><span class="meta">${esc(e.address || e.city)}</span>${e.mine || !open ? "" : `<button class="link" type="button" data-conf="${esc(e.id)}" style="font-size:14px;margin-top:4px">${cf ? "Conflict declared. Undo" : "I know this household"}</button>`}</div>${ctl}</div>`;
+    return `<div class="vrow${isPick ? " mine" : ""}">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"><img src="${esc(contestImage(D.contest.name, D.contest.logo))}" alt="" width="40" height="40" loading="lazy"></span>`}<div><b>${esc(e.name)}</b><span class="meta">${esc(e.address || e.city)}</span>${e.mine || !open ? "" : `<button class="link" type="button" data-conf="${esc(e.id)}" style="font-size:14px;margin-top:4px">${cf ? "Conflict declared. Undo" : "I know this household"}</button>`}</div>${ctl}</div>`;
   }).join("")}</section>`).join("");
   $("#app").innerHTML = `<section data-p="ballot"><div class="card"><h1 style="font-size:clamp(26px,5vw,34px)">${esc(c.name)}</h1><p class="muted">${esc(c.org)} · Judges' ballot</p>
     <p>${score ? "Score every home from 1 to 10 in each category." : "Pick one favorite home in each category."} Judge on first impression, creativity, theme, craftsmanship and variety of lights. Your ${score ? "scores are" : "picks are"} private until winners are announced, and you can change them until voting closes.</p>
-    <p class="small muted">If you know a household, tap “I know this household”. Your vote for it won't count.</p>
-    <div class="status ${open ? "ok" : "no"}">${c.announced ? "Winners are announced. This ballot is closed." : open ? `Voting is open until ${fmt(c.voteEnd)}.` : `Voting opens ${fmt(c.voteStart)}.`} <b style="font-weight:500">${done} of ${total} done.</b></div></div></section><section data-p="tour">${tourHtml({ slug, title: "Visit the homes", intro: "Drive past every home you will judge, in as few routes as possible. Your maps app takes up to 9 stops at a time, so a long list is split into routes of 9 or fewer, and each route starts where the last one ended. Tick each home as you see it. Homes you know or own are left out." })}</section>${sections}`;
+    <p class="small muted">If you know a household, tap “I know this household”. Your ${score ? "score" : "pick"} for it won't count.</p>
+    <div class="status ${open ? "ok" : "no"}">${c.announced ? "Winners are announced. This ballot is closed." : open ? `Voting is open through ${fmt(c.voteEnd)} (11:59 pm Pacific).` : `Voting opens ${fmt(c.voteStart)} (12:00 am Pacific).`} <b style="font-weight:500">${done} of ${total} done.</b></div>
+    <h2 style="font-size:19px;margin-top:6px">Your categories</h2>
+    <ul class="chk">${c.categories.map((k, ci) => { const n = mine(k), ok = n >= need && need > 0; return `<li><button type="button" class="link" data-goto="c${ci}">${ok ? "✓ " : ""}${esc(k)}</button><span class="small muted">${score ? `${n} of ${need} homes scored` : ok ? "Picked" : "Not picked yet"}</span></li>`; }).join("")}</ul>
+    ${open && c.categories.length ? `<div class="actions"><button class="btn org" type="button" id="startscoring">${done === 0 ? "Start scoring" : done >= total ? "Review my " + (score ? "scores" : "picks") : "Continue scoring"}</button></div>` : ""}</div></section><section data-p="tour">${tourHtml({ slug, title: "Visit the homes", intro: "Drive past every home you will judge, in as few routes as possible. Your maps app takes up to 9 stops at a time, so a long list is split into routes of 9 or fewer, and each route starts where the last one ended. Tick each home as you see it. Homes you know or own are left out." })}</section>${sections}`;
   wireTour(document, { slug, entries: homes });
-  const mine = (k) => (score ? homes.filter((e) => scoreOf(e.id, k)).length : pickOf(k) ? 1 : 0), need = score ? homes.length : 1;
   shell.setItems([{ k: "ballot", label: "Ballot", icon: "check" }, { k: "tour", label: "Visit the homes", icon: "map" }, ...c.categories.map((k, ci) => ({ k: "c" + ci, label: k, icon: mine(k) >= need ? "star" : "trophy" }))]);
   if (!document.querySelector(`#app [data-p="${panel}"]`)) panel = "ballot";
   shell.setTitle(c.name); shell.own(true); showPanel();
   document.querySelectorAll("[data-pick]").forEach((b) => (b.onclick = async () => { const [id, k] = b.dataset.pick.split("|"); const r = await api({ action: "pick", post_id: id, category: k }); if (!r.ok) return toast(r.j.error || "Couldn't save that."); toast(k + ": picked"); load(); }));
-  document.querySelectorAll("[data-score]").forEach((s) => (s.onchange = async () => { const [id, k] = s.dataset.score.split("|"); const r = await api({ action: "score", post_id: id, category: k, score: s.value }); if (!r.ok) toast(r.j.error || "Couldn't save that."); load(); }));
+  document.querySelectorAll("[data-chip]").forEach((b) => (b.onclick = async () => { const [id, k, n] = b.dataset.chip.split("|"); const y = scrollY; document.querySelectorAll("[data-chip]").forEach((x) => (x.disabled = true)); const r = await api({ action: "score", post_id: id, category: k, score: n }); if (!r.ok) toast(r.j.error || "Couldn't save that."); await load(); scrollTo(0, y); }));
+  const go = (k) => { panel = k; showPanel(); window.scrollTo(0, 0); };
+  document.querySelectorAll("[data-goto]").forEach((b) => (b.onclick = () => go(b.dataset.goto)));
+  const st = document.getElementById("startscoring"); if (st) st.onclick = () => { const i = c.categories.findIndex((k) => mine(k) < need); go("c" + (i < 0 ? 0 : i)); };
   document.querySelectorAll("[data-conf]").forEach((b) => (b.onclick = async () => { const id = b.dataset.conf, on = !conf.has(id); const r = await api({ action: "conflict", post_id: id, on }); if (!r.ok) return toast(r.j.error || "Couldn't save that."); toast(on ? "Noted. Your vote for that home won't count." : "Conflict removed."); load(); }));
 }
 noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261111fe1" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

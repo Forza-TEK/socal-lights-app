@@ -7,7 +7,7 @@
 //   basis ''        : neither confirmed yet. Saved as a draft record, never shown.
 //   basis 'legacy'  : rows made before this feature; shown as before.
 // SHOWN ON THE CONTEST PAGE only when: the organizer ticked "show on the contest page" AND the basis is paid or in_kind (or legacy) AND the organizer ticked that they have the sponsor's permission to list
-// their name and logo AND Admin has not hidden it. Public output carries only logo, company name and website, labelled "Sponsor". Contact details and receipts are never public.
+// their name and logo AND Admin has not hidden it. Public output carries only logo, company name and website, labeled "Sponsor". Contact details and receipts are never public.
 import { clean, webUrl, validHost } from "./util.js";
 
 export const TIERS = ["presenting", "gold", "silver", "prize"];

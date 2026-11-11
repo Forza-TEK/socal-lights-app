@@ -6,6 +6,7 @@ import { ownerOf, approveEntry } from "../../../../_lib/contests.js";
 import { newPhotoToken, photoLink } from "../../../../_lib/entryphotos.js";
 import { parseHome, homeKey, locate } from "../../../../_lib/homes.js";
 import { normName, normText } from "../../../../_lib/fields.js";
+import { fmtDate } from "../../../../../public/contestfmt.js";
 
 export async function onRequestPost({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -42,7 +43,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   const name = row.title || row.biz;
   if (b.action === "approve") {
     await approveEntry(env, row);
-    tell("entry_approved", { name, contest: c.name, vote_start: c.vote_start, vote_end: c.vote_end, link: page });
+    tell("entry_approved", { name, contest: c.name, vote_start: fmtDate(c.vote_start), vote_end: fmtDate(c.vote_end), link: page });
     return json({ ok: true });
   }
   if (b.action === "restore") {

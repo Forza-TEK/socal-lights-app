@@ -25,8 +25,8 @@ button{touch-action:manipulation}
 .topbar{position:fixed;z-index:20;top:calc(env(safe-area-inset-top,0px) + 14px);left:max(14px,env(safe-area-inset-left,0px));right:calc(var(--panel-w) + 32px);display:grid;gap:10px;justify-items:start;pointer-events:none}
 .topbar>*{pointer-events:auto}
 .searchrow{display:flex;gap:10px;align-items:center;width:100%;min-width:0}
-.brand{display:flex;align-items:center;gap:10px;height:52px;padding:0 18px;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);font-weight:800;font-size:18px;letter-spacing:-.02em;white-space:nowrap;color:var(--ink);text-decoration:none}
-.brand .mark{flex:none;display:block;width:44px;height:44px;margin:0 -2px 0 -10px;border-radius:50%}
+.brand{display:flex;align-items:center;gap:12px;height:52px;padding:0 22px 0 0;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);font-weight:800;font-size:18px;letter-spacing:-.02em;white-space:nowrap;color:var(--ink);text-decoration:none}
+.brand .mark{flex:none;display:block;width:52px;height:52px;margin:0;border-radius:50%}
 .brand .wm b{font-weight:800;background:linear-gradient(90deg,#f08a1c,var(--s-halloween) 45%,var(--s-christmas));-webkit-background-clip:text;background-clip:text;color:transparent}
 @keyframes tw{50%{opacity:.35}}
 .search{flex:1;min-width:0;max-width:560px;display:flex;align-items:center;gap:10px;height:52px;padding:0 6px 0 18px;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);border:1.5px solid transparent;transition:border-color .15s}
@@ -977,3 +977,25 @@ body:has(#seasonmenu)::after{content:"";position:fixed;inset:0;z-index:55;backgr
 #n-events{display:none}
 .qsel .qcity{font-size:16px;height:36px;min-width:0;width:9.5em;border:1px solid var(--field);border-radius:10px;background:var(--surface-2);padding:0 8px}
 @media (max-width:340px){.sortw{display:none}}
+/* Map top bar, one look at every width: the season button is always a round icon (its name is the tooltip and the screen-reader label), and a round "+" (Add) sits beside the profile
+   circle. When the bar drops to two rows, the season circle is under the logo and the "+" goes under the season circle. */
+#addbtn{display:inline-grid;place-items:center;text-decoration:none;color:var(--ink)}
+.seasonbtn,.seasonbtn.mini{--sb:52px;width:var(--sb);height:var(--sb);padding:0;gap:0;justify-content:center;transition:width .35s cubic-bezier(.25,.1,.25,1),padding .35s cubic-bezier(.25,.1,.25,1),gap .35s cubic-bezier(.25,.1,.25,1)}
+.seasonbtn:not([aria-expanded="true"]) #seasonlbl,.seasonbtn:not([aria-expanded="true"]) .caret{max-width:0;opacity:0;margin:0}
+/* open (its season list is showing): the circle grows into the wide button with the season's name and the arrow */
+.seasonbtn[aria-expanded="true"],.seasonbtn.mini[aria-expanded="true"]{width:auto;padding:0 18px;gap:8px}
+.seasonbtn[aria-expanded="true"] #seasonlbl,.seasonbtn.mini[aria-expanded="true"] #seasonlbl{max-width:240px;opacity:1}
+.seasonbtn[aria-expanded="true"] .caret,.seasonbtn.mini[aria-expanded="true"] .caret{max-width:24px;opacity:1;margin-right:-4px}
+@media (max-width:1099px){
+  .seasonbtn,.seasonbtn.mini{--sb:44px}
+  .searchrow{grid-template-areas:"brand search acct more" "season season season theme" "add add add add"!important}
+  .searchrow #addbtn{grid-area:add;justify-self:start;width:44px;height:44px}
+  #welcome{top:190px!important}
+}
+@media (max-width:700px){#welcome{top:calc(env(safe-area-inset-top,0px) + 176px)!important}}
+@media (min-width:701px) and (max-height:500px){
+  #seasonbtn[aria-expanded="true"]{width:auto;padding:0 16px}#seasonbtn[aria-expanded="true"] #seasonlbl,#seasonbtn[aria-expanded="true"] .caret{display:inline}
+  #addbtn{position:fixed!important;left:14px;top:120px;width:44px;height:44px;z-index:21}
+  #themebtn{top:170px!important}
+  #welcome{top:120px!important;left:72px}
+}

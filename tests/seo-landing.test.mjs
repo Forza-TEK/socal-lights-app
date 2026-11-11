@@ -52,7 +52,7 @@ test("front-end rules: focus ring on search, reduced-motion sponsor strip, 24px 
   assert.match(css, /prefers-reduced-motion:reduce\)\{\.sp-set\{animation:none/);
   assert.match(css, /\.panel:has\(>\.sponsor\) #back\{top:82px\}/);
   assert.match(css, /body\.detail-open #welcome\{display:none\}/);
-  assert.match(app, /function dismissWelcome\(\)/); assert.match(app, /state\.detail \|\| \/\^#\[eh\]-\/\.test\(location\.hash\)/);
+  assert.match(app, /function dismissWelcome\(\)/); assert.match(app, /state\.detail \|\| \/\^#\[ehm\]-\/\.test\(location\.hash\)/);
   assert.match(app, /<div class="dlive" aria-live="polite">/);
   assert.match(app, /f\.focus\(\{ preventScroll: true \}\)/); assert.match(app, /e\.key !== "Tab"/); assert.match(app, /querySelector\("\[data-openfilters\]"\)/);
   assert.match(app, /const secure = \(u\)/); assert.match(app, /lbEl\.innerHTML[^\n]*secure\(q\.src\)/);

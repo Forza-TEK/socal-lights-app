@@ -86,26 +86,40 @@ test("house post: spammy words hold it for review; installers need website or ph
     assert.equal(p.poster_type, "installer"); assert.ok(p.installer_id); assert.equal(p.installer_confirmed, 1); assert.match(p.web, /brightinstall/);
   } finally { f.restore(); }
 });
-test("house post: 5 per hour per connection (429), 5 displays a day per account", async () => {
+test("house post: 5 a day per account; the 429 says which limit and when it resets; other accounts on the same network are not blocked", async () => {
   const { env, raw } = newEnv({ PHOTOS: r2() }); const u = await addUser(raw, "u1", "owner@example.com"), f = geo({ census: PASADENA });
   try {
     for (let i = 0; i < 5; i++) assert.equal((await postHome(env, homeForm({ biz: "B" + i }), u.cookie, "192.0.2.1")).status, 200);
-    assert.equal((await postHome(env, homeForm(), u.cookie, "192.0.2.1")).status, 429, "6th from one connection");
-    // a different connection hits the per-account daily limit instead
+    const res = await postHome(env, homeForm(), u.cookie, "192.0.2.1"), r = await body(res);
+    assert.equal(res.status, 429); assert.equal(r.limit, "day");
+    assert.match(r.error, /5 homes in the last 24 hours, which is the daily limit for one account/); assert.match(r.error, /in about \d+ hours?/); assert.match(r.error, /info@socallights\.app/);
+    assert.ok(Number(res.headers.get("retry-after")) > 0 && r.retry_after === Number(res.headers.get("retry-after")), "Retry-After header and body agree");
+    // a different connection does not help: the limit is the account's
     assert.equal((await postHome(env, homeForm(), u.cookie, "192.0.2.2")).status, 429);
-    const u2 = await addUser(raw, "u2", "other@example.com");
-    assert.equal((await postHome(env, homeForm(), u2.cookie, "192.0.2.2")).status, 200, "another account on that connection is fine");
+    // five other people on the SAME network (a library, a school) are not blocked by it (it used to be 5 submissions an hour for the whole address)
+    for (let k = 2; k <= 6; k++) { const o = await addUser(raw, "u" + k, `p${k}@example.com`); assert.equal((await postHome(env, homeForm(), o.cookie, "192.0.2.1")).status, 200, "account " + k); }
   } finally { f.restore(); }
 });
-// submit.js uploads photos before the per-account daily check; the 429 path deletes them again.
-test("house post: the per-account daily limit does not leave uploaded photos behind in R2", async () => {
+test("house post: one network address is capped at 30 an hour, and the message says so with a way to reach us", async () => {
+  const { env, raw } = newEnv({ PHOTOS: r2() }); const u = await addUser(raw, "u1", "owner@example.com"), f = geo({ census: PASADENA });
+  try {
+    const ins = raw.prepare("INSERT INTO submit_log (ip) VALUES (?)"); for (let i = 0; i < 30; i++) ins.run("192.0.2.50");
+    const res = await postHome(env, homeForm(), u.cookie, "192.0.2.50"), r = await body(res);
+    assert.equal(res.status, 429); assert.equal(r.limit, "connection");
+    assert.match(r.error, /This network \(shared Wi-Fi counts as one connection\) has sent 30 submissions in the last hour/); assert.match(r.error, /resets in about (\d+ minutes?|1 hour)/); assert.match(r.error, /email info@socallights\.app/);
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM posts").get().n, 0, "nothing was saved");
+    assert.equal((await postHome(env, homeForm(), u.cookie, "192.0.2.51")).status, 200, "another address is fine");
+  } finally { f.restore(); }
+});
+// The limits are checked before anything is stored, so a refused post leaves nothing in R2.
+test("house post: a refused post (limit) leaves nothing uploaded in R2", async () => {
   const bucket = r2(), { env, raw } = newEnv({ PHOTOS: bucket }); const u = await addUser(raw, "u1", "owner@example.com"), f = geo({ census: PASADENA });
   try {
     for (let i = 0; i < 5; i++) await postHome(env, homeForm({ biz: "B" + i }), u.cookie, "192.0.2." + (10 + i));
-    const before = [...bucket.store.keys()].sort();
+    const before = [...bucket.store.keys()].sort(), puts = bucket.puts.length;
     const form = homeForm(); form.append("photos", jpeg());
     assert.equal((await postHome(env, form, u.cookie, "192.0.2.99")).status, 429);
-    assert.deepEqual([...bucket.store.keys()].sort(), before, "photos uploaded for a refused post are deleted");
+    assert.deepEqual([...bucket.store.keys()].sort(), before); assert.equal(bucket.puts.length, puts, "no upload was even attempted");
   } finally { f.restore(); }
 });
 
@@ -169,13 +183,22 @@ test("event: same name and day as one on the map is reported as a duplicate and 
     assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM event_submissions").get().n, 1);
   } finally { f.restore(); }
 });
-test("event: 5 per hour per connection and 8 per account per day", async () => {
+test("event: 5 an hour and 8 a day per account (each 429 says which and when it resets); 30 an hour per connection", async () => {
   const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), f = geo({ census: PASADENA });
   try {
     for (let i = 0; i < 5; i++) assert.equal((await postEvent(env, evBody({ name: "Holiday Show Number " + i, address: i + "00 Main Street" }), u.cookie, { ip: "192.0.2.1" })).status, 200);
-    assert.equal((await postEvent(env, evBody({ name: "Holiday Show Number 9" }), u.cookie, { ip: "192.0.2.1" })).status, 429);
+    const sixth = await postEvent(env, evBody({ name: "Holiday Show Number 9", address: "950 Main Street" }), u.cookie, { ip: "192.0.2.2" }), r = await body(sixth);
+    assert.equal(sixth.status, 429); assert.equal(r.limit, "account"); assert.match(r.error, /5 events in the last hour, which is the limit for one account/); assert.match(r.error, /in about (\d+ minutes?|1 hour)/);
+    assert.ok(Number(sixth.headers.get("retry-after")) > 0);
+    // after the hour, the daily cap of 8 applies
+    raw.prepare("UPDATE event_submissions SET created_at = datetime(created_at, '-2 hours')").run();
     for (let i = 5; i < 8; i++) assert.equal((await postEvent(env, evBody({ name: "Holiday Show Number " + i, address: i + "00 Main Street" }), u.cookie, { ip: "192.0.2.2" })).status, 200);
-    assert.equal((await postEvent(env, evBody({ name: "Holiday Show Number 10", address: "900 Main Street" }), u.cookie, { ip: "192.0.2.3" })).status, 429, "the 9th event for one account in a day");
+    const ninth = await postEvent(env, evBody({ name: "Holiday Show Number 10", address: "900 Main Street" }), u.cookie, { ip: "192.0.2.3" }), n = await body(ninth);
+    assert.equal(ninth.status, 429, "the 9th event for one account in a day"); assert.equal(n.limit, "day"); assert.match(n.error, /8 events in the last 24 hours, which is the daily limit for one account \(8\)/); assert.match(n.error, /info@socallights\.app/);
+    // the connection: 30 an hour
+    const ins = raw.prepare("INSERT INTO submit_log (ip) VALUES (?)"); for (let i = 0; i < 30; i++) ins.run("192.0.2.77");
+    const o = await addUser(raw, "u2", "p@example.com"), net = await postEvent(env, evBody({ name: "Another Show Number 1", address: "1 Pine Street" }), o.cookie, { ip: "192.0.2.77" }), m = await body(net);
+    assert.equal(net.status, 429); assert.equal(m.limit, "connection"); assert.match(m.error, /shared Wi-Fi counts as one connection/);
   } finally { f.restore(); }
 });
 test("event: after 100 auto-published in a day, new ones wait for review and are not put on the map", async () => {

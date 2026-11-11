@@ -18,7 +18,7 @@ The coffee-cup button in the top bar opens a "Keep SoCal Lights free" box. The d
 ## 3. Feature your event
 **Automatic (Stripe):** see `docs/stripe-setup.md`. Once the two Stripe secrets are set, visitors pick their event and pay on `/feature`, and the placement turns on by itself. The manual SQL below is only for comping a placement by hand.
 
-- Page: `/feature` (plans: Featured pin $10, Top of the list $15 (each from payment to the event's last day, up to 30 days), Full run $25 (events of 31+ days, up to 90 days); raised from $5 / $10 / $15 on 2026-11-04; Whole season $20 became Full run $25 on 2026-11-06). Prices are defined only in `functions/_lib/featured.js`
+- Page: `/feature` (SUPERSEDED: these were the old plans. The current prices are in `functions/_lib/featured.js` and `/api/config`; event plans now cost 25 / 50 / 50 / 75 and the home pin and top cost 10 and 15). Prices are defined only in `functions/_lib/featured.js`
   (`PLANS`) and reach the pages through `/api/config`; the HTML holds wording only. Linked from the ⋯ menu as "Promote your event" (hidden in the store apps).
 - Payment: Stripe only. The Cash App payment links (`featurePay`) were removed; if Stripe isn't switched on, `/feature` shows an email-us message to `contactEmail`.
   Refunds and disputes switch the placement off automatically (see `docs/stripe-setup.md`).

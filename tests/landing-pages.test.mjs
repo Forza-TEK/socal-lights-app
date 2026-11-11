@@ -39,7 +39,7 @@ test("event page: summary, details, more in the city linking to /e/, nearby citi
   assert.match(h, /<h2>Details<\/h2>/); assert.match(h, /<dt>Where<\/dt><dd>Candy Lane Park, 100 Main St, Altadena, CA 91001 · <a href="https:\/\/www\.google\.com\/maps\/dir/);
   assert.match(h, /<h2>More events in Altadena<\/h2>/); assert.match(h, /href="\/e\/b"/); assert.match(h, /href="\/e\/c"/); assert.doesNotMatch(h, /href="\/e\/a"[^>]*class="ev"/);
   assert.match(h, /data-share data-url="https:\/\/x\.test\/e\/a"/); assert.match(h, /data-sub-form data-city="Altadena" data-src="event"/);
-  assert.match(h, /og:image" content="https:\/\/img\.example\.org\/a\.jpg"/); assert.doesNotMatch(h, /http:\/\/img\.example\.org/);
+  assert.match(h, /og:image" content="https:\/\/x\.test\/cdn-cgi\/image\/[^"]*\/https:\/\/img\.example\.org\/a\.jpg"/); assert.doesNotMatch(h, /http:\/\/img\.example\.org/);
   assert.match(h, /href="\/#e-a"/);
   const ld = lds(h).find((x) => x["@type"] === "Event");
   assert.equal(ld.url, "https://x.test/e/a"); assert.equal(ld.location.address.postalCode, "91001");

@@ -16,6 +16,7 @@ import { readFileSync, readdirSync, writeFileSync, appendFileSync } from "node:f
 import { execFileSync } from "node:child_process";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import path from "node:path";
+import { normalizeHours, freeFlagProblem, imageProblem, sharedUrlKey } from "./event-rules.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -145,8 +146,11 @@ function checkRow(e, label) {
   if (!["confirmed", "expected"].includes(r.status)) err("status", w, `status must be confirmed or expected (got ${r.status})`, true);
   if (![0, 1].includes(r.free)) err("free", w, "free must be 0 or 1", true);
   if (r.status === "expected" && !/check site\s*$/i.test(r.hours || "")) warn("expected-hours", w, 'expected events should have hours ending "check site"');
-  if (r.free === 1 && r.price && !/free/i.test(r.price)) warn("free-price", w, `free=1 but price says "${r.price}"`);
-  if (r.free === 0 && /^free$/i.test((r.price || "").trim())) warn("free-price", w, 'price says "Free" but free=0');
+  // Style rules apply to a field only when the migration adds the row or changes that field, so touching an old row for another reason is not blocked by old text.
+  const touched = (...fs) => e.kind === "added" || !e.prev || fs.some((f) => e.prev[f] !== r[f]);
+  if (touched("free", "price")) { const fp = freeFlagProblem(r.free, r.price); if (fp) err("free-price", w, fp); } // DAT-07
+  if (touched("hours")) { const nh = normalizeHours(r.hours); if (r.hours && nh !== r.hours) err("hours-style", w, `hours "${r.hours}" should read "${nh}" (one en dash, times like 7pm or 7:30pm, "; check site" as the only estimate phrase)`); } // DAT-06
+  if (touched("image")) { const ip = imageProblem(r); if (ip) add(ip.level, false, "photo", w, ip.why); } // DAT-01
   const { lat, lng } = r;
   if (typeof lat !== "number" || typeof lng !== "number" || !(lat >= 32 && lat <= 35.8 && lng >= -121.5 && lng <= -114)) err("coords", w, `lat/lng (${lat}, ${lng}) outside Southern California (lat 32–35.8, lng −121.5 to −114)`, true);
   else if (CITY[r.city]) {
@@ -177,6 +181,12 @@ if (!failedSql) {
     if (n.length > 1) warn("duplicate", `row ${r.id}`, `same name, date and city as ${n.filter((x) => x !== r.id).join(", ")}`);
     else if (a.length > 1 && r.address) warn("duplicate", `row ${r.id}`, `same address and start date as ${a.filter((x) => x !== r.id).join(", ")}`);
   }
+  // DAT-09: a source page shared by many events is a roundup; prefer each event's own page
+  if (!flag("--history")) {
+    const byUrl = new Map();
+    for (const r of all) { const k = r.url ? sharedUrlKey(r.url) : ""; if (k) (byUrl.get(k) || byUrl.set(k, []).get(k)).push(r.id); }
+    for (const e of changed) { const k = e.row.url ? sharedUrlKey(e.row.url) : "", n = (byUrl.get(k) || []).length; if (k && n >= 4 && e.kind === "added") warn("shared-url", `row ${e.row.id}`, `source page is shared by ${n} events (a roundup or calendar page?); use the event's own page when one exists`); }
+  }
   if (removed.length) {
     // This check cannot see production, so it cannot know whether a removed event has a paid Featured order. Say so, with the query that answers it.
     const msg = `removes ${removed.length} event(s): ${removed.slice(0, 8).join(", ")}${removed.length > 8 ? ", ..." : ""}. Before merging, make sure none has a paid Featured order (a deleted event loses its placement): SELECT session_id, event_id, plan, status FROM feature_orders WHERE event_id IN (<these ids>)`;
@@ -187,7 +197,11 @@ if (!failedSql) {
 
 // ---------- optional: load each url ----------
 async function checkUrls() {
-  const rows = changed.filter((e) => e.row.url && /^https?:/i.test(e.row.url));
+  // Only rows whose source matters to the change: added rows, a changed url, or changed dates/status/place. A cleanup that only rewrites hours, price, free flag, name,
+  // blurb or photo (for example the 2026-11-11 data audit fixes) does not re-test hundreds of old source pages that bot walls and timeouts fail in CI.
+  const COSMETIC = new Set(["hours", "price", "free", "name", "blurb", "image", "images", "notice", "venue"]);
+  const sourceMatters = (e) => e.kind === "added" || !e.prev || Object.keys(e.prev).some((k) => k !== "updated_at" && !COSMETIC.has(k) && e.prev[k] !== e.row[k]);
+  const rows = changed.filter((e) => e.row.url && /^https?:/i.test(e.row.url) && sourceMatters(e));
   const urls = [...new Set(rows.map((e) => e.row.url))];
   const res = new Map();
   let i = 0;

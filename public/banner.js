@@ -1,5 +1,5 @@
-// Map banner: a labelled strip on the map that shows ONE sponsor at a time (whole name and phone, nothing cut off, every link at least 44 px tall) and moves on every few seconds. Each installer with a Banner whose service area is in the map view is its own pill (labelled "Sponsor"), and each event with a paid
-// banner that is in the map view is a pill labelled "Featured" (name, city, dates; tap opens the event). An installer with only the top-of-the-list card is NOT a pill (it is a card, below).
+// Map banner: a labeled strip on the map that shows ONE sponsor at a time (whole name and phone, nothing cut off, every link at least 44 px tall) and moves on every few seconds. Each installer with a Banner whose service area is in the map view is its own pill (labeled "Sponsor"), and each event with a paid
+// banner that is in the map view is a pill labeled "Featured" (name, city, dates; tap opens the event). An installer with only the top-of-the-list card is NOT a pill (it is a card, below).
 // Desktop: a line under the logo, search and buttons. Phone: right above the list, so it moves with the list.
 // The list of installers comes from /api/banner (same for everyone); which ones show is decided here from what is in view.
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
@@ -121,7 +121,7 @@ export async function initBanner({ place, onChange, onOpenEvent }) {
   return true;
 }
 
-// ---- Top of the list ($75): a labelled company card at the top of the map list, behind Featured events.
+// ---- Top of the list: a labeled company card at the top of the map list, behind Featured events.
 const TOP_MAX = 2; // at most two cards, so paid cards never push the places off the screen
 export const topSponsors = (regions) => {
   const m = LIST.filter((i) => i.t && !i.ev && serves(i, regions)), k = Math.floor(OFFSET * Math.max(m.length, 1));
