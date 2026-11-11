@@ -86,6 +86,9 @@ Audit items SEO-02 to SEO-12, MAP-12, MAP-13, MAP-15, ADM-01 to ADM-11. Full rul
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (AI button on the phone map)
+- On the phone map the "Ask SoCal Lights" button is a 60 px circle, the same height as the bottom nav bar, on the same line to its right (2 px from the bottom, 12 px from the right). While the nav bar is hidden (a place card is open) it keeps its normal spot. Only the map page; other pages are unchanged.
+
 ## 2026-11-11 (nav bar at the lowest position)
 - Owner (iPhone 16 Pro): the browser reserves its own space for the address bar, so the phone nav bar now sits 2 px above the bottom edge of the page whatever the safe area reports (`bottom:2px`, was `max(4px, safe area - 6px)`); the sheet follows (`peekH`), gap under the pills still 6 px.
 

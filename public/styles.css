@@ -1003,3 +1003,9 @@ body:has(#seasonmenu)::after{content:"";position:fixed;inset:0;z-index:55;backgr
 
 /* Phone sheet handle: the bar sits close to the top edge and the sponsor strip starts right under it (the handle keeps its 44 px grab area; the strip overlaps its lower half) */
 @media (max-width:700px){.grab{align-content:start;padding-top:9px;margin-bottom:-22px}}
+
+/* Phone map: the AI button is a circle as tall as the bottom nav bar (60 px) and sits on the same line, to the right of it. While the nav bar is hidden (a place's card is open) it keeps its normal spot. */
+@media (max-width:700px){
+  body:has(#bnav):not(.detail-open):not(.pin-open) .scl-chat-fab{right:12px;bottom:2px;width:60px;height:60px;min-height:60px}
+  body:has(#bnav):not(.detail-open):not(.pin-open) .scl-chat-fab .scl-chat-fab-ic{width:42px;height:42px;font-size:22px}
+}
