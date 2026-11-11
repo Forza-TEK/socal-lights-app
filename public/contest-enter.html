@@ -7,25 +7,31 @@
 <meta name="description" content="Enter your home in a neighborhood lighting contest on SoCal Lights.">
 <title>Enter your home · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, esc, input, area, select, check, photoField, sumRow } from "/addflow.js?v=20261111d";
-import { me, signIn } from "/auth.js?v=20261107p";
+import { run, esc, input, area, select, check, photoField, sumRow, bad, apiError, photoRow } from "/addflow.js?v=20261111x560";
+import { me, signIn } from "/auth.js?v=20261111z";
 import { CITY } from "/cities.js?v=20261107a";
-import { defaultSeason } from "/seasons.js?v=20261104a";
+import { defaultSeason } from "/seasons.js?v=20261111x553";
+import { fmtDate, entriesClosedText } from "/contestfmt.js?v=20261111a";
 const slug = location.pathname.split("/")[2] || "", cities = Object.keys(CITY).sort(), app = document.getElementById("app");
 const plain = (h, t, p, btn) => { app.innerHTML = `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><a class="link" href="${slug ? "/c/" + esc(slug) : "/contests"}">Back</a></div><main class="main"><h1>${h}</h1><p class="help">${p}</p>${btn || ""}</main>`; };
+if (!slug) location.replace("/contests"); // /contest-enter with no contest in the address: the list of contests is the useful page
 const r0 = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" });
 if (!slug || !r0.ok) { plain("We can't find that contest", "The link may be mistyped, or the contest may not be public yet.", '<div><a class="btn" href="/">Back to the map</a></div>'); }
 else {
   const C = (await r0.json()).contest; document.title = "Enter: " + C.name; document.documentElement.dataset.season = defaultSeason(C.entriesClose);
-  if (!C.entriesOpen) plain("Entries are closed", `${esc(C.name)} isn't taking new entries right now.`, `<div><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`);
+  if (!C.entriesOpen) plain("Entries are closed", "", `${esc(entriesClosedText(C))} Questions? Ask the organizer, ${esc(C.org)}.`, `<div><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`);
   else {
     let user = (await me()).user;
     const d = { photos: [], street: "", city: C.city || "", zip: "", name: "", desc: "", rules: false, contestSlug: slug };
@@ -36,10 +42,10 @@ else {
       { id: "photos", sec: "Your home", title: "Add photos of your home", help: "Take one now or pick from your gallery. Your home competes in every category, and voters pick a favorite in each one.", body: (x) => photoField(x), check: (x) => (!x.photos.length ? "Add at least one photo. It's how people recognize your house." : "") },
       { id: "addr", sec: "Your home", title: "What's your address?", help: "The pin goes on this address and visitors see it.",
         body: (x) => `${x.city === C.city ? `<p class="help" style="margin:0 0 6px">This contest is for homes in <b>${esc(C.city)}</b>.</p><details ${x.city !== C.city ? "open" : ""}><summary class="link" style="display:inline">My home is in a different city</summary><div style="margin-top:8px">` : "<div>"}${select(x, "city", cities.map((c) => [c, c]), { label: "City", ac: "address-level2" })}</div>${x.city === C.city ? "</details>" : ""}${input(x, "street", { label: "Street address", ph: "e.g. 27 Via Alicia", max: 120, ac: "address-line1", addr: true })}${input(x, "zip", { label: "ZIP", max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}`,
-        check: (x) => (!x.street.trim() ? "Add your street address." : !/^\d{5}$/.test(x.zip.trim()) ? "The ZIP code needs 5 digits." : "") },
+        check: (x) => (!x.street.trim() ? bad("Add your street address.", "street") : !/^\d{5}$/.test(x.zip.trim()) ? bad("The ZIP code needs 5 digits.", "zip") : "") },
       { id: "name", sec: "Your home", title: "What name should we show?", help: "For example, The Lopez family.", body: (x) => `${input(x, "name", { label: "Name on the entry", max: 80, ac: "name", ph: "The Lopez family" })}${area(x, "desc", { label: "One line about your display", ph: "12,000 lights synced to music. Tune to 88.1 FM.", max: 300, opt: true })}`, check: (x) => (!x.name.trim() ? "Add the name for the entry." : "") },
       { id: "review", sec: "Review", title: "Ready to enter?", cta: "Submit my entry",
-        body: (x) => `<div class="sum">${sumRow("Contest", esc(C.name), "photos")}${sumRow("Home", `${esc(x.name)}, ${esc(x.street)}`, "name")}${sumRow("Photos", String(x.photos.length), "photos")}</div>${check(x, "rules", "I agree to the official rules and that judges may visit.")}${C.rules ? `<details><summary class="link" style="display:inline">Read the official rules</summary><div class="hint" style="white-space:pre-wrap;margin-top:10px">${esc(C.rules)}</div></details>` : ""}<p class="small muted">You're signed in as ${esc(user ? user.email : "")}. ${C.approval === "manual" ? "The organizer reviews each entry before it goes on the map." : "Your entry goes on the map right away."}</p>`,
+        body: (x) => `<div class="sum">${sumRow("Contest", esc(C.name), "photos")}${sumRow("Home", `${esc(x.name)}, ${esc(x.street)}`, "name")}${photoRow(x)}</div>${check(x, "rules", "I agree to the official rules and that judges may visit.")}${C.rules ? `<details><summary class="link" style="display:inline">Read the official rules</summary><div class="hint" style="white-space:pre-wrap;margin-top:10px">${esc(C.rules)}</div></details>` : ""}<p class="small muted">You're signed in as ${esc(user ? user.email : "")}. ${C.approval === "manual" ? "The organizer reviews each entry before it goes on the map." : "Your entry goes on the map right away."}</p>`,
         check: (x) => (!x.rules ? "Tick the box to agree to the rules." : ""),
         submit: async (x, api, retry) => {
           const fd = new FormData();
@@ -47,14 +53,14 @@ else {
           x.photos.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
           const r = await fetch("/api/submit", { method: "POST", body: fd }), j = await r.json().catch(() => ({}));
           if (r.status === 401 && !retry) { const u = await signIn({ title: "Sign in again to submit", next: location.pathname }); if (u) { user = u; return steps[4].submit(x, api, true); } throw new Error("Sign in to submit your entry."); }
-          if (!r.ok) throw new Error(j.error || "Couldn't send that. Try again in a moment.");
-          api.finish(`<h1>You're entered!</h1><p class="help">${C.approval === "manual" ? "The organizer will review your entry before it goes on the map." : "Your entry is on the contest page and the map now."} Sign in with ${esc(user.email)} any time to come back.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/c/${esc(slug)}">See the contest</a><a class="btn out" href="/c/${esc(slug)}/enter">Enter another home</a></div>`);
+          if (!r.ok) throw apiError(r, j, "Couldn't send that. Try again in a moment.");
+          api.finish(`<h1>You're entered!</h1><p class="help">${C.approval === "manual" ? "The organizer will review your entry before it goes on the map." : "Your entry is on the contest page and the map now."}</p><p class="help">Voting runs ${esc(fmtDate(C.voteStart))} to ${esc(fmtDate(C.voteEnd))}. All times are Pacific, and the last day runs through 11:59 pm. Share <a href="/c/${esc(slug)}">the contest link</a> so neighbors can vote for your home.</p><p class="help">A confirmation is on its way to ${esc(user.email)}. To edit or withdraw your entry, sign in with that email and open the <b>Your home</b> card on the contest page.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/c/${esc(slug)}">See the contest</a><a class="btn out" href="/c/${esc(slug)}/enter">Enter another home</a></div>`);
         } },
     ];
-    run({ steps, data: d, exit: "/c/" + slug, persist: "scl-entry-draft-" + slug, noPersist: ["photos"], account: { kind: "entry", q: "entry&c=" + encodeURIComponent(slug), title: (x) => (x.name || "My entry") + " · " + C.name }, addr: { cities }, actions: { async signin(_, a) { const u = await signIn({ title: "Sign in to enter", next: location.pathname }); if (u) { user = u; a.draw(); } } } });
+    run({ steps, data: d, exit: "/c/" + slug, persist: "scl-entry-draft-" + slug, uid: () => user && user.id, noPersist: ["photos"], account: { kind: "entry", q: "entry&c=" + encodeURIComponent(slug), title: (x) => (x.name || "My entry") + " · " + C.name }, addr: { cities }, actions: { async signin(_, a) { const u = await signIn({ title: "Sign in to enter", next: location.pathname }); if (u) { user = u; a.draw(); } } } });
   }
 }
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

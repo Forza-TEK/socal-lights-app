@@ -1,5 +1,5 @@
 // Admin > Help: the Help Center articles, what people searched for and did not find, and the "not helpful" notes.
-import { esc, toolbar, wireToolbar, tap, toast, modalFrame } from "/admin/kit.js?v=20261103a";
+import { esc, toolbar, wireToolbar, tap, toast, modalFrame } from "/admin/kit.js?v=20261113a";
 
 const $ = (s) => document.querySelector(s);
 async function api(path, opts = {}) {
@@ -56,7 +56,7 @@ function openArticle(a, main, q, seed = "") {
         <div class="ff c3"><label for="h-k">Type</label><select id="h-k">${opts(Object.entries(DATA.kinds), a.kind)}</select><small class="fhint">How to: steps for a task. Fix a problem: symptom, cause, fix. Answer: a short rule or policy.</small></div>
         <div class="ff c6"><label for="h-s">The answer in one sentence</label><textarea id="h-s" rows="2" maxlength="300">${esc(a.summary)}</textarea><small class="fhint">Shown first on the page and in search results.</small></div>
         <div class="ff c6"><label for="h-b">Article text</label><textarea id="h-b" rows="14" maxlength="8000" spellcheck="true">${esc(a.body)}</textarea>
-          <small class="fhint">Blank line = new paragraph. "- " starts a list item. "1. " starts a numbered step. "## " makes a small heading. **bold**. [link text](/help/another-article) links to a page on this site.</small></div>
+          <small class="fhint">Blank line = new paragraph. "- " starts a list item. "1. " starts a numbered step. "## " makes a heading and "### " a smaller one. **bold**. [link text](/help/another-article) links to a page on this site; [ask us](#ask) opens the Ask box.</small></div>
         <div class="ff c6"><label for="h-w">Extra words people might type</label><input id="h-w" maxlength="300" value="${esc(a.keywords)}"><small class="fhint">So search finds this article, for example: code spam junk missing.</small></div>
         <div class="ff c3"><label for="h-v">Tutorial video file (optional)</label><input id="h-v" maxlength="40" value="${esc(a.video)}" placeholder="find-email"><small class="fhint">The file name in /tutorials, without .mp4.</small></div>
         <div class="ff c3"><label for="h-o">Order in its category</label><input id="h-o" type="number" min="0" max="999" value="${esc(a.sort)}"><small class="fhint">Lower numbers show first.</small></div>

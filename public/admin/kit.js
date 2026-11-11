@@ -26,8 +26,9 @@ export function toolbar({ views = [], active = "", search, add, right = "", coun
     ${search ? `<input class="tsearch" type="search" data-search placeholder="${esc(search.placeholder || "Search")}" value="${esc(search.value || "")}" aria-label="${esc(search.placeholder || "Search")}">` : ""}${right}
     <span class="grow"></span>${count ? `<span class="meta tcount" data-tcount>${count}</span>` : ""}${add ? `<button type="button" class="btn ice" id="${add.id}">${esc(add.label)}</button>` : ""}</div>`;
 }
-export const wireToolbar = (root, { onView, onSearch }) => {
+export const wireToolbar = (root, { onView, onSearch, onSort }) => {
   root.querySelectorAll("[data-view]").forEach((b) => (b.onclick = () => onView && onView(b.dataset.view)));
+  const so = root.querySelector("[data-sort]"); if (so && onSort) so.onchange = () => onSort(so.value);
   const s = root.querySelector("[data-search]"); if (s && onSearch) { let t; s.oninput = () => { clearTimeout(t); t = setTimeout(() => onSearch(s.value.trim()), 200); }; }
 };
 // Hide the cards that don't contain the typed words; updates the running count. Used by every list that is already on the page.
@@ -37,6 +38,55 @@ export function filterCards(root, q) {
   cards.forEach((c) => { const t = c.textContent.toLowerCase(); const ok = w.every((x) => t.includes(x)); c.hidden = !ok; if (ok) n++; });
   const el = root.querySelector("[data-tcount]"); if (el) el.textContent = q ? `${n} of ${cards.length}` : `${cards.length}`;
   let none = root.querySelector(".nomatch"); if (!n && cards.length) { if (!none) { none = document.createElement("div"); none.className = "empty nomatch"; none.textContent = "Nothing matches that."; cards[0].parentNode.after(none); } } else if (none) none.remove();
+  enhanceLists(root, !!q);
+}
+
+// ---- Phones: long lists fold each card to its title line (tap the line to open it) and show 20 cards at a time ----
+export const phone = () => window.matchMedia("(max-width:699px)").matches;
+export const PAGE_PHONE = 20;
+const FOLD = ".cards > .acard.rec:not(.compact) > .rh";
+// Idempotent: safe to call after every render. searching = a search is typed, so every match is shown (no paging).
+export function enhanceLists(root, searching = false) {
+  const on = phone();
+  root.querySelectorAll(FOLD).forEach((h) => {
+    if (on) { h.setAttribute("role", "button"); h.tabIndex = 0; h.setAttribute("aria-expanded", String(h.parentNode.classList.contains("open"))); }
+    else { h.removeAttribute("role"); h.removeAttribute("tabindex"); h.removeAttribute("aria-expanded"); }
+  });
+  root.querySelectorAll(".cards").forEach((box) => {
+    const cards = [...box.children].filter((c) => c.classList.contains("rec") && !c.hidden), shown = Number(box.dataset.shown || PAGE_PHONE);
+    cards.forEach((c, i) => c.classList.toggle("pg-hide", on && !searching && i >= shown));
+    const hidden = on && !searching ? Math.max(0, cards.length - shown) : 0;
+    let more = box.nextElementSibling && box.nextElementSibling.classList.contains("pgmore") ? box.nextElementSibling : null;
+    if (hidden && !more) { more = document.createElement("div"); more.className = "pager pgmore"; box.after(more); }
+    if (more) { if (!hidden) more.remove(); else more.innerHTML = `<span class="meta">Showing ${shown} of ${cards.length}</span><button class="btn ghost" type="button" data-pgmore>Show ${Math.min(PAGE_PHONE, hidden)} more</button>`; }
+  });
+}
+export function wireFold(root) {
+  root.addEventListener("click", (e) => {
+    const more = e.target.closest("[data-pgmore]");
+    if (more) { const box = more.closest(".pgmore").previousElementSibling; box.dataset.shown = String(Number(box.dataset.shown || PAGE_PHONE) + PAGE_PHONE); enhanceLists(root); return; }
+    const h = e.target.closest(FOLD);
+    if (!h || !phone() || e.target.closest("a,button,input,label,select,textarea")) return;
+    const card = h.parentNode; card.classList.toggle("open"); h.setAttribute("aria-expanded", String(card.classList.contains("open")));
+  });
+  root.addEventListener("keydown", (e) => { const h = e.target.closest && e.target.closest(FOLD); if (h && e.target === h && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); h.click(); } });
+  new MutationObserver(() => enhanceLists(root, !!(root.querySelector("[data-search]") || {}).value)).observe(root, { childList: true });
+  window.matchMedia("(max-width:699px)").addEventListener("change", () => enhanceLists(root));
+}
+
+// A sort control for a toolbar: [[value, label], ...]
+export const sortSelect = (options, value) => `<select class="tsort" data-sort aria-label="Sort by">${options.map(([k, l]) => `<option value="${esc(k)}" ${k === value ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+
+// Asks inside the page instead of the browser's own box. Resolves true / false (confirm) or the typed text / null (text). Same look as the other edit windows.
+export function askBox({ title, message = "", go = "Yes", input = null, danger = false }) {
+  return new Promise((done) => {
+    const m = document.getElementById("modal"); m.hidden = false;
+    m.innerHTML = modalFrame(title, `<form class="f" id="abForm" novalidate>${message ? `<p style="margin:0 0 12px;white-space:pre-line">${esc(message)}</p>` : ""}${input ? `<div class="ff c6"><label for="ab-t">${esc(input.label)}</label><input id="ab-t" maxlength="200" placeholder="${esc(input.placeholder || "")}" autocomplete="off">${input.hint ? `<small class="fhint">${esc(input.hint)}</small>` : ""}</div>` : ""}<div class="mfoot"><button class="btn ${danger ? "danger-solid" : "ice"}" type="submit">${esc(go)}</button><button class="btn ghost" type="button" data-mcancel>Cancel</button></div></form>`);
+    const end = (v) => { m.hidden = true; m.innerHTML = ""; done(v); };
+    document.getElementById("mClose").onclick = () => end(input ? null : false); m.querySelector("[data-mcancel]").addEventListener("click", () => end(input ? null : false), { once: true });
+    document.getElementById("abForm").onsubmit = (e) => { e.preventDefault(); if (!input) return end(true); const v = document.getElementById("ab-t").value.trim(); if (!v) return document.getElementById("ab-t").focus(); end(v); };
+    const t = document.getElementById("ab-t"); if (t) t.focus();
+  });
 }
 
 // Destructive buttons: the first tap arms (text + red), the second within 5 seconds goes ahead. Returns true when it should proceed.

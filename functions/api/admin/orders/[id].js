@@ -5,6 +5,7 @@
 // The admin middleware has already required the Access login and logs the POST to admin_log (area "orders").
 import { json, err, clean } from "../../../_lib/util.js";
 import { applyOrder, revokePlan, setOrderNote } from "../../../_lib/featured.js";
+import { notifyRefunded } from "../../../_lib/ordermail.js";
 
 export async function onRequestPost({ request, env, params, data }) {
   const b = await request.json().catch(() => ({}));
@@ -16,6 +17,7 @@ export async function onRequestPost({ request, env, params, data }) {
     if (o.status === "refunded") return json({ ok: true });
     const manual = await revokePlan(env.DB, o, "refunded");
     if (!manual) await setOrderNote(env.DB, o.session_id, `Marked refunded by ${who} on ${new Date().toISOString().slice(0, 10)} (refunded in the Stripe dashboard).`);
+    await notifyRefunded(env, o, { off: !!o.applied && !manual }); // the buyer is told the refund was issued (once, service mail)
     return json({ ok: true, placement_differs: manual });
   }
   if (b.action === "reapply") {

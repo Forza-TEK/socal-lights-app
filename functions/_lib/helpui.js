@@ -10,7 +10,7 @@ main.help{max-width:1160px}.top{max-width:1160px}.top,main.help{padding-left:24p
 .help .lede{color:var(--muted);font-size:18px;margin:0 0 18px;max-width:60ch}
 .hsearch{position:relative;margin:6px 0 8px}
 .hsearch form{display:flex;gap:8px}
-.hsearch input[type=search]{flex:1;min-width:0;min-height:54px;padding:0 18px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font:500 17px var(--f)}
+.hsearch input[type=search]{flex:1;min-width:0;min-height:54px;padding:0 18px;border:1.5px solid var(--field);border-radius:999px;background:var(--surface);color:var(--ink);font:500 17px var(--f)}
 .hsearch button{min-height:54px;padding:0 22px;border:0;border-radius:999px;background:var(--season);color:var(--on-season);font:700 16px var(--f);cursor:pointer}
 .hres{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
 .hres a{display:block;padding:12px 16px;border-radius:14px;background:var(--surface);box-shadow:0 2px 10px rgba(20,22,27,.08);text-decoration:none}
@@ -36,13 +36,12 @@ main.help{max-width:1160px}.top{max-width:1160px}.top,main.help{padding-left:24p
 .htabs-on .hsec[data-cat]{margin-top:18px}
 .htabs-on .hsec[data-cat][hidden]{display:none}
 /* In the app frame (appshell.js: side menu, icon rail, phone bottom bar) the topics live in the frame's menu, so the in-page tabs and the old header go away */
-:root{--font:var(--f);--tile:var(--surface-2);--line2:#b9b4aa;--btn:var(--ink);--btn-ink:var(--bg);--s-halloween:#e8590c;--s-christmas:#c42f39}:root[data-theme="dark"]{--line2:#444a58;--s-halloween:#ff8a3d;--s-christmas:#ff6b6b}
 body.sh-page .top,body.sh-page .htabs{display:none}body.sh-page main.help{max-width:980px;margin:0 auto;padding:22px clamp(16px,3vw,32px) 72px}body.sh-page .hlayout{display:block;margin-top:8px}body.sh-page .hlayout .hsec[data-cat]{max-width:none;margin-top:18px}
 @media(max-width:699px){body.sh-page main.help{padding:16px 16px calc(92px + env(safe-area-inset-bottom,0px))}}
 
 .alist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .alist a{display:flex;flex-direction:column;gap:5px;height:100%;box-sizing:border-box;padding:16px 18px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-decoration:none;min-height:48px}
-.alist a:hover,.alist a:focus-visible{border-color:var(--season);outline:none}
+.alist a:hover,.alist a:focus-visible{border-color:var(--season)}.alist a:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .alist .at{font-weight:700;font-size:16px;line-height:1.3;color:var(--ink)}
 .alist .am{font-size:13px;color:var(--ink)}.alist .av{font-size:13px;color:var(--muted);margin-top:auto;padding-top:2px}
 .hsec h2 .ct{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
@@ -50,6 +49,7 @@ body.sh-page .top,body.sh-page .htabs{display:none}body.sh-page main.help{max-wi
 .art .sum{font-size:19px;margin:10px 0 18px;max-width:62ch}
 .art .body{max-width:66ch}.art .body p,.art .body ul,.art .body ol{margin:0 0 14px}.art .body ol,.art .body ul{padding-left:24px}.art .body li{margin:6px 0}
 .art .body h2{font-size:20px;margin:26px 0 8px}
+.art .body h3{font-size:17px;margin:20px 0 6px}
 .art .body a{text-underline-offset:3px}
 .vid{margin:0 0 22px;border-radius:18px;overflow:hidden;background:#000;box-shadow:var(--shadow);max-width:720px}
 .vid video{display:block;width:100%;aspect-ratio:16/9;background:#000}.vid.ph video{aspect-ratio:9/16;max-height:78vh}
@@ -58,7 +58,7 @@ body.sh-page .top,body.sh-page .htabs{display:none}body.sh-page main.help{max-wi
 .rate{margin:30px 0 0;padding:18px;border-radius:18px;background:var(--surface);box-shadow:0 2px 10px rgba(20,22,27,.08);max-width:66ch}
 .rate .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .rate button.btn{min-height:44px}
-.rate textarea,.ask textarea,.ask input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--ink);min-height:48px}
+.rate textarea,.ask textarea,.ask input{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--field);border-radius:12px;background:transparent;color:var(--ink);min-height:48px}
 .ask{margin:16px 0 0;max-width:66ch}.ask summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
 .ask form{display:grid;gap:10px;padding:6px 0 0}.ask label{display:grid;gap:4px;font-size:14px;color:var(--muted)}
 .hmsg{margin:8px 0 0;font-size:15px}.hmsg.bad{color:#b42318}
@@ -69,7 +69,7 @@ export const helpFrame = ({ title, desc, canonical, ld, body, noindex, origin, c
   page({ title, desc, canonical, ld, noindex, origin, body: `${header("Open the map", "/")}<main class="help" id="content" data-hcat="${esc(cat)}"><style>${CSS}</style>${body}</main>${frameScript(cats)}` });
 
 // With scripts the page moves into the app frame (the same one Profile and Tutorials use); without them it keeps the plain header and the topic links.
-const frameScript = (cats) => `<script type="module">import { mountShell } from "/appshell.js?v=20261111a";
+const frameScript = (cats) => `<script type="module">import { mountShell } from "/appshell.js?v=20261111x560";
 const C = ${jsonScript(CATEGORIES.filter((c) => cats.includes(c.key)).map((c) => ({ k: c.key, label: c.title })))}, IC = { find: "map", enter: "pencil", vote: "check", run: "trophy", sponsors: "star", post: "homeplus", account: "user" };
 const m = document.getElementById("content"), index = !!document.querySelector(".hsec[data-cat]"), here = () => (location.hash || "").slice(1);
 document.body.classList.add("sh-page");
@@ -88,7 +88,8 @@ i.addEventListener("input",function(){clearTimeout(t);clearTimeout(lg);t=setTime
 f.addEventListener("submit",function(e){e.preventDefault();clearTimeout(t);clearTimeout(lg);go(true)});
 if(i.value)go(false)})()</script>`;
 
-export const articleLink = (a) => `<li><a href="/help/${esc(a.slug)}"><b class="at">${esc(a.title)}</b><span class="am">${esc((CAT[a.category] || {}).title || "Help")} &middot; ${esc(KINDS[a.kind] || "")}</span><span class="av">${/^[a-z0-9-]+$/.test(a.video || "") ? "&#9654; Video and steps" : "Written steps"}</span></a></li>`;
+// A card: the title, the one-line answer under it, and how it is shown (video, written steps or a quick answer). The topic is the section heading, so it is not repeated here.
+export const articleLink = (a) => `<li><a href="/help/${esc(a.slug)}"><b class="at">${esc(a.title)}</b><span class="am">${esc(a.summary)}</span><span class="av">${/^[a-z0-9-]+$/.test(a.video || "") ? "&#9654; Video and steps" : a.kind === "answer" ? "Quick answer" : a.kind === "fix" ? "Fix a problem" : "Written steps"}</span></a></li>`;
 
 // "Still stuck? Ask us": a short form that goes to the owner's Reports list and, if an email is left, can be answered.
 export const askForm = (ref = "help") => `<details class="ask" id="ask"><summary>Still stuck? Ask us</summary><form id="askf" novalidate>
@@ -96,7 +97,8 @@ export const askForm = (ref = "help") => `<details class="ask" id="ask"><summary
 <label>Your email, if you would like an answer (optional)<input id="ask-c" type="email" maxlength="120" autocomplete="email"></label>
 <div><button class="btn go" type="submit" style="min-height:48px;padding:0 22px;flex:none">Send</button></div>
 <p class="hmsg" id="ask-s" role="status"></p><p style="margin:0;color:var(--muted);font-size:14px">You can also write to <a href="mailto:${HELP_EMAIL}">${HELP_EMAIL}</a>.</p></form></details>
-<script>(function(){var f=document.getElementById("askf");if(!f)return;f.addEventListener("submit",function(e){e.preventDefault();var s=document.getElementById("ask-s"),m=document.getElementById("ask-m").value.trim();if(m.length<5){s.className="hmsg bad";s.textContent="Tell us what you need help with, a few words is enough.";return}
+<script>(function(){var d=document.getElementById("ask");function open(){if(d&&location.hash==="#ask"){d.open=true}}open();addEventListener("hashchange",open);document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[href="#ask"]');if(a&&d){d.open=true;d.scrollIntoView({block:"center"});var t=document.getElementById("ask-m");if(t)t.focus({preventScroll:true})}});
+var f=document.getElementById("askf");if(!f)return;f.addEventListener("submit",function(e){e.preventDefault();var s=document.getElementById("ask-s"),m=document.getElementById("ask-m").value.trim();if(m.length<5){s.className="hmsg bad";s.textContent="Tell us what you need help with, a few words is enough.";return}
 s.className="hmsg";s.textContent="Sending…";fetch("/api/help/contact",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({ref:${jsonScript(ref)},message:m,contact:document.getElementById("ask-c").value})}).then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d}})}).then(function(x){if(x.ok){s.textContent="Thank you. We read every message. If you left an email, we will write back.";f.reset()}else{s.className="hmsg bad";s.textContent=x.d.error||"That did not send. Please try again."}}).catch(function(){s.className="hmsg bad";s.textContent="That did not send. Please check your connection and try again."})})})()</script>`;
 
 // Tabs under the search: one per topic. Without scripts every topic is listed on the page and the tabs jump to it; with scripts only the chosen topic shows.

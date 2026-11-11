@@ -1,33 +1,44 @@
 // Copyright line and links at the bottom of every page except the map (the map has its own, in the credit pill and under the Places list).
 (function () {
   // The AI assistant (when it is switched on) goes with the person from page to page: chat.js does nothing unless /api/config says chatEnabled, and it keeps the chat in this tab. Not on forms, checkout or admin pages.
-  try { var cp = location.pathname; if (!window.__sclChat && (cp === "/add" || /^\/(help|tutorials|pricing|privacy|terms|contests|c|in|past|e|installer|profile)(\/|$)/.test(cp))) { var cs = document.createElement("script"); cs.src = "/chat.js?v=20261111h"; cs.defer = true; document.head.appendChild(cs); } } catch (e) {}
+  try { var cp = location.pathname; if (!window.__sclChat && (cp === "/add" || /^\/(help|tutorials|pricing|privacy|terms|contests|c|in|past|e|installer|profile)(\/|$)/.test(cp))) { var cs = document.createElement("script"); cs.src = "/chat.js?v=20261111e"; cs.defer = true; document.head.appendChild(cs); } } catch (e) {}
   // every page registers the offline worker (the map does it in index.html), so any page you have opened once opens again with no signal
   try { if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () {}); }); } catch (e) {}
   // "Skip to the content": the first Tab stop on every page that has a main area (the map has its own skip link)
+  // the browser bar follows the page theme (the head carries the light color; the night color is set here)
+  try { var tc = document.querySelector('meta[name="theme-color"]'); if (tc && document.documentElement.dataset.theme === "dark") tc.content = "#0b0d12"; } catch (e) {}
+  var skipDone = false;
   var skip = function () {
     try {
-      var m = document.querySelector("main"); if (!m || document.querySelector(".skiplink,.sh-skip")) return;
+      if (skipDone) return true;
+      var m = document.querySelector("main"); if (!m) return false;
+      if (document.querySelector(".skiplink,.sh-skip")) { skipDone = true; return true; }
+      skipDone = true;
       if (!m.id) m.id = "main";
       m.setAttribute("tabindex", "-1"); m.style.outline = "none";
       var st = document.createElement("style");
-      st.textContent = ".skiplink{position:absolute;left:12px;top:-60px;z-index:1000;padding:12px 18px;border-radius:8px;background:var(--ink,#14161b);color:var(--bg,#fff);font:600 15px/1.2 var(--font,system-ui,sans-serif);text-decoration:none}.skiplink:focus{top:12px;outline:3px solid var(--season,var(--accent,#2a5bd7));outline-offset:2px}";
+      st.textContent = ".skiplink{position:absolute;left:12px;top:-60px;z-index:1000;padding:12px 18px;border-radius:8px;background:var(--ink,#14161b);color:var(--bg,#fff);font:600 15px/1.2 var(--font,system-ui,sans-serif);text-decoration:none}.skiplink:focus{top:12px;outline:3px solid var(--season,#2a5bd7);outline-offset:2px}";
       document.head.appendChild(st);
       var a = document.createElement("a"); a.className = "skiplink"; a.href = "#" + m.id; a.textContent = "Skip to the content";
       a.addEventListener("click", function () { m.focus(); });
       document.body.insertBefore(a, document.body.firstChild);
-    } catch (e) {}
+      return true;
+    } catch (e) { return true; }
   };
-  if (document.readyState === "complete") skip(); else window.addEventListener("load", skip);
-  // The same "Open the map" pill in the header of every page (the server-written pages already have it; the form and account pages get it here)
+  // as soon as the page's <main> exists: static pages at once, pages that draw their content with a script (the add forms) when it appears
+  try {
+    if (!skip()) {
+      var mo = new MutationObserver(function () { if (skip()) mo.disconnect(); });
+      mo.observe(document.documentElement, { childList: true, subtree: true });
+      setTimeout(function () { mo.disconnect(); }, 15000);
+    }
+  } catch (e) {}
+  // The same "Open the map" link in the header of every page. The pages carry it in their HTML; this adds it to a header drawn by a script (its look is in /tokens.css)
   var pill = function () {
     try {
-      var h = document.querySelector(".hdr .hright"); if (!h || h.querySelector(".pill")) return;
+      var h = document.querySelector(".hdr .hright"); if (!h || h.querySelector(".maplink")) return;
       if (/^\/add-/.test(location.pathname)) return; // the add forms keep Save & exit in that spot
-      var st = document.createElement("style");
-      st.textContent = ".hdr .pill{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;background:var(--tile,#fff);color:var(--ink);box-shadow:0 2px 12px rgba(20,22,27,.12),0 0 0 1px var(--line,rgba(128,128,128,.25));font-weight:700;font-size:15px;text-decoration:none;white-space:nowrap}.hdr .pill .short{display:none}.hdr .pill:hover{box-shadow:0 2px 12px rgba(20,22,27,.16),0 0 0 1.5px var(--season,var(--ink))}@media(max-width:480px){.hdr .pill .long{display:none}.hdr .pill .short{display:inline}.hdr .pill{padding:0 14px}}";
-      document.head.appendChild(st);
-      var a = document.createElement("a"); a.className = "pill"; a.href = "/"; a.setAttribute("aria-label", "Open the map"); a.innerHTML = "<span class=\"long\">Open the map</span><span class=\"short\">Map</span>";
+      var a = document.createElement("a"); a.className = "maplink"; a.href = "/"; a.setAttribute("aria-label", "Open the map"); a.innerHTML = "<span class=\"long\">Open the map</span><span class=\"short\">Map</span>";
       h.insertBefore(a, h.firstChild);
     } catch (e) {}
   };

@@ -14,7 +14,7 @@ const text = terms.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
 test("Terms have a paid placements section covering what it is, labels, contests, window, refunds, disputes and no guarantee", () => {
   assert.ok(/<h2 id="paid">Paid placements<\/h2>/.test(terms));
-  for (const must of ["Featured", "Top of the list", "banner", "pill labelled \"Featured\"", "last day of the season it was bought in (Christmas lights: Jan 6)", "adds nothing new is not sold", "gold-ringed pin", "Stripe", "no subscription", "labelled", "never affects any contest result", "winner, 2nd or 3rd place",
+  for (const must of ["Featured", "Top of the list", "banner", "pill labeled \"Featured\"", "last day of the season it was bought in (Christmas lights: Jan 6)", "adds nothing new is not sold", "gold-ringed pin", "Stripe", "no subscription", "labeled", "never affects any contest result", "winner, 2nd or 3rd place",
     "starts when your payment goes through", "full refund", "payment dispute", "do not promise any number of views", "Installer Sponsor placements", "\"Sponsor\"", "per season", "inaccurate", "unpublish", "/pricing", "info@socallights.app"])
     assert.ok(text.includes(must) || terms.includes(must), "Terms should say: " + must);
   assert.ok(!/\b(house|display)s?\b/i.test(terms.split('<h2 id="paid">')[1].split("<h2>Accounts</h2>")[0].replace(/<[^>]+>/g, " ")), "the new section says home, not house or display");

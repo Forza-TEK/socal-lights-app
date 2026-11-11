@@ -6,28 +6,33 @@
 <meta name="robots" content="noindex">
 <title>Home decorating contest · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/contest.css?v=20261111c">
-<link rel="stylesheet" href="/routes.css?v=20261109a">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/contest.css?v=20261111x560">
+<link rel="stylesheet" href="/routes.css?v=20261111x560">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
-<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a><span id="tb"></span><span id="acct"></span></div></div>
 <main class="cmain">
 <div id="app"><p class="loading">Loading the contest…</p></div>
 </main>
 <script type="module">
-import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
-import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111d";
+import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261111z";
+import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111x560";
 import { tourHtml, wireTour } from "/tour.js?v=20261111d";
 import { getMaps, routeUrl, navAttr } from "/maps.js?v=20261111a";
+import { fmtDate, statusChips, entriesClosedText, tieText, PT_NOTE } from "/contestfmt.js?v=20261111a";
+import { contestImage } from "/contesticon.js?v=20261111a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
-const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };
+const fmt = (s) => fmtDate(s, false);
 const initials = (o) => (o.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("") || "EN").toUpperCase();
-let D = null, ACT = null;
+let D = null, ACT = null, BUSY = false, VOTEMSG = "";
 
 let counted = false;
 function countVisit() { if (counted) return; counted = true; const q = new URLSearchParams(location.search).get("src"); try { fetch(`/api/contests/${encodeURIComponent(slug)}/hit`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ src: q }), keepalive: true }); } catch {} }
@@ -39,8 +44,8 @@ async function load() {
 
 const CROWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>';
 // "Directions · On map" under a home's address (text links, small tap targets padded)
-const homeLinks = (e) => { const dest = e.address || (Number.isFinite(e.lat) ? e.lat + "," + e.lng : ""); return dest ? `<span class="vlinks"><a href="${esc(routeUrl(getMaps(), [dest], ""))}" ${navAttr([dest], "")} target="_blank" rel="noopener" aria-label="Directions to ${esc(e.name)}">Directions</a><a href="/#h-${esc(e.id)}" aria-label="Show ${esc(e.name)} on the map">On map</a></span>` : ""; };
-function gallery() { return `<section class="card"><h2>Homes</h2>${D.entries.length ? D.entries.map((e) => `<div class="vrow">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"><img src="/img/badge-160.webp" alt="" width="40" height="40" loading="lazy"></span>`}<div><b>${esc(e.name)}</b><span class="meta">${esc(e.address || e.city)}</span>${homeLinks(e)}</div><span></span></div>`).join("") : `<p class="muted">No homes yet.</p>`}</section>`; }
+const homeLinks = (e) => { const dest = e.address || (Number.isFinite(e.lat) ? e.lat + "," + e.lng : ""); return dest ? `<span class="vlinks"><a href="${esc(routeUrl(getMaps(), [dest], ""))}" ${navAttr([dest], "")} target="_blank" rel="noopener" aria-label="Directions to ${esc(e.name)}">Directions</a><a href="/#m-${esc(e.id)}" aria-label="On map: ${esc(e.name)}">On map</a></span>` : ""; };
+function gallery() { return `<section class="card"><h2>Homes</h2>${D.entries.length ? D.entries.map((e) => `<div class="vrow">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"><img src="${esc(contestImage(D.contest.name, D.contest.logo))}" alt="" width="40" height="40" loading="lazy"></span>`}<div><b>${esc(e.name)}</b><span class="meta">${esc(e.address || e.city)}</span>${homeLinks(e)}</div><span></span></div>`).join("") : `<p class="muted">No homes yet.</p>`}</section>`; }
 function render() {
   const c = D.contest, me = D.me, mine = me.votes || [];
   const pills = [];
@@ -48,24 +53,23 @@ function render() {
   if (c.status !== "live") pills.push(`<span class="pill p-wait">Waiting for approval</span>`);
   else if (c.announced) pills.push(`<span class="pill p-ok">Winners announced</span>`);
   else {
-    pills.push(c.entriesOpen ? `<span class="pill p-ok">Entries open until ${fmt(c.entriesClose)}</span>` : `<span class="pill p-wait">Entries closed</span>`);
-    pills.push(c.votingOpen ? `<span class="pill p-ok">Voting is open</span>` : new Date().toISOString().slice(0, 10) < c.voteStart ? `<span class="pill p-wait">Voting opens ${fmt(c.voteStart)}</span>` : `<span class="pill p-wait">Voting not open</span>`);
+    for (const p of statusChips(c)) pills.push(`<span class="pill ${p.tone === "ok" ? "p-ok" : p.tone === "bad" ? "p-no" : "p-idle"}">${esc(p.text)}</span>`);
   }
   const pub = c.mode !== "judges", both = c.mode === "both", amJudge = !!me.isJudge;
   const voteIn = (cat) => mine.find((v) => v.category === cat), done = c.categories.filter(voteIn).length;
   // What the awards are worth, and (after announcing) who won them
   const prizeBox = () => { if (c.announced) return ""; const ps = D.prizes || []; if (!ps.length && !c.sponsor) return ""; return `<section class="card"><h2>Prizes</h2>${c.prizeMode === "one" && c.prize ? `<p>${esc(c.prize)} for each winner.</p>` : `<div class="list">${ps.map((p) => `<div><b style="font-weight:500">${esc(p.category)}${both ? " · " + esc(p.label) : ""}</b><br><span class="muted">${esc(p.prize)}</span></div>`).join("")}</div>`}${c.sponsor ? `<p class="small muted">Provided by ${esc(c.sponsor)}</p>` : ""}</section>`; };
-  const winnersBox = () => { const aw = (D.awards || []).filter((a) => a.ids.length); if (!c.announced || !aw.length) return ""; const byId = Object.fromEntries(D.entries.map((e) => [e.id, e])); return `<section class="card"><h2>${CROWN} Winners</h2><p class="small muted">Final results${c.frozenAt ? ", locked " + fmt(c.frozenAt) : ""}. Winners keep their crown.</p><div class="list">${aw.map((a) => `<div><span class="small muted">${esc(a.category)}${c.mode === "both" ? " · " + esc(a.label) : ""}</span><br><b style="font-weight:500">${CROWN} ${a.ids.map((id) => esc((byId[id] || {}).name || "")).join(", ")}</b>${a.prize ? `<br><span class="small muted">Prize: ${esc(a.prize)}</span>` : ""}</div>`).join("")}</div>${c.sponsor ? `<p class="small muted">Prizes provided by ${esc(c.sponsor)}</p>` : ""}</section>`; };
+  const winnersBox = () => { const aw = (D.awards || []).filter((a) => a.ids.length); if (!c.announced || !aw.length) return ""; const byId = Object.fromEntries(D.entries.map((e) => [e.id, e])); return `<section class="card"><h2>${CROWN} Winners</h2><p class="small muted">Final results${c.frozenAt ? ", locked " + fmt(c.frozenAt) : ""}. Winners keep their crown.</p><div class="list">${aw.map((a) => { const tie = tieText(a, byId, c.judgeMethod); return `<div><span class="small muted">${esc(a.category)}${c.mode === "both" ? " · " + esc(a.label) : ""}</span>${tie ? `<br><span class="pill p-idle">${esc(tie)}</span>` : ""}${a.ids.map((id) => `<br><b style="font-weight:500">${CROWN} ${esc((byId[id] || {}).name || "")}</b>`).join("")}${a.prize ? `<br><span class="small muted">Prize${tie ? " (shared)" : ""}: ${esc(a.prize)}</span>` : ""}</div>`; }).join("")}</div>${c.sponsor ? `<p class="small muted">Prizes provided by ${esc(c.sponsor)}</p>` : ""}</section>`; };
   // One ballot per category: every home is listed in every category, and a voter picks one favorite in each
   const cur = c.categories.includes(ACT) ? ACT : c.categories[0];
   const sections = [cur].map((cat) => {
     const my = voteIn(cat), win = new Set(D.winners[cat] || []), jwin = new Set((D.jwinners || {})[cat] || []);
     const rows = D.entries.map((e) => {
       const isMy = !!my && my.post_id === e.id;
-      const label = e.mine ? "Your home" : amJudge ? "Judges vote on their ballot" : isMy ? "Your vote ✓" : !c.votingOpen ? (c.announced ? "Voting is over" : "Voting not open") : my ? "Move my vote here" : "Vote";
+      const label = e.mine ? "Your home" : amJudge ? "Judges vote on their ballot" : isMy ? "Your vote ✓" : !c.votingOpen ? (c.votingState === "over" ? "Voting is over" : c.votingState === "paused" ? "Voting is paused" : "Voting not open yet") : my ? "Move my vote here" : "Vote";
       const n = e.votes ? e.votes[cat] : null;
-      return `<div class="vrow${isMy ? " mine" : ""}">${e.photos[0] ? `<button type="button" class="zoom" data-zoom="${esc(e.photos[0])}" data-cap="${esc(e.name)}" aria-label="Enlarge photo of ${esc(e.name)}"><img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy"></button>` : `<span class="ph"><img src="/img/badge-160.webp" alt="" width="40" height="40" loading="lazy"></span>`}
-        <div><b>${win.has(e.id) || jwin.has(e.id) ? CROWN + " " : ""}${esc(e.name)} ${win.has(e.id) ? `<span class="pill p-ok">${both ? "People's Choice" : "Winner"}</span>` : ""}${jwin.has(e.id) ? `<span class="pill p-ok">${both ? "Judges' Choice" : "Winner"}</span>` : ""}</b><span class="meta">${esc(e.address || e.city)}${n !== null ? ` · ${n} vote${n === 1 ? "" : "s"}` : ""}</span>${e.descr ? `<span class="meta">${esc(e.descr)}</span>` : ""}${homeLinks(e)}</div>
+      return `<div class="vrow${isMy ? " mine" : ""}">${e.photos[0] ? `<button type="button" class="zoom" data-zoom="${esc(e.photos[0])}" data-cap="${esc(e.name)}" aria-label="Enlarge photo of ${esc(e.name)}"><img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy"></button>` : `<span class="ph"><img src="${esc(contestImage(D.contest.name, D.contest.logo))}" alt="" width="40" height="40" loading="lazy"></span>`}
+        <div><b>${win.has(e.id) || jwin.has(e.id) ? CROWN + " " : ""}${esc(e.name)} ${win.has(e.id) ? `<span class="pill p-ok">${both ? "People's Choice" : "Winner"}${win.size > 1 ? " (tied)" : ""}</span>` : ""}${jwin.has(e.id) ? `<span class="pill p-ok">${both ? "Judges' Choice" : "Winner"}${jwin.size > 1 ? " (tied)" : ""}</span>` : ""}</b><span class="meta">${esc(e.address || e.city)}${n !== null ? ` · ${n} vote${n === 1 ? "" : "s"}` : ""}</span>${e.descr ? `<span class="meta">${esc(e.descr)}</span>` : ""}${homeLinks(e)}</div>
         <button class="btn ${isMy ? "ghost" : "org"} sm" data-vote="${esc(e.id)}" data-cat="${esc(cat)}" type="button" ${c.votingOpen && !e.mine && !isMy && !amJudge ? "" : "disabled"} aria-label="${esc(label)}: ${esc(e.name)}, ${esc(cat)}">${label}</button></div>`;
     }).join("");
     return `<section class="card" aria-labelledby="cat-${esc(cat.replace(/\W+/g, "-"))}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h2 id="cat-${esc(cat.replace(/\W+/g, "-"))}">${esc(cat)}${both ? ' <span class="small muted">People\'s Choice</span>' : ""}</h2>${my ? `<span class="pill p-ok">You voted</span>` : c.votingOpen ? `<span class="pill p-wait">Pick one favorite</span>` : ""}</div>${D.entries.length ? `<div>${rows}</div>` : `<p class="muted small">No homes yet.</p>`}</section>`;
@@ -78,13 +82,14 @@ function render() {
   const myHomes = D.entries.filter((e) => e.mine && !c.announced), mineBox = () => !myHomes.length ? "" : `<section class="card"><h2>Your home${myHomes.length > 1 ? "s" : ""}</h2>${myHomes.map((e) => `<div class="rowmine" style="display:grid;gap:8px;margin:8px 0"><b style="font-weight:500">${esc(e.name)}</b><div class="actions"><button class="btn ghost sm" type="button" data-edit="${esc(e.id)}">Edit name and description</button>${e.manage ? `<a class="btn org sm" href="${esc(e.manage)}">Edit details and photos</a>` : `<button class="btn ghost sm" type="button" data-withdraw="${esc(e.id)}">Withdraw</button>`}</div><form data-editform="${esc(e.id)}" style="display:none;gap:8px;max-width:480px"><input name="name" value="${esc(e.name)}" maxlength="80" aria-label="Name on the entry"><textarea name="desc" rows="2" maxlength="300" aria-label="About your display">${esc(e.descr || "")}</textarea><p class="small muted">${e.manage ? "To change photos and more, use Edit details and photos." : "To change photos or the address, withdraw this entry and enter again."}</p><div><button class="btn org sm" type="submit">Save</button></div></form></div>`).join("")}</section>`;
   const thanks = pub && c.votingOpen && me.signedIn && !amJudge && done === c.categories.length ? `<section class="card center"><h2>Thanks for voting!</h2><p class="muted">Know a neighbor who should enter or vote? Send them the link.</p><button class="btn org" type="button" id="sharec">Share this contest</button></section>` : "";
   $("#app").innerHTML = `${c.status !== "live" ? `<div class="status no">This contest is not showing right now, so only you can see it.</div>` : ""}
-  <div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(c.org))}</div><div><h1>${esc(c.name)}</h1><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
+  <div class="card"><div class="banner"><div class="logo has" aria-hidden="true"><img src="${esc(contestImage(c.name, c.logo))}" alt="" width="46" height="46"></div><div><h1>${esc(c.name)}</h1><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
   <p>${esc(c.descr)}</p><div style="display:flex;gap:8px;flex-wrap:wrap">${pills.join("")}</div>
-  <p class="small muted">Voting runs ${fmt(c.voteStart)} to ${fmt(c.voteEnd)}. ${pub ? `Every home is in every category. You get one vote in each category.${c.votingOpen && me.signedIn && !amJudge ? ` You've voted in ${done} of ${c.categories.length}.` : ""}` : "Voting in this contest is by invited judges only."}${both ? " A separate panel of judges also votes for Judges' Choice." : ""}</p>
+  ${c.announced ? `<p class="small muted">Voting ended ${fmt(c.frozenAt || c.voteEnd)}. The winners are final.</p>` : `<p class="small muted">Voting runs ${fmt(c.voteStart)} to ${fmt(c.voteEnd)}. ${pub ? `Every home is in every category. You get one vote in each category.${c.votingOpen && me.signedIn && !amJudge ? ` You've voted in ${done} of ${c.categories.length}.` : ""}` : "Voting in this contest is by invited judges only."}${both ? " A separate panel of judges also votes for Judges' Choice." : ""} ${PT_NOTE}</p>`}
   ${amJudge ? `<div class="status ok">You're a judge in this contest. <a href="/c/${esc(c.slug)}/judge">Open the judges' ballot</a>.</div>` : ""}
-  <div class="actions">${c.status === "live" && !c.announced ? `<a class="btn org" href="/c/${esc(c.slug)}/enter" ${c.entriesOpen ? "" : 'aria-disabled="true" style="opacity:.55;pointer-events:none"'}>${c.entriesOpen ? "Enter my home" : "Entries are closed"}</a>` : ""}${me.isOwner ? `<a class="btn ghost" href="/c/${esc(c.slug)}/manage">Manage this contest</a>` : ""}</div>${c.rules ? `<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600">Official rules</summary><div class="small muted" style="white-space:pre-wrap;margin-top:10px">${esc(c.rules)}</div></details>` : ""}</div>
+  <div class="actions">${c.status === "live" && !c.announced ? `${c.entriesOpen ? `<a class="btn org" href="/c/${esc(c.slug)}/enter">Enter my home</a>` : `<p class="small muted" style="margin:0">${esc(entriesClosedText(c))}</p>`}` : ""}${me.isOwner ? `<a class="btn ghost" href="/c/${esc(c.slug)}/manage">Manage this contest</a>` : ""}</div>${c.rules ? `<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600">Official rules</summary><div class="small muted" style="white-space:pre-wrap;margin-top:10px">${esc(c.rules)}</div></details>` : ""}</div>
+  ${VOTEMSG ? `<div class="status ok" role="status" aria-live="polite">${esc(VOTEMSG)}</div>` : ""}
   ${winnersBox()}${prizeBox()}${sponsorsBox()}${mineBox()}
-  ${D.entries.length ? tourHtml({ slug: c.slug, title: "Visit the homes", intro: "Drive past the homes in a few routes before you vote. Your maps app takes up to 9 stops at a time, so a long list is split into routes of 9 or fewer, and each route starts where the last one ended." }) : ""}
+  ${D.entries.length ? tourHtml({ slug: c.slug, title: "Visit the homes", intro: (pub ? "Drive past the homes in a few routes before you vote. " : "Drive past these homes in a few routes. ") + "Your maps app takes up to 9 stops at a time, so a long list is split into routes of 9 or fewer, and each route starts where the last one ended." }) : ""}
   ${!pub ? gallery() : D.entries.length ? ballot + sections + thanks : `<div class="card"><h2>No homes yet</h2><p class="muted">Be the first to enter. Approved homes appear here, in every category, and on the map.</p></div>`}${quoteBox()}`;
   const qb = $("#quotebtn"); if (qb) qb.onclick = async () => { try { if (!navigator.webdriver) navigator.sendBeacon("/api/visit", new Blob([JSON.stringify({ k: "click:installer" })], { type: "application/json" })); } catch {} if (!D.me.signedIn) { const u = await signIn({ title: "Sign in to ask for a quote", next: location.pathname }); if (!u) return; await load(); refreshAcct($("#acct")); return; } const f = $("#quoteform"); f.hidden = false; f.style.display = "grid"; qb.hidden = true; $("#q-name").focus(); };
   const qf = $("#quoteform"); if (qf) qf.onsubmit = async (ev) => { ev.preventDefault(); const er = $("#q-err"); er.hidden = true; const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/quote`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("#q-name").value, phone: $("#q-phone").value, note: $("#q-note").value, consent: $("#q-ok").checked }) }), j = await r.json().catch(() => ({})); if (!r.ok) { er.textContent = j.error || "That didn't send."; er.hidden = false; return; } qf.outerHTML = `<p class="status ok">Sent. ${esc(D.installer.name)} will be in touch.</p>`; };
@@ -107,15 +112,20 @@ function zoom(key, cap) {
 }
 
 async function vote(id, category) {
-  if (!D.me.signedIn) { const u = await signIn({ title: "Sign in to vote", next: location.pathname }); if (!u) return; await load(); refreshAcct($("#acct")); }
-  const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/vote`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ post_id: id, category }) });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) return toast(j.error || "Couldn't record your vote.");
-  toast(j.same ? "That's already your vote." : j.moved ? `${category}: vote moved to ${j.name}` : `${category}: vote recorded for ${j.name}`);
-  const nx = D.contest.categories; ACT = category; await load(); const next = D.contest.categories.find((g) => !(D.me.votes || []).some((v) => v.category === g)); if (next && nx.length > 1) { ACT = next; const y = scrollY; render(); scrollTo(0, y); }
+  if (BUSY) return; // a double tap sends one vote, not two
+  BUSY = true; document.querySelectorAll("[data-vote]").forEach((b) => (b.disabled = true));
+  try {
+    if (!D.me.signedIn) { const u = await signIn({ title: "Sign in to vote", next: location.pathname }); if (!u) return; await load(); refreshAcct($("#acct")); }
+    const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/vote`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ post_id: id, category }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return toast(j.error || "Couldn't record your vote.");
+    // One confirmation that stays on the page (the ballot moves on to the next category by itself, so a short toast would be gone before it is read)
+    VOTEMSG = j.same ? `${category}: that is already your vote for ${j.name}.` : j.moved ? `${category}: your vote moved to ${j.name}.` : `${category}: vote recorded for ${j.name}.`;
+    const nx = D.contest.categories; ACT = category; await load(); const next = D.contest.categories.find((g) => !(D.me.votes || []).some((v) => v.category === g)); if (next && nx.length > 1) { ACT = next; const y = scrollY; render(); scrollTo(0, y); }
+  } finally { BUSY = false; if (D) { const y = scrollY; render(); scrollTo(0, y); } }
 }
 $("#tb").innerHTML = themeBtn(); mountAcct($("#acct")); noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

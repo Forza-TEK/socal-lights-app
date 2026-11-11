@@ -1,10 +1,12 @@
 // /c/<slug> — the public page for one contest (the QR code points here). The page itself is public/contest.html.
 // The page fills itself in with JavaScript, but link previews (Facebook, Nextdoor, texts) only read the HTML, so the title,
 // description and a photo are written into the head here.
-import { getContest } from "../_lib/contests.js";
+import { getContest, trimmedSlugFor } from "../_lib/contests.js";
 
 export async function onRequestGet({ request, env, params }) {
   const origin = new URL(request.url).origin;
+  // Printed QR codes from before slugs were trimmed end in "-": send them to the same contest without it (keeps ?src=qr)
+  try { const t = await trimmedSlugFor(env, params.slug); if (t) return Response.redirect(`${origin}/c/${t}${new URL(request.url).search}`, 301); } catch {}
   const res = await env.ASSETS.fetch(new Request(new URL("/contest", request.url), request));
   let c = null, photo = "", exists = true;
   try {
@@ -18,9 +20,10 @@ export async function onRequestGet({ request, env, params }) {
   if (!c) return new Response(res.body, { status: exists ? res.status : 404, headers: res.headers });
   const title = `${c.name} | SoCal Lights`;
   const desc = `${c.org} · ${c.city}. ${c.descr}`.slice(0, 200);
-  const img = photo || `${origin}/img/share.png`, url = `${origin}/c/${c.slug}`;
+  // the contest's own first photo, served from our domain through the resizer (1200x630 JPEG), else the site card (1200x630)
+  const img = photo ? `${origin}/cdn-cgi/image/width=1200,height=630,fit=cover,quality=70,format=jpeg/${photo}` : `${origin}/img/share.png`, url = `${origin}/c/${c.slug}`;
   const meta = (k, v, attr = "property") => `<meta ${attr}="${k}" content="${String(v).replace(/[&<>"]/g, (x) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[x]))}">`;
-  const tags = [meta("og:title", title), meta("og:description", desc), meta("og:image", img), meta("og:url", url), meta("og:type", "website"), meta("twitter:card", "summary_large_image", "name"), meta("description", desc, "name")].join("");
+  const tags = [meta("og:title", title), meta("og:description", desc), meta("og:image", img), meta("og:image:width", 1200), meta("og:image:height", 630), meta("twitter:image", img, "name"), meta("og:url", url), meta("og:type", "website"), meta("twitter:card", "summary_large_image", "name"), meta("description", desc, "name")].join("");
   return new HTMLRewriter()
     .on("title", { element(e) { e.setInnerContent(title); } })
     .on("head", { element(e) { e.append(tags, { html: true }); } })

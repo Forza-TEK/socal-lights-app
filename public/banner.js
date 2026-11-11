@@ -1,5 +1,5 @@
-// Map banner: a thin, labelled marquee on the map. Each installer with a Banner whose service area is in the map view is its own pill (labelled "Sponsor"), and each event with a paid
-// banner that is in the map view is a pill labelled "Featured" (name, city, dates; tap opens the event). An installer with only the top-of-the-list card is NOT a pill (it is a card, below).
+// Map banner: a labeled strip on the map that shows ONE sponsor at a time (whole name and phone, nothing cut off, every link at least 44 px tall) and moves on every few seconds. Each installer with a Banner whose service area is in the map view is its own pill (labeled "Sponsor"), and each event with a paid
+// banner that is in the map view is a pill labeled "Featured" (name, city, dates; tap opens the event). An installer with only the top-of-the-list card is NOT a pill (it is a card, below).
 // Desktop: a line under the logo, search and buttons. Phone: right above the list, so it moves with the list.
 // The list of installers comes from /api/banner (same for everyone); which ones show is decided here from what is in view.
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
@@ -45,58 +45,45 @@ const pill = (it) => {
 };
 const EMPTY = `<a class="sp-pill sp-empty" href="/pricing">Advertise here</a>`;
 
+// One item at a time: the strip shows a whole pill (name and phone), then the next one every ROTATE_MS, then the "Advertise here" pill. A pause button stops it; it also stops while the pointer or keyboard focus is on it.
+let items = [], idx = 0, timer = 0, hovering = false, focused = false;
 function paint() {
   if (!el) return;
   const k = Math.floor(OFFSET * Math.max(cur.length, 1)), order = cur.slice(k).concat(cur.slice(0, k));
-  // one "set" = the installers, then a single "advertise here" pill; the set is at least as wide as the strip, so the loop has no repeats
-  const win = el.querySelector(".sp-win"), track = el.querySelector(".sp-track"), set = order.map(pill).join("") + EMPTY;
-  track.style.setProperty("--win", (win.clientWidth || 360) + "px");
-  track.innerHTML = `<span class="sp-set">${set}</span><span class="sp-set sp-dup" aria-hidden="true" inert>${set}</span>`;
-  const w = track.firstElementChild.getBoundingClientRect().width;
-  SW = w; track.classList.add("go"); nudge(0);
-  watch(); changed();
+  items = order.map(pill).concat(EMPTY); idx = 0;
+  // the strip keeps the height of its tallest item (a long name or a narrow phone can need two lines), so the list below does not jump every time it moves on
+  const track = el.querySelector(".sp-track"); track.style.minHeight = ""; let tall = 0;
+  items.forEach((h) => { track.innerHTML = `<span class="sp-set">${h}</span>`; tall = Math.max(tall, track.offsetHeight); });
+  track.style.minHeight = tall + "px";
+  show(); schedule(); changed();
 }
-
-// The strip drifts on its own and can also be dragged: a finger on a phone, the mouse on a computer. It keeps a little momentum after a flick, then drifts on again.
-// Plain scrolling of the page still works (the strip only claims sideways movement). A drag never counts as a tap on a pill.
-let SW = 0, X = 0, vel = 0, dragging = false, hovering = false, focused = false, lastT = 0, raf = 0, suppress = false;
-function nudge(dx) { if (!SW) return; X = (((X + dx) % SW) + SW) % SW; const t = el && el.querySelector(".sp-track"); if (t) t.style.transform = `translate3d(${-X}px,0,0)`; }
-function tick(t) {
-  raf = requestAnimationFrame(tick);
-  const dt = Math.min(0.1, (t - (lastT || t)) / 1000); lastT = t;
-  if (!el || el.hidden || reduced || dragging) return;
-  if (Math.abs(vel) > 8) { nudge(vel * dt); vel *= Math.pow(0.04, dt); } else vel = 0; // momentum from a flick fades in about a second
-  if (!paused && !hovering && !focused && !vel) nudge(SPEED * dt);
+function show() {
+  const track = el && el.querySelector(".sp-track"); if (!track) return;
+  track.innerHTML = `<span class="sp-set">${items[idx % items.length]}</span>`;
+  const h = track.offsetHeight; if (h > (parseFloat(track.style.minHeight) || 0) + 1) { track.style.minHeight = h + "px"; changed(); } // never shorter than the tallest item seen
+  watch();
 }
-function drag(win) {
-  let id = null, sx = 0, sy = 0, sX = 0, moved = false, lx = 0, lt = 0;
-  win.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") hovering = true; });
-  win.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") hovering = false; });
-  win.addEventListener("focusin", () => { focused = true; }); win.addEventListener("focusout", () => { focused = false; });
-  win.addEventListener("dragstart", (e) => e.preventDefault()); // no ghost image of a pill's link
-  win.addEventListener("pointerdown", (e) => { if (reduced || (e.pointerType === "mouse" && e.button !== 0)) return; id = e.pointerId; sx = lx = e.clientX; sy = e.clientY; sX = X; moved = false; vel = 0; lt = performance.now(); });
-  win.addEventListener("pointermove", (e) => {
-    if (e.pointerId !== id) return;
-    if (!moved) { if (Math.abs(e.clientX - sx) < 6 || Math.abs(e.clientY - sy) > Math.abs(e.clientX - sx)) return; moved = true; dragging = true; try { win.setPointerCapture(id); } catch {} win.classList.add("drag"); }
-    const now = performance.now(), dx = lx - e.clientX; X = sX + (sx - e.clientX); nudge(0);
-    if (now > lt) vel = vel * 0.6 + (dx / ((now - lt) / 1000)) * 0.4; lx = e.clientX; lt = now;
-  });
-  const end = (e) => { if (e.pointerId !== id) return; id = null; if (moved) { suppress = true; setTimeout(() => (suppress = false), 60); if (performance.now() - lt > 120) vel = 0; vel = Math.max(-1800, Math.min(1800, vel)); } dragging = false; win.classList.remove("drag"); };
-  win.addEventListener("pointerup", end); win.addEventListener("pointercancel", end);
-  win.addEventListener("click", (e) => { if (suppress) { e.preventDefault(); e.stopPropagation(); } }, true);
-  win.addEventListener("wheel", (e) => { if (reduced || Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; e.preventDefault(); nudge(e.deltaX); }, { passive: false }); // trackpad two-finger sideways swipe
+function advance() { if (items.length > 1) { idx = (idx + 1) % items.length; show(); changed(); } }
+function schedule() {
+  clearInterval(timer); timer = 0;
+  if (!paused && !hovering && !focused && items.length > 1 && !(el && el.hidden)) timer = setInterval(advance, ROTATE_MS);
+}
+function watchPointer(win) {
+  win.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") { hovering = true; schedule(); } });
+  win.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") { hovering = false; schedule(); } });
+  win.addEventListener("focusin", () => { focused = true; schedule(); }); win.addEventListener("focusout", () => { focused = false; schedule(); });
 }
 
 // Count a "shown" the first time an installer's pill is actually on screen.
 function watch() {
   if (io) io.disconnect();
-  if (!("IntersectionObserver" in window)) { cur.forEach((i) => { if (!seen.has(i.id)) { seen.add(i.id); beat(i.id, "imp"); } }); return; }
+  if (!("IntersectionObserver" in window)) { el.querySelectorAll(".sp-pill[data-id]").forEach((n) => { const id = n.dataset.id; if (!seen.has(id)) { seen.add(id); beat(id, "imp"); } }); return; }
   io = new IntersectionObserver((es) => es.forEach((e) => { const id = e.target.dataset.id; if (e.isIntersecting && id && !seen.has(id)) { seen.add(id); beat(id, "imp"); } }), { root: el.querySelector(".sp-win"), threshold: 0.6 });
-  el.querySelectorAll(".sp-set:first-child > .sp-pill[data-id]").forEach((n) => io.observe(n));
+  el.querySelectorAll(".sp-pill[data-id]").forEach((n) => io.observe(n));
 }
 
 function setPaused(on) {
-  paused = on; el.classList.toggle("paused", on);
+  paused = on; el.classList.toggle("paused", on); schedule();
   const pb = el.querySelector(".sp-pause"); if (!pb) return;
   pb.setAttribute("aria-pressed", String(on)); pb.setAttribute("aria-label", on ? "Play the scrolling banner" : "Pause the scrolling banner"); pb.querySelector(".pp").setAttribute("d", on ? "M2 1l7 4-7 4z" : "M2 1h2v8H2zM6 1h2v8H6z");
 }
@@ -127,14 +114,14 @@ export async function initBanner({ place, onChange, onOpenEvent }) {
     if (a) { const pl = a.closest(".sp-pill"), id = pl?.dataset.id; if (id) beat(id, a.dataset.k); if (pl?.dataset.eid && openEvent(pl.dataset.eid)) e.preventDefault(); }
     else if (pb) setPaused(!paused);
   });
-  host(el); paint(); drag(el.querySelector(".sp-win")); if (!reduced) raf = requestAnimationFrame(tick);
+  host(el); watchPointer(el.querySelector(".sp-win")); paint();
   let lastW = el.querySelector(".sp-win").clientWidth, rt; // the strip follows the list panel opening and closing, and the window size
   if ("ResizeObserver" in window) new ResizeObserver(() => { const w = el.querySelector(".sp-win").clientWidth; if (Math.abs(w - lastW) < 3) return; lastW = w; clearTimeout(rt); rt = setTimeout(paint, 150); }).observe(el.querySelector(".sp-win"));
   if (reduced) setPaused(true); // people who asked for less motion get it standing still; the play button starts it
   return true;
 }
 
-// ---- Top of the list ($75): a labelled company card at the top of the map list, behind Featured events.
+// ---- Top of the list: a labeled company card at the top of the map list, behind Featured events.
 const TOP_MAX = 2; // at most two cards, so paid cards never push the places off the screen
 export const topSponsors = (regions) => {
   const m = LIST.filter((i) => i.t && !i.ev && serves(i, regions)), k = Math.floor(OFFSET * Math.max(m.length, 1));

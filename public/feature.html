@@ -6,10 +6,14 @@
 <title>Feature your event · SoCal Lights</title>
 <meta name="description" content="Put your Southern California Halloween, holiday or seasonal event in front of people on SoCal Lights: a Featured pin, a banner pill at the top of the map list, and top of the list.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/info.css?v=20261110y">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/info.css?v=20261111x560">
 <style>
 .plan{background:#fff;gap:8px}:root[data-theme="dark"] .plan{background:var(--tile)}
 .plan .price{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.plan .price small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0}
@@ -28,7 +32,7 @@
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="wide">
-<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a><span id="tb"></span><span id="acct"></span></div></div>
 <main class="wide">
 <h1>Feature your event</h1>
 <p class="lede">A Featured event stands out on the SoCal Lights map with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin. You can add a banner pill at the top of the map list, and top of the list. Listing an event is free; this is optional. <a href="/pricing">See all pricing</a>. Run several events a season as a city, chamber, nonprofit or event producer? See <a href="/partner">Event Partner</a>.</p>
@@ -49,7 +53,7 @@
 </div>
 
 <h2>Good to know</h2>
-<details><summary>Is it labeled as an ad?</summary><p>Featured events and homes carry a visible Featured badge, and an event's banner pill at the top of the map list is labelled "Featured", so nobody is misled. We only list real, public events, and a Featured event still has to be accurate: dates, venue and address are checked like every other listing.</p></details>
+<details><summary>Is it labeled as an ad?</summary><p>Featured events and homes carry a visible Featured badge, and an event's banner pill at the top of the map list is labeled "Featured", so nobody is misled. We only list real, public events, and a Featured event still has to be accurate: dates, venue and address are checked like every other listing.</p></details>
 <details><summary>What can I feature?</summary><p>Public Halloween, Día de los Muertos, Thanksgiving, Christmas and holiday, New Year's, spring, and summer events in Southern California: haunts, pumpkin patches, tree lightings, light shows, parades, markets and more. We reserve the right to decline events that are not open to the public or that we cannot verify.</p></details>
 <details><summary>Can I get a refund?</summary><p>If we cannot list or feature your event for any reason, you get a full refund, for every part of your plan: the pin, the banner and top of the list. Once your placement is live, payments are non-refundable, but if your event is cancelled, email us and we will move your placement to another of your events or refund the unused time. A refund switches your Featured placement off (the pin, the banner and top of the list), and so does a payment dispute, so please email <a href="mailto:info@socallights.app">info@socallights.app</a> before disputing a charge with your bank. The same rules are in our <a href="/terms#paid">Terms</a>.</p></details>
 <details><summary>How long does it run, and what does an upgrade cost?</summary><p>It runs from the moment you pay until your event ends or the season ends (Christmas lights: Jan 6), whichever comes first, and the price is the same whenever you buy. Each part (the Featured pin, the banner, top of the list) has the same price: if you already have some of them, you pay only for the parts you add, and a purchase that adds nothing new is not sold. This page shows the exact dates and the total before you pay.</p></details>
@@ -62,7 +66,7 @@
 <script type="module">
 import { SITE } from "/site-config.js?v=20261107a";
 import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
-import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS, planCopy, planBlurb, planWindow, eventEligibility, quoteLine, niceDate as fmt, ptToday } from "/feature-plans.js?v=20261108a";
+import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS, planCopy, planBlurb, planWindow, eventEligibility, quoteLine, niceDate as fmt, ptToday } from "/feature-plans.js?v=20261111x553";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const money = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : c / 100);
@@ -83,7 +87,7 @@ else if (!cfg.featureCheckout) { $("#auto").hidden = true; $("#manual").hidden =
 else await start();
 
 async function start() {
-  const { me, signIn } = await import("/auth.js?v=20261107p");
+  const { me, signIn } = await import("/auth.js?v=20261111z");
   const user = (await me()).user;
   const wantPlan = (k) => (EP[k] ? k : EP[LEG[k]] ? LEG[k] : "");
   const S = { plan: wantPlan(qs.get("plan")), ev: null, mine: [], user, busy: false, msg: "", changing: false, claim: null, claimMsg: "", found: [] };
@@ -191,7 +195,7 @@ async function start() {
     ${pend ? `<p class="meta"><b>We'll review your event first.</b> Your payment is held and Featured switches on the moment we approve it. If we can't list the event, you get a full refund.</p>` : ""}
     ${others.length ? `<p class="meta">Other plans for this event: ${others.map((k) => `<a href="#" data-sw="${k}">${esc(eventTierCopy(k).name)} (${money(m.quotes[k].cents)})</a>`).join(" · ")}</p>` : ""}
     <p><button class="btn" id="go" type="button"${S.busy ? " disabled" : ""}>${S.busy ? "Opening Stripe…" : `Pay ${price} on Stripe`}</button></p>
-    <p class="msg${S.err ? " err" : ""}" id="gomsg">${S.msg ? esc(S.msg) : `The receipt goes to ${esc(user.email)}. You pay on Stripe's secure page with a card or Cash App Pay. No subscription.`}</p></div>`;
+    <p class="msg${S.err ? " err" : ""}" id="gomsg">${S.msg ? esc(S.msg) : `The receipt goes to ${esc(user.email)}. You pay on Stripe's secure page. You can pay by card, Apple Pay, Google Pay, Amazon Pay, Cash App Pay or Link. Which options you see depends on your device and location. No subscription.`}</p></div>`;
   }
 
   function draw() {
@@ -264,8 +268,8 @@ async function paidView(S) {
   const find = async () => { if (!S.user) return null; const f = await fetch("/api/me/featurable", { cache: "no-store" }).then((r) => (r.ok ? r.json() : {})).catch(() => ({})); return [...(f.homes || []), ...(f.events || []), ...(f.contests || [])].find((m) => m.id === id) || null; };
   const paint = (m) => {
     const pname = plan ? (EP[plan] ? eventTierCopy(plan).name : planCopy(plan, PL).name) : "Featured", waiting = m && m.state === "pending", on = m && (m.featured || m.banner_until), thing = home ? "home" : "event";
-    const head = waiting ? "Payment received. We're checking your event first." : on ? `Thank you. ${m.name} is Featured.` : "Thank you. Your payment went through.";
-    const when1 = waiting ? "As soon as we approve your event, usually within a day. You don't need to do anything. If we can't list it, you get a full refund." : on ? `It is on now${m.until ? " and runs through " + fmt(m.until) : ""}. Refresh the map if you don't see the gold pin yet.` : `Within a few minutes. We're switching it on now; refresh this page or the map in a minute.`;
+    const head = waiting ? "Payment received. We're checking your event first." : on ? `Thank you. ${m.name} is Featured.` : "We're checking your payment.";
+    const when1 = waiting ? "As soon as we approve your event, usually within a day. You don't need to do anything. If we can't list it, you get a full refund." : on ? `It is on now${m.until ? " and runs through " + fmt(m.until) : ""}. Refresh the map if you don't see the gold pin yet.` : `Within a few minutes, once Stripe confirms the payment. Refresh this page or the map in a minute. If you did not pay, nothing was charged and nothing is switched on.`;
     const see = id && !id.startsWith("sub:") && !home ? `<a href="/#e-${esc(id)}">See it on the map</a> or ` : "";
     box.innerHTML = `<h2>${esc(head)}</h2><p class="meta">${esc(pname)}${m && m.name && !on ? " · " + esc(m.name) : ""}</p>
       <h3>What happens next</h3><ul>
@@ -284,9 +288,9 @@ async function paidView(S) {
 }
 </script>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261111d";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111x560";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

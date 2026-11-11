@@ -2,11 +2,16 @@
 import { loadArticles, renderBody, plainText, CAT, KINDS } from "../_lib/help.js";
 import { helpFrame, askForm, articleLink, esc } from "../_lib/helpui.js";
 import { jsonScript } from "../_lib/shell.js";
+import { hasTrailingSlash, permanent } from "../_lib/redirect.js";
+
+// "Nov 8, 2026": the date the article last changed, in Pacific time like every other time on the site (the database keeps UTC).
+const updatedOn = (ts) => { const d = new Date(String(ts || "").replace(" ", "T") + "Z"); return isNaN(d) ? "" : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Los_Angeles" }); };
 
 const notFound = (origin) => new Response(helpFrame({ title: "Help article not found | SoCal Lights", noindex: true, origin, body: `<h1>We couldn't find that page</h1><p class="lede">It may have moved. Try a search.</p><p><a class="btn go" style="display:inline-flex;max-width:260px" href="/help">Go to the Help Center</a></p>` }), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
 
 export async function onRequestGet({ request, env, params }) {
   const origin = new URL(request.url).origin, slug = String(params.slug || "").toLowerCase();
+  if (slug && (slug !== params.slug || hasTrailingSlash(request))) return permanent(request, "/help/" + encodeURIComponent(slug));
   const list = await loadArticles(env), a = list.find((x) => x.slug === slug);
   if (!a) return notFound(origin);
   const cat = CAT[a.category] || { key: a.category, title: "Help" };
@@ -20,7 +25,7 @@ export async function onRequestGet({ request, env, params }) {
 <div class="rate" id="rate"><b id="rq">Was this helpful?</b><div class="row" id="rb" style="margin-top:10px"><button type="button" class="btn" data-y="1">Yes</button><button type="button" class="btn" data-y="0">No</button></div><div id="rn" hidden style="margin-top:10px"><label for="rnote" style="display:block;font-size:14px;color:var(--muted);margin-bottom:4px">What were you looking for? (optional)</label><textarea id="rnote" rows="3" maxlength="300"></textarea><div style="margin-top:8px"><button type="button" class="btn go" id="rsend" style="min-height:44px;padding:0 20px;flex:none">Send</button></div></div><p class="hmsg" id="rm" role="status"></p></div>
 ${askForm("help:" + a.slug)}
 ${related.length ? `<section class="hsec"><h2>More in ${esc(cat.title)}</h2><ul class="alist">${related.map(articleLink).join("")}</ul></section>` : ""}
-<p class="hmsg" style="color:var(--muted)">Updated ${esc(String(a.updated_at || "").slice(0, 10))}</p></article>
+<p class="hmsg" style="color:var(--muted)">Updated ${esc(updatedOn(a.updated_at))}</p></article>
 <div class="hfoot"><span>Looking for something else?</span><a class="btn go" style="flex:none" href="/help">Search the Help Center</a></div>
 <script>(function(){var s=${jsonScript(a.slug)},m=document.getElementById("rm"),n=document.getElementById("rn");
 function post(y,note){return fetch("/api/help/vote",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({slug:s,helpful:y,note:note||""})})}

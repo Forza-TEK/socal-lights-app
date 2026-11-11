@@ -7,7 +7,7 @@ import { ptToday } from "./time.js";
 // EVENT ORGANIZERS: listing is free. Paid tiers are ADDITIVE components, each COMPONENT_CENTS: the Featured pin (always included in any paid tier), the banner and the top of the list.
 //   ev_pin = pin | ev_banner = pin + banner | ev_top = pin + top of the list | ev_all = pin + banner + top of the list.
 //   Component meaning: pin = events.featured level 1 (gold-ringed pin and Featured badge); top = level 2 (listed first when people browse the area); banner = the event is a pill
-//   in the labelled strip at the top of the map list (events.banner_until; the pill reads "Featured").
+//   in the labeled strip at the top of the map list (events.banner_until; the pill reads "Featured").
 //   WINDOW (flat price, no proration, the installers' philosophy): starts at payment and ends on the event's last day (end_date as stored), capped at the last day of the sponsor season that
 //   contains the payment day (seasonOf in sponsor.js; Christmas lights ends Jan 6). Buying opens OPEN_DAYS before the event starts. The quote (dates and price) is locked at checkout (eventQuote).
 //   UPGRADES cost COMPONENT_CENTS per component the event does not already hold for the whole window; a purchase that adds nothing new is refused (400).
@@ -37,7 +37,7 @@ export const isEventTier = (plan) => !!EVENT_PLANS[plan];
 export const componentsOf = (p) => ["pin", ...(p.banner ? ["banner"] : []), ...(p.top ? ["top"] : [])];
 
 // Installer placements. Prices in cents; they exist only here (/api/config serves them).
-// banner = the labelled Sponsor strip; top = the company card at the top of the list. Three products: banner ($50), top ($50, WITHOUT the banner) and banner_top ($75, both).
+// banner = the labeled Sponsor strip; top = the company card at the top of the list. Three products: banner ($50), top ($50, WITHOUT the banner) and banner_top ($75, both).
 // Rules (season length, stacking, renewal, upgrade) are in sponsor.js. The stored plan keys are "banner", "top" and "banner_top", on feature_orders rows with target = 'installer'.
 export const INSTALLER_PLANS = {
   banner: { label: "Banner", cents: 5000, banner: true, top: false },

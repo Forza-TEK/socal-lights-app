@@ -5,11 +5,11 @@ import { esc } from "./shell.js";
 // Same names and keys as the Tutorials page groups, so people learn one map. "account" has no tutorial group.
 export const CATEGORIES = [
   { key: "find", title: "Find and plan", blurb: "Location, seasons, filters, routes, the weekly email, installing the app" },
+  { key: "post", title: "Post events and homes", blurb: "Add an event, or show off your own home" },
   { key: "enter", title: "Enter a home", blurb: "Enter a contest, edit or withdraw your entry, your profile and badges" },
   { key: "vote", title: "Vote and judge", blurb: "Vote for your favorite homes, or score them as a judge" },
   { key: "run", title: "Run a contest", blurb: "Create, share, approve entries, change dates, voting, your team, winners" },
   { key: "sponsors", title: "Sponsors and installers", blurb: "Add sponsors, quote requests, installer profiles" },
-  { key: "post", title: "Post events and homes", blurb: "Add an event, or show off your own home" },
   { key: "account", title: "Account, privacy and safety", blurb: "Signing in, your data, deleting your account, reporting a problem" },
 ];
 export const KINDS = { howto: "How to", fix: "Fix a problem", answer: "Answer" };
@@ -24,26 +24,26 @@ export async function loadArticles(env, { drafts = false } = {}) {
 }
 
 // ---------- Article text -> HTML ----------
-// Blank line = new paragraph. "- " = bullet list. "1. " = numbered steps. "## " = small heading.
-// **bold** and [link text](/path or https://...) work inside a line. Everything else is shown as typed.
+// Blank line = new paragraph. "- " = bullet list. "1. " = numbered steps. "## " = heading, "### " = smaller heading.
+// **bold** and [link text](/path, #anchor, https://... or mailto:...) work inside a line. [ask us](#ask) opens the "Still stuck? Ask us" box on the page. Everything else is shown as typed.
 const inline = (s) => esc(s)
   .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
-  .replace(/\[([^\]]+)\]\((\/[^\s)]*|https:\/\/[^\s)]+|mailto:[^\s)]+)\)/g, (m, t, u) => `<a href="${u}"${u.startsWith("http") ? ' rel="noopener" target="_blank"' : ""}>${t}</a>`);
+  .replace(/\[([^\]]+)\]\((\/[^\s)]*|#[A-Za-z0-9_-]+|https:\/\/[^\s)]+|mailto:[^\s)]+)\)/g, (m, t, u) => `<a href="${u}"${u.startsWith("http") ? ' rel="noopener" target="_blank"' : ""}>${t}</a>`);
 export function renderBody(text) {
   const out = []; let kind = "", items = [];
   const flush = () => { if (!items.length) return; out.push(kind === "ul" ? `<ul>${items.map((x) => `<li>${x}</li>`).join("")}</ul>` : kind === "ol" ? `<ol>${items.map((x) => `<li>${x}</li>`).join("")}</ol>` : `<p>${items.join("<br>")}</p>`); kind = ""; items = []; };
   for (const raw of String(text || "").replace(/\r/g, "").split("\n")) {
     const l = raw.trim();
     if (!l) { flush(); continue; }
-    const t = /^## /.test(l) ? "h" : /^- /.test(l) ? "ul" : /^\d+\.\s/.test(l) ? "ol" : "p";
-    if (t === "h") { flush(); out.push(`<h2>${inline(l.slice(3))}</h2>`); continue; }
+    const t = /^###? /.test(l) ? "h" : /^- /.test(l) ? "ul" : /^\d+\.\s/.test(l) ? "ol" : "p";
+    if (t === "h") { flush(); const n = l.startsWith("### ") ? 3 : 2; out.push(`<h${n}>${inline(l.slice(n + 1))}</h${n}>`); continue; }
     if (t !== kind) flush();
     kind = t; items.push(inline(t === "ul" ? l.slice(2) : t === "ol" ? l.replace(/^\d+\.\s/, "") : l));
   }
   flush();
   return out.join("");
 }
-export const plainText = (text) => String(text || "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/^(## |- |\d+\.\s)/gm, "").replace(/\s+/g, " ").trim();
+export const plainText = (text) => String(text || "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/^(### |## |- |\d+\.\s)/gm, "").replace(/\s+/g, " ").trim();
 
 // ---------- Search ----------
 const STOP = new Set("a an and are as at be but by can do does for from get got has have how i if in into is it its me my of on or our so that the their them then there this to up us was we what when where which who why will with you your".split(" "));

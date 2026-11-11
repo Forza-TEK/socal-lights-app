@@ -681,7 +681,7 @@ test("new knowledge chunks are found, and the Favorites and Route these names ar
   const top = (q) => rankChunks(q, 3).map((c) => c.title);
   assert.ok(top("How do I plan a night and open a route in Favorites?").some((t) => /^Favorites: plan a night/.test(t)));
   assert.ok(top("How do I remove my home from the map?").some((t) => /^Remove my home/.test(t)));
-  assert.ok(top("How do I promote my event with a Featured pin?").some((t) => /^Promote your event/.test(t)));
+  assert.ok(top("How do I promote my event with a Featured pin?").some((t) => /^Feature your event/.test(t)));
   assert.ok(top("How do I sign up for the weekly lights email and stop it?").some((t) => /^Weekly lights email: sign up/.test(t)));
 });
 
@@ -741,4 +741,75 @@ test("audit gaps are filled: seasons and boat parades, filters, sign out, paymen
   has("How do I save a draft?", /Your profile/);
   has("How do I report a problem on a listing?", /On any listing/);
   has("How do I switch to dark mode?", /Day and night mode/);
+});
+
+// ---------------------------------------------------------------- audit 2026-11-11 (help, assistant and copy)
+import { readFileSync as readFileAudit } from "node:fs";
+import { rankArticles, buildContext, seasonFacts } from "../functions/_lib/chatkb.js";
+import { loadArticles } from "../functions/_lib/help.js";
+
+test("audit AST-03: stop-the-emails and unsubscribe questions get the curated answer and the Help article, with no model call", async () => {
+  const { env, calls } = setup();
+  for (const q of ["How do I stop the emails?", "How do I unsubscribe", "I want to opt out of your emails", "Please stop sending me emails"]) {
+    const r = await ask(env, q);
+    assert.ok(!r.body.refused, q + " was refused");
+    assert.match(r.body.reply, /stop-emails-from-socal-lights/, q);
+    assert.match(r.body.reply, /Unsubscribe/, q);
+  }
+  assert.equal(calls.length, 0);
+});
+
+test("audit AST-04: Confirmed vs Expected, Shop tab, Waze, calendar, data and who-runs-this questions are in scope", async () => {
+  for (const q of ["What is the difference between Confirmed and Expected?", "What is the Shop tab?", "What does Top of the list mean?", "Can I export my favorites to my calendar?", "Does it work with Waze?", "Do you sell my data?", "is this a scam", "Who built this site?", "What can you do?"]) {
+    assert.equal(classify(q).kind, "ok", q);
+  }
+  const { env, calls, state } = setup(); state.reply = "Confirmed means the event's own page shows its name and dates.";
+  const r = await ask(env, "What is the difference between Confirmed and Expected?");
+  assert.equal(r.body.reply, state.reply); assert.match(calls[0].system, /confirmed-or-expected/);
+  const w = await ask(env, "Does it work with Waze?"); assert.ok(!w.body.refused && !w.body.gap); assert.match(calls[1].system, /Waze takes one stop at a time/);
+  const who = await ask(env, "Who built this site?"); assert.match(who.body.reply, /Forza-TEK/); assert.equal(who.body.refused, undefined);
+  const can = await ask(env, "What can you do?"); assert.match(can.body.reply, /automated AI assistant/);
+});
+
+test("audit AST-02: season dates can be stated, and fractions are not read as dates", async () => {
+  const { env } = setup();
+  const ctx = await buildContext(env, "When does the Christmas lights season end?");
+  const ok = filterOutput("The Christmas lights season on the map runs until Jan 6.", ctx);
+  assert.equal(ok.blocked, "", ok.text);
+  assert.ok(seasonFacts().text.includes("Jan 6"));
+  assert.match(ctx.stableSystem, /SEASONS/);
+  assert.equal(filterOutput("Entries 3/4 of homes are in.", ctx).blocked, "");
+  assert.equal(datesIn("3/4 of homes").size, 0);
+  assert.ok(datesIn("on 12/5").has("12-05")); assert.ok(datesIn("on 3/4/2027").has("03-04"));
+  assert.equal(stripFigures("3/4 of homes"), "3/4 of homes");
+  assert.equal(filterOutput("The event is on Mar 9.", ctx).blocked, "date"); // a date that is not in any source is still blocked
+  const { env: e2, state } = setup(); state.reply = "The Christmas lights season on the map runs until Jan 6.";
+  assert.equal((await ask(e2, "When does the Christmas lights season end?")).body.reply, state.reply);
+});
+
+test("audit AST-05: Help article matching uses whole words and skips one and two letter words", async () => {
+  const { env } = setup();
+  const list = await loadArticles(env);
+  assert.deepEqual(rankArticles(list, "hi"), []);
+  assert.ok(!rankArticles(list, "Do you take donations?").some((a) => a.slug === "edit-a-home-you-added"));
+  assert.ok(rankArticles(list, "Do you take donations?").some((a) => a.slug === "is-it-free"));
+  assert.ok(!rankArticles(list, "Can I vote more than once?").some((a) => a.slug === "find-lights-near-me"));
+  assert.ok(rankArticles(list, "how old do I have to be to enter").some((a) => a.slug === "enter-your-home-in-a-contest"));
+});
+
+test("audit AST-06: a request for the owner's phone number says personal details are not shared, and still offers the team", async () => {
+  const { env, calls } = setup();
+  const r = await ask(env, "What's the owner's phone number?");
+  assert.match(r.body.reply, /can't share personal details/); assert.doesNotMatch(r.body.reply, /^Of course/);
+  assert.ok(r.body.cards.some((c) => c.action === "ask_human")); assert.equal(calls.length, 0);
+  assert.match((await ask(env, "Can I talk to a person?")).body.reply, /^Of course/);
+});
+
+test("audit AST-07 and AST-08: the curated entry answer names the real button, and the chat has contest and voting chips", async () => {
+  const { directAnswer } = await import("../functions/_lib/chatanswers.js");
+  const t = directAnswer("how do I enter my home in a contest").reply;
+  assert.match(t, /tap Enter my home\./); assert.doesNotMatch(t, /tap Enter\./);
+  const chat = readFileAudit(new URL("../public/chat.js", import.meta.url), "utf8");
+  assert.ok(chat.includes('"How do contests work?"') && chat.includes('"How do I vote?"'));
+  assert.equal(classify("How do contests work?").kind, "ok"); assert.equal(classify("How do I vote?").kind, "ok");
 });

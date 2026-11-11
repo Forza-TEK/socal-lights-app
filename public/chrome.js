@@ -2,10 +2,10 @@
 //  - the light / night switch
 //  - the account button: a person icon that opens the sign-in sheet when you are signed out, and your picture (or initial)
 //    that opens a small menu (profile, your contests, sign out) when you are signed in.
-import { me, signIn, signOut, esc } from "/auth.js?v=20261107p";
+import { me, signIn, signOut, esc } from "/auth.js?v=20261111z";
 
 // styles for the account menu and the signed-out button, added once (pages without our main stylesheet get them too)
-if (!document.getElementById("chrome-css")) { const l = document.createElement("link"); l.id = "chrome-css"; l.rel = "stylesheet"; l.href = "/chrome.css?v=20261111a"; document.head.appendChild(l); }
+if (!document.getElementById("chrome-css")) { const l = document.createElement("link"); l.id = "chrome-css"; l.rel = "stylesheet"; l.href = "/chrome.css?v=20261111x560"; document.head.appendChild(l); }
 
 /* ---------- light / night (same switch and same remembered choice as the map) ---------- */
 const nextSwitch = () => { const d = new Date(); d.setMinutes(0, 0, 0); const h = d.getHours(); if (h < 6) d.setHours(6); else if (h < 18) d.setHours(18); else { d.setDate(d.getDate() + 1); d.setHours(6); } return d.getTime(); };

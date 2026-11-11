@@ -9,7 +9,7 @@ a good larger one (at least 800 px wide, under 15 MB) is resized to 1280 px JPEG
 --rehost files). The script identifies itself honestly (SoCalLightsBot) and never retries a page that refuses it:
 pages that block it are left for a manual photo. Writes UPDATE statements; run `npm run validate`. Needs Pillow.
 """
-import argparse, collections, io, json, os, re, urllib.parse, urllib.request
+import argparse, collections, io, json, os, re, urllib.error, urllib.parse, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
 
@@ -74,9 +74,11 @@ def main():
         if not e.get("img") and (e.get("u") or "").startswith("http"): (by[e["u"].split("#")[0]].append(e["id"]), nm.setdefault(e["u"].split("#")[0], e.get("n", "")))
     urls = [u for u, ids in by.items() if len(ids) <= a.max_events_per_page]
     print(len(urls), "pages to try")
+    why = {}  # page -> why no photo came from it (HTTP status, or an error), for the "needs a photo" list below
     def go(u):
         try: return u, best(u, nm.get(u, ""))
-        except Exception: return u, None
+        except urllib.error.HTTPError as e: why[u] = f"HTTP {e.code}" + (" (page turns away the bot: do NOT bypass, use docs/sweep-methods.md 5.1)" if e.code in (401, 403, 429) else ""); return u, None
+        except Exception as e: why[u] = "error: " + type(e).__name__; return u, None
     with ThreadPoolExecutor(10) as ex: res = list(ex.map(go, urls))
     cnt = collections.Counter(p[0] for _, p in res if p)
     q = lambda s: "'" + s.replace("'", "''") + "'"
@@ -93,6 +95,12 @@ def main():
             else: src = p[0]; hot += 1
             lines.append(f"UPDATE events SET image={q(src)}, updated_at=datetime('now') WHERE id={q(i)} AND (image IS NULL OR image='');")
     open(a.out, "w").write("\n".join(lines) + "\n")
+    # Events whose page gave no photo (blocked, no usable picture, or shared by too many events): the run looks for the same event on the owner's other official sites (docs/sweep-methods.md 5.1)
+    done = {i for u, p in res if p and cnt[p[0]] <= 1 for i in by[u]}
+    need = [(i, nm.get(u, ""), u, why.get(u) or (f"page is shared by {len(ids)} events (a roundup page)" if len(ids) > a.max_events_per_page else "no usable photo on the page")) for u, ids in by.items() for i in ids if i not in done]
+    npath = os.path.splitext(a.out)[0] + "-needs-photo.tsv"
+    open(npath, "w").write("id\tname\tpage\treason\n" + "\n".join("\t".join(x) for x in need) + "\n")
+    print(len(need), "events still need a photo ->", npath)
     print(hot, "hotlinked,", reh, "re-hosted ->", a.out)
 
 if __name__ == "__main__": main()

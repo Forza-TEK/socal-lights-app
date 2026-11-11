@@ -6,15 +6,19 @@
 <title>Event Partner · SoCal Lights</title>
 <meta name="description" content="Event Partner for cities, chambers, nonprofits and event producers: one price per season covers up to 10 of your events with the Featured pin and an Event Partner badge. Listing an event stays free.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/info.css?v=20261110y">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/info.css?v=20261111x560">
 <style>.plist{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}.plist li{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.plist small{display:block;color:var(--muted)}.pbox{border:2px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}.pbox ul{padding-left:20px;display:grid;gap:4px}.pbox .price{font-size:32px;font-weight:700}.pbox .price small{font-size:14px;font-weight:400;color:var(--muted)}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
-<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a><span id="tb"></span><span id="acct"></span></div></div>
 <main>
 <h1>Event Partner</h1>
 <p class="lede">For cities, chambers of commerce, nonprofits and event producers that run several events in a season. One price covers up to 10 of your organization's events with the Featured pin and an Event Partner badge. Listing an event stays free for everyone. <a href="/pricing#events">See all pricing</a>.</p>
@@ -26,8 +30,8 @@
 <details><summary>Can I get a refund?</summary><p>If we cannot apply what you paid for, you get a full refund. Once your events are featured, payments are non-refundable, but write to <a href="mailto:info@socallights.app">info@socallights.app</a> if something is wrong, and please do that before disputing a charge. A refund or dispute switches the Featured pins it applied off.</p></details>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261111d";
-import { me, signIn } from "/auth.js?v=20261107p";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111x560";
+import { me, signIn } from "/auth.js?v=20261111z";
 import { partnerCopy, dollars, niceDate, esc, BADGE_NOTE } from "/partner-copy.js?v=20261109a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 const $ = (q) => document.querySelector(q), q = new URLSearchParams(location.search);
@@ -76,6 +80,6 @@ else if (!(await me()).user) {
   await paint(v);
 }
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

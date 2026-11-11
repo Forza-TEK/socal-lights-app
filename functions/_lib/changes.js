@@ -3,7 +3,7 @@ import { newId } from "./util.js";
 import { sendNow } from "./mailbatch.js";
 import { logOp } from "./oplog.js";
 
-export const HOME_FIELDS = { title: "Display name", descr: "About it", where_txt: "Tips for visitors", season: "Season", lights_on: "Lights are on", visit: "How to see it", parking: "Parking", accessible: "Stroller and wheelchair friendly", radio: "Radio station", web: "Website", phone: "Phone for quotes", service_area: "Service area" };
+export const HOME_FIELDS = { street: "Street address", city: "City", zip: "ZIP", title: "Display name", descr: "About it", where_txt: "Tips for visitors", season: "Season", lights_on: "Lights are on", visit: "How to see it", parking: "Parking", accessible: "Stroller and wheelchair friendly", radio: "Radio station", web: "Website", phone: "Phone for quotes", service_area: "Service area" };
 export const CONTEST_FIELDS = { name: "Contest name", org: "Run by", descr: "Welcome message", entries_close: "Entries close", vote_start: "Voting starts", vote_end: "Voting ends", categories: "Voting categories", approval: "Entry approval", prize_mode: "Prize type", prize: "Prize", prizes: "Prizes per award", sponsor: "Prize provided by", rules: "Official rules", installer_name: "Presenting installer", installer_email: "Installer email", installer_url: "Installer website", show_counts: "Show vote counts", entries_open: "Entries open", voting_open: "Voting open", mode: "Who votes" };
 
 const show = (v) => { if (v === 1 || v === true) return "Yes"; if (v === 0 || v === false) return "No"; let s = String(v ?? ""); try { const j = JSON.parse(s); if (Array.isArray(j)) s = j.join(", "); } catch {} return s.length > 140 ? s.slice(0, 137) + "..." : s; };

@@ -58,7 +58,9 @@ export async function onRequestPost({ request, env }) {
   // "Can I talk to a person?": always answered with the Send to the team card, even off topic, at the cap, or with no model call (owner decision: always reachable)
   if (settings.tiers[1] && wantsHuman(last) && !(["injection", "typedPersonal", "personal"].includes(classify(last).kind))) { // "the owner's phone number" is a personal-data ask, not a request for the team
     await recordUsage(env, { chats: first ? 1 : 0, turns: 1 }); await bumpAction(env, "ask_human", "shown");
-    return say("Of course. Tap the button below, write what you need, and send it: the team reads every message. If you add your email, they can reply to you.", { cards: [humanCard(last)] }, headers);
+    // "What's the owner's phone number?" is a request for personal details: say plainly that they are not shared, and still offer to pass a message on
+    const phoneAsk = /\b(phone|cell|mobile|telephone)\b|\bnumber\b[^.?!]{0,20}\b(owner|team|staff|you)\b|\b(owner|team|staff|your)\b[^.?!]{0,20}\bnumber\b|\bcall (you|the owner|the team|someone)\b|\bhome address\b/i.test(last);
+    return say(phoneAsk ? "I can't share personal details like a phone number, but I can pass a message to the team. Tap the button below, write what you need, and send it: the team reads every message. If you add your email, they can reply to you." : "Of course. Tap the button below, write what you need, and send it: the team reads every message. If you add your email, they can reply to you.", { cards: [humanCard(last)] }, headers);
   }
   // Tier 1 requests that read as off topic to the scope filter ("subscribe me", "this listing is outdated"): answer with the card, no model call
   { const qi = quickIntent(last, settings); if (qi && classify(last).kind === "offtopic") { await recordUsage(env, { chats: first ? 1 : 0, turns: 1 }); for (const c of qi.cards) await bumpAction(env, c.action, "shown"); return say(qi.reply, { cards: qi.cards }, headers); } }
