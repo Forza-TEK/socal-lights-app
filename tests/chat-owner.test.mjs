@@ -79,7 +79,7 @@ test("publish an event from one card: the full card runs the site's own add-even
   const { env, raw } = setup(), me = await addUser(raw, "u1", "me@example.com"), f = stubFetch(async () => new Response(JSON.stringify([]), { status: 200 }));
   try {
     const r = await ask(env, "I want to add my tree lighting event to the map", me.cookie);
-    const card = r.cards.find((c) => c.label === "Add my event"); assert.ok(card, "signed in: the one-card publish option"); assert.ok(r.cards.some((c) => c.nav === "/add-event"), "and the step-by-step form");
+    const card = r.cards.find((c) => c.label === "Add my event"); assert.ok(card, "signed in: the one-card publish option"); assert.ok(!r.cards.some((c) => c.nav === "/add-event"), "one option, not two forms: the step-by-step form is a link inside the card"); assert.equal(card.alt.href, "/add-event");
     assert.deepEqual(card.fields.map((x) => x.name), ["name", "season", "type", "start", "end", "free", "hours", "venue", "address", "city", "blurb"]);
     const body = { name: "Maple Court Tree Lighting", season: "christmas", type: "tree", start: ptToday(12), end: ptToday(12), free: true, hours: "6 pm", venue: "Maple Court Park", address: "100 Maple Ct", city: "Pasadena", blurb: "Neighbors gather to light the big tree and sing." };
     const res = await submitEvent({ env, request: new Request(ORIGIN + "/api/submit-event", { method: "POST", headers: { "content-type": "application/json", origin: ORIGIN, cookie: me.cookie, "CF-Connecting-IP": "203.0.113.5" }, body: JSON.stringify({ ...card.call.body, ...body }) }) });

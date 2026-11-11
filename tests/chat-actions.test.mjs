@@ -208,7 +208,7 @@ test("chat to form hand-off: the Start this event card, and the form side only a
 test("off-topic-sounding requests for a Tier 1 card still get the card, with no model call", async () => {
   const { env, calls } = setup();
   const before = calls.length;
-  const sub = await ask(env, "subscribe me"); assert.ok(sub.body.cards.some((c) => c.action === "weekly_email")); assert.match(sub.body.reply, /Sign me up/);
+  const sub = await ask(env, "subscribe me"); assert.ok(sub.body.cards.some((c) => c.action === "weekly_email")); assert.match(sub.body.reply, /Would you like to go ahead/);
   assert.equal(calls.length, before, "answered without the model");
   const out = await ask(env, "this listing is outdated"); assert.ok(out.body.cards.some((c) => c.action === "report_problem"));
   const no = await ask(env, "unsubscribe me"); assert.ok(!(no.body.cards || []).some((c) => c.action === "weekly_email"));
@@ -220,4 +220,17 @@ test("casual phrasings that are about the site are in scope (phone number, donat
   for (const q of ["do you have a phone number", "do you take donations", "how do I get a QR code", "what size should photos be", "my code expired", "can I have two accounts", "can I bring a dog", "how do I change my name"]) assert.equal(classify(q).kind, "ok", q);
   for (const q of ["what is the capital of France", "write me a poem about cats", "who won the football game"]) assert.notEqual(classify(q).kind, "ok", q);
   assert.match(rankChunks("what size should photos be", 3).map((c) => c.title).join(" | "), /Photos: formats, size and tips/);
+});
+
+test("forms never pop up unasked: the widget shows a button first, an explicit request for a person opens its box, an offer stays collapsed, and signed-in visitors get one event option", async () => {
+  const fs = await import("node:fs"), widget = fs.readFileSync(new URL("../public/chat.js", import.meta.url), "utf8");
+  assert.match(widget, /card\.type === "form" && !card\.suggest && !card\.open/, "every form card starts as a button");
+  assert.match(widget, /Would you like me to help with that\?/);
+  const { cardsFor, humanCard } = await import("../functions/_lib/chatcards.js");
+  assert.equal(humanCard("help").open, undefined, "an offer (no answer, cost cap) is collapsed"); assert.equal(humanCard("help", true).open, true);
+  const asked = cardsFor({ question: "can I talk to a real person", settings: { tiers: { 1: true, 2: true, 3: true } } }); assert.equal(asked[0].open, true, "the visitor asked for a person: the box is open");
+  const gap = cardsFor({ question: "something nobody knows", settings: { tiers: { 1: true, 2: true, 3: true } }, handoff: "gap" }); assert.ok(gap[0].action === "ask_human" && !gap[0].open);
+  const ev = cardsFor({ question: "how do I add an event", settings: { tiers: { 1: true, 2: true, 3: true } }, user: { id: "u1" }, own: {} });
+  assert.equal(ev.filter((c) => c.type === "form").length, 1, "one event form, not two");
+  const out = cardsFor({ question: "how do I add an event", settings: { tiers: { 1: true, 2: true, 3: true } } }); assert.equal(out.filter((c) => c.type === "form").length, 1);
 });

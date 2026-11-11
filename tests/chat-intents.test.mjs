@@ -12,7 +12,7 @@ const PHRASES = [
  ["sign me up for emails","Sign me up"],["I want the weekly email","Sign me up"],["how do I get the newsletter","Sign me up"],["subscribe me","Sign me up"],["unsubscribe me","NONE"],["stop the emails","NONE"],
  ["please remove my home from the map","Send removal request"],["I want my house taken off the site","Send removal request"],["delete my listing","Send removal request"],["how do I take down my display","Take down"],
  ["the hours on that event are wrong","Report a problem"],["this listing is outdated","Report a problem"],["the address is incorrect","Report a problem"],["report a problem with an event","Report a problem"],
- ["how do I add an event","Start this event"],["I want to post my parade","Start this event"],["list my tree lighting","Start this event"],["where can I find events to attend","NONE"],
+ ["how do I add an event"," event"],["I want to post my parade"," event"],["list my tree lighting"," event"],["where can I find events to attend","NONE"],
  ["add my home to the map","Start my home"],["I want to show my lights","Start my home"],["how do I list my house","Start my home"],["find homes near me","NONE"],
  ["start a contest","Start my contest"],["I want to run a decorating contest for my HOA","Start my contest"],["how do contests work","NONE"],
  ["take my home down for the season","Take down"],["pause my display","Take down"],["put my home back on the map","back on the map"],["my event is cancelled","cancelled"],["the event got postponed","postponed"],["run my event again next year","again next year"],["withdraw my entry","NONE"],["change the description of my event","Edit the description"],

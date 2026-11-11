@@ -61,20 +61,21 @@ export function contestStartCard() {
 export function quickIntent(question, settings) {
   const q = String(question || ""), t = (settings && settings.tiers) || {};
   if (!t[1] || STOP.test(q)) return null;
-  if (WEEKLY.test(q)) return { reply: "Happy to set that up. Fill in the box below and tap Sign me up: it is one short free email a week, and we send a link to confirm first.", cards: [formCard("weekly_email")] };
-  if (REPORT.test(q)) return { reply: "Thank you for flagging it. Tell us which listing and what is wrong below, and the team will look at it.", cards: [formCard("report_problem")] };
-  if (REMOVE.test(q) || REMOVE2.test(q)) return { reply: "I can pass that on. Fill in the box below and tap Send removal request, and we will email you when it is done. You do not need an account.", cards: [formCard("remove_home")] };
+  if (WEEKLY.test(q)) return { reply: "I can set that up for you: it is one short free email a week, and we send a link to confirm first. Would you like to go ahead? Tap the button below.", cards: [formCard("weekly_email")] };
+  if (REPORT.test(q)) return { reply: "Thank you for flagging it. Would you like to send a report to the team? Tap the button below and tell us which listing and what is wrong.", cards: [formCard("report_problem")] };
+  if (REMOVE.test(q) || REMOVE2.test(q)) return { reply: "I can pass that on, and you do not need an account. Would you like to send a removal request? Tap the button below and we will email you when it is done.", cards: [formCard("remove_home")] };
   if (!informational(q)) {
-    if (ADD_CONTEST.test(q)) return { reply: "Great, I can start that with you. Tell me the basics below and tap Open the wizard; Quick start keeps the rest simple.", cards: [contestStartCard()] };
+    if (ADD_CONTEST.test(q)) return { reply: "Great, I can start that with you. Would you like to begin? Tap the button below and I will open the contest wizard with the basics filled in.", cards: [contestStartCard()] };
     const toMap = ADD_TO_MAP.test(q), homey = HOMEY.test(q) && !/\bhaunted house\b/i.test(q);
-    if (ADD_HOME.test(q) || (toMap && homey)) return { reply: "Wonderful, let's get your display on the map. Fill in what you know below and tap Open the form; you add night photos there.", cards: [homeStartCard()] };
-    if (ADD_EVENT.test(q) || toMap) return { reply: "Happy to help you list your event. Fill in what you know below and tap Open the form, and you review everything there before it goes on the map.", cards: [eventStartCard()] };
+    if (ADD_HOME.test(q) || (toMap && homey)) return { reply: "Wonderful, let's get your display on the map. Would you like to begin? Tap the button below and I will open the form with what you tell me filled in; you add night photos there.", cards: [homeStartCard()] };
+    if (ADD_EVENT.test(q) || toMap) return { reply: "Happy to help you list your event. Would you like to begin? Tap the button below; you review everything before it goes on the map.", cards: [eventStartCard()] };
   }
   return null;
 }
 export const needsAccount = (q) => wantsOwnerAction(q) || (ADD_EVENT.test(String(q || "")) && !/\b(find|search|see|go to|attend)\b/i.test(String(q || "")));
 export const wantsHuman = (q) => HUMAN.test(String(q || ""));
-export const humanCard = (question = "") => formCard("ask_human", { message: String(question).replace(/\s+/g, " ").trim().slice(0, 300) });
+// open: the visitor asked for a person, so the box is open; an offer (no answer found, cost cap) is collapsed behind a button like every other form.
+export const humanCard = (question = "", open = false) => ({ ...formCard("ask_human", { message: String(question).replace(/\s+/g, " ").trim().slice(0, 300) }), ...(open ? { open: true } : {}) });
 
 // A question that only asks about something ("what happens if I take my home down", "is it free to add an event") gets the answer, not an action card; a request ("can you", "please", "I want") or "how do I" still does.
 const INFO = /^\s*(what|what's|whats|is|are|does|why|when|which|who|how (does|much|many|long|often)|do (i|you|we|they|events?|people|homes?|contests?|judges?|votes?|the (site|map|app)))\b/i, ASKS = /\b(can you|could you|please|i want|i'd like|i would like|help me|i need to|i need a)\b/i;
@@ -85,18 +86,19 @@ export function cardsFor({ question, settings, ctx = {}, handoff = "", user = nu
   const q = String(question || ""), out = [], t = (settings && settings.tiers) || { 1: true, 2: true, 3: true };
   const removing = REMOVE.test(q) || REMOVE2.test(q) || REMOVE3.test(q);
   if (t[1]) {
-    if (handoff || HUMAN.test(q)) out.push(humanCard(q));
+    if (handoff || HUMAN.test(q)) out.push(humanCard(q, !handoff));
     if (REPORT.test(q) && !out.length && !(user && /\b(my|our)\b/i.test(q) && wantsOwnerAction(q))) out.push(formCard("report_problem", { where: (ctx.eventList && ctx.eventList.length === 1 && ctx.eventList[0].name) || "" }));
-    const info = informational(q);
+    const info = informational(q), from = out.length; // a question that only asks about something still gets the matching card, as a suggestion the visitor can open
     const toMap = ADD_TO_MAP.test(q), homey = HOMEY.test(q) && !/\b(haunted house)\b/i.test(q);
-    if (!info && (ADD_EVENT.test(q) || (toMap && !homey && !ADD_CONTEST.test(q))) && !/\b(find|search|see|go to|attend)\b/i.test(q)) { if (t[3] && user) out.push(publishEventCard()); out.push(eventStartCard()); }
-    if (!info && (ADD_HOME.test(q) || (toMap && homey)) && !removing && !/\b(find|search|visit|directions|haunted house)\b/i.test(q)) out.push(homeStartCard());
-    if (!info && ADD_CONTEST.test(q)) out.push(contestStartCard());
-    if (!info && WEEKLY.test(q) && !STOP.test(q)) out.push(formCard("weekly_email"));
-    if (removing && !info) out.push(formCard("remove_home"));
+    if ((ADD_EVENT.test(q) || (toMap && !homey && !ADD_CONTEST.test(q))) && !/\b(find|search|see|go to|attend)\b/i.test(q)) { out.push(t[3] && user ? publishEventCard() : eventStartCard()); } // one option, not two: signed in, the add-it-now card (it links to the step-by-step form); signed out, the step-by-step form
+    if ((ADD_HOME.test(q) || (toMap && homey)) && !removing && !/\b(find|search|visit|directions|haunted house)\b/i.test(q)) out.push(homeStartCard());
+    if (ADD_CONTEST.test(q)) out.push(contestStartCard());
+    if (WEEKLY.test(q) && !STOP.test(q)) out.push(formCard("weekly_email"));
+    if (removing) out.push(formCard("remove_home"));
+    if (info) for (const c of out.slice(from)) c.suggest = true;
   }
   // Tier 3: the signed-in visitor's own listings (docs/ai-assistant-actions-design.md). Signed out: one card that says to sign in first.
-  if (t[3] && (!handoff || handoff === "gap") && wantsOwnerAction(q) && !informational(q) && !(removing && !user)) { if (user) out.unshift(...ownerCards({ question: q, own: own || {} })); else if (/\b(my|our|mine)\b/i.test(q)) out.unshift(signInCard()); }
+  if (t[3] && (!handoff || handoff === "gap") && wantsOwnerAction(q) && !(removing && !user) && !(informational(q) && !user)) { if (user) { const oc = ownerCards({ question: q, own: own || {} }); if (informational(q)) for (const c of oc) c.suggest = true; out.unshift(...oc); } else if (/\b(my|our|mine)\b/i.test(q)) out.unshift(signInCard()); }
   const ownerShown = out.some((c) => c.type === "call" || (c.type === "form" && c.call));
   if (t[2] && !handoff && !ownerShown) {
     const ev = (ctx.eventList || []).slice(0, 3);
