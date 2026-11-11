@@ -1451,7 +1451,7 @@ $("#q").addEventListener("keydown", (e) => {
 // The sheet is one full-height panel that only slides up and down (a GPU transform), so the buttons, the count / sort line and the
 // cards never move relative to the sheet and nothing is rebuilt while it moves. Peek shows the handle and the buttons row above the
 // floating tab bar; a soft fade at the bottom hides the rest of the sheet behind the tab bar and fades away as the sheet rises.
-const PEEK = 232; // visible height at Peek: the 44 px handle area, the buttons row, and the count and Sort row, which end just above the tab bar (it covered them at 160)
+const PEEK = 164; // visible height at Peek: the handle and the buttons row, ending right above the tab bar (the owner wants the list minimized this low; 232 raised it)
 let safeBottom = null;
 function peekH() {
   if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
