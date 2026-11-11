@@ -33,6 +33,7 @@ test("the event API returns ch for a live contest's event only, approved homes o
   const get = async (id) => (await eventGet({ request: new Request("https://socallights.app/api/events/" + id), env, params: { id }, waitUntil() {} })).json();
   const d = await get("c-light-up");
   assert.equal(d.ch.slug, "light-up"); assert.equal(d.ch.total, 1); assert.deepEqual(d.ch.homes.map((h) => [h.name, h.address, h.photo]), [["The A's", "1 Elm Ave, Covina, CA", "p/a/1.jpg"]]);
+  assert.deepEqual([d.ch.homes[0].lat, d.ch.homes[0].lng], [34.1, -118], "each home carries its pin, for directions");
   assert.equal((await get("x-1")).ch, undefined);
   assert.equal(await contestHomes(env, "x-1"), null);
 });

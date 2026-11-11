@@ -15,6 +15,9 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (navigate to contest homes)
+- Every home shown for a contest now has **Directions** (opens the person's maps app, same chooser as elsewhere) and **On map** (`/#h-<id>`): the map card strip, the `/e/c-<slug>` grid and the contest page rows. The card and the city page also have **Route all N homes**, which opens the contest page's existing route builder (`/c/<slug>#tour`, routes every home in stops of 9). Fixed the map card overflowing sideways on phones (the home strip was widening the whole card).
+
 ## 2026-11-11 (homes on a contest's cards)
 - A contest's map details card and its `/e/c-<slug>` page now list the homes entered: first 12 (photos first; rotating daily while voting is open) with name and address, plus the total and a "See all N homes" link to the contest page. Data: `functions/_lib/contesthomes.js`, returned as `ch` by `GET /api/events/c-<slug>`. Approved homes only. `/e` pages stay cached up to 15 minutes. Tests: `tests/contest-homes.test.mjs`.
 
