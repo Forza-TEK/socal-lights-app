@@ -960,15 +960,15 @@ const hasDetail = (ev) => "b" in ev;
 function loadDetail(ev) {
   if (hasDetail(ev)) return Promise.resolve(ev);
   const id = ev.id, kept = DETAIL.get(id);
-  if (kept) { HEAVY.forEach((k) => (ev[k] = kept[k])); return Promise.resolve(ev); }
+  if (kept) { HEAVY.forEach((k) => (ev[k] = kept[k])); if (kept.ch) ev.ch = kept.ch; return Promise.resolve(ev); }
   if (DFETCH.has(id)) return DFETCH.get(id);
   DERR.delete(id);
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
   const p = fetch("/api/events/" + encodeURIComponent(id), { signal: ctl.signal })
     .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
     .then((d) => {
-      const got = {}; HEAVY.forEach((k) => (got[k] = typeof d[k] === "string" ? d[k] : "")); DETAIL.set(id, got);
-      const cur = E.find((x) => x.id === id); HEAVY.forEach((k) => { ev[k] = got[k]; if (cur) cur[k] = got[k]; });
+      const got = {}; HEAVY.forEach((k) => (got[k] = typeof d[k] === "string" ? d[k] : "")); if (d.ch) got.ch = d.ch; DETAIL.set(id, got);
+      const cur = E.find((x) => x.id === id); HEAVY.forEach((k) => { ev[k] = got[k]; if (cur) cur[k] = got[k]; }); if (got.ch) { ev.ch = got.ch; if (cur) cur.ch = got.ch; }
       return ev;
     })
     .catch((err) => { DERR.set(id, err instanceof TypeError || (err && err.name === "AbortError") || navigator.onLine === false ? "net" : "http"); throw err; })
@@ -976,6 +976,12 @@ function loadDetail(ev) {
   DFETCH.set(id, p); return p;
 }
 const infoBtn = (ev, url) => (url ? `<a class="abtn" href="${esc(infoUrl(affUrl(url), ev.n, ev.city || ""))}" target="_blank" rel="noopener${isAff(url) ? " sponsored" : ""}" aria-label="Event info" title="Event info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a>` : "");
+// The homes entered in a contest (the first 12 and the total, from GET /api/events/c-<slug>): a swipeable strip on the details card
+const homesBox = (ev) => {
+  const h = ev.ch; if (!h) return "";
+  const tile = (x) => `<a class="chm" href="/c/${esc(h.slug)}">${x.photo ? `<img src="/api/photo/${esc(x.photo)}" alt="${esc(x.name)} lights" loading="lazy" width="180" height="135">` : '<span class="chn"></span>'}<b>${esc(x.name)}</b><span>${esc(x.address)}</span></a>`;
+  return `<section class="chomes" id="dhomes" aria-label="Homes entered"><h3>Homes entered${h.total ? ` (${h.total})` : ""}</h3>${h.homes.length ? `<div class="chstrip">${h.homes.map(tile).join("")}</div>${h.total > h.homes.length ? `<a class="chall" href="/c/${esc(h.slug)}">See all ${h.total} homes &rsaquo;</a>` : ""}` : `<p class="meta">No homes entered yet. Be the first to enter.</p>`}</section>`;
+};
 const contestBtn = (ev, url) => (String(ev.id).startsWith("c-") && url ? `<a class="contestgo" href="${esc(url)}">Enter your home or vote &rsaquo;</a>` : "");
 // the blurb's place while it loads: a grey block as tall as a typical blurb, or (when it could not load) a short note with Try again
 const blurbPending = (err) => err
@@ -991,7 +997,7 @@ function wireRetry(ev) { const b = $("#dretry"); if (b) b.onclick = () => { DERR
 // fill a just-loaded event into the open details page without redrawing it (the photo, scroll position and buttons stay as they are)
 function showDetail(ev) {
   swap("#dblurb", `<p class="blurb" id="dblurb">${esc(ev.b)}</p>`);
-  const url = safeUrl(ev.u); swap("#dslot", infoBtn(ev, url)); swap("#dcontest", contestBtn(ev, url));
+  const url = safeUrl(ev.u); swap("#dslot", infoBtn(ev, url)); swap("#dcontest", contestBtn(ev, url)); swap("#dhomes", homesBox(ev) || '<span id="dhomes"></span>');
   const phs = photosOf(ev, true), tr = $("#track"), cr = $("#hcredit"); // the photo credit names the event's site now that its link is known
   if (tr) [...tr.children].forEach((sl, i) => { const q = phs[i]; if (q) { sl.dataset.credit = q.credit || ""; sl.dataset.link = safeUrl(q.link) || ""; } });
   const q = phs[tr && tr.clientWidth ? Math.round(tr.scrollLeft / tr.clientWidth) : 0] || phs[0];
@@ -1013,7 +1019,7 @@ function detailHtml(k) {
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd>${ev.lc ? `<dt>Updated</dt><dd class="meta">${esc(fmt(ev.lc))}</dd>` : ""}</dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}
-    ${loading ? `<span id="dcontest"></span>` : contestBtn(ev, url)}${isSweepHome(ev) ? `<a class="claimhome" href="/add-house?claim=${encodeURIComponent(ev.id)}">Is this your home? Claim it &rsaquo;</a>` : ""}${reportLink(ev.n, "e-" + ev.id, ev.city, isSweepHome(ev))}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites" title="${f ? "In my favorites" : "Add to my favorites"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${loading ? `<span class="abtn" id="dslot" aria-hidden="true" style="visibility:hidden"></span>` : infoBtn(ev, url)}<a class="btn go" href="${esc(dirUrl(ev))}" ${navAttr([destOf(ev)])} target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
+    ${loading ? `<span id="dcontest"></span>` : contestBtn(ev, url)}${loading ? (String(ev.id).startsWith("c-") ? `<span id="dhomes"></span>` : "") : homesBox(ev)}${isSweepHome(ev) ? `<a class="claimhome" href="/add-house?claim=${encodeURIComponent(ev.id)}">Is this your home? Claim it &rsaquo;</a>` : ""}${reportLink(ev.n, "e-" + ev.id, ev.city, isSweepHome(ev))}<div class="actionbar"><button class="abtn" type="button" data-fav="${esc(ev.id)}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites" title="${f ? "In my favorites" : "Add to my favorites"}">${HEART}</button><button class="abtn" type="button" data-share="e:${esc(ev.id)}" aria-label="Share" title="Share">${SHARE}</button><button class="abtn" type="button" data-cal="${esc(ev.id)}" aria-label="Add to calendar" title="Add to calendar">${CAL_ICON}</button>${loading ? `<span class="abtn" id="dslot" aria-hidden="true" style="visibility:hidden"></span>` : infoBtn(ev, url)}<a class="btn go" href="${esc(dirUrl(ev))}" ${navAttr([destOf(ev)])} target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 3 3 10.5l7.5 3L13.5 21z"/></svg>Directions${awayShort(ev) ? " · " + awayShort(ev) : ""}</a></div></div>`;
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
   return `<div class="detail">  ${ph.length ? `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="ph-none">No photos yet</div></div>`}
