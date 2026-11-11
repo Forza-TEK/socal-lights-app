@@ -57,12 +57,22 @@ Pick **Better Stack** (free plan: one account does both the web check and the "h
 `curl -s https://socallights.app/api/health` should print `{"ok":true,"db":true,"stale":false,"staleJobs":[]}`. It reads one tiny table and is edge cached for 30 seconds (errors too). If D1 is over its free daily read limit it answers 503 `{"ok":false,"db":false,"quota":true,...}` ("over quota", resets 00:00 UTC), distinct from a plain outage (`"quota":false`).
 With the key (`ALERT_CRON_KEY`): `curl -s https://socal-lights.pages.dev/api/heartbeat -H "x-alert-key: $KEY"` lists every job: last run, hours ago, stale or failed.
 
-## The mail outbox clock (Cloudflare Worker, added 2026-11-11)
-Queued emails (contest results, voting reminders) used to be sent by `.github/workflows/mail-outbox.yml`, hourly on GitHub's scheduler, which really ran every 4 to 8 hours (that is what tripped the "scheduled job stopped" alert). Now a tiny Cloudflare Worker, `workers/mail-cron/`, has a 5-minute cron trigger: it calls `/api/mail/drain` until the queue is empty and then reports to the `mail-outbox` heartbeat. Cloudflare's scheduler is on time; GitHub's is not.
-- **Deploy:** `.github/workflows/deploy-mail-cron.yml` (on a change under `workers/mail-cron/`, or by hand from Actions > Deploy mail cron > Run workflow). It needs the repository secrets `CLOUDFLARE_API_TOKEN` and `ALERT_CRON_KEY`. **One-time setup:** the API token must also have **Account > Workers Scripts > Edit** (Cloudflare dashboard > My Profile > API Tokens > edit the token > add the permission > save; the token value does not change).
-- **Check it:** Cloudflare dashboard > Workers & Pages > `socal-lights-mail-cron` > Triggers shows the `*/5 * * * *` cron; Admin heartbeat shows `mail-outbox` reporting every few minutes; or `curl -s https://socallights.app/api/health` (`staleJobs` stays empty).
-- **Stage 2 (after it has run cleanly for a day):** remove the `schedule:` block from `.github/workflows/mail-outbox.yml` (keep `workflow_dispatch` as a manual fallback) and tighten the `mail-outbox` stale threshold in `functions/_lib/heartbeat.js` from 6 hours to 1 hour. Until then the old hourly run still exists as a safety net (draining is safe to run twice: rows are claimed before they are sent).
-- **Free-plan limits:** a Worker may make 50 outgoing calls per run; this one makes at most 9. Cron triggers on the free plan: 5 per account.
+## The Cloudflare clock (Worker `workers/mail-cron`, added 2026-11-11)
+GitHub's scheduler is best effort (the hourly mail job really ran every 4 to 8 hours, and the 30-minute usage check kept showing "late"). So every scheduled job that only needs to CALL THE SITE now runs from one Cloudflare Worker with several cron triggers; each job calls its endpoint, decides ok or fail the way its old GitHub workflow did, and reports to the heartbeat. Cloudflare's scheduler is on time.
+| Job | Cron (UTC) | Endpoint | Heartbeat |
+|---|---|---|---|
+| Send queued emails | every 5 minutes | `/api/mail/drain` (until empty) | `mail-outbox` |
+| Cloudflare usage check | `7,37 * * * *` | `/api/usage-check?notify=1` (the site emails the owner at 90%+, at most every 6 hours, instead of a GitHub issue) | `usage-check` |
+| Stripe reconcile | `47 14 * * *` | `/api/stripe-reconcile` (until done) | `stripe-reconcile` |
+| Sponsor renewals | `17 15 * * *` | `/api/sponsor/renewals` | `sponsor-renewals` |
+| Contest reminders | `15 17 * * *` | `/api/contest-remind` | `contest-reminders` (new) |
+| Weekly lights email | `30 17 * * 4` | `/api/alerts/send` (batches until done) | `alerts` |
+- **Stay on GitHub** (they need GitHub or wrangler): the admin digest (it also opens the GitHub "jobs stopped" issue and starts a late backup), the nightly backup, the deploy watch, the uptime check (Better Stack now does that job).
+- **Deploy:** `.github/workflows/deploy-mail-cron.yml` (on a change under `workers/mail-cron/`, or by hand from Actions > Deploy mail cron > Run workflow). Needs the repository secrets `CLOUDFLARE_API_TOKEN` (with **Account > Workers Scripts > Edit**) and `ALERT_CRON_KEY`. The Worker keeps its first name `socal-lights-mail-cron`.
+- **Check it:** Cloudflare dashboard > Workers & Pages > `socal-lights-mail-cron` > Triggers lists the six schedules; Metrics/Logs show the runs; Admin > Last run of each job shows each job reporting on time; `curl -s https://socallights.app/api/health` keeps `staleJobs` empty.
+- **Stage 1 (now):** the old GitHub schedules still run too, as a safety net. This is safe because every job is built to run twice (mail rows are claimed before sending; renewals and reminders are once-only; reconcile is read-only; the weekly email only sends to people not yet sent).
+- **Stage 2 (after a clean day):** remove the `schedule:` block from each moved workflow (`mail-outbox`, `usage-check`, `stripe-reconcile`, `sponsor-renewals`, `contest-reminders`, `alerts`), keeping `workflow_dispatch` as a manual fallback, and tighten the stale thresholds in `functions/_lib/heartbeat.js` (mail-outbox 6h to 1h, usage-check 4h to 1h).
+- **Limits:** a Worker may make 50 outgoing calls per run (the loops use at most 31); cron triggers: 5 per account on the free plan, more on Workers Paid (this account is on Paid, 6 are used).
 
 ## Routines (sweeps, weekly and midweek upkeep, browser pass, photo refresh)
 These are Claude Code scheduled tasks, not GitHub workflows, so they have no heartbeat endpoint call. Their trace is the migration or commit they leave. A routine that finds nothing leaves no trace at all, so check by hand:
