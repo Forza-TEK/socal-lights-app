@@ -1,0 +1,48 @@
+name: Deploy mail cron (Cloudflare Worker)
+
+# Puts workers/mail-cron on Cloudflare: a Worker with a 5-minute cron trigger that sends the queued emails (see workers/mail-cron/wrangler.toml).
+# Needs the repository secrets CLOUDFLARE_API_TOKEN (the token must ALSO have "Workers Scripts: Edit" on the account; D1 Edit and R2 Edit are already there) and ALERT_CRON_KEY (already set).
+# Runs when the Worker's files change on main, and by hand from Actions > Deploy mail cron > Run workflow.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/mail-cron/**"
+      - ".github/workflows/deploy-mail-cron.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-mail-cron
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 52d622850c5e367e319d35143c43a275  # account id (not a secret)
+      ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check the secrets are there
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::error::CLOUDFLARE_API_TOKEN secret is not set"; exit 1; fi
+          if [ -z "$ALERT_CRON_KEY" ]; then echo "::error::ALERT_CRON_KEY secret is not set"; exit 1; fi
+          TOKEN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | grep -oE '[A-Za-z0-9_-]{30,}' | head -n 1)
+          if [ -z "$TOKEN" ]; then echo "::error::CLOUDFLARE_API_TOKEN doesn't look like a Cloudflare token"; exit 1; fi
+          echo "CLOUDFLARE_API_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+      - name: Deploy the Worker
+        run: |
+          if ! npx --yes wrangler@4 deploy --config workers/mail-cron/wrangler.toml 2>&1 | sed -E 's#https?://[^[:space:]]+#<link hidden>#g'; then exit 1; fi
+          echo "deploy command finished"
+      - name: Give the Worker the key
+        run: |
+          printf '%s' "$ALERT_CRON_KEY" | npx --yes wrangler@4 secret put ALERT_CRON_KEY --config workers/mail-cron/wrangler.toml >/dev/null
+          echo "key set"
