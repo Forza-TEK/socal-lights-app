@@ -26,6 +26,14 @@ Runs in a Claude session that is **linked to the owner's computer (Claude deskto
 
 For each city read the calendar month by month, open every holiday, Halloween, Thanksgiving, tree lighting, parade, Santa, lights, Día de los Muertos, turkey trot and New Year event, and note title, date, time, venue, street address, cost, and the page URL. Also check each city's decorating-contest or home-lights page for published home addresses.
 
+## Photos (owner, 2026-11-11: yes, grab the photos from the pages Chrome can read)
+Many of these city pages refuse our bot, so events listed from them often have no photo. For every event on a page you load in Chrome, **both the events you add and the events already on the map whose `img` is empty** (include `img` in the slim fields you read from `/api/events`):
+1. Take the event's own picture from the page: the photo in the event's own block or gallery, else the page's `og:image` (from the meta tags or the DOM).
+2. In Chrome, check the image really loads (natural width 500 px or more) and **look at it** (screenshot or open it in a new tab). It must show the event or its place. Reject a logo, banner, ad, map, ticket graphic or site-wide default picture, a roundup page's single picture, and a picture that would sit on more than 3 events. A city or government event may use its city logo or seal only if nothing better exists.
+3. Use the image address as is (hotlink; do not download or re-host from the cloud shell). Add the guarded `UPDATE events SET image='...', updated_at=datetime('now') WHERE id='...' AND (image IS NULL OR image='');` to the same migration. Never use an address containing `--` (split it with `'...-' || '-...'`).
+4. If the page has no usable picture, look for the same event on the owner's other official site (`docs/sweep-methods.md` section 5.1), official sources only.
+5. List the events you could not give a photo in the report, with their page addresses. Same safety rule as everything here: if Chrome is refused, do not work around it.
+
 ## Publish
 1. Put every new event in ONE migration `migrations/<next number>_browser_pass_<date>.sql` (INSERT ... ON CONFLICT(id) DO UPDATE, at most 30 rows per INSERT). Geocode each address with Nominatim and accept only a result whose house number matches; set photos only from the event's own page (hotlink if under 1.5 MB).
 2. Run `npm run validate`, fix every error, review every warning.
