@@ -57,6 +57,13 @@ const tick = (k) => { try { if (navigator.webdriver) return; const body = JSON.s
 document.addEventListener("click", (e) => {
   const a = e.target.closest && e.target.closest("a,[data-clk]"); if (!a) return;
   if (a.dataset.clk) return tick(a.dataset.clk);
+  // "On map" links (/#h-<home id>, /#e-<event id>) inside the app: the page is already open, so a hash change alone does nothing. Open that place here.
+  const dl = (a.getAttribute && a.getAttribute("href") || "").match(/^\/#([eh])-(.+)$/);
+  if (dl && location.pathname === "/" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+    let id = dl[2]; try { id = decodeURIComponent(id); } catch {}
+    const k = (dl[1] === "e" ? "e:" : "i:") + id, it = findKey(k);
+    if (it) { e.preventDefault(); const sn = it.kind === "ev" ? it.ev.sn : it.p.season; if (SEASONS[sn] && sn !== state.season) setSeason(sn); selectKey(k, "list"); try { history.replaceState(null, "", "/#" + dl[1] + "-" + dl[2]); } catch {} return; }
+  }
   if (a.matches('.mrow[href="/feature"]')) return tick("click:promote");
   if (a.matches(".shopcard")) return tick("click:shop");
   if (a.matches(".actionbar a.btn.go, a.legbtn")) return tick("click:route");
