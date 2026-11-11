@@ -301,3 +301,16 @@ test("digest: a stalled deploy is reported with the fix; a healthy system adds n
     assert.match(sent[0].text, /cancel the stuck one, then retry the production deployment/);
   } finally { globalThis.fetch = real; }
 });
+
+test("/api/health?strict=1: 200 while every job is fresh, 503 when a job is stale (for a monitor that only reads the status code); plain /api/health stays 200", async () => {
+  const { env, raw } = newEnv();
+  const strict = (init) => health({ request: new Request("https://x.test/api/health?strict=1", init), env });
+  let res = await strict(); assert.equal(res.status, 200); assert.equal((await res.json()).stale, false);
+  raw.prepare("UPDATE job_heartbeats SET last_at = ? WHERE job = 'backup'").run(hoursAgo(31));
+  res = await strict(); const b = await res.json();
+  assert.equal(res.status, 503, "stale job: the status-code monitor alerts"); assert.deepEqual(b.staleJobs, ["backup"]);
+  assert.equal((await strict({ method: "HEAD" })).status, 503);
+  assert.equal((await health({ request: new Request("https://x.test/api/health"), env })).status, 200, "the plain endpoint is unchanged");
+  const broken = { DB: { prepare: () => ({ all: async () => { throw new Error("D1_ERROR: down"); }, first: async () => { throw new Error("D1_ERROR: down"); } }) } };
+  assert.equal((await health({ request: new Request("https://x.test/api/health?strict=1"), env: broken })).status, 503, "database down is 503 either way");
+});
