@@ -1024,3 +1024,6 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Organizer dashboard > Entries: the table is now a list of entry rows (photo or "No photo" with the entry number, name with status and "Added by organizer" tags, address, contact or "The homeowner has not linked this home yet", and the buttons together on the right; they drop under the text on a phone).
 
 - City sweep group 18 (High Desert & Mountains), 2026-11-11: 1 event added (Magic in the Cove, Lucerne Valley, expected; migration 0233). Everything else found was already on the map. No usable photos (county roundup og:image is a shared holidays.jpg; allevents banners are flyers). No public home-contest addresses (29 Palms Holiday Light Tour, Yucca Valley porch contest, Big Bear Festival of Lights: no 2026 lists yet).
+
+## 2026-11-11 midweek upkeep (Wed)
+Migration 0234: confirmed 10 Ventura/SB/San Bernardino-county Christmas events from 2026 organizer/roundup pages (Camarillo Glow moved to Dec 5), 1 photo. No contest homes yet: Temecula map due week of Dec 7, Norwalk judging Dec 14, Big Bear voting map Dec 1, Santa Maria tour map Dec 4. Not confirmable yet: Ojai tree lighting, Downtown SB/Ventura tree lightings, Goleta Depot, Paseo Nuevo, San Bernardino County city tree lightings (no 2026 pages).
