@@ -992,8 +992,12 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 /* Map top bar, one look at every width: the season button is always a round icon (its name is the tooltip and the screen-reader label), and a round "+" (Add) sits beside the profile
    circle. When the bar drops to two rows, the season circle is under the logo and the "+" goes under the season circle. */
 #addbtn{display:inline-grid;place-items:center;text-decoration:none;color:var(--ink)}
-.seasonbtn,.seasonbtn.mini{--sb:52px;width:var(--sb);height:var(--sb);padding:0;gap:0;justify-content:center}
-.seasonbtn #seasonlbl,.seasonbtn .caret{display:none}
+.seasonbtn,.seasonbtn.mini{--sb:52px;width:var(--sb);height:var(--sb);padding:0;gap:0;justify-content:center;transition:width .35s cubic-bezier(.25,.1,.25,1),padding .35s cubic-bezier(.25,.1,.25,1),gap .35s cubic-bezier(.25,.1,.25,1)}
+.seasonbtn:not([aria-expanded="true"]) #seasonlbl,.seasonbtn:not([aria-expanded="true"]) .caret{max-width:0;opacity:0;margin:0}
+/* open (its season list is showing): the circle grows into the wide button with the season's name and the arrow */
+.seasonbtn[aria-expanded="true"],.seasonbtn.mini[aria-expanded="true"]{width:auto;padding:0 18px;gap:8px}
+.seasonbtn[aria-expanded="true"] #seasonlbl,.seasonbtn.mini[aria-expanded="true"] #seasonlbl{max-width:240px;opacity:1}
+.seasonbtn[aria-expanded="true"] .caret,.seasonbtn.mini[aria-expanded="true"] .caret{max-width:24px;opacity:1;margin-right:-4px}
 @media (max-width:1099px){
   .seasonbtn,.seasonbtn.mini{--sb:44px}
   .searchrow{grid-template-areas:"brand search acct more" "season season season theme" "add add add add"!important}
@@ -1002,6 +1006,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 }
 @media (max-width:700px){#welcome{top:calc(env(safe-area-inset-top,0px) + 176px)!important}}
 @media (min-width:701px) and (max-height:500px){
+  #seasonbtn[aria-expanded="true"]{width:auto;padding:0 16px}#seasonbtn[aria-expanded="true"] #seasonlbl,#seasonbtn[aria-expanded="true"] .caret{display:inline}
   #addbtn{position:fixed!important;left:14px;top:120px;width:44px;height:44px;z-index:21}
   #themebtn{top:170px!important}
   #welcome{top:120px!important;left:72px}
