@@ -24,7 +24,7 @@ import { rulesDefault } from "/rules.js?v=20261107a";
 import { printable } from "/printables.js?v=20261107a";
 import { CITY } from "/cities.js?v=20261107a";
 import { defaultSeason } from "/seasons.js?v=20261104a";
-import { pickerHtml, beacon, niceDate, IN_APP, appPassHtml, openWeb } from "/contest-passes.js?v=20261111a";
+import { pickerHtml, beacon, niceDate, IN_APP, appPassHtml, openWeb } from "/contest-passes.js?v=20261111b";
 const FREE = new Set(["gmail.com","googlemail.com","hotmail.com","outlook.com","live.com","msn.com","yahoo.com","icloud.com","me.com","aol.com","proton.me","protonmail.com"]);
 capture(null, null, "contest");
 const DEF = ["Best Overall", "Most Creative", "Best Lights & Music", "Best Traditional"], cities = Object.keys(CITY).sort();
@@ -41,7 +41,7 @@ if (!cur.user) {
 }
 const hostOf = (s) => { try { return new URL(/^https?:/i.test(s) ? s : "https://" + s).hostname.replace(/^www\./, "").toLowerCase(); } catch { return ""; } };
 function trustNow() { if (!cur.user) return ""; const dom = cur.user.email.split("@")[1]; if (FREE.has(dom)) return "free"; if (!d.site.trim()) return "none"; const h = hostOf(d.site); return h && (h === dom || h.endsWith("." + dom) || dom.endsWith("." + h)) ? "match" : "other"; }
-const TRUST = { match: "Your email matches your website, so your contest goes live right away.", free: "Your contest goes live right away. Because Gmail, Hotmail and similar addresses can't be matched to an organization, a person may take a quick look at it later.", other: "Your contest goes live right away. Your email doesn't match your website, so a person may take a quick look at it later.", none: "Your contest goes live right away. Adding a website helps people see who is behind it." };
+const TRUST = { match: "Your email matches your website, so your contest goes live after you choose a pass, if you need one.", free: "Your contest goes live after you choose a pass, if you need one. Because Gmail, Hotmail and similar addresses can't be matched to an organization, a person may take a quick look at it later.", other: "Your contest goes live after you choose a pass, if you need one. Your email doesn't match your website, so a person may take a quick look at it later.", none: "Your contest goes live after you choose a pass, if you need one. Adding a website helps people see who is behind it." };
 const rulesArgs = () => ({ name: d.name, org: d.org, city: d.city, closes: d.closes, vs: d.vs, ve: d.ve, oneWin: d.oneWin === "yes", mode: d.mode, method: d.method, prizeMode: d.prizeMode, prize: d.prize, sponsor: d.sponsor });
 const parseJudges = (t) => [...new Set((t || "").split(/[\n,;]+/).map((x) => x.trim()).filter((x) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x)))];
 const kinds = () => (d.mode === "judges" ? [["judge", "Judges' Choice"]] : d.mode === "both" ? [["public", "People's Choice"], ["judge", "Judges' Choice"]] : [["public", "People's Choice"]]);

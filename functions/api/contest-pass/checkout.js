@@ -1,7 +1,8 @@
-// POST /api/contest-pass/checkout  { plan: "pass_5" | "pass_10" | "pass_20", site?, back? }  ->  { url } (Stripe Checkout page).
+// POST /api/contest-pass/checkout  { plan: "pass_1" | "pass_5" | "pass_20", site?, back? }  ->  { url } (Stripe Checkout page).
 // Needs a signed-in account. The organization, the window, the cap and the price come from the server only (passes.js) and are locked into the payment (metadata quote_*): the webhook
 // applies exactly that, checks the amount against it, and holds the order as refund due if the window changed or the organization already holds this much.
 // Same shape as /api/sponsor/checkout. Never touches a contest, a vote or a result.
+import { niceYmd } from "../../_lib/money.js";
 import { json, err, clean } from "../../_lib/util.js";
 import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { keyForUser } from "../../_lib/passkey.js";
@@ -32,7 +33,7 @@ export async function onRequestPost({ request, env }) {
     "line_items[0][price_data][currency]": "usd",
     "line_items[0][price_data][unit_amount]": String(q.cents), // the pass price, or the difference for an upgrade (passes.js); never from the browser
     "line_items[0][price_data][product_data][name]": `Contest pass on SoCal Lights: ${orgLabel(key)}`.slice(0, 120),
-    "line_items[0][price_data][product_data][description]": `${p.label} · ${q.from} to ${q.to}${q.upgrade ? " · upgrade (the difference)" : ""}`.slice(0, 200),
+    "line_items[0][price_data][product_data][description]": `${p.label} · ${niceYmd(q.from)} to ${niceYmd(q.to)}${q.upgrade ? " · upgrade (the difference)" : ""}`.slice(0, 200),
     "metadata[event_id]": key, // the organization key (the shared metadata name every placement uses)
     "metadata[target]": "contest_pass",
     "metadata[plan]": plan,

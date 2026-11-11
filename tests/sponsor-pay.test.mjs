@@ -72,7 +72,7 @@ test("checkout: the price and dates come from the server; metadata, idempotency,
     const sent = new URLSearchParams(String(f.calls[0].init.body));
     assert.equal(sent.get("line_items[0][price_data][unit_amount]"), "7500");
     assert.equal(sent.get("metadata[target]"), "installer"); assert.equal(sent.get("metadata[event_id]"), "i1"); assert.equal(sent.get("metadata[plan]"), "banner_top"); assert.equal(sent.get("metadata[user_id]"), "u1");
-    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /2026-11-06 to 2027-01-06/);
+    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /Nov 6, 2026 to Jan 6, 2027/);
     assert.equal(sent.get("customer_email"), "owner@example.com");
     assert.match(sent.get("success_url"), /\/sponsor\?paid=1&installer=bright-nights&plan=banner_top$/); assert.match(sent.get("cancel_url"), /\/sponsor\?cancelled=1&installer=bright-nights/);
     assert.match(f.calls[0].init.headers["idempotency-key"], /^sponsor-[0-9a-f]{64}$/);
@@ -88,7 +88,7 @@ test("checkout on the last days of a season charges the full price; the webhook 
     assert.equal(r.status, 200);
     const sent = new URLSearchParams(String(f.calls[0].init.body));
     assert.equal(sent.get("line_items[0][price_data][unit_amount]"), "5000", "no proration, even on Dec 14");
-    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /2026-12-14 to 2027-01-06/); assert.ok(!/prorated/.test(sent.get("line_items[0][price_data][product_data][description]")));
+    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /Dec 14, 2026 to Jan 6, 2027/); assert.ok(!/prorated/.test(sent.get("line_items[0][price_data][product_data][description]")));
     await pay(env, 1, "banner", 5000);
     assert.equal(getOrder(raw, "cs_1").note, null); assert.equal(getOrder(raw, "cs_1").amount, 5000, "the amount charged is stored"); assert.equal(getInst(raw).banner_until, "2027-01-06");
     await pay(env, 2, "banner_top", 7500);

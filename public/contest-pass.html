@@ -9,8 +9,9 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261111zb">
-<link rel="stylesheet" href="/info.css?v=20261110y">
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111zb";
+import { me, signIn } from "/auth.js?v=20261111z";
+import { pickerHtml, plansPreviewHtml, beacon, niceDate, esc, IN_APP, passPageUrl, openWeb } from "/contest-passes.js?v=20261111b";
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
@@ -18,15 +19,17 @@
 <main>
 <h1>Contest passes</h1>
 <p class="lede">A contest pass lets your organization run a single contest, up to 5 or up to 20 inside a 12-month window. It only counts contests: entering and voting stay free, and payment never affects any result, vote, judge or ranking.</p>
+<p class="meta" id="msg" role="status" aria-live="polite" style="font-weight:600"></p>
 <div id="app"><p class="muted">Loading…</p></div>
-<p class="meta" id="msg" role="status"></p>
 </main>
 <script type="module">
 import { themeBtn, mountAcct } from "/addflow.js?v=20261111zb";
 import { me, signIn } from "/auth.js?v=20261111z";
-import { pickerHtml, beacon, niceDate, esc, IN_APP, passPageUrl, openWeb } from "/contest-passes.js?v=20261111a";
+import { pickerHtml, plansPreviewHtml, beacon, niceDate, esc, IN_APP, passPageUrl, openWeb } from "/contest-passes.js?v=20261111b";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 const $ = (q) => document.querySelector(q), q = new URLSearchParams(location.search);
+// A status message sits ABOVE the picker (the Choose button is far below it on a phone) and is scrolled into view.
+const say = (t) => { $("#msg").textContent = t; if (t) $("#msg").scrollIntoView({ block: "center", behavior: "smooth" }); };
 const back = /^manage:[a-z0-9-]{1,60}$/.test(q.get("back") || "") ? q.get("back") : "pass";
 const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
 // ?site= is the contest website from the wizard: it decides which organization the pass belongs to (the same way a new contest does). Kept through Stripe.
@@ -34,7 +37,7 @@ const site = q.get("site") || "";
 const entitlement = async () => { const r = await fetch("/api/contest-pass/entitlement" + (site ? "?site=" + encodeURIComponent(site) : ""), { cache: "no-store" }); return r.ok ? r.json() : null; };
 if (IN_APP) { $("#app").innerHTML = `<p>Contest passes are bought on our website, in your browser, not inside the app.</p><p><a class="btn" href="${esc(passPageUrl(site))}" id="web" target="_blank" rel="noopener">Continue on socallights.app</a></p>`; $("#web").onclick = (e) => { e.preventDefault(); openWeb($("#web").href); }; }
 else if (!(await me()).user) {
-  $("#app").innerHTML = `<p>Sign in to see where your organization stands and to choose a pass.</p><button class="btn" id="in" type="button">Sign in</button>`;
+  $("#app").innerHTML = plansPreviewHtml(cfg) + `<p>Sign in to see where your organization stands and to choose a pass.</p><button class="btn" id="in" type="button">Sign in</button>`;
   $("#in").onclick = async () => { if (await signIn({ title: "Sign in to choose a pass", next: location.pathname + location.search })) location.reload(); };
 } else {
   const paint = (v) => {
@@ -47,17 +50,17 @@ else if (!(await me()).user) {
       beacon("fn:pass-choose"); b.disabled = true; b.textContent = "Opening payment…";
       const r = await fetch("/api/contest-pass/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: b.dataset.pass, back, ...(site ? { site } : {}) }) }), j = await r.json().catch(() => ({}));
       if (r.ok && j.url) { location.href = j.url; return; }
-      b.disabled = false; b.textContent = "Choose"; $("#msg").textContent = j.error || "The payment page couldn't be opened. Please try again.";
+      b.disabled = false; b.textContent = "Choose"; say(j.error || "The payment page couldn't be opened. Please try again.");
     }));
     document.querySelectorAll("[data-pass-contact]").forEach((a) => (a.onclick = () => { fetch("/api/contest-pass/contact", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }).catch(() => {}); }));
     if (!v.comp) beacon("fn:pass-picker-shown");
   };
-  if (q.get("pass") === "cancelled") $("#msg").textContent = "Payment cancelled. Nothing was charged.";
+  if (q.get("pass") === "cancelled") say("Payment cancelled. Nothing was charged.");
   let v = await entitlement();
   if (q.get("pass") === "paid") {
-    $("#msg").textContent = "Payment received. Confirming your pass…";
+    say("Payment received. Confirming your pass…");
     for (let i = 0; i < 20 && v && !v.holdsPass; i++) { await new Promise((go) => setTimeout(go, 1500)); v = await entitlement(); }
-    $("#msg").textContent = v && v.holdsPass ? "Your pass is active. A receipt is on its way to your email. If you started from the SoCal Lights app, go back to the app and tap I have my pass." : "Your payment is still being confirmed. Refresh this page in a minute. You will not be charged again.";
+    say(v && v.holdsPass ? "Your pass is active. A receipt is on its way to your email. If you started from the SoCal Lights app, go back to the app and tap I have my pass." : "Your payment is still being confirmed. Refresh this page in a minute. You will not be charged again.");
     const m = (q.get("back") || "").match(/^manage:([a-z0-9-]+)$/);
     if (v && v.holdsPass && m) $("#msg").insertAdjacentHTML("beforeend", ` <a href="/c/${esc(m[1])}/manage">Back to your contest</a>`);
   }
