@@ -2,15 +2,18 @@
 // (Pages applies _headers to static assets only, not to Function responses).
 //
 // Rules: never change a body, never override a header the handler already set, never throw (any problem falls through to the plain response).
-// A Content-Security-Policy is deliberately NOT set here: it needs a long test across the map app, Turnstile, Google sign-in and the admin pages
-// (deferred, see docs/status.md and the audit item S-02). Set-Cookie and cache headers are left exactly as the handler wrote them.
+// HSTS and a REPORT-ONLY Content-Security-Policy are added (functions/_lib/secheaders.js). The CSP is deliberately not enforced: it needs a long test across the map app, Turnstile,
+// sign-in and the admin pages first. Set-Cookie and cache headers are left exactly as the handler wrote them.
 import { noteQuotaError } from "./_lib/oplog.js";
+import { CSP_REPORT_ONLY, HSTS } from "./_lib/secheaders.js";
 
 const HEADERS = [
   ["X-Content-Type-Options", "nosniff"],
   ["Referrer-Policy", "strict-origin-when-cross-origin"],
   ["Permissions-Policy", "geolocation=(self), camera=(), microphone=()"],
   ["X-Frame-Options", "SAMEORIGIN"],
+  ["Strict-Transport-Security", HSTS],
+  ["Content-Security-Policy-Report-Only", CSP_REPORT_ONLY],
 ];
 
 export async function onRequest({ next, env }) {

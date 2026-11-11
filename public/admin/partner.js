@@ -1,7 +1,7 @@
 // Admin > Event Partners: one list of organizations (a plan, a comp or covered events this season), like Contest passes. Open one for its events (free a slot),
 // its comps and plans, and a form to grant it a comp. "Grant a comp" at the top does the same for a new organization (founder cities are free; no price is ever shown to them).
 // Plans bought also show in Orders.
-import { esc, btn, rec, fact, toast, modalFrame } from "/admin/kit.js?v=20261103a";
+import { esc, btn, rec, fact, toast, modalFrame, tap } from "/admin/kit.js?v=20261113a";
 
 const $ = (s) => document.querySelector(s);
 async function api(path, opts = {}) {
@@ -62,13 +62,13 @@ function openOrg(key) {
   $("#mClose").onclick = close;
   wireGrant(m, "po", key, async () => { await renderPartner(MAIN); openOrg(key); });
   m.querySelectorAll("[data-pact]").forEach((b) => (b.onclick = async () => {
-    if (!confirm("End this comp now?")) return;
+    if (!tap(b, "end this comp")) return;
     try { await api("/api/admin/partner", { method: "POST", body: JSON.stringify({ action: "revoke_comp", id: b.closest("[data-pcomp]").dataset.pcomp }) }); toast("Done"); await renderPartner(MAIN); openOrg(key); } catch (er) { toast(er.message, true); }
   }));
   m.querySelectorAll("[data-act=release]").forEach((a) => (a.onclick = async (e) => {
     e.preventDefault();
-    if (!confirm("Free this slot? The event stops showing the Event Partner badge. Its Featured pin is left as it is (change it in Events).")) return;
-    try { await api("/api/admin/partner", { method: "POST", body: JSON.stringify({ action: "release", event_id: a.dataset.ev, season_start: a.dataset.ss }) }); toast("Slot freed"); await renderPartner(MAIN); openOrg(key); } catch (er) { toast(er.message, true); }
+    if (!tap(a, "free this slot")) return;
+    try { await api("/api/admin/partner", { method: "POST", body: JSON.stringify({ action: "release", event_id: a.dataset.ev, season_start: a.dataset.ss }) }); toast("Slot freed. The Event Partner badge is gone; the Featured pin is left as it is (change it in Events)."); await renderPartner(MAIN); openOrg(key); } catch (er) { toast(er.message, true); }
   }));
 }
 

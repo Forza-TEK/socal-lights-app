@@ -1,5 +1,5 @@
 // Admin > Help: the Help Center articles, what people searched for and did not find, and the "not helpful" notes.
-import { esc, toolbar, wireToolbar, tap, toast, modalFrame } from "/admin/kit.js?v=20261103a";
+import { esc, toolbar, wireToolbar, tap, toast, modalFrame } from "/admin/kit.js?v=20261113a";
 
 const $ = (s) => document.querySelector(s);
 async function api(path, opts = {}) {

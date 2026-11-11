@@ -1,5 +1,5 @@
 // Admin > AI assistant: the on/off switch, the kill switch, the cost cap and today's and this month's counters. Counters only: there is no message text to read.
-import { esc, btn, tap, toast } from "/admin/kit.js?v=20261103a";
+import { esc, btn, tap, toast } from "/admin/kit.js?v=20261113a";
 
 const $ = (s) => document.querySelector(s);
 async function api(path, opts = {}) {

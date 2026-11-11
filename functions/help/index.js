@@ -1,9 +1,11 @@
 // GET /help — the Help Center: a search box, the seven categories with their articles, and a way to ask a person.
 // GET /help?q=words — the same page with the search answered on the server (works without scripts) and the search logged.
 import { loadArticles, searchArticles, CATEGORIES, KINDS } from "../_lib/help.js";
+import { hasTrailingSlash, permanent } from "../_lib/redirect.js";
 import { helpFrame, searchBox, searchScript, articleLink, catTabs, tabScript, askForm, esc } from "../_lib/helpui.js";
 
 export async function onRequestGet({ request, env }) {
+  if (hasTrailingSlash(request)) return permanent(request, "/help");
   const url = new URL(request.url), origin = url.origin, q = (url.searchParams.get("q") || "").trim().slice(0, 120);
   const list = await loadArticles(env);
   let found = null;

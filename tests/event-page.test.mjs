@@ -18,21 +18,22 @@ const seed = () => {
 test("confirmed upcoming event: own preview tags, Event data, indexable, map button", async () => {
   const h = await (await get(seed(), "conf")).text();
   assert.match(h, /<title>Candy Lane in Altadena, CA \| SoCal Lights<\/title>/);
-  assert.match(h, /property="og:url" content="https:\/\/x\.test\/e\/conf"/); assert.match(h, /og:image" content="https:\/\/img\.example\.org\/a\.jpg"/);
+  assert.match(h, /property="og:url" content="https:\/\/x\.test\/e\/conf"/); assert.match(h, /og:image" content="https:\/\/x\.test\/cdn-cgi\/image\/width=1200,height=630,fit=cover,quality=70,format=jpeg\/https:\/\/img\.example\.org\/a\.jpg"/); assert.match(h, /og:image:width" content="1200"/); assert.match(h, /twitter:image" content="https:\/\/x\.test\/cdn-cgi/);
   assert.match(h, /twitter:card/); assert.match(h, /"@type":"Event"/); assert.match(h, /"price":"0"/);
   assert.doesNotMatch(h, /name="robots"/); assert.match(h, /href="\/#e-conf"/); assert.match(h, /href="\/in\/altadena"/);
 });
 
-test("expected and ended events: no Event data, noindex; unknown id is 404", async () => {
+test("expected and ended events: never Event data; an ended one is noindex; unknown id is 404", async () => {
   const env = seed();
-  for (const id of ["exp", "old"]) { const h = await (await get(env, id)).text(); assert.doesNotMatch(h, /"@type":"Event"/); assert.match(h, /noindex,follow/); }
+  for (const id of ["exp", "old"]) { const h = await (await get(env, id)).text(); assert.doesNotMatch(h, /"@type":"Event"/); }
+  assert.match(await (await get(env, "old")).text(), /noindex,follow/);
   assert.match(await (await get(env, "exp")).text(), /date estimated/);
   assert.equal((await get(env, "nope")).status, 404);
 });
 
-test("sitemap lists confirmed upcoming events only", async () => {
+test("sitemap lists the indexable event pages (confirmed upcoming, and expected ones the rule allows) with their own lastmod, never an ended one", async () => {
   const xml = await (await sitemap({ request: new Request("https://x.test/sitemap.xml"), env: seed() })).text();
-  assert.match(xml, /\/e\/conf</); assert.doesNotMatch(xml, /\/e\/exp</); assert.doesNotMatch(xml, /\/e\/old</);
+  assert.match(xml, /<loc>https:\/\/x\.test\/e\/conf<\/loc><lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/); assert.match(xml, /\/e\/exp</); assert.doesNotMatch(xml, /\/e\/old</);
 });
 
 test("breadcrumbs: visible trail and BreadcrumbList on event pages, ended events included", async () => {

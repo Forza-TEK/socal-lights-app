@@ -2,11 +2,13 @@
 import { loadArticles, renderBody, plainText, CAT, KINDS } from "../_lib/help.js";
 import { helpFrame, askForm, articleLink, esc } from "../_lib/helpui.js";
 import { jsonScript } from "../_lib/shell.js";
+import { hasTrailingSlash, permanent } from "../_lib/redirect.js";
 
 const notFound = (origin) => new Response(helpFrame({ title: "Help article not found | SoCal Lights", noindex: true, origin, body: `<h1>We couldn't find that page</h1><p class="lede">It may have moved. Try a search.</p><p><a class="btn go" style="display:inline-flex;max-width:260px" href="/help">Go to the Help Center</a></p>` }), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
 
 export async function onRequestGet({ request, env, params }) {
   const origin = new URL(request.url).origin, slug = String(params.slug || "").toLowerCase();
+  if (slug && (slug !== params.slug || hasTrailingSlash(request))) return permanent(request, "/help/" + encodeURIComponent(slug));
   const list = await loadArticles(env), a = list.find((x) => x.slug === slug);
   if (!a) return notFound(origin);
   const cat = CAT[a.category] || { key: a.category, title: "Help" };
