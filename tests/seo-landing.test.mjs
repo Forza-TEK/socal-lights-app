@@ -71,7 +71,7 @@ test("theme: every page's head script follows the device's dark setting as well 
 test("list cards: small copies (320 wide), only the first two load at once, sizes declared", () => {
   const app = read("public/app.js");
   assert.ok(app.includes("photoImg(ph, i < 2, 320, 120)")); assert.ok(app.includes("photoImg({ src: photoUrl(ph[0]) }, i < 2, 320, 120)"));
-  assert.match(app, /\(THUMBS && \/\^\\\/\(img\\\/events\|api\\\/photo\)\\\//);
+  assert.match(app, /\(THUMBS && \/\^\\\/\(img\\\/events\|api\\\/photo\|img\\\/stock\\\/t\)\\\//); // our own photos and the stock thumbnails
   assert.match(app, /width="\$\{w\}" height="\$\{h\}"/);
 });
 
