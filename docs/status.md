@@ -86,6 +86,9 @@ Audit items SEO-02 to SEO-12, MAP-12, MAP-13, MAP-15, ADM-01 to ADM-11. Full rul
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (nav bar closer to the address bar)
+- The phone nav bar sits at `max(4px, safe-area-inset-bottom - 6px)` from the bottom (was safe area + 6 px): 2 px lower where the safe area is 0, and 12 px lower on phones that report a bottom safe area (home-indicator or floating browser bar). The collapsed sheet follows (`peekH` in `app.js`), so the gap under the filter pills stays 6 px.
+
 ## 2026-11-11 (phone sheet handle spacing)
 - On phones the list sheet's handle bar sits 9 px from the top edge and the sponsor strip starts about 24 px below the top (was 46 px). The handle keeps its 44 px grab area (the strip overlaps its lower half) and the collapsed sheet is 22 px lower (`PEEK` 164 to 142), so the pills and the nav bar stay where they were.
 
