@@ -11,7 +11,9 @@ export async function onRequestGet(context) {
   const groups = new Map();
   for (const c of rows) { const l = contestLabel(c); (groups.get(l) || groups.set(l, []).get(l)).push(c); }
   const title = "Past home decorating contest results | SoCal Lights";
-  const desc = `Results of ${rows.length} finished home decorating contest${rows.length === 1 ? "" : "s"} across Southern California: the winners and every home that entered, by season and year.`;
+  const desc = rows.length
+    ? `Results of ${rows.length} finished home decorating contest${rows.length === 1 ? "" : "s"} across Southern California: the winners and every home that entered, by season and year.`
+    : "Results appear here when a contest ends: the winners and every home that entered, by season and year.";
   const sections = [...groups].map(([label, cs]) => `<h2>${esc(label)}</h2><div class="list">${cs.map((c) => { const n = JSON.parse(c.results).entries.length; return `<a class="ev" href="/past/${esc(c.slug)}" style="grid-template-columns:minmax(0,1fr)"><div><h3>${esc(c.name)}</h3><p>${esc(c.org)} · ${esc(c.city)}</p><p>${n} home${n === 1 ? "" : "s"} entered</p></div></a>`; }).join("")}</div>`).join("");
   const ld = { "@context": "https://schema.org", "@type": "ItemList", name: "Past home decorating contest results", numberOfItems: rows.length, itemListElement: rows.slice(0, 100).map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, url: `${origin}/past/${c.slug}` })) };
   const body = `${header("Open the map")}<main><h1>Past contest results</h1><p class="sub">${esc(desc)}</p>${rows.length ? sections : `<div class="note"><p>No contest has announced its winners yet.</p></div>`}<div class="foot"><a href="/contests">Contests</a><a href="/">All of Southern California</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></main>`;

@@ -1,7 +1,7 @@
 // The signed-in pages' frame (Profile, Tutorials), built the same way as Admin:
 //   desktop: side menu | tablet: icon rail | phone: top bar + bottom bar + "More" sheet.
 // mountShell moves the page's #content into the frame and returns { setActive, setCount, setTitle }.
-import { themeBtn, mountAcct } from "/chrome.js?v=20261111a";
+import { themeBtn, mountAcct } from "/chrome.js?v=20261111fe1";
 const P = {
   map: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/>',
@@ -13,7 +13,7 @@ const P = {
 };
 const svg = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.file}</svg>`;
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261111a"; document.head.appendChild(l); }
+if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261111fe1"; document.head.appendChild(l); }
 const SITE = [["map", "Map", "/", "map"], ["add", "Add", "/add", "add"], ["tut", "Tutorials", "/tutorials", "play"], ["help", "Help", "/help", "help"], ["prof", "Your profile", "/profile", "user"]];
 
 // opts: { page: "tut"|"prof"|"contest"..., extra: [[key,label,href,icon]], title, items: [{k,label,icon,count?}], active, onPick(k) }
@@ -27,7 +27,7 @@ export function mountShell({ page, title, items, active, onPick, extra = [] }) {
   <nav class="sh-side" id="sh-side" aria-label="${esc(title)} sections"><a class="sh-brand" href="/" aria-label="SoCal Lights home"><img src="/img/badge-160.webp" width="40" height="40" alt=""><span class="sh-lb">SoCal <b>Lights</b></span></a>
     <div class="sh-list"><p class="sh-gh sh-own">${esc(title)}</p><div class="sh-grp sh-own">${items.map(item).join("")}</div><p class="sh-gh">SoCal Lights</p><div class="sh-grp">${site}</div></div></nav>
   <div class="sh-scrim" id="sh-scrim"></div>
-  <div class="sh-col"><header class="sh-top"><a class="sh-tbrand" href="/" aria-label="SoCal Lights home"><img src="/img/badge-160.webp" width="36" height="36" alt=""></a><span class="sh-title" id="sh-title">${esc(title)}</span><span class="sh-grow"></span>${themeBtn()}<span id="acct"></span></header></div>
+  <div class="sh-col"><header class="sh-top"><a class="sh-tbrand" href="/" aria-label="SoCal Lights home"><img src="/img/badge-160.webp" width="36" height="36" alt=""></a><span class="sh-title" id="sh-title">${esc(title)}</span><span class="sh-grow"></span><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a>${themeBtn()}<span id="acct"></span></header></div>
   <nav class="sh-bbar" aria-label="Quick sections">${bottom}<button type="button" class="sh-bb" id="sh-more" aria-expanded="false" aria-controls="sh-side">${svg("more")}<span>More</span></button></nav>`;
   document.querySelectorAll(".skiplink").forEach((a) => a.remove()); document.body.prepend(root);
   const col = root.querySelector(".sh-col"); content.classList.add("sh-content"); col.appendChild(content);

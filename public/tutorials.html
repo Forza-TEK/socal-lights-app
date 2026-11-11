@@ -7,10 +7,14 @@
 <meta name="description" content="Short how-to videos for SoCal Lights: finding lights, entering and voting in contests, and running one.">
 <meta property="og:title" content="Tutorials · SoCal Lights"><meta property="og:description" content="Short how-to videos for SoCal Lights: finding lights, entering and voting in contests, and running one."><meta property="og:image" content="https://socallights.app/img/share.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/info.css?v=20261110y">
+<link rel="stylesheet" href="/tokens.css?v=20261111fe1">
+<link rel="stylesheet" href="/addflow.css?v=20261111fe1">
+<link rel="stylesheet" href="/info.css?v=20261111fe1">
 <style>
 .tnav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px}.tnav button{min-height:44px;display:inline-flex;align-items:center;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-weight:500;cursor:pointer}.tnav button:hover{border-color:var(--season)}.tnav button[aria-selected=true]{background:var(--season);border-color:var(--season);color:var(--on-season,#fff)}.tgroup[hidden]{display:none}
 .tgroup{margin:30px 0 0;scroll-margin-top:16px}.tgroup>p{margin:4px 0 12px;color:var(--muted)}
@@ -23,7 +27,7 @@
 .tcard iframe,.tcard video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
 .tsub{color:var(--muted)}
 .tlist{display:grid;gap:8px;margin-top:12px}.trow{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;scroll-margin-top:16px}.trow h3{margin:0;font-size:16px;font-weight:500}.trow p{margin:2px 0 0;font-size:14px;color:var(--muted)}.trow .soon{flex:none;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
-.vfull{position:fixed;inset:0;z-index:2000;background:#000;display:flex;align-items:center;justify-content:center}.vfull video,.vfull iframe{width:100%;height:100%;object-fit:contain;border:0;background:#000}.vfull video{background:transparent}.vclose{position:absolute;top:max(12px,env(safe-area-inset-top,0px));right:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font:400 28px/1 system-ui,sans-serif;cursor:pointer}.vfull video::cue{font-size:13px;line-height:1.25;background:rgba(0,0,0,.72)}.vclose:focus-visible{outline:3px solid #fff;outline-offset:2px}a.play{text-decoration:none}.tcard h3 a{color:inherit;text-decoration:none}.tcard h3 a:hover{text-decoration:underline;text-underline-offset:3px}a.ver{text-decoration:none;display:inline-flex;align-items:center}.vers{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.ver{font:inherit;font-size:13px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;min-height:36px;white-space:nowrap}.ver:hover{background:var(--tile)}.ver:hover{border-color:var(--season)}.ver:focus-visible{outline:3px solid var(--season);outline-offset:2px}.vfull.wide-screen{background:rgba(0,0,0,.88)}.vfull.wide-screen video,.vfull.wide-screen iframe{width:auto;height:min(100vh,900px);aspect-ratio:9/16;max-width:100vw}.vfill{position:absolute;inset:0;width:100%;height:100%;filter:blur(18px) saturate(1.1);transform:scale(1.2);opacity:.9}.vfull video,.vfull iframe{position:relative}</style>
+.vfull{position:fixed;inset:0;z-index:2000;background:#000;display:flex;align-items:center;justify-content:center}.vfull video,.vfull iframe{width:100%;height:100%;object-fit:contain;border:0;background:#000}.vfull video{background:transparent}.vclose{position:absolute;top:max(12px,env(safe-area-inset-top,0px));right:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font:400 28px/1 system-ui,sans-serif;cursor:pointer}.vfull video::cue{font-size:13px;line-height:1.25;background:rgba(0,0,0,.72)}.vclose:focus-visible{outline:3px solid #fff;outline-offset:2px}a.play{text-decoration:none}.tcard h3 a{color:inherit;text-decoration:none}.tcard h3 a:hover{text-decoration:underline;text-underline-offset:3px}a.ver{text-decoration:none;display:inline-flex;align-items:center}.vers{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.ver{font:inherit;font-size:13px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;min-height:44px;white-space:nowrap}.ver:hover{background:var(--tile)}.ver:hover{border-color:var(--season)}.ver:focus-visible{outline:3px solid var(--season);outline-offset:2px}.vfull.wide-screen{background:rgba(0,0,0,.88)}.vfull.wide-screen video,.vfull.wide-screen iframe{width:auto;height:min(100vh,900px);aspect-ratio:9/16;max-width:100vw}.vfill{position:absolute;inset:0;width:100%;height:100%;filter:blur(18px) saturate(1.1);transform:scale(1.2);opacity:.9}.vfull video,.vfull iframe{position:relative}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="sh-page">
@@ -34,7 +38,7 @@
 <noscript><p>Turn on JavaScript to see the tutorial list.</p></noscript>
 </main>
 <script type="module">
-import { mountShell } from "/appshell.js?v=20261111a";
+import { mountShell } from "/appshell.js?v=20261111fe1";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (q) => document.querySelector(q);
 // Turns a pasted video link into something we can play: YouTube, Vimeo, Cloudflare Stream, or a direct video file
@@ -93,6 +97,6 @@ function fromHash() {
 }
 addEventListener("hashchange", fromHash); fromHash();
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111fe1" defer></script>
 </body>
 </html>

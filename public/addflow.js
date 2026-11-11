@@ -24,7 +24,7 @@ export function validSite(s) {
 }
 
 /* ---------- light / night switch and account button: shared with every page (see chrome.js) ---------- */
-import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome.js?v=20261111a";
+import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome.js?v=20261111fe1";
 export { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct };
 
 /* ---------- field builders ---------- */

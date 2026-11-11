@@ -7,10 +7,14 @@
 <meta name="description" content="Installers: put your company in the labelled Sponsor banner on the SoCal Lights map, and optionally at the top of the list. A one-time payment for the season, or renew automatically if you choose.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/info.css?v=20261110y">
+<link rel="stylesheet" href="/tokens.css?v=20261111fe1">
+<link rel="stylesheet" href="/addflow.css?v=20261111fe1">
+<link rel="stylesheet" href="/info.css?v=20261111fe1">
 <style>
 .plan,details,.pick{background:#fff}:root[data-theme="dark"] .plan,:root[data-theme="dark"] details,:root[data-theme="dark"] .pick{background:var(--tile)}
 .plan{gap:8px;border:2px solid var(--line);display:flex;flex-direction:column;transition:border-color .15s,background-color .15s}.plan>.btn{margin-top:auto;align-self:flex-start}
@@ -30,7 +34,7 @@
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
-<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a><span id="tb"></span><span id="acct"></span></div></div>
 <main id="content">
 <h1>Sponsor placement for installers</h1>
 <p class="lede">Put your company where people planning a drive look: the labelled <b>Sponsor</b> banner at the top of the list on the map, your company card at the top of the list, or both. Pay one time for the season. Automatic renewal is optional and off unless you tick the box before paying. The map and your free profile stay free, and money never changes a contest result.</p>
@@ -73,7 +77,7 @@
 <p class="meta">Questions? Email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>. <a href="/pricing#banner">Back to pricing</a>.</p>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261111d";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111fe1";
 import { me, signIn } from "/auth.js?v=20261107p";
 import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord, renewalText } from "/sponsor-plans.js?v=20261108a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
@@ -166,6 +170,6 @@ function renderSummary(i) {
   };
 }
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111fe1" defer></script>
 </body>
 </html>

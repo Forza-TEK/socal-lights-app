@@ -7,15 +7,19 @@
 <meta name="description" content="Home decorating contests in Southern California: vote, enter, run your own, and see past results.">
 <meta property="og:title" content="Contests · SoCal Lights"><meta property="og:description" content="Home decorating contests in Southern California: vote, enter, run your own, and see past results."><meta property="og:image" content="https://socallights.app/img/share.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/contest.css?v=20261111c">
+<link rel="stylesheet" href="/tokens.css?v=20261111fe1">
+<link rel="stylesheet" href="/addflow.css?v=20261111fe1">
+<link rel="stylesheet" href="/contest.css?v=20261111fe1">
 <style>
 .ctop{flex-wrap:wrap;gap:12px}.ctop>div{min-width:0}body.wide .hdr{max-width:1160px}.cmain.wide{max-width:1160px}.cmain.wide .help,.cmain.wide .ctop p{max-width:70ch}
 .cmain .card{background:#fff;border-radius:18px}:root[data-theme="dark"] .cmain .card{background:var(--tile)}
 .cmain .card h2{font-weight:800;font-size:20px;letter-spacing:-.01em}
-#live{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));align-items:stretch}#live .card{align-content:start}#live .card:only-child{grid-column:1/-1}
+#live{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));align-items:stretch}#live .card{align-content:start}#live .card:only-child{grid-column:1/-1}
 #live .card .actions{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}#live .card .actions .btn{flex:1 1 auto;justify-content:center;padding:0 14px;text-align:center}
 #mine{display:grid;gap:18px}@media(min-width:900px){#mine{grid-template-columns:1fr 1fr;align-items:start}#mine>.card.center{grid-column:1/-1}}
 @media(min-width:900px){.entries{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 36px}.entry:nth-child(2){border-top:0}}
@@ -24,7 +28,7 @@
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="wide">
-<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a><span id="tb"></span><span id="acct"></span></div></div>
 <main class="cmain wide">
 <div class="ctop"><div><h1>Contests</h1><p class="help" style="margin-top:8px">Vote for your favorite home, enter your own, or run a contest for your neighborhood. <a href="/tutorials#run">How it works</a></p></div><a class="btn org" href="/add-contest">Start a contest</a></div>
 <div class="tabsrow" role="tablist" aria-label="Contests"><button type="button" role="tab" data-tab="live">Live now</button><button type="button" role="tab" data-tab="mine">Mine</button><button type="button" role="tab" data-tab="past">Past results</button></div>
@@ -32,7 +36,7 @@
 </main>
 <script type="module">
 import { me, signIn, esc } from "/auth.js?v=20261107p";
-import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111d";
+import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111fe1";
 const $ = (q) => document.querySelector(q);
 const CROWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>';
 $("#tb").innerHTML = themeBtn(); mountAcct($("#acct"));
@@ -92,6 +96,6 @@ function draw(labels) {
 }
 show(tab);
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111fe1" defer></script>
 </body>
 </html>

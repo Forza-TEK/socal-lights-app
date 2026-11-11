@@ -7,14 +7,18 @@
 <title>Contest passes · SoCal Lights</title>
 <meta name="description" content="Choose a contest pass: a single contest, up to 5 or up to 20 in a 12-month window. Entering and voting stay free.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/info.css?v=20261110y">
+<link rel="stylesheet" href="/tokens.css?v=20261111fe1">
+<link rel="stylesheet" href="/addflow.css?v=20261111fe1">
+<link rel="stylesheet" href="/info.css?v=20261111fe1">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
-<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a><span id="tb"></span><span id="acct"></span></div></div>
 <main>
 <h1>Contest passes</h1>
 <p class="lede">A contest pass lets your organization run a single contest, up to 5 or up to 20 inside a 12-month window. It only counts contests: entering and voting stay free, and payment never affects any result, vote, judge or ranking.</p>
@@ -22,7 +26,7 @@
 <p class="meta" id="msg" role="status"></p>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261111d";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111fe1";
 import { me, signIn } from "/auth.js?v=20261107p";
 import { pickerHtml, beacon, niceDate, esc, IN_APP, passPageUrl, openWeb } from "/contest-passes.js?v=20261111a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
@@ -64,6 +68,6 @@ else if (!(await me()).user) {
   paint(v);
 }
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111fe1" defer></script>
 </body>
 </html>

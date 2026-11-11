@@ -6,6 +6,7 @@ import { esc, header, hero, page, crumbs, subscribeBox, shareBtn } from "../_lib
 import { contestHomes } from "../_lib/contesthomes.js";
 import { slugOf, nearby } from "../_lib/cityindex.js";
 import { upcomingEvents, relatedTo } from "../_lib/upcoming.js";
+import { usablePhoto } from "../../public/photoguess.js";
 import { eventLd, eventTitle, eventDesc, secureUrl, http, fmtDate, whenText, usefulHours, whereText, typeLabel } from "../_lib/eventld.js";
 
 const notFound = (origin) => new Response(page({ title: "Event not found | SoCal Lights", noindex: true, origin, body: `${header()}<main><div class="note"><h1>We can't find that event</h1><p class="sub">The link may be mistyped, or the event may have been removed.</p><p><a class="btn go" href="/">Open the map</a></p></div></main>` }), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
@@ -34,7 +35,7 @@ export async function onRequestGet(context) {
   const ended = e.e < today, confirmed = e.st === "c", when = whenText(e);
   const where = whereText(e), hrs = usefulHours(e), t = typeLabel(e);
   const title = eventTitle(e), desc = eventDesc(e);
-  const img = secureUrl(e.img), canonical = `${origin}/e/${encodeURIComponent(e.id)}`;
+  const img = secureUrl(usablePhoto(e)), canonical = `${origin}/e/${encodeURIComponent(e.id)}`;
   // Structured data only for confirmed events that have not ended: expected dates are estimates, and markup would state them as firm
   const ld = confirmed && !ended ? eventLd(e, canonical) : null;
   const map = `/#e-${encodeURIComponent(e.id)}`, citySlug = slugOf(e.city);
@@ -49,7 +50,7 @@ export async function onRequestGet(context) {
   try {
     const list = await upcomingEvents(env, origin, (p) => { try { context.waitUntil(p); } catch {} });
     const { sibs, total, cities } = relatedTo(list, e, slugOf, 6), near = nearby(cities, citySlug, 6);
-    const card = (x) => `<a class="ev" href="/e/${encodeURIComponent(x.id)}"><div class="ph">${x.img ? `<img src="${/^https?:/.test(x.img) ? "/cdn-cgi/image/width=240,fit=cover/" : ""}${esc(x.img)}" alt="" loading="lazy" width="120" height="120" onerror="this.onerror=null;this.src='${esc(secureUrl(x.img).replace(/'/g, "%27"))}'">` : ""}</div><div><h3>${esc(x.n)}</h3><p>${esc(whenText(x))}</p><div class="tags"><span class="tag ${x.free ? "free" : "paid"}">${esc(x.free ? "Free" : x.p || "Price not listed")}</span><span class="tag ${x.st === "c" ? "conf" : "exp"}">${x.st === "c" ? "Confirmed" : "Expected"}</span></div></div></a>`;
+    const card = (x) => `<a class="ev" href="/e/${encodeURIComponent(x.id)}"><div class="ph">${usablePhoto(x) ? `<img src="${/^https?:/.test(x.img) ? "/cdn-cgi/image/width=240,fit=cover/" : ""}${esc(x.img)}" alt="" loading="lazy" width="120" height="120" onerror="this.onerror=null;this.src='${esc(secureUrl(x.img).replace(/'/g, "%27"))}'">` : ""}</div><div><h3>${esc(x.n)}</h3><p>${esc(whenText(x))}</p><div class="tags"><span class="tag ${x.free ? "free" : "paid"}">${esc(x.free ? "Free" : x.p || "Price not listed")}</span><span class="tag ${x.st === "c" ? "conf" : "exp"}">${x.st === "c" ? "Confirmed" : "Expected"}</span></div></div></a>`;
     related = `${sibs.length ? `<h2>More events in ${esc(e.city)}</h2><div class="list">${sibs.map(card).join("")}</div>${total > sibs.length ? `<div class="foot"><a href="/in/${esc(citySlug)}">See all ${total + 1} events in ${esc(e.city)}</a></div>` : ""}` : ""}${near.length ? `<h2>Near ${esc(e.city)}</h2><div class="foot">${near.map((c) => `<a href="/in/${esc(c.slug)}">${esc(c.city)} (${c.n})</a>`).join("")}</div>` : ""}`;
   } catch {}
 

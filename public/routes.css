@@ -37,3 +37,8 @@
 .legl .rowacts .link{background:none;border:0;padding:4px 2px;font:inherit;font-size:14px;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:28px;display:inline-flex;align-items:center}
 .wznote{margin:0;padding:0 16px 8px}
 .tourbar .mapsnow{margin-right:auto}
+
+/* "visited": the whole row (checkbox, number and name) is the tap target, not just the small box */
+.legl li,.rsheet .legl li{padding-top:0;padding-bottom:0}
+.legl label{align-self:stretch;min-height:56px}
+.legl input[type=checkbox]{width:28px;height:28px}

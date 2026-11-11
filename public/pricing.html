@@ -6,16 +6,20 @@
 <title>Pricing · SoCal Lights</title>
 <meta name="description" content="SoCal Lights is a free map of holiday lights and events in Southern California. See what is free and what is optional before you add anything.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/info.css?v=20261110y">
+<link rel="stylesheet" href="/tokens.css?v=20261111fe1">
+<link rel="stylesheet" href="/addflow.css?v=20261111fe1">
+<link rel="stylesheet" href="/info.css?v=20261111fe1">
 <style>.pcards.tight{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.wcard .big{margin:0}details summary::marker{color:var(--muted)}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 <script src="/chat.js?v=20261111h" defer></script>
 </head>
 <body class="wide">
-<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a><span id="tb"></span><span id="acct"></span></div></div>
 <main class="wide" id="content">
 <h1>Pricing</h1>
 <p class="lede">Finding lights and events is free, and so is posting them. Paid options only make your listing easier to see. Every paid placement is labelled, and money never changes a contest result.</p>
@@ -80,7 +84,7 @@
 </div></section>
 </main>
 <script type="module">
-import { mountShell } from "/appshell.js?v=20261111a";
+import { mountShell } from "/appshell.js?v=20261111fe1";
 import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
 import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261108a";
 import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
@@ -143,6 +147,6 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   }
 }
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111fe1" defer></script>
 </body>
 </html>

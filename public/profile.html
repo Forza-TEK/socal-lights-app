@@ -6,20 +6,24 @@
 <meta name="robots" content="noindex">
 <title>Your profile · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/forms.css?v=20261106zb">
-<link rel="stylesheet" href="/profile.css?v=20261106zb">
+<link rel="stylesheet" href="/tokens.css?v=20261111fe1">
+<link rel="stylesheet" href="/addflow.css?v=20261111fe1">
+<link rel="stylesheet" href="/forms.css?v=20261111fe1">
+<link rel="stylesheet" href="/profile.css?v=20261111fe1">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="sh-page prof">
 <main class="main" id="content"><div id="app" class="main" style="padding:0;max-width:none"><p class="muted">Loading…</p></div></main>
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261107p";
-import { mountShell } from "/appshell.js?v=20261111a";
-import { homeForm, eventForm, openFormWindow } from "/forms.js?v=20261106zb";
-import { esc, input, select, attachAddress, OPT } from "/addflow.js?v=20261111d";
+import { mountShell } from "/appshell.js?v=20261111fe1";
+import { homeForm, eventForm, openFormWindow } from "/forms.js?v=20261111fe1";
+import { esc, input, select, attachAddress, OPT } from "/addflow.js?v=20261111fe1";
 import { CITY } from "/cities.js?v=20261107a";
 const shell = mountShell({ page: "prof", title: "Your profile", active: (location.hash || "").slice(1) || "drafts", items: [{ k: "drafts", label: "Drafts", icon: "file" }, { k: "contests", label: "Contests", icon: "trophy" }, { k: "displays", label: "Displays", icon: "home" }, { k: "events", label: "Events", icon: "cal" }, { k: "badges", label: "Badges", icon: "star", hidden: true }, { k: "account", label: "Account", icon: "user" }, { k: "tutorials", label: "Tutorials", icon: "play", href: "/tutorials" }], onPick: (k) => { tab = k; history.replaceState(null, "", "#" + k); render(); window.scrollTo(0, 0); } });
 const $ = (q) => document.querySelector(q), app = $("#app"), cities = Object.keys(CITY).sort();
@@ -224,6 +228,6 @@ async function load() {
 }
 load();
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111fe1" defer></script>
 </body>
 </html>

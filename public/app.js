@@ -2,14 +2,15 @@
 import { CITY } from "/cities.js?v=20261107a";
 import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261104a";
 import { STOCK } from "/stock.js?v=20261107a";
+import { isCityEvent, looksLikeLogoUrl, judgePicture } from "/photoguess.js?v=20261111fe1"; // logo, banner and blurry pictures give way to the stock photo (city events may keep their logo)
 import { SITE } from "/site-config.js?v=20261107a";
 import "/norm-ui.js?v=20261102b";
 import { me as authMe } from "/auth.js?v=20261107p";
-import "/chrome.js?v=20261111a"; // the account circle opens the same menu as on every other page
+import "/chrome.js?v=20261111fe1"; // the account circle opens the same menu as on every other page
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261111d";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261111a";
-import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261110a";
+import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261111fe1";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -596,7 +597,8 @@ function photoOf(ev, hero) {
   // each type has several stock photos; the event's id picks one, so the same event always gets the same photo
   const k = stockKey(ev), n = k ? hashOf(ev.id) % STOCK[k].length : 0, st = k && STOCK[k][n];
   const stock = k ? `/img/stock/${hero ? "" : "t/"}${k}-${n + 1}.jpg` : "", sc = k && `Photo: ${st.by} · ${st.lic}`;
-  if (ev.img) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u ? infoUrl(ev.u, ev.n, ev.city || "") : ev.u };
+  const city = isCityEvent(ev); // a city or government event may keep its city logo or seal as its photo; any other event whose picture is named like a logo gives way to the stock photo
+  if (ev.img && (city || !looksLikeLogoUrl(ev.img) || !stock)) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, keep: city, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u ? infoUrl(ev.u, ev.n, ev.city || "") : ev.u };
   return k ? { src: stock, credit: sc, link: st.src } : null;
 }
 // A gallery: the main photo first, then any extra photos stored for the event (ev.imgs)
@@ -620,17 +622,23 @@ function probeRemoteThumbs() { const e = E.find((x) => /^https?:/.test(x.img || 
 const secure = (u) => String(u || "").replace(/^http:\/\//i, "https://");
 const thumbOf = (u, w) => { u = u || ""; return (THUMBS && /^\/(img\/events|api\/photo)\//.test(u)) || (THUMBS_REMOTE && /^https?:\/\//.test(u)) ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : secure(u); };
 // w: the width asked for (list cards 320, pop-up 800, details 900); h: when given, the box is declared so nothing moves while the photo loads. Only the first cards load at once: the rest wait until they near the screen.
-const photoImg = (ph, eager, w = 640, h = 0) => { const t = thumbOf(ph.src, w), o = secure(ph.src); return `<img class="evimg" src="${esc(t)}"${t !== o ? ` data-orig="${esc(o)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}"` : ""} alt=""${h ? ` width="${w}" height="${h}"` : ""} loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`; };
-document.addEventListener("load", (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains("evimg")) e.target.classList.add("ld"); }, true);
+const photoImg = (ph, eager, w = 640, h = 0) => { const t = thumbOf(ph.src, w), o = secure(ph.src); return `<img class="evimg" src="${esc(t)}"${t !== o ? ` data-orig="${esc(o)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}" data-w="${t !== o ? w : 0}"${ph.keep ? " data-keep=\"1\"" : ""}` : ""} alt=""${h ? ` width="${w}" height="${h}"` : ""} loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`; };
+// The official picture gives way to the stock photo of that kind of event when it failed to load, or (by its size and shape, see photoguess.js) is a blurry or tiny picture, or a logo or banner on a non-city event
+function useStock(i) {
+  i.src = i.dataset.fb; i.removeAttribute("data-fb"); i.removeAttribute("data-w"); i.removeAttribute("data-orig");
+  const c = i.closest(".hero")?.querySelector(".credit"); // the detail header credits the stock photo instead
+  if (c) { c.textContent = i.dataset.fbc; if (c.href) c.href = i.dataset.fbl; }
+}
+document.addEventListener("load", (e) => {
+  const i = e.target; if (!(i instanceof HTMLImageElement) || !i.classList.contains("evimg")) return;
+  if (i.dataset.fb && i.dataset.w !== undefined) { const v = judgePicture(i.naturalWidth, i.naturalHeight, +i.dataset.w || 0); if (v === "lowres" || (v === "logo" && !i.dataset.keep)) { useStock(i); return; } }
+  i.classList.add("ld");
+}, true);
 document.addEventListener("error", (e) => {
   const i = e.target;
   if (!(i instanceof HTMLImageElement) || !i.classList.contains("evimg")) return;
   if (i.dataset.orig) { const o = i.dataset.orig; i.removeAttribute("data-orig"); i.src = o; return; } // the resized copy failed: use the original
-  if (i.dataset.fb) {
-    i.src = i.dataset.fb; i.removeAttribute("data-fb");
-    const c = i.closest(".hero")?.querySelector(".credit"); // the detail header credits the stock photo instead
-    if (c) { c.textContent = i.dataset.fbc; if (c.href) c.href = i.dataset.fbl; }
-  }
+  if (i.dataset.fb) useStock(i);
   else i.remove(); // no stock photo either: the emoji underneath shows through
 }, true);
 // Short "when" label: "Tonight", "Thru Oct 30", "Oct 31 only", "Opens Nov 27"
@@ -700,7 +708,7 @@ function instItem(p, x = null, i = 99) {
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
-const sortHtml = () => `<label class="sortl">Sort <select class="sortsel" id="sortSel" aria-label="Sort places">${SORTS.map(([v, l]) => `<option value="${v}"${state.sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
+const sortHtml = () => `<label class="sortl"><span class="sortw">Sort</span> <select class="sortsel" id="sortSel" aria-label="Sort places">${SORTS.map(([v, l]) => `<option value="${v}"${state.sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>`;
 function quickPicks() {
   const q = [["date", TODAY, "Tonight"], ["weekend", "1", "This weekend"], ["cost", "free", "Free"]];
   const nf = activeFilters().length;
@@ -754,7 +762,7 @@ function positionRoutePill() {
   const r = document.getElementById("panel").getBoundingClientRect(), h = document.querySelector("#phead .hrow"), c = document.querySelector("#phead .hcount");
   // a dot is selected: its card covers the list, so the pill rides on top of that card instead
   const pv = document.getElementById("preview"), pinCard = pv && !pv.hidden && document.body.classList.contains("pin-open") ? pv.getBoundingClientRect().top : null;
-  b.classList.remove("docked"); b.style.top = Math.round((pinCard != null ? pinCard : r.top) - 48) + "px"; b.style.left = "auto"; b.style.right = "14px"; // the list stops below the pill, so the pill always rides on top of it
+  b.classList.remove("docked"); const top = Math.round((pinCard != null ? pinCard : r.top) - 48); b.style.top = top + "px"; b.style.left = "auto"; b.style.right = top < 284 ? "70px" : "14px"; // the list stops below the pill, so the pill always rides on top of it
 }
 { const rp = rtPill(); if (rp) rp.addEventListener("click", () => { if (rp.dataset.hint) { toast(rp.dataset.hint, true); return; } routeFromView(); }); }
 // While the list slides (drag or tap), keep the pill on it
@@ -778,7 +786,7 @@ function routeFromView() {
   const c = map.getCenter(), og = state.start === "me" && state.me ? state.me : { lat: c.lat, lng: c.lng };
   let at = og; const pool = stops.slice(), ord = [];
   while (pool.length) { pool.sort((a, b) => miles(at, a) - miles(at, b)); at = pool.shift(); ord.push(at); }
-  openRouteSheet({ title: "Route these places", intro: `Your maps app takes about 9 stops at a time, so ${ord.length > 9 ? "these " + ord.length + " places are split into routes of 9 or fewer" : "this is one route"}. Each route starts where the last one ended. Tick a place when you have been there.`, stops: ord, app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); } });
+  openRouteSheet({ title: "Route these places", intro: `Your maps app takes about 9 stops at a time, so ${ord.length > 9 ? "these " + ord.length + " places are split into routes of 9 or fewer" : "this is one route"}. Each route starts where the last one ended. Tick a stop when you have been there.`, stops: ord, app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); } });
 }
 function openNightRoutes() {
   const st = routeStops(); if (!st.length) return;
@@ -788,6 +796,15 @@ function openNightRoutes() {
   openRouteSheet({ title: "Your favorites", key: "map", stops: startStop ? stops.slice(1) : stops, start: startStop ? stops[0] : null, origin, app: mapsApp, onApp: (v) => { mapsApp = v; renderPanel(); },
     intro: `Your maps app takes about 9 stops at a time, so ${n > 9 ? "your favorites are split into routes of 9 or fewer" : "this is one route"}. Each route starts where the last one ended. Tick a stop when you have been there.`,
     note: mapsApp === "apple" ? "Multi-stop routes in Apple Maps need iOS 18.4 or later. Older iPhones open with the first stop." : "" });
+}
+// Start the favorites route from a typed city (the list of about 300 cities is a suggestion list while typing, not a menu to scroll)
+function askStartCity(sel) {
+  const lab = sel.closest("label"); if (!lab) return;
+  lab.innerHTML = `Start <input id="startCity" class="qcity" type="search" list="startCities" placeholder="Type a city" aria-label="Start city" autocomplete="off" enterkeyhint="go"><datalist id="startCities">${Object.keys(CITY).sort().map((c) => `<option value="${esc(c)}">`).join("")}</datalist>`;
+  const inp = lab.querySelector("input"); inp.focus();
+  const apply = () => { const m = Object.keys(CITY).find((c) => c.toLowerCase() === inp.value.trim().toLowerCase()); if (m) { state.start = m; renderPanel(); drawMap(); fitRoute(); } else renderPanel(); };
+  inp.addEventListener("change", apply);
+  inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); apply(); } else if (e.key === "Escape") { e.stopPropagation(); renderPanel(); } });
 }
 async function shareNight() {
   if (!favs.size) return;
@@ -833,7 +850,7 @@ function renderPanel(opts) {
     const vis = items.filter((it) => inView(it.lng, it.lat) || state.sel === it.key || state.keep === it.key); // keep: the card you just came back from stays listed
     const liveEl = $("#live"); if (liveEl) { const msg = vis.length + (vis.length === 1 ? " place" : " places") + " in view"; if (liveEl.textContent !== msg) liveEl.textContent = msg; }
     const act = activeFilters();
-    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hmv"> in map view</span></span>${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
+    head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hin"> in view</span></span>${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
     const tops = bannerOn && !state.detail && state.tab !== "plan" ? topSponsors(viewRegions()) : [], topSig = tops.map((t) => t.id).join(",");
     const sig = topSig + "@" + vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
     if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
@@ -860,10 +877,10 @@ function renderPanel(opts) {
     const startStop = state.start === "first" && !og && st.length > 1 ? st[0] : null;
     const nRoutes = routeLegs(startStop ? st.slice(1) : st).length;
     const dur = mins >= 60 ? Math.floor(mins / 60) + " hr" + (mins % 60 ? " " + (mins % 60) + " min" : "") : mins + " min";
-    const startSel = `<label class="qsel">Start <select id="startFrom" aria-label="Start from"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${Object.keys(CITY).sort().map((c) => `<option ${c === state.start ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
+    const startSel = `<label class="qsel">Start <select id="startFrom" aria-label="Start from"><option value="me" ${state.start === "me" ? "selected" : ""}>My location</option><option value="first" ${state.start === "first" ? "selected" : ""}>First stop</option>${state.start && state.start !== "me" && state.start !== "first" ? `<option value="${esc(state.start)}" selected>${esc(state.start)}</option>` : ""}<option value="__city">A city…</option></select></label>`;
     const mapsSel = `<button type="button" class="qchg" data-mapschange aria-label="Maps app: ${MAPS[mapsApp]}. Change" title="Change the maps app">${MAPS[mapsApp]}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>`;
     head.innerHTML = `<div class="hrow"><span class="hcount"><b>${st.length}</b> stop${st.length === 1 ? "" : "s"}${st.length && total >= 1 ? `<span class="hmv"> · about ${Math.round(total)} mi · ${dur}</span>` : ""}</span>${nightHelp ? "" : `<button type="button" class="helpbtn" data-nhelp="1" aria-label="How Favorites work" title="How Favorites work">?</button>`}</div>${st.length ? `<div class="quick" role="group" aria-label="Route options"><button type="button" class="qgo" data-nroute title="Open ${nRoutes > 1 ? nRoutes + ' driving routes' : 'the driving route'} in ${MAPS[mapsApp]}">${ROUTE_ICON}<span>Route these${nRoutes > 1 ? " · " + nRoutes + " routes" : ""}</span></button>${startSel}${mapsSel}${state.shared ? "" : `<button type="button" class="qshare qicon" data-nshare aria-label="Share my favorites" title="Share">${SHARE}</button>`}</div>` : ""}${state.shared ? `<div class="sharedbar"><span>Favorites shared with you</span><button type="button" data-nsave>Add to my favorites</button><button type="button" data-nclose>Close</button></div>` : ""}`;
-    const sf = $("#startFrom"); if (sf) sf.onchange = (e) => { state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
+    const sf = $("#startFrom"); if (sf) sf.onchange = (e) => { if (e.target.value === "__city") { askStartCity(sf); return; } state.start = e.target.value; if (state.start === "me") locateMe(true); renderPanel(); drawMap(); fitRoute(); };
     const ms = $("#mapsSel"); if (ms) ms.onchange = (e) => setMapsApp(e.target.value);
     if (!st.length) { body.innerHTML = nightHelp ? helpHtml(0) : `<div class="empty">No stops yet. Tap the heart on any place to add it.</div>`; return; }
     const notes = [];
@@ -1384,7 +1401,7 @@ function applyFilters() {
 // Phone: the floating tab bar drives the same three tabs as the panel
 document.querySelectorAll("#bnav [data-tab]").forEach((b) => (b.onclick = () => $("#t-" + b.dataset.tab).click()));
 // the phone's search box shares its row with the logo and night-mode button, so keep the hint short enough to fit
-const fitHint = () => { $("#q").placeholder = innerWidth > 860 ? "Search places or a city" : innerWidth > 380 ? "Search places" : "Search"; };
+const fitHint = () => { $("#q").placeholder = innerWidth > 860 ? "Search places or city" : innerWidth > 380 ? "Search places" : "Search"; };
 fitHint(); addEventListener("resize", fitHint);
 let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); showSuggestions(); }, 120); };
 // Suggestions under the search box: cities (move the map there) and places (open their details)
@@ -1420,7 +1437,7 @@ $("#q").addEventListener("keydown", (e) => {
 // The sheet is one full-height panel that only slides up and down (a GPU transform), so the buttons, the count / sort line and the
 // cards never move relative to the sheet and nothing is rebuilt while it moves. Peek shows the handle and the buttons row above the
 // floating tab bar; a soft fade at the bottom hides the rest of the sheet behind the tab bar and fades away as the sheet rises.
-const PEEK = 160; // visible height at Peek: handle + the buttons row, which end just above the tab bar zone
+const PEEK = 232; // visible height at Peek: the 44 px handle area, the buttons row, and the count and Sort row, which end just above the tab bar (it covered them at 160)
 let safeBottom = null;
 function peekH() {
   if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }

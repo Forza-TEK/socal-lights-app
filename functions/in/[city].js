@@ -4,6 +4,7 @@ import { rowToEvent } from "../_lib/util.js";
 import { pairs, approvedPosts } from "../_lib/addrkey.js";
 import { esc, header, page, crumbs, subscribeBox, shareBtn } from "../_lib/shell.js";
 import { eventLd, secureUrl } from "../_lib/eventld.js";
+import { usablePhoto } from "../../public/photoguess.js";
 import { slugOf, summarize, nearby, isIndexable } from "../_lib/cityindex.js";
 
 export { slugOf };
@@ -29,7 +30,7 @@ export async function onRequestGet(context) {
   const ld = evs.filter((e) => e.st === "c").slice(0, 60).map((e) => eventLd(e, `${origin}/e/${encodeURIComponent(e.id)}`));
   const bc = crumbs(origin, [{ name: "SoCal Lights", href: "/" }, { name: "Cities", href: "/in" }, { name: city }]);
   const thumb = (u) => { if (!u) return ""; const full = esc(secureUrl(u) || u); const small = /^https?:\/\//.test(u) ? `/cdn-cgi/image/width=240,fit=cover/${esc(u)}` : full; return `<img src="${small}" alt="" loading="lazy" width="120" height="120" onerror="this.onerror=null;this.src='${full}'">`; };
-  const li = evs.map((e) => `<article class="ev card-ev"><div class="ph">${thumb(e.img)}</div><div><h3><a href="/e/${encodeURIComponent(e.id)}">${esc(e.n)}</a></h3><p>${esc(e.s === e.e ? fmt(e.s) : fmt(e.s) + " to " + fmt(e.e))}${e.h ? " · " + esc(e.h) : ""}</p><p>${esc([e.v, e.a].filter(Boolean).join(", "))}</p><div class="tags">${e.nt ? `<span class="tag cancel">${e.nt === "cancelled" ? "Cancelled" : "Postponed"}</span>` : ""}<span class="tag ${e.free ? "free" : "paid"}">${esc(e.free ? "Free" : e.p || "Price not listed")}</span><span class="tag ${e.st === "c" ? "conf" : "exp"}">${e.st === "c" ? "Confirmed" : "Expected"}</span></div><div class="evact"><a href="/#e-${encodeURIComponent(e.id)}" aria-label="Open ${esc(e.n)} on the map">Open on the map</a></div></div></article>`).join("");
+  const li = evs.map((e) => `<article class="ev card-ev"><div class="ph">${thumb(usablePhoto(e))}</div><div><h3><a href="/e/${encodeURIComponent(e.id)}">${esc(e.n)}</a></h3><p>${esc(e.s === e.e ? fmt(e.s) : fmt(e.s) + " to " + fmt(e.e))}${e.h ? " · " + esc(e.h) : ""}</p><p>${esc([e.v, e.a].filter(Boolean).join(", "))}</p><div class="tags">${e.nt ? `<span class="tag cancel">${e.nt === "cancelled" ? "Cancelled" : "Postponed"}</span>` : ""}<span class="tag ${e.free ? "free" : "paid"}">${esc(e.free ? "Free" : e.p || "Price not listed")}</span><span class="tag ${e.st === "c" ? "conf" : "exp"}">${e.st === "c" ? "Confirmed" : "Expected"}</span></div><div class="evact"><a href="/#e-${encodeURIComponent(e.id)}" aria-label="Open ${esc(e.n)} on the map">Open on the map</a></div></div></article>`).join("");
   // Nearest cities that have a page worth visiting, then the rest of the county, then the ways to add or promote an event
   const cities = summarize(upcoming), me = cities.find((c) => c.slug === params.city), near = nearby(cities, params.city, 6), shown = new Set(near.map((c) => c.slug));
   const more = cities.filter((c) => c.county === county && c.slug !== params.city && !shown.has(c.slug) && c.indexable).sort((a, b) => b.n - a.n || a.city.localeCompare(b.city)).slice(0, 12);
