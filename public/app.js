@@ -1455,7 +1455,7 @@ const PEEK = 142; // visible height at Peek: the handle and the buttons row, end
 let safeBottom = null;
 function peekH() {
   if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
-  return PEEK + Math.max(4, safeBottom - 6) - 6 + (typeof bannerHeight === "function" && isPhone() ? bannerHeight() : 0);
+  return PEEK + 2 - 6 + (typeof bannerHeight === "function" && isPhone() ? bannerHeight() : 0);
 }
 let sheetState = "peek";
 const fullH = () => $("#panel").offsetHeight || innerHeight * 0.85;
