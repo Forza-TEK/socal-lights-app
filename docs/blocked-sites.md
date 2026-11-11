@@ -9,7 +9,8 @@ Checked 2026-10-31. These sites answer **403 Access Denied** to our honest bot r
 2. **Search-result snippets.** A web search often shows the page's title, date and place without loading it. Use them to find a date, then confirm on a page that loads.
 3. **Last year's page pattern.** A search snippet for a blocked page can show last year's date. If an event repeats on a known pattern and no 2026 page exists, add it as `expected` with the date estimated from prior years and say so in the blurb (see `docs/updating-events.md`).
 4. **Ask the city.** Email the events or IT contact and ask for (a) an events feed (iCal/RSS) or monthly event list, or (b) to allow `SoCalLightsBot` through. The owner sends it; the reply (a feed URL, or a PDF) is then added to this file.
-5. **A person opens the page.** The owner opens the page in a normal browser and pastes the text or a screenshot into the chat. That is allowed and works every time.
+5. **Photos only: the same event on the owner's other official site.** When the event page blocks us, the photo usually exists on a sister page (a parent company's holiday or events site, the city's official events page). Find it with a normal web search, look at the image, credit stays the event's own site. Full steps: docs/sweep-methods.md section 5.1. Example: Irvine Spectrum Nightly Tree Lighting (irvinespectrumcenter.com blocks us; holiday.irvinecompanyretail.com has the photo, migration 0232).
+6. **A person opens the page.** The owner opens the page in a normal browser and pastes the text or a screenshot into the chat. That is allowed and works every time.
 
 ## Email to send (owner's address; edit the greeting)
 > Subject: Events feed for SoCalLights.app (free community events map)
@@ -21,6 +22,7 @@ Bot = our scheduled, unattended cloud runs. Chrome = the owner's own Chrome driv
 
 | Host | Bot | Chrome (2026-10-30) | Alternate sources | Ask sent? |
 |---|---|---|---|---|
+| irvinespectrumcenter.com | 403 (2026-11-11, WebFetch and curl) | not tried | holiday.irvinecompanyretail.com has the same event and its photo (photo used, migration 0232) | no |
 | cityofwhittier.org, whittierprcs.org | Akamai 403 (also robots.txt) | loads; 2026 events found (tree lighting Dec 1, Cookies with Santa Dec 5); no 2026 parade page | whittierchamber.com events, whittiermuseum.org, Macaroni Kid Norwalk, Patch | no |
 | santamonica.com | 403 | loads (search `?mySearch=<word>&page-num=1`, event pages `/event/<slug>/`) | chambers, local papers, Patch | no |
 | cityofhawthorne.org | 403 | loads; calendar has no seasonal events Nov-Jan | chambers, local papers | no |
