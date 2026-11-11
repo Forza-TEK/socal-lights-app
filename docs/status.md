@@ -2,6 +2,13 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-11 (data audit fixes, branch fix-data, batch D2)
+- Audit items DAT-01, 03, 04, 05, 06, 07, 08, 09, 10, 11 (`docs/audit/2026-11-11-data-seo-admin.md` on branch audit-data-admin). Not merged; the owner reviews the PR.
+- New shared rules `scripts/event-rules.mjs`, enforced by `npm run validate` for rows a migration adds or changes (only the field that changed is checked): `hours-style` (one en dash, `7pm`/`7:30pm`, `; check site`), `free-price` (free=1 only when the price starts with "Free"), `photo` (logo/badge/site-default file names are errors unless a city or government event keeps its own logo or seal; banner/screenshot names warn), `shared-url` (a source page shared by 4+ events warns on a new row).
+- Migrations 0229 (73 wrong photos cleared, each guarded by the old image), 0230 (39 contest-home retitles, 9 free/price fixes, 123 Farm confirmed from its own page), 0231 (691 hours texts normalized). Replayed against the migrations they match the live API exactly (every guarded UPDATE applies).
+- New tools: `scripts/coverage-report.mjs` (counts, 0/1-event cities, expected rows already started or ended; `--write-doc` rewrites the generated block in `docs/coverage-cities.md`), `scripts/audit-event-photos.mjs` (file-name rules, `--check-images` size check, `--sample 40` for the by-eye miss rate). `docs/confirmation-plan.md` now says drive-by lights and the next 14 days come first.
+- Left for the owner: `citadel` (expected, tree lighting Nov 7 already passed; no public page proves its 2026 status), the audit counted 6 + 4 free/price mismatches, 5 + 4 existed on the live API today and all 9 are fixed; photos that could not be loaded from the audit machine (40) were judged by file name only. Not done: show "last checked" on cards (touches the map card code, outside this batch). DAT-10: no action.
+
 ## 2026-11-11 (contest audit batch A, branch `fix-contests`)
 - Owner-approved findings CON-01, 02, 04, 05, 08, 09, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26, 27, 28, 30, 31. Details and the vote-speed rule are in `docs/contests.md` (last section). Tests: `tests/contest-audit-a.test.mjs`.
 - Migration 0228 trims contest addresses that end in "-" (the live Covina contest); the old link redirects. Also fixed: the organizer's vote list widened the whole page on phones.
