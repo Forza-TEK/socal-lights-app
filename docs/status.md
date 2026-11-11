@@ -1022,3 +1022,5 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 - Check addresses: "25961 Galway Dr. Lake Forest, CA. 92630" (no comma before the city, "CA." with a period) is read correctly; a trailing known city after a street suffix is taken as the city; "CA."/"Calif." count as the state.
 
 - Organizer dashboard > Entries: the table is now a list of entry rows (photo or "No photo" with the entry number, name with status and "Added by organizer" tags, address, contact or "The homeowner has not linked this home yet", and the buttons together on the right; they drop under the text on a phone).
+
+- City sweep group 18 (High Desert & Mountains), 2026-11-11: 1 event added (Magic in the Cove, Lucerne Valley, expected; migration 0233). Everything else found was already on the map. No usable photos (county roundup og:image is a shared holidays.jpg; allevents banners are flyers). No public home-contest addresses (29 Palms Holiday Light Tour, Yucca Valley porch contest, Big Bear Festival of Lights: no 2026 lists yet).
