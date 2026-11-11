@@ -9,14 +9,14 @@ export async function hashKey(env, ...parts) {
 }
 
 // Checks every rule and, only when all pass, records one send under each key. Returns "" when allowed, otherwise the message to show (use it with a 429).
-// rules: [{ kind, key, max, windowHours, cooldownSeconds?, msg, coolMsg? }]
+// rules: [{ kind, key, max, windowHours (or windowSeconds for a short window), cooldownSeconds?, msg, coolMsg? }]
 export async function checkThrottle(env, rules) {
   for (const r of rules) {
     const row = await env.DB.prepare(
       `SELECT COUNT(*) AS n, COALESCE(MIN(CAST(strftime('%s','now') AS INTEGER) - CAST(strftime('%s', created_at) AS INTEGER)), 999999) AS newest,
               COALESCE(MAX(CAST(strftime('%s','now') AS INTEGER) - CAST(strftime('%s', created_at) AS INTEGER)), 0) AS oldest
        FROM send_throttle WHERE kind = ? AND key = ? AND created_at > datetime('now', ?)`
-    ).bind(r.kind, r.key, `-${r.windowHours} hours`).first();
+    ).bind(r.kind, r.key, r.windowSeconds ? `-${r.windowSeconds} seconds` : `-${r.windowHours} hours`).first();
     if (r.cooldownSeconds && row.n > 0 && row.newest < r.cooldownSeconds) return r.coolMsg || "Please wait a minute and try again.";
     // A refusal also says when it lifts: the oldest send in the window leaves it windowHours after it was made
     if (row.n >= r.max) return `${r.msg} It resets in ${inWords(Math.max(60, r.windowHours * 3600 - (row.oldest || 0)))}.`;
@@ -46,5 +46,14 @@ export async function alertConfirmThrottle(env, request, email) {
     { kind: "alert-email", key: await hashKey(env, "e", String(email).toLowerCase()), max: 3, windowHours: 24, msg: "We've already sent a few confirmation emails to this address today. Please check your inbox and spam folder for the link, or try again tomorrow." },
     // Per connection, for people with no account: unchanged at 20 a day. These emails go to addresses anyone can type, so this stays tight; the message now says which limit it is and when it resets.
     { kind: "alert-ip", key: await hashKey(env, "ip", ipOf(request)), max: 20, windowHours: 24, msg: "This network (shared Wi-Fi counts as one connection) has asked for too many alert emails today. You can email info@socallights.app instead." },
+  ]);
+}
+
+// Votes: at most 40 a minute per connection (hashed). A home, a school or an event Wi-Fi shares one address among many people, so the limit is generous:
+// it stops a script, not a crowd. Returns "" (and records the vote) or the message for a 429; the voter just tries again in a moment.
+export const VOTES_PER_MINUTE = 40;
+export async function voteThrottle(env, request) {
+  return checkThrottle(env, [
+    { kind: "vote-ip", key: await hashKey(env, "ip", ipOf(request)), max: VOTES_PER_MINUTE, windowSeconds: 60, msg: "Slow down a little. Lots of votes are coming from your connection right now. Wait a minute and tap Vote again." },
   ]);
 }

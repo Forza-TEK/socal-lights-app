@@ -2,6 +2,11 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-11 (contest audit batch A, branch `fix-contests`)
+- Owner-approved findings CON-01, 02, 04, 05, 08, 09, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26, 27, 28, 30, 31. Details and the vote-speed rule are in `docs/contests.md` (last section). Tests: `tests/contest-audit-a.test.mjs`.
+- Migration 0228 trims contest addresses that end in "-" (the live Covina contest); the old link redirects. Also fixed: the organizer's vote list widened the whole page on phones.
+- Not done here (other batches or owner): pricing/pass screens (batch B), the "display"/"household" wording, CON-03, 13, 24, 25, 29.
+
 ## 2026-11-11 (batch E: Help Center, assistant and copy audit fixes; branch fix-help-copy, PR open, not merged)
 - **Help pages:** `[ask us](#ask)` links now render and open the Ask box; `###` headings render; cards show the one-line summary and "Quick answer" / "Fix a problem" / "Written steps"; topic order is Find, Post, Enter, Vote, Run, Sponsors, Account; footer date reads "Nov 8, 2026" (Pacific).
 - **Migration 0227** (`scripts/help/updates-copy-1111.mjs`, text in `docs/help-updates.md`): 8 new articles (edit or cancel an event, take a home down and put it back, Shop tab, day and night mode, see who won, who can run a contest, what is SoCal Lights, wheelchair and stroller) and edits to 19 others (age and eligibility, "&", labeled, bold buttons, plain add-event steps, search words, Featured bullet split, Founder city badge moved to Run). Only articles still `updated_by = 'seed'`.

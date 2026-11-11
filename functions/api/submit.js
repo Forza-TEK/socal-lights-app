@@ -6,6 +6,7 @@ import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
+import { fmtDate } from "../../public/contestfmt.js";
 import { getUser } from "../_lib/auth.js";
 import { findOrCreateInstaller } from "../_lib/installers.js";
 import { approveEntry } from "../_lib/contests.js";
@@ -189,6 +190,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // Skipped for an address on the do-not-contact list, and throttled (functions/_lib/receipt.js). The answer says whether one is on its way so the page can say so.
   let receipt = "";
   if (!contest) receipt = await sendReceipt(env, waitUntil, { id: published ? "home_live" : "home_received", to: email, vars: { name: title, city, map: `https://socallights.app/#h-${id}`, link: "https://socallights.app/profile#displays" } });
+  // "We received your entry": what happens next, the voting dates and where to edit or withdraw it (the Your home card on the contest page)
+  if (contest && cu.email) {
+    const job = sendTemplate(env, "entry_received", cu.email, { name: title || biz, contest: contest.name, review: published ? "It is on the contest page and the map now." : "The organizer will review it before it goes on the map.", vote_start: fmtDate(contest.vote_start), vote_end: fmtDate(contest.vote_end), link: `https://socallights.app/c/${contest.slug}` }).catch(() => {});
+    if (waitUntil) waitUntil(job);
+  }
   await bump(env, contest ? "fn:contest-entry-done" : "fn:add-house-done");
   return json({ ok: true, id, status: published ? "published" : "pending", receipt: receipt === "queued" ? "sent" : "", email });
 }
