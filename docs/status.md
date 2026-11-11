@@ -56,6 +56,9 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (map top bar: Add circle, round season button)
+- The map top bar has a round **+** (Add, goes to `/add`) beside the profile circle. When the bar drops to two rows (under 1100 px wide, and phones), the season circle is under the logo and the **+** is under the season circle (landscape phones: season, +, day/night in the left column). The season button is a round icon at every width (its name is the tooltip and screen-reader label; the season menu still opens from it). Welcome prompt moved down so it clears the extra circle.
+
 ## 2026-11-11 (On map zooms to the home)
 - "On map" on a contest home now opens the map zoomed to the home with its card, like tapping its dot (before it opened the home's details in the list, no zoom). It uses `/#m-<home id>` (`showOnMap` in `app.js`); shared home links (`/#h-`) still open the details. Works from the contest page, the `/e` page and the map card.
 
