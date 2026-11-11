@@ -47,6 +47,9 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (form.get("rules") !== "1") return err(400, "Please accept the official rules to enter.");
   }
 
+  // A new home also passes the "I am human" check (sign-in alone does not stop a script that holds a session). Contest entries have their own page and no widget, so they are not asked.
+  if (!contest && !(await verifyTurnstile(env, form.get("cf-turnstile-response"), ip))) return err(400, "Please finish the 'I am human' check, then try again.");
+
   // Throttles (functions/_lib/submitlimit.js): per account (the real limit) and per connection (a safety net that a shared network does not trip). A refusal says which limit and when it resets.
   if (contest) {
     // Contest entries are tied to a signed-in account, so a shared network (an event night, a school Wi-Fi) gets a higher limit

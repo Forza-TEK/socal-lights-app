@@ -1,7 +1,7 @@
 // POST /api/submit-event — public "Add your event" form (JSON).
 // The event is geocoded and its web page is checked. If the page really mentions the event and its year, the event
 // is published straight away; otherwise it waits in the admin's "Submitted events" tab. Either way it is logged.
-import { json, err, clean, webUrl, newId, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { json, err, clean, webUrl, newId, nearestCounty, geocodeAddress, verifyTurnstile } from "../_lib/util.js";
 import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
 import { requireUser, sameOrigin } from "../_lib/auth.js";
@@ -26,12 +26,13 @@ const featurable = (ev) => { const t = ptToday(); return Object.keys(EVENT_PLANS
 
 export async function onRequestPost({ request, env, waitUntil }) {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  // An event belongs to the account that adds it: sign in first (this replaces the "I am human" check)
+  // An event belongs to the account that adds it: sign in first, and pass the "I am human" check (the token comes with the form)
   if (!sameOrigin(request)) return err(403, "Not allowed.");
   const { user, res } = await requireUser(request, env);
   if (res) return res;
   const b = await request.json().catch(() => null);
   if (!b) return err(400, "The form couldn't be read. Please try again.");
+  if (!(await verifyTurnstile(env, b["cf-turnstile-response"], ip))) return err(400, "Please finish the 'I am human' check, then try again.");
 
   // Throttles (functions/_lib/submitlimit.js): per account (the real limit, hourly and daily) and per connection (a safety net a shared network does not trip). A refusal says which limit and when it resets.
   const lim = await checkSubmitLimits(env, { ip, user, kind: "event" });
