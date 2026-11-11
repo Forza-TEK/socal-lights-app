@@ -181,7 +181,7 @@ test("digest on Workers Paid: plan line, billing month, estimate, USAGE (not LIM
 
 test("admin panel and scripts carry the Workers Paid wording and the free path", () => {
   const js = readFileSync("public/admin/admin.js", "utf8");
-  assert.match(js, /Plan: Workers Paid/); assert.match(js, /Plan: Cloudflare Free/); assert.match(js, /Extra charges start/); assert.match(js, /Estimated extra charge/);
+  assert.match(js, /"Workers Paid"/); assert.match(js, /"Cloudflare Free"/); assert.match(js, /Extra charges start/); assert.match(js, /Extra charges so far/); assert.match(js, /not<\/b> a stop: extra use is billed/);
   const sh = readFileSync(".github/scripts/usage-issue.sh", "utf8");
   assert.match(sh, /Cloudflare usage limit reached or near/); assert.match(sh, /NOT hard stops/); assert.match(sh, /Cloudflare free-plan limit reached or near/);
   assert.match(readFileSync(".github/workflows/usage-check.yml", "utf8"), /Workers Paid/);

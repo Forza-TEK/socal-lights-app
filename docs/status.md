@@ -15,6 +15,9 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (Admin usage page header)
+- The Usage page header is now four small tiles (plan, billing month, extra charges so far, highest right now), a legend row with the Refresh button on the right, and one footnote, instead of two dense paragraphs.
+
 ## 2026-11-11 (On map button)
 - "On map" on a contest home (map card) did nothing because the link only changed the address bar of a page that was already open. Clicks on in-app `/#h-<id>` and `/#e-<id>` links now open that place in the map (the map moves to it and its card opens). If the place is not in the loaded list the link behaves as before.
 
