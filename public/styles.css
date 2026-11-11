@@ -1000,3 +1000,6 @@ body:has(#seasonmenu)::after{content:"";position:fixed;inset:0;z-index:55;backgr
   #themebtn{top:170px!important}
   #welcome{top:120px!important;left:72px}
 }
+
+/* Phone sheet handle: the bar sits close to the top edge and the sponsor strip starts right under it (the handle keeps its 44 px grab area; the strip overlaps its lower half) */
+@media (max-width:700px){.grab{align-content:start;padding-top:9px;margin-bottom:-22px}}
