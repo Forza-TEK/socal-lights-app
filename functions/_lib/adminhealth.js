@@ -4,18 +4,23 @@
 //  jobs:   the heartbeat of every scheduled GitHub workflow that reports in (job_heartbeats) plus the last time the live database applied a migration
 //          (d1_migrations: the "[SCL]" Claude routines publish event changes as migrations, so this is the closest trace they leave; they have no heartbeat of their own).
 import { sqlAgo } from "./revenue.js";
+import { INFO_LOG_SQL } from "./oplog.js";
 
 export const OP_LABEL = { mail: "Email send errors", email: "Email send errors", webhook: "Stripe webhook problems", limit: "Cloudflare or email limits hit", renewal: "Automatic renewal problems", reconcile: "Stripe reconcile differences", ads: "Ad reporting problems", outreach: "Outreach problems", posts: "Home posting problems", contest: "Contest problems", account: "Account problems", badges: "Badge problems", removal: "Home removal problems", "sponsor-pay-link": "Sponsor payment link problems" };
 
+const ACTIVITY_LABEL = { outreach: "Outreach calls that worked", ads: "Ad reports received", "sponsor-pay-link": "Sponsor payment links set (for abuse review)" };
+
 export async function errorsLast7(env, jobs = [], now = Date.now()) {
   const since = sqlAgo(now - 7 * 86400000);
-  let groups = [], mailFailed = 0, opsError = "";
-  try { groups = (await env.DB.prepare("SELECT kind, COUNT(*) AS n, MAX(created_at) AS last, MAX(detail) AS example FROM ops_log WHERE created_at > ? GROUP BY kind ORDER BY n DESC").bind(since).all()).results; } catch (e) { opsError = "The error log could not be read."; }
+  let groups = [], activity = [], mailFailed = 0, opsError = "";
+  try { groups = (await env.DB.prepare("SELECT kind, COUNT(*) AS n, MAX(created_at) AS last, MAX(detail) AS example FROM ops_log WHERE created_at > ? AND NOT " + INFO_LOG_SQL + " GROUP BY kind ORDER BY n DESC").bind(since).all()).results; } catch (e) { opsError = "The error log could not be read."; }
+  // normal activity that is logged but is not a failure (outreach and ad reports that worked, sponsor payment-link notes): shown apart, never counted as errors
+  try { activity = (await env.DB.prepare("SELECT kind, COUNT(*) AS n, MAX(created_at) AS last FROM ops_log WHERE created_at > ? AND " + INFO_LOG_SQL + " GROUP BY kind ORDER BY n DESC").bind(since).all()).results.map((g) => ({ kind: g.kind, label: ACTIVITY_LABEL[g.kind] || g.kind, n: g.n, last: g.last })); } catch {}
   try { mailFailed = ((await env.DB.prepare("SELECT COUNT(*) AS n FROM mail_outbox WHERE status = 'failed' AND created_at > ?").bind(since).first()) || {}).n || 0; } catch {}
   const failedJobs = jobs.filter((j) => j.failed).map((j) => ({ job: j.job, label: j.label, last: j.last }));
   const list = groups.map((g) => ({ kind: g.kind, label: OP_LABEL[g.kind] || g.kind, n: g.n, last: g.last, example: String(g.example || "").slice(0, 120) }));
   const total = list.reduce((t, g) => t + g.n, 0) + mailFailed + failedJobs.length;
-  return { total, groups: list, mailFailed, failedJobs, ...(opsError ? { error: opsError } : {}), notStored: ["Server errors (5xx) and browser errors are not stored by this site. Cloudflare dashboard > Workers & Pages > socal-lights > Metrics shows server errors."] };
+  return { total, groups: list, activity, mailFailed, failedJobs, ...(opsError ? { error: opsError } : {}), notStored: ["Server errors (5xx) and browser errors are not stored by this site. Cloudflare dashboard > Workers & Pages > socal-lights > Metrics shows server errors."] };
 }
 
 // What the dashboard shows for "last run of each routine and workflow".
