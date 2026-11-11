@@ -66,3 +66,4 @@ body.sh-page{padding:0}
 .sh-cnt-dot[hidden],.sh-cnt[hidden]{display:none}
 
 .sh-noown .sh-own{display:none!important}.sh-noown .sh-bbar{grid-template-columns:repeat(1,1fr)}
+@media (min-width:700px){.sh-top .maplink{display:none}} /* the sidebar already has Map (an icon on tablets), so the header pill is only for phones */

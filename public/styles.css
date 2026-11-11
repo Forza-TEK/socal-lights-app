@@ -405,6 +405,10 @@ button{touch-action:manipulation}
 }
 @media (max-width:1499px) and (min-width:701px){.brand .wm{display:none}.brand{width:52px;padding:0;justify-content:center;border-radius:50%;background:none}.brand .mark{width:52px;height:52px;margin:0}}
 
+/* Top bar on a computer: the search box keeps a usable width. When the buttons do not fit beside it they wrap to a second line, and below 1500 px the Route these pill shows only its icon (its words stay for screen readers). */
+@media (min-width:1100px){.searchrow{flex-wrap:wrap;row-gap:8px}.search{flex:1 1 220px;min-width:220px}}
+@media (min-width:1100px) and (max-width:1499px){.rtpill{position:relative;width:52px;padding:0;justify-content:center}.rtpill>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}#welcome{top:150px}}
+
 /* ---------- Redfin-style list cards ---------- */
 @media (min-width:1100px){:root{--panel-w:540px}}
 @media (min-width:1360px){:root{--panel-w:700px}}
@@ -744,7 +748,7 @@ body.lb-open{overflow:hidden}
 #welcome button.no{background:none;color:var(--muted);padding:9px 6px}
 @media (min-width:701px){#welcome{left:20px;right:auto;top:96px;width:330px}}
 body.detail-open #welcome{display:none}
-@media (max-width:700px){.panel:has(>.sponsor) #back{top:82px}} /* the Back arrow sits below the sponsor strip, not on it */
+@media (max-width:700px){.panel:has(>.sponsor) #back{top:62px}} /* the Back arrow sits below the sponsor strip, not on it */
 .sharedbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 0;padding:10px 12px;border-radius:16px;background:var(--season-soft);font-size:14.5px}
 .sharedbar span{flex:1 1 150px;font-weight:500}
 .sharedbar button{border:0;border-radius:999px;padding:8px 14px;background:var(--ink);color:var(--surface);font:inherit;font-weight:500;cursor:pointer}
@@ -841,27 +845,24 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .claimhome{display:inline-block;margin:8px 0 2px;font-size:14px;font-weight:600;color:var(--season-ink);text-decoration:none}.claimhome:hover{text-decoration:underline}
 
 /* Installer banner (banner.js): a thin labelled marquee of pills. Desktop: its own line under the logo/search/buttons. Phone: right above the list. */
-/* Sponsor strip: one sponsor at a time (whole name and phone, never cut off), every link at least 44 px tall, rotating every few seconds; the pause button stops it. */
-.sponsor{--sp-h:44px;display:flex;align-items:center;gap:8px;box-sizing:border-box;min-height:var(--sp-h);min-width:0;font-size:13px;line-height:1.2}
+.sponsor{--sp-h:24px;display:flex;align-items:center;gap:8px;box-sizing:border-box;height:var(--sp-h);min-width:0;font-size:12.5px;line-height:1;white-space:nowrap}
+
 .panel>.sponsor{margin:2px 14px 6px;flex:none}
 @media (min-width:701px){.panel>.sponsor{margin:14px 18px 0}.panel>.sponsor .sp-tag{order:-2}.panel>.sponsor .sp-pause{order:-1}}
-.sp-tag{flex:none;display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--ink);color:var(--surface);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-.sp-win{flex:1;min-width:0}
-.sp-track{display:flex;align-items:center}
-.sp-set{display:flex;align-items:center;min-width:0;flex:1;animation:spfade .35s ease}
-@keyframes spfade{from{opacity:0}to{opacity:1}}
-.sp-pill{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;min-height:var(--sp-h);box-sizing:border-box;padding:0 14px;border-radius:22px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font-weight:700}
-.sp-pill a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;min-height:var(--sp-h);min-width:44px;overflow-wrap:anywhere}
-.sp-pill .sp-name{flex:1 1 auto;min-width:0}.sp-pill .sp-tel{flex:none;white-space:nowrap}
+.sp-tag{flex:none;display:inline-flex;align-items:center;height:var(--sp-h);padding:0 10px;border-radius:999px;background:var(--ink);color:var(--surface);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.sp-win{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent)}
+.sp-track{display:flex;align-items:center;width:max-content}
+.sp-set{display:flex;align-items:center;gap:8px;box-sizing:border-box;min-width:var(--win,0px);padding:0 14px 0 6px}
+.sp-track.go{will-change:transform}
+.sp-win{touch-action:pan-y;cursor:grab;-webkit-user-select:none;user-select:none}.sp-win.drag{cursor:grabbing}.sp-win.drag a{pointer-events:none}
+.sp-pill{flex:none;display:inline-flex;align-items:center;gap:7px;height:var(--sp-h);padding:0 12px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font-weight:700}
+.sp-pill a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;height:var(--sp-h)}
 .sp-pill a:hover{text-decoration:underline;text-underline-offset:3px}
 .sp-empty{background:color-mix(in srgb,var(--surface) 72%,transparent);box-shadow:inset 0 0 0 1.5px var(--line2,var(--line));border:0;color:var(--muted);font-weight:600;text-decoration:none}
-.sp-sep{display:none}
-.sp-empty{justify-content:center}
-.sp-pause{flex:none;position:relative;width:var(--sp-h);height:var(--sp-h);display:grid;place-items:center;padding:0;border:0;background:none;color:var(--ink);cursor:pointer}
-.sp-pause::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
-.sp-pause svg{position:relative}
+.sp-sep{color:var(--muted)}
+.sp-pause{flex:none;width:var(--sp-h);height:var(--sp-h);display:grid;place-items:center;padding:0;border:0;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);cursor:pointer}
 .sponsor a:focus-visible,.sp-pause:focus-visible{outline:2px solid var(--season);outline-offset:1px;border-radius:999px}
-@media (prefers-reduced-motion:reduce){.sp-set{animation:none}}
+@media (prefers-reduced-motion:reduce){.sp-win{overflow-x:auto;scrollbar-width:none;-webkit-mask-image:none;mask-image:none}.sp-win::-webkit-scrollbar{display:none}.sp-track.go{animation:none;transform:none}.sp-dup{display:none}.sp-pause{display:none}}
 .fpanel:focus{outline:none}
 /* Phones turned sideways and small tablets: the search row has a second row (season, day/night), so the zoom buttons start below it instead of under the day/night button */
 @media (min-width:701px) and (max-width:1099px){.maplibregl-ctrl-top-right{top:132px}}
