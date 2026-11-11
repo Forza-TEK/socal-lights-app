@@ -629,7 +629,7 @@ thumbProbe(location.origin + "/img/badge-160.webp").then((ok) => { THUMBS = ok; 
 function probeRemoteThumbs() { const e = E.find((x) => /^https?:/.test(x.img || "")); if (e) thumbProbe(e.img).then((ok) => { THUMBS_REMOTE = ok; try { localStorage.setItem("socal-thumbs-remote", ok ? "1" : "0"); } catch {} }); }
 // Photos stored as http:// are never requested directly from an https page (mixed content): the resizer fetches them for us, and the fallback copy is the https address.
 const secure = (u) => String(u || "").replace(/^http:\/\//i, "https://");
-const thumbOf = (u, w) => { u = u || ""; return (THUMBS && /^\/(img\/events|api\/photo)\//.test(u)) || (THUMBS_REMOTE && /^https?:\/\//.test(u)) ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : secure(u); };
+const thumbOf = (u, w) => { u = u || ""; return (THUMBS && /^\/(img\/events|api\/photo|img\/stock\/t)\//.test(u)) || (THUMBS_REMOTE && /^https?:\/\//.test(u)) ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : secure(u); };
 // w: the width asked for (list cards 320, pop-up 800, details 900); h: when given, the box is declared so nothing moves while the photo loads. Only the first cards load at once: the rest wait until they near the screen.
 const photoImg = (ph, eager, w = 640, h = 0) => { const t = thumbOf(ph.src, w), o = secure(ph.src); return `<img class="evimg" src="${esc(t)}"${t !== o ? ` data-orig="${esc(o)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}" data-w="${t !== o ? w : 0}"${ph.keep ? " data-keep=\"1\"" : ""}` : ""} alt=""${h ? ` width="${w}" height="${h}"` : ""} loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`; };
 // The official picture gives way to the stock photo of that kind of event when it failed to load, or (by its size and shape, see photoguess.js) is a blurry or tiny picture, or a logo or banner on a non-city event
@@ -723,7 +723,7 @@ function quickPicks() {
   const nf = activeFilters().length;
   return `<div class="quick" role="group" aria-label="Quick picks">${q.map(([f, v, l]) => `<button type="button" data-quick="${f}" data-v="${v}" aria-pressed="${f === "weekend" ? state.weekend : state[f] === v}">${l}</button>`).join("")}<button type="button" class="qf${fOpen ? " open" : ""}" data-openfilters aria-haspopup="dialog" aria-expanded="${fOpen}">Filters${nf ? ` <span class="fn">${nf}</span>` : ""}</button>${isPhone() ? "" : sortHtml()}</div>`;
 }
-const LIST_PAGE = 60; let listVis = [], listShown = 0, listSig = "", listIO = null;
+const LIST_PAGE = 60; let listVis = [], listShown = 0, listSig = "", listPageSig = "", listIO = null;
 // Paid installer cards go at the top of the list, right behind the Featured places (which sort first).
 function listWithSponsors(items, tops) {
   const cards = items.map((it, i) => listCard(it, i)); if (!tops.length) return cards.join("");
@@ -861,8 +861,12 @@ function renderPanel(opts) {
     const act = activeFilters();
     head.innerHTML = `<div class="hrow"><span class="hcount"><b>${vis.length.toLocaleString("en-US")}</b> place${vis.length === 1 ? "" : "s"}<span class="hin"> in view</span></span>${isPhone() ? `<span class="hright">${sortHtml()}</span>` : ""}</div>${quickPicks()}${act.length ? `<div class="actchips">${act.map(([k, l]) => `<button type="button" class="achip" data-clear="${esc(k)}" aria-label="Remove filter ${esc(l)}">${esc(l)} <span aria-hidden="true">✕</span></button>`).join("")}<button type="button" class="linkbtn" data-clear="all">Clear all</button></div>` : ""}`;
     const tops = bannerOn && !state.detail && state.tab !== "plan" ? topSponsors(viewRegions()) : [], topSig = tops.map((t) => t.id).join(",");
-    const sig = topSig + "@" + vis.map((it) => it.key).join("|") + "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
+    const rest = "#" + state.sel + "#" + state.keep + "#" + favs.size + "#" + state.sort + "#" + (state.me ? 1 : 0);
+    const sig = topSig + "@" + vis.map((it) => it.key).join("|") + rest;
+    const pageSig = vis.length > LIST_PAGE ? topSig + "@" + vis.slice(0, LIST_PAGE).map((it) => it.key).join("|") + rest : ""; // only the first page of cards is on screen; the rest is drawn from listVis as you scroll
     if (opts && opts.quiet && sig === listSig) return; // the map moved but the same places are in view: leave the list alone
+    if (opts && (opts.quiet || opts.keepPage) && pageSig && pageSig === listPageSig) { listSig = sig; listVis = vis; updateRoutePill(vis); return; } // the first page of cards is the same ones (the whole list arrived, or the map moved a little): keep them and their photos as they are
+    listPageSig = pageSig;
     listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE); updateRoutePill(vis);
     body.innerHTML = vis.length ? `<h2 class="sr">Places in view</h2><div class="list">${listWithSponsors(vis.slice(0, listShown), tops)}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
       : !state.all && !state.city && !E.some((e) => (e.sn || "christmas") === state.season) ? `<div class="empty">No ${esc((SEASONS[state.season] || {}).short || "seasonal")} events are listed yet. We start adding them about six weeks ahead, so check back soon. Know of one? <a href="/add-event">Add an event</a>.</div>`
@@ -1542,13 +1546,28 @@ function setSheet(s) {
 })();
 
 /* ---------- boot ---------- */
+// Page speed: the map library (208 KB) and the map itself are heavy, so they start only after the first screen of photos has loaded (at most 2.5 s later), or at the first touch/key, so they do not compete with the list for the slow phone connection and processor.
+function mapWhenCalm() {
+  let go = () => { go = () => {}; clearTimeout(t); ["pointerdown", "keydown", "wheel"].forEach((n) => removeEventListener(n, ev, true)); document.removeEventListener("load", onImg, true); requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => (window.requestIdleCallback || ((f) => setTimeout(f, 0)))(loadMapLib, { timeout: 1500 }), 250))); }; // two frames and a moment later, so the photos are painted before the map starts using the processor
+  const ev = () => go(), t = setTimeout(ev, 2500);
+  let want = Math.min(4, document.querySelectorAll("#pbody img.evimg").length), seen = 0;
+  const onImg = (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains("evimg") && ++seen >= want) go(); };
+  ["pointerdown", "keydown", "wheel"].forEach((n) => addEventListener(n, ev, { capture: true, passive: true }));
+  if (!want) return go();
+  document.addEventListener("load", onImg, true);
+}
+let headOnly = false, fullP = null;
 async function load() {
   try {
     // Each list loads on its own: the events are the app (no events = the error message), but homes or settings failing leave the map working (homes retry in 10 seconds, then every 15 minutes).
     // index.html starts these three requests while the page is still loading (window.__pre); use those answers once instead of asking again
     const pre = window.__pre || {}; window.__pre = null;
     const get = (u) => pre[u] || fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
-    const [evR, postsR, cfgR] = await Promise.allSettled([get("/api/events"), get("/api/posts"), get("/api/config")]);
+    // Page speed: index.html asks for a small first-screen share of the list (/api/events?head=1) and only then for the whole list. The first screen is drawn from the small one; the whole list replaces it as soon as it arrives (takeFull). If the small one is missing or empty, wait for the whole list as before.
+    const headP = pre["/api/events?head=1"] || null; fullP = get("/api/events");
+    const [evR0, postsR, cfgR] = await Promise.allSettled([headP || fullP, get("/api/posts"), get("/api/config")]);
+    headOnly = !!headP && evR0.status === "fulfilled" && Array.isArray(evR0.value) && evR0.value.length > 0;
+    const evR = headP && !headOnly ? (await Promise.allSettled([fullP]))[0] : evR0;
     if (evR.status !== "fulfilled" || !Array.isArray(evR.value)) throw new Error("events failed");
     E = evR.value; setTimeout(probeRemoteThumbs, 1500);
     SHOW = postsR.status === "fulfilled" && Array.isArray(postsR.value) ? postsR.value : []; CONFIG = cfgR.status === "fulfilled" && cfgR.value ? cfgR.value : {};
@@ -1558,8 +1577,10 @@ async function load() {
   } catch {
     $("#pbody").innerHTML = `<div class="empty">Events couldn't load. Check your connection and refresh the page.</div>`; loadMapLib(); return;
   }
+  if (headOnly) document.body.classList.add("headonly"); // the counts wait for the whole list (index.html hides them meanwhile)
   renderSeasonBar(); applyFilters(); startBanner();
-  loadMapLib(); // the list is on screen: now bring in the map library (index.html already asked the browser to fetch it quietly)
+  if (headOnly) fullP.then(takeFull, () => setTimeout(refreshData, 3000)); // the whole list failed: ask again, the first screen stays meanwhile
+  mapWhenCalm(); // the list is on screen: bring in the map library once the first photos are in (or on the first touch)
   const h = location.hash.slice(1), dl = h.match(/^([ehm])-(.+)$/);
   if (dl) {
     const ev = dl[1] === "e" ? E.find((x) => x.id === dl[2]) : null, ho = dl[1] !== "e" ? SHOW.find((x) => x.id === dl[2]) : null, sn = ev ? ev.sn : ho ? ho.season : "";
@@ -1578,13 +1599,23 @@ async function load() {
 // Keep an open page fresh: when you come back to the tab (or every 15 minutes while it's open),
 // quietly reload the event list so newly added events appear without a manual refresh.
 let loadedAt = Date.now();
+// The whole list has arrived after the first screen was drawn from the small one: use it, then redraw the list (keeping its scroll position), the counts and the map
+function takeFull(ev) {
+  if (!headOnly || !Array.isArray(ev)) return;
+  headOnly = false; E = ev;
+  E.forEach((e) => { const d = DETAIL.get(e.id); if (d) HEAVY.forEach((k) => (e[k] = d[k])); });
+  E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
+  placeHouses(); loadedAt = Date.now(); document.body.classList.remove("headonly");
+  if (state.detail) { counts(); drawMap(); } else { const b = $("#pbody"), top = b.scrollTop; renderPanel({ keepPage: true }); b.scrollTop = top; drawMap(); }
+  if (fOpen) { refreshFilters(); placeFilters(); }
+}
 async function refreshData() {
   try {
     const get = (u) => fetch(u, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
     const [evR, postsR] = await Promise.allSettled([get("/api/events"), get("/api/posts")]);
     const ev = evR.status === "fulfilled" ? evR.value : null, posts = postsR.status === "fulfilled" ? postsR.value : null;
     if (!Array.isArray(ev) && !Array.isArray(posts)) return;
-    if (Array.isArray(ev)) E = ev; if (Array.isArray(posts)) SHOW = posts;
+    if (Array.isArray(ev)) { E = ev; if (headOnly) { headOnly = false; document.body.classList.remove("headonly"); } } if (Array.isArray(posts)) SHOW = posts;
     E.forEach((e) => { const d = DETAIL.get(e.id); if (d) HEAVY.forEach((k) => (e[k] = d[k])); }); // keep the details already loaded (the list has none)
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses(); loadedAt = Date.now();

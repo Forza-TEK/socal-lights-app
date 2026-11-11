@@ -615,7 +615,7 @@ test("Admin changes are logged by the admin middleware area list", async () => {
 test("wiring: pages load the widget with a versioned tag, the widget is inert unless config says so, and binding names match the docs", async () => {
   const { readFileSync } = await import("node:fs");
   const idx = readFileSync("public/index.html", "utf8"), js = readFileSync("public/chat.js", "utf8"), toml = readFileSync("wrangler.toml", "utf8");
-  assert.ok(/<script src="\/chat\.js\?v=[0-9a-z]+" defer><\/script>/.test(idx));
+  assert.ok(/<script src="\/chat\.js\?v=[0-9a-z]+" defer><\/script>/.test(idx) || /s\.src="\/chat\.js\?v=[0-9a-z]+"/.test(idx), "the map page loads the widget with a versioned address (from an idle loader)");
   assert.ok(js.includes("c.chatEnabled") && js.includes('role: "log"') && js.includes('"aria-live": "polite"') && js.includes('"aria-modal": "true"') && js.includes("Escape"));
   assert.ok(!/innerHTML/.test(js), "replies are inserted as text, never as HTML");
   assert.ok(!/localStorage|document\.cookie/.test(js), "nothing lasting is stored in the browser: no localStorage, no cookie");
