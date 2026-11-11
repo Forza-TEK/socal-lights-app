@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/addflow.css?v=20261111z">
 <link rel="stylesheet" href="/forms.css?v=20261106zb">
 <link rel="stylesheet" href="/profile.css?v=20261106zb">
 <script src="/hit.js?v=20261107a" defer></script>
@@ -16,11 +16,14 @@
 <body class="sh-page prof">
 <main class="main" id="content"><div id="app" class="main" style="padding:0;max-width:none"><p class="muted">Loading…</p></div></main>
 <script type="module">
-import { me, signIn, signOut, noteSigninResult, toast } from "/auth.js?v=20261107p";
-import { mountShell } from "/appshell.js?v=20261111a";
-import { homeForm, eventForm, openFormWindow } from "/forms.js?v=20261106zb";
-import { esc, input, select, attachAddress, OPT } from "/addflow.js?v=20261111d";
+import { me, signIn, signOut, noteSigninResult, toast, friendlyError } from "/auth.js?v=20261111z";
+import { mountShell } from "/appshell.js?v=20261111z";
+import { homeForm, eventForm, openFormWindow, photoBoxHtml, wireSeasonType } from "/forms.js?v=20261111z";
+import { esc, input, select, attachAddress, OPT, shrink } from "/addflow.js?v=20261111z";
+import { SEASONS } from "/seasons.js?v=20261104a";
+import { draftKey, clearAllLocalDrafts } from "/drafts-local.js?v=20261111z";
 import { CITY } from "/cities.js?v=20261107a";
+const SEASON_LIST = Object.entries(SEASONS).map(([k, v]) => [k, v.label, v.types]); // for the edit sheets: season, and the types that belong to it
 const shell = mountShell({ page: "prof", title: "Your profile", active: (location.hash || "").slice(1) || "drafts", items: [{ k: "drafts", label: "Drafts", icon: "file" }, { k: "contests", label: "Contests", icon: "trophy" }, { k: "displays", label: "Displays", icon: "home" }, { k: "events", label: "Events", icon: "cal" }, { k: "badges", label: "Badges", icon: "star", hidden: true }, { k: "account", label: "Account", icon: "user" }, { k: "tutorials", label: "Tutorials", icon: "play", href: "/tutorials" }], onPick: (k) => { tab = k; history.replaceState(null, "", "#" + k); render(); window.scrollTo(0, 0); } });
 const $ = (q) => document.querySelector(q), app = $("#app"), cities = Object.keys(CITY).sort();
 const KEYS = { house: "scl-house-draft", event: "scl-event-draft", contest: "scl-contest-draft" }, PAGE = { house: "/add-house", event: "/add-event", contest: "/add-contest" }, LABEL = { house: "Lighting display", event: "Event", contest: "Contest", entry: "Contest entry" }, dpage = (d) => (d.kind === "entry" ? (d.slug ? `/c/${d.slug}/enter` : "/add") : PAGE[d.kind] || "/add");
@@ -31,7 +34,10 @@ let O = null, NL = { optin: null, config: null }, BD = { badges: [], master: tru
 
 // After Google sign-in comes back with ?save=<kind>, move the draft kept on this device into the account
 async function syncLocal() {
-  const qs = new URLSearchParams(location.search), kind = qs.get("save"), key = kind === "entry" && /^[a-z0-9-]{1,80}$/.test(qs.get("c") || "") ? "scl-entry-draft-" + qs.get("c") : KEYS[kind]; if (!key) return;
+  const qs = new URLSearchParams(location.search), kind = qs.get("save"), base = kind === "entry" && /^[a-z0-9-]{1,80}$/.test(qs.get("c") || "") ? "scl-entry-draft-" + qs.get("c") : KEYS[kind]; if (!base) return;
+  // Drafts are kept per account on this device. A form started signed out (the account is only known after Google sign-in) saved it under "anon": that one is used too.
+  const uid = info && info.user ? info.user.id : "", key = [draftKey(base, uid), draftKey(base, "")].find((k) => { try { return localStorage.getItem(k); } catch { return false; } });
+  if (!key) { history.replaceState(null, "", "/profile#drafts"); return; }
   try {
     const sv = JSON.parse(localStorage.getItem(key) || "null");
     if (sv && sv.d) {
@@ -40,7 +46,7 @@ async function syncLocal() {
       if (r.ok) { localStorage.removeItem(key); toast("Draft saved to your profile."); }
     }
   } catch {}
-  history.replaceState(null, "", "/profile");
+  history.replaceState(null, "", "/profile#drafts");
 }
 const head = (h, add) => `<div class="sechead"><h2>${h}</h2>${add ? `<a class="btn out sm" href="${add[1]}">${add[0]}</a>` : ""}</div>`;
 const fld = (k, l, v, ex = "") => `<label class="mf"><span>${l}</span><input data-k="${k}" value="${esc(v ?? "")}" ${ex}></label>`;
@@ -55,7 +61,7 @@ function homeRow(h) {
   const pro = h.poster_type === "installer";
   return `<div class="rowi mrow" data-home="${esc(h.id)}"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status, st)}</span>${sharedLine(h)}</div>
    <div class="acts">${h.status === "approved" || h.status === "paused" ? `<button class="btn out sm" type="button" data-medit>Edit</button><button class="btn out sm" type="button" data-hact="${h.status === "paused" ? "resume" : "pause"}">${h.status === "paused" ? "Put back on the map" : "Take down for the season"}</button><button class="btn out sm danger" type="button" data-hdel>Delete</button>` : ""}</div>
-   ${homeForm(h, { pro, changes: chgList(h.changes) })}</div>`;
+   ${homeForm(h, { pro, changes: chgList(h.changes), own: true, cities, seasons: SEASON_LIST })}</div>`;
 }
 // A contest you run or help run: where it stands, and the buttons for it
 const dshort = (iso) => { try { return new Date(iso + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
@@ -78,7 +84,7 @@ function eventRow(e) {
   const st = live ? ["live", e.notice === "cancelled" ? "Cancelled" : e.notice === "postponed" ? "Postponed" : "On the map"] : e.status === "pending" ? ["warn", "In review"] : ["", e.status];
   return `<div class="rowi mrow" data-ev="${esc(e.id)}"><div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${esc(e.start_date)}${e.end_date !== e.start_date ? " to " + esc(e.end_date) : ""} · ${dot(e.status, st)}</span></div>
    <div class="acts">${live ? `<button class="btn out sm" type="button" data-medit>Edit</button><select class="btn out sm" data-notice aria-label="Event notice"><option value="">No notice</option><option value="cancelled" ${e.notice === "cancelled" ? "selected" : ""}>Cancelled</option><option value="postponed" ${e.notice === "postponed" ? "selected" : ""}>Postponed</option></select>` : ""}${e.status === "published" || e.status === "pending" ? `<button class="btn out sm" type="button" data-ecopy>Run again next year</button><button class="btn out sm danger" type="button" data-edel>Delete</button>` : ""}</div>
-   ${eventForm(e)}</div>`;
+   ${eventForm(e, { cities, seasons: SEASON_LIST })}</div>`;
 }
 const list = (rows, empty) => (rows.length ? `<div class="list">${rows.join("")}</div>` : `<p class="muted pempty">${empty}</p>`);
 
@@ -102,7 +108,7 @@ function nlSection() {
 }
 function panel() {
   const o = O, u = o.user;
-  if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}</span></div><div class="acts"><a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
+  if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}${d.kind === "house" || d.kind === "entry" ? " · photos stay on the device where you added them" : ""}</span></div><div class="acts"><a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}" data-name="${esc(d.title)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
   if (tab === "contests") return head("Contests you run", ["+ Add a contest", "/add-contest"]) + list(o.contests.map(contestRow), 'You do not run or help run a contest yet. <a href="/add-contest">Create one</a>.')
     + head("Homes you entered") + list(o.entries.map(entryRow), 'You have not entered a home in a contest yet. <a href="/contests">See contests to enter</a>.');
   if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + (o.installers || []).map((i) => `<p class="small"><a class="btn out sm" href="/installer/${esc(i.slug)}/manage">Manage the ${esc(i.name)} profile</a></p>`).join("") + list([...o.homes.map(homeRow), ...linked().map(entryRow)], "None yet.");
@@ -137,15 +143,71 @@ function render() {
     <section id="pp">${panel()}</section>`;
   wire();
 }
+// Delete with a clear confirmation and a short Undo. First tap: the button names what will go and a line says it is for good. Second tap: the row disappears and an Undo bar shows for 8 seconds.
+// The delete request is sent only when that time runs out (or the page is left), so Undo really brings it back: the database has no soft delete, so nothing is removed before then.
+const UNDO_MS = 8000, pendingDeletes = new Set();
+const undos = Object.assign(document.createElement("div"), { id: "undos", className: "undos" }); document.body.appendChild(undos);
+addEventListener("pagehide", () => pendingDeletes.forEach((send) => send(true)));
+function confirmDelete(btn, { name, row, url, extra = "" }) {
+  let note = row.querySelector(":scope > .delnote");
+  if (!note) { note = document.createElement("p"); note.className = "delnote small"; note.setAttribute("role", "status"); row.appendChild(note); }
+  const reset = () => { clearTimeout(btn._t); delete btn.dataset.sure; if (btn.dataset.label) btn.textContent = btn.dataset.label; note.textContent = ""; note.hidden = true; };
+  if (!btn.dataset.sure) {
+    btn.dataset.sure = "1"; btn.dataset.label = btn.textContent;
+    btn.textContent = "Tap again to delete “" + (name.length > 28 ? name.slice(0, 27) + "…" : name) + "”";
+    note.textContent = `This deletes “${name}”${extra} for good. After you tap again you have a few seconds to undo it, then it cannot be undone.`; note.hidden = false;
+    btn._t = setTimeout(reset, 8000); return;
+  }
+  clearTimeout(btn._t); row.hidden = true;
+  const bar = document.createElement("div"); bar.className = "undobar"; bar.setAttribute("role", "status");
+  bar.innerHTML = `<span>Deleted “${esc(name)}”.</span><button class="link" type="button">Undo</button>`; undos.appendChild(bar);
+  let done = false, timer = 0;
+  const send = async (leaving) => {
+    if (done) return; done = true; clearTimeout(timer); pendingDeletes.delete(send); bar.remove();
+    try { const r = await fetch(url, { method: "DELETE", keepalive: !!leaving }); if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "That didn't work."); if (!leaving) toast("Deleted."); }
+    catch (x) { row.hidden = false; reset(); toast(friendlyError(x, "That didn't work. Nothing was deleted.")); return; }
+    if (!leaving) { row.remove(); if (!pendingDeletes.size) load(); }
+  };
+  timer = setTimeout(send, UNDO_MS); pendingDeletes.add(send);
+  const undo = bar.querySelector("button"); undo.onclick = () => { done = true; clearTimeout(timer); pendingDeletes.delete(send); bar.remove(); row.hidden = false; reset(); toast("Kept. Nothing was deleted."); };
+  undo.focus();
+}
+// The edit sheet of a home you posted: photos are added and removed right away (shrunk on this device first), and the address field suggests streets.
+function wireHomeExtras(row, f) {
+  const id = row.dataset.home, h = O.homes.find((x) => x.id === id), box = f.querySelector("[data-pbox]"); if (!h || !box) return;
+  const say = (t) => { const s = box.querySelector("[data-pstat]"); if (s) s.textContent = t; };
+  const redraw = (keys) => { h.photos = keys; box.innerHTML = photoBoxHtml(h, keys); };
+  const send = (init) => fetch("/api/me/homes/" + id, init).then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "That didn't work."); return j; });
+  f.addEventListener("change", async (e) => {
+    if (!e.target.matches("[data-ephotos]")) return;
+    const files = [...e.target.files]; e.target.value = ""; if (!files.length) return;
+    const room = 8 - (h.photos || []).length; let n = 0;
+    say("Preparing…");
+    try {
+      const fd = new FormData();
+      for (const file of files.slice(0, room)) { if (!file.type.startsWith("image/")) continue; try { fd.append("photos", await shrink(file), `photo-${++n}.jpg`); } catch { n--; } }
+      if (n < 1) return say("Those files couldn't be read as photos. Try a JPG or PNG.");
+      say("Uploading…");
+      const j = await send({ method: "POST", body: fd }); redraw(j.photos);
+      say(`${n} photo${n === 1 ? "" : "s"} added.${files.length > room ? " The limit is 8 photos, so the rest were left out." : ""}`);
+    } catch (x) { say(friendlyError(x, "Couldn't add the photos.")); }
+  });
+  f.addEventListener("click", async (e) => {
+    const rm = e.target.closest("[data-ph-rm]"), cv = e.target.closest("[data-ph-cover]"); if (!rm && !cv) return;
+    try { const j = await send({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: rm ? "removephoto" : "coverphoto", key: (rm || cv).dataset[rm ? "phRm" : "phCover"] }) }); redraw(j.photos); say(rm ? "Photo removed." : "Cover changed."); }
+    catch (x) { say(friendlyError(x, "That didn't work.")); }
+  });
+  attachAddress(f, { getCity: () => (f.querySelector('[data-k="city"]') || {}).value || "", onPick: (s) => { const set = (k, v) => { const el = f.querySelector(`[data-k="${k}"]`); if (el) el.value = v; }; set("street", s.street); if (cities.includes(s.city)) set("city", s.city); if (/^\d{5}/.test(s.zip)) set("zip", s.zip.slice(0, 5)); } });
+}
 function wire() {
   app.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; history.replaceState(null, "", "#" + tab); render(); }));
-  app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to delete"; return; } await fetch("/api/drafts/" + b.dataset.del, { method: "DELETE" }); load(); }));
+  app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => confirmDelete(b, { name: b.dataset.name || "this draft", what: "the saved draft", row: b.closest(".rowi"), url: "/api/drafts/" + b.dataset.del })));
   const ep = $("#editprof"); if (ep) ep.onclick = () => { tab = "account"; history.replaceState(null, "", "#account"); render(); window.scrollTo(0, 0); };
   const da = $("#delacct"); if (da) da.onclick = async () => {
     if (!da.dataset.sure) { da.dataset.sure = "1"; da.textContent = "Tap again to permanently delete"; return; }
     da.disabled = true; const r = await fetch("/api/me", { method: "DELETE" });
     if (!r.ok) { const j = await r.json().catch(() => ({})); const er = $("#delerr"); er.textContent = j.error || "Couldn't delete your account. Try again."; er.hidden = false; da.disabled = false; return; }
-    location.href = "/?deleted=1";
+    clearAllLocalDrafts(); location.href = "/?deleted=1";
   };
   const save = () => fetch("/api/me/badges", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ master: BD.master, off: BD.off }) });
   const bm = app.querySelector("[data-bpm]"); if (bm) bm.onchange = async () => { BD.master = bm.checked; await save(); render(); };
@@ -159,13 +221,29 @@ function wire() {
     const cl = f && f.querySelector("[data-mcancel]"); if (cl) cl.onclick = () => { if (closeW) closeW(); };
     const collect = () => { const o = {}; f.querySelectorAll("[data-k]").forEach((el) => (o[el.dataset.k] = el.type === "checkbox" ? el.checked : el.value)); return o; };
     if (row.dataset.home) {
-      f.onsubmit = async (e) => { e.preventDefault(); er.hidden = true; try { await post("/api/me/homes/" + row.dataset.home, { action: "edit", ...collect() }); if (closeW) closeW(); toast("Saved."); load(); } catch (x) { er.textContent = x.message; er.hidden = false; } };
-      const hd = row.querySelector("[data-hdel]"); if (hd && !row.dataset.shared) hd.onclick = async () => { if (!hd.dataset.sure) { hd.dataset.sure = "1"; hd.textContent = "Tap again to delete for good"; return; } try { const r = await fetch("/api/me/homes/" + row.dataset.home, { method: "DELETE" }); if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "That didn't work."); toast("Deleted."); load(); } catch (x) { toast(x.message); } };
+      wireHomeExtras(row, f);
+      f.onsubmit = async (e) => {
+        e.preventDefault(); er.hidden = true;
+        try {
+          const j = await post("/api/me/homes/" + row.dataset.home, { action: "edit", ...collect() }); if (closeW) closeW();
+          // Same rules as a new home: text that needs a person's look puts it back in review, and a street we cannot find leaves the pin at the city center. Both are said here, not left to be discovered.
+          toast(j.review ? "Saved. The new text needs a quick look, so this home is back in review until it is approved." : j.located === false ? "Saved. We couldn't find that exact street, so the pin is at the center of the city. Check the address." : "Saved.", j.review || j.located === false ? 9000 : undefined); load();
+        } catch (x) { er.textContent = friendlyError(x); er.hidden = false; }
+      };
+      const hd = row.querySelector("[data-hdel]"), hm = O.homes.find((x) => x.id === row.dataset.home) || {};
+      if (hd && !row.dataset.shared) hd.onclick = () => confirmDelete(hd, { name: hm.title || hm.biz || "this home", what: "the home", row, url: "/api/me/homes/" + row.dataset.home, extra: ", its photos and its page" });
       row.querySelectorAll("[data-hact]").forEach((b) => (b.onclick = async () => { try { await post("/api/me/homes/" + row.dataset.home, { action: b.dataset.hact }); toast(b.dataset.hact === "pause" ? "Taken down. Put it back any time." : "Back on the map."); load(); } catch (x) { toast(x.message); } }));
     } else {
-      f.onsubmit = async (e) => { e.preventDefault(); er.hidden = true; try { await post("/api/me/events/" + row.dataset.ev, { action: "edit", ...collect() }); if (closeW) closeW(); toast("Saved."); load(); } catch (x) { er.textContent = x.message; er.hidden = false; } };
+      wireSeasonType(f, SEASON_LIST);
+      attachAddress(f, { getCity: () => (f.querySelector('[data-k="city"]') || {}).value || "", onPick: (s) => { const set = (k, v) => { const el = f.querySelector(`[data-k="${k}"]`); if (el) el.value = v; }; set("address", s.street); if (cities.includes(s.city)) set("city", s.city); } });
+      f.onsubmit = async (e) => {
+        e.preventDefault(); er.hidden = true;
+        try { const j = await post("/api/me/events/" + row.dataset.ev, { action: "edit", ...collect() }); if (closeW) closeW(); toast(j.located === false ? "Saved. We couldn't find that exact street, so the pin is at the center of the city. Check the address." : "Saved.", j.located === false ? 9000 : undefined); load(); }
+        catch (x) { er.textContent = friendlyError(x); er.hidden = false; }
+      };
       const nt = row.querySelector("[data-notice]"); if (nt) nt.onchange = async () => { try { await post("/api/me/events/" + row.dataset.ev, { action: "notice", notice: nt.value }); toast(nt.value ? "Tag added to the event." : "Tag removed."); load(); } catch (x) { toast(x.message); } };
-      const ed = row.querySelector("[data-edel]"); if (ed) ed.onclick = async () => { if (!ed.dataset.sure) { ed.dataset.sure = "1"; ed.textContent = "Tap again to delete for good"; return; } try { const r = await fetch("/api/me/events/" + row.dataset.ev, { method: "DELETE" }); if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "That didn't work."); toast("Deleted."); load(); } catch (x) { toast(x.message); } };
+      const ed = row.querySelector("[data-edel]"), em2 = O.events.find((x) => x.id === row.dataset.ev) || {};
+      if (ed) ed.onclick = () => confirmDelete(ed, { name: em2.name || "this event", what: "the event", row, url: "/api/me/events/" + row.dataset.ev, extra: " and its page on the map" });
       const cp = row.querySelector("[data-ecopy]"); if (cp) cp.onclick = async () => { if (!cp.dataset.sure) { cp.dataset.sure = "1"; cp.textContent = "Tap again: copy to next year"; return; } try { await post("/api/me/events/" + row.dataset.ev, { action: "copy" }); toast("Copied. Edit the new dates when you know them."); load(); } catch (x) { toast(x.message); } };
     }
   });
@@ -210,7 +288,7 @@ function wire() {
 }
 
 addEventListener("hashchange", () => { tab = (location.hash || "").slice(1) || "drafts"; if (O) render(); });
-let info = null;
+let info = null, opened = false; // opened: the first tab was chosen already (a reload after an edit keeps the tab you are on)
 async function load() {
   noteSigninResult();
   const i = await me(true); info = i;
@@ -220,7 +298,12 @@ async function load() {
   BD = await fetch("/api/me/badges", { cache: "no-store" }).then((x) => (x.ok ? x.json() : BD)).catch(() => BD);
   NL = await fetch("/api/me/newsletter", { cache: "no-store" }).then((x) => (x.ok ? x.json() : NL)).catch(() => NL);
   O = await r.json(); O.user ={ ...O.user, street: i.user.street || "", city: i.user.city || "", zip: i.user.zip || "", name: i.user.name || O.user.name || "" };
-  render();
+  // With no tab in the address (#displays...), open the tab that holds what matters now: what was just posted (the last 15 minutes), else saved drafts if there are any, else the first tab with something in it.
+  if (!(location.hash || "").slice(1) && !opened) {
+    const fresh = (rows) => rows.some((x) => Date.now() - Date.parse(String(x.created_at).replace(" ", "T") + "Z") < 15 * 60_000);
+    tab = fresh(O.homes) ? "displays" : fresh(O.events) ? "events" : O.drafts.length ? "drafts" : O.homes.length || linked().length ? "displays" : O.events.length ? "events" : O.contests.length ? "contests" : "drafts";
+  }
+  opened = true; render();
 }
 load();
 </script>
