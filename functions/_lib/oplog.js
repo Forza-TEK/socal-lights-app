@@ -30,10 +30,15 @@ export async function logOpOnce(env, kind, detail = "", minutes = 60) {
   return true;
 }
 
+// Lines in ops_log that record normal activity or a note for review, NOT a failure: every outreach and ad-report call that worked (they are logged so Admin can show what Grok sent),
+// and the host of a sponsor payment link (an abuse-review note). They stay in the log, but the dashboard's "Errors" count and the digest's "problems" leave them out.
+// A line that says "failed" or "invalid" is still a problem.
+export const INFO_LOG_SQL = "((kind IN ('outreach','ads') AND detail NOT LIKE '%fail%' AND detail NOT LIKE '%invalid%') OR kind = 'sponsor-pay-link')";
+
 // Grouped summary since a timestamp ("YYYY-MM-DD HH:MM:SS", UTC): [{ kind, n, last, example }], newest group first.
 export async function opsSince(env, since) {
   try {
-    const rows = (await env.DB.prepare("SELECT kind, detail, created_at FROM ops_log WHERE created_at > ? ORDER BY id DESC LIMIT 500").bind(since).all()).results;
+    const rows = (await env.DB.prepare("SELECT kind, detail, created_at FROM ops_log WHERE created_at > ? AND NOT " + INFO_LOG_SQL + " ORDER BY id DESC LIMIT 500").bind(since).all()).results;
     const by = new Map();
     for (const r of rows) { const g = by.get(r.kind) || { kind: r.kind, n: 0, last: r.created_at, example: r.detail }; g.n++; by.set(r.kind, g); }
     return [...by.values()];

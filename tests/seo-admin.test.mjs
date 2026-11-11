@@ -290,5 +290,5 @@ test("ADM-05, 06, 08, 11: bulk select on Events and submitted events, sort contr
 
 test("Admin asset versions moved together", () => {
   const idx = read("public/admin/index.html"), js = read("public/admin/admin.js");
-  assert.match(idx, /admin\.css\?v=20261113a/); assert.match(idx, /admin\.js\?v=20261111x560/); assert.match(js, /kit\.js\?v=20261113a/); assert.match(js, /health\.js\?v=20261113a/);
+  assert.match(idx, /admin\.css\?v=20261113a/); assert.match(idx, /admin\.js\?v=20261113b/); assert.match(js, /kit\.js\?v=20261113a/); assert.match(js, /health\.js\?v=20261113a/);
 });
