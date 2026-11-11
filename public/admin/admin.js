@@ -386,7 +386,7 @@ async function renderContests() {
   CONTESTS = await api("/api/admin/contests");
   const g = (k) => CONTESTS.filter((c) => cview(c) === k), n = { look: g("look").length, live: g("live").length, ended: g("ended").length, declined: g("declined").length };
   setCount("contests", n.look);
-  if (!CVIEW || (CVIEW === "look" && !n.look)) CVIEW = n.look ? "look" : n.live ? "live" : n.ended ? "ended" : "declined";
+  if (!CVIEW) CVIEW = n.look ? "look" : n.live ? "live" : n.ended ? "ended" : "declined"; // only the first time: picking "Needs a look" with nothing in it shows the empty note instead of jumping away
   const list = g(CVIEW);
   const bar = toolbar({ views: [{ k: "look", label: "Needs a look", n: n.look }, { k: "live", label: "Live", n: n.live }, { k: "ended", label: "Ended", n: n.ended }, { k: "declined", label: "Unpublished", n: n.declined }, { k: "passes", label: "Contest passes" }], active: CVIEW, search: { placeholder: "Search contests, organizers", value: CSEARCH }, right: dl("contests"), count: String(list.length) });
   const wire = () => { wireToolbar(main, { onView: (v) => { CVIEW = v; renderContests(); }, onSearch: (q) => { CSEARCH = q; filterCards(main, q); } }); if (CSEARCH) filterCards(main, CSEARCH); applyPreset(main); };
