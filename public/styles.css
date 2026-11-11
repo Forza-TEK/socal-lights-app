@@ -975,3 +975,11 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .sp-ev .sp-lbl{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6b4a00;background:#ffd36a;border-radius:999px;padding:2px 7px}
 .sp-ev .sp-meta{color:var(--muted);font-weight:600}
 :root[data-theme="dark"] .sp-ev .sp-lbl{color:#2b1d00}
+
+/* homes entered in a contest, on its details card */
+.chomes{margin:14px 0 4px}.chomes h3{margin:0 0 8px;font-size:16px}
+.chstrip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.chm{flex:0 0 150px;display:grid;gap:3px;align-content:start;scroll-snap-align:start;text-decoration:none;color:inherit}
+.chm img,.chn{width:150px;height:112px;object-fit:cover;border-radius:12px;background:var(--surface-2,rgba(128,128,128,.15));display:block}
+.chm b{font-size:14px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}.chm span:last-child{font-size:12.5px;color:var(--muted);line-height:1.3}
+.chall{display:inline-flex;align-items:center;min-height:44px;font-weight:600;color:var(--ink);text-underline-offset:3px}

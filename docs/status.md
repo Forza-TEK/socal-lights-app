@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-11 (homes on a contest's cards)
+- A contest's map details card and its `/e/c-<slug>` page now list the homes entered: first 12 (photos first; rotating daily while voting is open) with name and address, plus the total and a "See all N homes" link to the contest page. Data: `functions/_lib/contesthomes.js`, returned as `ch` by `GET /api/events/c-<slug>`. Approved homes only. `/e` pages stay cached up to 15 minutes. Tests: `tests/contest-homes.test.mjs`.
+
 ## 2026-11-10 (editing a contest entry record)
 - Owner could not fix a misspelled name on an organizer-added home. Added: organizer **Edit** (name, description, address with re-lookup) on added homes; Admin **Contest entries** view (Houses > Published) that opens the usual Edit form; the homeowner button on the contest page now reads **Edit details and photos**. Homeowner editing of name/description already existed. Address stays organizer/Admin only. Tests in `tests/entry-photos.test.mjs`.
 - A home linked from an organizer link now also shows under Displays on the profile (as well as under Contests), with Manage and Open contest buttons.
