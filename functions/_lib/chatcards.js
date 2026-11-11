@@ -87,16 +87,17 @@ export function cardsFor({ question, settings, ctx = {}, handoff = "", user = nu
   if (t[1]) {
     if (handoff || HUMAN.test(q)) out.push(humanCard(q));
     if (REPORT.test(q) && !out.length && !(user && /\b(my|our)\b/i.test(q) && wantsOwnerAction(q))) out.push(formCard("report_problem", { where: (ctx.eventList && ctx.eventList.length === 1 && ctx.eventList[0].name) || "" }));
-    const info = informational(q);
+    const info = informational(q), from = out.length; // a question that only asks about something still gets the matching card, as a suggestion the visitor can open
     const toMap = ADD_TO_MAP.test(q), homey = HOMEY.test(q) && !/\b(haunted house)\b/i.test(q);
-    if (!info && (ADD_EVENT.test(q) || (toMap && !homey && !ADD_CONTEST.test(q))) && !/\b(find|search|see|go to|attend)\b/i.test(q)) { if (t[3] && user) out.push(publishEventCard()); out.push(eventStartCard()); }
-    if (!info && (ADD_HOME.test(q) || (toMap && homey)) && !removing && !/\b(find|search|visit|directions|haunted house)\b/i.test(q)) out.push(homeStartCard());
-    if (!info && ADD_CONTEST.test(q)) out.push(contestStartCard());
-    if (!info && WEEKLY.test(q) && !STOP.test(q)) out.push(formCard("weekly_email"));
-    if (removing && !info) out.push(formCard("remove_home"));
+    if ((ADD_EVENT.test(q) || (toMap && !homey && !ADD_CONTEST.test(q))) && !/\b(find|search|see|go to|attend)\b/i.test(q)) { if (t[3] && user) out.push(publishEventCard()); out.push(eventStartCard()); }
+    if ((ADD_HOME.test(q) || (toMap && homey)) && !removing && !/\b(find|search|visit|directions|haunted house)\b/i.test(q)) out.push(homeStartCard());
+    if (ADD_CONTEST.test(q)) out.push(contestStartCard());
+    if (WEEKLY.test(q) && !STOP.test(q)) out.push(formCard("weekly_email"));
+    if (removing) out.push(formCard("remove_home"));
+    if (info) for (const c of out.slice(from)) c.suggest = true;
   }
   // Tier 3: the signed-in visitor's own listings (docs/ai-assistant-actions-design.md). Signed out: one card that says to sign in first.
-  if (t[3] && (!handoff || handoff === "gap") && wantsOwnerAction(q) && !informational(q) && !(removing && !user)) { if (user) out.unshift(...ownerCards({ question: q, own: own || {} })); else if (/\b(my|our|mine)\b/i.test(q)) out.unshift(signInCard()); }
+  if (t[3] && (!handoff || handoff === "gap") && wantsOwnerAction(q) && !(removing && !user) && !(informational(q) && !user)) { if (user) { const oc = ownerCards({ question: q, own: own || {} }); if (informational(q)) for (const c of oc) c.suggest = true; out.unshift(...oc); } else if (/\b(my|our|mine)\b/i.test(q)) out.unshift(signInCard()); }
   const ownerShown = out.some((c) => c.type === "call" || (c.type === "form" && c.call));
   if (t[2] && !handoff && !ownerShown) {
     const ev = (ctx.eventList || []).slice(0, 3);

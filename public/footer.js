@@ -1,7 +1,7 @@
 // Copyright line and links at the bottom of every page except the map (the map has its own, in the credit pill and under the Places list).
 (function () {
   // The AI assistant (when it is switched on) goes with the person from page to page: chat.js does nothing unless /api/config says chatEnabled, and it keeps the chat in this tab. Not on forms, checkout or admin pages.
-  try { var cp = location.pathname; if (!window.__sclChat && (cp === "/add" || /^\/(help|tutorials|pricing|privacy|terms|contests|c|in|past|e|installer|profile)(\/|$)/.test(cp))) { var cs = document.createElement("script"); cs.src = "/chat.js?v=20261111g"; cs.defer = true; document.head.appendChild(cs); } } catch (e) {}
+  try { var cp = location.pathname; if (!window.__sclChat && (cp === "/add" || /^\/(help|tutorials|pricing|privacy|terms|contests|c|in|past|e|installer|profile)(\/|$)/.test(cp))) { var cs = document.createElement("script"); cs.src = "/chat.js?v=20261111f"; cs.defer = true; document.head.appendChild(cs); } } catch (e) {}
   // every page registers the offline worker (the map does it in index.html), so any page you have opened once opens again with no signal
   try { if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () {}); }); } catch (e) {}
   // "Skip to the content": the first Tab stop on every page that has a main area (the map has its own skip link)

@@ -123,13 +123,14 @@ Full steps: ${HELP}enter-your-home-in-a-contest`,
 export const TOPIC_IDS = TOPICS.map((t) => t.id);
 
 // Returns { id, reply, cards } or null. `q` is the visitor's newest message. Safety refusals and the "talk to a person" fast path run before this.
+const EXTRA = { contest_add_homes: ["Open your contests (then Manage)", "/contests#mine"], fix_added_home: ["Open your contests (then Manage)", "/contests#mine"], homeowner_link: ["Open your contests (then Manage)", "/contests#mine"], org_photos: ["Open your contests (then Manage)", "/contests#mine"], remove_added_home: ["Open your contests (then Manage)", "/contests#mine"], resident_enter: ["See contests you can enter", "/contests"], homeowner_got_link: ["Open your profile", "/profile"] };
 export function directAnswer(q) {
   const text = String(q || "");
   if (text.length < 8 || text.length > 500) return null;
   for (const t of TOPICS) {
     let hit = false;
     try { hit = t.test(text); } catch { hit = false; }
-    if (hit) return { id: t.id, reply: t.reply, cards: t.link ? [{ type: "links", label: "Open the Help article", links: [{ label: t.link[0], sub: "", href: "/help/" + t.link[1] }] }] : [] };
+    if (hit) { const ex = EXTRA[t.id], links = [...(t.link ? [{ label: t.link[0], sub: "", href: "/help/" + t.link[1] }] : []), ...(ex ? [{ label: ex[0], sub: "", href: ex[1] }] : [])]; return { id: t.id, reply: t.reply, cards: links.length ? [{ type: "links", label: "Go straight there", links }] : [] }; }
   }
   return null;
 }

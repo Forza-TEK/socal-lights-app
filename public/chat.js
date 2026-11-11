@@ -117,6 +117,12 @@
     var seq = 0;
     function addCard(card, lastReply) {
       if (!card || typeof card !== "object") return;
+      if (card.suggest) { // a question that only asked about something: offer the action as a suggestion; tapping it opens the full card
+        var sg = el("div", { class: "scl-chat-card" }), sbtn = el("button", { type: "button", class: "scl-chat-card-go", text: String(card.label || "Start").slice(0, 80) });
+        sg.appendChild(el("p", { class: "scl-chat-card-s", text: "I can help you do that, if you like:" }));
+        sbtn.addEventListener("click", function () { sg.remove(); var c2 = {}, k2; for (k2 in card) c2[k2] = card[k2]; c2.suggest = false; addCard(c2, lastReply); });
+        sg.appendChild(sbtn); log.appendChild(sg); log.scrollTop = log.scrollHeight; return;
+      }
       var box = el("div", { class: "scl-chat-card" });
       if (card.type === "links" && Array.isArray(card.links)) {
         box.appendChild(el("p", { class: "scl-chat-card-h", text: String(card.label || "Open") }));

@@ -92,9 +92,28 @@ test("the action audit: every phrasing gets the expected card (or none)", async 
   const lab = (b) => (b.cards || []).map((c) => c.label + (c.links ? " [" + c.links.map((l) => l.label).join(", ") + "]" : "")).join(" | ");
   const misses = [];
   for (const [cat, q, signed, want] of T) {
-    const b = await ask(q, signed), labels = lab(b), act = (b.cards || []).filter((c) => c.type !== "links");
+    const b = await ask(q, signed), labels = lab(b), act = (b.cards || []).filter((c) => c.type !== "links" && !c.suggest); // a suggested card (a question that only asked about something) is not an action card
     const ok = want === "ANY" ? true : want === "NONE" ? !act.length && !(b.cards || []).some((c) => c.label === "Sign in first") : want === "LINKS" ? (b.cards || []).some((c) => c.type === "links") : labels.toLowerCase().includes(want.toLowerCase());
     if (!ok) misses.push(`${cat} | ${signed ? "in" : "out"} | ${q} | wanted ${want} | got ${labels || "none"}`);
   }
   assert.deepEqual(misses, [], `${misses.length} of ${T.length} phrasings missed`);
+});
+
+test("a question that only asks about something still suggests the matching action, as a collapsed suggestion, and never for unrelated questions", async () => {
+  resetChatCache();
+  const { DB, raw } = makeDB(); raw.prepare("UPDATE chat_settings SET value='1' WHERE key='chat_enabled'").run();
+  const me = await addUser(raw, "u1", "me@example.com");
+  raw.prepare("INSERT INTO posts (id,status,biz,title,city,lat,lng,descr,photos,contact_email,season,address,street,zip,contest_id,user_id) VALUES ('h1','approved','Fam','Oak Street Lights','Pasadena',34.1,-118.1,'A long description of my lights.','[]','me@example.com','christmas','1 Oak St','1 Oak St','91101',NULL,'u1')").run();
+  const env = { DB, CHAT_GLOBAL_PER_HOUR: "100000", CHAT_TEST_MODEL: async () => ({ text: "Here is how it works." }) };
+  let n = 0; const ask = async (q, signed) => (await chat({ request: new Request(ORIGIN + "/api/chat", { method: "POST", headers: { "content-type": "application/json", origin: ORIGIN, "CF-Connecting-IP": "198.51.100." + (++n), ...(signed ? { cookie: me.cookie } : {}) }, body: JSON.stringify({ messages: [{ role: "user", content: q }], token: "t" }) }), env })).json();
+  const sug = (b) => (b.cards || []).filter((c) => c.suggest).map((c) => c.label).join(" | ");
+  assert.match(sug(await ask("is it free to add an event")), /Start this event/);
+  assert.match(sug(await ask("how does weekly email work")), /Sign me up/);
+  assert.match(sug(await ask("what happens when I remove my home from the map")), /Send removal request/);
+  assert.match(sug(await ask("what happens if I take my home down", true)), /Take down/);
+  assert.doesNotMatch(JSON.stringify((await ask("what happens if I take my home down", false)).cards || []), /Sign in first|Take down/, "signed out: no listing suggestion");
+  for (const q of ["how does voting work", "what does the gold pin mean", "what seasons does the map cover"]) assert.deepEqual((await ask(q)).cards || [], [], q);
+  const asked = await ask("how do I add an event"); assert.ok(asked.cards.some((c) => c.label === "Start this event" && !c.suggest), "a request is still a full card");
+  const widget = (await import("node:fs")).readFileSync(new URL("../public/chat.js", import.meta.url), "utf8");
+  assert.match(widget, /card\.suggest/); assert.match(widget, /I can help you do that, if you like/);
 });
