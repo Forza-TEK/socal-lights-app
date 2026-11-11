@@ -5,7 +5,7 @@ import { attachAddress } from "/addflow.js?v=20261111d";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261104c";
 import { renderHelp } from "/admin/help.js?v=20261104a";
-import { renderPartner } from "/admin/partner.js?v=20261112g";
+import { renderPartner } from "/admin/partner.js?v=20261112k";
 import { renderChat } from "/admin/chat.js?v=20261111h";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261103a";
 
