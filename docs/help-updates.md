@@ -2361,3 +2361,272 @@ See also [Edit or withdraw your entry](/help/edit-or-withdraw-your-entry).
 ## If your city added your home
 
 A city or neighborhood group can enter your home for you and send you a private link. See [Your city added your home](/help/your-city-added-your-home).
+
+
+# Help Center copy audit (2026-11-11): the new articles
+
+Migration `0224_help_copy_audit_2026-11-11.sql` adds these eight articles and edits nineteen others (text fragments, only where nobody edited the article in Admin). If an article you edited in Admin should get the new wording, paste it from here. Regenerate with `node scripts/help/updates-copy-1111.mjs --md`. Slugs never change.
+
+## edit-or-cancel-your-event
+New article. Category: post. Type: howto. Order: 12.
+
+Title:
+
+    Edit or cancel your event
+
+One-sentence answer:
+
+    Open Your profile, tap Events, then Edit to change the details, or use Event notice to mark it Cancelled or Postponed.
+
+Search words:
+
+    edit event change event change dates cancel event cancelled postponed reschedule delete event event changed run again next year my event
+
+Text:
+
+    An event changed? You can fix its details, mark it cancelled or postponed, run it again next year, or delete it. You do this from your profile, signed in with the same account you used to add the event.
+    
+    1. Tap your **account circle** at the top of the map and choose **Your profile**. See [Your profile](/help/your-profile).
+    2. Tap **Events**.
+    3. Find your event. The tag under its name says **On the map**, **In review**, **Cancelled** or **Postponed**.
+    4. Tap **Edit**. You can change the name, the start and end dates, the hours, the venue, the price, the description and the event web page.
+    5. Tap **Save**. The map and the event's page show the change right away.
+    
+    ## Mark it cancelled or postponed
+    
+    The event stays on the map with a tag, so nobody drives out for nothing.
+    
+    1. On the event's row, open the **Event notice** list.
+    2. Choose **Cancelled** or **Postponed**.
+    3. When the event is back on, choose **No notice** to take the tag off. If the dates moved, tap **Edit** and change them too.
+    
+    ## Run it again next year
+    
+    Tap **Run again next year** on the event's row. It adds a copy with every date moved forward one year. The copy shows as Expected until its dates are checked, so open it and tap **Edit** when you know the real dates.
+    
+    ## Good to know
+    
+    - The Edit window does not change the city or the street address. To move an event, write to info@socallights.app.
+    - **Delete** removes the event from the map for good. It asks you to tap again. If you paid for a Featured placement, write to us first: see [Feature an event or a home](/help/feature-an-event-or-home).
+    - An event that is **In review** can be deleted but not edited until it is on the map.
+    - Cancelled or postponed events cannot be featured.
+    
+    Did not find your event? See [Add an event to the map](/help/add-an-event). Anything else, [ask us](#ask).
+
+## take-your-home-down-and-put-it-back
+New article. Category: post. Type: howto. Order: 23.
+
+Title:
+
+    Take your home down and put it back
+
+One-sentence answer:
+
+    Open Your profile, tap Displays, then Take down for the season. Put back on the map brings it back with your photos and details.
+
+Search words:
+
+    take down take down my home season is over remove for the season pause put back put it back edit my home delete my home hide my home off the map
+
+Text:
+
+    When the season is over, or you just need a break, you can take your home off the map and put it back later. Nothing is deleted. Your details and photos wait for you.
+    
+    1. Tap your **account circle** at the top of the map and choose **Your profile**. See [Your profile](/help/your-profile).
+    2. Tap **Displays**.
+    3. Find your home. The tag under its name says **On the map**, **Taken down for the season** or **In review**.
+    4. Tap **Take down for the season**. The home leaves the map, and the tag changes to **Taken down for the season**.
+    
+    ## Put it back
+    
+    1. Open **Your profile**, then **Displays**.
+    2. Tap **Put back on the map** on the home's row.
+    
+    ## Change something first
+    
+    Tap **Edit** to change the name, the description, when the lights are on, how to see it, parking, the radio station or the tips for visitors, then tap **Save**.
+    
+    ## Delete it for good
+    
+    **Delete** removes the home and its photos for good. It asks you to tap again, so you cannot do it by accident. If you only want it off the map for now, use Take down for the season instead.
+    
+    ## Good to know
+    
+    - Only the person who posted the home can take it down or put it back. If an installer shares the listing, they are emailed when you do.
+    - A home is on the map again as soon as you tap Put back on the map. You do not need to fill anything in again.
+    - A home you added to a contest is not on this list. See [Edit or withdraw your entry](/help/edit-or-withdraw-your-entry).
+    - Not signed in, or not your account? Use the Remove my home page: see [Is this your home? Claim it](/help/claim-your-home).
+    
+    Anything else, [ask us](#ask).
+
+## what-is-the-shop-tab
+New article. Category: find. Type: answer. Order: 160.
+
+Title:
+
+    What is the Shop tab?
+
+One-sentence answer:
+
+    The Shop tab has seasonal ideas for lights and decorations. Each card opens an Amazon search, and we may earn a small commission at no cost to you.
+
+Search words:
+
+    shop shop tab amazon affiliate buy lights decorations gift ideas commission associate store
+
+Text:
+
+    The **Shop** tab is next to **Places** and **Favorites** on the map. On a phone it is in the bar at the bottom. It has ideas for each season, such as lights and decorations.
+    
+    1. Open the map and tap **Shop**.
+    2. Tap the season button at the top of the list (it says **Shop for** and the season) to see ideas for another season.
+    3. Tap a card. It opens an Amazon search in a new tab.
+    
+    - SoCal Lights does not sell anything. Buying happens on Amazon.
+    - The cards are affiliate links. As an Amazon Associate we earn from qualifying purchases, at no extra cost to you. The tab says so under the cards.
+    - Shop links never affect a contest, a listing or the order of the map list. The map, search, routes, voting and entering stay free.
+    - The Shop tab is on the website. It is not inside the SoCal Lights app.
+    
+    See also [Is SoCal Lights free?](/help/is-it-free) and the [Privacy Policy](/privacy).
+
+## day-and-night-mode
+New article. Category: find. Type: answer. Order: 170.
+
+Title:
+
+    Switch between day and night mode
+
+One-sentence answer:
+
+    Tap the sun and moon button at the top of any page. Night mode turns on by itself from 6 pm to 6 am, or whenever your device is set to dark.
+
+Search words:
+
+    dark mode night mode day mode light mode dark theme theme sun and moon sun moon too bright brightness switch
+
+Text:
+
+    Every page has a **sun and moon button**: in the header on the map and at the top of the other pages. Tap it to switch between day (light) and night (dark) mode.
+    
+    - SoCal Lights picks one for you. Night mode comes on from 6 pm to 6 am in your local time, or all day if your phone or computer is set to dark mode.
+    - When you tap the button, your choice holds until the next automatic change at 6 am or 6 pm. After that, the automatic choice takes over again.
+    - The choice is saved on that phone or computer only.
+
+## see-who-won-a-contest
+New article. Category: vote. Type: howto. Order: 135.
+
+Title:
+
+    See who won a contest
+
+One-sentence answer:
+
+    Open Contests and tap Past results. Winners appear after the organizer announces them, on the contest page and by email.
+
+Search words:
+
+    who won winner winners results past results contest results announced announcement scores ranking how did my home do
+
+Text:
+
+    Winners are announced by each contest's organizer, not by SoCal Lights. Until then, results stay hidden for everyone and nobody can see who is ahead.
+    
+    1. Open **Contests**: tap the **three dots** at the top right of the map and tap **Contests**, or, signed in, tap your **account circle** and then **Your contests**.
+    2. Tap **Past results**.
+    3. Choose the season and year in the **Season | Year** list.
+    4. Each contest has a card with its **Winners** and the results for every home. Tap **See the full contest** to open its page. **Permanent page** is a link you can share.
+    
+    ## Good to know
+    
+    - Winners show on the contest's own page and are emailed to the people who entered when the organizer announces them.
+    - Not there yet? The contest may still be taking entries or voting, or the organizer has not announced the winners. Check the contest page for the dates.
+    - Your home is a winner? You get a crown on your profile. See [Your profile](/help/your-profile).
+    - How winners are chosen is in [How are winners chosen?](/help/how-winners-are-chosen).
+    
+    Anything else, [ask us](#ask).
+
+## who-can-run-a-contest
+New article. Category: run. Type: answer. Order: 5.
+
+Title:
+
+    Can my HOA, school or business run a contest?
+
+One-sentence answer:
+
+    Yes. Any group can run a home-decorating contest: a city, a homeowners association (HOA), a school, a chamber of commerce, a business or a neighborhood group.
+
+Search words:
+
+    hoa homeowners association school business company church club chamber city neighborhood group who can run a contest organizer nonprofit
+
+Text:
+
+    Yes. Any group can run a contest, such as a city, a homeowners association (HOA), a school, a chamber of commerce, a business or a neighborhood group. You sign in and set it up yourself. Quick start is seven short screens.
+    
+    - Running a contest needs a **contest pass**. See [Contest passes](/help/contest-passes) and the [Pricing](/pricing) page.
+    - Residents enter and vote for free, and payment never affects who wins.
+    - You write or accept the official rules, and you decide who wins. SoCal Lights provides the website only. Read the contest part of our [Terms](/terms#contests).
+    - If your sign-in email is at your organization's website, we match your organization to that website. Everyone at that organization shares one pass window.
+    - A new contest may be held for a quick look by our team before it goes live. We email you when it is approved.
+    
+    Ready? See [Create a contest with Quick start](/help/create-a-contest-quick-start). Anything else, [ask us](#ask).
+
+## what-is-socal-lights
+New article. Category: find. Type: answer. Order: 5.
+
+Title:
+
+    What is SoCal Lights, and who runs it?
+
+One-sentence answer:
+
+    A free map of holiday lights, events and decorated homes across Southern California, with neighborhood contests. It is operated by Forza-TEK.
+
+Search words:
+
+    about about us what is socal lights who runs who owns who built forza-tek forza tek legit scam real contact company team
+
+Text:
+
+    SoCal Lights (socallights.app) is a free map of Christmas lights, Halloween, boat parades and other holiday events and decorated homes across Southern California. People use it to plan a night out, and neighbors use it to enter and vote in home-decorating contests.
+    
+    - It is operated by Forza-TEK. See our [Terms](/terms) and [Privacy Policy](/privacy).
+    - Finding events and homes, routes, voting and entering a contest are free. Some extras are optional and paid, and they are always labeled. See [Is SoCal Lights free?](/help/is-it-free).
+    - Events and times come from public sources and from the people who post them. Check with the organizer before you go.
+    - Contests are run by their organizers. SoCal Lights provides the website only.
+    
+    Want to talk to a person? Write to info@socallights.app or [ask us](#ask).
+
+## wheelchair-and-stroller-friendly-places
+New article. Category: find. Type: answer. Order: 165.
+
+Title:
+
+    Find stroller and wheelchair friendly places
+
+One-sentence answer:
+
+    Open Filters, then Stroller friendly under Visiting a home. A home's page says Stroller and wheelchair friendly when its owner ticked it.
+
+Search words:
+
+    wheelchair accessible accessibility stroller strollers disabled mobility kids children toddler family parking walk by drive by hard to park
+
+Text:
+
+    Families and visitors who use a wheelchair or a stroller can narrow the map to homes whose owners say they are easy to visit.
+    
+    1. On the map, tap **Filters**.
+    2. Under **Visiting a home**, tap **Stroller friendly**. You can add **Free parking**, **Drive by** or **Walk by** too.
+    3. Tap the button at the bottom to see the places.
+    4. Open a home to see its facts. A home says **Stroller and wheelchair friendly** when its owner ticked that box.
+    
+    ## Good to know
+    
+    - **Drive by** homes can be seen from your car. A home's page also says if parking is free, on the street or hard to find.
+    - Owners fill these in themselves and we do not check them. If a home or an event is not as described, tap **Report a problem** on it.
+    - Posting your own home? Tick **Stroller and wheelchair friendly** when you edit it. See [Take your home down and put it back](/help/take-your-home-down-and-put-it-back).
+    - For an event, ask the organizer about access. The event's page links to their site.
+    
+    Anything else, [ask us](#ask).

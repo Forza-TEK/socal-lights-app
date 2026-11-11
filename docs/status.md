@@ -2,6 +2,14 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-11 (batch E: Help Center, assistant and copy audit fixes; branch fix-help-copy, PR open, not merged)
+- **Help pages:** `[ask us](#ask)` links now render and open the Ask box; `###` headings render; cards show the one-line summary and "Quick answer" / "Fix a problem" / "Written steps"; topic order is Find, Post, Enter, Vote, Run, Sponsors, Account; footer date reads "Nov 8, 2026" (Pacific).
+- **Migration 0224** (`scripts/help/updates-copy-1111.mjs`, text in `docs/help-updates.md`): 8 new articles (edit or cancel an event, take a home down and put it back, Shop tab, day and night mode, see who won, who can run a contest, what is SoCal Lights, wheelchair and stroller) and edits to 19 others (age and eligibility, "&", labeled, bold buttons, plain add-event steps, search words, Featured bullet split, Founder city badge moved to Run). Only articles still `updated_by = 'seed'`.
+- **Assistant:** season dates (SEASONS block from `public/seasons.js` and `sponsor.js`) can be stated; `3/4` is a fraction, not a date; unsubscribe and "what can you do / who built this" have fixed answers; Confirmed vs Expected, Shop, Waze, calendar, data, scam questions are in scope; whole-word Help matching; owner phone number reply; "tap Enter my home"; chips "How do contests work?" and "How do I vote?". KB regenerated.
+- **Copy:** "labeled"; menu "Feature your event"; contest rules and Terms say "Organizer"; event plans "per event"; dead `showcase` copy removed from `seasons.js`; admin label "a contest needs a pass"; HOA spelled out on Pricing; wizard website help text (CON-20); tutorials: titles match articles, "Plan a night" no longer promises a calendar.
+- **Spanish page** `/es` (`public/es.html`): noindex (meta and `_headers`), not in the sitemap, no language switch. **Spanish, community-reviewed: pending.** A native speaker must read it before the owner removes noindex.
+- Not done: HLP-15 (split the three long articles), AST-01 and CPY-01 (owner skipped).
+
 ## 2026-11-11 (assistant: forms ask first)
 - Owner feedback: asking how to add an event brought up two forms at once. Now every form card starts as a button ("Would you like me to help with that?" then the action), and the form opens only after the visitor taps it. Signed-in visitors get one event option (add it now, with a link to the step-by-step form inside), not two. A visitor who asks for a person gets that box open straight away; offers (no answer found, cost cap) stay collapsed. The one-tap confirm cards (take down a home, mark cancelled...) are unchanged.
 

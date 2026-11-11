@@ -272,9 +272,9 @@ test("copy: no 'Everything in' / 'Everything above' on any page, script or email
   const files = [...walk("public").filter((p) => /\.(html|js)$/.test(p)), "functions/_lib/mailtpl.js", "functions/_lib/featuremail.js"];
   for (const f of files) assert.doesNotMatch(readFileSync(f, "utf8").replace(/(^|\s)\/\/.*$/gm, ""), /Everything (in|above)/i, f); // comments that forbid the phrase do not count
   for (const k of EVENT_KEYS) { const c = eventTierCopy(k).bullets.join("\n"); assert.match(c, /gold-ringed pin/); assert.match(c, /"Featured" badge/); assert.match(c, /Runs from the moment you pay until your event ends or the season ends \(Christmas lights: Jan 6\), whichever comes first/); }
-  assert.match(eventTierCopy("ev_banner").bullets.join("\n"), /pill labelled "Featured" in the strip at the top of the map list/); assert.doesNotMatch(eventTierCopy("ev_banner").bullets.join("\n"), /listed first/);
+  assert.match(eventTierCopy("ev_banner").bullets.join("\n"), /pill labeled "Featured" in the strip at the top of the map list/); assert.doesNotMatch(eventTierCopy("ev_banner").bullets.join("\n"), /listed first/);
   assert.match(eventTierCopy("ev_top").bullets.join("\n"), /listed first when people browse your area/); assert.doesNotMatch(eventTierCopy("ev_top").bullets.join("\n"), /pill/);
-  const all = eventTierCopy("ev_all").bullets.join("\n"); assert.match(all, /pill labelled "Featured"/); assert.match(all, /listed first/); assert.match(all, /gold-ringed pin/);
+  const all = eventTierCopy("ev_all").bullets.join("\n"); assert.match(all, /pill labeled "Featured"/); assert.match(all, /listed first/); assert.match(all, /gold-ringed pin/);
 });
 test("copy: the pages show prices from /api/config, never hardcoded", () => {
   for (const f of ["public/pricing.html", "public/feature.html", "public/add-event.html", "public/sponsor.html", "public/feature-plans.js", "public/sponsor-plans.js"]) {

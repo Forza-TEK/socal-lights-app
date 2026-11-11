@@ -12,13 +12,13 @@
 <link rel="stylesheet" href="/info.css?v=20261110y">
 <style>.pcards.tight{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.wcard .big{margin:0}details summary::marker{color:var(--muted)}</style>
 <script src="/hit.js?v=20261107a" defer></script>
-<script src="/chat.js?v=20261111h" defer></script>
+<script src="/chat.js?v=20261111e" defer></script>
 </head>
 <body class="wide">
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
 <main class="wide" id="content">
 <h1>Pricing</h1>
-<p class="lede">Finding lights and events is free, and so is posting them. Paid options only make your listing easier to see. Every paid placement is labelled, and money never changes a contest result.</p>
+<p class="lede">Finding lights and events is free, and so is posting them. Paid options only make your listing easier to see. Every paid placement is labeled, and money never changes a contest result.</p>
 
 <div class="wgrid" id="p-homeowners" data-panel="homeowners" data-label="Homeowners" style="margin-top:26px">
 <section class="wcard" id="homeowners"><h2>Homeowners</h2><div class="big">Free</div>
@@ -29,7 +29,7 @@
 </div>
 
 <section class="wsec" id="contests" data-panel="contests" data-label="Contest organizers"><h2>Contest organizers</h2>
-<p class="sub"><b>Contest organizers choose a pass for their contests.</b> Cities, HOAs, chambers and neighborhood groups: resident entries, voting, judges, and People's Choice and Judges' Choice awards. Residents enter and vote for free. A pass only counts contests.</p>
+<p class="sub"><b>Contest organizers choose a pass for their contests.</b> Cities, homeowners associations (HOAs), chambers of commerce and neighborhood groups: resident entries, voting, judges, and People's Choice and Judges' Choice awards. Residents enter and vote for free. A pass only counts contests.</p>
 <div class="pcards three" id="ctiers"></div><div id="cmore"></div>
 <p class="cmpnote" id="cnote">Passes are chosen when you create a contest, or any time on the <a href="/contest-pass">contest pass page</a>. A pass is one payment on Stripe's secure page and never renews by itself. Your 12-month window starts the day you buy your pass (or the day your first contest goes live, if that comes first), and upgrading inside it costs only the difference. Passes are for the organization: the website matching your email's domain, or your own account.</p></section>
 
@@ -59,7 +59,7 @@
 <div id="partnerbox" class="paid" hidden><h3>Event Partner: for organizations with several events</h3><div class="pcards" id="partnercard"></div><p class="cmpnote" id="partnernote"></p></div></section>
 
 <section class="wsec" id="banner" data-panel="banner" data-label="Installers"><h2>Installers</h2>
-<p class="sub">Show your company on the map and in your homes' pages. Paid placements are always labelled "Sponsor".</p>
+<p class="sub">Show your company on the map and in your homes' pages. Paid placements are always labeled "Sponsor".</p>
 <section class="pfree" id="instfree"><div class="pprice">Free</div><div class="ptxt"><h3 class="pname">Profile card</h3><p class="pblurb">Your company page at socallights.app/installer/your-company: name, areas served, phone, website, an About blurb and every home you installed, with a Request a quote button. It is linked from each of those homes on the map.</p></div><a class="btn ghost" href="/add-house?kind=installer">Create your free profile</a></section>
 <div class="pcards three" id="insttiers"></div>
 <p class="cmpnote paid" id="instnote">You pay on Stripe's secure page, one time for the season by default. Automatic renewal is optional: it is off unless you tick the box on the payment step (or turn it on in your dashboard), and you can cancel it any time. You can also renew or upgrade by hand from your dashboard.</p>
@@ -73,7 +73,7 @@
 <details><summary>Can I get a refund?</summary><p>If we cannot list or feature your event for any reason, you get a full refund. Once your placement is live, payments are non-refundable, but if your event is cancelled, email us and we will move your placement to another of your events or refund the unused time. See our <a href="/terms#paid">Terms</a>.</p></details>
 <details><summary>Can I add a part later?</summary><p>Yes. Each part (the Featured pin, the banner, top of the list) has the same price: if you already have some of them, you pay only for the parts you add.</p></details>
 <details><summary>Can paying change who wins a contest?</summary><p>No. Contests are free to enter and free to vote in, and payment never affects who wins or any contest result. A home can only be featured after the winners are announced, and only if it finished winner, 2nd or 3rd place.</p></details>
-<details><summary>Is a Featured event labelled?</summary><p>Yes. Featured events and homes carry a visible Featured badge, and the banner pill is labelled "Featured", so nobody is misled. They still have to be real, public and accurate.</p></details>
+<details><summary>Is a Featured event labeled?</summary><p>Yes. Featured events and homes carry a visible Featured badge, and the banner pill is labeled "Featured", so nobody is misled. They still have to be real, public and accurate.</p></details>
 <details><summary>How do contest passes work?</summary><p>An organization chooses a pass before a contest goes live: a single contest, up to 5 contests or up to 20 contests in a 12-month window. The window starts the day you buy the pass, or the day the organization's first contest goes live if that comes first. You can upgrade later by paying only the difference. A contest counts when it goes live. Drafts, contests held for review and contests that were never live do not count. When the window ends, your next contest needs a new pass. A pass counts contests only: entering and voting stay free, and payment never affects any result. We sometimes give a founding partner contests for a period; that organization sees "Founding partner: free through" a date and no price.</p></details>
 <details><summary>Will finding lights ever cost money?</summary><p>Finding events and lights, search, routes, favorites and voting in contests are meant to stay free for everyone. That is what the site is for.</p></details>
 <details><summary>Questions?</summary><p>Email <a href="mailto:info@socallights.app">info@socallights.app</a>.</p></details>
@@ -81,8 +81,8 @@
 </main>
 <script type="module">
 import { mountShell } from "/appshell.js?v=20261111a";
-import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
-import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261108a";
+import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS } from "/feature-plans.js?v=20261111e";
+import { SPONSOR_KEYS, sponsorCopy, money, seasonRule } from "/sponsor-plans.js?v=20261111e";
 import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
 import { partnerCopy, dollars as partnerDollars } from "/partner-copy.js?v=20261109a";
 import { PASS_KEYS, passCopy, moreCopy, contactHref, dollars as passDollars } from "/contest-passes.js?v=20261111a";
@@ -143,6 +143,6 @@ if (/SoCalLightsApp/.test(navigator.userAgent)) {
   }
 }
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

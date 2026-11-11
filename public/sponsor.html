@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Sponsor placement for installers · SoCal Lights</title>
-<meta name="description" content="Installers: put your company in the labelled Sponsor banner on the SoCal Lights map, and optionally at the top of the list. A one-time payment for the season, or renew automatically if you choose.">
+<meta name="description" content="Installers: put your company in the labeled Sponsor banner on the SoCal Lights map, and optionally at the top of the list. A one-time payment for the season, or renew automatically if you choose.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -33,7 +33,7 @@
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
 <main id="content">
 <h1>Sponsor placement for installers</h1>
-<p class="lede">Put your company where people planning a drive look: the labelled <b>Sponsor</b> banner at the top of the list on the map, your company card at the top of the list, or both. Pay one time for the season. Automatic renewal is optional and off unless you tick the box before paying. The map and your free profile stay free, and money never changes a contest result.</p>
+<p class="lede">Put your company where people planning a drive look: the labeled <b>Sponsor</b> banner at the top of the list on the map, your company card at the top of the list, or both. Pay one time for the season. Automatic renewal is optional and off unless you tick the box before paying. The map and your free profile stay free, and money never changes a contest result.</p>
 
 <div id="paid" class="ok" hidden><b>Thank you!</b> Your payment went through. Your placement turns on automatically within a few minutes (refresh the map to see it), and the dates are in your <a id="dashlink" href="/profile">dashboard</a>. A receipt is on its way from Stripe.</div>
 <div id="cancelled" class="ok" hidden><b>No payment was made.</b> Your company and plan are still chosen below, so you can pick up where you left off.</div>
@@ -67,7 +67,7 @@
 <h2>How it works</h2>
 <details open><summary>How long does a season last, and what does it cost?</summary><p id="rule2"></p></details>
 <details><summary>Can I renew or upgrade?</summary><p><b>Renew:</b> buy the same plan again while it is running and the new season starts the day after the current one ends, at the plan's price. Time is only ever added, and we sell at most one season ahead. Automatic renewal renews the same plan: a Top of the list placement renews as Top of the list. <b>Upgrade:</b> Banner and Top of the list are different products, and Banner and top of the list is both. If you have the Banner or Top of the list running to the end of the season and want both, choose Banner and top of the list: you pay the difference between that plan and the one you hold, the missing one starts today and runs to the end of the season, and what you have stays as it is. Buying the other single product instead is a full, separate purchase. This page shows the exact dates and price before you pay.</p></details>
-<details><summary>Is it labelled as an ad?</summary><p>Yes. Paid placements are always labelled "Sponsor" in the banner and on the list card, and your profile still has to be real and accurate.</p></details>
+<details><summary>Is it labeled as an ad?</summary><p>Yes. Paid placements are always labeled "Sponsor" in the banner and on the list card, and your profile still has to be real and accurate.</p></details>
 <details><summary>Can I get a refund?</summary><p>If we cannot put your placement on for any reason, you get a full refund. Once it is running, payments are non-refundable, but email us if something is wrong. A refund switches the placement off, and so does a payment dispute, so please email us before disputing a charge with your bank.</p></details>
 <details><summary>Does paying change a contest?</summary><p>No. Payment never affects who wins or any contest result, and finding lights and events on the map stays free for everyone.</p></details>
 <p class="meta">Questions? Email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>. <a href="/pricing#banner">Back to pricing</a>.</p>
@@ -75,7 +75,7 @@
 <script type="module">
 import { themeBtn, mountAcct } from "/addflow.js?v=20261111d";
 import { me, signIn } from "/auth.js?v=20261107p";
-import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord, renewalText } from "/sponsor-plans.js?v=20261108a";
+import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord, renewalText } from "/sponsor-plans.js?v=20261111e";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -166,6 +166,6 @@ function renderSummary(i) {
   };
 }
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

@@ -49,7 +49,7 @@
 </div>
 
 <h2>Good to know</h2>
-<details><summary>Is it labeled as an ad?</summary><p>Featured events and homes carry a visible Featured badge, and an event's banner pill at the top of the map list is labelled "Featured", so nobody is misled. We only list real, public events, and a Featured event still has to be accurate: dates, venue and address are checked like every other listing.</p></details>
+<details><summary>Is it labeled as an ad?</summary><p>Featured events and homes carry a visible Featured badge, and an event's banner pill at the top of the map list is labeled "Featured", so nobody is misled. We only list real, public events, and a Featured event still has to be accurate: dates, venue and address are checked like every other listing.</p></details>
 <details><summary>What can I feature?</summary><p>Public Halloween, Día de los Muertos, Thanksgiving, Christmas and holiday, New Year's, spring, and summer events in Southern California: haunts, pumpkin patches, tree lightings, light shows, parades, markets and more. We reserve the right to decline events that are not open to the public or that we cannot verify.</p></details>
 <details><summary>Can I get a refund?</summary><p>If we cannot list or feature your event for any reason, you get a full refund, for every part of your plan: the pin, the banner and top of the list. Once your placement is live, payments are non-refundable, but if your event is cancelled, email us and we will move your placement to another of your events or refund the unused time. A refund switches your Featured placement off (the pin, the banner and top of the list), and so does a payment dispute, so please email <a href="mailto:info@socallights.app">info@socallights.app</a> before disputing a charge with your bank. The same rules are in our <a href="/terms#paid">Terms</a>.</p></details>
 <details><summary>How long does it run, and what does an upgrade cost?</summary><p>It runs from the moment you pay until your event ends or the season ends (Christmas lights: Jan 6), whichever comes first, and the price is the same whenever you buy. Each part (the Featured pin, the banner, top of the list) has the same price: if you already have some of them, you pay only for the parts you add, and a purchase that adds nothing new is not sold. This page shows the exact dates and the total before you pay.</p></details>
@@ -62,7 +62,7 @@
 <script type="module">
 import { SITE } from "/site-config.js?v=20261107a";
 import { planCard, compareTable } from "/plan-cards.js?v=20261109b";
-import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS, planCopy, planBlurb, planWindow, eventEligibility, quoteLine, niceDate as fmt, ptToday } from "/feature-plans.js?v=20261108a";
+import { eventTierCopy, eventTierBlurb, eventRule, EVENT_KEYS, planCopy, planBlurb, planWindow, eventEligibility, quoteLine, niceDate as fmt, ptToday } from "/feature-plans.js?v=20261111e";
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const money = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : c / 100);
@@ -287,6 +287,6 @@ async function paidView(S) {
 import { themeBtn, mountAcct } from "/addflow.js?v=20261111d";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

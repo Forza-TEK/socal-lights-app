@@ -15,9 +15,9 @@
 <div id="app"></div>
 <script type="module">
 import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave } from "/addflow.js?v=20261111d";
-import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
+import { SEASONS, defaultSeason } from "/seasons.js?v=20261111e";
 import { CITY } from "/cities.js?v=20261107a";
-import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
+import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261111e";
 import { me, signIn } from "/auth.js?v=20261107p";
 import { capture, take } from "/chatprefill.js?v=20261111b";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
@@ -96,6 +96,6 @@ run({ preview, steps, data: d, persist: "scl-event-draft", prefill: (x) => { con
   actions: { skipurl(_, a) { d.url = ""; a.next(); } },
   after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

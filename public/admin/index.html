@@ -44,7 +44,7 @@
 <script src="/vendor/maplibre-gl-4.7.1.js"></script>
 <script type="module">
 import { themeBtn } from "/chrome.js?v=20261111a";
-import { defaultSeason } from "/seasons.js?v=20261104a";
+import { defaultSeason } from "/seasons.js?v=20261111e";
 document.getElementById("tb").innerHTML = themeBtn();
 document.documentElement.dataset.season = defaultSeason(new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10));
 </script>

@@ -21,7 +21,7 @@
 </main>
 <script type="module">
 import { ICON, esc, themeBtn, mountAcct } from "/addflow.js?v=20261111d";
-import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
+import { SEASONS, defaultSeason } from "/seasons.js?v=20261111e";
 document.getElementById("tb").innerHTML = themeBtn() + '<span id="acct"></span>'; mountAcct(document.getElementById("acct"));
 const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
 document.documentElement.dataset.season = defaultSeason(today);
@@ -37,6 +37,6 @@ if (!/SoCalLightsApp/.test(navigator.userAgent)) fetch("/api/config").then((r) =
 // Contests need sign-in. Until Google or emailed codes are switched on, hide that choice rather than send people to a dead end.
 fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (!j.methods || (!j.methods.google && !j.methods.email)) document.getElementById("o-contest")?.remove(); }).catch(() => {});
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>
