@@ -8,7 +8,7 @@ export const PLAN_KEYS = EVENT_KEYS; // what the plan pickers list for an event
 const TIER_NAME = { ev_pin: "Featured pin", ev_banner: "Banner + Featured pin", ev_top: "Top of the list + Featured pin", ev_all: "Top of the list + Banner + Featured pin" };
 const PIN = ["A gold-ringed pin on the map", `A "Featured" badge on your event in the list and in its details`];
 const BANNER = [
-  `Your event as a pill labelled "Featured" in the strip at the top of the map list, with its name, city and dates; tap it to open your event`,
+  `Your event as a pill labeled "Featured" in the strip at the top of the map list, with its name, city and dates; tap it to open your event`,
   "The pill shows whenever your event is in the map view",
   "How many times your banner was shown and tapped, on your Feature page",
 ];
@@ -18,7 +18,7 @@ export const RUNS = "Runs from the moment you pay until your event ends or the s
 // Name, price unit and the full bullet list of an event tier. No prices in the wording.
 export function eventTierCopy(k) {
   const p = { ev_pin: [...PIN], ev_banner: [...PIN, ...BANNER], ev_top: [...PIN, ...TOP], ev_all: [...PIN, ...BANNER, ...TOP] }[k] || [];
-  return { name: TIER_NAME[k] || k, unit: "per season", bullets: [...p, RUNS] };
+  return { name: TIER_NAME[k] || k, unit: "per event", bullets: [...p, RUNS] };
 }
 export function eventTierBlurb(k) {
   return {

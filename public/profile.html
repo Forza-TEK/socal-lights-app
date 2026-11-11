@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261111zb">
+<link rel="stylesheet" href="/addflow.css?v=20261111x553">
 <link rel="stylesheet" href="/forms.css?v=20261106zb">
 <link rel="stylesheet" href="/profile.css?v=20261106zb">
 <script src="/hit.js?v=20261107a" defer></script>
@@ -20,7 +20,7 @@ import { me, signIn, signOut, noteSigninResult, toast, friendlyError } from "/au
 import { mountShell } from "/appshell.js?v=20261111z";
 import { homeForm, eventForm, openFormWindow, photoBoxHtml, wireSeasonType } from "/forms.js?v=20261111z";
 import { esc, input, select, attachAddress, OPT, shrink } from "/addflow.js?v=20261111zb";
-import { SEASONS } from "/seasons.js?v=20261104a";
+import { SEASONS } from "/seasons.js?v=20261111x553";
 import { draftKey, clearAllLocalDrafts } from "/drafts-local.js?v=20261111z";
 import { CITY } from "/cities.js?v=20261107a";
 const SEASON_LIST = Object.entries(SEASONS).map(([k, v]) => [k, v.label, v.types]); // for the edit sheets: season, and the types that belong to it
@@ -307,6 +307,6 @@ async function load() {
 }
 load();
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

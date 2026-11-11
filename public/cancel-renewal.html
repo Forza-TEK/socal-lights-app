@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261111zb">
-<link rel="stylesheet" href="/info.css?v=20261111x552">
+<link rel="stylesheet" href="/addflow.css?v=20261111x553">
+<link rel="stylesheet" href="/info.css?v=20261111x553">
 <style>.unsub{max-width:520px;margin:40px auto;text-align:center;display:grid;gap:14px;justify-items:center}.unsub h1{margin:0}.unsub p{margin:0}.unsub .btn{min-height:48px;padding:0 26px}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
@@ -35,6 +35,6 @@
   fetch("/api/sponsor/renewal?t=" + encodeURIComponent(t)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); }).then(draw).catch(function (e) { fail(e.message); });
 })();
 </script>
-<script src="/footer.js?v=20261111h" defer></script>
+<script src="/footer.js?v=20261111e" defer></script>
 </body>
 </html>

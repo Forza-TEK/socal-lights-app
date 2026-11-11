@@ -50,6 +50,7 @@ body.sh-page .top,body.sh-page .htabs{display:none}body.sh-page main.help{max-wi
 .art .sum{font-size:19px;margin:10px 0 18px;max-width:62ch}
 .art .body{max-width:66ch}.art .body p,.art .body ul,.art .body ol{margin:0 0 14px}.art .body ol,.art .body ul{padding-left:24px}.art .body li{margin:6px 0}
 .art .body h2{font-size:20px;margin:26px 0 8px}
+.art .body h3{font-size:17px;margin:20px 0 6px}
 .art .body a{text-underline-offset:3px}
 .vid{margin:0 0 22px;border-radius:18px;overflow:hidden;background:#000;box-shadow:var(--shadow);max-width:720px}
 .vid video{display:block;width:100%;aspect-ratio:16/9;background:#000}.vid.ph video{aspect-ratio:9/16;max-height:78vh}
@@ -88,7 +89,8 @@ i.addEventListener("input",function(){clearTimeout(t);clearTimeout(lg);t=setTime
 f.addEventListener("submit",function(e){e.preventDefault();clearTimeout(t);clearTimeout(lg);go(true)});
 if(i.value)go(false)})()</script>`;
 
-export const articleLink = (a) => `<li><a href="/help/${esc(a.slug)}"><b class="at">${esc(a.title)}</b><span class="am">${esc((CAT[a.category] || {}).title || "Help")} &middot; ${esc(KINDS[a.kind] || "")}</span><span class="av">${/^[a-z0-9-]+$/.test(a.video || "") ? "&#9654; Video and steps" : "Written steps"}</span></a></li>`;
+// A card: the title, the one-line answer under it, and how it is shown (video, written steps or a quick answer). The topic is the section heading, so it is not repeated here.
+export const articleLink = (a) => `<li><a href="/help/${esc(a.slug)}"><b class="at">${esc(a.title)}</b><span class="am">${esc(a.summary)}</span><span class="av">${/^[a-z0-9-]+$/.test(a.video || "") ? "&#9654; Video and steps" : a.kind === "answer" ? "Quick answer" : a.kind === "fix" ? "Fix a problem" : "Written steps"}</span></a></li>`;
 
 // "Still stuck? Ask us": a short form that goes to the owner's Reports list and, if an email is left, can be answered.
 export const askForm = (ref = "help") => `<details class="ask" id="ask"><summary>Still stuck? Ask us</summary><form id="askf" novalidate>
@@ -96,7 +98,8 @@ export const askForm = (ref = "help") => `<details class="ask" id="ask"><summary
 <label>Your email, if you would like an answer (optional)<input id="ask-c" type="email" maxlength="120" autocomplete="email"></label>
 <div><button class="btn go" type="submit" style="min-height:48px;padding:0 22px;flex:none">Send</button></div>
 <p class="hmsg" id="ask-s" role="status"></p><p style="margin:0;color:var(--muted);font-size:14px">You can also write to <a href="mailto:${HELP_EMAIL}">${HELP_EMAIL}</a>.</p></form></details>
-<script>(function(){var f=document.getElementById("askf");if(!f)return;f.addEventListener("submit",function(e){e.preventDefault();var s=document.getElementById("ask-s"),m=document.getElementById("ask-m").value.trim();if(m.length<5){s.className="hmsg bad";s.textContent="Tell us what you need help with, a few words is enough.";return}
+<script>(function(){var d=document.getElementById("ask");function open(){if(d&&location.hash==="#ask"){d.open=true}}open();addEventListener("hashchange",open);document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[href="#ask"]');if(a&&d){d.open=true;d.scrollIntoView({block:"center"});var t=document.getElementById("ask-m");if(t)t.focus({preventScroll:true})}});
+var f=document.getElementById("askf");if(!f)return;f.addEventListener("submit",function(e){e.preventDefault();var s=document.getElementById("ask-s"),m=document.getElementById("ask-m").value.trim();if(m.length<5){s.className="hmsg bad";s.textContent="Tell us what you need help with, a few words is enough.";return}
 s.className="hmsg";s.textContent="Sending…";fetch("/api/help/contact",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({ref:${jsonScript(ref)},message:m,contact:document.getElementById("ask-c").value})}).then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d}})}).then(function(x){if(x.ok){s.textContent="Thank you. We read every message. If you left an email, we will write back.";f.reset()}else{s.className="hmsg bad";s.textContent=x.d.error||"That did not send. Please try again."}}).catch(function(){s.className="hmsg bad";s.textContent="That did not send. Please check your connection and try again."})})})()</script>`;
 
 // Tabs under the search: one per topic. Without scripts every topic is listed on the page and the tabs jump to it; with scripts only the chosen topic shows.

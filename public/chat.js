@@ -95,7 +95,7 @@
     // coming back from another page of the site: put the earlier conversation back (the panel stays closed until the person opens it)
     saved.log.forEach(function (m) { say(m.r, m.t, true); });
     if (saved.log.some(function (m) { return m.r === "user"; })) chips.hidden = true;
-    ["How much does it cost to feature my event?", "How do I add my home?", "What events are on this weekend?"].forEach(function (q) {
+    ["How much does it cost to feature my event?", "How do I add my home?", "What events are on this weekend?", "How do contests work?", "How do I vote?"].forEach(function (q) {
       var b = el("button", { type: "button", class: "scl-chat-chip", text: q });
       b.addEventListener("click", function () { input.value = q; submit(); });
       chips.appendChild(b);
