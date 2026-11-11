@@ -86,6 +86,9 @@ Audit items SEO-02 to SEO-12, MAP-12, MAP-13, MAP-15, ADM-01 to ADM-11. Full rul
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (phone nav bar position)
+- The phone bottom navigation bar (Places, heart, shop) sits 6 px above the browser's bottom edge (was 12 px), so it is right above the address bar without touching it, and there is a 6 px gap between it and the filter pills (they were touching).
+
 ## 2026-11-11 (all site-calling jobs on the Cloudflare clock, stage 1)
 - `workers/mail-cron` now runs six jobs on Cloudflare cron triggers: mail outbox (5 min), usage check (30 min, the site emails the owner at 90%+), Stripe reconcile, sponsor renewals, contest reminders (new heartbeat `contest-reminders`, migration 0235) and the weekly lights email. The old GitHub schedules still run as a safety net (all jobs are safe to run twice). Digest, backup, deploy watch and uptime stay on GitHub. Stage 2 after a clean day: remove the GitHub schedules and tighten the stale thresholds. Details: `docs/runbooks/monitoring.md`.
 
