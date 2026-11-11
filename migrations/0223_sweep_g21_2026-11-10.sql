@@ -7,9 +7,7 @@ ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=e
   blurb=excluded.blurb, url=excluded.url, season=excluded.season,
   venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
 UPDATE events SET image='https://www.lalive.com/assets/img/1065x625_LAK-HolidayIce-a9b179c083.jpg', updated_at=datetime('now') WHERE id='g21-lalive-holiday-ice-festival';
-UPDATE events SET image='https://hauntedattractionnetwork.com/wp-content/uploads/haunted-houses-in-los-angeles-2026-card-v2.jpg', updated_at=datetime('now') WHERE id='delusion' AND (image IS NULL OR image='');
 UPDATE events SET image='https://shoplakes.com/wp-content/uploads/2024/12/24LTO_UpdateWebImages_2880x1920_ShoppingDining-1-1-scaled.jpeg', updated_at=datetime('now') WHERE id='g19-lakes-holiday-ice-rink' AND (image IS NULL OR image='');
-UPDATE events SET image='https://images.squarespace-cdn.com/content/v1/60d48a8b81228b0cfd1cad41/efb680df-637d-41a5-8851-370fd3baef01/image0.jpeg', updated_at=datetime('now') WHERE id='g18-newberry-pistachio-farm-festival' AND (image IS NULL OR image='');
 UPDATE events SET image='https://www.antelopevalley.com/wp-content/smush-avif/2026/10/jingle-fest-2026-img.jpg.avif', updated_at=datetime('now') WHERE id='g7-jingle-fest-26' AND (image IS NULL OR image='');
 UPDATE events SET image='https://moval.gov/parks-comm-svc/events/fun-color-run/funrun.JPG', updated_at=datetime('now') WHERE id='ev-moval-fun-color-run' AND (image IS NULL OR image='');
 UPDATE events SET image='https://symphony.cdn.tambourine.com/belmont-park/media/facepaint_bloom-65dd1a0c6f806.webp', updated_at=datetime('now') WHERE id='g11-belmont-park-winter-wonder' AND (image IS NULL OR image='');
