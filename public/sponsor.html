@@ -9,8 +9,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/info.css?v=20261110y">
+<link rel="stylesheet" href="/addflow.css?v=20261111x553">
+<link rel="stylesheet" href="/info.css?v=20261111x553">
 <style>
 .plan,details,.pick{background:#fff}:root[data-theme="dark"] .plan,:root[data-theme="dark"] details,:root[data-theme="dark"] .pick{background:var(--tile)}
 .plan{gap:8px;border:2px solid var(--line);display:flex;flex-direction:column;transition:border-color .15s,background-color .15s}.plan>.btn{margin-top:auto;align-self:flex-start}
@@ -60,7 +60,7 @@
 <div class="sum" id="sum" aria-live="polite"></div>
 <div class="renew" id="renewbox"><label class="rcheck"><input type="checkbox" id="renew"><span id="renewtxt"></span></label></div>
 <p><button class="btn" id="go" type="button" disabled>Continue to payment</button></p>
-<p class="meta" id="gomsg">You pay on Stripe's secure page with a card; your placement turns on automatically within a few minutes. We never see your card details.</p>
+<p class="meta" id="gomsg">You pay on Stripe's secure page. You can pay by card, Apple Pay, Google Pay, Amazon Pay, Cash App Pay or Link. Which options you see depends on your device and location. Optional automatic renewal needs a card. Your placement turns on automatically within a few minutes. We never see your card details.</p>
 </div>
 </div>
 
@@ -73,9 +73,9 @@
 <p class="meta">Questions? Email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>. <a href="/pricing#banner">Back to pricing</a>.</p>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261111d";
-import { me, signIn } from "/auth.js?v=20261107p";
-import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord, renewalText } from "/sponsor-plans.js?v=20261111e";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111zb";
+import { me, signIn } from "/auth.js?v=20261111z";
+import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord, renewalText } from "/sponsor-plans.js?v=20261111x553";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -86,7 +86,21 @@ try { const s = JSON.parse(sessionStorage.getItem(KEY) || "{}"); if (!plan && SP
 const save = () => { try { sessionStorage.setItem(KEY, JSON.stringify({ plan, slug })); } catch {} };
 beacon("fn:sponsor-shown");
 
-if (qs.get("paid")) { try { sessionStorage.removeItem(KEY); } catch {} $("#paid").hidden = false; if (slug) $("#dashlink").href = "/installer/" + encodeURIComponent(slug) + "/manage"; }
+if (qs.get("paid")) {
+  // The success banner appears only once the placement really exists (checked against the installer's record, as /partner and /contest-pass do); a reloaded or forwarded ?paid=1 link claims nothing.
+  try { sessionStorage.removeItem(KEY); } catch {}
+  const box = $("#paid"), done = box.innerHTML; box.hidden = false; box.innerHTML = "<b>Checking your payment…</b>";
+  (async () => {
+    for (let i = 0; i < 6; i++) {
+      const u = (await me()).user; if (!u) break;
+      const r = await fetch("/api/me/sponsor", { cache: "no-store" }), d = r.ok ? await r.json() : { installers: [] };
+      const inst = d.installers.find((x) => !slug || x.slug === slug), p = inst && inst.placement;
+      if (p && (p.banner_until || p.top_until)) { box.innerHTML = done; $("#dashlink").href = "/installer/" + encodeURIComponent(inst.slug) + "/manage"; return; }
+      await new Promise((go) => setTimeout(go, 3000));
+    }
+    box.innerHTML = "<b>We could not see a payment yet.</b> If you paid, your placement turns on within a few minutes and its dates will be in your dashboard. If you did not pay, nothing was charged.";
+  })();
+}
 if (qs.get("cancelled")) $("#cancelled").hidden = false;
 
 const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));

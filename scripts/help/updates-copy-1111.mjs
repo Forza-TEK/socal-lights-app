@@ -1,4 +1,4 @@
-// Help Center copy audit, 2026-11-11 (batch E): writes migrations/0224_help_copy_audit_2026-11-11.sql.
+// Help Center copy audit, 2026-11-11 (batch E): writes migrations/0227_help_copy_audit_2026-11-11.sql.
 // Usage: node scripts/help/updates-copy-1111.mjs            (writes the migration and checks every edit against the articles as the earlier migrations leave them)
 //        node scripts/help/updates-copy-1111.mjs --md       (also appends the text of the new articles to docs/help-updates.md)
 // What it does: 8 new articles (INSERT OR IGNORE) and small edits to existing ones (UPDATE ... replace(), only where updated_by is still 'seed', so an article edited in Admin is never overwritten).
@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { join, dirname } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const OUT = "0224_help_copy_audit_2026-11-11.sql";
+const OUT = "0227_help_copy_audit_2026-11-11.sql";
 
 // The articles as the migrations before this one leave them.
 const db = new DatabaseSync(":memory:");
@@ -308,7 +308,7 @@ writeFileSync(join(ROOT, "migrations", OUT), out.join("\n") + "\n");
 console.log(`wrote migrations/${OUT}: ${EDITS.length} articles edited (${nEdits} text fragments), ${NEW.length} new`);
 
 if (process.argv.includes("--md")) {
-  let md = "\n\n# Help Center copy audit (2026-11-11): the new articles\n\nMigration `0224_help_copy_audit_2026-11-11.sql` adds these eight articles and edits nineteen others (text fragments, only where nobody edited the article in Admin). If an article you edited in Admin should get the new wording, paste it from here. Regenerate with `node scripts/help/updates-copy-1111.mjs --md`. Slugs never change.\n";
+  let md = "\n\n# Help Center copy audit (2026-11-11): the new articles\n\nMigration `0227_help_copy_audit_2026-11-11.sql` adds these eight articles and edits nineteen others (text fragments, only where nobody edited the article in Admin). If an article you edited in Admin should get the new wording, paste it from here. Regenerate with `node scripts/help/updates-copy-1111.mjs --md`. Slugs never change.\n";
   for (const a of NEW) md += `\n## ${a.slug}\nNew article. Category: ${a.category}. Type: ${a.kind}. Order: ${a.sort}.\n\nTitle:\n\n    ${a.title}\n\nOne-sentence answer:\n\n    ${a.summary}\n\nSearch words:\n\n    ${a.keywords.replace(/,/g, "")}\n\nText:\n\n${a.body.split("\n").map((l) => "    " + l).join("\n")}\n`;
   appendFileSync(join(ROOT, "docs", "help-updates.md"), md);
   console.log("appended to docs/help-updates.md");

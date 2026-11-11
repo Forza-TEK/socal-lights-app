@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
-<link rel="stylesheet" href="/contest.css?v=20261111c">
+<link rel="stylesheet" href="/addflow.css?v=20261111x553">
+<link rel="stylesheet" href="/contest.css?v=20261111d">
 <link rel="stylesheet" href="/routes.css?v=20261109a">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
@@ -19,10 +19,11 @@
 <div id="app"><p class="loading">Loading the contest…</p></div>
 </main>
 <script type="module">
-import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
-import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111d";
+import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261111z";
+import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111zb";
 import { tourHtml, wireTour } from "/tour.js?v=20261111d";
 import { getMaps, routeUrl, navAttr } from "/maps.js?v=20261111a";
+import { contestImage } from "/contesticon.js?v=20261111a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };
@@ -39,8 +40,8 @@ async function load() {
 
 const CROWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>';
 // "Directions · On map" under a home's address (text links, small tap targets padded)
-const homeLinks = (e) => { const dest = e.address || (Number.isFinite(e.lat) ? e.lat + "," + e.lng : ""); return dest ? `<span class="vlinks"><a href="${esc(routeUrl(getMaps(), [dest], ""))}" ${navAttr([dest], "")} target="_blank" rel="noopener" aria-label="Directions to ${esc(e.name)}">Directions</a><a href="/#h-${esc(e.id)}" aria-label="Show ${esc(e.name)} on the map">On map</a></span>` : ""; };
-function gallery() { return `<section class="card"><h2>Homes</h2>${D.entries.length ? D.entries.map((e) => `<div class="vrow">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"><img src="/img/badge-160.webp" alt="" width="40" height="40" loading="lazy"></span>`}<div><b>${esc(e.name)}</b><span class="meta">${esc(e.address || e.city)}</span>${homeLinks(e)}</div><span></span></div>`).join("") : `<p class="muted">No homes yet.</p>`}</section>`; }
+const homeLinks = (e) => { const dest = e.address || (Number.isFinite(e.lat) ? e.lat + "," + e.lng : ""); return dest ? `<span class="vlinks"><a href="${esc(routeUrl(getMaps(), [dest], ""))}" ${navAttr([dest], "")} target="_blank" rel="noopener" aria-label="Directions to ${esc(e.name)}">Directions</a><a href="/#m-${esc(e.id)}" aria-label="Show ${esc(e.name)} on the map">On map</a></span>` : ""; };
+function gallery() { return `<section class="card"><h2>Homes</h2>${D.entries.length ? D.entries.map((e) => `<div class="vrow">${e.photos[0] ? `<img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy">` : `<span class="ph"><img src="${esc(contestImage(D.contest.name, D.contest.logo))}" alt="" width="40" height="40" loading="lazy"></span>`}<div><b>${esc(e.name)}</b><span class="meta">${esc(e.address || e.city)}</span>${homeLinks(e)}</div><span></span></div>`).join("") : `<p class="muted">No homes yet.</p>`}</section>`; }
 function render() {
   const c = D.contest, me = D.me, mine = me.votes || [];
   const pills = [];
@@ -64,7 +65,7 @@ function render() {
       const isMy = !!my && my.post_id === e.id;
       const label = e.mine ? "Your home" : amJudge ? "Judges vote on their ballot" : isMy ? "Your vote ✓" : !c.votingOpen ? (c.announced ? "Voting is over" : "Voting not open") : my ? "Move my vote here" : "Vote";
       const n = e.votes ? e.votes[cat] : null;
-      return `<div class="vrow${isMy ? " mine" : ""}">${e.photos[0] ? `<button type="button" class="zoom" data-zoom="${esc(e.photos[0])}" data-cap="${esc(e.name)}" aria-label="Enlarge photo of ${esc(e.name)}"><img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy"></button>` : `<span class="ph"><img src="/img/badge-160.webp" alt="" width="40" height="40" loading="lazy"></span>`}
+      return `<div class="vrow${isMy ? " mine" : ""}">${e.photos[0] ? `<button type="button" class="zoom" data-zoom="${esc(e.photos[0])}" data-cap="${esc(e.name)}" aria-label="Enlarge photo of ${esc(e.name)}"><img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy"></button>` : `<span class="ph"><img src="${esc(contestImage(D.contest.name, D.contest.logo))}" alt="" width="40" height="40" loading="lazy"></span>`}
         <div><b>${win.has(e.id) || jwin.has(e.id) ? CROWN + " " : ""}${esc(e.name)} ${win.has(e.id) ? `<span class="pill p-ok">${both ? "People's Choice" : "Winner"}</span>` : ""}${jwin.has(e.id) ? `<span class="pill p-ok">${both ? "Judges' Choice" : "Winner"}</span>` : ""}</b><span class="meta">${esc(e.address || e.city)}${n !== null ? ` · ${n} vote${n === 1 ? "" : "s"}` : ""}</span>${e.descr ? `<span class="meta">${esc(e.descr)}</span>` : ""}${homeLinks(e)}</div>
         <button class="btn ${isMy ? "ghost" : "org"} sm" data-vote="${esc(e.id)}" data-cat="${esc(cat)}" type="button" ${c.votingOpen && !e.mine && !isMy && !amJudge ? "" : "disabled"} aria-label="${esc(label)}: ${esc(e.name)}, ${esc(cat)}">${label}</button></div>`;
     }).join("");
@@ -78,7 +79,7 @@ function render() {
   const myHomes = D.entries.filter((e) => e.mine && !c.announced), mineBox = () => !myHomes.length ? "" : `<section class="card"><h2>Your home${myHomes.length > 1 ? "s" : ""}</h2>${myHomes.map((e) => `<div class="rowmine" style="display:grid;gap:8px;margin:8px 0"><b style="font-weight:500">${esc(e.name)}</b><div class="actions"><button class="btn ghost sm" type="button" data-edit="${esc(e.id)}">Edit name and description</button>${e.manage ? `<a class="btn org sm" href="${esc(e.manage)}">Edit details and photos</a>` : `<button class="btn ghost sm" type="button" data-withdraw="${esc(e.id)}">Withdraw</button>`}</div><form data-editform="${esc(e.id)}" style="display:none;gap:8px;max-width:480px"><input name="name" value="${esc(e.name)}" maxlength="80" aria-label="Name on the entry"><textarea name="desc" rows="2" maxlength="300" aria-label="About your display">${esc(e.descr || "")}</textarea><p class="small muted">${e.manage ? "To change photos and more, use Edit details and photos." : "To change photos or the address, withdraw this entry and enter again."}</p><div><button class="btn org sm" type="submit">Save</button></div></form></div>`).join("")}</section>`;
   const thanks = pub && c.votingOpen && me.signedIn && !amJudge && done === c.categories.length ? `<section class="card center"><h2>Thanks for voting!</h2><p class="muted">Know a neighbor who should enter or vote? Send them the link.</p><button class="btn org" type="button" id="sharec">Share this contest</button></section>` : "";
   $("#app").innerHTML = `${c.status !== "live" ? `<div class="status no">This contest is not showing right now, so only you can see it.</div>` : ""}
-  <div class="card"><div class="banner"><div class="logo" aria-hidden="true">${esc(initials(c.org))}</div><div><h1>${esc(c.name)}</h1><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
+  <div class="card"><div class="banner"><div class="logo has" aria-hidden="true"><img src="${esc(contestImage(c.name, c.logo))}" alt="" width="46" height="46"></div><div><h1>${esc(c.name)}</h1><span>${esc(c.org)} · ${esc(c.city)}</span></div></div>
   <p>${esc(c.descr)}</p><div style="display:flex;gap:8px;flex-wrap:wrap">${pills.join("")}</div>
   <p class="small muted">Voting runs ${fmt(c.voteStart)} to ${fmt(c.voteEnd)}. ${pub ? `Every home is in every category. You get one vote in each category.${c.votingOpen && me.signedIn && !amJudge ? ` You've voted in ${done} of ${c.categories.length}.` : ""}` : "Voting in this contest is by invited judges only."}${both ? " A separate panel of judges also votes for Judges' Choice." : ""}</p>
   ${amJudge ? `<div class="status ok">You're a judge in this contest. <a href="/c/${esc(c.slug)}/judge">Open the judges' ballot</a>.</div>` : ""}

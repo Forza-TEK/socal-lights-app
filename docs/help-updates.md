@@ -2365,7 +2365,7 @@ A city or neighborhood group can enter your home for you and send you a private 
 
 # Help Center copy audit (2026-11-11): the new articles
 
-Migration `0224_help_copy_audit_2026-11-11.sql` adds these eight articles and edits nineteen others (text fragments, only where nobody edited the article in Admin). If an article you edited in Admin should get the new wording, paste it from here. Regenerate with `node scripts/help/updates-copy-1111.mjs --md`. Slugs never change.
+Migration `0227_help_copy_audit_2026-11-11.sql` adds these eight articles and edits nineteen others (text fragments, only where nobody edited the article in Admin). If an article you edited in Admin should get the new wording, paste it from here. Regenerate with `node scripts/help/updates-copy-1111.mjs --md`. Slugs never change.
 
 ## edit-or-cancel-your-event
 New article. Category: post. Type: howto. Order: 12.

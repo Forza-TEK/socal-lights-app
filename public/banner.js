@@ -134,7 +134,7 @@ export async function initBanner({ place, onChange, onOpenEvent }) {
   return true;
 }
 
-// ---- Top of the list ($75): a labeled company card at the top of the map list, behind Featured events.
+// ---- Top of the list: a labeled company card at the top of the map list, behind Featured events.
 const TOP_MAX = 2; // at most two cards, so paid cards never push the places off the screen
 export const topSponsors = (regions) => {
   const m = LIST.filter((i) => i.t && !i.ev && serves(i, regions)), k = Math.floor(OFFSET * Math.max(m.length, 1));

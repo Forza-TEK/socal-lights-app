@@ -306,10 +306,13 @@ test("N-03: quote requests are capped per account (5 a day, one a minute) and pe
     assert.equal(q(raw, "SELECT COUNT(*) AS n FROM installer_leads WHERE installer_id = 'i5'")[0].n, 0, "no lead and no email for the refused request");
     assert.ok(q(raw, "SELECT key FROM send_throttle").every((x) => /^[0-9a-f]{32}$/.test(x.key)), "only hashes are stored");
     assert.ok(!JSON.stringify(q(raw, "SELECT * FROM send_throttle")).includes("7.7.7.7"));
-    // a different account on the same connection hits the per-connection cap after 10 in a day
+    // a different account on the same connection hits the per-connection cap after 30 in a day (it used to be 10, which blocked whole shared networks). Rows for 24 more sends are
+    // added directly so the test stays short; the five real ones above are already counted, so the next account is the 30th and the one after is refused, with the reason.
+    const { hashKey } = await import("../functions/_lib/throttle.js"), ipKey = await hashKey(env, "ip", "7.7.7.7");
+    for (let k = 0; k < 24; k++) raw.prepare("INSERT INTO send_throttle (kind, key) VALUES ('quote-ip', ?)").run(ipKey);
     for (let k = 0; k < 6; k++) { const v = await addUser(raw, "v" + k, `v${k}@example.com`); raw.prepare("UPDATE send_throttle SET created_at = datetime(created_at, '-5 minutes')").run();
       const r = await call(instQuote, { params: { slug: "co6" }, request: jreq("/api/installers/co6/quote", v, body, { headers: { "CF-Connecting-IP": "7.7.7.7" } }), env }).then(jbody);
-      if (k < 5) assert.equal(r.status, 200, "v" + k); else assert.equal(r.status, 429); }
+      if (k < 1) assert.equal(r.status, 200, "v" + k); else { assert.equal(r.status, 429); assert.match(r.body.error, /This network \(shared Wi-Fi counts as one connection\)/); assert.match(r.body.error, /resets in about \d+ hours?/); assert.match(r.body.error, /info@socallights\.app/); } }
   } finally { s.done(); }
 });
 

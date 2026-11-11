@@ -8,7 +8,8 @@
 import { json, err } from "../_lib/util.js";
 import { logOp, logOpOnce } from "../_lib/oplog.js";
 import { bump } from "../_lib/funnel.js";
-import { sendFeaturePaidEmail } from "../_lib/featuremail.js";
+import { sendFeaturePaidEmail, sendHomeFeaturePaidEmail } from "../_lib/featuremail.js";
+import { notifyNotApplied, notifyRefunded } from "../_lib/ordermail.js";
 import { sponsorWindow } from "../_lib/sponsor.js";
 import { passOf, quoteProblem } from "../_lib/passes.js";
 import { sendPassPaidEmail } from "../_lib/passmail.js";
@@ -71,7 +72,9 @@ async function handle(evt, env) {
         if (h.meta && h.meta.changes) await setOrderNote(env.DB, order.session_id, AUTO + "partial refund: the placement was left on. Decide in Stripe whether to refund the rest, then mark it refunded here.");
         return { held: "partial refund" };
       }
-      return revoked(await revokePlan(env.DB, order, "refunded"));
+      const manual = await revokePlan(env.DB, order, "refunded");
+      await notifyRefunded(env, order, { off: !!order.applied && !manual }); // "Your refund was issued": once per order, service mail
+      return revoked(manual);
     }
     case "charge.dispute.created":
     case "charge.dispute.closed": {
@@ -171,6 +174,9 @@ async function paid(s, env) {
   if (!exists && quote) await env.DB.prepare("UPDATE feature_orders SET quote_from = ?, quote_to = ? WHERE session_id = ?").bind(quote.from, quote.to, s.id).run();
   if (!exists && target === "installer" && s.metadata.renewal === "1") await env.DB.prepare("UPDATE feature_orders SET renewal = 1 WHERE session_id = ?").bind(s.id).run(); // an automatic charge: Admin > Orders marks it, a refund or dispute pauses the renewal
   const order = await env.DB.prepare("SELECT * FROM feature_orders WHERE session_id = ?").bind(s.id).first();
+  // The buyer is told when a payment was taken but not applied (held as refund due), or was refunded before it arrived. Service mail: sent once, even to someone who unsubscribed from marketing.
+  if (!exists && order.status === "refund_due") await notifyNotApplied(env, order);
+  if (!exists && order.status === "refunded") await notifyRefunded(env, order, { off: false });
   if (order.applied) { // a replay: the placement is on. Saving the card for renewal is idempotent, so a retry that failed after applying still completes it.
     if (target === "installer" && s.metadata.renew === "1") { const e = await enrollFromSession(s, order, env); if (e instanceof Response) return e; }
     return { duplicate: true };
@@ -207,6 +213,7 @@ async function paid(s, env) {
     return { sponsor: nf };
   } // counted and mailed once: a replay returns "duplicate" above
   if (target === "event") { const q = await env.DB.prepare("SELECT name FROM events WHERE id = ?").bind(targetId).first(); await sendFeaturePaidEmail(env, { order, name: q && q.name, until: nf.featured_until, eventId: targetId }); }
+  if (target === "home") { const h = await env.DB.prepare("SELECT title FROM posts WHERE id = ?").bind(targetId).first(); await sendHomeFeaturePaidEmail(env, { order, name: h && h.title, until: nf.featured_until, homeId: targetId }); }
   return { featured: nf };
 }
 

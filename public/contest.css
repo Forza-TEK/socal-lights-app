@@ -6,10 +6,11 @@ body{padding-bottom:60px}
 .card{background:transparent;border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:18px;min-width:0}
 .card h2{font-weight:400;font-size:24px;letter-spacing:-.015em}.card h3{font-weight:500;font-size:17px}
 .banner{display:flex;gap:14px;align-items:center}.banner b{display:block;font-weight:500;font-size:19px;line-height:1.25}.banner span{font-size:14px;color:var(--muted)}
+.logo.has{border:0;overflow:hidden;background:var(--tile,#fff)}.logo.has img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
 .logo{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-weight:500;font-size:15px;color:var(--ink)}
 .pill{display:inline-block;font-size:13px;font-weight:500;padding:3px 11px;border-radius:999px;white-space:nowrap;border:1px solid var(--line2);color:var(--muted)}
 .p-ok{color:var(--ok);border-color:var(--ok)}.p-wait{color:var(--season);border-color:var(--season)}.p-no{color:var(--bad);border-color:var(--bad)}
-.p-founder{color:var(--ice,#2559b8);border-color:var(--ice,#2559b8)}.p-founder::before{content:"\2605 ";font-size:12px}
+.p-founder{color:var(--ice,#2559b8);border-color:var(--ice,#2559b8)}.p-founder::before{content:"\2605";font-size:17px;line-height:1;margin-right:6px;vertical-align:-1px}
 .status{border-left:2px solid var(--season);padding:2px 0 2px 14px;font-size:15px;color:var(--muted)}.status.no{border-color:var(--season)}.status.ok{border-color:var(--ok)}
 .actions{display:flex;gap:12px;flex-wrap:wrap}
 .btn.org{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}.btn.bad{background:transparent;color:var(--bad);border-color:var(--bad)}
