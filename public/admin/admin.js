@@ -879,11 +879,18 @@ async function renderUsage() {
     <ol class="usteps"><li>Cloudflare dashboard &gt; avatar (top right) &gt; My Profile &gt; API Tokens &gt; Create Token &gt; Custom token &gt; Get started.</li><li>Permission: Account / Account Analytics / Read. Account resources: Include / this account. Continue to summary &gt; Create Token. Copy the token once.</li><li>Account ID: Workers &amp; Pages overview, right-hand column (it is also the long code in the dashboard address after /).</li><li>Workers &amp; Pages &gt; socal-lights &gt; Settings &gt; Variables and Secrets &gt; Add. Type: Secret, name <code>CF_ANALYTICS_TOKEN</code>, paste the token. Add again: Secret <code>CF_ACCOUNT_ID</code>. Environment: Production. Save.</li><li>Redeploy (Deployments &gt; the latest &gt; Retry deployment), then reload this page.</li></ol>
     <p class="meta" style="margin:0">Full steps: docs/runbooks/cloudflare-limits.md</p></section>`;
   const asOf = u.connected && u.fetchedAt ? `Cloudflare numbers as of ${esc(String(u.fetchedAt).slice(0, 16))} UTC (cached up to 5 minutes).` : "";
-  const planBar = paid
-    ? `<p class="meta" style="margin:0 0 6px"><b>Plan: Workers Paid</b> ($${u.planBaseUsd}/month). Included amounts are for the billing month from <b>${esc(u.periodStart)}</b> (UTC), not per day, and passing them is <b>not</b> a stop: extra use is billed. Estimated extra charges so far this month (beyond the $${u.planBaseUsd}): <b>${U_USD(u.estimatedOverageUsd)}</b>. An estimate from Cloudflare's analytics, not the invoice; check Billing. Prices checked ${esc(u.pricingVerified)}. ${asOf}</p>`
-    : `<p class="meta" style="margin:0 0 6px"><b>Plan: Cloudflare Free.</b> Daily limits for <b>today, UTC day ${esc(u.utcDay)}</b>; Cloudflare resets them at 00:00 UTC and the site stops until then. ${asOf}</p>`;
+  const tile = (k, v, sub = "") => `<div class="ustat"><span>${k}</span><b>${v}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
+  const hi = tile("Highest right now", u.top ? `${u.top.pct}%` : "No numbers yet", u.top ? esc(u.top.label) : "");
+  const tiles = paid
+    ? tile("Plan", "Workers Paid", `$${u.planBaseUsd} a month`) + tile("Billing month", `Since ${esc(u.periodStart)}`, "UTC. Included amounts are for the month, not per day") + tile("Extra charges so far", U_USD(u.estimatedOverageUsd), `Beyond the $${u.planBaseUsd}. An estimate, not the invoice`) + hi
+    : tile("Plan", "Cloudflare Free", "Daily limits") + tile("Today", `UTC day ${esc(u.utcDay)}`, "Resets at 00:00 UTC and the site stops until then") + hi;
+  const note = paid
+    ? `Passing an included amount is <b>not</b> a stop: extra use is billed. The charge figure is an estimate from Cloudflare's analytics, so check Billing for the real number. Prices checked ${esc(u.pricingVerified)}.`
+    : "";
+  const planBar = `<div class="ustats">${tiles}</div>
+    <div class="uhbar"><div class="ulegend" aria-label="Colors"><span class="tag warn">Watch</span><span class="meta">from 70%</span><span class="tag bad">Warning</span><span class="meta">from 90%</span><span class="tag bad">${paid ? "Extra charges start" : "Limit reached"}</span><span class="meta">at 100%${paid ? " of the included amount" : ""}</span></div><button type="button" class="btn ghost" id="urefresh">Refresh now</button></div>
+    <p class="meta ufoot">${note} Read-only: this page cannot change anything.${asOf ? " " + asOf : ""}</p>`;
   main.innerHTML = `${planBar}
-    <p class="meta" style="margin:0 0 12px">Read-only: this page cannot change anything. Colors: <span class="tag warn">Watch</span> from 70%, <span class="tag bad">Warning</span> from 90%, <span class="tag bad">${paid ? "Extra charges start" : "Limit reached"}</span> at 100%${paid ? " of the included amount" : ""}. Highest right now: <b>${worst}</b>. <button type="button" class="btn ghost" id="urefresh">Refresh now</button></p>
     ${u.limitHits.length ? `<div class="limitbanner" role="alert"><b>Limit hit at ${esc(String(u.limitHits[0].at).slice(0, 16))} UTC${u.limitHits.length > 1 ? ` (${u.limitHits.length} times in 24 hours)` : ""}.</b><span>${esc(String(u.limitHits[0].detail).slice(0, 200))}</span></div>` : ""}
     ${u.connected && !u.error ? "" : steps}
     ${u.missing.length ? `<p class="msg err">Cloudflare would not give some numbers: ${u.missing.map((x) => esc(x.what) + (x.permission ? ` (needs ${esc(x.permission)})` : "")).join("; ")}.</p>` : ""}
