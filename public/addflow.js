@@ -1,7 +1,8 @@
 // Step-by-step engine shared by the add forms (event, home display, contest). One question per screen, a segmented
 // progress bar, Back and Next. Each form supplies its steps; this file does the rest (state, validation, photos,
 // address suggestions, "I am human" check, saved drafts).
-import { me, signIn } from "/auth.js?v=20261107p";
+import { me, signIn, friendlyError, isNetError } from "/auth.js?v=20261111z";
+import { draftKey, purgeLegacyDrafts, savePhotos, loadPhotos, dropPhotos } from "/drafts-local.js?v=20261111z";
 import "/norm-ui.js?v=20261102b";
 import { CITY } from "/cities.js?v=20261107a";
 export const $ = (q, r = document) => r.querySelector(q);
@@ -14,6 +15,10 @@ const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct
 export const fmt = (s) => (s ? MON[parse(s).getMonth()] + " " + parse(s).getDate() : "");
 export const OPT = '<span class="opt-lbl">Optional</span>', PRIV = "<b>Private</b>";
 export const isEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e).trim());
+// A step's check(d) returns "" (fine), a message, or bad(message, "fieldKey"): the key says WHICH field the message is about, so focus goes there and only that field is flagged.
+export const bad = (msg, field) => ({ msg, field });
+// An error from our own API: keeps the HTTP status (429 = a limit, the message already says which one and when it resets) so the form can offer the right way out.
+export function apiError(r, j, fallback) { const e = new Error((j && j.error) || fallback); e.status = r.status; e.limit = j && j.limit; return e; }
 
 // Domain-name format check (RFC 1035/1123): labels of letters, digits and hyphens, a letters-only top-level domain, no IP addresses
 export function validSite(s) {
@@ -24,14 +29,15 @@ export function validSite(s) {
 }
 
 /* ---------- light / night switch and account button: shared with every page (see chrome.js) ---------- */
-import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome.js?v=20261111a";
+import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome.js?v=20261111z";
 export { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct };
 
 /* ---------- field builders ---------- */
+// Every field has a visible <label for> or, when the step's title already asks the question, an aria-label (same pattern in all the add forms).
 export const input = (d, k, { label = "", ph = "", max = 200, type = "text", opt = false, ac = "", mode = "", addr = false, aria = "" } = {}) =>
   `<div class="field${addr ? " combo" : ""}">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<input class="in" id="f-${k}" data-k="${k}" ${aria && !label ? `aria-label="${esc(aria)}"` : ""} ${addr ? "data-addr" : ""} type="${type}" maxlength="${max}" ${ac ? `autocomplete="${ac}"` : 'autocomplete="off"'} ${mode ? `inputmode="${mode}"` : ""} placeholder="${esc(ph)}" value="${esc(d[k] ?? "")}"></div>`;
-export const area = (d, k, { label = "", ph = "", max = 300, opt = false } = {}) =>
-  `<div class="field">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<textarea class="in" id="f-${k}" data-k="${k}" maxlength="${max}" placeholder="${esc(ph)}">${esc(d[k] ?? "")}</textarea></div>`;
+export const area = (d, k, { label = "", ph = "", max = 300, opt = false, aria = "" } = {}) =>
+  `<div class="field">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<textarea class="in" id="f-${k}" data-k="${k}" ${aria && !label ? `aria-label="${esc(aria)}"` : ""} maxlength="${max}" placeholder="${esc(ph)}">${esc(d[k] ?? "")}</textarea></div>`;
 export const select = (d, k, options, { label = "", blank = "", ac = "" } = {}) =>
   `<div class="field">${label ? `<label for="f-${k}">${label}</label>` : ""}<select class="in" id="f-${k}" data-k="${k}" ${ac ? `autocomplete="${ac}"` : ""}>${blank ? `<option value="">${esc(blank)}</option>` : ""}${options.map(([v, l]) => `<option value="${esc(v)}" ${String(d[k]) === String(v) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>`;
 export const tile = (d, k, v, title, desc = "", sm = false) =>
@@ -45,9 +51,14 @@ export async function nlSave(x, role, page) {
   try { await fetch("/api/me/newsletter", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ optin: true, role, topics: [], method: "add-listing checkbox", source_page: page }) }); } catch {}
 }
 export const photoField =(d, { max = 8, help = "" } = {}) =>
-  `<div class="drop" id="drop"><span>${help || `Up to ${max} photos. The first one is the cover. They shrink on your phone, so uploads are quick.`}</span><label class="btn out sm" for="f-photos" style="margin:0">Choose photos</label><input id="f-photos" data-photos type="file" accept="image/*" multiple hidden></div><div class="thumbs" id="thumbs">${thumbsHtml(d)}</div><p class="err" id="perr" role="alert" hidden></p>`;
+  `<div class="drop" id="drop"><span>${help || `Up to ${max} photos. The first one is the cover. They shrink on your phone, so uploads are quick, and they stay on this device if you reload or tap Save &amp; exit.`}</span><label class="btn out sm" for="f-photos" style="margin:0">Choose photos</label><input id="f-photos" data-photos type="file" accept="image/*" multiple hidden></div><div class="thumbs" id="thumbs">${thumbsHtml(d)}</div><p class="err" id="perr" role="alert" hidden></p>`;
 const thumbsHtml = (d) => (d.photos || []).map((p, i) => `<div class="t"><img src="${p.url}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button>${i === 0 ? "<em>COVER</em>" : ""}</div>`).join("");
 export const sumRow = (k, v, goto) => `<div><span>${k}</span><b>${v}</b><button class="link" type="button" data-goto="${goto}">Edit</button></div>`;
+// The Photos row of a review screen: the real thumbnails and the count, a remove button on each, and a way back to add more. (The photos are kept on this device with the draft, so they are still here after a reload.)
+export const photoRow = (d, goto = "photos") => {
+  const n = (d.photos || []).length;
+  return `<div class="sum-photos"><span>Photos</span><b>${n ? `${n} photo${n === 1 ? "" : "s"}` : "None yet"}</b><button class="link" type="button" data-goto="${goto}">${n ? "Add or change" : "Add photos"}</button>${n ? `<div class="thumbs mini">${thumbsHtml(d)}</div>` : '<p class="small muted">You can send it without photos and add them later from Your profile.</p>'}</div>`;
+};
 export const ICON = {
   event: '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
   contest: '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a2 2 0 0 0 2 4M16 6h3a2 2 0 0 1-2 4M12 13v4M9 20h6"/></svg>',
@@ -55,7 +66,7 @@ export const ICON = {
 };
 
 /* ---------- photos: resized on the device (at most 1600px, JPEG) before upload ---------- */
-async function shrink(file) {
+export async function shrink(file) {
   const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
   const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height)), c = document.createElement("canvas");
   c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
@@ -103,20 +114,37 @@ export function attachAddress(root, { getCity = () => "", onPick = () => {} } = 
 /* ---------- the engine ---------- */
 // o: { steps, data, root, exit, season(d), persist (localStorage key), noPersist: [keys], account: { kind, title(d) }, addr: { cities }, actions: { name(arg, api) }, after(step) }
 // step: { id, sec, title, help, body(d), check(d) -> error text, skip(d), cta, redraw, submit(d, api) }
+// o.persist is the draft's base name ("scl-house-draft"); the draft is kept under that name PLUS the signed-in account (o.uid: the account id, or a function that returns it), so two people on one
+// browser never see each other's draft. The answers live in localStorage, the photos in IndexedDB (public/drafts-local.js), both removed at sign-out and when the form is sent.
 export function run(o) {
-  const d = o.data, root = o.root || $("#app"), S = { i: 0, err: "", busy: false, done: null };
+  const d = o.data, root = o.root || $("#app"), S = { i: 0, err: "", busy: false, done: null, restored: false, savedAt: 0 };
   const T = (v) => (typeof v === "function" ? v(d) : v), steps = () => o.steps.filter((s) => !(s.skip && s.skip(d)));
-  if (o.persist) try {
-    const sv = JSON.parse(localStorage.getItem(o.persist) || "null");
-    if (sv && sv.d) { Object.assign(d, sv.d); S.i = sv.i || 0; }
-  } catch {}
+  const INIT = JSON.parse(JSON.stringify(d)); // the blank form, for "Start over"
+  const uidNow = () => (typeof o.uid === "function" ? o.uid() : o.uid) || "";
+  const pk = () => (o.persist ? draftKey(o.persist, uidNow()) : "");
+  let curKey = pk();
+  if (o.persist) {
+    purgeLegacyDrafts(); // drafts saved before drafts were kept per account: nobody can say whose they are
+    try {
+      // A form started signed out (the contest form) and continued after signing in: the draft saved under "anon" in the last hour moves to the account's key
+      if (uidNow() && !localStorage.getItem(curKey)) { const an = draftKey(o.persist, ""), sv = JSON.parse(localStorage.getItem(an) || "null"); if (sv && sv.t && Date.now() - sv.t < 3600_000) { localStorage.setItem(curKey, JSON.stringify(sv)); localStorage.removeItem(an); } }
+      const sv = JSON.parse(localStorage.getItem(curKey) || "null");
+      if (sv && sv.d) { Object.assign(d, sv.d); S.i = sv.i || 0; S.savedAt = sv.t || 0; S.restored = true; }
+    } catch {}
+  }
   // o.prefill(d): optional. Fills answers that came from somewhere else (for example the AI assistant's hand-off) and returns true if it did; the form then opens at the first step
   // that still needs something, or the last (review) step when everything passes, instead of the first.
   if (o.prefill) try {
     if (o.prefill(d)) { const all = steps(); let k = all.findIndex((x) => x.check && x.check(d)); S.i = k < 0 ? all.length - 1 : k; }
   } catch {}
   let dirty = false;
-  const save = () => { if (!o.persist) return; try { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && typeof v !== "function") c[k] = v; localStorage.setItem(o.persist, JSON.stringify({ d: c, i: S.i })); } catch {} };
+  // The photos (already shrunk) go to IndexedDB with the draft, so a reload, Save & exit or a sign-in round trip does not lose them
+  const keepPhotos = () => (o.persist && Array.isArray(d.photos) ? savePhotos(curKey, d.photos.map((p) => p.blob), d._draftId) : Promise.resolve());
+  const save = () => {
+    if (!o.persist) return;
+    const k = pk(); if (k !== curKey) { const old = curKey; curKey = k; try { localStorage.removeItem(old); } catch {} dropPhotos(old); keepPhotos(); } // signed in while filling the form: the draft follows the account
+    try { const c = {}; for (const [kk, v] of Object.entries(d)) if (!(o.noPersist || []).includes(kk) && typeof v !== "function") c[kk] = v; S.savedAt = Date.now(); localStorage.setItem(curKey, JSON.stringify({ d: c, i: S.i, t: S.savedAt })); } catch {}
+  };
   const hdr = (done) => `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? "" : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
   function draw(focus) {
     if (S.done !== null) { root.innerHTML = `${hdr(true)}<main class="main">${S.done}</main>`; window.scrollTo(0, 0); return; }
@@ -125,28 +153,57 @@ export function run(o) {
     const secs = [...new Set(st.map((x) => x.sec))], cur = secs.indexOf(s.sec);
     const segs = secs.map((sc, k) => { const inSec = st.filter((x) => x.sec === sc), idx = inSec.indexOf(s), f = k < cur ? 1 : k > cur ? 0 : (idx + 1) / inSec.length; return `<div class="seg" aria-hidden="true"><i style="width:${f * 100}%"></i></div>`; }).join("");
     const last = !!s.submit;
-    root.innerHTML = `${hdr()}<main class="main"><h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<p class="err" id="err" role="alert" ${S.err ? "" : "hidden"}>${esc(S.err)}</p></main>${o.preview ? `<aside class="pvcard" id="pvcard" aria-label="Preview of your listing"><span class="pvl">Preview</span><div id="pvbody">${o.preview(d)}</div><p class="pvn">This is how it will look to people. It updates as you type.</p></aside>` : ""}
-    <div class="bar" role="navigation" aria-label="Steps"><div class="segs" role="progressbar" aria-label="Progress: ${esc(s.sec)}">${segs}</div><div class="nav"><button class="link" type="button" data-a="back">${S.i === 0 ? "Cancel" : "Back"}</button><button class="btn" type="button" data-a="next" id="nextbtn">${esc(T(s.cta) || (last ? "Submit" : "Next"))}</button></div></div>`;
+    // A draft that was restored (reload, or opened from Your profile) says when it was saved and can be thrown away
+    const note = S.restored && o.persist ? `<p class="draftnote" id="draftnote">${S.savedAt ? `Draft saved ${esc(new Date(S.savedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))} on this device.` : "You have a saved draft."} <button class="link" type="button" data-a="startover">Start over</button></p>` : "";
+    root.innerHTML = `${hdr()}<main class="main">${note}<h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<div class="errbox"><p class="err" id="err" role="alert" tabindex="-1" ${S.err ? "" : "hidden"}>${esc(S.err)}</p><p class="small errhelp" id="errhelp" ${S.help ? "" : "hidden"}>${S.help ? S.help : ""}</p><button class="btn out sm" type="button" data-a="retry" id="retrybtn" ${S.retry ? "" : "hidden"}>Try again</button></div></main>${o.preview ? `<aside class="pvcard" id="pvcard" aria-label="Preview of your listing"><span class="pvl">Preview</span><div id="pvbody">${o.preview(d)}</div><p class="pvn">This is how it will look to people. It updates as you type.</p></aside>` : ""}
+    <div class="bar" role="navigation" aria-label="Steps"><div class="segs" role="progressbar" aria-label="Progress: ${esc(s.sec)}" aria-valuemin="1" aria-valuemax="${st.length}" aria-valuenow="${S.i + 1}" aria-valuetext="Step ${S.i + 1} of ${st.length}: ${esc(s.sec)}">${segs}</div><div class="nav"><button class="link" type="button" data-a="back">${S.i === 0 ? "Cancel" : "Back"}</button><span class="stepn small muted" aria-hidden="true">Step ${S.i + 1} of ${st.length}</span><button class="btn" type="button" data-a="next" id="nextbtn">${esc(T(s.cta) || (last ? "Submit" : "Next"))}</button></div></div>`;
     if (focus) { const f = root.querySelector(".in,[data-tile]"); if (f && f.classList.contains("in")) f.focus({ preventScroll: true }); window.scrollTo(0, 0); }
     if (o.after) o.after(s, d);
   }
   // Tie the message to the field it is about: the first empty field on the step gets aria-invalid and aria-describedby="err" (cleared when the person types)
-  const flagField = () => { unflag(); const f = [...root.querySelectorAll("input[data-k],textarea[data-k],select[data-k]")].find((x) => x.type !== "checkbox" && x.type !== "radio" && x.type !== "file" && !String(x.value || "").trim()); if (f) { f.setAttribute("aria-invalid", "true"); f.setAttribute("aria-describedby", "err"); } };
+  // The field the message is about (the step's check says which, with bad(msg, key); else the first empty one) is flagged AND gets focus, so a keyboard or screen-reader user lands on it and hears the message
+  // (the message is role=alert and the field points at it). When no field is involved (a tile step), focus goes to the message itself.
+  const flagField = (key) => {
+    unflag();
+    const els = [...root.querySelectorAll("input[data-k],textarea[data-k],select[data-k]")].filter((x) => x.type !== "checkbox" && x.type !== "radio" && x.type !== "file");
+    const f = key ? els.find((x) => x.dataset.k === key) : els.find((x) => !String(x.value || "").trim());
+    if (f) { f.setAttribute("aria-invalid", "true"); f.setAttribute("aria-describedby", "err"); f.focus(); return; }
+    const e = $("#err"); if (e && !e.hidden) e.focus({ preventScroll: false });
+  };
   const unflag = () => root.querySelectorAll("[aria-describedby=\"err\"][data-k]").forEach((x) => { x.removeAttribute("aria-invalid"); x.removeAttribute("aria-describedby"); });
-  const showErr = (t) => { S.err = t; const e = $("#err"); if (e) { e.textContent = t; e.hidden = !t; if (t) e.scrollIntoView({ block: "center", behavior: "smooth" }); } };
+  // opts.retry: show the "Try again" button (a dropped connection). opts.help: html line under the message (a limit: how to reach us). opts.scroll false: the caller moves focus, which scrolls.
+  const showErr = (t, opts = {}) => {
+    S.err = t; S.retry = !!(t && opts.retry); S.help = t ? opts.help || "" : "";
+    const e = $("#err"), rb = $("#retrybtn"), hp = $("#errhelp");
+    if (e) { e.textContent = t; e.hidden = !t; if (t && opts.scroll !== false) e.scrollIntoView({ block: "center", behavior: "smooth" }); }
+    if (rb) rb.hidden = !S.retry;
+    if (hp) { hp.innerHTML = S.help; hp.hidden = !S.help; }
+  };
   const pv = () => { const b = $("#pvbody"); if (b && o.preview) b.innerHTML = o.preview(d); };
-  const api = { next: () => next(), draw: () => draw(), err: showErr, finish(html) { S.done = html; if (d._draftId) fetch("/api/drafts/" + d._draftId, { method: "DELETE" }).catch(() => {}); if (o.persist) try { localStorage.removeItem(o.persist); } catch {} draw(); }, goto(id) { const i = steps().findIndex((x) => x.id === id); if (i > -1) { S.i = i; S.err = ""; save(); draw(true); } }, data: d, step: () => steps()[S.i] };
+  const api = { next: () => next(), draw: () => draw(), err: showErr, finish(html) { S.done = html; if (d._draftId) fetch("/api/drafts/" + d._draftId, { method: "DELETE" }).catch(() => {}); if (o.persist) { try { localStorage.removeItem(curKey); } catch {} dropPhotos(curKey); } draw(); }, goto(id) { const i = steps().findIndex((x) => x.id === id); if (i > -1) { S.i = i; S.err = ""; save(); draw(true); } }, data: d, step: () => steps()[S.i] };
   async function next() {
     if (S.busy) return;
-    const s = steps()[S.i], e = s.check ? s.check(d) : ""; if (e) { showErr(e); flagField(); return; } showErr(""); unflag();
+    const all = steps(), s = all[S.i], found = (r) => (r && typeof r === "object" ? r : { msg: r || "" });
+    const e = found(s.check ? s.check(d) : ""); if (e.msg) { showErr(e.msg, { scroll: false }); flagField(e.field); return; } showErr(""); unflag();
     if (s.submit) {
+      // Before sending, every earlier step is checked again (a draft restored days later can hold dates that have passed): the first one that fails is opened with its message
+      for (let k = 0; k < S.i; k++) { const r = found(all[k].check ? all[k].check(d) : ""); if (r.msg) { S.i = k; save(); draw(true); showErr(r.msg, { scroll: false }); flagField(r.field); return; } }
       S.busy = true; const b = $("#nextbtn"), label = b.textContent; b.disabled = true; b.textContent = "Sending…";
-      try { await s.submit(d, api); } catch (x) { S.busy = false; if (S.done === null) { showErr(x.message || "Something went wrong. Please try again."); const bb = $("#nextbtn"); if (bb) { bb.disabled = false; bb.textContent = label; } ts.reset(); } return; }
+      try { await s.submit(d, api); } catch (x) {
+        S.busy = false;
+        if (S.done === null) {
+          // A dropped connection: a plain sentence and a Try again button (the answers are kept on this device). A limit (429): the message already says which and when it resets; add the way to reach us.
+          const net = isNetError(x);
+          showErr(friendlyError(x), { retry: net, help: x.status === 429 ? 'Need this added now? Email <a href="mailto:info@socallights.app">info@socallights.app</a> and we will help.' : "" });
+          const bb = $("#nextbtn"); if (bb) { bb.disabled = false; bb.textContent = label; } ts.reset();
+        }
+        return;
+      }
       S.busy = false; return;
     }
     S.i++; save(); draw(true);
   }
-  // Save & exit: sign in if needed, keep the answers on your account (photos are not saved), and go to your profile
+  // Save & exit: sign in if needed, keep the answers on your account, and go to your profile. The photos stay on this device with the draft (IndexedDB), so Continue on this device brings them back.
   const cleanData = () => { const c = {}; for (const [k, v] of Object.entries(d)) if (!(o.noPersist || []).includes(k) && !k.startsWith("_") && typeof v !== "function") c[k] = v; return c; };
   let leaveTo = "";
   async function saveExit() {
@@ -156,8 +213,8 @@ export function run(o) {
       if (!u) { u = await signIn({ title: "Sign in to save your draft", next: "/profile?save=" + (o.account.q || o.account.kind) }); if (!u) { S.busy = false; return; } }
       const r = await fetch("/api/drafts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: d._draftId, kind: o.account.kind, title: o.account.title(d), data: cleanData(), step: S.i }) });
       const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Couldn't save your draft. Try again.");
-      d._draftId = j.id; save(); dirty = false; leaving = true; location.href = leaveTo || "/profile";
-    } catch (e) { showErr(e.message || "Couldn't save your draft."); }
+      d._draftId = j.id; save(); await keepPhotos(); dirty = false; leaving = true; location.href = leaveTo || "/profile#drafts";
+    } catch (e) { showErr(friendlyError(e, "Couldn't save your draft."), { retry: false }); }
     S.busy = false;
   }
   // Leaving with unsaved changes: offer to save the draft first (links in the header, Back on the first step, and the browser's own tab close or reload)
@@ -199,10 +256,15 @@ export function run(o) {
       if (o.onInput) o.onInput(k, d, api); pv(); return;
     }
     if (t.dataset.goto) return api.goto(t.dataset.goto);
-    if (t.dataset.rm) { const i = +t.dataset.rm; URL.revokeObjectURL(d.photos[i].url); d.photos.splice(i, 1); $("#thumbs").innerHTML = thumbsHtml(d); pv(); return; }
+    if (t.dataset.rm) {
+      const i = +t.dataset.rm; if (!d.photos[i]) return; URL.revokeObjectURL(d.photos[i].url); d.photos.splice(i, 1); dirty = true; keepPhotos(); pv();
+      if ($("#thumbs")) $("#thumbs").innerHTML = thumbsHtml(d); else draw(); // on the Photos step the strip updates in place; on the review screen the whole row is drawn again
+      return;
+    }
     if (t.dataset.copy) { const old = t.textContent; navigator.clipboard.writeText(t.dataset.copy).then(() => (t.textContent = "Copied"), () => (t.textContent = "Select it")); setTimeout(() => (t.textContent = old), 1500); return; }
     const [a, p] = (t.dataset.a || "").split(/:(.*)/s);
-    if (a === "next") return next(); if (a === "back") return back(); if (a === "saveexit") return saveExit();
+    if (a === "next" || a === "retry") return next(); if (a === "back") return back(); if (a === "saveexit") return saveExit();
+    if (a === "startover") return startOver(t);
     if (o.actions && o.actions[a]) return o.actions[a](p, api);
   });
   const dz = () => $("#drop");
@@ -214,9 +276,25 @@ export function run(o) {
     for (const f of list) {
       if (d.photos.length >= 8) { say("That's the limit of 8 photos."); break; }
       if (!f.type.startsWith("image/")) { say("Skipped a file that isn't a photo."); continue; }
-      try { const b = await shrink(f); dirty = true; d.photos.push({ blob: b, url: URL.createObjectURL(b) }); pv(); } catch { say("One photo couldn't be read. Try a JPG or PNG."); }
+      try {
+        const b = await shrink(f);
+        if (d.photos.length >= 8) { say("That's the limit of 8 photos."); break; } // checked again after the (slow) shrink, so several quick picks cannot go past 8
+        dirty = true; d.photos.push({ blob: b, url: URL.createObjectURL(b) }); pv(); await keepPhotos();
+      } catch { say("One photo couldn't be read. Try a JPG or PNG."); }
       const th = $("#thumbs"); if (th) th.innerHTML = thumbsHtml(d);
     }
+  }
+  // Start over: tap again to confirm. Clears the answers and photos kept on this device, and the copy saved to the account when this draft was opened from Your profile.
+  let sureT = 0;
+  function startOver(btn) {
+    if (!btn.dataset.sure) { btn.dataset.sure = "1"; btn.textContent = "Tap again to start over"; clearTimeout(sureT); sureT = setTimeout(() => { if (btn.isConnected) { delete btn.dataset.sure; btn.textContent = "Start over"; } }, 5000); return; }
+    const id = d._draftId; if (id) fetch("/api/drafts/" + encodeURIComponent(id), { method: "DELETE" }).catch(() => {});
+    try { localStorage.removeItem(curKey); } catch {} dropPhotos(curKey);
+    (d.photos || []).forEach((p) => URL.revokeObjectURL(p.url));
+    for (const k of Object.keys(d)) delete d[k]; Object.assign(d, JSON.parse(JSON.stringify(INIT)));
+    S.i = 0; S.err = ""; S.restored = false; S.savedAt = 0; dirty = false;
+    if (new URLSearchParams(location.search).get("draft")) history.replaceState(null, "", location.pathname);
+    draw(true);
   }
 
   // street-address suggestions on any [data-addr] input
@@ -230,7 +308,15 @@ export function run(o) {
   // ?draft=<id> reopens a draft saved to your account, on the step you left
   api.ready = (async () => {
     const id = new URLSearchParams(location.search).get("draft");
-    if (id) try { const r = await fetch("/api/drafts/" + encodeURIComponent(id), { cache: "no-store" }); if (r.ok) { const j = await r.json(); Object.assign(d, j.data); d._draftId = j.id; S.i = j.step || 0; } } catch {}
+    if (id) try {
+      const r = await fetch("/api/drafts/" + encodeURIComponent(id), { cache: "no-store" });
+      if (r.ok) { const j = await r.json(); Object.assign(d, j.data); d._draftId = j.id; S.i = j.step || 0; S.restored = true; S.savedAt = j.updated_at ? Date.parse(String(j.updated_at).replace(" ", "T") + "Z") || 0 : 0; }
+    } catch {}
+    // The photos that were kept with this draft on this device (a reload, Save & exit, or a sign-in round trip). They are only used for the draft they belong to.
+    if (o.persist && Array.isArray(d.photos) && !d.photos.length) try {
+      const rec = await loadPhotos(curKey);
+      if (rec && Array.isArray(rec.blobs) && rec.blobs.length && (rec.draftId || "") === (d._draftId || "")) { d.photos = rec.blobs.slice(0, 8).map((b) => ({ blob: b, url: URL.createObjectURL(b) })); S.restored = true; pv(); }
+    } catch {}
     draw(true);
   })();
   return api;

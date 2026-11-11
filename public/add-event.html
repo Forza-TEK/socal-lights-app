@@ -8,17 +8,17 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/addflow.css?v=20261111z">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave } from "/addflow.js?v=20261111d";
+import { run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261111z";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
 import { CITY } from "/cities.js?v=20261107a";
 import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261108a";
-import { me, signIn } from "/auth.js?v=20261107p";
+import { me, signIn } from "/auth.js?v=20261111z";
 import { capture, take } from "/chatprefill.js?v=20261111b";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
 capture(SEASONS, cities); // arrived from the AI assistant's "Start this event" card: remember the values (they survive sign-in) and tidy the address bar
@@ -53,21 +53,21 @@ const plansHtml = (x) => (QUOTES[qKey(x)] ? `<div class="tiles">${plansFor(x).ma
 const steps = [
   { id: "url", sec: "Basics", title: "Do you have a web page for your event?", help: "If the page mentions your event's name and date, it shows as Confirmed. Without one, it still goes on the map right away, marked Expected until the dates are checked.",
     body: (x) => `${input(x, "url", { label: "Event web page", type: "text", mode: "url", ph: "yourevent.org/lights", max: 300, opt: true })}<div style="text-align:right;margin-top:-12px"><button class="link" type="button" data-a="skipurl" style="display:inline-flex;align-items:center;gap:6px">No... Next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>`,
-    check: (x) => (x.url.trim() && !validSite(x.url) ? "That doesn't look like a web address. Try something like example.org/event, or tap No... Next." : "") },
+    check: (x) => (x.url.trim() && !validSite(x.url) ? bad("That doesn't look like a web address. Try something like example.org/event, or tap No... Next.", "url") : "") },
   { id: "name", sec: "Basics", title: "What's the event called?", help: "Choose its season and type too, so people can find it.", redraw: true,
     body: (x) => `${input(x, "name", { label: "Event name", max: 120 })}${select(x, "season", Object.entries(SEASONS).map(([k, v]) => [k, v.label]), { label: "Season" })}${select(x, "type", Object.entries(SEASONS[x.season].types).map(([k, l]) => [k, l]), { label: "Type", blank: "Choose a type" })}`,
-    check: (x) => (x.name.trim().length < 4 ? "Enter the event's name." : !SEASONS[x.season].types[x.type] ? "Choose the type of event." : "") },
+    check: (x) => (x.name.trim().length < 4 ? bad("Enter the event's name.", "name") : !SEASONS[x.season].types[x.type] ? bad("Choose the type of event.", "type") : "") },
   { id: "dates", sec: "When", title: "When is it?", help: "Pick the first and last day. For a one-day event use the same day twice.", redraw: false,
     body: (x) => `<div class="row2">${input(x, "start", { label: "First day", type: "date" })}${input(x, "end", { label: "Last day", type: "date" })}</div>${input(x, "hours", { label: "Hours", ph: "for example 5–9pm", max: 120, opt: true })}`,
-    check: (x) => (!x.start || !x.end ? "Pick the first and last day." : x.end < x.start ? "The last day can't be before the first day." : x.end < today ? "That event has already ended." : "") },
+    check: (x) => (!x.start ? bad("Pick the first and last day.", "start") : !x.end ? bad("Pick the first and last day.", "end") : x.end < x.start ? bad("The last day can't be before the first day.", "end") : x.end < today ? bad("That event has already ended.", "end") : "") },
   { id: "price", sec: "When", title: "Is it free to attend?", redraw: true,
     body: (x) => `<div class="tiles g2">${tile(x, "free", "yes", "Free", "", true)}${tile(x, "free", "no", "Paid", "", true)}</div>${x.free === "no" ? input(x, "price", { label: "Price", ph: "for example $15 adults, kids free", max: 80 }) : ""}`,
-    check: (x) => (x.free === "no" && !x.price.trim() ? "Add the price, for example $15 adults." : "") },
+    check: (x) => (x.free === "no" && !x.price.trim() ? bad("Add the price, for example $15 adults.", "price") : "") },
   { id: "where", sec: "Where", title: "Where is it?", help: "The pin goes on this address. For a parade, use the cross streets.",
     body: (x) => `${input(x, "venue", { label: "Venue or place name", ph: "e.g. Heritage Park", max: 120 })}${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city", ac: "address-level2" })}${input(x, "street", { label: "Street address", ph: "123 Main St", max: 160, ac: "address-line1", addr: true })}`,
-    check: (x) => (x.venue.trim().length < 3 ? "Enter the venue or place name." : x.street.trim().length < 6 ? "Enter the street address (or the two cross streets for a parade)." : !x.city ? "Choose the city." : "") },
+    check: (x) => (x.venue.trim().length < 3 ? bad("Enter the venue or place name.", "venue") : x.street.trim().length < 6 ? bad("Enter the street address (or the two cross streets for a parade).", "street") : !x.city ? bad("Choose the city.", "city") : "") },
   { id: "blurb", sec: "About", title: "Describe it in a sentence or two", help: "In your own words. It shows on the map card.",
-    body: (x) => area(x, "blurb", { max: 200, ph: "What families will see and do" }), check: (x) => (x.blurb.trim().length < 20 ? "Add a sentence or two (at least 20 characters)." : "") },
+    body: (x) => area(x, "blurb", { max: 200, ph: "What families will see and do", aria: "Describe your event" }), check: (x) => (x.blurb.trim().length < 20 ? bad("Add a sentence or two (at least 20 characters).", "blurb") : "") },
   { id: "review", sec: "Review", title: "Check everything, then add it", cta: "Add my event", redraw: false,
     body: (x) => `<div class="sum">${sumRow("Event", esc(x.name), "name")}${sumRow("Page", x.url.trim() ? esc(x.url) : "None. A person will check it", "url")}${sumRow("When", fmt(x.start) + (x.end !== x.start ? " to " + fmt(x.end) : ""), "dates")}${sumRow("Price", x.free === "yes" ? "Free" : esc(x.price), "price")}${sumRow("Where", `${esc(x.venue)}, ${esc(x.city)}`, "where")}</div>
       <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). It is only used if something needs fixing and it is never shown publicly.</p></div>
@@ -76,22 +76,44 @@ const steps = [
     submit: async (x, api) => {
       const body = { name: x.name, url: x.url, season: x.season, type: x.type, start: x.start, end: x.end, hours: x.hours, price: x.free === "yes" ? "" : x.price, free: x.free === "yes", venue: x.venue, address: x.street, city: x.city, blurb: x.blurb, email: x.email, "cf-turnstile-response": ts.token() };
       const r = await fetch("/api/submit-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
+      if (!r.ok) throw apiError(r, j, "Something went wrong. Please try again.");
       await nlSave(x, "host", "add-event");
       if (x.plan && planOff(x, x.plan)) x.plan = ""; // the dates changed after the plan was chosen
-      if (x.plan && pay) {
+      const live = j.status === "published" || (j.status === "duplicate" && j.mine); // on the map and the poster's own
+      if (x.plan && pay && (live || j.status === "pending")) {
         // Straight on to Stripe. A published event is featured by its id; one in review is held until it is approved.
-        const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(j.status === "published" || j.status === "duplicate" ? { event_id: j.id } : { submission_id: j.submission_id }), plan: x.plan, email: x.email }) });
+        const c = await fetch("/api/feature/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(live ? { event_id: j.id } : { submission_id: j.submission_id }), plan: x.plan, email: x.email }) });
         const cd = await c.json().catch(() => ({}));
         if (c.ok && cd.url) { location.href = cd.url; return; }
-        api.finish(`<h1>${esc(j.message)}</h1><p class="help">We couldn't open the payment page just now. <a href="/feature?plan=${esc(x.plan)}&${j.status === "published" || j.status === "duplicate" ? "event=" + encodeURIComponent(j.id) : "sub=" + encodeURIComponent(j.submission_id)}">Pick up where you left off</a>: your event and plan are already chosen.</p>`); return;
+        api.finish(`<h1>${esc(j.message)}</h1><p class="help">We couldn't open the payment page just now. <a href="/feature?plan=${esc(x.plan)}&${live ? "event=" + encodeURIComponent(j.id) : "sub=" + encodeURIComponent(j.submission_id)}">Pick up where you left off</a>: your event and plan are already chosen.</p>`); return;
       }
-      api.finish(`<h1>${esc(j.message)}</h1><p class="help">${j.status === "published" ? "It's on the map now." : "It is on the map shortly."}</p><div style="display:flex;gap:12px;flex-wrap:wrap">${j.status === "published" || j.status === "duplicate" ? '<a class="btn" href="/">See it on the map</a>' : ""}${IN_APP ? "" : '<a class="btn out" href="/feature">Feature your event</a>'}<a class="btn out" href="/add-event">Add another event</a></div>`);
+      // One screen per real state, so the heading, the text and the buttons never disagree:
+      //   published        : it is on the map now (and Feature is offered only if the server says a Featured placement can be bought today)
+      //   duplicate, mine  : you already added it, it is on the map
+      //   duplicate, other : someone else's event is already on the map; Feature is never offered
+      //   pending          : it waits for review, so it is NOT on the map yet (no See it on the map, no Feature)
+      const mail = j.receipt === "sent" ? `<p class="small muted" role="status">We emailed a confirmation to <b>${esc(j.email || x.email)}</b>.</p>` : "", row = (h, t) => `<div><b style="font-weight:500">${h}</b><br><span class="muted">${t}</span></div>`;
+      const btn = (href, t, primary) => `<a class="btn${primary ? "" : " out"}" href="${href}">${t}</a>`, feat = live && j.featurable && !IN_APP ? btn("/feature?event=" + encodeURIComponent(j.id), "Feature your event") : "";
+      let head, help, next = "", acts;
+      if (j.status === "duplicate" && !j.mine) {
+        head = "This event is already on the map"; help = "Someone has already listed it, so we did not add it a second time. If it is yours and you would like to manage it, email <a href=\"mailto:info@socallights.app\">info@socallights.app</a> and we will link it to your account.";
+        acts = btn("/#e-" + encodeURIComponent(j.id), "See it on the map", true) + btn("/add-event", "Add a different event");
+      } else if (j.status === "duplicate") {
+        head = "You already added this event"; help = "It is on the map now. You can change its details from Your profile."; next = row("Change it any time.", "Open Your profile, find the event and choose Edit.");
+        acts = btn("/#e-" + encodeURIComponent(j.id), "See it on the map", true) + btn("/profile#events", "Edit it") + feat + btn("/add-event", "Add another event");
+      } else if (j.status === "published") {
+        head = j.message; help = "It's on the map now."; next = row("People can find it now.", "It shows as Expected until we check the dates, or Confirmed when your event page matches.") + row("Change it any time.", "Open Your profile, find the event and choose Edit. You can change the details, the address and the season, or mark it cancelled or postponed.") + (feat ? row("Want it to stand out?", "You can feature it so it shows first in your area.") : "");
+        acts = btn("/#e-" + encodeURIComponent(j.id), "See it on the map", true) + btn("/profile#events", "Edit it") + feat + btn("/add-event", "Add another event");
+      } else {
+        head = j.duplicate ? "You already sent this event" : j.message; help = "It is waiting for review, so it is not on the map yet."; next = row("A person looks it over.", "Nothing is public until it is approved.") + row("We email you.", "You hear from us when it is on the map, or if we need something from you.") + (IN_APP ? "" : row("Featuring comes after.", "You can feature it once it is on the map.")) + row("You can still change it.", "Open Your profile, find the event and choose Edit while you wait.");
+        acts = btn("/profile#events", "See it in Your profile", true) + btn("/", "Back to the map") + btn("/add-event", "Add another event");
+      }
+      api.finish(`<h1>${esc(head)}</h1><p class="help">${help}</p>${mail}${next ? `<div><h2 style="margin-bottom:6px">What happens next</h2><div class="list">${next}</div></div>` : ""}<div style="display:flex;gap:12px;flex-wrap:wrap">${acts}</div>`);
     } },
 ];
 const fmtD = (x) => { if (!x) return ""; const [y, m, dd] = x.split("-").map(Number); return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1] + " " + dd; };
 const preview = (x) => pvCard({ title: x.name, ph: "Your event name", when: x.start ? (x.end && x.end !== x.start ? fmtD(x.start) + " to " + fmtD(x.end) : fmtD(x.start)) : "", lines: [{ t: [x.venue, x.city].filter(Boolean).join(", ") || "Venue and city", e: !x.venue && !x.city }, { t: x.hours || "", e: false }], tags: [x.free === "yes" ? "Free" : (x.price || "Price"), "Expected"] });
-run({ preview, steps, data: d, persist: "scl-event-draft", prefill: (x) => { const v = take(); if (!v || !Object.keys(v).length) return false; Object.assign(x, v); return true; }, account: { kind: "event", title: (x) => x.name }, noPersist: ["email", "plan", "nl"], season: (x) => x.season, addr: { cities },
+run({ preview, steps, data: d, persist: "scl-event-draft", uid: acct.id, prefill: (x) => { const v = take(); if (!v || !Object.keys(v).length) return false; Object.assign(x, v); return true; }, account: { kind: "event", title: (x) => x.name }, noPersist: ["email", "plan", "nl"], season: (x) => x.season, addr: { cities },
   onInput: (k, x) => { if (k === "start" && (!x.end || x.end < x.start)) { x.end = x.start; const e = document.getElementById("f-end"); if (e) e.value = x.end; } if (k === "season") { x.type = ""; const t = document.getElementById("f-type"); if (t) t.innerHTML = '<option value="">Choose a type</option>' + Object.entries(SEASONS[x.season].types).map(([a, l]) => `<option value="${esc(a)}">${esc(l)}</option>`).join(""); } },
   actions: { skipurl(_, a) { d.url = ""; a.next(); } },
   after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });
