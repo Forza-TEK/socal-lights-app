@@ -102,7 +102,7 @@ export function hero(slides, fallbackText = "") {
   return `<div class="hero"><div class="track">${s}</div>${many ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">&#8249;</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">&#8250;</button><span class="count">1 / ${slides.length}</span>` : ""}</div>`;
 }
 
-const CHROME = `<script type="module">import { themeBtn, mountAcct } from "/chrome.js?v=20261110b";const t=document.querySelector("[data-theme-slot]");if(t)t.innerHTML=themeBtn();const a=document.querySelector("[data-acct-slot]");if(a)mountAcct(a);</script>`;
+const CHROME = `<script type="module">import { themeBtn, mountAcct } from "/chrome.js?v=20261111a";const t=document.querySelector("[data-theme-slot]");if(t)t.innerHTML=themeBtn();const a=document.querySelector("[data-acct-slot]");if(a)mountAcct(a);</script>`;
 // Wide pages (city lists, past results): one 1160px frame for the header and the content, lists in columns, text lines capped for reading
 export const WIDE = `.top,main{max-width:1160px}.top,main{padding-left:24px;padding-right:24px}@media(min-width:1208px){.top,main{padding-left:0;padding-right:0}}main>p,main>.sub,main h1{max-width:70ch}@media(min-width:900px){main .list{grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:14px}.duo{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px;align-items:start}.duo-l{position:sticky;top:16px}.duo-r>.tags:first-child{margin-top:0}.duo .hero{max-height:560px}}`;
 export function page({ title, desc = "", canonical = "", ld = null, body, noindex = false, origin = "", image = "", ogType = "website", wide = false }) {

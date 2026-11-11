@@ -20,9 +20,9 @@
 </main>
 <script type="module">
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
-import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111b";
-import { tourHtml, wireTour } from "/tour.js?v=20261111a";
-import { getMaps, routeUrl, navAttr } from "/maps.js?v=20261109c";
+import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111d";
+import { tourHtml, wireTour } from "/tour.js?v=20261111d";
+import { getMaps, routeUrl, navAttr } from "/maps.js?v=20261111a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmt = (s) => { const [, m, d] = s.split("-").map(Number); return MON[m - 1] + " " + d; };

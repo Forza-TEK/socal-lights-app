@@ -5,10 +5,10 @@ import { STOCK } from "/stock.js?v=20261107a";
 import { SITE } from "/site-config.js?v=20261107a";
 import "/norm-ui.js?v=20261102b";
 import { me as authMe } from "/auth.js?v=20261107p";
-import "/chrome.js?v=20261110b"; // the account circle opens the same menu as on every other page
+import "/chrome.js?v=20261111a"; // the account circle opens the same menu as on every other page
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
-import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261111a";
-import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261109c";
+import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261111d";
+import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261111a";
 import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261110a";
 
 /* ---------- constants & helpers ---------- */

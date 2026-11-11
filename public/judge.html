@@ -17,9 +17,9 @@
 <main class="cmain" id="content"><div id="app"><p class="loading">Loading the ballot…</p></div></main>
 <script type="module">
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261107p";
-import { refreshAcct } from "/addflow.js?v=20261111b";
-import { mountShell } from "/appshell.js?v=20261110e";
-import { tourHtml, wireTour } from "/tour.js?v=20261111a";
+import { refreshAcct } from "/addflow.js?v=20261111d";
+import { mountShell } from "/appshell.js?v=20261111a";
+import { tourHtml, wireTour } from "/tour.js?v=20261111d";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 let panel = "ballot";
 const shell = mountShell({ page: "judge", title: "Judging", active: panel, extra: [["contest", "Contest page", "/c/" + slug, "play"]], items: [{ k: "ballot", label: "Ballot", icon: "check" }],

@@ -38,7 +38,7 @@ function css() {
   if (document.getElementById("maps-css")) return;
   const st = document.createElement("style"); st.id = "maps-css";
   st.textContent = `.mpscrim{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.5);display:grid;place-items:end center}
-.mpdlg{width:min(420px,100%);box-sizing:border-box;background:var(--surface,#fff);color:var(--ink,#14161b);border-radius:24px 24px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 20px);display:grid;gap:10px;font-family:var(--f-body,var(--font,system-ui,sans-serif))}
+.mpdlg{width:min(420px,100%);box-sizing:border-box;background:var(--surface,var(--bg,#fff));color:var(--ink,#14161b);border-radius:24px 24px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 20px);display:grid;gap:10px;font-family:var(--f-body,var(--font,system-ui,sans-serif))}
 @media(min-width:600px){.mpscrim{place-items:center}.mpdlg{border-radius:24px}}
 .mpdlg h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}.mpdlg p{margin:0;font-size:14px;color:var(--muted,#646a7a)}
 .mpdlg .mpb{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 18px;border:1.5px solid var(--line,#e7e3dc);border-radius:16px;background:transparent;color:inherit;font:700 16px/1 inherit;font-family:inherit;cursor:pointer;text-align:left}
