@@ -72,6 +72,9 @@ Audit items SEO-02 to SEO-12, MAP-12, MAP-13, MAP-15, ADM-01 to ADM-11. Full rul
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (Irvine Spectrum tree photo)
+- Irvine Spectrum Nightly Tree Lighting had no photo because irvinespectrumcenter.com refuses automated visits. Migration 0232 uses the Irvine Company's own listing photo for the same event (holiday.irvinecompanyretail.com). General lesson: when an event's page blocks the bot, look for the same event on the owner's other official site (found by a normal web search) before leaving it on a stock photo. Never spoof a browser or crawler.
+
 ## 2026-11-11 (map logo pill)
 - On wide screens the logo in the map's SoCal Lights pill now fills the pill's full height and sits flush left (no gap left, top or bottom); the narrower layouts already show it as a full circle.
 
