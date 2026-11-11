@@ -24,7 +24,7 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 .tile:hover{border-color:var(--ink)}.tile b{font-weight:500;font-size:17px;line-height:1.3}.tile span{color:var(--muted);font-size:15px}
 .tile[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);background:var(--tile)}.tile[aria-pressed="true"]::after{content:"";position:absolute;top:18px;right:18px;width:10px;height:10px;border-radius:50%;background:var(--season)}
 .tile.sm{padding:14px 18px;min-height:52px;align-content:center}
-.tile.opt{grid-template-columns:auto 1fr;column-gap:20px;row-gap:2px;align-items:start}.tile.opt .ico{grid-row:1/4;width:36px;height:36px;color:var(--season);margin-top:2px}.tile.opt>b{color:var(--ink);font-weight:500}.tile.opt .ico svg{display:block}
+.tile.opt{grid-template-columns:auto 1fr;column-gap:20px;row-gap:2px;align-items:start}.tile.opt .ico{grid-row:1/span 5;width:36px;height:36px;color:var(--season);margin-top:2px}.tile.opt>b{color:var(--ink);font-weight:500}.tile.opt .ico svg{display:block}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--btn);background:var(--btn);color:var(--btn-ink);font:500 16px var(--font);padding:14px 26px;min-height:50px;border-radius:8px;cursor:pointer;text-decoration:none}
 .btn.out{background:transparent;color:var(--ink);border-color:var(--ink)}.btn.sm{min-height:44px;padding:7px 14px;font-size:14px}.btn:disabled{opacity:.35;cursor:not-allowed}.btn:hover:not(:disabled){opacity:.88}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:0 max(24px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));z-index:5}
@@ -151,3 +151,20 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .undobar .link{color:var(--bg);min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 10px;font-weight:700}
 .thumbs button.mk{top:auto;right:auto;left:0;bottom:0;width:auto;height:44px;padding:0 12px;background:rgba(0,0,0,.72);border-radius:0 8px 0 0;font-size:12px;font-weight:600}
 .padd{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px}
+/* add-flow batch F (2026-11-11): skip link, whole-row review taps, counters, buttons under the form on wide screens */
+.skipl{position:absolute;left:-999px;top:8px;z-index:200;background:var(--btn);color:var(--btn-ink);padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:500}.skipl:focus{left:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#exitbtn{display:contents}
+.main:focus{outline:0}
+.ctr{margin-top:-2px;text-align:right;font-variant-numeric:tabular-nums}
+.sum>.sumr{position:relative}.sum>.sumr:hover{background:var(--tile)}.sum>.sumr .link::after{content:"";position:absolute;inset:0}.sum>.sumr .link:focus-visible{outline:0}.sum>.sumr:focus-within{outline:2px solid var(--season);outline-offset:-2px}
+.sum em{font-style:normal}
+.tile .signnote{font-size:13px;color:var(--muted)}
+.hl-n{display:none}@media(max-width:560px){.hl-w{display:none}.hl-n{display:inline}}
+@media(max-width:480px){.hdr .brand .wm{display:none}}
+@media(min-width:900px){
+  body{padding-bottom:60px}
+  .bar{position:static;max-width:640px;margin:0 auto;border-top:0;padding:0 0 24px}
+  .segs{margin:0;padding:0}
+  .nav{margin-top:18px}
+}

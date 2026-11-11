@@ -8,13 +8,13 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261111z">
+<link rel="stylesheet" href="/addflow.css?v=20261111zb">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { run, ts, esc, input, area, select, tile, check, photoField, photoRow, sumRow, validSite, isEmail, PRIV, OPT, today, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261111z";
+import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, check, photoField, photoRow, sumRow, validSite, isEmail, PRIV, OPT, today, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261111zb";
 import { draftKey } from "/drafts-local.js?v=20261111z";
 import { capture, take } from "/chatprefill.js?v=20261111b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261104a";
@@ -23,6 +23,7 @@ import { me, signIn } from "/auth.js?v=20261111z";
 import { CITY } from "/cities.js?v=20261107a";
 const qs = new URLSearchParams(location.search), cities = Object.keys(CITY).sort();
 capture(SEASONS, cities, "home"); // arrived from the AI assistant: remember the values (they survive sign-in) and tidy the address bar
+const cfg = await ts.init(); // the "I am human" check on the last step (the server verifies it; sign-in alone does not prove a person is posting)
 const d = { kind: qs.get("kind") === "installer" ? "installer" : "homeowner", biz: "", web: "", phone: "", area: "", perm: false, season: SEASONS[qs.get("s")] ? qs.get("s") : defaultSeason(today), title: "", desc: "", lightsOn: "", visit: "", parking: "", accessible: false, radio: "", hadPro: "no", instName: "", instWeb: "", street: "", city: "", zip: "", where: "", photos: [], email: "" };
 const pro = (x) => x.kind === "installer";
 
@@ -31,10 +32,11 @@ const acct = (await me()).user; if (acct) { try { const ov = await (await fetch(
 
 // your display belongs to the account that adds it, so sign in before anything else
 if (!acct) {
-  document.getElementById("app").innerHTML = `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
-    <main class="main"><h1>Sign in to add your lights display</h1><p class="help">Your display is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p>
+  document.getElementById("app").innerHTML = `<a class="skipl" href="#main">Skip to the form</a><div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>
+    <main class="main" id="main" tabindex="-1"><h1>Sign in to add your lights display</h1><p class="help">Your display is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></main>`;
-  await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add your lights display", next: location.pathname })) go(); }; });
+  mountAcct(document.getElementById("acct"));
+  await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add your lights display", next: location.pathname + location.search })) go(); }; });
   location.reload(); await new Promise(() => {});
 }
 if (acct) { d.email = acct.email; if (!d.biz && acct.name) d.biz = acct.name; if (acct.city && cities.includes(acct.city)) { d.city = acct.city; d.street = acct.street || ""; d.zip = acct.zip || ""; } }
@@ -75,7 +77,7 @@ const steps = [
   { id: "season", sec: "Your display", title: "Which season is this display for?", help: "It shows up under that season on the map.", redraw: true,
     body: (x) => `<div class="tiles g2">${Object.entries(SEASONS).map(([k, v]) => tile(x, "season", k, esc(v.label), "", true)).join("")}</div>` },
   { id: "about", sec: "Your display", title: "Tell us about the display", help: "A name for it, and a few sentences about what makes it special.",
-    body: (x) => `${input(x, "title", { label: "Display name", max: 90, ph: "e.g. Music-synced rooftop show" })}${area(x, "desc", { label: pro(x) ? "About this installation" : "About this house", max: 1200, ph: "What you installed, how many lights, what makes it special" })}`,
+    body: (x) => `${input(x, "title", { label: "Display name", max: 90, ph: "e.g. Music-synced rooftop show" })}${area(x, "desc", { label: pro(x) ? "About this installation" : "About this house", max: 1200, min: 10, count: true, ph: "What you installed, how many lights, what makes it special" })}`,
     check: (x) => (x.title.trim().length < 3 ? bad("Give the display a name.", "title") : x.desc.trim().length < 10 ? bad("Add a sentence or two about it.", "desc") : "") },
   { id: "addr", sec: "Location", title: "Where is it?", help: "The pin goes on this address and visitors see it, so they can drive by.",
     body: (x) => `${select(x, "city", cities.map((c) => [c, c]), { label: "City", blank: "Choose a city", ac: "address-level2" })}${input(x, "street", { label: "Street address", max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}${input(x, "zip", { label: "ZIP", max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}`,
@@ -84,14 +86,16 @@ const steps = [
     body: (x) => `${input(x, "lightsOn", { max: 60, ph: "e.g. 5 to 10 pm nightly", label: "Lights are on", opt: true })}<div class="field"><span class="lab">How can people see it? ${OPT}</span><div class="tiles g2">${tile(x, "visit", "drive", "Drive by", "", true)}${tile(x, "visit", "walk", "Walk by", "", true)}${tile(x, "visit", "both", "Drive or walk", "", true)}</div></div><div class="field"><span class="lab">Parking ${OPT}</span><div class="tiles g2">${tile(x, "parking", "free", "Free parking nearby", "", true)}${tile(x, "parking", "street", "Street parking", "", true)}${tile(x, "parking", "none", "Hard to park", "", true)}</div></div>${check(x, "accessible", "Stroller and wheelchair friendly")}${input(x, "radio", { max: 40, ph: "e.g. 88.1 FM", label: "Radio station for the music", opt: true })}${input(x, "where", { max: 120, ph: "e.g. Visible from Main St on weekend nights", label: "Other tips", opt: true })}` },
   { id: "photos", sec: "Photos", title: "Add photos", help: "Photos help families find the right house. You can skip this and add them any time from Your profile (open your home and choose Edit).", body: (x) => photoField(x) },
   { id: "review", sec: "Review", title: "Check everything, then send it", help: "It goes on the map right away. You can ask us to change or remove it any time.", cta: "Put it on the map",
-    body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${!pro(x) && x.hadPro === "yes" ? sumRow("Installed by", esc(x.instName), "installer") : ""}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${photoRow(x)}</div>
-      <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). Only the site owner sees it.</p></div>${nlCheck(x)}`,
+    body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${!pro(x) && x.hadPro === "yes" ? sumRow("Installed by", esc([x.instName.trim(), x.instWeb.trim()].filter(Boolean).join(" · ")), "installer") : ""}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow(pro(x) ? "About this installation" : "About this house", esc(x.desc), "about")}${pro(x) ? sumRow("How to reach you", esc([x.web.trim(), x.phone.trim(), x.area.trim() ? "Serves " + x.area.trim() : ""].filter(Boolean).join(" · ")), "biz") : ""}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${sumRow("Visit tips", esc([x.lightsOn.trim() && "Lights on " + x.lightsOn.trim(), { drive: "Drive by", walk: "Walk by", both: "Drive or walk" }[x.visit], { free: "Free parking nearby", street: "Street parking", none: "Hard to park" }[x.parking], x.accessible && "Stroller and wheelchair friendly", x.radio.trim() && "Radio " + x.radio.trim(), x.where.trim()].filter(Boolean).join(" · ")), "where")}${photoRow(x)}</div>
+      <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). Only the site owner sees it.</p></div>${nlCheck(x)}<div id="ts"></div>`,
     submit: async (x, api) => {
+      ts.need();
       const fd = new FormData(), set = { kind: x.kind, biz: x.biz.trim(), email: x.email.trim(), title: x.title.trim(), season: x.season, lights_on: x.lightsOn.trim(), visit: x.visit, parking: x.parking, radio: x.radio.trim(), ...(x.accessible ? { accessible: "1" } : {}), street: x.street.trim(), city: x.city, state: "CA", zip: x.zip.trim(), where: x.where.trim(), desc: x.desc.trim() };
       if (pro(x)) Object.assign(set, { web: x.web.trim(), phone: x.phone.trim(), area: x.area.trim(), permission: "1" });
       if (!pro(x) && x.hadPro === "yes") Object.assign(set, { installer_name: x.instName.trim(), installer_web: x.instWeb.trim() });
       if (x.claim) set.claim = x.claim;
       for (const [k, v] of Object.entries(set)) fd.append(k, v);
+      fd.append("cf-turnstile-response", ts.token());
       x.photos.forEach((p, i) => fd.append("photos", p.blob, `photo-${i + 1}.jpg`));
       
       const r = await fetch("/api/submit", { method: "POST", body: fd }), j = await r.json().catch(() => ({}));
@@ -104,7 +108,7 @@ const steps = [
     } },
 ];
 const preview = (x) => pvCard({ photo: (x.photos && x.photos[0] && x.photos[0].url) || "", title: x.kind === "installer" ? (x.biz || x.title) : x.title, ph: "Your display's name", when: "Home display", lines: [{ t: [x.city, SEASONS[x.season] ? SEASONS[x.season].label : ""].filter(Boolean).join(" \u00b7 ") || "Your city", e: !x.city }, { t: x.desc ? (x.desc.length > 90 ? x.desc.slice(0, 90) + "\u2026" : x.desc) : "A line about your lights", e: !x.desc }], tags: [x.kind === "installer" ? "Professional installer" : "Homeowner"] });
-run({ preview, steps, data: d, persist: "scl-house-draft", uid: acct.id, prefill: (x) => { const v = take("home"); if (!v || !Object.keys(v).length) return false; Object.assign(x, v); return true; }, account: { kind: "house", title: (x) => x.title || x.biz }, noPersist: ["photos", "email", "nl"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
+run({ preview, steps, data: d, persist: "scl-house-draft", uid: acct.id, prefill: (x) => { const v = take("home"); if (!v || !Object.keys(v).length) return false; Object.assign(x, v); return true; }, help: "/help/show-off-your-house", account: { kind: "house", title: (x) => x.title || x.biz }, noPersist: ["photos", "email", "nl"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
 </script>
 <script src="/footer.js?v=20261111h" defer></script>
 </body>

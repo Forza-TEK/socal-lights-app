@@ -36,8 +36,10 @@ export { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct };
 // Every field has a visible <label for> or, when the step's title already asks the question, an aria-label (same pattern in all the add forms).
 export const input = (d, k, { label = "", ph = "", max = 200, type = "text", opt = false, ac = "", mode = "", addr = false, aria = "" } = {}) =>
   `<div class="field${addr ? " combo" : ""}">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<input class="in" id="f-${k}" data-k="${k}" ${aria && !label ? `aria-label="${esc(aria)}"` : ""} ${addr ? "data-addr" : ""} type="${type}" maxlength="${max}" ${ac ? `autocomplete="${ac}"` : 'autocomplete="off"'} ${mode ? `inputmode="${mode}"` : ""} placeholder="${esc(ph)}" value="${esc(d[k] ?? "")}"></div>`;
-export const area = (d, k, { label = "", ph = "", max = 300, opt = false, aria = "" } = {}) =>
-  `<div class="field">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<textarea class="in" id="f-${k}" data-k="${k}" ${aria && !label ? `aria-label="${esc(aria)}"` : ""} maxlength="${max}" placeholder="${esc(ph)}">${esc(d[k] ?? "")}</textarea></div>`;
+// count: show "n/max" under the box (and the minimum, until it is reached), so the limit is known before text is cut off. min only feeds that line; the step's own check still enforces it.
+export const ctrText = (n, max, min = 0) => `${n}/${max}${min && n < min ? ` · at least ${min} characters` : ""}`;
+export const area = (d, k, { label = "", ph = "", max = 300, opt = false, aria = "", count = false, min = 0 } = {}) =>
+  `<div class="field">${label ? `<label for="f-${k}">${label}${opt ? " " + OPT : ""}</label>` : ""}<textarea class="in" id="f-${k}" data-k="${k}" ${aria && !label ? `aria-label="${esc(aria)}"` : ""} ${count ? `aria-describedby="ctr-${k}" data-max="${max}" data-min="${min}"` : ""} maxlength="${max}" placeholder="${esc(ph)}">${esc(d[k] ?? "")}</textarea>${count ? `<div class="ctr small muted" id="ctr-${k}">${ctrText(String(d[k] ?? "").length, max, min)}</div>` : ""}</div>`;
 export const select = (d, k, options, { label = "", blank = "", ac = "" } = {}) =>
   `<div class="field">${label ? `<label for="f-${k}">${label}</label>` : ""}<select class="in" id="f-${k}" data-k="${k}" ${ac ? `autocomplete="${ac}"` : ""}>${blank ? `<option value="">${esc(blank)}</option>` : ""}${options.map(([v, l]) => `<option value="${esc(v)}" ${String(d[k]) === String(v) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>`;
 export const tile = (d, k, v, title, desc = "", sm = false) =>
@@ -51,9 +53,10 @@ export async function nlSave(x, role, page) {
   try { await fetch("/api/me/newsletter", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ optin: true, role, topics: [], method: "add-listing checkbox", source_page: page }) }); } catch {}
 }
 export const photoField =(d, { max = 8, help = "" } = {}) =>
-  `<div class="drop" id="drop"><span>${help || `Up to ${max} photos. The first one is the cover. They shrink on your phone, so uploads are quick, and they stay on this device if you reload or tap Save &amp; exit.`}</span><label class="btn out sm" for="f-photos" style="margin:0">Choose photos</label><input id="f-photos" data-photos type="file" accept="image/*" multiple hidden></div><div class="thumbs" id="thumbs">${thumbsHtml(d)}</div><p class="err" id="perr" role="alert" hidden></p>`;
+  `<div class="drop" id="drop"><span>${help || `Up to ${max} photos. The first one is the cover. They shrink on your phone, so uploads are quick, and they stay on this device if you reload or tap Save &amp; exit. iPhone photos (HEIC) are converted to JPG for you.`}</span><label class="btn out sm" for="f-photos" style="margin:0">Choose photos</label><input id="f-photos" data-photos type="file" accept="image/*" multiple hidden></div><div class="thumbs" id="thumbs">${thumbsHtml(d)}</div><p class="err" id="perr" role="alert" hidden></p>`;
 const thumbsHtml = (d) => (d.photos || []).map((p, i) => `<div class="t"><img src="${p.url}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button>${i === 0 ? "<em>COVER</em>" : ""}</div>`).join("");
-export const sumRow = (k, v, goto) => `<div><span>${k}</span><b>${v}</b><button class="link" type="button" data-goto="${goto}">Edit</button></div>`;
+// The whole row is the tap target (the Edit button stretches over it); an empty optional answer reads "Not added" so it can be filled in from here.
+export const sumRow = (k, v, goto) => `<div class="sumr"><span>${k}</span><b>${v || '<em class="muted">Not added</em>'}</b><button class="link" type="button" data-goto="${goto}" aria-label="Edit ${esc(String(k).toLowerCase())}">Edit</button></div>`;
 // The Photos row of a review screen: the real thumbnails and the count, a remove button on each, and a way back to add more. (The photos are kept on this device with the draft, so they are still here after a reload.)
 export const photoRow = (d, goto = "photos") => {
   const n = (d.photos || []).length;
@@ -85,6 +88,8 @@ export const ts = {
   mount() { const el = $("#ts"); this.widget = null; if (el && this.key && window.turnstile) this.widget = window.turnstile.render(el, { sitekey: this.key }); },
   token() { return this.widget != null && window.turnstile ? window.turnstile.getResponse(this.widget) || "" : ""; },
   reset() { if (this.widget != null && window.turnstile) window.turnstile.reset(this.widget); },
+  // Throws a plain sentence before anything is sent when the spam check is switched on but has not been passed (the server checks the token too)
+  need() { if (this.key && !this.token()) throw new Error("Please finish the \"I am human\" check above the button, then try again. If you can't see it, turn off any content blocker for this site and reload the page."); },
 };
 
 /* ---------- street-address suggestions ---------- */
@@ -145,9 +150,13 @@ export function run(o) {
     const k = pk(); if (k !== curKey) { const old = curKey; curKey = k; try { localStorage.removeItem(old); } catch {} dropPhotos(old); keepPhotos(); } // signed in while filling the form: the draft follows the account
     try { const c = {}; for (const [kk, v] of Object.entries(d)) if (!(o.noPersist || []).includes(kk) && typeof v !== "function") c[kk] = v; S.savedAt = Date.now(); localStorage.setItem(curKey, JSON.stringify({ d: c, i: S.i, t: S.savedAt })); } catch {}
   };
-  const hdr = (done) => `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? "" : o.account ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
+  // Save & exit appears once there is something to save (typed or chosen, or a restored draft, or past the first step); before that, a plain Exit
+  const hasInput = () => dirty || S.restored || S.i > 0;
+  const exitBtn = () => o.account && hasInput() ? '<button class="link" type="button" data-a="saveexit">Save &amp; exit</button>' : `<a class="link" href="${esc(o.exit || "/add")}">Exit</a>`;
+  const syncExit = () => { const el = $("#exitbtn"); if (!el || S.done !== null) return; const h = exitBtn(); if (el.innerHTML !== h) el.innerHTML = h; };
+  const hdr = (done) => `<a class="skipl" href="#main">Skip to the form</a><div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? "" : `<a class="link" href="${esc(o.help || "/help")}" target="_blank" rel="noopener"><span class="hl-w">Need help?</span><span class="hl-n">Help</span><span class="sr"> (opens in a new tab)</span></a><span id="exitbtn">${exitBtn()}</span>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
   function draw(focus) {
-    if (S.done !== null) { root.innerHTML = `${hdr(true)}<main class="main">${S.done}</main>`; window.scrollTo(0, 0); return; }
+    if (S.done !== null) { root.innerHTML = `${hdr(true)}<main class="main" id="main" tabindex="-1">${S.done}</main>`; window.scrollTo(0, 0); return; }
     const st = steps(); S.i = Math.max(0, Math.min(S.i, st.length - 1)); const s = st[S.i];
     if (o.season) document.documentElement.dataset.season = o.season(d);
     const secs = [...new Set(st.map((x) => x.sec))], cur = secs.indexOf(s.sec);
@@ -155,7 +164,7 @@ export function run(o) {
     const last = !!s.submit;
     // A draft that was restored (reload, or opened from Your profile) says when it was saved and can be thrown away
     const note = S.restored && o.persist ? `<p class="draftnote" id="draftnote">${S.savedAt ? `Draft saved ${esc(new Date(S.savedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))} on this device.` : "You have a saved draft."} <button class="link" type="button" data-a="startover">Start over</button></p>` : "";
-    root.innerHTML = `${hdr()}<main class="main">${note}<h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<div class="errbox"><p class="err" id="err" role="alert" tabindex="-1" ${S.err ? "" : "hidden"}>${esc(S.err)}</p><p class="small errhelp" id="errhelp" ${S.help ? "" : "hidden"}>${S.help ? S.help : ""}</p><button class="btn out sm" type="button" data-a="retry" id="retrybtn" ${S.retry ? "" : "hidden"}>Try again</button></div></main>${o.preview ? `<aside class="pvcard" id="pvcard" aria-label="Preview of your listing"><span class="pvl">Preview</span><div id="pvbody">${o.preview(d)}</div><p class="pvn">This is how it will look to people. It updates as you type.</p></aside>` : ""}
+    root.innerHTML = `${hdr()}<main class="main" id="main" tabindex="-1">${note}<h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<div class="errbox"><p class="err" id="err" role="alert" tabindex="-1" ${S.err ? "" : "hidden"}>${esc(S.err)}</p><p class="small errhelp" id="errhelp" ${S.help ? "" : "hidden"}>${S.help ? S.help : ""}</p><button class="btn out sm" type="button" data-a="retry" id="retrybtn" ${S.retry ? "" : "hidden"}>Try again</button></div></main>${o.preview ? `<aside class="pvcard" id="pvcard" aria-label="Preview of your listing"><span class="pvl">Preview</span><div id="pvbody">${o.preview(d)}</div><p class="pvn">This is how it will look to people. It updates as you type.</p></aside>` : ""}
     <div class="bar" role="navigation" aria-label="Steps"><div class="segs" role="progressbar" aria-label="Progress: ${esc(s.sec)}" aria-valuemin="1" aria-valuemax="${st.length}" aria-valuenow="${S.i + 1}" aria-valuetext="Step ${S.i + 1} of ${st.length}: ${esc(s.sec)}">${segs}</div><div class="nav"><button class="link" type="button" data-a="back">${S.i === 0 ? "Cancel" : "Back"}</button><span class="stepn small muted" aria-hidden="true">Step ${S.i + 1} of ${st.length}</span><button class="btn" type="button" data-a="next" id="nextbtn">${esc(T(s.cta) || (last ? "Submit" : "Next"))}</button></div></div>`;
     if (focus) { const f = root.querySelector(".in,[data-tile]"); if (f && f.classList.contains("in")) f.focus({ preventScroll: true }); window.scrollTo(0, 0); }
     if (o.after) o.after(s, d);
@@ -236,7 +245,8 @@ export function run(o) {
 
   // typing, choosing, clicking
   const onValue = (t) => {
-    const k = t.dataset.k; dirty = true; d[k] = t.type === "checkbox" ? t.checked : t.value; if (t.getAttribute("aria-invalid")) { t.removeAttribute("aria-invalid"); t.removeAttribute("aria-describedby"); }
+    const k = t.dataset.k; dirty = true; syncExit(); d[k] = t.type === "checkbox" ? t.checked : t.value;
+    { const c = $("#ctr-" + k); if (c && t.dataset.max) c.textContent = ctrText(t.value.length, +t.dataset.max, +t.dataset.min || 0); } if (t.getAttribute("aria-invalid")) { t.removeAttribute("aria-invalid"); t.removeAttribute("aria-describedby"); }
     save(); if (o.onInput) o.onInput(k, d, api); pv();
     const s = steps()[S.i]; if (s && s.redraw && (t.type === "checkbox" || t.tagName === "SELECT")) { draw(); }
   };
@@ -250,7 +260,7 @@ export function run(o) {
   document.addEventListener("click", (e) => {
     const t = e.target.closest("[data-tile],[data-a],[data-goto],[data-rm],[data-copy]"); if (!t || !root.contains(t)) return;
     if (t.dataset.tile) {
-      const [k, ...v] = t.dataset.tile.split("|"); dirty = true; d[k] = v.join("|"); save();
+      const [k, ...v] = t.dataset.tile.split("|"); dirty = true; syncExit(); d[k] = v.join("|"); save();
       const s = steps()[S.i];
       if (s && s.redraw) draw(); else root.querySelectorAll(`[data-tile^="${k}|"]`).forEach((x) => x.setAttribute("aria-pressed", x === t));
       if (o.onInput) o.onInput(k, d, api); pv(); return;
@@ -279,8 +289,8 @@ export function run(o) {
       try {
         const b = await shrink(f);
         if (d.photos.length >= 8) { say("That's the limit of 8 photos."); break; } // checked again after the (slow) shrink, so several quick picks cannot go past 8
-        dirty = true; d.photos.push({ blob: b, url: URL.createObjectURL(b) }); pv(); await keepPhotos();
-      } catch { say("One photo couldn't be read. Try a JPG or PNG."); }
+        dirty = true; syncExit(); d.photos.push({ blob: b, url: URL.createObjectURL(b) }); pv(); await keepPhotos();
+      } catch { say(/hei[cf]/i.test(f.type + " " + f.name) ? "This browser can't open HEIC photos. On an iPhone they are converted for you; on a computer, export the photo as JPG first." : "One photo couldn't be read. Try a JPG or PNG."); }
       const th = $("#thumbs"); if (th) th.innerHTML = thumbsHtml(d);
     }
   }

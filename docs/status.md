@@ -2,6 +2,18 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-11 (add flows, the rest: branch fix-add-rest, PR on top of fix-add-flows, not merged)
+- From the same audit: ADD-11, 13, 16, 17, 18, 19, 20, 22, 23. ADD-12 (Step n of N, aria values) and ADD-14 (grey Optional) were already in fix-add-flows. ADD-08, ADD-15, ADD-21 left alone on purpose.
+- Photos (ADD-11): remove target and the recheck after each shrink were already 44 px / done; added the sentence that iPhone HEIC photos are converted, and a specific message when a computer browser cannot open a HEIC file.
+- Review (ADD-13): every answer is listed (event: season, type, hours, description, street; home: description, visit tips, installer or contact details). The whole row is the tap target (the Edit button stretches over it); an empty optional answer reads "Not added".
+- Counter (ADD-16): "n/200" under the event description and "n/1200" under the home description, with "at least 20 / 10 characters" until reached.
+- I-am-human check (ADD-17): CHOSE TO VERIFY ON THE SERVER. New events and new homes now send the Turnstile token and `functions/api/submit-event.js` and `submit.js` check it with `verifyTurnstile` (contest entries are not asked: that page has no widget). Reason: sign-in alone (Google especially) does not stop a script that holds a session. Same fail-open rule as every other form: no `TURNSTILE_SECRET` means allowed (local dev), `TURNSTILE_REQUIRED=1` previews refuse. Risk: a visitor whose browser blocks challenges.cloudflare.com cannot post; the form says to turn off the content blocker. To undo, remove the two `verifyTurnstile` lines and `ts.need()` in the pages.
+- Signed-out (ADD-18): the /add tiles say "You'll sign in first (free, no password)"; the sign-in gate pages show the theme and account buttons.
+- Header (ADD-19): Save & exit appears once something is typed or chosen (before that, a plain Exit); a "Need help?" link (new tab, "Help" on phones) goes to the matching Help article. At 480 px and below the wordmark hides so the header does not overflow.
+- Declined email (ADD-20): `functions/_lib/declined.js` saves the declined home's answers as a draft on the account (not for contest entries, not past 10 drafts) and the mail links to `/add-house?draft=<id>`, which opens on the review screen; otherwise the blank form as before. Photos are not part of a draft, the mail says so. The sign-in gate now keeps `?draft=` through sign-in.
+- Wide screens (ADD-22): from 900 px the progress line, Back and Next sit under the form instead of fixed to the bottom. Skip link and main landmark on the add pages and gates (ADD-23).
+- Tests: `tests/add-rest.test.mjs`. Browser check done locally (phone, 360, desktop) with the challenge script stubbed.
+
 ## 2026-11-11 (add flows and sign-in fixes, branch fix-add-flows, PR open, not merged)
 - From the owner-reviewed audit `docs/audit/2026-11-11-add-flows-and-signin.md` (branch audit-add): ADD-01 to ADD-07, ADD-09, ADD-10 (ADD-08 wording left alone on purpose).
 - Photos (ADD-01): kept in IndexedDB on the device with the draft (`public/drafts-local.js`), so they survive reload, Save & exit and a sign-in round trip; real thumbnails and a Remove button on the review screen. They are NOT uploaded until the form is sent (no R2 cost, no clean-up job); they stay on the device where they were added.

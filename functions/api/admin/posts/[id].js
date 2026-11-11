@@ -4,6 +4,7 @@
 import { phoneField, line, normText, normName, normStreet, normZip } from "../../../_lib/fields.js";
 import { json, err, clean, safeUrl, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
 import { tell } from "../../../_lib/notify.js";
+import { declinedDraft } from "../../../_lib/declined.js";
 import { markHomeRefundDue } from "../../../_lib/orders.js";
 import { CITY } from "../../../../public/cities.js";
 import { SEASONS } from "../../../../public/seasons.js";
@@ -108,7 +109,9 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     // The photos stay in the private pending/ folder so a decline can be undone. The person is emailed the reason, if you wrote one.
     await env.DB.prepare("UPDATE posts SET status='declined' WHERE id=?").bind(row.id).run();
     await markHomeRefundDue(env.DB, row.id, "The home was declined while a paid Featured placement was running. Refund it in Stripe, then mark it refunded.");
-    tell(env, waitUntil, row.contact_email, "house_declined", { name: row.title || row.biz, reason: clean(body.reason, 400) });
+    // The mail links to the person's own answers (saved as a draft on their account), not a blank form
+    const link = row.contest_id ? "" : await declinedDraft(env, row).catch(() => "");
+    tell(env, waitUntil, row.contact_email, "house_declined", { name: row.title || row.biz, reason: clean(body.reason, 400), link: link || "https://socallights.app/add-house" });
     return json({ ok: true });
   }
   if (body.action === "restore") {
