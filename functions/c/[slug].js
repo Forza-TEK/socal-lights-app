@@ -1,10 +1,12 @@
 // /c/<slug> — the public page for one contest (the QR code points here). The page itself is public/contest.html.
 // The page fills itself in with JavaScript, but link previews (Facebook, Nextdoor, texts) only read the HTML, so the title,
 // description and a photo are written into the head here.
-import { getContest } from "../_lib/contests.js";
+import { getContest, trimmedSlugFor } from "../_lib/contests.js";
 
 export async function onRequestGet({ request, env, params }) {
   const origin = new URL(request.url).origin;
+  // Printed QR codes from before slugs were trimmed end in "-": send them to the same contest without it (keeps ?src=qr)
+  try { const t = await trimmedSlugFor(env, params.slug); if (t) return Response.redirect(`${origin}/c/${t}${new URL(request.url).search}`, 301); } catch {}
   const res = await env.ASSETS.fetch(new Request(new URL("/contest", request.url), request));
   let c = null, photo = "", exists = true;
   try {

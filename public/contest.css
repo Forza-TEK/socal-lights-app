@@ -6,10 +6,11 @@ body{padding-bottom:60px}
 .card{background:transparent;border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:18px;min-width:0}
 .card h2{font-weight:400;font-size:24px;letter-spacing:-.015em}.card h3{font-weight:500;font-size:17px}
 .banner{display:flex;gap:14px;align-items:center}.banner b{display:block;font-weight:500;font-size:19px;line-height:1.25}.banner span{font-size:14px;color:var(--muted)}
+.logo.has{border:0;overflow:hidden;background:var(--tile,#fff)}.logo.has img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
 .logo{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-weight:500;font-size:15px;color:var(--ink)}
 .pill{display:inline-block;font-size:13px;font-weight:500;padding:3px 11px;border-radius:999px;white-space:nowrap;border:1px solid var(--line2);color:var(--muted)}
 .p-ok{color:var(--ok);border-color:var(--ok)}.p-wait{color:var(--season);border-color:var(--season)}.p-no{color:var(--bad);border-color:var(--bad)}
-.p-founder{color:var(--ice,#2559b8);border-color:var(--ice,#2559b8)}.p-founder::before{content:"\2605 ";font-size:12px}
+.p-founder{color:var(--ice,#2559b8);border-color:var(--ice,#2559b8)}.p-founder::before{content:"\2605";font-size:17px;line-height:1;margin-right:6px;vertical-align:-1px}
 .status{border-left:2px solid var(--season);padding:2px 0 2px 14px;font-size:15px;color:var(--muted)}.status.no{border-color:var(--season)}.status.ok{border-color:var(--ok)}
 .actions{display:flex;gap:12px;flex-wrap:wrap}
 .btn.org{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}.btn.bad{background:transparent;color:var(--bad);border-color:var(--bad)}
@@ -86,3 +87,25 @@ body{padding-bottom:60px}
 
 .vlinks{display:flex;gap:16px;margin-top:2px}.vlinks a{display:inline-flex;align-items:center;min-height:32px;font-size:14px;font-weight:600;color:var(--ink);text-underline-offset:3px}
 .vrow .ph{display:grid;place-items:center}.vrow .ph img{width:40px;height:40px;object-fit:contain;border-radius:50%;background:none}
+
+/* Neutral status (not yet, or finished) is grey; green is open now; red is only for something that needs action */
+.p-idle{color:var(--muted);border-color:var(--line2)}
+/* Judges' score: tap 1 to 10, full width under the home (a native select squeezed to 64 px on phones) */
+.chips{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.chips .chiphd{grid-column:1/-1}
+@media(min-width:640px){.chips{grid-template-columns:repeat(10,minmax(0,1fr))}}
+.chip{min-height:44px;border:1px solid var(--line2);border-radius:10px;background:transparent;color:var(--ink);font:600 17px/1 var(--font,inherit);cursor:pointer;padding:0}
+.chip[aria-pressed="true"]{background:var(--season);border-color:var(--season);color:var(--on-season,#fff)}
+.chip:focus-visible{outline:2px solid var(--ink);outline-offset:2px}.chip:disabled{opacity:.6;cursor:wait}
+.vrow>.pill{grid-column:1/-1;justify-self:start}
+@media(min-width:481px){.vrow>.pill{grid-column:auto}}
+.chk{list-style:none;margin:0;padding:0;display:grid;gap:2px}.chk li{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding:6px 0}.chk li:first-child{border-top:0}
+.chk .link{min-height:44px;font-size:16px;text-align:left}
+/* Organizer dashboard: small quiet actions, and the "needs your OK" group first */
+.entr.pend{background:color-mix(in srgb,var(--season) 7%,transparent);border-radius:12px;padding-left:10px;padding-right:10px}
+.enth{margin:0 0 4px;font-size:15px;font-weight:600}
+.qlink{background:none;border:0;padding:6px 4px;min-height:32px;font:inherit;font-size:14px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.qlink:hover{color:var(--ink)}
+.cfm{display:grid;gap:12px}.cfm ul{margin:0;padding-left:20px;display:grid;gap:6px}.cfm li.warn{color:var(--ink);font-weight:600}.cfm li.fine{color:var(--muted)}
+.annc h2{margin:0}.annc .actions{display:flex;gap:8px;flex-wrap:wrap}
+/* A wide table (the vote list) scrolls inside its card; it must not widen the whole page on a phone */
+.card>.tbl{min-width:0;max-width:100%}details.card{grid-template-columns:minmax(0,1fr)}

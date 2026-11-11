@@ -6,13 +6,16 @@ import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
+import { fmtDate } from "../../public/contestfmt.js";
 import { getUser } from "../_lib/auth.js";
 import { findOrCreateInstaller } from "../_lib/installers.js";
 import { approveEntry } from "../_lib/contests.js";
+import { checkSubmitLimits, limitResponse, CONTACT } from "../_lib/submitlimit.js";
+import { sendReceipt } from "../_lib/receipt.js";
 import { normZip, phoneField, normName, normStreet, normText, normEmailText, normRadio, line } from "../_lib/fields.js";
 
 const AUTO_HOMES_PER_DAY = 60; // safety valve: past this many in a day, new homes wait for review
-const BAD = /\b(viagra|casino|porn|xxx|escort|crypto|bitcoin|loan|forex|cbd|betting)\b/i;
+import { BAD } from "../_lib/moderation.js"; // the same "needs a person to look" rule the edit sheet uses
 import { getContest, windows } from "../_lib/contests.js";
 
 const MAX_PHOTOS = 8;
@@ -45,10 +48,18 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (form.get("rules") !== "1") return err(400, "Please accept the official rules to enter.");
   }
 
-  // Throttle: 5 submissions per hour per connection
-  const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM submit_log WHERE ip = ? AND created_at > datetime('now','-1 hour')").bind(ip).first();
-  // Contest entries are tied to a signed-in account, so a shared network (an event night, a school Wi-Fi) gets a higher limit
-  if (n >= (contest ? 60 : 5)) return err(429, "Too many submissions from this connection. Try again in an hour.");
+  // A new home also passes the "I am human" check (sign-in alone does not stop a script that holds a session). Contest entries have their own page and no widget, so they are not asked.
+  if (!contest && !(await verifyTurnstile(env, form.get("cf-turnstile-response"), ip))) return err(400, "Please finish the 'I am human' check, then try again.");
+
+  // Throttles (functions/_lib/submitlimit.js): per account (the real limit) and per connection (a safety net that a shared network does not trip). A refusal says which limit and when it resets.
+  if (contest) {
+    // Contest entries are tied to a signed-in account, so a shared network (an event night, a school Wi-Fi) gets a higher limit
+    const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM submit_log WHERE ip = ? AND created_at > datetime('now','-1 hour')").bind(ip).first();
+    if (n >= 60) return limitResponse({ limit: "connection", retry_after: 3600, error: `This network has sent ${n} entries in the last hour, which is its limit. It resets within an hour. Your answers are saved here, so try again then, or email ${CONTACT}.` });
+  } else {
+    const lim = await checkSubmitLimits(env, { ip, user: cu, kind: "home" });
+    if (lim) return limitResponse(lim);
+  }
 
   const biz = normName(clean(form.get("biz"), 80));
   const title = normName(clean(form.get("title"), 90)) || (contest ? biz : "");
@@ -107,13 +118,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   // The pin goes on the exact address; if it can't be found it falls back to the city center (the admin can fix it)
   let [lat, lng] = CITY[city];
-  if (!contest) {
-    const { n: mine } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NULL AND lower(contact_email) = lower(?) AND created_at > datetime('now','-1 day')").bind(email).first();
-    if (mine >= 5) {
-      await Promise.all(keys.map((k) => env.PHOTOS.delete(k))); // this post is refused, so its uploaded photos must not be left behind
-      return err(429, "You've posted several displays today. Try again tomorrow, or email info@socallights.app if you need more.");
-    }
-  }
   const pt = await geocodeAddress(address, city, [lat, lng]); if (pt) [lat, lng] = pt;
   const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
   const county = nearestCounty(lat, lng, evs);
@@ -182,6 +186,15 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const job = sendTemplate(env, "entry_new", contest.contact_email, { title, street, city, contest: contest.name, link: `https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});
     if (waitUntil) waitUntil(job);
   }
+  // A receipt to the person who added a home (not for contest entries: the organizer's own flow covers those): "you're live" when it went on the map, "we got it" when it waits for review.
+  // Skipped for an address on the do-not-contact list, and throttled (functions/_lib/receipt.js). The answer says whether one is on its way so the page can say so.
+  let receipt = "";
+  if (!contest) receipt = await sendReceipt(env, waitUntil, { id: published ? "home_live" : "home_received", to: email, vars: { name: title, city, map: `https://socallights.app/#h-${id}`, link: "https://socallights.app/profile#displays" } });
+  // "We received your entry": what happens next, the voting dates and where to edit or withdraw it (the Your home card on the contest page)
+  if (contest && cu.email) {
+    const job = sendTemplate(env, "entry_received", cu.email, { name: title || biz, contest: contest.name, review: published ? "It is on the contest page and the map now." : "The organizer will review it before it goes on the map.", vote_start: fmtDate(contest.vote_start), vote_end: fmtDate(contest.vote_end), link: `https://socallights.app/c/${contest.slug}` }).catch(() => {});
+    if (waitUntil) waitUntil(job);
+  }
   await bump(env, contest ? "fn:contest-entry-done" : "fn:add-house-done");
-  return json({ ok: true, id, status: published ? "published" : "pending" });
+  return json({ ok: true, id, status: published ? "published" : "pending", receipt: receipt === "queued" ? "sent" : "", email });
 }

@@ -38,7 +38,8 @@ function orgRow(o) {
   return rec({ compact: true, attrs: `data-pkey="${esc(o.key)}"`, title: esc(o.label), tags: [[t, tone]], lead: `<span class="sub">${esc(sub)}</span>`, main: btn("ghost", "Open", 'data-popen="1"') });
 }
 const compCard = (c) => rec({ attrs: `data-pcomp="${esc(c.id)}"`, title: esc(c.label), tags: [[c.running ? "Running" : c.revoked ? "Ended by you" : "Expired", c.running ? "ok" : ""]], meta: esc((c.created_at || "").slice(0, 10)),
-  facts: fact("Allowed", c.allowed < 0 ? "unlimited events per season" : `${c.allowed} events per season`) + fact("Valid until", esc(pdate(c.valid_until))) + fact("Note", esc(c.note)) + fact("Granted by", esc(c.created_by)), main: c.running ? btn("ghost", "End this comp now", 'data-pact="revoke_comp"') : "" });
+  facts: fact("Allowed", c.allowed < 0 ? "unlimited events per season" : `${c.allowed} events per season`) + fact("Valid until", esc(pdate(c.valid_until))) + fact("Note", esc(c.note)) + fact("Granted by", esc(c.created_by)), main: c.running ? btn("ghost", "Edit", 'data-pedit="1"') : "", danger: c.running ? btn("danger", "End this comp now", 'data-pact="revoke_comp"') : "",
+  body: c.running ? `<form class="f pcedit" data-pcform hidden><div class="fgrid">${field("pe" + c.id + "A", "Events per season", `<input type="number" min="1" max="1000" inputmode="numeric" value="${c.allowed < 0 ? 10 : c.allowed}" data-pe="allowed"${c.allowed < 0 ? " disabled" : ""}>`)}${field("pe" + c.id + "U", "Valid until", `<input type="date" value="${esc(c.valid_until)}" data-pe="until">`)}${field("pe" + c.id + "L", "Unlimited", `<label class="chk"><input type="checkbox" data-pe="unl"${c.allowed < 0 ? " checked" : ""}> No limit while the comp runs</label>`)}${field("pe" + c.id + "N", "Note (only you see it)", `<input maxlength="300" value="${esc(c.note || "")}" data-pe="note">`, "c6")}</div><div class="mfoot grantfoot"><button class="btn ice" type="submit">Save changes</button><button class="btn ghost" type="button" data-pecancel>Cancel</button><span class="msg" role="status"></span></div></form>` : "" });
 const planCard = (p) => rec({ title: esc(p.label), tags: [[p.status === "active" ? "Active" : "Revoked", p.status === "active" ? "ok" : ""]], meta: esc((p.created_at || "").slice(0, 10)),
   facts: fact("Season", `${esc(pdate(p.season_start))} to ${esc(pdate(p.season_end))}`) + fact("Paid", esc("$" + ((p.amount || 0) / 100).toFixed(2))) + fact("Buyer", esc(p.email || "")) + fact("Order", esc(p.order_status || "")) });
 
@@ -65,6 +66,17 @@ function openOrg(key) {
     if (!tap(b, "end this comp")) return;
     try { await api("/api/admin/partner", { method: "POST", body: JSON.stringify({ action: "revoke_comp", id: b.closest("[data-pcomp]").dataset.pcomp }) }); toast("Done"); await renderPartner(MAIN); openOrg(key); } catch (er) { toast(er.message, true); }
   }));
+  m.querySelectorAll("[data-pedit]").forEach((b) => (b.onclick = () => { const f = b.closest("[data-pcomp]").querySelector("[data-pcform]"); f.hidden = !f.hidden; if (!f.hidden) f.querySelector("[data-pe=until]").focus(); }));
+  m.querySelectorAll("[data-pcform]").forEach((f) => {
+    const g = (k) => f.querySelector(`[data-pe=${k}]`), msg = f.querySelector(".msg");
+    g("unl").onchange = (e) => { g("allowed").disabled = e.target.checked; };
+    f.querySelector("[data-pecancel]").onclick = () => { f.hidden = true; };
+    f.onsubmit = async (e) => {
+      e.preventDefault(); msg.className = "msg"; msg.textContent = "Saving…";
+      try { await api("/api/admin/partner", { method: "POST", body: JSON.stringify({ action: "edit_comp", id: f.closest("[data-pcomp]").dataset.pcomp, allowed: g("unl").checked ? "unlimited" : Number(g("allowed").value), until: g("until").value, note: g("note").value }) }); toast("Comp saved"); await renderPartner(MAIN); openOrg(key); }
+      catch (er) { msg.className = "msg err"; msg.textContent = er.message; }
+    };
+  });
   m.querySelectorAll("[data-act=release]").forEach((a) => (a.onclick = async (e) => {
     e.preventDefault();
     if (!tap(a, "free this slot")) return;

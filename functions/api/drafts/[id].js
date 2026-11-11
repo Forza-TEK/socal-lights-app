@@ -6,9 +6,9 @@ import { requireUser, sameOrigin } from "../../_lib/auth.js";
 export async function onRequestGet({ params, request, env }) {
   const { user, res } = await requireUser(request, env);
   if (res) return res;
-  const d = await env.DB.prepare("SELECT id,kind,title,data,step FROM drafts WHERE id = ? AND user_id = ?").bind(params.id, user.id).first();
+  const d = await env.DB.prepare("SELECT id,kind,title,data,step,updated_at FROM drafts WHERE id = ? AND user_id = ?").bind(params.id, user.id).first();
   if (!d) return err(404, "That draft doesn't exist.");
-  return json({ id: d.id, kind: d.kind, title: d.title, step: d.step, data: JSON.parse(d.data) }, { headers: { "cache-control": "no-store" } });
+  return json({ id: d.id, kind: d.kind, title: d.title, step: d.step, updated_at: d.updated_at, data: JSON.parse(d.data) }, { headers: { "cache-control": "no-store" } });
 }
 
 export async function onRequestDelete({ params, request, env }) {

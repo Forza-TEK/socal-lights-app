@@ -1,6 +1,7 @@
 // POST /api/partner/checkout  { site? }  ->  { url } (Stripe Checkout page) for the Event Partner plan of the signed-in person's organization, this season.
 // The price, the season dates and the organization come from the server only (partner.js) and are locked into the payment (metadata quote_*): the webhook applies exactly that.
 // A comp or a plan already held means nothing to buy (400). Same shape as /api/contest-pass/checkout.
+import { niceYmd } from "../../_lib/money.js";
 import { json, err, clean } from "../../_lib/util.js";
 import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { partnerKey } from "../../_lib/partnerapply.js";
@@ -26,7 +27,7 @@ export async function onRequestPost({ request, env }) {
     "line_items[0][price_data][currency]": "usd",
     "line_items[0][price_data][unit_amount]": String(q.cents), // from partner.js; never from the browser
     "line_items[0][price_data][product_data][name]": `Event Partner on SoCal Lights: ${orgLabel(key)}`.slice(0, 120),
-    "line_items[0][price_data][product_data][description]": `Up to ${EVENT_PARTNER.cap} events · ${q.season} season · ${q.from} to ${q.to}`.slice(0, 200),
+    "line_items[0][price_data][product_data][description]": `Up to ${EVENT_PARTNER.cap} events · ${q.season} season · ${niceYmd(q.from)} to ${niceYmd(q.to)}`.slice(0, 200),
     "metadata[event_id]": key, "metadata[target]": "event_partner", "metadata[plan]": PARTNER_PLAN, "metadata[user_id]": user.id,
     "metadata[quote_from]": q.from, "metadata[quote_to]": q.to, "metadata[quote_cents]": String(q.cents),
     "payment_intent_data[description]": `SoCal Lights Event Partner: ${orgLabel(key)}`.slice(0, 200),

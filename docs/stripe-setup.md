@@ -44,7 +44,7 @@ Paid placement is web only: the page, the menu link and `/api/feature/checkout` 
    - `STRIPE_WEBHOOK_SECRET` = the signing secret (type **Secret**)
    Then redeploy (Deployments > the latest > Retry deployment) so the secrets load.
 6. Settings > Business > Customer emails: turn on **Successful payments** so Stripe emails receipts (the checkout also passes the buyer's email as the receipt address; Stripe only sends receipts for live-mode payments).
-7. Check: open `https://socallights.app/api/config`; it should show `"featureCheckout":true`. Make one real test purchase on your own event (the cheapest plan is $10) and refund it.
+7. Check: open `https://socallights.app/api/config`; it should show `"featureCheckout":true`. Make one real test purchase on your own event (the cheapest plan is the Featured pin; see /pricing for the price) and refund it.
 
 ## Who can pay, and the admin step
 Checkout requires a signed-in account and ownership of the event (submitted it, approved claim, or contest owner/staff). Claims that cannot be auto-approved appear in the admin **Event claims** tab: check the claimant's email against the event's website, then Approve or Decline. Approving only lets them buy Featured for that event; it gives no edit rights. Migration 0157 adds `feature_orders.user_id` and `event_claims`.
@@ -63,7 +63,7 @@ mentions the event name and the year, the event is published immediately as conf
 "Submitted events" (publish as confirmed or expected, or decline). Limits: 5 submissions per hour per connection, 40 auto-publishes per day.
 
 ## Featured while adding an event
-The `/add-event` form offers an optional "Make it stand out" choice ($10 / $15 / $25). After the event is added the visitor goes straight to Stripe.
+The `/add-event` form offers an optional "Make it stand out" choice (prices are on /pricing; the old $10 / $15 / $25 plans are superseded). After the event is added the visitor goes straight to Stripe.
 If the event published instantly the payment attaches to it by id; if it is waiting in the admin "Submitted events" tab, the payment is recorded
 against `sub:<submission id>` and applied the moment you publish it (the pending card shows "Paid Featured"). If you decline a submission that
 has paid, refund it in Stripe. The choice only appears when online payment is switched on (`/api/config` shows `featureCheckout: true`).

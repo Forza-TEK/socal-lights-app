@@ -44,19 +44,24 @@ live database (the site itself redeploys on every push through Cloudflare Pages)
 | season / type | season is a key in `public/seasons.js`; type must be one of that season's `types` |
 | start_date / end_date | `YYYY-MM-DD`, end ≥ start |
 | status | `confirmed` only when the organizer has published this year's dates; otherwise `expected` (dates estimated from last year, and `hours` says "check site") |
-| free | 1 or 0 |
+| free | 1 or 0. `1` only when the price text starts with "Free" (admission is free; extras may follow: `Free; parking $15`). A price like `Kids $5; adults free` or `Check listing` is `0`. The validator errors on a disagreement (rule `free-price`). |
+| hours | one style (validator rule `hours-style`, error): times as `7pm` or `7:30pm` (lowercase, no space, no `:00`), one en dash in ranges (`5pm–9pm`, `Fri–Sun`), and `; check site` as the only way to say the times are estimated (not `, check site`, ` — check site`, `see site`). `normalizeHours()` in `scripts/event-rules.mjs` returns the exact text, and the error message prints it. |
 | venue | the place name people type into Google Maps (e.g. `Crown Valley Community Park`). For parades: the start or main viewing area. |
 | address | full street address with ZIP (`29751 Crown Valley Pkwy, Laguna Niguel, CA 92677`) or an intersection (`Main St & Electric Ave, Seal Beach, CA 90740`). **Directions use this field**, so it must be right. |
 | lat / lng | the venue itself, not the city center. Get them by geocoding the address (OpenStreetMap Nominatim: `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=<address>`) or from the venue's map listing; inside lat 32–35.8, lng −121.5 to −114 |
 | blurb | one sentence in our own words, ≤ 180 chars — never copied text |
 | url | the event's **own** page (organizer or venue) whenever one exists, not a roundup listing many events. The site adds a text fragment so roundup links scroll to the event's name, but an event page is better. |
-| image | optional. The event's own photo: the `og:image` of its official page when that is a real photo of the event (not a logo, flyer or clip art), landscape, under 1.5 MB. Set it with `UPDATE events SET image='…' WHERE id='…';`. Leave it empty otherwise: the card then shows the stock photo for the event's type (`public/stock.js`). Avoid `--` inside the URL (split it as `'…-' || '-…'`), since the validator reads `--` as a comment. |
+| image | optional. The event's own photo: the `og:image` of its official page when that is a real photo of the event (not a logo, flyer or clip art), landscape, under 1.5 MB. Set it with `UPDATE events SET image='…' WHERE id='…';`. Leave it empty otherwise: the card then shows the stock photo for the event's type (`public/stock.js`). Avoid `--` inside the URL (split it as `'…-' || '-…'`), since the validator reads `--` as a comment. | **Photo rule (owner, 2026-11-11):** a CITY or government event (organizer, source or venue like "City of", "Parks and Recreation", a .gov domain) may keep its city logo or seal as the card photo. For every other event, a logo, badge, banner, newsletter cover, screenshot, advertisement or unrelated picture is not accepted, and neither is a blurry or low-resolution one (under 500 px wide): leave `image` empty so the card shows the stock photo. The validator checks file names (rule `photo`); `node scripts/audit-event-photos.mjs` audits the live map and prints a sample to look at by eye.
 
 Only add real events found in public sources. Never invent events, dates or prices.
 
 **Contest homes:** homes entered in or winning a decorating contest are added as events (Christmas `drive`; Halloween `haunt`/`family`) with the published street address and the contest page as `url`. Only use addresses a public page published for visitors or judging. Details in [city-sweep.md](city-sweep.md).
 
 See [sweep-methods.md](sweep-methods.md) for the photo, pin-audit and migration-size rules that every run follows (never more than 30 rows per INSERT: D1 rejects larger statements).
+
+**Roundup pages (DAT-09):** when 4 or more events share one source page, the validator warns (`shared-url`) on a newly added row. Look for the event's own page (organizer, venue, city); keep the roundup only when none exists. Contest-home rows legitimately share their contest page.
+
+**Expected rows that already started or ended (DAT-08):** resolve them from a public page (confirm, correct the dates, or `notice='cancelled'`), or list them for the owner. `node scripts/coverage-report.mjs` prints the ids.
 
 ## Rolling a season into next year
 

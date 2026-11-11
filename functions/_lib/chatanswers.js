@@ -108,7 +108,7 @@ Full steps for Way 1: ${HELP}add-your-citys-homes-yourself`,
     id: "resident_enter",
     test: (q) => any(q, SELF, /\b(how|where) (do|can) (i|we) enter (the |a |this )?(contest|competition|[a-z' ]{0,40}contest)\b(?![^.?!]*\b(event|business|company|team|sponsor)\b)/i, /\b(enter|submit|register|put) (my|our|a) (home|house|display|lights)\b[^.?!]{0,25}\b(contest|competition|decorating|voting)\b/i) && !/\b(my|our|an?) (event|business|company|team)\b[^.?!]{0,10}\bin\b/i.test(q) && !/\b(without|instead of|not in)\b[^.?!]{0,15}\bcontest\b|\b(to|on) the map\b/i.test(q) && /\b(contests?|competitions?)\b/i.test(q) && !any(q, /\b(organi[sz]er|my contest|our contest|for residents|dashboard|city added)\b/i),
     reply: `Here is how to enter your home in a contest:
-1. Open the contest page (use the link, QR code or poster from the organizer) and tap Enter.
+1. Open the contest page (use the link, QR code or poster from the organizer) and tap Enter my home.
 2. Sign in with Google or an emailed code.
 3. Add photos (take them at night with the lights on), your home's address, and a name.
 4. Accept the contest's official rules. You must be 18 or older.
@@ -120,6 +120,34 @@ Full steps: ${HELP}enter-your-home-in-a-contest`,
     link: ["Enter your home in a contest", "enter-your-home-in-a-contest"],
   },
 ];
+
+// Fixed friendly answers for plain questions a visitor can fairly ask, written once so a small model cannot get them wrong (same rules as TOPICS: no prices, no dates, our own links only).
+// Kept apart from TOPICS (the contest flows) because they are not all step lists.
+const FIXED = [
+  {
+    id: "stop_emails",
+    test: (q) => any(q, /\b(unsubscribe|opt[- ]?out)\b/i, /\bstop\b[^.?!]{0,25}\b(e-?mails?|newsletters?|messages)\b/i, /\b(too many|so many)\b[^.?!]{0,15}\be-?mails\b/i, /\bno longer want\b[^.?!]{0,25}\be-?mails?\b/i, /\b(take|remove) me off\b[^.?!]{0,25}\b(list|e-?mails?)\b/i),
+    reply: `The way to stop an email depends on which one it is:
+1. Reminders, updates and result emails: tap Unsubscribe in the footer of the email, then tap Unsubscribe on the page that opens. You do not need to sign in.
+2. The weekly lights email: tap "Unsubscribe from the weekly email" at the bottom of any of them.
+3. The monthly update: use the link at the bottom of the email, or turn it off in your profile.
+- Sign-in codes and decisions about your listings (an entry approved or declined) are service emails, so they have no unsubscribe link. To stop every email, write to info@socallights.app from the address you want removed, or delete your account.
+Full steps: ${HELP}stop-emails-from-socal-lights`,
+    link: ["Stop emails from SoCal Lights", "stop-emails-from-socal-lights"],
+  },
+  {
+    id: "about_site",
+    test: (q) => any(q, /\bwhat can you (do|help)\b/i, /\bwho (built|made|created|runs|owns|operates|is behind)\b[^.?!]{0,20}\b(this|the)\b[^.?!]{0,8}\b(site|website|web site|app|map)\b/i, /\bwho (built|made|created|runs|owns|operates|is behind) (socal ?lights|socallights)\b/i, /\bwhat('?s| is) (this|socal ?lights|socallights)( site| website| app| place)?\s*\??$/i, /\bwhat is this (site|website|app|place)\b/i, /\bis (this|socal ?lights|socallights)[^.?!]{0,12}\b(a )?(scam|legit|legitimate|real|safe)\b/i),
+    reply: `SoCal Lights (socallights.app) is a free map of Christmas lights, Halloween, boat parades and other holiday events and decorated homes across Southern California, with neighborhood home-decorating contests. It is operated by Forza-TEK. I am an automated AI assistant, not a person.
+I can help with:
+- finding events and homes, the map, your location and routes
+- entering a home in a contest, voting, and running a contest
+- posting an event or a home, sign-in and your account
+- prices and paid options (the map, search, routes, voting and entering are always free, and payment never affects a contest result)
+Questions about the site itself are in the Terms and the Privacy Policy. To reach the team, email info@socallights.app.`,
+    link: ["Help Center", ""],
+  },
+];
 export const TOPIC_IDS = TOPICS.map((t) => t.id);
 
 // Returns { id, reply, cards } or null. `q` is the visitor's newest message. Safety refusals and the "talk to a person" fast path run before this.
@@ -127,10 +155,10 @@ const EXTRA = { contest_add_homes: ["Open your contests (then Manage)", "/contes
 export function directAnswer(q) {
   const text = String(q || "");
   if (text.length < 8 || text.length > 500) return null;
-  for (const t of TOPICS) {
+  for (const t of [...TOPICS, ...FIXED]) {
     let hit = false;
     try { hit = t.test(text); } catch { hit = false; }
-    if (hit) { const ex = EXTRA[t.id], links = [...(t.link ? [{ label: t.link[0], sub: "", href: "/help/" + t.link[1] }] : []), ...(ex ? [{ label: ex[0], sub: "", href: ex[1] }] : [])]; return { id: t.id, reply: t.reply, cards: links.length ? [{ type: "links", label: "Go straight there", links }] : [] }; }
+    if (hit) { const ex = EXTRA[t.id], links = [...(t.link ? [{ label: t.link[0], sub: "", href: "/help" + (t.link[1] ? "/" + t.link[1] : "") }] : []), ...(ex ? [{ label: ex[0], sub: "", href: ex[1] }] : [])]; return { id: t.id, reply: t.reply, cards: links.length ? [{ type: "links", label: "Go straight there", links }] : [] }; }
   }
   return null;
 }

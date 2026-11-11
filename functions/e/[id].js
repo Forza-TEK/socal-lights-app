@@ -5,6 +5,7 @@ import { rowToEvent } from "../_lib/util.js";
 import { esc, header, hero, page, crumbs, subscribeBox, shareBtn } from "../_lib/shell.js";
 import { contestHomes } from "../_lib/contesthomes.js";
 import { hasTrailingSlash, permanent } from "../_lib/redirect.js";
+import { contestImage } from "../../public/contesticon.js";
 import { slugOf, nearby } from "../_lib/cityindex.js";
 import { upcomingEvents, relatedTo } from "../_lib/upcoming.js";
 import { eventLd, eventTitle, eventDesc, secureUrl, http, fmtDate, whenText, usefulHours, whereText, typeLabel, eventIndexable, shareImage, eventIcs } from "../_lib/eventld.js";
@@ -68,8 +69,9 @@ export async function onRequestGet(context) {
   try {
     const h = await contestHomes(env, row.id);
     if (h) {
+      const ph = contestImage(h.name, h.logo);
       const gm = (x) => "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(x.address || `${x.lat},${x.lng}`);
-      const tile = (x) => `<div class="hm"><a class="hml" href="/c/${esc(h.slug)}">${x.photo ? `<img src="/api/photo/${esc(x.photo)}" alt="${esc(x.name)} lights" loading="lazy" width="320" height="240" onerror="this.onerror=null;this.src='/img/badge-160.webp';this.className='fb'">` : '<span class="hmn"><img src="/img/badge-160.webp" alt="" width="64" height="64" loading="lazy"></span>'}<b>${esc(x.name)}</b><span>${esc(x.address)}</span></a><span class="hmb"><a href="${esc(gm(x))}" target="_blank" rel="noopener" aria-label="Directions to ${esc(x.name)}">Directions</a><a href="/#h-${esc(x.id)}" aria-label="Show ${esc(x.name)} on the map">On map</a></span></div>`;
+      const tile = (x) => `<div class="hm"><a class="hml" href="/c/${esc(h.slug)}">${x.photo ? `<img src="/api/photo/${esc(x.photo)}" alt="${esc(x.name)} lights" loading="lazy" width="320" height="240" onerror="this.onerror=null;this.src='${esc(ph)}';this.className='fb'">` : `<span class="hmn"><img src="${esc(ph)}" alt="" width="64" height="64" loading="lazy"></span>`}<b>${esc(x.name)}</b><span>${esc(x.address)}</span></a><span class="hmb"><a href="${esc(gm(x))}" target="_blank" rel="noopener" aria-label="Directions to ${esc(x.name)}">Directions</a><a href="/#m-${esc(x.id)}" aria-label="On map: ${esc(x.name)}">On map</a></span></div>`;
       homes = `<h2>Homes entered${h.total ? ` (${h.total})` : ""}</h2>${h.homes.length ? `<div class="hgrid">${h.homes.map(tile).join("")}</div><p class="foot">${h.total > h.homes.length ? `<a href="/c/${esc(h.slug)}">See all ${h.total} homes</a>` : ""}<a href="/c/${esc(h.slug)}#tour">Route all ${h.total} homes</a></p>` : `<p class="sub">No homes entered yet. <a href="/c/${esc(h.slug)}">Be the first to enter</a>.</p>`}`;
     }
   } catch {}

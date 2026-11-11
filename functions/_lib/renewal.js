@@ -10,6 +10,7 @@
 //   Failure: email a link to pay once or update the card, retry ONCE 3 days later, then the renewal lapses and no more automatic charges are made.
 //   Cancel: any time before the charge, from the dashboard or the link in any email. Cancelling keeps the placement already paid for.
 //   Refund or dispute of an automatic charge pauses the renewal and tells the team.
+import { money } from "./money.js";
 import { INSTALLER_PLANS, ptToday, addDays } from "./featured.js";
 import { sponsorWindow, sponsorProblem, planEnds } from "./sponsor.js";
 import { stripeCall, sha256hex } from "./stripe.js";
@@ -53,7 +54,7 @@ async function ownerEmail(env, row) {
 }
 function vars(inst, row, extra = {}) {
   const p = INSTALLER_PLANS[row.plan] || INSTALLER_PLANS.banner;
-  return { installer: inst.name, plan: p.label, price: usd(p.cents), cancel_link: `${SITE}/cancel-renewal?t=${row.cancel_token}`, link: `${SITE}/sponsor?installer=${encodeURIComponent(inst.slug)}&plan=${row.plan}`, dashboard: `${SITE}/installer/${inst.slug}/manage`, consent: consentText(p.cents, row.consent_text_version || CONSENT_VERSION), ...extra };
+  return { installer: inst.name, plan: p.label, price: money(p.cents), cancel_link: `${SITE}/cancel-renewal?t=${row.cancel_token}`, link: `${SITE}/sponsor?installer=${encodeURIComponent(inst.slug)}&plan=${row.plan}`, dashboard: `${SITE}/installer/${inst.slug}/manage`, consent: consentText(p.cents, row.consent_text_version || CONSENT_VERSION), ...extra };
 }
 
 // Turns automatic renewal on (or updates the saved card). Idempotent per Checkout session: a replayed webhook changes nothing and sends nothing more.
@@ -117,7 +118,7 @@ export async function processRenewals(env, deps, today = ptToday()) {
     let noticed = row.notice_sent_for === row.next_charge_date;
     if (row.notice_sent_for !== row.next_charge_date && addDays(row.next_charge_date, -REMINDER_DAYS) <= today && row.next_charge_date >= today) {
       const w = sponsorWindow(plan, { ...inst, banner_until: inst.banner_until, top_until: inst.top_until }, today), to = await ownerEmail(env, row);
-      const note = row.last_paid_cents != null && row.last_paid_cents !== p.cents ? `The price changed: you last paid ${usd(row.last_paid_cents)} and this renewal is ${usd(p.cents)}. ` : "";
+      const note = row.last_paid_cents != null && row.last_paid_cents !== p.cents ? `The price changed: you last paid ${money(row.last_paid_cents)} and this renewal is ${money(p.cents)}. ` : "";
       const sent = to ? await mail(env, "renewal_reminder", to, vars(inst, { ...row, plan }, { date: nice(row.next_charge_date), from: nice(w.from), to: nice(w.to), note })) : false;
       if (sent) { await env.DB.prepare("UPDATE installer_autorenew SET notice_sent_for = ?, updated_at = datetime('now') WHERE installer_id = ?").bind(row.next_charge_date, row.installer_id).run(); out.reminded++; noticed = true; }
     }
