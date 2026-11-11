@@ -2,6 +2,11 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-11 (contest audit batch A, branch `fix-contests`)
+- Owner-approved findings CON-01, 02, 04, 05, 08, 09, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26, 27, 28, 30, 31. Details and the vote-speed rule are in `docs/contests.md` (last section). Tests: `tests/contest-audit-a.test.mjs`.
+- Migration 0226 trims contest addresses that end in "-" (the live Covina contest); the old link redirects. Also fixed: the organizer's vote list widened the whole page on phones.
+- Not done here (other batches or owner): pricing/pass screens (batch B), the "display"/"household" wording, CON-03, 13, 24, 25, 29.
+
 ## 2026-11-11 (assistant: forms ask first)
 - Owner feedback: asking how to add an event brought up two forms at once. Now every form card starts as a button ("Would you like me to help with that?" then the action), and the form opens only after the visitor taps it. Signed-in visitors get one event option (add it now, with a link to the step-by-step form inside), not two. A visitor who asks for a person gets that box open straight away; offers (no answer found, cost cap) stay collapsed. The one-tap confirm cards (take down a home, mark cancelled...) are unchanged.
 

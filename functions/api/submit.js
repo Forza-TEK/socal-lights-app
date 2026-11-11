@@ -6,6 +6,7 @@ import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
+import { fmtDate } from "../../public/contestfmt.js";
 import { getUser } from "../_lib/auth.js";
 import { findOrCreateInstaller } from "../_lib/installers.js";
 import { approveEntry } from "../_lib/contests.js";
@@ -180,6 +181,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // Manual approval: tell the organizer there is something waiting for them
   if (contest && !autoApprove && contest.contact_email) {
     const job = sendTemplate(env, "entry_new", contest.contact_email, { title, street, city, contest: contest.name, link: `https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});
+    if (waitUntil) waitUntil(job);
+  }
+  // "We received your entry": what happens next, the voting dates and where to edit or withdraw it (the Your home card on the contest page)
+  if (contest && cu.email) {
+    const job = sendTemplate(env, "entry_received", cu.email, { name: title || biz, contest: contest.name, review: published ? "It is on the contest page and the map now." : "The organizer will review it before it goes on the map.", vote_start: fmtDate(contest.vote_start), vote_end: fmtDate(contest.vote_end), link: `https://socallights.app/c/${contest.slug}` }).catch(() => {});
     if (waitUntil) waitUntil(job);
   }
   await bump(env, contest ? "fn:contest-entry-done" : "fn:add-house-done");

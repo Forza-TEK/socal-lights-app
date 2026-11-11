@@ -7,6 +7,7 @@ import { takeOffMap, putBackOnMap, contestDeletedStatements } from "./orders.js"
 import { CITY } from "../../public/cities.js";
 import { SEASONS, defaultSeason } from "../../public/seasons.js";
 import { ptToday } from "./time.js";
+import { slug as slugify } from "./events.js";
 
 // Consumer mailbox providers: an address here proves nothing about who runs a website or an event.
 export const FREE_DOMAINS = new Set([
@@ -59,6 +60,21 @@ export const officialSounding = (...texts) => texts.some((t) => OFFICIAL.test(St
 // Organizer-added homes allowed while a contest still has a review note (an organizer Admin has not vouched for yet).
 export const UNTRUSTED_ADDED_CAP = 25;
 
+// A contest's web address from its name: lowercase words joined by dashes, cut at 40 characters, with no dash left hanging at the end after the cut
+// ("...holiday-home-lighting-" printed on a poster looks broken and invites a typo).
+export const contestSlug = (name) => slugify(name).slice(0, 40).replace(/-+$/, "") || "contest";
+// The same slug with a short random tail when it is taken; the tail is added after trimming so there is never a double dash.
+export const withTail = (slug, tail) => `${slug.slice(0, 34).replace(/-+$/, "")}-${tail}`;
+// A link that ended in "-" (the old way a cut name was written, still on printed QR codes) points at the same contest without it.
+// Returns the trimmed slug when that contest exists and the asked one does not, else "".
+export async function trimmedSlugFor(env, slug) {
+  const s = String(slug || "").toLowerCase();
+  if (!/-$/.test(s)) return "";
+  const t = s.replace(/-+$/, "");
+  if (!t || (await getContest(env, s))) return "";
+  return (await getContest(env, t)) ? t : "";
+}
+
 export const getContest = (env, slug) => env.DB.prepare("SELECT * FROM contests WHERE slug = ?").bind(String(slug || "").toLowerCase()).first();
 
 // What is open right now. The dates decide; the organizer can also pause entries or voting by hand.
@@ -68,6 +84,14 @@ export function windows(c, today = todayPT()) {
     entriesOpen: live && !!c.entries_open && today <= c.entries_close,
     votingOpen: live && !!c.voting_open && today >= c.vote_start && today <= c.vote_end,
   };
+}
+
+// The same two windows as words, for the pages: entriesState is open / paused (the organizer closed it by hand, or the contest is not live) / ended (the entry date passed) / over (winners announced);
+// votingState is before / open / paused / over. Computed here, in Pacific time, so a page never works out a date itself (the browser's own date was the UTC one).
+export function states(c, today = todayPT()) {
+  const entriesState = c.announced ? "over" : today > c.entries_close ? "ended" : !c.entries_open || c.status !== "live" ? "paused" : "open";
+  const votingState = c.announced || today > c.vote_end ? "over" : today < c.vote_start ? "before" : !c.voting_open ? "paused" : "open";
+  return { entriesState, votingState };
 }
 
 const TYPE_BY_SEASON = { christmas: "drive", halloween: "family", newyear: "family", valentines: "family", spring: "festival", summer: "festival" };

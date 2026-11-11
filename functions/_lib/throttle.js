@@ -8,13 +8,13 @@ export async function hashKey(env, ...parts) {
 }
 
 // Checks every rule and, only when all pass, records one send under each key. Returns "" when allowed, otherwise the message to show (use it with a 429).
-// rules: [{ kind, key, max, windowHours, cooldownSeconds?, msg, coolMsg? }]
+// rules: [{ kind, key, max, windowHours (or windowSeconds for a short window), cooldownSeconds?, msg, coolMsg? }]
 export async function checkThrottle(env, rules) {
   for (const r of rules) {
     const row = await env.DB.prepare(
       `SELECT COUNT(*) AS n, COALESCE(MIN(CAST(strftime('%s','now') AS INTEGER) - CAST(strftime('%s', created_at) AS INTEGER)), 999999) AS newest
        FROM send_throttle WHERE kind = ? AND key = ? AND created_at > datetime('now', ?)`
-    ).bind(r.kind, r.key, `-${r.windowHours} hours`).first();
+    ).bind(r.kind, r.key, r.windowSeconds ? `-${r.windowSeconds} seconds` : `-${r.windowHours} hours`).first();
     if (r.cooldownSeconds && row.n > 0 && row.newest < r.cooldownSeconds) return r.coolMsg || "Please wait a minute and try again.";
     if (row.n >= r.max) return r.msg;
   }
@@ -41,5 +41,14 @@ export async function alertConfirmThrottle(env, request, email) {
   return checkThrottle(env, [
     { kind: "alert-email", key: await hashKey(env, "e", String(email).toLowerCase()), max: 3, windowHours: 24, msg: "We've already sent a few confirmation emails to this address today. Please check your inbox and spam folder for the link, or try again tomorrow." },
     { kind: "alert-ip", key: await hashKey(env, "ip", ipOf(request)), max: 20, windowHours: 24, msg: "Too many requests from this connection today. Please try again tomorrow." },
+  ]);
+}
+
+// Votes: at most 40 a minute per connection (hashed). A home, a school or an event Wi-Fi shares one address among many people, so the limit is generous:
+// it stops a script, not a crowd. Returns "" (and records the vote) or the message for a 429; the voter just tries again in a moment.
+export const VOTES_PER_MINUTE = 40;
+export async function voteThrottle(env, request) {
+  return checkThrottle(env, [
+    { kind: "vote-ip", key: await hashKey(env, "ip", ipOf(request)), max: VOTES_PER_MINUTE, windowSeconds: 60, msg: "Slow down a little. Lots of votes are coming from your connection right now. Wait a minute and tap Vote again." },
   ]);
 }

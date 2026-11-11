@@ -4,10 +4,9 @@
 import { json, err, clean, webUrl, newId } from "../../_lib/util.js";
 import { enqueueMail, drainMail } from "../../_lib/mailbatch.js";
 import { logOp } from "../../_lib/oplog.js";
-import { slug as slugify } from "../../_lib/events.js";
 import { inviteJudges } from "./[slug]/judges.js";
 import { getUser, sameOrigin, okEmail } from "../../_lib/auth.js";
-import { getContest, windows, todayPT, isDate, listOnMap, unlistFromMap, isStaff, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
+import { getContest, windows, states, contestSlug, withTail, todayPT, isDate, listOnMap, unlistFromMap, isStaff, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { publicEntry } from "../../_lib/archive.js";
 import { judgeProgress } from "../../_lib/judging.js";
 import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
@@ -51,7 +50,7 @@ export async function onRequestGet({ params, request, env }) {
     sponsors: sponsors.filter((x) => isOwner || isPublic(x)).map((x) => (isOwner ? staffView(x) : publicView(x))), // the public sees only sponsors that are shown (logo, name, website); the organizer team sees the records
     installer: c.installer_name ? { name: c.installer_name, url: c.installer_url || "", slug: (await env.DB.prepare("SELECT slug FROM installers WHERE lower(name) = lower(?) AND status = 'active'").bind(c.installer_name).first())?.slug || "" } : null,
     ...(isOwner ? { installerEmail: c.installer_email || "" } : {}),
-    contest: { founder: isFounder(await founderKeys(env), c.org_key), slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, unpublishedByOwner: c.status === "declined" && c.unpublished_by === "owner",  entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open },
+    contest: { founder: isFounder(await founderKeys(env), c.org_key), slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, unpublishedByOwner: c.status === "declined" && c.unpublished_by === "owner",  entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open, ...states(c) },
     entries, winners: frozen ? frozen.winners : c.announced ? live.winners : {}, jwinners: frozen ? frozen.jwinners || {} : c.announced ? live.jwinners : {}, awards, prizes,
     me: { signedIn: !!user, isOwner, isCreator: !!user && !!c.owner_id && c.owner_id === user.id, isJudge: !!jrow, votes: mine },
   }, { headers: { "cache-control": "no-store" } });
@@ -126,8 +125,8 @@ async function cloneContest(env, c, user) {
   if (vs <= closes) vs = addDays(closes, 1); // an organizer may have started voting early; the copy keeps the normal order
   if (ve <= vs) ve = addDays(vs, 14);
   const name = /\b20\d\d\b/.test(c.name) ? c.name.replace(/\b(20\d\d)\b/, (y) => String(+y + 1)) : `${c.name} ${closes.slice(0, 4)}`;
-  let slug = slugify(name).slice(0, 40) || "contest";
-  if (await getContest(env, slug)) slug = `${slug.slice(0, 34)}-${newId().slice(0, 5)}`;
+  let slug = contestSlug(name);
+  if (await getContest(env, slug)) slug = withTail(slug, newId().slice(0, 5));
   const skip = new Set(["sponsor_token", "sponsor_link_on", "sponsor_admin_off", "sponsor_pay_hidden", "org_key", "live_at", "id", "slug", "name", "announced", "results", "event_id", "note", "created_at", "updated_at", "remind_open", "remind_close", "entries_close", "vote_start", "vote_end", "season", "status", "entries_open", "voting_open"]);
   const row = { ...Object.fromEntries(Object.entries(c).filter(([k]) => !skip.has(k))), id: newId(), slug, name, entries_close: closes, vote_start: vs, vote_end: ve, season: seasonFor(closes), status: c.status === "pending" ? "pending" : "live", owner_id: c.owner_id };
   row.org_key = gate.key; row.live_at = row.status === "live" ? todayPT() : "";

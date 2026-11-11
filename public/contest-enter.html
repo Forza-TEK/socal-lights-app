@@ -19,13 +19,15 @@ import { run, esc, input, area, select, check, photoField, sumRow } from "/addfl
 import { me, signIn } from "/auth.js?v=20261107p";
 import { CITY } from "/cities.js?v=20261107a";
 import { defaultSeason } from "/seasons.js?v=20261104a";
+import { fmtDate, entriesClosedText } from "/contestfmt.js?v=20261111a";
 const slug = location.pathname.split("/")[2] || "", cities = Object.keys(CITY).sort(), app = document.getElementById("app");
 const plain = (h, t, p, btn) => { app.innerHTML = `<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><a class="link" href="${slug ? "/c/" + esc(slug) : "/contests"}">Back</a></div><main class="main"><h1>${h}</h1><p class="help">${p}</p>${btn || ""}</main>`; };
+if (!slug) location.replace("/contests"); // /contest-enter with no contest in the address: the list of contests is the useful page
 const r0 = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" });
 if (!slug || !r0.ok) { plain("We can't find that contest", "The link may be mistyped, or the contest may not be public yet.", '<div><a class="btn" href="/">Back to the map</a></div>'); }
 else {
   const C = (await r0.json()).contest; document.title = "Enter: " + C.name; document.documentElement.dataset.season = defaultSeason(C.entriesClose);
-  if (!C.entriesOpen) plain("Entries are closed", `${esc(C.name)} isn't taking new entries right now.`, `<div><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`);
+  if (!C.entriesOpen) plain("Entries are closed", "", `${esc(entriesClosedText(C))} Questions? Ask the organizer, ${esc(C.org)}.`, `<div><a class="btn" href="/c/${esc(slug)}">See the contest</a></div>`);
   else {
     let user = (await me()).user;
     const d = { photos: [], street: "", city: C.city || "", zip: "", name: "", desc: "", rules: false, contestSlug: slug };
@@ -48,7 +50,7 @@ else {
           const r = await fetch("/api/submit", { method: "POST", body: fd }), j = await r.json().catch(() => ({}));
           if (r.status === 401 && !retry) { const u = await signIn({ title: "Sign in again to submit", next: location.pathname }); if (u) { user = u; return steps[4].submit(x, api, true); } throw new Error("Sign in to submit your entry."); }
           if (!r.ok) throw new Error(j.error || "Couldn't send that. Try again in a moment.");
-          api.finish(`<h1>You're entered!</h1><p class="help">${C.approval === "manual" ? "The organizer will review your entry before it goes on the map." : "Your entry is on the contest page and the map now."} Sign in with ${esc(user.email)} any time to come back.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/c/${esc(slug)}">See the contest</a><a class="btn out" href="/c/${esc(slug)}/enter">Enter another home</a></div>`);
+          api.finish(`<h1>You're entered!</h1><p class="help">${C.approval === "manual" ? "The organizer will review your entry before it goes on the map." : "Your entry is on the contest page and the map now."}</p><p class="help">Voting runs ${esc(fmtDate(C.voteStart))} to ${esc(fmtDate(C.voteEnd))}. All times are Pacific, and the last day runs through 11:59 pm. Share <a href="/c/${esc(slug)}">the contest link</a> so neighbors can vote for your home.</p><p class="help">A confirmation is on its way to ${esc(user.email)}. To edit or withdraw your entry, sign in with that email and open the <b>Your home</b> card on the contest page.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="/c/${esc(slug)}">See the contest</a><a class="btn out" href="/c/${esc(slug)}/enter">Enter another home</a></div>`);
         } },
     ];
     run({ steps, data: d, exit: "/c/" + slug, persist: "scl-entry-draft-" + slug, noPersist: ["photos"], account: { kind: "entry", q: "entry&c=" + encodeURIComponent(slug), title: (x) => (x.name || "My entry") + " · " + C.name }, addr: { cities }, actions: { async signin(_, a) { const u = await signIn({ title: "Sign in to enter", next: location.pathname }); if (u) { user = u; a.draw(); } } } });
