@@ -197,7 +197,11 @@ if (!failedSql) {
 
 // ---------- optional: load each url ----------
 async function checkUrls() {
-  const rows = changed.filter((e) => e.row.url && /^https?:/i.test(e.row.url));
+  // Only rows whose source matters to the change: added rows, a changed url, or changed dates/status/place. A cleanup that only rewrites hours, price, free flag, name,
+  // blurb or photo (for example the 2026-11-11 data audit fixes) does not re-test hundreds of old source pages that bot walls and timeouts fail in CI.
+  const COSMETIC = new Set(["hours", "price", "free", "name", "blurb", "image", "images", "notice", "venue"]);
+  const sourceMatters = (e) => e.kind === "added" || !e.prev || Object.keys(e.prev).some((k) => k !== "updated_at" && !COSMETIC.has(k) && e.prev[k] !== e.row[k]);
+  const rows = changed.filter((e) => e.row.url && /^https?:/i.test(e.row.url) && sourceMatters(e));
   const urls = [...new Set(rows.map((e) => e.row.url))];
   const res = new Map();
   let i = 0;

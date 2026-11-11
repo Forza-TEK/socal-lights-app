@@ -120,6 +120,16 @@ test("--check-urls: a dead source page (404/410, refused connection) fails; bloc
   for (const code of [403, 429, 500]) { const r = await one(code); assert.equal(r.code, 0, "HTTP " + code + r.out); assert.ok(has(r, "url-blocked")); }
   const refused = await check(sqlFor({ id: "t-url-refused", url: "http://127.0.0.1:1/x" }), ["--check-urls"]); assert.equal(refused.code, 1, refused.out); assert.ok(has(refused, "url-dead"));
 });
+test("--check-urls: a cleanup that only rewrites hours/price/photo does not re-test old source pages; a changed date or url still does", async () => {
+  const base = `http://127.0.0.1:${port}`, seed = join(root, "migrations", "9400_seed_old_row.sql"), mig = join(root, "migrations", "9401_cleanup.sql");
+  writeFileSync(seed, sqlFor({ id: "t-url-old", url: `${base}/404` })); // an "old" row: it is part of the state before the file under test
+  try {
+    writeFileSync(mig, "UPDATE events SET hours='6–9pm', price='Free', free=1 WHERE id='t-url-old';\n");
+    const r1 = await run(["--files", "9401_cleanup.sql", "--check-urls"]); assert.equal(r1.code, 0, r1.out); assert.ok(!has(r1, "url-dead"));
+    writeFileSync(mig, "UPDATE events SET end_date='2026-12-30' WHERE id='t-url-old';\n");
+    const r2 = await run(["--files", "9401_cleanup.sql", "--check-urls"]); assert.equal(r2.code, 1, r2.out); assert.ok(has(r2, "url-dead"));
+  } finally { rmSync(mig, { force: true }); rmSync(seed, { force: true }); }
+});
 // ---- audit 2026-11-11 (DAT-01, DAT-06, DAT-07, DAT-09): data-quality rules on rows a migration adds or changes ----
 test("free flag must agree with the price text (DAT-07): errors, not warnings", async () => {
   const r = await check(sqlFor({ id: "t-fp1", free: 1, price: "$20" }) + sqlFor({ id: "t-fp2", free: 0, price: "Free" }) + sqlFor({ id: "t-fp3", free: 0, price: "Free; parking $15" }) + sqlFor({ id: "t-fp4", free: 1, price: "Check listing" }) + sqlFor({ id: "t-ok1", free: 1, price: "Free; parking $15" }) + sqlFor({ id: "t-ok2", free: 0, price: "Kids $5; adults free" }));
