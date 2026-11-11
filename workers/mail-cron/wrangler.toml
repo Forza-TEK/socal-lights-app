@@ -1,0 +1,9 @@
+# A tiny Cloudflare Worker whose only job is a clock: every 5 minutes it asks the site to send what is waiting in the mail outbox.
+# (Cloudflare Pages, where the site runs, has no scheduler of its own; a Worker does. GitHub's scheduler is unreliable: it ran the old hourly job every 4 to 8 hours.)
+# Deployed by .github/workflows/deploy-mail-cron.yml. Secret: ALERT_CRON_KEY (the same key the site checks), set by that workflow from the GitHub secret of the same name.
+name = "socal-lights-mail-cron"
+main = "index.js"
+compatibility_date = "2025-09-01"
+
+[triggers]
+crons = ["*/5 * * * *"]
