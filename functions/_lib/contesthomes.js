@@ -15,9 +15,9 @@ export function pickHomes(rows, { voting = false, day = 0, limit = HOME_LIMIT } 
 // null when the id isn't a live contest's event
 export async function contestHomes(env, eventId) {
   if (!String(eventId).startsWith("c-")) return null;
-  const c = await env.DB.prepare("SELECT id, slug, name, vote_start, vote_end FROM contests WHERE event_id = ? AND status = 'live'").bind(eventId).first();
+  const c = await env.DB.prepare("SELECT id, slug, name, logo, vote_start, vote_end FROM contests WHERE event_id = ? AND status = 'live'").bind(eventId).first();
   if (!c) return null;
   const { results } = await env.DB.prepare("SELECT id, title, biz, address, city, photos, entry_no, lat, lng FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
   const today = todayPT(), voting = c.vote_start <= today && today <= c.vote_end;
-  return { slug: c.slug, ...pickHomes(results, { voting, day: Math.floor(Date.parse(today) / 86400000) }) };
+  return { slug: c.slug, name: c.name, logo: c.logo ? `/api/contests/${encodeURIComponent(c.slug)}/logo?v=${(c.logo.match(/\/(\d+)\.\w+$/) || [])[1] || "1"}` : "", ...pickHomes(results, { voting, day: Math.floor(Date.parse(today) / 86400000) }) };
 }

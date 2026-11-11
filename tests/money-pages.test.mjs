@@ -52,9 +52,9 @@ test("PAY-05: one refund statement per product, in Pricing, the receipts and Ter
 
 test("PAY-07 and PAY-08: the same payment-method and no-tax wording on Pricing, Terms, the payment pages and the Help articles", () => {
   const sentence = "You can pay by card, Apple Pay, Google Pay, Amazon Pay, Cash App Pay or Link. Which options you see depends on your device and location.";
-  for (const f of ["public/pricing.html", "public/terms.html", "public/feature.html", "public/sponsor.html", "migrations/0225_help_no_sales_tax.sql"]) assert.ok(read(f).includes(sentence), f);
+  for (const f of ["public/pricing.html", "public/terms.html", "public/feature.html", "public/sponsor.html", "migrations/0226_help_no_sales_tax.sql"]) assert.ok(read(f).includes(sentence), f);
   const tax = "The price you see is the price you pay. We do not add sales tax.";
-  for (const f of ["public/pricing.html", "public/terms.html", "migrations/0225_help_no_sales_tax.sql"]) assert.ok(read(f).includes(tax), f);
+  for (const f of ["public/pricing.html", "public/terms.html", "migrations/0226_help_no_sales_tax.sql"]) assert.ok(read(f).includes(tax), f);
   assert.ok(!/by card on Stripe|with a card or Cash App Pay|with a card;/.test(read("public/terms.html") + pricing + read("public/feature.html") + read("public/sponsor.html")));
   assert.ok(!/automatic_tax/.test(["contest-pass", "partner", "sponsor", "feature"].map((d) => read(`functions/api/${d}/checkout.js`)).join("")), "Stripe Tax is not switched on");
 });
