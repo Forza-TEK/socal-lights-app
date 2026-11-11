@@ -5,10 +5,11 @@ import assert from "node:assert/strict";
 import { onRequestPost as submitHome } from "../functions/api/submit.js";
 import { onRequestPost as submitEvent } from "../functions/api/submit-event.js";
 import { onRequestPost as homesPost } from "../functions/api/me/homes/[id].js";
+import { onRequestPost as contestCreate } from "../functions/api/contests/index.js";
 import { onRequestPost as eventsPost } from "../functions/api/me/events/[id].js";
 import { sendReceipt, RECEIPT_MAX_PER_DAY } from "../functions/_lib/receipt.js";
 import { addSuppression } from "../functions/_lib/outreach.js";
-import { newEnv, addUser, stubFetch, ptToday } from "./_pay.mjs";
+import { newEnv, addUser, stubFetch, ptToday, compEveryone } from "./_pay.mjs";
 import { draftKey, purgeLegacyDrafts, clearAllLocalDrafts } from "../public/drafts-local.js";
 
 const ORIGIN = "https://socallights.app";
@@ -53,16 +54,38 @@ test("receipt: an event goes live ('on the map') or waits ('we got it', not on t
     assert.match(w.mails[1].text, /Nothing is public until it is approved/);
   } finally { w.restore(); }
 });
-test("receipt: not sent to an address that unsubscribed, asked to be removed, or is on the suppression list; the submission still works", async () => {
+test("receipt is service mail: people who unsubscribed or were removed from marketing still get it; hard bounces, complaints, invalid and deleted accounts do not", async () => {
   const { env, raw } = mkEnv(), w = world();
   try {
-    const a = await addUser(raw, "u1", "optout@example.com"); raw.prepare("INSERT INTO email_prefs (email, token, optout) VALUES (?,?,1)").run("optout@example.com", "t".repeat(36));
-    const b = await addUser(raw, "u2", "listed@example.com"); await addSuppression(env, "listed@example.com", "manual", "test");
-    const c = await addUser(raw, "u3", "fine@example.com");
-    for (const u of [a, b]) { const r = await j(await postHome(env, homeForm(), u.cookie, "203.0.113." + u.id.slice(1))); assert.equal(r.status, "published"); assert.equal(r.receipt, "", "the page is not told a mail is coming"); }
-    assert.equal(w.mails.length, 0, "no mail to a suppressed address");
-    assert.equal((await j(await postHome(env, homeForm(), c.cookie, "203.0.113.30"))).receipt, "sent"); assert.equal(w.mails.length, 1);
+    let n = 0; const post = async (email) => { const u = await addUser(raw, "u" + ++n, email); return j(await postHome(env, homeForm(), u.cookie, "203.0.113." + (10 + n))); };
+    // opted out of marketing, removal request, monthly update unsubscribe, marketing suppression: all still get the receipt
+    raw.prepare("INSERT INTO email_prefs (email, token, optout) VALUES (?,?,1)").run("optout@example.com", "t".repeat(36));
+    raw.prepare("INSERT INTO removal_requests (id, email) VALUES ('r1', 'removed@example.com')").run();
+    await addSuppression(env, "listed@example.com", "unsubscribe", "app"); await addSuppression(env, "replied@example.com", "reply", "grok");
+    for (const e of ["optout@example.com", "removed@example.com", "listed@example.com", "replied@example.com"]) { const r = await post(e); assert.equal(r.status, "published"); assert.equal(r.receipt, "sent", e); }
+    assert.equal(w.mails.length, 4, "all four got their receipt");
+    // never mailed: bounce, complaint, an address reported invalid, a deleted account
+    await addSuppression(env, "bounced@example.com", "bounce", "grok"); await addSuppression(env, "spam@example.com", "complaint", "grok"); await addSuppression(env, "gone@example.com", "manual", "account_deleted");
+    const { outreachHashes } = await import("../functions/_lib/outreach.js"), inv = (await outreachHashes(env, "bad@example.com")).h;
+    raw.prepare("INSERT INTO outreach_invalid (email_hash, reason, first_seen) VALUES (?, 'no_mail_server', '2026-11-01')").run(inv);
+    for (const e of ["bounced@example.com", "spam@example.com", "gone@example.com", "bad@example.com"]) { const r = await post(e); assert.equal(r.status, "published", "the submission itself still works"); assert.equal(r.receipt, "", e); }
+    assert.equal(w.mails.length, 4, "no mail to an undeliverable address");
+    assert.equal(await sendReceipt(env, null, { id: "home_live", to: "bounced@example.com", vars: {} }), "undeliverable");
     assert.equal(await sendReceipt(env, null, { id: "home_live", to: "not an address", vars: {} }), "invalid");
+  } finally { w.restore(); }
+});
+test("receipt: a contest that goes live at once, and one held for review, each get their receipt with the dashboard link", async () => {
+  const { env, raw } = mkEnv(), w = world(); compEveryone(raw);
+  try {
+    const mk = (user, body) => contestCreate({ env, waitUntil: null, request: new Request(ORIGIN + "/api/contests", { method: "POST", headers: { "content-type": "application/json", origin: ORIGIN, cookie: user.cookie }, body: JSON.stringify(body) }) }).then(j);
+    const body = (o) => ({ name: "Maple Street Holiday Lights", org: "Maple Street neighbors", city: "Pasadena", descr: "A friendly lights contest for our street.", site: "", closes: ptToday(10), vs: ptToday(12), ve: ptToday(20), cats: ["Best Overall"], ...o });
+    const a = await addUser(raw, "u1", "plain@example.com"), live = await mk(a, body({}));
+    assert.equal(live.http, 200); assert.equal(live.status, "live"); assert.equal(live.receipt, "sent"); assert.equal(live.email, "plain@example.com");
+    const b = await addUser(raw, "u2", "someone@gmail.com"), held = await mk(b, body({ name: "City of Irvine Official Lights", org: "City of Irvine" }));
+    assert.equal(held.status, "pending"); assert.equal(held.receipt, "sent");
+    const sent = w.mails.filter((m) => /^(Your contest is live|We got your contest)/.test(m.subject));
+    assert.deepEqual(sent.map((m) => m.subject), ["Your contest is live: Maple Street Holiday Lights", "We got your contest: City of Irvine Official Lights"]);
+    assert.match(sent[0].text, new RegExp("/c/" + live.slug + "/manage")); assert.match(sent[1].text, /Entries stay paused and it is not on the map until it is approved/);
   } finally { w.restore(); }
 });
 test("receipt: the existing send throttle applies (20 a day per address, stored hashed)", async () => {
