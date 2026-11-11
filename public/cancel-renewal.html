@@ -6,15 +6,19 @@
 <meta name="robots" content="noindex">
 <title>Cancel automatic renewal · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261111x553">
-<link rel="stylesheet" href="/info.css?v=20261111x553">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/info.css?v=20261111x560">
 <style>.unsub{max-width:520px;margin:40px auto;text-align:center;display:grid;gap:14px;justify-items:center}.unsub h1{margin:0}.unsub p{margin:0}.unsub .btn{min-height:48px;padding:0 26px}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
-<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a></div>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a></div></div>
 <main id="content"><div class="unsub" id="box"><p class="meta">One moment…</p></div></main>
 <script>
 (function () {
@@ -35,6 +39,6 @@
   fetch("/api/sponsor/renewal?t=" + encodeURIComponent(t)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); }).then(draw).catch(function (e) { fail(e.message); });
 })();
 </script>
-<script src="/footer.js?v=20261111e" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

@@ -6,15 +6,19 @@
 <title>Add your event · SoCal Lights</title>
 <meta name="description" content="Put your Halloween, holiday or seasonal event on the SoCal Lights map. It's free.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261111x553">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261111zb";
+import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261111x560";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261111x553";
 import { CITY } from "/cities.js?v=20261107a";
 import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261111x553";
@@ -120,6 +124,6 @@ run({ preview, steps, data: d, persist: "scl-event-draft", uid: acct.id, prefill
   actions: { skipurl(_, a) { d.url = ""; a.next(); } },
   after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });
 </script>
-<script src="/footer.js?v=20261111e" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

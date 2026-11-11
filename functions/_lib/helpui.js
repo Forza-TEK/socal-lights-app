@@ -10,7 +10,7 @@ main.help{max-width:1160px}.top{max-width:1160px}.top,main.help{padding-left:24p
 .help .lede{color:var(--muted);font-size:18px;margin:0 0 18px;max-width:60ch}
 .hsearch{position:relative;margin:6px 0 8px}
 .hsearch form{display:flex;gap:8px}
-.hsearch input[type=search]{flex:1;min-width:0;min-height:54px;padding:0 18px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font:500 17px var(--f)}
+.hsearch input[type=search]{flex:1;min-width:0;min-height:54px;padding:0 18px;border:1.5px solid var(--field);border-radius:999px;background:var(--surface);color:var(--ink);font:500 17px var(--f)}
 .hsearch button{min-height:54px;padding:0 22px;border:0;border-radius:999px;background:var(--season);color:var(--on-season);font:700 16px var(--f);cursor:pointer}
 .hres{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
 .hres a{display:block;padding:12px 16px;border-radius:14px;background:var(--surface);box-shadow:0 2px 10px rgba(20,22,27,.08);text-decoration:none}
@@ -36,13 +36,12 @@ main.help{max-width:1160px}.top{max-width:1160px}.top,main.help{padding-left:24p
 .htabs-on .hsec[data-cat]{margin-top:18px}
 .htabs-on .hsec[data-cat][hidden]{display:none}
 /* In the app frame (appshell.js: side menu, icon rail, phone bottom bar) the topics live in the frame's menu, so the in-page tabs and the old header go away */
-:root{--font:var(--f);--tile:var(--surface-2);--line2:#b9b4aa;--btn:var(--ink);--btn-ink:var(--bg);--s-halloween:#e8590c;--s-christmas:#c42f39}:root[data-theme="dark"]{--line2:#444a58;--s-halloween:#ff8a3d;--s-christmas:#ff6b6b}
 body.sh-page .top,body.sh-page .htabs{display:none}body.sh-page main.help{max-width:980px;margin:0 auto;padding:22px clamp(16px,3vw,32px) 72px}body.sh-page .hlayout{display:block;margin-top:8px}body.sh-page .hlayout .hsec[data-cat]{max-width:none;margin-top:18px}
 @media(max-width:699px){body.sh-page main.help{padding:16px 16px calc(92px + env(safe-area-inset-bottom,0px))}}
 
 .alist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .alist a{display:flex;flex-direction:column;gap:5px;height:100%;box-sizing:border-box;padding:16px 18px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-decoration:none;min-height:48px}
-.alist a:hover,.alist a:focus-visible{border-color:var(--season);outline:none}
+.alist a:hover,.alist a:focus-visible{border-color:var(--season)}.alist a:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .alist .at{font-weight:700;font-size:16px;line-height:1.3;color:var(--ink)}
 .alist .am{font-size:13px;color:var(--ink)}.alist .av{font-size:13px;color:var(--muted);margin-top:auto;padding-top:2px}
 .hsec h2 .ct{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
@@ -59,7 +58,7 @@ body.sh-page .top,body.sh-page .htabs{display:none}body.sh-page main.help{max-wi
 .rate{margin:30px 0 0;padding:18px;border-radius:18px;background:var(--surface);box-shadow:0 2px 10px rgba(20,22,27,.08);max-width:66ch}
 .rate .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .rate button.btn{min-height:44px}
-.rate textarea,.ask textarea,.ask input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--ink);min-height:48px}
+.rate textarea,.ask textarea,.ask input{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--field);border-radius:12px;background:transparent;color:var(--ink);min-height:48px}
 .ask{margin:16px 0 0;max-width:66ch}.ask summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
 .ask form{display:grid;gap:10px;padding:6px 0 0}.ask label{display:grid;gap:4px;font-size:14px;color:var(--muted)}
 .hmsg{margin:8px 0 0;font-size:15px}.hmsg.bad{color:#b42318}
@@ -70,7 +69,7 @@ export const helpFrame = ({ title, desc, canonical, ld, body, noindex, origin, c
   page({ title, desc, canonical, ld, noindex, origin, body: `${header("Open the map", "/")}<main class="help" id="content" data-hcat="${esc(cat)}"><style>${CSS}</style>${body}</main>${frameScript(cats)}` });
 
 // With scripts the page moves into the app frame (the same one Profile and Tutorials use); without them it keeps the plain header and the topic links.
-const frameScript = (cats) => `<script type="module">import { mountShell } from "/appshell.js?v=20261111z";
+const frameScript = (cats) => `<script type="module">import { mountShell } from "/appshell.js?v=20261111x560";
 const C = ${jsonScript(CATEGORIES.filter((c) => cats.includes(c.key)).map((c) => ({ k: c.key, label: c.title })))}, IC = { find: "map", enter: "pencil", vote: "check", run: "trophy", sponsors: "star", post: "homeplus", account: "user" };
 const m = document.getElementById("content"), index = !!document.querySelector(".hsec[data-cat]"), here = () => (location.hash || "").slice(1);
 document.body.classList.add("sh-page");

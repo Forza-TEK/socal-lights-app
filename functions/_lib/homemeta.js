@@ -2,7 +2,7 @@
 // ("Christmas lights near me" in November, "Halloween events" in October). Same season windows as the map (public/seasons.js).
 // public/index.html carries the Christmas wording as its default; GET / (functions/index.js) swaps in the right season's text.
 // Limits: title at most 60 characters, description at most 155 (search results cut longer ones). No keyword lists: one plain sentence each.
-import { defaultSeason } from "../../public/seasons.js";
+import { defaultSeason, phaseFor } from "../../public/seasons.js";
 
 export const HOME_META = {
   christmas: {
@@ -34,12 +34,16 @@ export const HOME_META = {
 export const homeMeta = (isoDate) => HOME_META[defaultSeason(isoDate)] || HOME_META.christmas;
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-// Swap the title, description and Open Graph text in the static page. A tag that is not found is left alone.
+// Swap the title, description and Open Graph text in the static page, and write the current season into the first HTML (the colour, the season button's
+// icon and name) so a slow connection never flashes another season before app.js runs. A tag that is not found is left alone.
 export function applyHomeMeta(html, isoDate) {
-  const m = homeMeta(isoDate);
+  const m = homeMeta(isoDate), k = defaultSeason(isoDate), ph = phaseFor(k, isoDate);
   return html
     .replace(/<title>[^<]*<\/title>/, `<title>${esc(m.title)}</title>`)
     .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(m.desc)}">`)
     .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${esc(m.title)}">`)
-    .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${esc(m.desc)}">`);
+    .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${esc(m.desc)}">`)
+    .replace(/<html lang="en" data-theme="light"(?: data-season="[a-z]*")?>/, `<html lang="en" data-theme="light" data-season="${k}">`)
+    .replace(/(id="seasonico" aria-hidden="true">)[^<]*(<\/span><span id="seasonlbl">)[^<]*(<\/span>)/, (_, a, b, c) => `${a}${ph.icon}${b}${esc(ph.name)}${c}`)
+    .replace(/(id="seasonbtn"[^>]*aria-label=")Season[^"]*(")/, (_, a, b) => `${a}Season: ${esc(ph.name)}${b}`);
 }

@@ -6,10 +6,14 @@
 <title>Feature your event · SoCal Lights</title>
 <meta name="description" content="Put your Southern California Halloween, holiday or seasonal event in front of people on SoCal Lights: a Featured pin, a banner pill at the top of the map list, and top of the list.">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261111x553">
-<link rel="stylesheet" href="/info.css?v=20261111x553">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/info.css?v=20261111x560">
 <style>
 .plan{background:#fff;gap:8px}:root[data-theme="dark"] .plan{background:var(--tile)}
 .plan .price{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.plan .price small{font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0}
@@ -28,7 +32,7 @@
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="wide">
-<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a><span id="tb"></span><span id="acct"></span></div></div>
 <main class="wide">
 <h1>Feature your event</h1>
 <p class="lede">A Featured event stands out on the SoCal Lights map with a gold <span class="tag">Featured</span> badge and a bigger gold-ringed pin. You can add a banner pill at the top of the map list, and top of the list. Listing an event is free; this is optional. <a href="/pricing">See all pricing</a>. Run several events a season as a city, chamber, nonprofit or event producer? See <a href="/partner">Event Partner</a>.</p>
@@ -284,9 +288,9 @@ async function paidView(S) {
 }
 </script>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261111zb";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261111x560";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 </script>
-<script src="/footer.js?v=20261111e" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

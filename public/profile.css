@@ -39,6 +39,6 @@ body.prof .sh-content,body.prof .sh-content.main{display:block}
 .prof .sh-content .who>div>div{row-gap:8px!important}
 .prof .list .dot{margin-left:5px}
 
-.prof .list .waitnote{color:var(--season);font-weight:600}
+.prof .list .waitnote{color:var(--season-ink);font-weight:600}
 .prof .sechead+.list+.sechead{margin-top:14px}
 .prof .pempty a{color:var(--ink);text-underline-offset:3px}

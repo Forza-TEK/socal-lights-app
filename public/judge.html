@@ -6,11 +6,15 @@
 <meta name="robots" content="noindex">
 <title>Judges' ballot · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261111x553">
-<link rel="stylesheet" href="/contest.css?v=20261111x556">
-<link rel="stylesheet" href="/routes.css?v=20261109a">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/contest.css?v=20261111x560">
+<link rel="stylesheet" href="/routes.css?v=20261111x560">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="sh-page">
@@ -18,8 +22,8 @@
 <script type="module">
 import { contestImage } from "/contesticon.js?v=20261111a";
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261111z";
-import { refreshAcct } from "/addflow.js?v=20261111zb";
-import { mountShell } from "/appshell.js?v=20261111z";
+import { refreshAcct } from "/addflow.js?v=20261111x560";
+import { mountShell } from "/appshell.js?v=20261111x560";
 import { tourHtml, wireTour } from "/tour.js?v=20261111d";
 import { fmtDate } from "/contestfmt.js?v=20261111a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
@@ -74,6 +78,6 @@ function render() {
 }
 noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261111e" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

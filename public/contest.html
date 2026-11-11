@@ -6,21 +6,25 @@
 <meta name="robots" content="noindex">
 <title>Home decorating contest · SoCal Lights</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261111x553">
-<link rel="stylesheet" href="/contest.css?v=20261111x556">
-<link rel="stylesheet" href="/routes.css?v=20261109a">
+<link rel="stylesheet" href="/tokens.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/contest.css?v=20261111x560">
+<link rel="stylesheet" href="/routes.css?v=20261111x560">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
-<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><span id="tb"></span><span id="acct"></span></div></div>
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a><span id="tb"></span><span id="acct"></span></div></div>
 <main class="cmain">
 <div id="app"><p class="loading">Loading the contest…</p></div>
 </main>
 <script type="module">
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261111z";
-import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111zb";
+import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261111x560";
 import { tourHtml, wireTour } from "/tour.js?v=20261111d";
 import { getMaps, routeUrl, navAttr } from "/maps.js?v=20261111a";
 import { fmtDate, statusChips, entriesClosedText, tieText, PT_NOTE } from "/contestfmt.js?v=20261111a";
@@ -122,6 +126,6 @@ async function vote(id, category) {
 }
 $("#tb").innerHTML = themeBtn(); mountAcct($("#acct")); noteSigninResult(); load();
 </script>
-<script src="/footer.js?v=20261111e" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
 </body>
 </html>

@@ -1,5 +1,4 @@
 /* one menu look everywhere: 44px rows, 10px corners, soft grey hover/selected (the same as the side menus and Admin) */
-:root{--navhi:#f7f7f7}:root[data-theme="dark"]{--navhi:#1f2430}
 /* Account menu and the signed-out sign-in button (the shared look of the header controls) */
 .acct-in{cursor:pointer}
 .acct[data-acct-menu]{cursor:pointer;font:inherit;font-weight:600}

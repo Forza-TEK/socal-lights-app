@@ -1,0 +1,52 @@
+/* The one place the site's colors, fonts and shadows are defined. Every page (the map, the add flows, Pricing, Help, city and event pages,
+   the 404) loads this file first; the page stylesheets only use var(--x). tests/css-tokens.test.mjs fails if a stylesheet or page uses a
+   variable that is neither defined here nor declared in the same file, which is how pages used to fall back to light colors in night mode.
+   Two naming families exist for historical reasons and are kept as aliases: --surface = --tile, --f = --f-body = --font. */
+:root{
+  --bg:#ffffff; --surface:#ffffff; --tile:var(--surface); --surface-2:#f3f1ec; --ink:#14161b; --muted:#646a7a;
+  --line:#e7e3dc;                 /* hairline for cards and dividers */
+  --line2:#b0b0b0;                /* stronger border for buttons, dashed drop zones */
+  --field:#8a8f9c;                /* border of text fields (3.2:1 on white, WCAG 1.4.11) */
+  --navhi:#f7f7f7;                /* hover and selected row in every menu */
+  --shadow:0 12px 32px rgba(20,22,27,.10),0 2px 6px rgba(20,22,27,.06);
+  --shadow-sm:0 2px 10px rgba(20,22,27,.08),0 1px 2px rgba(20,22,27,.05);
+  --free:#0b7a52; --free-soft:#dcf5ea; --paid:#b33a08; --paid-soft:#fde7da; --gold:#8a5f00; --gold-soft:#fbefcc;
+  --ice:#2559b8; --ice-soft:#e2ecfb; --heart:#e5484d; --focus:#2a5bd7;
+  --btn:#222222; --btn-ink:#ffffff; --bad:#c13515; --ok:#1a7f4b;
+  --s-newyear:#6d3fc0; --s-valentines:#b0123f; --s-spring:#c0306f; --s-summer:#1e63c4; --s-halloween:#e8590c; --s-christmas:#c9313b;
+  --season:var(--s-christmas); --on-season:#ffffff;
+  --f:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --f-body:var(--f); --f-display:var(--f); --f-mono:var(--f); --font:var(--f);
+  --mono:ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0b0d12; --surface:#161a22; --surface-2:#1f2430; --ink:#f5f3ee; --muted:#9ba1b1;
+  --line:#2a303c; --line2:#5a5a5a; --field:#6d7485; --navhi:#1f2430;
+  --shadow:0 12px 32px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.35);
+  --shadow-sm:0 2px 10px rgba(0,0,0,.35);
+  --free:#3ddc97; --free-soft:#123628; --paid:#ff9a5c; --paid-soft:#3a2216; --gold:#f5c461; --gold-soft:#33291a;
+  --ice:#7fb6ee; --ice-soft:#18273b; --heart:#ff6b70; --focus:#8fb0ff;
+  --btn:#f4f4f4; --btn-ink:#121212; --bad:#ff8a73; --ok:#4cc58a;
+  --s-newyear:#a98bf0; --s-valentines:#ff5c82; --s-spring:#f07cb2; --s-summer:#6fa8f2; --s-halloween:#ff8a3d; --s-christmas:#ff6b6b;
+  --on-season:#0b0d12;
+  color-scheme:dark;
+}
+:root[data-season="newyear"]{--season:var(--s-newyear)} :root[data-season="valentines"]{--season:var(--s-valentines)} :root[data-season="spring"]{--season:var(--s-spring)} :root[data-season="summer"]{--season:var(--s-summer)}
+:root[data-season="halloween"]{--season:var(--s-halloween);--on-season:#14161b} :root[data-season="christmas"]{--season:var(--s-christmas)}
+/* tints and text colors derived from the season: use --season for fills and borders, --season-ink for text */
+:root{--season-soft:color-mix(in srgb,var(--season) 14%,var(--surface)); --season-ink:color-mix(in srgb,var(--season) 72%,var(--ink))}
+/* one hint-text color for every field on every page (the browser default is too faint on dark fields) */
+::placeholder{color:var(--muted);opacity:1}
+/* printing: always the light palette (night-mode light text would vanish on paper) */
+@media print{:root,:root[data-theme="dark"]{--bg:#fff;--surface:#fff;--surface-2:#f3f1ec;--ink:#000;--muted:#333;--line:#bbb;--season-ink:#000;color-scheme:light}}
+
+/* ---- the site header: logo, wordmark, Map link, light/night, account. Every page uses these rules: 72 px tall, same Map link ---- */
+.hdr .brand,.top .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.02em;white-space:nowrap;color:var(--ink);text-decoration:none}
+.hdr .brand img,.top .brand img{display:block;width:40px;height:40px;border-radius:50%;flex:none}
+.hdr .brand .wm b,.top .brand .wm b{font-weight:800;background:linear-gradient(90deg,#f08a1c,var(--s-halloween) 45%,var(--s-christmas));-webkit-background-clip:text;background-clip:text;color:transparent}
+@media(max-width:400px){.hdr .brand .wm,.top .brand .wm{display:none}}
+.maplink{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow);font:700 15px/1.2 var(--f);text-decoration:none;white-space:nowrap;box-sizing:border-box;flex:none}
+.maplink:hover{box-shadow:0 0 0 1.5px var(--season),var(--shadow)}
+.maplink .short{display:none}
+@media(max-width:480px){.maplink .long{display:none}.maplink .short{display:inline}.maplink{padding:0 14px}}
+@media print{.maplink{display:none}}

@@ -12,10 +12,10 @@ main b,main strong{color:var(--ink);font-weight:500}
 .plan h3{font-weight:500;font-size:18px}.price{font-size:32px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.price small{font-size:14px;font-weight:400;color:var(--muted)}
 .plan ul{margin:0}
 main .btn{border-radius:8px}.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
-.tag{display:inline-block;font-size:12px;font-weight:500;border-radius:999px;padding:2px 10px;border:1px solid var(--season);color:var(--season)}.tag::before{content:"★ "}
+.tag{display:inline-block;font-size:12px;font-weight:500;border-radius:999px;padding:2px 10px;border:1px solid var(--season);color:var(--season-ink)}.tag::before{content:"★ "}
 details{border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0}summary{font-weight:500;cursor:pointer;color:var(--ink)}
 #pick{display:grid;gap:8px;margin:0 0 8px}
-main input[type=search],main input[type=text],main input[type=email]{width:100%;font:400 17px/1.4 var(--font);padding:16px;border:1px solid var(--line2);border-radius:8px;background:transparent;color:var(--ink);min-height:56px}
+main input[type=search],main input[type=text],main input[type=email]{width:100%;font:400 17px/1.4 var(--font);padding:16px;border:1px solid var(--field);border-radius:8px;background:transparent;color:var(--ink);min-height:56px}
 main input:focus{outline:0;border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .res{display:grid;gap:6px;margin:0;padding:0;list-style:none}.res button{width:100%;text-align:left;font:inherit;padding:12px 16px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);cursor:pointer}.res button:hover{border-color:var(--ink)}.res button small{display:block;color:var(--muted)}
 .chosen{border-left:2px solid var(--season);padding:4px 0 4px 14px;color:var(--ink)}
@@ -96,3 +96,8 @@ main.legal{display:grid;gap:0 48px;grid-template-columns:minmax(0,1fr)}
 
 /* Pages inside the app frame (appshell.js): the frame has its own top bar and menu, so the page header goes and the content uses the frame width */
 body.sh-page .hdr{display:none}body.sh-page.wide main,body.sh-page main{max-width:1040px;margin:0 auto;padding:22px clamp(16px,3vw,32px) 72px}body.sh-page .sh-content{max-width:none}@media(max-width:699px){body.sh-page main{padding:16px 16px calc(92px + env(safe-area-inset-bottom,0px))}}
+
+/* a very long single word (a hashtag, a web address) wraps instead of widening the page */
+h1,h2,h3,.tag,.tile,.pcard,summary{overflow-wrap:anywhere}
+
+@media print{.hdr,.bar,.sitefoot,.skiplink,.sh-side,.sh-top,.sh-bbar,.sh-skip,.btn,button,[data-theme-slot],#tb,#acct{display:none!important}body{background:#fff;color:#000;padding:0;font-size:12pt}.sh-content,main{max-width:none!important;padding:0!important;margin:0!important}main a[href^="http"]::after{content:" (" attr(href) ")";font-size:.8em;overflow-wrap:anywhere}}
