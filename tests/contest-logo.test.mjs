@@ -55,3 +55,15 @@ test("upload: only the organizer team; JPG/PNG/WebP only; stored in R2; the publ
   const none = await (await contestGet({ params: { slug: SLUG }, request: new Request(`${origin}/api/contests/${SLUG}`), env: t.env })).json(); assert.equal(none.contest.logo, "");
   assert.equal((await logoGet({ params: { slug: SLUG }, request: new Request(`${origin}/api/contests/${SLUG}/logo`), env: t.env })).status, 404);
 });
+
+test("the /e page and the map card never print a template placeholder: homes with no photo show the drawn icon (a regression: the icon address was printed literally and the image broke)", async () => {
+  const { onRequestGet: eventPage } = await import("../functions/e/[id].js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb) VALUES ('c-light-up','Light Up the Town','Los Angeles','Covina','drive','2026-11-01','2027-12-20','confirmed',1,'Free','',34.1,-118,'b')").run();
+  t.raw.prepare("INSERT INTO posts (id,status,biz,title,city,lat,lng,descr,photos,contact_email,season,address,street,zip,contest_id,user_id,entry_no) VALUES ('a','approved','A','The A','Covina',34.1,-118,'x','[]','','christmas','1 Elm Ave, Covina, CA','1 Elm','','c1','',1)").run();
+  const html = await (await eventPage({ request: new Request(`${origin}/e/c-light-up`), env: t.env, params: { id: "c-light-up" }, waitUntil() {} })).text();
+  assert.match(html, /class="hmn"><img src="data:image\/svg\+xml;utf8,/, "the drawn icon is the placeholder");
+  assert.doesNotMatch(html, /\$\{/, "no unfilled template text");
+  const { readFileSync } = await import("node:fs");
+  assert.doesNotMatch(readFileSync("public/app.js", "utf8"), /'[^'`\n]*<img src="\$\{esc\(ph\)\}/, "app.js builds the placeholder with a template literal");
+});
