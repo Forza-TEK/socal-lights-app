@@ -3,9 +3,12 @@
 //   edit   : name, hours, price, free, blurb, url, venue, start, end
 //   notice : "cancelled" | "postponed" | "" shows a tag on the event
 //   copy   : "Run again next year": a new event with every date moved forward a year, marked Expected
-import { json, err, clean, webUrl, newId } from "../../../_lib/util.js";
+import { json, err, clean, webUrl, newId, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
+import { CITY } from "../../../../public/cities.js";
+import { SEASONS } from "../../../../public/seasons.js";
+import { BAD } from "../../../_lib/moderation.js";
 import { requireUser, sameOrigin, normEmail } from "../../../_lib/auth.js";
-import { isDate, slug, upsertEvent } from "../../../_lib/events.js";
+import { isDate, slug, upsertEvent, verifyEventPage } from "../../../_lib/events.js";
 import { refundDueStatements } from "../../../_lib/orders.js";
 import { normName, line } from "../../../_lib/fields.js";
 
@@ -36,12 +39,26 @@ export async function onRequestPost({ params, request, env }) {
     if (venue.length < 3) return err(400, "Enter the venue or place name.");
     if (!isDate(start) || !isDate(end) || end < start) return err(400, "Check the start and end dates.");
     if (urlRaw && !url) return err(400, "That doesn't look like a valid web address.");
-    await env.DB.prepare("UPDATE event_submissions SET name=?, blurb=?, venue=?, start_date=?, end_date=?, hours=?, free=?, price=?, url=? WHERE id=?").bind(name, blurb, venue, start, end, hours, free, price, url, s.id).run();
-    if (live) {
-      const cur = await env.DB.prepare("SELECT status FROM events WHERE id = ?").bind(s.event_id).first();
-      await upsertEvent(env, { id: s.event_id, name, county: s.county, city: s.city, type: s.type, start_date: start, end_date: end, status: cur ? cur.status : "expected", free, price, hours, lat: s.lat, lng: s.lng, blurb, url, season: s.season, venue, address: s.address });
+    // The same rules as a new event (functions/api/submit-event.js): the words that need a person's look are refused, a season needs one of its own types, the city must be listed,
+    // the street address needs 6 characters, and a changed address is looked up again so the pin moves with it.
+    if (BAD.test(`${name} ${blurb} ${venue}`)) return err(400, "That doesn't look like a community event listing.");
+    const season = b.season === undefined ? s.season : SEASONS[b.season] ? b.season : "", type = b.type === undefined ? s.type : clean(b.type, 10);
+    if (b.season !== undefined || b.type !== undefined) { if (!season || !SEASONS[season].types[type]) return err(400, "Choose a season and an event type."); }
+    const city = b.city === undefined ? s.city : clean(b.city, 60), address = b.address === undefined ? String(s.address || "") : line(b.address, 160);
+    if (b.city !== undefined && !CITY[city]) return err(400, "Choose a city from the list.");
+    if (b.address !== undefined && address.length < 6) return err(400, "Enter the street address (or the two cross streets for a parade).");
+    let { lat, lng, county } = s, located;
+    if (CITY[city] && (city !== s.city || address.toLowerCase() !== String(s.address || "").toLowerCase())) {
+      [lat, lng] = CITY[city]; const pt = await geocodeAddress(address, city, [lat, lng]); located = !!pt; if (pt) [lat, lng] = pt;
+      const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all(); county = nearestCounty(lat, lng, evs);
     }
-    return json({ ok: true });
+    // A new web page, name or first day is checked the way a new event's page is: "Confirmed" only when the page mentions the event and its year, otherwise "Expected".
+    const cur = live ? await env.DB.prepare("SELECT status FROM events WHERE id = ?").bind(s.event_id).first() : null;
+    let status = cur ? cur.status : "expected", verified = s.verified;
+    if (url !== (s.url || "") || name !== s.name || start !== s.start_date) { const ck = url ? await verifyEventPage(url, name, start) : { ok: false }; status = ck.ok ? "confirmed" : "expected"; verified = ck.ok ? 1 : 0; }
+    await env.DB.prepare("UPDATE event_submissions SET name=?, blurb=?, venue=?, start_date=?, end_date=?, hours=?, free=?, price=?, url=?, season=?, type=?, city=?, address=?, lat=?, lng=?, county=?, verified=? WHERE id=?").bind(name, blurb, venue, start, end, hours, free, price, url, season, type, city, address, lat, lng, county, verified, s.id).run();
+    if (live) await upsertEvent(env, { id: s.event_id, name, county, city, type, start_date: start, end_date: end, status, free, price, hours, lat, lng, blurb, url, season, venue, address });
+    return json({ ok: true, ...(located === undefined ? {} : { located }) });
   }
   if (b.action === "copy") {
     const start = plusYear(s.start_date), end = plusYear(s.end_date), id = newId(), eventId = `u-${slug(s.name).slice(0, 24)}-${newId().slice(0, 6)}`;

@@ -7,14 +7,18 @@
 //   GET     : the recent changes (who changed which field, and when)
 // Who can open it: the person who posted it, and the installer's profile owner once the installer has confirmed they installed it
 // (or when the listing is the installer's own). Each side is emailed what the other changed.
-import { json, err, clean, webUrl } from "../../../_lib/util.js";
+import { json, err, clean, webUrl, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
+import { CITY } from "../../../../public/cities.js";
+import { needsReview } from "../../../_lib/moderation.js";
+import { addHomePhotos, removeHomePhoto, coverHomePhoto } from "../../../_lib/homephotos.js";
+import { checkThrottle, hashKey } from "../../../_lib/throttle.js";
 import { requireUser, sameOrigin, normEmail } from "../../../_lib/auth.js";
 import { SEASONS } from "../../../../public/seasons.js";
 import { movePhotos } from "../../../_lib/posts.js";
 import { r2Delete, photoKeys } from "../../../_lib/dbchunk.js";
 import { diff, logHome, lines, notify, HOME_FIELDS } from "../../../_lib/changes.js";
 import { refundDueStatements } from "../../../_lib/orders.js";
-import { phoneField, normName, normText, normRadio, line } from "../../../_lib/fields.js";
+import { phoneField, normName, normText, normRadio, normStreet, normZip, line } from "../../../_lib/fields.js";
 
 // Which side of the listing is this person on? Returns { row, inst, role: "homeowner" | "installer" } or { res }.
 export async function access(env, user, id) {
@@ -51,8 +55,29 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   const a = await access(env, user, params.id);
   if (a.res) return a.res;
   const { row, inst, role } = a;
-  const b = await request.json().catch(() => ({}));
   const mine = row.user_id === user.id || normEmail(row.contact_email) === user.email;
+
+  // Photos (multipart): the same checks as a new submission (up to 8, JPG/PNG/WebP, under 6 MB). Only the person who posted the home.
+  if ((request.headers.get("content-type") || "").includes("multipart/form-data")) {
+    if (!mine) return err(403, "Only the person who posted this can change its photos.");
+    const slow = await checkThrottle(env, [{ kind: "home-photos", key: await hashKey(env, "u", user.id), max: 40, windowHours: 24, msg: "That is a lot of photo changes for one day." }]);
+    if (slow) return err(429, slow);
+    let form; try { form = await request.formData(); } catch { return err(400, "The photos couldn't be read. Please try again."); }
+    const files = form.getAll("photos").filter((f) => f && typeof f === "object" && f.size > 0);
+    const r = await addHomePhotos(env, row, files);
+    if (r.error) return err(r.status, r.error);
+    await logHome(env, row.id, { email: user.email, name: user.name || row.biz || user.email, role }, [{ label: "Photos", old: String(JSON.parse(row.photos || "[]").length), new: String(r.photos.length) }]);
+    return json({ ok: true, photos: r.photos });
+  }
+  const b = await request.json().catch(() => ({}));
+
+  if (b.action === "removephoto" || b.action === "coverphoto") {
+    if (!mine) return err(403, "Only the person who posted this can change its photos.");
+    const r = b.action === "removephoto" ? await removeHomePhoto(env, row, String(b.key || "")) : await coverHomePhoto(env, row, String(b.key || ""));
+    if (r.error) return err(r.status, r.error);
+    if (b.action === "removephoto") await logHome(env, row.id, { email: user.email, name: user.name || row.biz || user.email, role }, [{ label: "Photos", old: String(JSON.parse(row.photos || "[]").length), new: String(r.photos.length) }]);
+    return json({ ok: true, photos: r.photos });
+  }
 
   if (b.action === "pause" || b.action === "resume") {
     if (!mine) return err(403, "Only the person who posted this can take it down or put it back.");
@@ -81,7 +106,24 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     if (pro && webRaw && !web) return err(400, "That website address doesn't look right.");
     const phoneNew = pro ? phoneField(b.phone ?? row.phone) : { value: row.phone };
     if (phoneNew.error) return err(400, phoneNew.error);
+    // Address: only the person who posted the home. Same rules as a new submission (a listed city, a 5-digit ZIP); a changed address is looked up again so the pin moves with it.
+    const touched = b.street !== undefined || b.city !== undefined || b.zip !== undefined;
+    const city = b.city === undefined ? row.city : clean(b.city, 60), street = b.street === undefined ? row.street || "" : normStreet(clean(b.street, 120)), zip = b.zip === undefined ? row.zip || "" : normZip(clean(b.zip, 12)) || clean(b.zip, 10);
+    let loc = null, located;
+    if (touched) {
+      if (!mine) return err(403, "Only the person who posted this can change its address.");
+      if (!CITY[city]) return err(400, "Choose a city from the list.");
+      if (street.length < 3) return err(400, "Add your street address.");
+      if (!/^\d{5}$/.test(zip)) return err(400, "The ZIP code needs 5 digits.");
+      if (street !== (row.street || "") || city !== row.city || zip !== (row.zip || "")) {
+        const address = `${street}, ${city}, CA ${zip}`; let [lat, lng] = CITY[city];
+        const pt = await geocodeAddress(address, city, [lat, lng]); located = !!pt; if (pt) [lat, lng] = pt;
+        const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
+        loc = { street, city, zip, address, lat, lng, county: nearestCounty(lat, lng, evs) };
+      }
+    }
     const next = {
+      ...(loc ? { street: loc.street, city: loc.city, zip: loc.zip } : {}),
       title, descr: desc, where_txt: line(b.where ?? row.where_txt, 120), season: SEASONS[b.season] ? b.season : row.season,
       lights_on: line(b.lights_on ?? row.lights_on, 60), visit: ["drive", "walk", "both", ""].includes(b.visit) ? b.visit : row.visit,
       parking: ["free", "street", "none", ""].includes(b.parking) ? b.parking : row.parking, accessible: b.accessible === undefined ? row.accessible : b.accessible ? 1 : 0,
@@ -89,14 +131,23 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     };
     const changes = diff(row, next, HOME_FIELDS);
     if (!changes.length) return json({ ok: true, changed: 0 });
-    await env.DB.prepare("UPDATE posts SET title=?, descr=?, where_txt=?, season=?, lights_on=?, visit=?, parking=?, accessible=?, radio=?, web=?, phone=?, service_area=? WHERE id=?")
-      .bind(next.title, next.descr, next.where_txt, next.season, next.lights_on, next.visit, next.parking, next.accessible, next.radio, next.web, next.phone, next.service_area, row.id).run();
+    // The same "needs a person to look" rule as a new submission (functions/_lib/moderation.js): text that trips it takes the home off the map and back into review until it is approved again.
+    const review = row.status !== "pending" && needsReview(row.biz, next.title, next.descr, next.where_txt);
+    let photos = row.photos;
+    if (review && row.status === "approved") photos = JSON.stringify(await movePhotos(env, row, "p/", "pending/"));
+    await env.DB.batch([
+      env.DB.prepare("UPDATE posts SET title=?, descr=?, where_txt=?, season=?, lights_on=?, visit=?, parking=?, accessible=?, radio=?, web=?, phone=?, service_area=? WHERE id=?")
+        .bind(next.title, next.descr, next.where_txt, next.season, next.lights_on, next.visit, next.parking, next.accessible, next.radio, next.web, next.phone, next.service_area, row.id),
+      ...(loc ? [env.DB.prepare("UPDATE posts SET street=?, city=?, zip=?, address=?, lat=?, lng=?, county=? WHERE id=?").bind(loc.street, loc.city, loc.zip, loc.address, loc.lat, loc.lng, loc.county, row.id)] : []),
+      ...(review ? [env.DB.prepare("UPDATE posts SET status='pending', approved_at=NULL, photos=? WHERE id=?").bind(photos, row.id)] : []),
+    ]);
+    if (review) changes.push({ label: "Listing", old: row.status === "approved" ? "On the map" : "Taken down for the season", new: "Back in review (the new text needs a look)" });
     const who = { email: user.email, name: (role === "installer" && inst ? inst.name : user.name || row.biz) || user.email, role };
     await logHome(env, row.id, who, changes);
     // Everyone who shares the listing is told, including the person who made the change
     const job = notify(env, everyone(row, inst, who), "listing_updated", { who: who.name, title: next.title, changes: lines(changes), link: where(row, inst, "homeowner"), manage: inst ? "https://socallights.app/installer/" + inst.slug + "/manage" : "" });
     if (waitUntil) waitUntil(job);
-    return json({ ok: true, changed: changes.length });
+    return json({ ok: true, changed: changes.length, review, ...(loc ? { located } : {}) });
   }
   return err(400, "Unknown action.");
 }

@@ -106,7 +106,7 @@ Running a contest needs a contest pass, starting with the first contest. The org
 
 ## Sponsors of a contest
 url: /help#sponsors
-An organizer can record a sponsor who paid them directly. Sponsorship money goes to the organizer, not to SoCal Lights. A sponsor appears on the contest page only when the organizer has confirmed the payment (or an in-kind gift), has the sponsor's permission, and chooses to show it. The contest page then shows the sponsor's logo, name and link, labelled Sponsor, with the line that sponsors support the contest but do not influence who wins. Organizers can also share a private sponsor invite link (/s/<code>): a sponsor opens it without an account, fills in a short form, and nothing is shown on the contest page until the organizer confirms the payment and approves it. The organizer can turn the link off or make a new one. Never pay anyone you do not know.
+An organizer can record a sponsor who paid them directly. Sponsorship money goes to the organizer, not to SoCal Lights. A sponsor appears on the contest page only when the organizer has confirmed the payment (or an in-kind gift), has the sponsor's permission, and chooses to show it. The contest page then shows the sponsor's logo, name and link, labeled Sponsor, with the line that sponsors support the contest but do not influence who wins. Organizers can also share a private sponsor invite link (/s/<code>): a sponsor opens it without an account, fills in a short form, and nothing is shown on the contest page until the organizer confirms the payment and approves it. The organizer can turn the link off or make a new one. Never pay anyone you do not know.
 
 ## Featuring a home after a contest
 url: /feature
@@ -114,7 +114,7 @@ After winners are announced, the owner of a home that finished first, second or 
 
 ## Where to find Add, Contests, Tutorials and Help
 url: /help
-The map has two buttons at the top right: the account circle and the three dots. When you are signed in, Add (called Add an event, home or contest), Your contests, Tutorials and Help are in the account circle menu: tap the account circle at the top right. That menu also has Your profile and Sign out. When you are not signed in, Add, Contests, Tutorials and Help are in the three dots menu instead, and the account circle asks you to sign in. The three dots menu always has the Weekly lights email, Promote your event, Browse by city, Privacy and terms, and a way to email us.
+The map has two buttons at the top right: the account circle and the three dots. When you are signed in, Add (called Add an event, home or contest), Your contests, Tutorials and Help are in the account circle menu: tap the account circle at the top right. That menu also has Your profile and Sign out. When you are not signed in, Add, Contests, Tutorials and Help are in the three dots menu instead, and the account circle asks you to sign in. The three dots menu always has the Weekly lights email, Feature your event, Browse by city, Privacy and terms, and a way to email us.
 
 ## Accounts and sign-in
 url: /help#account
@@ -128,9 +128,10 @@ The Favorites tab (heart icon, next to Places and Shop) is where you plan a nigh
 url: /remove-home
 If your home is on SoCal Lights and you would rather it were not, open the Remove my home page (socallights.app/remove-home). You do not need an account. Enter which home (the listing id from its page, or the street address) and your email so we can confirm and tell you when it is removed, add anything else we should know if you like, and tap Send my request. We email you when it is done. We use your email only to answer this request. You can also write to info@socallights.app.
 
-## Promote your event: how to pay for a Featured pin
+## Feature your event: how to pay for a Featured pin
 url: /feature
-Listing an event is always free; Featured placement is an optional, one-time payment with no subscription. To feature an event: open the three-dot menu and tap Promote your event, or go to the Feature page. Pick a plan: every plan includes the gold Featured pin on the map; the banner adds a Featured pill in the strip at the top of the map list, and Top of the list puts your event first when people browse your area. Choose your event from your list (a home that finished first, second or third in an announced contest can be featured the same way), check the start date, end date and total, and tap Pay on Stripe, where you pay by card or Cash App Pay. Featured events carry a visible Featured badge and still have to be accurate. Plan prices are on the Pricing page.
+keywords: promote advertise boost my event featured pin
+Listing an event is always free; Featured placement is an optional, one-time payment with no subscription. To feature an event: open the three-dot menu and tap Feature your event, or go to the Feature page. Pick a plan: every plan includes the gold Featured pin on the map; the banner adds a Featured pill in the strip at the top of the map list, and Top of the list puts your event first when people browse your area. Choose your event from your list (a home that finished first, second or third in an announced contest can be featured the same way), check the start date, end date and total, and tap Pay on Stripe, where you pay by card or Cash App Pay. Featured events carry a visible Featured badge and still have to be accurate. Plan prices are on the Pricing page.
 
 ## Event Partner: a plan for organizations with several events
 url: /partner
@@ -151,7 +152,7 @@ Featured events, installer placements and contest passes: if we cannot list, fea
 
 ## What an installer can do: all the options for installers
 url: /pricing#banner
-A professional lighting installer has these options, and a free profile comes first. 1) A free company profile page at /installer/<name> with the company, service area, phone, website, a Request a quote button and every home it installed. 2) Add homes you installed: sign in, open Add, choose A lighting display, then A professional installer; your company details are filled in from your profile, and the home counts as confirmed. 3) Homes that homeowners say you installed show Installed by with your company name; you confirm or reject them. 4) Claim and manage your profile: details, logo, areas served, profile views and quote requests. 5) Share listings with homeowners once you confirm them. 6) Get quote requests from your profile, and from contests that name you as their presenting installer. 7) Optional paid Sponsor placements: the Banner, Top of the list, or both, always labelled Sponsor. Prices are on the Pricing page.
+A professional lighting installer has these options, and a free profile comes first. 1) A free company profile page at /installer/<name> with the company, service area, phone, website, a Request a quote button and every home it installed. 2) Add homes you installed: sign in, open Add, choose A lighting display, then A professional installer; your company details are filled in from your profile, and the home counts as confirmed. 3) Homes that homeowners say you installed show Installed by with your company name; you confirm or reject them. 4) Claim and manage your profile: details, logo, areas served, profile views and quote requests. 5) Share listings with homeowners once you confirm them. 6) Get quote requests from your profile, and from contests that name you as their presenting installer. 7) Optional paid Sponsor placements: the Banner, Top of the list, or both, always labeled Sponsor. Prices are on the Pricing page.
 
 ## Installers: add a home you installed
 url: /add-house
@@ -171,7 +172,7 @@ Quote requests reach an installer two ways. On your profile, visitors tap Reques
 
 ## Installers: Sponsor placements, step by step
 url: /sponsor
-Your free profile stays free. Paid Sponsor placements are optional, always labelled Sponsor, and never affect any contest. The Banner is a pill in the strip at the top of the map list; Top of the list puts your company card first in the installer list without the banner; the third plan has both. To buy: open Pricing and choose Installers, or open Promote your event and tap See all pricing; tap Choose on a plan; sign in with your company email; choose your company (it needs a free profile first); check the dates, which start today and end on the last day of the season; and tap Continue to payment, which opens Stripe. Automatic renewal is optional and off unless you tick the box, and you can cancel it any time from your manage page. Prices are on the Pricing page.
+Your free profile stays free. Paid Sponsor placements are optional, always labeled Sponsor, and never affect any contest. The Banner is a pill in the strip at the top of the map list; Top of the list puts your company card first in the installer list without the banner; the third plan has both. To buy: open Pricing and choose Installers, or open Feature your event and tap See all pricing; tap Choose on a plan; sign in with your company email; choose your company (it needs a free profile first); check the dates, which start today and end on the last day of the season; and tap Continue to payment, which opens Stripe. Automatic renewal is optional and off unless you tick the box, and you can cancel it any time from your manage page. Prices are on the Pricing page.
 
 ## Seasons and kinds of events on the map
 url: /
@@ -188,9 +189,19 @@ url: /help
 keywords: directions get directions report wrong problem bug mistake remove home confirmed expected
 Open an event or home and tap Directions to open it in your maps app. To plan several stops use Favorites and Route these. If something looks wrong on a listing, tap Report a problem on it, or see the Help Center article Report a problem; you can also email info@socallights.app. If your own home is on the map and you would rather it were not, tap Not your listing? Remove my home on the listing, or use the Remove my home page. Events listed as Expected have dates that are not confirmed yet; Confirmed means a web page checked the name and date.
 
+## Maps apps (Waze, Google Maps, Apple Maps) and Add to calendar
+url: /tutorials#v-map
+keywords: waze google maps apple maps directions navigate navigation calendar add to calendar export favorites ics google calendar apple calendar outlook
+Directions and Route these can open in Apple Maps, Google Maps or Waze. On a phone, the first time you tap Directions a small window asks which one to use, and it remembers your choice on that device. Waze takes one stop at a time: for a route it opens the first stop, and you open each next stop with its own Directions button. To put an event on your calendar, open the event and tap the calendar button (Add to calendar): it opens Google Calendar when Google Maps is your chosen maps app, and otherwise gives you a calendar file that Apple Calendar and Outlook open. It adds one event at a time; there is no way to send all your Favorites to a calendar at once.
+
+## About the assistant, and who runs SoCal Lights
+url: /terms
+keywords: who built who runs who owns who made this site forza-tek what can you do what is this about us scam legit real
+SoCal Lights (socallights.app) is operated by Forza-TEK. It is a free map of Christmas lights, Halloween, boat parades and other holiday events and decorated homes across Southern California, with neighborhood home-decorating contests. This AI assistant is an automated assistant, not a person. It can help with finding events and homes, how the site works, contests (entering, voting, running one), posting an event or a home, sign-in and your account, and prices. For anything else, or to reach the team, email info@socallights.app.
+
 ## Day and night mode
 url: /
-Every page has a sun and moon button, in the header on the map and on other pages, that switches between day (light) and night (dark) mode. The site picks one for you at first, and remembers your choice on your device.
+Every page has a sun and moon button, in the header on the map and on other pages, that switches between day (light) and night (dark) mode. The site picks one for you: night mode from 6 pm to 6 am in your local time, or all day when your device is set to dark. When you tap the button, your choice holds until the next 6 am or 6 pm, then the automatic choice takes over again.
 
 ## Your profile: drafts, displays, events, contests, badges and account
 url: /profile
@@ -215,7 +226,7 @@ Automatic renewal is optional and off unless you ticked the box when you bought.
 ## Advertising and promoting on SoCal Lights
 url: /pricing
 keywords: advertise advertising promote cost price list banner buy
-Event organizers can promote an event with a Featured pin, banner or top of the list (Promote your event). Lighting installers can buy a Sponsor Banner or Top of the list placement (Pricing, Installers). Contest organizers can record sponsors on their contest page. All paid placements are labelled and never affect a contest result. Prices are on the Pricing page. For anything else, email info@socallights.app.
+Event organizers can promote an event with a Featured pin, banner or top of the list (Feature your event). Lighting installers can buy a Sponsor Banner or Top of the list placement (Pricing, Installers). Contest organizers can record sponsors on their contest page. All paid placements are labeled and never affect a contest result. Prices are on the Pricing page. For anything else, email info@socallights.app.
 
 ## Contest organizer tools: QR poster, yard signs, results download
 url: /help#run
@@ -234,12 +245,12 @@ We do not sell your personal information and we do not use advertising cookies o
 ## Is SoCal Lights free? What costs money?
 url: /pricing
 keywords: free cost how much price list listing site free pay
-Using SoCal Lights is free: the map, search, routes, Favorites, voting, entering a contest, and posting an event or your own home. Residents and visitors use it for free, and organizers pay for a contest pass to run a contest. Optional paid extras are always labelled and never change a contest result: Featured placements for events, installer Sponsor placements (the Banner, Top of the list, or both), contest passes, and featuring a winning home. Prices are on the Pricing page. The site is in English.
+Using SoCal Lights is free: the map, search, routes, Favorites, voting, entering a contest, and posting an event or your own home. Residents and visitors use it for free, and organizers pay for a contest pass to run a contest. Optional paid extras are always labeled and never change a contest result: Featured placements for events, installer Sponsor placements (the Banner, Top of the list, or both), contest passes, and featuring a winning home. Prices are on the Pricing page. The site is in English.
 
 ## Installer and Featured plans: what the Banner includes
 url: /pricing
 keywords: banner plan include includes top of the list pin what do i get
-For events, every Featured plan includes the gold-ringed Featured pin and badge. The banner adds your event as a Featured pill in the strip at the top of the map list, and Top of the list shows your event first when people browse your area; the plans combine these. For installers, the Sponsor Banner is a pill labelled Sponsor in that strip, Top of the list puts your company card first in the installer list without the banner, and the third plan has both. Each plan card on the Pricing page folds open with What's included and the exact price.
+For events, every Featured plan includes the gold-ringed Featured pin and badge. The banner adds your event as a Featured pill in the strip at the top of the map list, and Top of the list shows your event first when people browse your area; the plans combine these. For installers, the Sponsor Banner is a pill labeled Sponsor in that strip, Top of the list puts your company card first in the installer list without the banner, and the third plan has both. Each plan card on the Pricing page folds open with What's included and the exact price.
 
 ## Adding a logo, photos and sponsor logos
 url: /help#sponsors
@@ -259,7 +270,7 @@ There are several ways a home gets onto SoCal Lights. 1) A homeowner adds it: si
 ## Every route for an event at a glance
 url: /add-event
 keywords: all the ways options routes several ways different ways claim an existing event web page confirmed expected
-To list an event, sign in, open Add, and choose An event. If your event has a web page that mentions its name and date, the event is marked Confirmed; without a page it still goes on the map, marked Expected until the dates are checked. If your event is already on the map but not on your account, open Promote your event (or its listing) and use Claim an existing listing: if your email matches the event's own website it is approved at once, otherwise the team checks it. Contest organizers who create a contest also get it on the map as an event automatically. Listing an event is always free.
+To list an event, sign in, open Add, and choose An event. If your event has a web page that mentions its name and date, the event is marked Confirmed; without a page it still goes on the map, marked Expected until the dates are checked. If your event is already on the map but not on your account, open Feature your event (or its listing) and use Claim an existing listing: if your email matches the event's own website it is approved at once, otherwise the team checks it. Contest organizers who create a contest also get it on the map as an event automatically. Listing an event is always free.
 
 ## Sharing a home, an event or your night
 url: /tutorials#night

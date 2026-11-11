@@ -988,3 +988,26 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .chn{display:grid;place-items:center}.chm .chn img,.chm img.fb{width:64px;height:64px;object-fit:contain;border-radius:50%;background:none}.chm img.fb{width:150px;height:112px;padding:24px 43px;box-sizing:border-box;background:var(--surface-2,rgba(128,128,128,.15));border-radius:12px}
 .chb{display:flex;gap:6px}.chd{flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 8px;border-radius:10px;border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}
 .chlinks{display:flex;flex-wrap:wrap;gap:4px 18px}.chall{display:inline-flex;align-items:center;min-height:44px;font-weight:600;color:var(--ink);text-underline-offset:3px}
+
+/* Map top bar, one look at every width: the season button is always a round icon (its name is the tooltip and the screen-reader label), and a round "+" (Add) sits beside the profile
+   circle. When the bar drops to two rows, the season circle is under the logo and the "+" goes under the season circle. */
+#addbtn{display:inline-grid;place-items:center;text-decoration:none;color:var(--ink)}
+.seasonbtn,.seasonbtn.mini{--sb:52px;width:var(--sb);height:var(--sb);padding:0;gap:0;justify-content:center;transition:width .35s cubic-bezier(.25,.1,.25,1),padding .35s cubic-bezier(.25,.1,.25,1),gap .35s cubic-bezier(.25,.1,.25,1)}
+.seasonbtn:not([aria-expanded="true"]) #seasonlbl,.seasonbtn:not([aria-expanded="true"]) .caret{max-width:0;opacity:0;margin:0}
+/* open (its season list is showing): the circle grows into the wide button with the season's name and the arrow */
+.seasonbtn[aria-expanded="true"],.seasonbtn.mini[aria-expanded="true"]{width:auto;padding:0 18px;gap:8px}
+.seasonbtn[aria-expanded="true"] #seasonlbl,.seasonbtn.mini[aria-expanded="true"] #seasonlbl{max-width:240px;opacity:1}
+.seasonbtn[aria-expanded="true"] .caret,.seasonbtn.mini[aria-expanded="true"] .caret{max-width:24px;opacity:1;margin-right:-4px}
+@media (max-width:1099px){
+  .seasonbtn,.seasonbtn.mini{--sb:44px}
+  .searchrow{grid-template-areas:"brand search acct more" "season season season theme" "add add add add"!important}
+  .searchrow #addbtn{grid-area:add;justify-self:start;width:44px;height:44px}
+  #welcome{top:190px!important}
+}
+@media (max-width:700px){#welcome{top:calc(env(safe-area-inset-top,0px) + 176px)!important}}
+@media (min-width:701px) and (max-height:500px){
+  #seasonbtn[aria-expanded="true"]{width:auto;padding:0 16px}#seasonbtn[aria-expanded="true"] #seasonlbl,#seasonbtn[aria-expanded="true"] .caret{display:inline}
+  #addbtn{position:fixed!important;left:14px;top:120px;width:44px;height:44px;z-index:21}
+  #themebtn{top:170px!important}
+  #welcome{top:120px!important;left:72px}
+}

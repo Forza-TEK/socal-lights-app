@@ -18,7 +18,7 @@ const HOMEY = /\b(home|house|display|lights|yard|animated|decorations?)\b/i;
 const ADD_HOME = /\b(add|put|show|list|post|submit|showcase|enter)\b[^.?!]{0,40}\b(my )?(home|house|display|lights|yard)\b[^.?!]{0,30}\b(on|to|in)\b[^.?!]{0,20}\bmap\b|\b(add|list|post|showcase|submit)\b[^.?!]{0,25}\b(my )?(home|house|display)\b|\b(show|share|showcase|display)\b( off)? my (christmas |holiday )?(lights|home|house|display|yard)\b|\b(decorated|decorating)\b[^.?!]{0,20}\b(my|our)\b[^.?!]{0,15}\b(home|house|yard)\b|\b(be|get) on (the|your) map\b[^.?!]{0,20}\b(home|house)?owner\b|\bon the map as a (home|house)owner\b/i;
 const ADD_CONTEST = /\b(start|create|run|host|set up|setup|launch|organi[sz]e)\b[^.?!]{0,40}\b(a |my |our )?(best |decorating |decorated |lighting |holiday )?(home |house )?contest\b|\bcontest\b[^.?!]{0,40}\bhow (do|can) (i|we) (start|begin|set up|create|run)\b|\b(want|wants|would like|like|need)\b[^.?!]{0,15}\b(a|an|our|my)\b[^.?!]{0,15}\b(lighting |decorating |holiday |home )?(contest|competition)\b|\b(run|host|create|start|organi[sz]e)\b[^.?!]{0,30}\b(competition)\b/i;
 const WHERE = /\b(where|how do i (?:get to|go to|open|find)|link to|take me to)\b[^.?!]{0,40}\b(add|contests?|profile|pricing|prices|help|tutorials?|promote|feature)\b/i;
-const PAGES = [["add", "/add", "Add an event, home or contest"], ["contest", "/contests", "Contests"], ["profile", "/profile", "Your profile"], ["pric", "/pricing", "Pricing"], ["help", "/help", "Help Center"], ["tutorial", "/tutorials", "Tutorials"], ["promote", "/feature", "Promote your event"], ["feature", "/feature", "Promote your event"]];
+const PAGES = [["add", "/add", "Add an event, home or contest"], ["contest", "/contests", "Contests"], ["profile", "/profile", "Your profile"], ["pric", "/pricing", "Pricing"], ["help", "/help", "Help Center"], ["tutorial", "/tutorials", "Tutorials"], ["promote", "/feature", "Feature your event"], ["feature", "/feature", "Feature your event"]];
 
 const formCard = (id, extra = {}) => {
   const a = ACTIONS[id];
@@ -86,7 +86,7 @@ export function cardsFor({ question, settings, ctx = {}, handoff = "", user = nu
   const q = String(question || ""), out = [], t = (settings && settings.tiers) || { 1: true, 2: true, 3: true };
   const removing = REMOVE.test(q) || REMOVE2.test(q) || REMOVE3.test(q);
   if (t[1]) {
-    if (handoff || HUMAN.test(q)) out.push(humanCard(q, !handoff));
+    if ((handoff || HUMAN.test(q)) && !(handoff === "gap" && REPORT.test(q))) out.push(humanCard(q, !handoff)); // "this listing is outdated" with nothing in the knowledge base gets the report form, not a generic send-to-the-team
     if (REPORT.test(q) && !out.length && !(user && /\b(my|our)\b/i.test(q) && wantsOwnerAction(q))) out.push(formCard("report_problem", { where: (ctx.eventList && ctx.eventList.length === 1 && ctx.eventList[0].name) || "" }));
     const info = informational(q), from = out.length; // a question that only asks about something still gets the matching card, as a suggestion the visitor can open
     const toMap = ADD_TO_MAP.test(q), homey = HOMEY.test(q) && !/\b(haunted house)\b/i.test(q);

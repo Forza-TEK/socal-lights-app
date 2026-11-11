@@ -110,14 +110,14 @@ test("the reminder goes out once, 7 days before the charge, with amount, date an
   try {
     let un = at("2026-12-29"); await run(env); un(); assert.equal(mailTo(net, "owner@example.com", /renews on/).length, 0, "8 days before: too early");
     un = at("2026-12-30"); const r1 = await run(env); un();
-    const m = mailTo(net, "owner@example.com", /renews on Jan 6, 2027 \(\$50\)/); assert.equal(m.length, 1); assert.equal(r1.body.reminded, 1);
-    assert.match(m[0].text, /\$50/); assert.match(m[0].text, /Jan 7, 2027 to Jan 31, 2027/); assert.match(m[0].text, /cancel-renewal\?t=[a-f0-9]{36}/); assert.ok(!/price changed/.test(m[0].text));
+    const m = mailTo(net, "owner@example.com", /renews on Jan 6, 2027 \(\$50\.00\)/); assert.equal(m.length, 1); assert.equal(r1.body.reminded, 1);
+    assert.match(m[0].text, /\$50\.00/); assert.match(m[0].text, /Jan 7, 2027 to Jan 31, 2027/); assert.match(m[0].text, /cancel-renewal\?t=[a-f0-9]{36}/); assert.ok(!/price changed/.test(m[0].text));
     un = at("2026-12-31"); await run(env); un(); assert.equal(mailTo(net, "owner@example.com", /renews on/).length, 1, "once per renewal");
     // a new price: noted in the reminder, and the charge is at the CURRENT price
     raw.prepare("UPDATE installer_autorenew SET notice_sent_for = NULL").run();
     const was = INSTALLER_PLANS.banner.cents; INSTALLER_PLANS.banner.cents = 5500;
     try { un = at("2027-01-02"); await run(env); un(); } finally { INSTALLER_PLANS.banner.cents = was; }
-    const m2 = mailTo(net, "owner@example.com", /renews on/); assert.equal(m2.length, 2); assert.match(m2[1].text, /The price changed: you last paid \$50 and this renewal is \$55/);
+    const m2 = mailTo(net, "owner@example.com", /renews on/); assert.equal(m2.length, 2); assert.match(m2[1].text, /The price changed: you last paid \$50\.00 and this renewal is \$55\.00/);
     assert.equal(net.piCalls().length, 0, "no charge before the charge date");
   } finally { net.restore(); }
 });

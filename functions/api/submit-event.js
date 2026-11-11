@@ -1,7 +1,7 @@
 // POST /api/submit-event — public "Add your event" form (JSON).
 // The event is geocoded and its web page is checked. If the page really mentions the event and its year, the event
 // is published straight away; otherwise it waits in the admin's "Submitted events" tab. Either way it is logged.
-import { json, err, clean, webUrl, newId, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { json, err, clean, webUrl, newId, nearestCounty, geocodeAddress, verifyTurnstile } from "../_lib/util.js";
 import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
 import { requireUser, sameOrigin } from "../_lib/auth.js";
@@ -10,21 +10,33 @@ import { normName, line, normEmailText } from "../_lib/fields.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 import { ptToday } from "../_lib/time.js";
+import { checkSubmitLimits, limitResponse } from "../_lib/submitlimit.js";
+import { sendReceipt } from "../_lib/receipt.js";
+import { EVENT_PLANS, eventQuote } from "../_lib/featured.js";
+
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const day = (s) => { const [, m, d] = String(s).split("-").map(Number); return MON[m - 1] + " " + d; };
+const whenOf = (e) => (e.end_date && e.end_date !== e.start_date ? `${day(e.start_date)} to ${day(e.end_date)}` : day(e.start_date));
 
 const AUTO_PUBLISH_PER_DAY = 100; // safety valve: past this, everything waits for review
-const BAD = /\b(viagra|casino|porn|xxx|escort|crypto|bitcoin|loan|forex|cbd|betting)\b/i;
+import { BAD } from "../_lib/moderation.js"; // the same rule the edit sheet uses
 
-export async function onRequestPost({ request, env }) {
+// Can a Featured placement be bought for this event today? (the same calculation the checkout uses: featuring opens 30 days before the event, and not after it ended)
+const featurable = (ev) => { const t = ptToday(); return Object.keys(EVENT_PLANS).some((k) => !eventQuote(ev, k, t).problem); };
+
+export async function onRequestPost({ request, env, waitUntil }) {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  // An event belongs to the account that adds it: sign in first (this replaces the "I am human" check)
+  // An event belongs to the account that adds it: sign in first, and pass the "I am human" check (the token comes with the form)
   if (!sameOrigin(request)) return err(403, "Not allowed.");
   const { user, res } = await requireUser(request, env);
   if (res) return res;
   const b = await request.json().catch(() => null);
   if (!b) return err(400, "The form couldn't be read. Please try again.");
+  if (!(await verifyTurnstile(env, b["cf-turnstile-response"], ip))) return err(400, "Please finish the 'I am human' check, then try again.");
 
-  const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM submit_log WHERE ip = ? AND created_at > datetime('now','-1 hour')").bind(ip).first();
-  if (n >= 5) return err(429, "Too many submissions from this connection. Try again in an hour.");
+  // Throttles (functions/_lib/submitlimit.js): per account (the real limit, hourly and daily) and per connection (a safety net a shared network does not trip). A refusal says which limit and when it resets.
+  const lim = await checkSubmitLimits(env, { ip, user, kind: "event" });
+  if (lim) return limitResponse(lim);
 
   const e = {
     name: normName(clean(b.name, 120)), city: clean(b.city, 60), season: SEASONS[b.season] ? b.season : "", type: clean(b.type, 10),
@@ -49,12 +61,17 @@ export async function onRequestPost({ request, env }) {
   if (!e.free && !e.price) e.price = "Price not listed";
   if (e.free && !e.price) e.price = "Free";
 
-  const { n: mineToday } = await env.DB.prepare("SELECT COUNT(*) AS n FROM event_submissions WHERE lower(contact_email) = lower(?) AND created_at > datetime('now','-1 day')").bind(e.email).first();
-  if (mineToday >= 8) return err(429, "You've added several events today. Try again tomorrow, or email info@socallights.app if you have more.");
-  // Already on the map?
-  const dup = await env.DB.prepare("SELECT id FROM events WHERE (lower(name) = lower(?) AND start_date = ?) OR (lower(address) = lower(?) AND start_date = ? AND lower(city) = lower(?)) LIMIT 1")
+  // Already on the map? The answer says whose it is and whether it can be featured, so the page shows only what is true (no "Feature your event" for someone else's event).
+  const dup = await env.DB.prepare("SELECT id, start_date, end_date, featured, featured_until, banner_until FROM events WHERE (lower(name) = lower(?) AND start_date = ?) OR (lower(address) = lower(?) AND start_date = ? AND lower(city) = lower(?)) LIMIT 1")
     .bind(e.name, e.start_date, e.address, e.start_date, e.city).first();
-  if (dup) return json({ ok: true, status: "duplicate", id: dup.id, message: "Good news: this event is already on the map." });
+  if (dup) {
+    const own = await env.DB.prepare("SELECT 1 AS x FROM event_submissions WHERE event_id = ? AND lower(contact_email) = ? LIMIT 1").bind(dup.id, e.email).first();
+    return json({ ok: true, status: "duplicate", id: dup.id, mine: !!own, featurable: !!own && featurable(dup), message: own ? "You already added this event, and it is on the map." : "This event is already on the map." });
+  }
+
+  // The same person sending the same event again while the first one still waits for review: say so (it is not on the map yet), and do not queue a second copy
+  const again = await env.DB.prepare("SELECT id FROM event_submissions WHERE status = 'pending' AND lower(contact_email) = ? AND lower(name) = lower(?) AND start_date = ? LIMIT 1").bind(e.email, e.name, e.start_date).first();
+  if (again) return json({ ok: true, status: "pending", duplicate: true, mine: true, submission_id: again.id, message: "You already sent this event. It is waiting for review." });
 
   // Pin: geocode the street address (rejects a hit more than 30 km from the chosen city)
   let [lat, lng] = CITY[e.city];
@@ -88,8 +105,10 @@ export async function onRequestPost({ request, env }) {
   if (auto) {
     await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: check.ok ? "confirmed" : "expected", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
     await bump(env, "fn:add-event-done");
-    return json({ ok: true, status: "published", id: eventId, submission_id: id, message: "Your event is on the map." });
+    const receipt = await sendReceipt(env, waitUntil, { id: "event_live", to: e.email, vars: { name: e.name, when: whenOf(e), map: `https://socallights.app/#e-${eventId}`, link: "https://socallights.app/profile#events" } });
+    return json({ ok: true, status: "published", id: eventId, submission_id: id, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Your event is on the map." });
   }
   await bump(env, "fn:add-event-done");
-  return json({ ok: true, status: "pending", submission_id: id, message: "Thanks! We'll check your event and add it shortly." });
+  const receipt = await sendReceipt(env, waitUntil, { id: "event_received", to: e.email, vars: { name: e.name, when: whenOf(e), link: "https://socallights.app/profile#events" } });
+  return json({ ok: true, status: "pending", submission_id: id, receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Thanks! We'll check your event and add it shortly." });
 }

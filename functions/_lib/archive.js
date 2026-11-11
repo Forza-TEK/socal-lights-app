@@ -1,6 +1,7 @@
 // Finished contests as they were frozen when the winners were announced (contests.results). Shared by /api/archive (the Past results tab)
 // and the server-written pages /past and /past/<slug>, so they always show the same thing.
 import { SEASONS } from "../../public/seasons.js";
+import { tieText } from "../../public/contestfmt.js";
 
 export const yearOf = (c) => { const y = +c.entries_close.slice(0, 4), m = +c.entries_close.slice(5, 7); return c.season === "newyear" && m >= 12 ? y + 1 : y; };
 export const contestLabel = (c) => { const s = SEASONS[c.season] || {}; return `${s.short || s.label || c.season} | ${yearOf(c)}`; };
@@ -14,8 +15,17 @@ export const ARCHIVE_COLS = "slug,name,org,org_key,city,county,season,entries_cl
 // announced and still public (an announced contest stays 'live' even after its organizer deletes their account)
 export const ARCHIVE_WHERE = "announced = 1 AND status = 'live' AND results != ''";
 
-export function shapeContest(c) {
+// One contest's frozen snapshot, parsed. Throws when the record is not usable (not JSON, or no list of entries), so a caller can skip that one contest.
+export function parseResults(c) {
   const snap = JSON.parse(c.results);
+  if (!snap || typeof snap !== "object" || !Array.isArray(snap.entries)) throw new Error("results snapshot has no entries");
+  return snap;
+}
+// The rows that can be shown: a contest whose snapshot is damaged is left out instead of failing the whole page (/past) or list (/api/archive).
+export function usable(rows) { return rows.filter((r) => { try { parseResults(r); return true; } catch { return false; } }); }
+
+export function shapeContest(c) {
+  const snap = parseResults(c);
   snap.entries = snap.entries.map(publicEntry);
   const byId = Object.fromEntries(snap.entries.map((e) => [e.id, e]));
   const awards = snap.awards || [], cats = snap.categories || [];
@@ -24,5 +34,5 @@ export function shapeContest(c) {
     won: awards.filter((a) => a.ids.includes(e.id)).map((a) => ({ category: a.category, label: a.label, prize: a.prize || "" })) }))
     .sort((a, b) => b.won.length - a.won.length || b.results.reduce((n, r) => n + (r.votes || 0), 0) - a.results.reduce((n, r) => n + (r.votes || 0), 0) || (a.no || 0) - (b.no || 0));
   return { slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, season: c.season, label: contestLabel(c), at: snap.at, mode: c.mode || "public", method: c.judge_method === "score" ? "score" : "pick", categories: cats, entries,
-    awards: awards.filter((a) => a.ids.length).map((a) => ({ category: a.category, label: a.label, prize: a.prize || "", winners: a.ids.map((id) => byId[id]).filter(Boolean).map((e) => ({ name: e.name, address: e.address, city: e.city, photo: (e.photos || [])[0] || "" })) })) };
+    awards: awards.filter((a) => a.ids.length).map((a) => ({ category: a.category, label: a.label, prize: a.prize || "", tie: tieText(a, byId, c.judge_method === "score" ? "score" : "pick"), winners: a.ids.map((id) => byId[id]).filter(Boolean).map((e) => ({ name: e.name, address: e.address, city: e.city, photo: (e.photos || [])[0] || "" })) })) };
 }

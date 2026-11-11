@@ -52,7 +52,7 @@ const INJECTION = [
 ];
 const PERSONAL_ASK = [
   /\b(phone|cell|mobile|e-?mail|address|number|name|surname|contact)\b[^.?!]{0,30}\b(of|for)\b[^.?!]{0,30}\b(owner|homeowner|resident|user|organizer|organiser|member|person|neighbor|neighbour|admin|applicant|voter|judge|installer)\b/i,
-  /\bwho (owns|lives|is the owner|is the homeowner|runs|posted|submitted|voted|are the judges)\b/i,
+  /\bwho (owns|lives|is the owner|is the homeowner|runs|posted|submitted|voted|are the judges)\b(?!\s+(?:this|the)\s+(?:site|website|web site|app|map|socal\s*lights|socallights))/i,
   /\b(list|give|show|export|dump|send)\b[^.?!]{0,30}\b(e-?mails?|users?|accounts?|phone numbers?|customers?|subscribers?|database|voters?|judges?)\b/i,
   /\b(who|which (people|users|accounts))\b[^.?!]{0,25}\b(voted|signed up|subscribed|entered|bought|paid)\b/i,
 ];
@@ -76,7 +76,7 @@ const ANTIFRAUD = [
 ];
 const DEFER = /\b(disqualif\w*|disput\w*|appeals?|lawsuits?|sue|suing|legal(?:ly)?|attorney|lawyer|liab\w+|prizes? (?:tax|taxes|value|delivery|claim|money|cash)|taxes|rigged|cheat\w*|fraud\w*|unfair|(?:my|a|the) votes? (?:was|were|got|is|are) (?:removed|voided|deleted|not counted)|void(?:ed)? (?:my )?votes?|refund(?:ed)? (?:my )?(?:entry|vote))\b/i;
 // Words that make a question plausibly about this site. This only saves a model call on obvious off-topic questions (the model is told the same scope); it is not the only defence.
-const ON_TOPIC = /\b(lights?|lit|christmas|xmas|halloween|thanksgiving|new year'?s?|valentine\w*|spring|summer|events?|parades?|boat|tree|trees|homes?|houses?|displays?|contests?|votes?|voted|voting|winners?|winning|ties?|tied|announc\w*|categor\w+|scor\w+|rank\w*|judg\w+|sponsors?|organi[sz]\w+|judges?|entry|entries|enter|prices?|pricing|costs?|how much|free|pay|paid|payment|refunds?|featured?|pin|banner|sponsors?|installers?|installation|map|maps|route|routes|app|account|sign[ -]?in|log[ -]?in|profile|help|tonight|weekend|near|nearby|city|cities|county|counties|los angeles|orange|riverside|san bernardino|san diego|ventura|santa barbara|socal|southern california|socallights|email|alerts?|newsletter|submit|add|post|showcase|remove|delete|privacy|terms|happening|going on|things to do|visit|walk|drive|tour|market|festival|santa|snow|nativity|holiday|holidays|season|dates?|hours|tickets?|address|install|download|android|iphone|offline|dark mode|night mode|contact|support|phone|listings?|resume|cancell?ed|postponed|rescheduled|photos?|pictures?|upload\w*|approv\w+|donat\w+|tips?|tipping|qr|poster|posters|advertis\w+|accounts|two accounts|code|codes|passwords?|dog|dogs|pets?|parking|stroller|wheelchair|accessible|hi|hello|hey|thanks?|thank you|bye)\b|\b(change|update|edit)\b[^.?!]{0,15}\b(my )?(name|email)\b|\bwhat size\b|\bapi\b/i;
+const ON_TOPIC = /\b(lights?|lit|christmas|xmas|halloween|thanksgiving|new year'?s?|valentine\w*|spring|summer|events?|parades?|boat|tree|trees|homes?|houses?|displays?|contests?|votes?|voted|voting|winners?|winning|ties?|tied|announc\w*|categor\w+|scor\w+|rank\w*|judg\w+|sponsors?|organi[sz]\w+|judges?|entry|entries|enter|prices?|pricing|costs?|how much|free|pay|paid|payment|refunds?|featured?|pin|banner|sponsors?|installers?|installation|map|maps|route|routes|app|account|sign[ -]?in|log[ -]?in|profile|help|tonight|weekend|near|nearby|city|cities|county|counties|los angeles|orange|riverside|san bernardino|san diego|ventura|santa barbara|socal|southern california|socallights|email|alerts?|newsletter|submit|add|post|showcase|remove|delete|privacy|terms|happening|going on|things to do|visit|walk|drive|tour|market|festival|santa|snow|nativity|holiday|holidays|season|dates?|hours|tickets?|address|install|download|android|iphone|offline|dark mode|night mode|confirmed|expected|shops?|top of the list|calendars?|waze|google maps|apple maps|unsubscribe|opt[- ]out|emails|data|scam|legit|forza|forza-tek|who (?:built|made|created|runs|owns|operates)|what can you do|what is (?:this|socal ?lights)|about (?:you|this site)|contact|support|phone|listings?|resume|cancell?ed|postponed|rescheduled|photos?|pictures?|upload\w*|approv\w+|donat\w+|tips?|tipping|qr|poster|posters|advertis\w+|accounts|two accounts|code|codes|passwords?|dog|dogs|pets?|parking|stroller|wheelchair|accessible|hi|hello|hey|thanks?|thank you|bye)\b|\b(change|update|edit)\b[^.?!]{0,15}\b(my )?(name|email)\b|\bwhat size\b|\bapi\b/i;
 
 export function classify(text) {
   const t = String(text || "");
@@ -95,13 +95,14 @@ export function classify(text) {
 const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12 };
 const MON = "(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)";
 const pad = (n) => String(n).padStart(2, "0");
+const FRACTION = new Set(["1/2", "1/3", "2/3", "1/4", "3/4", "1/5", "2/5", "3/5", "4/5", "1/8", "3/8", "5/8", "7/8"]); // a slash pair that is almost always a fraction when no year follows
 // Every calendar date in a piece of text as "MM-DD" ("Dec 5", "5 December", "December 5th, 2026", "2026-12-05", "12/5").
 export function datesIn(text) {
   const out = new Set(), s = String(text || "");
   for (const m of s.matchAll(new RegExp(`\\b${MON}\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b(?!\\s*(?:%|percent|people|homes|houses|events))`, "gi"))) out.add(pad(MONTHS[m[1].toLowerCase().slice(0, 3)]) + "-" + pad(+m[2]));
   for (const m of s.matchAll(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?${MON}\\b`, "gi"))) out.add(pad(MONTHS[m[2].toLowerCase().slice(0, 3)]) + "-" + pad(+m[1]));
   for (const m of s.matchAll(/\b20\d\d-(\d\d)-(\d\d)\b/g)) out.add(m[1] + "-" + m[2]);
-  for (const m of s.matchAll(/\b(\d{1,2})\/(\d{1,2})(?:\/(?:20)?\d\d)?\b/g)) if (+m[1] >= 1 && +m[1] <= 12 && +m[2] >= 1 && +m[2] <= 31) out.add(pad(+m[1]) + "-" + pad(+m[2]));
+  for (const m of s.matchAll(/\b(\d{1,2})\/(\d{1,2})(\/(?:20)?\d\d)?\b(?!\s*(?:of\b|th\b|ths\b|full\b|cup\b|mile|inch|hour))/gi)) if (+m[1] >= 1 && +m[1] <= 12 && +m[2] >= 1 && +m[2] <= 31 && (m[3] || !FRACTION.has(m[1] + "/" + m[2]))) out.add(pad(+m[1]) + "-" + pad(+m[2])); // "3/4 of homes" is a fraction, not March 4; "12/5" and "3/4/2027" are dates
   return out;
 }
 // A dollar amount anywhere in the text, as cents; [] when there is none. Word amounts ("twenty dollars") are returned as -1 (never allowed).
@@ -121,7 +122,7 @@ export function stripFigures(text) {
     .replace(new RegExp(`\\b${MON}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?(?:\\s*,?\\s*20\\d\\d)?\\b`, "gi"), "(date: see the event page)")
     .replace(new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+(?:of\\s+)?${MON}\\b(?:\\s*,?\\s*20\\d\\d)?`, "gi"), "(date: see the event page)")
     .replace(/\b20\d\d-\d\d-\d\d\b/g, "(date: see the event page)")
-    .replace(/\b\d{1,2}\/\d{1,2}(?:\/(?:20)?\d\d)?\b/g, "(date: see the event page)");
+    .replace(/\b(\d{1,2})\/(\d{1,2})(\/(?:20)?\d\d)?\b(?!\s*(?:of\b|th\b|ths\b|full\b|cup\b|mile|inch|hour))/gi, (m, x, y, yr) => (yr || !FRACTION.has(x + "/" + y) ? "(date: see the event page)" : m));
 }
 
 // Sentences that describe how fake votes are detected are removed from everything we retrieve, so a model can never repeat them (owner decision: describe fraud protection only in general terms).

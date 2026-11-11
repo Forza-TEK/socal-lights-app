@@ -1,5 +1,6 @@
 // GET  /api/admin/partner — Admin > Event Partners: the organizations with a plan, a comp or covered events this season (events used x of cap), the comps and the plans bought.
 // POST /api/admin/partner { action: "grant", target, allowed (1-1000 or "unlimited"), until (YYYY-MM-DD), note }   cover an organization key, website domain or email at no price
+//                         { action: "edit_comp", id, allowed (1-1000 or "unlimited"), until, note }   change a running comp (events per season, valid-until date, note)
 //                         { action: "revoke_comp", id }                                  end a comp now
 //                         { action: "release", event_id, season_start }                   free one slot (the event stops showing the badge; its Featured pin is left for Admin > Events)
 // Nothing here calls Stripe. The admin middleware has already required the Access login and logs the POST to admin_log.
@@ -36,6 +37,16 @@ export async function onRequestPost({ request, env, data }) {
     const id = newId();
     await env.DB.prepare("INSERT INTO event_partner_comps (id, org_key, allowed, valid_until, note, created_by) VALUES (?,?,?,?,?,?)").bind(id, key, unlimited ? -1 : n, until, clean(b.note, 300), who).run();
     return json({ ok: true, id, key });
+  }
+  if (b.action === "edit_comp") {
+    const id = clean(b.id, 60), c = await env.DB.prepare("SELECT id, revoked, valid_until FROM event_partner_comps WHERE id = ?").bind(id).first();
+    if (!c) return err(404, "That comp does not exist.");
+    if (c.revoked || c.valid_until < todayPT()) return err(400, "Only a running comp can be edited. Grant a new one instead.");
+    const until = clean(b.until, 10), unlimited = b.allowed === "unlimited" || b.allowed === -1, n = Math.floor(Number(b.allowed));
+    if (!isDate(until) || until < todayPT()) return err(400, "Pick a valid-until date that has not passed.");
+    if (!unlimited && !(n >= 1 && n <= 1000)) return err(400, "Events per season must be a number from 1 to 1000, or unlimited.");
+    await env.DB.prepare("UPDATE event_partner_comps SET allowed = ?, valid_until = ?, note = ? WHERE id = ?").bind(unlimited ? -1 : n, until, clean(b.note, 300), id).run();
+    return json({ ok: true });
   }
   if (b.action === "revoke_comp") { await env.DB.prepare("UPDATE event_partner_comps SET revoked = 1 WHERE id = ?").bind(clean(b.id, 60)).run(); return json({ ok: true }); }
   if (b.action === "release") {

@@ -1,23 +1,23 @@
 // POST /api/contests — an organizer creates a contest (signed in). It goes live straight away when their email matches
 // the website they gave; otherwise it waits for the site owner. GET lists the live contests.
 import { json, err, clean, webUrl, newId } from "../../_lib/util.js";
-import { slug as slugify } from "../../_lib/events.js";
 import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { CITY } from "../../../public/cities.js";
 import { rulesDefault } from "../../../public/rules.js";
 import { SEASONS } from "../../../public/seasons.js";
-import { trustOf, officialSounding, windows, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest, KIND_LABEL } from "../../_lib/contests.js";
+import { trustOf, officialSounding, windows, states, contestSlug, withTail, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest, KIND_LABEL } from "../../_lib/contests.js";
 import { inviteJudges } from "./[slug]/judges.js";
 import { normName, normText } from "../../_lib/fields.js";
 import { reserveSends } from "../../_lib/sendlimit.js";
 import { tell } from "../../_lib/notify.js";
 import { founderKeys, isFounder } from "../../_lib/founder.js";
+import { sendReceipt } from "../../_lib/receipt.js";
 import { liveGate, PAYWALL_MESSAGE } from "../../_lib/passkey.js";
 
 export async function onRequestGet({ env }) {
   const { results } = await env.DB.prepare("SELECT slug,name,org,org_key,city,county,entries_close,vote_start,vote_end,announced,status,entries_open,voting_open FROM contests WHERE status='live' ORDER BY created_at DESC LIMIT 100").all();
   const fk = await founderKeys(env);
-  return json(results.map((c) => ({ founder: isFounder(fk, c.org_key), slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, entries_close: c.entries_close, vote_start: c.vote_start, vote_end: c.vote_end, announced: !!c.announced, ...windows(c) })), { headers: { "cache-control": "public, max-age=60" } });
+  return json(results.map((c) => ({ founder: isFounder(fk, c.org_key), slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, entries_close: c.entries_close, vote_start: c.vote_start, vote_end: c.vote_end, announced: !!c.announced, ...windows(c), ...states(c) })), { headers: { "cache-control": "public, max-age=60" } });
 }
 
 export async function onRequestPost({ request, env, waitUntil }) {
@@ -57,8 +57,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // A contest held for review (official-sounding name) is not live, so it does not count and needs no pass yet.
   const gate = await liveGate(env, user.email, site);
   if (live && !gate.ok) return json({ error: PAYWALL_MESSAGE, code: "pass_required", ...gate.view }, { status: 402 });
-  let slug = slugify(name).slice(0, 40) || "contest";
-  if (await getContest(env, slug)) slug = `${slug.slice(0, 34)}-${newId().slice(0, 5)}`;
+  let slug = contestSlug(name);
+  if (await getContest(env, slug)) slug = withTail(slug, newId().slice(0, 5));
   const season = seasonFor(closes);
   const oneWin = b.oneWin === true, typed = String(b.rules || "").replace(/\r/g, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, 4000);
   const rules = typed.length >= 40 ? typed : rulesDefault({ name, org, city, closes, vs, ve, oneWin });
@@ -77,5 +77,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (live) await listOnMap(env, c);
   if (judgeEmails.length) await inviteJudges(env, { id: c.id, slug, name, org, judge_method: method }, judgeEmails);
   if (c.note) tell(env, waitUntil, env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", "contest_review", { name, org, city, email: user.email, note: c.note, what: official ? "It is not live yet: it waits for you, cannot add organizer-added homes and cannot buy a paid placement until you approve it." : "It is live, but until you click Looks fine the organizer can add only a few homes of their own (25) and cannot buy a paid placement.", link: "https://socallights.app/admin/" });
-  return json({ ok: true, slug, status: c.status, trust, review: !!c.note });
+  const receipt = await sendReceipt(env, waitUntil, { id: c.status === "live" ? "contest_live_now" : "contest_received", to: user.email, vars: { name, link: `https://socallights.app/c/${slug}/manage`, page: `https://socallights.app/c/${slug}` } });
+  return json({ ok: true, slug, status: c.status, trust, review: !!c.note, receipt: receipt === "queued" ? "sent" : "", email: user.email });
 }
