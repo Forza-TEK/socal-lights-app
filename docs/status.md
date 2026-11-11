@@ -38,6 +38,9 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (On map zooms to the home)
+- "On map" on a contest home now opens the map zoomed to the home with its card, like tapping its dot (before it opened the home's details in the list, no zoom). It uses `/#m-<home id>` (`showOnMap` in `app.js`); shared home links (`/#h-`) still open the details. Works from the contest page, the `/e` page and the map card.
+
 ## 2026-11-11 (fix: broken placeholder images on contest homes)
 - The drawn icon on homes with no photo showed as a broken image on the map card and the `/e` page: the icon address was written into a plain string instead of a template, so the page printed the text literally. Fixed, with a test that checks the `/e` page markup. The contest page and judge rows were not affected.
 
