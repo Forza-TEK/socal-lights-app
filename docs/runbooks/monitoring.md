@@ -38,11 +38,11 @@ Pick **Better Stack** (free plan: one account does both the web check and the "h
 
 **B. The site check (keyword on `/api/health`):**
 1. Left menu **Uptime** > **Monitors** > **Create monitor**.
-2. Monitor type / "What to monitor": **Keyword** (or "Expected keyword"/"Alert us when the response contains").
+2. "Alert us when": **URL becomes unavailable** (the free option; the keyword options are paid).
 3. URL: `https://socallights.app/api/health`
-4. Choose: alert when the page **does not contain** `"ok":true` (this fires if the site or database is down: the endpoint answers 503 with `"ok":false`).
+4. Nothing else to choose: `/api/health` answers 503 with `"ok":false` when the site or database is down, which is what "unavailable" means.
 5. Check frequency: 3 minutes (the free minimum). On-call/alert: **Email**, rey@forza-tek.com. Create.
-6. Create a **second** monitor the same way: URL `https://socallights.app/api/health`, alert when the page **contains** `"stale":true`. Name it "SoCal Lights: a scheduled job is stale". Same email.
+6. Create a **second** monitor, "SoCal Lights: a scheduled job is stale". The Better Stack **free plan only has "URL becomes unavailable"** (keyword matching is paid), so use the strict address: URL `https://socallights.app/api/health?strict=1`, alert when **URL becomes unavailable**, same email. It answers 200 while every scheduled job is fresh and **503 when one has gone stale** (or the database is down); the body names the job(s) in `staleJobs`. (On a paid plan, a keyword monitor for `"stale":true` on the plain address does the same.) The first monitor can use the same type with the plain `/api/health` address (503 only when the site or database is down).
 7. If socallights.app ever answers the monitor with a Cloudflare challenge, use `https://socal-lights.pages.dev/api/health` instead (same code and database).
 
 **C. The backup dead-man's switch (heartbeat):**
