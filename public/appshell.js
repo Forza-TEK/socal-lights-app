@@ -13,7 +13,7 @@ const P = {
 };
 const svg = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.file}</svg>`;
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261111x560"; document.head.appendChild(l); }
+if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261111y2"; document.head.appendChild(l); }
 const SITE = [["map", "Map", "/", "map"], ["add", "Add", "/add", "add"], ["tut", "Tutorials", "/tutorials", "play"], ["help", "Help", "/help", "help"], ["prof", "Your profile", "/profile", "user"]];
 
 // opts: { page: "tut"|"prof"|"contest"..., extra: [[key,label,href,icon]], title, items: [{k,label,icon,count?}], active, onPick(k) }

@@ -92,18 +92,16 @@ test("A11-04/05/06/12/13: field sizes, borders, placeholders, small text and foc
   assert.match(help, /\.ask input\{width:100%;font:inherit;font-size:16px;[^}]*var\(--field\)/);
   assert.match(tokens, /::placeholder\{color:var\(--muted\);opacity:1\}/);
   assert.match(help, /\.alist a:focus-visible\{outline:2px solid var\(--focus\)/);
-  for (const f of ["public/styles.css", "public/appshell.css"]) assert.ok(!/font-size:1[01](\.5)?px/.test(read(f).replace(/\.caret\{font-size:10px[^}]*\}/g, "")), f + " has text under 12px");
+  for (const f of ["public/styles.css", "public/appshell.css"]) assert.ok(!/font-size:1[01](\.5)?px/.test(read(f).replace(/\.caret\{font-size:10px[^}]*\}/g, "").replace(/\.sp-tag\{[^}]*font-size:10px[^}]*\}/g, "")), f + " has text under 12px");
   assert.match(read("public/addflow.css"), /\.in\{[^}]*border:1px solid var\(--field\)/);
 });
 
-test("MAP-06/07/14/19: 44 px targets, a sponsor strip that shows whole items, a dimmed background behind the season menu, whole-row visited tap", () => {
+test("MAP-06/14/19: 44 px targets, a scrolling sponsor strip (MAP-07 reverted by the owner), a dimmed background behind the season menu, whole-row visited tap", () => {
   const css = read("public/styles.css"), banner = read("public/banner.js");
   assert.match(css, /\.maplibregl-ctrl-group button\{width:44px!important;height:44px!important\}/);
-  assert.match(css, /\.sponsor\{--sp-h:44px/); assert.match(css, /\.sp-pill a\{[^}]*min-height:var\(--sp-h\)/);
   assert.match(css, /body:has\(#seasonmenu\)::after/);
   assert.match(css, /\.grab\{min-height:44px/);
-  assert.ok(!/translate3d\(\$\{-X\}/.test(banner), "no scrolling marquee");
-  assert.match(banner, /ROTATE_MS/); assert.match(banner, /sp-tag">Sponsor</);
+  assert.match(banner, /translate3d\(\$\{-X\}/, "the sponsor strip scrolls again (owner reverted the one-at-a-time strip)"); assert.match(banner, /sp-tag">Sponsor</);
   assert.match(read("public/routes.css"), /\.legl label\{align-self:stretch;min-height:56px\}/);
 });
 
@@ -113,4 +111,11 @@ test("MAP-11/16/17: one count wording, no 300-city menu, one word in the route s
   assert.ok(!/Object\.keys\(CITY\)\.sort\(\)\.map\(\(c\) => `<option \$\{c === state\.start/.test(app), "the Start menu no longer lists every city");
   assert.match(app, /askStartCity/);
   assert.ok(!app.includes("Tick a place"));
+});
+
+test("owner follow-ups: the search box keeps a usable width, and the app-frame header has no second Map button beside the sidebar", () => {
+  const css = read("public/styles.css");
+  assert.match(css, /@media \(min-width:1100px\)\{\.searchrow\{flex-wrap:wrap[^}]*\}\.search\{flex:1 1 220px;min-width:220px\}\}/);
+  assert.match(css, /\.rtpill>span\{position:absolute/, "the pill keeps its words for screen readers");
+  assert.match(read("public/appshell.css"), /@media \(min-width:700px\)\{\.sh-top \.maplink\{display:none\}\}/);
 });
