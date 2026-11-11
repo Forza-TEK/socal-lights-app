@@ -10,7 +10,7 @@
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/addflow.css?v=20261110e">
+<link rel="stylesheet" href="/addflow.css?v=20261111zb">
 <link rel="stylesheet" href="/info.css?v=20261110y">
 <style>
 .hp{max-width:640px;margin:28px auto 56px;display:grid;gap:16px}.hp h1{margin:0;font-size:28px}.hp p{margin:0}.hp .meta{color:var(--muted)}
@@ -31,7 +31,7 @@
 <main><div class="hp" id="box"><p class="meta">Loading…</p></div></main>
 <script type="module">
 import { shrink } from "/shrink.js?v=20261111a";
-import { signIn, noteSigninResult } from "/auth.js?v=20261107p";
+import { signIn, noteSigninResult } from "/auth.js?v=20261111z";
 const box = document.getElementById("box"), token = (location.pathname.match(/^\/photos\/([A-Za-z0-9_-]{20,64})\/?$/) || [])[1] || "";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], nice = (d) => { const [, m, x] = String(d).split("-").map(Number); return m ? MON[m - 1] + " " + x : ""; };

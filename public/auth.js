@@ -1,18 +1,27 @@
 // Sign-in for the contest pages: Continue with Google, or an emailed 6-digit code. Both prove the same email address.
 const $ = (q, r = document) => r.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+import { clearAllLocalDrafts } from "/drafts-local.js?v=20261111z";
 let cache = null;
+
+// A network failure (offline, dropped connection, blocked request) reaches the page as a raw browser message ("Failed to fetch" in Chrome, "Load failed" in Safari). People get this sentence instead.
+export const OFFLINE_MSG = "You're offline or the connection dropped. Your work is saved; try again.";
+export const OFFLINE_SHORT = "You're offline or the connection dropped. Try again.";
+export const isNetError = (e) => !!e && !e.status && /failed to fetch|load failed|network ?error|network request failed|fetch failed|internet connection|offline/i.test(String((e && e.message) || e));
+// The text to show for an error thrown by fetch or by our own code: the friendly sentence for a network failure, else the error's own message, else the fallback.
+export const friendlyError = (e, fallback = "Something went wrong. Please try again.", short = false) => (isNetError(e) ? (short ? OFFLINE_SHORT : OFFLINE_MSG) : (e && e.message) || fallback);
 
 export async function me(force) {
   if (cache && !force) return cache;
   cache = await fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ user: null, methods: {}, down: true }));
   return cache;
 }
-export async function signOut() { await fetch("/api/auth/logout", { method: "POST", body: "{}", headers: { "content-type": "application/json" } }); cache = null; }
+// Signing out also removes every unfinished add-form draft (answers and photos) kept on this device, so the next person using the browser never sees them.
+export async function signOut() { await fetch("/api/auth/logout", { method: "POST", body: "{}", headers: { "content-type": "application/json" } }); cache = null; clearAllLocalDrafts(); }
 
-export function toast(msg) {
+export function toast(msg, ms = 3200) {
   let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
-  t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 3200);
+  t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), ms);
 }
 
 // Google sends people back with ?signin=cancelled|failed when it didn't work
@@ -27,12 +36,31 @@ export function noteSigninResult() {
 // (Google leaves the page and comes back, so it doesn't resolve.)
 export function signIn({ title = "Sign in to continue", next = location.pathname + location.search } = {}) {
   return new Promise(async (resolve) => {
+    const opener = document.activeElement; // focus goes back here when the sheet closes
     const info = await me(true);
     try { if (!navigator.webdriver) { const tb = JSON.stringify({ k: "fn:signin-open" }); if (!(navigator.sendBeacon && navigator.sendBeacon("/api/visit", new Blob([tb], { type: "application/json" })))) fetch("/api/visit", { method: "POST", headers: { "content-type": "application/json" }, body: tb, keepalive: true }); } } catch {}
     const host = document.createElement("div");
-    const close = (v) => { host.remove(); document.removeEventListener("keydown", onKey); resolve(v); };
-    const onKey = (e) => { if (e.key === "Escape") close(null); };
-    document.addEventListener("keydown", onKey);
+    // The sheet is a real dialog: the page behind it cannot be reached (inert), Tab and Shift+Tab stay inside it, Escape closes it, and focus returns to what opened it.
+    const behind = [...document.body.children].filter((c) => !c.hasAttribute("inert"));
+    const close = (v) => {
+      host.remove(); document.removeEventListener("keydown", onKey, true); behind.forEach((c) => c.removeAttribute("inert"));
+      if (opener && opener.isConnected && typeof opener.focus === "function") try { opener.focus(); } catch {}
+      resolve(v);
+    };
+    const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),iframe,[tabindex]:not([tabindex="-1"])';
+    const onKey = (e) => {
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(null); return; }
+      if (e.key !== "Tab") return;
+      const f = [...host.querySelectorAll(FOCUSABLE)].filter((x) => x.getClientRects().length), a = document.activeElement;
+      if (!f.length) { e.preventDefault(); return; }
+      if (!host.contains(a)) { e.preventDefault(); f[0].focus(); }
+      else if (e.shiftKey && a === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && a === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    };
+    document.addEventListener("keydown", onKey, true);
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Show a message under the field it is about without rebuilding the sheet: the field is flagged and tied to the message, the message is announced (role=alert), and focus goes to the field.
+    const fieldErr = (el, msg) => { const p = $("#si-err", host); if (p) p.textContent = msg; if (el) { el.setAttribute("aria-invalid", "true"); el.setAttribute("aria-describedby", "si-err"); el.focus(); } };
     let stage = "choose", email = "", err = "", devCode = "", widget = null;
     const G = `<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>`;
     const draw = () => {
@@ -42,13 +70,13 @@ export function signIn({ title = "Sign in to continue", next = location.pathname
       if (stage === "choose") {
         body = `${m.google ? `<a class="gbtn" href="/api/auth/google/start?next=${encodeURIComponent(next)}">${G} Continue with Google</a>` : ""}
           ${m.google && m.email ? `<div class="or">or</div>` : ""}
-          ${m.email ? `<div><label for="si-email">Use your email instead</label><p class="help">We'll email you a 6-digit code. No password.</p><input id="si-email" type="email" inputmode="email" autocomplete="email" value="${esc(email)}"${err ? ' aria-invalid="true"' : ""}>${err ? `<p class="err">${esc(err)}</p>` : ""}<div id="si-ts" style="margin-top:8px"></div></div><button class="ebtn" id="si-send" type="button">Email me a code</button>` : ""}
+          ${m.email ? `<div><label for="si-email">Use your email instead</label><p class="help">We'll email you a 6-digit code. No password.</p><input id="si-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" value="${esc(email)}"${err ? ' aria-invalid="true" aria-describedby="si-err"' : ""}><p class="err" id="si-err" role="alert">${esc(err)}</p><div id="si-ts" style="margin-top:8px"></div></div><button class="ebtn" id="si-send" type="button">Email me a code</button>` : ""}
           ${info.down || info.degraded ? `<p class="status no">Sign-in is having trouble right now. Please try again in a few minutes.</p>` : ""}
           ${!info.down && !m.google && !m.email ? `<p class="status no">Sign-in isn't switched on for this site yet.</p>` : ""}`;
       } else {
         body = `<p class="muted small">We sent a 6-digit code to <b>${esc(email)}</b>. It works for 10 minutes.</p>
           ${devCode ? `<div class="hint">Local test mode: your code is <b>${esc(devCode)}</b>.</div>` : ""}
-          <div><label for="si-code">6-digit code</label><input id="si-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"${err ? ' aria-invalid="true"' : ""}>${err ? `<p class="err">${esc(err)}</p>` : ""}</div>
+          <div><label for="si-code">6-digit code</label><input id="si-code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" enterkeyhint="go"${err ? ' aria-invalid="true" aria-describedby="si-err"' : ""}><p class="err" id="si-err" role="alert">${esc(err)}</p></div>
           <button class="btn org" id="si-verify" type="button">Continue</button><button class="link" id="si-back" type="button">Use a different email</button>`;
       }
       host.innerHTML = `<div class="scrim"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="si-t"><div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><h2 id="si-t">${esc(stage === "choose" ? title : "Enter your code")}</h2><button class="link" id="si-x" type="button" aria-label="Close">Close</button></div>${body}${stage === "choose" ? `<p class="small muted" style="margin:12px 0 0">You need to be 13 or older to sign in (18 or older to enter a contest). By continuing you agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>` : ""}</div></div>`;
@@ -60,10 +88,15 @@ export function signIn({ title = "Sign in to continue", next = location.pathname
         $("#si-email", host).onkeydown = (e) => { if (e.key === "Enter") send.click(); };
         if (info.turnstileSiteKey && !widget) loadTurnstile(info.turnstileSiteKey, $("#si-ts", host)).then((w) => (widget = w));
         send.onclick = async () => {
-          err = ""; send.disabled = true;
+          const inp = $("#si-email", host); email = inp.value.trim(); err = "";
+          // an empty or malformed address is caught here, before any request
+          if (!email) return fieldErr(inp, "Enter your email address.");
+          if (!EMAIL_RE.test(email)) return fieldErr(inp, "That email address doesn't look right. It should look like name@example.com.");
+          send.disabled = true; const label = send.textContent; send.textContent = "Sending…";
           const body = { email }; if (window.turnstile && widget != null) body["cf-turnstile-response"] = window.turnstile.getResponse(widget) || "";
-          const r = await fetch("/api/auth/email/start", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-          const j = await r.json().catch(() => ({}));
+          let r, j;
+          try { r = await fetch("/api/auth/email/start", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); j = await r.json().catch(() => ({})); }
+          catch (x) { send.disabled = false; send.textContent = label; return fieldErr(inp, friendlyError(x, "", true)); }
           if (!r.ok) { err = j.error || "Couldn't send the code. Try again."; widget = null; draw(); return; }
           devCode = j.devCode || ""; stage = "code"; draw();
         };
@@ -73,15 +106,18 @@ export function signIn({ title = "Sign in to continue", next = location.pathname
         $("#si-code", host).onkeydown = (e) => { if (e.key === "Enter") ver.click(); };
         $("#si-back", host).onclick = () => { stage = "choose"; err = ""; widget = null; draw(); };
         ver.onclick = async () => {
+          const inp = $("#si-code", host), code = inp.value.replace(/\s/g, ""); err = "";
+          if (!/^\d{6}$/.test(code)) return fieldErr(inp, "Enter the 6-digit code from the email.");
           ver.disabled = true;
-          const r = await fetch("/api/auth/email/verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, code: $("#si-code", host).value }) });
-          const j = await r.json().catch(() => ({}));
-          if (!r.ok) { err = j.error || "That code didn't work."; draw(); return; }
+          let r, j;
+          try { r = await fetch("/api/auth/email/verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, code }) }); j = await r.json().catch(() => ({})); }
+          catch (x) { ver.disabled = false; return fieldErr(inp, friendlyError(x, "", true)); }
+          if (!r.ok) { err = j.error || "That code didn't work."; draw(); return; } // the sheet is drawn again with an empty code box, focus on it and the message announced
           cache = null; close(j.user);
         };
       }
     };
-    document.body.appendChild(host); draw();
+    document.body.appendChild(host); behind.forEach((c) => c.setAttribute("inert", "")); draw();
   });
 }
 
