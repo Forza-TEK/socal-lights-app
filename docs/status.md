@@ -26,6 +26,21 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-11 (Contests tab: Needs a look)
+- Clicking "Needs a look" on Admin > Contests did nothing when it was empty, because the page jumped straight back to Live. It now stays and shows "Nothing needs a look..." (the page still picks Live on first open when nothing needs a look).
+
+## 2026-11-11 (End this comp button)
+- "End this comp now" (Event Partners and Contest passes) sits at the right end of the comp card and is red, like other destructive buttons in Admin.
+
+## 2026-11-11 (edit an Event Partner comp)
+- Event Partners comps can be edited again: **Edit** on a running comp opens events per season (or unlimited), valid-until date and note, saved with `edit_comp` in `/api/admin/partner` (a running comp only; an ended one needs a new grant). Tests in `tests/event-partner.test.mjs`.
+
+## 2026-11-11 (Admin Event Partners page)
+- Event Partners now looks like Contest passes: an "Organizations (N)" header with a Grant a comp button, compact rows (name, Comp or Plan tag, events used and comp date) with an Open button, and a detail view for each organization (events and free a slot, its comps with End this comp, grant a comp to it, plans bought). Ended comps and past plans are in a collapsed section. Same actions and API as before.
+
+## 2026-11-11 (Admin usage page header)
+- The Usage page header is now four small tiles (plan, billing month, extra charges so far, highest right now), a legend row with the Refresh button on the right, and one footnote, instead of two dense paragraphs.
+
 ## 2026-11-11 (On map button)
 - "On map" on a contest home (map card) did nothing because the link only changed the address bar of a page that was already open. Clicks on in-app `/#h-<id>` and `/#e-<id>` links now open that place in the map (the map moves to it and its card opens). If the place is not in the loaded list the link behaves as before.
 
