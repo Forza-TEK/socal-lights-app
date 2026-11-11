@@ -2,6 +2,7 @@
 import { loadArticles, renderBody, plainText, CAT, KINDS } from "../_lib/help.js";
 import { helpFrame, askForm, articleLink, esc } from "../_lib/helpui.js";
 import { jsonScript } from "../_lib/shell.js";
+import { hasTrailingSlash, permanent } from "../_lib/redirect.js";
 
 // "Nov 8, 2026": the date the article last changed, in Pacific time like every other time on the site (the database keeps UTC).
 const updatedOn = (ts) => { const d = new Date(String(ts || "").replace(" ", "T") + "Z"); return isNaN(d) ? "" : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Los_Angeles" }); };
@@ -10,6 +11,7 @@ const notFound = (origin) => new Response(helpFrame({ title: "Help article not f
 
 export async function onRequestGet({ request, env, params }) {
   const origin = new URL(request.url).origin, slug = String(params.slug || "").toLowerCase();
+  if (slug && (slug !== params.slug || hasTrailingSlash(request))) return permanent(request, "/help/" + encodeURIComponent(slug));
   const list = await loadArticles(env), a = list.find((x) => x.slug === slug);
   if (!a) return notFound(origin);
   const cat = CAT[a.category] || { key: a.category, title: "Help" };

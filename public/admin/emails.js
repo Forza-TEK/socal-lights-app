@@ -1,5 +1,5 @@
 // Admin > Settings > Email templates: every automatic email the site sends, with its plain-text and HTML versions.
-import { esc, toolbar, wireToolbar, tap, toast, modalFrame } from "/admin/kit.js?v=20261103a";
+import { esc, toolbar, wireToolbar, tap, toast, modalFrame } from "/admin/kit.js?v=20261113a";
 
 const $ = (s) => document.querySelector(s);
 async function api(path, opts = {}) {

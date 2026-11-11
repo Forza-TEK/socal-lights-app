@@ -3,6 +3,8 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(self)
   X-Frame-Options: SAMEORIGIN
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://challenges.cloudflare.com; worker-src 'self' blob:; frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://player.vimeo.com iframe.videodelivery.net https://*.cloudflarestream.com; object-src 'none'; base-uri 'self'; form-action 'self' checkout.stripe.com; frame-ancestors 'self'
 
 /admin/*
   Cache-Control: no-store

@@ -3,11 +3,12 @@ import { CITY } from "/cities.js";
 import { SEASONS, defaultSeason } from "/seasons.js";
 import { attachAddress } from "/addflow.js?v=20261111zb";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
-import { renderEmails } from "/admin/emails.js?v=20261104c";
-import { renderHelp } from "/admin/help.js?v=20261104a";
-import { renderPartner } from "/admin/partner.js?v=20261112m";
-import { renderChat } from "/admin/chat.js?v=20261111h";
-import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame } from "/admin/kit.js?v=20261103a";
+import { renderEmails } from "/admin/emails.js?v=20261113a";
+import { renderHelp } from "/admin/help.js?v=20261113a";
+import { renderPartner } from "/admin/partner.js?v=20261113a";
+import { renderChat } from "/admin/chat.js?v=20261113a";
+import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261113a";
+import { HEALTH, healthTest } from "/admin/health.js?v=20261113a";
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -15,7 +16,10 @@ const COUNTIES = ["Los Angeles", "Orange", "Riverside", "San Bernardino", "San D
 const TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
 let evSeason = defaultSeason(TODAY);
 const photo = (k) => "/api/admin/photo/" + k.split("/").map(encodeURIComponent).join("/");
-let tab = "dashboard", PVIEW = "pending", EVENTS = [], POSTS = [];
+let tab = "dashboard", PVIEW = "pending", EVENTS = [], POSTS = [], HSORT = "new";
+const sortList = (list, key, by) => [...list].sort(by[key] || by.new);
+const HSORTS = [["new", "Newest first"], ["old", "Oldest first"], ["name", "Name A to Z"], ["city", "City A to Z"]];
+const HBY = { new: (a, b) => String(b.created || "").localeCompare(String(a.created || "")), old: (a, b) => String(a.created || "").localeCompare(String(b.created || "")), name: (a, b) => String(a.title || "").localeCompare(String(b.title || "")), city: (a, b) => String(a.city || "").localeCompare(String(b.city || "")) || String(a.title || "").localeCompare(String(b.title || "")) };
 // Address suggestions on every address box in the edit windows (the house street and the event address)
 attachAddress($("#modal"), { getCity: () => ($("#pCity") || $("#eCity") || {}).value || "", onPick: (s, inp) => {
   if (inp.id === "pStreet") { inp.value = s.street; if ($("#pCity") && [...$("#pCity").options].some((o) => o.value === s.city)) $("#pCity").value = s.city; if ($("#pZip") && /^\d{5}/.test(s.zip)) $("#pZip").value = s.zip.slice(0, 5); }
@@ -30,8 +34,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "emails", "help", "chat"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "passes", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "emails", "help", "chat"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
@@ -47,6 +51,7 @@ function setTab(t, push = true) {
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) setTab(b.dataset.tab); });
 const sheet = $("#side");
+wireFold($("#main"));
 function openSheet() { document.body.classList.add("sheet-open"); $("#moreBtn") && $("#moreBtn").setAttribute("aria-expanded", "true"); }
 function closeSheet() { document.body.classList.remove("sheet-open"); $("#moreBtn") && $("#moreBtn").setAttribute("aria-expanded", "false"); }
 $("#moreBtn").onclick = () => (document.body.classList.contains("sheet-open") ? closeSheet() : openSheet());
@@ -67,7 +72,7 @@ async function render() {
     if (tab === "claims") return renderClaims();
     if (tab === "orders") return renderOrders();
     if (tab === "partner") return renderPartner(main);
-    if (tab === "contests") return renderContests();
+    if (tab === "contests" || tab === "passes") { if (tab === "passes") CVIEW = "passes"; else if (CVIEW === "passes") CVIEW = ""; return renderContests(); }
     if (tab === "overlaps") return renderOverlaps();
     if (tab === "installers") return renderInstallers();
     if (tab === "data") return renderData();
@@ -87,9 +92,9 @@ async function render() {
     }
     const waiting = await api("/api/admin/posts?status=" + tab), declined = tab === "pending" ? await api("/api/admin/posts?status=declined") : [];
     if (tab === "pending") setCount("pending", waiting.length);
-    const showing = tab === "pending" && PVIEW === "declined" ? declined : waiting;
-    const bar = toolbar({ views: tab === "pending" ? [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "declined", label: "Declined", n: declined.length }] : tab === "approved" ? [{ k: "pending", label: "Published" }, { k: "contest", label: "Contest entries" }] : [], active: PVIEW, search: { placeholder: "Search houses, people, cities" }, right: dl("houses" + (tab === "pending" ? (PVIEW === "declined" ? "&status=declined" : "&status=pending") : "&status=approved")), count: String(showing.length) });
-    const go = () => { wireToolbar(main, { onView: (v) => { PVIEW = v; render(); }, onSearch: (q) => filterCards(main, q) }); applyPreset(main); };
+    const showing = sortList(tab === "pending" && PVIEW === "declined" ? declined : waiting, HSORT, HBY);
+    const bar = toolbar({ views: tab === "pending" ? [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "declined", label: "Declined", n: declined.length }] : tab === "approved" ? [{ k: "pending", label: "Published" }, { k: "contest", label: "Contest entries" }] : [], active: PVIEW, search: { placeholder: "Search houses, people, cities" }, right: sortSelect(HSORTS, HSORT) + dl("houses" + (tab === "pending" ? (PVIEW === "declined" ? "&status=declined" : "&status=pending") : "&status=approved")), count: String(showing.length) });
+    const go = () => { wireToolbar(main, { onView: (v) => { PVIEW = v; render(); }, onSearch: (q) => filterCards(main, q), onSort: (v) => { HSORT = v; render(); } }); applyPreset(main); };
     if (!showing.length) { main.innerHTML = bar + `<div class="empty">${tab !== "pending" ? "No published houses yet." : PVIEW === "declined" ? "Nothing declined." : "Nothing waiting for review."}</div>`; go(); return; }
     const bulk = tab === "pending" && PVIEW !== "declined" ? `<div class="bulk" id="bulk"><label class="chk"><input type="checkbox" id="selAll"> Select all</label><span class="grow"></span><span class="meta" id="selN"></span><button class="btn ice" type="button" id="bulkGo" hidden></button><button class="btn ghost" type="button" id="bulkClear" hidden>Clear</button></div>` : "";
     POSTS = showing; main.innerHTML = bar + bulk + `<div class="cards">${showing.map(postCard).join("")}</div>`; go(); if (bulk) wireBulk(main);
@@ -235,18 +240,21 @@ $("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-
 
 
 /* ---------- submitted events (public "Add your event" form) ---------- */
-let SUBS = [], SUBVIEW = "pending";
+let SUBS = [], SUBVIEW = "pending", SSORT = "new";
+const SSORTS = [["new", "Newest first"], ["old", "Oldest first"], ["date", "Event date, soonest first"], ["name", "Name A to Z"]];
+const SBY = { new: (a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")), old: (a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")), date: (a, b) => String(a.start_date || "").localeCompare(String(b.start_date || "")), name: (a, b) => String(a.name || "").localeCompare(String(b.name || "")) };
 async function renderSubs() {
   const main = $("#main");
   const [waiting, live, declined] = await Promise.all([api("/api/admin/submissions?status=pending"), api("/api/admin/submissions?status=published"), api("/api/admin/submissions?status=declined")]);
-  SUBS = SUBVIEW === "pending" ? waiting : SUBVIEW === "declined" ? declined : live;
+  SUBS = sortList(SUBVIEW === "pending" ? waiting : SUBVIEW === "declined" ? declined : live, SSORT, SBY);
   setCount("subs", waiting.length);
-  const bar = toolbar({ views: [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "published", label: "Live", n: live.length }, { k: "declined", label: "Declined", n: declined.length }], active: SUBVIEW, search: { placeholder: "Search events, cities" }, count: String(SUBS.length) });
-  const go = () => { wireToolbar(main, { onView: (v) => { SUBVIEW = v; renderSubs(); }, onSearch: (q) => filterCards(main, q) }); applyPreset(main); };
+  const bar = toolbar({ views: [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "published", label: "Live", n: live.length }, { k: "declined", label: "Declined", n: declined.length }], active: SUBVIEW, search: { placeholder: "Search events, cities" }, right: sortSelect(SSORTS, SSORT), count: String(SUBS.length) });
+  const go = () => { wireToolbar(main, { onView: (v) => { SUBVIEW = v; renderSubs(); }, onSearch: (q) => filterCards(main, q), onSort: (v) => { SSORT = v; renderSubs(); } }); applyPreset(main); };
   if (!SUBS.length) { main.innerHTML = bar + `<div class="empty">${SUBVIEW === "pending" ? "Nothing waiting. New events go live right away; look under Live to review or unpublish them." : SUBVIEW === "declined" ? "Nothing declined." : "No submitted events are live."}</div>`; go(); return; }
   const pend = SUBVIEW === "pending";
-  main.innerHTML = bar + `<div class="cards">${SUBS.map((x) => rec({
-    attrs: `data-sid="${esc(x.id)}"`, title: esc(x.name), tags: [[pend ? "Waiting" : SUBVIEW === "declined" ? "Declined" : "Published", pend ? "warn" : SUBVIEW === "declined" ? "bad" : "ok"]], meta: esc((x.created_at || "").slice(0, 16)) + " UTC",
+  const sbulk = pend ? `<div class="bulk" id="sbulk"><label class="chk"><input type="checkbox" id="sAll"> Select all</label><span class="grow"></span><span class="meta" id="sSelN"></span><button class="btn ice" type="button" id="sPubC" hidden></button><button class="btn ghost" type="button" id="sPubE" hidden></button><button class="btn ghost danger" type="button" id="sDec" hidden></button><button class="btn ghost" type="button" id="sClear" hidden>Clear</button></div>` : "";
+  main.innerHTML = bar + sbulk + `<div class="cards">${SUBS.map((x) => rec({
+    attrs: `data-sid="${esc(x.id)}"`, title: (pend ? `<input type="checkbox" class="rsel" data-ssel="${esc(x.id)}" aria-label="Select ${esc(x.name)}"> ` : "") + esc(x.name), tags: [[pend ? "Waiting" : SUBVIEW === "declined" ? "Declined" : "Published", pend ? "warn" : SUBVIEW === "declined" ? "bad" : "ok"]], meta: esc((x.created_at || "").slice(0, 16)) + " UTC",
     facts: fact("When", esc(x.start_date) + (x.end_date !== x.start_date ? " to " + esc(x.end_date) : "") + " · " + esc(x.hours || "no hours")) + fact("Where", `${esc(x.venue)}<br><span class="meta">${esc(x.address)}, ${esc(x.city)} · ${esc(x.county || "")} (pin ${Number(x.lat).toFixed(4)}, ${Number(x.lng).toFixed(4)})</span>`)
       + fact("Type", `${esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)} · ${esc(x.price || "")}`) + fact("About", esc(x.blurb)) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "")
       + fact("Contact", `<span style="user-select:all">${esc(x.contact_email)}</span>`) + fact("Notes", esc(x.note || "")) + (x.paid_plans ? fact("Paid Featured", `<b>${esc(x.paid_plans)}</b>`) : ""),
@@ -254,7 +262,30 @@ async function renderSubs() {
     main: SUBVIEW === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : pend ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : btn("ghost", "Unpublish", 'data-sact="unpublish"'),
     danger: pend ? btn("danger", "Decline", 'data-sact="decline"') : "",
   })).join("")}</div>`;
-  go();
+  go(); if (pend) wireSubsBulk(main);
+}
+// Pick several waiting events: publish them (confirmed or expected) or decline them in one go. A second tap confirms. Declines can be undone.
+function wireSubsBulk(main) {
+  const boxes = () => [...main.querySelectorAll(".rec:not([hidden]) .rsel")], picked = () => boxes().filter((b) => b.checked), idOf = (b) => b.dataset.ssel;
+  const paint = () => { const n = picked().length, w = `${n} event${n === 1 ? "" : "s"}`; $("#sSelN").textContent = n ? `${n} selected` : ""; $("#sPubC").textContent = `Publish ${w} (confirmed)`; $("#sPubE").textContent = `Publish ${w} (expected)`; $("#sDec").textContent = `Decline ${w}`; ["sPubC", "sPubE", "sDec", "sClear"].forEach((id) => ($("#" + id).hidden = !n)); $("#sAll").checked = n > 0 && n === boxes().length; };
+  main.addEventListener("change", (e) => { if (e.target.matches(".rsel")) paint(); });
+  $("#sAll").onchange = (e) => { boxes().forEach((b) => (b.checked = e.target.checked)); paint(); };
+  $("#sClear").onclick = () => { boxes().forEach((b) => (b.checked = false)); paint(); };
+  const run = async (btn, verb, body, undo) => {
+    const ids = picked().map(idOf); if (!ids.length) return;
+    if (body.action === "decline") { const r = await askReason({ title: `Decline ${ids.length} event${ids.length === 1 ? "" : "s"}`, hint: "This note is emailed to each person who added one. Leave it blank to send no reason. If someone paid for Featured, refund it under Orders." }); if (r === null) return; body = { ...body, reason: r }; }
+    else if (!tap(btn, verb.replace("{n}", ids.length))) return;
+    main.querySelectorAll("#sbulk button").forEach((b) => (b.disabled = true));
+    const okIds = []; let failed = 0, skipped = 0;
+    for (const [i, id] of ids.entries()) { btn.textContent = `Working ${i + 1} of ${ids.length}…`; try { await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify(body) }); okIds.push(id); } catch (er) { if (er.status === 409) skipped++; else failed++; } }
+    const msg = `${okIds.length} event${okIds.length === 1 ? "" : "s"} ${body.action === "decline" ? "declined" : "published"}` + (skipped ? `, ${skipped} skipped (paid Featured: open each one to confirm)` : "") + (failed ? `, ${failed} could not be saved` : "");
+    toast(msg, !okIds.length, undo && okIds.length ? { undo: async () => { let u = 0; for (const id of okIds) { try { await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify(undo) }); u++; } catch {} } toast(`Undone for ${u} event${u === 1 ? "" : "s"}`); renderSubs(); refreshCounts(); } } : {});
+    renderSubs(); refreshCounts();
+  };
+  $("#sPubC").onclick = (e) => run(e.target, "publish {n} as confirmed", { action: "approve", status: "confirmed" }, null);
+  $("#sPubE").onclick = (e) => run(e.target, "publish {n} as expected", { action: "approve", status: "expected" }, null);
+  $("#sDec").onclick = (e) => run(e.target, "decline", { action: "decline" }, { action: "restore" });
+  paint();
 }
 let photoKey = null;
 document.addEventListener("keydown", (e) => photoKey && photoKey(e));
@@ -296,7 +327,7 @@ $("#main").addEventListener("click", async (e) => {
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try {
     const post = (more = {}) => api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify({ action: act, status: b.dataset.st, ...extra, ...more }) });
-    try { await post(); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && confirm(er.message)) await post({ confirm: true }); else throw er; } // a paid placement needs an explicit yes
+    try { await post(); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Confirm" }))) await post({ confirm: true }); else throw er; } // a paid placement needs an explicit yes
     const undo = act === "decline" ? { action: "restore" } : act === "unpublish" ? { action: "approve", status: x.verified ? "confirmed" : "expected", notify: false } : null;
     toast(SDONE[act] || "Done", false, undo ? { undo: async () => { try { await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); renderSubs(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
     renderSubs(); refreshCounts();
@@ -335,15 +366,15 @@ const INST_PLAN = { banner: "Banner", top: "Top of the list", banner_top: "Banne
 const OSTATUS = { paid: ["Paid", "ok"], refunded: ["Refunded", ""], disputed: ["Disputed", "bad"], dispute_won: ["Dispute won", ""], held: ["Held", "warn"], refund_due: ["Refund due", "bad"] };
 const money = (c, cur) => (c == null ? "" : (cur && cur !== "usd" ? cur.toUpperCase() + " " : "$") + (c / 100).toFixed(2));
 async function renderOrders() {
-  const main = $("#main"), all = await api("/api/admin/orders"), rn = await api("/api/admin/renewals").catch(() => null);
+  const main = $("#main"), all = await api("/api/admin/orders"), rn = await api("/api/admin/renewals").catch(() => null), rv = await api("/api/admin/revenue?days=30").catch(() => null);
   const RG = { upcoming: ["Upcoming", "ok"], failed: ["Charge failed", "bad"], overdue: ["Overdue: run the job", "bad"], lapsed: ["Lapsed", "bad"], paused: ["Paused", "warn"], cancelled: ["Cancelled", ""] };
   const renHtml = rn && rn.rows.length ? `<h2 class="dh">Automatic renewals (read-only): ${rn.counts.upcoming} upcoming, ${rn.counts.overdue} overdue, ${rn.counts.failed} failed, ${rn.counts.lapsed} lapsed, ${rn.counts.paused} paused</h2><div class="cards">${rn.rows.map((r) => rec({ attrs: "", title: esc(r.name || r.installer_id), tags: [RG[r.group] || [r.group, ""]], meta: esc(INST_PLAN[r.plan] || "Banner") + " · " + esc(money(r.price_cents)), facts: fact("Next charge", esc(r.next_charge_date || "")) + fact("Reminder sent", r.notice_sent_for ? "yes" : "not yet") + fact("Retry", esc(r.retry_at || "")) + fact("Last error", esc(r.last_error || "")) + fact("Agreed", esc((r.consent_at || "") + (r.consent_text_version ? " · wording " + r.consent_text_version : ""))) })).join("")}</div>` : "";
   const need = all.filter((o) => o.flags.length), rows = OVIEW === "attention" ? need : OVIEW === "paid" ? all.filter((o) => o.status === "paid") : OVIEW === "closed" ? all.filter((o) => o.status !== "paid") : all;
   setCount("orders", need.length);
   const bar = toolbar({ views: [{ k: "attention", label: "Needs attention", n: need.length }, { k: "paid", label: "Paid", n: all.filter((o) => o.status === "paid").length }, { k: "closed", label: "Refunded and disputed", n: all.filter((o) => o.status !== "paid").length }, { k: "all", label: "All", n: all.length }], active: OVIEW, search: { placeholder: "Search events, emails" }, count: String(rows.length) });
   const go = () => wireToolbar(main, { onView: (v) => { OVIEW = v; renderOrders(); }, onSearch: (q) => filterCards(main, q) });
-  if (!rows.length) { main.innerHTML = bar + renHtml + `<div class="empty">${OVIEW === "attention" ? "Nothing needs you. Refunds you still have to make, disputes, partial refunds and placements that did not switch on show up here." : "No orders here yet."}</div>`; go(); return; }
-  main.innerHTML = bar + renHtml + `<div class="cards">${rows.map((o) => {
+  if (!rows.length) { main.innerHTML = revenueStrip(rv) + bar + renHtml + `<div class="empty">${OVIEW === "attention" ? "Nothing needs you. Refunds you still have to make, disputes, partial refunds and placements that did not switch on show up here." : "No orders here yet."}</div>`; go(); return; }
+  main.innerHTML = revenueStrip(rv) + bar + renHtml + `<div class="cards">${rows.map((o) => {
     const st = OSTATUS[o.status] || [o.status, ""], due = ["refund_due", "held", "disputed"].includes(o.status);
     return rec({
       attrs: `data-oid="${esc(o.session_id)}" data-onote="${esc(o.note || "")}"`, title: esc(o.target === "contest_pass" || o.target === "event_partner" ? orgLabelOf(o.event_id) : o.name || o.event_id), tags: [st, ...(o.target === "event_partner" ? [["Event Partner", ""]] : o.target === "contest_pass" ? [["Contest pass", ""]] : o.target === "home" ? [["Featured home", ""]] : o.target === "installer" ? [["Installer: " + (INST_PLAN[o.plan] || o.plan).toLowerCase(), ""], ...(o.renewal ? [["Auto-renewal", ""]] : [])] : []), ...o.flags.filter((f) => !(f === "refund_due" || f === "disputed" || f === "held")).map((f) => OFLAG[f] || [f, "warn"])], meta: esc((o.created_at || "").slice(0, 16)) + " UTC",
@@ -353,6 +384,7 @@ async function renderOrders() {
         + (o.target === "installer" ? fact("Installer", `<a href="/admin/#installers">${esc(o.name || o.event_id)}</a>${o.inst_slug ? ` · <a href="/installer/${esc(o.inst_slug)}" target="_blank" rel="noopener">public page</a>` : ""}`) : o.target === "home" ? fact("Home", esc([o.city, o.contest_name && "podium of " + o.contest_name, o.event_id].filter(Boolean).join(" · "))) : fact("Event", esc([o.city, o.start_date && o.end_date ? (o.start_date === o.end_date ? o.start_date : o.start_date + " to " + o.end_date) : "", o.notice && o.notice.toUpperCase(), String(o.event_id).startsWith("sub:") ? "waiting for approval (payment held; it switches on when you approve the event)" : o.event_id].filter(Boolean).join(" · ")))) + fact("Buyer", `<span style="user-select:all">${esc(o.email)}</span>`)
         + fact("Payment", o.stripe_url ? `<a href="${esc(o.stripe_url)}" target="_blank" rel="noopener">${esc(o.payment_intent)} in Stripe</a>` : "") + fact("Note", esc(o.note || "")),
       edit: btn("ghost", o.note ? "Edit note" : "Add note", 'data-oact="note"'),
+      body: due ? '<p class="meta" style="margin:0">Use <b>Mark refunded</b> only after you refunded the payment in the Stripe dashboard. The button does not refund anything.</p>' : "",
       main: due ? btn("main", "Mark refunded", 'data-oact="mark_refunded"') : o.status === "paid" && !o.applied ? btn("main", "Apply now", 'data-oact="reapply"') : "",
     });
   }).join("")}</div>`;
@@ -370,7 +402,7 @@ function askNote(title, value) {
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-oact]"); if (!b) return;
   const card = b.closest("[data-oid]"), act = b.dataset.oact, name = card.querySelector("h3").textContent, msg = card.querySelector(".msg"), body = { action: act };
-  if (act === "mark_refunded" && !confirm("Mark this order refunded?\n\nOnly do this after you refunded the payment in the Stripe dashboard. This does not refund anything.")) return;
+  if (act === "mark_refunded" && !tap(b, "mark refunded")) return; // the card says: only after refunding in Stripe; this button refunds nothing
   if (act === "note") { const v = await askNote("Note for " + name, card.dataset.onote); if (v === null) return; body.note = v; }
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try { const d = await api("/api/admin/orders/" + encodeURIComponent(card.dataset.oid), { method: "POST", body: JSON.stringify(body) }); toast(act === "mark_refunded" ? (d.placement_differs ? "Marked refunded. The placement was left on: check it" : "Marked refunded") : act === "reapply" ? "Applied" : "Note saved"); renderOrders(); refreshCounts(); }
@@ -389,7 +421,7 @@ async function renderContests() {
   if (!CVIEW) CVIEW = n.look ? "look" : n.live ? "live" : n.ended ? "ended" : "declined"; // only the first time: picking "Needs a look" with nothing in it shows the empty note instead of jumping away
   const list = g(CVIEW);
   const bar = toolbar({ views: [{ k: "look", label: "Needs a look", n: n.look }, { k: "live", label: "Live", n: n.live }, { k: "ended", label: "Ended", n: n.ended }, { k: "declined", label: "Unpublished", n: n.declined }, { k: "passes", label: "Contest passes" }], active: CVIEW, search: { placeholder: "Search contests, organizers", value: CSEARCH }, right: dl("contests"), count: String(list.length) });
-  const wire = () => { wireToolbar(main, { onView: (v) => { CVIEW = v; renderContests(); }, onSearch: (q) => { CSEARCH = q; filterCards(main, q); } }); if (CSEARCH) filterCards(main, CSEARCH); applyPreset(main); };
+  const wire = () => { wireToolbar(main, { onView: (v) => { CVIEW = v; if ((v === "passes") !== (tab === "passes")) return setTab(v === "passes" ? "passes" : "contests"); renderContests(); }, onSearch: (q) => { CSEARCH = q; filterCards(main, q); } }); if (CSEARCH) filterCards(main, CSEARCH); applyPreset(main); };
   if (CVIEW === "passes") { main.innerHTML = bar + `<div id="passes">Loading…</div>`; wire(); return renderPasses(); }
   if (!list.length) { main.innerHTML = bar + `<div class="empty">${CVIEW === "look" ? "Nothing needs a look. New contests go live right away. One shows here when the organizer's email could not be matched to a website." : "No contests here."}</div>`; wire(); return; }
   main.innerHTML = bar + `<div class="cards">${list.map((c) => {
@@ -456,7 +488,7 @@ function openOrg(key) {
     <h3 class="dh">Contests</h3>${contests}
     <h3 class="dh">Comps</h3><div class="cards">${compCards}</div>
     <details class="pgrant"><summary>Grant a comp to this organization</summary><div class="f">${grantFields("po", false)}</div></details>
-    <h3 class="dh">Passes bought</h3><div class="cards">${passCards}</div>
+    <h3 class="dh">Passes bought</h3><p class="meta">Revoking a pass leaves the contests that are already live live, and refunds nothing (refund in Stripe, then mark it refunded under Orders).</p><div class="cards">${passCards}</div>
     <h3 class="dh">Other</h3><div class="ra" style="margin:0">${btn("ghost", "Merge into another key", 'data-pact="merge"')}<span class="msg" id="poMsgTop" role="status"></span></div>
     <p class="meta">Merging counts this organization's past and future contests, passes and comps under another key (a domain like covinaca.gov, or an email address).</p>`, true);
   const close = () => { m.hidden = true; m.innerHTML = ""; };
@@ -464,9 +496,9 @@ function openOrg(key) {
   wireGrant(m, "po", key, async () => { await reloadPasses(); openOrg(key); });
   m.querySelectorAll("[data-pact]").forEach((b) => (b.onclick = async () => {
     const act = b.dataset.pact, body = { action: act };
-    if (act === "merge") { const to = prompt("Count this organization's contests under which key? Type a website domain (covinaca.gov) or an email address."); if (!to) return; body.from = key; body.to = to; }
-    else if (act === "revoke_comp") { if (!confirm("End this comp now?")) return; body.id = b.closest("[data-pcomp]").dataset.pcomp; }
-    else if (act === "revoke_pass") { if (!confirm("Revoke this pass? Contests already live stay live. This does not refund anything.")) return; body.session_id = b.closest("[data-ppass]").dataset.ppass; }
+    if (act === "merge") { const to = await askBox({ title: "Merge into another key", message: "Count this organization's contests under which key?", go: "Merge", input: { label: "Website domain or email address", placeholder: "covinaca.gov", hint: "A website domain (covinaca.gov) or an email address." } }); if (!to) return; body.from = key; body.to = to; }
+    else if (act === "revoke_comp") { if (!tap(b, "end this comp")) return; body.id = b.closest("[data-pcomp]").dataset.pcomp; }
+    else if (act === "revoke_pass") { if (!tap(b, "revoke this pass")) return; body.session_id = b.closest("[data-ppass]").dataset.ppass; }
     try { await api("/api/admin/passes", { method: "POST", body: JSON.stringify(body) }); toast(act === "merge" ? "Merged" : "Done"); await reloadPasses(); if (act === "merge") close(); else openOrg(key); } catch (er) { toast(er.message, true); }
   }));
 }
@@ -517,32 +549,86 @@ $("#main").addEventListener("click", async (e) => {
 });
 
 /* ---------- events ---------- */
-let EVQ = "", EVLIMIT = 60;
+let EVQ = "", EVLIMIT = 0, EVSORT = "date", EVSTATUS = "", EVCOUNTY = "", EVHEALTH = "";
+const EVSEL = new Set(); // ids ticked for a bulk action; kept across pages, filters and searches until an action runs or Clear is tapped
+const evPage = () => (phone() ? PAGE_PHONE : 60);
+const priceNum = (e) => { if (e.free) return 0; const m = String(e.p || "").match(/\$\s*(\d+(?:\.\d+)?)/); return m ? Number(m[1]) : 1e9; };
+const EVSORTS = [["date", "Date, soonest first"], ["name", "Name A to Z"], ["city", "City A to Z"], ["updated", "Recently updated"], ["price", "Price, lowest first"]];
+const EVCMP = {
+  date: (a, b) => a.s.localeCompare(b.s) || a.n.localeCompare(b.n), name: (a, b) => a.n.localeCompare(b.n), city: (a, b) => a.city.localeCompare(b.city) || a.n.localeCompare(b.n),
+  updated: (a, b) => String(b.lc || "").localeCompare(String(a.lc || "")) || a.n.localeCompare(b.n), price: (a, b) => priceNum(a) - priceNum(b) || a.n.localeCompare(b.n),
+};
+// The event as the edit form would send it, with some fields changed (used by the bulk actions and their Undo)
+const evBody = (e, over = {}) => ({ id: e.id, season: e.sn || "christmas", name: e.n, county: e.c, city: e.city, type: e.t, start: e.s, end: e.e, status: e.st === "c" ? "confirmed" : "expected", free: !!e.free, price: e.p, hours: e.h, lat: e.lat, lng: e.lng, blurb: e.b, url: e.u, venue: e.v, address: e.a, ...over });
+const evFiltered = () => {
+  const w = EVQ.toLowerCase().split(/\s+/).filter(Boolean), test = healthTest(EVHEALTH);
+  return EVENTS.filter((e) => (evSeason === "all" || (e.sn || "christmas") === evSeason) && (!EVSTATUS || e.st === EVSTATUS) && (!EVCOUNTY || e.c === EVCOUNTY) && (!test || test(e, TODAY)) && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x))).sort(EVCMP[EVSORT] || EVCMP.date);
+};
 async function renderEvents() {
   EVENTS = await (await fetch("/api/admin/events", { cache: "no-store" })).json();
   const main = $("#main");
-  const seasonSel = `<select id="evSeason" aria-label="Season">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === evSeason ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`;
-  main.innerHTML = toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: seasonSel + `<a class="btn ghost" id="evDl" href="/api/admin/export?type=events&season=${evSeason}" download>Download CSV</a>`, add: { id: "addEv", label: "Add an event" }, count: "" }) + `<div id="evlist"></div>`;
+  const sel = (id, label, opts, cur) => `<select id="${id}" aria-label="${label}">${opts.map(([k, l]) => `<option value="${esc(k)}" ${k === cur ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  const seasonSel = sel("evSeason", "Season", [["all", "All seasons"], ...Object.entries(SEASONS).map(([k, v]) => [k, v.label])], evSeason);
+  const filters = seasonSel + sel("evStatus", "Dates", [["", "Confirmed and expected"], ["c", "Confirmed only"], ["e", "Expected only"]], EVSTATUS) + sel("evCounty", "County", [["", "All counties"], ...COUNTIES.map((c) => [c, c + " County"])], EVCOUNTY)
+    + sel("evHealth", "Needs a look", [["", "Everything"], ...HEALTH.map(([k, l]) => [k, l])], EVHEALTH) + sortSelect(EVSORTS, EVSORT);
+  main.innerHTML = toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: filters + `<a class="btn ghost" id="evDl" href="/api/admin/export?type=events${evSeason === "all" ? "" : "&season=" + evSeason}" download>Download CSV</a>`, add: { id: "addEv", label: "Add an event" }, count: "" })
+    + `<div class="bulk" id="evBulk"><label class="chk"><input type="checkbox" id="evAll"> <span id="evAllL">Select all</span></label><span class="grow"></span><span class="meta" id="evSelN"></span>
+      <button class="btn ice" type="button" id="evSetC" hidden></button><button class="btn ghost" type="button" id="evSetE" hidden></button>
+      <select id="evMoveTo" aria-label="Move to season" hidden>${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join("")}</select><button class="btn ghost" type="button" id="evMove" hidden></button>
+      <button class="btn ghost danger" type="button" id="evDel" hidden></button><button class="btn ghost" type="button" id="evClear" hidden>Clear</button></div><div id="evlist"></div>`;
+  if (!EVLIMIT) EVLIMIT = evPage();
+  let shown = [];
+  const paintBulk = () => {
+    const n = EVSEL.size, all = evFiltered(), on = n > 0, plural = `${n} event${n === 1 ? "" : "s"}`;
+    $("#evSelN").textContent = on ? `${n} selected` : ""; $("#evAllL").textContent = `Select all ${all.length} shown by the filters`;
+    $("#evAll").checked = all.length > 0 && all.every((e) => EVSEL.has(e.id));
+    $("#evSetC").textContent = `Set ${plural} to confirmed`; $("#evSetE").textContent = `Set ${plural} to expected`; $("#evMove").textContent = "Move to season"; $("#evDel").textContent = `Delete ${plural}`;
+    ["evSetC", "evSetE", "evMoveTo", "evMove", "evDel", "evClear"].forEach((id) => ($("#" + id).hidden = !on));
+  };
   const paint = () => {
-    const w = EVQ.toLowerCase().split(/\s+/).filter(Boolean);
-    const all = EVENTS.filter((e) => (e.sn || "christmas") === evSeason && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x)));
-    const list = all.slice(0, EVLIMIT);
+    const all = evFiltered(); shown = all.slice(0, EVLIMIT);
     main.querySelector("[data-tcount]") ? 0 : main.querySelector(".tbar .grow").insertAdjacentHTML("afterend", '<span class="meta tcount" data-tcount></span>');
     main.querySelector("[data-tcount]").textContent = `${all.length} event${all.length === 1 ? "" : "s"}`;
-    $("#evlist").innerHTML = all.length ? `<div class="cards">${list.map((e) => rec({
-      compact: true, cls: e.e < TODAY ? "past" : "", attrs: `data-eid="${esc(e.id)}"`, title: esc(e.n), tags: [[e.st === "c" ? "Confirmed" : "Expected", e.st === "c" ? "ok" : "warn"], ...(e.e < TODAY ? [["Ended"]] : [])],
+    $("#evlist").innerHTML = all.length ? `<div class="cards">${shown.map((e) => rec({
+      compact: true, cls: e.e < TODAY ? "past" : "", attrs: `data-eid="${esc(e.id)}"`, title: `<input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}> ` + esc(e.n), tags: [[e.st === "c" ? "Confirmed" : "Expected", e.st === "c" ? "ok" : "warn"], ...(e.e < TODAY ? [["Ended"]] : [])],
       meta: "", body: `<span class="sub">${esc(e.city)}, ${esc(e.c)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""} · ${esc(e.p || "")}</span>`, edit: btn("ghost", "Edit", `data-edit="${esc(e.id)}"`),
-    })).join("")}</div>${all.length > list.length ? `<div class="pager"><span class="meta">Showing ${list.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show 60 more</button></div>` : ""}` : `<div class="empty">No events match.</div>`;
+    })).join("")}</div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : ""}` : `<div class="empty">${EVQ || EVSTATUS || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
     $("#evlist").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => editEvent(EVENTS.find((x) => x.id === b.dataset.edit))));
-    if ($("#evMore")) $("#evMore").onclick = () => { EVLIMIT += 60; paint(); };
+    $("#evlist").querySelectorAll("[data-esel]").forEach((b) => (b.onchange = () => { b.checked ? EVSEL.add(b.dataset.esel) : EVSEL.delete(b.dataset.esel); paintBulk(); }));
+    if ($("#evMore")) $("#evMore").onclick = () => { EVLIMIT += evPage(); paint(); };
+    paintBulk();
   };
   paint();
-  wireToolbar(main, { onSearch: (q) => { EVQ = q; EVLIMIT = 60; paint(); } });
-  $("#evSeason").onchange = (x) => { evSeason = x.target.value; EVLIMIT = 60; $("#evDl").href = "/api/admin/export?type=events&season=" + evSeason; paint(); };
+  wireToolbar(main, { onSearch: (q) => { EVQ = q; EVLIMIT = evPage(); paint(); } });
+  const refilter = () => { EVLIMIT = evPage(); $("#evDl").href = "/api/admin/export?type=events" + (evSeason === "all" ? "" : "&season=" + evSeason); paint(); };
+  $("#evSeason").onchange = (x) => { evSeason = x.target.value; refilter(); };
+  $("#evStatus").onchange = (x) => { EVSTATUS = x.target.value; refilter(); };
+  $("#evCounty").onchange = (x) => { EVCOUNTY = x.target.value; refilter(); };
+  $("#evHealth").onchange = (x) => { EVHEALTH = x.target.value; refilter(); };
+  main.querySelector("[data-sort]").onchange = (x) => { EVSORT = x.target.value; refilter(); };
   $("#addEv").onclick = () => editEvent(null);
+  // ---- bulk actions: a second tap confirms; status and season changes can be undone, a delete cannot ----
+  $("#evAll").onchange = (x) => { const all = evFiltered(); if (x.target.checked && all.length > BULK_MAX) { x.target.checked = false; return toast(`Pick at most ${BULK_MAX} at a time. Narrow the filters first.`, true); } all.forEach((e) => (x.target.checked ? EVSEL.add(e.id) : EVSEL.delete(e.id))); paint(); };
+  $("#evClear").onclick = () => { EVSEL.clear(); paint(); };
+  const run = async (btn, verb, fn, undoable) => {
+    const ids = [...EVSEL]; if (!ids.length || !tap(btn, verb.replace("{n}", ids.length))) return;
+    document.querySelectorAll("#evBulk button, #evBulk select").forEach((b) => (b.disabled = true));
+    const list = ids.map((id) => EVENTS.find((e) => e.id === id)).filter(Boolean), before = list.map((e) => ({ ...e })), okIds = []; let failed = 0, skipped = 0;
+    for (const [i, e] of list.entries()) { btn.textContent = `Working ${i + 1} of ${list.length}…`; try { await fn(e); okIds.push(e.id); } catch (er) { if (er.status === 409) skipped++; else failed++; } }
+    EVSEL.clear(); const done = okIds.length, bad = failed + skipped;
+    const msg = `${done} event${done === 1 ? "" : "s"} done` + (skipped ? `, ${skipped} skipped (a paid Featured order is running: open each one to confirm)` : "") + (failed ? `, ${failed} could not be saved` : "");
+    toast(msg, !!bad && !done, undoable && done ? { undo: async () => { let u = 0; for (const e of before.filter((b) => okIds.includes(b.id))) { try { await api("/api/admin/events", { method: "POST", body: JSON.stringify(evBody(e)) }); u++; } catch {} } toast(`Undone for ${u} event${u === 1 ? "" : "s"}`); renderEvents(); refreshCounts(); } } : {});
+    renderEvents(); refreshCounts();
+  };
+  const post = (e, over) => api("/api/admin/events", { method: "POST", body: JSON.stringify(evBody(e, over)) });
+  $("#evSetC").onclick = (x) => run(x.target, "set {n} to confirmed", (e) => post(e, { status: "confirmed" }), true);
+  $("#evSetE").onclick = (x) => run(x.target, "set {n} to expected", (e) => post(e, { status: "expected" }), true);
+  $("#evMove").onclick = (x) => { const to = $("#evMoveTo").value; run(x.target, `move {n} to ${SEASONS[to].short || SEASONS[to].label}`, (e) => post(e, { season: to, type: SEASONS[to].types[e.t] ? e.t : Object.keys(SEASONS[to].types)[0] }), true); };
+  $("#evDel").onclick = (x) => run(x.target, "delete {n} for good (no undo)", (e) => api("/api/admin/events/" + encodeURIComponent(e.id), { method: "DELETE" }), false);
 }
+const BULK_MAX = 200;
 function editEvent(ev) {
-  const e = ev || { id: "", n: "", c: "Orange", city: "", t: Object.keys(SEASONS[evSeason].types)[0], s: TODAY, e: TODAY, st: "expected", free: true, p: "Free", h: "", lat: 33.68, lng: -117.83, b: "", u: "", sn: evSeason };
+  const e = ev || { id: "", n: "", c: "Orange", city: "", t: Object.keys((SEASONS[evSeason] || SEASONS.christmas).types)[0], s: TODAY, e: TODAY, st: "expected", free: true, p: "Free", h: "", lat: 33.68, lng: -117.83, b: "", u: "", sn: SEASONS[evSeason] ? evSeason : "christmas" };
   const typeOpts = (sn, cur) => Object.entries(SEASONS[sn].types).map(([v, l]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${l}</option>`).join("");
   const m = $("#modal");
   m.innerHTML = `<div class="card wide" role="dialog" aria-modal="true"><div class="mh"><h2>${ev ? "Edit event" : "Add an event"}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -584,7 +670,7 @@ function editEvent(ev) {
   $("#mClose").onclick = close;
   let placed = false; // the paid placement fields are sent only once they have loaded, so a failed load can never wipe a placement
   if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
-  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && confirm(er.message)) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted"); if (tab === "events") renderEvents(); else render(); };
+  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Delete anyway", danger: true }))) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted"); if (tab === "events") renderEvents(); else render(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");
     const id = ev ? ev.id : $("#eN").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) + "-" + Math.random().toString(36).slice(2, 6);
@@ -615,7 +701,7 @@ async function renderUsers() {
     compact: true, attrs: `data-uid="${esc(u.id)}"`, title: esc(u.name || "(no name)"), tags: u.status === "suspended" ? [["Suspended", "bad"]] : [],
     body: `<span class="sub">${esc(u.email)}${u.google ? " · Google" : ""} · joined ${esc((u.created_at || "").slice(0, 10))} · last sign-in ${ago(u.last_login)}</span><span class="sub">${u.homes + u.entries} home${u.homes + u.entries === 1 ? "" : "s"}/entr${u.homes + u.entries === 1 ? "y" : "ies"} · ${u.contests} contest${u.contests === 1 ? "" : "s"} run · ${u.votes} vote${u.votes === 1 ? "" : "s"}</span>`,
     edit: btn("ghost", "Profile", `data-open="${esc(u.id)}"`),
-  })).join("")}</div>` + pager({ offset: d.offset, shown: d.users.length, total: d.total, page: d.page, idPrev: "uPrev", idNext: "uNext" }) : `<div class="empty">${USERS.q || USERS.status ? "Nobody matches that." : "Nobody has made a profile yet."}</div>`);
+  })).join("")}</div>` + pager({ offset: d.offset, shown: d.users.length, total: d.total, page: d.page, idPrev: "uPrev", idNext: "uNext" }) : `<div class="empty">${USERS.q || USERS.status ? "Nothing matches that." : "Nobody has made a profile yet."}</div>`);
   wireToolbar(main, { onView: (v) => { USERS.status = v; USERS.offset = 0; renderUsers(); }, onSearch: (q) => { USERS.q = q; USERS.offset = 0; renderUsers().then(() => { const i = $("[data-search]"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); } });
   if ($("#uPrev")) $("#uPrev").onclick = () => { USERS.offset = Math.max(0, USERS.offset - d.page); renderUsers(); };
   if ($("#uNext")) $("#uNext").onclick = () => { USERS.offset += d.page; renderUsers(); };
@@ -808,13 +894,46 @@ function spark(vals, days, label) {
   const md = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}: ${vals.join(", ")} from ${md(days[0])} to ${md(days[days.length - 1])}" preserveAspectRatio="none"><title>${esc(label)}</title>${[0, .5, 1].map((t) => `<line x1="${pad}" x2="${W - pad}" y1="${(pad + t * (H - 2 * pad)).toFixed(1)}" y2="${(pad + t * (H - 2 * pad)).toFixed(1)}" class="sg"/>`).join("")}<path d="${area}" class="sa"/><path d="${line}" class="sl" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="4" class="sd"/></svg><div class="sx"><span>${md(days[0])}</span><span>${md(days[days.length - 1])}</span></div>`;
 }
+// Data health: counts of the checks in public/admin/health.js; a row opens the Events tab already filtered to those events
+function healthCard(h) {
+  if (!h) return "";
+  const m = h.map || {};
+  return `<h2 class="dh">Data health</h2><section class="hcard" aria-label="Data health"><p class="meta" style="margin:0 0 10px"><b>${fmt(m.total)}</b> events are on the public map now (${fmt(m.confirmed)} confirmed, ${fmt(m.expected)} expected, ${m.total ? Math.round((m.expected / m.total) * 100) : 0}% still expected). ${fmt(h.stored)} rows are stored in all, including past seasons. Tap a row to see those events.</p>
+    <div class="hlist">${HEALTH.map(([k, label, why]) => `<button type="button" class="hrow ${h[k] ? "bad" : "ok"}" data-hfilter="${k}" title="${esc(why)}"><b>${fmt(h[k])}</b><span>${esc(label)}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>
+    <p class="meta" style="margin:10px 0 0">Not counted here: cities with no events (see docs/coverage-cities.md) and whether a photo shows the right place.</p></section>`;
+}
+const usdOf = (c) => "$" + (Number(c || 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Orders added up for the last 30 days, by product (Orders tab and dashboard). Stripe is the source of truth.
+function revenueStrip(r, link = false) {
+  if (!r) return "";
+  if (r.error) return `<h2 class="dh">Revenue, last ${r.days || 30} days</h2><p class="meta">The orders could not be read: ${esc(r.error)}</p>`;
+  const t = r.total;
+  return `<h2 class="dh">Revenue, last ${r.days} days</h2><section class="hcard" aria-label="Revenue, last ${r.days} days">
+    <div class="stats"><div class="stat"><b>${usdOf(t.net)}</b><span>net of refunds</span></div><div class="stat"><b>${fmt(t.orders)}</b><span>orders</span></div><div class="stat"><b>${usdOf(t.refunded)}</b><span>refunded</span></div><div class="stat"><b>${usdOf(t.atRisk)}</b><span>refund due, held or disputed</span></div></div>
+    ${r.rows.length ? `<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th scope="col">Product</th><th scope="col">Orders</th><th scope="col">Collected</th><th scope="col">Refunded</th><th scope="col">Net</th></tr></thead><tbody>${r.rows.map((x) => `<tr><td>${esc(x.label)}</td><td>${fmt(x.orders)}</td><td>${usdOf(x.gross)}</td><td>${usdOf(x.refunded)}</td><td>${usdOf(x.net)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="meta" style="margin:10px 0 0">No orders in the last ${r.days} days.</p>`}
+    <p class="meta" style="margin:10px 0 0">Added up from the orders this site recorded; the Stripe dashboard is the record of money. ${r.otherCurrency ? `${r.otherCurrency} order(s) in another currency are left out. ` : ""}${link ? 'Details and refunds: <a href="#orders" data-tab="orders">Orders</a>.' : ""}</p></section>`;
+}
+function errorsCard(e) {
+  if (!e) return "";
+  const rows = [...e.groups.map((g) => `<li><div class="dli" style="cursor:default"><span class="dt"><b>${esc(g.label)}</b><small>last ${esc(agoShort(g.last))}${g.example ? " · " + esc(g.example) : ""}</small></span><span class="tag bad">${fmt(g.n)}</span></div></li>`),
+    ...(e.mailFailed ? [`<li><div class="dli" style="cursor:default"><span class="dt"><b>Emails that failed for good</b><small>still in the send queue as failed</small></span><span class="tag bad">${fmt(e.mailFailed)}</span></div></li>`] : []),
+    ...e.failedJobs.map((j) => `<li><div class="dli" style="cursor:default"><span class="dt"><b>${esc(j.label)}: last run failed</b><small>${esc(agoShort(j.last))}</small></span><span class="tag bad">1</span></div></li>`)];
+  return `<h2 class="dh">Errors, last 7 days</h2><div class="calm ${e.total ? "warnbox" : ""}"><b style="font:300 34px/1 var(--font)">${fmt(e.total)}</b><div><b>${e.total ? "things went wrong" : "Nothing logged"}</b><p class="meta" style="margin:2px 0 0">${e.error ? esc(e.error) : "Failed emails, payment webhook problems, limits hit and failed scheduled jobs."}</p></div></div>${rows.length ? `<ul class="dl">${rows.join("")}</ul>` : ""}<p class="meta" style="margin:8px 0 0">${esc(e.notStored.join(" "))}</p>`;
+}
+function runsCard(r) {
+  if (!r) return "";
+  const tag = (w) => (w.failed ? ["bad", "failed"] : w.stale ? ["bad", "late"] : w.status === "none" ? ["", "no report"] : ["ok", "ok"]);
+  return `<h2 class="dh">Last run of each job</h2><ul class="dl">${r.workflows.map((w) => { const [c, t] = tag(w); return `<li><div class="dli" style="cursor:default"><span class="dt"><b>${esc(w.label)}</b><small>every ${esc(w.every)} · ${w.last ? "last report " + esc(agoShort(w.last)) : "never reported"}</small></span><span class="tag ${c}">${t}</span></div></li>`; }).join("")}
+    <li><div class="dli" style="cursor:default"><span class="dt"><b>Event data last published</b><small>${r.migration ? esc(r.migration.name) + " · applied " + esc(agoShort(r.migration.at)) : "not available"}</small></span></div></li></ul><p class="meta" style="margin:8px 0 0">${esc(r.notRecorded.join(" "))}</p>`;
+}
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-hfilter]"); if (b) { evSeason = "all"; EVHEALTH = b.dataset.hfilter; EVQ = ""; EVSTATUS = ""; EVCOUNTY = ""; EVLIMIT = 0; setTab("events"); } });
 async function renderDashboard() {
   const main = $("#main"), d = await api("/api/admin/dashboard");
   const a = d.attention, todo = [
     ["pending", a.waitHomes, "house", "waiting for your review"], ["subs", a.waitEvents, "event", "submitted, waiting for review"], ["contests", a.waitContests, "contest", "waiting for approval"],
     ["reports", a.reports, "report", "from visitors this week"], ["installers", a.claims, "installer claim", "to confirm"],
   ].filter((t) => t[1] > 0);
-  const tile = (k, n, l) => `<div class="stat"><b>${fmt(n)}</b><span>${l}</span></div>`;
+  const tile = (k, n, l, more = "") => `<div class="stat"><b>${fmt(n)}</b><span>${l}</span>${more ? `<small class="meta">${more}</small>` : ""}</div>`;
   const kindTab = { home: "pending", event: "subs" };
   main.innerHTML = `
     <p class="hello">${hour < 5 ? "Hello" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}. ${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p>
@@ -824,7 +943,13 @@ async function renderDashboard() {
     <h2 class="dh">Today</h2>
     <div class="stats">${tile("h", d.today.homes, "new houses")}${tile("e", d.today.events, "events submitted")}${tile("c", d.today.entries, "contest entries")}${tile("l", d.people.litToday, "lights switched on")}</div>
     <h2 class="dh">On the site now</h2>
-    <div class="stats">${tile("h", d.live.homes, "published houses")}${tile("e", d.live.events, "map events")}${tile("c", d.live.contests, "contests running")}${tile("i", d.live.installers, "installers")}</div>
+    <div class="stats">${tile("h", d.live.homes, "published houses")}${tile("e", d.live.events, "map events", `${fmt(d.live.eventsConfirmed)} confirmed · ${fmt(d.live.eventsExpected)} expected`)}${tile("c", d.live.contests, "contests running")}${tile("i", d.live.installers, "installers")}</div>
+    ${healthCard(d.health)}
+    ${revenueStrip(d.revenue, true)}
+    <div class="dcols">
+      <section class="dbox" aria-label="Errors, last 7 days">${errorsCard(d.errors)}</section>
+      <section class="dbox" aria-label="Last run of each job">${runsCard(d.runs)}</section>
+    </div>
     <h2 class="dh">People, last 7 days</h2>
     <div class="stats">${tile("u", d.people.users, "accounts in total")}${tile("n", d.people.newUsers, "new accounts")}${tile("v", d.people.votesWeek, "contest votes")}${tile("p", d.people.hits, "installer profile views")}</div>
     <h2 class="dh">Last 14 days</h2>
@@ -1162,10 +1287,10 @@ $("#main").addEventListener("click", async (e) => {
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-rm]"); if (!b) return;
   const card = b.closest("[data-rmid]"), act = b.dataset.rm;
-  if (!tap(b, act === "approve" ? (b.dataset.nothing ? "close" : "remove") : "decline")) return;
+  if (act === "approve" && !tap(b, b.dataset.nothing ? "close" : "remove")) return;
   const body = { id: card.dataset.rmid, action: act };
   if (act === "approve") { if (b.dataset.target) body.target = b.dataset.target; if (b.dataset.nothing) body.nothing = true; }
-  if (act === "decline") body.reason = prompt("A note for the person who asked (optional). It is included in the email.") || "";
+  if (act === "decline") { const r = await askReason({ title: "Decline this request", hint: "A note for the person who asked. It is included in the email. Leave it blank to send none.", go: "Decline" }); if (r === null) { b.dataset.armed = ""; return; } body.reason = r; }
   b.disabled = true;
   try { await api("/api/admin/removals", { method: "POST", body: JSON.stringify(body) }); toast(act === "approve" ? "Done. The person was emailed." : "Declined. The person was emailed."); refreshCounts(); renderReports(); }
   catch (err) { b.disabled = false; toast(err.message); }

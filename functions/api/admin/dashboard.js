@@ -5,6 +5,9 @@ import { funnelCounts, STEPS } from "../../_lib/funnel.js";
 import { limitHits } from "../../_lib/cfusage.js";
 import { ptToday, shiftDay } from "../../_lib/time.js";
 import { jobStatus, problemJobs } from "../../_lib/heartbeat.js";
+import { loadEventStats } from "../../_lib/eventhealth.js";
+import { revenue } from "../../_lib/revenue.js";
+import { errorsLast7, lastRuns } from "../../_lib/adminhealth.js";
 
 export async function onRequestGet({ env }) {
   const n = async (sql, ...a) => { try { return (await env.DB.prepare(sql).bind(...a).first()).n || 0; } catch { return 0; } };
@@ -14,14 +17,14 @@ export async function onRequestGet({ env }) {
   const dst = /PDT/.test(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles", timeZoneName: "short" }));
   const day = new Date(`${ptDate}T00:00:00${dst ? "-07:00" : "-08:00"}`).toISOString().slice(0, 19).replace("T", " ");
   const week = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 19).replace("T", " ");
-  const [waitHomes, waitEvents, waitContests, reports, claims, homesLive, eventsLive, contestsLive, installers, users, newUsers, subsToday, homesToday, entriesToday, votesWeek, litToday, hits, recentHomes, recentEvents, contests, activity] = await Promise.all([
+  const [waitHomes, waitEvents, waitContests, reports, claims, homesLive, evStats, contestsLive, installers, users, newUsers, subsToday, homesToday, entriesToday, votesWeek, litToday, hits, recentHomes, recentEvents, contests, activity] = await Promise.all([
     n("SELECT COUNT(*) AS n FROM posts WHERE status = 'pending' AND contest_id IS NULL"),
     n("SELECT COUNT(*) AS n FROM event_submissions WHERE status = 'pending'"),
     n("SELECT COUNT(*) AS n FROM contests WHERE status = 'pending' OR (status = 'live' AND note != '')"),
     n("SELECT (SELECT COUNT(*) FROM reports WHERE created_at > ?) + (SELECT COUNT(*) FROM removal_requests WHERE status = 'open') AS n", week),
     n("SELECT COUNT(*) AS n FROM posts WHERE installer_id IS NOT NULL AND installer_confirmed = 0 AND poster_type != 'installer' AND status = 'approved'"),
     n("SELECT COUNT(*) AS n FROM posts WHERE status = 'approved' AND contest_id IS NULL"),
-    n("SELECT COUNT(*) AS n FROM events"),
+    loadEventStats(env, ptDate), // what the public map shows (not every row ever stored), and the data health counts
     n("SELECT COUNT(*) AS n FROM contests WHERE status = 'live' AND announced = 0"),
     n("SELECT COUNT(*) AS n FROM installers WHERE status = 'active'"),
     n("SELECT COUNT(*) AS n FROM users"),
@@ -53,14 +56,18 @@ export async function onRequestGet({ env }) {
   const clickRows = await rows("SELECT page, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today, SUM(n) AS week FROM site_hits WHERE day >= ? AND (page LIKE 'click:%' OR page = 'feature') GROUP BY page", days[13], days[7]);
   const refRows = await rows("SELECT page, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today, SUM(n) AS week FROM site_hits WHERE day >= ? AND page LIKE 'ref:%' GROUP BY page ORDER BY week DESC LIMIT 40", days[13], days[7]);
   const clicks = Object.fromEntries(clickRows.map((r) => [r.page, { today: r.today || 0, week: r.week || 0 }]));
+  const jobSt = await jobStatus(env);
+  const [rev, errors, runs] = await Promise.all([revenue(env, 30), errorsLast7(env, jobSt.jobs), lastRuns(env, jobSt.jobs)]);
   return json({
-    staleJobs: problemJobs(await jobStatus(env)).map((j) => ({ job: j.job, line: j.line, failed: j.failed && !j.stale })), // scheduled jobs that went quiet or failed (red banner on Admin home)
+    staleJobs: problemJobs(jobSt).map((j) => ({ job: j.job, line: j.line, failed: j.failed && !j.stale })), // scheduled jobs that went quiet or failed (red banner on Admin home)
     limits: (await limitHits(env)).slice(0, 3), // quota errors logged in the last 24 hours (banner on Admin home)
+    health: { ...evStats.health, upcoming: evStats.upcoming, upcomingConfirmed: evStats.upcomingConfirmed, map: evStats.map, stored: evStats.stored, today: ptDate },
+    revenue: rev, errors, runs,
     funnel: { steps: STEPS, counts: await funnelCounts(env), refs: refRows.map((r) => ({ code: r.page.slice(4), today: r.today || 0, week: r.week || 0 })) },
     trends: { days, houses: tHouses, votes: tVotes, accounts: tAccounts, views: tViews, topPages, clicks },
     attention: { waitHomes, waitEvents, waitContests, reports, claims },
     today: { homes: homesToday, events: subsToday, entries: entriesToday },
-    live: { homes: homesLive, events: eventsLive, contests: contestsLive, installers },
+    live: { homes: homesLive, events: evStats.map.total, eventsConfirmed: evStats.map.confirmed, eventsExpected: evStats.map.expected, contests: contestsLive, installers },
     people: { users, newUsers, votesWeek, hits, litToday },
     recent, contests, activity,
   }, { headers: { "cache-control": "no-store" } });

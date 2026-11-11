@@ -1,6 +1,7 @@
 // GET /past/<slug> — the permanent results page of one finished contest: the winners and then every home that entered, with its results.
 // Built from the frozen snapshot written when the winners were announced; shows only what the Past results tab (/api/archive) already shows.
 import { esc, header, page } from "../_lib/shell.js";
+import { hasTrailingSlash, permanent } from "../_lib/redirect.js";
 import { founderKeys, isFounder } from "../_lib/founder.js";
 import { FOUNDER_LABEL, FOUNDER_TIP } from "../_lib/founder.js";
 import { ARCHIVE_COLS, ARCHIVE_WHERE, shapeContest } from "../_lib/archive.js";
@@ -12,6 +13,7 @@ const CROWN = "&#128081; ";
 
 export async function onRequestGet(context) {
   const { request, env, params } = context, origin = new URL(request.url).origin, slug = String(params.slug || "").toLowerCase();
+  if (slug && (slug !== params.slug || hasTrailingSlash(request))) return permanent(request, "/past/" + encodeURIComponent(slug));
   const cache = typeof caches !== "undefined" ? caches.default : null, key = new Request(request.url, { method: "GET" });
   if (cache) { const hit = await cache.match(key); if (hit) return hit; }
   let row = null;

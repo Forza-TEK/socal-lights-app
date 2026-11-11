@@ -43,16 +43,71 @@ export function eventLd(e, url) {
   };
 }
 
-// Title of at most 60 characters: the long form first, shorter ones when the name is long
+// Words a title must not end on ("Parade of Lights Premier Viewing at the" reads as cut off)
+const DANGLING = /\s+(?:at|the|of|in|on|for|and|or|to|with|by|a|an|&|-|–|—|\|)$/i;
+// Cut a name at a word boundary (at most n characters), drop dangling little words and punctuation, and add an ellipsis only when something was cut
+export function cutName(name, n) {
+  const s = String(name || "").replace(/\s+/g, " ").trim();
+  if (s.length <= n) return s;
+  let t = s.slice(0, n - 1).replace(/\s+\S*$/, "");
+  for (let i = 0; i < 4 && DANGLING.test(t); i++) t = t.replace(DANGLING, "");
+  return t.replace(/[\s,;:\-–—(]+$/, "") + "…";
+}
+// Title of at most 60 characters. The full name comes first: with the city when it fits, then without; when the name alone is long the
+// "| SoCal Lights" suffix is dropped before the name is cut, and a cut is made at a word boundary (never ending on "at the").
 export function eventTitle(e) {
-  const n = clip(e.n, 40);
-  return [`${n} in ${e.city}, CA | SoCal Lights`, `${n} in ${e.city} | SoCal Lights`, `${clip(e.n, 44)} | SoCal Lights`].find((t) => t.length <= 60) || `${clip(e.n, 44)} | SoCal Lights`;
+  const SUF = " | SoCal Lights", n = String(e.n || "").replace(/\s+/g, " ").trim();
+  const whole = [`${n} in ${e.city}, CA${SUF}`, `${n} in ${e.city}${SUF}`, `${n}${SUF}`, n].find((t) => t.length <= 60);
+  return whole || cutName(n, 60);
 }
 
 // Description of at most 155 characters (what search results show): name, dates, place, then the start of the blurb if there is room
 export function eventDesc(e) {
-  const head = `${e.n}: ${whenText(e)}`, hrs = usefulHours(e), where = whereText(e);
+  const head = `${e.n}: ${e.st === "c" ? whenText(e) : `${whenText(e)} (dates estimated)`}`, hrs = usefulHours(e), where = whereText(e);
   let d = head + (hrs ? ", " + hrs : "") + (where ? ". " + where : "") + ".";
   if (e.b && d.length < 110) d += " " + e.b;
   return clip(d, 155);
+}
+
+// Which event pages search engines may index (SEO-06). The rule, in one place for the page, the sitemap and the tests:
+//  - never an ended event, and never a cancelled or postponed one;
+//  - a confirmed event: yes;
+//  - an expected event (dates estimated from past years): yes only when it has a public source link a visitor can check the dates on,
+//    and it starts within EXPECTED_DAYS days (a guess a year away helps nobody). Its page already says "date estimated" and its meta description says "(dates estimated)".
+// Event structured data (schema.org Event, which states a firm date) is still written ONLY for confirmed events that have not ended (eventLd above).
+export const EXPECTED_DAYS = 180;
+export const dayDiff = (a, b) => Math.round((Date.parse(b + "T12:00:00Z") - Date.parse(a + "T12:00:00Z")) / 86400000);
+export function eventIndexable(e, today) {
+  if (!e || e.e < today || e.nt) return false;
+  if (e.st === "c") return true;
+  return !!http(e.u) && dayDiff(today, e.s) <= EXPECTED_DAYS;
+}
+
+// The share picture of an event page: its own photo served from our domain through the Cloudflare resizer (1200x630, JPEG, about 100 KB), never the
+// third-party file itself. Returns { url, w, h } or null (no usable photo: the page falls back to the site card).
+export function shareImage(e, origin) {
+  const u = secureUrl(e.img);
+  return u ? { url: `${origin}/cdn-cgi/image/width=1200,height=630,fit=cover,quality=70,format=jpeg/${u}`, w: 1200, h: 630 } : null;
+}
+
+// "6-9 pm" style hours of a one-day event as [start, end] clock strings "HHMMSS", else null (all-day)
+export function timeRange(e) {
+  if (e.s !== e.e) return null;
+  const m = String(e.h || "").match(/^\D{0,12}?(\d{1,2})(?::(\d{2}))?\s*([ap])?\.?m?\.?\s*(?:–|-|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?/i);
+  if (!m) return null;
+  const to24 = (h, mi, ap) => { h = +h % 12; if (/p/i.test(ap)) h += 12; return h * 60 + (+mi || 0); };
+  const endAp = m[6], startAp = m[3] || endAp;
+  let s = to24(m[1], m[2], startAp); const en = to24(m[4], m[5], endAp);
+  if (!m[3] && s >= en) s -= 12 * 60;
+  if (s < 0 || en <= s) return null;
+  const f = (x) => String(Math.floor(x / 60)).padStart(2, "0") + String(x % 60).padStart(2, "0") + "00";
+  return [f(s), f(en)];
+}
+// A calendar file (.ics) for one event, same fields as the map's "Add to calendar" button. Times are local to the event (floating), all-day when no hours are known.
+export function eventIcs(e, origin) {
+  const ymd = (d) => d.replace(/-/g, ""), next = (d) => new Date(Date.parse(d + "T12:00:00Z") + 86400000).toISOString().slice(0, 10), tr = timeRange(e);
+  const esc2 = (x) => String(x).replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  const when = tr ? `DTSTART:${ymd(e.s)}T${tr[0]}\r\nDTEND:${ymd(e.e)}T${tr[1]}` : `DTSTART;VALUE=DATE:${ymd(e.s)}\r\nDTEND;VALUE=DATE:${ymd(next(e.e))}`;
+  const desc = [e.h || "", e.st === "c" ? "" : "Dates are estimated: check the event's site before you go.", http(e.u), `Found on SoCal Lights: ${origin}/e/${encodeURIComponent(e.id)}`].filter(Boolean).join("\n");
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//SoCal Lights//EN", "BEGIN:VEVENT", `UID:${e.id}@socallights.app`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`, when, `SUMMARY:${esc2(e.n)}`, `LOCATION:${esc2([e.v, e.a].filter(Boolean).join(", "))}`, `DESCRIPTION:${esc2(desc)}`, "END:VEVENT", "END:VCALENDAR", ""].join("\r\n");
 }
