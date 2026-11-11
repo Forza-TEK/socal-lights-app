@@ -50,7 +50,7 @@ const editCard = (label, summary, call, field, value, max) => ({ type: "form", l
 // The "add my event" card: the full form on one card, published with one tap (the site's own validation and review rules apply). Everything the add-event form asks for.
 export function publishEventCard() {
   const types = [...new Map(Object.values(SEASONS).flatMap((s) => Object.entries(s.types)).map(([k, l]) => [k, l]))];
-  return { type: "form", label: "Add my event", summary: "Fill in every box and tap Add my event. It goes on the map the same way as from the Add page, with the same checks. Want to review it step by step instead? Use Start this event.", done: "Your event was submitted. Open Your profile, Events, to see it.", call: { method: "POST", url: "/api/submit-event", body: {} }, go: "Add my event",
+  return { type: "form", label: "Add my event", summary: "Fill in every box and tap Add my event. It goes on the map the same way as from the Add page, with the same checks. Want to review it step by step instead? Use Start this event.", done: "Your event was submitted. Open Your profile, Events, to see it.", call: { method: "POST", url: "/api/submit-event", body: {} }, go: "Add my event", alt: { label: "Prefer to go step by step? Open the add-event form", href: "/add-event" },
     fields: [
       { name: "name", label: "Event name", type: "text", required: true, max: 120 },
       { name: "season", label: "Season", type: "select", required: true, options: Object.entries(SEASONS).map(([k, v]) => [k, v.label]), value: "christmas" },

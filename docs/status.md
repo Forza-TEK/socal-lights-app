@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-11 (assistant: forms ask first)
+- Owner feedback: asking how to add an event brought up two forms at once. Now every form card starts as a button ("Would you like me to help with that?" then the action), and the form opens only after the visitor taps it. Signed-in visitors get one event option (add it now, with a link to the step-by-step form inside), not two. A visitor who asks for a person gets that box open straight away; offers (no answer found, cost cap) stay collapsed. The one-tap confirm cards (take down a home, mark cancelled...) are unchanged.
+
 ## 2026-11-11 (assistant: suggests actions)
 - Owner request: when a question suggests the visitor may want to do something, the assistant suggests the action. A question that only asks about something ("is it free to add an event", "how does weekly email work", "what happens if I take my home down") now shows the matching card as a collapsed suggestion ("I can help you do that, if you like:" and one button that opens the full card); a request ("how do I add an event", "please remove my home") still shows the full card. Signed-out visitors get no suggestion for changes to their own listings. The curated contest answers also link straight to the organizer's contests and the Help article. Tests in `tests/chat-action-audit.test.mjs`.
 

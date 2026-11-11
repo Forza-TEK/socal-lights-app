@@ -117,10 +117,11 @@
     var seq = 0;
     function addCard(card, lastReply) {
       if (!card || typeof card !== "object") return;
+      if (card.type === "form" && !card.suggest && !card.open) { var cc = {}, kk; for (kk in card) cc[kk] = card[kk]; cc.suggest = true; card = cc; } // forms never pop up unasked: a button first, the form after the visitor says yes
       if (card.suggest) { // a question that only asked about something: offer the action as a suggestion; tapping it opens the full card
         var sg = el("div", { class: "scl-chat-card" }), sbtn = el("button", { type: "button", class: "scl-chat-card-go", text: String(card.label || "Start").slice(0, 80) });
-        sg.appendChild(el("p", { class: "scl-chat-card-s", text: "I can help you do that, if you like:" }));
-        sbtn.addEventListener("click", function () { sg.remove(); var c2 = {}, k2; for (k2 in card) c2[k2] = card[k2]; c2.suggest = false; addCard(c2, lastReply); });
+        sg.appendChild(el("p", { class: "scl-chat-card-s", text: "Would you like me to help with that?" }));
+        sbtn.addEventListener("click", function () { sg.remove(); var c2 = {}, k2; for (k2 in card) c2[k2] = card[k2]; c2.suggest = false; c2.open = true; addCard(c2, lastReply); });
         sg.appendChild(sbtn); log.appendChild(sg); log.scrollTop = log.scrollHeight; return;
       }
       var box = el("div", { class: "scl-chat-card" });
@@ -211,6 +212,7 @@
             })
             .catch(function () { go.disabled = false; msg.textContent = "I couldn't reach the server. Please try again, or email info@socallights.app."; });
         });
+        if (card.alt && SAFE.test(String(card.alt.href || ""))) f.appendChild(el("p", { class: "scl-chat-card-s" }, [el("a", { href: card.alt.href, text: String(card.alt.label || "Open the form").slice(0, 100) })]));
         box.appendChild(f);
       } else return;
       log.appendChild(box);

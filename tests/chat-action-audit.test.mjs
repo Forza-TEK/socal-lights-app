@@ -115,5 +115,5 @@ test("a question that only asks about something still suggests the matching acti
   for (const q of ["how does voting work", "what does the gold pin mean", "what seasons does the map cover"]) assert.deepEqual((await ask(q)).cards || [], [], q);
   const asked = await ask("how do I add an event"); assert.ok(asked.cards.some((c) => c.label === "Start this event" && !c.suggest), "a request is still a full card");
   const widget = (await import("node:fs")).readFileSync(new URL("../public/chat.js", import.meta.url), "utf8");
-  assert.match(widget, /card\.suggest/); assert.match(widget, /I can help you do that, if you like/);
+  assert.match(widget, /card\.suggest/); assert.match(widget, /Would you like me to help with that/);
 });
