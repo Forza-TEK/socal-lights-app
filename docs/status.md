@@ -2,6 +2,13 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-11 (data audit fixes, branch fix-data, batch D2)
+- Audit items DAT-01, 03, 04, 05, 06, 07, 08, 09, 10, 11 (`docs/audit/2026-11-11-data-seo-admin.md` on branch audit-data-admin). Not merged; the owner reviews the PR.
+- New shared rules `scripts/event-rules.mjs`, enforced by `npm run validate` for rows a migration adds or changes (only the field that changed is checked): `hours-style` (one en dash, `7pm`/`7:30pm`, `; check site`), `free-price` (free=1 only when the price starts with "Free"), `photo` (logo/badge/site-default file names are errors unless a city or government event keeps its own logo or seal; banner/screenshot names warn), `shared-url` (a source page shared by 4+ events warns on a new row).
+- Migrations 0224 (73 wrong photos cleared, each guarded by the old image), 0225 (39 contest-home retitles, 9 free/price fixes, 123 Farm confirmed from its own page), 0226 (691 hours texts normalized). Replayed against the migrations they match the live API exactly (every guarded UPDATE applies).
+- New tools: `scripts/coverage-report.mjs` (counts, 0/1-event cities, expected rows already started or ended; `--write-doc` rewrites the generated block in `docs/coverage-cities.md`), `scripts/audit-event-photos.mjs` (file-name rules, `--check-images` size check, `--sample 40` for the by-eye miss rate). `docs/confirmation-plan.md` now says drive-by lights and the next 14 days come first.
+- Left for the owner: `citadel` (expected, tree lighting Nov 7 already passed; no public page proves its 2026 status), the audit counted 6 + 4 free/price mismatches, 5 + 4 existed on the live API today and all 9 are fixed; photos that could not be loaded from the audit machine (40) were judged by file name only. Not done: show "last checked" on cards (touches the map card code, outside this batch). DAT-10: no action.
+
 ## 2026-11-11 (assistant: forms ask first)
 - Owner feedback: asking how to add an event brought up two forms at once. Now every form card starts as a button ("Would you like me to help with that?" then the action), and the form opens only after the visitor taps it. Signed-in visitors get one event option (add it now, with a link to the step-by-step form inside), not two. A visitor who asks for a person gets that box open straight away; offers (no answer found, cost cap) stay collapsed. The one-tap confirm cards (take down a home, mark cancelled...) are unchanged.
 

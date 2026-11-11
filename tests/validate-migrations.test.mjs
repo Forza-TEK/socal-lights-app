@@ -18,6 +18,7 @@ before(async () => {
   root = mkdtempSync(join(tmpdir(), "scl-validate-"));
   mkdirSync(join(root, "scripts")); mkdirSync(join(root, "public"));
   cpSync(join(REPO, "scripts/validate-migrations.mjs"), join(root, "scripts/validate-migrations.mjs"));
+  cpSync(join(REPO, "scripts/event-rules.mjs"), join(root, "scripts/event-rules.mjs"));
   for (const f of ["seasons.js", "cities.js"]) cpSync(join(REPO, "public", f), join(root, "public", f));
   cpSync(join(REPO, "migrations"), join(root, "migrations"), { recursive: true });
   const git = (...a) => execFileSync("git", a, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
@@ -39,7 +40,7 @@ async function check(sql, flags = [], name) {
 const COLS = "id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address";
 const UPSERT = "ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city, type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status, free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng, blurb=excluded.blurb, url=excluded.url, season=excluded.season, venue=excluded.venue, address=excluded.address, updated_at=datetime('now');";
 const q = (v) => (typeof v === "number" ? String(v) : "'" + String(v).replace(/'/g, "''") + "'");
-const ev = (o = {}) => ({ id: "t-lights-26", name: "Test Lights Night", county: "Los Angeles", city: "Pasadena", type: "walk", start_date: "2026-12-05", end_date: "2026-12-20", status: "confirmed", free: 1, price: "Free", hours: "5-9pm", lat: 34.148, lng: -118.144, blurb: "Neighborhood lights walk with cocoa.", url: "https://example.org/lights", season: "christmas", venue: "Memorial Park", address: "85 E Holly St, Pasadena, CA 91103", ...o });
+const ev = (o = {}) => ({ id: "t-lights-26", name: "Test Lights Night", county: "Los Angeles", city: "Pasadena", type: "walk", start_date: "2026-12-05", end_date: "2026-12-20", status: "confirmed", free: 1, price: "Free", hours: "5–9pm", lat: 34.148, lng: -118.144, blurb: "Neighborhood lights walk with cocoa.", url: "https://example.org/lights", season: "christmas", venue: "Memorial Park", address: "85 E Holly St, Pasadena, CA 91103", ...o });
 const sqlFor = (o, { upsert = true } = {}) => { const r = ev(o); return `INSERT INTO events (${COLS}) VALUES (${COLS.split(",").map((c) => q(r[c])).join(",")}) ${upsert ? UPSERT : ";"}\n`; };
 const has = (r, rule) => new RegExp("\\*\\*" + rule + "\\*\\*").test(r.out);
 // Is row `id` listed under `rule` in the report? (the report groups findings: "- **rule** (n)" then "  - row <id>: message")
@@ -74,9 +75,9 @@ test("hard rules: id format, county, season/type, status, free flag, coordinates
   for (const [id, [, rule]] of Object.entries(cases)) assert.ok(flagged(r, rule, id), `${id} -> ${rule}\n${r.out}`);
   assert.ok(flagged(r, "id", "Bad_ID"), r.out);
 });
-test("soft rules are warnings, not failures: ended, far future, expected without 'check site', free/price mismatch, no url, http, far pin, missing venue/blurb, no ZIP", async () => {
+test("soft rules are warnings, not failures: ended, far future, expected without 'check site', no url, http, far pin, missing venue/blurb, no ZIP", async () => {
   const cases = { "t-ended": [{ start_date: "2026-10-01", end_date: "2026-10-02" }, "already-ended"], "t-far": [{ start_date: "2028-06-01", end_date: "2028-06-02" }, "far-future"], "t-exp": [{ status: "expected", hours: "evenings" }, "expected-hours"],
-    "t-fp1": [{ free: 1, price: "$20" }, "free-price"], "t-fp2": [{ free: 0, price: "Free" }, "free-price"], "t-nourl": [{ url: "" }, "url"], "t-http": [{ url: "http://example.org/x" }, "url"], "t-far2": [{ lat: 34.9, lng: -118.1 }, "coords-city"],
+    "t-nourl": [{ url: "" }, "url"], "t-http": [{ url: "http://example.org/x" }, "url"], "t-far2": [{ lat: 34.9, lng: -118.1 }, "coords-city"],
     "t-venue": [{ venue: "" }, "venue"], "t-blurb": [{ blurb: "" }, "blurb"], "t-zip": [{ address: "Somewhere nice" }, "address"] };
   const r = await check(Object.entries(cases).map(([id, [o]]) => sqlFor({ id, ...o })).join(""));
   assert.equal(r.code, 0, r.out);
@@ -119,6 +120,45 @@ test("--check-urls: a dead source page (404/410, refused connection) fails; bloc
   for (const code of [403, 429, 500]) { const r = await one(code); assert.equal(r.code, 0, "HTTP " + code + r.out); assert.ok(has(r, "url-blocked")); }
   const refused = await check(sqlFor({ id: "t-url-refused", url: "http://127.0.0.1:1/x" }), ["--check-urls"]); assert.equal(refused.code, 1, refused.out); assert.ok(has(refused, "url-dead"));
 });
+// ---- audit 2026-11-11 (DAT-01, DAT-06, DAT-07, DAT-09): data-quality rules on rows a migration adds or changes ----
+test("free flag must agree with the price text (DAT-07): errors, not warnings", async () => {
+  const r = await check(sqlFor({ id: "t-fp1", free: 1, price: "$20" }) + sqlFor({ id: "t-fp2", free: 0, price: "Free" }) + sqlFor({ id: "t-fp3", free: 0, price: "Free; parking $15" }) + sqlFor({ id: "t-fp4", free: 1, price: "Check listing" }) + sqlFor({ id: "t-ok1", free: 1, price: "Free; parking $15" }) + sqlFor({ id: "t-ok2", free: 0, price: "Kids $5; adults free" }));
+  assert.equal(r.code, 1, r.out);
+  for (const id of ["t-fp1", "t-fp2", "t-fp3", "t-fp4"]) assert.ok(flagged(r, "free-price", id), `${id}\n${r.out}`);
+  for (const id of ["t-ok1", "t-ok2"]) assert.ok(!flagged(r, "free-price", id), `${id}\n${r.out}`);
+});
+test("hours style (DAT-06): one dash, one time style, one estimate phrase; the message prints the fixed text", async () => {
+  const bad = { "t-h1": "5-9 PM", "t-h2": "7:00 PM — check site", "t-h3": "6pm, check site", "t-h4": "10 a.m.-4 p.m." };
+  const r = await check(Object.entries(bad).map(([id, hours]) => sqlFor({ id, hours })).join("") + sqlFor({ id: "t-h5", hours: "5pm–9pm; check site" }));
+  assert.equal(r.code, 1, r.out);
+  for (const id of Object.keys(bad)) assert.ok(flagged(r, "hours-style", id), `${id}\n${r.out}`);
+  assert.ok(!flagged(r, "hours-style", "t-h5"), r.out);
+  assert.match(r.out, /should read "5–9pm"/); assert.match(r.out, /should read "7pm; check site"/);
+});
+test("old rows are not blocked by old text: only a changed hours, price or image field is checked", async () => {
+  const r = await check("UPDATE events SET status='confirmed' WHERE id='citadel';\n");
+  assert.equal(r.code, 0, r.out); assert.ok(!has(r, "hours-style"));
+});
+test("event photos (DAT-01): logos and site defaults are rejected for ordinary events, a city event keeps its logo, banners only warn", async () => {
+  const set = (id, image) => `UPDATE events SET image='${image}' WHERE id='${id}';\n`;
+  const r = await check(
+    sqlFor({ id: "t-img1" }) + set("t-img1", "https://example.org/wp-content/uploads/event-logo.png") +
+    sqlFor({ id: "t-img2" }) + set("t-img2", "https://example.org/mk-fb-default-2021.jpg") +
+    sqlFor({ id: "t-img3", name: "City of Pasadena Tree Lighting", url: "https://www.cityofpasadena.net/events/tree" }) + set("t-img3", "https://www.cityofpasadena.net/files/city-logo.png") +
+    sqlFor({ id: "t-img4" }) + set("t-img4", "https://example.org/holiday-lights-banner.webp") +
+    sqlFor({ id: "t-img5" }) + set("t-img5", "https://example.org/crowd-at-the-parade.jpg"));
+  assert.equal(r.code, 1, r.out);
+  assert.ok(flagged(r, "photo", "t-img1") && flagged(r, "photo", "t-img2"), r.out);
+  assert.ok(!r.out.includes("row t-img3: photo") && !r.out.includes("row t-img5: photo"), r.out);
+  assert.ok(r.out.includes("row t-img4: photo file name says banner"), r.out); // a warning, listed after the errors
+  assert.match(r.out, /Errors: 2\./);
+});
+test("a source page shared by 4 or more events warns on a new row (DAT-09)", async () => {
+  const sql = ["a", "b", "c", "d"].map((x) => sqlFor({ id: `t-sh-${x}`, name: `Shared Page Event ${x}`, url: "https://example.org/roundup" })).join("");
+  const r = await check(sql);
+  assert.equal(r.code, 0, r.out); assert.ok(flagged(r, "shared-url", "t-sh-a"), r.out);
+});
+
 test("--base: editing or deleting an existing migration is a hard error; adding a clean new one passes; no change says none new", async () => {
   const git = (...a) => execFileSync("git", a, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
   const none = await run(["--base", baseSha]); assert.equal(none.code, 0, none.out); assert.match(none.out, /none new/);
@@ -134,4 +174,5 @@ test("--base: editing or deleting an existing migration is a hard error; adding 
   const deleted = await run(["--base", baseSha]); assert.equal(deleted.code, 1); assert.ok(has(deleted, "existing-migration-edited"), "deleting an old migration counts too");
 });
 test("usage error without arguments", async () => { assert.equal((await run([])).code, 2); });
+
 // (--history replays every migration and takes about 9 s, so it is not part of the fast suite; run it by hand: node scripts/validate-migrations.mjs --history --from 0170)
