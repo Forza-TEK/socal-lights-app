@@ -91,7 +91,7 @@ test("checkout: the price and window come from the server, are locked into the p
     const r = await buy(env, { event_id: "ev1", plan: "ev_all", price: 1 }, me.cookie); assert.equal(r.status, 200);
     const sent = new URLSearchParams(String(f.calls[0].init.body));
     assert.deepEqual([sent.get("line_items[0][price_data][unit_amount]"), sent.get("metadata[plan]"), sent.get("metadata[quote_from]"), sent.get("metadata[quote_to]"), sent.get("metadata[quote_cents]")], ["7500", "ev_all", T, "2027-01-06", "7500"]);
-    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /Top of the list \+ Banner \+ Featured pin/); assert.match(sent.get("line_items[0][price_data][product_data][description]"), /2026-11-06 to 2027-01-06/);
+    assert.match(sent.get("line_items[0][price_data][product_data][description]"), /Top of the list \+ Banner \+ Featured pin/); assert.match(sent.get("line_items[0][price_data][product_data][description]"), /Nov 6, 2026 to Jan 6, 2027/);
     for (const plan of ["pin", "top", "season", "nope"]) assert.equal((await buy(env, { event_id: "ev1", plan }, me.cookie)).status, 400, plan);
     assert.equal(f.calls.length, 1);
     // an event that already has the pin: the banner tier charges only $25 more
