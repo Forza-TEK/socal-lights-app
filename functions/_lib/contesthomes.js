@@ -5,7 +5,7 @@ export const HOME_LIMIT = 12;
 const todayPT = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
 
 export function pickHomes(rows, { voting = false, day = 0, limit = HOME_LIMIT } = {}) {
-  const homes = rows.map((r) => ({ id: r.id, name: r.title || r.biz || "", address: r.address || r.city || "", photo: (JSON.parse(r.photos || "[]")[0]) || "", no: r.entry_no || 0 }))
+  const homes = rows.map((r) => ({ id: r.id, name: r.title || r.biz || "", address: r.address || r.city || "", photo: (JSON.parse(r.photos || "[]")[0]) || "", no: r.entry_no || 0, lat: r.lat, lng: r.lng }))
     .sort((a, z) => (a.photo ? 0 : 1) - (z.photo ? 0 : 1) || a.no - z.no);
   const withPhoto = homes.filter((h) => h.photo), without = homes.filter((h) => !h.photo);
   const turn = voting && withPhoto.length > 1 ? day % withPhoto.length : 0;
@@ -17,7 +17,7 @@ export async function contestHomes(env, eventId) {
   if (!String(eventId).startsWith("c-")) return null;
   const c = await env.DB.prepare("SELECT id, slug, name, vote_start, vote_end FROM contests WHERE event_id = ? AND status = 'live'").bind(eventId).first();
   if (!c) return null;
-  const { results } = await env.DB.prepare("SELECT id, title, biz, address, city, photos, entry_no FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
+  const { results } = await env.DB.prepare("SELECT id, title, biz, address, city, photos, entry_no, lat, lng FROM posts WHERE contest_id = ? AND status = 'approved' ORDER BY entry_no").bind(c.id).all();
   const today = todayPT(), voting = c.vote_start <= today && today <= c.vote_end;
   return { slug: c.slug, ...pickHomes(results, { voting, day: Math.floor(Date.parse(today) / 86400000) }) };
 }
