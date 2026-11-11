@@ -14,11 +14,13 @@ You do not need a contest to put your home on the map. Adding a home, also calle
 
 ## Entering a home in a contest
 url: /help#enter
+keywords: approve entries by hand manual automatic approval how entries are approved ways to approve entries
 To enter, open the contest page and choose Enter. You must sign in, add photos, the home's address and a name, and accept the contest's official rules. You must be 18 or older to enter a home. A home does not pick a category: it competes in every category. If the organizer approves entries by hand, your photos stay private until the organizer approves your entry; if entries are approved automatically, your home appears right away. You can edit or withdraw your entry from your profile while the contest allows it. If you are the organizer and your city already has a list of homes, you can add them yourself instead: see Organizer-added homes.
 
 ## Voting in a contest
 url: /help#vote
-Voting is free and needs a sign-in. Every approved home is listed in every voting category (for example Best Overall or Most Creative). Each voter picks one favorite home in each category. Voting again in a category moves your vote. Some contests give one vote in total instead; the contest page says which. Nobody can vote for their own home. Voting opens on the contest's start date (or when the organizer starts it early) and stops when the winners are announced. Fake, automated or traded votes are not allowed and may be voided. Votes are never sold.
+keywords: who votes options ways to vote
+Voting is free and needs a sign-in. Every approved home is listed in every voting category (for example Best Overall or Most Creative). Each voter picks one favorite home in each category. Voting again in a category moves your vote. Some contests give one vote in total instead; the contest page says which. Nobody can vote for their own home. Voting opens on the contest's start date (or when the organizer starts it early) and stops when the winners are announced. Fake, automated or traded votes are not allowed and may be voided. Votes are never sold. Who votes is the organizer's choice: public voting only, judges only (judges vote on a separate judges' ballot), or both.
 
 ## Categories, winners and ties
 url: /help#run
@@ -30,6 +32,7 @@ The organizer dashboard is where you run your contest: approve entries, add co-o
 
 ## Judges and how judging works
 url: /help/judge-a-contest
+keywords: how can someone become a judge how do judges get invited who can judge
 A contest can be public voting only (People's Choice), judges only (Judges' Choice), or both. The organizer adds judges by email from the dashboard. Each judge gets an email with a private link to the judges' ballot at /c/<name>/judge and signs in with the email they were invited at. Judges vote on the judges' ballot, not in the public vote. The organizer chooses one of two methods. Pick: each judge picks one favorite home in every category. Score: each judge scores every home from 1 to 10 in every category; there is no separate rubric or criteria list. When 5 or more judges score a home, the highest and lowest score for it are dropped before averaging (a trimmed average), so one very generous or very harsh judge cannot swing it. A judge cannot judge their own home, and a judge can mark a home as a conflict and skip it; skipped homes do not count for that judge. Judging happens during the contest's voting dates.
 
 ## How votes, judge results and ties decide winners
@@ -58,6 +61,7 @@ Vote counts are hidden until the winners are announced unless the organizer choo
 
 ## Announcing winners and the results page
 url: /past
+keywords: who won a contest find the winners results page what happens at the end of a contest after voting ends winners announced
 When the organizer announces winners, the results are saved as a fixed snapshot and votes are locked. Every entrant is emailed, and winners get a congratulations email. The permanent results page is at /past/<name>, and /past lists every announced contest. Winners can show a crown badge on their listings; each person can hide badges from the Badges tab on their profile.
 
 ## Organizer-added homes
@@ -256,3 +260,13 @@ There are several ways a home gets onto SoCal Lights. 1) A homeowner adds it: si
 url: /add-event
 keywords: all the ways options routes several ways different ways claim an existing event web page confirmed expected
 To list an event, sign in, open Add, and choose An event. If your event has a web page that mentions its name and date, the event is marked Confirmed; without a page it still goes on the map, marked Expected until the dates are checked. If your event is already on the map but not on your account, open Promote your event (or its listing) and use Claim an existing listing: if your email matches the event's own website it is approved at once, otherwise the team checks it. Contest organizers who create a contest also get it on the map as an event automatically. Listing an event is always free.
+
+## Sharing a home, an event or your night
+url: /tutorials#night
+keywords: tell someone about my display share a listing share an event share my favorites send a link to a friend share my night
+Every event and home card has a Share button that sends a link to that place; an event has its own page that opens for anyone, and a home opens on the map. In Favorites, tap the share icon to send your whole list of favorites, and the person you send it to opens the same list on their own phone and can add it to their own favorites. If you run a contest, share it with the link, the QR code, the poster or the yard sign from your dashboard.
+
+## Using the map: the main controls
+url: /tutorials#map
+keywords: ways to use the map how do I use the map use the map on my phone map controls what can I do on the map getting started
+On the map you can: tap Use my location (and Allow) so distances and directions work; tap the season button to switch between Thanksgiving and Christmas Lights, Halloween, New Year and the other seasons; type a city in the search to jump there, or tap Show all of Southern California; tap Filters to narrow by date (tonight, this weekend), distance, county, free or ticketed, kind of event, home displays, professionally installed, and how to visit a home (drive by, walk by, free parking, stroller friendly); tap a card or a dot for details, directions and Share; tap the heart on places you like and open Favorites to plan a night, then Route these to open the stops in your maps app; and use the three dots or the account circle for Add, Contests, the weekly email, Tutorials and Help.

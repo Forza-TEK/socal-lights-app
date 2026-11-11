@@ -2,6 +2,11 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-11 (assistant: complete answers for the contest flows, completeness audit)
+- After a second Covina-area report (an organizer who wanted to add homes manually did not get the help she needed), the assistant now sends **curated complete answers without a model call** for the contest flows where every route and step must be listed: organizer adds homes (both routes, steps, limits), enter my home, fix a home I added, send the homeowner a link, add photos to added homes, remove an added home, and the homeowner's own page (`functions/_lib/chatanswers.js`). Safety refusals still come first; they work at the cost cap and are counted as `direct_*` in Admin's action table. 133 phrasings (about 92% on unseen wording before tuning) in `tests/chat-answers.test.mjs`, with drift checks against the published Help articles (limits and button names).
+- Completeness audit (`tests/chat-coverage.test.mjs`): 36 multi-option questions (share a contest, ways to vote, become a judge, sign in, promote an event, approve entries, end of a contest...) must give the model every fact; 7 gaps fixed with keywords, a sharing chunk and a map-controls chunk.
+- Not possible from here: seeing the real chat. If the model's wording is still poor, paste it.
+
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
 
