@@ -418,6 +418,7 @@ async function renderContests() {
   CONTESTS = await api("/api/admin/contests");
   const g = (k) => CONTESTS.filter((c) => cview(c) === k), n = { look: g("look").length, live: g("live").length, ended: g("ended").length, declined: g("declined").length };
   setCount("contests", n.look);
+  setCount("contestsAll", CONTESTS.filter((c) => c.status !== "declined").length); // the plain total beside the name, like Installers and Users
   if (!CVIEW) CVIEW = n.look ? "look" : n.live ? "live" : n.ended ? "ended" : "declined"; // only the first time: picking "Needs a look" with nothing in it shows the empty note instead of jumping away
   const list = g(CVIEW);
   const bar = toolbar({ views: [{ k: "look", label: "Needs a look", n: n.look }, { k: "live", label: "Live", n: n.live }, { k: "ended", label: "Ended", n: n.ended }, { k: "declined", label: "Unpublished", n: n.declined }, { k: "passes", label: "Contest passes" }], active: CVIEW, search: { placeholder: "Search contests, organizers", value: CSEARCH }, right: dl("contests"), count: String(list.length) });

@@ -18,3 +18,13 @@ test("organizer-added entries are counted for the organizer, not shown as 0", as
   const d = await (await userGet({ params: { id: "org1" }, env })).json();
   assert.equal(d.posts.length, 3); assert.ok(d.posts.every((p) => p.added === 1));
 });
+
+test("the Contests tab shows a plain total (live and unpublished) next to the attention count", async () => {
+  const { onRequestGet: countsGet } = await import("../functions/api/admin/counts.js");
+  const { env, raw } = newEnv();
+  const cols = raw.prepare("PRAGMA table_info(contests)").all().filter((c) => c.notnull && c.dflt_value == null && !c.pk).map((c) => c.name);
+  const mk = (id, status) => { const names = ["id", "slug", "owner_id", "name", "status", ...cols.filter((c) => !["id", "slug", "owner_id", "name", "status"].includes(c))]; raw.prepare(`INSERT INTO contests (${names.join(",")}) VALUES (${names.map(() => "?").join(",")})`).run(...names.map((n) => (n === "id" ? id : n === "slug" ? id : n === "status" ? status : n === "name" ? "N " + id : "x"))); };
+  mk("c1", "live"); mk("c2", "unpublished"); mk("c3", "declined");
+  const j = await (await countsGet({ env })).json();
+  assert.equal(j.contestsAll, 2); assert.equal(j.contests, 0);
+});
