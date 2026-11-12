@@ -1063,3 +1063,8 @@ Thin-county Saturday (n=933 -> group 18). Group already well covered. Added Bars
 
 ## 2026-11-11 midweek upkeep (Wed)
 Migration 0234: confirmed 10 Ventura/SB/San Bernardino-county Christmas events from 2026 organizer/roundup pages (Camarillo Glow moved to Dec 5), 1 photo. No contest homes yet: Temecula map due week of Dec 7, Norwalk judging Dec 14, Big Bear voting map Dec 1, Santa Maria tour map Dec 4. Not confirmable yet: Ojai tree lighting, Downtown SB/Ventura tree lightings, Goleta Depot, Paseo Nuevo, San Bernardino County city tree lightings (no 2026 pages).
+
+## 2026-11-12 city sweep, group 4 (Pomona Valley & East SGV)
+- Added the Holiday Half Marathon & 5K at Fairplex (Dec 20, migration 0238). Group was already well covered (34 events).
+- Leads not added: LASD Turkey Trot 5K, San Dimas, Nov 14 (runsignup.com/Race/Info/CA/SanDimas/LASAAMugRun3TurkeyTrot, Bonelli Park, 120 E Via Verde Park Rd: Nominatim has no house-number match, so no verified pin); Azusa Festival of Lights and Glendora Village Holiday Stroll (no 2026 page; Glendora chamber page returns 403).
+- No usable photos: Claremont Turkey Trot image is a logo; downtownpomona.org image is a site-wide aerial; La Puente and San Dimas images are flyers.
