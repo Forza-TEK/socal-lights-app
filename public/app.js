@@ -1470,6 +1470,22 @@ function placeSheet(y) {
   return v;
 }
 const sheetNow = () => new DOMMatrix(getComputedStyle($("#panel")).transform).m42 || 0;
+// Once, when the site opens on a phone: the collapsed list hops up and settles, so it is clear that it can be pulled up. Skipped when a place was opened from a link, when the person prefers less motion,
+// and the moment the sheet is touched.
+let bounced = false;
+function introBounce() {
+  if (bounced || !isPhone() || sheetState !== "peek" || state.detail || matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  bounced = true;
+  setTimeout(() => {
+    if (!isPhone() || sheetState !== "peek" || state.detail) return;
+    const panel = $("#panel"), y = peekY();
+    const at = (dy) => ({ transform: `translate3d(0,${y + dy}px,0)` });
+    const a = panel.animate([{ ...at(0), offset: 0 }, { ...at(-96), offset: 0.3, easing: "cubic-bezier(.3,0,.7,1)" }, { ...at(4), offset: 0.52 }, { ...at(-34), offset: 0.7, easing: "cubic-bezier(.3,0,.7,1)" }, { ...at(2), offset: 0.86 }, { ...at(-9), offset: 0.94 }, { ...at(0), offset: 1 }], { duration: 1150, easing: "cubic-bezier(.4,0,.6,1)" });
+    followRoutePill(1300);
+    const stop = () => a.cancel();
+    panel.addEventListener("pointerdown", stop, { once: true }); a.addEventListener("finish", () => panel.removeEventListener("pointerdown", stop));
+  }, 700); // after the sheet has slid in
+}
 // After the sheet moves, scroll the list just enough to keep the selected card on screen (above the tab bar, below the header)
 let keepT = null;
 function keepSelectedVisible() {
@@ -1589,6 +1605,7 @@ async function load() {
     else if (ev) selectKey("e:" + ev.id, "list"); else if (ho) selectKey("i:" + ho.id, "list");
   }
   welcomeLater();
+  if (!dl) introBounce();
   const cm = h.match(/^city-(.+)$/);
   if (cm) { const c = Object.keys(CITY_OPTS).find((x) => citySlug(x) === cm[1]); if (c) { state.all = true; renderSeasonBar(); setCity(c); } }
   if (h === "all") { state.all = true; renderSeasonBar(); applyFilters(); }
