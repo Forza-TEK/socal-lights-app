@@ -63,6 +63,19 @@ test("weekly lights email: batches until remaining is 0; an all-failed batch or 
   } finally { globalThis.setTimeout = fast; }
 });
 
+test("deploy watch: passes main's latest commit from GitHub to the site, still checks without it, ok for any answer the site gives (a stalled deploy is a finding), fail when the site does not answer", async () => {
+  let s = stub([{ body: { sha: "a".repeat(40), commit: { committer: { date: "2026-11-12T10:00:00Z" } } } }, { body: { state: "stalled", problems: ["x"] } }, {}]);
+  try {
+    assert.equal(await runJob({ ALERT_CRON_KEY: KEY }, "deploy-watch"), "ok");
+    assert.match(s.calls[0].url.replace("https://socal-lights.pages.dev", ""), /api\.github\.com\/repos\/Forza-TEK\/socal-lights-app\/commits\/main/);
+    assert.match(s.calls[1].url, /^\/api\/deploy-check\?sha=a{40}&at=2026-11-12T10%3A00%3A00Z$/);
+    assert.match(s.calls[2].url, /job=deploy-watch&status=ok/);
+  } finally { s.restore(); }
+  s = stub([new Error("github down"), { body: { state: "ok" } }, {}]);
+  try { assert.equal(await runJob({ ALERT_CRON_KEY: KEY }, "deploy-watch"), "ok"); assert.equal(s.calls[1].url, "/api/deploy-check", "no head: still checks"); } finally { s.restore(); }
+  s = stub([{ status: 500 }, { status: 500, body: {} }, {}]); try { assert.equal(await runJob({ ALERT_CRON_KEY: KEY }, "deploy-watch"), "fail"); } finally { s.restore(); }
+});
+
 test("wiring: every cron in wrangler.toml has jobs, every job has a heartbeat name the site knows, scheduled() runs the right ones, the deploy workflow sets the key", async () => {
   const toml = readFileSync("workers/mail-cron/wrangler.toml", "utf8");
   const listed = [...toml.match(/crons = \[(.*?)\]/s)[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);

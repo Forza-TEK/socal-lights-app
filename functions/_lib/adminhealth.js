@@ -6,7 +6,7 @@
 import { sqlAgo } from "./revenue.js";
 import { INFO_LOG_SQL } from "./oplog.js";
 
-export const OP_LABEL = { mail: "Email send errors", email: "Email send errors", webhook: "Stripe webhook problems", "usage-alert": "Cloudflare usage alerts sent", limit: "Cloudflare or email limits hit", renewal: "Automatic renewal problems", reconcile: "Stripe reconcile differences", ads: "Ad reporting problems", outreach: "Outreach problems", posts: "Home posting problems", contest: "Contest problems", account: "Account problems", badges: "Badge problems", removal: "Home removal problems", "sponsor-pay-link": "Sponsor payment link problems" };
+export const OP_LABEL = { mail: "Email send errors", email: "Email send errors", webhook: "Stripe webhook problems", "usage-alert": "Cloudflare usage alerts sent", "deploy-stalled": "Deploy stalled alerts sent", limit: "Cloudflare or email limits hit", renewal: "Automatic renewal problems", reconcile: "Stripe reconcile differences", ads: "Ad reporting problems", outreach: "Outreach problems", posts: "Home posting problems", contest: "Contest problems", account: "Account problems", badges: "Badge problems", removal: "Home removal problems", "sponsor-pay-link": "Sponsor payment link problems" };
 
 const ACTIVITY_LABEL = { outreach: "Outreach calls that worked", ads: "Ad reports received", "sponsor-pay-link": "Sponsor payment links set (for abuse review)" };
 

@@ -7,7 +7,7 @@
 import { json, err } from "../_lib/util.js";
 import { getUsage, usageLines } from "../_lib/cfusage.js";
 import { jobStatus, problemJobs } from "../_lib/heartbeat.js";
-import { logOpOnce } from "../_lib/oplog.js";
+import { logOp } from "../_lib/oplog.js";
 import { sendTemplate } from "../_lib/mailtpl.js";
 
 export async function onRequest({ request, env }) {
@@ -18,7 +18,9 @@ export async function onRequest({ request, env }) {
   let notified = false;
   if (new URL(request.url).searchParams.get("notify") === "1" && (u.level === "warning" || u.level === "limit")) {
     try {
-      if (await logOpOnce(env, "usage-alert", `level ${u.level}`, 360)) { await sendTemplate(env, "usage_alert", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { level: u.level, lines: usageLines(u).map((l) => "- " + l).join("\n") }); notified = true; }
+      // one email per 6 hours while usage stays high; the note that it was sent is written only after the email really went out, so a failed send is tried again at the next check
+      const recent = await env.DB.prepare("SELECT id FROM ops_log WHERE kind = 'usage-alert' AND created_at > datetime('now','-360 minutes') LIMIT 1").first();
+      if (!recent && (await sendTemplate(env, "usage_alert", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { level: u.level, lines: usageLines(u).map((l) => "- " + l).join("\n") }))) { await logOp(env, "usage-alert", `level ${u.level}`); notified = true; }
     } catch {}
   }
   const stale = problemJobs(await jobStatus(env)); // scheduled jobs that went quiet (functions/_lib/heartbeat.js): the workflow opens its own issue for these

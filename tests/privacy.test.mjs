@@ -161,7 +161,7 @@ test("IP rows older than 48 hours are pruned, newer ones kept (helper and on-ins
 // ---------------------------------------------------------------- (d) email footer, headers, postal address
 const stubEnv = () => { const { DB, raw } = makeDB(); return { DB, raw, env: { DB, RESEND_API_KEY: "re_test" } }; };
 const MARKETING = ["alerts_weekly", "contest_remind_open", "contest_remind_close", "contest_invite", "judge_invite", "coorg_invite", "judge_nudge", "results_entrant"];
-const TRANSACTIONAL = ["usage_alert", "signin_code", "alerts_confirm", "contest_quote", "installer_quote", "contest_quote_sent", "admin_digest", "installer_claim"];
+const TRANSACTIONAL = ["usage_alert", "deploy_alert", "signin_code", "alerts_confirm", "contest_quote", "installer_quote", "contest_quote_sent", "admin_digest", "installer_claim"];
 const sampleVars = (id) => { const t = TEMPLATES.find((x) => x.id === id), v = {}; for (const [k, d] of Object.entries(t.vars || {})) v[k] = d[1]; return v; };
 
 test("marketing emails carry the postal address from MAIL_POSTAL_ADDRESS and an unsubscribe link; without the secret there is no address line and no crash", async () => {
