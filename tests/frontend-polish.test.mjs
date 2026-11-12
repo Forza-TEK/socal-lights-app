@@ -119,3 +119,11 @@ test("owner follow-ups: the search box keeps a usable width, and the app-frame h
   assert.match(css, /\.rtpill>span\{position:absolute/, "the pill keeps its words for screen readers");
   assert.match(read("public/appshell.css"), /@media \(min-width:700px\)\{\.sh-top \.maplink\{display:none\}\}/);
 });
+
+test("phone: the collapsed list bounces once when the site opens, never with reduced motion, never over an opened place or a link, and a touch stops it", () => {
+  const app = readFileSync("public/app.js", "utf8");
+  assert.match(app, /function introBounce\(\)/);
+  assert.match(app, /prefers-reduced-motion:reduce\)"\)\.matches\) return;\s*\n\s*bounced = true/, "skipped for reduced motion, and runs once");
+  assert.match(app, /if \(!dl\) introBounce\(\)/, "not when the page opened on a link to a place");
+  assert.match(app, /panel\.addEventListener\("pointerdown", stop, \{ once: true \}\)/, "a touch cancels it");
+});
