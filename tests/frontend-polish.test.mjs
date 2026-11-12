@@ -135,3 +135,9 @@ test("live location: the locate button follows you (tracking, dot, accuracy ring
   assert.match(app, /Date\.now\(\) - listAt > 30000/, "the list is refreshed at most every 30 s");
   assert.doesNotMatch(app, /trackUserLocation: false/);
 });
+
+test("phone: pulled down past its resting spot the list stretches (up to 70 px) and springs back with a small bounce, unless motion is reduced", () => {
+  const app = readFileSync("public/app.js", "utf8");
+  assert.match(app, /70 \* \(1 - Math\.exp\(-\(y - py\) \/ 160\)\)/, "growing resistance, capped at 70 px");
+  assert.match(app, /if \(over > 2 && next === "peek" && !matchMedia\("\(prefers-reduced-motion:reduce\)"\)\.matches\)/);
+});

@@ -1473,7 +1473,9 @@ function sheetVisible() { return isPhone() ? stopH(sheetState) : 0; }
 const peekY = () => Math.max(0, fullH() - stopH("peek")); // how far the sheet is pushed down at Peek
 // y = how far down the sheet is (0 = Full); the fade behind the tab bar follows
 function placeSheet(y) {
-  const panel = $("#panel"), py = peekY(), v = Math.max(0, Math.min(py, y));
+  const panel = $("#panel"), py = peekY();
+  // Pulled down past its resting spot, the sheet stretches with growing resistance (up to 70 px) and springs back when let go (see the end of the drag below)
+  const v = Math.max(0, Math.min(py, y)) + (y > py ? 70 * (1 - Math.exp(-(y - py) / 160)) : 0);
   panel.style.transform = `translate3d(0,${v}px,0)`; positionRoutePill();
   const f = $("#navfade"); if (f) f.style.opacity = py ? Math.min(1, Math.max(0, v / py)) : 1;
   return v;
@@ -1533,7 +1535,13 @@ function setSheet(s) {
     if (d.y0 === null) return false;
     const dy = y - d.y0, moved = d.moved; d.y0 = null; panel.classList.remove("dragging");
     if (!moved) return false;
-    setSheet(dy < -40 ? "full" : dy > 40 ? "peek" : d.y < peekY() / 2 ? "full" : "peek"); // a flick decides; a slow drag snaps to the nearer position
+    const over = d.y - peekY(), next = dy < -40 ? "full" : dy > 40 ? "peek" : d.y < peekY() / 2 ? "full" : "peek"; // a flick decides; a slow drag snaps to the nearer position
+    setSheet(next);
+    if (over > 2 && next === "peek" && !matchMedia("(prefers-reduced-motion:reduce)").matches) { // it was stretched past its resting spot: spring back with a small bounce
+      const y = peekY(), at = (dy) => ({ transform: `translate3d(0,${y + dy}px,0)` });
+      panel.animate([{ ...at(over), offset: 0 }, { ...at(-Math.min(16, over * 0.3)), offset: 0.45, easing: "cubic-bezier(.3,0,.7,1)" }, { ...at(Math.min(5, over * 0.1)), offset: 0.7 }, { ...at(-2), offset: 0.88 }, { ...at(0), offset: 1 }], { duration: 620, easing: "cubic-bezier(.3,.1,.5,1)" });
+      followRoutePill(700);
+    }
     d.justDragged = true; setTimeout(() => (d.justDragged = false), 50);
     return true;
   }
