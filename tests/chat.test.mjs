@@ -261,7 +261,9 @@ test("live contest data (names, dates, status) is given to the model, with the T
   assert.ok(sys.includes("CONTEST https://socallights.app/c/zzyzx-lights") && sys.includes("one vote per category") && sys.includes("Best Overall, Most Creative"));
   assert.ok(sys.includes("TERMS (public contest rules") && sys.includes("Votes are never sold"));
   assert.ok(!/results|vote count|leading/i.test(sys.split("CONTESTS (live")[1].split("</untrusted_context>")[0]), "no results or counts in the contest block");
-  state.reply = `Voting starts ${long(ptToday(33))}.`;
+  // a date far enough out that it is not in the data or the knowledge base (a fixed "33 days from today" collides with a published date on some days, e.g. Dec 15)
+  let off = 33; while (off < 330 && (sys.includes(long(ptToday(off))) || sys.includes(short(ptToday(off))))) off++;
+  state.reply = `Voting starts ${long(ptToday(off))}.`;
   assert.equal((await ask(env, "When does voting start in the Zzyzx contest?")).body.reply, MESSAGES.date, "a contest date that is not in the data is blocked");
 });
 
