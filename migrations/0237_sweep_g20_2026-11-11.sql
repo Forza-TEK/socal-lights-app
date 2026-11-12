@@ -1,0 +1,17 @@
+-- City sweep group 20 (Santa Barbara County) 2026-11-11.
+-- Sources: lobero.org event pages, thesymphony.org, lanefarmssb.com (all loaded 2026-11-11); geocodes via Nominatim (house numbers matched; Lane Farms Produce Stand at 308 Walnut Ln).
+-- Photo: Rudolph image from the Lobero event page (ballet performers). Revels and Irish Christmas headers are text/graphic banners, left on stock photo.
+INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address)
+VALUES
+('g20-lane-farms-christmas-patch','Christmas Patch at Lane Farms','Santa Barbara','Santa Barbara','tree','2026-11-27','2026-12-23','confirmed',0,'Price not listed','10am–8pm; 10am–6pm Dec 19–23',34.4341592,-119.8020422,'Choose a fresh-cut noble, Nordmann or Douglas fir at the farm, with farm animals, tractors and a corn maze.','https://lanefarmssb.com/christmas-patch','christmas','Lane Farms','308 S Walnut Ln, Santa Barbara, CA 93111'),
+('g20-lobero-rudolph-ballet','RUDOLPH by State Street Ballet Academy','Santa Barbara','Santa Barbara','show','2026-12-05','2026-12-06','confirmed',0,'$19-$32','Sat 6:30pm; Sun 2pm',34.4216706,-119.7000353,'Student ballet telling the story of Rudolph the misfit reindeer and his North Pole journey, performed by State Street Ballet Academy dancers.','https://www.lobero.org/events/rudolph-2026/','christmas','Lobero Theatre','33 E Canon Perdido St, Santa Barbara, CA 93101'),
+('g20-lobero-christmas-revels','The Christmas Revels: A Victorian Celebration of the Winter Solstice','Santa Barbara','Santa Barbara','show','2026-12-19','2026-12-20','confirmed',0,'$26-$86','Sat 2:30pm and 7:30pm; Sun 2:30pm',34.4216706,-119.7000353,'19th year of a Victorian marketplace revue with carols, dances, a mummers'' play and a chorus of all ages.','https://www.lobero.org/events/revels-2026/','christmas','Lobero Theatre','33 E Canon Perdido St, Santa Barbara, CA 93101'),
+('g20-lobero-irish-christmas','An Irish Christmas','Santa Barbara','Santa Barbara','show','2026-12-22','2026-12-22','confirmed',0,'$43-$85','7:30pm',34.4216706,-119.7000353,'Family-friendly mix of Christmas carols, Irish dance, music and storytelling with dancers from Riverdance and Lord of the Dance.','https://www.lobero.org/events/an-irish-christmas-2026/','christmas','Lobero Theatre','33 E Canon Perdido St, Santa Barbara, CA 93101'),
+('g20-sb-symphony-nye-2026','New Year''s Eve with The Symphony (Disco 50)','Santa Barbara','Santa Barbara','show','2026-12-31','2026-12-31','confirmed',0,'Check listing','8:30pm',34.4240477,-119.7045845,'Santa Barbara Symphony rings in the new year with a disco-themed concert led by guest conductor Sean Mayes.','https://thesymphony.org/?p=35462','newyear','Granada Theatre','1214 State St, Santa Barbara, CA 93101')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city,
+  type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status,
+  free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng,
+  blurb=excluded.blurb, url=excluded.url, season=excluded.season,
+  venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
+
+UPDATE events SET image='https://www.lobero.org/wp-content/uploads/2025/08/Web-Rudolph-23.jpg', updated_at=datetime('now') WHERE id='g20-lobero-rudolph-ballet' AND (image IS NULL OR image='');
