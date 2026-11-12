@@ -1,0 +1,12 @@
+-- City sweep group 5 (South Bay) 2026-11-12.
+-- RPV rows: annual events, dates estimated from the 2025 schedule (rpvca.gov/CivicSend/ViewMessage/message/273905, loaded 2026-11-12); status expected. Pin: 30940 Hawthorne Blvd geocoded (house number 30940 matched).
+-- Catalina Polar Bear: lovecatalina.com Christmas & Holiday Events page lists Jan 1 2027 swim 7:30am, plunge 11:30am. Pin: 1 Casino Way (Casino Point), house number matched. No photos: pages have no usable event photo.
+INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address)
+VALUES ('g5-rpv-tree-lighting','Rancho Palos Verdes Tree Lighting Ceremony','Los Angeles','Rancho Palos Verdes','tree','2026-12-11','2026-12-11','expected',1,'Free','5:30pm–9:30pm; check site','33.7445139','-118.4037239','City tree lighting at the civic center with real snow for sledding, cocoa, music and crafts; 2026 date estimated from last year.','https://rpvca.gov/CivicSend/ViewMessage/message/273905','christmas','Ken Dyda Civic Center','30940 Hawthorne Blvd, Rancho Palos Verdes, CA 90275'),
+('g5-rpv-carols-cocoa','Carols and Cocoa at the Civic Center','Los Angeles','Rancho Palos Verdes','tree','2026-12-19','2026-12-19','expected',1,'Free','4pm–8pm; check site','33.7445139','-118.4037239','Santa, gingerbread house decorating, carolers and train rides at the civic center; 2026 date estimated from last year.','https://rpvca.gov/CivicSend/ViewMessage/message/273905','christmas','Ken Dyda Civic Center','30940 Hawthorne Blvd, Rancho Palos Verdes, CA 90275'),
+('g5-catalina-polar-bear-plunge','Catalina Polar Bear Swim & Plunge','Los Angeles','Avalon','family','2027-01-01','2027-01-01','confirmed',1,'Free','7:30am–11:30am','33.3488994','-118.3255897','New Year''s Day one-mile swim at 7:30am from Casino Dive Park, then a family Polar Bear Plunge at 11:30am at Middle Beach.','https://www.lovecatalina.com/events/by-holiday/christmas-holiday-events/','newyear','Casino Dive Park','1 Casino Way, Avalon, CA 90704')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city,
+  type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status,
+  free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng,
+  blurb=excluded.blurb, url=excluded.url, season=excluded.season,
+  venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
