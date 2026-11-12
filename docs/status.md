@@ -86,6 +86,9 @@ Audit items SEO-02 to SEO-12, MAP-12, MAP-13, MAP-15, ADM-01 to ADM-11. Full rul
 
 ## 2026-11-10 (assistant: re-learned the new organizer and homeowner Help articles and videos)
 - New knowledge chunks from the new Help articles: Fix a home you added (Edit button, address locked after winners), Send the homeowner a private link (Copy link, Email link, new link, unlink, photos), Your city added your home (the homeowner's page), What is the Founder city badge. The video captions are rebuilt into the knowledge base automatically. Retrieval check: 8 new phrasings find the right chunk; the 121-question audit has 112 fully covered and 0 uncovered; the earlier Covina phrasings still give both routes (`tests/chat-contest-homes.test.mjs`). Contest pricing (a pass from the first contest, free domains) was already in the knowledge base from another session and matches `passes.js`.
+## 2026-11-12 (live location on the map)
+- The locate button now follows you: a blue dot with an accuracy ring and a direction arrow moves with your phone (GPS, high accuracy); the map follows until you drag it (the dot keeps moving), tap again to follow again, tap once more to turn it off. Distances and the nearest sort refresh every 30 seconds. Nothing is sent to the server. Updates pause while the page is in the background (an iOS rule). Tested with a simulated moving phone: dot stays centred while following, moves on its own after a drag, re-locks on tap, removed when turned off.
+
 ## 2026-11-12 (list bounce on load, phone)
 - On a phone the collapsed list hops up about 90 px and settles (about 1.1 s, after it slides in) once when the site opens, to show it can be pulled up. Not with reduced motion, not when the page opens on a link to a place, and a touch stops it (`introBounce` in `app.js`).
 

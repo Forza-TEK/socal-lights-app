@@ -251,7 +251,8 @@ function placeHouses() {
 let map = null, geo = null;
 const SOCIAL_BROWSER = /FBAN|FBAV|FB_IAB|Instagram|Snapchat|MicroMessenger|Line\/|TikTok|musical_ly/i.test(navigator.userAgent || "");
 const flyToMe = () => { if (map && state.me) map.easeTo({ center: [state.me.lng, state.me.lat], zoom: Math.max(map.getZoom(), 15), duration: 800 }); };
-document.addEventListener("click", (ev) => { const b = ev.target && ev.target.closest && ev.target.closest(".maplibregl-ctrl-geolocate"); if (b && state.me) flyToMe(); }, true); // a tap with a known position moves the map right away
+let tracking = false, firstFix = false, listAt = 0; // live location: the button follows you while it is on (tap again, or drag the map, to stop following)
+document.addEventListener("click", (ev) => { const b = ev.target && ev.target.closest && ev.target.closest(".maplibregl-ctrl-geolocate"); if (b && state.me && !tracking) flyToMe(); }, true); // a tap with a known position moves the map right away (when it is not already following you)
 function startMap() {
   if (map || !window.maplibregl) return;
   map = new maplibregl.Map({ container: "map", style: MAP_STYLES[theme()], bounds: SOCAL, fitBoundsOptions: { padding: 40 }, attributionControl: { compact: true, customAttribution: "\u00a9 " + new Date().getFullYear() + " Forza-TEK" }, dragRotate: false, pitchWithRotate: false, clickTolerance: 10 }); // clickTolerance: a tap with a little finger wobble still counts as a tap
@@ -259,7 +260,8 @@ function startMap() {
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
   // The locate button waited only 6 s for a fix and then failed silently, which is what some phones (slow network fixes, in-app browsers) showed: it looked like the button did nothing.
   // Now it waits longer, flies to a position we already know at once, and says what went wrong.
-  geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 }, trackUserLocation: false });
+  // Live location: while the button is on, the browser keeps sending your position (GPS) and the blue dot, its accuracy ring and a direction arrow move with you; the map follows until you drag it. Nothing leaves the phone.
+  geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 }, trackUserLocation: true, showUserLocation: true, showAccuracyCircle: true, showUserHeading: true, fitBoundsOptions: { maxZoom: 16 } });
   map.addControl(geo, "top-right");
   geo.on("error", (e) => {
     if (state.me) { flyToMe(); return; } // we already know where you are (read when you allowed it)
@@ -272,7 +274,14 @@ function startMap() {
     toast(c === 1 ? blocked : c === 3 ? "Still looking for your location. Tap the button again in a moment." : "Couldn't find your location right now. Check that Location is on for your phone.", false, c === 1 ? 12000 : 5000);
   });
   // The control only zooms to the (often wide) accuracy circle; fly in close on the user instead
-  geo.on("geolocate", (e) => { const wel = document.getElementById("welcome"); if (wel) wel.remove(); state.me = { lat: e.coords.latitude, lng: e.coords.longitude }; state.meErr = ""; scheduleList(); map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }); });
+  geo.on("trackuserlocationstart", () => { tracking = true; firstFix = true; });
+  geo.on("trackuserlocationend", () => { tracking = false; firstFix = false; });
+  geo.on("geolocate", (e) => {
+    const wel = document.getElementById("welcome"); if (wel) wel.remove();
+    state.me = { lat: e.coords.latitude, lng: e.coords.longitude, acc: e.coords.accuracy, heading: Number.isFinite(e.coords.heading) ? e.coords.heading : null }; state.meErr = "";
+    if (firstFix) { firstFix = false; map.easeTo({ center: [e.coords.longitude, e.coords.latitude], zoom: Math.max(map.getZoom(), 15), duration: 800 }, { geolocateSource: true }); } // geolocateSource: tells the control this move is its own, so it keeps following // the control only zooms to the (often wide) accuracy circle; fly in close on the first fix
+    if (Date.now() - listAt > 30000) { listAt = Date.now(); scheduleList(); } // distances and the nearest sort refresh every 30 s, not on every GPS tick
+  });
   map.on("style.load", initLayers);
   map.on("load", initLayers);
 }

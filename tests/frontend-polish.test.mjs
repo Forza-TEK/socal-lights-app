@@ -127,3 +127,11 @@ test("phone: the collapsed list bounces once when the site opens, never with red
   assert.match(app, /if \(!dl\) introBounce\(\)/, "not when the page opened on a link to a place");
   assert.match(app, /panel\.addEventListener\("pointerdown", stop, \{ once: true \}\)/, "a touch cancels it");
 });
+
+test("live location: the locate button follows you (tracking, dot, accuracy ring, heading), keeps following through its own first zoom, and refreshes distances only every 30 seconds", () => {
+  const app = readFileSync("public/app.js", "utf8");
+  assert.match(app, /trackUserLocation: true, showUserLocation: true, showAccuracyCircle: true, showUserHeading: true/);
+  assert.match(app, /\{ geolocateSource: true \}/, "the first-fix zoom is tagged as the control's own move, so follow mode is not switched off");
+  assert.match(app, /Date\.now\(\) - listAt > 30000/, "the list is refreshed at most every 30 s");
+  assert.doesNotMatch(app, /trackUserLocation: false/);
+});
