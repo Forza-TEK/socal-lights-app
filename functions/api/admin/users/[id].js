@@ -10,7 +10,7 @@ export async function onRequestGet({ params, env }) {
   if (!user) return err(404, "No such account.");
   const all = (sql) => env.DB.prepare(sql).bind(params.id).all().then((r) => r.results);
   const [posts, contests, votes, sessions, history, events, installers] = await Promise.all([
-    all("SELECT id, title, biz, city, season, status, contest_id, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC LIMIT 50"),
+    all("SELECT id, title, biz, city, season, status, contest_id, created_at, (added_by = ?1) AS added FROM posts WHERE user_id = ?1 OR added_by = ?1 ORDER BY created_at DESC LIMIT 50"),
     all("SELECT id, slug, name, city, status, announced FROM contests WHERE owner_id = ? ORDER BY created_at DESC"),
     env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE user_id = ?").bind(params.id).first(),
     env.DB.prepare("SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND expires_at > datetime('now')").bind(params.id).first(),
