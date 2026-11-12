@@ -314,6 +314,10 @@ export const TEMPLATES = [
     vars: { level: ["Level (warning or limit)", "warning"], lines: ["What is high (built by the site)", "- D1 rows read: 92% of the included amount", true] },
     subject: "SoCal Lights: Cloudflare usage is at {{level}}",
     text: "~ Cloudflare usage\n\n# Usage is at {{level}}\n\n{{lines}}\n\nOn Workers Paid the monthly amounts are not hard stops: at 100% extra charges start and the site keeps working. Open Admin, Usage for the month to date, today and the 7-day trend.\n\n[Open Admin, Usage](https://socallights.app/admin/#usage)\n\n* You got this email because you are the SoCal Lights admin. It is sent at most every 6 hours, only while usage stays at 90% or more." },
+  { id: "deploy_alert", group: "admin", unsub: "none", name: "Deploy stalled alert", to: "Admin", when: "When a Cloudflare Pages deploy looks stuck or production is behind main (at most every 3 hours while it lasts).",
+    vars: { lines: ["What is wrong (built by the site)", "- A preview deployment has been active for 12 minutes. Builds run one at a time, so everything behind it waits.", true] },
+    subject: "SoCal Lights: a deploy looks stalled",
+    text: "~ Deploy watch\n\n# A deploy looks stalled\n\n{{lines}}\n\nFix: Cloudflare dashboard, Workers & Pages, socal-lights, Deployments. Cancel the deployment that is stuck \"active\" (usually a preview build). Production deploys wait behind it.\n\n[Open the runbook](https://github.com/Forza-TEK/socal-lights-app/blob/main/docs/runbooks/deploy-stall.md)\n\n* You got this email because you are the SoCal Lights admin. It is sent at most every 3 hours while the problem lasts." },
 ];
 
 const FORMAT = "Formatting for this email: start a line with ~ for the small heading above the title, # for the title, ## for a box title (then lines starting with - for its bullets), and > for a quoted note. Write [Button text](link) for the orange button and **bold** for bold. Start a line with @ for a big highlighted code. Start the last line with * for the small print at the bottom. The unsubscribe line, links and copyright are added under it automatically.";

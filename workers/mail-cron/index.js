@@ -36,6 +36,17 @@ export const JOBS = {
     const r = await call(env, "/api/sponsor/renewals"), j = await body(r);
     return r.ok && j.ok !== false ? "ok" : "fail";
   },
+  // Deploy watch: is a Cloudflare Pages deploy stuck, or production behind main? The Worker reads main's latest commit from GitHub's public API and the site does the check and emails the owner (3-hourly at most).
+  // A stalled deploy is a finding, not a broken job: the job reports ok as long as the site answered.
+  "deploy-watch": async (env) => {
+    let q = "";
+    try {
+      const g = await fetch("https://api.github.com/repos/Forza-TEK/socal-lights-app/commits/main", { headers: { "user-agent": "socal-lights-clock", accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(15000) });
+      if (g.ok) { const j = await g.json(), at = j.commit && j.commit.committer && j.commit.committer.date; if (j.sha && at) q = `?sha=${encodeURIComponent(j.sha)}&at=${encodeURIComponent(at)}`; }
+    } catch {}
+    const r = await call(env, "/api/deploy-check" + q), j = await body(r);
+    return r.ok && ["ok", "stalled", "not_configured", "unknown"].includes(j.state) ? "ok" : "fail";
+  },
   // Contest reminders (voting opens, voting closes soon): each is queued once per contest.
   "contest-reminders": async (env) => {
     const r = await call(env, "/api/contest-remind"), j = await body(r);
@@ -57,6 +68,7 @@ export const JOBS = {
 // Which jobs each cron trigger runs (UTC; the same moments as the old GitHub schedules). Keep in step with wrangler.toml.
 export const CRONS = {
   "*/5 * * * *": ["mail-outbox"],
+  "*/10 * * * *": ["deploy-watch"],
   "7,37 * * * *": ["usage-check"],
   "47 14 * * *": ["stripe-reconcile"],
   "17 15 * * *": ["sponsor-renewals"],
