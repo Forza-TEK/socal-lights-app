@@ -110,3 +110,10 @@ test("the Admin page /admin/as: Admin only, only listed pages, injects the shim,
   const admin = fs.readFileSync(new URL("../public/admin/admin.js", import.meta.url), "utf8");
   assert.match(admin, /Open their profile as them/); assert.match(admin, /Edit as owner/); assert.match(admin, /manage as owner/); assert.match(admin, /Organizer dashboard \(as the organizer\)/);
 });
+
+import { readFileSync as readRoutes } from "node:fs";
+test("/admin/as is a Pages Function route (without it in _routes.json the site answers 'Page not found')", () => {
+  const routes = JSON.parse(readRoutes("public/_routes.json", "utf8"));
+  assert.ok(routes.include.includes("/admin/as"));
+  assert.ok(readRoutes("functions/admin/as.js", "utf8").includes("onRequestGet"));
+});
