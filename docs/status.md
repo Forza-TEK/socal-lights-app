@@ -2,6 +2,11 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-13 (See it on the map after adding an event)
+- Owner: after adding an event, "See it on the map" showed all of Southern California. Cause: the link is `/#e-<id>`, and the event list is cached for 1 to 2 minutes, so a brand-new event was not in it and the page did nothing. Also, the zoom ran before the map library had loaded in some cases.
+- `public/app.js` (`?v=20261114d`): if the event is not in the list, it is fetched from `/api/events/<id>`, added, selected and zoomed to; a found event now zooms through `zoomWhenReady`, which waits for the map. Checked locally on desktop and iPhone 14 with an event added after the list was cached. Test in `tests/css-tokens.test.mjs`.
+- Not covered: the same link for a newly added home (`/#m-<id>`).
+
 ## 2026-11-13 (hover colors on every button)
 - Owner: the season button's hover was much darker than the rest (it was in the "filled" group) and everything should be lighter. Season button now uses the soft tint; tint 11% -> 7%, field tint 7% -> 4%, filled hover is season mixed with the surface (82%) instead of the ink, dark buttons use it instead of the full season color. `tokens.css` `?v=20261113m`, `admin.css` `?v=20261113g`.
 - Owner: hover works on Edge now but was too dark. Tint 26% -> 11% of the season color, filled hover 78% -> 90% season (Admin too). `tokens.css` `?v=20261113l`, `admin.css` `?v=20261113f`.

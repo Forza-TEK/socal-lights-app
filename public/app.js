@@ -65,6 +65,8 @@ function showOnMap(k) {
   let tries = 0; const go = () => { if (map && mapReady) easeToPoint(lng, lat, 16.5); else if (tries++ < 60) setTimeout(go, 250); };
   go(); return true;
 }
+// The map library loads a moment after the list: a link that arrives with a place in it zooms there as soon as the map is ready
+function zoomWhenReady(lng, lat, z) { let tries = 0; const go = () => { if (map && mapReady) easeToPoint(lng, lat, z); else if (tries++ < 60) setTimeout(go, 250); }; go(); }
 document.addEventListener("click", (e) => {
   const a = e.target.closest && e.target.closest("a,[data-clk]"); if (!a) return;
   if (a.dataset.clk) return tick(a.dataset.clk);
@@ -1619,7 +1621,13 @@ async function load() {
     const ev = dl[1] === "e" ? E.find((x) => x.id === dl[2]) : null, ho = dl[1] !== "e" ? SHOW.find((x) => x.id === dl[2]) : null, sn = ev ? ev.sn : ho ? ho.season : "";
     if (SEASONS[sn]) setSeason(sn);
     if (dl[1] === "m") { if (ho) showOnMap("i:" + ho.id); } // an "On map" link: the map zooms to the home and shows its card
-    else if (ev) selectKey("e:" + ev.id, "list"); else if (ho) selectKey("i:" + ho.id, "list");
+    else if (ev) { selectKey("e:" + ev.id, "list"); zoomWhenReady(ev.lng, ev.lat, 14); } else if (ho) selectKey("i:" + ho.id, "list");
+    // "See it on the map" right after adding an event: the list (cached for a minute or two) does not have it yet, so ask for the event itself, add it, and then zoom to it
+    else if (dl[1] === "e") fetch("/api/events/" + encodeURIComponent(dl[2])).then((r) => (r.ok ? r.json() : null)).then((d) => {
+      if (!d || !d.id || typeof d.lat !== "number" || typeof d.lng !== "number" || E.some((x) => x.id === d.id)) return;
+      E.push(d); DETAIL.set(d.id, { b: d.b || "", u: d.u || "" }); if (!CITY_OPTS[d.city]) CITY_OPTS[d.city] = [d.lat, d.lng];
+      if (SEASONS[d.sn]) setSeason(d.sn); applyFilters(); selectKey("e:" + d.id, "list"); zoomWhenReady(d.lng, d.lat, 14);
+    }).catch(() => {});
   }
   welcomeLater();
   if (!dl) introBounce();
