@@ -60,3 +60,10 @@ test("every page loads one hover layer and its asset versions match", () => {
   assert.doesNotMatch(css, /@media \(hover:hover\)/, "hover rules must not depend on the hover media feature (it is false on some Edge setups)");
   for (const sel of [".iconbtn", "#addbtn", ".seasonbtn", ".bnav button", ".btn:not(.ghost)", ".maplibregl-ctrl-group button"]) assert.ok(css.includes(sel), sel + " has a hover color");
 });
+
+test("a /#e-<id> link to an event the cached list does not have yet fetches it and zooms to it", () => {
+  const js = readFileSync("public/app.js", "utf8");
+  assert.match(js, /fetch\("\/api\/events\/" \+ encodeURIComponent\(dl\[2\]\)\)/);
+  assert.match(js, /zoomWhenReady\(d\.lng, d\.lat/);
+  assert.match(js, /zoomWhenReady\(ev\.lng, ev\.lat/);
+});
