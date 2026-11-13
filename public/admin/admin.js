@@ -932,6 +932,7 @@ function runsCard(r) {
   if (!r) return "";
   const tag = (w) => (w.failed ? ["bad", "failed"] : w.stale ? ["bad", "late"] : w.status === "none" ? ["", "no report"] : ["ok", "ok"]);
   return `<h2 class="dh">Last run of each job</h2><ul class="dl">${r.workflows.map((w) => { const [c, t] = tag(w); return `<li><div class="dli" style="cursor:default"><span class="dt"><b>${esc(w.label)}</b><small>every ${esc(w.every)} · ${w.last ? "last report " + esc(agoShort(w.last)) : "never reported"}</small></span><span class="tag ${c}">${t}</span></div></li>`; }).join("")}
+    <li><div class="dli" style="cursor:default"><span class="dt"><b>Last Stripe event received</b><small>${r.stripe ? esc(r.stripe.type) + " · " + esc(agoShort(r.stripe.at)) : "none yet (payments reach the site once a real purchase or test event arrives)"}</small></span></div></li>
     <li><div class="dli" style="cursor:default"><span class="dt"><b>Event data last published</b><small>${r.migration ? esc(r.migration.name) + " · applied " + esc(agoShort(r.migration.at)) : "not available"}</small></span></div></li></ul><p class="meta" style="margin:8px 0 0">${esc(r.notRecorded.join(" "))}</p>`;
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-hfilter]"); if (b) { evSeason = "all"; EVHEALTH = b.dataset.hfilter; EVQ = ""; EVSTATUS = ""; EVCOUNTY = ""; EVLIMIT = 0; setTab("events"); } });

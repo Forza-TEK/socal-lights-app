@@ -27,9 +27,11 @@ export async function errorsLast7(env, jobs = [], now = Date.now()) {
 export async function lastRuns(env, jobs = []) {
   let migration = null;
   try { const r = await env.DB.prepare("SELECT name, applied_at FROM d1_migrations ORDER BY id DESC LIMIT 1").first(); if (r) migration = { name: r.name, at: r.applied_at }; } catch {}
+  let stripe = null;
+  try { const r = await env.DB.prepare("SELECT type, received_at FROM stripe_events ORDER BY received_at DESC LIMIT 1").first(); if (r) stripe = { type: r.type, at: r.received_at }; } catch {}
   return {
     workflows: jobs.map((j) => ({ job: j.job, label: j.label, every: j.every, last: j.last, status: j.status, problem: j.problem, stale: j.stale, failed: j.failed })),
-    migration,
+    migration, stripe,
     notRecorded: ["Claude routines ([SCL] sweeps, weekly and midweek upkeep, photo refresh, browser pass) have no heartbeat: the newest applied migration below is their trace. A routine that finds nothing leaves none.", "Workflows without a heartbeat (Apply database migrations, Tests) are not listed: see GitHub > Actions."],
   };
 }
