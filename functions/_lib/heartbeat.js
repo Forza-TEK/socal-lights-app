@@ -16,6 +16,7 @@ export const JOBS = {
   "stripe-reconcile": { label: "Stripe reconcile", every: "day", staleH: 30 },
   alerts: { label: "Weekly lights email", every: "week", staleH: 192 },
   "contest-reminders": { label: "Contest reminders", every: "day", staleH: 30 },
+  "verify-events": { label: "Event page re-check", every: "30 minutes", staleH: 4 },
 };
 
 const sqlMs = (s) => Date.parse(String(s || "").replace(" ", "T") + "Z");

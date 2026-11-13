@@ -52,6 +52,11 @@ export const JOBS = {
     const r = await call(env, "/api/contest-remind"), j = await body(r);
     return r.ok && "contests" in j ? "ok" : "fail";
   },
+  // People's own events that went live as "expected" because their event page could not be checked at the time: ask again, and confirm the ones whose page now passes.
+  "verify-events": async (env) => {
+    const r = await call(env, "/api/verify-events", 60000), j = await body(r);
+    return r.ok && typeof j.checked === "number" ? "ok" : "fail";
+  },
   // Weekly lights email: send in batches until the list is done (up to 30 batches, a short pause between). A batch where every email failed is a mail-service problem: stop and report fail.
   alerts: async (env) => {
     for (let i = 0; i < 30; i++) {
@@ -72,6 +77,7 @@ export const CRONS = {
   "7,37 * * * *": ["usage-check"],
   "47 14 * * *": ["stripe-reconcile"],
   "17 15 * * *": ["sponsor-renewals"],
+  "13,43 * * * *": ["verify-events"],
   "15 17 * * *": ["contest-reminders"],
   "30 17 * * 4": ["alerts"],
 };
