@@ -2636,3 +2636,6 @@ New article `your-events` ("Find and manage your events"): tap your account circ
 
 ## Event photos (2026-11-13, migration 0245)
 Owners can add up to 4 photos to an event they added. New article `add-photos-to-your-event` ("Add photos to your event"): account circle, **Your events**, **Edit**, the **Photos** box, **Add photos**; the first photo is the cover (**Cover**, x); saved right away; JPG, PNG or WebP under 6 MB; shown first and credited to the organizer; removing all brings back the web page picture or a stock photo; only once the event is on the map; **Run again next year** does not copy photos. `your-events` rewritten to match (and to say events you add are Confirmed, and Delete removes the photos); a pointer added to `add-an-event`; a note added to `my-photo-will-not-upload`. All seed-only. No video yet (`video` is empty): see `docs/tutorial-updates.md`.
+
+## Manage your events video (2026-11-13, migration 0247)
+The new video "Manage your events" (file `post-manage-events`, Tutorials group "Post events and homes") is linked to the Help articles `your-events`, `add-photos-to-your-event` and `edit-or-cancel-your-event` (only where the Video field was empty and nobody had edited the article in Admin). If you pasted those articles by hand, set their Video field to `post-manage-events`.

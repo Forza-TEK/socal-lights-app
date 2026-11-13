@@ -494,5 +494,27 @@ S["owner-photos"] = { id: "owner-photos", file: "enter-city-home", cookie: ck.u_
   nextUp("Enter a home", "Edit or withdraw your entry", "Change your entry, or take it out of the contest"),
 ]};
 
+// Manage your events (new 2026-11-13): the account menu's Your events row, Edit, the Photos box (up to 4 photos, Cover, remove), Cancelled or Postponed.
+// Demo event "Oak Hill Neighborhood Tree Lighting" (seed-feature.sql), owned by jamie@demo.example (cookie u_mine). Selectors from public/chrome.js and public/forms.js.
+const EVT = '[data-ev="sub_oak_hill"]';
+S["manage-events"] = { id: "manage-events", file: "post-manage-events", cookie: ck.u_mine, routes: NOCFG, ...MAPSPEC, steps: [
+  hook(EP, "Manage your events", "Edit an event, add photos, and mark it cancelled", "In this video, you will add photos to an event you posted, and learn where to find your events. We start on the map."),
+  ...openShort(),
+  ...navSteps([
+    target("Tap your account circle", "Look at the top of the map, beside the search box. See your picture, or your initial, in a circle? Tap it.", "#acctbtn", { after: 1600 }),
+    target("Tap Your events", "In the menu, tap Your events. It opens the events you added.", '.acctmenu a[role="menuitem"][href="/profile#events"]', { after: 2600 }),
+  ]),
+  { cap: "Your event", say: "Here is your event. It says whether it is on the map, and it shows the buttons for it.", do: async (p, h) => { await p.locator(EVT).first().waitFor({ timeout: 15000 }); await h.hover(EVT, 2200); }, pad: 0.4 },
+  target("Tap Edit", "Tap Edit.", `${EVT} [data-medit]`, { after: 2200 }),
+  { cap: "The Photos box", say: "Find the Photos box. You can add up to four photos. Photos are saved right away, so you do not need to tap Save.", do: async (p, h) => { await p.locator("[data-pbox]:visible").first().waitFor({ timeout: 15000 }); await h.scrollTo("[data-pbox]:visible", 240).catch(() => {}); await h.hover("[data-pbox]:visible", 2400); }, pad: 0.4 },
+  { cap: "Tap Add photos", say: "Tap Add photos, and choose pictures from your phone or computer.", do: async (p, h) => { const [fc] = await Promise.all([p.waitForEvent("filechooser"), h.click("[data-pbox]:visible label.btn", { after: 300 })]); await fc.setFiles([PHOTO("stock/tree-3.jpg"), PHOTO("stock/walk-2.jpg"), PHOTO("stock/tree-1.jpg")]); await p.locator("[data-pbox]:visible .t").first().waitFor({ timeout: 20000 }); await sleep(3200); }, pad: 0.4, poster: true },
+  { cap: "The cover photo", say: "The first photo is the cover. It is the picture on the map list and at the top of your event page. To use a different one, tap Cover on it.", do: async (p, h) => { await h.hover("[data-pbox]:visible .t >> nth=0", 1800); await h.click("[data-pbox]:visible [data-ph-cover] >> nth=0", { after: 1800 }); }, pad: 0.4 },
+  { cap: "Remove a photo", say: "To take a photo off, tap the x on it.", do: async (p, h) => { await h.hover("[data-pbox]:visible [data-ph-rm] >> nth=2", 1800); }, pad: 0.4 },
+  { cap: "Photos show first", say: "Your photos show first on the map and on the event page, credited to the organizer. If you remove them all, the picture from your event's web page comes back.", do: async (p, h) => { await sleep(2600); }, pad: 0.4 },
+  { cap: "Cancel or postpone", say: "If your event is cancelled or postponed, choose that on the event, so visitors do not drive out for nothing. You can clear it later.", do: async (p, h) => { const f = await p.$(`${EVT} [data-mcancel]`); if (f) await f.click(); await sleep(900); await h.hover(`${EVT} [data-notice]`, 2200).catch(() => {}); }, pad: 0.5 },
+  recap(EP, "Manage your events", ["Account circle, then Your events", "Tap Edit on an event", "Add up to four photos; the first is the cover", "Mark it cancelled or postponed"], "That is how you manage an event you posted. Your photos show first on the map and on the event page."),
+  nextUp(EP, "Show off your home", "Put your lights on the map with Showcase a House"),
+]};
+
 const id = process.argv[2];
 if (id) { if (!S[id]) throw new Error("no video " + id); await record(S[id]); }

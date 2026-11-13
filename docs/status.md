@@ -2,6 +2,10 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-13 (videos and Help for Your events and event photos)
+- Recorded (computer and phone): new `manage-events` ("Manage your events", file `post-manage-events`); re-recorded `add-event` and `profile` (profile now shows the Your events menu row and the Events tab). Migration 0247 links the new video to the `your-events`, `add-photos-to-your-event` and `edit-or-cancel-your-event` articles. The other account-menu videos are being re-recorded so they show the new row; those land in follow-up PRs.
+- Recorder fixes: `quick` and `custom` need the demo comp (`seed-comp.sql`); `add-homes` and `approve` clear the seeded votes (`seed-add-homes.sql`) because homes cannot be added once any vote exists.
+
 ## 2026-11-13 (Admin parity)
 - Admins can do what users do via a signed act-as proxy and Admin links; see `docs/admin-parity.md`. Update list for videos and Help: `docs/video-and-help-update-instructions-2026-11-13.md`. Migration 0245 also reconciles `edit-or-cancel-your-event`, `your-events` and `confirmed-or-expected`. Owner step: set `ADMIN_AS_SECRET`.
 
