@@ -2,6 +2,14 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-14 (event page check retries before giving up)
+- Owner got a submission (Night in Bethlehem, Gateway Church of the Nazarene, Murrieta) with the note "event page could not be loaded" and the label "Expected from past years". Not from a sweep: `submit-event.js` marks a user's event "expected" whenever the page check does not pass. The church site (GoDaddy) answered slowly or dropped the connection (2 of 3 test loads reset after about 10 s; the third took 0.6 s and mentioned the name and 2026), and the check's 6 s limit gave up.
+- `functions/_lib/events.js` `verifyEventPage`: a failed load (no answer, 5xx, 429) is tried once more with a 9 s limit, same bot name; if both fail the note reads "event page was slow or would not answer our check (open the link yourself to confirm the dates)"; 404s and content mismatches are final. Tests: `tests/verify-event-page.test.mjs`. The existing event stays "expected" until the owner sets it to confirmed in Admin > Events.
+
+## 2026-11-14 (cannot pinch the top half of the map on a phone)
+- Owner: on the phone, pinch worked on the lower half of the map but not the upper half. Cause: `.searchrow` (the top bar's grid) is full width and about 160 px tall on a phone and took every touch in its empty gaps (the strip beside the season button, between the buttons). A pinch needs both fingers on the map, so any finger in that band broke it.
+- `public/styles.css` (`?v=20261114a`): `.searchrow{pointer-events:none}.searchrow>*{pointer-events:auto}`. Measured on an iPhone 14 profile with `elementFromPoint`: before, the whole band y 40-160 was covered; after, only the real buttons and the search box are. Test in `tests/css-tokens.test.mjs`. Not tried on a real phone.
+
 ## 2026-11-13 (See it on the map after adding an event)
 - Owner: after adding an event, "See it on the map" showed all of Southern California. Cause: the link is `/#e-<id>`, and the event list is cached for 1 to 2 minutes, so a brand-new event was not in it and the page did nothing. Also, the zoom ran before the map library had loaded in some cases.
 - `public/app.js` (`?v=20261114d`): if the event is not in the list, it is fetched from `/api/events/<id>`, added, selected and zoomed to; a found event now zooms through `zoomWhenReady`, which waits for the map. Checked locally on desktop and iPhone 14 with an event added after the list was cached. Test in `tests/css-tokens.test.mjs`.

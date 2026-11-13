@@ -24,6 +24,8 @@ button{touch-action:manipulation}
 /* ---------- floating top bar ---------- */
 .topbar{position:fixed;z-index:20;top:calc(env(safe-area-inset-top,0px) + 14px);left:max(14px,env(safe-area-inset-left,0px));right:calc(var(--panel-w) + 32px);display:grid;gap:10px;justify-items:start;pointer-events:none}
 .topbar>*{pointer-events:auto}
+/* the row spans the whole top bar: only its buttons and fields take touches, so the empty parts never block a pinch or drag on the map underneath */
+.searchrow{pointer-events:none}.searchrow>*{pointer-events:auto}
 .searchrow{display:flex;gap:10px;align-items:center;width:100%;min-width:0}
 .brand{display:flex;align-items:center;gap:12px;height:52px;padding:0 22px 0 0;border-radius:999px;background:var(--glass);box-shadow:var(--shadow);font-weight:800;font-size:18px;letter-spacing:-.02em;white-space:nowrap;color:var(--ink);text-decoration:none}
 .brand .mark{flex:none;display:block;width:52px;height:52px;margin:0;border-radius:50%}

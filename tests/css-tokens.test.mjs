@@ -67,3 +67,8 @@ test("a /#e-<id> link to an event the cached list does not have yet fetches it a
   assert.match(js, /zoomWhenReady\(d\.lng, d\.lat/);
   assert.match(js, /zoomWhenReady\(ev\.lng, ev\.lat/);
 });
+
+test("the top bar's empty space lets touches through to the map (pinch on the top half)", () => {
+  const css = readFileSync("public/styles.css", "utf8");
+  assert.match(css, /\.searchrow\{pointer-events:none\}\.searchrow>\*\{pointer-events:auto\}/);
+});
