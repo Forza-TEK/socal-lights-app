@@ -218,3 +218,14 @@ test("featuredLevel: a placement lasts through its last Pacific day and ends at 
   restore = freezeNow("2026-12-10T08:00:00Z");
   try { assert.equal(rowToEvent({ featured: 1, featured_until: null }).f, 1, "no end date means no expiry"); assert.equal(rowToEvent({ featured: 0, featured_until: "2099-01-01" }).f, 0); assert.equal(rowToEvent({ featured: 5, featured_until: null }).f, 2, "levels are clamped"); } finally { restore(); }
 });
+
+test("unsigned requests are refused without logging an error; a wrong signature still logs", async () => {
+  const { env, raw } = newEnv();
+  const count = () => raw.prepare("SELECT COUNT(*) n FROM ops_log WHERE kind = 'webhook'").get().n;
+  const r = await webhook({ request: new Request("https://x.test/api/stripe-webhook", { method: "POST", body: "{}" }), env });
+  assert.equal(r.status, 400);
+  assert.equal(count(), 0, "no stripe-signature header: not Stripe, not an error");
+  const r2 = await webhook({ request: new Request("https://x.test/api/stripe-webhook", { method: "POST", body: "{}", headers: { "stripe-signature": "t=" + Math.floor(Date.now() / 1000) + ",v1=" + "0".repeat(64) } }), env });
+  assert.equal(r2.status, 400);
+  assert.equal(count(), 1, "a signed-but-wrong request is a real secret problem");
+});

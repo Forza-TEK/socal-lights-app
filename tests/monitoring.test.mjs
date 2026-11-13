@@ -166,11 +166,11 @@ test("webhook: a bad signature is filed once an hour per cause, masked, and stil
   await sendWebhook(webhook, { ...env, STRIPE_WEBHOOK_SECRET: "" }, e);
   await sendWebhook(webhook, env, e, { t: Math.floor(Date.now() / 1000) - 900 });
   rows = raw.prepare("SELECT detail FROM ops_log ORDER BY id").all().map((r) => r.detail);
-  assert.equal(rows.length, 4);
-  assert.ok(rows.some((d) => /no stripe-signature header/.test(d)) && rows.some((d) => /is not set/.test(d)) && rows.some((d) => /5 minutes off/.test(d)));
+  assert.equal(rows.length, 3, "a missing header is not Stripe, so it is not filed");
+  assert.ok(!rows.some((d) => /no stripe-signature header/.test(d)) && rows.some((d) => /is not set/.test(d)) && rows.some((d) => /5 minutes off/.test(d)));
   raw.prepare("UPDATE ops_log SET created_at = datetime('now','-2 hours')").run();
   await sendWebhook(webhook, env, e, { secret: "whsec_wrong" });
-  assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM ops_log").get().n, 5, "filed again after the hour");
+  assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM ops_log").get().n, 4, "filed again after the hour");
   assert.equal((await sendWebhook(webhook, env, stripeEvent("customer.created", {}))).status, 200, "a good signature is unaffected");
 });
 
