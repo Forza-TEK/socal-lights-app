@@ -6,7 +6,7 @@ import { actAsSecret } from "../_lib/actas.js";
 
 export const TO_OK = /^\/(profile|contests|add-event|add-house|add-contest|c\/[A-Za-z0-9_-]{1,64}\/manage|installer\/[A-Za-z0-9_-]{1,64}\/manage)$/;
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-export const injectShim = (html, as, label, hash) => html.replace(/<head([^>]*)>/i, (m) => `${m}<script src="/admin/as-shim.js?as=${encodeURIComponent(as)}&label=${encodeURIComponent(label)}&hash=${encodeURIComponent(hash)}"></script>`);
+export const injectShim = (html, as, label, hash, to = "") => html.replace(/<head([^>]*)>/i, (m) => `${m}<script src="/admin/as-shim.js?as=${encodeURIComponent(as)}&label=${encodeURIComponent(label)}&hash=${encodeURIComponent(hash)}&to=${encodeURIComponent(to)}"></script>`);
 // The page itself says whose it is: a contest's organizer dashboard is its owner's, an installer's manage page is its owner's. The page's own "who is signed in" call has no contest or installer
 // in its path, so it needs the person named up front (the ?as= the shim adds to every call). Returns { as, label } or null when nobody owns it (or the page is not one with an owner).
 export async function ownerForPage(env, to) {
@@ -24,6 +24,6 @@ export async function onRequestGet({ request, env }) {
   if (!as) { const o = await ownerForPage(env, to); if (o) ({ as, label } = o); else if (/^\/(c\/[^/]+|installer\/[^/]+)\/manage$/.test(to)) return new Response("That page has no owner account to act as. Add ?as=<user id or email> if you know who it is.", { status: 404 }); }
   const page = await fetch(new Request(url.origin + to, { headers: { accept: "text/html" } }));
   if (!page.ok) return new Response("That page was not found.", { status: 404 });
-  const html = injectShim(await page.text(), as, label || to, hash);
+  const html = injectShim(await page.text(), as, label || to, hash, to);
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" } });
 }

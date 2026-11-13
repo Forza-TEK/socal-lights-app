@@ -95,7 +95,7 @@ test("the Admin page /admin/as: Admin only, only listed pages, injects the shim,
   const real = globalThis.fetch; globalThis.fetch = async (r) => new Response(`<!doctype html><html><head><title>Your profile</title></head><body>${new URL(r.url).pathname}</body></html>`, { headers: { "content-type": "text/html" } });
   try {
     const r = await get("?to=/profile&as=me@example.com&hash=events"); assert.equal(r.status, 200); const html = await r.text();
-    assert.match(html, /<head><script src="\/admin\/as-shim\.js\?as=me%40example\.com&label=me%40example\.com&hash=events"><\/script><title>/); assert.equal(r.headers.get("cache-control"), "no-store");
+    assert.match(html, /<head><script src="\/admin\/as-shim\.js\?as=me%40example\.com&label=me%40example\.com&hash=events&to=%2Fprofile"><\/script><title>/); assert.equal(r.headers.get("cache-control"), "no-store");
   } finally { globalThis.fetch = real; }
   assert.equal(injectShim("<html><head lang=en>x", "u1", "u1", "").includes('<head lang=en><script src="/admin/as-shim.js'), true);
   // the shim, run against a stand-in page
@@ -133,4 +133,13 @@ test("the organizer dashboard and installer manage page open as their owner with
     const ok = await asPage(ctx("/c/oak-hill/manage")), html = await ok.text();
     assert.equal(ok.status, 200, html); assert.match(html, /as=u1/); assert.match(html, /label=me%40example\.com/);
   } finally { globalThis.fetch = real; }
+});
+
+test("the Admin view shows the page's real path in the address bar, because pages read their slug from it (the organizer page took 'as' for the contest name)", async () => {
+  const { injectShim } = await import("../functions/admin/as.js");
+  assert.match(injectShim("<html><head>x", "u1", "me@x.org", "", "/c/oak-hill/manage"), /&to=%2Fc%2Foak-hill%2Fmanage"/);
+  const { readFileSync } = await import("node:fs"), shim = readFileSync("public/admin/as-shim.js", "utf8");
+  assert.match(shim, /history\.replaceState\(null, "", TO \+ location\.hash\)/);
+  // the same rule the organizer page uses to find its contest, run on the address the shim leaves behind
+  assert.equal("/c/oak-hill/manage".split("/")[2], "oak-hill"); assert.equal("/admin/as".split("/")[2], "as");
 });
