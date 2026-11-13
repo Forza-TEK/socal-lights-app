@@ -367,3 +367,8 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .ucount b{font-size:20px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
 .ucount span{font-size:13px;font-weight:500;color:var(--muted)}
 .ucount.zero{border-color:var(--line);background:transparent}.ucount.zero b{color:var(--muted);font-weight:500}
+/* the count chips are buttons: they open the person's profile at that section */
+button.ucount{font:inherit;cursor:pointer;-webkit-appearance:none;appearance:none}
+button.ucount:hover{border-color:var(--season);background:color-mix(in srgb,var(--season) 7%,var(--surface-2))}
+button.ucount:focus-visible{outline:2px solid var(--season);outline-offset:2px}
+#ps-votes:focus,.psec:focus{outline:none}

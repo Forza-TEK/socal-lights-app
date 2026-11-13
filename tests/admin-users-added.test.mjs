@@ -41,5 +41,5 @@ test("the Users list and CSV count the events a person submitted (matched on the
   assert.match(csv.split("\r\n")[0], /votes,events_submitted,admin_note/);
   const { readFileSync } = await import("node:fs");
   const js = readFileSync("public/admin/admin.js", "utf8"), css = readFileSync("public/admin/admin.css", "utf8");
-  assert.match(js, /\["Events", u\.events \|\| 0, ""\]/); assert.match(css, /\.ucount b\{font-size:20px/);
+  assert.match(js, /\["Events", u\.events \|\| 0, "", "events"\]/); assert.match(js, /<button type="button" class="ucount[^`]*data-open="\$\{esc\(u\.id\)\}" data-sec="\$\{k\}"/); assert.match(js, /openUser\(b\.dataset\.open, b\.dataset\.sec\)/); for (const k of ["posts", "events", "contests"]) assert.ok(js.includes(`"None.", "${k}")`), k + " section has an anchor"); assert.ok(js.includes('id="ps-votes"')); assert.match(css, /\.ucount b\{font-size:20px/);
 });
