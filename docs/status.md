@@ -3,6 +3,7 @@
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
 ## 2026-11-13 (hover colors on every button)
+- Owner: hover works on Edge now but was too dark. Tint 26% -> 11% of the season color, filled hover 78% -> 90% season (Admin too). `tokens.css` `?v=20261113l`, `admin.css` `?v=20261113f`.
 - Owner on Edge still saw no hover (video: only "Route these", whose old rule had no media query, changed) even with the new tokens.css loaded. The hover media feature is evidently false in that browser, so the whole layer is no longer inside any `@media` gate (a touch screen may show a hover color after a tap until the next tap). `tokens.css` `?v=20261113k`, `admin.css` `?v=20261113e`. Test now fails if the gate comes back.
 - Owner reported no hover change after the merge; the live site did change in desktop Chromium (verified against production), so the hover rules now also apply when any attached pointer can hover (iPad trackpad, hybrid laptops, some webviews report `hover:none` for the primary pointer). `tokens.css` `?v=20261113j`, `admin.css` `?v=20261113d`.
 - Follow-up: the top bar (brand pill, search box, season, day/night, account, Add, menu) and text fields/selects now change on hover too (tint on pills, season-colored border on fields). Tint made stronger (26%). `tokens.css` `?v=20261113i`, `admin.css` `?v=20261113c`.
