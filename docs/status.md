@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-14 (Admin > Users: count chips open the records)
+- Owner: the counts on each Users row should link to the records. Each chip is now a button that opens that person's profile scrolled to its section: Homes and entries, Events they submitted, Contests they run, Votes cast (the profile lists every record with a link onward, including ones still waiting for review). `admin.js` `?v=20261114d`, `admin.css` `?v=20261114b`. Test in `tests/admin-users-added.test.mjs`. Not looked at in a browser (Admin needs the Cloudflare Access login).
+
 ## 2026-11-14 (events people add are confirmed: the organizer is the source)
 - Owner: confirming a submitted event must not depend on reading its website (bot protection blocks automatic reads; the owner opens the page fine) and must not depend on a matching email domain (an HOA or a family block party may only post on this site; the Holidays in the Pines submitter is a Gmail address, Crestline Chamber of Commerce). We do not get past bot protection, and a domain match was dropped before merging.
 - New rule: an event added from a signed-in, verified account is **confirmed** (the organizer gave the dates; "expected" means dates estimated from past years). `functions/api/submit-event.js` and the owner's edit (`functions/api/me/events/[id].js`) always set `confirmed`; `event_submissions.verified` and the note still record whether its web page could be read and matched (admin information only). Migration 0242 brings events already added to the same rule (sweep-found events are untouched). Admin can still unpublish, and "Publish (expected)" for waiting events still exists. The `verify-events` job and the **Confirm dates** button stay for any event an admin published as expected.
