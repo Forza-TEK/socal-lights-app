@@ -27,7 +27,9 @@ export async function onRequestPost({ request, env }) {
   const sigHeader = request.headers.get("stripe-signature");
   if (!(await verifyStripeSignature(raw, sigHeader, env.STRIPE_WEBHOOK_SECRET))) {
     // A wrong or missing signing secret makes every real Stripe delivery fail here, so the cause is filed (once an hour per cause, nothing from the request itself) and the digest shows it.
-    await logOpOnce(env, "webhook", `Stripe webhook rejected: ${signatureProblem(sigHeader, env.STRIPE_WEBHOOK_SECRET)}`, 60);
+    // A request with no (or a malformed) stripe-signature header is not from Stripe at all (a scanner or a stray test), so it is refused without filing an error.
+    const why = signatureProblem(sigHeader, env.STRIPE_WEBHOOK_SECRET);
+    if (!/not sent by Stripe/.test(why)) await logOpOnce(env, "webhook", `Stripe webhook rejected: ${why}`, 60);
     return err(400, "Bad signature.");
   }
   let evt; try { evt = JSON.parse(raw); } catch { return err(400, "Bad payload."); }

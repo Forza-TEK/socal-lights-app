@@ -31,3 +31,12 @@ test("a calm week shows nothing logged even with outreach activity", async () =>
   const e = await errorsLast7(env, []);
   assert.equal(e.total, 0); assert.equal(e.activity[0].n, 1);
 });
+
+test("lastRuns reports the newest Stripe event received", async () => {
+  const { lastRuns } = await import("../functions/_lib/adminhealth.js");
+  const { env, raw } = newEnv();
+  assert.equal((await lastRuns(env, [])).stripe, null);
+  raw.prepare("INSERT INTO stripe_events (id,type,received_at) VALUES ('evt_1','charge.refunded','2026-01-01 00:00:00'),('evt_2','checkout.session.completed','2026-02-01 00:00:00')").run();
+  const r = await lastRuns(env, []);
+  assert.deepEqual(r.stripe, { type: "checkout.session.completed", at: "2026-02-01 00:00:00" });
+});
