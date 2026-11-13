@@ -81,7 +81,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const county = nearestCounty(lat, lng, evs);
 
   // The event web page is optional. With one, we check it mentions the event and its year (then the event goes live right away); without one, a person reviews it.
-  const check = e.url ? await verifyEventPage(e.url, e.name, e.start_date) : { ok: false, note: "no event web page given" };
+  const check = e.url ? await verifyEventPage(e.url, e.name, e.start_date, undefined, e.email) : { ok: false, note: "no event web page given" };
   const { c: today24 } = await env.DB.prepare("SELECT COUNT(*) AS c FROM event_submissions WHERE status = 'published' AND created_at > datetime('now','-1 day')").first();
   // Every event goes live right away (it can be unpublished from the admin). Only a busy day holds new ones for review.
   // A web page that mentions the event and its year makes it "confirmed"; otherwise it goes up as "expected".

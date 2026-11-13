@@ -46,3 +46,6 @@ Many of these city pages refuse our bot, so events listed from them often have n
 - Calendar URL patterns: Granicus sites take `/-curm-12/-cury-2026` appended to the calendar page (Whittier PRCS, Hawthorne, Chula Vista); Inglewood: `/calendar.aspx?view=list&year=2026&month=11`; santamonica.com: `/events/?mySearch=holiday&page-num=1` and `/event/<slug>/`.
 - A "Full Calendar" button can leave the city's domain (Eastvale goes to calendarwiz.com). Chrome asks for permission per site; if it was not granted, ask the owner to allow it.
 - Do not click cookie banners ("Got it"): accepting is not part of this task.
+
+## Submitted events that our check could not read (bot protection)
+Admin > Submitted events lists published events that are still **Expected**. Those whose note says "the site's bot protection blocked our automatic check" are fine to check in the owner's own Chrome (a normal visitor, no tricks): open the event's page, and if it shows the event name and a 2026 date, click **Confirm dates** on the card. If the dates differ, edit the event in Admin > Events first. Leave anything that does not load or does not mention the event. The unattended check never gets past a challenge page (`docs/blocked-sites.md`).

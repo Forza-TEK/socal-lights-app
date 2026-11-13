@@ -2,6 +2,12 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-14 (blocked sites: confirm by the account's own email domain)
+- Owner: confirming should not be hard, since the page opens fine in a browser. The block is the site's own bot protection (it decides by who asks, not what is asked); we still do not disguise the check or solve challenges.
+- New proof that needs no page read: an event is only added from a signed-in account with a verified email. When the check is blocked and that email is at the event page's own website (same domain or a subdomain either way; free-mail and shared platforms such as facebook.com, eventbrite.com, wixsite.com never count), the event is confirmed with the note "the site blocks automatic checks, but the account's verified email is at the event page's own website". `emailOwnsSite` and the 5th argument of `verifyEventPage` in `functions/_lib/events.js`; used at submit, in the owner's edit, and in the `verify-events` job. Tests in `tests/verify-event-page.test.mjs`.
+- Still blocked and not on the site's domain: one-tap **Confirm dates** in Admin, and a new section in `docs/browser-pass.md` for the Friday browser pass in the owner's own Chrome.
+- Longer-term, owner's call: applying to Cloudflare's verified-bots program for `SoCalLightsBot` would make many Cloudflare-protected sites let us through. Not started; requirements not checked.
+
 ## 2026-11-14 (Admin > Users: events count, bigger counts)
 - Owner: the Users list showed homes/entries, contests run and votes but not events, and the counts were small grey text. The list API now returns `events` (event submissions whose contact email is the user's, case-insensitive) and the CSV has `events_submitted`. Each row shows four count chips (Homes and entries, Events, Contests run, Votes) with a 20 px number; zero counts are muted. `admin.js` `?v=20261114c`, `admin.css` `?v=20261114a`. Test in `tests/admin-users-added.test.mjs`. Not looked at in a browser (Admin needs the Cloudflare Access login).
 - Events are matched on email because a submission has no user id; an event someone submitted with a different email than their account is not counted for them.

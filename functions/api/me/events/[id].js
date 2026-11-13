@@ -55,7 +55,7 @@ export async function onRequestPost({ params, request, env }) {
     // A new web page, name or first day is checked the way a new event's page is: "Confirmed" only when the page mentions the event and its year, otherwise "Expected".
     const cur = live ? await env.DB.prepare("SELECT status FROM events WHERE id = ?").bind(s.event_id).first() : null;
     let status = cur ? cur.status : "expected", verified = s.verified;
-    if (url !== (s.url || "") || name !== s.name || start !== s.start_date) { const ck = url ? await verifyEventPage(url, name, start) : { ok: false }; status = ck.ok ? "confirmed" : "expected"; verified = ck.ok ? 1 : 0; }
+    if (url !== (s.url || "") || name !== s.name || start !== s.start_date) { const ck = url ? await verifyEventPage(url, name, start, undefined, user.email) : { ok: false }; status = ck.ok ? "confirmed" : "expected"; verified = ck.ok ? 1 : 0; }
     await env.DB.prepare("UPDATE event_submissions SET name=?, blurb=?, venue=?, start_date=?, end_date=?, hours=?, free=?, price=?, url=?, season=?, type=?, city=?, address=?, lat=?, lng=?, county=?, verified=? WHERE id=?").bind(name, blurb, venue, start, end, hours, free, price, url, season, type, city, address, lat, lng, county, verified, s.id).run();
     if (live) await upsertEvent(env, { id: s.event_id, name, county, city, type, start_date: start, end_date: end, status, free, price, hours, lat, lng, blurb, url, season, venue, address });
     return json({ ok: true, ...(located === undefined ? {} : { located }) });

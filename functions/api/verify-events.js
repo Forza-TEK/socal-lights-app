@@ -14,11 +14,11 @@ export async function onRequest({ request, env }) {
   if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
   if (request.method !== "POST" && request.method !== "GET") return err(405, "Use POST.");
   const { results: due } = await env.DB.prepare(
-    `SELECT s.id AS sid, e.id AS eid, e.name, e.url, e.start_date FROM event_submissions s JOIN events e ON e.id = s.event_id
+    `SELECT s.id AS sid, s.contact_email AS email, e.id AS eid, e.name, e.url, e.start_date FROM event_submissions s JOIN events e ON e.id = s.event_id
      WHERE s.status = 'published' AND e.status = 'expected' AND e.url != '' AND e.end_date >= date('now') AND (s.checked_at IS NULL OR s.checked_at < datetime('now', CASE WHEN s.note LIKE 'the site''s bot protection%' THEN '-3 days' ELSE '-6 hours' END))
      ORDER BY s.checked_at IS NOT NULL, s.checked_at LIMIT ?`).bind(BATCH).all();
   let confirmed = 0, failed = 0;
-  const done = await Promise.all(due.map(async (r) => ({ r, c: await verifyEventPage(r.url, r.name, r.start_date).catch(() => ({ ok: false, note: "check did not run" })) })));
+  const done = await Promise.all(due.map(async (r) => ({ r, c: await verifyEventPage(r.url, r.name, r.start_date, undefined, r.email).catch(() => ({ ok: false, note: "check did not run" })) })));
   for (const { r, c } of done) {
     try {
       if (c.ok) {
