@@ -84,7 +84,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const check = e.url ? await verifyEventPage(e.url, e.name, e.start_date) : { ok: false, note: "no event web page given" };
   const { c: today24 } = await env.DB.prepare("SELECT COUNT(*) AS c FROM event_submissions WHERE status = 'published' AND created_at > datetime('now','-1 day')").first();
   // Every event goes live right away (it can be unpublished from the admin). Only a busy day holds new ones for review.
-  // A web page that mentions the event and its year makes it "confirmed"; otherwise it goes up as "expected".
+  // The organizer gave the dates themselves, from a signed-in, verified account, so the event goes up "confirmed" ("expected" means dates estimated from past years). Whether its web page could be read and matched is kept in `verified` and the note for the admin.
   const reasons = [];
   if (!located) reasons.push("pin is at the city center (address not found)");
   if (!check.ok) reasons.push(check.note);
@@ -103,7 +103,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   ]);
 
   if (auto) {
-    await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: check.ok ? "confirmed" : "expected", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
+    await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: "confirmed", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
     await bump(env, "fn:add-event-done");
     const receipt = await sendReceipt(env, waitUntil, { id: "event_live", to: e.email, vars: { name: e.name, when: whenOf(e), map: `https://socallights.app/#e-${eventId}`, link: "https://socallights.app/profile#events" } });
     return json({ ok: true, status: "published", id: eventId, submission_id: id, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Your event is on the map." });

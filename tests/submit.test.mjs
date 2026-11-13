@@ -154,23 +154,23 @@ test("event: geocode hit pins it; with a page that mentions the name and year it
     assert.equal(sub.status, "published"); assert.equal(sub.verified, 1); assert.equal(sub.contact_email, "o@example.com");
   } finally { f.restore(); }
 });
-test("event: geocoder down and no web page: still published as expected, pin at the city center, reasons recorded", async () => {
+test("event: geocoder down and no web page: still published (confirmed: the organizer gave the dates), pin at the city center, reasons recorded", async () => {
   const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), f = geo({ down: true });
   try {
     const r = await body(await postEvent(env, evBody(), u.cookie)); assert.equal(r.http, 200);
     const ev = raw.prepare("SELECT status, lat, lng FROM events WHERE id = ?").get(r.id);
-    assert.equal(ev.status, "expected"); assert.deepEqual([ev.lat, ev.lng], PASADENA);
+    assert.equal(ev.status, "confirmed"); assert.deepEqual([ev.lat, ev.lng], PASADENA);
     const note = raw.prepare("SELECT note FROM event_submissions WHERE id = ?").get(r.submission_id).note;
     assert.match(note, /city center/); assert.match(note, /no event web page/);
   } finally { f.restore(); }
 });
-test("event: a page that is down or does not mention the year leaves it expected", async () => {
+test("event: a page that is down or does not mention the year does not stop it being confirmed, but the page check is recorded as not verified", async () => {
   const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com");
   for (const page of ["down", "<p>Pasadena Holiday Parade 1999</p>"]) {
     const f = geo({ census: PASADENA, page });
     try {
       const r = await body(await postEvent(env, evBody({ url: "https://parade.example.org/x", name: "Pasadena Holiday Parade " + page.length }), u.cookie, { ip: "198.51.100." + page.length }));
-      assert.equal(r.http, 200); assert.equal(raw.prepare("SELECT status FROM events WHERE id = ?").get(r.id).status, "expected", page);
+      assert.equal(r.http, 200); assert.equal(raw.prepare("SELECT status FROM events WHERE id = ?").get(r.id).status, "confirmed", page); assert.equal(raw.prepare("SELECT verified FROM event_submissions WHERE event_id = ?").get(r.id).verified, 0, page);
     } finally { f.restore(); }
   }
 });

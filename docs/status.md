@@ -2,6 +2,11 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-14 (events people add are confirmed: the organizer is the source)
+- Owner: confirming a submitted event must not depend on reading its website (bot protection blocks automatic reads; the owner opens the page fine) and must not depend on a matching email domain (an HOA or a family block party may only post on this site; the Holidays in the Pines submitter is a Gmail address, Crestline Chamber of Commerce). We do not get past bot protection, and a domain match was dropped before merging.
+- New rule: an event added from a signed-in, verified account is **confirmed** (the organizer gave the dates; "expected" means dates estimated from past years). `functions/api/submit-event.js` and the owner's edit (`functions/api/me/events/[id].js`) always set `confirmed`; `event_submissions.verified` and the note still record whether its web page could be read and matched (admin information only). Migration 0242 brings events already added to the same rule (sweep-found events are untouched). Admin can still unpublish, and "Publish (expected)" for waiting events still exists. The `verify-events` job and the **Confirm dates** button stay for any event an admin published as expected.
+- Tests: `tests/submit.test.mjs` updated (a down or non-matching page no longer leaves it expected).
+
 ## 2026-11-14 (Admin > Users: events count, bigger counts)
 - Owner: the Users list showed homes/entries, contests run and votes but not events, and the counts were small grey text. The list API now returns `events` (event submissions whose contact email is the user's, case-insensitive) and the CSV has `events_submitted`. Each row shows four count chips (Homes and entries, Events, Contests run, Votes) with a 20 px number; zero counts are muted. `admin.js` `?v=20261114c`, `admin.css` `?v=20261114a`. Test in `tests/admin-users-added.test.mjs`. Not looked at in a browser (Admin needs the Cloudflare Access login).
 - Events are matched on email because a submission has no user id; an event someone submitted with a different email than their account is not counted for them.
