@@ -117,3 +117,20 @@ test("/admin/as is a Pages Function route (without it in _routes.json the site a
   assert.ok(routes.include.includes("/admin/as"));
   assert.ok(readRoutes("functions/admin/as.js", "utf8").includes("onRequestGet"));
 });
+
+import { ownerForPage, onRequestGet as asPage } from "../functions/admin/as.js";
+test("the organizer dashboard and installer manage page open as their owner without ?as= (the page's own 'who am I' call needs the person)", async () => {
+  const { env, raw } = setup(); await owner(raw);
+  raw.prepare("INSERT INTO contests (id,slug,name,org,city,owner_id,status,entries_close,vote_start,vote_end,announced) VALUES ('k1','oak-hill','Oak Hill Contest','Oak Hill HOA','Pasadena','u1','live',?,?,?,0)").run(ptToday(5), ptToday(6), ptToday(12));
+  raw.prepare("INSERT INTO installers (id,slug,name,owner_email,status) VALUES ('i1','bright','Bright Nights','Me@Example.com','active')").run();
+  assert.deepEqual(await ownerForPage(env, "/c/oak-hill/manage"), { as: "u1", label: "me@example.com" });
+  assert.deepEqual(await ownerForPage(env, "/installer/bright/manage"), { as: "me@example.com", label: "me@example.com" });
+  assert.equal(await ownerForPage(env, "/c/missing/manage"), null); assert.equal(await ownerForPage(env, "/profile"), null);
+  // the page: the shim gets the owner and the red bar names the person, not the path
+  const real = globalThis.fetch; globalThis.fetch = async () => new Response("<html><head></head><body>ok</body></html>", { status: 200 });
+  try {
+    const ctx = (to, extra = "") => ({ env: { ...env, ...SECRET, ADMIN_DEV_BYPASS: "1" }, request: new Request("http://localhost/admin/as?to=" + encodeURIComponent(to) + extra, { headers: { "cf-access-jwt-assertion": "x" } }), data: { admin: { email: "rey@forza-tek.com" } } });
+    const ok = await asPage(ctx("/c/oak-hill/manage")), html = await ok.text();
+    assert.equal(ok.status, 200, html); assert.match(html, /as=u1/); assert.match(html, /label=me%40example\.com/);
+  } finally { globalThis.fetch = real; }
+});
