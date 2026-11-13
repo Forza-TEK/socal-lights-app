@@ -57,6 +57,6 @@ test("the text-field border token passes 3:1 against the page and card colors", 
 
 test("every page loads one hover layer and its asset versions match", () => {
   const css = readFileSync("public/tokens.css", "utf8");
-  assert.match(css, /@media \(hover:hover\)/);
+  assert.match(css, /@media \(hover:hover\),\(any-hover:hover\)/);
   for (const sel of [".iconbtn", "#addbtn", ".seasonbtn", ".bnav button", ".btn:not(.ghost)", ".maplibregl-ctrl-group button"]) assert.ok(css.includes(sel), sel + " has a hover color");
 });
