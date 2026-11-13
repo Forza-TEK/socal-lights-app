@@ -45,3 +45,5 @@ Sites that **do** load: rivlib.libcal.com, library.sbcounty.gov (see `docs/sweep
 Added 2026-11-01 (group 17 sweep): montclairca.gov (WebFetch 403; cityofmontclair.org pages load via search).
 
 Added 2026-11-08 (group 14 sweep): rivcodistrict2.org (WebFetch 403), norco.ca.us event pages (403 via curl and WebFetch), cityofperris.org Calendar/Event pages and eastvaleca.gov showpublisheddocument (403), cpo.soar.com (not reachable from the sweep session).
+
+Added 2026-11-13 (group 7 sweep): cityoflancasterca.org (WebFetch 403), scvnews.com (WebFetch 403). visitlancastercity.com pages from search 404.

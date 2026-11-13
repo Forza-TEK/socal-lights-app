@@ -1081,3 +1081,9 @@ Migration 0234: confirmed 10 Ventura/SB/San Bernardino-county Christmas events f
 - Added the Holiday Half Marathon & 5K at Fairplex (Dec 20, migration 0238). Group was already well covered (34 events).
 - Leads not added: LASD Turkey Trot 5K, San Dimas, Nov 14 (runsignup.com/Race/Info/CA/SanDimas/LASAAMugRun3TurkeyTrot, Bonelli Park, 120 E Via Verde Park Rd: Nominatim has no house-number match, so no verified pin); Azusa Festival of Lights and Glendora Village Holiday Stroll (no 2026 page; Glendora chamber page returns 403).
 - No usable photos: Claremont Turkey Trot image is a logo; downtownpomona.org image is a site-wide aerial; La Puente and San Dimas images are flyers.
+
+## 2026-11-13 city sweep, group 7 (North LA County)
+- Nothing new added (no migration). The group already has 21 events; searches for Santa Clarita, Lancaster, Palmdale, Acton, Castaic and Agua Dulce turned up only 2024/2025 pages.
+- Leads not added (no 2026 page): River of Lights at Central Park (santaclarita.gov, Dec 2025 release, nightly dusk-10pm through NYE at 27150 Bouquet Canyon Rd; re-check once the city posts 2026), Lancaster Mayor's Tree Lighting (2025: Nov 28) and AV Christmas parade (2025: Dec 6, Lancaster), Palmdale parade (2025: Dec 13), Santa Clarita Thanksgiving community dinner (2025: Canyon Country Community Center), home displays (Hallak, Briarcliff, Homestead Place, Winter Town Acton) only listed in 2024/25 articles.
+- No decorating contests with published addresses found in the group.
+- No photo set: SCTC Turkey Trot og:image is the club's mascot graphic (logo-style); cityoflancasterca.org blocks us, so Magical BLVD Christmas stays on the stock photo.
