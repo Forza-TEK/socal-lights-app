@@ -51,6 +51,8 @@ test("sponsor renewals and contest reminders: ok only on the answers the old wor
   s = stub([{ body: { ok: false, note: "STRIPE_SECRET_KEY is not set" } }, {}]); try { assert.equal(await runJob({ ALERT_CRON_KEY: KEY }, "sponsor-renewals"), "fail"); } finally { s.restore(); }
   s = stub([{ body: { contests: 2 } }, {}]); try { assert.equal(await runJob({ ALERT_CRON_KEY: KEY }, "contest-reminders"), "ok"); assert.match(s.calls.at(-1).url, /job=contest-reminders&status=ok/); } finally { s.restore(); }
   s = stub([{ body: { error: "x" } }, {}]); try { assert.equal(await runJob({ ALERT_CRON_KEY: KEY }, "contest-reminders"), "fail"); } finally { s.restore(); }
+  s = stub([{ body: { checked: 2, confirmed: 1, failed: 1 } }, {}]); try { assert.equal(await runJob({ ALERT_CRON_KEY: KEY }, "verify-events"), "ok"); assert.match(s.calls[0].url, /\/api\/verify-events$/); assert.match(s.calls.at(-1).url, /job=verify-events&status=ok/); } finally { s.restore(); }
+  s = stub([{ body: { error: "x" } }, {}]); try { assert.equal(await runJob({ ALERT_CRON_KEY: KEY }, "verify-events"), "fail"); } finally { s.restore(); }
 });
 
 test("weekly lights email: batches until remaining is 0; an all-failed batch or a missing count is a failure", async () => {
