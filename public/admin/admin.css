@@ -361,3 +361,9 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
   body.admin :is(input,select,textarea):not(:disabled):not(:focus):not([type=checkbox]):not([type=radio]):hover{border-color:var(--season)!important;background:color-mix(in srgb,var(--season) 4%,var(--surface))}
   body.admin :is(.btn.danger,.btn.danger-solid):not(:disabled):hover{filter:brightness(1.12)}
 }
+/* Users list: the counts are the point of the row, so they are big chips, not small grey text */
+.ucounts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.ucount{display:inline-flex;align-items:baseline;gap:7px;padding:6px 14px;border:1px solid var(--line2);border-radius:999px;background:var(--surface-2);color:var(--ink)}
+.ucount b{font-size:20px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.ucount span{font-size:13px;font-weight:500;color:var(--muted)}
+.ucount.zero{border-color:var(--line);background:transparent}.ucount.zero b{color:var(--muted);font-weight:500}
