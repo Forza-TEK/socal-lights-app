@@ -551,6 +551,11 @@
           }
         },
         {
+          "id": "manage-events",
+          "title": "Manage your events",
+          "desc": "Find your events, add up to four photos, and mark an event cancelled or postponed."
+        },
+        {
           "id": "showcase",
           "title": "Show off your home on the map",
           "desc": "Put your lights on the map so families can find your home. You do not need a contest.",
