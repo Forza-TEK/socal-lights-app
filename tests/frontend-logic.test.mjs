@@ -89,3 +89,11 @@ test("feature plans: eligibility reasons for events that cannot be featured", ()
   assert.match(eventEligibility({ state: "live" }, qs(-9, -8)).reason, /ended/);
   const ok = eventEligibility({ state: "live" }, qs(5, 9)); assert.equal(ok.ok, true); assert.deepEqual(ok.plans, ["ev_pin", "ev_banner", "ev_top", "ev_all"]);
 });
+
+test("Christmas has a Nativity type (Nativity & drive-thru nativity) that shows as a filter, has a short label and a photo fallback", async () => {
+  const { SEASONS, TYPE_SHORT } = await import("../public/seasons.js");
+  assert.match(SEASONS.christmas.types.nativity, /nativity/i); assert.match(SEASONS.christmas.types.nativity, /drive-thru/i); assert.equal(TYPE_SHORT.nativity, "Nativity");
+  const { readFileSync } = await import("node:fs");
+  assert.match(readFileSync("public/app.js", "utf8"), /christmas: \{[^}]*nativity: "tree"/);
+  assert.match(readFileSync("migrations/0246_nativity_type.sql", "utf8"), /type = 'nativity'/);
+});

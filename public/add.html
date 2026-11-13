@@ -25,7 +25,7 @@
 </main>
 <script type="module">
 import { ICON, esc, themeBtn, mountAcct } from "/addflow.js?v=20261113a";
-import { SEASONS, defaultSeason } from "/seasons.js?v=20261111x553";
+import { SEASONS, defaultSeason } from "/seasons.js?v=20261114n";
 document.getElementById("tb").innerHTML = themeBtn() + '<span id="acct"></span>'; mountAcct(document.getElementById("acct"));
 const today = new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10);
 document.documentElement.dataset.season = defaultSeason(today);

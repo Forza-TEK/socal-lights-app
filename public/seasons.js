@@ -110,6 +110,7 @@ export const SEASONS = {
       parade: "Boat & street parades",
       park: "Theme parks & zoos",
       tree: "Tree lightings & villages",
+      nativity: "Nativity & drive-thru nativity",
       tour: "Tours & rides",
       show: "Shows & concerts",
     },
@@ -129,7 +130,7 @@ export const SEASON_KEYS = Object.keys(SEASONS);
 
 // Short labels for every type, used on cards and tags
 export const TYPE_SHORT = {
-  trot: "Turkey trot", thanks: "Thanksgiving", walk: "Walk-through", drive: "Drive-by", parade: "Parade", park: "Park / zoo", tree: "Tree lighting", tour: "Tour / ride",
+  trot: "Turkey trot", thanks: "Thanksgiving", walk: "Walk-through", drive: "Drive-by", parade: "Parade", park: "Park / zoo", tree: "Tree lighting", nativity: "Nativity", tour: "Tour / ride",
   haunt: "Haunt", pumpkin: "Pumpkins", family: "Family event", dia: "Día de los Muertos", show: "Show",
   nye: "New Year's Eve", lunar: "Lunar New Year", romance: "Date night", dance: "Dance / party", sweets: "Chocolate & wine", run: "Cupid run", lights: "Lights", bloom: "Blooms", nature: "Nature", stpat: "St. Patrick's",
   easter: "Easter", cinco: "Cinco de Mayo", festival: "Festival", fireworks: "Fireworks", fair: "Fair", concert: "Concert / movie",
