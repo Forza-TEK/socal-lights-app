@@ -152,14 +152,14 @@
           "title": "Your profile: drafts, contests, badges and your account",
           "desc": "Drafts, contests, badges and deleting your account.",
           "url": "/tutorials/profile.mp4",
-          "length": "2:02",
+          "length": "2:24",
           "captions": "/tutorials/profile.vtt",
           "poster": "/tutorials/profile.jpg",
           "mobile": {
             "url": "/tutorials/profile-mobile.mp4",
             "poster": "/tutorials/profile-mobile.jpg",
             "captions": "/tutorials/profile-mobile.vtt",
-            "length": "2:04"
+            "length": "2:22"
           }
         }
       ]
@@ -540,14 +540,29 @@
           "title": "Add an event to the map",
           "desc": "Share a tree lighting, market, parade or haunted house.",
           "url": "/tutorials/post-event.mp4",
-          "length": "2:32",
+          "length": "2:42",
           "captions": "/tutorials/post-event.vtt",
           "poster": "/tutorials/post-event.jpg",
           "mobile": {
             "url": "/tutorials/post-event-mobile.mp4",
             "poster": "/tutorials/post-event-mobile.jpg",
             "captions": "/tutorials/post-event-mobile.vtt",
-            "length": "2:33"
+            "length": "2:37"
+          }
+        },
+        {
+          "id": "manage-events",
+          "title": "Manage your events",
+          "desc": "Find your events, add up to four photos, and mark an event cancelled or postponed.",
+          "captions": "/tutorials/post-manage-events.vtt",
+          "url": "/tutorials/post-manage-events.mp4",
+          "poster": "/tutorials/post-manage-events.jpg",
+          "length": "1:45",
+          "mobile": {
+            "url": "/tutorials/post-manage-events-mobile.mp4",
+            "poster": "/tutorials/post-manage-events-mobile.jpg",
+            "captions": "/tutorials/post-manage-events-mobile.vtt",
+            "length": "1:39"
           }
         },
         {
