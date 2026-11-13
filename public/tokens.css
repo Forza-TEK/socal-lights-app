@@ -56,16 +56,16 @@
    - dark buttons (.btn, dark circles over photos): the season color itself
    - ghost, outline, chips, tabs and bottom-nav buttons: the same tint as the circles
    !important is deliberate: it is the only way to beat the id and compound selectors the page stylesheets use. */
-:root{--hov:color-mix(in srgb,var(--season) 11%,var(--surface)); --hov-ink:var(--season-ink); --hov-fill:color-mix(in srgb,var(--season) 90%,var(--ink))}
+:root{--hov:color-mix(in srgb,var(--season) 7%,var(--surface)); --hov-ink:var(--season-ink); --hov-fill:color-mix(in srgb,var(--season) 82%,var(--surface))}
 @media all{
-  :is(.iconbtn,.abtn,.fbtn,.helpbtn,.xbtn,.shr,.star,.pv-acts button,.preview .x,#alerts .ax,.tbtn,.acct,.gbtn,.ebtn,.legbtn,.onbtn,.sc-btn,.back.plain,.thumbs .t button,.thumbs button,.chip,.linkbtn,.ptab,.bnav button,.quick button,.mapspick button,.kindseg button,.fseg button,.pop .seg button,.sharedbar button,#welcome button.no,#sugg button,.res button,.ptabs2 button,.btn.ghost,.btn.out,.dlg .btn.out,.pnav,.seasonbar button,.fwin .xbtn):not(:disabled):not([aria-disabled="true"]):hover{background:var(--hov)!important;color:var(--hov-ink)!important}
-  :is(.seasonbtn,#addbtn,.addbtn,.quick .qgo,.contestgo,.quick button.qf.open,.btn.ice,#welcome button:not(.no)):not(:disabled):hover{background:var(--hov-fill)!important;color:var(--on-season)!important;filter:none!important}
-  :is(.btn:not(.ghost):not(.out):not(.ice):not(.danger):not(.bad),.hero .back,.hero .pvnav,.gallery>.back,.gallery .nav,.preview .pvnav,.lbx,.lbn,.lightbox button):not(:disabled):hover{background:var(--season)!important;color:var(--on-season)!important;filter:none!important}
+  :is(.iconbtn,.seasonbtn,.abtn,.fbtn,.helpbtn,.xbtn,.shr,.star,.pv-acts button,.preview .x,#alerts .ax,.tbtn,.acct,.gbtn,.ebtn,.legbtn,.onbtn,.sc-btn,.back.plain,.thumbs .t button,.thumbs button,.chip,.linkbtn,.ptab,.bnav button,.quick button,.mapspick button,.kindseg button,.fseg button,.pop .seg button,.sharedbar button,#welcome button.no,#sugg button,.res button,.ptabs2 button,.btn.ghost,.btn.out,.dlg .btn.out,.pnav,.seasonbar button,.fwin .xbtn):not(:disabled):not([aria-disabled="true"]):hover{background:var(--hov)!important;color:var(--hov-ink)!important}
+  :is(#addbtn,.addbtn,.quick .qgo,.contestgo,.quick button.qf.open,.btn.ice,#welcome button:not(.no)):not(:disabled):hover{background:var(--hov-fill)!important;color:var(--on-season)!important;filter:none!important}
+  :is(.btn:not(.ghost):not(.out):not(.ice):not(.danger):not(.bad),.hero .back,.hero .pvnav,.gallery>.back,.gallery .nav,.preview .pvnav,.lbx,.lbn,.lightbox button):not(:disabled):hover{background:var(--hov-fill)!important;color:var(--on-season)!important;filter:none!important}
   .maplibregl-ctrl-group button:not(:disabled):hover{background:var(--hov)!important}
   :is(.search,.brand,.rtpill,.acct,.teaser,.shopcard,.mrow,.sh-nv):hover{background:var(--hov)!important}
   .brand:hover .wm{color:var(--hov-ink)}
   .search:hover,input:is([type=text],[type=search],[type=email],[type=url],[type=tel],[type=number],[type=date],[type=password]):not(:disabled):not(:focus):hover,select:not(:disabled):not(:focus):hover,textarea:not(:disabled):not(:focus):hover{border-color:var(--season)!important}
-  input:is([type=text],[type=search],[type=email],[type=url],[type=tel],[type=number],[type=date],[type=password]):not(:disabled):not(:focus):hover,select:not(:disabled):not(:focus):hover,textarea:not(:disabled):not(:focus):hover{background:color-mix(in srgb,var(--season) 7%,var(--surface))}
+  input:is([type=text],[type=search],[type=email],[type=url],[type=tel],[type=number],[type=date],[type=password]):not(:disabled):not(:focus):hover,select:not(:disabled):not(:focus):hover,textarea:not(:disabled):not(:focus):hover{background:color-mix(in srgb,var(--season) 4%,var(--surface))}
   .search input:hover{background:transparent!important}
   .btn.danger:not(:disabled):hover,.btn.bad:not(:disabled):hover{filter:brightness(1.12)}
 }
