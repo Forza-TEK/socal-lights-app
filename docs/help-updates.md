@@ -2630,3 +2630,6 @@ Text:
     - For an event, ask the organizer about access. The event's page links to their site.
     
     Anything else, [ask us](#ask).
+
+## Find and manage your events (2026-11-13, migration 0243)
+New article `your-events` ("Find and manage your events"): tap your account circle, then **Your events** (opens the Events tab of your profile); Edit, Cancelled or Postponed (No notice clears it), Run again next year, Delete; a short note that events do not take photo uploads (the picture comes from the event's web page, otherwise a stock photo), and that homes can have up to eight photos. A "After you add it" pointer is appended to `add-an-event` (seed-only, once). The text is in `migrations/0243_help_your_events.sql`; no video yet (see `docs/tutorial-updates.md`).

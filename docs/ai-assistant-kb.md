@@ -114,7 +114,7 @@ After winners are announced, the owner of a home that finished first, second or 
 
 ## Where to find Add, Contests, Tutorials and Help
 url: /help
-The map has two buttons at the top right: the account circle and the three dots. When you are signed in, Add (called Add an event, home or contest), Your contests, Tutorials and Help are in the account circle menu: tap the account circle at the top right. That menu also has Your profile and Sign out. When you are not signed in, Add, Contests, Tutorials and Help are in the three dots menu instead, and the account circle asks you to sign in. The three dots menu always has the Weekly lights email, Feature your event, Browse by city, Privacy and terms, and a way to email us.
+The map has two buttons at the top right: the account circle and the three dots. When you are signed in, Add (called Add an event, home or contest), Your contests, Your events, Tutorials and Help are in the account circle menu: tap the account circle at the top right. That menu also has Your profile and Sign out. Your events opens the events you added, where you can edit them, mark them cancelled or postponed, run them again next year or delete them. When you are not signed in, Add, Contests, Tutorials and Help are in the three dots menu instead, and the account circle asks you to sign in. The three dots menu always has the Weekly lights email, Feature your event, Browse by city, Privacy and terms, and a way to email us.
 
 ## Accounts and sign-in
 url: /help#account
@@ -187,7 +187,7 @@ Tap Filters on the map to narrow the list. When: Any date, Tonight, This weekend
 ## On any listing: directions, report a problem, remove a home
 url: /help
 keywords: directions get directions report wrong problem bug mistake remove home confirmed expected
-Open an event or home and tap Directions to open it in your maps app. To plan several stops use Favorites and Route these. If something looks wrong on a listing, tap Report a problem on it, or see the Help Center article Report a problem; you can also email info@socallights.app. If your own home is on the map and you would rather it were not, tap Not your listing? Remove my home on the listing, or use the Remove my home page. Events listed as Expected have dates that are not confirmed yet; Confirmed means a web page checked the name and date.
+Open an event or home and tap Directions to open it in your maps app. To plan several stops use Favorites and Route these. If something looks wrong on a listing, tap Report a problem on it, or see the Help Center article Report a problem; you can also email info@socallights.app. If your own home is on the map and you would rather it were not, tap Not your listing? Remove my home on the listing, or use the Remove my home page. Confirmed means the dates are confirmed: an event you add yourself is Confirmed, because you gave the dates. Expected means the dates are estimated from past years and not confirmed yet.
 
 ## Maps apps (Waze, Google Maps, Apple Maps) and Add to calendar
 url: /tutorials#v-map
@@ -206,7 +206,7 @@ Every page has a sun and moon button, in the header on the map and on other page
 ## Your profile: drafts, displays, events, contests, badges and account
 url: /profile
 keywords: draft drafts badges delete event edit display edit event profile tabs save exit
-Open your profile from the account circle (Your profile). It has these tabs. Drafts: add forms keep your place when you tap Save & exit, and here you can Continue or Delete a draft. Contests: the contests you run (Manage or View page) and the homes you entered. Displays: homes you posted, each showing On the map, In review or Taken down for the season, with Edit, Take down for the season (or Put back on the map) and Delete; installers also see Manage the company profile. Events: events you added, with Edit, a notice you can set to Cancelled or Postponed, Run again next year, and Delete. Badges: winners keep a crown badge, and you choose where badges show (list card, map pop-up, details page). Account: your optional name and address (used only to fill in forms, never shown publicly), your monthly update choice, Sign out, and Delete my account. To delete an event or a home, use Delete on its row in your profile.
+Open your profile from the account circle (Your profile). It has these tabs. Drafts: add forms keep your place when you tap Save & exit, and here you can Continue or Delete a draft. Contests: the contests you run (Manage or View page) and the homes you entered. Displays: homes you posted, each showing On the map, In review or Taken down for the season, with Edit, Take down for the season (or Put back on the map) and Delete; installers also see Manage the company profile. Events (also reached from the account circle menu: Your events): events you added, with Edit, a notice you can set to Cancelled or Postponed, Run again next year, and Delete. Badges: winners keep a crown badge, and you choose where badges show (list card, map pop-up, details page). Account: your optional name and address (used only to fill in forms, never shown publicly), your monthly update choice, Sign out, and Delete my account. To delete an event or a home, use Delete on its row in your profile.
 
 ## Signing in and out, and passwords
 url: /profile
@@ -270,7 +270,7 @@ There are several ways a home gets onto SoCal Lights. 1) A homeowner adds it: si
 ## Every route for an event at a glance
 url: /add-event
 keywords: all the ways options routes several ways different ways claim an existing event web page confirmed expected
-To list an event, sign in, open Add, and choose An event. If your event has a web page that mentions its name and date, the event is marked Confirmed; without a page it still goes on the map, marked Expected until the dates are checked. If your event is already on the map but not on your account, open Feature your event (or its listing) and use Claim an existing listing: if your email matches the event's own website it is approved at once, otherwise the team checks it. Contest organizers who create a contest also get it on the map as an event automatically. Listing an event is always free.
+To list an event, sign in, open Add, and choose An event. An event you add is marked Confirmed because you, the organizer, give the dates; adding its web page is optional, and the team may check it. If your event is already on the map but not on your account, open Feature your event (or its listing) and use Claim an existing listing: if your email matches the event's own website it is approved at once, otherwise the team checks it. Contest organizers who create a contest also get it on the map as an event automatically. Listing an event is always free.
 
 ## Sharing a home, an event or your night
 url: /tutorials#night
@@ -281,3 +281,8 @@ Every event and home card has a Share button that sends a link to that place; an
 url: /tutorials#map
 keywords: ways to use the map how do I use the map use the map on my phone map controls what can I do on the map getting started
 On the map you can: tap Use my location (and Allow) so distances and directions work; tap the season button to switch between Thanksgiving and Christmas Lights, Halloween, New Year and the other seasons; type a city in the search to jump there, or tap Show all of Southern California; tap Filters to narrow by date (tonight, this weekend), distance, county, free or ticketed, kind of event, home displays, professionally installed, and how to visit a home (drive by, walk by, free parking, stroller friendly); tap a card or a dot for details, directions and Share; tap the heart on places you like and open Favorites to plan a night, then Route these to open the stops in your maps app; and use the three dots or the account circle for Add, Contests, the weekly email, Tutorials and Help.
+
+## Your events: where to manage an event you added
+url: /profile#events
+keywords: your events my events manage my event edit my event where are my events find the event I added event photo picture image of my event photo for my event
+To manage an event you added, tap your account circle at the top right and choose Your events (it opens the Events tab of your profile). Each event shows whether it is on the map or in review, with Edit (name, dates, hours, place, price, description and web page), a Cancelled or Postponed notice, Run again next year, and Delete. About photos: an event's picture comes from the event's own web page (when that page has a real photo of the event) or, if there is none, a stock photo for that kind of event; the add-event form and Your events do not take photo uploads. To change the picture, make sure the event web page address in Edit is your official event page, and email info@socallights.app if the picture is wrong. Photos you can add yourself are for homes (up to 8, from the add-home form or the Edit button on a home in Your profile, Displays).
