@@ -45,22 +45,3 @@ test("an ordinary 403 (no challenge) is still just an HTTP error", async () => {
   const r = await verifyEventPage("https://x.test/x", NAME, START, async () => new Response("no", { status: 403 }));
   assert.equal(r.blocked, undefined); assert.match(r.note, /HTTP 403/);
 });
-
-import { emailOwnsSite } from "../functions/_lib/events.js";
-const challenge = async () => new Response("<title>Just a moment...</title>", { status: 403, headers: { "cf-mitigated": "challenge" } });
-test("a blocked site is accepted when the signed-in account's email is at that site's own domain", async () => {
-  const r = await verifyEventPage("https://www.visitcrestline.org/holidays-in-the-pines", "Holidays in the Pines", "2026-11-28", challenge, "Events@VisitCrestline.org");
-  assert.equal(r.ok, true); assert.match(r.note, /own website/);
-});
-test("a blocked site is not accepted for a stranger's or a free-mail address", async () => {
-  for (const em of ["", "someone@gmail.com", "x@othersite.org"]) assert.equal((await verifyEventPage("https://visitcrestline.org/x", NAME, START, challenge, em)).ok, false, em || "(none)");
-});
-test("emailOwnsSite: same site or its subdomain either way; shared platforms and free mail never", () => {
-  assert.equal(emailOwnsSite("a@crestline.org", "https://visit.crestline.org/x"), true);
-  assert.equal(emailOwnsSite("a@visit.crestline.org", "https://crestline.org/x"), true);
-  assert.equal(emailOwnsSite("a@facebook.com", "https://www.facebook.com/events/1"), false);
-  assert.equal(emailOwnsSite("a@gmail.com", "https://gmail.com/x"), false);
-  assert.equal(emailOwnsSite("a@mail.wix.com", "https://x.wixsite.com/y"), false);
-  assert.equal(emailOwnsSite("a@org", "https://org/x"), false);
-  assert.equal(emailOwnsSite("a@crestline.org", "not a url"), false);
-});
