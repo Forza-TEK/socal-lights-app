@@ -8,7 +8,7 @@ import { renderHelp } from "/admin/help.js?v=20261113a";
 import { renderPartner } from "/admin/partner.js?v=20261113a";
 import { renderChat } from "/admin/chat.js?v=20261113a";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261113a";
-import { HEALTH, healthTest } from "/admin/health.js?v=20261113a";
+import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

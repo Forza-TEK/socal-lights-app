@@ -27,7 +27,7 @@ import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261111z";
 import { refreshAcct } from "/addflow.js?v=20261113a";
 import { mountShell } from "/appshell.js?v=20261113a";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
-import { homeForm, fsec, ff, openFormWindow } from "/forms.js?v=20261111x560";
+import { homeForm, fsec, ff, openFormWindow } from "/forms.js?v=20261113b";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], fmt = (s) => { const [, m, d] = String(s).split("-").map(Number); return MON[m - 1] + " " + d; };
 let D = null, panel = (location.hash || "").slice(1) || "overview";

@@ -22,7 +22,7 @@
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast, friendlyError } from "/auth.js?v=20261111z";
 import { mountShell } from "/appshell.js?v=20261113a";
-import { homeForm, eventForm, openFormWindow, photoBoxHtml, wireSeasonType } from "/forms.js?v=20261111x560";
+import { homeForm, eventForm, openFormWindow, photoBoxHtml, wireSeasonType } from "/forms.js?v=20261113b";
 import { esc, input, select, attachAddress, OPT, shrink } from "/addflow.js?v=20261113a";
 import { SEASONS } from "/seasons.js?v=20261111x553";
 import { draftKey, clearAllLocalDrafts } from "/drafts-local.js?v=20261111z";
@@ -177,15 +177,16 @@ function confirmDelete(btn, { name, row, url, extra = "" }) {
   undo.focus();
 }
 // The edit sheet of a home you posted: photos are added and removed right away (shrunk on this device first), and the address field suggests streets.
-function wireHomeExtras(row, f) {
-  const id = row.dataset.home, h = O.homes.find((x) => x.id === id), box = f.querySelector("[data-pbox]"); if (!h || !box) return;
+// The photo box of an edit sheet (a home: up to 8, an event: up to 4): photos are added and removed right away, shrunk on this device first.
+function wirePhotoBox(f, { item, url, max, opts = {} }) {
+  const box = f.querySelector("[data-pbox]"); if (!item || !box) return;
   const say = (t) => { const s = box.querySelector("[data-pstat]"); if (s) s.textContent = t; };
-  const redraw = (keys) => { h.photos = keys; box.innerHTML = photoBoxHtml(h, keys); };
-  const send = (init) => fetch("/api/me/homes/" + id, init).then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "That didn't work."); return j; });
+  const redraw = (keys) => { item.photos = keys; box.innerHTML = photoBoxHtml(item, keys, { max, ...opts }); };
+  const send = (init) => fetch(url, init).then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "That didn't work."); return j; });
   f.addEventListener("change", async (e) => {
     if (!e.target.matches("[data-ephotos]")) return;
     const files = [...e.target.files]; e.target.value = ""; if (!files.length) return;
-    const room = 8 - (h.photos || []).length; let n = 0;
+    const room = max - (item.photos || []).length; let n = 0;
     say("Preparing…");
     try {
       const fd = new FormData();
@@ -193,7 +194,7 @@ function wireHomeExtras(row, f) {
       if (n < 1) return say("Those files couldn't be read as photos. Try a JPG or PNG.");
       say("Uploading…");
       const j = await send({ method: "POST", body: fd }); redraw(j.photos);
-      say(`${n} photo${n === 1 ? "" : "s"} added.${files.length > room ? " The limit is 8 photos, so the rest were left out." : ""}`);
+      say(`${n} photo${n === 1 ? "" : "s"} added.${files.length > room ? ` The limit is ${max} photos, so the rest were left out.` : ""}`);
     } catch (x) { say(friendlyError(x, "Couldn't add the photos.")); }
   });
   f.addEventListener("click", async (e) => {
@@ -201,6 +202,11 @@ function wireHomeExtras(row, f) {
     try { const j = await send({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: rm ? "removephoto" : "coverphoto", key: (rm || cv).dataset[rm ? "phRm" : "phCover"] }) }); redraw(j.photos); say(rm ? "Photo removed." : "Cover changed."); }
     catch (x) { say(friendlyError(x, "That didn't work.")); }
   });
+}
+// The edit sheet of a home you posted: photos (up to 8), and the address field suggests streets.
+function wireHomeExtras(row, f) {
+  const id = row.dataset.home, h = O.homes.find((x) => x.id === id);
+  wirePhotoBox(f, { item: h, url: "/api/me/homes/" + id, max: 8 });
   attachAddress(f, { getCity: () => (f.querySelector('[data-k="city"]') || {}).value || "", onPick: (s) => { const set = (k, v) => { const el = f.querySelector(`[data-k="${k}"]`); if (el) el.value = v; }; set("street", s.street); if (cities.includes(s.city)) set("city", s.city); if (/^\d{5}/.test(s.zip)) set("zip", s.zip.slice(0, 5)); } });
 }
 function wire() {
@@ -239,6 +245,7 @@ function wire() {
       row.querySelectorAll("[data-hact]").forEach((b) => (b.onclick = async () => { try { await post("/api/me/homes/" + row.dataset.home, { action: b.dataset.hact }); toast(b.dataset.hact === "pause" ? "Taken down. Put it back any time." : "Back on the map."); load(); } catch (x) { toast(x.message); } }));
     } else {
       wireSeasonType(f, SEASON_LIST);
+      if (f.querySelector("[data-pbox]")) wirePhotoBox(f, { item: O.events.find((x) => x.id === row.dataset.ev), url: "/api/me/events/" + row.dataset.ev, max: 4, opts: { live: true, noun: "event" } }); // the owner's own event photos (up to 4)
       attachAddress(f, { getCity: () => (f.querySelector('[data-k="city"]') || {}).value || "", onPick: (s) => { const set = (k, v) => { const el = f.querySelector(`[data-k="${k}"]`); if (el) el.value = v; }; set("address", s.street); if (cities.includes(s.city)) set("city", s.city); } });
       f.onsubmit = async (e) => {
         e.preventDefault(); er.hidden = true;

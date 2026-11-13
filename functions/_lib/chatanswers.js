@@ -28,6 +28,22 @@ Full steps: ${HELP}add-your-citys-homes-yourself`,
     link: ["Add your city's homes yourself", "add-your-citys-homes-yourself"],
   },
   {
+    id: "event_photos",
+    test: (q) => all(q, /\b(photos?|pictures?|images?|pics?)\b/i, /\b(events?|parade|tree lighting|festival|market)\b/i) && any(q, /\b(add|upload|put|post|attach|change|edit|replace|update|remove|delete|fix|more|cover|how many|can i|can you|wrong)\b/i) && !any(q, /\b(homes?|houses?|displays?|lights|yard|profile|avatar)\b/i, /\b(contests?|entry|entries|organi[sz]er|residents?)\b/i),
+    reply: `Yes, you can add up to 4 photos to your event. Here is how:
+1. Tap your account circle at the top right of the map, then choose Your events.
+2. On your event, tap Edit.
+3. Find the Photos box and tap Add photos. Choose up to 4 pictures from your phone or computer (JPG, PNG or WebP, each under 6 MB). Big phone photos are shrunk for you.
+4. Wait for "added". Photos save right away, so you do not need to tap Save.
+- The first photo is the cover, shown on the map list and at the top of the event page. Tap Cover on another photo to change it, or the x to remove one.
+- Your photos show first, credited to the organizer. If you remove them all, the picture from your event's web page (or a stock photo for that kind of event) comes back.
+- Photos can be added once your event is on the map, not while it is still in review.
+- Run again next year does not copy the photos, so add them to the new copy.
+- Homes work the same way with up to 8 photos.
+Full steps: ${HELP}add-photos-to-your-event`,
+    link: ["Add photos to your event", "add-photos-to-your-event"],
+  },
+  {
     id: "org_photos",
     test: (q) => all(q, /\b(photos?|pictures?|images?)\b/i, /\b(add|upload|put|attach)\b/i) && any(q, /\b(homes? (i|we) (added|loaded|entered|put in|imported)|(i|we) (added|loaded|entered|put in|imported)|added (homes?|them)|organi[sz]er|for (a |an |the )?residents?|city added|no photos?|don'?t have (any )?(photos?|pictures?)|have no photo|loaded manually)\b/i) && !any(q, /\b(my (own )?home|my display|my lights)\b/i) && !/\b(home ?owner|resident|family|owner)\b[^.?!]{0,20}\b(to|can) (add|upload)\b/i.test(q),
     reply: `Homes you add yourself start with no photo, and you can add photos for them:
@@ -151,7 +167,7 @@ Questions about the site itself are in the Terms and the Privacy Policy. To reac
 export const TOPIC_IDS = TOPICS.map((t) => t.id);
 
 // Returns { id, reply, cards } or null. `q` is the visitor's newest message. Safety refusals and the "talk to a person" fast path run before this.
-const EXTRA = { contest_add_homes: ["Open your contests (then Manage)", "/contests#mine"], fix_added_home: ["Open your contests (then Manage)", "/contests#mine"], homeowner_link: ["Open your contests (then Manage)", "/contests#mine"], org_photos: ["Open your contests (then Manage)", "/contests#mine"], remove_added_home: ["Open your contests (then Manage)", "/contests#mine"], resident_enter: ["See contests you can enter", "/contests"], homeowner_got_link: ["Open your profile", "/profile"] };
+const EXTRA = { event_photos: ["Open Your events", "/profile#events"], contest_add_homes: ["Open your contests (then Manage)", "/contests#mine"], fix_added_home: ["Open your contests (then Manage)", "/contests#mine"], homeowner_link: ["Open your contests (then Manage)", "/contests#mine"], org_photos: ["Open your contests (then Manage)", "/contests#mine"], remove_added_home: ["Open your contests (then Manage)", "/contests#mine"], resident_enter: ["See contests you can enter", "/contests"], homeowner_got_link: ["Open your profile", "/profile"] };
 export function directAnswer(q) {
   const text = String(q || "");
   if (text.length < 8 || text.length > 500) return null;

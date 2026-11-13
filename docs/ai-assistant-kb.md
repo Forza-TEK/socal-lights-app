@@ -255,7 +255,7 @@ For events, every Featured plan includes the gold-ringed Featured pin and badge.
 ## Adding a logo, photos and sponsor logos
 url: /help#sponsors
 keywords: logo logos add a logo upload sponsor logo installer logo photo
-An installer adds a company logo on the manage page under Your details. A contest organizer adds a sponsor's logo on the Sponsors tab when recording a sponsor, or the sponsor adds it on the private invite link. Logos show only after the organizer confirms the sponsor and chooses to show it. Photos for homes and events are added in the add form (take them at night, the first is the cover), and can be edited from your profile.
+An installer adds a company logo on the manage page under Your details. A contest organizer adds a sponsor's logo on the Sponsors tab when recording a sponsor, or the sponsor adds it on the private invite link. Logos show only after the organizer confirms the sponsor and chooses to show it. Photos for a home are added in the add-home form (take them at night, the first is the cover, up to 8) and can be edited from Your profile. Photos for an event (up to 4) are added after it is on the map: account circle, Your events, Edit, Photos.
 
 ## Photos: formats, size and tips
 url: /help/my-photo-will-not-upload
@@ -269,7 +269,7 @@ There are several ways a home gets onto SoCal Lights. 1) A homeowner adds it: si
 
 ## Every route for an event at a glance
 url: /add-event
-keywords: all the ways options routes several ways different ways claim an existing event web page confirmed expected
+keywords: how can I get my event on the map get my event listed all the ways options routes several ways different ways claim an existing event web page confirmed expected
 To list an event, sign in, open Add, and choose An event. An event you add is marked Confirmed because you, the organizer, give the dates; adding its web page is optional, and the team may check it. If your event is already on the map but not on your account, open Feature your event (or its listing) and use Claim an existing listing: if your email matches the event's own website it is approved at once, otherwise the team checks it. Contest organizers who create a contest also get it on the map as an event automatically. Listing an event is always free.
 
 ## Sharing a home, an event or your night
@@ -284,5 +284,5 @@ On the map you can: tap Use my location (and Allow) so distances and directions 
 
 ## Your events: where to manage an event you added
 url: /profile#events
-keywords: your events my events manage my event edit my event where are my events find the event I added event photo picture image of my event photo for my event
-To manage an event you added, tap your account circle at the top right and choose Your events (it opens the Events tab of your profile). Each event shows whether it is on the map or in review, with Edit (name, dates, hours, place, price, description and web page), a Cancelled or Postponed notice, Run again next year, and Delete. About photos: an event's picture comes from the event's own web page (when that page has a real photo of the event) or, if there is none, a stock photo for that kind of event; the add-event form and Your events do not take photo uploads. To change the picture, make sure the event web page address in Edit is your official event page, and email info@socallights.app if the picture is wrong. Photos you can add yourself are for homes (up to 8, from the add-home form or the Edit button on a home in Your profile, Displays).
+keywords: your events my events manage my event edit my event where are my events find the event I added event photo picture image of my event photo for my event add a photo to my event upload photos event photos
+To manage an event you added, tap your account circle at the top right and choose Your events (it opens the Events tab of your profile). Each event shows whether it is on the map or in review, with Edit (name, dates, hours, place, price, description, web page and photos), a Cancelled or Postponed notice, Run again next year, and Delete. To add photos to your event: open Your events, tap Edit on the event, find the Photos box, and tap Add photos. You can add up to 4 photos (JPG, PNG or WebP, each under 6 MB; big phone photos are shrunk for you). Photos are added or removed right away, with no need to tap Save. The first photo is the cover: tap Cover on another photo to change it, or the cross to remove one. Your photos show first on the map and on the event page, credited to the organizer. Photos can be added once the event is on the map (not while it is in review). If you remove all of your photos, the picture from your event's web page, or a stock photo for that kind of event, comes back. Run again next year does not copy the photos, so add them to the new copy. Homes can have up to 8 photos.

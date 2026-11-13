@@ -11,12 +11,13 @@ const X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wid
 
 const MAXP = 8;
 // The photo box of a home's edit sheet: the real photos (live homes only: a taken-down or in-review home keeps them private), each with Remove and Make cover, and the add button.
-export function photoBoxHtml(h, keys = h.photos || []) {
-  const live = h.status === "approved", id = esc(h.id || "x"), full = keys.length >= MAXP;
+// opts.max: the most photos (8 for a home, 4 for an event); opts.live: whether the photos are public now (a home is live when approved; an event is live when it is on the map); opts.noun: "home" or "event".
+export function photoBoxHtml(h, keys = h.photos || [], opts = {}) {
+  const max = opts.max || MAXP, noun = opts.noun || "home", live = opts.live !== undefined ? !!opts.live : h.status === "approved", id = esc(h.id || "x"), full = keys.length >= max;
   const tile = (k, i) => `<div class="t"><img src="/api/photo/${esc(k)}" alt="Photo ${i + 1}" loading="lazy"><button type="button" data-ph-rm="${esc(k)}" aria-label="Remove photo ${i + 1}">&times;</button>${i === 0 ? "<em>COVER</em>" : `<button type="button" class="mk" data-ph-cover="${esc(k)}" aria-label="Make photo ${i + 1} the cover">Cover</button>`}</div>`;
   const grid = live && keys.length ? `<div class="thumbs">${keys.map(tile).join("")}</div>` : "";
-  const note = !keys.length ? '<p class="small muted">No photos yet.</p>' : !live ? `<p class="small muted">${keys.length} photo${keys.length === 1 ? "" : "s"}, kept private while this home is not on the map. They show again when it is.</p>` : "";
-  return `${grid}${note}<div class="padd"><label class="btn out sm" for="ph-${id}">Add photos</label><input id="ph-${id}" type="file" accept="image/*" multiple hidden data-ephotos ${full ? "disabled" : ""}><span class="small muted" data-pstat role="status">${full ? "That is the limit of 8 photos. Remove one to add another." : ""}</span></div>`;
+  const note = !keys.length ? '<p class="small muted">No photos yet.</p>' : !live ? `<p class="small muted">${keys.length} photo${keys.length === 1 ? "" : "s"}, kept private while this ${noun} is not on the map. They show again when it is.</p>` : "";
+  return `${grid}${note}<div class="padd"><label class="btn out sm" for="ph-${id}">Add photos</label><input id="ph-${id}" type="file" accept="image/*" multiple hidden data-ephotos ${full ? "disabled" : ""}><span class="small muted" data-pstat role="status">${full ? `That is the limit of ${max} photos. Remove one to add another.` : ""}</span></div>`;
 }
 // The listing's edit form (a display). pro = a professional installer's listing (adds phone, website, areas served). changes = html of recent changes.
 // own = the signed-in person posted this home (Your profile): the form also has the season, the photos and the address, and they go through the same checks as a new submission.
@@ -35,9 +36,11 @@ export function homeForm(h, { pro = false, changes = "", cancelAttr = "data-mcan
 }
 // An event's edit form. cities / seasons ([key, label, { type: label }]) fill the Where, Season and Type fields (the type list follows the season: see wireSeasonType).
 export function eventForm(e, { cancelAttr = "data-mcancel", cities = [], seasons = [] } = {}) {
+  const livePhotos = e.status === "published" && !!e.event_id; // the owner's photos (up to 4) can be added once the event is on the map
   const cur = seasons.find((x) => x[0] === (e.season || "christmas")) || seasons[0] || ["", "", {}];
   return `<form class="mform f" hidden novalidate>
     ${fsec("Event", "", ff("Event name", inp("name", e.name, 'maxlength="120"')) + (seasons.length ? ff("Season", sel("season", cur[0], seasons.map(([k, l]) => [k, l])), { c: "c3" }) + ff("Type", sel("type", e.type || "", Object.entries(cur[2]).map(([k, l]) => [k, l])), { c: "c3" }) : ""))}
+    ${livePhotos ? fsec("Photos", "Up to 4. The first one is the cover. Photos are shrunk on your phone before they upload, and they are added or removed right away (you do not need to tap Save). They show first on the map and on the event page.", `<div class="ff c6" data-pbox>${photoBoxHtml(e, e.photos || [], { max: 4, live: true, noun: "event" })}</div>`) : ""}
     ${cities.length ? fsec("Where", "Changing the address moves the pin: it is looked up the same way as when you first added the event.", ff("City", sel("city", e.city || "", cities.map((c) => [c, c])), { c: "c3" }) + `<div class="ff c3 combo"><label>Street address<input data-k="address" data-addr value="${esc(e.address ?? "")}" maxlength="160" autocomplete="off"></label></div>`) : ""}
     ${fsec("When", "", ff("Starts", inp("start", e.start_date, 'type="date"'), { c: "c3" }) + ff("Ends", inp("end", e.end_date, 'type="date"'), { c: "c3" }) + ff("Hours", inp("hours", e.hours, 'maxlength="120" placeholder="6 to 10 pm nightly"')))}
     ${fsec("Where and price", "", ff("Venue", inp("venue", e.venue, 'maxlength="120"'), { c: "c4" }) + ff("Price (or Free)", inp("price", e.price, 'maxlength="80"'), { c: "c2" }))}
