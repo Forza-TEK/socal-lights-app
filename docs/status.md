@@ -3,6 +3,7 @@
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
 ## 2026-11-13 (hover colors on every button)
+- Follow-up: the top bar (brand pill, search box, season, day/night, account, Add, menu) and text fields/selects now change on hover too (tint on pills, season-colored border on fields). Tint made stronger (26%). `tokens.css` `?v=20261113i`, `admin.css` `?v=20261113c`.
 - One hover layer at the end of `public/tokens.css` (loaded by every page, version bumped to `20261113h` on all pages and in `functions/_lib/shell.js`) plus a matching block in `public/admin/admin.css` (`?v=20261113b`). Mouse and trackpad only (`@media (hover:hover)`), so a tap never leaves a stuck color.
 - Circle and icon buttons, chips, tabs, bottom-nav, ghost/outline buttons, MapLibre zoom/locate: a tint of the season color. Filled season buttons (Add, Go, season pill): a deeper season color. Dark buttons (`.btn`, dark circles over photos): the season color. Danger buttons brighten.
 - Checked in a browser (light and dark): `.iconbtn`, `#addbtn`, `.seasonbtn`, zoom button all change. Test: `tests/css-tokens.test.mjs`.

@@ -358,5 +358,6 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
   body.admin{--hov:color-mix(in srgb,var(--season) 20%,var(--surface));--hov-fill:color-mix(in srgb,var(--season) 78%,var(--ink))}
   body.admin :is(.tbtn,.xbtn,.pnav,.btn.ghost,.tabs button,.seg button):not(:disabled):hover{background:var(--hov)!important;color:var(--ink)!important}
   body.admin .btn:not(.ghost):not(.danger):not(.armed):not(.danger-solid):not(:disabled):hover{background:var(--hov-fill)!important;color:#fff!important;filter:none!important}
+  body.admin :is(input,select,textarea):not(:disabled):not(:focus):not([type=checkbox]):not([type=radio]):hover{border-color:var(--season)!important;background:color-mix(in srgb,var(--season) 7%,var(--surface))}
   body.admin :is(.btn.danger,.btn.danger-solid):not(:disabled):hover{filter:brightness(1.12)}
 }
