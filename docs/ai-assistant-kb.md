@@ -187,7 +187,7 @@ Tap Filters on the map to narrow the list. When: Any date, Tonight, This weekend
 ## On any listing: directions, report a problem, remove a home
 url: /help
 keywords: directions get directions report wrong problem bug mistake remove home confirmed expected
-Open an event or home and tap Directions to open it in your maps app. To plan several stops use Favorites and Route these. If something looks wrong on a listing, tap Report a problem on it, or see the Help Center article Report a problem; you can also email info@socallights.app. If your own home is on the map and you would rather it were not, tap Not your listing? Remove my home on the listing, or use the Remove my home page. Events listed as Expected have dates that are not confirmed yet; Confirmed means a web page checked the name and date.
+Open an event or home and tap Directions to open it in your maps app. To plan several stops use Favorites and Route these. If something looks wrong on a listing, tap Report a problem on it, or see the Help Center article Report a problem; you can also email info@socallights.app. If your own home is on the map and you would rather it were not, tap Not your listing? Remove my home on the listing, or use the Remove my home page. Confirmed means the dates are confirmed: an event you add yourself is Confirmed, because you gave the dates. Expected means the dates are estimated from past years and not confirmed yet.
 
 ## Maps apps (Waze, Google Maps, Apple Maps) and Add to calendar
 url: /tutorials#v-map
@@ -270,7 +270,7 @@ There are several ways a home gets onto SoCal Lights. 1) A homeowner adds it: si
 ## Every route for an event at a glance
 url: /add-event
 keywords: all the ways options routes several ways different ways claim an existing event web page confirmed expected
-To list an event, sign in, open Add, and choose An event. If your event has a web page that mentions its name and date, the event is marked Confirmed; without a page it still goes on the map, marked Expected until the dates are checked. If your event is already on the map but not on your account, open Feature your event (or its listing) and use Claim an existing listing: if your email matches the event's own website it is approved at once, otherwise the team checks it. Contest organizers who create a contest also get it on the map as an event automatically. Listing an event is always free.
+To list an event, sign in, open Add, and choose An event. An event you add is marked Confirmed because you, the organizer, give the dates; adding its web page is optional, and the team may check it. If your event is already on the map but not on your account, open Feature your event (or its listing) and use Claim an existing listing: if your email matches the event's own website it is approved at once, otherwise the team checks it. Contest organizers who create a contest also get it on the map as an event automatically. Listing an event is always free.
 
 ## Sharing a home, an event or your night
 url: /tutorials#night

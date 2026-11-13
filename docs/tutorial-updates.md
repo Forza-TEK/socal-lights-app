@@ -174,3 +174,13 @@ Full report: `docs/audit/2026-11-08-tutorial-videos.md` (verdict per video, sync
 
 ## Audio check (2026-11-09)
 A speech-recognition check of all 62 recordings (`scripts/tutorials/audio-check/`) found two with wrong narration in the computer version: Find lights near me (opening doubled, a line skipped) and Edit your contest (lines from another video in the middle). Both re-recorded and rechecked. Every line's voice starts within 0.3 s of its caption in all 62 videos. The recorder now clears old voice clips before each run and stops if a clip does not fit its text. The picture-to-voice match (does the voice say "tap" when the tap happens) is not covered by this check.
+
+## Your events menu item (2026-11-13)
+The account circle menu now has **Your events** (after Your contests): it opens the Events tab of Your profile (`/profile#events`), where a person edits, cancels, postpones, runs again or deletes the events they added. Menu order signed in: Your profile, Your contests, **Your events**, Add an event, home or contest, Tutorials, Help, Sign out.
+| Video | Action |
+|---|---|
+| Add an event to the map (`add-event`) | **Re-record the ending.** After "Add my event", say: "To change or cancel it later, tap your account circle, then Your events." Show the menu and the Events tab. |
+| Your profile (`profile`) | Re-record or patch the account-menu shot: the menu has one more row. Mention that Your events is a shortcut to the Events tab. |
+| Every video that opens the account menu (Create a contest, Showcase, Add events, Claim...) | The menu on screen has one more row. Narration that says "tap Add an event, home or contest" stays true, so re-record only when convenient. |
+| New (suggested) | **Manage your events** (about 1:30): account circle, Your events, Edit, Cancelled or Postponed, Run again next year. Say plainly that events do not take photo uploads: the picture comes from the event's web page, or a stock photo. |
+Help: article `your-events` (migration `0243_help_your_events.sql`) and a pointer at the end of "Add an event to the map". The AI assistant already knows all of this (chunk "Your events: where to manage an event you added").

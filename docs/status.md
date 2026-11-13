@@ -2,6 +2,10 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-13 (Your events menu item; the photo question)
+- Owner: "Can I add a photo to my event" sent people through the add-event form. Now: the account circle menu has **Your events** (opens `/profile#events`; `public/chrome.js`); questions about an event you already added (photo, edit, where is it) get a "Manage your events" link instead of the add-event form (`MANAGE_EVENT` in `chatcards.js`); asking for a *new* event still starts one. New Help article `your-events` (migration 0243) and a pointer in `add-an-event`; assistant chunk "Your events: where to manage an event you added"; tutorial changes written up for the Tutorials and Help agent in `docs/tutorial-updates.md`. Assistant statements about Confirmed and Expected were updated for the new rule that events people add are confirmed.
+- **Open question for the owner:** events do not take photo uploads today. An event's picture is the `og:image` of its web page or a stock photo (`docs/updating-events.md`); `eventForm` and the owner's edit have no photo box. The Help article and the assistant say so plainly. If people should be able to add their own event photo from Your events, that is a new feature (upload endpoint, storage, display, review) and the wording must change when it ships.
+
 ## 2026-11-14 (Admin > Users: count chips open the records)
 - Owner: the counts on each Users row should link to the records. Each chip is now a button that opens that person's profile scrolled to its section: Homes and entries, Events they submitted, Contests they run, Votes cast (the profile lists every record with a link onward, including ones still waiting for review). `admin.js` `?v=20261114d`, `admin.css` `?v=20261114b`. Test in `tests/admin-users-added.test.mjs`. Not looked at in a browser (Admin needs the Cloudflare Access login).
 

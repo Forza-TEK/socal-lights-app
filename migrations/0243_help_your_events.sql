@@ -4,13 +4,13 @@ INSERT OR IGNORE INTO help_articles (slug, title, category, kind, summary, body,
 
 1. Sign in. Tap your account circle at the top right of the map (your picture or your initial).
 2. Choose **Your events**. It opens the Events tab of your profile.
-3. Find your event. Each one says whether it is **On the map** or **In review**, and shows a **Cancelled** or **Postponed** tag if you set one.
+3. Find your event. Each one says whether it is **On the map** or **In review**, and events you add yourself show as Confirmed because you gave the dates, and shows a **Cancelled** or **Postponed** tag if you set one.
 4. Tap **Edit** to change the name, dates, hours, place, price, description or web page, then tap **Save**.
 
 ## Other buttons on an event
 
 - **Cancelled** or **Postponed** puts a tag on the event so visitors do not drive out for nothing. Choose **No notice** to take it off again.
-- **Run again next year** makes a copy with every date moved forward a year. It shows as Expected until the dates are checked.
+- **Run again next year** makes a copy with every date moved forward a year. The copy starts as Expected (the new dates are a guess). When the real dates are set, tap **Edit** and **Save** and it becomes Confirmed.
 - **Delete** takes the event off the map. This cannot be undone.
 
 ## What about a photo?
