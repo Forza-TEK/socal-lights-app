@@ -57,3 +57,16 @@ test("at most 6 events per run", async () => {
   const s = stubFetch(() => new Response(`Night in Bethlehem ${year} Bethlehem`));
   try { const j = await (await call(env)).json(); assert.deepEqual([j.checked, j.confirmed], [6, 6]); const k = await (await call(env)).json(); assert.equal(k.checked, 3); } finally { s.restore(); }
 });
+
+test("a site whose bot protection blocks the check is noted and left alone for 3 days (not 6 hours)", async () => {
+  const { env, raw } = newEnv(); seed(raw, "u-blk");
+  const s = stubFetch(() => new Response("<title>Just a moment...</title>", { status: 403, headers: { "cf-mitigated": "challenge" } }));
+  try {
+    assert.deepEqual(Object.values(await (await call(env)).json()), [1, 0, 1]);
+    raw.prepare("UPDATE event_submissions SET checked_at = datetime('now','-7 hours')").run();
+    assert.equal((await (await call(env)).json()).checked, 0, "7 hours later it is still left alone");
+    raw.prepare("UPDATE event_submissions SET checked_at = datetime('now','-4 days')").run();
+    assert.equal((await (await call(env)).json()).checked, 1, "after 3 days it is asked again");
+  } finally { s.restore(); }
+  assert.equal(st(raw, "u-blk"), "expected"); assert.match(sub(raw, "u-blk").note, /bot protection/);
+});

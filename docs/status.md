@@ -2,6 +2,16 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-14 (Admin > Users: events count, bigger counts)
+- Owner: the Users list showed homes/entries, contests run and votes but not events, and the counts were small grey text. The list API now returns `events` (event submissions whose contact email is the user's, case-insensitive) and the CSV has `events_submitted`. Each row shows four count chips (Homes and entries, Events, Contests run, Votes) with a 20 px number; zero counts are muted. `admin.js` `?v=20261114c`, `admin.css` `?v=20261114a`. Test in `tests/admin-users-added.test.mjs`. Not looked at in a browser (Admin needs the Cloudflare Access login).
+- Events are matched on email because a submission has no user id; an event someone submitted with a different email than their account is not counted for them.
+
+## 2026-11-14 (sites behind bot protection: Holidays in the Pines)
+- Owner: "Holidays in the Pines" (Crestline, visitcrestline.org) showed the note "event page returned HTTP 403" although its page opens fine in a browser. Cause: the site is behind Cloudflare's "Just a moment..." challenge (`cf-mitigated: challenge`); it answers every automated visitor with 403, with our honest bot name or without. We do not disguise the check or solve challenges (`docs/blocked-sites.md`).
+- `verifyEventPage` now recognises a challenge (403/429/503 with `cf-mitigated: challenge`, Sucuri or Akamai headers), makes one try (no retry), and reports `blocked` with the note "the site's bot protection blocked our automatic check (the page itself is probably fine: open the link yourself, then confirm the dates)". `verify-events` asks such a site again after 3 days, not 6 hours.
+- New Admin action: published events in Admin > Submitted events whose event is still Expected get a **Confirm dates** button (`action: "confirm"` in `functions/api/admin/submissions/[id].js`; submission `verified=1`, note "confirmed by the site owner after checking the page"). The list API returns `event_status`. `admin.js` `?v=20261114b`.
+- Not automatic: a blocked site cannot be confirmed by the job. Open question for the owner: auto-confirm when the organizer's contact email is on the same domain as the event page (needs a decision on how much to trust an unverified email).
+
 ## 2026-11-14 (link to the public card in Admin)
 - Owner: Admin > Events needed a link to a newly created event's card. Each event row now has "View card" (opens `/e/<id>` in a new tab), and published events in Admin > Submitted events have it too (next to Unpublish). `public/admin/admin.js` `?v=20261114a`; test in `tests/seo-admin.test.mjs`. Not looked at in a browser (Admin needs the Cloudflare Access login).
 

@@ -259,7 +259,7 @@ async function renderSubs() {
       + fact("Type", `${esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)} · ${esc(x.price || "")}`) + fact("About", esc(x.blurb)) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "")
       + fact("Contact", `<span style="user-select:all">${esc(x.contact_email)}</span>`) + fact("Notes", esc(x.note || "")) + (x.paid_plans ? fact("Paid Featured", `<b>${esc(x.paid_plans)}</b>`) : ""),
     edit: pend ? btn("ghost", "Edit", `data-sedit="${esc(x.id)}"`) : "",
-    main: SUBVIEW === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : pend ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : (x.event_id ? viewLink(x.event_id) : "") + btn("ghost", "Unpublish", 'data-sact="unpublish"'),
+    main: SUBVIEW === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : pend ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : (x.event_id ? viewLink(x.event_id) : "") + (x.event_id && x.event_status === "expected" ? btn("main", "Confirm dates", 'data-sact="confirm"') : "") + btn("ghost", "Unpublish", 'data-sact="unpublish"'),
     danger: pend ? btn("danger", "Decline", 'data-sact="decline"') : "",
   })).join("")}</div>`;
   go(); if (pend) wireSubsBulk(main);
@@ -318,7 +318,7 @@ document.addEventListener("click", async (e) => {
     SUBVIEW = b.dataset.st === "published" ? "published" : b.dataset.st === "pending" ? "pending" : "published"; setTab("subs");
   } catch (er) { toast(er.message, true); }
 });
-const SDONE = { approve: "Published", decline: "Declined. If they paid for Featured, refund it under Orders.", unpublish: "Unpublished", restore: "Back in the waiting list" };
+const SDONE = { confirm: "Confirmed. The event now shows as Confirmed on the map.", approve: "Published", decline: "Declined. If they paid for Featured, refund it under Orders.", unpublish: "Unpublished", restore: "Back in the waiting list" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-sact]"); if (!b) return;
   const card = b.closest("[data-sid]"), msg = card.querySelector(".msg"), act = b.dataset.sact, id = card.dataset.sid, name = card.querySelector("h3").textContent, x = SUBS.find((r) => r.id === id) || {}, extra = {};
@@ -702,7 +702,7 @@ async function renderUsers() {
   const bar = toolbar({ views: [{ k: "", label: "All", n: d.all }, { k: "active", label: "Active" }, { k: "suspended", label: "Suspended", n: d.suspended }], active: USERS.status, search: { placeholder: "Search name or email", value: USERS.q }, right: `<a class="btn ghost" href="/api/admin/users?format=csv&q=${encodeURIComponent(USERS.q)}&status=${USERS.status}" download>Download CSV</a>`, count: `${d.total}` });
   main.innerHTML = bar + (d.users.length ? `<div class="cards">${d.users.map((u) => rec({
     compact: true, attrs: `data-uid="${esc(u.id)}"`, title: esc(u.name || "(no name)"), tags: u.status === "suspended" ? [["Suspended", "bad"]] : [],
-    body: `<span class="sub">${esc(u.email)}${u.google ? " · Google" : ""} · joined ${esc((u.created_at || "").slice(0, 10))} · last sign-in ${ago(u.last_login)}</span><span class="sub">${u.homes + u.entries + (u.added || 0)} home${u.homes + u.entries + (u.added || 0) === 1 ? "" : "s"}/entr${u.homes + u.entries + (u.added || 0) === 1 ? "y" : "ies"}${u.added ? ` (${u.added} added as organizer)` : ""} · ${u.contests} contest${u.contests === 1 ? "" : "s"} run · ${u.votes} vote${u.votes === 1 ? "" : "s"}</span>`,
+    body: `<span class="sub">${esc(u.email)}${u.google ? " · Google" : ""} · joined ${esc((u.created_at || "").slice(0, 10))} · last sign-in ${ago(u.last_login)}</span><div class="ucounts" aria-label="What they have done">${[["Homes and entries", u.homes + u.entries + (u.added || 0), u.added ? `${u.added} added as organizer` : ""], ["Events", u.events || 0, ""], ["Contests run", u.contests, ""], ["Votes", u.votes, ""]].map(([l, n, t]) => `<span class="ucount${n ? "" : " zero"}"${t ? ` title="${esc(t)}"` : ""}><b>${n}</b><span>${l}</span></span>`).join("")}</div>`,
     edit: btn("ghost", "Profile", `data-open="${esc(u.id)}"`),
   })).join("")}</div>` + pager({ offset: d.offset, shown: d.users.length, total: d.total, page: d.page, idPrev: "uPrev", idNext: "uNext" }) : `<div class="empty">${USERS.q || USERS.status ? "Nothing matches that." : "Nobody has made a profile yet."}</div>`);
   wireToolbar(main, { onView: (v) => { USERS.status = v; USERS.offset = 0; renderUsers(); }, onSearch: (q) => { USERS.q = q; USERS.offset = 0; renderUsers().then(() => { const i = $("[data-search]"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); } });
