@@ -32,7 +32,7 @@ const closeMenu = () => { if (menu) { menu.remove(); menu = null; } document.que
 function openMenu(btn) {
   closeMenu(); btn.setAttribute("aria-expanded", "true");
   menu = document.createElement("div"); menu.className = "acctmenu"; menu.setAttribute("role", "menu");
-  menu.innerHTML = `<div class="who" role="presentation"><b>${esc(acctUser.name || "Signed in")}</b><span>${esc(acctUser.email)}</span></div><a role="menuitem" href="/profile">Your profile</a><a role="menuitem" href="/contests#mine">Your contests</a><a role="menuitem" href="/add">Add an event, home or contest</a><a role="menuitem" href="/tutorials">Tutorials</a><a role="menuitem" href="/help">Help</a><button role="menuitem" type="button" data-signout>Sign out</button>`;
+  menu.innerHTML = `<div class="who" role="presentation"><b>${esc(acctUser.name || "Signed in")}</b><span>${esc(acctUser.email)}</span></div><a role="menuitem" href="/profile">Your profile</a><a role="menuitem" href="/contests#mine">Your contests</a><a role="menuitem" href="/profile#events">Your events</a><a role="menuitem" href="/add">Add an event, home or contest</a><a role="menuitem" href="/tutorials">Tutorials</a><a role="menuitem" href="/help">Help</a><button role="menuitem" type="button" data-signout>Sign out</button>`;
   document.body.appendChild(menu);
   const r = btn.getBoundingClientRect(); menu.style.top = r.bottom + 8 + "px"; menu.style.right = Math.max(8, innerWidth - r.right) + "px";
   menu.querySelector("a").focus();

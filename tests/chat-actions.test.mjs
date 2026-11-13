@@ -234,3 +234,17 @@ test("forms never pop up unasked: the widget shows a button first, an explicit r
   assert.equal(ev.filter((c) => c.type === "form").length, 1, "one event form, not two");
   const out = cardsFor({ question: "how do I add an event", settings: { tiers: { 1: true, 2: true, 3: true } } }); assert.equal(out.filter((c) => c.type === "form").length, 1);
 });
+
+test("questions about an event you already added point to Your events (account circle), not the add-an-event form; asking for a new event still starts one", async () => {
+  const { cardsFor } = await import("../functions/_lib/chatcards.js"), { rankChunks } = await import("../functions/_lib/chatkb.js");
+  const S = { tiers: { 1: true, 2: true, 3: true } };
+  for (const q of ["Can I add a photo to my event", "can I put a picture on my event page", "where do I find my events", "how do I edit my event", "how do I change the hours of my event"]) {
+    const c = cardsFor({ question: q, settings: S });
+    assert.ok(c.some((x) => x.label === "Manage your events" && x.links[0].href === "/profile#events"), q); assert.ok(!c.some((x) => x.nav === "/add-event"), q + " must not start the add-event form");
+  }
+  for (const q of ["how do I add an event", "add a new event", "I want to add another event"]) assert.ok(cardsFor({ question: q, settings: S }).some((x) => x.nav === "/add-event"), q);
+  assert.match(rankChunks("Can I add a photo to my event", 2).map((c) => c.title).join(" | "), /Your events: where to manage/);
+  const { KB_CHUNKS } = await import("../functions/_lib/chatkb-data.js"), t = KB_CHUNKS.filter((c) => /Your events: where to manage|Where to find Add/.test(c.title)).map((c) => c.text).join(" ");
+  assert.match(t, /account circle[^.]*Your events/); assert.match(t, /do not take photo uploads/);
+  const chrome = (await import("node:fs")).readFileSync(new URL("../public/chrome.js", import.meta.url), "utf8"); assert.match(chrome, /href="\/profile#events">Your events</);
+});
