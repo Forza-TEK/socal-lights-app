@@ -2,6 +2,9 @@
 
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
+## 2026-11-14 (link to the public card in Admin)
+- Owner: Admin > Events needed a link to a newly created event's card. Each event row now has "View card" (opens `/e/<id>` in a new tab), and published events in Admin > Submitted events have it too (next to Unpublish). `public/admin/admin.js` `?v=20261114a`; test in `tests/seo-admin.test.mjs`. Not looked at in a browser (Admin needs the Cloudflare Access login).
+
 ## 2026-11-14 (events people submit are confirmed automatically)
 - Owner: a submitted event stayed "expected" after a failed page check and Admin showed no way to confirm it (Admin > Submitted events only has Unpublish; the "Dates are" choice is in Admin > Events > the event > Edit), and hundreds of these must not need a hand.
 - New job `verify-events` on the Cloudflare clock (`13,43 * * * *`): `POST /api/verify-events` (key-protected, `functions/api/verify-events.js`) takes up to 6 published, still-expected, upcoming events that a person submitted and that have a web page, runs the same check as the submit form (`verifyEventPage`: page loads, mentions the name and the year) and sets the ones that pass to confirmed (submission `verified=1`, note "confirmed automatically: ..."). A page that still fails is noted and asked again after 6 hours until the event ends. Never downgrades; never touches sweep-found events (they follow `docs/confirmation-plan.md`). Migration 0241 adds `event_submissions.checked_at` and the job's heartbeat row; `functions/_lib/heartbeat.js` lists it (stale after 4 h); `workers/mail-cron` redeploys on merge. Tests: `tests/verify-events.test.mjs`, `tests/mail-cron.test.mjs`.

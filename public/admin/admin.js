@@ -259,7 +259,7 @@ async function renderSubs() {
       + fact("Type", `${esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)} · ${esc(x.price || "")}`) + fact("About", esc(x.blurb)) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "")
       + fact("Contact", `<span style="user-select:all">${esc(x.contact_email)}</span>`) + fact("Notes", esc(x.note || "")) + (x.paid_plans ? fact("Paid Featured", `<b>${esc(x.paid_plans)}</b>`) : ""),
     edit: pend ? btn("ghost", "Edit", `data-sedit="${esc(x.id)}"`) : "",
-    main: SUBVIEW === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : pend ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : btn("ghost", "Unpublish", 'data-sact="unpublish"'),
+    main: SUBVIEW === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : pend ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : (x.event_id ? viewLink(x.event_id) : "") + btn("ghost", "Unpublish", 'data-sact="unpublish"'),
     danger: pend ? btn("danger", "Decline", 'data-sact="decline"') : "",
   })).join("")}</div>`;
   go(); if (pend) wireSubsBulk(main);
@@ -559,6 +559,8 @@ const EVCMP = {
   date: (a, b) => a.s.localeCompare(b.s) || a.n.localeCompare(b.n), name: (a, b) => a.n.localeCompare(b.n), city: (a, b) => a.city.localeCompare(b.city) || a.n.localeCompare(b.n),
   updated: (a, b) => String(b.lc || "").localeCompare(String(a.lc || "")) || a.n.localeCompare(b.n), price: (a, b) => priceNum(a) - priceNum(b) || a.n.localeCompare(b.n),
 };
+// The event's public card (opens in a new tab)
+const viewLink = (id) => `<a class="btn ghost" href="/e/${encodeURIComponent(id)}" target="_blank" rel="noopener" aria-label="View this event on the site (opens in a new tab)">View card</a>`;
 // The event as the edit form would send it, with some fields changed (used by the bulk actions and their Undo)
 const evBody = (e, over = {}) => ({ id: e.id, season: e.sn || "christmas", name: e.n, county: e.c, city: e.city, type: e.t, start: e.s, end: e.e, status: e.st === "c" ? "confirmed" : "expected", free: !!e.free, price: e.p, hours: e.h, lat: e.lat, lng: e.lng, blurb: e.b, url: e.u, venue: e.v, address: e.a, ...over });
 const evFiltered = () => {
@@ -592,7 +594,7 @@ async function renderEvents() {
     main.querySelector("[data-tcount]").textContent = `${all.length} event${all.length === 1 ? "" : "s"}`;
     $("#evlist").innerHTML = all.length ? `<div class="cards">${shown.map((e) => rec({
       compact: true, cls: e.e < TODAY ? "past" : "", attrs: `data-eid="${esc(e.id)}"`, title: `<input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}> ` + esc(e.n), tags: [[e.st === "c" ? "Confirmed" : "Expected", e.st === "c" ? "ok" : "warn"], ...(e.e < TODAY ? [["Ended"]] : [])],
-      meta: "", body: `<span class="sub">${esc(e.city)}, ${esc(e.c)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""} · ${esc(e.p || "")}</span>`, edit: btn("ghost", "Edit", `data-edit="${esc(e.id)}"`),
+      meta: "", body: `<span class="sub">${esc(e.city)}, ${esc(e.c)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""} · ${esc(e.p || "")}</span>`, edit: btn("ghost", "Edit", `data-edit="${esc(e.id)}"`), main: viewLink(e.id),
     })).join("")}</div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : ""}` : `<div class="empty">${EVQ || EVSTATUS || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
     $("#evlist").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => editEvent(EVENTS.find((x) => x.id === b.dataset.edit))));
     $("#evlist").querySelectorAll("[data-esel]").forEach((b) => (b.onchange = () => { b.checked ? EVSEL.add(b.dataset.esel) : EVSEL.delete(b.dataset.esel); paintBulk(); }));
