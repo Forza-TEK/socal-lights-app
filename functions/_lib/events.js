@@ -22,22 +22,30 @@ const STOP = new Set(["the", "and", "annual", "event", "festival", "with", "from
 export const nameTokens = (name) => [...new Set(String(name).toLowerCase().split(/[^a-z0-9']+/).filter((w) => w.length >= 4 && !STOP.has(w)))];
 
 // Loads the submitted event page and checks that it mentions the event and its year. Returns { ok, note }.
+// Some hosts (GoDaddy sites, for one) answer slowly or drop automated requests now and then, so a failed load is tried once more with a longer wait,
+// always under our own bot name. If both tries fail the note says the site was unreachable (not that the page is wrong), so the owner knows to open the link.
 export async function verifyEventPage(url, name, startDate, doFetch = fetch) {
-  try {
-    const u = new URL(url);
-    if (!/^https?:$/.test(u.protocol)) return { ok: false, note: "link is not http(s)" };
-    const r = await doFetch(u.href, { redirect: "follow", headers: { "user-agent": "Mozilla/5.0 (compatible; SoCalLightsBot/1.0; +https://socallights.app)", accept: "text/html,*/*" }, signal: AbortSignal.timeout(6000) });
-    if (!r.ok) return { ok: false, note: `event page returned HTTP ${r.status}` };
-    const text = (await r.text()).slice(0, 400_000).toLowerCase();
-    const toks = nameTokens(name);
-    const hit = toks.filter((t) => text.includes(t));
-    const year = startDate.slice(0, 4);
-    if (!toks.length || hit.length < Math.min(2, toks.length)) return { ok: false, note: "event page does not mention the event name" };
-    if (!text.includes(year)) return { ok: false, note: `event page does not mention ${year}` };
-    return { ok: true, note: "event page mentions the name and year" };
-  } catch (x) {
-    return { ok: false, note: "event page could not be loaded" };
+  let u;
+  try { u = new URL(url); } catch { return { ok: false, note: "link is not a valid web address" }; }
+  if (!/^https?:$/.test(u.protocol)) return { ok: false, note: "link is not http(s)" };
+  let r = null, reason = "";
+  for (const ms of [6000, 9000]) {
+    try {
+      r = await doFetch(u.href, { redirect: "follow", headers: { "user-agent": "Mozilla/5.0 (compatible; SoCalLightsBot/1.0; +https://socallights.app)", accept: "text/html,*/*" }, signal: AbortSignal.timeout(ms) });
+      if (r.status < 500 && r.status !== 429) break; // an answer we can use (a 5xx or "slow down" is worth one more try)
+      reason = `HTTP ${r.status}`;
+    } catch { r = null; reason = "no answer"; }
   }
+  if (!r) return { ok: false, note: "event page was slow or would not answer our check (open the link yourself to confirm the dates)" };
+  if (!r.ok) return { ok: false, note: `event page returned HTTP ${r.status}` };
+  let text;
+  try { text = (await r.text()).slice(0, 400_000).toLowerCase(); } catch { return { ok: false, note: "event page was slow or would not answer our check (open the link yourself to confirm the dates)" }; }
+  const toks = nameTokens(name);
+  const hit = toks.filter((t) => text.includes(t));
+  const year = startDate.slice(0, 4);
+  if (!toks.length || hit.length < Math.min(2, toks.length)) return { ok: false, note: "event page does not mention the event name" };
+  if (!text.includes(year)) return { ok: false, note: `event page does not mention ${year}` };
+  return { ok: true, note: "event page mentions the name and year" };
 }
 
 export { clean, safeUrl, COUNTIES, SEASONS };
