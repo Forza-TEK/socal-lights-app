@@ -1,5 +1,6 @@
 // Shared helpers for the API functions.
 import { ptToday } from "./time.js";
+import { ownerKeys, ownerUrls } from "./eventphotos.js";
 
 export const json = (data, init = {}) =>
   new Response(JSON.stringify(data), {
@@ -70,13 +71,21 @@ function featuredLevel(r) {
 }
 
 // extra photos for an event: a JSON array of image URLs in events.images
+// The owner's own photos (events.owner_photos, at most 4) come first; the picture found on the event's web page follows them, and comes back by itself when the owner removes theirs.
+// op: how many photos the owner added (the page credits them to the organizer, not to the event's web site).
+function ownerImages(r) {
+  const own = ownerKeys(r.owner_photos);
+  if (!own.length) return { img: r.image || "", imgs: parseImgs(r.images) };
+  const urls = ownerUrls(own), rest = [r.image, ...parseImgs(r.images)].filter((u) => typeof u === "string" && u && !urls.includes(u));
+  return { img: urls[0], imgs: [...urls.slice(1), ...rest].slice(0, 12), op: urls.length };
+}
 function parseImgs(v) { try { const a = JSON.parse(v || "[]"); return Array.isArray(a) ? a.filter((x) => typeof x === "string").slice(0, 12) : []; } catch { return []; } }
 export function rowToEvent(r) {
   return {
     id: r.id, n: r.name, c: r.county, city: r.city, t: r.type, s: r.start_date, e: r.end_date,
     st: r.status === "confirmed" ? "c" : "e", free: !!r.free, p: r.price || "", h: r.hours || "",
     lat: r.lat, lng: r.lng, b: r.blurb || "", u: r.url || "", sn: r.season || "christmas",
-    v: r.venue || "", a: r.address || "", img: r.image || "", imgs: parseImgs(r.images),
+    v: r.venue || "", a: r.address || "", ...ownerImages(r),
     f: featuredLevel(r), nt: r.notice || "", lc: String(r.updated_at || "").slice(0, 10),
     ...(r.partner_until && r.partner_until >= ptToday() ? { ep: 1, ...(r.partner_verified ? { epv: 1 } : {}) } : {}), // Event Partner badge (partner.js); epv: the organization is a website domain matched by its organizer's email
   };

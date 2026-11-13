@@ -245,13 +245,13 @@ test("questions about an event you already added point to Your events (account c
   for (const q of ["how do I add an event", "add a new event", "I want to add another event"]) assert.ok(cardsFor({ question: q, settings: S }).some((x) => x.nav === "/add-event"), q);
   assert.match(rankChunks("Can I add a photo to my event", 2).map((c) => c.title).join(" | "), /Your events: where to manage/);
   const { KB_CHUNKS } = await import("../functions/_lib/chatkb-data.js"), t = KB_CHUNKS.filter((c) => /Your events: where to manage|Where to find Add/.test(c.title)).map((c) => c.text).join(" ");
-  assert.match(t, /account circle[^.]*Your events/); assert.match(t, /do not take photo uploads/);
+  assert.match(t, /account circle[^.]*Your events/); assert.match(t, /up to 4 photos/); assert.match(t, /Edit[^.]*Photos box/);
   const chrome = (await import("node:fs")).readFileSync(new URL("../public/chrome.js", import.meta.url), "utf8"); assert.match(chrome, /href="\/profile#events">Your events</);
 });
 
 test("the Help migration for Your events exists with a unique number, no price, and the same photo facts as the assistant", async () => {
   const fs = await import("node:fs"), dir = new URL("../migrations/", import.meta.url), files = fs.readdirSync(dir).filter((f) => f.endsWith(".sql"));
   const m = files.find((f) => /your_events/.test(f)); assert.ok(m); assert.equal(files.filter((f) => f.slice(0, 4) === m.slice(0, 4)).length, 1, "no other migration shares its number"); const sql = fs.readFileSync(new URL(m, dir), "utf8");
-  assert.match(sql, /\*\*Your events\*\*/); assert.match(sql, /do not take photo uploads/); assert.doesNotMatch(sql, /\$\d/);
+  assert.match(sql, /\*\*Your events\*\*/); assert.match(sql, /\*\*Your events\*\*/); assert.doesNotMatch(sql, /\$\d/);
   assert.match(sql, /updated_by = 'seed' AND body NOT LIKE '%\/help\/your-events%'/, "the add-an-event pointer is added once and never over an Admin edit");
 });

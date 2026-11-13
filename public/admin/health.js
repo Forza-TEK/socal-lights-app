@@ -6,7 +6,7 @@ export const STALE_DAYS = 14;
 
 export const HEALTH = [
   // key, label shown on the card and in the filter, explanation, test
-  ["nophoto", "No photo", "Upcoming events with no photo at all.", (e, today) => e.e >= today && !e.img && !(e.imgs && e.imgs.length)],
+  ["nophoto", "No photo", "Upcoming events with no photo at all.", (e, today) => e.e >= today && !e.img && !(e.imgs && e.imgs.length) && !e.op],
   ["passed", "Expected, date passed", "Events still marked expected whose end date is already past (a guess that was never confirmed).", (e, today) => e.st !== "c" && e.e < today],
   ["nolink", "No link", "Upcoming events with no website for people to check the details.", (e, today) => e.e >= today && !e.u],
   ["stale", `Expected, not updated in ${STALE_DAYS}+ days`, `Upcoming events still marked expected that nobody has edited or confirmed for ${STALE_DAYS} days or more.`, (e, today) => e.st !== "c" && e.e >= today && !!e.lc && e.lc <= day(today, -STALE_DAYS)],

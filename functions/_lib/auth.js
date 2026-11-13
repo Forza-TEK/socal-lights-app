@@ -4,6 +4,7 @@ import { json, err, newId } from "./util.js";
 import { logOp } from "./oplog.js";
 import { bump } from "./funnel.js";
 import { EMAIL_KEY, utcDay } from "./cfusage.js";
+import { readActAs } from "./actas.js";
 
 export const COOKIE = "scl_session";
 const SESSION_DAYS = 30;
@@ -63,6 +64,8 @@ export async function startSession(env, request, userId) {
 
 // The signed-in person for this request, or null.
 export async function getUser(request, env) {
+  const acting = await readActAs(request, env); // an Admin acting for this person (a signed header from /api/admin/as/..., see actas.js)
+  if (acting) return acting;
   const t = readCookie(request, COOKIE);
   if (!t) return null;
   const u = await env.DB.prepare("SELECT u.id,u.email,u.name FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ? AND s.expires_at > datetime('now') AND u.status != 'suspended'").bind(await sha256(t)).first();

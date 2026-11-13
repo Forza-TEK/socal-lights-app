@@ -1,8 +1,10 @@
-// POST   /api/me/events/<submission id> { action: "edit" | "notice" | "copy" } — the person who submitted an event manages it.
+// POST   /api/me/events/<submission id> { action: "edit" | "notice" | "copy" | "removephoto" | "coverphoto" } — the person who submitted an event manages it.
+// POST   /api/me/events/<submission id> as multipart form data with "photos" — adds up to 4 photos of the event (see _lib/eventphotos.js).
 // DELETE /api/me/events/<submission id> — removes the event from the map and the list (only the person who added it).
 //   edit   : name, hours, price, free, blurb, url, venue, start, end
 //   notice : "cancelled" | "postponed" | "" shows a tag on the event
-//   copy   : "Run again next year": a new event with every date moved forward a year, marked Expected
+//   copy   : "Run again next year": a new event with every date moved forward a year, marked Expected (the owner's photos are not copied)
+//   removephoto / coverphoto { key } : remove one of the owner's photos, or make it the cover (the first one)
 import { json, err, clean, webUrl, newId, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
 import { CITY } from "../../../../public/cities.js";
 import { SEASONS } from "../../../../public/seasons.js";
@@ -11,6 +13,8 @@ import { requireUser, sameOrigin, normEmail } from "../../../_lib/auth.js";
 import { isDate, slug, upsertEvent, verifyEventPage } from "../../../_lib/events.js";
 import { refundDueStatements } from "../../../_lib/orders.js";
 import { normName, line } from "../../../_lib/fields.js";
+import { addEventPhotos, removeEventPhoto, coverEventPhoto, ownerKeys } from "../../../_lib/eventphotos.js";
+import { checkThrottle, hashKey } from "../../../_lib/throttle.js";
 
 const plusYear = (d) => { const x = new Date(d + "T12:00:00Z"); x.setUTCFullYear(x.getUTCFullYear() + 1); return x.toISOString().slice(0, 10); };
 
@@ -20,8 +24,31 @@ export async function onRequestPost({ params, request, env }) {
   if (res) return res;
   const s = await env.DB.prepare("SELECT * FROM event_submissions WHERE id = ?").bind(params.id).first();
   if (!s || normEmail(s.contact_email) !== user.email) return err(404, "That event isn't yours.");
-  const b = await request.json().catch(() => ({}));
   const live = s.status === "published" && s.event_id;
+
+  // Photos: a file upload (multipart) adds up to 4; removephoto and coverphoto are small JSON calls. Only the person who added the event, only while it is on the map.
+  if (/multipart\/form-data/i.test(request.headers.get("content-type") || "")) {
+    if (!live) return err(400, "Photos can be added once the event is on the map.");
+    const slow = await checkThrottle(env, [{ kind: "event-photos", key: await hashKey(env, "u", user.id), max: 40, windowHours: 24, msg: "That is a lot of photo changes for one day. Please try again tomorrow." }]);
+    if (slow) return err(429, slow);
+    let form; try { form = await request.formData(); } catch { return err(400, "The photos couldn't be read. Please try again."); }
+    const files = form.getAll("photos").filter((f) => f && typeof f === "object" && f.size > 0);
+    const ev = await env.DB.prepare("SELECT id, owner_photos FROM events WHERE id = ?").bind(s.event_id).first();
+    if (!ev) return err(400, "That event isn't on the map.");
+    const r = await addEventPhotos(env, ev, files);
+    if (r.error) return err(r.status || 400, r.error);
+    return json({ ok: true, photos: r.photos });
+  }
+  const b = await request.json().catch(() => ({}));
+
+  if (b.action === "removephoto" || b.action === "coverphoto") {
+    if (!live) return err(400, "That event isn't on the map.");
+    const ev = await env.DB.prepare("SELECT id, owner_photos FROM events WHERE id = ?").bind(s.event_id).first();
+    if (!ev) return err(400, "That event isn't on the map.");
+    const r = b.action === "removephoto" ? await removeEventPhoto(env, ev, String(b.key || "")) : await coverEventPhoto(env, ev, String(b.key || ""));
+    if (r.error) return err(r.status || 400, r.error);
+    return json({ ok: true, photos: r.photos });
+  }
 
   if (b.action === "notice") {
     if (!live) return err(400, "That event isn't on the map.");
@@ -78,7 +105,9 @@ export async function onRequestDelete({ params, request, env }) {
   if (!s || normEmail(s.contact_email) !== user.email) return err(404, "That event isn't yours.");
   // A paid Featured placement goes with the event row (or was waiting on this submission): flag it refund due first.
   const stmts = [...refundDueStatements(env.DB, { events: ["sub:" + s.id, s.event_id] }, "The organizer deleted the event while a paid Featured placement was running or waiting. Refund it in Stripe, then mark it refunded here."), env.DB.prepare("DELETE FROM event_submissions WHERE id = ?").bind(s.id)];
+  const own = s.event_id ? await env.DB.prepare("SELECT owner_photos FROM events WHERE id = ?").bind(s.event_id).first() : null;
   if (s.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(s.event_id));
   await env.DB.batch(stmts);
+  if (own) await Promise.all(ownerKeys(own.owner_photos).map((k) => env.PHOTOS.delete(k).catch(() => {}))); // the owner's photos go with the event
   return json({ ok: true });
 }

@@ -613,18 +613,21 @@ function stockKey(ev) {
 }
 const hashOf = (str) => { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+// A photo the organizer added (Your events > Edit) is served from our own /api/photo/e/ path and credited to the organizer, not to the event's web site.
+const isOwnerPhoto = (u) => /\/api\/photo\/e\//.test(String(u || ""));
 function photoOf(ev, hero) {
   // each type has several stock photos; the event's id picks one, so the same event always gets the same photo
   const k = stockKey(ev), n = k ? hashOf(ev.id) % STOCK[k].length : 0, st = k && STOCK[k][n];
   const stock = k ? `/img/stock/${hero ? "" : "t/"}${k}-${n + 1}.jpg` : "", sc = k && `Photo: ${st.by} · ${st.lic}`;
   const city = isCityEvent(ev); // a city or government event may keep its city logo or seal as its photo; any other event whose picture is named like a logo gives way to the stock photo
+  if (isOwnerPhoto(ev.img)) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, keep: true, credit: "Photo: the organizer" };
   if (ev.img && (city || !looksLikeLogoUrl(ev.img) || !stock)) return { src: ev.img, fb: stock, fbc: sc, fbl: k && st.src, keep: city, credit: "Photo: " + hostOf(ev.u || ev.img), link: ev.u ? infoUrl(ev.u, ev.n, ev.city || "") : ev.u };
   return k ? { src: stock, credit: sc, link: st.src } : null;
 }
 // A gallery: the main photo first, then any extra photos stored for the event (ev.imgs)
 function photosOf(ev, hero) {
   const first = photoOf(ev, hero), out = first ? [first] : [];
-  (ev.imgs || []).forEach((u) => { if (u && u !== ev.img) out.push({ src: u, credit: "Photo: " + hostOf(ev.u || u), link: ev.u }); });
+  (ev.imgs || []).forEach((u) => { if (u && u !== ev.img) out.push(isOwnerPhoto(u) ? { src: u, credit: "Photo: the organizer" } : { src: u, credit: "Photo: " + hostOf(ev.u || u), link: ev.u }); });
   return out;
 }
 const ARW_L = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>`;

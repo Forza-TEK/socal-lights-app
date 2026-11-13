@@ -6,12 +6,13 @@ import { pairs, approvedPosts } from "./addrkey.js";
 import { ptDate } from "./time.js";
 import { HEALTH } from "../../public/admin/health.js";
 
+import { ownerKeys } from "./eventphotos.js";
 import { ENDED_GRACE_DAYS } from "../api/events.js"; // the public map's own grace period: one number, so the dashboard cannot drift from the map
-export const EVENT_COLS = "id, status, start_date, end_date, image, images, url, updated_at, city, address, keep_listed";
+export const EVENT_COLS = "id, status, start_date, end_date, image, images, owner_photos, url, updated_at, city, address, keep_listed";
 
 const imgs = (v) => { try { const a = JSON.parse(v || "[]"); return Array.isArray(a) ? a.filter((x) => typeof x === "string") : []; } catch { return []; } };
 // The same small shape the admin list gets from rowToEvent, with only the fields the checks read
-export const healthShape = (r) => ({ id: r.id, st: r.status === "confirmed" ? "c" : "e", s: r.start_date, e: r.end_date, img: r.image || "", imgs: imgs(r.images), u: r.url || "", lc: String(r.updated_at || "").slice(0, 10) });
+export const healthShape = (r) => ({ id: r.id, st: r.status === "confirmed" ? "c" : "e", s: r.start_date, e: r.end_date, img: r.image || "", imgs: imgs(r.images), u: r.url || "", lc: String(r.updated_at || "").slice(0, 10), op: ownerKeys(r.owner_photos).length }); // op: photos the organizer added (they count as a photo)
 
 // rows: events columns (EVENT_COLS); posts: approvedPosts(env). Pure.
 export function eventStats(rows, posts, today = ptDate()) {
