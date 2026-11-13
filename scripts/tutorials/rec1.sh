@@ -13,7 +13,7 @@ for id in "$@"; do
   npx wrangler d1 execute socal-lights --local $PERSIST --file ${DEMO:-$S/demo2}/seed.sql >/dev/null 2>&1
   [ "$id" = "announce" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file ${DEMO:-$S/demo2}/judged.sql >/dev/null 2>&1
   [ "$id" = "founder-city-badge" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-founder.sql >/dev/null 2>&1
-  [ "$id" = "contest-pass-app" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-passes.sql >/dev/null 2>&1
+  [ "$id" = "contest-pass-app" -o "$id" = "contest-passes" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-passes.sql >/dev/null 2>&1
   [ "$id" = "entry-edit" -o "$id" = "entry-photos" -o "$id" = "owner-photos" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-ownhomes.sql >/dev/null 2>&1
   [ "$id" = "manage-events" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-feature.sql >/dev/null 2>&1
   [ "$id" = "installer" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-installer.sql >/dev/null 2>&1
