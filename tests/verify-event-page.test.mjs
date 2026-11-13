@@ -34,3 +34,14 @@ test("a bad link never reaches the network", async () => {
   const r = await verifyEventPage("not a url", NAME, START, async () => { throw new Error("should not run"); });
   assert.equal(r.ok, false); assert.match(r.note, /valid web address/);
 });
+
+test("a bot-protection challenge (Cloudflare 'Just a moment') is reported as blocked: one try, no disguise, and a note that blames the protection, not the page", async () => {
+  let n = 0, seen;
+  const r = await verifyEventPage("https://visit.test/x", NAME, START, async (u, init) => { n++; seen = init.headers["user-agent"]; return new Response("<title>Just a moment...</title>", { status: 403, headers: { "cf-mitigated": "challenge", "content-type": "text/html" } }); });
+  assert.equal(n, 1); assert.equal(r.ok, false); assert.equal(r.blocked, true); assert.match(r.note, /bot protection blocked/);
+  assert.match(seen, /SoCalLightsBot/, "still our own name");
+});
+test("an ordinary 403 (no challenge) is still just an HTTP error", async () => {
+  const r = await verifyEventPage("https://x.test/x", NAME, START, async () => new Response("no", { status: 403 }));
+  assert.equal(r.blocked, undefined); assert.match(r.note, /HTTP 403/);
+});

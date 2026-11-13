@@ -1,4 +1,4 @@
-// POST /api/admin/submissions/:id  { action: "approve" | "decline" | "unpublish" | "edit", status?: "confirmed" | "expected", ...fields for edit }
+// POST /api/admin/submissions/:id  { action: "approve" | "decline" | "unpublish" | "confirm" | "edit", status?: "confirmed" | "expected", ...fields for edit }
 import { sendFeaturePaidEmail } from "../../../_lib/featuremail.js";
 import { json, err } from "../../../_lib/util.js";
 import { upsertEvent, slug } from "../../../_lib/events.js";
@@ -22,6 +22,15 @@ export async function onRequestPost({ request, env, params, waitUntil }) {
     if (f.url && !/^https?:\/\//i.test(f.url)) return err(400, "The event page must start with http:// or https://.");
     await env.DB.prepare("UPDATE event_submissions SET name=?, venue=?, address=?, city=?, hours=?, price=?, blurb=?, url=?, contact_email=?, start_date=?, end_date=? WHERE id=?")
       .bind(f.name, f.venue, f.address, f.city, f.hours, f.price, f.blurb, f.url, f.contact_email, f.start_date, f.end_date, s.id).run();
+    return json({ ok: true });
+  }
+  if (b.action === "confirm") {
+    // The owner opened the organizer's page and the dates are right (for sites whose bot protection blocks the automatic check): the live event becomes confirmed.
+    if (s.status !== "published" || !s.event_id) return err(400, "Only a published event can be confirmed.");
+    await env.DB.batch([
+      env.DB.prepare("UPDATE events SET status = 'confirmed', updated_at = datetime('now') WHERE id = ?").bind(s.event_id),
+      env.DB.prepare("UPDATE event_submissions SET verified = 1, note = 'confirmed by the site owner after checking the page', checked_at = datetime('now') WHERE id = ?").bind(s.id),
+    ]);
     return json({ ok: true });
   }
   if (b.action === "unpublish") {

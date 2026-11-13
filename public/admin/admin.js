@@ -259,7 +259,7 @@ async function renderSubs() {
       + fact("Type", `${esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)} · ${esc(x.price || "")}`) + fact("About", esc(x.blurb)) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "")
       + fact("Contact", `<span style="user-select:all">${esc(x.contact_email)}</span>`) + fact("Notes", esc(x.note || "")) + (x.paid_plans ? fact("Paid Featured", `<b>${esc(x.paid_plans)}</b>`) : ""),
     edit: pend ? btn("ghost", "Edit", `data-sedit="${esc(x.id)}"`) : "",
-    main: SUBVIEW === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : pend ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : (x.event_id ? viewLink(x.event_id) : "") + btn("ghost", "Unpublish", 'data-sact="unpublish"'),
+    main: SUBVIEW === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : pend ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : (x.event_id ? viewLink(x.event_id) : "") + (x.event_id && x.event_status === "expected" ? btn("main", "Confirm dates", 'data-sact="confirm"') : "") + btn("ghost", "Unpublish", 'data-sact="unpublish"'),
     danger: pend ? btn("danger", "Decline", 'data-sact="decline"') : "",
   })).join("")}</div>`;
   go(); if (pend) wireSubsBulk(main);
@@ -318,7 +318,7 @@ document.addEventListener("click", async (e) => {
     SUBVIEW = b.dataset.st === "published" ? "published" : b.dataset.st === "pending" ? "pending" : "published"; setTab("subs");
   } catch (er) { toast(er.message, true); }
 });
-const SDONE = { approve: "Published", decline: "Declined. If they paid for Featured, refund it under Orders.", unpublish: "Unpublished", restore: "Back in the waiting list" };
+const SDONE = { confirm: "Confirmed. The event now shows as Confirmed on the map.", approve: "Published", decline: "Declined. If they paid for Featured, refund it under Orders.", unpublish: "Unpublished", restore: "Back in the waiting list" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-sact]"); if (!b) return;
   const card = b.closest("[data-sid]"), msg = card.querySelector(".msg"), act = b.dataset.sact, id = card.dataset.sid, name = card.querySelector("h3").textContent, x = SUBS.find((r) => r.id === id) || {}, extra = {};

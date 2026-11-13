@@ -114,3 +114,15 @@ test("funnel keys: the browser can count 'Choose' and 'event picked', and nothin
   assert.equal(n(raw, "fn:event-feature-checkout"), 0); assert.equal(n(raw, "fn:event-feature-paid"), 0);
   const keys = STEPS.map(([k]) => k); for (const k of ["fn:event-feature-choose", "fn:event-feature-pick", "fn:event-feature-checkout", "fn:event-feature-paid"]) assert.ok(keys.includes(k), k + " is listed in the admin");
 });
+
+test("Admin can confirm a published submitted event (for sites whose bot protection blocks the automatic check)", async () => {
+  const { env, raw } = newEnv();
+  raw.prepare("INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES ('u-c1','Holidays in the Pines','San Bernardino','Crestline','show','2026-11-28','2026-11-28','expected',1,'Free','',34.2,-117.3,'','https://visit.test/x','christmas','','')").run();
+  raw.prepare("INSERT INTO event_submissions (id,status,name,county,city,season,type,start_date,end_date,free,price,hours,lat,lng,blurb,url,venue,address,contact_email,verified,note,event_id) VALUES ('s-c1','published','Holidays in the Pines','San Bernardino','Crestline','christmas','show','2026-11-28','2026-11-28',1,'Free','',34.2,-117.3,'','https://visit.test/x','','','a@b.test',0,'blocked','u-c1')").run();
+  const post = (id, action) => decide({ request: new Request("https://x.test/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify({ action }) }), env, params: { id }, waitUntil() {} });
+  assert.equal((await post("s-c1", "confirm")).status, 200);
+  assert.equal(raw.prepare("SELECT status FROM events WHERE id='u-c1'").get().status, "confirmed");
+  assert.equal(raw.prepare("SELECT verified FROM event_submissions WHERE id='s-c1'").get().verified, 1);
+  raw.prepare("UPDATE event_submissions SET status='pending' WHERE id='s-c1'").run();
+  assert.equal((await post("s-c1", "confirm")).status, 400, "only a published event can be confirmed");
+});
