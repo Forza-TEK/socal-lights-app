@@ -17,6 +17,7 @@ for id in "$@"; do
   [ "$id" = "entry-edit" -o "$id" = "entry-photos" -o "$id" = "owner-photos" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-ownhomes.sql >/dev/null 2>&1
   [ "$id" = "manage-events" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-feature.sql >/dev/null 2>&1
   [ "$id" = "profile" -o "$id" = "manage-events" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-profile.sql >/dev/null 2>&1
+  [ "$id" = "quick" -o "$id" = "custom" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-comp.sql >/dev/null 2>&1
   [ "$id" = "installer" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-installer.sql >/dev/null 2>&1
   [ "$id" = "add-homes" -o "$id" = "approve" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-add-homes.sql >/dev/null 2>&1
   [ "$id" = "feature" ] && npx wrangler d1 execute socal-lights --local $PERSIST --file scripts/tutorials/seed-feature.sql >/dev/null 2>&1
