@@ -2,6 +2,7 @@
 // so a long list is split into the fewest routes of 9 or fewer, sized evenly, with each route starting where the last one ended.
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const MAX_STOPS = 9;
+import { nativeShare } from "/native.js?v=20261115a";
 import { MAPS, getMaps, routeUrl, placeUrl, navAttr, mapsNow, askMaps, setMaps } from "/maps.js?v=20261111a";
 export { routeUrl };
 
@@ -30,6 +31,7 @@ export function tourHtml(opts) { return `<section class="${opts.bare ? "" : "car
 // Share one stop to the phone's share sheet: the Tesla app (and car apps) take a shared place like this
 async function shareStop(h) {
   const url = placeUrl(where(h), h.name), data = { title: h.name, text: h.name + (h.sub || h.address ? " – " + (h.sub || h.address) : ""), url };
+  if (await nativeShare(data)) return;
   try { await navigator.share(data); } catch (e) { if (e && e.name !== "AbortError") { try { await navigator.clipboard.writeText(url); } catch {} } }
 }
 export function wireTour(root, opts) {

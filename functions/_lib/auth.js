@@ -17,6 +17,12 @@ export function normEmail(e) {
   if (d === "gmail.com" || d === "googlemail.com") { u = u.replace(/\./g, ""); d = "gmail.com"; }
   return `${u}@${d}`;
 }
+// App Store review login. Apple's reviewers cannot receive mail at an address we pick, so ONE fixed address has ONE fixed 6-digit code, switched on by the Pages secret
+// APP_REVIEW_CODE (exactly six digits; anything else, or unset, means off and this address signs in like everyone else). The code is checked through the normal
+// login_codes path: asking for it stores the usual row (so the per-address and per-IP hourly limits, the 10-minute expiry and 5 tries all apply) but sends no mail.
+// The stored hash covers "<email>:<code>", so the code is useless for any other address. A demo account is a normal user: it has no admin rights (admin is Cloudflare Access only).
+export const APP_REVIEW_EMAIL = "appreview@socallights.app";
+export const appReviewCode = (env, email) => (normEmail(email) === APP_REVIEW_EMAIL && /^\d{6}$/.test(String((env && env.APP_REVIEW_CODE) || "")) ? String(env.APP_REVIEW_CODE) : "");
 // Throwaway-mail services. Voting accounts need a real, lasting inbox, so these can't sign in with an emailed code.
 const DISPOSABLE = new Set(["mailinator.com", "guerrillamail.com", "guerrillamail.net", "10minutemail.com", "tempmail.com", "temp-mail.org", "yopmail.com", "trashmail.com", "throwawaymail.com", "sharklasers.com", "getnada.com", "maildrop.cc", "dispostable.com", "fakeinbox.com", "mailnesia.com", "mintemail.com", "tempr.email", "emailondeck.com"]);
 export const isDisposable = (e) => DISPOSABLE.has(String(e || "").trim().toLowerCase().split("@")[1] || "");

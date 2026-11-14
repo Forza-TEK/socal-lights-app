@@ -25,7 +25,8 @@
 <script type="module">
 import { signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261111z";
 import { themeBtn, mountAcct, refreshAcct } from "/addflow.js?v=20261113a";
-import { tourHtml, wireTour } from "/tour.js?v=20261111d";
+import { nativeShare } from "/native.js?v=20261115a";
+import { tourHtml, wireTour } from "/tour.js?v=20261115a";
 import { getMaps, routeUrl, navAttr } from "/maps.js?v=20261111a";
 import { fmtDate, statusChips, entriesClosedText, tieText, PT_NOTE } from "/contestfmt.js?v=20261111a";
 import { contestImage } from "/contesticon.js?v=20261111a";
@@ -98,7 +99,7 @@ function render() {
   document.querySelectorAll("[data-withdraw]").forEach((b) => (b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to withdraw"; return; } const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/mine?id=${encodeURIComponent(b.dataset.withdraw)}`, { method: "DELETE" }), j = await r.json().catch(() => ({})); if (!r.ok) return toast(j.error || "That didn't work."); toast("Your entry was withdrawn."); load(); }));
   document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { ACT = b.dataset.tab; const y = scrollY; render(); scrollTo(0, y); }));
   document.querySelectorAll("[data-zoom]").forEach((b) => (b.onclick = () => zoom(b.dataset.zoom, b.dataset.cap)));
-  const sh = $("#sharec"); if (sh) sh.onclick = async () => { const u = location.origin + "/c/" + c.slug, t = c.name + ": enter your home or vote"; try { if (navigator.share) await navigator.share({ title: c.name, text: t, url: u }); else { await navigator.clipboard.writeText(u); toast("Link copied."); } } catch {} };
+  const sh = $("#sharec"); if (sh) sh.onclick = async () => { const u = location.origin + "/c/" + c.slug, t = c.name + ": enter your home or vote"; try { if (await nativeShare({ title: c.name, text: t, url: u })) return; if (navigator.share) await navigator.share({ title: c.name, text: t, url: u }); else { await navigator.clipboard.writeText(u); toast("Link copied."); } } catch {} };
   document.querySelectorAll("[data-vote]").forEach((b) => (b.onclick = () => vote(b.dataset.vote, b.dataset.cat)));
   wireTour(document, { slug: c.slug, entries: D.entries });
   if (location.hash === "#tour") { const t = document.querySelector("[data-tour]"); if (t) t.scrollIntoView(); }
