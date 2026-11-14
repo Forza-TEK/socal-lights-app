@@ -70,14 +70,14 @@
           "title": "Find a contest to vote in or enter",
           "desc": "Live now, Mine and Past results, and the Enter or vote button on a map card.",
           "url": "/tutorials/find-contests.mp4",
-          "length": "1:53",
+          "length": "1:55",
           "captions": "/tutorials/find-contests.vtt",
           "poster": "/tutorials/find-contests.jpg",
           "mobile": {
             "url": "/tutorials/find-contests-mobile.mp4",
             "poster": "/tutorials/find-contests-mobile.jpg",
             "captions": "/tutorials/find-contests-mobile.vtt",
-            "length": "1:52"
+            "length": "1:53"
           }
         },
         {
@@ -107,7 +107,7 @@
           "title": "Enter your home in a contest",
           "desc": "Sign in, add photos, your address and agree to the rules.",
           "url": "/tutorials/enter.mp4",
-          "length": "2:49",
+          "length": "2:54",
           "captions": "/tutorials/enter.vtt",
           "poster": "/tutorials/enter.jpg",
           "mobile": {
@@ -137,7 +137,7 @@
           "title": "Edit or withdraw your entry",
           "desc": "Change your entry's name and description, or take it out.",
           "url": "/tutorials/edit-entry.mp4",
-          "length": "1:32",
+          "length": "1:33",
           "captions": "/tutorials/edit-entry.vtt",
           "poster": "/tutorials/edit-entry.jpg",
           "mobile": {
@@ -174,14 +174,14 @@
           "title": "Vote in a contest",
           "desc": "Use the category tabs, pick one favorite in each, and share the contest.",
           "url": "/tutorials/vote.mp4",
-          "length": "2:06",
+          "length": "2:07",
           "captions": "/tutorials/vote.vtt",
           "poster": "/tutorials/vote.jpg",
           "mobile": {
             "url": "/tutorials/vote-mobile.mp4",
             "poster": "/tutorials/vote-mobile.jpg",
             "captions": "/tutorials/vote-mobile.vtt",
-            "length": "2:05"
+            "length": "2:04"
           }
         },
         {
@@ -211,14 +211,14 @@
           "title": "Create a contest with Quick start",
           "desc": "The short setup: seven screens.",
           "url": "/tutorials/run-quick.mp4",
-          "length": "4:53",
+          "length": "4:54",
           "captions": "/tutorials/run-quick.vtt",
           "poster": "/tutorials/run-quick.jpg",
           "mobile": {
             "url": "/tutorials/run-quick-mobile.mp4",
             "poster": "/tutorials/run-quick-mobile.jpg",
             "captions": "/tutorials/run-quick-mobile.vtt",
-            "length": "4:52"
+            "length": "4:53"
           }
         },
         {
@@ -226,7 +226,7 @@
           "title": "Create a contest with Customize",
           "desc": "Judges, prizes, categories, vote counts and your own rules.",
           "url": "/tutorials/run-custom.mp4",
-          "length": "7:06",
+          "length": "7:07",
           "captions": "/tutorials/run-custom.vtt",
           "poster": "/tutorials/run-custom.jpg",
           "mobile": {
@@ -241,14 +241,14 @@
           "title": "Contest passes: what running a contest costs",
           "desc": "What the pass picker shows when you run a contest, and how to choose a pass.",
           "url": "/tutorials/run-passes.mp4",
-          "length": "4:12",
+          "length": "4:16",
           "captions": "/tutorials/run-passes.vtt",
           "poster": "/tutorials/run-passes.jpg",
           "mobile": {
             "url": "/tutorials/run-passes-mobile.mp4",
             "poster": "/tutorials/run-passes-mobile.jpg",
             "captions": "/tutorials/run-passes-mobile.vtt",
-            "length": "4:12"
+            "length": "4:13"
           }
         },
         {
@@ -258,7 +258,7 @@
           "captions": "/tutorials/run-pass-app.vtt",
           "url": "/tutorials/run-pass-app.mp4",
           "poster": "/tutorials/run-pass-app.jpg",
-          "length": "3:55",
+          "length": "3:56",
           "mobile": {
             "url": "/tutorials/run-pass-app-mobile.mp4",
             "poster": "/tutorials/run-pass-app-mobile.jpg",
@@ -273,12 +273,12 @@
           "captions": "/tutorials/run-founder.vtt",
           "url": "/tutorials/run-founder.mp4",
           "poster": "/tutorials/run-founder.jpg",
-          "length": "1:58",
+          "length": "1:59",
           "mobile": {
             "url": "/tutorials/run-founder-mobile.mp4",
             "poster": "/tutorials/run-founder-mobile.jpg",
             "captions": "/tutorials/run-founder-mobile.vtt",
-            "length": "1:58"
+            "length": "1:57"
           }
         },
         {
@@ -286,7 +286,7 @@
           "title": "Share your contest: link, QR code, poster, yard sign",
           "desc": "Link, QR code, entry poster and yard sign.",
           "url": "/tutorials/run-share.mp4",
-          "length": "3:18",
+          "length": "3:19",
           "captions": "/tutorials/run-share.vtt",
           "poster": "/tutorials/run-share.jpg",
           "mobile": {
@@ -301,14 +301,14 @@
           "title": "Approve and decline entries",
           "desc": "Approve, decline with a reason, add homes yourself, and undo a decline.",
           "url": "/tutorials/run-approve.mp4",
-          "length": "2:13",
+          "length": "2:16",
           "captions": "/tutorials/run-approve.vtt",
           "poster": "/tutorials/run-approve.jpg",
           "mobile": {
             "url": "/tutorials/run-approve-mobile.mp4",
             "poster": "/tutorials/run-approve-mobile.jpg",
             "captions": "/tutorials/run-approve-mobile.vtt",
-            "length": "2:14"
+            "length": "2:13"
           }
         },
         {
@@ -316,7 +316,7 @@
           "title": "Add your city's homes yourself",
           "desc": "Paste a list of addresses, check them, and put every home on the ballot.",
           "url": "/tutorials/run-add-homes.mp4",
-          "length": "2:19",
+          "length": "2:18",
           "captions": "/tutorials/run-add-homes.vtt",
           "poster": "/tutorials/run-add-homes.jpg",
           "mobile": {
@@ -338,7 +338,7 @@
             "url": "/tutorials/run-edit-home-mobile.mp4",
             "poster": "/tutorials/run-edit-home-mobile.jpg",
             "captions": "/tutorials/run-edit-home-mobile.vtt",
-            "length": "1:46"
+            "length": "1:44"
           }
         },
         {
@@ -348,7 +348,7 @@
           "captions": "/tutorials/run-home-photos.vtt",
           "url": "/tutorials/run-home-photos.mp4",
           "poster": "/tutorials/run-home-photos.jpg",
-          "length": "2:06",
+          "length": "2:03",
           "mobile": {
             "url": "/tutorials/run-home-photos-mobile.mp4",
             "poster": "/tutorials/run-home-photos-mobile.jpg",
@@ -368,7 +368,7 @@
             "url": "/tutorials/run-edit-mobile.mp4",
             "poster": "/tutorials/run-edit-mobile.jpg",
             "captions": "/tutorials/run-edit-mobile.vtt",
-            "length": "2:25"
+            "length": "2:26"
           }
         },
         {
@@ -376,7 +376,7 @@
           "title": "Run voting: pause, check results and void a vote",
           "desc": "Start now, pause, review votes and void a vote.",
           "url": "/tutorials/run-voting.mp4",
-          "length": "2:11",
+          "length": "2:13",
           "captions": "/tutorials/run-voting.vtt",
           "poster": "/tutorials/run-voting.jpg",
           "mobile": {
@@ -391,14 +391,14 @@
           "title": "Unpublish a contest and publish it again",
           "desc": "Hide your contest from the public, then bring it back.",
           "url": "/tutorials/run-unpublish.mp4",
-          "length": "1:55",
+          "length": "1:58",
           "captions": "/tutorials/run-unpublish.vtt",
           "poster": "/tutorials/run-unpublish.jpg",
           "mobile": {
             "url": "/tutorials/run-unpublish-mobile.mp4",
             "poster": "/tutorials/run-unpublish-mobile.jpg",
             "captions": "/tutorials/run-unpublish-mobile.vtt",
-            "length": "1:53"
+            "length": "1:54"
           }
         },
         {
@@ -406,14 +406,14 @@
           "title": "Add co-organizers and judges",
           "desc": "Invite people to help run the contest.",
           "url": "/tutorials/run-team.mp4",
-          "length": "2:21",
+          "length": "2:25",
           "captions": "/tutorials/run-team.vtt",
           "poster": "/tutorials/run-team.jpg",
           "mobile": {
             "url": "/tutorials/run-team-mobile.mp4",
             "poster": "/tutorials/run-team-mobile.jpg",
             "captions": "/tutorials/run-team-mobile.vtt",
-            "length": "2:21"
+            "length": "2:22"
           }
         },
         {
@@ -421,14 +421,14 @@
           "title": "Announce winners",
           "desc": "Close voting, announce, export results and see the archive.",
           "url": "/tutorials/run-announce.mp4",
-          "length": "2:13",
+          "length": "2:37",
           "captions": "/tutorials/run-announce.vtt",
           "poster": "/tutorials/run-announce.jpg",
           "mobile": {
             "url": "/tutorials/run-announce-mobile.mp4",
             "poster": "/tutorials/run-announce-mobile.jpg",
             "captions": "/tutorials/run-announce-mobile.vtt",
-            "length": "2:14"
+            "length": "2:42"
           }
         },
         {
@@ -436,7 +436,7 @@
           "title": "Read your contest activity",
           "desc": "Visits, QR scans, voters and votes per day.",
           "url": "/tutorials/run-activity.mp4",
-          "length": "1:36",
+          "length": "1:37",
           "captions": "/tutorials/run-activity.vtt",
           "poster": "/tutorials/run-activity.jpg",
           "mobile": {
@@ -458,7 +458,7 @@
           "title": "Add sponsors and logos to your contest",
           "desc": "Record a sponsor and show it on the contest page.",
           "url": "/tutorials/sponsors-add.mp4",
-          "length": "2:02",
+          "length": "2:04",
           "captions": "/tutorials/sponsors-add.vtt",
           "poster": "/tutorials/sponsors-add.jpg",
           "mobile": {
@@ -473,7 +473,7 @@
           "title": "Add sponsors to your contest",
           "desc": "Share one private link, then review and approve the request.",
           "url": "/tutorials/sponsors-invite.mp4",
-          "length": "2:13",
+          "length": "2:14",
           "captions": "/tutorials/sponsors-invite.vtt",
           "poster": "/tutorials/sponsors-invite.jpg",
           "mobile": {
@@ -570,7 +570,7 @@
           "title": "Show off your home on the map",
           "desc": "Put your lights on the map so families can find your home. You do not need a contest.",
           "url": "/tutorials/post-house.mp4",
-          "length": "2:50",
+          "length": "2:56",
           "captions": "/tutorials/post-house.vtt",
           "poster": "/tutorials/post-house.jpg",
           "mobile": {
