@@ -55,7 +55,7 @@ def best(url, name=""):
         try:
             b = get(c); im = Image.open(io.BytesIO(b)); w, h = im.size
         except Exception: continue
-        if len(b) < 20000 or w < 480 or h < 260 or not (0.8 <= w / h <= 2.8): continue
+        if len(b) < 20000 or w < 480 or h < 260 or not (0.55 <= w / h <= 2.8): continue
         big = len(b) > 1_500_000
         if big and (w < 800 or len(b) > 15_000_000): continue
         if k < nhit: return (c, w * h, big, b)  # a photo named for this event beats the page's og:image
