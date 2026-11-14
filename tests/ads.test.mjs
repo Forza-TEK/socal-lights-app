@@ -318,3 +318,23 @@ test("admin page: Ads sub-tabs are accessible, keyboard driven, remembered in th
   const d = await (await onRequestGet({ env, request: new Request("https://socallights.app/api/admin/ads") })).json();
   assert.ok(d.rules.length > 5); assert.equal(d.campaigns.find((c) => c.audience === "families").daily_hint_cents, 667);
 });
+
+test("short ad names (ct-a, in-a...) are stored under the approved id, so they are not 'not in the launch set'; unapproved or unknown names still are", async () => {
+  const { env, raw } = mk();
+  await withNow(NOW, async () => {
+    const r = await send(env, [row({ ad_id: "ct-a" }), row({ ad_id: "in-b", campaign: "installers" }), row({ ad_id: "ct-c" }), row({ ad_id: "zz-z" })]);
+    assert.equal(r.status, 200, JSON.stringify(r.body));
+    const ids = raw.prepare("SELECT ad_id FROM ads_reports ORDER BY ad_id").all().map((x) => x.ad_id);
+    assert.deepEqual(ids, ["ct-c-meta", "ct-a-meta", "in-b-meta", "zz-z"].sort());
+    const w = r.body.warnings.filter((x) => x.code === "not_in_launch_set").map((x) => x.ad_id).sort();
+    assert.deepEqual(w, ["ct-c-meta", "zz-z"], "an approved ad's short name is fine; ct-c is a held ad and zz-z is unknown, so they still raise the alert");
+    const dup = await send(env, [row({ ad_id: "ct-a" }), row({ ad_id: "ct-a-meta" })]);
+    assert.equal(dup.status, 400); assert.match(JSON.stringify(dup.body), /appears twice/);
+  });
+});
+test("migration 0251 renames reports already stored under the short names (and leaves unknown ones alone)", () => {
+  const { raw } = mk(); const ins = raw.prepare("INSERT INTO ads_reports (ad_id, campaign, status, spend_cents, impressions, clicks, as_of, received_at) VALUES (?, 'contest_organizers', 'active', 100, 10, 1, '2026-11-13T09:00:00Z', '2026-11-13T17:02:00Z')");
+  ["ct-a", "ev-b", "zz-z"].forEach((id) => ins.run(id)); ins.run("in-a"); ins.run("in-a-meta");
+  raw.exec(readFileSync(new URL("../migrations/0251_ads_reports_use_approved_ids.sql", import.meta.url), "utf8"));
+  assert.deepEqual(raw.prepare("SELECT ad_id FROM ads_reports ORDER BY ad_id").all().map((x) => x.ad_id), ["ct-a-meta", "ev-b-meta", "in-a", "in-a-meta", "zz-z"], "in-a stays because in-a-meta already has its own report");
+});
