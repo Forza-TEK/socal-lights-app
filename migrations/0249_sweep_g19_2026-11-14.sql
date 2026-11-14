@@ -1,0 +1,12 @@
+-- City sweep group 19 (Ventura County) 2026-11-14. Sources: Conejo Valley Guide holiday roundup, BAPAC, Ventura County Ballet, Hospice of the Conejo.
+-- Residential light lists found were last season's (2025), so no homes added (rule 6). Port Hueneme, Ojai, Fillmore, Santa Paula: no new dated 2026 public events found beyond those on the map.
+-- Photos left empty: the pages have no og:image or only banners/graphics.
+INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES
+('g19-irish-christmas-bapac','An Irish Christmas (Kavli Theatre)','Ventura','Thousand Oaks','show','2026-12-23','2026-12-23','confirmed',0,'Price not listed','7pm',34.1756,-118.8479,'Kerry Irish Productions mixes Christmas carols with Irish dance at the Bank of America Performing Arts Center.','https://bapacthousandoaks.com/show-details/an-irish-christmas26','christmas','Fred Kavli Theatre, Bank of America Performing Arts Center','2100 E Thousand Oaks Blvd, Thousand Oaks, CA 91362'),
+('g19-vc-ballet-nutcracker','Ventura County Ballet: The Nutcracker (Oxnard)','Ventura','Oxnard','show','2026-12-05','2026-12-06','confirmed',0,'Price not listed','Sat 3pm; Sun 2pm; sensory-friendly Sat 11am',34.1930846,-119.1885203,'Ventura County Ballet''s 28th annual Nutcracker at the Oxnard Performing Arts Center, with a sensory-friendly show Saturday morning.','https://www.venturacountyballet.com/','christmas','Oxnard Performing Arts Center','800 Hobson Way, Oxnard, CA 93030'),
+('g19-festival-of-trees-oaks','Festival of Trees at The Oaks (Hospice of the Conejo)','Ventura','Thousand Oaks','tree','2026-11-23','2026-12-04','confirmed',0,'Check listing','Hours not listed; check site',34.1813254,-118.8827579,'Hospice of the Conejo''s 11th annual fundraiser displays decorated trees at The Oaks mall, with voting and tree sales through Dec 3.','https://www.hospiceoftheconejo.org/events/festival-of-trees/','christmas','The Oaks mall','350 W Hillcrest Dr, Thousand Oaks, CA 91360')
+ON CONFLICT(id) DO UPDATE SET name=excluded.name, county=excluded.county, city=excluded.city,
+  type=excluded.type, start_date=excluded.start_date, end_date=excluded.end_date, status=excluded.status,
+  free=excluded.free, price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng,
+  blurb=excluded.blurb, url=excluded.url, season=excluded.season,
+  venue=excluded.venue, address=excluded.address, updated_at=datetime('now');
