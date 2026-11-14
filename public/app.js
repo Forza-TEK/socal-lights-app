@@ -551,24 +551,35 @@ function nudgeShopTabs() {
 }
 $("#t-events").onclick = () => setTab("events"); $("#t-shop").onclick = () => setTab("shop"); $("#t-plan").onclick = () => setTab("plan");
 
-// One pill that glides to the selected tab (top tabs on desktop, bottom bar on phones), instead of each tab fading its own background
+// One pill that glides to the selected tab (top tabs on desktop, bottom bar on phones), instead of each tab fading its own background.
+// The pill's two edges are springs: the edge on the side it is travelling toward launches first and fast, the trailing edge follows more slowly, so the pill stretches toward the new tab and then snaps
+// in (a liquid, elastic move) and settles in about a third of a second with only a hair of overshoot. It also squashes a little while it moves. Reduced-motion users get an instant move.
 function initSlidePill(box, selector) {
   if (!box) return;
   const pill = document.createElement("span"); pill.className = "slidepill"; pill.setAttribute("aria-hidden", "true"); box.prepend(pill);
   const still = matchMedia("(prefers-reduced-motion: reduce)");
-  let cur = null, raf = 0, until = 0;
-  const target = () => { const b = box.querySelector(selector); return b && !b.hidden && box.getClientRects().length ? { x: b.offsetLeft, y: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight } : null; };
-  const step = () => {
+  const LEAD = { k: 0.26, c: 0.5 }, TRAIL = { k: 0.1, c: 0.6 }, STEP = 1000 / 60; // spring stiffness and damping per 1/60 s step
+  let cur = null, vel = { l: 0, r: 0 }, lead = "r", raf = 0, until = 0, last = 0, acc = 0;
+  const target = () => { const b = box.querySelector(selector); return b && !b.hidden && box.getClientRects().length ? { l: b.offsetLeft, r: b.offsetLeft + b.offsetWidth, y: b.offsetTop, h: b.offsetHeight } : null; };
+  const step = (now) => {
     raf = 0; const t = target();
     if (!t) { pill.style.opacity = "0"; cur = null; return; }
     pill.style.opacity = "1";
+    if (!cur || still.matches) { cur = { ...t }; vel = { l: 0, r: 0 }; }
     let moving = false;
-    if (!cur || still.matches) cur = { ...t };
-    else for (const k of ["x", "y", "w", "h"]) { const d = t[k] - cur[k]; if (Math.abs(d) > 0.4) { cur[k] += d * 0.2; moving = true; } else cur[k] = t[k]; }
-    pill.style.width = cur.w + "px"; pill.style.height = cur.h + "px"; pill.style.transform = `translate(${cur.x}px,${cur.y}px)`;
-    if (moving || performance.now() < until) raf = requestAnimationFrame(step);
+    if (Math.abs((t.l + t.r) - (cur.l + cur.r)) > 2) lead = t.l + t.r > cur.l + cur.r ? "r" : "l"; // the edge toward the destination leads
+    acc += Math.min(100, last ? now - last : STEP); last = now;
+    for (; acc >= STEP; acc -= STEP) {
+      for (const e of ["l", "r"]) { const sp = e === lead ? LEAD : TRAIL; vel[e] = (vel[e] + (t[e] - cur[e]) * sp.k) * sp.c; cur[e] += vel[e]; }
+      cur.y += (t.y - cur.y) * 0.3; cur.h += (t.h - cur.h) * 0.3;
+    }
+    if (Math.abs(t.l - cur.l) < 0.3 && Math.abs(t.r - cur.r) < 0.3 && Math.abs(vel.l) < 0.05 && Math.abs(vel.r) < 0.05) { cur.l = t.l; cur.r = t.r; vel = { l: 0, r: 0 }; } else moving = true;
+    if (Math.abs(t.y - cur.y) > 0.3 || Math.abs(t.h - cur.h) > 0.3) moving = true; else { cur.y = t.y; cur.h = t.h; }
+    const w = Math.max(8, cur.r - cur.l), squash = 1 - Math.min(0.07, Math.abs(vel[lead]) / 220);
+    pill.style.width = w + "px"; pill.style.height = cur.h + "px"; pill.style.transform = `translate(${cur.l}px,${cur.y}px) scale(1,${squash.toFixed(3)})`;
+    if (moving || performance.now() < until) raf = requestAnimationFrame(step); else last = 0;
   };
-  const kick = () => { until = performance.now() + 600; if (!raf) raf = requestAnimationFrame(step); };
+  const kick = () => { until = performance.now() + 600; if (!raf) { acc = 0; last = 0; raf = requestAnimationFrame(step); } };
   new MutationObserver(kick).observe(box, { attributes: true, subtree: true, attributeFilter: ["aria-current", "aria-selected", "hidden"] });
   addEventListener("resize", () => { cur = null; kick(); });
   // the tab bar is hidden while a map pin card is open (display: none); when it comes back the pill has to be placed again
