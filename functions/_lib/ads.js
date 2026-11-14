@@ -16,6 +16,9 @@ export const FIELDS = ["ad_id", "campaign", "status", "spend_cents", "impression
 export const AD_URL_HOSTS = ["business.facebook.com", "www.facebook.com", "facebook.com", "adsmanager.facebook.com", "fb.me", "www.instagram.com", "instagram.com"];
 const MAX_SPEND = 5_000_000, MAX_COUNT = 2_000_000_000, MAX_ADS_STORED = 100;
 
+// Grok has reported the ads as ct-a, ev-a, in-a (without "-meta"). Same ad, so the short name is stored under the approved id when that is unambiguous; anything else is left as sent and still raises "not in the launch set".
+export const canonicalAdId = (id, known) => (known.has(id) ? id : known.has(id + "-meta") ? id + "-meta" : id);
+
 export const RULES = [
   "Facebook and Instagram (Meta) only. Do not create anything in Google Ads, Nextdoor or anywhere else.",
   "Use ONLY the copy in this brief, word for word. No new ad copy, claims, prices or images. Say 'home', never 'house' or 'display'.",

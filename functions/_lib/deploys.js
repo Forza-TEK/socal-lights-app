@@ -1,5 +1,5 @@
 // Cloudflare Pages deploy-stall detection, read-only. Used by scripts/deploy-watch.mjs (scheduled workflow) and by the admin digest, so there is one rule.
-//   (a) a deployment (preview or production: builds run one at a time, so a hung preview blocks production) still "active" 8+ minutes after it was created
+//   (a) a deployment (preview or production: builds run one at a time, so a hung preview blocks production) still "active" 8+ minutes after it was created, and nothing newer has finished (a stale "active" record behind a finished deploy is ignored)
 //   (b) production not on main's HEAD 20+ minutes after that commit was made (no production deployment for it, or it failed)
 // The head of main is passed in by the workflow (it has the checkout); the digest checks (a) and a failed newest production build only, so the site itself makes no call to any host but Cloudflare.
 // Calls GET /accounts/<id>/pages/projects/<project>/deployments?per_page=15 with a token that needs Account > Cloudflare Pages > Read.
@@ -19,6 +19,10 @@ export function evaluateDeploys(deployments, head, now = Date.now()) {
   for (const d of list) {
     const st = d.latest_stage || {};
     if (!ACTIVE.has(st.status)) continue;
+    // A record stuck on "active" while a LATER deployment has already finished is only a stale record (Cloudflare sometimes never closes one): the queue is moving, so it blocks nothing.
+    // Without this the watch emailed "stalled" every 3 hours for a record that had been stuck since the night before while every later deploy took 1.5 minutes.
+    const made = Date.parse(d.created_on);
+    if (list.some((o) => o !== d && Date.parse(o.created_on) > made && (o.latest_stage || {}).name === "deploy" && (o.latest_stage || {}).status === "success")) continue;
     const age = minutes(d.created_on, now);
     if (age >= STUCK_MIN) problems.push({ kind: "stuck", id: d.id, env: d.environment, stage: st.name, minutes: age, sha: (d.deployment_trigger && d.deployment_trigger.metadata && d.deployment_trigger.metadata.commit_hash || "").slice(0, 7),
       text: `A ${d.environment} deployment (${String(d.id).slice(0, 8)}) has been "${st.name}: active" for ${age} minutes. Builds run one at a time, so everything behind it waits.` });

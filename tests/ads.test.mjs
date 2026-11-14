@@ -318,3 +318,26 @@ test("admin page: Ads sub-tabs are accessible, keyboard driven, remembered in th
   const d = await (await onRequestGet({ env, request: new Request("https://socallights.app/api/admin/ads") })).json();
   assert.ok(d.rules.length > 5); assert.equal(d.campaigns.find((c) => c.audience === "families").daily_hint_cents, 667);
 });
+
+test("short ad names (ct-a, in-a...) are stored under the approved id, so they are not 'not in the launch set'; unapproved or unknown names still are", async () => {
+  const { env, raw } = mk();
+  await withNow(NOW, async () => {
+    const r = await send(env, [row({ ad_id: "ct-a" }), row({ ad_id: "in-b", campaign: "installers" }), row({ ad_id: "ct-c" }), row({ ad_id: "zz-z" })]);
+    assert.equal(r.status, 200, JSON.stringify(r.body));
+    const ids = raw.prepare("SELECT ad_id FROM ads_reports ORDER BY ad_id").all().map((x) => x.ad_id);
+    assert.deepEqual(ids, ["ct-c-meta", "ct-a-meta", "in-b-meta", "zz-z"].sort());
+    const w = r.body.warnings.filter((x) => x.code === "not_in_launch_set").map((x) => x.ad_id).sort();
+    assert.deepEqual(w, ["ct-c-meta", "zz-z"], "an approved ad's short name is fine; ct-c is a held ad and zz-z is unknown, so they still raise the alert");
+    const dup = await send(env, [row({ ad_id: "ct-a" }), row({ ad_id: "ct-a-meta" })]);
+    assert.equal(dup.status, 400); assert.match(JSON.stringify(dup.body), /appears twice/);
+  });
+});
+test("migration 0251 renames short-name reports, and deletes a stale short row when the approved id already has newer or equal numbers", () => {
+  const { raw } = mk(); const ins = raw.prepare("INSERT INTO ads_reports (ad_id, campaign, status, spend_cents, impressions, clicks, as_of, received_at) VALUES (?, 'contest_organizers', ?, ?, 10, 1, ?, '2026-11-13T17:02:00Z')");
+  ins.run("ct-a", "active", 100, "2026-11-13T09:00:00Z");                        // no ct-a-meta report yet: renamed
+  ins.run("in-a", "paused", 0, "2026-11-09T09:00:00Z"); ins.run("in-a-meta", "active", 500, "2026-11-13T09:00:00Z"); // stale short row, live numbers under the full id: deleted
+  ins.run("ev-b", "active", 900, "2026-11-14T09:00:00Z"); ins.run("ev-b-meta", "active", 100, "2026-11-13T09:00:00Z"); // the short row is NEWER: kept untouched
+  ins.run("zz-z", "active", 1, "2026-11-13T09:00:00Z");                          // not an ad of ours: untouched
+  raw.exec(readFileSync(new URL("../migrations/0251_ads_reports_use_approved_ids.sql", import.meta.url), "utf8"));
+  assert.deepEqual(raw.prepare("SELECT ad_id, spend_cents FROM ads_reports ORDER BY ad_id").all().map((x) => `${x.ad_id}:${x.spend_cents}`), ["ct-a-meta:100", "ev-b:900", "ev-b-meta:100", "in-a-meta:500", "zz-z:1"]);
+});
