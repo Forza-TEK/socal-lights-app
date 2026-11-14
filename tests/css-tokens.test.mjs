@@ -72,3 +72,9 @@ test("the top bar's empty space lets touches through to the map (pinch on the to
   const css = readFileSync("public/styles.css", "utf8");
   assert.match(css, /\.searchrow\{pointer-events:none\}\.searchrow>\*\{pointer-events:auto\}/);
 });
+
+test("the Places / heart / bag tabs (.ptab) are not part of the shared hover layer: they keep their own hover (icon darkens, no tint)", () => {
+  const css = readFileSync("public/tokens.css", "utf8");
+  assert.ok(!/[(,]\.ptab[,)]/.test(css), ".ptab must not be in tokens.css hover lists");
+  assert.match(readFileSync("public/styles.css", "utf8"), /\.ptab:hover\{color:var\(--ink\)\}/);
+});
