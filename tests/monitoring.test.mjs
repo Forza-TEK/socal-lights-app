@@ -100,7 +100,7 @@ test("/api/health before the migration: the database answers, so it is still 200
 });
 
 test("Admin home data carries the stale-job banner lines", async () => {
-  const { env, raw } = newEnv(); setAll(raw, 1);
+  const { env, raw } = newEnv(); setAll(raw, 0.25);
   assert.deepEqual((await (await dashboard({ env })).json()).staleJobs, []);
   raw.prepare("UPDATE job_heartbeats SET last_at = ? WHERE job = 'uptime'").run(hoursAgo(9));
   const d = await (await dashboard({ env })).json();
@@ -272,7 +272,7 @@ async function runDigest(env) {
 }
 
 test("digest: names the stale job with hours and cadence, the Stripe findings and the webhook problem; stays well under 50 calls", async () => {
-  const { env, raw } = newEnv(); setAll(raw, 1);
+  const { env, raw } = newEnv(); setAll(raw, 0.25);
   raw.prepare("UPDATE job_heartbeats SET last_at = ? WHERE job = 'backup'").run(hoursAgo(31));
   const s = stripeStub({ sessions: [{ data: [cs("cs_gone")], has_more: false }], intents: [{ data: [], has_more: false }] });
   try { await reconcileStep(env); } finally { s.restore(); }
@@ -288,7 +288,7 @@ test("digest: names the stale job with hours and cadence, the Stripe findings an
 });
 
 test("digest: a stalled deploy is reported with the fix; a healthy system adds no section", async () => {
-  const { env, raw } = newEnv(); setAll(raw, 1);
+  const { env, raw } = newEnv(); setAll(raw, 0.25);
   let r = await runDigest({ ...env, CF_ACCOUNT_ID: "acc", CF_ANALYTICS_TOKEN: "tok" });
   assert.doesNotMatch(r.text, /DEPLOY STALLED/);
   const real = globalThis.fetch;
@@ -313,4 +313,11 @@ test("/api/health?strict=1: 200 while every job is fresh, 503 when a job is stal
   assert.equal((await health({ request: new Request("https://x.test/api/health"), env })).status, 200, "the plain endpoint is unchanged");
   const broken = { DB: { prepare: () => ({ all: async () => { throw new Error("D1_ERROR: down"); }, first: async () => { throw new Error("D1_ERROR: down"); } }) } };
   assert.equal((await health({ request: new Request("https://x.test/api/health?strict=1"), env: broken })).status, 503, "database down is 503 either way");
+});
+
+test("the moved jobs are flagged within an hour (the Cloudflare clock runs them every 5 to 30 minutes), daily ones after 30 hours", async () => {
+  const { JOBS } = await import("../functions/_lib/heartbeat.js");
+  for (const j of ["mail-outbox", "usage-check", "deploy-watch"]) assert.ok(JOBS[j].staleH <= 1, j);
+  assert.ok(JOBS["verify-events"].staleH <= 2);
+  for (const j of ["stripe-reconcile", "sponsor-renewals", "contest-reminders"]) assert.equal(JOBS[j].staleH, 30, j);
 });

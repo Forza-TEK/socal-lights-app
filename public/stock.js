@@ -1,8 +1,13 @@
 // Openly licensed stock photos in /img/stock, several per kind of event (<key>-<n>.jpg, n counting from 1). An event shows
 // its own official photo when it has one (the `image` column); otherwise its id picks one of these for its type. All from
-// Flickr via Openverse; CC BY photos must keep their credit, which the detail page shows. To add one, save it as the next
+// Flickr via Openverse (nativity: Wikimedia Commons, CC BY-SA 4.0 or CC0); CC BY photos must keep their credit, which the detail page shows. To add one, save it as the next
 // number for its key and add its line at the end of that list.
 export const STOCK = {
+  nativity: [
+    { by: "Jiří Sedláček", lic: "CC BY-SA 4.0", src: "https://commons.wikimedia.org/wiki/File:Overview_of_christmas_nativity_scene_in_2023_at_T%C5%99eb%C3%AD%C4%8D_castle_courtyard_in_Z%C3%A1mek_street_in_T%C5%99eb%C3%AD%C4%8D,_T%C5%99eb%C3%AD%C4%8D_District.jpg" },
+    { by: "Ideefixe", lic: "CC BY-SA 4.0", src: "https://commons.wikimedia.org/wiki/File:Nativity-scene-2020-exterior-church-charenton-le-pont.jpg" },
+    { by: "Andy Li", lic: "CC0", src: "https://commons.wikimedia.org/wiki/File:Nativity_scene_in_Canterbury_Cathedral_2024-12-29.jpg" },
+  ],
   bloom: [
     { by: "janoma.cl", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/16982168@N05/4573892308" },
     { by: "Eye4Art", lic: "CC BY 2.0", src: "https://www.flickr.com/photos/14264209@N07/3126720223" },

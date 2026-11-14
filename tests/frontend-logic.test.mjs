@@ -94,6 +94,13 @@ test("Christmas has a Nativity type (Nativity & drive-thru nativity) that shows 
   const { SEASONS, TYPE_SHORT } = await import("../public/seasons.js");
   assert.match(SEASONS.christmas.types.nativity, /nativity/i); assert.match(SEASONS.christmas.types.nativity, /drive-thru/i); assert.equal(TYPE_SHORT.nativity, "Nativity");
   const { readFileSync } = await import("node:fs");
-  assert.match(readFileSync("public/app.js", "utf8"), /christmas: \{[^}]*nativity: "tree"/);
+  
   assert.match(readFileSync("migrations/0246_nativity_type.sql", "utf8"), /type = 'nativity'/);
+});
+
+test("every stock photo listed in stock.js has its file, and nativity has its own photos (with a credit each)", async () => {
+  const { STOCK } = await import("../public/stock.js"); const { existsSync } = await import("node:fs");
+  for (const [k, list] of Object.entries(STOCK)) list.forEach((p, i) => { assert.ok(existsSync(`public/img/stock/${k}-${i + 1}.jpg`), `${k}-${i + 1}.jpg exists`); assert.ok(p.by && p.lic && /^https:\/\//.test(p.src), `${k}-${i + 1} has a credit`); });
+  assert.ok(STOCK.nativity.length >= 3);
+  assert.doesNotMatch((await import("node:fs")).readFileSync("public/app.js", "utf8"), /nativity: "tree"/, "nativity no longer borrows the tree-lighting photo");
 });

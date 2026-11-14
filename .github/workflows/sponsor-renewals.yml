@@ -1,12 +1,11 @@
 name: Sponsor automatic renewals
+# Scheduled by the Cloudflare cron Worker (workers/mail-cron), not by GitHub: this workflow only runs by hand (Actions > Run workflow) as a fallback. docs/runbooks/monitoring.md.
 
 # Daily job for the optional automatic renewal of installer Sponsor placements: reminders 7 days before a charge, the charge on the last day of the running
 # placement, the one retry after 3 days. Calls the pages.dev address of the same site (socallights.app puts a bot check in front of GitHub's servers).
 # 15:17 UTC (7:17 or 8:17 in the morning Pacific). Needs the repository secret ALERT_CRON_KEY, the same value as the Cloudflare Pages secret of that name
 # (the weekly email already uses it). It is safe to run by hand from the Actions tab or twice in a day: a reminder is sent once per renewal and a charge uses an idempotency key.
 on:
-  schedule:
-    - cron: "17 15 * * *"
   workflow_dispatch:
 
 jobs:

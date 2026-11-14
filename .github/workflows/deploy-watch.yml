@@ -4,10 +4,9 @@
 # Needs the repository secret CLOUDFLARE_API_TOKEN to have "Account > Cloudflare Pages > Read" (add it once: docs/runbooks/deploy-stall.md). Without it the run ends green with a
 # notice "Deploy check not_configured": it never fails just because the permission is missing. Nothing here writes to Cloudflare.
 name: Deploy watch
+# Scheduled by the Cloudflare cron Worker (workers/mail-cron), not by GitHub: this workflow only runs by hand (Actions > Run workflow) as a fallback. docs/runbooks/monitoring.md.
 
 on:
-  schedule:
-    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 permissions:
