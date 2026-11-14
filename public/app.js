@@ -3,6 +3,7 @@ import { CITY } from "/cities.js?v=20261107a";
 import { IN_APP as NATIVE_IN_APP, nativeShare, syncReminder } from "/native.js?v=20261115a";
 import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261114n";
 import { STOCK } from "/stock.js?v=20261114a";
+import { parseVideo } from "/video.js?v=20261115a";
 import { isCityEvent, looksLikeLogoUrl, judgePicture } from "/photoguess.js?v=20261111x560"; // logo, banner and blurry pictures give way to the stock photo (city events may keep their logo)
 import { SITE } from "/site-config.js?v=20261107a";
 import "/norm-ui.js?v=20261102b";
@@ -1011,7 +1012,7 @@ function openLightbox(items, start = 0, title = "") {
 /* ---------- event details (blurb and link) load when an event is opened ---------- */
 // The event list leaves out each event's blurb (b) and link (u), about 40% of its bytes. GET /api/events/<id> has them: they are fetched when the details page (or the map card) opens, kept in memory for the visit,
 // and filled into the open page in place, so nothing jumps. The service worker keeps the answers for events you opened, so they still open with no signal; otherwise a short note and a Try again button show.
-const HEAVY = ["b", "u"], DETAIL = new Map(), DFETCH = new Map(), DERR = new Map();
+const HEAVY = ["b", "u", "vid"], DETAIL = new Map(), DFETCH = new Map(), DERR = new Map();
 const hasDetail = (ev) => "b" in ev;
 function loadDetail(ev) {
   if (hasDetail(ev)) return Promise.resolve(ev);
@@ -1051,9 +1052,21 @@ function startDetail(ev) {
   loadDetail(ev).then(() => { if (still()) showDetail(ev); }).catch(() => { if (still()) { swap("#dblurb", blurbPending(DERR.get(ev.id))); wireRetry(ev); } });
 }
 function wireRetry(ev) { const b = $("#dretry"); if (b) b.onclick = () => { DERR.delete(ev.id); swap("#dblurb", blurbPending("")); startDetail(ev); }; }
+// An event's video (YouTube or Vimeo): a button, and the player is only loaded when it is tapped, so opening a card contacts neither site.
+function videoBlock(ev) {
+  const v = ev.vid ? parseVideo(ev.vid) : null;
+  return `<div id="dvideo">${v ? `<button type="button" class="vidbtn" data-vid="${esc(v.embed)}" data-watch="${esc(v.watch)}"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span>Watch the video</span><small>${v.kind === "vimeo" ? "Vimeo" : "YouTube"}</small></button>` : ""}</div>`;
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("[data-vid]"); if (!b) return;
+  const f = document.createElement("iframe"); f.src = b.dataset.vid; f.title = "Event video"; f.loading = "lazy"; f.allow = "autoplay; picture-in-picture; fullscreen"; f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin"; f.className = "vidframe";
+  const wrap = document.createElement("div"); wrap.className = "vidwrap"; wrap.appendChild(f);
+  const a = document.createElement("a"); a.className = "vidlink"; a.href = b.dataset.watch; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Open in a new tab"; wrap.appendChild(a);
+  b.replaceWith(wrap);
+});
 // fill a just-loaded event into the open details page without redrawing it (the photo, scroll position and buttons stay as they are)
 function showDetail(ev) {
-  swap("#dblurb", `<p class="blurb" id="dblurb">${esc(ev.b)}</p>`);
+  swap("#dblurb", `<p class="blurb" id="dblurb">${esc(ev.b)}</p>`); swap("#dvideo", videoBlock(ev));
   const url = safeUrl(ev.u); swap("#dslot", infoBtn(ev, url)); swap("#dcontest", contestBtn(ev, url)); swap("#dhomes", homesBox(ev) || '<span id="dhomes"></span>');
   const phs = photosOf(ev, true), tr = $("#track"), cr = $("#hcredit"); // the photo credit names the event's site now that its link is known
   if (tr) [...tr.children].forEach((sl, i) => { const q = phs[i]; if (q) { sl.dataset.credit = q.credit || ""; sl.dataset.link = safeUrl(q.link) || ""; } });
@@ -1073,6 +1086,7 @@ function detailHtml(k) {
     <div class="tags">${noticeTag(ev)}${ev.f ? `<span class="tag feat">Featured</span>` : ""}${ev.ep ? `<span class="tag" title="This organization has an Event Partner plan on SoCal Lights. It is not an endorsement by SoCal Lights.">Event Partner</span>${ev.epv ? `<span class="tag" title="The organizer's email is at the organization's own website.">Verified email domain</span>` : ""}` : ""}<span class="tag ${ev.st === "c" ? "conf" : "exp"}">${ev.st === "c" ? "Dates confirmed" : "Expected from past years · check site"}</span><span class="tag">${esc(ev.c)} County</span></div>
     <div class="boxes"><div><span>When</span><b>${whenShort(ev)}</b></div><div><span>Hours</span><b>${esc(ev.h)}</b></div><div><span>Cost</span><b>${esc(ev.p)}</b></div></div>
     <div class="dlive" aria-live="polite">${loading ? blurbPending(derr) : `<p class="blurb" id="dblurb">${esc(ev.b)}</p>`}</div>
+    ${videoBlock(ev)}
     <dl class="facts">${ev.v || ev.a ? `<dt>Where</dt><dd>${esc(ev.v)}${ev.v && ev.a && !ev.a.startsWith(ev.v) ? "<br>" : ""}${ev.a && !ev.a.startsWith(ev.v) ? `<span class="meta">${esc(ev.a)}</span>` : ""}</dd>` : ""}<dt>Dates</dt><dd class="dates">${range(ev)}</dd>${ev.lc ? `<dt>Updated</dt><dd class="meta">${esc(fmt(ev.lc))}</dd>` : ""}</dl>
     ${mapsPicker()}
     ${ev.st !== "c" ? `<p class="meta">These dates follow last year's schedule. Check the event link before you go.</p>` : ""}

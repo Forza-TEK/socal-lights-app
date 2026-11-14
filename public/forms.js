@@ -44,7 +44,7 @@ export function eventForm(e, { cancelAttr = "data-mcancel", cities = [], seasons
     ${cities.length ? fsec("Where", "Changing the address moves the pin: it is looked up the same way as when you first added the event.", ff("City", sel("city", e.city || "", cities.map((c) => [c, c])), { c: "c3" }) + `<div class="ff c3 combo"><label>Street address<input data-k="address" data-addr value="${esc(e.address ?? "")}" maxlength="160" autocomplete="off"></label></div>`) : ""}
     ${fsec("When", "", ff("Starts", inp("start", e.start_date, 'type="date"'), { c: "c3" }) + ff("Ends", inp("end", e.end_date, 'type="date"'), { c: "c3" }) + ff("Hours", inp("hours", e.hours, 'maxlength="120" placeholder="6 to 10 pm nightly"')))}
     ${fsec("Where and price", "", ff("Venue", inp("venue", e.venue, 'maxlength="120"'), { c: "c4" }) + ff("Price (or Free)", inp("price", e.price, 'maxlength="80"'), { c: "c2" }))}
-    ${fsec("Details", "", ff("Description", `<textarea data-k="blurb" rows="4" maxlength="200">${esc(e.blurb || "")}</textarea>`) + ff("Event web page", inp("url", e.url, 'maxlength="300" type="url" placeholder="https://"')))}
+    ${fsec("Details", "", ff("Description", `<textarea data-k="blurb" rows="4" maxlength="200">${esc(e.blurb || "")}</textarea>`) + ff("Event web page", inp("url", e.url, 'maxlength="300" type="url" placeholder="https://"')) + ff("Video (optional)", inp("video", e.video, 'maxlength="300" type="url" placeholder="YouTube or Vimeo link"'), { c: "c6" }))}
     <p class="err" role="alert" hidden></p>
     <div class="mfoot sticky"><button class="btn" type="submit">Save</button><button class="btn out" type="button" ${cancelAttr}>Cancel</button></div></form>`;
 }

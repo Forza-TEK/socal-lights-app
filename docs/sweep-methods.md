@@ -36,6 +36,13 @@ Added 2026-11-11 (owner). Irvine Spectrum Nightly Tree Lighting had all its deta
 5. Set it with the same guarded UPDATE as above. The card credits the event's own site and links to its page, so the credit stays right when the image comes from the owner's sister site. Say in the migration comment which page the photo came from and why.
 6. `scripts/photo_pass.py` writes `<out>-needs-photo.tsv` (id, name, page, reason) next to its SQL: that is the list to work through with steps 2 to 5. Anything you cannot resolve goes in the report with its page address so the owner can paste the picture address from a normal browser.
 
+## 5.2 Videos
+Added 2026-11-15 (owner): an event can carry one video (`events.video`, a YouTube or Vimeo link stored in the clean form `https://www.youtube.com/watch?v=ID` / `https://vimeo.com/ID`). The card shows a "Watch the video" button and loads the player only when tapped (youtube-nocookie.com / player.vimeo.com), so opening a card contacts neither site.
+- Take a video only from a player **embedded on the event's own page** (an `<iframe>` of YouTube or Vimeo) or the organizer's own official channel linked from it. Not from search results, other people's uploads or social posts. A site-wide promo video that appears on every page of a site is not the event's video: leave it.
+- `python3 scripts/video_pass.py --out /tmp/videos.sql` reads the events' pages (honest bot name, never retried under another identity, blocked pages are skipped and counted) and writes `UPDATE events SET video='…' WHERE id='…' AND (video IS NULL OR video='');` lines. **Read the list before you publish it** (a page with one video for every event is a brand video; open one or two). Put the kept lines in a migration.
+- A page that blocks the bot (401/403/429 or a challenge) is never bypassed: the video link comes from the organizer (Your events > Edit > Video) or Admin > Events > Edit, or the owner pastes it from a normal browser.
+- Organizers and Admin can set or remove it in the edit forms; a link that is not YouTube or Vimeo is refused.
+
 ## 6. Pin audit
 For every event you add or touch, confirm the pin is on the address: geocode the address and compare with `lat/lng`; if they are more than about 300 m apart, fix the coordinates (a pin on a city center or a neighbouring place is a bug; Rey found "Santa's Arrival" 1.4 km off City Hall). The weekly upkeep also audits the map in batches.
 

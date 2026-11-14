@@ -2,6 +2,7 @@
 // POST /api/admin/events — create or update one event.
 import { json, err, clean, safeUrl, COUNTIES } from "../../../_lib/util.js";
 import { SEASONS } from "../../../../public/seasons.js";
+import { parseVideo } from "../../../../public/video.js";
 import { build } from "../../events.js";
 import { eventFloor, ptToday } from "../../../_lib/featured.js";
 export async function onRequestGet({ env }) { const b = await build(env, true, true, true); return new Response(b.body, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", etag: b.tag } }); }
@@ -20,6 +21,9 @@ export async function onRequestPost({ request, env }) {
     venue: clean(b.venue, 120), address: clean(b.address, 200),
   };
   if (!e.name || !e.city) return err(400, "Name and city are required.");
+  // video: only touched when the editor sends it (an empty value removes it)
+  const vidIn = b.video === undefined ? undefined : clean(b.video, 300), vid = vidIn ? parseVideo(vidIn) : null;
+  if (vidIn && !vid) return err(400, "That video link isn't a YouTube or Vimeo address.");
   if (!COUNTIES.includes(e.county)) return err(400, "Choose one of the seven counties.");
   if (!SEASONS[e.season].types[e.type]) return err(400, "Choose an event type that fits the season.");
   if (!isDate(e.start) || !isDate(e.end) || e.end < e.start) return err(400, "Check the start and end dates.");
@@ -53,7 +57,7 @@ export async function onRequestPost({ request, env }) {
        price=excluded.price, hours=excluded.hours, lat=excluded.lat, lng=excluded.lng, blurb=excluded.blurb,
        url=excluded.url, season=excluded.season, updated_at=datetime('now')`
   ).bind(e.id, e.name, e.county, e.city, e.type, e.start, e.end, e.status, e.free, e.price, e.hours, e.lat, e.lng, e.blurb, e.url, e.season).run();
-  try { await withVenue(); if (place) await env.DB.prepare("UPDATE events SET featured=?, featured_until=?, banner_until=? WHERE id=?").bind(place.lvl, place.fu, place.bu, e.id).run(); }
+  try { await withVenue(); if (vidIn !== undefined) await env.DB.prepare("UPDATE events SET video = ? WHERE id = ?").bind(vid ? vid.watch : "", e.id).run(); if (place) await env.DB.prepare("UPDATE events SET featured=?, featured_until=?, banner_until=? WHERE id=?").bind(place.lvl, place.fu, place.bu, e.id).run(); }
   catch (x) { if (/no column named|no such column/i.test(String(x && x.message))) await withoutVenue(); else throw x; }
   return json({ ok: true, id: e.id });
 }
