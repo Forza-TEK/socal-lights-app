@@ -15,6 +15,7 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 - Reviewer demo login: `appreview@socallights.app` plus the six-digit Pages secret `APP_REVIEW_CODE` (off when unset or not six digits). Runs through the normal `login_codes` path, so all sign-in limits apply; no mail; the code works only for that address; not admin. Owner step: set the secret and paste the login into App Store Connect (`docs/app-store.md`).
 - Native: `public/native.js` sends every Share button to the native share sheet inside the app; saving an event calls a reminder hook that needs `@capacitor/local-notifications`, NOT installed yet (needs `npm install` in `app/` with the lock file, `cap sync`, a device test; steps in `docs/app-store.md`). `app.js` `?v=20261115a`, `tour.js` `?v=20261115a`, new `native.js` `?v=20261115a`.
 - Screenshots (superseded 2026-11-14: now 1206x2622 and 1179x2556) in `docs/app-store-screenshots/`. The store text now says sign in to create a listing or enter a contest.
+- 2026-11-14: owner set the `APP_REVIEW_CODE` Pages secret; this commit redeploys the site so it takes effect. Still to check by hand: sign in as `appreview@socallights.app` on the live site (Turnstile blocks automated checks).
 - Not verified: anything on a device or in Xcode, the share sheet and reminders in the real app, the demo login on the live site.
 
 ## 2026-11-13 (videos and Help for Your events and event photos)
