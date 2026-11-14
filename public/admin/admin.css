@@ -353,14 +353,6 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 }
 .tsort{min-height:44px}
 @media (prefers-reduced-motion:reduce){#main .cards>.acard.rec>.rh::after{transition:none}}
-/* Hover colors (mouse only): same scheme as the public site, see tokens.css */
-@media all{
-  body.admin{--hov:color-mix(in srgb,var(--season) 7%,var(--surface));--hov-fill:color-mix(in srgb,var(--season) 82%,var(--surface))}
-  body.admin :is(.tbtn,.xbtn,.pnav,.btn.ghost,.tabs button,.seg button):not(:disabled):hover{background:var(--hov)!important;color:var(--ink)!important}
-  body.admin .btn:not(.ghost):not(.danger):not(.armed):not(.danger-solid):not(:disabled):hover{background:var(--hov-fill)!important;color:#fff!important;filter:none!important}
-  body.admin :is(input,select,textarea):not(:disabled):not(:focus):not([type=checkbox]):not([type=radio]):hover{border-color:var(--season)!important;background:color-mix(in srgb,var(--season) 4%,var(--surface))}
-  body.admin :is(.btn.danger,.btn.danger-solid):not(:disabled):hover{filter:brightness(1.12)}
-}
 /* Users list: the counts are the point of the row, so they are big chips, not small grey text */
 .ucounts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .ucount{display:inline-flex;align-items:baseline;gap:7px;padding:6px 14px;border:1px solid var(--line2);border-radius:999px;background:var(--surface-2);color:var(--ink)}
@@ -369,6 +361,5 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .ucount.zero{border-color:var(--line);background:transparent}.ucount.zero b{color:var(--muted);font-weight:500}
 /* the count chips are buttons: they open the person's profile at that section */
 button.ucount{font:inherit;cursor:pointer;-webkit-appearance:none;appearance:none}
-button.ucount:hover{border-color:var(--season);background:color-mix(in srgb,var(--season) 7%,var(--surface-2))}
 button.ucount:focus-visible{outline:2px solid var(--season);outline-offset:2px}
 #ps-votes:focus,.psec:focus{outline:none}

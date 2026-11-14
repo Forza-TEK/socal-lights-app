@@ -55,12 +55,6 @@ test("the text-field border token passes 3:1 against the page and card colors", 
   assert.ok(ratio(dark, "#161a22") >= 3 && ratio(dark, "#0b0d12") >= 3, "dark --field on the card and page colors");
 });
 
-test("every page loads one hover layer and its asset versions match", () => {
-  const css = readFileSync("public/tokens.css", "utf8");
-  assert.doesNotMatch(css, /@media \(hover:hover\)/, "hover rules must not depend on the hover media feature (it is false on some Edge setups)");
-  for (const sel of [".iconbtn", "#addbtn", ".seasonbtn", ".bnav button", ".btn:not(.ghost)", ".maplibregl-ctrl-group button"]) assert.ok(css.includes(sel), sel + " has a hover color");
-});
-
 test("a /#e-<id> link to an event the cached list does not have yet fetches it and zooms to it", () => {
   const js = readFileSync("public/app.js", "utf8");
   assert.match(js, /fetch\("\/api\/events\/" \+ encodeURIComponent\(dl\[2\]\)\)/);
@@ -73,8 +67,10 @@ test("the top bar's empty space lets touches through to the map (pinch on the to
   assert.match(css, /\.searchrow\{pointer-events:none\}\.searchrow>\*\{pointer-events:auto\}/);
 });
 
-test("the Places / heart / bag tabs (.ptab) are not part of the shared hover layer: they keep their own hover (icon darkens, no tint)", () => {
-  const css = readFileSync("public/tokens.css", "utf8");
-  assert.ok(!/[(,]\.ptab[,)]/.test(css), ".ptab must not be in tokens.css hover lists");
-  assert.match(readFileSync("public/styles.css", "utf8"), /\.ptab:hover\{color:var\(--ink\)\}/);
+test("there is no shared hover layer: buttons keep the hover each one's own stylesheet gives it (owner, 2026-11-15: no tinted hover colors)", () => {
+  const tokens = readFileSync("public/tokens.css", "utf8"), admin = readFileSync("public/admin/admin.css", "utf8");
+  assert.doesNotMatch(tokens, /:hover[^}]*!important/, "tokens.css has no important hover override"); assert.equal((tokens.match(/:hover/g) || []).length, 1, "only the map-link hover that was always there");
+  assert.doesNotMatch(tokens + admin, /--hov\b|--hov-fill/, "no shared hover color variables");
+  assert.doesNotMatch(admin, /@media all\{[^}]*:hover[^}]*!important/s, "no important hover override in admin.css");
+  assert.match(readFileSync("public/styles.css", "utf8"), /\.ptab:hover\{color:var\(--ink\)\}/, "the tabs keep their own hover");
 });

@@ -85,7 +85,7 @@ export function rowToEvent(r) {
     id: r.id, n: r.name, c: r.county, city: r.city, t: r.type, s: r.start_date, e: r.end_date,
     st: r.status === "confirmed" ? "c" : "e", free: !!r.free, p: r.price || "", h: r.hours || "",
     lat: r.lat, lng: r.lng, b: r.blurb || "", u: r.url || "", sn: r.season || "christmas",
-    v: r.venue || "", a: r.address || "", ...ownerImages(r),
+    v: r.venue || "", a: r.address || "", ...ownerImages(r), ...(r.video ? { vid: r.video } : {}),
     f: featuredLevel(r), nt: r.notice || "", lc: String(r.updated_at || "").slice(0, 10),
     ...(r.partner_until && r.partner_until >= ptToday() ? { ep: 1, ...(r.partner_verified ? { epv: 1 } : {}) } : {}), // Event Partner badge (partner.js); epv: the organization is a website domain matched by its organizer's email
   };
@@ -93,7 +93,7 @@ export function rowToEvent(r) {
 
 // The public list leaves out the fields only the event's detail view reads (the blurb "b" and the link "u": about 40% of the list's bytes).
 // GET /api/events/<id> returns the whole object. Everything else the list needs stays: search matches name, city, county and address; routes and directions use address and venue; cards use hours, price and the photo.
-export const DETAIL_ONLY = ["b", "u"];
+export const DETAIL_ONLY = ["b", "u", "vid"];
 // The map's "Contests" type filter also matches a contest or competition named in the blurb, so the list carries that answer as ct: 1 instead of the blurb. Same pattern as public/app.js.
 export const CONTEST_RE = /\b(contests?|competitions?)\b/i;
 export function rowToListEvent(r) {

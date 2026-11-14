@@ -1,7 +1,7 @@
 // POST   /api/me/events/<submission id> { action: "edit" | "notice" | "copy" | "removephoto" | "coverphoto" } — the person who submitted an event manages it.
 // POST   /api/me/events/<submission id> as multipart form data with "photos" — adds up to 4 photos of the event (see _lib/eventphotos.js).
 // DELETE /api/me/events/<submission id> — removes the event from the map and the list (only the person who added it).
-//   edit   : name, hours, price, free, blurb, url, venue, start, end
+//   edit   : name, hours, price, free, blurb, url, venue, start, end, video (a YouTube or Vimeo link)
 //   notice : "cancelled" | "postponed" | "" shows a tag on the event
 //   copy   : "Run again next year": a new event with every date moved forward a year, marked Expected (the owner's photos are not copied)
 //   removephoto / coverphoto { key } : remove one of the owner's photos, or make it the cover (the first one)
@@ -11,6 +11,7 @@ import { SEASONS } from "../../../../public/seasons.js";
 import { BAD } from "../../../_lib/moderation.js";
 import { requireUser, sameOrigin, normEmail } from "../../../_lib/auth.js";
 import { isDate, slug, upsertEvent, verifyEventPage } from "../../../_lib/events.js";
+import { parseVideo } from "../../../../public/video.js";
 import { refundDueStatements } from "../../../_lib/orders.js";
 import { normName, line } from "../../../_lib/fields.js";
 import { addEventPhotos, removeEventPhoto, coverEventPhoto, ownerKeys } from "../../../_lib/eventphotos.js";
@@ -60,6 +61,9 @@ export async function onRequestPost({ params, request, env }) {
     const name = normName(clean(b.name ?? s.name, 120)), blurb = line(b.blurb ?? s.blurb, 200), venue = normName(clean(b.venue ?? s.venue, 120));
     const start = clean(b.start ?? s.start_date, 10), end = clean(b.end ?? s.end_date, 10), hours = line(b.hours ?? s.hours, 120);
     const free = b.free === undefined ? s.free : b.free ? 1 : 0, price = line(b.price ?? s.price, 80) || (free ? "Free" : "Price not listed");
+    // optional video: a YouTube or Vimeo link, stored in its clean form; an empty value removes it
+    const vidIn = b.video === undefined ? undefined : clean(b.video, 300), vid = vidIn ? parseVideo(vidIn) : null;
+    if (vidIn && !vid) return err(400, "That video link isn't a YouTube or Vimeo address. Paste the link from the video's Share button.");
     const urlRaw = clean(b.url ?? s.url, 300), url = urlRaw ? webUrl(urlRaw) : "";
     if (name.length < 4) return err(400, "Enter the event's name.");
     if (blurb.length < 20) return err(400, "Add a one- or two-sentence description (at least 20 characters).");
@@ -85,6 +89,7 @@ export async function onRequestPost({ params, request, env }) {
     if (url !== (s.url || "") || name !== s.name || start !== s.start_date) { const ck = url ? await verifyEventPage(url, name, start) : { ok: false }; status = "confirmed"; verified = ck.ok ? 1 : 0; } // the organizer states the dates, so the event stays confirmed; `verified` only records that its page matched
     await env.DB.prepare("UPDATE event_submissions SET name=?, blurb=?, venue=?, start_date=?, end_date=?, hours=?, free=?, price=?, url=?, season=?, type=?, city=?, address=?, lat=?, lng=?, county=?, verified=? WHERE id=?").bind(name, blurb, venue, start, end, hours, free, price, url, season, type, city, address, lat, lng, county, verified, s.id).run();
     if (live) await upsertEvent(env, { id: s.event_id, name, county, city, type, start_date: start, end_date: end, status, free, price, hours, lat, lng, blurb, url, season, venue, address });
+    if (live && vidIn !== undefined) await env.DB.prepare("UPDATE events SET video = ? WHERE id = ?").bind(vid ? vid.watch : "", s.event_id).run();
     return json({ ok: true, ...(located === undefined ? {} : { located }) });
   }
   if (b.action === "copy") {
