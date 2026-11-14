@@ -950,9 +950,9 @@ async function renderDashboard() {
     ${d.limits && d.limits.length ? `<button type="button" class="limitbanner" data-tab="usage"><b>A Cloudflare or email limit was hit at ${esc(String(d.limits[0].at).slice(0, 16))} UTC.</b><span>${esc(String(d.limits[0].detail).slice(0, 140))} Open Cloudflare usage to see which one and what to do.</span></button>` : ""}
     <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l]) => `<button type="button" class="tcard" data-tab="${k}"><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>` : `<div class="calm">${dico("check", "okic")}<div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests or reports are waiting.</p></div></div>`}</section>
     <h2 class="dh">Today</h2>
-    <div class="stats">${tile("h", d.today.homes, "new houses")}${tile("e", d.today.events, "events submitted")}${tile("c", d.today.entries, "contest entries")}${tile("l", d.people.litToday, "lights switched on")}</div>
+    <div class="stats">${tile("h", d.today.homes, "new houses")}${tile("e", d.today.events, "events submitted")}${tile("c", d.today.entries, "new contest entries")}${tile("l", d.people.litToday, "lights switched on")}</div>
     <h2 class="dh">On the site now</h2>
-    <div class="stats">${tile("h", d.live.homes, "published houses")}${tile("e", d.live.events, "map events", `${fmt(d.live.eventsConfirmed)} confirmed · ${fmt(d.live.eventsExpected)} expected`)}${tile("c", d.live.contests, "contests running")}${tile("i", d.live.installers, "installers")}</div>
+    <div class="stats">${tile("h", d.live.homes, "published houses")}${tile("e", d.live.events, "map events", `${fmt(d.live.eventsConfirmed)} confirmed · ${fmt(d.live.eventsExpected)} expected`)}${tile("c", d.live.contests, "contests running")}${tile("c", d.live.entries || 0, "contest entries", "in the contests running now")}${tile("i", d.live.installers, "installers")}</div>
     ${healthCard(d.health)}
     ${revenueStrip(d.revenue, true)}
     <div class="dcols">
