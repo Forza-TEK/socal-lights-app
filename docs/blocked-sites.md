@@ -47,3 +47,5 @@ Added 2026-11-01 (group 17 sweep): montclairca.gov (WebFetch 403; cityofmontclai
 Added 2026-11-08 (group 14 sweep): rivcodistrict2.org (WebFetch 403), norco.ca.us event pages (403 via curl and WebFetch), cityofperris.org Calendar/Event pages and eastvaleca.gov showpublisheddocument (403), cpo.soar.com (not reachable from the sweep session).
 
 Added 2026-11-13 (group 7 sweep): cityoflancasterca.org (WebFetch 403), scvnews.com (WebFetch 403). visitlancastercity.com pages from search 404.
+
+Added 2026-11-14 (venue pass): exploretock.com (Tock event pages for wineries such as BOTTAIA and Malibu Wines: Cloudflare challenge, 403; use temeculawines.org event pages instead), bottaiawinery.com (403). Not reachable from the session: orfilawines.com (Escondido, igloo village; no response), so Orfila December events are not on the map. WebFetch could not resolve most hosts that day; curl with the honest SoCalLightsBot agent loaded the rest.
