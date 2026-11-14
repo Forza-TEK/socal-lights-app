@@ -32,9 +32,8 @@ jobs:
         run: |
           xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -destination 'generic/platform=iOS' \
             -archivePath $RUNNER_TEMP/App.xcarchive archive \
-            DEVELOPMENT_TEAM=$TEAM_ID CURRENT_PROJECT_VERSION=${{ inputs.build_number }} MARKETING_VERSION=1.0 CODE_SIGN_STYLE=Automatic \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8 -authenticationKeyID $KEY_ID -authenticationKeyIssuerID $ISSUER_ID
+            DEVELOPMENT_TEAM=$TEAM_ID CURRENT_PROJECT_VERSION=${{ inputs.build_number }} MARKETING_VERSION=1.0 \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
       - name: Export and upload to App Store Connect
         working-directory: app/ios/App
         run: |
