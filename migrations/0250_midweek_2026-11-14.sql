@@ -1,0 +1,2 @@
+-- Midweek upkeep 2026-11-14. Source: https://www.magicoflights.com/coachella-valley (2026 season page: Nov 20 2026 - Jan 2 2027, Sun-Thu 5:30-9pm, Fri-Sat 5:30-10pm, per vehicle $26.99 November-only, $29.99 Santa Saver, $89.99 season pass).
+UPDATE events SET url='https://www.magicoflights.com/coachella-valley', status='confirmed', end_date='2027-01-02', hours='Sun–Thu 5:30pm–9pm, Fri–Sat 5:30pm–10pm', price='From $26.99 per vehicle', updated_at=datetime('now') WHERE id='mol';
