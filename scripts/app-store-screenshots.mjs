@@ -1,5 +1,5 @@
 // Regenerates the six App Store iPhone screenshots from the live site.
-// Usage: node scripts/app-store-screenshots.mjs [--only=1,3] [--sizes=1206x2622,1179x2556] [--out=docs/app-store-screenshots] [--site=https://socallights.app]
+// Usage: node scripts/app-store-screenshots.mjs [--only=1,3] [--sizes=1206x2622,1179x2556,2064x2752] [--out=docs/app-store-screenshots] [--site=https://socallights.app]
 // Needs Playwright (require('playwright')) with a Chromium build. Does not use the SoCalLightsApp user agent.
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
@@ -10,9 +10,10 @@ const arg = (k, d) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || "").
 const SITE = arg("site", "https://socallights.app");
 const OUT = arg("out", "docs/app-store-screenshots");
 const ONLY = arg("only", "1,2,3,4,5,6").split(",").map(Number);
-const SIZES = { "1206x2622": [402, 874], "1179x2556": [393, 852] };
+const SIZES = { "1206x2622": [402, 874, 3], "1179x2556": [393, 852, 3], "2064x2752": [1032, 1376, 2] }; // [CSS width, CSS height, deviceScaleFactor]
 const WANT = arg("sizes", Object.keys(SIZES).join(",")).split(",");
 const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+const IPAD_UA = "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
 const FAVS = ["disney", "knotts", "coc-irvine-spectrum-ice-rink", "tanaka"]; // four Orange County stops, all businesses/venues
 const INSTALLER_ID = "377c55677a574f02"; // Lights Up Today (installer listing, business address)
 
@@ -37,9 +38,10 @@ async function pickSuggestion(p, text, sel) {
 }
 
 for (const size of WANT) {
-  const [w, h] = SIZES[size];
+  const [w, h, dsf] = SIZES[size];
+  const ipad = w > 700;
   const ctx = await browser.newContext({
-    viewport: { width: w, height: h }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, userAgent: UA, locale: "en-US",
+    viewport: { width: w, height: h }, deviceScaleFactor: dsf, isMobile: true, hasTouch: true, userAgent: ipad ? IPAD_UA : UA, locale: "en-US",
     geolocation: { latitude: 34.1478, longitude: -118.1445 }, permissions: ["geolocation"],
   });
   const open = async (hash = "", favs = []) => {
@@ -65,11 +67,13 @@ for (const size of WANT) {
     await mapReady(p);
     await p.click("#back"); // leave the full detail: the map keeps the pin selected and shows its card
     await settle(p, 1500);
-    await p.click("#grab"); // collapse the list so the map shows
+    if (!ipad) await p.click("#grab"); // phone: collapse the list so the map shows (iPad: the side panel stays beside the map)
     await settle(p, 2500);
     // tap the selected pin (the map centres on it) like a finger would; try a few heights around the middle of the visible map
+    // iPad: the map is the area left of the side panel, so the pin sits near the middle of that area
+    const mapW = ipad ? await p.evaluate(() => Math.round(document.querySelector("#panel").getBoundingClientRect().left)) : w;
     for (const y of [407, 395, 419, 383, 431, 371, 443, 359, 455].map((v) => Math.round(v * h / 874))) {
-      await p.touchscreen.tap(Math.round(w / 2), y);
+      await p.touchscreen.tap(Math.round(mapW / 2), y);
       await settle(p, 1200);
       if (await p.evaluate(() => { const e = document.querySelector("#preview"); return !!e && !e.hidden && e.offsetHeight > 0; })) break;
     }
@@ -81,7 +85,8 @@ for (const size of WANT) {
     await mapReady(p);
     await pickSuggestion(p, "Pasadena", "[data-sc]");
     await mapReady(p);
-    await p.click("#grab");
+    if (!ipad) await p.click("#grab");
+    else await p.evaluate(() => { const b = document.querySelector("#pbody"); b.scrollTop = 625; }); // iPad: the list is already open in the side panel; scroll it so this shot shows other cards than shot 1
     await settle(p);
     await shot(p, 3, "places-list");
   }
@@ -95,13 +100,17 @@ for (const size of WANT) {
   if (ONLY.includes(5)) { // Favorites with a 4-stop route
     const p = await open("", FAVS);
     await mapReady(p);
-    await p.click('#bnav [data-tab="plan"]');
+    await p.click(ipad ? "#t-plan" : '#bnav [data-tab="plan"]'); // iPad shows the tabs in the side panel, not the phone tab bar
     await settle(p, 4000);
     await shot(p, 5, "favorites-route");
   }
   if (ONLY.includes(6)) { // installer listing with photos
     const p = await open("#m-" + INSTALLER_ID);
     await mapReady(p);
+    // iPad: the hash opens the map card plus the list card. The full listing (and its house number) is not shown, and the map is zoomed out
+    // three steps so the pin is not at street level: the listing is a Home display and its street address is not meant for store art.
+    if (ipad) for (let i = 0; i < 3; i++) { await p.click(".maplibregl-ctrl-zoom-out"); await settle(p, 1200); }
+    if (ipad) await mapReady(p);
     await shot(p, 6, "home-photos");
   }
   await ctx.close();

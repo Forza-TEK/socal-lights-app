@@ -1,5 +1,9 @@
 # Status
 
+## 2026-11-14 (iPad 13" App Store screenshots, branch `ipad-screenshots`)
+- App Store Connect now also requires 13-inch iPad screenshots. `scripts/app-store-screenshots.mjs` has a third size `2064x2752` (viewport 1032x1376, scale 2, iPad user agent with touch) and the same six shots were generated into `docs/app-store-screenshots/N-name-2064x2752.png` (pixel size checked by script; every PNG opened and checked). Upload on the "iPad 13\" display" tab. Details in `docs/app-store.md`.
+- Shot 6 deliberately does not open the full Lights Up Today listing: it prints "835 Loma Vista Street", which looks like a house address, not a business one. The existing iPhone shot 6 PNGs were not rechecked for this; look at them before submitting and ask the owner whether that address is OK to show.
+
 ## 2026-11-14 (App Store screenshots at the accepted sizes, branch `app-store-screenshots`)
 - App Store Connect only accepts 1206x2622 (6.3") and 1179x2556 (6.1") for iPhone, so the old 1320x2868 and 1284x2778 PNGs were deleted and the six shots regenerated at both new sizes by `scripts/app-store-screenshots.mjs` (rerunnable; usage in `docs/app-store.md`). Each PNG was opened and checked (no overlay, tiles loaded, no personal data; the installer listing is Lights Up Today). The assistant button is hidden in the shots because it covered the Filters button. Total about 12.4 MiB, optimized losslessly.
 
