@@ -10,6 +10,7 @@ For **every city** in its group, a helper checks, one by one:
 - community centers, libraries, malls and shopping centers, churches only for large public events
 - local farms, zoos, museums, theaters, colleges, HOA/master-planned community events that are open to the public
 - local news and family sites (Patch, local papers, mommypoppins, macaronikid, enjoyorangecounty, lajollamom, Time Out, LAist)
+- **wineries, breweries, taprooms and distilleries** (venue pass, see [city-sweep.md](city-sweep.md): holiday lights, tree lightings, Santa, markets, New Year's Eve, Halloween; searches like "<city> winery holiday", "<city> brewery tree lighting")
 - **home decorating contests** (Halloween, Christmas, holiday): city, HOA, chamber, newspaper, radio and service-club contests that publish entered or winning homes with addresses (see the contest section in [city-sweep.md](city-sweep.md))
 
 A helper always reports the cities where it found nothing, so gaps are visible instead of silent.

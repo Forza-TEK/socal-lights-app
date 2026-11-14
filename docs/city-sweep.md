@@ -42,6 +42,16 @@ Homes entered in decorating contests are the most-requested thing people look fo
 - **Christmas/holiday contests are part of every Nov-Dec run**: also re-check the dated list in [contest-leads.md](contest-leads.md) (entries and winner maps appear in December after judging) and add newly published homes
 - report in the final message which cities had contests, how many homes were added per contest, and the contest pages that had no addresses
 
+## Venue pass: wineries, breweries, taprooms, distilleries (every sweep, every city)
+Added 2026-11-14 (owner approved). Every city sweep also checks these venue types for the cities of its group, in every season it covers (holiday lights, tree lightings, Santa visits, holiday markets hosted at the venue, ugly-sweater and Christmas movie nights, igloo dining, ice rinks, Thanksgiving and New Year's Eve parties, Halloween events while they apply, nativity).
+- Search per city (or per wine region for rural groups: Temecula, Ramona, Santa Ynez Valley, Agua Dulce, Cucamonga, Julian): `"<city> winery holiday"`, `"<city> brewery tree lighting"`, `"<city> brewery Christmas"`, `"<city> taproom holiday market"`, `"<city> distillery holiday"`, `"<city> winery New Year's Eve"`, and in season `"<city> brewery Halloween"`.
+- Read the venue's own events page and the regional association calendar: Temecula Valley Winegrowers (`temeculawines.org/events`, each event has its own page), Ramona Valley Vineyard Association, Santa Ynez Valley and Los Olivos tasting-room pages, brewery sites (Stone, Beachwood, Firestone Walker, Pocock, Pure Project and local taprooms). Facebook event pages only when public; Eventbrite pages that load.
+- Add only dated public events with a seasonal angle. Skip ordinary happy hours, trivia, live-music nights, wine-club pickups, private or members-only events, and promotions with no event time. Market, class and party events count when they are explicitly holiday-themed.
+- Types are the season's existing types (`tree` for tree lightings and holiday markets, `walk` for lit walk-throughs, `show` for movie nights and parties, `nye` for New Year's Eve). Do not invent a type.
+- Dedupe against `/api/events` by venue and date (a winery's tree lighting is often already on the map from a city roundup; update that row instead of adding a second one).
+- Tock (`exploretock.com`) and some winery sites answer with a Cloudflare challenge (403): do not retry or bypass; use the regional association page, and list the host in [blocked-sites.md](blocked-sites.md).
+- Report which venue cities had nothing, as for the rest of the sweep. First run: migration 0251 (`vp-` ids).
+
 ## When you think you are done
 Re-check each city once more with the library calendar and the parks & recreation calendar specifically. If a city in the group has **no** event for the current season, say so in the report and search for it again by name ("<city> library Halloween 2026", "<city> parks and recreation events October 2026") before giving up. Cities of 50,000+ people almost always have something.
 

@@ -12,7 +12,7 @@ Last updated 2026-11-07. This is the one page that says where SoCal Lights work 
 | Task | When (Pacific) | Needs work computer? | Job |
 |---|---|---|---|
 | (GitHub Actions, not a scheduled task) Send queued emails | hourly (`mail-outbox.yml`) | No | Sends contest results and voting reminders waiting in `mail_outbox`, retries failures (`/api/mail/drain`, key `ALERT_CRON_KEY`) |
-| [SCL] City sweep | 4:13, 12:13, 20:13 daily | No | One city group per run: new events, contest homes, photos |
+| [SCL] City sweep | 4:13, 12:13, 20:13 daily | No | One city group per run: new events, contest homes, venue pass (wineries, breweries, taprooms, distilleries; "<city> winery holiday", "<city> brewery tree lighting"), photos |
 | [SCL] Weekly upkeep | Mondays 6:47 | No | Confirm dates, fix details, remove dupes, season roll-overs |
 | [SCL] Midweek upkeep (Nov-Dec) | Wed + Sat 6:52, Nov-Dec | No | Date confirmation, contest homes, photos |
 | [SCL] Monthly photo refresh | 1st of month 2:37 | No | New photos, replace dead ones |
