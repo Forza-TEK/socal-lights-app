@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-14 (App Store screenshots at the accepted sizes, branch `app-store-screenshots`)
+- App Store Connect only accepts 1206x2622 (6.3") and 1179x2556 (6.1") for iPhone, so the old 1320x2868 and 1284x2778 PNGs were deleted and the six shots regenerated at both new sizes by `scripts/app-store-screenshots.mjs` (rerunnable; usage in `docs/app-store.md`). Each PNG was opened and checked (no overlay, tiles loaded, no personal data; the installer listing is Lights Up Today). The assistant button is hidden in the shots because it covered the Filters button. Total about 12.4 MiB, optimized losslessly.
+
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
 ## 2026-11-14 (venue pass: wineries, breweries, taprooms, distilleries; branch `venue-sweep`)
@@ -11,7 +14,7 @@ _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial vid
 - Checked first: "Continue with Google" was already hidden in the app (`public/auth.js`), and in-app account deletion already existed (Profile > Account > Delete my account, `DELETE /api/me`, described in `public/privacy.html`); neither needed code, both now have tests (`tests/appstore.test.mjs`), including that a Google sign-in and an emailed code for the same address (case, +tag, Gmail dots) are one account in either order.
 - Reviewer demo login: `appreview@socallights.app` plus the six-digit Pages secret `APP_REVIEW_CODE` (off when unset or not six digits). Runs through the normal `login_codes` path, so all sign-in limits apply; no mail; the code works only for that address; not admin. Owner step: set the secret and paste the login into App Store Connect (`docs/app-store.md`).
 - Native: `public/native.js` sends every Share button to the native share sheet inside the app; saving an event calls a reminder hook that needs `@capacitor/local-notifications`, NOT installed yet (needs `npm install` in `app/` with the lock file, `cap sync`, a device test; steps in `docs/app-store.md`). `app.js` `?v=20261115a`, `tour.js` `?v=20261115a`, new `native.js` `?v=20261115a`.
-- Screenshots (iPhone 1320x2868 and 1284x2778) in `docs/app-store-screenshots/`. The store text now says sign in to create a listing or enter a contest.
+- Screenshots (superseded 2026-11-14: now 1206x2622 and 1179x2556) in `docs/app-store-screenshots/`. The store text now says sign in to create a listing or enter a contest.
 - Not verified: anything on a device or in Xcode, the share sheet and reminders in the real app, the demo login on the live site.
 
 ## 2026-11-13 (videos and Help for Your events and event photos)
