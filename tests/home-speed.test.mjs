@@ -95,7 +95,7 @@ test("asset budget: what the home page needs before the first screen stays small
   const size = (p) => statSync("public/" + p.replace(/\?.*/, "")).size;
   const first = ["styles.css", "routes.css", "app.js", "cities.js", "seasons.js", "stock.js", "site-config.js", "norm-ui.js", "norm.js", "tour.js", "maps.js", "banner.js", "auth.js", "chrome.js", "fonts/plus-jakarta-sans-latin.woff2", "img/badge-120.webp"];
   const total = first.reduce((n, f) => n + size(f), 0);
-  assert.ok(total < 435_000, `first-screen files ${total} bytes (budget 435000; 420 KB when this test was written)`);
+  assert.ok(total < 437_000, `first-screen files ${total} bytes (budget 437000, raised from 435000 for the native share hook; 420 KB when this test was written)`);
   assert.ok(size("img/badge-120.webp") < 8_000, "the header badge is a small copy, not the 160 px original");
   assert.ok(html.includes('src="/img/badge-120.webp" width="44"'));
   assert.ok(size("app.js") < 200_000, "app.js stays under 200 KB");

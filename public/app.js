@@ -1,5 +1,6 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js?v=20261107a";
+import { IN_APP as NATIVE_IN_APP, nativeShare, syncReminder } from "/native.js?v=20261115a";
 import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261114n";
 import { STOCK } from "/stock.js?v=20261114a";
 import { isCityEvent, looksLikeLogoUrl, judgePicture } from "/photoguess.js?v=20261111x560"; // logo, banner and blurry pictures give way to the stock photo (city events may keep their logo)
@@ -8,7 +9,7 @@ import "/norm-ui.js?v=20261102b";
 import { me as authMe } from "/auth.js?v=20261111z";
 import "/chrome.js?v=20261113a"; // the account circle opens the same menu as on every other page
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
-import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261111d";
+import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261115a";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261111a";
 import { contestImage } from "/contesticon.js?v=20261111a";
 import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261111y1";
@@ -53,7 +54,7 @@ function destOf(ev) {
 }
 // Which maps app opens for directions: Apple Maps by default on iPhone/iPad, Google Maps elsewhere; the choice is remembered.
 // The store apps add "SoCalLightsApp" to the browser string. Payments for tips and Featured placements are left out there (Apple and Google want in-app purchase for digital goods).
-const IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
+const IN_APP = NATIVE_IN_APP;
 // Counts a tap on a tracked link or button: one number per kind per day on the server, no IP, cookie or account (see functions/api/visit.js).
 const tick = (k) => { try { if (navigator.webdriver) return; const body = JSON.stringify({ k }); if (!(navigator.sendBeacon && navigator.sendBeacon("/api/visit", new Blob([body], { type: "application/json" })))) fetch("/api/visit", { method: "POST", headers: { "content-type": "application/json" }, body, keepalive: true }); } catch {} };
 // Show a place on the map the way tapping its dot does: zoom to it and open its card on the map. The map library loads a moment after the list, so wait for it.
@@ -183,6 +184,8 @@ document.addEventListener("click", (e) => {
 let E = [], SHOW = [], CONFIG = {};
 const state = { vis: new Set(), season: defaultSeason(TODAY), all: false, q: "", date: "", weekend: false, city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
+// Inside the app, saving an event sets a reminder for its first day and un-saving removes it (no-op in a browser or until the app build has the plugin; see native.js)
+const remind = (id, on) => { if (NATIVE_IN_APP && !String(id).startsWith("h:")) { const ev = E.find((e) => e.id === id); if (ev) syncReminder(ev, on); } };
 const hfav = (p) => "h:" + p.id; // houses are starred as "h:<id>"; events by their plain id
 const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify([...favs])); } catch {} };
 
@@ -478,7 +481,7 @@ function renderPreview() {
     }
     if (e.target.closest(".x")) { closePin(); return; }
     if (e.target.closest("[data-pvshare]")) { shareItem(k); return; }
-    if (e.target.closest("[data-pvfav]")) { const id = it.kind === "ev" ? it.ev.id : hfav(it.p); favs.has(id) ? favs.delete(id) : favs.add(id); saveFavs(); renderPanel(); drawMap(); renderPreview(); return; }
+    if (e.target.closest("[data-pvfav]")) { const id = it.kind === "ev" ? it.ev.id : hfav(it.p); favs.has(id) ? favs.delete(id) : favs.add(id); remind(id, favs.has(id)); saveFavs(); renderPanel(); drawMap(); renderPreview(); return; }
     openDetail(k);
   };
   updateRoutePill(); if (isPhone()) followRoutePill(400); // the card slides in: keep the "Route these" pill on top of it
@@ -678,6 +681,7 @@ function toast(msg, accent, ms) {
 async function shareItem(k) {
   const it = findKey(k); if (!it) return;
   const title = it.kind === "ev" ? it.ev.n : it.p.title, url = location.origin + (it.kind === "ev" ? "/e/" + encodeURIComponent(it.ev.id) : "/#h-" + it.p.id); // events share a server page so texts and social posts show a preview card; its button opens the map
+  if (await nativeShare({ title, text: title + " on SoCal Lights", url })) return; // the phone's own share sheet inside the app
   try { if (navigator.share) { await navigator.share({ title, text: title + " on SoCal Lights", url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
   try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { toast(url); }
 }
@@ -832,6 +836,7 @@ function askStartCity(sel) {
 async function shareNight() {
   if (!favs.size) return;
   const url = location.origin + "/#night-" + [...favs].map(encodeURIComponent).join(","), title = "My favorites on SoCal Lights";
+  if (await nativeShare({ title, text: `${favs.size} stops for a night of lights`, url })) return;
   try { if (navigator.share) { await navigator.share({ title, text: `${favs.size} stops for a night of lights`, url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
   try { await navigator.clipboard.writeText(url); toast("Link to your favorites copied"); } catch { toast(url); }
 }
@@ -926,7 +931,7 @@ document.getElementById("panel").addEventListener("click", (e) => { const h = e.
 $("#pbody").addEventListener("click", (e) => {
   const mp = e.target.closest("[data-maps]"); if (mp) { e.stopPropagation(); setMapsApp(mp.dataset.maps); return; }
   const f = e.target.closest("[data-fav]");
-  if (f) { e.stopPropagation(); const id = f.dataset.fav; const was = favs.has(id); was ? favs.delete(id) : favs.add(id); saveFavs(); if (was && state.tab === "plan" && !state.detail) { state.hot = null; closePin(); } if (state.tab === "plan" && !favs.size) { setTab("events"); if (isPhone()) setSheet("peek"); fitSoCal(true); return; } renderPanel(); drawMap(); return; }
+  if (f) { e.stopPropagation(); const id = f.dataset.fav; const was = favs.has(id); was ? favs.delete(id) : favs.add(id); remind(id, !was); saveFavs(); if (was && state.tab === "plan" && !state.detail) { state.hot = null; closePin(); } if (state.tab === "plan" && !favs.size) { setTab("events"); if (isPhone()) setSheet("peek"); fitSoCal(true); return; } renderPanel(); drawMap(); return; }
   const it = e.target.closest(".item"); if (it && !e.target.closest("button,a,input,select")) { selectKey(it.dataset.key, "list"); if (e.target.closest(".tile,.thumb") && state.detail !== it.dataset.key) openDetail(it.dataset.key); }
 });
 $("#phead").addEventListener("change", (e) => { if (e.target.id === "sortSel") { state.sort = e.target.value; renderPanel(); scroller().scrollTop = 0; } });
@@ -944,7 +949,7 @@ $("#pbody").addEventListener("click", (e) => {
 });
 $("#phead").addEventListener("click", (e) => {
   const ns = e.target.closest("[data-nshare]"); if (ns) { shareNight(); return; }
-  if (e.target.closest("[data-nsave]")) { state.shared.forEach((id) => favs.add(id)); state.shared = null; saveFavs(); counts(); renderPanel(); drawMap(); toast("Added to your favorites"); return; }
+  if (e.target.closest("[data-nsave]")) { state.shared.forEach((id) => { favs.add(id); remind(id, true); }); state.shared = null; saveFavs(); counts(); renderPanel(); drawMap(); toast("Added to your favorites"); return; }
   if (e.target.closest("[data-nclose]")) { state.shared = null; renderPanel(); drawMap(); return; }
   if (e.target.closest("[data-nroute]")) { openNightRoutes(); return; }
   const rt = e.target.closest("[data-route]");

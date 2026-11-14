@@ -2,7 +2,7 @@
 import { json, err, verifyTurnstile } from "../../../_lib/util.js";
 import { sendTemplate } from "../../../_lib/mailtpl.js";
 import { ipPruneStatements } from "../../../_lib/retention.js";
-import { normEmail, okEmail, isDisposable, sha256, sameOrigin, isSuspended, SUSPENDED_MSG } from "../../../_lib/auth.js";
+import { normEmail, okEmail, appReviewCode, isDisposable, sha256, sameOrigin, isSuspended, SUSPENDED_MSG } from "../../../_lib/auth.js";
 
 export async function onRequestPost({ request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -19,13 +19,15 @@ export async function onRequestPost({ request, env }) {
   const { n: perIp } = await env.DB.prepare("SELECT COUNT(*) AS n FROM login_codes WHERE ip = ? AND created_at > datetime('now','-1 hour')").bind(ip).first();
   if (perEmail >= 4 || perIp >= 12) return err(429, "Too many codes requested. Try again in an hour.");
 
-  const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, "0");
+  const reviewCode = appReviewCode(env, email); // App Store reviewer: the fixed code and no mail (see appReviewCode in _lib/auth.js)
+  const code = reviewCode || String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, "0");
   const exp = new Date(Date.now() + 10 * 60_000).toISOString().slice(0, 19).replace("T", " ");
   await env.DB.batch([
     env.DB.prepare("INSERT INTO login_codes (email,code_hash,ip,expires_at) VALUES (?,?,?,?)").bind(email, await sha256(`${email}:${code}`), ip, exp),
     ...ipPruneStatements(env),
   ]);
   // Local development only (DEV_AUTH=1 in .dev.vars, localhost): hand the code back instead of emailing it.
+  if (reviewCode) return json({ ok: true });
   if (env.DEV_AUTH === "1" && new URL(request.url).hostname === "localhost" && !env.RESEND_API_KEY) return json({ ok: true, devCode: code });
   const sent = await sendTemplate(env, "signin_code", String(b.email).trim(), { code });
   if (!sent) return err(502, "We couldn't send the email. Please try again in a moment.");
