@@ -3,7 +3,7 @@
 _Last updated: 2026-11-10 (ad creative done and published for Grok; tutorial videos for contest pricing; contest pricing: organizers pay from the first contest; Event Partner plan)_
 
 ## 2026-11-13 (videos and Help for Your events and event photos)
-- Recorded (computer and phone): new `manage-events` ("Manage your events", file `post-manage-events`); re-recorded `add-event` and `profile` (profile now shows the Your events menu row and the Events tab). Migration 0247 links the new video to the `your-events`, `add-photos-to-your-event` and `edit-or-cancel-your-event` articles. The other account-menu videos are being re-recorded so they show the new row; those land in follow-up PRs.
+- Recorded (computer and phone): new `manage-events` ("Manage your events", file `post-manage-events`); re-recorded `add-event` and `profile` (profile now shows the Your events menu row and the Events tab). Migration 0247 links the new video to the `your-events`, `add-photos-to-your-event` and `edit-or-cancel-your-event` articles. The other 24 account-menu videos were re-recorded (computer and phone) so they show the new Your events row; installed in the follow-up PR.
 - Recorder fixes: `quick` and `custom` need the demo comp (`seed-comp.sql`); `add-homes` and `approve` clear the seeded votes (`seed-add-homes.sql`) because homes cannot be added once any vote exists.
 
 ## 2026-11-13 (Admin parity)
