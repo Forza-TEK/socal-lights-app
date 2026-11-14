@@ -321,3 +321,14 @@ test("the moved jobs are flagged within an hour (the Cloudflare clock runs them 
   assert.ok(JOBS["verify-events"].staleH <= 2);
   for (const j of ["stripe-reconcile", "sponsor-renewals", "contest-reminders"]) assert.equal(JOBS[j].staleH, 30, j);
 });
+
+test("the dashboard counts contest entries on the site now (not only ones that arrived today)", async () => {
+  const { env, raw } = newEnv();
+  raw.prepare("INSERT INTO users (id,email,name) VALUES ('u1','o@example.com','O')").run();
+  raw.prepare("INSERT INTO contests (id,slug,name,org,city,owner_id,status,entries_close,vote_start,vote_end,announced) VALUES ('k1','oak-hill','Oak Hill','HOA','Pasadena','u1','live','2026-11-10','2026-12-12','2026-12-14',0)").run();
+  raw.prepare("INSERT INTO posts (id,status,biz,title,city,lat,lng,descr,photos,contact_email,season,address,street,zip,contest_id,user_id,created_at) VALUES ('p1','approved','Fam','Oak Lights','Pasadena',34.1,-118.1,'A long description of my lights.','[]','o@example.com','christmas','1 Oak St','1 Oak St','91101','k1','u1','2026-11-05 10:00:00')").run();
+  const d = await (await dashboard({ env })).json();
+  assert.equal(d.live.contests, 1); assert.equal(d.live.entries, 1, "the entry counts even though it was made days ago"); assert.equal(d.today.entries, 0, "and the Today tile still counts only new ones");
+  const js = (await import("node:fs")).readFileSync("public/admin/admin.js", "utf8");
+  assert.match(js, /"new contest entries"/); assert.match(js, /d\.live\.entries \|\| 0, "contest entries"/);
+});
