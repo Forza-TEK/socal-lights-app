@@ -1,4 +1,5 @@
 name: Cloudflare usage check
+# Scheduled by the Cloudflare cron Worker (workers/mail-cron), not by GitHub: this workflow only runs by hand (Actions > Run workflow) as a fallback. docs/runbooks/monitoring.md.
 
 # Every 30 minutes (GitHub's schedule can run late or skip a run: the three-a-day admin digest runs the same check too, and the digest email has a
 # "Cloudflare usage" section). Asks the site for its Cloudflare plan usage (read-only) and opens ONE issue, "Cloudflare usage limit reached or near",
@@ -7,8 +8,6 @@ name: Cloudflare usage check
 # Uses the same repository secret as the digest (ALERT_CRON_KEY) and the pages.dev address (socallights.app challenges GitHub's servers).
 # Needs the Pages secrets CF_ANALYTICS_TOKEN and CF_ACCOUNT_ID for the Cloudflare numbers (see docs/runbooks/cloudflare-limits.md); without them only email counts and logged quota errors are checked.
 on:
-  schedule:
-    - cron: "7,37 * * * *"
   workflow_dispatch:
 
 permissions:

@@ -1,4 +1,5 @@
 name: Stripe reconcile
+# Scheduled by the Cloudflare cron Worker (workers/mail-cron), not by GitHub: this workflow only runs by hand (Actions > Run workflow) as a fallback. docs/runbooks/monitoring.md.
 
 # Daily, read-only check that Stripe and our orders agree (functions/_lib/reconcile.js): last 3 days of Checkout Sessions and PaymentIntents against feature_orders.
 # Reports paid-but-not-recorded, paid-but-not-applied, amount differences and unknown payments to the admin digest and to ops_log. It only ever READS from Stripe.
@@ -7,8 +8,6 @@ name: Stripe reconcile
 # If STRIPE_SECRET_KEY is a restricted key without read access to Checkout Sessions / PaymentIntents the run still passes and the digest says what permission to add (docs/stripe-setup.md).
 # 14:47 UTC = 6:47 or 7:47 Pacific.
 on:
-  schedule:
-    - cron: "47 14 * * *"
   workflow_dispatch:
 
 permissions:

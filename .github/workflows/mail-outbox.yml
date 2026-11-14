@@ -1,11 +1,10 @@
 name: Send queued emails
+# Scheduled by the Cloudflare cron Worker (workers/mail-cron), not by GitHub: this workflow only runs by hand (Actions > Run workflow) as a fallback. docs/runbooks/monitoring.md.
 
 # Contest results and voting reminders go to a small queue (mail_outbox) and are sent in batches, because a Cloudflare request on the free plan can only make 50 outgoing calls.
 # The first batch goes out right away when the organizer announces; this hourly run sends the rest and retries anything that failed (delay 10 minutes, then 2 hours, up to 8 tries).
 # Calls the pages.dev address because socallights.app puts a bot check in front of GitHub's servers. Uses the same repository secret as the weekly email (ALERT_CRON_KEY).
 on:
-  schedule:
-    - cron: "41 * * * *"
   workflow_dispatch:
 
 permissions:

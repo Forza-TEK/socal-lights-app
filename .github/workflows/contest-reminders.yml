@@ -1,11 +1,10 @@
 name: Send contest reminders
+# Scheduled by the Cloudflare cron Worker (workers/mail-cron), not by GitHub: this workflow only runs by hand (Actions > Run workflow) as a fallback. docs/runbooks/monitoring.md.
 
 # Once a day. Emails entrants when voting opens, and entrants plus voters two days before it closes (each once per contest).
 # Calls the pages.dev address because socallights.app puts a bot check in front of GitHub's servers. Uses the same
 # repository secret as the weekly email (ALERT_CRON_KEY). It can also be run by hand from the Actions tab.
 on:
-  schedule:
-    - cron: "15 17 * * *"
   workflow_dispatch:
 
 jobs:
