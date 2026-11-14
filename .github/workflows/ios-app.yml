@@ -10,7 +10,7 @@ on:
         default: "1"
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 45
     env:
       TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -18,6 +18,9 @@ jobs:
       ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
     steps:
       - uses: actions/checkout@v4
+      - name: Use the newest Xcode 26 (Apple requires the iOS 26 SDK)
+        run: |
+          X=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1); echo "Using $X"; sudo xcode-select -s "$X/Contents/Developer"; xcodebuild -version
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - name: Install and sync
