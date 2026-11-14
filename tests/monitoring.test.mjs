@@ -321,3 +321,14 @@ test("the moved jobs are flagged within an hour (the Cloudflare clock runs them 
   assert.ok(JOBS["verify-events"].staleH <= 2);
   for (const j of ["stripe-reconcile", "sponsor-renewals", "contest-reminders"]) assert.equal(JOBS[j].staleH, 30, j);
 });
+
+test("a stale 'active' deployment behind a finished newer one is ignored; one that is the newest still counts", () => {
+  // d-old has been "active" for 14 hours but d-new (created later) finished its deploy: the queue is moving
+  const old = dep("d-old", "production", "active", 14 * 60), fresh = dep("d-new", "production", "success", 20, "aaaaaaa1111", "deploy");
+  assert.equal(evaluateDeploys([fresh, old], null, NOW).state, "ok", "a newer deploy finished, so the old record blocks nothing");
+  assert.equal(evaluateDeploys([old], null, NOW).state, "stalled", "nothing newer finished: still stalled");
+  const olderOk = dep("d-ok", "production", "success", 15 * 60, "aaaaaaa1111", "deploy");
+  assert.equal(evaluateDeploys([old, olderOk], null, NOW).state, "stalled", "a success that is OLDER than the stuck one does not excuse it");
+  const newerActive = dep("d-newer-active", "preview", "active", 30);
+  assert.equal(evaluateDeploys([newerActive, old, olderOk], null, NOW).state, "stalled", "a newer one that is also still active does not excuse it");
+});
