@@ -115,6 +115,17 @@ test("photo link: kept as a link (never copied) on the event, dropped with a rea
   });
 });
 
+test("a city or government event may keep its logo as the photo; any other event's logo is dropped", async () => {
+  await run(async () => {
+    const { env, raw } = mk();
+    globalThis.fetch = async (u, o) => (o && o.method === "HEAD" ? new Response(null, { status: 200, headers: { "content-type": "image/png" } }) : new Response(JSON.stringify({ result: { addressMatches: [{ matchedAddress: "X", coordinates: { x: -117.3717, y: 33.9806 } }] } })));
+    const city = await send(env, [good({ name: "Riverside Tree Lighting", venue: "City of Riverside Mission Square", address: "400 Main St, Riverside, CA 92501", url: "https://www.riversideca.gov/tree", image_url: "https://www.riversideca.gov/img/city-logo.png" })]);
+    assert.equal(city.body.results[0].image, "linked"); assert.equal(raw.prepare("SELECT image FROM events WHERE id = ?").get(city.body.results[0].id).image, "https://www.riversideca.gov/img/city-logo.png");
+    const biz = await send(env, [good({ name: "Mall Light Show", venue: "Fashion Mall", address: "500 Main St, Riverside, CA 92501", url: "https://fashionmall.example.com/lights", image_url: "https://fashionmall.example.com/img/logo.png" })]);
+    assert.equal(biz.body.results[0].verdict, "published"); assert.match(biz.body.results[0].image, /logo/);
+  });
+});
+
 test("admin: Remove photo keeps the event and clears the link", async () => {
   await run(async () => {
     const { env, raw } = mk();
