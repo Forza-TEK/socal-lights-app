@@ -30,7 +30,7 @@ export async function renderGrok(main) {
           + fact("Page Grok read", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>${x.seen ? ` <span class="meta">(read ${esc(x.seen)})</span>` : ""}` : "")
           + fact("Photo", x.image ? `<a href="${esc(x.image)}" target="_blank" rel="noopener"><img src="${esc(x.image)}" alt="Linked photo for ${esc(x.name)}" loading="lazy" referrerpolicy="no-referrer" style="max-width:160px;max-height:110px;border-radius:8px;display:block"></a><span class="meta">linked from the event's site, not copied</span>` : "")
           + fact("What it said", esc(x.evidence || "")) + fact(x.status === "rejected" ? "Why rejected" : "Note", esc(x.reason || "")),
-        main: x.status === "published" ? `<a class="btn ghost" href="/e/${encodeURIComponent(x.id)}" target="_blank" rel="noopener">View card</a>` + (x.image ? btn("ghost", "Remove photo", 'data-ga="remove_photo"') : "") + btn("danger", "Unpublish", 'data-ga="unpublish"') : x.status === "held" || x.status === "unpublished" ? btn("main", "Publish", 'data-ga="publish"') : "",
+        main: x.status === "published" ? `<a class="btn ghost" href="/e/${encodeURIComponent(x.id)}" target="_blank" rel="noopener">View card</a>` + (x.image ? btn("ghost", "Remove photo", 'data-ga="remove_photo"') : "") + btn("danger", "Unpublish", 'data-ga="unpublish"') : x.status === "held" || x.status === "unpublished" ? btn("main", "Publish", 'data-ga="publish"') : x.status === "rejected" ? btn("ghost", "Publish anyway", 'data-ga="publish"') : "",
       });
     }).join("")}</div>` : `<div class="empty">${VIEW === "published" ? "Nothing from Grok is on the map yet." : "Nothing here."}</div>`}`;
   main.onclick = async (e) => {

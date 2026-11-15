@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-15 (From Grok: Publish anyway on rejected rows)
+- Admin > From Grok > Rejected rows now have a **Publish anyway** button (owner override of the checks). Rejected rows used to keep only a few fields; they now keep everything Grok sent (hours, price, blurb, venue, address, page, evidence, photo link) so the owner can read and publish them. Publishing a rejected row still needs the basics (a name, a city from our list, a valid season and type, real dates), looks up the pin (city center when the address is not found, noted on the row), works out the county and the event id, refuses a name and date already on the map, and checks the photo link like the intake does. The event goes on the map as confirmed, tagged From Grok. Rows already stored before this change have fewer fields and may be refused with a message naming what is missing.
+
 ## 2026-11-15 (main menu reverted to how it behaved before the animation requests)
 - Owner asked to put the main menu (Places / Favorites / Shop pill and bottom bar) back to how it behaved before the animation changes (PRs 632 and 633: restored label/icon animation, bouncier then slower pill, reduced-motion change). `public/styles.css`, `public/app.js` and `tests/frontend-logic.test.mjs` were restored to their state of commit 2affe87 (pill springs LEAD k .26 c .5, TRAIL k .1 c .6; the "sliding pill" CSS that keeps only the pill glide and a color fade; the old reduced-motion rule). Nothing else in those files had changed since. New cache versions `styles.css?v=20261115g`, `app.js?v=20261115m` so phones that loaded the newer files fetch the restored ones.
 
