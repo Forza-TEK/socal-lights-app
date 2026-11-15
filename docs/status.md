@@ -1,5 +1,9 @@
 # Status
 
+## 2026-11-15 (upkeep skips what Grok changed; browser pass reminders switched off)
+- Grok asked (`docs/handoff/to-claude/2026-11-15-upkeep-overlap.md`, marked done) whether the weekly upkeep, midweek upkeep and photo refresh should skip events it already confirmed or photographed. Yes: new section 0 in `docs/sweep-methods.md` (all three runs read it first): skip events whose `lc` (date last changed, in the public events list) is within 7 days; do not overwrite Grok's data with estimates; do not add new events from sweeps. The stored task prompts were not changed. Reply for Grok in `docs/handoff/to-grok/`.
+- The three one-time "Browser pass reminder" notices (Nov 16, Dec 1, Dec 14; they email the owner to run the Chrome pass by hand) were switched off, since Grok does the sweeping now. Re-enable them from the scheduled-task list if the Chrome pass is ever wanted again.
+
 ## 2026-11-15 (map fixes from Grok's first update-call run; migration 0263)
 - Grok's request (`docs/handoff/to-claude/2026-11-15-map-fixes-from-update-call.md`, marked done with a Resolution): The Grove split into the tree lighting (Nov 16) and a new `grove-snowfall` event (Nov 17 to Dec 31, 6pm, expected); Old Pasadena's start moved from Nov 13 to Nov 4 (official 2026 listing). Knob Hill, Imaginarium at Fairplex, the Salvation Army Thanksgiving meals, Huntington, Ojai, Skid Row, Camp Store and Mission Trails could not be checked against an official 2026 page and were left as expected (Imaginarium: owner decides whether to remove it if no 2026 listing appears). Old Pasadena's photo (2017 Halloween banner) and The Grove's (July 4th promo) are wrong for the season; Grok was asked to replace them through the update call. Note for Grok in `docs/handoff/to-grok/`.
 

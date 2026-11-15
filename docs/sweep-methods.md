@@ -2,6 +2,13 @@
 
 Lessons from the 2026-10-30 contest-homes work. Every scheduled run follows these.
 
+## 0. Grok overlap rule (added 2026-11-15, owner: Grok now does the sweeping)
+Grok (the intake bot) runs the update call daily: it confirms `expected` events from their own pages, corrects dates, hours and price, and adds official photos. So that the upkeep and photo-refresh runs do not redo or undo that work:
+- **Skip any event whose `lc` is within the last 7 days.** `lc` is in the public events list (`https://socallights.app/api/events`): the date the event was last changed. A change Grok applies sets it, so no other tracking is needed. Do not re-check, re-date, re-photograph or re-pin those events in this run.
+- **Never overwrite what Grok set with an estimate.** Change an event Grok confirmed only when you hold a newer official page that disagrees, and say so in the report.
+- What stays with the scheduled runs, because the update call cannot do it: deleting cancelled or closed events and duplicates, pin and county audits, season roll-overs, the Admin-only items, and photos whose page blocks the bot.
+- Do not add new events from a city, county, venue or hotel sweep: that is Grok's now (see `docs/handoff/grok-coverage.md`).
+
 ## 1. Home decorating contests and displays (Halloween, Christmas, holiday)
 See [city-sweep.md](city-sweep.md) and [contest-leads.md](contest-leads.md). Add **every** entrant, finalist, winner and honorable mention whose street address a public page publishes, not just the top winners. One event per home: Christmas type `drive`; Halloween `haunt` (scary) or `family`. Contest pages often hold the list in a **PDF or a PNG map** (open the PDF with `pdftotext`; if it has no text layer render it with `pdftoppm -png` and read the image) or in an ArcGIS/Story Map layer (read its JSON).
 
