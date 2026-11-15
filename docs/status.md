@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-15 (menu animation restored, branch `claude/affectionate-faraday-0w156h`)
+- Owner saw almost no animation in the Places / Favorites / Shop menu. Cause found by measuring in a browser: the later "sliding pill" rules in `public/styles.css` had switched off the label opening (width), the padding change and the icon pop, leaving only the pill and a color fade; and the reduced-motion rule (which Windows turns on when "Animation effects" is off) removed the rest. Now the pill, the opening label, the padding and the icon pop all run together, and under reduced motion the menu keeps its calm glide and label opening (only pops, spins and sweeping pages stay off). Then, from a video the owner liked, the pill got bouncier (springs LEAD k .2 c .66, TRAIL k .1 c .74: about a tenth of the distance of overshoot, settles in about half a second, squashes up to 13% while moving) and the icon pop is bubblier (scale .4 to 1.24 to .94 to 1). The pill test in `tests/frontend-logic.test.mjs` now expects that overshoot. Versions: `styles.css?v=20261115e`, `app.js?v=20261115f`.
+
 ## 2026-11-15 (Grok intake accepts public social links)
 - Grok reported its instructions said the page must be the event's own site, not a social post. The code only required https; the doc said no social posts. Now both agree: a public Facebook/Instagram/TikTok/YouTube/Nextdoor/X post or event page is accepted as `url` when it opens without login and states the date, time and place (event's own site preferred). Tracking parameters (fbclid, igsh, utm_*) are stripped; login, share and redirect links are rejected. Same checks otherwise (date, time, place, evidence, address lookup, duplicates). Tests in `tests/intake.test.mjs`.
 

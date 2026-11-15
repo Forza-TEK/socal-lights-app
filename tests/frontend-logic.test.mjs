@@ -107,12 +107,12 @@ test("every stock photo listed in stock.js has its file, and nativity has its ow
 
 test("the tab pill moves on two springs (leading edge fast, trailing edge slow: it stretches then snaps in), squashes a little, and with reduced motion still slides (calmly), never an instant jump", async () => {
   const { readFileSync } = await import("node:fs"), js = readFileSync("public/app.js", "utf8"), a = js.indexOf("function initSlidePill"), body = js.slice(a, js.indexOf('initSlidePill(document.querySelector(".ptabs")'));
-  assert.match(body, /LEAD = \{ k: 0\.26, c: 0\.5 \}, TRAIL = \{ k: 0\.1, c: 0\.6 \}/);
+  assert.match(body, /LEAD = \{ k: 0\.2, c: 0\.66 \}, TRAIL = \{ k: 0\.1, c: 0\.74 \}/);
   assert.match(body, /lead = t\.l \+ t\.r > cur\.l \+ cur\.r \? "r" : "l"/); assert.match(body, /scale\(1,\$\{squash/); assert.match(body, /if \(!cur\) \{ cur = \{ \.\.\.t \}/); assert.match(body, /still\.matches\) cur\[e\] \+= \(t\[e\] - cur\[e\]\) \* 0\.22/); assert.match(body, /squash = still\.matches \? 1 :/);
-  // the same numbers, run: the pill never gets narrower than where it started, it stretches visibly, settles within about 400 ms and overshoots by only a few pixels
-  const L = { k: 0.26, c: 0.5 }, T = { k: 0.1, c: 0.6 }; let l = 0, r = 100, vl = 0, vr = 0, minW = 100, maxW = 100, over = 0, settled = -1;
+  // the same numbers, run (owner asked for a bouncier, bubblier pill on 2026-11-15): it stretches visibly, squeezes a little as it lands, overshoots by about a tenth of the distance (a few pixels on a normal one-tab hop) and settles in about half a second
+  const L = { k: 0.2, c: 0.66 }, T = { k: 0.1, c: 0.74 }; let l = 0, r = 100, vl = 0, vr = 0, minW = 100, maxW = 100, over = 0, settled = -1;
   for (let f = 0; f < 90; f++) { vr = (vr + (300 - r) * L.k) * L.c; r += vr; vl = (vl + (200 - l) * T.k) * T.c; l += vl; minW = Math.min(minW, r - l); maxW = Math.max(maxW, r - l); over = Math.max(over, l - 200, r - 300); if (settled < 0 && Math.abs(l - 200) < 1.2 && Math.abs(r - 300) < 1.2) settled = f; }
-  assert.ok(minW >= 99.5 && maxW > 130 && over < 6 && settled * 16.7 < 420, JSON.stringify({ minW, maxW, over, settled }));
+  assert.ok(minW >= 70 && maxW > 130 && over > 8 && over < 40 && settled * 16.7 < 560, JSON.stringify({ minW, maxW, over, settled }));
 });
 
 test("setTab does the heavy list and map drawing BEFORE the tabs are marked selected, so the sliding pill starts on a free main thread", async () => {
