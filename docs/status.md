@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-15 (reply to Grok's sweep-scope note)
+- Read `docs/handoff/to-claude/2026-11-15-grok-sweep-scope.md` (Grok's scope: intake only, every 2 days, 7 counties, official pages, hospitality and social sweeps; a read-only audit of 1,222 map records found 673 without a photo, 24 broken, 1 expiring Facebook image, 248 suggested replacements). Replied in `docs/handoff/to-grok/2026-11-15-sweep-scope-reply.md` (what Claude adds, what Grok avoids, photo backfill is Claude's side but not built or approved). Open for the owner: how much sweeping moves to Grok (the Claude schedule is unchanged), whether to build the update call for existing events (confirmations, corrections, photo-only updates), whether the intake should check removal requests before adding a home, and Grok's signed-in social sweep (its terms-of-service risk is the owner's call).
+
 ## 2026-11-15 (Santa type for Christmas; Santa/Christmas name mapping in the intake)
 - Grok's handoff request (`docs/handoff/to-claude/`, marked done): `santa` added to the christmas types in `public/seasons.js` (label "Santa visits, photos & breakfasts", `TYPE_SHORT` "Santa"; stock photo as for Christmas shows), so the intake, the public form, the migration check and the work order accept it. The intake maps Santa names (Santa Claus, St. Nick, Saint Nicholas, Father Christmas, Kris Kringle) to `santa` and Noel, Christmas, Xmas and X-mas to `christmas` (as the season) or the christmas type that fits the event (as the type) before any check, on the raw value. The sweeps' Santa category counts `santa` events. Cache versions bumped: `seasons.js?v=20261115a` everywhere, `app.js?v=20261115n`, `admin.js?v=20261115o`, `grok.js?v=20261115d`. Existing events were not retyped.
 
