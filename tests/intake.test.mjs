@@ -6,7 +6,7 @@ import { newEnv, freezeNow } from "./_pay.mjs";
 import { onRequest as intake } from "../functions/api/intake/events.js";
 import { onRequest as workOrder } from "../functions/api/intake/work-order.js";
 import { onRequestGet as adminGet, onRequestPost as adminPost } from "../functions/api/admin/grok.js";
-import { checkFields, MAX_ROWS } from "../functions/_lib/intake.js";
+import { checkFields, checkImage, MAX_ROWS } from "../functions/_lib/intake.js";
 
 const KEY = "test-intake-key-0123456789abcdef";
 const NOW = "2026-11-15T20:00:00Z", TODAY = "2026-11-15";
@@ -92,6 +92,40 @@ test("a public social post is accepted as the page; tracking parameters are stri
     assert.ok(checkFields(good({ url: u }), TODAY).problems, u);
 });
 
+test("photo link: kept as a link (never copied) on the event, dropped with a reason when bad, and the row still publishes", async () => {
+  await run(async () => {
+    const { env, raw } = mk();
+    const head = (status, type, extra = {}) => async (u, o) => (o && o.method === "HEAD" ? new Response(null, { status, headers: { "content-type": type, ...extra } }) : new Response(JSON.stringify({ result: { addressMatches: [{ matchedAddress: "X", coordinates: { x: -117.3717, y: 33.9806 } }] } })));
+    globalThis.fetch = head(200, "image/jpeg");
+    const ok = await send(env, [good({ image_url: "https://www.missioninn.com/img/festival-of-lights.jpg" })]);
+    assert.equal(ok.body.results[0].verdict, "published"); assert.equal(ok.body.results[0].image, "linked");
+    assert.equal(raw.prepare("SELECT image FROM events WHERE id = ?").get(ok.body.results[0].id).image, "https://www.missioninn.com/img/festival-of-lights.jpg");
+    assert.equal(raw.prepare("SELECT image FROM intake_events WHERE id = ?").get(ok.body.results[0].id).image, "https://www.missioninn.com/img/festival-of-lights.jpg");
+    const bad = [
+      ["http://example.org/a.jpg", /https/], ["https://scontent-lax3-1.xx.fbcdn.net/v/t39/a.jpg?oe=abc", /expire/], ["https://example.org/site-logo.png", /logo/],
+      ["https://example.org/placeholder.jpg", /badge|placeholder/], ["not a url", /valid/],
+    ];
+    for (const [i, [u, re]] of bad.entries()) { const r = await send(env, [good({ name: "Photo bad " + i + " fest", address: `${100 + i} Main St, Riverside, CA 92501`, url: `https://example.org/p${i}`, image_url: u })]); assert.equal(r.body.results[0].verdict, "published", u); assert.match(r.body.results[0].image, re, u); assert.equal(raw.prepare("SELECT image FROM events WHERE id = ?").get(r.body.results[0].id).image, null, u); }
+    globalThis.fetch = head(200, "text/html"); const html = await send(env, [good({ name: "Html page fest", address: "201 Main St, Riverside, CA 92501", url: "https://example.org/q201", image_url: "https://example.org/a.jpg" })]); assert.match(html.body.results[0].image, /not a picture/);
+    globalThis.fetch = head(404, "text/html"); const gone = await send(env, [good({ name: "Gone photo fest", address: "202 Main St, Riverside, CA 92501", url: "https://example.org/q202", image_url: "https://example.org/a.jpg" })]); assert.match(gone.body.results[0].image, /no longer exists/);
+    globalThis.fetch = head(403, "text/html"); const blocked = await send(env, [good({ name: "Blocked site fest", address: "203 Main St, Riverside, CA 92501", url: "https://example.org/q203", image_url: "https://example.org/a.jpg" })]); assert.equal(blocked.body.results[0].image, "linked", "a site that refuses our check keeps the link");
+    assert.equal((await checkImage("", {}, async () => { throw new Error("no fetch for an empty link"); })).image, "");
+    assert.equal((await checkImage("https://example.org/a.jpg", {}, async () => { throw new Error("down"); })).image, "https://example.org/a.jpg", "cannot tell: keep");
+    assert.equal((await send(env, [good({ name: "Unknown field fest", imag: 1 })])).body.results[0].verdict, "rejected", "unknown fields are still refused");
+  });
+});
+
+test("admin: Remove photo keeps the event and clears the link", async () => {
+  await run(async () => {
+    const { env, raw } = mk();
+    globalThis.fetch = async (u, o) => (o && o.method === "HEAD" ? new Response(null, { status: 200, headers: { "content-type": "image/png" } }) : new Response(JSON.stringify({ result: { addressMatches: [{ matchedAddress: "X", coordinates: { x: -117.3717, y: 33.9806 } }] } })));
+    const id = (await send(env, [good({ image_url: "https://www.missioninn.com/img/festival.png" })])).body.results[0].id;
+    const r = await adminPost({ request: new Request("https://socallights.app/api/admin/grok", { method: "POST", body: JSON.stringify({ action: "remove_photo", id }) }), env });
+    assert.equal(r.status, 200);
+    assert.equal(raw.prepare("SELECT image FROM events WHERE id = ?").get(id).image, null); assert.equal(raw.prepare("SELECT image FROM intake_events WHERE id = ?").get(id).image, ""); assert.equal(raw.prepare("SELECT status FROM events WHERE id = ?").get(id).status, "confirmed");
+  });
+});
+
 test("hours are put in house style; free price defaults", () => {
   const c = checkFields(good({ hours: "5:30 PM - 9:30 PM", price: "" }), TODAY);
   assert.equal(c.row.hours, "5:30pm–9:30pm"); assert.equal(c.row.price, "Free");
@@ -158,6 +192,16 @@ test("a full call stays under the 50 outgoing calls a Pages Function may make", 
     env.DB.stats.reset();
     await send(env, Array.from({ length: MAX_ROWS }, (_, i) => good({ name: `Limit test festival ${i}` })));
     assert.ok(outgoing + env.DB.stats.calls < 50, `${outgoing} geocoder calls + ${env.DB.stats.calls} database calls`);
+  });
+});
+
+test("a full call with photo links (one address lookup and one link check per row) also stays under 50 outgoing calls", async () => {
+  await run(async () => {
+    const { env } = mk(); let outgoing = 0;
+    globalThis.fetch = async (u, o) => { outgoing++; return o && o.method === "HEAD" ? new Response(null, { status: 200, headers: { "content-type": "image/jpeg" } }) : new Response(JSON.stringify({ result: { addressMatches: [{ matchedAddress: "X", coordinates: { x: -117.3717, y: 33.9806 } }] } })); };
+    env.DB.stats.reset();
+    const r = await send(env, Array.from({ length: MAX_ROWS }, (_, i) => good({ name: `Photo budget festival ${i}`, address: `${300 + i} Main St, Riverside, CA 92501`, url: `https://example.org/b${i}`, image_url: `https://example.org/i${i}.jpg` })));
+    assert.equal(r.body.published, MAX_ROWS); assert.ok(outgoing + env.DB.stats.calls < 50, `${outgoing} outgoing + ${env.DB.stats.calls} database calls`);
   });
 });
 

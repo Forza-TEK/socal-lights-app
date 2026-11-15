@@ -9,11 +9,11 @@ import { BAD } from "./moderation.js";
 import { ptToday } from "./time.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
-import { normalizeHours, freeFlagProblem } from "../../scripts/event-rules.mjs";
+import { normalizeHours, freeFlagProblem, imageProblem } from "../../scripts/event-rules.mjs";
 
 export const MAX_ROWS = 8;            // each row costs up to 2 geocoder calls and 2 database calls; a Pages Function may make 50 outgoing calls per request
 export const RATE_PER_MIN = 30, PUBLISH_PER_DAY = 60, KEEP_REJECTED_DAYS = 30;
-export const FIELDS = ["name", "city", "season", "type", "start", "end", "hours", "free", "price", "blurb", "url", "venue", "address", "shows", "evidence", "seen"];
+export const FIELDS = ["name", "city", "season", "type", "start", "end", "hours", "free", "price", "blurb", "url", "image_url", "venue", "address", "shows", "evidence", "seen"];
 export const SHOWS = ["date", "time", "place"];
 export const ID_PREFIX = "grok-";
 
@@ -70,7 +70,7 @@ export function checkFields(r, today = ptToday()) {
   const row = {
     name: normName(clean(r.name, 120)), city: clean(r.city, 60), season: clean(r.season, 20), type: clean(r.type, 10), start_date: clean(r.start, 10), end_date: clean(r.end || r.start, 10),
     hours: normalizeHours(line(r.hours, 120)), free: r.free === true || r.free === 1 ? 1 : 0, price: line(r.price, 80), blurb: line(r.blurb, 400), url: webUrl(clean(r.url, 300)),
-    venue: normName(clean(r.venue, 120)), address: line(r.address, 160), evidence: line(r.evidence, 240), seen: clean(r.seen, 10),
+    venue: normName(clean(r.venue, 120)), address: line(r.address, 160), evidence: line(r.evidence, 240), seen: clean(r.seen, 10), image: String(r.image_url || "").slice(0, 600),
   };
   if (typeof r.free !== "boolean" && r.free !== 0 && r.free !== 1) p.push("free must be true or false");
   if (row.name.length < 4) p.push("name is missing or too short");
@@ -104,11 +104,32 @@ export function checkFields(r, today = ptToday()) {
   return p.length ? { problems: p } : { row };
 }
 
+// An optional photo LINK (never copied: the card shows it from the event's site and credits "Photo: <the site>", like every linked photo). A bad link never rejects the row: the photo is dropped and the reason is returned.
+// Links to Facebook/Instagram picture servers are refused because they are signed and expire within days.
+const EXPIRING = /(^|\.)(fbcdn\.net|cdninstagram\.com|twimg\.com|tiktokcdn[a-z-]*\.com|googleusercontent\.com)$/i;
+export async function checkImage(raw, row, doFetch = fetch) {
+  const u = String(raw || "").trim();
+  if (!u) return { image: "" };
+  let x; try { x = new URL(u); } catch { return { image: "", note: "image dropped: not a valid web address" }; }
+  if (x.protocol !== "https:") return { image: "", note: "image dropped: the link must be https" };
+  if (u.length > 500) return { image: "", note: "image dropped: link too long" };
+  if (EXPIRING.test(x.hostname)) return { image: "", note: "image dropped: social media picture links expire; use the picture from the event's own page, or leave it out" };
+  const p = imageProblem({ ...row, image: u });
+  if (p && p.level === "error") return { image: "", note: "image dropped: " + p.why.split(";")[0] };
+  try { // one quick look: drop it only when the address clearly is not a picture (a page, or gone). A site that refuses our check (403, 429, timeouts) is kept: visitors' browsers can still load it, and the card falls back to a stock photo if not.
+    const r = await doFetch(u, { method: "HEAD", redirect: "manual", headers: { "user-agent": "SoCalLights.app link check" }, signal: AbortSignal.timeout(3000) });
+    if (r.status >= 300 && r.status < 400) { const to = r.headers.get("location") || ""; if (!/^https:\/\//i.test(new URL(to, u).href)) return { image: "", note: "image dropped: it redirects to a non-https address" }; }
+    else if (r.status === 404 || r.status === 410) return { image: "", note: "image dropped: the link no longer exists" };
+    else if (r.ok) { const t = (r.headers.get("content-type") || "").toLowerCase(); if (t && !/^image\//.test(t)) return { image: "", note: "image dropped: the link is not a picture" }; const n = Number(r.headers.get("content-length") || 0); if (n > 15 * 1024 * 1024) return { image: "", note: "image dropped: file is over 15 MB" }; }
+  } catch { /* cannot tell: keep it */ }
+  return { image: x.href };
+}
+
 const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-const INSERT_INTAKE = `INSERT OR REPLACE INTO intake_events (id,status,reason,name,county,city,season,type,start_date,end_date,hours,free,price,blurb,url,venue,address,lat,lng,evidence,seen,received_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))`;
-const INSERT_EVENT = `INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address,updated_at) VALUES (?,?,?,?,?,?,?,'confirmed',?,?,?,?,?,?,?,?,?,?,datetime('now')) ON CONFLICT(id) DO NOTHING`;
-export const eventStatement = (env, x) => env.DB.prepare(INSERT_EVENT).bind(x.id, x.name, x.county, x.city, x.type, x.start_date, x.end_date, x.free ? 1 : 0, x.price, x.hours, x.lat, x.lng, x.blurb, x.url, x.season, x.venue, x.address);
-const intakeStatement = (env, x, status, reason) => env.DB.prepare(INSERT_INTAKE).bind(x.id, status, reason, x.name, x.county || "", x.city, x.season, x.type, x.start_date, x.end_date, x.hours, x.free ? 1 : 0, x.price, x.blurb, x.url, x.venue, x.address, x.lat ?? null, x.lng ?? null, x.evidence, x.seen);
+const INSERT_INTAKE = `INSERT OR REPLACE INTO intake_events (id,status,reason,name,county,city,season,type,start_date,end_date,hours,free,price,blurb,url,venue,address,lat,lng,evidence,seen,image,received_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))`;
+const INSERT_EVENT = `INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address,image,updated_at) VALUES (?,?,?,?,?,?,?,'confirmed',?,?,?,?,?,?,?,?,?,?,?,datetime('now')) ON CONFLICT(id) DO NOTHING`;
+export const eventStatement = (env, x) => env.DB.prepare(INSERT_EVENT).bind(x.id, x.name, x.county, x.city, x.type, x.start_date, x.end_date, x.free ? 1 : 0, x.price, x.hours, x.lat, x.lng, x.blurb, x.url, x.season, x.venue, x.address, x.image || null);
+const intakeStatement = (env, x, status, reason) => env.DB.prepare(INSERT_INTAKE).bind(x.id, status, reason, x.name, x.county || "", x.city, x.season, x.type, x.start_date, x.end_date, x.hours, x.free ? 1 : 0, x.price, x.blurb, x.url, x.venue, x.address, x.lat ?? null, x.lng ?? null, x.evidence, x.seen, x.image || "");
 
 /** Checks every row and (unless dry_run) stores the verdicts. Returns { results: [{ index, name, verdict: published|held|duplicate|rejected, id?, reasons? }], published, held, duplicate, rejected }. */
 export async function processRows(env, rows, { dryRun = false, doFetch = fetch, today = ptToday() } = {}) {
@@ -133,6 +154,7 @@ export async function processRows(env, rows, { dryRun = false, doFetch = fetch, 
     const info = {}, pt = await geocodeAddress(x.address, x.city, CITY[x.city], ["Los Angeles", "San Diego"].includes(x.city) ? 45 : 30, doFetch, info);
     if (!pt) { res.verdict = "rejected"; res.reasons = [info.down ? "the address lookup was unavailable; send this row again later" : info.far ? `the address is far from ${x.city}: check the city and address` : "the address was not found: use the full street address with ZIP"]; if (!info.down && !dryRun) res._store = { id: x.id, x, status: "rejected" }; continue; }
     [x.lat, x.lng] = pt; x.county = nearestCounty(x.lat, x.lng, evs);
+    const im = await checkImage(x.image, x, doFetch); x.image = im.image; if (im.note) res.image = im.note; else if (x.image) res.image = "linked";
     if (km(pt, CITY[x.city]) > 60) { res.verdict = "rejected"; res.reasons = ["the pin is too far from the city"]; continue; }
     if (live && budget > 0) { res.verdict = "published"; budget--; res.map = `https://socallights.app/#e-${x.id}`; if (!dryRun) writes.push(intakeStatement(env, x, "published", ""), eventStatement(env, x)); }
     else { res.verdict = "held"; res.reasons = [live ? "the daily publishing limit was reached" : "passed every check; publishing is switched off, so the owner publishes it from Admin"]; if (!dryRun) writes.push(intakeStatement(env, x, "held", res.reasons[0])); }

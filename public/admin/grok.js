@@ -28,15 +28,16 @@ export async function renderGrok(main) {
           + fact("Where", x.venue || x.address ? `${esc(x.venue)}<br><span class="meta">${esc(x.address)}, ${esc(x.city)}${x.county ? " · " + esc(x.county) : ""}</span>` : esc(x.city))
           + fact("Type", `${esc(season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)}${x.price ? " · " + esc(x.price) : ""}`)
           + fact("Page Grok read", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>${x.seen ? ` <span class="meta">(read ${esc(x.seen)})</span>` : ""}` : "")
+          + fact("Photo", x.image ? `<a href="${esc(x.image)}" target="_blank" rel="noopener"><img src="${esc(x.image)}" alt="Linked photo for ${esc(x.name)}" loading="lazy" referrerpolicy="no-referrer" style="max-width:160px;max-height:110px;border-radius:8px;display:block"></a><span class="meta">linked from the event's site, not copied</span>` : "")
           + fact("What it said", esc(x.evidence || "")) + fact(x.status === "rejected" ? "Why rejected" : "Note", esc(x.reason || "")),
-        main: x.status === "published" ? `<a class="btn ghost" href="/e/${encodeURIComponent(x.id)}" target="_blank" rel="noopener">View card</a>` + btn("danger", "Unpublish", 'data-ga="unpublish"') : x.status === "held" || x.status === "unpublished" ? btn("main", "Publish", 'data-ga="publish"') : "",
+        main: x.status === "published" ? `<a class="btn ghost" href="/e/${encodeURIComponent(x.id)}" target="_blank" rel="noopener">View card</a>` + (x.image ? btn("ghost", "Remove photo", 'data-ga="remove_photo"') : "") + btn("danger", "Unpublish", 'data-ga="unpublish"') : x.status === "held" || x.status === "unpublished" ? btn("main", "Publish", 'data-ga="publish"') : "",
       });
     }).join("")}</div>` : `<div class="empty">${VIEW === "published" ? "Nothing from Grok is on the map yet." : "Nothing here."}</div>`}`;
   main.onclick = async (e) => {
     const v = e.target.closest("[data-gv]"); if (v) { VIEW = v.dataset.gv; return renderGrok(main); }
     const b = e.target.closest("[data-ga]"); if (!b) return;
     const id = b.closest("[data-gid]").dataset.gid; b.disabled = true;
-    try { await api("/api/admin/grok", { method: "POST", body: JSON.stringify({ action: b.dataset.ga, id }) }); toast(b.dataset.ga === "publish" ? "Published" : "Unpublished"); renderGrok(main); }
+    try { await api("/api/admin/grok", { method: "POST", body: JSON.stringify({ action: b.dataset.ga, id }) }); toast({ publish: "Published", unpublish: "Unpublished", remove_photo: "Photo removed" }[b.dataset.ga]); renderGrok(main); }
     catch (er) { b.disabled = false; toast(er.message, true); }
   };
 }

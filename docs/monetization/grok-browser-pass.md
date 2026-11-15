@@ -40,6 +40,7 @@ Always send that custom `User-Agent` (Cloudflare blocks default script agents wi
   "price": "Free",
   "blurb": "One or two sentences, 20 to 180 characters, restating the listing. No links.",
   "url": "https://example.org/the-event-page",
+  "image_url": "https://example.org/images/festival-of-lights.jpg",
   "venue": "The Mission Inn",
   "address": "3649 Mission Inn Ave, Riverside, CA 92501",
   "shows": ["date", "time", "place"],
@@ -53,6 +54,7 @@ Field rules (the same rules our sweeps use; a row that breaks one is `rejected` 
 - `hours` are the real times on the page, written like `7pm`, `7:30pm`, `5pm–9pm` (one en dash). Never "TBD" or "check site".
 - `free` is `true` only when general admission is free; then `price` must start with "Free". Otherwise put the price text (for example `"Adults $15; kids $8"`).
 - `url` is the `https` page you read. **Prefer the event's own website or its page on the venue's or city's site.** If the only source is a **public social post or event page** (Facebook, Instagram, TikTok, YouTube, Nextdoor, X) that you could open without logging in and that states the date, time and place, send that link instead. Use the post's own address (not a login or share link; tracking parameters are removed for you). Never a homepage or a page that only says "see our page".
+- `image_url` is **optional**: a photo **link**, taken from the event's own page or post (its main picture, the event's flyer, or a photo of the venue). The site **links** to it exactly as it does for every event photo (the card shows it from that site and credits "Photo: <the site>"); it never copies or stores the picture, so do not upload anything. Rules: `https`; a normal picture address (jpg, png or webp); not a logo, badge, banner or page graphic; no stock or watermarked images; no pictures with private individuals as the subject; no Facebook or Instagram picture-server links (`fbcdn`, `cdninstagram`), which expire within days: use the picture from the event's own website, or leave the field out. If unsure, leave it out. A bad link never rejects the row: the photo is dropped and the answer says why in `image`.
 - `address` is the full street address with ZIP (or two cross streets for a parade). The site looks it up; an address it cannot find is rejected.
 - `shows` must list `"date"`, `"time"` and `"place"`: your statement that the page showed all three. `evidence` quotes it. `seen` is the day you read the page.
 - Unknown fields are rejected on purpose.
@@ -60,11 +62,11 @@ Field rules (the same rules our sweeps use; a row that breaks one is `rejected` 
 ## Step 3: read the answer
 ```json
 { "ok": true, "dry_run": false, "publishing": true, "published": 1, "held": 0, "duplicate": 1, "rejected": 1,
-  "results": [ { "index": 0, "name": "...", "verdict": "published", "id": "grok-...", "map": "https://socallights.app/#e-grok-..." },
+  "results": [ { "index": 0, "name": "...", "verdict": "published", "image": "linked", "id": "grok-...", "map": "https://socallights.app/#e-grok-..." },
                { "index": 1, "verdict": "duplicate", "reasons": ["..."] },
                { "index": 2, "verdict": "rejected", "reasons": ["hours must be the real times from the page ..."] } ] }
 ```
-- `published`: on the map now.
+- `published`: on the map now. `image` is `linked` when your photo link was kept, or `image dropped: <reason>` when it was not (the event is still published).
 - `held`: passed every check but publishing is switched off (or the daily cap of 60 was reached); the owner publishes it from Admin.
 - `duplicate`: already known. Do not resend.
 - `rejected`: read `reasons`; fix and resend once, or skip. A "lookup was unavailable" reason means resend later.
