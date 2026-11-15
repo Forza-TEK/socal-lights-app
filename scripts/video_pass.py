@@ -6,6 +6,8 @@ the honest bot name, no retry under another identity; a page that answers 401/40
 Only fills events that have no video yet: AND (video IS NULL OR video='')."""
 import argparse, collections, json, re, urllib.error, urllib.parse, urllib.request
 from concurrent.futures import ThreadPoolExecutor
+import os, sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from robots_ok import fetch_ok
 
 UA = "SoCalLightsBot/1.0 (+https://socallights.app)"
 YT = re.compile(r"^[A-Za-z0-9_-]{11}$")
@@ -26,6 +28,7 @@ def clean(u):
     return None
 
 def embedded(url):
+    fetch_ok(url)  # robots.txt first (raises PermissionError when it disallows the page)
     html = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": UA}), timeout=20).read(900_000).decode("utf8", "ignore")
     for m in re.finditer(r"<iframe[^>]+(?:data-src|data-lazy-src|src)=[\"']([^\"']+)", html, re.I):
         w = clean(urllib.parse.urljoin(url, m.group(1).replace("&amp;", "&")))
@@ -43,6 +46,7 @@ def main():
     print(len(urls), "pages to try"); skipped = {}
     def go(u):
         try: return u, embedded(u)
+        except PermissionError: skipped[u] = "robots.txt asks bots not to read this page (do NOT bypass)"; return u, None
         except urllib.error.HTTPError as e: skipped[u] = f"HTTP {e.code}" + (" (turns away the bot: do NOT bypass)" if e.code in (401, 403, 429) else ""); return u, None
         except Exception as e: skipped[u] = "error: " + type(e).__name__; return u, None
     with ThreadPoolExecutor(10) as ex: res = list(ex.map(go, urls))

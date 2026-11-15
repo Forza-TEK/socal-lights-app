@@ -23,6 +23,7 @@ export const nameTokens = (name) => [...new Set(String(name).toLowerCase().split
 
 // Some sites sit behind a bot-protection challenge (Cloudflare "Just a moment...", Sucuri, Akamai) that answers every automated visitor with a 403 or 503 and a challenge page, however polite.
 // That says nothing about the page itself, so it is reported as "blocked" (not as a failed page) and is not tried again soon. We do not disguise the check or try to solve the challenge.
+export const ROBOTS_NOTE = "the site's robots.txt asks automated visitors not to read this page, so we did not (open the link yourself to confirm the dates)";
 export const BLOCKED_NOTE = "the site's bot protection blocked our automatic check (the page itself is probably fine: open the link yourself, then confirm the dates)";
 const blockedByProtection = (r) => [403, 429, 503].includes(r.status) && (/challenge/i.test(r.headers.get("cf-mitigated") || "") || /sucuri|akamaighost/i.test(r.headers.get("server") || "") || r.headers.has("x-sucuri-id"));
 // Loads the submitted event page and checks that it mentions the event and its year. Returns { ok, note }.
@@ -36,6 +37,7 @@ export async function verifyEventPage(url, name, startDate, doFetch = fetch) {
   for (const ms of [6000, 9000]) {
     try {
       r = await doFetch(u.href, { redirect: "follow", headers: { "user-agent": "Mozilla/5.0 (compatible; SoCalLightsBot/1.0; +https://socallights.app)", accept: "text/html,*/*" }, signal: AbortSignal.timeout(ms) });
+      if (r.headers.get("x-robots-blocked")) return { ok: false, blocked: true, note: ROBOTS_NOTE }; // the site's robots.txt asks bots not to read this page: we do not
       if (blockedByProtection(r)) return { ok: false, blocked: true, note: BLOCKED_NOTE }; // a bot challenge page: no retry, and never any attempt to get past it
       if (r.status < 500 && r.status !== 429) break; // an answer we can use (a 5xx or "slow down" is worth one more try)
       reason = `HTTP ${r.status}`;

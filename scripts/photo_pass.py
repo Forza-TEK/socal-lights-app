@@ -12,11 +12,14 @@ pages that block it are left for a manual photo. Writes UPDATE statements; run `
 import argparse, collections, io, json, os, re, urllib.error, urllib.parse, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
+import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from robots_ok import fetch_ok
 
 UA = "Mozilla/5.0 (compatible; SoCalLightsBot/1.0; +https://socallights.app)"
 BAD = re.compile(r"logo|icon|favicon|sprite|avatar|blank|spacer|banner|header|footer|button|badge|social|facebook|twitter|instagram|youtube|appstore|playstore|map|qr|sponsor|loading|pixel|\.svg|\.gif|1x1|arrow|menu|search|share|gravatar|ticket|admit", re.I)
 
 def get(u, n=20_000_000):
+    fetch_ok(u)  # robots.txt first (raises PermissionError when it disallows the page)
     return urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": UA}), timeout=20).read(n)
 
 GENERIC = set("event events annual free city park the and for with night lights light show display displays village celebration".split())
@@ -77,6 +80,7 @@ def main():
     why = {}  # page -> why no photo came from it (HTTP status, or an error), for the "needs a photo" list below
     def go(u):
         try: return u, best(u, nm.get(u, ""))
+        except PermissionError: why[u] = "robots.txt asks bots not to read this page (do NOT bypass: use docs/browser-pass.md)"; return u, None
         except urllib.error.HTTPError as e: why[u] = f"HTTP {e.code}" + (" (page turns away the bot: do NOT bypass, use docs/sweep-methods.md 5.1)" if e.code in (401, 403, 429) else ""); return u, None
         except Exception as e: why[u] = "error: " + type(e).__name__; return u, None
     with ThreadPoolExecutor(10) as ex: res = list(ex.map(go, urls))
