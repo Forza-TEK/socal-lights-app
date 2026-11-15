@@ -5,6 +5,7 @@ import { reply, adsError } from "./ads.js";
 import { clean, webUrl, nearestCounty, geocodeAddress } from "./util.js";
 import { line, normName } from "./fields.js";
 import { slug, isDate } from "./events.js";
+import { streetParts } from "./addrkey.js";
 import { BAD } from "./moderation.js";
 import { ptToday } from "./time.js";
 import { CITY } from "../../public/cities.js";
@@ -161,6 +162,23 @@ export const rawRow = (r) => ({
   evidence: str(r.evidence, 240), seen: str(r.seen, 10), image: str(r.image_url, 500),
 });
 
+// A resident who asked us to remove a home (removal_requests, open or approved) must not see it come back through the intake. A request is matched by street number, street name and suffix,
+// plus the same ZIP or the city named in what was typed (the address is kept on the request when Admin approves it, even if the request only named a listing).
+const cityWord = (c) => String(c || "").toLowerCase().replace(/[^a-z]/g, "");
+export const loadRemovals = async (env) => (await env.DB.prepare("SELECT address FROM removal_requests WHERE status IN ('open','done') AND address != ''").all()).results;
+export function removedHome(removals, row) {
+  const b = streetParts(row.address); if (!b) return false;
+  const zip = (String(row.address).match(/\b(9\d{4})\b/) || [])[1] || "";
+  for (const r of removals) {
+    const a = streetParts(r.address);
+    if (!a || a.num !== b.num || a.name !== b.name || (a.suf && b.suf && a.suf !== b.suf)) continue;
+    const rz = (String(r.address).match(/\b(9\d{4})\b/) || [])[1] || "";
+    if ((zip && rz && zip === rz) || cityWord(r.address).includes(cityWord(row.city))) return true;
+  }
+  return false;
+}
+export const REMOVED_REASON = "a resident asked us to remove a home at this address, so it cannot be added again";
+
 const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const INSERT_INTAKE = `INSERT OR REPLACE INTO intake_events (id,status,reason,name,county,city,season,type,start_date,end_date,hours,free,price,blurb,url,venue,address,lat,lng,evidence,seen,image,received_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))`;
 const INSERT_EVENT = `INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address,image,updated_at) VALUES (?,?,?,?,?,?,?,'confirmed',?,?,?,?,?,?,?,?,?,?,?,datetime('now')) ON CONFLICT(id) DO NOTHING`;
@@ -173,7 +191,7 @@ export async function processRows(env, rows, { dryRun = false, doFetch = fetch, 
   const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
   const { c: todays } = await env.DB.prepare("SELECT COUNT(*) AS c FROM intake_events WHERE status = 'published' AND received_at > datetime('now','-1 day')").first();
   let budget = Math.max(0, PUBLISH_PER_DAY - todays);
-  const out = [], writes = [], seen = new Set();
+  const out = [], writes = [], seen = new Set(), removals = await loadRemovals(env);
   for (let i = 0; i < rows.length; i++) {
     const res = { index: i, name: String(rows[i] && rows[i].name || "").slice(0, 120) };
     out.push(res);
@@ -186,6 +204,7 @@ export async function processRows(env, rows, { dryRun = false, doFetch = fetch, 
       `SELECT id FROM events WHERE id = ?1 OR (lower(name) = lower(?2) AND start_date = ?3) OR (lower(address) = lower(?4) AND start_date = ?3 AND lower(city) = lower(?5)) OR (url = ?6 AND start_date = ?3)
        UNION SELECT id FROM intake_events WHERE status IN ('published','held','unpublished') AND (id = ?1 OR (lower(name) = lower(?2) AND start_date = ?3) OR (lower(address) = lower(?4) AND start_date = ?3 AND lower(city) = lower(?5))) LIMIT 1`
     ).bind(x.id, x.name, x.start_date, x.address, x.city, x.url).first();
+    if (removedHome(removals, x)) { res.verdict = "rejected"; res.reasons = [REMOVED_REASON]; continue; } // not kept: nothing about the home is stored
     if (dup) { res.verdict = "duplicate"; res.reasons = ["already on the map, already sent, or taken down by the owner (an intake row never changes an existing event)"]; continue; }
     const info = {}, pt = await geocodeAddress(x.address, x.city, CITY[x.city], ["Los Angeles", "San Diego"].includes(x.city) ? 45 : 30, doFetch, info);
     if (!pt) { res.verdict = "rejected"; res.reasons = [info.down ? "the address lookup was unavailable; send this row again later" : info.far ? `the address is far from ${x.city}: check the city and address` : "the address was not found: use the full street address with ZIP"]; if (!info.down && !dryRun) res._store = { id: x.id, x, status: "rejected" }; continue; }

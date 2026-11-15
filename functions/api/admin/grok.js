@@ -2,7 +2,7 @@
 // GET  /api/admin/grok            -> { configured, publishing, counts, rows: [recent intake rows] }
 // POST /api/admin/grok { action: "unpublish" | "publish" | "remove_photo", id }   one click: take a Grok event off the map (the row stays, so Grok cannot add it again), or put a held / unpublished one on it.
 import { json, err } from "../../_lib/util.js";
-import { eventStatement, publishingOn, ID_PREFIX, intakeId, checkImage } from "../../_lib/intake.js";
+import { eventStatement, publishingOn, ID_PREFIX, intakeId, checkImage, loadRemovals, removedHome, REMOVED_REASON } from "../../_lib/intake.js";
 import { geocodeAddress, nearestCounty } from "../../_lib/util.js";
 import { isDate } from "../../_lib/events.js";
 import { normalizeHours } from "../../../scripts/event-rules.mjs";
@@ -32,6 +32,7 @@ export async function onRequestPost({ request, env }) {
   }
   if (b.action === "publish") {
     if (!["held", "unpublished", "rejected"].includes(row.status)) return err(409, "Only a held, unpublished or rejected row can be published.");
+    if (removedHome(await loadRemovals(env), row)) return err(409, "Cannot publish: " + REMOVED_REASON + ".");
     if (row.status === "rejected") { // the owner overrides the checks: the row is made complete (pin looked up, county and id worked out) and must still be a real, dated event with a known city, season and type
       const miss = [];
       if (String(row.name || "").trim().length < 4) miss.push("a name");

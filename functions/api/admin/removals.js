@@ -26,6 +26,13 @@ export async function onRequestGet({ env }) {
   return json(out, { headers: { "cache-control": "no-store" } });
 }
 
+async function addressOf(env, target) {
+  const [kind, ...rest] = String(target || "").split(":"), id = rest.join(":");
+  if (kind === "event") { const e = await env.DB.prepare("SELECT address, city FROM events WHERE id = ?").bind(id).first(); return e && e.address ? (e.city && !e.address.toLowerCase().includes(e.city.toLowerCase()) ? `${e.address}, ${e.city}` : e.address) : ""; }
+  if (kind === "post") { const p = await env.DB.prepare("SELECT street, city, zip FROM posts WHERE id = ?").bind(id).first(); return p && p.street ? [p.street, p.city, p.zip].filter(Boolean).join(", ") : ""; }
+  return "";
+}
+
 export async function onRequestPost({ request, env, waitUntil }) {
   const b = await request.json().catch(() => ({}));
   const r = await env.DB.prepare("SELECT * FROM removal_requests WHERE id = ?").bind(String(b.id || "")).first();
@@ -42,7 +49,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
     let target = clean(b.target, 100);
     if (!target && r.ref) { const t = await resolveRef(env, r.ref); if (t) target = `${t.kind}:${t.row.id}`; }
     let removed = "";
-    if (target) removed = await removeListing(env, target);
+    if (target) {
+      // keep where the home was, so the Grok intake (and anything else that adds events) can recognise it later: the request may only have named a listing, and the listing is about to be deleted
+      if (!r.address) { const where = await addressOf(env, target); if (where) await env.DB.prepare("UPDATE removal_requests SET address = ? WHERE id = ?").bind(where, r.id).run(); }
+      removed = await removeListing(env, target);
+    }
     if (!removed && b.nothing !== true) return err(400, target ? "That listing wasn't found (it may already be gone). Tick \"nothing to remove\" to close the request." : "Pick the listing to remove, or tick \"nothing to remove\" to close the request.");
     await env.DB.prepare("UPDATE removal_requests SET status = 'done', target = ?, handled_at = datetime('now') WHERE id = ?").bind(removed ? target : "", r.id).run();
     tell(env, waitUntil, r.email, "home_removal_done", { listing: what });

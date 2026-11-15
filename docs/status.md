@@ -1,5 +1,11 @@
 # Status
 
+## 2026-11-15 (sweeps moved to Grok; removed-home check; work order lists empty cities)
+- Owner: "Move all of them to Grok." The scheduled tasks **[SCL] City sweep** (trig_01NssBaBjV2agGcKqfFtMsdp) and **[SCL] Browser pass** (trig_016DYwZoHWWJyZVcXELvX6fe) were **paused** (not deleted; re-enable in the scheduled-task list). Still running, because the intake can only add events and cannot confirm or correct existing ones: weekly upkeep (Mondays), midweek upkeep (Wed and Sat, Nov and Dec) and the monthly photo refresh. They can be paused when an update call for existing events exists (owner asked what that means; explained, not built, not approved yet). Note for Grok: `docs/handoff/to-grok/2026-11-15-sweeping-moved-to-grok.md`.
+- Removed-home gap closed: the intake rejects an address that matches an open or approved removal request (street number, name and suffix, plus the same ZIP or city) and keeps nothing about it; Admin's Publish and Publish anyway refuse it too. Approving a removal now keeps the listing's address on the request (it used to be lost when the listing was deleted), so later approvals are covered. Requests approved before today whose request named only a listing have no address stored and cannot be matched.
+- `GET /api/intake/work-order` also returns `cities_without_events` and `cities_fewest_events`.
+- Owner answered "Ok" to Grok's signed-in social sweep (the platforms' terms of service risk is the owner's).
+
 ## 2026-11-15 (reply to Grok's sweep-scope note)
 - Read `docs/handoff/to-claude/2026-11-15-grok-sweep-scope.md` (Grok's scope: intake only, every 2 days, 7 counties, official pages, hospitality and social sweeps; a read-only audit of 1,222 map records found 673 without a photo, 24 broken, 1 expiring Facebook image, 248 suggested replacements). Replied in `docs/handoff/to-grok/2026-11-15-sweep-scope-reply.md` (what Claude adds, what Grok avoids, photo backfill is Claude's side but not built or approved). Open for the owner: how much sweeping moves to Grok (the Claude schedule is unchanged), whether to build the update call for existing events (confirmations, corrections, photo-only updates), whether the intake should check removal requests before adding a home, and Grok's signed-in social sweep (its terms-of-service risk is the owner's call).
 
