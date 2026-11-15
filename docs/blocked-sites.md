@@ -49,3 +49,5 @@ Added 2026-11-08 (group 14 sweep): rivcodistrict2.org (WebFetch 403), norco.ca.u
 Added 2026-11-13 (group 7 sweep): cityoflancasterca.org (WebFetch 403), scvnews.com (WebFetch 403). visitlancastercity.com pages from search 404.
 
 Added 2026-11-14 (venue pass): exploretock.com (Tock event pages for wineries such as BOTTAIA and Malibu Wines: Cloudflare challenge, 403; use temeculawines.org event pages instead), bottaiawinery.com (403). Not reachable from the session: orfilawines.com (Escondido, igloo village; no response), so Orfila December events are not on the map. WebFetch could not resolve most hosts that day; curl with the honest SoCalLightsBot agent loaded the rest.
+
+Added 2026-11-15 (hotel and resort pass): event.marriott.com (Marriott/Ritz-Carlton event ticket pages: Cloudflare challenge, 403); use the hotel's own `ritzcarlton.com/.../experiences/holidays` page (loads for the bot) and the public Eventbrite listing. visitcrestline.org (Visit Crestline: Cloudflare challenge, 403; found 2026-11-13).
