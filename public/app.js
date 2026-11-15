@@ -533,10 +533,17 @@ function placePin() {
   });
 }
 /* ---------- panel ---------- */
-function setTab(t) { const order = ["events", "plan", "shop"], dir = order.indexOf(t) - order.indexOf(state.tab), anim = dir > 0 ? "tabin-r" : dir < 0 ? "tabin-l" : "tabin"; state.tab = t; state.detail = null; ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
-  document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t)); renderPanel(); drawMap(); if (t === "plan") fitRoute();
+function setTab(t) {
+  const order = ["events", "plan", "shop"], dir = order.indexOf(t) - order.indexOf(state.tab), anim = dir > 0 ? "tabin-r" : dir < 0 ? "tabin-l" : "tabin";
+  state.tab = t; state.detail = null;
+  // The heavy part (drawing the list and the map pins: 30 to 60 ms on a laptop, 200 ms or more on a phone) runs BEFORE the tabs are marked as selected. The sliding pill starts when they are, so its
+  // first frames are smooth instead of freezing for the length of that work; the wait shows up as a tiny delay before the move, which feels like a tap, not a stutter.
+  renderPanel(); drawMap(); if (t === "plan") fitRoute();
+  ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
+  document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t));
   for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin", "tabin-r", "tabin-l"); void el.offsetWidth; el.classList.add(anim); } // the new tab slides in from the side it sits on: Places, Favorites, Shop
-  if (t === "shop") nudgeShopTabs(); }
+  if (t === "shop") nudgeShopTabs();
+}
 // On phones the category row swipes sideways; slide it out and back once when Shop opens so people notice.
 function nudgeShopTabs() {
   if (!isPhone() || matchMedia("(prefers-reduced-motion:reduce)").matches) return;
@@ -553,7 +560,7 @@ $("#t-events").onclick = () => setTab("events"); $("#t-shop").onclick = () => se
 
 // One pill that glides to the selected tab (top tabs on desktop, bottom bar on phones), instead of each tab fading its own background.
 // The pill's two edges are springs: the edge on the side it is travelling toward launches first and fast, the trailing edge follows more slowly, so the pill stretches toward the new tab and then snaps
-// in (a liquid, elastic move) and settles in about a third of a second with only a hair of overshoot. It also squashes a little while it moves. Reduced-motion users get an instant move.
+// in (a liquid, elastic move) and settles in about a third of a second with only a hair of overshoot. It also squashes a little while it moves. With the reduced-motion setting on it is a short, calm slide (no stretch, bounce or squash), not an instant jump: some computers (remote desktops, virtual machines) switch animations off and would otherwise never see the pill move.
 function initSlidePill(box, selector) {
   if (!box) return;
   const pill = document.createElement("span"); pill.className = "slidepill"; pill.setAttribute("aria-hidden", "true"); box.prepend(pill);
@@ -565,17 +572,20 @@ function initSlidePill(box, selector) {
     raf = 0; const t = target();
     if (!t) { pill.style.opacity = "0"; cur = null; return; }
     pill.style.opacity = "1";
-    if (!cur || still.matches) { cur = { ...t }; vel = { l: 0, r: 0 }; }
+    if (!cur) { cur = { ...t }; vel = { l: 0, r: 0 }; }
     let moving = false;
     if (Math.abs((t.l + t.r) - (cur.l + cur.r)) > 2) lead = t.l + t.r > cur.l + cur.r ? "r" : "l"; // the edge toward the destination leads
     acc += Math.min(100, last ? now - last : STEP); last = now;
     for (; acc >= STEP; acc -= STEP) {
-      for (const e of ["l", "r"]) { const sp = e === lead ? LEAD : TRAIL; vel[e] = (vel[e] + (t[e] - cur[e]) * sp.k) * sp.c; cur[e] += vel[e]; }
+      for (const e of ["l", "r"]) {
+        if (still.matches) cur[e] += (t[e] - cur[e]) * 0.22; // reduced motion: a short, calm slide (no stretch, no bounce, no squash), never an instant jump
+        else { const sp = e === lead ? LEAD : TRAIL; vel[e] = (vel[e] + (t[e] - cur[e]) * sp.k) * sp.c; cur[e] += vel[e]; }
+      }
       cur.y += (t.y - cur.y) * 0.3; cur.h += (t.h - cur.h) * 0.3;
     }
     if (Math.abs(t.l - cur.l) < 0.3 && Math.abs(t.r - cur.r) < 0.3 && Math.abs(vel.l) < 0.05 && Math.abs(vel.r) < 0.05) { cur.l = t.l; cur.r = t.r; vel = { l: 0, r: 0 }; } else moving = true;
     if (Math.abs(t.y - cur.y) > 0.3 || Math.abs(t.h - cur.h) > 0.3) moving = true; else { cur.y = t.y; cur.h = t.h; }
-    const w = Math.max(8, cur.r - cur.l), squash = 1 - Math.min(0.07, Math.abs(vel[lead]) / 220);
+    const w = Math.max(8, cur.r - cur.l), squash = still.matches ? 1 : 1 - Math.min(0.07, Math.abs(vel[lead]) / 220);
     pill.style.width = w + "px"; pill.style.height = cur.h + "px"; pill.style.transform = `translate(${cur.l}px,${cur.y}px) scale(1,${squash.toFixed(3)})`;
     if (moving || performance.now() < until) raf = requestAnimationFrame(step); else last = 0;
   };
