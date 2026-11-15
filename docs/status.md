@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-15 (menu pill: slower, smoother slide)
+- Owner found the bouncy pill too much and asked for a slower, smoother slide. The tab pill springs are now LEAD k .07 c .6, TRAIL k .05 c .62 (no overshoot, about 0.6 s for a one-tab hop, under 1 s for the longest), squash at most 3%, and the icon pop is a calm grow from 75%. Reduced motion is unchanged (short calm slide). `styles.css?v=20261115f`, `app.js?v=20261115l`. Test `tests/frontend-logic.test.mjs` updated to match.
+
 ## 2026-11-15 (menu animation restored, branch `claude/affectionate-faraday-0w156h`)
 - Owner saw almost no animation in the Places / Favorites / Shop menu. Cause found by measuring in a browser: the later "sliding pill" rules in `public/styles.css` had switched off the label opening (width), the padding change and the icon pop, leaving only the pill and a color fade; and the reduced-motion rule (which Windows turns on when "Animation effects" is off) removed the rest. Now the pill, the opening label, the padding and the icon pop all run together, and under reduced motion the menu keeps its calm glide and label opening (only pops, spins and sweeping pages stay off). Then, from a video the owner liked, the pill got bouncier (springs LEAD k .2 c .66, TRAIL k .1 c .74: about a tenth of the distance of overshoot, settles in about half a second, squashes up to 13% while moving) and the icon pop is bubblier (scale .4 to 1.24 to .94 to 1). The pill test in `tests/frontend-logic.test.mjs` now expects that overshoot. Versions: `styles.css?v=20261115e`, `app.js?v=20261115f`.
 
