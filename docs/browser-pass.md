@@ -23,8 +23,12 @@ Runs in a Claude session that is **linked to the owner's computer (Claude deskto
 | LA County Parks | https://parks.lacounty.gov/ (Events, Trick or Treat Village, Harvest Festival, holiday events) |
 | La Habra | the City of La Habra website (Events, Community Services) |
 | Others on `docs/blocked-sites.md` | any host listed there as blocked |
+| Watchlist venues marked blocked | run `node scripts/coverage-gaps.mjs --blocked` for the list (hotels, malls, gardens, tourism boards and other recurring venues whose site turned the bot away with a 403: SeaWorld, Irvine Spectrum, Visit Newport Beach, Visit San Diego, Visit Santa Barbara and others). Open each one's own holiday or events page in Chrome, and read the tourism boards' seasonal guides: they name hotels, rinks, light shows and markets the city calendars never list. Add the events by the usual rules, and set the photo and the video (the player embedded on the page, `docs/sweep-methods.md` 5.2) as for the city pages. |
 
 For each city read the calendar month by month, open every holiday, Halloween, Thanksgiving, tree lighting, parade, Santa, lights, Día de los Muertos, turkey trot and New Year event, and note title, date, time, venue, street address, cost, and the page URL. Also check each city's decorating-contest or home-lights page for published home addresses.
+
+## Why this is the route for blocked pages
+The unattended runs never get past a bot challenge, a 403 or a spoofed identity (`docs/blocked-sites.md`); this pass reads the same public pages the way any visitor does, in the owner's own Chrome, with no tricks, so everything a person can see on a public page ends up on the map. Tell the owner which pages still would not open.
 
 ## Photos (owner, 2026-11-11: yes, grab the photos from the pages Chrome can read)
 Many of these city pages refuse our bot, so events listed from them often have no photo. For every event on a page you load in Chrome, **both the events you add and the events already on the map whose `img` is empty** (include `img` in the slim fields you read from `/api/events`):

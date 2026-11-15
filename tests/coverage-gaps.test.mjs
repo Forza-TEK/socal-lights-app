@@ -99,3 +99,9 @@ test("--categories lists every season's categories with their searches", async (
   const { formatCategories } = await import("../scripts/coverage-gaps.mjs"), t = formatCategories();
   for (const s of Object.keys(SEASONS)) assert.match(t, new RegExp(`\\(${s}\\)`)); assert.match(t, /Nutcracker/); assert.match(t, /Look at:/);
 });
+
+test("--blocked lists the watchlist venues the bot cannot read, for the browser pass", async () => {
+  const { formatBlocked, blockedVenues } = await import("../scripts/coverage-gaps.mjs"), w = loadWatchlist();
+  assert.ok(blockedVenues(w).length >= 5); const t = formatBlocked(w); assert.match(t, /browser pass/); assert.match(t, /SeaWorld/);
+  assert.match(readFileSync("docs/browser-pass.md", "utf8"), /coverage-gaps\.mjs --blocked/);
+});
