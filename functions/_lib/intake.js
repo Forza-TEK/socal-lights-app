@@ -62,13 +62,41 @@ export const intakeId = async (name, start, city) => ID_PREFIX + slug(name).slic
 const monthsOut = (today, n) => { const d = new Date(today + "T12:00:00Z"); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); };
 const km = (a, b) => { const R = 6371, r = Math.PI / 180, x = (b[0] - a[0]) * r, y = (b[1] - a[1]) * r, h = Math.sin(x / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(y / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
 
+// Santa and Christmas names are never a reason to reject a row: they are mapped to the right season and type before any check. Matching ignores capitalization, accents and punctuation and sees the raw value (not cut to 10 characters).
+const fold = (v) => String(v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+const XMAS_NAME = /^(noel|christmas|xmas|x mas|merry christmas|holiday|holidays|christmas lights|xmas lights)$/;
+const SANTA_NAME = /^(santa|santa claus|st nick|st nicholas|saint nick|saint nicholas|father christmas|kris kringle|santa visit|santa visits|santa photos|breakfast with santa|brunch with santa|santa breakfast|santa brunch|santa arrival)$/;
+// A Christmas-name type (or a Santa name) becomes the allowed type that fits the event: Santa events are `santa`, otherwise the name and blurb decide, and a general holiday event is a `show`.
+export function guessChristmasType(name, blurb) {
+  const t = `${name} ${blurb}`;
+  if (/\bsanta\b|\bst\.? nick|saint nick|father christmas|kris kringle/i.test(t)) return "santa";
+  if (/parade/i.test(t)) return "parade";
+  if (/tree[- ]?light|lighting ceremony|christmas tree|tree lighting|village/i.test(t)) return "tree";
+  if (/nativity|manger/i.test(t)) return "nativity";
+  if (/walk[- ]?through|light walk|lights? trail|drive[- ]?(thru|through)|lights? show|lantern/i.test(t)) return /drive/i.test(t) ? "drive" : "walk";
+  if (/turkey trot|fun run|5k|10k/i.test(t)) return "trot";
+  if (/thanksgiving|harvest/i.test(t)) return "thanks";
+  if (/\btour\b|train|trolley|hayride|cruise/i.test(t)) return "tour";
+  return "show";
+}
+export function normalizeKinds(r) {
+  const rawSeason = String(r.season ?? ""), rawType = String(r.type ?? ""), fs = fold(rawSeason), ft = fold(rawType);
+  let season = rawSeason.trim().toLowerCase(), type = rawType.trim().toLowerCase();
+  if (XMAS_NAME.test(fs) || (XMAS_NAME.test(ft) && !SEASONS[season])) season = "christmas";
+  if (SANTA_NAME.test(ft) || SANTA_NAME.test(fs)) { type = "santa"; if (!SEASONS[season] || SANTA_NAME.test(fs)) season = "christmas"; }
+  else if (season === "christmas" && !SEASONS.christmas.types[type] && (XMAS_NAME.test(ft) || SANTA_NAME.test(ft))) type = guessChristmasType(r.name, r.blurb);
+  else if (XMAS_NAME.test(ft) && (season === "christmas" || XMAS_NAME.test(fs))) type = guessChristmasType(r.name, r.blurb);
+  return { season, type };
+}
+
 /** The checks that need no network: returns { row } (cleaned fields) or { problems: [..] }. Same rules as scripts/validate-migrations.mjs. */
 export function checkFields(r, today = ptToday()) {
   const p = [];
   if (!r || typeof r !== "object" || Array.isArray(r)) return { problems: ["each row must be an object"] };
   for (const k of Object.keys(r)) if (!FIELDS.includes(k)) p.push(`unknown field "${k}" (allowed: ${FIELDS.join(", ")})`);
+  const kinds = normalizeKinds(r);
   const row = {
-    name: normName(clean(r.name, 120)), city: clean(r.city, 60), season: clean(r.season, 20), type: clean(r.type, 10), start_date: clean(r.start, 10), end_date: clean(r.end || r.start, 10),
+    name: normName(clean(r.name, 120)), city: clean(r.city, 60), season: clean(kinds.season, 20), type: clean(kinds.type, 10), start_date: clean(r.start, 10), end_date: clean(r.end || r.start, 10),
     hours: normalizeHours(line(r.hours, 120)), free: r.free === true || r.free === 1 ? 1 : 0, price: line(r.price, 80), blurb: line(r.blurb, 400), url: webUrl(clean(r.url, 300)),
     venue: normName(clean(r.venue, 120)), address: line(r.address, 160), evidence: line(r.evidence, 240), seen: clean(r.seen, 10), image: String(r.image_url || "").slice(0, 600),
   };
