@@ -6,6 +6,7 @@ import { newEnv, freezeNow } from "./_pay.mjs";
 import { onRequest as intake } from "../functions/api/intake/events.js";
 import { onRequest as workOrder } from "../functions/api/intake/work-order.js";
 import { onRequestGet as adminGet, onRequestPost as adminPost } from "../functions/api/admin/grok.js";
+import { onRequestPost as removalsPost } from "../functions/api/admin/removals.js";
 import { checkFields, checkImage, normalizeKinds, MAX_ROWS } from "../functions/_lib/intake.js";
 
 const KEY = "test-intake-key-0123456789abcdef";
@@ -147,6 +148,39 @@ test("admin: Publish anyway puts a rejected row on the map (checked for the basi
   });
 });
 
+test("a home a resident asked us to remove cannot come back through the intake (open or approved request); other addresses and declined requests do not block", async () => {
+  await run(async () => {
+    const { env, raw } = mk();
+    const req = raw.prepare("INSERT INTO removal_requests (id, email, address, status) VALUES (?, 'a@example.com', ?, ?)");
+    req.run("r1", "27 Via Alicia, Irvine, CA 92618", "done"); req.run("r2", "400 Oak Ave, Riverside", "open"); req.run("r3", "9 Pine St, Riverside, CA 92501", "declined"); req.run("r4", "", "done");
+    const home = (name, address, city, n) => good({ name, address, city, url: `https://example.org/home${n}`, venue: "A home display" });
+    geo(33.6846, -117.8265);
+    const a = await send(env, [home("Alicia Lane Lights", "27 Via Alicia, Irvine, CA 92618", "Irvine", 1)]);
+    assert.equal(a.body.results[0].verdict, "rejected"); assert.match(a.body.results[0].reasons[0], /resident asked us to remove/);
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM intake_events WHERE name = 'Alicia Lane Lights'").get().n, 0, "nothing about the home is kept");
+    geo(33.9806, -117.3717);
+    assert.match((await send(env, [home("Oak Avenue Lights", "400 Oak Avenue, Riverside, CA 92501", "Riverside", 2)])).body.results[0].reasons[0], /resident asked us to remove/, "an open request blocks too, even without a ZIP on the request");
+    assert.equal((await send(env, [home("Pine Street Lights", "9 Pine St, Riverside, CA 92501", "Riverside", 3)])).body.results[0].verdict, "published", "a declined request does not block");
+    assert.equal((await send(env, [home("Oak Avenue Next Door", "402 Oak Avenue, Riverside, CA 92501", "Riverside", 4)])).body.results[0].verdict, "published", "a different house number is fine");
+    // Publish anyway cannot put a removed home back
+    const held = mk({ GROK_INTAKE_PUBLISH: "0" }); held.raw.prepare("INSERT INTO removal_requests (id, email, address, status) VALUES ('r9','a@example.com','500 Elm St, Riverside, CA 92501','done')").run();
+    const id = (await send(held.env, [home("Elm Street Lights", "600 Elm St, Riverside, CA 92501", "Riverside", 5)])).body.results[0].id; assert.ok(id);
+    held.raw.prepare("INSERT INTO removal_requests (id, email, address, status) VALUES ('r10','a@example.com','600 Elm St, Riverside, CA 92501','open')").run();
+    const r = await adminPost({ request: new Request("https://socallights.app/api/admin/grok", { method: "POST", body: JSON.stringify({ action: "publish", id }) }), env: held.env });
+    assert.equal(r.status, 409); assert.equal(held.raw.prepare("SELECT COUNT(*) AS n FROM events WHERE id = ?").get(id).n, 0);
+  });
+});
+
+test("approving a removal keeps the listing's address on the request (even when the request only named the listing)", async () => {
+  const { env, raw } = mk();
+  raw.prepare("INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES ('h1','A home','Orange','Irvine','drive','2026-12-01','2026-12-20','confirmed',1,'Free','6pm',33.68,-117.82,'b','','christmas','Home','27 Via Alicia, Irvine, CA 92618')").run();
+  raw.prepare("INSERT INTO removal_requests (id, email, ref, address, status) VALUES ('q1','a@example.com','h1','','open')").run();
+  const r = await removalsPost({ request: new Request("https://socallights.app/api/admin/removals", { method: "POST", body: JSON.stringify({ id: "q1", action: "approve", target: "event:h1" }) }), env, waitUntil() {} });
+  assert.equal(r.status, 200);
+  assert.equal(raw.prepare("SELECT address FROM removal_requests WHERE id = 'q1'").get().address, "27 Via Alicia, Irvine, CA 92618");
+  assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM events WHERE id = 'h1'").get().n, 0);
+});
+
 test("admin: Remove photo keeps the event and clears the link", async () => {
   await run(async () => {
     const { env, raw } = mk();
@@ -268,6 +302,7 @@ test("work order: key-protected, lists thin categories and the row rules", async
     const w = await call(workOrder, env, { method: "GET" });
     assert.equal(w.status, 200); assert.equal(w.body.max_rows_per_call, MAX_ROWS); assert.ok(w.body.fields.includes("evidence")); assert.ok(Array.isArray(w.body.thin_categories));
     assert.ok(w.body.thin_categories.length && w.body.thin_categories[0].categories[0].queries.length);
+    assert.ok(Array.isArray(w.body.cities_without_events) && w.body.cities_fewest_events.length && w.body.cities_fewest_events.every((c) => c.upcoming > 0 && !w.body.cities_without_events.includes(c.city)), "cities with no upcoming events are listed apart from those with the fewest");
   });
 });
 

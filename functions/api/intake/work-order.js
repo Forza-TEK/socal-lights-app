@@ -4,16 +4,25 @@ import { reply } from "../../_lib/ads.js";
 import { seasonReport } from "../../_lib/gaps.js";
 import { SEASONS } from "../../../public/seasons.js";
 import { ptToday } from "../../_lib/time.js";
+import { CITY } from "../../../public/cities.js";
 
 export async function onRequest({ request, env }) {
   const g = await intakeGuard(request, env, "GET");
   if (g.res) return g.res;
   const today = ptToday();
   const { results } = await env.DB.prepare("SELECT id, name AS n, venue AS v, type AS t, season AS sn, end_date AS e FROM events WHERE end_date >= ?").bind(today).all();
+  const counts = Object.fromEntries((await env.DB.prepare("SELECT city, COUNT(*) AS n FROM events WHERE end_date >= ? GROUP BY city").bind(today).all()).results.map((r) => [r.city, r.n]));
+  const cities = Object.keys(CITY).map((c) => ({ city: c, upcoming: counts[c] || 0 })).sort((a, b) => a.upcoming - b.upcoming || a.city.localeCompare(b.city));
+  // events already on the map that Grok can confirm or give a photo, soonest first (use POST /api/intake/updates): organizer-managed, contest and paid events are left out because their changes wait for the owner
+  const mine = "id NOT LIKE 'u-%' AND id NOT LIKE 'hcontest-%' AND id NOT LIKE 'h-%' AND id NOT IN (SELECT event_id FROM event_submissions WHERE event_id IS NOT NULL)";
+  const toConfirm = (await env.DB.prepare(`SELECT id, name, city, start_date, end_date, url FROM events WHERE status = 'expected' AND end_date >= ? AND ${mine} ORDER BY start_date LIMIT 40`).bind(today).all()).results;
+  const noPhoto = (await env.DB.prepare(`SELECT id, name, city, start_date, url FROM events WHERE (image IS NULL OR image = '') AND (owner_photos IS NULL OR owner_photos = '' OR owner_photos = '[]') AND end_date >= ? AND url != '' AND ${mine} ORDER BY start_date LIMIT 40`).bind(today).all()).results;
   const seasons = seasonReport(results, today).map((s) => ({ ...s, categories: s.categories.filter((c) => c.status !== "OK") })).filter((s) => s.categories.length);
   return reply(200, {
     ok: true, today, publishing: publishingOn(env), max_rows_per_call: MAX_ROWS, fields: FIELDS, shows_must_include: SHOWS,
     seasons: Object.fromEntries(Object.entries(SEASONS).map(([k, v]) => [k, { label: v.label, types: Object.keys(v.types) }])),
+    events_to_confirm: toConfirm, events_without_photo: noPhoto,
     thin_categories: seasons,
+    cities_without_events: cities.filter((c) => !c.upcoming).map((c) => c.city), cities_fewest_events: cities.filter((c) => c.upcoming).slice(0, 25),
   });
 }

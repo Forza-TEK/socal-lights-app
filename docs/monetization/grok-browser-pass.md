@@ -73,3 +73,23 @@ Field rules (the same rules our sweeps use; a row that breaks one is `rejected` 
 
 ## Run schedule
 **Every 2 days.** Start with **`"dry_run": true`** on your first run (every check, nothing stored) and show the owner the verdicts before sending real rows. A normal run: work order, read the thinnest categories' pages, send in batches of up to 8, then give the owner a short summary: how many published, held, duplicate, rejected, the pages that blocked you (so the owner can read them in the owner's own browser pass), and anything odd. Do not message the owner about each row.
+
+## Events already on the map: the update call
+New events go to `POST /api/intake/events`. For an event that is **already on the map**, use `POST /api/intake/updates` (same key and headers, at most **8 rows per call**, `dry_run` supported). It confirms an event or corrects it from the event's own page. The work order lists `events_to_confirm` (status `expected`, soonest first) and `events_without_photo`, each with the event's `id`; the same ids are in `GET /api/events`.
+```json
+{ "rows": [ {
+  "id": "the-event-id-from-the-map",
+  "url": "https://example.org/the-event-page",
+  "shows": ["date", "time", "place"],
+  "evidence": "A short quote of what the page says about the date, time and place.",
+  "seen": "2026-11-16",
+  "start": "2026-12-05", "end": "2026-12-05", "hours": "6pm–9pm",
+  "price": "Free", "free": true,
+  "image_url": "https://example.org/images/lights.jpg"
+} ] }
+```
+- Send **only what you read.** With just `id`, `url`, `shows`, `evidence` and `seen` the row means "this page states the event's date, time and place": an `expected` event becomes `confirmed`. Add `start`/`end` (both), `hours`, or `price` with `free` only when the page differs from the map; the same rules as new events apply (real dates not already past, hours like `7pm` or `5pm–9pm` and never an estimate, `free` true only when the price text starts with "Free"). A date, time or price change needs `shows` listing `date`, `time` and `place`, an `evidence` quote and `seen` (the day you read the page).
+- `image_url` alone (no other change) replaces a missing or dead linked photo, with the same checks and rules as for new events (link only, official site, no social picture-server links). It never replaces a photo we host or one the organizer added, and a photo alone does not confirm an event.
+- `cancelled: true` (with `url`, `evidence`, `seen`) reports a cancellation. It is never applied automatically: it is held for the owner.
+- You cannot change names, venues, addresses, types or remove anything.
+- Answers per row: `applied` (changed on the map; the owner can undo it in Admin > From Grok > Updates), `held` (waiting for the owner, with the reason), `unchanged` (the map already shows this), or `rejected` (with reasons: fix or skip). Held always means: organizer-managed event (`u-` ids, contest homes, anything an organizer added), an event with a paid placement, a cancellation, a start more than 60 days from an already confirmed start, a daily limit of 600 applied updates, or the owner has switched the intake off. Do not resend held rows.
