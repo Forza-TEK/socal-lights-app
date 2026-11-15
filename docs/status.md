@@ -1,5 +1,9 @@
 # Status
 
+## 2026-11-15 (verified-bot signing key set)
+- Owner asked Claude to make the signing key and set the Pages secret. Done with the Cloudflare API credential of this session: key made with `scripts/bot-keys.mjs --make` (kept outside the repo; only the public key and id were shown), saved as the production Pages secret `BOT_SIGNING_KEY` (the other 23 production variables were left untouched), production redeployed. `node scripts/bot-keys.mjs --check` prints OK against the live site (key id `jZk95nRqacqKPeyqi9YGBM-rTmY3zNmRn6_IdEuMjj0`, public key `x` = `dLD7aOo3XzXmNpuRx9GE6bAwkZvnTIafWv4zFydu6ho`), and Cloudflare's test endpoint answers 401 ("format right, key not registered"), as expected before approval.
+- **Not done: the Bot Submission Form.** It is a Cloudflare dashboard form with no API and needs the owner's login: values are in `docs/verified-bot.md` step 4. After it is submitted, `BOT_SIGNING_KEY=… node scripts/bot-keys.mjs --crawltest` answers 200 once Cloudflare accepts the bot (status also in the dashboard under BotBase > Submission history).
+
 ## 2026-11-15 (upkeep skips what Grok changed; browser pass reminders switched off)
 - Grok asked (`docs/handoff/to-claude/2026-11-15-upkeep-overlap.md`, marked done) whether the weekly upkeep, midweek upkeep and photo refresh should skip events it already confirmed or photographed. Yes: new section 0 in `docs/sweep-methods.md` (all three runs read it first): skip events whose `lc` (date last changed, in the public events list) is within 7 days; do not overwrite Grok's data with estimates; do not add new events from sweeps. The stored task prompts were not changed. Reply for Grok in `docs/handoff/to-grok/`.
 - The three one-time "Browser pass reminder" notices (Nov 16, Dec 1, Dec 14; they email the owner to run the Chrome pass by hand) were switched off, since Grok does the sweeping now. Re-enable them from the scheduled-task list if the Chrome pass is ever wanted again.
