@@ -1,5 +1,11 @@
 # Status
 
+## 2026-11-15 (incorporated cities and census-designated places added to the city list, branch `cursor/add-missing-cities-1538`)
+- Added to `public/cities.js` (the city filter and every form that only accepts an exact key, including `POST /api/intake/events`): the 10 incorporated cities that were missing (Bradbury, Hidden Hills, La Habra Heights, Rolling Hills, Vernon, Westlake Village, Canyon Lake, Loma Linda, Needles, Guadalupe) and all 176 census-designated places in the seven counties that were not already listed. CDP names and centers are the 2024 Census gazetteer (internal point, rounded to 3 decimal places). Where two CDPs in California share a name, the one inside Southern California is used. El Modena and Orange Park Acres were designated after that gazetteer; their centers are the Wikipedia coordinates, rounded the same way. No existing city was renamed or removed. Cache tags: `cities.js?v=20261115i`, `app.js?v=20261115j`, `addflow.js?v=20261115k`, `admin.js?v=20261115l`.
+- The other readers import that same `CITY` map or build pages from events. County on an intake row is still the county of the nearest event already on the map; there is no city-to-county table.
+- Each new place is also named in the sweep group for its county (`docs/coverage-cities.md`). Rolling Hills was missing from group 5. Idyllwild-Pine Cove and Mountain Center are in group 15, and Lytle Creek is in group 17, with the valleys they belong to. The generated 0–1 event block is left for `node scripts/coverage-report.mjs --write-doc` to refresh.
+- Test: `tests/city-list.test.mjs`.
+
 ## 2026-11-15 (Grok intake accepts public social links)
 - Grok reported its instructions said the page must be the event's own site, not a social post. The code only required https; the doc said no social posts. Now both agree: a public Facebook/Instagram/TikTok/YouTube/Nextdoor/X post or event page is accepted as `url` when it opens without login and states the date, time and place (event's own site preferred). Tracking parameters (fbclid, igsh, utm_*) are stripped; login, share and redirect links are rejected. Same checks otherwise (date, time, place, evidence, address lookup, duplicates). Tests in `tests/intake.test.mjs`.
 
