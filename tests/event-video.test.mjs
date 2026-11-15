@@ -58,3 +58,13 @@ test("the card shows a button, loads no player until it is tapped, and the edit 
   assert.match(app, /const HEAVY = \["b", "u", "vid"\]/); assert.match(app, /swap\("#dvideo", videoBlock\(ev\)\)/);
   assert.match(forms, /inp\("video", e\.video/); assert.match(adm, /id="eV"/); assert.match(adm, /video: \$\("#eV"\)\.value/);
 });
+
+test("the owner's event form puts the video field with the photos (and still shows it when photos are not available yet)", () => {
+  // forms.js imports browser-only modules by absolute URL, so this reads its source instead of running it
+  const src = readFileSync("public/forms.js", "utf8"), form = src.slice(src.indexOf("export function eventForm"), src.indexOf("// When the season changes"));
+  assert.equal((form.match(/inp\("video"/g) || []).length, 1, "one video input, built once as videoField");
+  assert.match(form, /const videoField = ff\("Video link \(optional\)", inp\("video", e\.video, 'maxlength="300" type="url" placeholder="Paste a YouTube or Vimeo link"'\), \{ c: "c6" \}\);/);
+  assert.match(form, /livePhotos \? fsec\("Photos and video",[\s\S]*?data-pbox>\$\{photoBoxHtml\(e, e\.photos \|\| \[\], \{ max: 4, live: true, noun: "event" \}\)\}<\/div>` \+ videoField\) : fsec\("Video",[^\n]*videoField\)\}/, "with the photos when they are available, in its own section otherwise");
+  const details = form.slice(form.indexOf('fsec("Details"')); assert.ok(!details.includes("video"), "nothing about video under Details");
+  const at = (t) => form.indexOf(t); assert.ok(at('fsec("Event"') < at('fsec("Photos and video"') && at('fsec("Photos and video"') < at('fsec("Where"'), "right after the event name and type, before the address");
+});
