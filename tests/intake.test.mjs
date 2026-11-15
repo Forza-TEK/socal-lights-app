@@ -126,6 +126,27 @@ test("a city or government event may keep its logo as the photo; any other event
   });
 });
 
+test("admin: Publish anyway puts a rejected row on the map (checked for the basics, pin looked up), and refuses one that is not a real dated event", async () => {
+  await run(async () => {
+    const { env, raw } = mk();
+    const adm = (b) => adminPost({ request: new Request("https://socallights.app/api/admin/grok", { method: "POST", body: JSON.stringify(b) }), env }).then(async (x) => ({ status: x.status, body: await x.json() }));
+    const rej = await send(env, [good({ name: "Rejected for hours fest", hours: "TBD" })]);
+    assert.equal(rej.body.results[0].verdict, "rejected");
+    const row = raw.prepare("SELECT id, status, blurb, venue, address, hours FROM intake_events WHERE status = 'rejected'").get();
+    assert.ok(row.id.startsWith("grokx-") && row.venue && row.address && row.blurb, "a rejected row keeps what Grok sent");
+    const ok = await adm({ action: "publish", id: row.id }); assert.equal(ok.status, 200); assert.match(ok.body.id, /^grok-/);
+    const ev = raw.prepare("SELECT status, hours, lat, county FROM events WHERE id = ?").get(ok.body.id); assert.equal(ev.status, "confirmed"); assert.ok(ev.lat && ev.county);
+    assert.equal(raw.prepare("SELECT status FROM intake_events WHERE id = ?").get(ok.body.id).status, "published"); assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM intake_events WHERE id = ?").get(row.id).n, 0, "the rejected copy is replaced");
+    const nocity = await send(env, [good({ name: "No such city fest", city: "Atlantis" })]);
+    const bad = raw.prepare("SELECT id FROM intake_events WHERE status = 'rejected' AND name = 'No such city fest'").get();
+    const refused = await adm({ action: "publish", id: bad.id }); assert.equal(refused.status, 409); assert.match(refused.body.error, /city/);
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM events WHERE name = 'No such city fest'").get().n, 0);
+    const again = await send(env, [good({ name: "Rejected for hours fest", hours: "TBD", address: "9 Other St, Riverside, CA 92501", url: "https://example.org/other-page" })]);
+    const row2 = raw.prepare("SELECT id FROM intake_events WHERE status = 'rejected' AND name = 'Rejected for hours fest'").get();
+    assert.equal((await adm({ action: "publish", id: row2.id })).status, 409, "already on the map");
+  });
+});
+
 test("admin: Remove photo keeps the event and clears the link", async () => {
   await run(async () => {
     const { env, raw } = mk();

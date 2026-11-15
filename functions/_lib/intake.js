@@ -125,6 +125,14 @@ export async function checkImage(raw, row, doFetch = fetch) {
   return { image: x.href };
 }
 
+// What a rejected row keeps (as sent, only trimmed) so the owner can read it in Admin > From Grok and publish it anyway.
+const str = (v, n) => (typeof v === "string" || typeof v === "number" ? String(v).slice(0, n) : "");
+export const rawRow = (r) => ({
+  name: str(r.name, 120), city: str(r.city, 60), season: str(r.season, 20), type: str(r.type, 10), start_date: str(r.start, 10), end_date: str(r.end || r.start, 10), hours: str(r.hours, 120),
+  free: r.free === true || r.free === 1 ? 1 : 0, price: str(r.price, 80), blurb: str(r.blurb, 400), url: str(r.url, 300), venue: str(r.venue, 120), address: str(r.address, 160),
+  evidence: str(r.evidence, 240), seen: str(r.seen, 10), image: str(r.image_url, 500),
+});
+
 const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const INSERT_INTAKE = `INSERT OR REPLACE INTO intake_events (id,status,reason,name,county,city,season,type,start_date,end_date,hours,free,price,blurb,url,venue,address,lat,lng,evidence,seen,image,received_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))`;
 const INSERT_EVENT = `INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address,image,updated_at) VALUES (?,?,?,?,?,?,?,'confirmed',?,?,?,?,?,?,?,?,?,?,?,datetime('now')) ON CONFLICT(id) DO NOTHING`;
@@ -142,7 +150,7 @@ export async function processRows(env, rows, { dryRun = false, doFetch = fetch, 
     const res = { index: i, name: String(rows[i] && rows[i].name || "").slice(0, 120) };
     out.push(res);
     const c = checkFields(rows[i], today);
-    if (c.problems) { res.verdict = "rejected"; res.reasons = c.problems; if (!dryRun && rows[i] && typeof rows[i] === "object") { /* kept for the admin so the owner can see what Grok tried */ res._store = { id: "grokx-" + (await sha256(JSON.stringify(rows[i]) + today)).slice(0, 12), x: { name: String(rows[i].name || "").slice(0, 120), city: String(rows[i].city || "").slice(0, 60), season: String(rows[i].season || "").slice(0, 20), type: String(rows[i].type || "").slice(0, 10), start_date: String(rows[i].start || "").slice(0, 10), end_date: String(rows[i].end || rows[i].start || "").slice(0, 10), hours: "", free: 0, price: "", blurb: "", url: String(rows[i].url || "").slice(0, 300), venue: "", address: "", evidence: "", seen: "" } }; } continue; }
+    if (c.problems) { res.verdict = "rejected"; res.reasons = c.problems; if (!dryRun && rows[i] && typeof rows[i] === "object") res._store = { id: "grokx-" + (await sha256(JSON.stringify(rows[i]) + today)).slice(0, 12), x: rawRow(rows[i]) }; continue; }
     const x = c.row; x.id = await intakeId(x.name, x.start_date, x.city); res.id = x.id;
     if (seen.has(x.id)) { res.verdict = "duplicate"; res.reasons = ["the same event appears twice in this call"]; continue; }
     seen.add(x.id);
