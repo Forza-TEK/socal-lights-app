@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-15 (Grok intake daily limit raised to 600; handoff request closed)
+- Owner asked to raise the intake's limit of 60 published rows a day to 600 (`PUBLISH_PER_DAY`); rows over the cap are still held for one-click Publish. The photo request in `docs/handoff/to-claude/` is marked done (with its Resolution) and a note was left in `docs/handoff/to-grok/`.
+
 ## 2026-11-15 (Grok intake: optional photo link)
 - Grok's request (`docs/handoff/to-claude/2026-11-15-intake-photo-support.md`, PR 635) asked for photo support. Owner decided: **link the photos as we do now, do not copy them.** New optional row field `image_url` (migration 0261 adds `intake_events.image`): stored in `events.image` like every other event photo, so the card shows it from the event's site and credits "Photo: <site>" with a link; nothing is downloaded or stored. Checks: https, at most 500 characters, not a logo/badge/placeholder (the sweeps' `imageProblem` rule), not a Facebook/Instagram/X/TikTok picture-server link (signed, expire in days), and one HEAD look that drops it only when it clearly is not a picture (HTML, 404/410, redirect to non-https, over 15 MB); a site that refuses the check keeps the link (the card falls back to its stock photo if the browser cannot load it). A bad photo never rejects the row: it is dropped and the answer's `image` field says why. Admin > From Grok shows the photo and has a one-click Remove photo (event stays). `docs/monetization/grok-browser-pass.md` updated. Rows per call stay 8 (tested under 50 outgoing calls with a photo check on every row).
 

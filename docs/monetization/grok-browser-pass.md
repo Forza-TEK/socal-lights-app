@@ -67,7 +67,7 @@ Field rules (the same rules our sweeps use; a row that breaks one is `rejected` 
                { "index": 2, "verdict": "rejected", "reasons": ["hours must be the real times from the page ..."] } ] }
 ```
 - `published`: on the map now. `image` is `linked` when your photo link was kept, or `image dropped: <reason>` when it was not (the event is still published).
-- `held`: passed every check but publishing is switched off (or the daily cap of 60 was reached); the owner publishes it from Admin.
+- `held`: passed every check but publishing is switched off (or the daily cap of 600 published rows was reached); the owner publishes it from Admin.
 - `duplicate`: already known. Do not resend.
 - `rejected`: read `reasons`; fix and resend once, or skip. A "lookup was unavailable" reason means resend later.
 

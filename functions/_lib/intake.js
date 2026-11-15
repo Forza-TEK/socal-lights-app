@@ -12,7 +12,7 @@ import { SEASONS } from "../../public/seasons.js";
 import { normalizeHours, freeFlagProblem, imageProblem } from "../../scripts/event-rules.mjs";
 
 export const MAX_ROWS = 8;            // each row costs up to 2 geocoder calls and 2 database calls; a Pages Function may make 50 outgoing calls per request
-export const RATE_PER_MIN = 30, PUBLISH_PER_DAY = 60, KEEP_REJECTED_DAYS = 30;
+export const RATE_PER_MIN = 30, PUBLISH_PER_DAY = 600, KEEP_REJECTED_DAYS = 30;
 export const FIELDS = ["name", "city", "season", "type", "start", "end", "hours", "free", "price", "blurb", "url", "image_url", "venue", "address", "shows", "evidence", "seen"];
 export const SHOWS = ["date", "time", "place"];
 export const ID_PREFIX = "grok-";
