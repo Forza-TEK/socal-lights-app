@@ -25,9 +25,18 @@ const ADDED = [
 const KEY = "test-intake-key-0123456789abcdef";
 const TODAY = "2026-11-15";
 
+// Census-designated places that were not already keys. Centers are the 2024 Census internal point, rounded to 3 decimals.
+const CDPS = [
+  ["Acton", [34.496, -118.184]], ["East Los Angeles", [34.032, -118.169]], ["Green Valley", [34.617, -118.405]],
+  ["Idyllwild-Pine Cove", [33.744, -116.731]], ["Las Flores", [33.584, -117.624]], ["Piñon Hills", [34.446, -117.624]],
+  ["El Modena", [33.788, -117.809]], ["Orange Park Acres", [33.802, -117.781]], ["Isla Vista", [34.412, -119.861]],
+  ["Camp Pendleton Mainside", [33.307, -117.331]],
+];
+
 test("the ten incorporated cities are exact keys, at the Wikipedia centers, and nothing already listed was renamed", () => {
-  assert.equal(Object.keys(CITY).length, 263);
+  assert.equal(Object.keys(CITY).length, 439);
   for (const [name, ll] of ADDED) assert.deepEqual(CITY[name], ll, name);
+  for (const [name, ll] of CDPS) assert.deepEqual(CITY[name], ll, name);
   assert.deepEqual(CITY["Rolling Hills Estates"], [33.775, -118.373]);
   assert.deepEqual(CITY["La Habra"], [33.929, -117.947]);
   assert.deepEqual(CITY["Los Angeles"], [34.052, -118.244]);
@@ -40,6 +49,7 @@ test("the sweep groups name Rolling Hills as its own city, beside Rolling Hills 
   assert.ok(names.includes("Rolling Hills"));
   assert.ok(names.includes("Rolling Hills Estates"));
   for (const [name] of ADDED) assert.ok(names.includes(name), name);
+  for (const [name] of CDPS) assert.ok(names.includes(name), name);
 });
 
 const row = (city) => ({
@@ -49,7 +59,7 @@ const row = (city) => ({
 });
 
 test("checkFields accepts each new city and still rejects a name that is not an exact key", () => {
-  for (const [name] of ADDED) {
+  for (const [name] of [...ADDED, ...CDPS]) {
     const c = checkFields(row(name), TODAY);
     assert.ok(c.row, name + ": " + (c.problems || []).join("; "));
     assert.equal(c.row.city, name);
@@ -76,6 +86,36 @@ test("POST /api/intake/events publishes a row in each new city", async () => {
     assert.equal(a.status, 200); assert.equal(b.status, 200);
     assert.equal(a.body.published, 8); assert.equal(b.body.published, 2);
     for (const [name, , county] of ADDED) {
+      const ev = raw.prepare("SELECT county, city, status FROM events WHERE name = ?").get(name + " Tree Lighting");
+      assert.deepEqual({ ...ev }, { county, city: name, status: "confirmed" });
+    }
+  } finally { undo(); globalThis.fetch = real; }
+});
+
+const CDP_POSTS = [
+  ["East Los Angeles", [34.032, -118.169], "Los Angeles"],
+  ["Idyllwild-Pine Cove", [33.744, -116.731], "Riverside"],
+  ["Piñon Hills", [34.446, -117.624], "San Bernardino"],
+  ["Isla Vista", [34.412, -119.861], "Santa Barbara"],
+];
+
+test("POST /api/intake/events publishes a census-designated place, including a name with an ñ", async () => {
+  const undo = freezeNow("2026-11-15T20:00:00Z");
+  const real = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const q = decodeURIComponent(String(url));
+    const hit = [...CDP_POSTS].sort((a, b) => b[0].length - a[0].length).find(([name]) => q.includes(name));
+    const [lat, lng] = hit ? hit[1] : [34, -118];
+    return new Response(JSON.stringify({ result: { addressMatches: [{ matchedAddress: "X", coordinates: { x: lng, y: lat } }] } }));
+  };
+  try {
+    const { env, raw } = newEnv({ GROK_INTAKE_KEY: KEY });
+    for (const [name, ll, county] of CDP_POSTS) addEvent(raw, "seed-" + name.toLowerCase().replace(/[^a-z]+/g, "-"), { name: "Seed", county, city: name, lat: ll[0], lng: ll[1] });
+    const r = await intake({ request: new Request("https://socallights.app/api/intake/events", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + KEY }, body: JSON.stringify({ rows: CDP_POSTS.map(([name]) => row(name)) }) }), env });
+    const body = await r.json();
+    assert.equal(r.status, 200);
+    assert.equal(body.published, CDP_POSTS.length, JSON.stringify(body.results));
+    for (const [name, , county] of CDP_POSTS) {
       const ev = raw.prepare("SELECT county, city, status FROM events WHERE name = ?").get(name + " Tree Lighting");
       assert.deepEqual({ ...ev }, { county, city: name, status: "confirmed" });
     }

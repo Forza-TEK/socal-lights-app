@@ -4,7 +4,7 @@
 import { me, signIn, friendlyError, isNetError } from "/auth.js?v=20261111z";
 import { draftKey, purgeLegacyDrafts, savePhotos, loadPhotos, dropPhotos } from "/drafts-local.js?v=20261111z";
 import "/norm-ui.js?v=20261102b";
-import { CITY } from "/cities.js?v=20261115f";
+import { CITY } from "/cities.js?v=20261115i";
 export const $ = (q, r = document) => r.querySelector(q);
 export const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");

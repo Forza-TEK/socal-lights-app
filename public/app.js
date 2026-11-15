@@ -1,5 +1,5 @@
 // SoCal Lights Finder — public map app
-import { CITY } from "/cities.js?v=20261115f";
+import { CITY } from "/cities.js?v=20261115i";
 import { IN_APP as NATIVE_IN_APP, nativeShare, syncReminder } from "/native.js?v=20261115a";
 import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261114n";
 import { STOCK } from "/stock.js?v=20261114a";

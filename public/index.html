@@ -30,7 +30,7 @@
 <script>window.__pre=(function(){try{var g=function(u){var p=fetch(u).then(function(r){if(!r.ok)throw new Error(u+" "+r.status);return r.json()});p.catch(function(){});return p},o={},h=null;/* first screen: a small share of the list first (not for a shared link or #season, which need the whole list at once), the whole list right after it, so the two do not share a slow connection */if(location.hash.length<2){h=o["/api/events?head=1"]=g("/api/events?head=1")}var f=o["/api/events"]=h?h.then(function(){},function(){}).then(function(){return g("/api/events")}):g("/api/events");f.catch(function(){});o["/api/posts"]=g("/api/posts");o["/api/config"]=g("/api/config");return o}catch(e){return null}})()</script>
 <style>.headonly .hcount b,.headonly #n-events{visibility:hidden}</style>
 <!-- the modules app.js imports, fetched at the same time as app.js instead of one level after it (keep in step with the import lines at the top of app.js; tests/seo-landing.test.mjs checks) -->
-<link rel="modulepreload" href="/cities.js?v=20261115f">
+<link rel="modulepreload" href="/cities.js?v=20261115i">
 <link rel="modulepreload" href="/seasons.js?v=20261114n">
 <link rel="modulepreload" href="/stock.js?v=20261114a">
 <link rel="modulepreload" href="/video.js?v=20261115a">
@@ -102,7 +102,7 @@
 <div class="menu" id="moremenu" role="menu" hidden></div>
 <div class="modal" id="modal" hidden></div>
 
-<script type="module" src="/app.js?v=20261115h"></script>
+<script type="module" src="/app.js?v=20261115j"></script>
 <script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script>
 </body>
 </html>
