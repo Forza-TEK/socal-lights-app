@@ -81,7 +81,7 @@ test("the screens: the edit sheet has a Photos box for a live event (limit 4), t
   const fs = await import("node:fs"), read = (p) => fs.readFileSync(new URL("../" + p, import.meta.url), "utf8");
   const forms = read("public/forms.js"); // the browser file imports /areapick.js, so it is read as text here
   assert.match(forms, /const livePhotos = e\.status === "published" && !!e\.event_id/, "the Photos box only for an event that is on the map");
-  assert.match(forms, /\$\{livePhotos \? fsec\("Photos", "Up to 4\./); assert.match(forms, /photoBoxHtml\(e, e\.photos \|\| \[\], \{ max: 4, live: true, noun: "event" \}\)/);
+  assert.match(forms, /\$\{livePhotos \? fsec\("Photos and video", "Up to 4 photos/); assert.match(forms, /photoBoxHtml\(e, e\.photos \|\| \[\], \{ max: 4, live: true, noun: "event" \}\)/);
   assert.match(forms, /const max = opts\.max \|\| MAXP/); assert.match(forms, /That is the limit of \$\{max\} photos/); assert.match(forms, /const MAXP = 8;/, "a home still allows 8");
   const profile = read("public/profile.html"); assert.match(profile, /wirePhotoBox\(f, \{ item: O\.events\.find/); assert.match(profile, /max: 4, opts: \{ live: true, noun: "event" \}/); assert.match(profile, /wirePhotoBox\(f, \{ item: h, url: "\/api\/me\/homes\/" \+ id, max: 8 \}\)/);
   assert.match(read("public/app.js"), /Photo: the organizer/);
