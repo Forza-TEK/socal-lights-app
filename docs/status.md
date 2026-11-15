@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-15 (Santa type for Christmas; Santa/Christmas name mapping in the intake)
+- Grok's handoff request (`docs/handoff/to-claude/`, marked done): `santa` added to the christmas types in `public/seasons.js` (label "Santa visits, photos & breakfasts", `TYPE_SHORT` "Santa"; stock photo as for Christmas shows), so the intake, the public form, the migration check and the work order accept it. The intake maps Santa names (Santa Claus, St. Nick, Saint Nicholas, Father Christmas, Kris Kringle) to `santa` and Noel, Christmas, Xmas and X-mas to `christmas` (as the season) or the christmas type that fits the event (as the type) before any check, on the raw value. The sweeps' Santa category counts `santa` events. Cache versions bumped: `seasons.js?v=20261115a` everywhere, `app.js?v=20261115n`, `admin.js?v=20261115o`, `grok.js?v=20261115d`. Existing events were not retyped.
+
 ## 2026-11-15 (From Grok: Publish anyway on rejected rows)
 - Admin > From Grok > Rejected rows now have a **Publish anyway** button (owner override of the checks). Rejected rows used to keep only a few fields; they now keep everything Grok sent (hours, price, blurb, venue, address, page, evidence, photo link) so the owner can read and publish them. Publishing a rejected row still needs the basics (a name, a city from our list, a valid season and type, real dates), looks up the pin (city center when the address is not found, noted on the row), works out the county and the event id, refuses a name and date already on the map, and checks the photo link like the intake does. The event goes on the map as confirmed, tagged From Grok. Rows already stored before this change have fewer fields and may be refused with a message naming what is missing.
 

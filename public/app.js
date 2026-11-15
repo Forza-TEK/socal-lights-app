@@ -1,7 +1,7 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js?v=20261115i";
 import { IN_APP as NATIVE_IN_APP, nativeShare, syncReminder } from "/native.js?v=20261115a";
-import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261114n";
+import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261115a";
 import { STOCK } from "/stock.js?v=20261114a";
 import { parseVideo } from "/video.js?v=20261115a";
 import { isCityEvent, looksLikeLogoUrl, judgePicture } from "/photoguess.js?v=20261111x560"; // logo, banner and blurry pictures give way to the stock photo (city events may keep their logo)
@@ -631,7 +631,7 @@ function datetile(ev) {
 const effStart = (e) => (e.s > TODAY ? e.s : TODAY);
 // Photos: the event's own preview image (from its official page) when we have one, otherwise an openly licensed
 // stock photo of that kind of event, served from /img/stock. Credits show on the detail page.
-const STOCK_BY_SEASON = { halloween: { park: "haunt" }, christmas: { park: "xmaspark", tour: "walk", show: "tree" }, newyear: { family: "nye", parade: "roseparade", show: "nye" }, summer: { park: "zoo" } };
+const STOCK_BY_SEASON = { halloween: { park: "haunt" }, christmas: { park: "xmaspark", tour: "walk", show: "tree", santa: "tree" }, newyear: { family: "nye", parade: "roseparade", show: "nye" }, summer: { park: "zoo" } };
 function stockKey(ev) {
   if (ev.sn === "christmas" && ev.t === "parade" && /boat|harbou?r|yacht|marina|bay\b|cruise/i.test(ev.n)) return "boatparade";
   return (STOCK_BY_SEASON[ev.sn] || {})[ev.t] || (STOCK[ev.t] ? ev.t : "");

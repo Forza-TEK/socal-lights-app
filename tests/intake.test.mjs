@@ -6,7 +6,7 @@ import { newEnv, freezeNow } from "./_pay.mjs";
 import { onRequest as intake } from "../functions/api/intake/events.js";
 import { onRequest as workOrder } from "../functions/api/intake/work-order.js";
 import { onRequestGet as adminGet, onRequestPost as adminPost } from "../functions/api/admin/grok.js";
-import { checkFields, checkImage, MAX_ROWS } from "../functions/_lib/intake.js";
+import { checkFields, checkImage, normalizeKinds, MAX_ROWS } from "../functions/_lib/intake.js";
 
 const KEY = "test-intake-key-0123456789abcdef";
 const NOW = "2026-11-15T20:00:00Z", TODAY = "2026-11-15";
@@ -156,6 +156,21 @@ test("admin: Remove photo keeps the event and clears the link", async () => {
     assert.equal(r.status, 200);
     assert.equal(raw.prepare("SELECT image FROM events WHERE id = ?").get(id).image, null); assert.equal(raw.prepare("SELECT image FROM intake_events WHERE id = ?").get(id).image, ""); assert.equal(raw.prepare("SELECT status FROM events WHERE id = ?").get(id).status, "confirmed");
   });
+});
+
+test("santa is an allowed Christmas type, and Santa and Christmas names are mapped instead of rejected", () => {
+  const ok = (o) => { const c = checkFields(good(o), TODAY); assert.ok(c.row, JSON.stringify(c.problems) + " for " + JSON.stringify(o)); return c.row; };
+  assert.equal(ok({ type: "santa" }).type, "santa");
+  for (const t of ["Santa Claus", "St. Nick", "St Nick", "Saint Nick", "Saint Nicholas", "Father Christmas", "Kris Kringle", "SANTA", "santa-claus", "Breakfast with Santa"]) { const r = ok({ type: t }); assert.deepEqual([r.season, r.type], ["christmas", "santa"], t); }
+  for (const s of ["Noel", "Christmas", "Xmas", "X-mas", "XMAS", "christmas "]) assert.equal(ok({ season: s }).season, "christmas", s);
+  assert.equal(ok({ type: "Christmas", name: "Breakfast with Santa at the Inn" }).type, "santa");
+  assert.equal(ok({ type: "Xmas", name: "Downtown Christmas Parade" }).type, "parade");
+  assert.equal(ok({ type: "Noel", name: "Holiday Concert", blurb: "Choir and orchestra perform holiday favorites for the family." }).type, "show");
+  { const r = ok({ type: "Christmas", season: "", name: "Winter Gala Night", blurb: "An evening of music, food and dancing for the whole family." }); assert.deepEqual([r.season, r.type], ["christmas", "show"]); }
+  assert.deepEqual(normalizeKinds({ season: "Santa Claus", type: "show" }), { season: "christmas", type: "santa" }, "a Santa name sent as the season");
+  assert.equal(normalizeKinds({ season: "halloween", type: "haunt" }).type, "haunt", "other seasons are untouched");
+  assert.ok(checkFields(good({ season: "halloween", type: "santa" }), TODAY).problems, "santa is only allowed for christmas");
+  assert.ok(checkFields(good({ type: "nonsense" }), TODAY).problems, "an unknown type is still refused");
 });
 
 test("hours are put in house style; free price defaults", () => {

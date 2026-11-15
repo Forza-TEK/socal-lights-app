@@ -49,7 +49,7 @@ Always send that custom `User-Agent` (Cloudflare blocks default script agents wi
 } ] }
 ```
 Field rules (the same rules our sweeps use; a row that breaks one is `rejected` with the reason):
-- `season` and `type` come from the work order (`christmas` types: trot, thanks, walk, drive, parade, park, tree, nativity, tour, show; the work order lists every season's types).
+- `season` and `type` come from the work order (`christmas` types: trot, thanks, walk, drive, parade, park, tree, nativity, **santa**, tour, show; the work order lists every season's types). Use `santa` for Santa photos, breakfast or brunch with Santa, and Santa visits and arrivals. Santa and Christmas names are never rejected: Santa Claus, St. Nick, Saint Nicholas, Father Christmas and Kris Kringle sent as the type become `santa`; Noel, Christmas, Xmas and X-mas sent as the season become `christmas`, and sent as the type they become the christmas type that fits the event (`santa`, `parade`, `tree`, and so on, otherwise `show`). Capitalization and punctuation do not matter.
 - `start` / `end` are `YYYY-MM-DD`; `end` may equal `start`. An event that already ended is rejected.
 - `hours` are the real times on the page, written like `7pm`, `7:30pm`, `5pm–9pm` (one en dash). Never "TBD" or "check site".
 - `free` is `true` only when general admission is free; then `price` must start with "Free". Otherwise put the price text (for example `"Adults $15; kids $8"`).

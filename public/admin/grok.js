@@ -1,6 +1,6 @@
 // Admin > From Grok: the events Grok sent from its browser pass (docs/monetization/grok-browser-pass.md). Published rows are on the map tagged "From Grok"; one click takes one off (and Grok cannot add it again).
 import { esc, btn, rec, fact, toast } from "/admin/kit.js?v=20261113a";
-import { SEASONS } from "/seasons.js?v=20261114n";
+import { SEASONS } from "/seasons.js?v=20261115a";
 
 async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: "same-origin", headers: opts.body ? { "content-type": "application/json" } : {}, ...opts });

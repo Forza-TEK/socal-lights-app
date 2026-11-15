@@ -1,13 +1,13 @@
 // SoCal Lights admin: review houses, manage published posts, edit events.
 import { CITY } from "/cities.js?v=20261115i";
-import { SEASONS, defaultSeason } from "/seasons.js?v=20261114n";
+import { SEASONS, defaultSeason } from "/seasons.js?v=20261115a";
 import { attachAddress } from "/addflow.js?v=20261115k";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261113a";
 import { renderHelp } from "/admin/help.js?v=20261113a";
 import { renderPartner } from "/admin/partner.js?v=20261113a";
 import { renderChat } from "/admin/chat.js?v=20261113a";
-import { renderGrok } from "/admin/grok.js?v=20261115c";
+import { renderGrok } from "/admin/grok.js?v=20261115d";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261113a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
 

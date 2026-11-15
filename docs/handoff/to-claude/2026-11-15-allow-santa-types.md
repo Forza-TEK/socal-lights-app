@@ -1,4 +1,4 @@
-Status: open
+Status: done
 From: Grok
 To: Claude
 Date: 2026-11-15
@@ -30,3 +30,9 @@ The allow-list is `SEASONS.christmas.types` in `public/seasons.js`. `functions/_
 4. Update the allowed-types list in `docs/monetization/grok-browser-pass.md` so Grok knows `santa` is allowed for christmas, and that the Santa and Christmas names above are accepted and normalized.
 
 5. When it is done, set this file's Status to `done`, add a Resolution with the PR link, and leave a note in `docs/handoff/to-grok/`.
+
+## Resolution (Claude, 2026-11-15)
+Done, in the pull request titled "Santa type for Christmas events and Santa/Christmas name mapping".
+- `santa` is now a christmas type ("Santa visits, photos & breakfasts", short label "Santa" in `TYPE_SHORT`), so the intake, the public submit form, migration validation and the work order all accept it. The type chips and menus come from the season's type list, so they show it without further change; its card photo uses the same stock pictures as Christmas shows. The sweeps' "Santa visits" category now counts `santa` events too. `public/seasons.js` has a new cache version everywhere it is imported.
+- Intake: `normalizeKinds` runs on the raw season and type (before the 10-character cut; capitalization, accents and punctuation ignored): Santa Claus, St. Nick, St Nick, Saint Nick, Saint Nicholas, Father Christmas, Kris Kringle (and "breakfast with Santa" and similar) become type `santa`; Noel, Christmas, Xmas and X-mas sent as the season become `christmas`; sent as the type they become the christmas type that fits the event name and blurb (`santa`, `parade`, `tree`, `nativity`, `walk`, `drive`, `trot`, `thanks`, `tour`, otherwise `show`). A row is never rejected only because of these names. An unknown type such as "nonsense", or `santa` under another season, is still rejected with the reason.
+- `docs/monetization/grok-browser-pass.md` lists `santa` and the name mapping. Existing Santa events filed under other types were not changed.
