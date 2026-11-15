@@ -1,6 +1,7 @@
 // POST /api/submit-event — public "Add your event" form (JSON).
 // The event is geocoded and its web page is checked. If the page really mentions the event and its year, the event
 // is published straight away; otherwise it waits in the admin's "Submitted events" tab. Either way it is logged.
+import { politeFetch } from "../_lib/botfetch.js";
 import { json, err, clean, webUrl, newId, nearestCounty, geocodeAddress, verifyTurnstile } from "../_lib/util.js";
 import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
@@ -81,7 +82,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const county = nearestCounty(lat, lng, evs);
 
   // The event web page is optional. With one, we check it mentions the event and its year (then the event goes live right away); without one, a person reviews it.
-  const check = e.url ? await verifyEventPage(e.url, e.name, e.start_date) : { ok: false, note: "no event web page given" };
+  const check = e.url ? await verifyEventPage(e.url, e.name, e.start_date, politeFetch(env)) : { ok: false, note: "no event web page given" };
   const { c: today24 } = await env.DB.prepare("SELECT COUNT(*) AS c FROM event_submissions WHERE status = 'published' AND created_at > datetime('now','-1 day')").first();
   // Every event goes live right away (it can be unpublished from the admin). Only a busy day holds new ones for review.
   // The organizer gave the dates themselves, from a signed-in, verified account, so the event goes up "confirmed" ("expected" means dates estimated from past years). Whether its web page could be read and matched is kept in `verified` and the note for the admin.

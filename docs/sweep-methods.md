@@ -43,6 +43,14 @@ Added 2026-11-15 (owner): an event can carry one video (`events.video`, a YouTub
 - A page that blocks the bot (401/403/429 or a challenge) is never bypassed: the video link comes from the organizer (Your events > Edit > Video) or Admin > Events > Edit, or the owner pastes it from a normal browser.
 - Organizers and Admin can set or remove it in the edit forms; a link that is not YouTube or Vimeo is refused.
 
+## 5.3 How our bot behaves (every fetch, every run)
+Added 2026-11-15 with the Cloudflare verified-bot application (`docs/verified-bot.md`); Cloudflare's rules for a verified bot are the rules for every fetch we make:
+- One honest identity: `Mozilla/5.0 (compatible; SoCalLightsBot/1.0; +https://socallights.app/bot)`. No browser or crawler disguise, ever.
+- Read the host's `robots.txt` first and do not fetch a path it disallows for `SoCalLightsBot` (our scripts and the server do this by themselves; when you fetch by hand, look).
+- Gentle: at most about one request a second to a host, a few pages per site per run, short timeouts.
+- No retry after a 403, a 429 or a challenge page, and no attempt to get past one. The one exception, only after Cloudflare has verified the bot: a single read through `node scripts/signed-fetch.mjs <url>`, which signs the same identity.
+- Pages that still refuse go to the browser pass in the owner's own Chrome (`docs/browser-pass.md`) or to a request to the site for a feed or an allow (`docs/blocked-sites.md`).
+
 ## 6. Pin audit
 For every event you add or touch, confirm the pin is on the address: geocode the address and compare with `lat/lng`; if they are more than about 300 m apart, fix the coordinates (a pin on a city center or a neighbouring place is a bug; Rey found "Santa's Arrival" 1.4 km off City Hall). The weekly upkeep also audits the map in batches.
 

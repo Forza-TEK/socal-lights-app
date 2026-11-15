@@ -5,6 +5,7 @@
 //   node scripts/coverage-gaps.mjs --group 8        the work order for one city group: its cities with their counts, the watchlist venues in them that have no event on the map yet,
 //                                                   and the thin categories to search for in them
 //   node scripts/coverage-gaps.mjs --categories     every season's categories with the searches and the places to look (no network needed)
+//   node scripts/coverage-gaps.mjs --blocked        the watchlist venues whose site turns the bot away (403): the list for the browser pass in the owner's own Chrome (docs/browser-pass.md)
 //   node scripts/coverage-gaps.mjs --json           the same as JSON (add --group N for one group)
 //   node scripts/coverage-gaps.mjs --file events.json   read a saved copy of /api/events?full=1 instead of the live API (no network)
 //
@@ -100,8 +101,17 @@ export function formatCategories() {
   return out.join("\n");
 }
 
+/** Watchlist venues whose site answered the bot with a 403: the browser pass (the owner's own Chrome, a normal visitor) reads them. */
+export function blockedVenues(watchlist) { return watchlist.venues.filter((v) => v.blocked); }
+export function formatBlocked(watchlist) {
+  const b = blockedVenues(watchlist), out = [`Watchlist venues whose site turns the bot away (${b.length}): read them in the browser pass (docs/browser-pass.md), in Chrome as a normal visitor.`];
+  for (const v of b) out.push(`- ${v.name} (${v.city}, group ${v.group}; ${v.kind}; ${v.seasons.join("/")}) ${v.site || ""}`);
+  return out.join("\n");
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2), opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : null; };
+  if (args.includes("--blocked")) { console.log(formatBlocked(loadWatchlist())); process.exit(0); }
   if (args.includes("--categories")) { console.log(formatCategories()); process.exit(0); }
   let events;
   if (opt("--file")) events = JSON.parse(readFileSync(opt("--file"), "utf8"));

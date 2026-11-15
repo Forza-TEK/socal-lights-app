@@ -4,6 +4,7 @@
 // (verifyEventPage: the page loads and mentions the event name and its year) and, when it passes, sets the event to confirmed. Nothing is ever downgraded or removed here.
 // Only events people submitted are touched; the sweep-found events follow the stricter rules in docs/confirmation-plan.md.
 // A page that still fails is asked again after 6 hours, until the event ends; a site whose bot protection blocks the check is asked again after 3 days (a person confirms those in Admin). At most 6 events per run, checked in parallel (about 12 outgoing calls at most).
+import { politeFetch } from "../_lib/botfetch.js";
 import { json, err } from "../_lib/util.js";
 import { verifyEventPage } from "../_lib/events.js";
 import { logOp } from "../_lib/oplog.js";
@@ -18,7 +19,7 @@ export async function onRequest({ request, env }) {
      WHERE s.status = 'published' AND e.status = 'expected' AND e.url != '' AND e.end_date >= date('now') AND (s.checked_at IS NULL OR s.checked_at < datetime('now', CASE WHEN s.note LIKE 'the site''s bot protection%' THEN '-3 days' ELSE '-6 hours' END))
      ORDER BY s.checked_at IS NOT NULL, s.checked_at LIMIT ?`).bind(BATCH).all();
   let confirmed = 0, failed = 0;
-  const done = await Promise.all(due.map(async (r) => ({ r, c: await verifyEventPage(r.url, r.name, r.start_date).catch(() => ({ ok: false, note: "check did not run" })) })));
+  const done = await Promise.all(due.map(async (r) => ({ r, c: await verifyEventPage(r.url, r.name, r.start_date, politeFetch(env)).catch(() => ({ ok: false, note: "check did not run" })) })));
   for (const { r, c } of done) {
     try {
       if (c.ok) {

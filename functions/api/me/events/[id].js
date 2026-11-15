@@ -5,6 +5,7 @@
 //   notice : "cancelled" | "postponed" | "" shows a tag on the event
 //   copy   : "Run again next year": a new event with every date moved forward a year, marked Expected (the owner's photos are not copied)
 //   removephoto / coverphoto { key } : remove one of the owner's photos, or make it the cover (the first one)
+import { politeFetch } from "../../../_lib/botfetch.js";
 import { json, err, clean, webUrl, newId, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
 import { CITY } from "../../../../public/cities.js";
 import { SEASONS } from "../../../../public/seasons.js";
@@ -86,7 +87,7 @@ export async function onRequestPost({ params, request, env }) {
     // A new web page, name or first day is checked the way a new event's page is: "Confirmed" only when the page mentions the event and its year, otherwise "Expected".
     const cur = live ? await env.DB.prepare("SELECT status FROM events WHERE id = ?").bind(s.event_id).first() : null;
     let status = cur ? cur.status : "expected", verified = s.verified;
-    if (url !== (s.url || "") || name !== s.name || start !== s.start_date) { const ck = url ? await verifyEventPage(url, name, start) : { ok: false }; status = "confirmed"; verified = ck.ok ? 1 : 0; } // the organizer states the dates, so the event stays confirmed; `verified` only records that its page matched
+    if (url !== (s.url || "") || name !== s.name || start !== s.start_date) { const ck = url ? await verifyEventPage(url, name, start, politeFetch(env)) : { ok: false }; status = "confirmed"; verified = ck.ok ? 1 : 0; } // the organizer states the dates, so the event stays confirmed; `verified` only records that its page matched
     await env.DB.prepare("UPDATE event_submissions SET name=?, blurb=?, venue=?, start_date=?, end_date=?, hours=?, free=?, price=?, url=?, season=?, type=?, city=?, address=?, lat=?, lng=?, county=?, verified=? WHERE id=?").bind(name, blurb, venue, start, end, hours, free, price, url, season, type, city, address, lat, lng, county, verified, s.id).run();
     if (live) await upsertEvent(env, { id: s.event_id, name, county, city, type, start_date: start, end_date: end, status, free, price, hours, lat, lng, blurb, url, season, venue, address });
     if (live && vidIn !== undefined) await env.DB.prepare("UPDATE events SET video = ? WHERE id = ?").bind(vid ? vid.watch : "", s.event_id).run();

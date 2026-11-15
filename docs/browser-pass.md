@@ -2,6 +2,13 @@
 
 Runs in a Claude session that is **linked to the owner's computer (Claude desktop app) with Claude in Chrome connected**. That can be a cloud session with this repo attached: on 2026-10-30 one such session did the whole pass (Chrome, git, npm and the PR). It cannot run as an unattended scheduled routine, because those have no Chrome. See `docs/workstation-setup.md`. The owner approved this on 2026-10-31: the pages are public, and the owner's own Chrome opens them like any visitor. Do not use scripts, proxies or a changed User-Agent on the city sites; just browse in Chrome. If Chrome refuses a site (permission not granted, or a redirect to another domain), stop on that site, list it, and ask the owner; do not work around it.
 
+## Where it runs and when
+- **When:** every **Tuesday and Friday at 10:23 AM Pacific** (the scheduled task "[SCL] Browser pass (Chrome, needs work computer)").
+- **On what:** the **owner's work computer**, the one linked to the Claude desktop app. It must be **awake** at that time, with the **Claude desktop app open and signed in**, and **Chrome open with the Claude extension signed in to the same Claude account and organization**. The pass reads pages through that Chrome, so it sees them the way you do.
+- **If the computer or Chrome is not reachable**, the run stops at once ("Claude in Chrome is not connected"), reads nothing, publishes nothing and sends the owner a notification. **That is what happened on Friday 2026-11-13**: no browser was connected, so nothing was read. The next scheduled run after that is Tuesday 2026-11-17 at 10:23 AM Pacific.
+- **To run it now** (computer on, Chrome open, extension signed in): ask in a Claude Code session to run the browser pass now; the scheduled task can be fired on demand.
+- A laptop that sleeps or a closed lid at 10:23 is the usual reason it does not run. A reminder that the owner can act on: leave the computer on and Chrome open on Tuesday and Friday mornings.
+
 ## Start
 1. Open this repo (`socal-lights-app`). Read `docs/sweep-methods.md` (inclusion rule: date + time + place + seasonal title is enough; blurb restates the listing only; price "Not listed" when blank; 30-row INSERT limit), `docs/updating-events.md` and `public/seasons.js` (types per season).
 2. In Chrome (new tabs), allow each site when asked. Close the tabs you opened when done.
@@ -23,8 +30,12 @@ Runs in a Claude session that is **linked to the owner's computer (Claude deskto
 | LA County Parks | https://parks.lacounty.gov/ (Events, Trick or Treat Village, Harvest Festival, holiday events) |
 | La Habra | the City of La Habra website (Events, Community Services) |
 | Others on `docs/blocked-sites.md` | any host listed there as blocked |
+| Watchlist venues marked blocked | run `node scripts/coverage-gaps.mjs --blocked` for the list (hotels, malls, gardens, tourism boards and other recurring venues whose site turned the bot away with a 403: SeaWorld, Irvine Spectrum, Visit Newport Beach, Visit San Diego, Visit Santa Barbara and others). Open each one's own holiday or events page in Chrome, and read the tourism boards' seasonal guides: they name hotels, rinks, light shows and markets the city calendars never list. Add the events by the usual rules, and set the photo and the video (the player embedded on the page, `docs/sweep-methods.md` 5.2) as for the city pages. |
 
 For each city read the calendar month by month, open every holiday, Halloween, Thanksgiving, tree lighting, parade, Santa, lights, Día de los Muertos, turkey trot and New Year event, and note title, date, time, venue, street address, cost, and the page URL. Also check each city's decorating-contest or home-lights page for published home addresses.
+
+## Why this is the route for blocked pages
+The unattended runs never get past a bot challenge, a 403 or a spoofed identity (`docs/blocked-sites.md`); this pass reads the same public pages the way any visitor does, in the owner's own Chrome, with no tricks, so everything a person can see on a public page ends up on the map. Tell the owner which pages still would not open.
 
 ## Photos (owner, 2026-11-11: yes, grab the photos from the pages Chrome can read)
 Many of these city pages refuse our bot, so events listed from them often have no photo. For every event on a page you load in Chrome, **both the events you add and the events already on the map whose `img` is empty** (include `img` in the slim fields you read from `/api/events`):

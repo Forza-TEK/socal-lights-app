@@ -16,7 +16,7 @@ Last updated 2026-11-07. This is the one page that says where SoCal Lights work 
 | [SCL] Weekly upkeep | Mondays 6:47 | No | Confirm dates, fix details, remove dupes, season roll-overs |
 | [SCL] Midweek upkeep (Nov-Dec) | Wed + Sat 6:52, Nov-Dec | No | Date confirmation, contest homes, photos |
 | [SCL] Monthly photo refresh | 1st of month 2:37 | No | New photos, replace dead ones |
-| [SCL] Browser pass (Chrome, needs work computer) | Tue + Fri 10:23 | **Yes** (computer on, Claude desktop + Chrome open) | Reads the city calendars that block the bot |
+| [SCL] Browser pass (Chrome, needs work computer) | Tuesdays and Fridays at 10:23 AM Pacific | **Yes: the owner's work computer** must be awake, with the Claude desktop app open and Chrome open with the Claude extension signed in to the same account and organization | Reads, in the owner's own Chrome as a normal visitor, the pages that turn the bot away: city calendars, the watchlist venues marked `blocked` (`node scripts/coverage-gaps.mjs --blocked`) and tourism-board guides |
 
 All publish straight to `main` after validation (owner authorized 2026-10-28). Check the GitHub Actions run "Apply database migrations" if anything looks off. Full prompts live in the tasks; the rules they follow are in the repo docs (`docs/sweep-methods.md`, `docs/updating-events.md`, `docs/browser-pass.md`).
 

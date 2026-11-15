@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SoCalLightsBot · SoCal Lights</title>
+<meta name="description" content="SoCalLightsBot: what it is, why it visits your site, how it behaves, and how to block it or reach us.">
+<link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/tokens.css?v=20261115b">
+<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/info.css?v=20261111x560">
+<script src="/hit.js?v=20261107a" defer></script>
+</head>
+<body class="wide">
+<div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a><span id="tb"></span><span id="acct"></span></div></div>
+<main id="content">
+<h1>SoCalLightsBot</h1>
+<p class="meta">SoCalLightsBot is the automated visitor of SoCal Lights (socallights.app), a free public map of holiday, Halloween and seasonal events and decorated homes across Southern California. Operated by Forza-TEK.</p>
+
+<h2>What it is for</h2>
+<p>We list real, public events: a tree lighting, a parade, a haunted trail, a holiday market. When an event page exists, SoCalLightsBot loads that one page to check that it shows the event's name, dates, address and, where the page offers them, a photo and an embedded video, so the listing is accurate and links back to your page. It also helps us find public events we have not listed yet. It reads public pages only: it never logs in, never submits forms and never uses accounts or private areas.</p>
+
+<h2>How it behaves</h2>
+<ul>
+<li><b>It says who it is.</b> Its user-agent is <code>Mozilla/5.0 (compatible; SoCalLightsBot/1.0; +https://socallights.app/bot)</code>. It does not pretend to be a browser or another crawler.</li>
+<li><b>It obeys robots.txt.</b> It reads <code>/robots.txt</code> first and does not fetch a path it is not allowed to read.</li>
+<li><b>It is gentle.</b> A few pages per site per run, at most about one request a second, with a short timeout. It does not retry after a refusal (403, 429 or a challenge page) and does not try to get around one.</li>
+<li><b>It can prove it is us.</b> Requests can carry a Web Bot Auth signature. The public key is at <a href="/.well-known/http-message-signatures-directory">/.well-known/http-message-signatures-directory</a>.</li>
+<li><b>It stores little.</b> It keeps the event facts shown on our map, a link to your page, and a link to a photo or video on your page (we show them with credit to your site and do not copy videos). It does not collect personal data.</li>
+</ul>
+
+<h2>Block it, slow it down, or ask us something</h2>
+<p>To stop it, add this to your <code>robots.txt</code>:</p>
+<pre>User-agent: SoCalLightsBot
+Disallow: /</pre>
+<p>To remove an event we list, or to give us an events feed (iCal or RSS) so we do not have to read your pages, write to <a href="mailto:info@socallights.app">info@socallights.app</a>. We will act on it quickly.</p>
+</main>
+<script type="module">
+import { mountShell } from "/appshell.js?v=20261113a";
+document.body.classList.add("sh-page");
+mountShell({ page: "legal", title: "Legal", items: [{ href: "/privacy", label: "Privacy Policy", icon: "file" }, { href: "/terms", label: "Terms of Use", icon: "file" }] });
+</script>
+<script src="/toc.js?v=20261110a" defer></script>
+<script src="/footer.js?v=20261111x560" defer></script>
+</body>
+</html>
