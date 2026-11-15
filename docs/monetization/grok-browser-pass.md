@@ -7,7 +7,7 @@ You read event pages in **your own browser** (the sites that turn our server bot
 
 ## Hard rules (follow every one)
 1. **Only publish what the event's own page states: the date, the time and the place.** If any of the three is missing, unclear or "TBD", skip the event. Never guess, estimate, copy last year's dates or invent a price. If the price is not listed, say `"price": "Price not listed"` with `"free": false`.
-2. **Read pages like a normal visitor.** Do not log in, do not solve CAPTCHAs or "verify you are human" checks, do not use tricks to get past a block, and do not read a page whose terms or robots.txt say no. If a page blocks you, skip it and list it in your summary. Never retry the same page under another identity.
+2. **Read pages like a normal visitor.** Public social posts and event pages are fine when they open without an account. Do not log in, do not solve CAPTCHAs or "verify you are human" checks, do not use tricks to get past a block, and do not read a page whose terms or robots.txt say no. If a page blocks you, skip it and list it in your summary. Never retry the same page under another identity.
 3. **No personal information.** Events only: nothing about people, no emails or phone numbers in any field.
 4. **Christmas, Halloween, holiday lights, boat parades, tree lightings, light shows, holiday markets and similar seasonal events** in Southern California only (Los Angeles, Orange, San Diego, Riverside, San Bernardino, Ventura, Santa Barbara counties). Cities must match our list exactly (the API tells you when one does not).
 5. The key lives in your secret store as `GROK_INTAKE_KEY`. Never paste it in a chat, a file or a message.
@@ -52,7 +52,7 @@ Field rules (the same rules our sweeps use; a row that breaks one is `rejected` 
 - `start` / `end` are `YYYY-MM-DD`; `end` may equal `start`. An event that already ended is rejected.
 - `hours` are the real times on the page, written like `7pm`, `7:30pm`, `5pm–9pm` (one en dash). Never "TBD" or "check site".
 - `free` is `true` only when general admission is free; then `price` must start with "Free". Otherwise put the price text (for example `"Adults $15; kids $8"`).
-- `url` is the event's own `https` page (the page you read), not a homepage or a social post.
+- `url` is the `https` page you read. **Prefer the event's own website or its page on the venue's or city's site.** If the only source is a **public social post or event page** (Facebook, Instagram, TikTok, YouTube, Nextdoor, X) that you could open without logging in and that states the date, time and place, send that link instead. Use the post's own address (not a login or share link; tracking parameters are removed for you). Never a homepage or a page that only says "see our page".
 - `address` is the full street address with ZIP (or two cross streets for a parade). The site looks it up; an address it cannot find is rejected.
 - `shows` must list `"date"`, `"time"` and `"place"`: your statement that the page showed all three. `evidence` quotes it. `seen` is the day you read the page.
 - Unknown fields are rejected on purpose.

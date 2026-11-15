@@ -17,6 +17,20 @@ export const FIELDS = ["name", "city", "season", "type", "start", "end", "hours"
 export const SHOWS = ["date", "time", "place"];
 export const ID_PREFIX = "grok-";
 
+// The page may be the event's own site or a public social post or event page that states the date, time and place (Facebook, Instagram, TikTok, YouTube, Nextdoor, X).
+// Tracking parameters are removed so the same page is one link; login, share-redirect and "photo of the day" style links are refused.
+const TRACKING = /^(fbclid|igshid|igsh|utm_[a-z]+|mibextid|ref|ref_src|s|si|feature)$/i;
+export function cleanPageUrl(u) {
+  if (!u) return { url: "" };
+  let x; try { x = new URL(u); } catch { return { url: "", problem: "url is not a valid web address" }; }
+  if (x.protocol !== "https:") return { url: u, problem: "url must be https" };
+  const host = x.hostname.toLowerCase().replace(/^(www|m|mobile|web|l|lm)\./, "");
+  if (/(^|\.)(facebook\.com|instagram\.com|fb\.me|fb\.watch)$/.test(host) && (/^\/(login|checkpoint|share|sharer|dialog|recover)\b/.test(x.pathname) || x.hostname.toLowerCase().startsWith("l."))) return { url: u, problem: "url is a login or share-redirect link: use the public address of the event or post itself" };
+  for (const k of [...x.searchParams.keys()]) if (TRACKING.test(k)) x.searchParams.delete(k);
+  x.hash = "";
+  return { url: x.href };
+}
+
 async function sameSecret(a, b) {
   const [x, y] = await Promise.all([sha256(String(a)), sha256(String(b))]);
   let d = 0; for (let i = 0; i < x.length; i++) d |= x.charCodeAt(i) ^ y.charCodeAt(i);
@@ -73,8 +87,8 @@ export function checkFields(r, today = ptToday()) {
   const shows = Array.isArray(r.shows) ? r.shows.map(String) : [];
   for (const s of SHOWS) if (!shows.includes(s)) p.push(`"shows" must list "${s}": only publish what the event's own page states (date, time and place)`);
   if (!row.hours || /check site/i.test(row.hours) || /^(tbd|tba|see site|varies)$/i.test(row.hours)) p.push("hours must be the real times from the page (not an estimate, TBD or \"check site\")");
-  if (!row.url) p.push("url must be the event's own https page");
-  else if (!/^https:\/\//i.test(row.url)) p.push("url must be https");
+  if (!row.url) p.push("url must be the https page you read: the event's own page, or a public post or event page that states the date, time and place");
+  else { const cu = cleanPageUrl(row.url); if (cu.problem) p.push(cu.problem); else row.url = cu.url; }
   if (!row.venue || row.venue.length < 3) p.push("venue is missing");
   if (row.address.length < 6) p.push("address is missing");
   else if (!/\b9\d{4}\b/.test(row.address) && !/&| and /i.test(row.address)) p.push("address needs a ZIP code (or two cross streets)");
