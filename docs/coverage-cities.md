@@ -23,7 +23,7 @@ Beyond cities, the sweeps also work from a **venue watchlist** (`docs/watchlist.
 2. **Valley & Verdugos** — Burbank, Glendale, La Cañada Flintridge, San Fernando, Encino, Sherman Oaks, Studio City, North Hollywood, Van Nuys, Woodland Hills, Northridge, Granada Hills, Porter Ranch, Chatsworth, Sylmar, Sunland-Tujunga, Calabasas, Agoura Hills, Westlake Village, Hidden Hills
 3. **West San Gabriel Valley** — Pasadena, Altadena, South Pasadena, San Marino, Arcadia, Monrovia, Sierra Madre, Bradbury, Duarte, Temple City, San Gabriel, Alhambra, Monterey Park, Rosemead, El Monte, South El Monte, Montebello
 4. **Pomona Valley & East SGV** — Azusa, Glendora, San Dimas, La Verne, Claremont, Pomona, Diamond Bar, Walnut, West Covina, Covina, Baldwin Park, Irwindale, Rowland Heights, Hacienda Heights, La Habra Heights, La Puente, City of Industry
-5. **South Bay** — Torrance, Redondo Beach, Hermosa Beach, Manhattan Beach, El Segundo, Palos Verdes Estates, Rancho Palos Verdes, Rolling Hills Estates, San Pedro, Wilmington, Carson, Gardena, Hawthorne, Inglewood, Lawndale, Lomita, Avalon (Catalina)
+5. **South Bay** — Torrance, Redondo Beach, Hermosa Beach, Manhattan Beach, El Segundo, Palos Verdes Estates, Rancho Palos Verdes, Rolling Hills, Rolling Hills Estates, San Pedro, Wilmington, Carson, Gardena, Hawthorne, Inglewood, Lawndale, Lomita, Avalon (Catalina)
 6. **Long Beach & Gateway Cities** — Long Beach, Lakewood, Signal Hill, Downey, Norwalk, Whittier, La Mirada, Cerritos, Artesia, Bellflower, Paramount, Pico Rivera, Santa Fe Springs, South Gate, Lynwood, Compton, Huntington Park, Bell Gardens, Commerce, Cudahy, Maywood, Vernon, Hawaiian Gardens
 7. **North LA County** — Santa Clarita (Valencia, Newhall, Saugus, Canyon Country, Stevenson Ranch), Castaic, Acton, Lancaster, Palmdale
 
@@ -55,6 +55,7 @@ Beyond cities, the sweeps also work from a **venue watchlist** (`docs/watchlist.
 
 All 210 incorporated cities in the seven counties (88 LA, 34 Orange, 18 San Diego, 28 Riverside, 24 San Bernardino, 10 Ventura, 8 Santa Barbara) were compared with this checklist.
 The 13 that were missing are now in a group above: Bradbury, Cudahy, Hawaiian Gardens, La Habra Heights, Lomita, Maywood and Vernon (LA); Blythe and Canyon Lake (Riverside); Adelanto, Grand Terrace and Needles (San Bernardino).
+Rolling Hills (the city, not Rolling Hills Estates) was still absent from group 5 and is listed there now.
 Unincorporated communities (for example Altadena, Rowland Heights, Hacienda Heights, Acton, Julian) are listed by name inside their groups.
 
 <!-- coverage:start -->
