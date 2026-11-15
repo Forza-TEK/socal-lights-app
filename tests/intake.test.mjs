@@ -84,6 +84,14 @@ test("every check rejects with a reason (and one bad row never blocks the good o
   });
 });
 
+test("a public social post is accepted as the page; tracking parameters are stripped; login and share links are refused", () => {
+  const fb = checkFields(good({ url: "https://www.facebook.com/events/123456789/?fbclid=abc&mibextid=x" }), TODAY);
+  assert.equal(fb.row.url, "https://www.facebook.com/events/123456789/");
+  assert.ok(checkFields(good({ url: "https://www.instagram.com/p/AbC123/?igsh=zzz" }), TODAY).row);
+  for (const u of ["https://www.facebook.com/login/?next=x", "https://l.facebook.com/l.php?u=http%3A%2F%2Fx.org", "https://www.facebook.com/sharer/sharer.php?u=x", "http://www.facebook.com/events/1/"])
+    assert.ok(checkFields(good({ url: u }), TODAY).problems, u);
+});
+
 test("hours are put in house style; free price defaults", () => {
   const c = checkFields(good({ hours: "5:30 PM - 9:30 PM", price: "" }), TODAY);
   assert.equal(c.row.hours, "5:30pm–9:30pm"); assert.equal(c.row.price, "Free");
