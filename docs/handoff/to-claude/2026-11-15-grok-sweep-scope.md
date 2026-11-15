@@ -12,12 +12,37 @@ Requested by Rey D'Angelo. Rey wants to make sure Grok and Claude don't overlap.
 - **Schedule.** An automated run every 2 days at about 9:11 AM PT (next run November 17, 2026), plus extra sweeps when Rey asks. November 15 had several.
 - **Coverage.** 7 counties (LA, Orange, San Diego, Riverside, San Bernardino, Ventura, Santa Barbara), every city and community key in `public/cities.js`. Thinnest work-order categories first.
 - **Seasons and types.** Thanksgiving, Christmas (including the new `santa` type), Hanukkah and menorah lightings, New Year's Eve, First Day hikes and polar plunges, Lunar New Year, and whatever else the work order lists.
-- **Website sweep.** Official event pages from cities and parks and recreation, chambers, churches, museums, zoos and gardens, theme parks, malls and shopping centers, and holiday-light displays.
-- **Hospitality sweep.** Restaurants, bars, hotels and resorts, wineries (Temecula, Santa Ynez and Los Olivos, Malibu, Ramona), breweries, distilleries and cideries. Covers holiday dinners and brunches, Santa breakfasts, pop-up bars, New Year's Eve parties, tree lightings and markets.
-- **Social sweep (read-only, approved by Rey).** Signed-in Facebook (Events search), Instagram (`socal_lightsapp`), X, TikTok and Nextdoor. Read only. Never posts, likes, messages or RSVPs. An official page URL is preferred. A social URL is used only when no official page exists.
 - **Photos.** Sends `image_url` only from the event's own official site, never from social image hosts.
 - **Read-only photo audit.** On November 15 Grok ran a one-time read of `GET /api/events` and `GET /api/events/<id>` to check photos on all 1,222 records. No writes. Results: 456 working photos, 673 missing, 68 stock, 24 broken, 1 expiring Facebook image (`lo-lights-on-symphony-anaheim`), and 248 suggested official replacements. Grok cannot apply these because the intake rejects duplicates. The CSV is available on request.
 - **Dedupe.** Grok checks the public map before sending and does not resend existing events.
+
+## Website sweep
+
+Official event pages. One source per bullet:
+
+- **Cities.** City websites and parks & recreation departments.
+- **Counties.** All 7 county governments, county parks, county fairgrounds and libraries.
+- **State parks and federal or public lands.**
+- **Churches and other houses of worship.** Live nativities, drive-thru nativities, Christmas services with public events, posadas, and menorah lightings at synagogues and Chabad centers.
+- **Nativity scenes and displays.**
+- **Chambers of commerce, business improvement districts and downtown associations.**
+- **School, nonprofit, community and civic groups.** Rotary, Kiwanis, Knights of Columbus, Junior League, and so on.
+- **HOAs and neighborhood holiday-light streets and home displays.** Only addresses a public post publishes.
+- **Museums, zoos, botanic gardens and nature centers.**
+- **Theme parks and attractions.**
+- **Malls, outdoor shopping centers and markets.**
+- **Theaters and performing arts venues.** Nutcracker and holiday shows.
+- **Railroads and holiday trains, boat parades and harbors.**
+- **Sports venues and ice rinks.**
+- **Event listing sites.** Only when they lead to the official page.
+
+## Hospitality sweep
+
+Restaurants, bars, hotels and resorts, wineries (Temecula, Santa Ynez and Los Olivos, Malibu, Ramona), breweries, distilleries and cideries. Covers holiday dinners and brunches, Santa breakfasts, pop-up bars, New Year's Eve parties, tree lightings and markets.
+
+## Social sweep (read-only, approved by Rey)
+
+Signed-in Facebook (Events search), Instagram (`socal_lightsapp`), X, TikTok and Nextdoor. Read only. Never posts, likes, messages or RSVPs. An official page URL is preferred. A social URL is used only when no official page exists.
 
 ## What Grok does NOT do
 
