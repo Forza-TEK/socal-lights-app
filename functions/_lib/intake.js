@@ -42,7 +42,7 @@ export async function intakeGuard(request, env, method) {
   return { keyId };
 }
 
-export const publishingOn = (env) => String(env.GROK_INTAKE_PUBLISH || "") === "1";
+export const publishingOn = (env) => String(env.GROK_INTAKE_PUBLISH ?? "") !== "0"; // on by default: rows that pass every check publish at once; the secret GROK_INTAKE_PUBLISH=0 is the kill switch (rows are then held)
 export const intakeId = async (name, start, city) => ID_PREFIX + slug(name).slice(0, 24).replace(/-+$/, "") + "-" + (await sha256(`${String(name).toLowerCase()}|${start}|${String(city).toLowerCase()}`)).slice(0, 6);
 
 const monthsOut = (today, n) => { const d = new Date(today + "T12:00:00Z"); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); };

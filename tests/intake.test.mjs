@@ -10,7 +10,7 @@ import { checkFields, MAX_ROWS } from "../functions/_lib/intake.js";
 
 const KEY = "test-intake-key-0123456789abcdef";
 const NOW = "2026-11-15T20:00:00Z", TODAY = "2026-11-15";
-const mk = (extra = {}) => newEnv({ GROK_INTAKE_KEY: KEY, GROK_INTAKE_PUBLISH: "1", ...extra });
+const mk = (extra = {}) => newEnv({ GROK_INTAKE_KEY: KEY, ...extra });
 const good = (o = {}) => ({
   name: "Mission Inn Festival of Lights", city: "Riverside", season: "christmas", type: "show", start: "2026-11-27", end: "2027-01-06", hours: "5:30pm–9:30pm", free: true, price: "Free",
   blurb: "Millions of lights across the historic hotel and its downtown blocks, with a tree lighting on opening night.", url: "https://www.missioninn.com/festival-of-lights/", venue: "The Mission Inn", address: "3649 Mission Inn Ave, Riverside, CA 92501",
@@ -115,9 +115,9 @@ test("address not found or far from the city is rejected; a geocoder outage asks
   });
 });
 
-test("publishing off: a passing row is held (not on the map); the owner publishes it with one click and can unpublish it", async () => {
+test("publishing off (GROK_INTAKE_PUBLISH=0): a passing row is held (not on the map); the owner publishes it with one click and can unpublish it", async () => {
   await run(async () => {
-    const { env, raw } = mk({ GROK_INTAKE_PUBLISH: "" });
+    const { env, raw } = mk({ GROK_INTAKE_PUBLISH: "0" });
     const r = await send(env, [good()]); const id = r.body.results[0].id;
     assert.equal(r.body.results[0].verdict, "held"); assert.equal(r.body.publishing, false);
     assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM events WHERE id = ?").get(id).n, 0);

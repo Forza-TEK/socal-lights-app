@@ -16,7 +16,7 @@ export async function renderGrok(main) {
   const d = await api("/api/admin/grok");
   const rows = d.rows.filter((r) => r.status === VIEW), n = (k) => d.counts[k] || 0;
   const state = !d.configured ? `<div class="empty">Not set up yet: no <code>GROK_INTAKE_KEY</code> secret exists. Setup steps are in docs/monetization/grok-browser-pass.md.</div>`
-    : `<p class="meta" style="margin:0 0 12px">${d.publishing ? "Publishing is <b>on</b>: rows that pass every check go on the map right away, tagged From Grok." : "Publishing is <b>off</b> (set <code>GROK_INTAKE_PUBLISH=1</code> to turn it on): rows that pass every check wait under Held, and you publish them with one click."}</p>`;
+    : `<p class="meta" style="margin:0 0 12px">${d.publishing ? "Publishing is <b>on</b>: rows that pass every check go on the map right away, tagged From Grok." : "Publishing is <b>off</b> (the secret <code>GROK_INTAKE_PUBLISH</code> is 0): rows that pass every check wait under Held, and you publish them with one click. Delete the secret or set it to 1 to publish automatically."}</p>`;
   main.innerHTML = `<h2 class="dh" style="margin-top:0">From Grok</h2>${state}
     <div class="seg" role="group" aria-label="Show" style="margin-bottom:14px">${VIEWS.map(([k, l]) => `<button type="button" data-gv="${k}" aria-pressed="${VIEW === k}">${l} <span class="meta">${n(k)}</span></button>`).join("")}</div>
     ${rows.length ? `<div class="cards">${rows.map((x) => {
