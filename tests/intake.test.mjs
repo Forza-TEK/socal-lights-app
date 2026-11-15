@@ -165,7 +165,7 @@ test("the daily publishing cap holds rows instead of publishing them", async () 
   await run(async () => {
     const { env, raw } = mk();
     const ins = raw.prepare("INSERT INTO intake_events (id,status,name) VALUES (?, 'published', 'n')");
-    for (let i = 0; i < 60; i++) ins.run("grok-fill-" + i);
+    for (let i = 0; i < 600; i++) ins.run("grok-fill-" + i);
     const r = await send(env, [good()]); assert.equal(r.body.results[0].verdict, "held"); assert.match(r.body.results[0].reasons[0], /daily/);
   });
 });
