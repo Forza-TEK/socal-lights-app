@@ -1,0 +1,2271 @@
+{
+ "note": "Venues that run seasonal events every year and often never reach a city calendar. A STARTING LIST, not a complete one: the sweeps add venues they find (add an entry when a run discovers one). `group` is the city group (docs/coverage-cities.md) whose sweep reads the venue. `site` is only a place to start (load the page to verify it; never bypass a block). `match` is the regular expression scripts/coverage-gaps.mjs uses to see whether the map already has an event for the venue (matched against the event's name and venue). Edit freely. `blocked: true` means the site answered the bot with 403 when the list was made (2026-11-15): do not retry or bypass it; use the venue's other pages, ticket listings and the tourism board guides. A site address that did not answer at all was left out.",
+ "venues": [
+  {
+   "id": "disneyland-resort",
+   "name": "Disneyland Resort",
+   "kind": "theme_park",
+   "city": "Anaheim",
+   "county": "Orange",
+   "group": 10,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://disneyland.disney.go.com",
+   "match": "disneyland|disney california"
+  },
+  {
+   "id": "knott-s-berry-farm",
+   "name": "Knott's Berry Farm",
+   "kind": "theme_park",
+   "city": "Buena Park",
+   "county": "Orange",
+   "group": 10,
+   "seasons": [
+    "halloween",
+    "christmas",
+    "summer"
+   ],
+   "site": "https://www.knotts.com",
+   "match": "knott"
+  },
+  {
+   "id": "universal-studios-hollywood",
+   "name": "Universal Studios Hollywood",
+   "kind": "theme_park",
+   "city": "Universal City",
+   "county": "Los Angeles",
+   "group": 2,
+   "seasons": [
+    "halloween",
+    "christmas",
+    "summer"
+   ],
+   "site": "https://www.universalstudioshollywood.com",
+   "match": "universal"
+  },
+  {
+   "id": "six-flags-magic-mountain",
+   "name": "Six Flags Magic Mountain",
+   "kind": "theme_park",
+   "city": "Valencia",
+   "county": "Los Angeles",
+   "group": 7,
+   "seasons": [
+    "halloween",
+    "christmas",
+    "summer"
+   ],
+   "site": "https://www.sixflags.com/magicmountain",
+   "match": "six flags|magic mountain"
+  },
+  {
+   "id": "legoland-california",
+   "name": "Legoland California",
+   "kind": "theme_park",
+   "city": "Carlsbad",
+   "county": "San Diego",
+   "group": 12,
+   "seasons": [
+    "halloween",
+    "christmas",
+    "summer"
+   ],
+   "site": "https://www.legoland.com/california",
+   "match": "legoland"
+  },
+  {
+   "id": "seaworld-san-diego",
+   "name": "SeaWorld San Diego",
+   "kind": "theme_park",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "halloween",
+    "christmas",
+    "summer"
+   ],
+   "site": "https://seaworld.com/san-diego",
+   "match": "seaworld|sea world",
+   "blocked": true
+  },
+  {
+   "id": "santa-s-village",
+   "name": "Santa's Village",
+   "kind": "theme_park",
+   "city": "Skyforest",
+   "county": "San Bernardino",
+   "group": 18,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "santa.s village"
+  },
+  {
+   "id": "pacific-park-santa-monica-pier",
+   "name": "Pacific Park (Santa Monica Pier)",
+   "kind": "theme_park",
+   "city": "Santa Monica",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "summer",
+    "halloween",
+    "christmas"
+   ],
+   "site": "https://pacpark.com",
+   "match": "pacific park|santa monica pier"
+  },
+  {
+   "id": "queen-mary",
+   "name": "Queen Mary",
+   "kind": "theme_park",
+   "city": "Long Beach",
+   "county": "Los Angeles",
+   "group": 6,
+   "seasons": [
+    "halloween",
+    "christmas",
+    "newyear"
+   ],
+   "site": "https://www.queenmary.com",
+   "match": "queen mary"
+  },
+  {
+   "id": "adventure-city",
+   "name": "Adventure City",
+   "kind": "theme_park",
+   "city": "Stanton",
+   "county": "Orange",
+   "group": 10,
+   "seasons": [
+    "halloween",
+    "christmas"
+   ],
+   "match": "adventure city"
+  },
+  {
+   "id": "belmont-park",
+   "name": "Belmont Park",
+   "kind": "theme_park",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "summer"
+   ],
+   "site": "https://www.belmontpark.com",
+   "match": "belmont park"
+  },
+  {
+   "id": "los-angeles-zoo-la-zoo-lights",
+   "name": "Los Angeles Zoo (LA Zoo Lights)",
+   "kind": "zoo_aquarium",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "site": "https://www.lazoo.org",
+   "match": "\\bla zoo|los angeles zoo|zoo lights"
+  },
+  {
+   "id": "san-diego-zoo",
+   "name": "San Diego Zoo",
+   "kind": "zoo_aquarium",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "halloween",
+    "summer"
+   ],
+   "site": "https://zoo.sandiegozoo.org",
+   "match": "san diego zoo"
+  },
+  {
+   "id": "san-diego-zoo-safari-park",
+   "name": "San Diego Zoo Safari Park",
+   "kind": "zoo_aquarium",
+   "city": "Escondido",
+   "county": "San Diego",
+   "group": 12,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "site": "https://sdzsafaripark.org",
+   "match": "safari park"
+  },
+  {
+   "id": "santa-barbara-zoo",
+   "name": "Santa Barbara Zoo",
+   "kind": "zoo_aquarium",
+   "city": "Santa Barbara",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "site": "https://www.sbzoo.org",
+   "match": "santa barbara zoo"
+  },
+  {
+   "id": "santa-ana-zoo",
+   "name": "Santa Ana Zoo",
+   "kind": "zoo_aquarium",
+   "city": "Santa Ana",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "site": "https://www.santaanazoo.org",
+   "match": "santa ana zoo"
+  },
+  {
+   "id": "the-living-desert-zoo-and-gardens",
+   "name": "The Living Desert Zoo and Gardens",
+   "kind": "zoo_aquarium",
+   "city": "Palm Desert",
+   "county": "Riverside",
+   "group": 16,
+   "seasons": [
+    "christmas",
+    "halloween",
+    "spring"
+   ],
+   "site": "https://www.livingdesert.org",
+   "match": "living desert"
+  },
+  {
+   "id": "aquarium-of-the-pacific",
+   "name": "Aquarium of the Pacific",
+   "kind": "zoo_aquarium",
+   "city": "Long Beach",
+   "county": "Los Angeles",
+   "group": 6,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://www.aquariumofpacific.org",
+   "match": "aquarium of the pacific"
+  },
+  {
+   "id": "birch-aquarium-at-scripps",
+   "name": "Birch Aquarium at Scripps",
+   "kind": "zoo_aquarium",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://aquarium.ucsd.edu",
+   "match": "birch aquarium"
+  },
+  {
+   "id": "cabrillo-marine-aquarium",
+   "name": "Cabrillo Marine Aquarium",
+   "kind": "zoo_aquarium",
+   "city": "San Pedro",
+   "county": "Los Angeles",
+   "group": 5,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://www.cabrillomarineaquarium.org",
+   "match": "cabrillo marine",
+   "blocked": true
+  },
+  {
+   "id": "descanso-gardens",
+   "name": "Descanso Gardens",
+   "kind": "garden",
+   "city": "La Cañada Flintridge",
+   "county": "Los Angeles",
+   "group": 2,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://www.descansogardens.org",
+   "match": "descanso"
+  },
+  {
+   "id": "los-angeles-county-arboretum",
+   "name": "Los Angeles County Arboretum",
+   "kind": "garden",
+   "city": "Arcadia",
+   "county": "Los Angeles",
+   "group": 3,
+   "seasons": [
+    "christmas",
+    "spring",
+    "halloween"
+   ],
+   "site": "https://arboretum.org",
+   "match": "arboretum"
+  },
+  {
+   "id": "the-huntington-library-art-museum-and-botanical-",
+   "name": "The Huntington Library, Art Museum and Botanical Gardens",
+   "kind": "garden",
+   "city": "San Marino",
+   "county": "Los Angeles",
+   "group": 3,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://www.huntington.org",
+   "match": "huntington"
+  },
+  {
+   "id": "rancho-santa-ana-botanic-garden",
+   "name": "Rancho Santa Ana Botanic Garden",
+   "kind": "garden",
+   "city": "Claremont",
+   "county": "Los Angeles",
+   "group": 4,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://www.rsabg.org",
+   "match": "rancho santa ana botanic"
+  },
+  {
+   "id": "fullerton-arboretum",
+   "name": "Fullerton Arboretum",
+   "kind": "garden",
+   "city": "Fullerton",
+   "county": "Orange",
+   "group": 10,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://fullertonarboretum.org",
+   "match": "fullerton arboretum"
+  },
+  {
+   "id": "south-coast-botanic-garden",
+   "name": "South Coast Botanic Garden",
+   "kind": "garden",
+   "city": "Rolling Hills Estates",
+   "county": "Los Angeles",
+   "group": 5,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://www.southcoastbotanicgarden.org",
+   "match": "south coast botanic"
+  },
+  {
+   "id": "san-diego-botanic-garden",
+   "name": "San Diego Botanic Garden",
+   "kind": "garden",
+   "city": "Encinitas",
+   "county": "San Diego",
+   "group": 12,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://sdbgarden.org",
+   "match": "san diego botanic"
+  },
+  {
+   "id": "balboa-park-december-nights",
+   "name": "Balboa Park (December Nights)",
+   "kind": "garden",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "spring",
+    "halloween"
+   ],
+   "site": "https://www.balboapark.org",
+   "match": "balboa park|december nights"
+  },
+  {
+   "id": "santa-barbara-botanic-garden",
+   "name": "Santa Barbara Botanic Garden",
+   "kind": "garden",
+   "city": "Santa Barbara",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://www.sbbg.org",
+   "match": "botanic garden"
+  },
+  {
+   "id": "rancho-los-alamitos",
+   "name": "Rancho Los Alamitos",
+   "kind": "garden",
+   "city": "Long Beach",
+   "county": "Los Angeles",
+   "group": 6,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.rancholosalamitos.org",
+   "match": "rancho los alamitos"
+  },
+  {
+   "id": "virginia-robinson-gardens",
+   "name": "Virginia Robinson Gardens",
+   "kind": "garden",
+   "city": "Beverly Hills",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://robinsongardens.org",
+   "match": "robinson gardens"
+  },
+  {
+   "id": "fillmore-western-railway",
+   "name": "Fillmore & Western Railway",
+   "kind": "railroad",
+   "city": "Fillmore",
+   "county": "Ventura",
+   "group": 19,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.fwry.com",
+   "match": "fillmore (&|and) western"
+  },
+  {
+   "id": "southern-california-railway-museum",
+   "name": "Southern California Railway Museum",
+   "kind": "railroad",
+   "city": "Perris",
+   "county": "Riverside",
+   "group": 14,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "site": "https://socalrailway.org",
+   "match": "railway museum|polar express|orange empire"
+  },
+  {
+   "id": "irvine-park-railroad",
+   "name": "Irvine Park Railroad",
+   "kind": "railroad",
+   "city": "Orange",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "match": "irvine park railroad|irvine regional park"
+  },
+  {
+   "id": "travel-town-museum",
+   "name": "Travel Town Museum",
+   "kind": "railroad",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.traveltown.org",
+   "match": "travel town"
+  },
+  {
+   "id": "big-bear-mountain-resort-snow-summit-and-bear-mo",
+   "name": "Big Bear Mountain Resort (Snow Summit and Bear Mountain)",
+   "kind": "snow",
+   "city": "Big Bear Lake",
+   "county": "San Bernardino",
+   "group": 18,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.bigbearmountainresort.com",
+   "match": "snow summit|bear mountain|big bear mountain"
+  },
+  {
+   "id": "mountain-high",
+   "name": "Mountain High",
+   "kind": "snow",
+   "city": "Wrightwood",
+   "county": "San Bernardino",
+   "group": 18,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.mthigh.com",
+   "match": "mountain high"
+  },
+  {
+   "id": "mt-baldy-resort",
+   "name": "Mt. Baldy Resort",
+   "kind": "snow",
+   "city": "Mt. Baldy",
+   "county": "Los Angeles",
+   "group": 17,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "baldy"
+  },
+  {
+   "id": "snow-valley-mountain-resort",
+   "name": "Snow Valley Mountain Resort",
+   "kind": "snow",
+   "city": "Running Springs",
+   "county": "San Bernardino",
+   "group": 18,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "snow valley"
+  },
+  {
+   "id": "lake-arrowhead-village",
+   "name": "Lake Arrowhead Village",
+   "kind": "snow",
+   "city": "Lake Arrowhead",
+   "county": "San Bernardino",
+   "group": 18,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "match": "lake arrowhead"
+  },
+  {
+   "id": "oak-glen-riley-s-farm-and-orchards",
+   "name": "Oak Glen (Riley's Farm and orchards)",
+   "kind": "snow",
+   "city": "Yucaipa",
+   "county": "San Bernardino",
+   "group": 17,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "match": "oak glen|riley"
+  },
+  {
+   "id": "julian",
+   "name": "Julian",
+   "kind": "snow",
+   "city": "Julian",
+   "county": "San Diego",
+   "group": 12,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "match": "julian"
+  },
+  {
+   "id": "idyllwild",
+   "name": "Idyllwild",
+   "kind": "snow",
+   "city": "Idyllwild",
+   "county": "Riverside",
+   "group": 15,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "idyllwild"
+  },
+  {
+   "id": "ice-at-santa-monica",
+   "name": "Ice at Santa Monica",
+   "kind": "ice_rink",
+   "city": "Santa Monica",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "ice at santa monica"
+  },
+  {
+   "id": "south-coast-plaza",
+   "name": "South Coast Plaza",
+   "kind": "mall",
+   "city": "Costa Mesa",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.southcoastplaza.com",
+   "match": "south coast plaza"
+  },
+  {
+   "id": "fashion-island",
+   "name": "Fashion Island",
+   "kind": "mall",
+   "city": "Newport Beach",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.shopfashionisland.com",
+   "match": "fashion island"
+  },
+  {
+   "id": "the-grove",
+   "name": "The Grove",
+   "kind": "mall",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://thegrovela.com",
+   "match": "the grove"
+  },
+  {
+   "id": "the-americana-at-brand",
+   "name": "The Americana at Brand",
+   "kind": "mall",
+   "city": "Glendale",
+   "county": "Los Angeles",
+   "group": 2,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.americanaatbrand.com",
+   "match": "americana at brand"
+  },
+  {
+   "id": "westfield-century-city",
+   "name": "Westfield Century City",
+   "kind": "mall",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "century city"
+  },
+  {
+   "id": "del-amo-fashion-center",
+   "name": "Del Amo Fashion Center",
+   "kind": "mall",
+   "city": "Torrance",
+   "county": "Los Angeles",
+   "group": 5,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "del amo"
+  },
+  {
+   "id": "third-street-promenade-and-santa-monica-place",
+   "name": "Third Street Promenade and Santa Monica Place",
+   "kind": "mall",
+   "city": "Santa Monica",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "third street promenade|santa monica place"
+  },
+  {
+   "id": "westfield-topanga-and-the-village",
+   "name": "Westfield Topanga and The Village",
+   "kind": "mall",
+   "city": "Canoga Park",
+   "county": "Los Angeles",
+   "group": 2,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "topanga"
+  },
+  {
+   "id": "irvine-spectrum-center",
+   "name": "Irvine Spectrum Center",
+   "kind": "mall",
+   "city": "Irvine",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "site": "https://www.irvinespectrumcenter.com",
+   "match": "spectrum",
+   "blocked": true
+  },
+  {
+   "id": "the-outlets-at-orange",
+   "name": "The Outlets at Orange",
+   "kind": "mall",
+   "city": "Orange",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "outlets at orange"
+  },
+  {
+   "id": "the-citadel-outlets",
+   "name": "The Citadel Outlets",
+   "kind": "mall",
+   "city": "Commerce",
+   "county": "Los Angeles",
+   "group": 6,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "citadel"
+  },
+  {
+   "id": "desert-hills-premium-outlets",
+   "name": "Desert Hills Premium Outlets",
+   "kind": "mall",
+   "city": "Cabazon",
+   "county": "Riverside",
+   "group": 15,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "desert hills"
+  },
+  {
+   "id": "ontario-mills",
+   "name": "Ontario Mills",
+   "kind": "mall",
+   "city": "Ontario",
+   "county": "San Bernardino",
+   "group": 17,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "ontario mills"
+  },
+  {
+   "id": "victoria-gardens",
+   "name": "Victoria Gardens",
+   "kind": "mall",
+   "city": "Rancho Cucamonga",
+   "county": "San Bernardino",
+   "group": 17,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "victoria gardens"
+  },
+  {
+   "id": "the-shops-at-mission-viejo",
+   "name": "The Shops at Mission Viejo",
+   "kind": "mall",
+   "city": "Mission Viejo",
+   "county": "Orange",
+   "group": 8,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "shops at mission viejo"
+  },
+  {
+   "id": "brea-mall",
+   "name": "Brea Mall",
+   "kind": "mall",
+   "city": "Brea",
+   "county": "Orange",
+   "group": 10,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "brea mall"
+  },
+  {
+   "id": "fashion-valley",
+   "name": "Fashion Valley",
+   "kind": "mall",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "fashion valley"
+  },
+  {
+   "id": "westfield-utc",
+   "name": "Westfield UTC",
+   "kind": "mall",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "\\butc\\b|westfield utc"
+  },
+  {
+   "id": "carlsbad-premium-outlets",
+   "name": "Carlsbad Premium Outlets",
+   "kind": "mall",
+   "city": "Carlsbad",
+   "county": "San Diego",
+   "group": 12,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "carlsbad premium"
+  },
+  {
+   "id": "seaport-village",
+   "name": "Seaport Village",
+   "kind": "mall",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "seaport village"
+  },
+  {
+   "id": "liberty-station",
+   "name": "Liberty Station",
+   "kind": "mall",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "match": "liberty station"
+  },
+  {
+   "id": "paseo-nuevo",
+   "name": "Paseo Nuevo",
+   "kind": "mall",
+   "city": "Santa Barbara",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "paseo nuevo"
+  },
+  {
+   "id": "the-collection-at-riverpark",
+   "name": "The Collection at RiverPark",
+   "kind": "mall",
+   "city": "Oxnard",
+   "county": "Ventura",
+   "group": 19,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "riverpark"
+  },
+  {
+   "id": "camarillo-premium-outlets",
+   "name": "Camarillo Premium Outlets",
+   "kind": "mall",
+   "city": "Camarillo",
+   "county": "Ventura",
+   "group": 19,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "camarillo premium"
+  },
+  {
+   "id": "the-oaks-westfield-oaks",
+   "name": "The Oaks (Westfield Oaks)",
+   "kind": "mall",
+   "city": "Thousand Oaks",
+   "county": "Ventura",
+   "group": 19,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "the oaks|westfield oaks"
+  },
+  {
+   "id": "simi-valley-town-center",
+   "name": "Simi Valley Town Center",
+   "kind": "mall",
+   "city": "Simi Valley",
+   "county": "Ventura",
+   "group": 19,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "simi valley town center"
+  },
+  {
+   "id": "pacific-city",
+   "name": "Pacific City",
+   "kind": "mall",
+   "city": "Huntington Beach",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "pacific city"
+  },
+  {
+   "id": "glendale-galleria",
+   "name": "Glendale Galleria",
+   "kind": "mall",
+   "city": "Glendale",
+   "county": "Los Angeles",
+   "group": 2,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "glendale galleria"
+  },
+  {
+   "id": "old-pasadena",
+   "name": "Old Pasadena",
+   "kind": "mall",
+   "city": "Pasadena",
+   "county": "Los Angeles",
+   "group": 3,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "old pasadena|old town pasadena"
+  },
+  {
+   "id": "fairplex",
+   "name": "Fairplex",
+   "kind": "fairground",
+   "city": "Pomona",
+   "county": "Los Angeles",
+   "group": 4,
+   "seasons": [
+    "christmas",
+    "halloween",
+    "summer"
+   ],
+   "site": "https://www.fairplex.com",
+   "match": "fairplex"
+  },
+  {
+   "id": "oc-fair-and-event-center",
+   "name": "OC Fair and Event Center",
+   "kind": "fairground",
+   "city": "Costa Mesa",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://ocfair.com",
+   "match": "oc fair|event center"
+  },
+  {
+   "id": "del-mar-fairgrounds",
+   "name": "Del Mar Fairgrounds",
+   "kind": "fairground",
+   "city": "Del Mar",
+   "county": "San Diego",
+   "group": 12,
+   "seasons": [
+    "christmas",
+    "summer"
+   ],
+   "site": "https://www.delmarfairgrounds.com",
+   "match": "del mar fair"
+  },
+  {
+   "id": "ventura-county-fairgrounds",
+   "name": "Ventura County Fairgrounds",
+   "kind": "fairground",
+   "city": "Ventura",
+   "county": "Ventura",
+   "group": 19,
+   "seasons": [
+    "christmas",
+    "summer"
+   ],
+   "match": "ventura county fair"
+  },
+  {
+   "id": "earl-warren-showgrounds",
+   "name": "Earl Warren Showgrounds",
+   "kind": "fairground",
+   "city": "Santa Barbara",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "earl warren"
+  },
+  {
+   "id": "rose-bowl-stadium",
+   "name": "Rose Bowl Stadium",
+   "kind": "venue",
+   "city": "Pasadena",
+   "county": "Los Angeles",
+   "group": 3,
+   "seasons": [
+    "newyear",
+    "summer"
+   ],
+   "site": "https://www.rosebowlstadium.com",
+   "match": "rose bowl"
+  },
+  {
+   "id": "dodger-stadium",
+   "name": "Dodger Stadium",
+   "kind": "venue",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "summer"
+   ],
+   "match": "dodger"
+  },
+  {
+   "id": "angel-stadium",
+   "name": "Angel Stadium",
+   "kind": "venue",
+   "city": "Anaheim",
+   "county": "Orange",
+   "group": 10,
+   "seasons": [
+    "christmas",
+    "summer"
+   ],
+   "match": "angel stadium"
+  },
+  {
+   "id": "petco-park",
+   "name": "Petco Park",
+   "kind": "venue",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "summer"
+   ],
+   "match": "petco park"
+  },
+  {
+   "id": "hollywood-bowl",
+   "name": "Hollywood Bowl",
+   "kind": "performing_arts",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "summer",
+    "christmas"
+   ],
+   "site": "https://www.hollywoodbowl.com",
+   "match": "hollywood bowl"
+  },
+  {
+   "id": "walt-disney-concert-hall-la-phil",
+   "name": "Walt Disney Concert Hall (LA Phil)",
+   "kind": "performing_arts",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.laphil.com",
+   "match": "disney concert hall|la phil"
+  },
+  {
+   "id": "the-music-center-dorothy-chandler-pavilion",
+   "name": "The Music Center (Dorothy Chandler Pavilion)",
+   "kind": "performing_arts",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.musiccenter.org",
+   "match": "music center|dorothy chandler",
+   "blocked": true
+  },
+  {
+   "id": "pasadena-symphony-and-pops",
+   "name": "Pasadena Symphony and POPS",
+   "kind": "performing_arts",
+   "city": "Pasadena",
+   "county": "Los Angeles",
+   "group": 3,
+   "seasons": [
+    "christmas",
+    "summer"
+   ],
+   "match": "pasadena (symphony|pops)"
+  },
+  {
+   "id": "segerstrom-center-for-the-arts",
+   "name": "Segerstrom Center for the Arts",
+   "kind": "performing_arts",
+   "city": "Costa Mesa",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.scfta.org",
+   "match": "segerstrom"
+  },
+  {
+   "id": "pacific-symphony",
+   "name": "Pacific Symphony",
+   "kind": "performing_arts",
+   "city": "Costa Mesa",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas",
+    "summer"
+   ],
+   "site": "https://www.pacificsymphony.org",
+   "match": "pacific symphony"
+  },
+  {
+   "id": "the-irvine-barclay-theatre",
+   "name": "The Irvine Barclay Theatre",
+   "kind": "performing_arts",
+   "city": "Irvine",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "barclay"
+  },
+  {
+   "id": "san-diego-symphony",
+   "name": "San Diego Symphony",
+   "kind": "performing_arts",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "summer"
+   ],
+   "site": "https://www.sandiegosymphony.org",
+   "match": "san diego symphony"
+  },
+  {
+   "id": "the-old-globe",
+   "name": "The Old Globe",
+   "kind": "performing_arts",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.theoldglobe.org",
+   "match": "old globe"
+  },
+  {
+   "id": "california-ballet-nutcracker",
+   "name": "California Ballet (Nutcracker)",
+   "kind": "performing_arts",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "california ballet"
+  },
+  {
+   "id": "san-diego-civic-theatre",
+   "name": "San Diego Civic Theatre",
+   "kind": "performing_arts",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "civic theat"
+  },
+  {
+   "id": "lobero-theatre",
+   "name": "Lobero Theatre",
+   "kind": "performing_arts",
+   "city": "Santa Barbara",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.lobero.org",
+   "match": "lobero"
+  },
+  {
+   "id": "the-granada-theatre-santa-barbara-symphony",
+   "name": "The Granada Theatre (Santa Barbara Symphony)",
+   "kind": "performing_arts",
+   "city": "Santa Barbara",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://granadasb.org",
+   "match": "granada"
+  },
+  {
+   "id": "fox-performing-arts-center",
+   "name": "Fox Performing Arts Center",
+   "kind": "performing_arts",
+   "city": "Riverside",
+   "county": "Riverside",
+   "group": 14,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "fox (performing|theat)"
+  },
+  {
+   "id": "rubicon-theatre-company",
+   "name": "Rubicon Theatre Company",
+   "kind": "performing_arts",
+   "city": "Ventura",
+   "county": "Ventura",
+   "group": 19,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.rubicontheatre.org",
+   "match": "rubicon"
+  },
+  {
+   "id": "oxnard-performing-arts-center",
+   "name": "Oxnard Performing Arts Center",
+   "kind": "performing_arts",
+   "city": "Oxnard",
+   "county": "Ventura",
+   "group": 19,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "oxnard performing"
+  },
+  {
+   "id": "alex-theatre",
+   "name": "Alex Theatre",
+   "kind": "performing_arts",
+   "city": "Glendale",
+   "county": "Los Angeles",
+   "group": 2,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.alextheatre.org",
+   "match": "alex theat"
+  },
+  {
+   "id": "thousand-oaks-civic-arts-plaza",
+   "name": "Thousand Oaks Civic Arts Plaza",
+   "kind": "performing_arts",
+   "city": "Thousand Oaks",
+   "county": "Ventura",
+   "group": 19,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "civic arts plaza"
+  },
+  {
+   "id": "olvera-street-las-posadas",
+   "name": "Olvera Street (Las Posadas)",
+   "kind": "historic",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "olvera"
+  },
+  {
+   "id": "mission-san-juan-capistrano",
+   "name": "Mission San Juan Capistrano",
+   "kind": "historic",
+   "city": "San Juan Capistrano",
+   "county": "Orange",
+   "group": 8,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "site": "https://www.missionsjc.com",
+   "match": "mission san juan"
+  },
+  {
+   "id": "mission-inn-hotel-and-spa-festival-of-lights",
+   "name": "Mission Inn Hotel and Spa (Festival of Lights)",
+   "kind": "historic",
+   "city": "Riverside",
+   "county": "Riverside",
+   "group": 14,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "site": "https://www.missioninn.com",
+   "match": "mission inn|festival of lights"
+  },
+  {
+   "id": "old-town-san-diego-state-historic-park",
+   "name": "Old Town San Diego State Historic Park",
+   "kind": "historic",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "match": "old town san diego"
+  },
+  {
+   "id": "old-town-temecula",
+   "name": "Old Town Temecula",
+   "kind": "historic",
+   "city": "Temecula",
+   "county": "Riverside",
+   "group": 15,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "match": "old town temecula"
+  },
+  {
+   "id": "calico-ghost-town",
+   "name": "Calico Ghost Town",
+   "kind": "historic",
+   "city": "Yermo",
+   "county": "San Bernardino",
+   "group": 18,
+   "seasons": [
+    "halloween",
+    "christmas"
+   ],
+   "match": "calico"
+  },
+  {
+   "id": "battleship-uss-iowa",
+   "name": "Battleship USS Iowa",
+   "kind": "historic",
+   "city": "San Pedro",
+   "county": "Los Angeles",
+   "group": 5,
+   "seasons": [
+    "christmas",
+    "halloween"
+   ],
+   "match": "battleship iowa"
+  },
+  {
+   "id": "uss-midway-museum",
+   "name": "USS Midway Museum",
+   "kind": "historic",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "halloween",
+    "summer"
+   ],
+   "site": "https://www.midway.org",
+   "match": "midway"
+  },
+  {
+   "id": "san-diego-maritime-museum",
+   "name": "San Diego Maritime Museum",
+   "kind": "historic",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://sdmaritime.org",
+   "match": "maritime museum"
+  },
+  {
+   "id": "heritage-square-museum",
+   "name": "Heritage Square Museum",
+   "kind": "historic",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "halloween",
+    "christmas"
+   ],
+   "site": "https://www.heritagesquare.org",
+   "match": "heritage square"
+  },
+  {
+   "id": "mission-santa-barbara",
+   "name": "Mission Santa Barbara",
+   "kind": "historic",
+   "city": "Santa Barbara",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas",
+    "spring"
+   ],
+   "match": "mission santa barbara|old mission"
+  },
+  {
+   "id": "the-ritz-carlton-laguna-niguel",
+   "name": "The Ritz-Carlton, Laguna Niguel",
+   "kind": "hotel_resort",
+   "city": "Dana Point",
+   "county": "Orange",
+   "group": 8,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "site": "https://www.ritzcarlton.com/en/hotels/snarz-the-ritz-carlton-laguna-niguel/experiences/holidays/",
+   "match": "ritz.carlton.*laguna"
+  },
+  {
+   "id": "the-ritz-carlton-rancho-mirage",
+   "name": "The Ritz-Carlton, Rancho Mirage",
+   "kind": "hotel_resort",
+   "city": "Rancho Mirage",
+   "county": "Riverside",
+   "group": 16,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "site": "https://www.ritzcarlton.com/en/hotels/pspps-the-ritz-carlton-rancho-mirage/experiences/holidays/",
+   "match": "ritz.carlton.*rancho mirage"
+  },
+  {
+   "id": "the-ritz-carlton-marina-del-rey",
+   "name": "The Ritz-Carlton, Marina del Rey",
+   "kind": "hotel_resort",
+   "city": "Marina del Rey",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "ritz.carlton.*marina"
+  },
+  {
+   "id": "the-ritz-carlton-bacara-santa-barbara",
+   "name": "The Ritz-Carlton Bacara, Santa Barbara",
+   "kind": "hotel_resort",
+   "city": "Goleta",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "bacara"
+  },
+  {
+   "id": "the-ritz-carlton-los-angeles",
+   "name": "The Ritz-Carlton, Los Angeles",
+   "kind": "hotel_resort",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "ritz.carlton.*los angeles"
+  },
+  {
+   "id": "four-seasons-hotel-los-angeles-at-beverly-hills",
+   "name": "Four Seasons Hotel Los Angeles at Beverly Hills",
+   "kind": "hotel_resort",
+   "city": "Beverly Hills",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "four seasons.*beverly"
+  },
+  {
+   "id": "four-seasons-hotel-westlake-village",
+   "name": "Four Seasons Hotel Westlake Village",
+   "kind": "hotel_resort",
+   "city": "Westlake Village",
+   "county": "Los Angeles",
+   "group": 2,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "four seasons.*westlake"
+  },
+  {
+   "id": "four-seasons-resort-the-biltmore-santa-barbara",
+   "name": "Four Seasons Resort The Biltmore Santa Barbara",
+   "kind": "hotel_resort",
+   "city": "Santa Barbara",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "biltmore"
+  },
+  {
+   "id": "montage-laguna-beach",
+   "name": "Montage Laguna Beach",
+   "kind": "hotel_resort",
+   "city": "Laguna Beach",
+   "county": "Orange",
+   "group": 8,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "montage.*laguna"
+  },
+  {
+   "id": "montage-beverly-hills",
+   "name": "Montage Beverly Hills",
+   "kind": "hotel_resort",
+   "city": "Beverly Hills",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "montage.*beverly"
+  },
+  {
+   "id": "the-st-regis-monarch-beach",
+   "name": "The St. Regis Monarch Beach",
+   "kind": "hotel_resort",
+   "city": "Dana Point",
+   "county": "Orange",
+   "group": 8,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "st\\.? regis|monarch beach"
+  },
+  {
+   "id": "terranea-resort",
+   "name": "Terranea Resort",
+   "kind": "hotel_resort",
+   "city": "Rancho Palos Verdes",
+   "county": "Los Angeles",
+   "group": 5,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "terranea"
+  },
+  {
+   "id": "the-resort-at-pelican-hill",
+   "name": "The Resort at Pelican Hill",
+   "kind": "hotel_resort",
+   "city": "Newport Coast",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "pelican hill"
+  },
+  {
+   "id": "the-langham-huntington-pasadena",
+   "name": "The Langham Huntington, Pasadena",
+   "kind": "hotel_resort",
+   "city": "Pasadena",
+   "county": "Los Angeles",
+   "group": 3,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "langham"
+  },
+  {
+   "id": "fairmont-miramar-hotel-and-bungalows",
+   "name": "Fairmont Miramar Hotel and Bungalows",
+   "kind": "hotel_resort",
+   "city": "Santa Monica",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "fairmont miramar"
+  },
+  {
+   "id": "the-beverly-hills-hotel",
+   "name": "The Beverly Hills Hotel",
+   "kind": "hotel_resort",
+   "city": "Beverly Hills",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "beverly hills hotel"
+  },
+  {
+   "id": "waldorf-astoria-beverly-hills",
+   "name": "Waldorf Astoria Beverly Hills",
+   "kind": "hotel_resort",
+   "city": "Beverly Hills",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "waldorf"
+  },
+  {
+   "id": "hotel-del-coronado",
+   "name": "Hotel del Coronado",
+   "kind": "hotel_resort",
+   "city": "Coronado",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "hotel del|the del\\b"
+  },
+  {
+   "id": "loews-coronado-bay-resort",
+   "name": "Loews Coronado Bay Resort",
+   "kind": "hotel_resort",
+   "city": "Coronado",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "loews coronado"
+  },
+  {
+   "id": "omni-la-costa-resort-and-spa",
+   "name": "Omni La Costa Resort and Spa",
+   "kind": "hotel_resort",
+   "city": "Carlsbad",
+   "county": "San Diego",
+   "group": 12,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "la costa"
+  },
+  {
+   "id": "rosewood-miramar-beach",
+   "name": "Rosewood Miramar Beach",
+   "kind": "hotel_resort",
+   "city": "Montecito",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "rosewood|miramar beach"
+  },
+  {
+   "id": "san-ysidro-ranch",
+   "name": "San Ysidro Ranch",
+   "kind": "hotel_resort",
+   "city": "Montecito",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "san ysidro"
+  },
+  {
+   "id": "jw-marriott-desert-springs-resort-and-spa",
+   "name": "JW Marriott Desert Springs Resort and Spa",
+   "kind": "hotel_resort",
+   "city": "Palm Desert",
+   "county": "Riverside",
+   "group": 16,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "desert springs"
+  },
+  {
+   "id": "la-quinta-resort-and-club",
+   "name": "La Quinta Resort and Club",
+   "kind": "hotel_resort",
+   "city": "La Quinta",
+   "county": "Riverside",
+   "group": 16,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "la quinta resort"
+  },
+  {
+   "id": "westin-mission-hills-resort",
+   "name": "Westin Mission Hills Resort",
+   "kind": "hotel_resort",
+   "city": "Rancho Mirage",
+   "county": "Riverside",
+   "group": 16,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "mission hills"
+  },
+  {
+   "id": "hotel-californian",
+   "name": "Hotel Californian",
+   "kind": "hotel_resort",
+   "city": "Santa Barbara",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "hotel californian"
+  },
+  {
+   "id": "shutters-on-the-beach-and-casa-del-mar",
+   "name": "Shutters on the Beach and Casa del Mar",
+   "kind": "hotel_resort",
+   "city": "Santa Monica",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "shutters|casa del mar"
+  },
+  {
+   "id": "estancia-la-jolla-hotel-and-spa",
+   "name": "Estancia La Jolla Hotel and Spa",
+   "kind": "hotel_resort",
+   "city": "La Jolla",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "estancia"
+  },
+  {
+   "id": "pechanga-resort-casino",
+   "name": "Pechanga Resort Casino",
+   "kind": "hotel_resort",
+   "city": "Temecula",
+   "county": "Riverside",
+   "group": 15,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "pechanga"
+  },
+  {
+   "id": "morongo-casino-resort-and-spa",
+   "name": "Morongo Casino Resort and Spa",
+   "kind": "hotel_resort",
+   "city": "Cabazon",
+   "county": "Riverside",
+   "group": 15,
+   "seasons": [
+    "christmas",
+    "newyear"
+   ],
+   "match": "morongo"
+  },
+  {
+   "id": "christ-cathedral",
+   "name": "Christ Cathedral",
+   "kind": "church",
+   "city": "Garden Grove",
+   "county": "Orange",
+   "group": 10,
+   "seasons": [
+    "christmas"
+   ],
+   "site": "https://www.christcathedral.org",
+   "match": "christ cathedral"
+  },
+  {
+   "id": "saddleback-church",
+   "name": "Saddleback Church",
+   "kind": "church",
+   "city": "Lake Forest",
+   "county": "Orange",
+   "group": 8,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "saddleback"
+  },
+  {
+   "id": "mariners-church",
+   "name": "Mariners Church",
+   "kind": "church",
+   "city": "Irvine",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "mariners"
+  },
+  {
+   "id": "cathedral-of-our-lady-of-the-angels",
+   "name": "Cathedral of Our Lady of the Angels",
+   "kind": "church",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "our lady of the angels"
+  },
+  {
+   "id": "all-saints-church-pasadena",
+   "name": "All Saints Church Pasadena",
+   "kind": "church",
+   "city": "Pasadena",
+   "county": "Los Angeles",
+   "group": 3,
+   "seasons": [
+    "christmas"
+   ],
+   "match": "all saints"
+  },
+  {
+   "id": "visit-pasadena",
+   "name": "Visit Pasadena",
+   "kind": "tourism_board",
+   "city": "Pasadena",
+   "county": "Los Angeles",
+   "group": 3,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.visitpasadena.com",
+   "match": "visit pasadena"
+  },
+  {
+   "id": "discover-los-angeles",
+   "name": "Discover Los Angeles",
+   "kind": "tourism_board",
+   "city": "Los Angeles",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.discoverlosangeles.com",
+   "match": "discover los angeles"
+  },
+  {
+   "id": "visit-anaheim",
+   "name": "Visit Anaheim",
+   "kind": "tourism_board",
+   "city": "Anaheim",
+   "county": "Orange",
+   "group": 10,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://visitanaheim.org",
+   "match": "visit anaheim"
+  },
+  {
+   "id": "visit-newport-beach",
+   "name": "Visit Newport Beach",
+   "kind": "tourism_board",
+   "city": "Newport Beach",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.visitnewportbeach.com",
+   "match": "visit newport",
+   "blocked": true
+  },
+  {
+   "id": "visit-huntington-beach",
+   "name": "Visit Huntington Beach",
+   "kind": "tourism_board",
+   "city": "Huntington Beach",
+   "county": "Orange",
+   "group": 9,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.surfcityusa.com",
+   "match": "surf city"
+  },
+  {
+   "id": "visit-laguna-beach",
+   "name": "Visit Laguna Beach",
+   "kind": "tourism_board",
+   "city": "Laguna Beach",
+   "county": "Orange",
+   "group": 8,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.visitlagunabeach.com",
+   "match": "visit laguna"
+  },
+  {
+   "id": "visit-dana-point",
+   "name": "Visit Dana Point",
+   "kind": "tourism_board",
+   "city": "Dana Point",
+   "county": "Orange",
+   "group": 8,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://visitdanapoint.com",
+   "match": "visit dana point"
+  },
+  {
+   "id": "visit-temecula-valley",
+   "name": "Visit Temecula Valley",
+   "kind": "tourism_board",
+   "city": "Temecula",
+   "county": "Riverside",
+   "group": 15,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.temeculavalley.com",
+   "match": "visit temecula"
+  },
+  {
+   "id": "visit-greater-palm-springs",
+   "name": "Visit Greater Palm Springs",
+   "kind": "tourism_board",
+   "city": "Palm Springs",
+   "county": "Riverside",
+   "group": 16,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.visitpalmsprings.com",
+   "match": "visit palm springs"
+  },
+  {
+   "id": "san-diego-tourism-authority-sandiego-org",
+   "name": "San Diego Tourism Authority (sandiego.org)",
+   "kind": "tourism_board",
+   "city": "San Diego",
+   "county": "San Diego",
+   "group": 11,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.sandiego.org",
+   "match": "visit san diego",
+   "blocked": true
+  },
+  {
+   "id": "visit-carlsbad",
+   "name": "Visit Carlsbad",
+   "kind": "tourism_board",
+   "city": "Carlsbad",
+   "county": "San Diego",
+   "group": 12,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.visitcarlsbad.com",
+   "match": "visit carlsbad"
+  },
+  {
+   "id": "visit-oceanside",
+   "name": "Visit Oceanside",
+   "kind": "tourism_board",
+   "city": "Oceanside",
+   "county": "San Diego",
+   "group": 12,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://visitoceanside.org",
+   "match": "visit oceanside"
+  },
+  {
+   "id": "santa-barbara-region-visit-santa-barbara",
+   "name": "Santa Barbara Region (Visit Santa Barbara)",
+   "kind": "tourism_board",
+   "city": "Santa Barbara",
+   "county": "Santa Barbara",
+   "group": 20,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.santabarbaraca.com",
+   "match": "visit santa barbara",
+   "blocked": true
+  },
+  {
+   "id": "visit-ventura",
+   "name": "Visit Ventura",
+   "kind": "tourism_board",
+   "city": "Ventura",
+   "county": "Ventura",
+   "group": 19,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "match": "visit ventura"
+  },
+  {
+   "id": "visit-santa-clarita",
+   "name": "Visit Santa Clarita",
+   "kind": "tourism_board",
+   "city": "Santa Clarita",
+   "county": "Los Angeles",
+   "group": 7,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "match": "visit santa clarita"
+  },
+  {
+   "id": "visit-long-beach",
+   "name": "Visit Long Beach",
+   "kind": "tourism_board",
+   "city": "Long Beach",
+   "county": "Los Angeles",
+   "group": 6,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.visitlongbeach.com",
+   "match": "visit long beach"
+  },
+  {
+   "id": "visit-big-bear",
+   "name": "Visit Big Bear",
+   "kind": "tourism_board",
+   "city": "Big Bear Lake",
+   "county": "San Bernardino",
+   "group": 18,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.bigbear.com",
+   "match": "visit big bear"
+  },
+  {
+   "id": "visit-west-hollywood",
+   "name": "Visit West Hollywood",
+   "kind": "tourism_board",
+   "city": "West Hollywood",
+   "county": "Los Angeles",
+   "group": 1,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.visitwesthollywood.com",
+   "match": "visit west hollywood"
+  },
+  {
+   "id": "visit-glendale",
+   "name": "Visit Glendale",
+   "kind": "tourism_board",
+   "city": "Glendale",
+   "county": "Los Angeles",
+   "group": 2,
+   "seasons": [
+    "christmas",
+    "newyear",
+    "valentines",
+    "spring",
+    "summer",
+    "halloween"
+   ],
+   "site": "https://www.visitglendale.com",
+   "match": "visit glendale"
+  }
+ ]
+}

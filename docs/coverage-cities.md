@@ -16,6 +16,8 @@ For **every city** in its group, a helper checks, one by one:
 
 A helper always reports the cities where it found nothing, so gaps are visible instead of silent.
 
+Beyond cities, the sweeps also work from a **venue watchlist** (`docs/watchlist.json`) and a list of **season categories** with working targets, and every run starts with `node scripts/coverage-gaps.mjs --group <N>` (see "Gap report, season categories and the venue watchlist" in [city-sweep.md](city-sweep.md)). The groups' thin days follow the gap report's ranking, not fixed groups.
+
 ## Los Angeles County
 1. **Central LA & Westside** — Los Angeles (Downtown, Hollywood, Silver Lake/Echo Park, Eastside/Boyle Heights, Highland Park, Griffith Park, Westwood, Venice, Playa Vista, Westchester), Beverly Hills, West Hollywood, Culver City, Santa Monica, Malibu
 2. **Valley & Verdugos** — Burbank, Glendale, La Cañada Flintridge, San Fernando, Encino, Sherman Oaks, Studio City, North Hollywood, Van Nuys, Woodland Hills, Northridge, Granada Hills, Porter Ranch, Chatsworth, Sylmar, Sunland-Tujunga, Calabasas, Agoura Hills, Westlake Village, Hidden Hills
