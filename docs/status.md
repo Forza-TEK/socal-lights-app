@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-15 (main menu reverted to how it behaved before the animation requests)
+- Owner asked to put the main menu (Places / Favorites / Shop pill and bottom bar) back to how it behaved before the animation changes (PRs 632 and 633: restored label/icon animation, bouncier then slower pill, reduced-motion change). `public/styles.css`, `public/app.js` and `tests/frontend-logic.test.mjs` were restored to their state of commit 2affe87 (pill springs LEAD k .26 c .5, TRAIL k .1 c .6; the "sliding pill" CSS that keeps only the pill glide and a color fade; the old reduced-motion rule). Nothing else in those files had changed since. New cache versions `styles.css?v=20261115g`, `app.js?v=20261115m` so phones that loaded the newer files fetch the restored ones.
+
 ## 2026-11-15 (Grok intake daily limit raised to 600; handoff request closed)
 - Owner asked to raise the intake's limit of 60 published rows a day to 600 (`PUBLISH_PER_DAY`); rows over the cap are still held for one-click Publish. The photo request in `docs/handoff/to-claude/` is marked done (with its Resolution) and a note was left in `docs/handoff/to-grok/`.
 

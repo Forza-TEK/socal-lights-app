@@ -565,7 +565,7 @@ function initSlidePill(box, selector) {
   if (!box) return;
   const pill = document.createElement("span"); pill.className = "slidepill"; pill.setAttribute("aria-hidden", "true"); box.prepend(pill);
   const still = matchMedia("(prefers-reduced-motion: reduce)");
-  const LEAD = { k: 0.07, c: 0.6 }, TRAIL = { k: 0.05, c: 0.62 }, STEP = 1000 / 60; // spring stiffness and damping per 1/60 s step
+  const LEAD = { k: 0.26, c: 0.5 }, TRAIL = { k: 0.1, c: 0.6 }, STEP = 1000 / 60; // spring stiffness and damping per 1/60 s step
   let cur = null, vel = { l: 0, r: 0 }, lead = "r", raf = 0, until = 0, last = 0, acc = 0;
   const target = () => { const b = box.querySelector(selector); return b && !b.hidden && box.getClientRects().length ? { l: b.offsetLeft, r: b.offsetLeft + b.offsetWidth, y: b.offsetTop, h: b.offsetHeight } : null; };
   const step = (now) => {
@@ -585,11 +585,11 @@ function initSlidePill(box, selector) {
     }
     if (Math.abs(t.l - cur.l) < 0.3 && Math.abs(t.r - cur.r) < 0.3 && Math.abs(vel.l) < 0.05 && Math.abs(vel.r) < 0.05) { cur.l = t.l; cur.r = t.r; vel = { l: 0, r: 0 }; } else moving = true;
     if (Math.abs(t.y - cur.y) > 0.3 || Math.abs(t.h - cur.h) > 0.3) moving = true; else { cur.y = t.y; cur.h = t.h; }
-    const w = Math.max(8, cur.r - cur.l), squash = still.matches ? 1 : 1 - Math.min(0.03, Math.abs(vel[lead]) / 400);
+    const w = Math.max(8, cur.r - cur.l), squash = still.matches ? 1 : 1 - Math.min(0.07, Math.abs(vel[lead]) / 220);
     pill.style.width = w + "px"; pill.style.height = cur.h + "px"; pill.style.transform = `translate(${cur.l}px,${cur.y}px) scale(1,${squash.toFixed(3)})`;
     if (moving || performance.now() < until) raf = requestAnimationFrame(step); else last = 0;
   };
-  const kick = () => { until = performance.now() + 1000; if (!raf) { acc = 0; last = 0; raf = requestAnimationFrame(step); } };
+  const kick = () => { until = performance.now() + 600; if (!raf) { acc = 0; last = 0; raf = requestAnimationFrame(step); } };
   new MutationObserver(kick).observe(box, { attributes: true, subtree: true, attributeFilter: ["aria-current", "aria-selected", "hidden"] });
   addEventListener("resize", () => { cur = null; kick(); });
   // the tab bar is hidden while a map pin card is open (display: none); when it comes back the pill has to be placed again
