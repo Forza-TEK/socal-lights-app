@@ -19,7 +19,8 @@ import { parseCities, countCity, pacificToday } from "./coverage-report.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fold = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-const text = (e) => `${e.n || ""} ${e.v || ""} ${e.b || ""}`;
+// Name and venue only: a sentence in the description that mentions Santa or a historic site does not make the event a Santa visit or a Dickens fair, and counting those would hide the gaps.
+const text = (e) => `${e.n || ""} ${e.v || ""}`;
 
 /** One category's count among the season's upcoming events. */
 export function countCategory(events, season, cat, today) {
