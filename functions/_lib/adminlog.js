@@ -17,6 +17,7 @@ const AREAS = {
   emails: ["email_templates", "id"],
   help: ["help_articles", "title", "slug"],
   chat: ["chat_settings", "key"],
+  grok: ["intake_events", "name"],
 };
 
 // "/api/admin/posts/abc" -> { area: "posts", id: "abc" }; null for anything that isn't a logged area

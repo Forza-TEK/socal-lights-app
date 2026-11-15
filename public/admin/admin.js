@@ -7,6 +7,7 @@ import { renderEmails } from "/admin/emails.js?v=20261113a";
 import { renderHelp } from "/admin/help.js?v=20261113a";
 import { renderPartner } from "/admin/partner.js?v=20261113a";
 import { renderChat } from "/admin/chat.js?v=20261113a";
+import { renderGrok } from "/admin/grok.js?v=20261115a";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261113a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
 
@@ -34,7 +35,7 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "passes", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "emails", "help", "chat"];
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "passes", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "grok", "emails", "help", "chat"];
 const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
@@ -84,6 +85,7 @@ async function render() {
     if (tab === "emails") return renderEmails(main);
     if (tab === "help") return renderHelp(main);
     if (tab === "chat") return renderChat(main);
+    if (tab === "grok") return renderGrok(main);
     if (tab === "approved" && PVIEW === "contest") {
       const list = await api("/api/admin/posts?contest=1"); POSTS = list;
       const cbar = toolbar({ views: [{ k: "pending", label: "Published" }, { k: "contest", label: "Contest entries", n: list.length }], active: "contest", search: { placeholder: "Search entries, people, cities" } });
@@ -596,7 +598,7 @@ async function renderEvents() {
     main.querySelector("[data-tcount]") ? 0 : main.querySelector(".tbar .grow").insertAdjacentHTML("afterend", '<span class="meta tcount" data-tcount></span>');
     main.querySelector("[data-tcount]").textContent = `${all.length} event${all.length === 1 ? "" : "s"}`;
     $("#evlist").innerHTML = all.length ? `<div class="cards">${shown.map((e) => rec({
-      compact: true, cls: e.e < TODAY ? "past" : "", attrs: `data-eid="${esc(e.id)}"`, title: `<input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}> ` + esc(e.n), tags: [[e.st === "c" ? "Confirmed" : "Expected", e.st === "c" ? "ok" : "warn"], ...(e.e < TODAY ? [["Ended"]] : [])],
+      compact: true, cls: e.e < TODAY ? "past" : "", attrs: `data-eid="${esc(e.id)}"`, title: `<input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}> ` + esc(e.n), tags: [[e.st === "c" ? "Confirmed" : "Expected", e.st === "c" ? "ok" : "warn"], ...(String(e.id).startsWith("grok-") ? [["From Grok"]] : []), ...(e.e < TODAY ? [["Ended"]] : [])],
       meta: "", body: `<span class="sub">${esc(e.city)}, ${esc(e.c)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""} · ${esc(e.p || "")}</span>`, edit: btn("ghost", "Edit", `data-edit="${esc(e.id)}"`), main: viewLink(e.id),
     })).join("")}</div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : ""}` : `<div class="empty">${EVQ || EVSTATUS || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
     $("#evlist").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => editEvent(EVENTS.find((x) => x.id === b.dataset.edit))));
