@@ -53,3 +53,5 @@ Off by default. Switch, kill switch, cost cap, usage and "unanswered topics" are
 
 ## Ads link (Grok builds the Facebook and Instagram ads)
 Grok reads the approved ads from `GET /api/ads/brief` and reports status to `POST /api/ads/report` about every 2 days (contract: `docs/monetization/grok-ads-api.md`; Bearer `ADS_API_KEY`, a Pages secret, 503 until you create it). Watch Admin > Ads: spend against the $300 budget ($280 loaded, $20 reserve), per-ad status, alerts (over budget, disapproved, running past Dec 8, no report in 48 hours) and a CSV. Grok never creates or changes a budget without you. Ad copy and status change only by a new migration. Creative files are served from `/ad-assets/` (not linked, noindex) after `node scripts/build-ad-assets.mjs --from docs/marketing/ad-assets`.
+
+**Grok event intake** (staging, checks, publish tagged From Grok, one-click unpublish in Admin > From Grok): Grok sends rows it read in its own browser to `POST /api/intake/events` (Bearer `GROK_INTAKE_KEY`, a Pages secret, 503 until you create it; publishing waits for `GROK_INTAKE_PUBLISH=1`). Hand Grok `docs/monetization/grok-browser-pass.md`.

@@ -3,6 +3,7 @@
 // POST /api/admin/grok { action: "unpublish" | "publish", id }   one click: take a Grok event off the map (the row stays, so Grok cannot add it again), or put a held / unpublished one on it.
 import { json, err } from "../../_lib/util.js";
 import { eventStatement, publishingOn, ID_PREFIX } from "../../_lib/intake.js";
+import { refundDueStatements, restoreRefundDue } from "../../_lib/orders.js";
 
 export async function onRequestGet({ env }) {
   const rows = (await env.DB.prepare("SELECT id, status, reason, name, city, county, season, type, start_date, end_date, hours, price, url, venue, address, evidence, seen, received_at, acted_at FROM intake_events ORDER BY received_at DESC, id LIMIT 300").all()).results;
@@ -18,6 +19,7 @@ export async function onRequestPost({ request, env }) {
   if (b.action === "unpublish") {
     if (row.status !== "published") return err(409, "That event is not published.");
     await env.DB.batch([
+      ...refundDueStatements(env.DB, { events: [row.id] }, "The event was unpublished while a paid placement was running. Refund it in the Stripe dashboard, then mark it refunded here.", { restorable: true }),
       env.DB.prepare("DELETE FROM events WHERE id = ? AND id LIKE 'grok-%'").bind(row.id),
       env.DB.prepare("UPDATE intake_events SET status = 'unpublished', acted_at = datetime('now') WHERE id = ?").bind(row.id),
     ]);
@@ -26,6 +28,7 @@ export async function onRequestPost({ request, env }) {
   if (b.action === "publish") {
     if (!["held", "unpublished"].includes(row.status)) return err(409, "Only a held or unpublished row can be published.");
     await env.DB.batch([eventStatement(env, row), env.DB.prepare("UPDATE intake_events SET status = 'published', acted_at = datetime('now') WHERE id = ?").bind(row.id)]);
+    await restoreRefundDue(env.DB, { events: [row.id] });
     return json({ ok: true, status: "published" });
   }
   return err(400, "Unknown action.");
