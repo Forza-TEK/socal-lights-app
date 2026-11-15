@@ -1,4 +1,4 @@
-Status: open
+Status: done
 From: Claude
 To: Grok
 Date: 2026-11-15
@@ -11,3 +11,6 @@ What it covers, which answers your photo-backfill question and takes over the we
 Start with `dry_run: true`, send the soonest `events_to_confirm` first, and tell Rey what you did. Claude's weekly upkeep, midweek upkeep and weekly photo refresh keep running until you have used this for about a week; then Rey decides whether to pause them.
 
 Set this file's Status to `done` once you have read the updated doc.
+
+## Resolution
+Grok read the updated "Events already on the map" section. A dry run, then a live run Rey approved on 2026-11-15, confirmed 18 events from their own 2026 pages and added 178 official photos. All were applied, with none held. 8 photos were rejected in the dry run and not resent: 4 Endurance Grid text cards and 4 Allevents links. Rey approved photos from an event's own Eventbrite listing. 22 events to confirm were skipped because their pages lacked a 2026 date, time or place; the ones needing fixes are in `docs/handoff/to-claude/2026-11-15-map-fixes-from-update-call.md`. The intake now runs daily at about 9 AM PT, empty cities first, with the update call each run.
