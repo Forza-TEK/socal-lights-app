@@ -1,5 +1,32 @@
 # Status
 
+## 2026-11-16: Owner answers to the payments and visitor audit decisions (branches `claude/events-fixes-0279`, `claude/first-vote-turnstile`)
+
+Recorded from `docs/audit/2026-11-16/payments-decisions.md` (p), `creation-*` (c), `visitor-decisions.md` (v) and the operations list (o).
+- p1: keep voter emails visible to organizers (as the Privacy page says).
+- p2: waits on the owner's Stripe step (Terms URL, statement descriptor). Nothing changed.
+- p3: Event Partner bought late in a season: warning only (as now).
+- p4: no refund-number promise ("within N business days") anywhere.
+- p5 (vote resistance): option (a), Turnstile on the first vote of each account, for contests with a prize or run by a city. Rule in `docs/contests.md`. Per-network cap not built.
+- p6: no Admin hand-off of a contest to another account (add a co-organizer instead).
+- p7: extend the founder comps by hand in Admin for Eastvale and Covina before 2026-12-31 if unused. **Reminder 2026-12-15: check Admin > Contests; if either city has not created its contest, extend its comp by hand before 2026-12-31.**
+- c1: keep a home post held for review.
+- c2: installer profile stays hidden.
+- c3: NEVER build a "hide street number" option: homes need a public address.
+- c4: keep the changed-event-page rule.
+- c5: simple account deletion (as is).
+- c6: no resend-link page.
+- v1: Tonight chip rule A (Expected events with "check site" hours are left out of Tonight and This weekend).
+- v2: keep "Free; paid extras" events in the Free chip.
+- v3: skip the D'Angelo photo.
+- v4: keep the three Covina homes listed; owners agreed to a public address.
+- v5, v6: leave the sponsor pills and Peek height as they are.
+- v7: keep the shop sort.
+- v8: leave the Espanol and "display" wording.
+- o2: Expected events wait for the existing update process.
+- o3: the WAF rule stays on hold.
+- v2 follow-up (done): migration `0279` sets `free=0` and the price to "Price not listed" on `tg-salvation-army-centre-city`, `-oceanside`, `-el-cajon` (were `free=1`, "Free in past years"), and moves `g13-mt-helix-turkey-trot-walk` from La Mesa to Casa de Oro-Mount Helix.
+
 ## 2026-11-16: Image resizer kept open for third-party photos (owner decision; branch `claude/restore-resizer`)
 - Undid only the resizer part of PR #691 (finding H4): `public/imgurl.js` removed; `thumbOf`/`probeRemoteThumbs`/`THUMBS_REMOTE` restored in `public/app.js`; event, city and contest pages and share pictures use `/cdn-cgi/image` for third-party photos again, with the original as the `onerror` fallback. Report or hide, Hide for me, Terms and policy text kept. `?v=` bumped on app.js and styles.css.
 - Cloudflare "Resize from any origin" stays ON. Free limit is 5,000 transformations a month: watch Images > Transformations in the Cloudflare dashboard. Details: `docs/audit/2026-11-16/app-policy-decisions.md` section 4.
