@@ -1,5 +1,13 @@
 # Status
 
+## 2026-11-16: Creation audit, part 3: add pages (branch `audit-creation-addflows`)
+- M5 on /add-house, /add-event and /add-contest, every step now moves focus: into the first text box, or onto the step's heading when the step has none; the finished screen focuses its heading too. Before, focus fell back to the top of the page after every tile step.
+- L3 if the monthly-update choice cannot be saved, the confirmation screen says so and points to Your profile, Account tab.
+- L12 the contest wizard says on the first step and on Dates that a pass is needed and what it starts at (the lowest price from `/api/config`, not written into the page; no price in the store apps).
+- L13 "No web page, continue" replaces "No... Next"; the installer's review note says quote requests go to the account email; photo errors name the file. Not changed: the Add hub's "about 1 minute" for an event (a test in `tests/contest-passes.test.mjs` pins it; the form has 7 steps, so "about 2 minutes" is closer; change both together).
+- L14 `docs/contests.md` describes the live hub, sign-in before the first step, and the silent 8-category and 15-judge caps.
+- `addflow.js?v=20261116a` on all 16 pages that load it. Tests: `tests/audit-creation-addflows.test.mjs` (6).
+
 ## 2026-11-16: Creation audit, part 2: accounts and email (branch `audit-creation-accounts`)
 - M9 a sign-in code is tied to the browser that asked for it (short-lived cookie `scl_code_nonce`, only its hash is stored in `login_codes.nonce_hash`): a stranger's wrong guesses from another browser no longer use up the real person's five tries (they count only against 10 an hour per address and the 30 an hour per network cap), and a correct code typed on another device still works. Codes made before this behave as before. The limit of 4 codes per address per hour is unchanged (the App Store reviewer login uses it).
 - L2 sign-in keeps the address as typed (`users.login_email`); receipts and the "we received your entry" mail go there; the account stays keyed by the stripped address. Other mail still uses the account address.

@@ -18,7 +18,7 @@
 <body>
 <div id="app"></div>
 <script type="module">
-import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261115k";
+import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261116a";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261115a";
 import { CITY } from "/cities.js?v=20261115i";
 import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261111x553";
@@ -57,8 +57,8 @@ const plansHtml = (x) => (QUOTES[qKey(x)] ? `<div class="tiles">${plansFor(x).ma
 
 const steps = [
   { id: "url", sec: "Basics", title: "Do you have a web page for your event?", help: "The web page is optional. Your event goes on the map as Confirmed either way, because you gave the dates. A page just helps people find out more.",
-    body: (x) => `${input(x, "url", { label: "Event web page", type: "text", mode: "url", ph: "yourevent.org/lights", max: 300, opt: true })}<div style="text-align:right;margin-top:-12px"><button class="link" type="button" data-a="skipurl" style="display:inline-flex;align-items:center;gap:6px">No... Next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>`,
-    check: (x) => (x.url.trim() && !validSite(x.url) ? bad("That doesn't look like a web address. Try something like example.org/event, or tap No... Next.", "url") : "") },
+    body: (x) => `${input(x, "url", { label: "Event web page", type: "text", mode: "url", ph: "yourevent.org/lights", max: 300, opt: true })}<div style="text-align:right;margin-top:-12px"><button class="link" type="button" data-a="skipurl" style="display:inline-flex;align-items:center;gap:6px">No web page, continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>`,
+    check: (x) => (x.url.trim() && !validSite(x.url) ? bad("That doesn't look like a web address. Try something like example.org/event, or tap No web page, continue.", "url") : "") },
   { id: "name", sec: "Basics", title: "What's the event called?", help: "Choose its season and type too, so people can find it.", redraw: true,
     body: (x) => `${input(x, "name", { label: "Event name", max: 120 })}${select(x, "season", Object.entries(SEASONS).map(([k, v]) => [k, v.label]), { label: "Season" })}${select(x, "type", Object.entries(SEASONS[x.season].types).map(([k, l]) => [k, l]), { label: "Type", blank: "Choose a type" })}`,
     check: (x) => (x.name.trim().length < 4 ? bad("Enter the event's name.", "name") : !SEASONS[x.season].types[x.type] ? bad("Choose the type of event.", "type") : "") },
