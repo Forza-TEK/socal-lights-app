@@ -1,4 +1,4 @@
-// Dead-man's switch for the scheduled jobs. GitHub's cron is best effort (the "every 15 minutes" uptime check has run every 6 to 8 hours), so each job
+// Dead-man's switch for the scheduled jobs. GitHub's cron is best effort (the old "every 15 minutes" uptime check ran every 6 to 8 hours; it now runs on the Cloudflare Worker clock), so each job
 // reports in here and the site itself notices when one has gone quiet: the Admin home banner, the admin digest, /api/health (public, one flag) and
 // /api/heartbeat (key-protected) all use staleJobs(). Table: job_heartbeats (migration 0182). No secrets, no personal data.
 //
@@ -6,7 +6,7 @@
 // "failed" when its last report said it failed. The seed rows in the migration start every clock when the table is created.
 
 export const JOBS = {
-  uptime: { label: "Uptime check", every: "15 minutes", staleH: 6 },
+  uptime: { label: "Uptime check", every: "10 minutes", staleH: 1 },
   "usage-check": { label: "Cloudflare usage check", every: "30 minutes", staleH: 1 },
   "mail-outbox": { label: "Send queued emails", every: "5 minutes", staleH: 1 },
   "deploy-watch": { label: "Deploy watch", every: "10 minutes", staleH: 1 },

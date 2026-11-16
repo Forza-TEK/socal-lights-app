@@ -1,4 +1,5 @@
-# Free uptime check. Every 15 minutes: (1) the app itself is tested through its pages.dev address (same code and database as the
+# Manual uptime check (fallback). The scheduled check moved to the Cloudflare Worker (workers/mail-cron, every 10 minutes, 2026-11-16) because GitHub runs scheduled jobs 4 to 8 hours apart;
+# run this by hand from Actions > Uptime check > Run workflow. It makes the same checks: (1) the app itself is tested through its pages.dev address (same code and database as the
 # real site, but not behind the zone's bot protection, which answers GitHub's data-center addresses with 403); (2) the real
 # domain must answer at all, proving DNS, TLS and Cloudflare are alive (200 = fine; 403 = Cloudflare's bot rule for cloud addresses,
 # also fine; no answer or a server error = a failure). A failed run makes GitHub email the repository owners.
@@ -7,8 +8,6 @@
 # so the REAL 5-minute uptime monitor is an external one: docs/runbooks/monitoring.md. Cloudflare Health Checks are not offered on the Free plan.
 name: Uptime check
 on:
-  schedule:
-    - cron: "*/15 * * * *"
   workflow_dispatch:
 permissions:
   issues: write   # only to open or close the "Site is down" issue

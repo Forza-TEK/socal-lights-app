@@ -1,5 +1,11 @@
 # Status
 
+## 2026-11-16: Uptime heartbeat moved to the Cloudflare clock; old false deploy alerts cleared (branch `uptime-on-cloudflare`)
+- Owner saw "Uptime check: last ran 6.3 hours ago" on the Admin banner: the uptime check was the last frequent job still on GitHub's scheduler (runs 4 to 8 hours apart although every run succeeds). It now runs in the Worker `workers/mail-cron` on the existing `*/10` cron beside the deploy watch (no new cron trigger): GETs the pages.dev `/`, `/api/config`, `/api/events`, `/in/irvine` (must serve the app, 3 tries each, 2 s apart) and `https://socallights.app/` (200/301/302/403), at most 15 calls plus the heartbeat; reports `uptime` ok or fail. `uptime.yml` is `workflow_dispatch` only. `uptime` in `functions/_lib/heartbeat.js`: every "10 minutes", staleH 1. Better Stack stays the real external monitor. Runbook updated.
+- Migration `0266_clear_false_deploy_stalled_alerts.sql`: deletes only `ops_log` rows kind `deploy-stalled`, detail `stuck%`, created on 2026-11-14 UTC (the five false alerts); real future alerts are untouched.
+- Tests: `tests/mail-cron.test.mjs` (uptime job, wiring), `tests/monitoring.test.mjs` (threshold, migration 0266).
+- Owner steps: after merge the `Deploy mail cron` workflow redeploys the Worker by itself (changed files under `workers/mail-cron/`); check Admin shows "Uptime check: ran N minutes ago" within 10 minutes. No new secret.
+
 ## 2026-11-16: Tab rows scroll, main navigation glides like the Admin tabs
 Admin tab rows that are wider than the phone (Contests has five) now swipe sideways and scroll the chosen tab into view; the right-hand tab was cut off before. The public main navigation (Places, Favorites, Shop, top bar and phone bar) keeps its colors but its selection pill now glides with the same ease as the Admin tabs, with no stretch, bounce or squash (it was a spring that stretched and bounced). Checked at phone width: tabs scroll, and the pill is mid-slide at 90 ms and settles by 800 ms. styles.css and app.js versions bumped.
 

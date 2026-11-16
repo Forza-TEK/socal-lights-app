@@ -1,6 +1,7 @@
 // Monitoring you can trust: job heartbeats, /api/health, deploy-stall rules, backup restore test, bad webhook signatures, Stripe reconcile.
 // No real network, email or payment: fetch is stubbed and the database is the in-memory stand-in with every migration applied.
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { evaluate, recordHeartbeat, jobStatus, JOBS } from "../functions/_lib/heartbeat.js";
 import { onRequest as heartbeat } from "../functions/api/heartbeat.js";
@@ -104,7 +105,7 @@ test("Admin home data carries the stale-job banner lines", async () => {
   assert.deepEqual((await (await dashboard({ env })).json()).staleJobs, []);
   raw.prepare("UPDATE job_heartbeats SET last_at = ? WHERE job = 'uptime'").run(hoursAgo(9));
   const d = await (await dashboard({ env })).json();
-  assert.equal(d.staleJobs.length, 1); assert.match(d.staleJobs[0].line, /Uptime check: last ran 9 hours ago \(expected every 15 minutes/);
+  assert.equal(d.staleJobs.length, 1); assert.match(d.staleJobs[0].line, /Uptime check: last ran 9 hours ago \(expected every 10 minutes/);
 });
 
 // ---------- deploy stall ----------
@@ -319,7 +320,20 @@ test("the moved jobs are flagged within an hour (the Cloudflare clock runs them 
   const { JOBS } = await import("../functions/_lib/heartbeat.js");
   for (const j of ["mail-outbox", "usage-check", "deploy-watch"]) assert.ok(JOBS[j].staleH <= 1, j);
   assert.ok(JOBS["verify-events"].staleH <= 2);
+  assert.equal(JOBS.uptime.staleH, 1, "the uptime check is on the Worker clock now (every 10 minutes)"); assert.equal(JOBS.uptime.every, "10 minutes");
   for (const j of ["stripe-reconcile", "sponsor-renewals", "contest-reminders"]) assert.equal(JOBS[j].staleH, 30, j);
+});
+
+test("migration 0266 clears only the false 2026-11-14 deploy-stalled rows", async () => {
+  const { raw } = newEnv();
+  raw.exec("DELETE FROM ops_log");
+  const add = (kind, detail, at) => raw.prepare("INSERT INTO ops_log (kind, detail, created_at) VALUES (?, ?, ?)").run(kind, detail, at);
+  add("deploy-stalled", "stuck", "2026-11-14 01:20:00"); add("deploy-stalled", "stuck", "2026-11-14 13:20:00");
+  add("deploy-stalled", "stuck", "2026-11-13 23:59:00"); add("deploy-stalled", "stuck", "2026-11-15 00:00:00"); add("deploy-stalled", "stuck", "2026-11-20 09:00:00");
+  add("deploy-stalled", "behind", "2026-11-14 05:00:00"); add("webhook", "stuck", "2026-11-14 05:00:00"); add("mail", "x", "2026-11-14 05:00:00");
+  raw.exec(readFileSync(new URL("../migrations/0266_clear_false_deploy_stalled_alerts.sql", import.meta.url), "utf8"));
+  const left = raw.prepare("SELECT kind, detail, created_at FROM ops_log").all().map((r) => `${r.kind}|${r.detail}|${r.created_at}`).sort();
+  assert.deepEqual(left, ["deploy-stalled|behind|2026-11-14 05:00:00", "deploy-stalled|stuck|2026-11-13 23:59:00", "deploy-stalled|stuck|2026-11-15 00:00:00", "deploy-stalled|stuck|2026-11-20 09:00:00", "mail|x|2026-11-14 05:00:00", "webhook|stuck|2026-11-14 05:00:00"]);
 });
 
 test("a stale 'active' deployment behind a finished newer one is ignored; one that is the newest still counts", () => {
