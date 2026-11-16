@@ -293,6 +293,8 @@ test("one-win and judge conflicts work with ownerless entries", async () => {
     assert.equal((await pick("B", y)).status, 200);
     res = await computeResults(t.env, q(t.raw, "SELECT * FROM contests WHERE id = 'c1'")[0]);
     assert.deepEqual(res.jwinners.B, [y]);
+    assert.equal((await call(judgePost, t.users.judge, "judge", "POST", { action: "conflict", post_id: y, on: true }, t.env)).status, 400, "a conflict can not be declared on a home the judge already picked (audit L3)");
+    assert.equal((await pick("B", x)).status, 200); // changing the pick frees the home
     await call(judgePost, t.users.judge, "judge", "POST", { action: "conflict", post_id: y, on: true }, t.env);
     res = await computeResults(t.env, q(t.raw, "SELECT * FROM contests WHERE id = 'c1'")[0]);
     assert.deepEqual(res.jwinners.B, [], "a recused judge's pick doesn't count");
@@ -306,7 +308,7 @@ test("announce freezes photo-less entries, and the Past page, archive shape and 
     startVoting(t.raw);
     await call(votePost, t.users.voter, "vote", "POST", { post_id: lees, category: "Best Overall" }, t.env);
     await call(judgePost, t.users.judge, "judge", "POST", { action: "pick", post_id: lees, category: "Best Overall" }, t.env);
-    const an = await call(contestPatch, t.users.owner, "", "PATCH", { action: "announce" }, t.env);
+    const an = await call(contestPatch, t.users.owner, "", "PATCH", { action: "announce", force: true }, t.env);
     assert.equal(an.status, 200, JSON.stringify(an.body));
     const snap = JSON.parse(q(t.raw, "SELECT results FROM contests WHERE id = 'c1'")[0].results);
     const e = snap.entries.find((x) => x.id === lees);

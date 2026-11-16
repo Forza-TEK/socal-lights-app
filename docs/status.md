@@ -1,5 +1,11 @@
 # Status
 
+## 2026-11-16: Payments audit, PR 2 of 3 (contest lifecycle and vote integrity; branch `audit/payments-contests`, stacked on PR 1)
+- M1 announcing while voting is still open needs the confirmation (even with votes). M2 an entrant's edit of an approved entry is written to the contest change log; text that trips the word filter sends it back to review. M7 contest create and Run it again recount the allowance after the insert and take the row back if two requests raced past the gate. M9 the organizer, co-organizers and judges cannot enter their own contest, and one address enters once (the default rules already said so). M10 Admin contest edit checks city and date order, and locks name, organizer, city and dates once announced; the contact email no longer pretends to change the organizer account.
+- L3 a judge cannot toggle a conflict on a home already picked or scored; removing a judge logs their email and how many picks/scores went. L6 migration `0267` adds `contests.remind_announce`: the organizer gets one email the day after voting ends (new template `contest_announce_reminder`), Admin gets an ops_log line after 7 days (contests that ended before this ran are marked done, nothing old is emailed). L7 withdrawing or declining an entry writes the vote count to the change log.
+- Tests: `tests/payments-audit-contests.test.mjs`; three older tests now pass `force` or change a pick first (they announced during open voting, or toggled a conflict after picking).
+- Not fixed here (needs a decision, see PR 3's `docs/audit/2026-11-16/payments-decisions.md`): M8 stronger vote resistance.
+
 ## 2026-11-16: AI assistant intro wording
 The introduction on Admin > AI assistant always said the assistant was off until turned on, even while it was on. It now says whether it is on, off or stopped by the kill switch, and that it only answers while switched on.
 

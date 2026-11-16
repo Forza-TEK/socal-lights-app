@@ -1,6 +1,6 @@
 // POST /api/contest-remind — called daily by a GitHub workflow with the shared key (the same ALERT_CRON_KEY as the weekly email).
 // For each live contest it emails: when voting opens (entrants), and two days before voting closes (entrants and everyone who has voted).
-// Each reminder is sent once per contest (remind_open / remind_close).
+// Each reminder is sent once per contest (remind_open / remind_close). The day after voting ends it also emails the organizer to announce the winners (remind_announce).
 import { json, err } from "../_lib/util.js";
 import { enqueueMail, drainMail } from "../_lib/mailbatch.js";
 import { logOp } from "../_lib/oplog.js";
@@ -36,6 +36,20 @@ export async function onRequestPost({ request, env }) {
       } catch (e) { failed[kind]++; await logOp(env, "mail", `${tpl} for contest ${c.id} could not be queued (will retry tomorrow): ` + (e && e.message)); }
     }
   }
+  // Audit L6: the day after voting ends the organizer gets one email if the winners are not announced; after 7 days Admin is told (Admin > Activity / the digest). remind_announce: 0, 1, 2.
+  const overdue = (await env.DB.prepare("SELECT * FROM contests WHERE status = 'live' AND announced = 0 AND vote_end < ? AND remind_announce < 2").bind(today).all()).results, announce = { organizers: 0, admin: 0 };
+  for (const c of overdue) {
+    try {
+      if (!c.remind_announce && c.contact_email) {
+        const n = await enqueueMail(env, [{ id: "contest_announce_reminder", to: c.contact_email, dedupe: `remind_announce:${c.id}`, vars: { contest: c.name, vote_end: fmtDate(c.vote_end), link: `https://socallights.app/c/${c.slug}/manage` } }]);
+        announce.organizers += n; await env.DB.prepare("UPDATE contests SET remind_announce = 1 WHERE id = ? AND remind_announce = 0").bind(c.id).run();
+      }
+      if (c.vote_end <= addDays(today, -7)) {
+        await logOp(env, "contest", `contest "${String(c.name).slice(0, 60)}" (${c.slug}) ended voting on ${c.vote_end} and the winners are still not announced`);
+        announce.admin++; await env.DB.prepare("UPDATE contests SET remind_announce = 2 WHERE id = ?").bind(c.id).run();
+      }
+    } catch (e) { await logOp(env, "mail", `announce reminder for contest ${c.id} could not be queued (will retry tomorrow): ` + (e && e.message)); }
+  }
   const sent = await drainMail(env);
-  return json({ contests: cs.length, queued, failed, sent: sent.sent, retrying: sent.retrying });
+  return json({ contests: cs.length, queued, failed, announce, sent: sent.sent, retrying: sent.retrying });
 }

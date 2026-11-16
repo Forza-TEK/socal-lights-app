@@ -57,7 +57,9 @@ export async function onRequestDelete({ params, request, env, waitUntil }) {
   if (res) return res;
   if (c.announced) return err(400, "The winners are announced and the results are locked.");
   const id = new URL(request.url).searchParams.get("id") || "";
+  const gone = await env.DB.prepare("SELECT email FROM judges WHERE contest_id = ? AND id = ?").bind(c.id, id).first(); // audit L3: the change log names the judge and says if a ballot went with them
+  const ballots = gone ? (await env.DB.prepare("SELECT (SELECT COUNT(*) FROM judge_picks WHERE contest_id = ?1 AND judge_id = ?2) + (SELECT COUNT(*) FROM judge_scores WHERE contest_id = ?1 AND judge_id = ?2) AS n").bind(c.id, id).first()).n : 0;
   await env.DB.batch(["judge_picks", "judge_scores", "judge_conflicts"].map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE contest_id = ? AND judge_id = ?`).bind(c.id, id)).concat(env.DB.prepare("DELETE FROM judges WHERE contest_id = ? AND id = ?").bind(c.id, id)));
-  await teamChanged(env, c, user, [{ label: "Judges", old: "", new: "Removed a judge" }], waitUntil);
+  await teamChanged(env, c, user, [{ label: "Judges", old: "", new: gone ? `Removed judge ${gone.email}${ballots ? ` (their ${ballots} pick${ballots === 1 ? "" : "s"} or score${ballots === 1 ? "" : "s"} were deleted)` : ""}` : "Removed a judge" }], waitUntil);
   return json({ ok: true });
 }

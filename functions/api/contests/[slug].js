@@ -15,7 +15,7 @@ import { normName, normText } from "../../_lib/fields.js";
 import { reserveSends } from "../../_lib/sendlimit.js";
 import { isPublic, staffView, publicView } from "../../_lib/sponsors.js";
 import { founderKeys, isFounder } from "../../_lib/founder.js";
-import { liveGate, PAYWALL_MESSAGE } from "../../_lib/passkey.js";
+import { liveGate, overAllowance, PAYWALL_MESSAGE } from "../../_lib/passkey.js";
 
 export async function onRequestGet({ params, request, env }) {
   const c = await getContest(env, params.slug);
@@ -94,7 +94,8 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
     const r = await computeResults(env, c);
     // Ask the organizer to confirm before the results are locked when voting hasn't started, nobody has voted or judged, or judges haven't finished
     const votesIn = Object.values(r.counts).reduce((n, m) => n + Object.values(m).reduce((a, x) => a + x, 0), 0), judgeIn = Object.keys(r.jpick).length + Object.keys(r.jscore).length;
-    const early = todayPT() < c.vote_start ? "Voting hasn't started yet." : votesIn === 0 && judgeIn === 0 ? "Nobody has voted yet." : "";
+    const today = todayPT(); // audit M1: a mis-click while voting is still open would freeze the results, email every entrant and close the votes for good, so it needs the confirmation too
+    const early = today < c.vote_start ? "Voting hasn't started yet." : votesIn === 0 && judgeIn === 0 ? "Nobody has voted yet." : today <= c.vote_end ? `Voting is still open until ${c.vote_end}.` : "";
     const inc = hasJudges(c) ? (await judgeProgress(env, c, r)).filter((j) => j.done < j.total).map((j) => j.email) : [];
     if (!b.force && (early || inc.length)) return json({ ok: false, needs_force: true, reason: early || "Some judges haven't finished.", ...(inc.length ? { incomplete: inc } : {}) }, { status: 409 });
     const awards = awardList(c, r);
@@ -132,11 +133,13 @@ async function cloneContest(env, c, user) {
   const name = /\b20\d\d\b/.test(c.name) ? c.name.replace(/\b(20\d\d)\b/, (y) => String(+y + 1)) : `${c.name} ${closes.slice(0, 4)}`;
   let slug = contestSlug(name);
   if (await getContest(env, slug)) slug = withTail(slug, newId().slice(0, 5));
-  const skip = new Set(["sponsor_token", "sponsor_link_on", "sponsor_admin_off", "sponsor_pay_hidden", "org_key", "live_at", "id", "slug", "name", "announced", "results", "event_id", "unpublished_by", "created_at", "updated_at", "remind_open", "remind_close", "entries_close", "vote_start", "vote_end", "season", "status", "entries_open", "voting_open"]);
+  const skip = new Set(["sponsor_token", "sponsor_link_on", "sponsor_admin_off", "sponsor_pay_hidden", "org_key", "live_at", "id", "slug", "name", "announced", "results", "event_id", "unpublished_by", "created_at", "updated_at", "remind_open", "remind_close", "remind_announce", "entries_close", "vote_start", "vote_end", "season", "status", "entries_open", "voting_open"]);
   const row = { ...Object.fromEntries(Object.entries(c).filter(([k]) => !skip.has(k))), id: newId(), slug, name, entries_close: closes, vote_start: vs, vote_end: ve, season: seasonFor(closes), status: "live", owner_id: c.owner_id }; // note stays with the copy (it is what limits organizer-added homes and sponsor payment text until Admin vouches)
   row.org_key = gate.key; row.live_at = row.status === "live" ? todayPT() : "";
   const cols = Object.keys(row);
   await env.DB.prepare(`INSERT INTO contests (${cols.join(",")}) VALUES (${cols.map(() => "?").join(",")})`).bind(...cols.map((k) => row[k])).run();
+  // Audit M7: the gate above and this insert are separate statements, so two requests at the same moment could both pass it. Count again now that the row is in: over the allowance, take it back.
+  if (await overAllowance(env, gate.key)) { await env.DB.prepare("DELETE FROM contests WHERE id = ?").bind(row.id).run(); return json({ error: PAYWALL_MESSAGE, code: "pass_required", ...gate.view }, { status: 402 }); }
   // sponsors (their logos are copied so removing one contest's logo never affects the other) and judges
   const sp = (await env.DB.prepare("SELECT * FROM contest_sponsors WHERE contest_id = ?").bind(c.id).all()).results;
   for (const x of sp) {

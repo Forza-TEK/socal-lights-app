@@ -115,7 +115,7 @@ const outbox = (raw) => raw.prepare("SELECT template, to_email, dedupe, status F
 
 test("announce: freezes the snapshot once, locks the contest, queues one email per entrant (winner or thanks) and the organizer, ranks a podium with a tie", async (tc) => {
   const t = await announceSetup(tc);
-  const before = await J(announce(t)); assert.equal(before.http, 200); await Promise.all(t.jobs);
+  const before = await J(announce(t, { force: true })); assert.equal(before.http, 200); await Promise.all(t.jobs);
   const c = t.raw.prepare("SELECT * FROM contests WHERE id = 'c1'").get();
   assert.equal(c.announced, 1);
   const snap = JSON.parse(c.results); assert.equal(snap.at, ptToday(0)); assert.deepEqual(snap.winners["Best Overall"], ["pa"]); assert.equal(snap.entries.length, 4);
