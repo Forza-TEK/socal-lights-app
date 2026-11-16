@@ -465,3 +465,8 @@ details.fbox::details-content{display:contents}
 .gimg{max-width:240px;max-height:160px;border-radius:10px;display:block}
 .btn.sm{min-height:36px;padding:0 10px;font-size:13px}
 @media (max-width:760px){.kv{grid-template-columns:1fr}}
+/* status pills never wrap onto two lines; a column that holds one stays as wide as the pill */
+body.admin .tag{white-space:nowrap;display:inline-flex;align-items:center}
+.dtab td:has(>.tag){white-space:nowrap}
+.dtab td:has(>.tag) .tag+.tag{margin-left:4px}
+.seg button{white-space:nowrap}
