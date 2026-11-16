@@ -1342,7 +1342,8 @@ const ADPANELS = {
 async function renderAds() {
   const main = $("#main"), d = await api("/api/admin/ads"); setDetail("");
   const ids = ADSEC.map((x) => x[0]), fromHash = () => { const p = location.hash.slice(1).split("/"); return p[0] === "ads" && ids.includes(p[1]) ? p[1] : "overview"; };
-  main.innerHTML = '<div class="pghead"><div><h2>Ads</h2><p>Facebook ads, run by Grok: what is running, what it cost and what came back.</p></div></div>';
+  main.textContent = "";
+  const hd = adEl("div", null, "pghead"), hdi = adEl("div"); hdi.append(adEl("h2", "Ads"), adEl("p", "Facebook ads, run by Grok: what is running, what it cost and what came back.")); hd.append(hdi); main.append(hd);
   const bar = adEl("div", null, "emtabs", { role: "tablist", "aria-label": "Ads sections" }), panels = {}, tabs = {};
   const show = (id, focus) => {
     for (const k of ids) { const on = k === id; tabs[k].setAttribute("aria-selected", String(on)); tabs[k].tabIndex = on ? 0 : -1; panels[k].hidden = !on; if (on && !panels[k].childNodes.length) panels[k].append(ADPANELS[k](d)); }
