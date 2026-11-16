@@ -1,5 +1,6 @@
 // Pieces of an event's page and structured data that the event page (/e/<id>) and the city page (/in/<city>) share, so both say the same thing about an event.
 import { TYPE_SHORT } from "../../public/seasons.js";
+import { resizedImage } from "../../public/imgurl.js";
 
 export const clip = (s, n) => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length <= n ? s : s.slice(0, n - 1).replace(/\s+\S*$/, "") + "…"; };
 export const http = (u) => { try { return /^https?:$/.test(new URL(u).protocol) ? u : ""; } catch { return ""; } };
@@ -83,11 +84,12 @@ export function eventIndexable(e, today) {
   return !!http(e.u) && dayDiff(today, e.s) <= EXPECTED_DAYS;
 }
 
-// The share picture of an event page: its own photo served from our domain through the Cloudflare resizer (1200x630, JPEG, about 100 KB), never the
-// third-party file itself. Returns { url, w, h } or null (no usable photo: the page falls back to the site card).
+// The share picture of an event page: a photo that is OURS (on our domain) served through the Cloudflare resizer (1200x630, JPEG, about 100 KB). A photo hosted on another
+// website is never sent through the resizer (it would make our domain an open image proxy, public/imgurl.js), and is not used as the share picture either: the page falls
+// back to the site card. Returns { url, w, h } or null.
 export function shareImage(e, origin) {
-  const u = secureUrl(e.img);
-  return u ? { url: `${origin}/cdn-cgi/image/width=1200,height=630,fit=cover,quality=70,format=jpeg/${u}`, w: 1200, h: 630 } : null;
+  const r = resizedImage(secureUrl(e.img), "width=1200,height=630,fit=cover,quality=70,format=jpeg", origin);
+  return r ? { url: origin + r, w: 1200, h: 630 } : null;
 }
 
 // "6-9 pm" style hours of a one-day event as [start, end] clock strings "HHMMSS", else null (all-day)
