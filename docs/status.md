@@ -1539,3 +1539,9 @@ Migration 0234: confirmed 10 Ventura/SB/San Bernardino-county Christmas events f
 - Contest creation stays available in the app. Owner: contests are run and prized by users, not by Forza-TEK. Not hidden. Apple 5.3 risk accepted by owner; fallback if a reviewer objects: add official-rules link and "Apple is not a sponsor" on in-app contest pages.
 - The "reviewed within 24 hours" report promise stays; owner checks Admin > Reports daily.
 - Terms now forbid unlawful, hateful, sexually explicit content and photos of people without permission (public/terms.html, What you post).
+
+## 2026-11-16 shrink tutorial videos for cellular
+- Re-encoded 75 of the 76 tutorial mp4s over 4 MB (libx264 CRF 27, preset slow, yuv420p, faststart; AAC 64k). Desktop clips capped at 1280x720 (were 2560x1440), phone clips 720 wide (were 1080). Filenames, durations (within 0.1 s) and captions unchanged.
+- Total mp4 size 686 MB -> 265 MB. find-map.mp4 (4.6 MB) was left as is because the re-encode was larger.
+- Largest remaining: run-custom-mobile 9.0 MB, run-custom 7.9 MB, run-quick-mobile 6.2 MB (all 5 to 7 minute clips); the rest are under 6 MB.
+- Recipe for new clips: `ffmpeg -i in.mp4 -vf "scale='min(1280,iw)':-2" -c:v libx264 -preset slow -crf 27 -pix_fmt yuv420p -c:a aac -b:a 64k -movflags +faststart out.mp4` (use 720 wide for phone clips).
