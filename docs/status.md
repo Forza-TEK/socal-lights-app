@@ -2,6 +2,7 @@
 
 ## 2026-11-16 (Admin redesign, step 4: Event claims)
 - **Event claims** in the same format: pill tabs (Waiting, Approved, Declined), a table (Event, Claimed by, Event page, Added, Status, Actions) with Approve and Decline on the row (a claim has too few fields for a separate record page). `admin.js?v=20261116i`. Tested in a browser with sample claims (approving moves the row to Approved).
+- Pills: status pills in the Admin tables no longer wrap onto two lines ("On the map" was breaking in a narrow column); `admin.css?v=20261116h`.
 - Not yet converted: Reports (a removal-requests section and a reports section, with a listing picker), Replaced records, Houses, Contests, Installers, Users, Orders, Event Partners, Data check, Activity log, Cloudflare usage, Outreach, Ads, Email templates, AI assistant, Help Center, and the Dashboard; then the signed-in visitor pages.
 
 ## 2026-11-16 (Admin redesign, step 3: Submitted events)
