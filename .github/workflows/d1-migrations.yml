@@ -43,7 +43,7 @@ jobs:
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - name: List the events an admin deleted in Admin (so a migration cannot bring one back by accident)
-        continue-on-error: true   # never blocks: without the secret, or before migration 0267 reaches the live database, the check simply has nothing to compare with
+        continue-on-error: true   # never blocks: without the secret, or before migration 0268 reaches the live database, the check simply has nothing to compare with
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 52d622850c5e367e319d35143c43a275
