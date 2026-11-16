@@ -190,6 +190,13 @@ const remind = (id, on) => { if (NATIVE_IN_APP && !String(id).startsWith("h:")) 
 const hfav = (p) => "h:" + p.id; // houses are starred as "h:<id>"; events by their plain id
 const saveFavs = () => { try { localStorage.setItem("socal-favs", JSON.stringify([...favs])); } catch {} };
 
+// The list as it arrives, made safe to show: a price that only says what it cost "in past years" is not a confirmed free event (F17), and an http:// photo address is upgraded to https:// so no browser blocks it as mixed content (F15)
+function tidyEvents(list) {
+  if (Array.isArray(list)) list.forEach((e) => { if (e.free && /past years/i.test(e.p || "")) e.free = false; if (typeof e.img === "string" && /^http:\/\//i.test(e.img)) e.img = "https://" + e.img.slice(7); });
+  return list;
+}
+// "Tonight" and "This weekend" count an event only when its date is firm: an Expected event (listed from past years) whose hours say "check site" is left out (F7)
+const unsureTonight = (ev) => ev.st !== "c" && /check/i.test(ev.h || "");
 const CITY_OPTS = { ...CITY };
 const nearCity = (lat, lng) => { if (!state.city) return true; const c = CITY_OPTS[state.city]; return !c || miles({ lat, lng }, { lat: c[0], lng: c[1] }) <= state.radius; };
 // Search text: lowercase, with street words shortened the same way on both sides, so "22 Tuberose Street" finds "22 Tuberose St, Ladera Ranch"
@@ -207,8 +214,8 @@ function evMatch(ev) {
   if (state.type === "pro") return false; // "Professionally installed" is about posted homes only; events carry no installer
   if (state.type === "contest" ? !isContest(ev) : state.type === "house" ? !isHome(ev) : state.type && ev.t !== state.type) return false;
   if (state.conf && ev.st !== "c") return false;
-  if (state.date && (state.date < ev.s || state.date > ev.e)) return false;
-  if (state.weekend) { const [a, b] = weekendRange(); if (ev.e < a || ev.s > b) return false; }
+  if (state.date && (state.date < ev.s || state.date > ev.e || unsureTonight(ev))) return false;
+  if (state.weekend) { const [a, b] = weekendRange(); if (ev.e < a || ev.s > b || unsureTonight(ev)) return false; }
   return true;
 }
 // "Contests" is not a stored type: it picks every event whose name or description is a contest or competition (decorating, costume, parade entries...).
@@ -225,7 +232,7 @@ function weekendRange() {
 // The list has no blurb: the server marks an event whose blurb names a contest or competition with ct: 1 (same pattern); a full object is tested here
 const isContest = (ev) => ev._ct ?? (ev._ct = !!ev.ct || CONTEST_RE.test(ev.n + " " + (ev.b || "")));
 // Home displays have no dates or ticket prices, so the date, cost and confirmed filters pass them (they only narrow events);
-// a Type other than "Home displays" leaves them out.
+// a Type other than "Homes" leaves them out.
 function instMatch(p) {
   if (!state.all && (p.season || "christmas") !== state.season) return false;
   if (state.type && state.type !== "house" && state.type !== "pro") return false;
@@ -241,7 +248,10 @@ function instMatch(p) {
   return true;
 }
 // Houses with a street address sit exactly on it; older posts without one are placed at city level, spread so pins don't stack
+// F14: a home with no name was titled "Home at <street>" when it was posted; the list shows the city instead of putting a street address in a heading
+const homeTitleOf = (t, city) => (/^home at \d/i.test(String(t || "")) && city ? "Home in " + city : t);
 function placeHouses() {
+  SHOW.forEach((p) => { p.title = homeTitleOf(p.title, p.city); });
   const byCity = {};
   SHOW.forEach((p) => { (byCity[p.city] ||= []).push(p); });
   Object.values(byCity).forEach((list) => list.filter((p) => !p.address).forEach((p, i) => {
@@ -481,7 +491,7 @@ function renderPreview() {
   } else {
     const p = it.p, ph = p.photos || [];
     const many = ph.length > 1;
-    pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide">${photoImg({ src: photoUrl(k2) }, i < 2, 800).replace('alt=""', `alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" draggable="false"`)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="pvcount" id="pvcount">1 / ${ph.length}</span>` : ph.length ? photoImg({ src: photoUrl(ph[0]) }, true, 800) : ""}<span class="when">Home display</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${bPop(p).icon}${esc(p.title)}${bPop(p).sub}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
+    pv.innerHTML = `<div class="tile pv-photo has-photo">${many ? `<div class="pvtrack" id="pvtrack">${ph.map((k2, i) => `<div class="pvslide">${photoImg({ src: photoUrl(k2) }, i < 2, 800).replace('alt=""', `alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" draggable="false"`)}</div>`).join("")}</div><button class="pvnav l" type="button" data-pvg="-1" aria-label="Previous photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button class="pvnav r" type="button" data-pvg="1" aria-label="Next photo"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="pvcount" id="pvcount">1 / ${ph.length}</span>` : ph.length ? photoImg({ src: photoUrl(ph[0]) }, true, 800) : ""}<span class="when">Home</span><button class="x" type="button" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div><div class="pv-body"><div class="pv-top"><strong>${bPop(p).icon}${esc(p.title)}${bPop(p).sub}</strong>${acts}</div><div class="meta">${p.kind === "installer" ? "" : "Posted by "}${esc(p.biz)} · ${esc(p.city)}</div><div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div>`;
   }
   pv.hidden = false; document.body.classList.toggle("pin-open", isPhone()); pinBox = null; if (!pinRO && window.ResizeObserver) { pinRO = new ResizeObserver(() => { pinBox = null; placePin(); positionRoutePill(); }); pinRO.observe(pv); } placePin();
   const tr = $("#pvtrack");
@@ -706,9 +716,10 @@ async function shareItem(k) {
 const SHARE = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>`;
 // "Free", "From $25", or the price text itself
 function priceLine(ev) {
-  if (ev.free) return "Free";
-  const m = String(ev.p || "").match(/\$[\d,.]+/);
-  return m ? "From " + m[0] : cut(String(ev.p || "Price not listed"), 24);
+  const p = String(ev.p || ""), m = p.match(/\$[\d,.]+/);
+  if (ev.free) return m ? "Free + paid extras" : "Free"; // "Free; Santa photos $20": the fee is not hidden behind a green Free
+  if (m) return "From " + m[0];
+  return /^(|check listing|see site|price not listed|n\/a|tbd)$/i.test(p.trim()) ? "Price not listed" : cut(p, 24);
 }
 const cut = (t, n) => (t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t);
 const hoursOf = (ev) => (ev.h && !/^check/i.test(ev.h) ? cut(ev.h, 30) : "");
@@ -749,7 +760,7 @@ const byLine = (p) => (p.kind === "installer" ? (p.inst ? instLink(p) : esc(p.bi
 const instLine = (p) => (p.kind !== "installer" && p.inst ? `<div class="meta instby">Installed by ${instLink(p)}${p.inst.ok ? ` <span class="instok" title="Confirmed by the installer" aria-label="Confirmed by the installer">&#10003;</span>` : ""}</div>` : "");
 function instItem(p, x = null, i = 99) {
   const ph = p.photos || [], k = "i:" + p.id, f = favs.has(hfav(p)), sn = SEASONS[p.season] ? SEASONS[p.season].short : "";
-  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? photoImg({ src: photoUrl(ph[0]) }, i < 2, 320, 120) : ""}<span class="when">Home display</span>${bChip(p)}${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts">${awayTag({ lat: p.plat, lng: p.plng })}<button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites">${HEART}</button></span></div><div class="meta">${byLine(p)} · ${esc(p.city)}</div>${instLine(p)}<div class="dates">${esc(sn)} display · Free to view</div>${homeTags(p)}${x ? legLine(x) : ""}<div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
+  return `<article class="item home${state.sel === k ? " sel" : ""}" data-key="${esc(k)}"><div class="thumb${ph.length ? " has-photo" : ""}">${ph.length ? photoImg({ src: photoUrl(ph[0]) }, i < 2, 320, 120) : ""}<span class="when">Home</span>${bChip(p)}${x ? `<span class="stopn" title="Stop ${x.n}">${x.n}</span>` : ""}</div><div class="ibody"><div class="pv-top"><h3>${esc(p.title)}</h3><span class="pv-acts">${awayTag({ lat: p.plat, lng: p.plng })}<button class="shr" type="button" data-share="${esc(k)}" aria-label="Share ${esc(p.title)}" title="Share">${SHARE}</button><button class="star" type="button" data-fav="${esc(hfav(p))}" aria-pressed="${f}" aria-label="${f ? "Remove from" : "Add to"} my favorites">${HEART}</button></span></div><div class="meta">${byLine(p)} · ${esc(p.city)}</div>${instLine(p)}<div class="dates">${esc(sn)} display · Free to view</div>${homeTags(p)}${x ? legLine(x) : ""}<div class="tags">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}${ph.length > 1 ? `<span class="tag">${ph.length} photos</span>` : ""}</div></div></article>`;
 }
 // Quick picks above the events list; they set the same date and cost filters as the chips
 function nextSat() { const [y, m, d] = TODAY.split("-").map(Number), dt = new Date(y, m - 1, d), wd = dt.getDay(); if (wd === 0 || wd === 6) return TODAY; dt.setDate(d + 6 - wd); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
@@ -1134,7 +1145,7 @@ function detailHtml(k) {
   }
   const p = it.p, ph = p.photos || [], web = safeUrl(p.web || "");
   return `<div class="detail">  ${ph.length ? `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="track" id="track">${ph.map((key, i) => `<div class="slide"><img src="${photoUrl(key)}" alt="${esc(p.title)}, photo ${i + 1} of ${ph.length}" loading="${i ? "lazy" : "eager"}"></div>`).join("")}</div>${ph.length > 1 ? `<button class="nav l" type="button" data-g="-1" aria-label="Previous photo">${ARW_L}</button><button class="nav r" type="button" data-g="1" aria-label="Next photo">${ARW_R}</button><span class="count" id="gcount">1 / ${ph.length}</span>` : ""}</div>` : `<div class="gallery"><button class="back" type="button" id="back" aria-label="Back to results"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="ph-none">No photos yet</div></div>`}
-  <div class="row" style="gap:6px;justify-content:flex-start;flex-wrap:wrap">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home display</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}</div>
+  <div class="row" style="gap:6px;justify-content:flex-start;flex-wrap:wrap">${p.f ? `<span class="tag feat">Featured</span>` : ""}<span class="tag ice">Home</span>${p.kind === "installer" ? `<span class="tag">Professional installer</span>` : ""}</div>
   <h2>${esc(p.title)}</h2><div class="meta">${p.kind === "installer" ? "" : "Posted by "}<b style="color:var(--ink)">${p.kind === "installer" && p.inst ? instLink(p) : esc(p.biz)}</b> · ${esc(p.city)}${away({ lat: p.plat, lng: p.plng })}</div>${instLine(p)}${bLines(p)}
   <p style="margin:0;white-space:pre-line">${esc(p.desc)}</p>
   <dl class="facts">${p.address ? `<dt>Address</dt><dd>${esc(p.address)}</dd>` : ""}${p.lon ? `<dt>Lights on</dt><dd>${esc(p.lon)}</dd>` : ""}${VISIT[p.visit] ? `<dt>Visit</dt><dd>${VISIT[p.visit]}${PARK[p.parking] ? " · " + PARK[p.parking] : ""}${p.acc ? " · Stroller and wheelchair friendly" : ""}</dd>` : p.acc || PARK[p.parking] ? `<dt>Visit</dt><dd>${[PARK[p.parking], p.acc && "Stroller and wheelchair friendly"].filter(Boolean).join(" · ")}</dd>` : ""}${p.radio ? `<dt>Tune in</dt><dd>${esc(p.radio)}</dd>` : ""}${p.where ? `<dt>See it</dt><dd>${esc(p.where)}</dd>` : ""}${p.kind === "installer" && p.area ? `<dt>Service area</dt><dd>${esc(p.area)}</dd>` : ""}${p.phone ? `<dt>Call for Quotes</dt><dd>${telHref(p.phone) ? `<a href="${esc(telHref(p.phone))}"${p.kind === "installer" ? ' data-clk="click:installer"' : ""}>${esc(fmtPhone(p.phone))}</a>` : esc(p.phone)}</dd>` : ""}${web ? `<dt>Web</dt><dd><a href="${esc(web)}" target="_blank" rel="noopener"${p.kind === "installer" ? ' data-clk="click:installer"' : ""}>${esc(web.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></dd>` : ""}</dl>
@@ -1217,7 +1228,7 @@ function activeFilters() {
   if (state.city) a.push(["city", "Near " + state.city + (state.radius !== 10 ? " · " + state.radius + " mi" : "")]);
   state.counties.forEach((c) => a.push(["county:" + c, c + " County"]));
   if (state.cost === "paid") a.push(["cost", "Ticketed only"]);
-  if (state.type) a.push(["type", state.type === "house" ? "Home displays" : state.type === "pro" ? "Professionally installed" : state.type === "contest" ? "Contests" : TYPE_SHORT[state.type] || "Type"]);
+  if (state.type) a.push(["type", state.type === "house" ? "Homes" : state.type === "pro" ? "Professionally installed" : state.type === "contest" ? "Contests" : TYPE_SHORT[state.type] || "Type"]);
   if (state.conf) a.push(["conf", "Confirmed dates"]);
   state.vis.forEach((v) => a.push(["vis:" + v, { drive: "Drive by", walk: "Walk by", free: "Free parking", acc: "Stroller friendly" }[v]]));
   return a;
@@ -1241,7 +1252,7 @@ function filtersHtml() {
       ${state.city ? "" : `<p class="fhint">Pick a city, then choose how far from it to look.</p>`}<div class="fseg${state.city ? "" : " off"}" role="group" aria-label="Distance from the city">${[5, 10, 25].map((r) => `<button type="button" data-rad="${r}" ${state.city ? "" : "disabled"} class="${state.radius === r ? "on" : ""}">${r} mi</button>`).join("")}</div></section>
     <section><h3>County</h3><div class="fchips">${COUNTIES.map((c) => ch(state.counties.has(c), `data-county="${esc(c)}"`, esc(c.replace(/^Los Angeles$/, "LA")))).join("")}</div></section>
     <section><h3>Cost</h3><div class="fseg" role="group" aria-label="Cost">${[["all", "All"], ["free", "Free"], ["paid", "Ticketed"]].map(([v, l]) => `<button type="button" data-fcost="${v}" class="${state.cost === v ? "on" : ""}">${l}</button>`).join("")}</div></section>
-    <section><h3>Type</h3><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).filter(([v]) => v !== "drive").map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Home displays")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}${ch(state.type === "pro", 'data-ftype="pro"', "Professionally installed")}</div></section>
+    <section><h3>Type</h3><div class="fchips">${ch(!state.type, 'data-ftype=""', "All")}${Object.entries(S.types).filter(([v]) => v !== "drive").map(([v, l]) => ch(state.type === v, `data-ftype="${v}"`, esc(l))).join("")}${ch(state.type === "house", 'data-ftype="house"', "Homes")}${ch(state.type === "contest", 'data-ftype="contest"', "Contests")}${ch(state.type === "pro", 'data-ftype="pro"', "Professionally installed")}</div></section>
     <section><h3>Visiting a home</h3><div class="fchips">${[["drive", "Drive by"], ["walk", "Walk by"], ["free", "Free parking"], ["acc", "Stroller friendly"]].map(([v, l]) => ch(state.vis.has(v), `data-fvis="${v}"`, l)).join("")}</div></section>
     <section class="frow"><span><b>Confirmed dates only</b></span><button type="button" class="sw${state.conf ? " on" : ""}" role="switch" aria-checked="${state.conf}" data-fconf aria-label="Confirmed dates only"><i></i></button></section>
   </div>
@@ -1327,7 +1338,7 @@ function closeMore() { const m = $("#moremenu"); if (m) m.hidden = true; const b
 function moreHtml() {
   const dark = theme() === "dark";
   const row = (tag, attrs, ic, t, sub, tail = "") => `<${tag} class="mrow" role="menuitem" ${attrs}><span class="mi">${ic}</span><span class="mt"><b>${t}</b><small>${sub}</small></span>${tail}</${tag}>`;
-  return (SIGNED_IN ? "" : row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home display"))
+  return (SIGNED_IN ? "" : row("a", 'href="/add"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`, "Add", "An event, a contest or a home"))
     + row("button", 'type="button" data-m="alerts"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>`, "Weekly lights email", "Lights and events near a city, once a week")
     + (IN_APP ? "" : row("button", 'type="button" data-m="support"', `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--heart)" aria-hidden="true"><path fill="currentColor" d="M12 11.5s-5.5-3.3-5.5-7a3 3 0 0 1 5.5-1.6 3 3 0 0 1 5.5 1.6c0 3.7-5.5 7-5.5 7z"/><path d="M3 16v5"/><path d="M3 17h4.5l3 1.8h5.5a1.8 1.8 0 0 0 0-3.6h-4"/><path d="m10.5 18.8 7.5-1 3-2.800"/></svg>`, "Support SoCal Lights", SITE.donateUrl ? "Pricing, and tips on Cash App" : "Pricing and the shop"))
     + (IN_APP ? "" : row("a", 'href="/feature"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>`, "Feature your event", "For organizers: a paid Featured pin"))
@@ -1335,6 +1346,7 @@ function moreHtml() {
     + row("a", 'href="/in"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`, "Browse by city", "Events listed city by city")
     + (SIGNED_IN ? "" : row("a", 'href="/tutorials"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>`, "Tutorials", "Short how-to videos"))
     + (SIGNED_IN ? "" : row("a", 'href="/help"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>`, "Help", "Answers and how-to steps"))
+    + row("a", 'href="/es" hreflang="es" lang="es"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>`, "Español", "SoCal Lights en español")
     + row("a", 'href="/privacy"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>`, "Privacy & terms", "How accounts and your data are handled")
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
@@ -1699,7 +1711,7 @@ async function load() {
     headOnly = !!headP && evR0.status === "fulfilled" && Array.isArray(evR0.value) && evR0.value.length > 0;
     const evR = headP && !headOnly ? (await Promise.allSettled([fullP]))[0] : evR0;
     if (evR.status !== "fulfilled" || !Array.isArray(evR.value)) throw new Error("events failed");
-    E = evR.value; setTimeout(probeRemoteThumbs, 1500);
+    E = tidyEvents(evR.value); setTimeout(probeRemoteThumbs, 1500);
     SHOW = postsR.status === "fulfilled" && Array.isArray(postsR.value) ? postsR.value : []; CONFIG = cfgR.status === "fulfilled" && cfgR.value ? cfgR.value : {};
     if (postsR.status !== "fulfilled") setTimeout(refreshData, 10000);
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
@@ -1739,7 +1751,7 @@ let loadedAt = Date.now();
 // The whole list has arrived after the first screen was drawn from the small one: use it, then redraw the list (keeping its scroll position), the counts and the map
 function takeFull(ev) {
   if (!headOnly || !Array.isArray(ev)) return;
-  headOnly = false; E = ev;
+  headOnly = false; E = tidyEvents(ev);
   E.forEach((e) => { const d = DETAIL.get(e.id); if (d) HEAVY.forEach((k) => (e[k] = d[k])); });
   E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
   placeHouses(); loadedAt = Date.now(); document.body.classList.remove("headonly");
@@ -1752,7 +1764,7 @@ async function refreshData() {
     const [evR, postsR] = await Promise.allSettled([get("/api/events"), get("/api/posts")]);
     const ev = evR.status === "fulfilled" ? evR.value : null, posts = postsR.status === "fulfilled" ? postsR.value : null;
     if (!Array.isArray(ev) && !Array.isArray(posts)) return;
-    if (Array.isArray(ev)) { E = ev; if (headOnly) { headOnly = false; document.body.classList.remove("headonly"); } } if (Array.isArray(posts)) SHOW = posts;
+    if (Array.isArray(ev)) { E = tidyEvents(ev); if (headOnly) { headOnly = false; document.body.classList.remove("headonly"); } } if (Array.isArray(posts)) SHOW = posts;
     E.forEach((e) => { const d = DETAIL.get(e.id); if (d) HEAVY.forEach((k) => (e[k] = d[k])); }); // keep the details already loaded (the list has none)
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses(); loadedAt = Date.now();

@@ -1,5 +1,10 @@
 # Status
 
+## 2026-11-16: Visitor audit, part 3 of 3: content rules (branch `audit-visitor-content`)
+- F7: Tonight and This weekend leave out Expected events whose hours say "check site". F17: "Free + paid extras" tag when a free event has a fee, "free in past years" is not free, unlisted prices all read "Price not listed". F15: `http://` event photos are upgraded to `https://`. F14: a home titled "Home at <street>" is listed as "Home in <city>". F11: Español in the More menu. F16: the map says "Home" / "Homes".
+- Decisions, options and what is not fixed (F6 photo, F13 shop sort, F21): `docs/audit/2026-11-16/visitor-decisions.md`.
+- Tests: `tests/visitor-content.test.mjs`. `app.js` `?v=20261116d`.
+
 ## 2026-11-16: Visitor audit, part 2 of 3: layout and tap targets (branch `audit-visitor-layout`)
 - F3: the "Ask SoCal Lights" button is hidden while an event or home card is open (it covered the Directions button; the sticky bar can sit anywhere, so lifting it could not clear it).
 - F4: at Peek on a phone the count and Sort (under the tab bar, shown as "1,076 pl") are hidden until the sheet is pulled up; Peek height unchanged (owner tuned it low). Option to raise Peek is in `docs/audit/2026-11-16/visitor-decisions.md`.
