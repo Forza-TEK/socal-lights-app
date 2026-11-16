@@ -152,3 +152,28 @@ test("wizard: the review screen mounts the human check and sends the token; the 
   assert.match(w, /await ts\.init\(\)/); assert.match(w, /<div id="ts"><\/div>/); assert.match(w, /ts\.mount\(\)/); assert.match(w, /"cf-turnstile-response": ts\.token\(\)/); assert.match(w, /ts\.need\(\)/);
   assert.match(e, /the organizer decides whether to accept it/);
 });
+
+test("clone counts toward the 3-a-day creation cap: 3 clones then the 4th is 429; create and clone count together; a refused clone makes nothing", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "owner@gmail.com");
+  const made = await make(env, u.cookie, {}); assert.equal(made.status, 200); const slug = made.body.slug;
+  const clone = () => J(patchContest({ params: { slug }, request: rq("/x", { action: "clone" }, u.cookie, "PATCH"), env, waitUntil: () => {} }));
+  const count = () => raw.prepare("SELECT COUNT(*) AS n FROM contests").get().n;
+  assert.equal((await clone()).status, 200); assert.equal((await clone()).status, 200); // 1 create + 2 clones = 3 today
+  const fourth = await clone(); assert.equal(fourth.status, 429); assert.match(fourth.body.error, /created several contests today/); assert.equal(count(), 3);
+  const create = await make(env, u.cookie, { name: "Another Showdown Here" }); assert.equal(create.status, 429, "a new contest is refused on the same count");
+  assert.equal(count(), 3);
+  // an older day frees the cap again
+  raw.prepare("UPDATE contests SET created_at = datetime('now','-2 day') WHERE slug != ?").run(slug);
+  assert.equal((await clone()).status, 200);
+  // a clone of something not live is still a 400, not a 429
+  raw.prepare("UPDATE contests SET status='declined', unpublished_by='' WHERE slug = ?").run(slug);
+  assert.equal((await clone()).status, 400);
+});
+test("clone: three clones in a day are allowed, the 4th is 429 (no creates)", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u2", "o2@gmail.com");
+  const made = await make(env, u.cookie, {}); const slug = made.body.slug;
+  raw.prepare("UPDATE contests SET created_at = datetime('now','-2 day')").run();
+  const clone = () => J(patchContest({ params: { slug }, request: rq("/x", { action: "clone" }, u.cookie, "PATCH"), env, waitUntil: () => {} }));
+  for (let i = 0; i < 3; i++) assert.equal((await clone()).status, 200, "clone " + (i + 1));
+  assert.equal((await clone()).status, 429);
+});

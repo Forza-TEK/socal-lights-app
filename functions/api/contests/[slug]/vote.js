@@ -1,8 +1,8 @@
 // POST /api/contests/<slug>/vote { post_id, category } — one vote per person in each category. Every home is in every
 // category; voting again in a category moves that vote.
-import { json, err, newId } from "../../../_lib/util.js";
+import { json, err, newId, verifyTurnstile } from "../../../_lib/util.js";
 import { requireUser, sameOrigin } from "../../../_lib/auth.js";
-import { getContest, windows, cats, hasPublic, judgeOf } from "../../../_lib/contests.js";
+import { getContest, windows, cats, hasPublic, judgeOf, needsFirstVoteCheck } from "../../../_lib/contests.js";
 import { voteThrottle } from "../../../_lib/throttle.js";
 
 export async function onRequestPost({ params, request, env }) {
@@ -20,6 +20,12 @@ export async function onRequestPost({ params, request, env }) {
   const post = await env.DB.prepare("SELECT id,user_id,title,biz FROM posts WHERE id = ? AND contest_id = ? AND status = 'approved'").bind(String(b.post_id || ""), c.id).first();
   if (!post) return err(404, "That home isn't in this contest.");
   if (post.user_id === user.id) return err(400, "You can't vote for your own home.");
+  // First vote of this account in this contest, in a contest with a prize or run by a city: an "I am human" check (Turnstile). Later votes (any category) need none.
+  // "First" is "this account has no vote row in the contest yet" (voided votes keep their row), so nothing new is stored. No token or a failed one is refused before anything is written.
+  if (needsFirstVoteCheck(c) && !(await env.DB.prepare("SELECT 1 AS x FROM votes WHERE contest_id = ? AND user_id = ? LIMIT 1").bind(c.id, user.id).first())) {
+    const token = String(b["cf-turnstile-response"] || "");
+    if (!(await verifyTurnstile(env, token, request.headers.get("CF-Connecting-IP") || ""))) return json({ error: token ? "That check did not pass. Please try again." : "Please complete the quick \"I am human\" check to cast your first vote.", needs_check: true }, { status: 400 });
+  }
   const slow = await voteThrottle(env, request); // after the checks above, so a request that was refused anyway does not use up the allowance
   if (slow) return err(429, slow);
   const had = await env.DB.prepare("SELECT post_id FROM votes WHERE contest_id = ? AND user_id = ? AND category = ?").bind(c.id, user.id, category).first();

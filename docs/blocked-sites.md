@@ -23,6 +23,11 @@ Bot = our scheduled, unattended cloud runs. Chrome = the owner's own Chrome driv
 | Host | Bot | Chrome (2026-10-30) | Alternate sources | Ask sent? |
 |---|---|---|---|---|
 | irvinespectrumcenter.com | 403 (2026-11-11, WebFetch and curl) | not tried | holiday.irvinecompanyretail.com has the same event and its photo (photo used, migration 0232) | no |
+| lajollachristmasparade.com | no connection (2026-11-16, curl and Grok's own browser, 2 tries) | n/a | the parade's page on lajolla.com or the city events calendar | no |
+| missionbayparadeoflights.org | no connection (2026-11-16, curl and Grok's browser, 2 tries) | n/a | San Diego Bay or sandiego.org listing | no |
+| thegardensonelpaseo.com | no connection (2026-11-16, curl and Grok's browser) | n/a | the Palm Desert / El Paseo business association events page | no |
+| sdbowlgames.org | no connection (2026-11-16, curl and Grok's browser) | n/a | the bowl game's page on sandiego.org | no |
+| highdesertsecondchance.org / .com | no connection (2026-11-16, curl and Grok's browser) | n/a | the organizer's social page, read by a person | no |
 | cityofwhittier.org, whittierprcs.org | Akamai 403 (also robots.txt) | loads; 2026 events found (tree lighting Dec 1, Cookies with Santa Dec 5); no 2026 parade page | whittierchamber.com events, whittiermuseum.org, Macaroni Kid Norwalk, Patch | no |
 | santamonica.com | 403 | loads (search `?mySearch=<word>&page-num=1`, event pages `/event/<slug>/`) | chambers, local papers, Patch | no |
 | cityofhawthorne.org | 403 | loads; calendar has no seasonal events Nov-Jan | chambers, local papers | no |

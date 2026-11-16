@@ -1,7 +1,7 @@
 // Step-by-step engine shared by the add forms (event, home display, contest). One question per screen, a segmented
 // progress bar, Back and Next. Each form supplies its steps; this file does the rest (state, validation, photos,
 // address suggestions, "I am human" check, saved drafts).
-import { me, signIn, friendlyError, isNetError } from "/auth.js?v=20261111z";
+import { me, signIn, friendlyError, isNetError } from "/auth.js?v=20261116a";
 import { draftKey, purgeLegacyDrafts, savePhotos, loadPhotos, dropPhotos } from "/drafts-local.js?v=20261111z";
 import "/norm-ui.js?v=20261102b";
 import { CITY } from "/cities.js?v=20261115i";
@@ -29,7 +29,7 @@ export function validSite(s) {
 }
 
 /* ---------- light / night switch and account button: shared with every page (see chrome.js) ---------- */
-import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome.js?v=20261113a";
+import { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct } from "/chrome.js?v=20261116a";
 export { toggleTheme, themeBtn, acctHtml, refreshAcct, mountAcct };
 
 /* ---------- field builders ---------- */
