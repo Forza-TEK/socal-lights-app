@@ -801,22 +801,23 @@ async function renderLog() {
 /* ---------- replaced records: a house or installer post replaces the sweep-made listing at the same address ---------- */
 const CHOICES = [["pick_post", "post", "Their record"], ["pick_both", "both", "Both"], ["pick_sweep", "sweep", "Sweep record"]];
 const choiceButtons = (r) => `<div class="row" style="gap:0;flex-wrap:nowrap" role="group" aria-label="Which record visitors see">${CHOICES.map(([a, c, l], i) => `<button type="button" data-ov="${a}" data-eid="${esc(r.event.id)}" aria-pressed="${r.event.choice === c}" class="btn ${r.event.choice === c ? "ice" : "ghost"}" style="border-radius:${i === 0 ? "10px 0 0 10px" : i === 2 ? "0 10px 10px 0" : "0"};padding-inline:12px;white-space:nowrap">${l}</button>`).join("")}</div>`;
+let OVV = "replaced";
 async function renderOverlaps() {
   const main = $("#main"), d = await api("/api/admin/overlaps");
-  setCount("overlaps", d.replaced.length);
-  const who = (p) => `<a href="#" data-gopost="${esc(p.id)}" data-name="${esc(p.title)}">${esc(p.title)}</a> <span class="meta">(${p.kind === "installer" ? "installer" : "homeowner"}, ${esc(p.biz)})</span>`;
-  const note = '<p class="meta" style="margin:0 0 14px;max-width:760px">When an approved house or installer post has the same street address as a record the sweeps made, the person\'s own record is shown and the sweep record is hidden. Choose which one visitors see for each address. Nothing is deleted, and the person\'s post stays approved.</p>';
-  const replaced = d.replaced.length ? `<div class="cards">${d.replaced.map((r) => rec({
-    attrs: `data-ovid="${esc(r.event.id)}"`, title: esc(r.event.name), tags: [[r.event.choice === "sweep" ? "Sweep record shown" : r.event.choice === "both" ? "Both shown" : "Their record shown", r.event.choice === "post" ? "ok" : ""]],
-    facts: fact("Address", esc(r.event.address)) + fact("The person's record", who(r.post)) + fact("Win on their listing", esc(r.event.win || "")),
-    body: `<div class="ovchoice"><span class="meta">Visitors see:</span>${choiceButtons(r)}</div>`,
-  })).join("")}</div>` : '<div class="empty">Nothing replaced yet.</div>';
-  const near = d.near.length ? `<div class="cards">${d.near.map((r) => rec({
-    compact: true, title: esc(r.event.name), tags: [["Both listed"]],
-    body: `<span class="sub">${esc(r.event.address)}</span><span class="sub">Post: ${who(r.post)} · ${esc(r.post.street)}, ${esc(r.post.city)}</span>`,
-  })).join("")}</div>` : '<div class="empty">None.</div>';
-  main.innerHTML = note + toolbar({ search: { placeholder: "Search replaced records" }, count: String(d.replaced.length) }) + `<h2 class="dh">Replaced (${d.replaced.length})</h2>${replaced}<h2 class="dh" style="margin-top:28px">Same street, different number (${d.near.length})</h2><p class="meta" style="margin:-4px 0 10px">Both stay listed.</p>${near}`;
-  wireToolbar(main, { onSearch: (q) => filterCards(main, q) });
+  setCount("overlaps", d.replaced.length); setDetail("");
+  const who = (p) => `<a class="rl" href="#" data-gopost="${esc(p.id)}" data-name="${esc(p.title)}">${esc(p.title)}</a><span class="sub">${p.kind === "installer" ? "installer" : "homeowner"}, ${esc(p.biz)}</span>`;
+  const tabs = [["replaced", "Replaced", d.replaced.length], ["near", "Same street", d.near.length]];
+  const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === OVV}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>`;
+  let body;
+  if (OVV === "replaced") {
+    body = `<div class="pghead"><div><h2>Replaced records</h2><p>When an approved house or installer post has the same street address as a record the sweeps made, the person's own record is shown and the sweep record is hidden. Choose which one visitors see for each address. Nothing is deleted, and the person's post stays approved.</p></div></div>`
+      + (d.replaced.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Sweep record</th><th>The person's record</th><th>Win on their listing</th><th>Showing</th><th>Visitors see</th></tr></thead><tbody>${d.replaced.map((r) => `<tr data-ovid="${esc(r.event.id)}"><td><b>${esc(r.event.name)}</b><span class="sub">${esc(r.event.address)}</span></td><td>${who(r.post)}</td><td>${esc(r.event.win || "")}</td><td><span class="tag ${r.event.choice === "post" ? "ok" : ""}">${r.event.choice === "sweep" ? "Sweep record" : r.event.choice === "both" ? "Both" : "Their record"}</span></td><td>${choiceButtons(r)}</td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${d.replaced.length} replaced</span></div></div>` : '<div class="empty">Nothing replaced yet.</div>');
+  } else {
+    body = `<div class="pghead"><div><h2>Same street, different number</h2><p>Both records stay listed.</p></div></div>`
+      + (d.near.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Sweep record</th><th>The person's record</th><th>Their street</th></tr></thead><tbody>${d.near.map((r) => `<tr><td><b>${esc(r.event.name)}</b><span class="sub">${esc(r.event.address)}</span></td><td>${who(r.post)}</td><td>${esc(r.post.street)}, ${esc(r.post.city)}</td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${d.near.length} pair${d.near.length === 1 ? "" : "s"}</span></div></div>` : '<div class="empty">None.</div>');
+  }
+  main.innerHTML = head + body;
+  main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { OVV = b.dataset.view; renderOverlaps(); }));
   main.querySelectorAll("[data-ov]").forEach((b) => (b.onclick = async () => { main.querySelectorAll("[data-ov]").forEach((x) => (x.disabled = true)); try { await api("/api/admin/overlaps", { method: "POST", body: JSON.stringify({ action: b.dataset.ov, event_id: b.dataset.eid }) }); toast("Saved"); renderOverlaps(); refreshCounts(); } catch (e) { renderOverlaps(); toast(e.message, true); } }));
   main.querySelectorAll("[data-gopost]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); PRESET = a.dataset.name; setTab("approved"); }));
 }
