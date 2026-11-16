@@ -512,3 +512,8 @@ body.admin .tag{white-space:nowrap;display:inline-flex;align-items:center}
 .top .crumb{flex:1 1 auto;min-width:0;overflow:hidden}
 body.admin .top .crumb h1{overflow:hidden;text-overflow:ellipsis;min-width:0}
 @media (max-width:699px){.top>.grow{display:none}.top{gap:4px}.top .tbtn,.top .ttool.bell,.top .ttool.pmb{width:40px;height:40px;min-width:40px;min-height:40px}.top a.ttool[data-tab="help"]{display:none}}
+
+/* Tab rows that are wider than the screen scroll sideways (swipe) instead of being cut off */
+.seg{max-width:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none}

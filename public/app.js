@@ -559,42 +559,24 @@ function nudgeShopTabs() {
 $("#t-events").onclick = () => setTab("events"); $("#t-shop").onclick = () => setTab("shop"); $("#t-plan").onclick = () => setTab("plan");
 
 // One pill that glides to the selected tab (top tabs on desktop, bottom bar on phones), instead of each tab fading its own background.
-// The pill's two edges are springs: the edge on the side it is travelling toward launches first and fast, the trailing edge follows more slowly, so the pill stretches toward the new tab and then snaps
-// in (a liquid, elastic move) and settles in about a third of a second with only a hair of overshoot. It also squashes a little while it moves. With the reduced-motion setting on it is a short, calm slide (no stretch, bounce or squash), not an instant jump: some computers (remote desktops, virtual machines) switch animations off and would otherwise never see the pill move.
+// Same glide as the Admin tabs: the pill slides and resizes to the selected tab with one smooth ease (see .slidepill in styles.css), no stretch, bounce or squash.
+// The first placement, and the one after the bar was hidden (a map pin card open), has no transition so the pill never flies in from the corner.
 function initSlidePill(box, selector) {
   if (!box) return;
   const pill = document.createElement("span"); pill.className = "slidepill"; pill.setAttribute("aria-hidden", "true"); box.prepend(pill);
-  const still = matchMedia("(prefers-reduced-motion: reduce)");
-  const LEAD = { k: 0.26, c: 0.5 }, TRAIL = { k: 0.1, c: 0.6 }, STEP = 1000 / 60; // spring stiffness and damping per 1/60 s step
-  let cur = null, vel = { l: 0, r: 0 }, lead = "r", raf = 0, until = 0, last = 0, acc = 0;
-  const target = () => { const b = box.querySelector(selector); return b && !b.hidden && box.getClientRects().length ? { l: b.offsetLeft, r: b.offsetLeft + b.offsetWidth, y: b.offsetTop, h: b.offsetHeight } : null; };
-  const step = (now) => {
-    raf = 0; const t = target();
-    if (!t) { pill.style.opacity = "0"; cur = null; return; }
-    pill.style.opacity = "1";
-    if (!cur) { cur = { ...t }; vel = { l: 0, r: 0 }; }
-    let moving = false;
-    if (Math.abs((t.l + t.r) - (cur.l + cur.r)) > 2) lead = t.l + t.r > cur.l + cur.r ? "r" : "l"; // the edge toward the destination leads
-    acc += Math.min(100, last ? now - last : STEP); last = now;
-    for (; acc >= STEP; acc -= STEP) {
-      for (const e of ["l", "r"]) {
-        if (still.matches) cur[e] += (t[e] - cur[e]) * 0.22; // reduced motion: a short, calm slide (no stretch, no bounce, no squash), never an instant jump
-        else { const sp = e === lead ? LEAD : TRAIL; vel[e] = (vel[e] + (t[e] - cur[e]) * sp.k) * sp.c; cur[e] += vel[e]; }
-      }
-      cur.y += (t.y - cur.y) * 0.3; cur.h += (t.h - cur.h) * 0.3;
-    }
-    if (Math.abs(t.l - cur.l) < 0.3 && Math.abs(t.r - cur.r) < 0.3 && Math.abs(vel.l) < 0.05 && Math.abs(vel.r) < 0.05) { cur.l = t.l; cur.r = t.r; vel = { l: 0, r: 0 }; } else moving = true;
-    if (Math.abs(t.y - cur.y) > 0.3 || Math.abs(t.h - cur.h) > 0.3) moving = true; else { cur.y = t.y; cur.h = t.h; }
-    const w = Math.max(8, cur.r - cur.l), squash = still.matches ? 1 : 1 - Math.min(0.07, Math.abs(vel[lead]) / 220);
-    pill.style.width = w + "px"; pill.style.height = cur.h + "px"; pill.style.transform = `translate(${cur.l}px,${cur.y}px) scale(1,${squash.toFixed(3)})`;
-    if (moving || performance.now() < until) raf = requestAnimationFrame(step); else last = 0;
+  let placed = false, raf = 0;
+  const place = () => {
+    raf = 0; const b = box.querySelector(selector);
+    if (!b || b.hidden || !box.getClientRects().length) { pill.style.opacity = "0"; placed = false; return; }
+    pill.style.opacity = "1"; if (!placed) pill.style.transition = "none";
+    pill.style.width = b.offsetWidth + "px"; pill.style.height = b.offsetHeight + "px"; pill.style.transform = `translate(${b.offsetLeft}px,${b.offsetTop}px)`;
+    if (!placed) { void pill.offsetWidth; pill.style.transition = ""; placed = true; }
   };
-  const kick = () => { until = performance.now() + 600; if (!raf) { acc = 0; last = 0; raf = requestAnimationFrame(step); } };
+  const kick = () => { if (!raf) raf = requestAnimationFrame(place); };
   new MutationObserver(kick).observe(box, { attributes: true, subtree: true, attributeFilter: ["aria-current", "aria-selected", "hidden"] });
-  addEventListener("resize", () => { cur = null; kick(); });
-  // the tab bar is hidden while a map pin card is open (display: none); when it comes back the pill has to be placed again
-  if ("ResizeObserver" in window) new ResizeObserver(() => { cur = null; kick(); }).observe(box);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { cur = null; kick(); });
+  addEventListener("resize", () => { placed = false; kick(); });
+  if ("ResizeObserver" in window) new ResizeObserver(kick).observe(box);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { placed = false; kick(); });
   kick();
 }
 initSlidePill(document.querySelector(".ptabs"), '.ptab[aria-selected="true"]');
