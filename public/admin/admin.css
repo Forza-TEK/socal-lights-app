@@ -500,3 +500,9 @@ body.admin .tag{white-space:nowrap;display:inline-flex;align-items:center}
 .seg[data-sl] button[aria-pressed="true"],.seg[data-sl] button[aria-selected="true"]{background:none;box-shadow:none}
 .seg-ind{position:absolute;left:0;top:3px;bottom:3px;width:0;border-radius:8px;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.14);z-index:0;pointer-events:none;transition:transform .32s cubic-bezier(.3,.7,.2,1),width .32s cubic-bezier(.3,.7,.2,1);will-change:transform,width}
 @media (prefers-reduced-motion:reduce){.seg-ind{transition:none}}
+
+/* Section tabs in Ads, Email templates and Help use the same pill style as the other pages */
+.emtabs{display:flex;width:max-content;max-width:100%;gap:2px;padding:3px;margin:0 0 18px;border-radius:10px;background:var(--surface-2);overflow-x:auto}
+.emtab{min-height:36px;padding:0 12px;border:0;border-radius:8px;font:500 13px var(--font);color:var(--muted);gap:6px}
+.emtab:hover{color:var(--ink);border-color:transparent}
+.emtab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14);font-weight:600;border-color:transparent}

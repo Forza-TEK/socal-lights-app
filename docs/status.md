@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin redesign, Outreach, Ads, Email templates, AI assistant and Help Center converted
+These five get the page head (title and description) and the same pill section tabs (Ads, Email templates) and tables (Outreach results and the do-not-contact list). Their content and actions are unchanged. Smoke-tested locally. Admin redesign: 19 of 21 areas done; the Dashboard and the signed-in visitor pages are next.
+
 ## 2026-11-16: Admin redesign, Data check, Activity log and Cloudflare usage converted
 These three get the page head (title, description, actions at the top right) and tables in the same style: Activity log is a table with paging and an area filter, Data check lists fields and items that need a person as tables with Check again and Tidy at the top right, Cloudflare usage keeps its meters with Refresh now at the top right. Smoke-tested locally. Admin redesign: 16 of 22 areas done; next is Outreach.
 

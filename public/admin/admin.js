@@ -3,10 +3,10 @@ import { CITY } from "/cities.js?v=20261115i";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261115a";
 import { attachAddress } from "/addflow.js?v=20261115k";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
-import { renderEmails } from "/admin/emails.js?v=20261113a";
-import { renderHelp } from "/admin/help.js?v=20261113a";
+import { renderEmails } from "/admin/emails.js?v=20261116b";
+import { renderHelp } from "/admin/help.js?v=20261116b";
 import { renderPartner } from "/admin/partner.js?v=20261116b";
-import { renderChat } from "/admin/chat.js?v=20261113a";
+import { renderChat } from "/admin/chat.js?v=20261116b";
 import { renderGrok } from "/admin/grok.js?v=20261116a";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261116a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
@@ -1153,7 +1153,8 @@ async function renderOutreach() {
     <p class="meta" style="margin:4px 0 0">Last failure: ${when(a.lastFailureAt)}. ${a.configured ? "" : "Set the OUTREACH_API_KEY secret (docs/CHECKLIST.md) to turn it on."}</p></article>`;
   const supRows = d.suppression.last.length ? d.suppression.last.map((x) => `<tr><td><code>${esc(x.prefix)}</code></td><td>${esc(x.reason)}</td><td>${esc(x.source)}</td><td>${esc(x.date)}</td></tr>`).join("") : `<tr><td colspan="4" class="meta">Nothing on the list yet.</td></tr>`;
   const resRows = d.results.map((c) => `<tr><td>${esc(c.segment.replace("_", " "))}</td><td>${c.step === 0 ? "Original" : "Follow-up " + c.step}</td><td>${fmt(c.sent)}</td><td>${fmt(c.replies)}</td><td>${fmt(c.bounces)}</td><td>${fmt(c.complaints)}</td><td>${fmt(c.unsubscribes)}</td><td>${fmt(c.registered)}</td><td>${fmt(c.listed)}</td></tr>`).join("");
-  main.innerHTML = `<p class="meta" style="margin:0 0 12px">Grok checks the app before every send through a narrow, key-protected API that returns only a status word. Nothing here shows a name or an address, and nothing you paste below is stored.</p>
+  setDetail("");
+  main.innerHTML = `<div class="pghead"><div><h2>Outreach</h2><p>Grok checks the app before every send through a narrow, key-protected API that returns only a status word. Nothing here shows a name or an address, and nothing you paste below is stored.</p></div></div>
     <h2 class="dh">Status</h2><div class="ugrid">${apiCard}
       <article class="ucard u-ok" aria-label="Suppression list"><div class="uh"><h3>Do-not-contact list</h3><span class="tag">${fmt(d.suppression.count)} hashed</span></div><p class="meta" style="margin:8px 0 0">One-way hashes only. Added by Grok (replies, bounces, complaints, unsubscribes), by the app (any marketing unsubscribe, deleted accounts) or by hand.</p></article></div>
     <h2 class="dh">Reconcile a sent log</h2>
@@ -1162,11 +1163,11 @@ async function renderOutreach() {
     <p style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0"><button type="button" class="btn ice" id="orrun">Check these addresses</button><label class="btn ghost" for="orfile" style="cursor:pointer">Choose a file</label><input type="file" id="orfile" accept=".csv,.txt,text/plain,text/csv" hidden><span class="meta" id="ornote" role="status"></span></p>
     <div id="orout"></div>
     <h2 class="dh">Results by segment and step</h2>
-    <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Results by segment and step"><table style="width:100%;min-width:640px"><caption class="meta" style="text-align:left;padding:0 0 6px">Counted from what Grok reported. “Registered” and “Listed” are people who created an account or a listing after being emailed, credited to the latest step sent before that (not opens).${d.capped ? " Some very large tables were capped." : ""}</caption>
+    <div class="card dtc"><div class="dtw" tabindex="0" role="region" aria-label="Results by segment and step"><table class="dtab"><caption class="meta" style="text-align:left;padding:0 0 6px">Counted from what Grok reported. “Registered” and “Listed” are people who created an account or a listing after being emailed, credited to the latest step sent before that (not opens).${d.capped ? " Some very large tables were capped." : ""}</caption>
       <thead><tr><th scope="col">Segment</th><th scope="col">Step</th><th scope="col">Sent</th><th scope="col">Replies</th><th scope="col">Bounces</th><th scope="col">Complaints</th><th scope="col">Unsubscribes</th><th scope="col">Registered after</th><th scope="col">Listed after</th></tr></thead>
-      <tbody>${resRows}<tr><th scope="row" colspan="2">All</th><td><b>${fmt(t.sent)}</b></td><td><b>${fmt(t.replies)}</b></td><td><b>${fmt(t.bounces)}</b></td><td><b>${fmt(t.complaints)}</b></td><td><b>${fmt(t.unsubscribes)}</b></td><td><b>${fmt(t.registered)}</b></td><td><b>${fmt(t.listed)}</b></td></tr></tbody></table></div>
+      <tbody>${resRows}<tr><th scope="row" colspan="2">All</th><td><b>${fmt(t.sent)}</b></td><td><b>${fmt(t.replies)}</b></td><td><b>${fmt(t.bounces)}</b></td><td><b>${fmt(t.complaints)}</b></td><td><b>${fmt(t.unsubscribes)}</b></td><td><b>${fmt(t.registered)}</b></td><td><b>${fmt(t.listed)}</b></td></tr></tbody></table></div></div>
     <h2 class="dh">Last 20 on the do-not-contact list</h2>
-    <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Last 20 on the do-not-contact list"><table style="width:100%;min-width:420px"><thead><tr><th scope="col">Hash (first 8)</th><th scope="col">Reason</th><th scope="col">Source</th><th scope="col">Date</th></tr></thead><tbody>${supRows}</tbody></table></div>`;
+    <div class="card dtc"><div class="dtw" tabindex="0" role="region" aria-label="Last 20 on the do-not-contact list"><table class="dtab"><thead><tr><th scope="col">Hash (first 8)</th><th scope="col">Reason</th><th scope="col">Source</th><th scope="col">Date</th></tr></thead><tbody>${supRows}</tbody></table></div></div>`;
   let list = [];
   const note = $("#ornote"), out = $("#orout");
   $("#orfile").onchange = async (e) => { const f = e.target.files[0]; e.target.value = ""; if (!f) return; if (f.size > 2e6) { note.textContent = "That file is too big."; return; } $("#orlog").value = await f.text(); note.textContent = `${fmt(parseEmails($("#orlog").value).length)} addresses found.`; };
@@ -1339,9 +1340,10 @@ const ADPANELS = {
   },
 };
 async function renderAds() {
-  const main = $("#main"), d = await api("/api/admin/ads");
+  const main = $("#main"), d = await api("/api/admin/ads"); setDetail("");
   const ids = ADSEC.map((x) => x[0]), fromHash = () => { const p = location.hash.slice(1).split("/"); return p[0] === "ads" && ids.includes(p[1]) ? p[1] : "overview"; };
   main.textContent = "";
+  const hd = adEl("div", null, "pghead"), hdi = adEl("div"); hdi.append(adEl("h2", "Ads"), adEl("p", "Facebook ads, run by Grok: what is running, what it cost and what came back.")); hd.append(hdi); main.append(hd);
   const bar = adEl("div", null, "emtabs", { role: "tablist", "aria-label": "Ads sections" }), panels = {}, tabs = {};
   const show = (id, focus) => {
     for (const k of ids) { const on = k === id; tabs[k].setAttribute("aria-selected", String(on)); tabs[k].tabIndex = on ? 0 : -1; panels[k].hidden = !on; if (on && !panels[k].childNodes.length) panels[k].append(ADPANELS[k](d)); }
