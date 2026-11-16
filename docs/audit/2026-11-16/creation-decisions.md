@@ -40,6 +40,6 @@ Each item below was fixed with the safest minimal behavior (hold for review rath
 
 ## 7. Two unsubscribe pages (L4)
 
-- Now: the two pages say exactly which list they control and link to each other; the invalid-link state points to Your profile (Account, Monthly update) and the mailbox. Both write to the shared do-not-contact list, so the future monthly sender must check `newsletter_optins.unsubscribed_at`, `email_prefs.optout` and the suppression list (documented in `docs/monetization/grok-outreach-api.md`).
+- Now: the two pages say exactly which list they control and link to each other; the invalid-link state points to Your profile (Account, Monthly update) and the mailbox. Both write to the shared do-not-contact list. The future monthly sender must call `monthlyMayReceive` in `functions/_lib/newsletter.js` for every address: it checks the active opt-in, `email_prefs.optout`, and hard bounces, complaints and deleted accounts (it does not check the whole suppression list, or someone who unsubscribed and opted in again could never receive it).
 - Not built: "enter your email and we send you a link". Anyone could trigger mail to any address, so it needs its own throttle and Turnstile.
 - Recommendation: build it only if people report lost links; the mailto line is the fallback.
