@@ -85,12 +85,14 @@ test("M5 / L1: contest pass and partner payment pages carry the refund rule; the
   try {
     assert.equal((await J(passCheckout({ request: rq("/api/contest-pass/checkout", { plan: "pass_1", back: "wizard" }, me.cookie), env }))).status, 200);
     assert.equal((await J(passCheckout({ request: rq("/api/contest-pass/checkout", { plan: "pass_1" }, me.cookie), env }))).status, 200);
-    const [a, b] = f.calls; assert.match(decode(a), /custom_text\[submit\]\[message\]=If we cannot apply your pass, you get a full refund/); assert.match(decode(a), /socallights\.app\/terms#passes/);
+    var [a, b] = f.calls; assert.match(decode(a), /custom_text\[submit\]\[message\]=If we cannot apply your pass, you get a full refund/); assert.match(decode(a), /socallights\.app\/terms#passes/);
     assert.notEqual(a.init.headers["idempotency-key"], b.init.headers["idempotency-key"], "a different return address is a different session");
     assert.equal((await J(partnerCheckout({ request: rq("/api/partner/checkout", {}, clerk.cookie), env }))).status, 200);
-    const p = f.calls[2]; assert.match(decode(p), /If we cannot apply your plan, you get a full refund/); assert.match(decode(p), /\d+ days? left in this season/);
+    var p = f.calls[2]; assert.match(decode(p), /If we cannot apply your plan, you get a full refund/); assert.match(decode(p), /\d+ days? left in this season/);
   } finally { f.restore(); }
+  assert.match(decode(a), /consent_collection\[terms_of_service\]=required/); assert.match(decode(p), /consent_collection\[terms_of_service\]=required/);
   assert.ok(refundNote("event").length < 1000);
+  for (const file of ["functions/api/feature/checkout.js", "functions/api/sponsor/checkout.js", "functions/api/installers/[slug]/manage.js"]) assert.doesNotMatch(readFileSync(file, "utf8"), /consent_collection/, file + " must not ask for Terms consent");
   for (const file of ["functions/api/feature/checkout.js", "functions/api/sponsor/checkout.js"]) assert.match(readFileSync(file, "utf8"), /custom_text\[submit\]\[message\]/, file);
 }));
 

@@ -109,6 +109,7 @@ The code is merged but **switched off until you add the key** (the API answers 5
 **This week**
 - [ ] **Protect `main` in GitHub so nothing merges without passing tests:** repository Settings, Branches (or Rules, then Rulesets), add a rule for `main`, tick "Require status checks to pass", search for and add **Tests**, save. The workflow cannot set this itself.
 - [ ] Stripe dashboard: look at Radar fraud rules and confirm the "Successful payments" receipt toggle (audit items; the API cannot read them)
+  - Terms of service URL is set in Stripe (Settings > Public details = https://socallights.app/terms, 2026-11-16) and contest pass and Event Partner checkouts now require the "I agree to the Terms" tick (`consent_collection[terms_of_service]=required`; not Featured or Sponsor). Still for the owner: Radar rules and the receipts toggle.
 - [ ] Send the three Outlook drafts (Mom's LA, Mission Viejo MVAC, Pasadena Now) and paste Draft A2 into Enjoy Orange County's form
 - [ ] Book the **CPA hour** (brief: `monetization/finance-operations.md`) and the **attorney** review (`monetization/legal-redlines.md`)
 - [ ] Apply to the **Fever** affiliate program (Impact); read Eventbrite's live terms first (`monetization/affiliate-plan.md`)
