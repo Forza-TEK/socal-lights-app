@@ -110,8 +110,21 @@ export async function processUpdates(env, rows, { dryRun = false, doFetch = fetc
     }
   }
   if (!dryRun && writes.length) await env.DB.batch(writes);
+  if (!dryRun) await recordAttempts(env, out);
   const n = (v) => out.filter((r) => r.verdict === v).length;
   return { results: out, applied: n("applied"), held: n("held"), unchanged: n("unchanged"), rejected: n("rejected") };
+}
+
+const ATTEMPT_RESULT = { applied: "changed", held: "changed", unchanged: "unchanged", rejected: "skipped" };
+/** Remember when Grok last tried each event on the map (any row that named an event that exists, even a rejected one: result skipped). Never fails the call: if the table is missing the rows are simply not remembered. */
+async function recordAttempts(env, out) {
+  const once = new Set(), rows = out.filter((r) => r.id && ATTEMPT_RESULT[r.verdict] && !once.has(r.id) && once.add(r.id)); // the first row for an event counts (a repeat in the same call is rejected)
+  if (!rows.length) return;
+  try {
+    const known = new Set((await env.DB.prepare(`SELECT id FROM events WHERE id IN (${rows.map(() => "?").join(",")})`).bind(...rows.map((r) => r.id)).all()).results.map((e) => e.id));
+    const now = new Date(Date.now()).toISOString().slice(0, 19) + "Z", mine = rows.filter((r) => known.has(r.id));
+    if (mine.length) await env.DB.batch(mine.map((r) => env.DB.prepare("INSERT INTO intake_attempts (event_id, last_attempt, result) VALUES (?, ?, ?) ON CONFLICT(event_id) DO UPDATE SET last_attempt = excluded.last_attempt, result = excluded.result").bind(r.id, now, ATTEMPT_RESULT[r.verdict])));
+  } catch {}
 }
 
 export const applyStatement = (env, eventId, v) => env.DB.prepare("UPDATE events SET start_date = ?, end_date = ?, hours = ?, price = ?, free = ?, status = ?, image = ?, updated_at = datetime('now') WHERE id = ?")

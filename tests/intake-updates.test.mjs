@@ -113,3 +113,49 @@ test("work order lists events Grok can confirm or give a photo (not organizer or
     assert.equal(r.body.applied, MAX_UPDATES); assert.ok(outgoing + env.DB.stats.calls < 50, `${outgoing} outgoing + ${env.DB.stats.calls} database calls`);
   });
 });
+
+test("work order paging: default 200 rows each, limit and offset, validated, rows keep their old fields", async () => {
+  await run(async () => {
+    const { env, raw, add } = mk(); raw.prepare("DELETE FROM events").run();
+    const ins = raw.prepare("INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+    for (let i = 0; i < 230; i++) ins.run("p" + String(i).padStart(3, "0"), "Lights " + i, "Riverside", "Riverside", "show", "2026-12-05", "2026-12-06", "expected", 1, "Free", "6pm", 33.9, -117.3, "x", "https://example.org/p" + i, "christmas", "V", "1 Main St");
+    const w = await call(env, null, "work-order", workOrder, "GET");
+    assert.equal(w.status, 200); assert.equal(w.body.events_to_confirm.length, 200); assert.equal(w.body.events_without_photo.length, 200);
+    assert.deepEqual(Object.keys(w.body.events_to_confirm[0]), ["id", "name", "city", "start_date", "end_date", "url", "last_attempt", "last_attempt_result"]);
+    assert.equal(w.body.paging.events_to_confirm_total, 230); assert.equal(w.body.paging.limit, 200); assert.equal(w.body.paging.offset, 0);
+    assert.ok(JSON.stringify(w.body).length < 100_000, "payload stays small: " + JSON.stringify(w.body).length);
+    const p2 = await call(env, null, "work-order?limit=50&offset=200", workOrder, "GET");
+    assert.equal(p2.body.events_to_confirm.length, 30); assert.equal(p2.body.events_to_confirm[0].id, "p200"); assert.equal(p2.body.paging.limit, 50);
+    const big = await call(env, null, "work-order?limit=500", workOrder, "GET"); assert.equal(big.body.events_to_confirm.length, 230);
+    for (const q of ["limit=0", "limit=501", "limit=abc", "limit=-1", "limit=1.5", "offset=-1", "offset=x", "skip_attempted_days=-2", "skip_attempted_days=9999"]) assert.equal((await call(env, null, "work-order?" + q, workOrder, "GET")).status, 400, q);
+    assert.equal((await call(env, null, "work-order?limit=5", workOrder, "GET", null)).status, 401, "key still required");
+    add("keep", { start: "2026-11-16" });
+    assert.equal((await call(env, null, "work-order?limit=1", workOrder, "GET")).body.events_to_confirm[0].id, "keep", "soonest first");
+  });
+});
+
+test("update call records last_attempt; work order shows it and skip_attempted_days leaves out unchanged or skipped rows tried recently", async () => {
+  await run(async () => {
+    const { env, raw, add } = mk(); raw.prepare("DELETE FROM events").run(); add("chg"); add("same", { status: "confirmed" }); add("bad"); add("old"); add("never");
+    const wo = async (q = "") => (await call(env, null, "work-order" + q, workOrder, "GET")).body;
+    assert.ok((await wo()).events_to_confirm.every((e) => e.last_attempt === null && e.last_attempt_result === null));
+    await call(env, { dry_run: true, rows: [row("chg")] });
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM intake_attempts").get().n, 0, "a dry run records nothing");
+    const r = await call(env, { rows: [row("chg"), row("same"), row("bad", { hours: "7pm", price: "$5", free: true }), row("nope"), row("chg")] });
+    assert.deepEqual(r.body.results.map((x) => x.verdict), ["applied", "unchanged", "rejected", "rejected", "rejected"]);
+    const at = Object.fromEntries(raw.prepare("SELECT event_id, last_attempt, result FROM intake_attempts").all().map((x) => [x.event_id, { ...x }]));
+    assert.deepEqual(Object.keys(at).sort(), ["bad", "chg", "same"], "unknown ids are not recorded");
+    assert.equal(at.chg.result, "changed", "a repeat of the same event in one call does not overwrite the first");
+    assert.equal(at.same.result, "unchanged"); assert.equal(at.bad.result, "skipped"); assert.equal(at.chg.last_attempt, "2026-11-15T20:00:00Z");
+    // put the events back as "expected" and add an attempt from 14 days ago
+    raw.prepare("UPDATE events SET status='expected' WHERE id IN ('same','chg')").run();
+    raw.prepare("INSERT INTO intake_attempts (event_id,last_attempt,result) VALUES ('old','2026-11-01T10:00:00Z','unchanged')").run();
+    const by = Object.fromEntries((await wo()).events_to_confirm.map((e) => [e.id, e]));
+    assert.equal(by.same.last_attempt, "2026-11-15T20:00:00Z"); assert.equal(by.same.last_attempt_result, "unchanged"); assert.equal(by.old.last_attempt_result, "unchanged"); assert.equal(by.never.last_attempt, null); assert.equal(by.never.last_attempt_result, null);
+    const ids = async (q) => (await wo(q)).events_to_confirm.map((e) => e.id).sort();
+    assert.deepEqual(await ids(""), ["bad", "chg", "never", "old", "same"], "no parameter: nothing is left out");
+    assert.deepEqual(await ids("?skip_attempted_days=7"), ["chg", "never", "old"], "same and bad (unchanged, skipped today) are left out; chg changed so it stays; old was 14 days ago");
+    assert.deepEqual(await ids("?skip_attempted_days=30"), ["chg", "never"], "old is left out within 30 days");
+    const w7 = await wo("?skip_attempted_days=7"); assert.equal(w7.paging.events_to_confirm_total, 3); assert.equal(w7.paging.skip_attempted_days, 7);
+  });
+});

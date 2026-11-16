@@ -76,6 +76,13 @@ Field rules (the same rules our sweeps use; a row that breaks one is `rejected` 
 
 ## Events already on the map: the update call
 New events go to `POST /api/intake/events`. For an event that is **already on the map**, use `POST /api/intake/updates` (same key and headers, at most **8 rows per call**, `dry_run` supported). It confirms an event or corrects it from the event's own page. The work order lists `events_to_confirm` (status `expected`, soonest first) and `events_without_photo`, each with the event's `id`; the same ids are in `GET /api/events`.
+
+**Size and paging of those two lists.** Each list returns up to **200 rows** by default (about 80 KB for both). Query parameters on `GET /api/intake/work-order`, all optional, all whole numbers (anything else is a `400` that says what is allowed):
+- `limit`: rows per list, 1 to **500** (default 200).
+- `offset`: rows to skip in each list, 0 or more (default 0), for the next page. Lists are sorted soonest first, then by id, so pages do not shuffle.
+- `skip_attempted_days`: 0 to 365 (default 0 = leave nothing out). Leaves out events you tried through the update call within that many days **with an `unchanged` or `skipped` result**; events whose last attempt `changed` something, and events never tried, always stay. Use `?skip_attempted_days=7` to see past rows that cannot be done yet.
+
+Every row has two extra fields: `last_attempt` (UTC time like `2026-11-16T09:30:00Z` of your last real, non-dry-run update call for that event, or `null`) and `last_attempt_result` (or `null`): `changed` (applied or held), `unchanged` (the map already showed it), or `skipped` (the row was rejected, for example the hours were not real times). The answer also has `paging`: `{ limit, offset, skip_attempted_days, events_to_confirm_total, events_without_photo_total }` (totals after `skip_attempted_days`; page on while `offset + limit` is below the total). `dry_run` calls and ids that are not on the map are not recorded.
 ```json
 { "rows": [ {
   "id": "the-event-id-from-the-map",
