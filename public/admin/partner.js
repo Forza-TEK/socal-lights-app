@@ -1,7 +1,7 @@
 // Admin > Event Partners: one list of organizations (a plan, a comp or covered events this season), like Contest passes. Open one for its events (free a slot),
 // its comps and plans, and a form to grant it a comp. "Grant a comp" at the top does the same for a new organization (founder cities are free; no price is ever shown to them).
 // Plans bought also show in Orders.
-import { esc, btn, rec, fact, toast, modalFrame, tap } from "/admin/kit.js?v=20261113a";
+import { esc, btn, rec, fact, toast, modalFrame, tap } from "/admin/kit.js?v=20261116a";
 
 const $ = (s) => document.querySelector(s);
 async function api(path, opts = {}) {

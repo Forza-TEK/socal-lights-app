@@ -1,6 +1,6 @@
 // Admin > From Grok: the events Grok sent from its browser pass (docs/monetization/grok-browser-pass.md) and the changes it made to events already on the map.
 // Same format as Events: pill tabs, a table, and a full-page record with a Back link and the actions at the top right.
-import { esc, btn, toast } from "/admin/kit.js?v=20261113a";
+import { esc, btn, toast } from "/admin/kit.js?v=20261116a";
 import { SEASONS } from "/seasons.js?v=20261115a";
 
 async function api(path, opts = {}) {

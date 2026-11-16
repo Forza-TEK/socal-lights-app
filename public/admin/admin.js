@@ -8,7 +8,7 @@ import { renderHelp } from "/admin/help.js?v=20261113a";
 import { renderPartner } from "/admin/partner.js?v=20261113a";
 import { renderChat } from "/admin/chat.js?v=20261113a";
 import { renderGrok } from "/admin/grok.js?v=20261116a";
-import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261113a";
+import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261116a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
 
 const $ = (s) => document.querySelector(s);
@@ -252,31 +252,48 @@ $("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-
 let SUBS = [], SUBVIEW = "pending", SSORT = "new";
 const SSORTS = [["new", "Newest first"], ["old", "Oldest first"], ["date", "Event date, soonest first"], ["name", "Name A to Z"]];
 const SBY = { new: (a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")), old: (a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")), date: (a, b) => String(a.start_date || "").localeCompare(String(b.start_date || "")), name: (a, b) => String(a.name || "").localeCompare(String(b.name || "")) };
+let SUBOPEN = "";
 async function renderSubs() {
   const main = $("#main");
   const [waiting, live, declined] = await Promise.all([api("/api/admin/submissions?status=pending"), api("/api/admin/submissions?status=published"), api("/api/admin/submissions?status=declined")]);
   SUBS = sortList(SUBVIEW === "pending" ? waiting : SUBVIEW === "declined" ? declined : live, SSORT, SBY);
   setCount("subs", waiting.length);
-  const bar = toolbar({ views: [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "published", label: "Live", n: live.length }, { k: "declined", label: "Declined", n: declined.length }], active: SUBVIEW, search: { placeholder: "Search events, cities" }, right: sortSelect(SSORTS, SSORT), count: String(SUBS.length) });
-  const go = () => { wireToolbar(main, { onView: (v) => { SUBVIEW = v; renderSubs(); }, onSearch: (q) => filterCards(main, q), onSort: (v) => { SSORT = v; renderSubs(); } }); applyPreset(main); };
-  if (!SUBS.length) { main.innerHTML = bar + `<div class="empty">${SUBVIEW === "pending" ? "Nothing waiting. New events go live right away; look under Live to review or unpublish them." : SUBVIEW === "declined" ? "Nothing declined." : "No submitted events are live."}</div>`; go(); return; }
-  const pend = SUBVIEW === "pending";
-  const sbulk = pend ? `<div class="bulk" id="sbulk"><label class="chk"><input type="checkbox" id="sAll"> Select all</label><span class="grow"></span><span class="meta" id="sSelN"></span><button class="btn ice" type="button" id="sPubC" hidden></button><button class="btn ghost" type="button" id="sPubE" hidden></button><button class="btn ghost danger" type="button" id="sDec" hidden></button><button class="btn ghost" type="button" id="sClear" hidden>Clear</button></div>` : "";
-  main.innerHTML = bar + sbulk + `<div class="cards">${SUBS.map((x) => rec({
-    attrs: `data-sid="${esc(x.id)}"`, title: (pend ? `<input type="checkbox" class="rsel" data-ssel="${esc(x.id)}" aria-label="Select ${esc(x.name)}"> ` : "") + esc(x.name), tags: [[pend ? "Waiting" : SUBVIEW === "declined" ? "Declined" : "Published", pend ? "warn" : SUBVIEW === "declined" ? "bad" : "ok"]], meta: esc((x.created_at || "").slice(0, 16)) + " UTC",
-    facts: fact("When", esc(x.start_date) + (x.end_date !== x.start_date ? " to " + esc(x.end_date) : "") + " · " + esc(x.hours || "no hours")) + fact("Where", `${esc(x.venue)}<br><span class="meta">${esc(x.address)}, ${esc(x.city)} · ${esc(x.county || "")} (pin ${Number(x.lat).toFixed(4)}, ${Number(x.lng).toFixed(4)})</span>`)
-      + fact("Type", `${esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)} · ${esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)} · ${esc(x.price || "")}`) + fact("About", esc(x.blurb)) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "")
-      + fact("Contact", `<span style="user-select:all">${esc(x.contact_email)}</span>`) + fact("Notes", esc(x.note || "")) + (x.paid_plans ? fact("Paid Featured", `<b>${esc(x.paid_plans)}</b>`) : ""),
-    edit: pend ? btn("ghost", "Edit", `data-sedit="${esc(x.id)}"`) : "",
-    main: SUBVIEW === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : pend ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : (x.event_id ? viewLink(x.event_id) : "") + (x.event_id && x.contact_email ? asLink("Edit as owner", "/profile", x.contact_email, "events") : "") + (x.event_id && x.event_status === "expected" ? btn("main", "Confirm dates", 'data-sact="confirm"') : "") + btn("ghost", "Unpublish", 'data-sact="unpublish"'),
-    danger: pend ? btn("danger", "Decline", 'data-sact="decline"') : "",
-  })).join("")}</div>`;
+  const pend = SUBVIEW === "pending", all = [...waiting, ...live, ...declined], one = SUBOPEN && all.find((r) => r.id === SUBOPEN);
+  if (SUBOPEN && !one) SUBOPEN = "";
+  const actions = (x) => {
+    const st = x.status === "pending" ? "pending" : x.status === "declined" ? "declined" : "published";
+    return (st === "pending" ? btn("ghost", "Edit", `data-sedit="${esc(x.id)}"`) : "")
+      + (st === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : st === "pending" ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : (x.event_id ? viewLink(x.event_id) : "") + (x.event_id && x.contact_email ? asLink("Edit as owner", "/profile", x.contact_email, "events") : "") + (x.event_id && x.event_status === "expected" ? btn("main", "Confirm dates", 'data-sact="confirm"') : "") + btn("ghost", "Unpublish", 'data-sact="unpublish"'))
+      + (st === "pending" ? btn("danger", "Decline", 'data-sact="decline"') : "");
+  };
+  if (one) { // the full record: Back link, actions at the top right, cards
+    const x = one, st = x.status === "pending" ? ["Waiting", "warn"] : x.status === "declined" ? ["Declined", "bad"] : ["Published", "ok"], kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v !== "" && v != null).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
+    setDetail(x.name); window.scrollTo(0, 0);
+    main.innerHTML = `<div class="rpage" data-sid="${esc(x.id)}"><a class="rback" href="#subs" id="sBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to submitted events</a>
+      <div class="pghead"><div><h2>Event detail</h2></div><div class="pgacts">${actions(x)}</div></div><span class="msg" role="status"></span>
+      <section class="rcard"><h3>Overview</h3>${kv([["Name", esc(x.name)], ["Status", `<span class="tag ${st[1]}">${st[0]}</span>`], ["Season", esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)], ["Type", esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)], ["Dates", esc(x.start_date) + (x.end_date !== x.start_date ? " to " + esc(x.end_date) : "")], ["Hours", esc(x.hours || "no hours")], ["Price", esc(x.price || "")], ["Added", esc((x.created_at || "").slice(0, 16)) + " UTC"]])}</section>
+      <section class="rcard"><h3>Where</h3>${kv([["Venue", esc(x.venue)], ["Address", esc(x.address)], ["City", esc(x.city)], ["County", esc(x.county || "")], ["Pin", `${Number(x.lat).toFixed(4)}, ${Number(x.lng).toFixed(4)}`]])}</section>
+      <section class="rcard"><h3>Details and contact</h3>${kv([["About", esc(x.blurb)], ["Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : ""], ["Contact", `<span style="user-select:all">${esc(x.contact_email)}</span>`], ["Notes", esc(x.note || "")], ["Paid Featured", x.paid_plans ? `<b>${esc(x.paid_plans)}</b>` : ""]])}</section></div>`;
+    $("#sBack").onclick = (e) => { e.preventDefault(); SUBOPEN = ""; setDetail(""); renderSubs(); };
+    return;
+  }
+  setDetail("");
+  const tabs = [["pending", "Waiting", waiting.length], ["published", "Live", live.length], ["declined", "Declined", declined.length]];
+  const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === SUBVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
+    <div class="pghead"><div><h2>Submitted events</h2><p>Events added by organizers through the Add your event form. They go live right away unless something looks wrong; open a row to review, edit or unpublish it.</p></div></div>`;
+  const bar = toolbar({ search: { placeholder: "Search events, cities" }, right: sortSelect(SSORTS, SSORT), count: String(SUBS.length) });
+  const go = () => { wireToolbar(main.querySelector(".tbar"), { onSearch: (q) => filterCards(main, q), onSort: (v) => { SSORT = v; renderSubs(); } }); main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { SUBVIEW = b.dataset.view; renderSubs(); })); applyPreset(main); };
+  if (!SUBS.length) { main.innerHTML = head + bar + `<div class="empty">${SUBVIEW === "pending" ? "Nothing waiting. New events go live right away; look under Live to review or unpublish them." : SUBVIEW === "declined" ? "Nothing declined." : "No submitted events are live."}</div>`; go(); return; }
+  const sbulk = pend ? `<div class="bulk" id="sbulk" hidden><span class="meta" id="sSelN"></span><span class="grow"></span><button class="btn ice" type="button" id="sPubC" hidden></button><button class="btn ghost" type="button" id="sPubE" hidden></button><button class="btn ghost danger" type="button" id="sDec" hidden></button><button class="btn ghost" type="button" id="sClear" hidden>Clear</button></div>` : "";
+  main.innerHTML = head + bar + sbulk + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr>${pend ? '<th class="cb"><input type="checkbox" id="sAll" aria-label="Select all shown"></th>' : ""}<th>Event</th><th>City</th><th>Dates</th><th>Contact</th><th>Added</th><th class="ac">Actions</th></tr></thead><tbody>
+    ${SUBS.map((x) => `<tr data-sid="${esc(x.id)}">${pend ? `<td class="cb"><input type="checkbox" class="rsel" data-ssel="${esc(x.id)}" aria-label="Select ${esc(x.name)}"></td>` : ""}<td><a class="rl" href="#subs" data-sopen="${esc(x.id)}">${esc(x.name)}</a><span class="sub">${esc(x.venue || "")}</span></td><td>${esc(x.city)}<span class="sub">${esc(x.county || "")}</span></td><td>${esc(x.start_date)}${x.end_date !== x.start_date ? " to " + esc(x.end_date) : ""}<span class="sub">${esc(x.hours || "no hours")}</span></td><td>${esc(x.contact_email)}</td><td>${esc((x.created_at || "").slice(0, 16))} UTC</td><td class="ac"><a class="rl" href="#subs" data-sopen="${esc(x.id)}">Open</a></td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${SUBS.length} event${SUBS.length === 1 ? "" : "s"}</span></div></div>`;
+  main.querySelectorAll("[data-sopen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); SUBOPEN = a.dataset.sopen; renderSubs(); }));
   go(); if (pend) wireSubsBulk(main);
 }
 // Pick several waiting events: publish them (confirmed or expected) or decline them in one go. A second tap confirms. Declines can be undone.
 function wireSubsBulk(main) {
-  const boxes = () => [...main.querySelectorAll(".rec:not([hidden]) .rsel")], picked = () => boxes().filter((b) => b.checked), idOf = (b) => b.dataset.ssel;
-  const paint = () => { const n = picked().length, w = `${n} event${n === 1 ? "" : "s"}`; $("#sSelN").textContent = n ? `${n} selected` : ""; $("#sPubC").textContent = `Publish ${w} (confirmed)`; $("#sPubE").textContent = `Publish ${w} (expected)`; $("#sDec").textContent = `Decline ${w}`; ["sPubC", "sPubE", "sDec", "sClear"].forEach((id) => ($("#" + id).hidden = !n)); $("#sAll").checked = n > 0 && n === boxes().length; };
+  const boxes = () => [...main.querySelectorAll("tbody tr:not([hidden]) .rsel")], picked = () => boxes().filter((b) => b.checked), idOf = (b) => b.dataset.ssel;
+  const paint = () => { const n = picked().length, w = `${n} event${n === 1 ? "" : "s"}`; $("#sSelN").textContent = n ? `${n} selected` : ""; $("#sPubC").textContent = `Publish ${w} (confirmed)`; $("#sPubE").textContent = `Publish ${w} (expected)`; $("#sDec").textContent = `Decline ${w}`; ["sPubC", "sPubE", "sDec", "sClear"].forEach((id) => ($("#" + id).hidden = !n)); $("#sbulk").hidden = !n; $("#sAll").checked = n > 0 && n === boxes().length; };
   main.addEventListener("change", (e) => { if (e.target.matches(".rsel")) paint(); });
   $("#sAll").onchange = (e) => { boxes().forEach((b) => (b.checked = e.target.checked)); paint(); };
   $("#sClear").onclick = () => { boxes().forEach((b) => (b.checked = false)); paint(); };
@@ -330,7 +347,7 @@ document.addEventListener("click", async (e) => {
 const SDONE = { confirm: "Confirmed. The event now shows as Confirmed on the map.", approve: "Published", decline: "Declined. If they paid for Featured, refund it under Orders.", unpublish: "Unpublished", restore: "Back in the waiting list" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-sact]"); if (!b) return;
-  const card = b.closest("[data-sid]"), msg = card.querySelector(".msg"), act = b.dataset.sact, id = card.dataset.sid, name = card.querySelector("h3").textContent, x = SUBS.find((r) => r.id === id) || {}, extra = {};
+  const card = b.closest("[data-sid]"), msg = card.querySelector(".msg") || { set className(v) {}, set textContent(v) {} }, act = b.dataset.sact, id = card.dataset.sid, x = SUBS.find((r) => r.id === id) || {}, name = x.name || "this event", extra = {};
   if (act === "decline") { const r = await askReason({ title: "Decline " + name, hint: x.paid_plans ? `They already paid for Featured (${x.paid_plans}). After you decline, refund it in the Stripe dashboard (it is listed under Orders as refund due), then mark it refunded. This note is emailed to them.` : "This is emailed to the person who added it. Leave it blank to send no reason." }); if (r === null) return; extra.reason = r; }
   else if (act === "unpublish" && !tap(b, "unpublish")) return;
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
@@ -338,7 +355,7 @@ $("#main").addEventListener("click", async (e) => {
     const post = (more = {}) => api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify({ action: act, status: b.dataset.st, ...extra, ...more }) });
     try { await post(); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Confirm" }))) await post({ confirm: true }); else throw er; } // a paid placement needs an explicit yes
     const undo = act === "decline" ? { action: "restore" } : act === "unpublish" ? { action: "approve", status: x.verified ? "confirmed" : "expected", notify: false } : null;
-    toast(SDONE[act] || "Done", false, undo ? { undo: async () => { try { await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); renderSubs(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
+    SUBOPEN = ""; toast(SDONE[act] || "Done", false, undo ? { undo: async () => { try { await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); renderSubs(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
     renderSubs(); refreshCounts();
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
