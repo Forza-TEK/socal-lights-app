@@ -56,9 +56,9 @@ Easy fix, and you get to show your own photos:
 - It usually goes live at once and replaces the automatic listing; if it is held for a quick check, it goes live once the site owner has looked it over.
 
 **7. Can I install the app on my phone, and does it work offline?**
-No, not yet! SoCal Lights is not in the App Store or Google Play right now. For now it is a website, and you can add it to your Home Screen so it opens full screen with its own icon, just like an app:
+On iPhone, yes: SoCal Lights is in the App Store (search for SoCal Lights). On any phone you can also add the website to your Home Screen so it opens full screen with its own icon, just like an app:
 - iPhone (Safari): tap Share, then Add to Home Screen, then Add.
-- Android (Chrome): tap the three dots, then Add to Home screen (Chrome may call it Install app; it still adds the website, not a store app).
+- Android (Chrome): tap the three dots, then Add to Home screen (Chrome may call it Install app; it still adds the website).
 Offline, it still opens and shows the last list of places it saved, handy in weak-signal neighborhoods, and it updates by itself when your signal returns.
 
 **8. How do I get the weekly lights email, and can I stop it?**
