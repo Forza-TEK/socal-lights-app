@@ -94,6 +94,21 @@
             "captions": "/tutorials/find-pro-mobile.vtt",
             "length": "1:27"
           }
+        },
+        {
+          "id": "calendar-share",
+          "title": "Add an event to your calendar and share it",
+          "desc": "Tap the calendar to add an event to Apple, Outlook or Google Calendar, and the arrow to send its link to a friend."
+        },
+        {
+          "id": "live-location",
+          "title": "Use my location",
+          "desc": "What the location button does, what stays on your device, and the one time it is sent."
+        },
+        {
+          "id": "pricing",
+          "title": "Pricing in two minutes",
+          "desc": "What is free, and what the four tabs of paid options buy: homeowners, events, contests and installers."
         }
       ]
     },
@@ -280,6 +295,11 @@
             "captions": "/tutorials/run-founder-mobile.vtt",
             "length": "1:57"
           }
+        },
+        {
+          "id": "contest-logo",
+          "title": "Add your contest logo",
+          "desc": "Upload your city or group logo so it shows on your contest page and on homes without a photo."
         },
         {
           "id": "share",
@@ -512,6 +532,11 @@
             "captions": "/tutorials/sponsors-profile-mobile.vtt",
             "length": "1:46"
           }
+        },
+        {
+          "id": "installer-dashboard",
+          "title": "Your installer dashboard",
+          "desc": "Your numbers, homes to confirm, details and logo, and the views and quote requests you receive."
         },
         {
           "id": "sponsor",
