@@ -44,8 +44,7 @@ UPDATE events SET hours='6pm–7:30pm', address='23560 Jefferson Ave, Murrieta, 
 UPDATE events SET hours='Fri 7pm, Sat 2 & 7pm, Sun 2pm; check site', updated_at=datetime('now') WHERE id='redlands-miracle-34th-street';
 UPDATE events SET hours='11am–7pm; check site', price='From $39', updated_at=datetime('now') WHERE id='riverside-nutcracker-brava';
 UPDATE events SET hours='Check site', updated_at=datetime('now') WHERE id='santa-monica-pier-swiss-winter-village';
--- Price wording outside the documented vocabulary (rule 4)
-UPDATE events SET price='Price not listed', updated_at=datetime('now') WHERE id IN ('tg-salvation-army-centre-city','tg-salvation-army-el-cajon','tg-salvation-army-oceanside') AND price='Free in past years';
+-- Price wording outside the documented vocabulary (rule 4); the Salvation Army 'Free in past years' rows are left for the owner (free=1 needs a price starting with Free)
 UPDATE events SET price='Price not listed', updated_at=datetime('now') WHERE id='rc-rancho-mirage-tree-lighting' AND price='Not listed';
 UPDATE events SET price='Check listing', updated_at=datetime('now') WHERE id IN ('g21-pershing-square-ice-rink','hermosa-for-the-holidays','torrance-memorial-holiday-festival') AND price='See site';
 -- Type labels: boat-parade cruises are parades, so the Parades filter finds them
