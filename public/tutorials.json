@@ -98,17 +98,47 @@
         {
           "id": "calendar-share",
           "title": "Add an event to your calendar and share it",
-          "desc": "Tap the calendar to add an event to Apple, Outlook or Google Calendar, and the arrow to send its link to a friend."
+          "desc": "Tap the calendar to add an event to Apple, Outlook or Google Calendar, and the arrow to send its link to a friend.",
+          "captions": "/tutorials/find-calendar-share.vtt",
+          "url": "/tutorials/find-calendar-share.mp4",
+          "poster": "/tutorials/find-calendar-share.jpg",
+          "length": "1:30",
+          "mobile": {
+            "url": "/tutorials/find-calendar-share-mobile.mp4",
+            "poster": "/tutorials/find-calendar-share-mobile.jpg",
+            "captions": "/tutorials/find-calendar-share-mobile.vtt",
+            "length": "1:29"
+          }
         },
         {
           "id": "live-location",
           "title": "Use my location",
-          "desc": "What the location button does, what stays on your device, and the one time it is sent."
+          "desc": "What the location button does, what stays on your device, and the one time it is sent.",
+          "captions": "/tutorials/find-location.vtt",
+          "url": "/tutorials/find-location.mp4",
+          "poster": "/tutorials/find-location.jpg",
+          "length": "1:44",
+          "mobile": {
+            "url": "/tutorials/find-location-mobile.mp4",
+            "poster": "/tutorials/find-location-mobile.jpg",
+            "captions": "/tutorials/find-location-mobile.vtt",
+            "length": "1:42"
+          }
         },
         {
           "id": "pricing",
           "title": "Pricing in two minutes",
-          "desc": "What is free, and what the four tabs of paid options buy: homeowners, events, contests and installers."
+          "desc": "What is free, and what the four tabs of paid options buy: homeowners, events, contests and installers.",
+          "captions": "/tutorials/find-pricing.vtt",
+          "url": "/tutorials/find-pricing.mp4",
+          "poster": "/tutorials/find-pricing.jpg",
+          "length": "2:14",
+          "mobile": {
+            "url": "/tutorials/find-pricing-mobile.mp4",
+            "poster": "/tutorials/find-pricing-mobile.jpg",
+            "captions": "/tutorials/find-pricing-mobile.vtt",
+            "length": "2:15"
+          }
         }
       ]
     },
@@ -299,7 +329,17 @@
         {
           "id": "contest-logo",
           "title": "Add your contest logo",
-          "desc": "Upload your city or group logo so it shows on your contest page and on homes without a photo."
+          "desc": "Upload your city or group logo so it shows on your contest page and on homes without a photo.",
+          "captions": "/tutorials/run-logo.vtt",
+          "url": "/tutorials/run-logo.mp4",
+          "poster": "/tutorials/run-logo.jpg",
+          "length": "1:46",
+          "mobile": {
+            "url": "/tutorials/run-logo-mobile.mp4",
+            "poster": "/tutorials/run-logo-mobile.jpg",
+            "captions": "/tutorials/run-logo-mobile.vtt",
+            "length": "1:48"
+          }
         },
         {
           "id": "share",
@@ -536,7 +576,17 @@
         {
           "id": "installer-dashboard",
           "title": "Your installer dashboard",
-          "desc": "Your numbers, homes to confirm, details and logo, and the views and quote requests you receive."
+          "desc": "Your numbers, homes to confirm, details and logo, and the views and quote requests you receive.",
+          "captions": "/tutorials/sponsors-dashboard.vtt",
+          "url": "/tutorials/sponsors-dashboard.mp4",
+          "poster": "/tutorials/sponsors-dashboard.jpg",
+          "length": "1:31",
+          "mobile": {
+            "url": "/tutorials/sponsors-dashboard-mobile.mp4",
+            "poster": "/tutorials/sponsors-dashboard-mobile.jpg",
+            "captions": "/tutorials/sponsors-dashboard-mobile.vtt",
+            "length": "1:32"
+          }
         },
         {
           "id": "sponsor",
