@@ -21,7 +21,7 @@ export async function renderEmails(main, q = "") {
   const items = DATA.items, groups = DATA.groups.filter((g) => items.some((t) => t.group === g.key));
   if (!groups.some((g) => g.key === TAB)) TAB = groups[0].key;
   const edited = items.filter((t) => t.edited).length;
-  main.innerHTML = toolbar({ search: { placeholder: "Search all emails", value: q }, count: `${items.length} emails${edited ? ` · ${edited} edited` : ""}` })
+  main.innerHTML = `<div class="pghead"><div><h2>Email templates</h2><p>Every email the site sends. Open one to read and edit its wording.</p></div></div>` + toolbar({ search: { placeholder: "Search all emails", value: q }, count: `${items.length} emails${edited ? ` · ${edited} edited` : ""}` })
     + `<div class="emtabs" role="tablist" aria-label="Email groups">${groups.map((g) => `<button type="button" role="tab" class="emtab" data-emtab="${esc(g.key)}" aria-selected="false">${esc(TABNAME[g.key] || g.label)} <span>${items.filter((t) => t.group === g.key).length}</span></button>`).join("")}</div>`
     + `<p class="meta emintro" id="emintro"></p><div class="emgrid" id="emlist" role="tabpanel"></div>`;
   const paint = (query) => {
