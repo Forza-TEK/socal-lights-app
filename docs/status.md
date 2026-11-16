@@ -1,5 +1,10 @@
 # Status
 
+## 2026-11-16: Videos `installer-profile`, `claim`, `profile`, `manage-events` re-recorded (computer and phone, branch `videos-b2-account`)
+- `manage-events` now shows the new Video link: Your events, Edit, paste a YouTube or Vimeo link, Save, then "Watch the video" on the event card, and the notice menu (Cancelled or Postponed) on the restyled Events list. `profile` shows the Nov 16 restyle. `installer-profile` and `claim` get the current header.
+- `claim` now uses the demo listing "Juniper Lane Lights (Irvine)" (210 Juniper Ln, invented; seed `scripts/tutorials/seed-claim.sql`) instead of searching "Spadra Lane", which was a real listing and address from the site's own data. `profile` and `manage-events` are seeded without the duplicate demo event. Demo photos are loaded into local R2 for the recordings. `check-sync.mjs` 8 of 8 pass; frames of all 8 files read.
+- This branch is stacked on `videos-b1` (recorder fixes); merge that PR first.
+
 ## 2026-11-16: Videos `map`, `night`, `email`, `pro-filter` re-recorded (computer and phone, branch `videos-b1-find`)
 - Same scripts and narration; new picture: the header with the + (Add) button and the account/person icon, current Filters and route sheets. Demo home photos are now loaded into the local R2 before recording, so no broken or placeholder pictures show in `pro-filter`. Recorder fixes: the share toast and the example email now show `https://socallights.app` (not `http://`), and the `email` phone version lands on the "You are signed up" page (the wrapped link on a phone was missed by the click). Same voice rules as the `feature` PR. `check-sync.mjs` 8 of 8 pass; frames of all 8 files read against the narration. `npm test` passes (1089).
 

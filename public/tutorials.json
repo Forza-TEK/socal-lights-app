@@ -152,14 +152,14 @@
           "title": "Your profile: drafts, contests, badges and your account",
           "desc": "Drafts, contests, badges and deleting your account.",
           "url": "/tutorials/profile.mp4",
-          "length": "2:24",
+          "length": "2:20",
           "captions": "/tutorials/profile.vtt",
           "poster": "/tutorials/profile.jpg",
           "mobile": {
             "url": "/tutorials/profile-mobile.mp4",
             "poster": "/tutorials/profile-mobile.jpg",
             "captions": "/tutorials/profile-mobile.vtt",
-            "length": "2:22"
+            "length": "2:21"
           }
         }
       ]
@@ -503,14 +503,14 @@
           "title": "Installer profiles and \"Installed by\"",
           "desc": "How a company gets a profile, how a home links to it, and how to confirm or claim yours.",
           "url": "/tutorials/sponsors-profile.mp4",
-          "length": "1:47",
+          "length": "1:46",
           "captions": "/tutorials/sponsors-profile.vtt",
           "poster": "/tutorials/sponsors-profile.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-profile-mobile.mp4",
             "poster": "/tutorials/sponsors-profile-mobile.jpg",
             "captions": "/tutorials/sponsors-profile-mobile.vtt",
-            "length": "1:47"
+            "length": "1:46"
           }
         },
         {
@@ -557,12 +557,12 @@
           "captions": "/tutorials/post-manage-events.vtt",
           "url": "/tutorials/post-manage-events.mp4",
           "poster": "/tutorials/post-manage-events.jpg",
-          "length": "1:45",
+          "length": "1:58",
           "mobile": {
             "url": "/tutorials/post-manage-events-mobile.mp4",
             "poster": "/tutorials/post-manage-events-mobile.jpg",
             "captions": "/tutorials/post-manage-events-mobile.vtt",
-            "length": "1:39"
+            "length": "1:57"
           }
         },
         {
@@ -585,14 +585,14 @@
           "title": "Is this your home? Claim it",
           "desc": "Is this your home? Replace the automatic listing with your own photos and details.",
           "url": "/tutorials/post-claim.mp4",
-          "length": "2:13",
+          "length": "2:09",
           "captions": "/tutorials/post-claim.vtt",
           "poster": "/tutorials/post-claim.jpg",
           "mobile": {
             "url": "/tutorials/post-claim-mobile.mp4",
             "poster": "/tutorials/post-claim-mobile.jpg",
             "captions": "/tutorials/post-claim-mobile.vtt",
-            "length": "2:10"
+            "length": "2:08"
           }
         },
         {
