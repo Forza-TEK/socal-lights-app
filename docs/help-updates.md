@@ -3276,3 +3276,520 @@ Text:
     To change your photo, tap **Add a photo** or **Change photo** under your name at the top of the profile. Use a JPG, PNG or WebP.
     
     To remove a home or an entry, see [Edit or withdraw your entry](/help/edit-or-withdraw-your-entry) and [Unpublish and publish again](/help/unpublish-and-publish-again). To delete your account, see [How do I delete my account?](/help/delete-my-account).
+
+
+# Help Center audit (2026-11-16), part 2: the new articles
+
+Migration `0268_help_new_topics_2026-11-16.sql` adds these 15 articles and links to them from the articles people read next. A new article is added only if its address is free, so to change one later, edit it in Admin > Help. Regenerate with `node scripts/help/updates-1116b.mjs --md`. Slugs never change.
+
+## where-is-the-add-button
+New article. Category: post. Type: answer. Order: 5.
+
+Title:
+
+    Where is the Add button?
+
+One-sentence answer:
+
+    Tap the round + button in the top bar of the map. It is always there, signed in or not, and opens the Add page.
+
+Search words:
+
+    add button plus button + button where is add how do i add top bar add an event add a home add a contest menu three dots account circle
+
+Text:
+
+    The top bar of the map has a round **+** button. Its label is **Add**. It is always there, on a phone and on a computer, whether you are signed in or not.
+    
+    1. Tap **+**. The Add page opens with three choices.
+    2. Choose one and follow the steps. You are asked to sign in when the form needs your account.
+    
+    - **An event** is for a tree lighting, parade, market or other seasonal event: [Add an event to the map](/help/add-an-event).
+    - **A contest** is for organizers who want to run a neighborhood contest: [Create a contest with Quick start](/help/create-a-contest-quick-start).
+    - **A lighting display** is for your home's lights: [Show off your home on the map](/help/show-off-your-house).
+    
+    ## Other ways to the Add page
+    
+    - Signed in: tap your **account circle**, then **Add an event, home or contest**.
+    - Signed out: tap the **three dots** at the right end of the top bar, then **Add**.
+    - Or go straight to socallights.app/add.
+    
+    Not sure which one you want? You do not need a contest to put your home on the map: [Add your home without entering a contest](/help/add-a-home-without-a-contest).
+
+## add-an-event-to-your-calendar
+New article. Category: find. Type: howto. Order: 26.
+
+Title:
+
+    Add an event to your calendar
+
+One-sentence answer:
+
+    Open an event and tap the calendar button. It opens Google Calendar if Google Maps is your maps app, otherwise it gives you a calendar file.
+
+Search words:
+
+    calendar add to calendar google calendar apple calendar outlook ics reminder save the date remind me event on my calendar
+
+Text:
+
+    You can put an event on your calendar so you do not forget it.
+    
+    1. On the map, tap the event to open its card.
+    2. Tap the **calendar** button (its label is **Add to calendar**) in the row of buttons with the heart and Share.
+    3. What happens next depends on your maps app:
+       - If **Google Maps** is your maps app, Google Calendar opens in a new tab with the event filled in. Tap save there.
+       - Otherwise you get a calendar file, and the site says **Calendar file ready**. Open it, and Apple Calendar, Outlook or your phone's calendar adds the event.
+    
+    ## Good to know
+    
+    - It fills in the name, the dates, the place and a link back to the event. If the hours are a single time range, such as 5 to 9 pm, it uses them. Otherwise it is an all-day event.
+    - It adds one event at a time. There is no way to send all your favorites to a calendar at once.
+    - Your maps app is the one you chose for directions. To change it, see [Drive a route](/help/drive-a-route).
+    - Dates and hours come from the event. Check with the organizer before you go: [Plan a night of lights](/help/plan-a-night).
+
+## event-video-link
+New article. Category: post. Type: howto. Order: 13.
+
+Title:
+
+    Watch an event video, or add one to your event
+
+One-sentence answer:
+
+    A Watch the video button on an event plays a YouTube or Vimeo video. Owners paste the link in Your events, Edit, Video link.
+
+Search words:
+
+    video event video watch the video youtube vimeo video link add a video promo video trailer play
+
+Text:
+
+    ## Watch a video
+    
+    Some events have a video from their organizer. Open the event's card and tap **Watch the video**. It is a YouTube or Vimeo video. The player only loads when you tap, so just opening a card does not contact YouTube or Vimeo.
+    
+    If a video will not play, see [A tutorial video will not play](/help/video-will-not-play) for the usual fixes.
+    
+    ## Add a video to your event
+    
+    1. Sign in, tap your **account circle** and choose **Your events**.
+    2. On your event, tap **Edit**.
+    3. Find **Video link (optional)**. Paste a YouTube or Vimeo link. Use the link from the video's **Share** button.
+    4. Tap **Save**. The **Watch the video** button shows on your event.
+    
+    To take the video off, clear the box and tap **Save**.
+    
+    ## Good to know
+    
+    - The video link is not in the Add form. Add your event first, then edit it.
+    - Only YouTube and Vimeo links work. Anything else is turned down with a message.
+    - The video shows once your event is on the map. An event that is still in review has to wait.
+    - Only the person who added an event can change it. See [Edit or cancel your event](/help/edit-or-cancel-your-event) and [Add photos to your event](/help/add-photos-to-your-event).
+
+## add-your-contest-logo
+New article. Category: run. Type: howto. Order: 48.
+
+Title:
+
+    Add your contest logo
+
+One-sentence answer:
+
+    On your dashboard's Details tab, tap Upload a logo. It shows on your contest page and on homes that have no photo.
+
+Search words:
+
+    contest logo upload logo city logo organization logo icon remove logo replace logo picture for contest hoa logo
+
+Text:
+
+    Your contest has a logo. It shows on your contest page, and it stands in for homes that have no photo yet. Until you add one, we draw a simple icon from your contest's name.
+    
+    1. Open your dashboard ([how](/help/share-your-contest)) and tap **Details**. On a phone, tap **More** first.
+    2. At the top you see the card **Contest logo**. Tap **Upload a logo** and choose a picture from your phone or computer.
+    3. Wait for the note under the button. Your new logo shows on the card right away.
+    
+    ## Change or remove it
+    
+    - Tap **Replace logo** to choose a different picture.
+    - Tap **Remove logo** to go back to the drawn icon. It asks you to confirm first.
+    
+    ## Good to know
+    
+    - Use a JPG, PNG or WebP. A logo under 600 KB goes up as it is. A bigger picture is made smaller for you, and a PNG keeps its see-through background.
+    - You or a co-organizer can change the logo. See [Add co-organizers and judges](/help/add-co-organizers-and-judges).
+    - Sponsor logos are separate: [Add sponsors and logos to your contest](/help/add-sponsors-and-logos).
+    - The rest of the contest's details are on the same tab: [Edit your contest and change the dates](/help/edit-your-contest-and-change-dates).
+
+## manage-your-installer-profile
+New article. Category: sponsors. Type: howto. Order: 25.
+
+Title:
+
+    Manage your installer profile
+
+One-sentence answer:
+
+    Open Your profile, Displays, Manage. The four tabs are Overview, Homes, Details and Activity: edit your details and logo, confirm homes, and read quote requests.
+
+Search words:
+
+    installer dashboard installer profile manage installer company profile logo quote requests profile views activity confirm homes not ours areas served about sponsor placement installer
+
+Text:
+
+    Once you have claimed or created your company's free profile, you manage it from your installer page. See [Installer profiles and "Installed by"](/help/installer-profiles) for how to get one.
+    
+    ## Open it
+    
+    1. Sign in with the email you claimed the profile with.
+    2. Tap your **account circle**, choose **Your profile**, then the **Displays** tab.
+    3. Tap **Manage the (your company) profile**.
+    
+    If it says "This isn't your profile", you are signed in with a different email. Open the company's page and choose **Is this your company? Claim this profile**.
+    
+    ## The four tabs
+    
+    - **Overview** shows your profile views for the last 30 days, how many homes you have on the map, and how many quote requests you have. There is a link to your public page. If you have a Sponsor placement, it also shows how often the banner and your company card were shown and tapped, and a button to renew or upgrade. See [Sponsor your installer company](/help/sponsor-your-installer-company).
+    - **Homes** lists homes that name your company. Tap **Confirm** on the ones you installed (they get a check mark) or **Not ours** on the ones you did not. Once confirmed, you and the homeowner can both edit that home, and each of you is emailed when the other changes something.
+    - **Details** is where you change your phone for quotes, your website, the areas you serve and your **About** text. Tap **Save**. Below it, **Logo** takes a JPG, PNG or WebP under 600 KB. It shows on your profile page. Tap **Remove logo** to take it off.
+    - **Activity** has a small chart of profile views by day, and the list of **Quote requests**: each person's name, email, phone and note. Each request is also emailed to you.
+    
+    ## Good to know
+    
+    - Paid Sponsor placements are bought on the website, not in the app.
+    - Presenting a contest? See [Add a presenting installer and quote requests](/help/presenting-installer-and-quote-requests).
+
+## find-santa-visits-and-nativities
+New article. Category: find. Type: howto. Order: 62.
+
+Title:
+
+    Find Santa visits and nativities
+
+One-sentence answer:
+
+    In the Christmas season, open Filters, then Type, and choose Santa visits, photos & breakfasts or Nativity & drive-thru nativity.
+
+Search words:
+
+    santa santa claus photos with santa breakfast with santa brunch with santa santa visit nativity drive-thru nativity living nativity christmas types kids family
+
+Text:
+
+    Santa visits and nativities have their own type in the Christmas season, so you can see just those.
+    
+    1. On the map, tap the season button at the top and choose **Thanksgiving & Christmas Lights**.
+    2. Tap **Filters**.
+    3. Under **Type**, tap **Santa visits, photos & breakfasts** or **Nativity & drive-thru nativity**.
+    4. Tap the button at the bottom to see the places.
+    
+    To go back to everything, open **Filters** again and choose **All** under Type.
+    
+    ## What is in each one
+    
+    - **Santa visits, photos & breakfasts** is for photos with Santa, breakfast or brunch with Santa, and Santa visits and arrivals.
+    - **Nativity & drive-thru nativity** is for living nativities and drive-thru nativities.
+    
+    ## Good to know
+    
+    - These types are only in the Christmas season. In another season, pick Christmas first.
+    - An event where Santa is just one part of something bigger, such as a tree lighting, may be listed under its main kind instead. You can also search for "Santa" in the search box.
+    - Adding an event? Pick the Christmas season and then the type that fits. See [Add an event to the map](/help/add-an-event).
+    - More ways to narrow the map: [Find lights near me](/help/find-lights-near-me).
+
+## socal-lights-iphone-app
+New article. Category: find. Type: answer. Order: 41.
+
+Title:
+
+    The SoCal Lights iPhone app
+
+One-sentence answer:
+
+    SoCal Lights is in the App Store for iPhone: search for SoCal Lights. It is the same map, with a few differences from the website.
+
+Search words:
+
+    iphone app app store ios download app apple sign in with code delete account in app contest pass in app featured in app android
+
+Text:
+
+    SoCal Lights is in the App Store for iPhone. Open the App Store and search for **SoCal Lights**.
+    
+    The app shows the same map, events, homes, contests and Help Center as socallights.app, and it updates whenever the website does. Browsing is free and needs no account.
+    
+    ## What is different in the app
+    
+    - **Sign in with an emailed code.** The app has no Google button. Google and the emailed code reach the same account, so a profile you made on the website is still yours: [I cannot sign in](/help/i-cannot-sign-in).
+    - **Tips and paid options are on the website.** The app has no tip item, no Featured payment and no contest pass checkout. To feature an event, buy a contest pass or sponsor an installer company, open socallights.app in your browser. The app says so where it would have taken a payment.
+    - **Delete your account in the app.** Tap your account circle, choose **Your profile**, open the **Account** tab and tap **Delete my account**. It asks you to tap again to confirm: [How do I delete my account?](/help/delete-my-account).
+    - **Share uses your phone's own share sheet.**
+    
+    ## Android, or no app
+    
+    On any phone you can add the website to your Home Screen from your browser, and it opens full screen with its own icon: [Put SoCal Lights on your phone and use it offline](/help/install-the-app).
+    
+    Something not working in the app? [Report a problem](/help/report-a-problem) or [ask us](#ask).
+
+## i-saw-it-lit-tonight
+New article. Category: find. Type: howto. Order: 27.
+
+Title:
+
+    Tell us a home is lit tonight
+
+One-sentence answer:
+
+    On a home's card, tap I saw it lit tonight. It tells other families the lights are on. Sharing your location is optional.
+
+Search words:
+
+    i saw it lit tonight lights on tonight lit tonight is it on are the lights on seen on site reported lit lit report lights on
+
+Text:
+
+    Families like to know a home's lights are on before they drive over. If you have seen them, you can tell everyone.
+    
+    1. On the map, open the home's card.
+    2. Tap **I saw it lit tonight** (the button with the light bulb).
+    3. If your browser asks to share your location, you can allow it or say no. Either way your tap counts.
+    
+    The button then says **Thanks, noted as lit**, and shows how many people have said so, for example **3 tonight**. The count starts again each night.
+    
+    ## Seen on site, or reported
+    
+    - If you allow location and you are within about a quarter mile of the home, your tap counts as **Seen lit on site tonight**.
+    - If you are farther away, or you do not share your location, it counts as **Reported lit tonight**.
+    
+    ## Good to know
+    
+    - You do not need an account.
+    - Each connection counts once per home each night, so tapping again does not add to the count.
+    - We do not save where you are. Your position is used once to check the distance. We keep only whether you were close, with a scrambled code of your connection so one person counts once, and we delete it after a few days.
+    - Only homes show this button, not events.
+    - Location not working? See [The map does not show my location](/help/location-does-not-work).
+
+## share-an-event-or-a-home
+New article. Category: find. Type: howto. Order: 28.
+
+Title:
+
+    Share an event or a home
+
+One-sentence answer:
+
+    Tap the Share icon on a card. An event shares its own page with a preview card. A home shares a link to the map.
+
+Search words:
+
+    share share an event share a home share link send to a friend text social preview card copy link share sheet
+
+Text:
+
+    1. Open an event or a home on the map.
+    2. Tap the **Share** icon (an arrow leaving a box) in the row of buttons on the card.
+    3. On a phone, your own share sheet opens. Pick Messages, WhatsApp, email or whatever you use. On a computer that cannot share, the link is copied and the site says **Link copied**. Paste it where you like.
+    
+    ## What your friend sees
+    
+    - **An event** shares the event's own page. It has the event's name and photo, so a text or a social post shows a preview card. The page tells them the dates and place, and its **Open on the map** button opens the event on the map.
+    - **A home** shares a link that opens the map on that home.
+    
+    ## Other kinds of sharing
+    
+    - To send your whole list of favorites to a friend, see [Plan a night of lights](/help/plan-a-night).
+    - To share a contest, see [Share your contest](/help/share-your-contest) and [Vote in a contest](/help/vote-in-a-contest).
+
+## browse-events-by-city
+New article. Category: find. Type: howto. Order: 63.
+
+Title:
+
+    Browse events city by city
+
+One-sentence answer:
+
+    Tap the three dots, then Browse by city. It lists every city with upcoming events, by county, and each city has its own page.
+
+Search words:
+
+    browse by city cities city list city page events in my city by county plan a trip in my town events near list of cities
+
+Text:
+
+    Want to see everything in one town without moving the map? Browse by city lists it.
+    
+    1. On the map, tap the **three dots** at the right end of the top bar.
+    2. Tap **Browse by city**.
+    3. Cities are grouped by county. Each one shows how many upcoming events it has. Tap a city.
+    4. The city's page lists its upcoming events, with dates and places. Tap one for its details, or use the **Open the map** link at the top to go back to the map.
+    
+    ## Good to know
+    
+    - Only cities with upcoming events are listed, so the list changes through the season.
+    - It is handy for planning a trip to a city you do not live in, and the city pages are plain pages that search engines can read.
+    - Prefer the map? Search for a city there: [Find lights near me](/help/find-lights-near-me).
+
+## what-featured-and-sponsor-labels-mean
+New article. Category: find. Type: answer. Order: 155.
+
+Title:
+
+    What do Featured and Sponsor labels mean?
+
+One-sentence answer:
+
+    Featured, Sponsor and Event Partner mark places that paid for extra attention. They are always labeled, and none of them changes a contest result.
+
+Search words:
+
+    featured sponsor sponsored ad advertisement gold ring gold pin paid event partner banner top of the list label labeled is this an ad
+
+Text:
+
+    Some things on SoCal Lights are paid for. Every one of them is labeled, so you can tell.
+    
+    - **Featured** is on an event or a home. It has a gold-ringed pin on the map and a **Featured** badge. Featured events can also show as a pill in the strip at the top of the list, or first in the list.
+    - **Sponsor** is on an installer company. A lighting company can pay to show its name and phone in a strip on the map, or as a company card at the top of the list. It is always labeled **Sponsor**.
+    - **Event Partner** is on events from an organization with an Event Partner plan, such as a city or a chamber. It is not an endorsement by SoCal Lights.
+    - **Sponsor** on a contest page marks a business that supported the contest. The organizer records it and shows it only with the sponsor's permission.
+    
+    ## What a label does not mean
+    
+    Paying never changes a contest. It cannot change who wins, who is ahead or any vote. The map, search, routes, voting and listing an event or a home stay free.
+    
+    Featured listings still have to be real and accurate. If something looks wrong, tap **Something wrong? Tell us** on its card.
+    
+    See [Is SoCal Lights free?](/help/is-it-free), [Feature an event or a home](/help/feature-an-event-or-home) and [Which Pricing tab is mine?](/help/which-pricing-tab-is-mine).
+
+## why-a-winery-or-hotel-event-is-listed
+New article. Category: find. Type: answer. Order: 156.
+
+Title:
+
+    Why is a winery, brewery or hotel event listed?
+
+One-sentence answer:
+
+    Wineries, breweries, taprooms, distilleries, hotels and resorts post holiday events too. We list the ones their own pages announce, and we fix or remove a listing if you ask.
+
+Search words:
+
+    winery brewery taproom distillery hotel resort venue tree lighting at a hotel why is this listed not my event remove my event wine beer holiday event at a winery
+
+Text:
+
+    SoCal Lights is a map of seasonal events, and many of them happen at wineries, breweries, taprooms, distilleries, hotels and resorts: a tree lighting at a hotel, a holiday market at a winery, a movie night at a brewery.
+    
+    We find these on public pages: the venue's own events page, a ticket page, or a local winery or business association's calendar. We only list an event that a public page announces, with the dates it gives. We do not make events up.
+    
+    ## If it is your event
+    
+    - Is it wrong or out of date? Tap **Something wrong? Tell us** on its card, or write to info@socallights.app, and we will correct it.
+    - Would you rather it were not listed? Write to info@socallights.app and we will take it off.
+    - Want to manage it yourself? Add it from your own account, so you can edit it and mark it cancelled or postponed. See [Add an event to the map](/help/add-an-event). Writing to us first means we can link it to your account instead of listing it twice.
+    
+    ## Good to know
+    
+    - Venue events can need a ticket or a reservation. Check the venue's page before you go. Dates are labeled **Confirmed** or **Expected**: [What do Confirmed and Expected mean?](/help/confirmed-or-expected).
+    - Listing an event is always free.
+
+## what-cancelled-and-postponed-mean
+New article. Category: find. Type: answer. Order: 152.
+
+Title:
+
+    What do Cancelled and Postponed mean on an event?
+
+One-sentence answer:
+
+    A red Cancelled or Postponed tag means the organizer marked the event. It stays on the map so nobody drives out for nothing. Check the organizer's page for what comes next.
+
+Search words:
+
+    cancelled canceled postponed rescheduled event cancelled red tag faded event notice is it still on called off weather
+
+Text:
+
+    A **Cancelled** or **Postponed** tag on an event is a warning. The organizer marked the event, and it stays on the map with a red tag and a faded card so nobody drives out for nothing.
+    
+    - **Cancelled** means the event is not happening.
+    - **Postponed** means it has been moved. The dates on the card may still be the old ones until the organizer sets new ones.
+    
+    ## What to do
+    
+    1. Open the event's card and tap its web page link to read what the organizer says.
+    2. Check again before you go. If the event comes back, the tag comes off.
+    3. If an event looks wrong, tap **Something wrong? Tell us** on its card.
+    
+    ## If it is your event
+    
+    You mark it, and clear the mark, with **Event notice** on your event's row in **Your events**: [Edit or cancel your event](/help/edit-or-cancel-your-event). A cancelled or postponed event cannot be featured.
+
+## follow-your-drive-with-live-location
+New article. Category: find. Type: howto. Order: 12.
+
+Title:
+
+    Follow your drive with live location
+
+One-sentence answer:
+
+    Tap the location button and allow it. A blue dot moves with you, the map follows you, and the list keeps the nearest places first.
+
+Search words:
+
+    live location moving dot blue dot follow me tracking gps heading arrow nearest first drive driving stop following location button
+
+Text:
+
+    1. On the map, tap the **location button** (top right, under the zoom buttons; its label is **Find my location**).
+    2. Tap **Allow** when your browser asks.
+    3. A blue dot shows where you are, with a ring for how exact the position is and an arrow for the way you are heading. It moves as you move, and the map follows you.
+    
+    The list keeps up too. Distances and the **nearest first** order refresh about every 30 seconds, so the places next to you stay at the top as you drive.
+    
+    ## Stop following
+    
+    - Drag the map to look around. The map stops following you.
+    - Tap the location button again to turn it off.
+    
+    ## Good to know
+    
+    - Your position stays on your phone for this. The map does not send it to us. (The one time it is used is if you tap [I saw it lit tonight](/help/i-saw-it-lit-tonight), which is optional.)
+    - Live location uses your phone's location service, which can use more battery.
+    - It does not work in the built-in browser of other apps. If nothing happens, see [The map does not show my location](/help/location-does-not-work).
+    - To drive to several places, see [Plan a night of lights](/help/plan-a-night) and [Drive a route](/help/drive-a-route).
+
+## which-pricing-tab-is-mine
+New article. Category: account. Type: answer. Order: 12.
+
+Title:
+
+    Which Pricing tab is mine?
+
+One-sentence answer:
+
+    The Pricing page has four tabs: Homeowners, Event organizers, Contest organizers and Installers. Pick the one that matches what you do.
+
+Search words:
+
+    pricing pricing tabs which plan which tab homeowner event organizer contest organizer installer how much plans what does it cost prices page
+
+Text:
+
+    The [Pricing](/pricing) page shows one audience at a time. The four tabs are above the page title. Pick the one that matches what you do.
+    
+    - **Homeowners**: showing your home's lights and entering a contest are free. A winning home can feature itself afterwards. [Pricing for homeowners](/pricing#homeowners).
+    - **Event organizers**: listing an event is free. Featured placement is optional, and there is a plan for organizations with several events. [Pricing for event organizers](/pricing#events). See also [Feature an event or a home](/help/feature-an-event-or-home) and [Event Partner](/help/event-partner-plan).
+    - **Contest organizers**: you choose a contest pass. Residents enter and vote for free. [Pricing for contest organizers](/pricing#contests). See [Contest passes](/help/contest-passes).
+    - **Installers**: a free company profile, and optional paid Sponsor placements. [Pricing for installers](/pricing#banner). See [Sponsor your installer company](/help/sponsor-your-installer-company).
+    
+    ## Good to know
+    
+    - The prices are on the Pricing page only, so they are always the current ones.
+    - Money never changes a contest result. See [Is SoCal Lights free?](/help/is-it-free).
+    - A Pricing link that ends in #events, #contests, #banner or #homeowners opens that tab.
+    - Inside the iPhone app, paid options are bought on the website: [The SoCal Lights iPhone app](/help/socal-lights-iphone-app).
