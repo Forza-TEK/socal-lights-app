@@ -699,7 +699,8 @@ body.lb-open{overflow:hidden}
 
 /* sliding selection pill for the tab bars (see initSlidePill in app.js): no per-tab background, no bounce */
 .ptabs{position:relative}
-.slidepill{position:absolute;left:0;top:0;width:0;height:0;border-radius:999px;background:var(--ink);pointer-events:none;z-index:0;will-change:transform,width}
+.slidepill{position:absolute;left:0;top:0;width:0;height:0;border-radius:999px;background:var(--ink);pointer-events:none;z-index:0;will-change:transform,width;transition:transform .32s cubic-bezier(.3,.7,.2,1),width .32s cubic-bezier(.3,.7,.2,1),height .32s cubic-bezier(.3,.7,.2,1),opacity .15s}
+@media (prefers-reduced-motion:reduce){.slidepill{transition-duration:.12s}}
 .ptab,.bnav button{position:relative;z-index:1}
 .ptab[aria-selected="true"],.bnav button[aria-current]{background:none!important;box-shadow:none}
 .ptab[aria-selected="true"] svg,.bnav button[aria-current] svg{animation:none}

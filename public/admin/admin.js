@@ -1464,6 +1464,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal
     const b = chosen(seg); if (!b) { ind.style.opacity = "0"; return; }
     ind.style.opacity = "1"; ind.style.transition = instant || still.matches ? "none" : "";
     ind.style.width = b.offsetWidth + "px"; ind.style.transform = `translateX(${b.offsetLeft}px)`;
+    if (seg.scrollWidth > seg.clientWidth + 1) { const r = b.offsetLeft + b.offsetWidth; if (b.offsetLeft < seg.scrollLeft + 8) seg.scrollTo({ left: Math.max(0, b.offsetLeft - 8), behavior: instant || still.matches ? "auto" : "smooth" }); else if (r > seg.scrollLeft + seg.clientWidth - 8) seg.scrollTo({ left: r - seg.clientWidth + 8, behavior: instant || still.matches ? "auto" : "smooth" }); } // a long tab row scrolls so the chosen tab is in view
     mem.set(seg._slKey, { l: b.offsetLeft, w: b.offsetWidth });
   };
   const key = (seg) => `${typeof tab === "string" ? tab : ""}|${seg.getAttribute("aria-label") || ""}|${[...document.querySelectorAll(".seg")].indexOf(seg)}`;

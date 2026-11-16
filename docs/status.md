@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Tab rows scroll, main navigation glides like the Admin tabs
+Admin tab rows that are wider than the phone (Contests has five) now swipe sideways and scroll the chosen tab into view; the right-hand tab was cut off before. The public main navigation (Places, Favorites, Shop, top bar and phone bar) keeps its colors but its selection pill now glides with the same ease as the Admin tabs, with no stretch, bounce or squash (it was a spring that stretched and bounced). Checked at phone width: tabs scroll, and the pill is mid-slide at 90 ms and settles by 800 ms. styles.css and app.js versions bumped.
+
 ## 2026-11-16: Admin phone top bar fixed
 On phones the round search button was squashed into an oval and overlapped the page title. The title now takes the space that is left (cut with an ellipsis), the round buttons keep their shape at 40 px, and the Help icon is hidden on phones (Help Center is in the menu). Checked at 390 and 360 px, dark and light, including the opened search overlay.
 
