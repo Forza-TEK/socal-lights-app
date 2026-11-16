@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin redesign, Data check, Activity log and Cloudflare usage converted
+These three get the page head (title, description, actions at the top right) and tables in the same style: Activity log is a table with paging and an area filter, Data check lists fields and items that need a person as tables with Check again and Tidy at the top right, Cloudflare usage keeps its meters with Refresh now at the top right. Smoke-tested locally. Admin redesign: 16 of 22 areas done; next is Outreach.
+
 ## 2026-11-16: Admin redesign, Event Partners converted
 Event Partners is a table of organizations with a full-page record (events, comps, plans, grant form) with a Back link instead of a window. New shared helper public/admin/pagehost.js turns the old profile windows into pages without changing their forms (also used by Installers and Users). Tested locally (list, grant, organization page). Admin redesign: 13 of 22 areas done; next is Data check.
 
