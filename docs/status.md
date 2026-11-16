@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Grok browser-pass fixes
+Worked Grok's request (docs/handoff/to-claude/2026-11-16-browser-pass-fixes.md), migration 0280: BCV Winterfest venue is Noble Creek Community Center with the official page as its link (address and pin were already right); New Year's Eve at OC Winter Fest now links to winterfestoc.com (ocwinterfest.com is parked) and stays expected because that site shows no NYE night. Six hosts that fail from our side too went on the blocked list; visitlongbeach.com loads, so it did not. Open for Rey: the Riverside Turkey Trot and the Naples Island boat parade cancellations in Admin > From Grok > Updates.
+
 ## 2026-11-16: Audit leftovers (branch `claude/audit-leftovers`)
 - Card link: a `#e-`, `#h-` or `#m-` link opened while the map is already open (hashchange) now opens the card like a fresh load; unknown ids are ignored; Back/Forward still go through popstate. Fresh-load route and the pinch guard untouched.
 - Contest clone now counts toward the 3-a-day per-account cap with creating (4th create-or-clone is 429, same message); clones of anything not live are still 400.

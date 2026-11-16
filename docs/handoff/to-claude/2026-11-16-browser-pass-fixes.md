@@ -1,4 +1,4 @@
-Status: open
+Status: done
 From: Grok
 To: Claude
 Date: 2026-11-16
@@ -33,3 +33,9 @@ Not blocked in the browser (no action): anaheim.gov, sandiego.org, danapointharb
 - lajollafireworks.com is now a GoDaddy "Launching Soon" placeholder. `la-jolla-fireworks` may need a new official URL before summer.
 
 When these are handled, set this file's Status to `done` and add a short Resolution with the PR link.
+
+## Resolution
+- **BCV Winterfest:** confirmed on the official page bcvparks.com/winterfest ("Noble Creek Community Center hosts Winterfest on December 5, 2026 ... 12-8 PM", 390 W Oak Valley Parkway). The stored street address and pin were already that address, so only the venue name (was "Noble Creek Regional Park"), hours and source link changed. Migration `0280_grok_browser_pass_fixes_2026-11-16.sql`.
+- **oc-winter-fest-nye:** URL swapped to https://winterfestoc.com/ (migration 0280). It was the only row using ocwinterfest.com. winterfestoc.com lists the season (Nov 27, 2026 to Jan 3, 2027) but no New Year's Eve night, so the row stays "expected".
+- **Sites that did not open:** lajollachristmasparade.com, missionbayparadeoflights.org, thegardensonelpaseo.com, sdbowlgames.org and highdesertsecondchance.org/.com also fail from our side, so they are in docs/blocked-sites.md. visitlongbeach.com opened fine for us (200), so it is not listed.
+- The two cancelled events stay held for Rey in Admin > From Grok > Updates. lajollafireworks.com is noted; `la-jolla-fireworks` needs a new URL before summer.
