@@ -3,6 +3,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { onRequestPost as start } from "../functions/api/auth/email/start.js";
 import { onRequestPost as verify } from "../functions/api/auth/email/verify.js";
 import { onRequestGet as gCallback } from "../functions/api/auth/google/callback.js";
@@ -227,8 +228,42 @@ test("every Share button goes through the native share sheet first, and saving a
   assert.equal((app.match(/remind\(id, /g) || []).length, 3, "all three places that save or un-save an event");
   assert.equal(read("public/index.html").match(/native\.js\?v=(\w+)/)[1], app.match(/native\.js\?v=(\w+)/)[1]);
 });
-test("the app project lists the plugins the site relies on (share is installed; local notifications is the documented next step)", () => {
+test("the app project lists the plugins the site relies on, and the lock file the CI installs from agrees (npm ci)", () => {
   const pkg = JSON.parse(read("app/package.json")); assert.ok(pkg.dependencies["@capacitor/share"], "share sheet plugin installed");
-  assert.ok(!pkg.dependencies["@capacitor/local-notifications"], "if this plugin is added, update docs/app-store.md and the Podfile via cap sync, then drop this line");
-  assert.match(read("docs/app-store.md"), /local-notifications/, "the remaining native step is written down");
+  assert.ok(pkg.dependencies["@capacitor/local-notifications"], "reminders for saved events: the plugin native.js syncReminder calls");
+  const lock = JSON.parse(read("app/package-lock.json")), top = lock.packages[""].dependencies;
+  assert.equal(top["@capacitor/local-notifications"], pkg.dependencies["@capacitor/local-notifications"], "lock file root lists it with the same range");
+  assert.match(lock.packages["node_modules/@capacitor/local-notifications"].version, /^7\./, "locked to a Capacitor 7 release");
+  assert.match(read("app/ios/App/Podfile"), /pod 'CapacitorLocalNotifications', :path => '..\/..\/node_modules\/@capacitor\/local-notifications'/);
+  assert.match(read("app/android/capacitor.settings.gradle"), /capacitor-local-notifications/);
+  assert.match(read("docs/app-store.md"), /local-notifications/, "the remaining native steps are written down");
+});
+
+// ---- 5. iOS shell (app/ios): strings and manifest Apple checks. Not runnable here; these keep the files from regressing.
+test("Info.plist: camera, photo and accurate location purpose strings; arm64; no 'stays on your device' claim", () => {
+  const plist = read("app/ios/App/App/Info.plist");
+  for (const k of ["NSCameraUsageDescription", "NSPhotoLibraryUsageDescription", "NSLocationWhenInUseUsageDescription"]) assert.match(plist, new RegExp(`<key>${k}</key>\\s*<string>[^<]{30,}</string>`), k);
+  assert.doesNotMatch(plist, /It stays on your device/);
+  assert.match(plist, /I saw it lit tonight/, "the one case where the position is sent");
+  assert.match(plist, /<string>arm64<\/string>/); assert.doesNotMatch(plist, /armv7/);
+  // file inputs on the site offer the camera, so the key must exist (iOS ends the app without it)
+  assert.match(read("public/forms.js"), /accept="image\/\*"/);
+});
+test("privacy manifest exists, declares no tracking, and is bundled by the Xcode project", () => {
+  const m = read("app/ios/App/App/PrivacyInfo.xcprivacy");
+  assert.match(m, /<key>NSPrivacyTracking<\/key>\s*<false\/>/); assert.match(m, /NSPrivacyAccessedAPICategoryUserDefaults/); assert.match(m, /CA92\.1/);
+  for (const t of ["EmailAddress", "PhotosorVideos", "PreciseLocation"]) assert.match(m, new RegExp("NSPrivacyCollectedDataType" + t));
+  const pj = read("app/ios/App/App.xcodeproj/project.pbxproj");
+  assert.match(pj, /PrivacyInfo\.xcprivacy in Resources/); assert.match(pj, /path = PrivacyInfo\.xcprivacy/);
+  assert.equal((pj.match(/MARKETING_VERSION = 1\.0\.1;/g) || []).length, 2, "both configurations");
+  const wf = read(".github/workflows/ios-app.yml");
+  assert.match(wf, /MARKETING_VERSION=1\.0\.1 /); assert.match(wf, /build_number:/, "the build number is still an input"); assert.match(wf, /CURRENT_PROJECT_VERSION=\$\{\{ inputs\.build_number \}\}/);
+});
+test("capacitor config: only hosts the site really uses, no stale unpkg, app-bound domains left off", () => {
+  const cfg = JSON.parse(read("app/capacitor.config.json")), nav = cfg.server.allowNavigation;
+  assert.ok(!nav.includes("unpkg.com"), "MapLibre is self-hosted");
+  for (const h of ["www.youtube-nocookie.com", "player.vimeo.com", "iframe.videodelivery.net", "*.cloudflarestream.com", "socallights.app"]) assert.ok(nav.includes(h), h);
+  assert.equal(cfg.ios.limitsNavigationsToAppBoundDomains, false, "turning it on without WKAppBoundDomains and a device test could block every external page");
+  assert.match(cfg.appendUserAgent, /SoCalLightsApp/);
+  for (const f of ["public", "functions"]) assert.ok(!/unpkg\.com/.test(execSync(`grep -rl unpkg.com ${f} --include=*.js --include=*.html --exclude-dir=vendor || true`, { cwd: new URL("..", import.meta.url).pathname, encoding: "utf8" })), "no page loads unpkg");
 });
