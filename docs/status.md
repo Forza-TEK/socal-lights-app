@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin redesign, Dashboard converted
+The Dashboard gets the page head (title and greeting) and its revenue list is a table in the same style as the rest. Looked at locally. Admin redesign: 20 of 21 areas done; the signed-in visitor pages are the last.
+
 ## 2026-11-16: Admin redesign, Outreach, Ads, Email templates, AI assistant and Help Center converted
 These five get the page head (title and description) and the same pill section tabs (Ads, Email templates) and tables (Outreach results and the do-not-contact list). Their content and actions are unchanged. Smoke-tested locally. Admin redesign: 19 of 21 areas done; the Dashboard and the signed-in visitor pages are next.
 
