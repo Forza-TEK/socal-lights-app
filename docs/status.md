@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin redesign, Event Partners converted
+Event Partners is a table of organizations with a full-page record (events, comps, plans, grant form) with a Back link instead of a window. New shared helper public/admin/pagehost.js turns the old profile windows into pages without changing their forms (also used by Installers and Users). Tested locally (list, grant, organization page). Admin redesign: 13 of 22 areas done; next is Data check.
+
 ## 2026-11-16: Admin redesign, Orders converted
 Orders use pill tabs (Needs attention, Paid, Refunded and disputed, All, Renewals), a table with search, and a full-page record with a Back link and the Add note and Mark refunded or Apply now actions at the top right. Automatic renewals moved into their own tab (read-only). Tested locally with seeded orders (list, tabs, record, note, back). Admin redesign: 12 of 22 areas done; next is Event Partners.
 
