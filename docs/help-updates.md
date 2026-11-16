@@ -2643,7 +2643,7 @@ The new video "Manage your events" (file `post-manage-events`, Tutorials group "
 
 # Help Center audit (2026-11-16), part 1: fixes to existing articles
 
-Migration `0267_help_fixes_2026-11-16.sql` changes these articles (text fragments, only where nobody edited the article in Admin). If you edited one in Admin, paste the text below over it. Regenerate with `node scripts/help/updates-1116a.mjs --md`. Slugs never change.
+Migration `0269_help_fixes_2026-11-16.sql` changes these articles (text fragments, only where nobody edited the article in Admin). If you edited one in Admin, paste the text below over it. Regenerate with `node scripts/help/updates-1116a.mjs --md`. Slugs never change.
 
 ## add-an-event
 

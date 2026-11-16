@@ -1,4 +1,4 @@
-// Help Center audit 2026-11-16, part 1 (fixes to existing articles): writes migrations/0267_help_fixes_2026-11-16.sql.
+// Help Center audit 2026-11-16, part 1 (fixes to existing articles): writes migrations/0269_help_fixes_2026-11-16.sql.
 // Usage: node scripts/help/updates-1116a.mjs
 // Same pattern as updates-copy-1111.mjs: text fragments replaced with UPDATE ... replace(), only where updated_by is still 'seed', so an article edited in Admin is never overwritten
 // (paste the text from docs/help-updates.md into Admin > Help for those). Each fragment must be in the article exactly once. No prices are written in any article: they are on /pricing.
@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { join, dirname } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const OUT = "0267_help_fixes_2026-11-16.sql";
+const OUT = "0269_help_fixes_2026-11-16.sql";
 
 // The articles as the migrations before this one leave them.
 const db = new DatabaseSync(":memory:");
