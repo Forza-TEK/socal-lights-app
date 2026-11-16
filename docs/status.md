@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin phone top bar fixed
+On phones the round search button was squashed into an oval and overlapped the page title. The title now takes the space that is left (cut with an ellipsis), the round buttons keep their shape at 40 px, and the Help icon is hidden on phones (Help Center is in the menu). Checked at 390 and 360 px, dark and light, including the opened search overlay.
+
 ## 2026-11-16: Admin redesign, signed-in visitor pages (Your profile)
 The lists on Your profile (Drafts, Contests, Displays, Events) are one bordered card with hairline dividers, like the Admin tables, and statuses are pills instead of dots (green On the map, amber In review, grey otherwise). Buttons, inline edit forms and everything behind them are unchanged. Looked at as a seeded user on desktop and on a phone in dark mode (via Admin acting as the user); light mode and the add and edit forms were not re-checked. Admin redesign: the Admin is done (20 areas). The visitor add and edit flows (/add-house, /add-event, /add-contest and their edit windows) are not converted yet.
 
