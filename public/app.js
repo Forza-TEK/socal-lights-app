@@ -1,7 +1,6 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js?v=20261115i";
 import { IN_APP as NATIVE_IN_APP, nativeShare, syncReminder } from "/native.js?v=20261115a";
-import { resizedImage } from "/imgurl.js?v=20261116a";
 import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261115a";
 import { STOCK } from "/stock.js?v=20261114a";
 import { parseVideo } from "/video.js?v=20261115a";
@@ -669,15 +668,19 @@ function photosOf(ev, hero) {
 const ARW_L = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>`;
 const ARW_R = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>`;
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
-// Smaller copies of OUR OWN photos for the list and popup, made by Cloudflare image resizing (/cdn-cgi/image). It is used only once a quick test shows it works on this site (and is remembered), otherwise the original photo loads, and a failed copy falls back to the original.
-// Photos hosted on other websites are never sent through the resizer (public/imgurl.js: it would make our domain an open image proxy); they load from their own site, as https.
-let THUMBS = true; try { THUMBS = localStorage.getItem("socal-thumbs") !== "0"; } catch {}
+// Smaller copies of photos for the list and popup, made by Cloudflare image resizing (/cdn-cgi/image). It is used only once a quick test shows it works on this site (and is remembered), otherwise the original photo loads, and a failed copy falls back to the original.
+// Remote photos are resized from the first visit (city pages already do this unconditionally and it works; a failed copy falls back to the original). Only a remembered failed probe ("0") turns it off.
+// Our own photos (/img/events, /api/photo) are resized from the first visit too, same rule: only a remembered failed probe ("0") turns it off.
+// Owner decision 2026-11-16: "Resize from any origin" stays on in Cloudflare, so other sites' photos are resized too (watch the 5,000 a month free limit).
+let THUMBS = true, THUMBS_REMOTE = true; try { THUMBS = localStorage.getItem("socal-thumbs") !== "0"; THUMBS_REMOTE = localStorage.getItem("socal-thumbs-remote") !== "0"; } catch {}
 const thumbProbe = (u) => fetch("/cdn-cgi/image/width=16/" + u, { method: "HEAD" }).then((r) => r.ok && /^image\//.test(r.headers.get("content-type") || "")).catch(() => false);
 // a device that already learned thumbnails work does not ask again on every load (the probe showed as an aborted request on each page view)
 (THUMBS && (() => { try { return localStorage.getItem("socal-thumbs") === "1"; } catch { return false; } })() ? Promise.resolve(true) : thumbProbe(location.origin + "/img/badge-160.webp")).then((ok) => { THUMBS = ok; try { localStorage.setItem("socal-thumbs", ok ? "1" : "0"); } catch {} });
-// Photos stored as http:// are never requested directly from an https page (mixed content), so the original is always the https address.
+// photos hosted on other sites can only be resized when Cloudflare is set to resize from any origin: test one of them once the events are loaded
+function probeRemoteThumbs() { const e = E.find((x) => /^https?:/.test(x.img || "")); if (e) thumbProbe(e.img).then((ok) => { THUMBS_REMOTE = ok; try { localStorage.setItem("socal-thumbs-remote", ok ? "1" : "0"); } catch {} }); }
+// Photos stored as http:// are never requested directly from an https page (mixed content): the resizer fetches them for us, and the fallback copy is the https address.
 const secure = (u) => String(u || "").replace(/^http:\/\//i, "https://");
-const thumbOf = (u, w) => { u = u || ""; return (THUMBS && /^\/(img\/events|api\/photo|img\/stock\/t)\//.test(u) && resizedImage(u, `width=${w},quality=75,format=auto`, location.origin)) || secure(u); };
+const thumbOf = (u, w) => { u = u || ""; return (THUMBS && /^\/(img\/events|api\/photo|img\/stock\/t)\//.test(u)) || (THUMBS_REMOTE && /^https?:\/\//.test(u)) ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : secure(u); };
 // w: the width asked for (list cards 320, pop-up 800, details 900); h: when given, the box is declared so nothing moves while the photo loads. Only the first cards load at once: the rest wait until they near the screen.
 const photoImg = (ph, eager, w = 640, h = 0) => { const t = thumbOf(ph.src, w), o = secure(ph.src); return `<img class="evimg" src="${esc(t)}"${t !== o ? ` data-orig="${esc(o)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}" data-w="${t !== o ? w : 0}"${ph.keep ? " data-keep=\"1\"" : ""}` : ""} alt=""${h ? ` width="${w}" height="${h}"` : ""} loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`; };
 // The official picture gives way to the stock photo of that kind of event when it failed to load, or (by its size and shape, see photoguess.js) is a blurry or tiny picture, or a logo or banner on a non-city event
@@ -1716,7 +1719,7 @@ async function load() {
     headOnly = !!headP && evR0.status === "fulfilled" && Array.isArray(evR0.value) && evR0.value.length > 0;
     const evR = headP && !headOnly ? (await Promise.allSettled([fullP]))[0] : evR0;
     if (evR.status !== "fulfilled" || !Array.isArray(evR.value)) throw new Error("events failed");
-    E = tidyEvents(keepShown(evR.value, "e-"));
+    E = tidyEvents(keepShown(evR.value, "e-")); setTimeout(probeRemoteThumbs, 1500);
     SHOW = postsR.status === "fulfilled" && Array.isArray(postsR.value) ? keepShown(postsR.value, "h-") : []; CONFIG = cfgR.status === "fulfilled" && cfgR.value ? cfgR.value : {};
     if (postsR.status !== "fulfilled") setTimeout(refreshData, 10000);
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });

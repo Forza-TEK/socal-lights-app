@@ -1,5 +1,9 @@
 # Status
 
+## 2026-11-16: Image resizer kept open for third-party photos (owner decision; branch `claude/restore-resizer`)
+- Undid only the resizer part of PR #691 (finding H4): `public/imgurl.js` removed; `thumbOf`/`probeRemoteThumbs`/`THUMBS_REMOTE` restored in `public/app.js`; event, city and contest pages and share pictures use `/cdn-cgi/image` for third-party photos again, with the original as the `onerror` fallback. Report or hide, Hide for me, Terms and policy text kept. `?v=` bumped on app.js and styles.css.
+- Cloudflare "Resize from any origin" stays ON. Free limit is 5,000 transformations a month: watch Images > Transformations in the Cloudflare dashboard. Details: `docs/audit/2026-11-16/app-policy-decisions.md` section 4.
+
 ## 2026-11-16: Live QA pass (PR #699)
 - End-to-end QA of the live site with Playwright (iPhone 14, in-app user agent with a simulated 59 px safe area, 1440x900): map, list, filters, search, event card, share, report or hide, city pages, add event, add house, add contest (to the review screens, nothing submitted), contest pages, sign-in sheet, in-app mode, 89 Help articles, 12 videos, /es, pricing, terms, privacy, 404.
 - Fixed in #699: no 24px side gutter on phones on every page whose stylesheet sets its own body padding (the safe-area rule in `tokens.css` had id-weight specificity; now `:where()`), /contests scrolled itself down on load (panel ids matched the #live/#mine/#past fragment; now `p-*`), the "n of 15 judges" counter did not update while typing, the Report or hide dialog could not scroll on a short screen, the assistant button covered "Show N places" and the entry flow's Next.
