@@ -1,5 +1,13 @@
 # Status
 
+## 2026-11-16: Contest second pass (branch `claude/contest-second-pass`; audit H2, M7, M8, L9; H3 verified)
+- H2 (HOLD): editing a contest to a name or organizer that newly sounds official (and the creator's email does not match the contest website) or that newly carries a review word keeps the contest live under its old name/text; the requested name, organizer, welcome text and rules wait in `contests.pending_edit` (migration 0276) and the review note, Admin gets the `contest_review` mail, and Admin's "Looks fine" applies them. The creator sees a "saved, rename needs a look" message on the dashboard. A matching organizer, an already-official name and an ordinary rename are never held. Create also holds review words (pending, note "review words").
+- H3: verified already fixed in the payments PR (`cloneContest` refuses anything not live). Not redone. Still open: a clone does not count toward the 3-a-day creation cap.
+- M7: server 400 "Use at most 8 categories." / "Invite at most 15 judges." (create, and categories on edit); wizard shows "n of 8 categories" and "n of 15 judges", disables Add at 8 and blocks Next above the limits.
+- M8: contest entries need a photo; an entry from another city is kept but never auto-approved, the organizer's `entry_new` mail says so (new `note` variable) and the entrant is told; the entry page warns about another city. Duplicate address in a contest was already refused (payments M9); tests added. Not done: contest entries do not carry the "this is my home" statement or the unfound-address hold (organizer reviews them).
+- L9: Turnstile on contest creation (wizard review screen, `verifyTurnstile` in `POST /api/contests`); one contest waiting for review per account (429); one `contest_review` mail per account per hour (also for held edits). Clone is unchanged.
+- Tests: `tests/contest-second-pass.test.mjs` (8); three older tests adjusted for the new one-pending rule and the 8-category 400.
+
 ## 2026-11-16: Video PRs #693, #694, #695 merged
 - Rebased each on main in turn (already-merged stacked commits dropped), regenerated `functions/_lib/chatkb-data.js`, Tests green, squash-merged. `find-map.mp4` was 15 MB after the re-record and failed the under-8 MB test in `tests/app-web-fixes.test.mjs`; re-encoded at 1280x720 (4.6 MB). Many other tutorial videos are 8 to 22 MB (`run-custom*.mp4` 22 MB); only `find-map` is checked by a test. The chat "dates" test passed on main today.
 
