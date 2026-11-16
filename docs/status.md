@@ -1,10 +1,10 @@
 # Status
 
-## 2026-11-16: Event data audit fixes (migrations 0267, 0268, 0269, three PRs)
+## 2026-11-16: Event data audit fixes (migrations 0271, 0272, 0273, three PRs)
 Fixes for the event-data findings of audit 2 (H4, M1 to M5, M9, L6, L7), each checked against the event's official page loaded politely on 2026-11-16.
-- 0267 duplicates: 11 Grok-side duplicates removed (event deleted, intake row `unpublished` so Grok cannot re-add), missing links, hours and address folded into the kept rows. dplights and soc-dp-harbor-after-dark are different events and stay.
-- 0268 hours and confirmations: The Grove tree lighting and snowfall, Old Pasadena, Calimesa and Montclair confirmed; last year's times cleared on the 19 stale rows (hours now 'Check site' where the 2026 page gives a date but no time); blank and non-standard hours and addresses fixed; boat-parade cruises typed parade.
-- 0269 photos and links: 73 photos that were shared by unrelated events, logos, flyers or screenshots cleared; 3 http images moved to https; 4 last-year links replaced by the organizer's page.
+- 0271 duplicates: 11 Grok-side duplicates removed (event deleted, intake row `unpublished` so Grok cannot re-add), missing links, hours and address folded into the kept rows. dplights and soc-dp-harbor-after-dark are different events and stay.
+- 0272 hours and confirmations: The Grove tree lighting and snowfall, Old Pasadena, Calimesa and Montclair confirmed; last year's times cleared on the 19 stale rows (hours now 'Check site' where the 2026 page gives a date but no time); blank and non-standard hours and addresses fixed; boat-parade cruises typed parade.
+- 0273 photos and links: 73 photos that were shared by unrelated events, logos, flyers or screenshots cleared; 3 http images moved to https; 4 last-year links replaced by the organizer's page.
 - Left open for the owner or Grok: the expected rows whose official page gives no 2026 information (Citadel Outlets, Electric Light Festival, Happy Harbor Days, Belmont Park Winter Wonder; Old links to 2025 articles on about 60 more expected rows), the Salvation Army 'Free in past years' price rows (free=1 needs a price starting with Free), 3 hotlinked photos that answer 403 to a plain request (venice-cinco-parade, g15-temecula-on-ice, ccl-wh was cleared).
 - `npm test` has one failure, chat.test.mjs "dates: only dates from the events given to the model may appear in an answer", unrelated to migrations.
 
