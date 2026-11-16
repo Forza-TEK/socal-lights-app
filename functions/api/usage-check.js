@@ -4,7 +4,7 @@
 // The workflow opens or updates the GitHub issue "Cloudflare usage limit reached or near" at warning or limit, and closes it on recovery.
 // With ?notify=1 (the Cloudflare cron Worker, workers/mail-cron) the site itself emails the owner at warning or limit, at most once every 6 hours, and the answer says `notified`.
 // No key or a wrong key: 401. Read-only against Cloudflare; the result is the same cached copy Admin > Usage shows.
-import { json, err } from "../_lib/util.js";
+import { json, err, sameKey } from "../_lib/util.js";
 import { getUsage, usageLines } from "../_lib/cfusage.js";
 import { jobStatus, problemJobs } from "../_lib/heartbeat.js";
 import { logOp } from "../_lib/oplog.js";
@@ -12,7 +12,7 @@ import { sendTemplate } from "../_lib/mailtpl.js";
 
 export async function onRequest({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
-  if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
+  if (!env.ALERT_CRON_KEY || key.length < 16 || !sameKey(key, env.ALERT_CRON_KEY)) return err(401, "Not allowed.");
   if (request.method !== "POST" && request.method !== "GET") return err(405, "Use POST.");
   const u = await getUsage(env);
   let notified = false;

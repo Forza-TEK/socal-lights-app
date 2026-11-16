@@ -81,9 +81,9 @@ test("ADMIN_DEV_BYPASS works only on localhost and only when set to 1", async ()
     assert.equal(await requireAdmin(req(null, "http://localhost:8788/api/admin/x"), {}), null);
   } finally { f.restore(); }
 });
-test("a token with no exp claim is accepted (Cloudflare always sets one): documents the current behavior", async () => {
+test("a token with no exp claim is refused (Cloudflare always sets one)", async () => {
   await withCerts([jwkOf(good.publicKey, KID)], async () => {
     const { exp, ...noExp } = claims();
-    assert.ok(await requireAdmin(req(jwt(noExp)), env));
+    assert.equal(await requireAdmin(req(jwt(noExp)), env), null);
   });
 });

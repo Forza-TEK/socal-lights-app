@@ -1,7 +1,7 @@
 // POST /api/contest-remind — called daily by a GitHub workflow with the shared key (the same ALERT_CRON_KEY as the weekly email).
 // For each live contest it emails: when voting opens (entrants), and two days before voting closes (entrants and everyone who has voted).
 // Each reminder is sent once per contest (remind_open / remind_close). The day after voting ends it also emails the organizer to announce the winners (remind_announce).
-import { json, err } from "../_lib/util.js";
+import { json, err, sameKey } from "../_lib/util.js";
 import { enqueueMail, drainMail } from "../_lib/mailbatch.js";
 import { logOp } from "../_lib/oplog.js";
 import { todayPT, addDays } from "../_lib/contests.js";
@@ -12,7 +12,7 @@ import { fmtDate } from "../../public/contestfmt.js";
 const CAP = 1000;
 export async function onRequestPost({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
-  if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
+  if (!env.ALERT_CRON_KEY || key.length < 16 || !sameKey(key, env.ALERT_CRON_KEY)) return err(401, "Not allowed.");
   const today = todayPT(), soon = addDays(today, 2);
   const { results: cs } = await env.DB.prepare("SELECT * FROM contests WHERE status = 'live' AND announced = 0 AND vote_end >= ?").bind(today).all();
   const queued = { open: 0, close: 0 }, failed = { open: 0, close: 0 };

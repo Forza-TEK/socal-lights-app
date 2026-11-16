@@ -1,6 +1,6 @@
 // POST /api/alerts/send — sends the weekly email, called by the scheduled GitHub workflow with the shared key.
 // Works through the list in small batches (a request can only make so many outgoing calls); call it again while `remaining` > 0.
-import { json, err, rowToEvent } from "../../_lib/util.js";
+import { json, err, rowToEvent, sameKey } from "../../_lib/util.js";
 import { sendNow } from "../../_lib/mailbatch.js";
 import { slugOf } from "../../in/[city].js";
 
@@ -10,7 +10,7 @@ const fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month
 
 export async function onRequestPost({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
-  if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
+  if (!env.ALERT_CRON_KEY || key.length < 16 || !sameKey(key, env.ALERT_CRON_KEY)) return err(401, "Not allowed.");
   const origin = "https://socallights.app", today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
   const until = new Date(Date.now() + DAYS * 86400000).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
   const subs = (await env.DB.prepare("SELECT * FROM alert_subs WHERE confirmed = 1 AND (last_sent IS NULL OR last_sent < date('now','-6 days')) ORDER BY created_at LIMIT ?").bind(BATCH).all()).results;

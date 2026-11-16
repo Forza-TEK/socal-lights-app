@@ -1,5 +1,14 @@
 # Status
 
+## 2026-11-16: Admin audit fixes, part 1 (phone, queues, confirmations, keys)
+From the Admin and data audit 2 (H1, H3, M6, M8, L1, L2, L3, L5):
+- **Phone Actions cell:** the phone card layout hid the 6th table cell, which was Actions in Event claims, Installers, From Grok and Houses "Open". Only non-action cells are hidden now (`td:nth-child(6):not(.ac)`); action links and buttons are at least 36 px tall.
+- **Queues are visible:** held Grok rows and updates get a badge on From Grok and count in the browser-tab number; the Dashboard has tiles for pending event claims and Grok items, so "All caught up" is only shown when they are zero. The installer tile is now "installer claims on a home, to confirm".
+- **Second tap:** Grok Unpublish, Undo, Remove photo, Publish anyway, and event-claim Approve / Decline use the same "Tap again" rule as the other destructive buttons.
+- **Small items:** the Events menu badge says (tooltip) it counts all seasons and the page count says "in this season"; the side menu shows a scroll shadow; phone cards label Photos, Received, Contact and Added.
+- **Keys:** cron endpoints compare `ALERT_CRON_KEY` in constant time (`sameKey` in `functions/_lib/util.js`); an Access token without `exp` is refused.
+- Tests: `tests/admin-fixes.test.mjs`; `tests/admin-gate.test.mjs` updated. Versions `admin.css?v=20261116n`, `admin.js?v=20261116y`, `grok.js?v=20261116b`.
+
 ## 2026-11-16: Payments audit, PR 3 of 3 (payments, receipts, emails, partner; branch `audit/payments-money`, stacked on PR 2)
 - M3 all six receipt templates skip bounced, complained and deleted addresses. M4 the "payment not applied" email says "we will refund" (not "we are refunding"), to "the payment method you used"; the digest and its subject flag a refund due for 3+ days. M5 the refund rule and Terms link are on the Stripe payment page of passes, Event Partner, Featured and Sponsor. M6 days left in the season shown on /partner and the Checkout description. M7 the Event Partner cap is checked inside the INSERT (two requests cannot both take the last place). M11 the digest lists founding comps ending within 30 days with no contest yet. M12 was already fixed (checkout refuses cancelled events, digest lists them).
 - L1 pass checkout idempotency key includes the return address. L2 a test-mode Stripe event is ignored when the site runs on a live key. L4 Admin passes list counts every running pass and comp (and says when the display list is cut). L5 the refund email says what happens to a contest pass or Event Partner plan. L9 the window rule says an unpublished contest still counts (`contest-passes.js` is now `?v=20261116a` on its three pages).

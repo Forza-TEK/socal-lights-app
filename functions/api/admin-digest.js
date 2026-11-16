@@ -1,7 +1,7 @@
 // POST /api/admin-digest — called three times a day by a GitHub workflow with the shared key (the same ALERT_CRON_KEY as the weekly email).
 // Emails the site owner how many homes, events and contest entries came in since the last email, today's totals, and what is waiting for review.
 // It always sends (a "nothing new" note when quiet) and includes the day's totals. Set ADMIN_NOTIFY_EMAIL to change where it goes (default rey@forza-tek.com).
-import { json, err } from "../_lib/util.js";
+import { json, err, sameKey } from "../_lib/util.js";
 import { sendTemplate } from "../_lib/mailtpl.js";
 import { pruneIps, pruneRetention } from "../_lib/retention.js";
 import { NEEDS_ATTENTION, ORDER_FROM, orderFlags } from "../_lib/orders.js";
@@ -17,7 +17,7 @@ import { readState, reconcileLines } from "../_lib/reconcile.js";
 
 export async function onRequestPost({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
-  if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
+  if (!env.ALERT_CRON_KEY || key.length < 16 || !sameKey(key, env.ALERT_CRON_KEY)) return err(401, "Not allowed.");
   await pruneOps(env);
   await pruneIps(env); // scheduled backstop for the 48-hour IP retention promise
   await pruneRetention(env); // PL-04: unconfirmed signups, old reports, declined submissions, admin-log labels
