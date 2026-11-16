@@ -2639,3 +2639,640 @@ Owners can add up to 4 photos to an event they added. New article `add-photos-to
 
 ## Manage your events video (2026-11-13, migration 0247)
 The new video "Manage your events" (file `post-manage-events`, Tutorials group "Post events and homes") is linked to the Help articles `your-events`, `add-photos-to-your-event` and `edit-or-cancel-your-event` (only where the Video field was empty and nobody had edited the article in Admin). If you pasted those articles by hand, set their Video field to `post-manage-events`.
+
+
+# Help Center audit (2026-11-16), part 1: fixes to existing articles
+
+Migration `0267_help_fixes_2026-11-16.sql` changes these articles (text fragments, only where nobody edited the article in Admin). If you edited one in Admin, paste the text below over it. Regenerate with `node scripts/help/updates-1116a.mjs --md`. Slugs never change.
+
+## add-an-event
+
+One-sentence answer:
+
+    Tap Add, then An event. Name it, pick the dates, add the place, and tap Add my event.
+
+Text:
+
+    1. Start on the map at socallights.app and tap the round **+** (Add) button in the top bar of the map. It is always there, signed in or not. You can also tap the **three dots** and then **Add** (signed out), or your **account circle** (the person icon) and then **Add an event, home or contest** (signed in). Then tap **An event**.
+    2. Sign in with Google or an emailed code if asked. Your event is saved to your account.
+    3. If your event has a web page, paste it into **Event web page** and tap **Next**. If it has no page, tap **No... Next** under the box. The web page is optional. Your event goes on the map as Confirmed either way, because you gave the dates.
+    4. Type the event's name, choose a season and a type, then tap **Next**.
+    5. Pick the first and last day (use the same day twice for a one-day event), add the hours if you like, then tap **Next**.
+    6. Say whether it is free to attend. Tap **Free**, or tap **Paid** and type the price, for example "$15 adults, kids free". Then tap **Next**.
+    7. Type the venue, choose the city and type the street address, then tap **Next**.
+    8. Describe it in a sentence or two (at least 20 characters), then tap **Next**.
+    9. Check everything and tap **Add my event**.
+    
+    On a very busy day we may hold a new event for a quick look before it goes on the map. The last screen says so, and we email you when it is up.
+    
+    ## Want it to stand out?
+    On the last step you can choose a paid Featured plan, or **No thanks, just list it**. If you pick a plan, you go straight to Stripe's secure page after tapping Add my event. See [Feature an event or a home](/help/feature-an-event-or-home). Listing your event is always free. To change it later, or mark it cancelled or postponed, see [Edit or cancel your event](/help/edit-or-cancel-your-event).
+    
+    ## After you add it
+    
+    To change, cancel or delete your event later, tap your account circle, then **Your events**. See [Find and manage your events](/help/your-events).
+    
+    Want to add photos? Once your event is on the map, tap your account circle, then **Your events**, then **Edit**: [Add photos to your event](/help/add-photos-to-your-event).
+
+## add-a-home-without-a-contest
+
+One-sentence answer:
+
+    You do not need a contest. Tap Add, then A lighting display, fill in the steps and your home goes on the map for free.
+
+Text:
+
+    You can put your home's lights on the map without entering any contest. It is free, and there is no voting, no judges and no organizer to wait for.
+    
+    ## Which button do I tap?
+    The Add page has three choices:
+    - **An event** is for a tree lighting, parade, market or other seasonal event.
+    - **A contest** is for organizers who want to run a neighborhood contest. It is not how you enter one.
+    - **A lighting display** is for your home's lights. This is the one you want.
+    
+    Tap the round **+** (Add) button in the top bar of the map. It is always there, signed in or not. Add is also in the account circle menu when you are signed in (**Add an event, home or contest**), or under the three dots when you are not. You can also go straight to socallights.app/add.
+    
+    ## The steps
+    1. Tap **Add**, then **A lighting display**.
+    2. Sign in with Google or an emailed code if asked. Your home is saved to your account.
+    3. Choose **A homeowner** (or **A professional installer**), then type the name to show.
+    4. Say whether a company installed your lights, then choose the season.
+    5. Name your home and tell us what makes it special.
+    6. Add the address. The pin goes here, and visitors see it so they can drive by.
+    7. Tell families when the lights are on and how to see them. This part is optional.
+    8. Add photos. Photos are optional too: you can skip them and add them later by email.
+    9. Check everything and tap **Put it on the map**.
+    
+    Nothing goes public until the last step, and you can save and exit at any time. Saved drafts are in [your profile](/help/your-profile). On the last step there is also an optional, unchecked box for the [monthly update email](/help/monthly-update-email).
+    
+    ## How this is different from a contest entry
+    - Most homes go live right away. If we hold one for a quick check, the site owner publishes it and may email you. In a contest the organizer usually approves each entry first.
+    - A home you add this way is not in any contest, so nobody votes on it and it cannot win. You can enter a contest later: see [Enter your home in a contest](/help/enter-your-home-in-a-contest). That is a separate entry.
+    - You manage it from **Your profile**, on the **Displays** tab: edit it, take it down for the season, put it back, or delete it.
+    - Your address and photos are public, so only add an address you want people to visit. See [Is my home address public?](/help/is-my-address-public).
+    
+    ## Is your home already on the map?
+    Some homes are on the map already, with a photo from the street. If yours is one of them, use **Is this your home? Claim it** on its card instead of adding it again. See [Is this your home? Claim it](/help/claim-your-home).
+    
+    More detail on each step is in [Show off your home on the map](/help/show-off-your-house).
+
+## show-off-your-house
+
+One-sentence answer:
+
+    Tap Add, then A lighting display. Photos, address and a description put your home's lights on the map for families to drive by.
+
+Text:
+
+    1. Start on the map at socallights.app and tap the round **+** (Add) button in the top bar of the map. It is always there, signed in or not. You can also tap the **three dots** and then **Add** (signed out), or your **account circle** (the person icon) and then **Add an event, home or contest** (signed in). Then tap **A lighting display**.
+    2. Sign in with Google or an emailed code if asked.
+    3. Under **Who's posting?**, choose **A homeowner** (or **A professional installer**), then tap **Next**.
+    4. Type the name to show, then tap **Next**.
+    5. Did a company install your lights? If you did it yourself, tap **No**, then **Next**.
+    6. Choose the season, then tap **Next**.
+    7. Name your home and tell us what makes it special, then tap **Next**.
+    8. Add the address. The pin goes here, and visitors see it so they can drive by. Tap **Next**.
+    9. Tell families when the lights are on and how to see them (drive by, walk by, parking), then tap **Next**.
+    10. Add photos, then tap **Next**.
+    11. Check everything and tap **Put it on the map**.
+    
+    Nothing goes public until the last step, and you can save and exit at any time. Saved drafts are in your profile. To change your home later, or take it down when the season is over, see [Take your home down and put it back](/help/take-your-home-down-and-put-it-back). Most homes go live right away. If we hold one for a quick check, the site owner publishes it and may email you.
+    
+    If you are a professional installer, you give a website or phone number for quotes and tick that you have the homeowner's permission to show the address.
+    
+    ## Is your home already on the map?
+    Some homes are on the map already, with a photo from the street. If yours is one of them, tap **Is this your home? Claim it** on its card instead. The form opens with your address filled in. See [Is this your home? Claim it](/help/claim-your-home).
+    
+    ## No contest needed
+    You do not have to enter a contest to put your home on the map. See [Add your home without entering a contest](/help/add-a-home-without-a-contest).
+
+## create-a-contest-quick-start
+
+One-sentence answer:
+
+    Tap Add, then A contest. Seven short screens, and your contest has its own link and QR code.
+
+Text:
+
+    Start at socallights.app and tap the round **+** (Add) button in the top bar of the map. It is always there, signed in or not. You can also tap your account circle, then **Add an event, home or contest** (signed in), or the three dots, then **Add** (not signed in). Or go straight to socallights.app/add.
+    
+    1. Tap **A contest**.
+    2. Name your contest. Type a name, then Next.
+    3. Who is running it? Type the name, pick your city, then Next.
+    4. The welcome message is already written. Keep it, or change it, then Next.
+    5. A website is optional. Next.
+    6. The dates are filled in for you. Next.
+    7. Choose **Quick start**. It sets everything up for you. Next.
+    8. Check your details and tap **Create contest**. If you are not signed in yet, you are asked to sign in here, and nothing you typed is lost.
+    9. Tap **Open my dashboard**. Your link and QR code are ready to share.
+    
+    Most contests go live right away. If we hold yours for a quick look, you see "Your contest is almost ready". We email you when it is approved, usually within a day, and your link and QR code already work.
+    
+    Want judges, prizes or your own categories? Use [Customize](/help/create-a-contest-customize).
+    
+    ## Choosing a contest pass
+    
+    Running a contest needs a contest pass. The Review screen shows the passes when your organization needs one, and your contest is created as soon as you pay. Residents enter and vote for free. See [Contest passes](/help/contest-passes).
+
+## enter-your-home-in-a-contest
+
+One-sentence answer:
+
+    Tap Enter my home, add photos, your address and a name, then agree to the rules and submit.
+
+Text:
+
+    Find the contest ([how](/help/find-contests)) and tap **Enter my home**. You will find it under **Live now** on the Contests page and at the top of the contest page. If entries are closed, there is no **Enter my home** button. The page says why instead: when entries closed and when voting opens, or that the organizer has paused new entries for now, or that the winners are already announced.
+    
+    The entry is a short set of steps. You can leave at any time and come back later: your answers are saved as a draft in [your profile](/help/your-profile), except the photos, which you add again.
+    
+    1. If you are not signed in, tap **Sign in**. Use Google or an emailed 6-digit code. That is how you come back later to check on your entry.
+    2. Add photos of your home. Tap **Choose photos**. You can add up to 8, and the first one is the cover.
+    3. Type your street address and ZIP code. The city is already set to the contest's city. If your home is in a different city, tap **My home is in a different city**.
+    4. Choose the name to show, for example, The Kim family. A line about your lights is optional.
+    5. Check the summary, tick the box to agree to the official rules, then tap **Submit my entry**.
+    
+    ## Who can enter
+    
+    To enter a home in a contest you must be 18 or older. That is the rule in our [Terms](/terms#contests).
+    
+    Each contest's organizer writes its official rules and decides who wins, so a contest can add its own limits. Contests that use our standard official rules are open to people who own a home in the contest's city or have the owner's permission to enter it, or who installed the display. You tick a box to agree to the official rules on the last step, so read them first. If you are not sure you qualify, ask the organizer before you enter.
+    
+    ## What happens next
+    
+    Most organizers review every entry first, so your home will say it is waiting until they approve it. Some contests publish entries right away. The last screen tells you which one yours is, and you also get an email when the organizer approves or declines it.
+    
+    The address you enter is where the pin goes, and visitors see it so they can drive by. You can enter up to 5 homes in one contest.
+    
+    If something goes wrong, see [My photo will not upload](/help/my-photo-will-not-upload) and [My entry is not on the map](/help/my-entry-is-not-on-the-map).
+
+## feature-an-event-or-home
+
+One-sentence answer:
+
+    Featured is optional and paid. Open the Feature page, choose your event or winning home, pick a plan and pay on Stripe.
+
+Text:
+
+    A Featured listing has a gold badge and a bigger gold-ringed pin on the map. It is optional. The Pricing page shows what each plan costs.
+    
+    ## For an event
+    - Open the Feature page: tap the **three dots** in the top bar and choose **Feature your event**, or go to socallights.app/feature, or tap **Choose** on a plan on the Pricing page.
+    - Pick a plan (below).
+    - Sign in, then choose your event. If it is not on the map yet, add it for free first. If it is yours but you did not add it, open **Claim an existing listing**, search for it and tap **This is my event: claim it**.
+    - Check the dates and the total, then tap **Pay on Stripe** and pay on Stripe's secure page. The payment methods you see depend on your device and location (see the end of this article).
+    
+    ### The plans for an event
+    Every plan is built from three parts. The pin is in every plan; the banner and top of the list are optional extras, and each part costs the same.
+    
+    **Featured pin**
+    - A gold-ringed pin on the map
+    - A "Featured" badge on your event in the list and in its details
+    - Runs from the moment you pay until your event ends or the season ends (Christmas lights: Jan 6), whichever comes first
+    
+    **Banner + Featured pin**
+    - A gold-ringed pin on the map
+    - A "Featured" badge on your event in the list and in its details
+    - Your event as a pill labeled "Featured" in the strip at the top of the map list, with its name, city and dates; tap it to open your event
+    - The pill shows whenever your event is in the map view
+    - How many times your banner was shown and tapped, on your Feature page
+    - Runs from the moment you pay until your event ends or the season ends (Christmas lights: Jan 6), whichever comes first
+    
+    **Top of the list + Featured pin**
+    - A gold-ringed pin on the map
+    - A "Featured" badge on your event in the list and in its details
+    - Your event is listed first when people browse your area
+    - Runs from the moment you pay until your event ends or the season ends (Christmas lights: Jan 6), whichever comes first
+    
+    **Top of the list + Banner + Featured pin**
+    - A gold-ringed pin on the map
+    - A "Featured" badge on your event in the list and in its details
+    - Your event as a pill labeled "Featured" in the strip at the top of the map list, with its name, city and dates; tap it to open your event
+    - The pill shows whenever your event is in the map view
+    - How many times your banner was shown and tapped, on your Feature page
+    - Your event is listed first when people browse your area
+    - Runs from the moment you pay until your event ends or the season ends (Christmas lights: Jan 6), whichever comes first
+    
+    ### When it starts and ends
+    - Featuring opens 30 days before your event starts. If you try sooner, the page tells you the date to come back. An event that is already running can be featured any time.
+    - It starts the moment you pay and ends on your event's last day or the last day of the season it was bought in (Christmas lights: Jan 6), whichever comes first. The price is the same whenever you buy, and the Feature page shows the exact dates and the total before you pay.
+    - Already have the pin? To add the banner or top of the list, pick the plan you want: you pay only for the parts you add. A plan that would add nothing is not sold, and the page says so.
+    - Buying again never shortens what you already have.
+    
+    ## For a home
+    Only the owner of a home that finished 1st, 2nd or 3rd place in a contest can feature it, and only after the winners are announced. Paying never changes a contest result. Homes have two plans, each for 30 days from the day you pay: the Featured pin (a gold-ringed pin and a "Featured" badge) and Top of the list (the same, and your home is listed first when people browse your area).
+    
+    ## Good to know
+    - You pay once per event or home. There is no subscription.
+    - Featured listings are always labeled, and they still have to be real and accurate.
+    - If we cannot list or feature your event, you get a full refund of every part. Once it is live, payments are non-refundable, but if your event is cancelled, email us and we will move your placement to another of your events or refund the unused time. A refund or a payment dispute switches the placement off.
+    - The map, search, routes and voting stay free. See [Is SoCal Lights free?](/help/is-it-free).
+    - Featured is bought on the website, not in the app.
+    
+    The price you see is the price you pay. We do not add sales tax. Prices are in US dollars. You can pay by card, Apple Pay, Google Pay, Amazon Pay, Cash App Pay or Link. Which options you see depends on your device and location. Optional automatic renewal needs a card.
+
+## ask-socal-lights-ai-assistant
+
+One-sentence answer:
+
+    A chat button on the map and the Pricing page answers questions about the site, contests and events. It is an automated assistant, not a person, and it can be wrong.
+
+Text:
+
+    **Ask SoCal Lights** is an automated AI assistant. It answers questions about finding events and homes, how contests work, how to add something and what things cost. It is not a person, and it can be wrong.
+    
+    ## Open it
+    - Tap the **Ask SoCal Lights** button at the bottom right of the map or of the [Pricing](/pricing) page. On a phone it shows as a round button with a sparkle icon.
+    - The first time in a visit it asks for a quick "I am human" check. Then type your question, or tap one of the suggestions, and tap **Send**.
+    - Tap **Start over** to clear the chat, or the **x** to close it.
+    
+    If you do not see the button, the assistant is switched off or unavailable right now. The Help Center and info@socallights.app always work.
+    
+    ## What it is good for
+    Questions such as how to enter or vote in a contest, how to add your home or an event, how sign-in works, what is on this weekend, or what an optional paid extra costs.
+    
+    ## Buttons it can offer
+    
+    Sometimes an answer comes with a card that has a button, so you can act right away. Each card says what it will do, and nothing happens until you tap its button.
+    
+    - **Send this to the team** has a box for your message. It is emailed to us. Add your email if you would like a reply.
+    - **Report a problem** asks which event or home is wrong and what is wrong.
+    - **Sign me up** is the free [weekly lights email](/help/weekly-lights-email). We email you a link to confirm first.
+    - **Send removal request** asks us to take a home off the map. You do not need an account.
+    - **Start this event**, **Start my home** and **Start my contest** open the Add form with what you told the assistant already filled in. You check everything there before anything goes on the map.
+    - If you are signed in and ask about your own event, home or contest entry, it can offer a card to mark an event cancelled or postponed, run it again next year, change a description, take a home down for the season and put it back, or withdraw an entry. Each one asks you to confirm.
+    
+    ## What it will not do
+    - It does not tell you who won or who is ahead in a contest.
+    - It does not decide disputes, disqualifications, legal, tax or prize questions. For those, read the [Terms](/terms) or email info@socallights.app.
+    - It does not do anything by itself. It cannot look up anyone's personal details, and nothing is sent or changed until you tap a button on a card.
+    - It will not suggest that paying can help you win. It cannot: payment never affects a contest result.
+    
+    Prices come only from the [Pricing](/pricing) page, so check it before you pay.
+    
+    ## Your privacy
+    Please do not type personal information such as names, addresses, phone numbers, email addresses or card numbers. Your chat stays in your browser tab only and is erased when you close the tab or tap **Start over**. We do not save what you type or what it answers. The one exception is a card you choose to send: what is in its boxes is emailed to the team. See the [privacy page](/privacy#ai-assistant) for the details.
+    
+    Not sure the answer is right? Use the Help Center search, or [ask us](#ask).
+
+## edit-or-cancel-your-event
+
+One-sentence answer:
+
+    Open Your profile, tap Events, then Edit to change the details, or use Event notice to mark it Cancelled or Postponed.
+
+Text:
+
+    An event changed? You can fix its details, add photos, mark it cancelled or postponed, run it again next year, or delete it. You do this from **Your events**, signed in with the same account you used to add the event.
+    
+    1. Tap your **account circle** at the top of the map and choose **Your events**. It opens the Events tab of your profile: [Find and manage your events](/help/your-events).
+    2. Find your event. The tag under its name says **On the map**, **In review**, **Cancelled** or **Postponed**.
+    3. Tap **Edit**. You can change the name, the season and type, the city and street address, the start and end dates, the hours, the venue, the price, the description and the event web page. You can add up to 4 photos here too: [Add photos to your event](/help/add-photos-to-your-event). There is also an optional **Video link**: paste a YouTube or Vimeo link and visitors see a **Watch the video** button on your event. The video only loads when they tap it.
+    4. Tap **Save**. The map and the event's page show the change right away. (Photos are saved as soon as you add them. The video link is saved with **Save**.)
+    
+    ## Mark it cancelled or postponed
+    
+    The event stays on the map with a tag, so nobody drives out for nothing.
+    
+    1. On the event's row, open the **Event notice** list.
+    2. Choose **Cancelled** or **Postponed**.
+    3. When the event is back on, choose **No notice** to take the tag off. If the dates moved, tap **Edit** and change them too.
+    
+    ## Run it again next year
+    
+    Tap **Run again next year** on the event's row. It adds a copy with every date moved forward one year. The copy starts as Expected, because the new dates are a guess. When you know the real dates, tap **Edit** and **Save** and it becomes Confirmed. The photos are not copied, so add them to the new copy.
+    
+    ## Good to know
+    
+    - Changing the address moves the pin, so we look the new address up again.
+    - **Delete** removes the event and its photos from the map for good. It asks you to tap again. If you paid for a Featured placement, write to info@socallights.app first: see [Feature an event or a home](/help/feature-an-event-or-home).
+    - An event that is **In review** can be deleted but not edited until it is on the map.
+    - Cancelled or postponed events cannot be featured.
+    
+    Did not find your event? See [Add an event to the map](/help/add-an-event). Anything else, [ask us](#ask).
+
+## i-cannot-vote
+
+One-sentence answer:
+
+    You must be signed in, voting must be open, and you cannot vote for your own home. You get one vote per category.
+
+Text:
+
+    Check these in order:
+    
+    1. **Sign in.** Voting needs an account, which keeps it to one vote per person. Use Google or an emailed code. Throwaway email addresses cannot be used, so use your regular email.
+    2. **Is voting open?** The contest page shows the voting dates. The buttons say **Voting not open yet** before it starts, **Voting is paused** while the organizer has paused voting, and **Voting is over** after the winners are announced.
+    3. **Your own home.** You cannot vote for a home you entered. It shows Your home.
+    4. **Are you a judge?** Judges do not use the public vote. Open the judges' ballot from your invitation email instead ([how](/help/judge-a-contest)).
+    5. **One favorite per category.** After you pick one in a category, tap **Move my vote here** on another home to change it.
+    6. Some contests are judges only. Then the public does not vote.
+    
+    See [Vote in a contest](/help/vote-in-a-contest).
+
+## wheelchair-and-stroller-friendly-places
+
+One-sentence answer:
+
+    Open Filters, then Stroller friendly under Visiting a home. A home's page says Stroller and wheelchair friendly when its owner ticked it.
+
+Text:
+
+    Families and visitors who use a wheelchair or a stroller can narrow the map to homes whose owners say they are easy to visit.
+    
+    1. On the map, tap **Filters**.
+    2. Under **Visiting a home**, tap **Stroller friendly**. You can add **Free parking**, **Drive by** or **Walk by** too.
+    3. Tap the button at the bottom to see the places.
+    4. Open a home to see its facts. A home says **Stroller and wheelchair friendly** when its owner ticked that box.
+    
+    ## Good to know
+    
+    - **Drive by** homes can be seen from your car. A home's page also says if parking is free, on the street or hard to find.
+    - Owners fill these in themselves and we do not check them. If a home or an event is not as described, tap **Something wrong? Tell us** on it.
+    - Posting your own home? Tick **Stroller and wheelchair friendly** when you edit it. See [Take your home down and put it back](/help/take-your-home-down-and-put-it-back).
+    - For an event, ask the organizer about access. The event's page links to their site.
+    
+    Anything else, [ask us](#ask).
+
+## install-the-app
+
+One-sentence answer:
+
+    SoCal Lights is in the App Store for iPhone: search for SoCal Lights. On any phone you can also add the website to your Home Screen from your browser.
+
+Text:
+
+    ## The iPhone app
+    
+    SoCal Lights is in the App Store. Open the App Store on your iPhone and search for **SoCal Lights**. It shows the same map as the website. Two things differ: you sign in with an emailed code (there is no Google button in the app), and tips and paid options such as Featured placements and contest passes are on the website, not in the app.
+    
+    ## Or add the website to your Home Screen
+    
+    This works on any phone, with or without the app.
+    
+    **iPhone:** open socallights.app in **Safari**. Tap the Share button, scroll down, and tap **Add to Home Screen**.
+    
+    **Android:** open socallights.app in **Chrome**. Tap the three dots, then **Install app** (or **Add to Home screen**).
+    
+    ## With no signal
+    The Home Screen version still opens, and so does any page you have opened before. Your last list of places is saved on your phone too. A page you have never opened shows a short offline message instead. Map pictures and photos are not saved. When your signal comes back, it updates by itself.
+    
+    Tip: open the pages you will want, such as the map and a contest, while you still have signal.
+    
+    The Install option missing? See [I do not see Add to Home Screen](/help/no-add-to-home-screen).
+
+## add-co-organizers-and-judges
+
+One-sentence answer:
+
+    Team is for co-organizers, Judges is for judges. Type an email and add them. They get an invitation by email.
+
+Text:
+
+    Open your dashboard ([how](/help/share-your-contest)) and tap **Team**. On a phone, the bottom bar shows only the first tabs, so tap **More** to find the others.
+    
+    - **Co-organizers** help you run the contest. Type their email and tap **Add co-organizer**. They get an email with one button to open the dashboard, and they sign in with that email. You can add up to 8, and only you, the person who created the contest, can add or remove them. They can approve entries, review votes, and manage judges and sponsors. Changing the contest's details, pausing voting, unpublishing and announcing winners stay with you.
+    - **Judges** are added on the **Judges** tab. It shows when your contest has judges, so choose "Judges only" or "Everyone and judges" when you create it. Type a judge's email and tap **Add judge**. Your judge gets an invitation with a button that opens their ballot. The tab also shows who has finished and has a button to remind judges who have not.
+
+## add-sponsors-and-logos
+
+One-sentence answer:
+
+    On the Sponsors tab, add a company, its level, website and logo, confirm how it supported you and tick permission and Show. It then appears on your contest page, labeled Sponsor.
+
+Text:
+
+    Sponsors are the businesses that support your contest. They show on your contest page, always labeled "Sponsor". You add them on the **Sponsors** tab.
+    
+    1. Open your dashboard ([how](/help/share-your-contest)) and tap **Sponsors**. On a phone, tap **More** first.
+    2. Under **Add or edit a sponsor**, type the company name and choose a **Level**: Presenting sponsor, Gold, Silver or Prize sponsor.
+    3. Add their website and choose their logo (JPG, PNG or WebP, under 600 KB). The contact name, phone, email and amount are optional. Only you and SoCal Lights staff see them.
+    4. Under **How the sponsorship counts**, choose **Paid to me** or **Donated in kind**. For Paid to me, tick that you collected the payment yourself and add the date and how it was paid. For Donated in kind, say what was given.
+    5. Tick that you have the sponsor's permission, and tick **Show on the contest page**.
+    6. Tap **Save sponsor**.
+    7. To check how it looks, tap **See it as voters do**.
+    
+    A sponsor shows on the contest page only when all of that is done. A line under each sponsor tells you its status, for example Not confirmed: not shown.
+    
+    ## Let sponsors come to you
+    Once your contest is live and approved, you can share one private invite link instead of typing everything yourself.
+    
+    - On the Sponsors tab, under Invite a sponsor, tap **Create invite link**, then **Copy link** or **Email this link**.
+    - A sponsor fills in a short form. They do not need an account.
+    - Their request waits under Waiting for your review. Tap **Mark payment received**, **Approve for the contest page** or **Decline**. Nothing shows on your page until you approve it.
+    - Anyone with the link can send a request, so share it only with people you want to hear from. Make a new link to stop the old one, or tap **Turn link off**.
+    
+    The longer version, with receipts and privacy, is [Add sponsors to your contest](/help/add-sponsors-to-your-contest).
+    
+    ## How sponsors pay you
+    Under How sponsors pay you, you can add your own payment link or instructions and up to three sponsor levels with amounts. Sponsors pay you directly. SoCal Lights never charges them, and payment never affects who wins.
+
+## add-sponsors-to-your-contest
+
+One-sentence answer:
+
+    Record a sponsor who paid you, or send them a private invite link. Approve them for the contest page after you receive the payment. The money goes to you, not to SoCal Lights.
+
+Text:
+
+    A sponsor can support your contest with money or goods. **The sponsorship money goes to you, the organizer, not to SoCal Lights.** You collect it, receipt it and report it. SoCal Lights does not process, hold or guarantee it. Sponsors do not influence results, and payment never affects who wins.
+    
+    The short version, step by step, is [Add sponsors and logos to your contest](/help/add-sponsors-and-logos).
+    
+    ## Add a sponsor
+    1. Open your dashboard and tap **Sponsors**. On a phone, tap **More** first.
+    2. Fill in the company name, the contact name and, if you like, the website, phone, email, amount and logo (JPG, PNG or WebP under 600 KB). Pick a level.
+    3. Under **How the sponsorship counts**, choose one:
+       - **Paid to me (the organizer):** tick **Payment collected by me**, enter the date you received it and how it was paid (cash, check, bank transfer, card on your own system, invoice paid, or your own words). You can upload the receipt or paid invoice (PDF, JPG or PNG under 5 MB).
+       - **Donated in kind:** say what was donated, for example yard signs or printing.
+    4. Tick that you have the sponsor's **permission** to list their name and logo and to keep their contact details here.
+    5. Tick **Show on the contest page** and tap **Save sponsor**.
+    
+    ## Let sponsors send you a request
+    Once your contest is live and we have approved it, your Sponsors tab has two more cards.
+    1. **How sponsors pay you.** Add your own payment link (an https:// link such as Venmo, PayPal, Stripe or your city's portal) and/or plain words, for example "Checks payable to City of Covina, mail to ...". You can also add up to three levels, each with a name and a dollar amount, such as Presenting, Gold and Supporter. They are only shown to sponsors: the site never charges anyone.
+    2. **Invite a sponsor.** Tap **Create invite link**. You get a private link that you can copy or send by email. A sponsor opens it (no account), reads that the money goes to you, sees your payment link, and fills in a short form. Tap **Turn link off** to stop it, or **Make a new link** to replace it (the old one stops working).
+    
+    When a sponsor sends the form we email you, and the request waits under **Waiting for your review**. For each one you can:
+    - **Mark payment received:** enter the date, how it was paid and, if you like, upload the receipt.
+    - **Approve for the contest page:** only after the payment is received (or marked donated in kind). Nothing shows before you approve.
+    - **Decline:** add a short note if you like. We email the sponsor politely.
+    - **Remove:** delete the request.
+    
+    SoCal Lights has not verified your payment link, and tells sponsors to pay only organizers they know. If your contest is still waiting for our review, these two cards say so and unlock when we approve it.
+    
+    ## What people see
+    The contest page shows the logo, name and link, labeled "Sponsor", and says that sponsors do not influence results and that sponsorship payments go to the organizer. A sponsor shows only when you confirmed the payment (or the in-kind gift), ticked the permission and chose to show it. Until then it is saved but not shown.
+    
+    ## Privacy
+    The contact details, the amount and the receipt are visible only to you, your co-organizers and SoCal Lights staff. The receipt is stored privately and is never shown on a page or in a list. They are deleted 24 months after the contest's voting ends, or when you remove the sponsor or delete your account. SoCal Lights staff can hide a sponsor from a contest page.
+    
+    ## Running the contest again
+    When you run a contest again, sponsors are copied as unconfirmed drafts. Confirm each payment (or gift) and permission again before they show.
+    
+    See [Run it again](/help/edit-your-contest-and-change-dates) and [Contest passes](/help/contest-passes).
+    
+    A sponsor who gets your invite link sees a page that explains the same thing: [Sponsor a contest with an invite link](/help/sponsor-a-contest-with-an-invite-link).
+
+## edit-your-contest-and-change-dates
+
+One-sentence answer:
+
+    On the Overview, tap Change dates, edit what you need on the Details tab, and tap Save changes. The same tab can start next year's contest.
+
+Text:
+
+    Open your dashboard ([how](/help/share-your-contest)). On the Overview, find **Schedule** and tap **Change dates**. It opens the **Details** tab, where **Edit contest details** is ready. You can also tap Details yourself (on a phone it is under **More**).
+    
+    1. Change the date that entries close, and the voting dates. You can also change the name, who runs it, the welcome message, how entries are approved, the prize, the official rules, and a presenting installer.
+    2. Tap **Save changes**.
+    
+    Entrants see changes right away, and the rest of the team is emailed about changes, so nobody is surprised. The **Team** tab keeps a list called **What the team changed**, with who changed what, newest first.
+    
+    Good to know:
+    
+    - The voting categories are locked after the first vote, because votes belong to a category.
+    - Once you announce the winners, the details are locked.
+    - Only the person who created the contest can change its details. Co-organizers can approve entries, review votes and manage judges and sponsors.
+    
+    If it will not save, see [My dashboard changes did not save](/help/dashboard-changes-did-not-save).
+    
+    ## Run it again
+    
+    At the bottom of the Details tab, **Run it again** starts a new contest with the same rules, categories, prizes and judges, and every date a year later. Tap **Run this contest again next year**, then tap again to confirm. Sponsors are copied as drafts: confirm each payment (or gift) and permission again before they show. You can edit the new contest before it opens. It counts toward your organization's 12-month window, so your [contest pass](/help/contest-passes) needs room for it, and a new pass is needed once the window has ended.
+
+## presenting-installer-and-quote-requests
+
+One-sentence answer:
+
+    Add a lighting company on Details. While your contest is live, its page gets a Get a quote button that sends requests to the company and to you.
+
+Text:
+
+    A presenting installer is a lighting company you partner with. Your contest page shows a labeled advertisement with a **Get a quote** button for neighbors.
+    
+    1. Open your dashboard ([how](/help/share-your-contest)) and tap **Details** (on a phone, tap **More** first). Scroll to **Presenting installer**.
+    2. Type the company's name, the email where quote requests should go, and their website.
+    3. Tap **Save changes**. This adds a **Get a quote** button to your contest page while the contest is live.
+    
+    ## What a neighbor sees
+    They open the contest page and tap **Get a quote**. They sign in if they have not yet, add their name and what they would like done, and tick the box to share their details. Then they tap **Send request**.
+    
+    Their details go only to that company and to you, the organizer, and only if they tick the box. SoCal Lights also keeps a copy. The form says so before they send it.
+    
+    ## Where you see requests
+    Open your dashboard and tap **Promote** (on a phone, under **More**). Quote requests are listed under **Activity**, and you also get an email for each one.
+
+## read-your-contest-activity
+
+One-sentence answer:
+
+    On Promote, Activity shows page visits, visits from your QR code, and how many people voted.
+
+Text:
+
+    Open your dashboard and tap **Promote** (on a phone, it is under **More**). **Activity** shows page visits, visits from your QR code, and how many people voted. Below, a chart shows votes for each day.
+    
+    Use it to see which sharing worked best.
+
+## share-your-contest
+
+One-sentence answer:
+
+    On your dashboard's Overview, use Share it: copy the link, print the entry poster or yard sign, or invite neighbors by email.
+
+Text:
+
+    1. Open **Contests**, then **Mine**, then **Manage** next to your contest.
+    2. On the **Overview**, find the card called **Share it**.
+    3. Tap **Copy link**, then paste it into an email, a text, or a Facebook post.
+    4. The **QR code** opens your contest when someone scans it with a phone. Put it on flyers and signs.
+    5. **Print entry poster** makes a page for a bulletin board. **Print yard sign** makes a big sign for a lawn.
+    6. To invite neighbors by email, tap **Promote** (on a phone, under **More**), then open **Invite neighbors by email**. Type their addresses and add a note. Each neighbor gets an invitation with your note and one button.
+
+## find-lights-near-me
+
+One-sentence answer:
+
+    Tap the location button so distances work, pick a season, search a city, and narrow the list with Filters. Tap Route these to drive what you see.
+
+Text:
+
+    1. Open socallights.app. To see what is close to you, tap **Use my location** when the message appears, or tap the **location button** on the map (top right, under the zoom buttons; its label is Find my location). Then tap **Allow** in your browser. Distances and "nearest first" depend on it. Nothing happens until you tap.
+    2. Tap the season button at the top and pick a season, such as **Thanksgiving & Christmas Lights**.
+    3. Or search: type a city name (or an event) in the search box and tap it in the list.
+    4. To narrow the list, tap **Filters**. You can pick a date, a city and distance, a county, free or ticketed, a type, and more. Tap the button at the bottom to see the places.
+    5. Use **Sort** above the list to put the nearest, soonest or free places first. The quick picks **Tonight**, **This weekend** and **Free** above the list set the date and cost filters in one tap.
+    
+    The list shows the places in the part of the map you are looking at, so move or zoom the map to change it. It is sorted nearest first once the site knows where you are. After you allow location, a blue dot shows where you are and moves with you while the location button is on.
+    
+    Location not working? See [The map does not show my location](/help/location-does-not-work).
+    
+    ## Driving to what you see
+    Tap **Route these**, the pill on the map. See [Drive a route](/help/drive-a-route).
+
+## location-does-not-work
+
+One-sentence answer:
+
+    Your browser needs permission to share your location. Tap the location button on the map, allow it for socallights.app, or search for a city instead.
+
+Text:
+
+    Distances and "nearest first" need your location. If they are missing:
+    
+    - Tap the **location button** on the map (top right, under the zoom buttons; its label is Find my location) and tap **Allow** when your browser asks. Give it up to 20 seconds. If it is still looking, tap it again.
+    - If you tapped **Block** or **No thanks** before, the site cannot ask again. Allow it in your browser:
+      - **iPhone:** open Settings, Privacy & Security, Location Services. Turn it on, then tap Safari Websites (or your browser) and choose **While Using the App**. Reload the page.
+      - **Android:** tap the lock icon in the address bar, then Permissions, Location, **Allow**. Also check that Location is on in your phone's quick settings. Then tap the location button again.
+      - **Computer:** open your browser's site settings for socallights.app and set Location to **Allow**, then reload.
+    - Opened the site from Instagram, Facebook, TikTok or another app's built-in browser? Those block location. Open socallights.app in Safari or Chrome instead.
+    
+    Once it works, the blue dot moves with you and the map follows you until you drag it. Tap the button again to stop.
+    
+    You can always skip location: search for a city, or pick a season, and the map works the same way.
+
+## your-events
+
+One-sentence answer:
+
+    Tap your account circle, then Your events. That is where every event you added is kept.
+
+Text:
+
+    Every event you add is kept under **Your events**.
+    
+    1. Sign in. Tap your account circle at the top right of the map (your picture or your initial).
+    2. Choose **Your events**. It opens the Events tab of your profile.
+    3. Find your event. Each one says whether it is **On the map** or **In review**, and a **Cancelled** or **Postponed** tag shows if you set one. Events you add yourself show as Confirmed, because you gave the dates.
+    
+    ## What you can do there
+    
+    - Change the details, mark it cancelled or postponed, run it again next year, or delete it: [Edit or cancel your event](/help/edit-or-cancel-your-event).
+    - Add up to 4 photos: [Add photos to your event](/help/add-photos-to-your-event).
+    - Add a video: in **Edit**, paste a YouTube or Vimeo link in **Video link**. See [Edit or cancel your event](/help/edit-or-cancel-your-event).
+    
+    Only the person who added an event can edit or delete it. Adding another event? Tap your account circle, then **Add an event, home or contest**: [Add an event to the map](/help/add-an-event).
+
+## your-profile
+
+One-sentence answer:
+
+    Tap your account circle at the top of the map and choose Your profile. Each section lists what you have, with buttons on every row.
+
+Text:
+
+    Tap your account circle at the top of the map (it shows your photo, or the first letter of your name or email) and choose **Your profile**. On other pages the same circle is at the top right. If you are not signed in, it asks you to sign in first.
+    
+    Sections are in the menu on the left, or along the bottom on a phone. Each one is a list of rows, and each row has buttons for what you can do with it. A status pill on a row shows where it stands, for example **On the map** or **In review**. On a phone the bottom bar shows Drafts, Contests, Displays and Events; tap **More** for Badges and Account.
+    
+    - **Drafts** lists anything you started and saved, including a contest entry. Tap **Continue** to finish it on any device, or **Delete**.
+    - **Contests** has two lists. **Contests you run** shows each contest you run or help run, with **Manage** and **View page**. **Homes you entered** shows your homes in other people's contests, whether each is in the contest, waiting for the organizer or not accepted, and **Open contest**.
+    - **Displays** lists the homes you showed off on the map. You can edit one, take it down for the season, put it back, or delete it. See [Take your home down and put it back](/help/take-your-home-down-and-put-it-back).
+    - **Events** lists the events you added. You can edit one, mark it cancelled or postponed, or run it again next year. See [Edit or cancel your event](/help/edit-or-cancel-your-event).
+    - **Badges** shows the awards your home has won. Winners keep a crown. It appears once you have one, and you can choose where your badges show on your listings.
+    - **Account** is where you change your name and address, turn the [monthly update email](/help/monthly-update-email) on or off, sign out, or delete your account. Your name and address are optional, only fill in forms for you, and are never shown publicly.
+    
+    To change your photo, tap **Add a photo** or **Change photo** under your name at the top of the profile. Use a JPG, PNG or WebP.
+    
+    To remove a home or an entry, see [Edit or withdraw your entry](/help/edit-or-withdraw-your-entry) and [Unpublish and publish again](/help/unpublish-and-publish-again). To delete your account, see [How do I delete my account?](/help/delete-my-account).

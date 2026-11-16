@@ -708,11 +708,13 @@ test("the contest wizard, accounts and favorites sources match the current app",
   assert.match(text("Which maps apps work with Route these in Favorites? Waze?"), /Waze/);
 });
 
-test("the assistant knows SoCal Lights is not in any app store", async () => {
+test("the assistant knows SoCal Lights is in the iPhone App Store and makes no promise about Android", async () => {
   const { rankChunks } = await import("../functions/_lib/chatkb.js");
   const t = rankChunks("Is the app in the Google Play store?", 3).map((c) => c.text).join(" ");
-  assert.match(t, /No, not yet\. SoCal Lights is not in the Apple App Store, Google Play/);
-  assert.match(t, /do not promise that a store app is coming/);
+  assert.match(t, /Yes, for iPhone: SoCal Lights is in the Apple App Store/);
+  assert.match(t, /search for SoCal Lights/);
+  assert.match(t, /do not say an Android app exists or is coming/);
+  assert.doesNotMatch(t, /No, not yet/);
 });
 
 test("refund questions get the published refund rules first, and the prompt says to give all information before handing off", async () => {
