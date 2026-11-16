@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin redesign, Replaced records converted
+Replaced records now use pill tabs (Replaced, Same street) and tables; the "Visitors see" choice (Their record, Both, Sweep record) sits in each row. Admin redesign: 7 of 22 areas done; next is Houses (test its bulk bar), then Contests, Installers and the rest. The Claude "SoCal Lights Progress" dashboard shows the list.
+
 ## 2026-11-16: Admin redesign, Reports converted
 Reports now use the new format: pill tabs (Home removals, All removals, Visitor reports), tables, and a full-page record with a Back link for each removal request (Approve/Decline at the top right). Admin redesign: 6 of 22 areas done; next is Replaced records, then Houses (test its bulk bar), Contests, Installers and the rest. Checked with empty data only; open a real removal request to see the record page.
 
