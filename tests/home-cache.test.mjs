@@ -25,7 +25,7 @@ async function legacyNav(env, today) {
     `<h3>${esc(county)} County</h3><ul>${list.sort((a, b) => b.n - a.n || a.city.localeCompare(b.city)).slice(0, 20).map((c) => `<li><a href="/in/${esc(c.slug)}" tabindex="-1">${esc(c.city)}: ${c.n} upcoming event${c.n === 1 ? "" : "s"}</a></li>`).join("")}</ul>`).join("");
   const evs = (await env.DB.prepare("SELECT id, name, city FROM events WHERE end_date >= ? AND status = 'confirmed' ORDER BY featured DESC, start_date, name LIMIT 20").bind(today).all()).results;
   const events = evs.length ? `<h2>Confirmed events coming up</h2><ul>${evs.map((e) => `<li><a href="/e/${encodeURIComponent(e.id)}" tabindex="-1">${esc(e.name)}, ${esc(e.city)}</a></li>`).join("")}</ul>` : "";
-  return `<nav class="sr" aria-label="Browse by city"><h2>Holiday lights and events by city</h2><p><a href="/in" tabindex="-1">All cities</a> <a href="/pricing" tabindex="-1">Feature your event</a> <a href="/help" tabindex="-1">Help</a></p>${groups}${events}</nav>`;
+  return `<nav class="sr" aria-label="Browse by city"><h2>Holiday lights and events by city</h2><p><a href="/in" tabindex="-1">All cities</a> <a class="web-only" href="/pricing" tabindex="-1">Feature your event</a> <a href="/help" tabindex="-1">Help</a></p>${groups}${events}</nav>`;
 }
 
 test("new list equals the old one on a mixed data set (featured, ties, odd names, expected, other counties, ended)", async () => {

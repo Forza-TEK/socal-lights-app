@@ -7,8 +7,8 @@ import { parseVideo } from "/video.js?v=20261115a";
 import { isCityEvent, looksLikeLogoUrl, judgePicture } from "/photoguess.js?v=20261111x560"; // logo, banner and blurry pictures give way to the stock photo (city events may keep their logo)
 import { SITE } from "/site-config.js?v=20261107a";
 import "/norm-ui.js?v=20261102b";
-import { me as authMe } from "/auth.js?v=20261111z";
-import "/chrome.js?v=20261113a"; // the account circle opens the same menu as on every other page
+import { me as authMe } from "/auth.js?v=20261116a";
+import "/chrome.js?v=20261116a"; // the account circle opens the same menu as on every other page
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261115a";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261111a";
@@ -1753,6 +1753,18 @@ async function load() {
   if (SEASONS[h]) setSeason(h);
   if (h === "showcase") location.replace("/add-house?s=" + state.season); if (h === "night") setTab("plan");
 }
+// A #e-<id> / #h-<id> / #m-<id> link opened while the map is already open (a pasted or tapped link that only changes the address fragment) opens its card like a fresh load does. Back and Forward are handled by popstate (the card is already open by then); unknown ids and other fragments are ignored.
+addEventListener("hashchange", () => {
+  const dl = location.hash.slice(1).match(/^([ehm])-(.+)$/); if (!dl) return;
+  let id = dl[2]; try { id = decodeURIComponent(id); } catch {}
+  const key = (dl[1] === "e" ? "e:" : "i:") + id;
+  if (state.detail === key) return;
+  const ev = dl[1] === "e" ? E.find((x) => x.id === id) : null, ho = dl[1] !== "e" ? SHOW.find((x) => x.id === id) : null;
+  if (!ev && !ho) return;
+  const sn = ev ? ev.sn : ho.season; if (SEASONS[sn] && sn !== state.season) setSeason(sn);
+  if (dl[1] === "m") showOnMap(key);
+  else if (ev) { selectKey(key, "list"); zoomWhenReady(ev.lng, ev.lat, 14); } else selectKey(key, "list");
+});
 // Keep an open page fresh: when you come back to the tab (or every 15 minutes while it's open),
 // quietly reload the event list so newly added events appear without a manual refresh.
 let loadedAt = Date.now();

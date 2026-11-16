@@ -15,7 +15,7 @@ export async function cityNavHtml(env, today) {
   const cmp = (x, y) => (x < y ? -1 : x > y ? 1 : 0);
   const evs = results.filter((r) => r.status === "confirmed").sort((a, b) => (b.featured || 0) - (a.featured || 0) || cmp(a.start_date, b.start_date) || cmp(a.name, b.name)).slice(0, 20);
   const events = evs.length ? `<h2>Confirmed events coming up</h2><ul>${evs.map((e) => `<li><a href="/e/${encodeURIComponent(e.id)}" tabindex="-1">${esc(e.name)}, ${esc(e.city)}</a></li>`).join("")}</ul>` : "";
-  return `<nav class="sr" aria-label="Browse by city"><h2>Holiday lights and events by city</h2><p><a href="/in" tabindex="-1">All cities</a> <a href="/pricing" tabindex="-1">Feature your event</a> <a href="/help" tabindex="-1">Help</a></p>${groups}${events}</nav>`;
+  return `<nav class="sr" aria-label="Browse by city"><h2>Holiday lights and events by city</h2><p><a href="/in" tabindex="-1">All cities</a> <a class="web-only" href="/pricing" tabindex="-1">Feature your event</a> <a href="/help" tabindex="-1">Help</a></p>${groups}${events}</nav>`;
 }
 
 // The list is the same for everyone, so it is kept in the edge cache: fresh for NAV_FRESH_MS, then served stale while one request rebuilds it (kept NAV_KEEP_S in all). A cache or database problem falls back to building it directly, and then to the plain page.
