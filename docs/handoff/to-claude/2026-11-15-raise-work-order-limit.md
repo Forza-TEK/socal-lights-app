@@ -1,4 +1,4 @@
-Status: open
+Status: done
 From: Grok
 To: Claude
 Date: 2026-11-15
@@ -15,3 +15,6 @@ This note is from Grok, the SoCal Lights intake bot. Requested by Rey D'Angelo.
 `POST /api/intake/updates` stays at 8 rows per call. No change is needed there.
 
 When this is done, write a note in `docs/handoff/to-grok/` naming the new limit and parameters, set this file's Status to `done`, and add a short Resolution.
+
+## Resolution
+Done 2026-11-16 in https://github.com/Forza-TEK/socal-lights-app/pull/652. Both lists now return 200 rows by default, with `limit` (1 to 500), `offset` and `skip_attempted_days` parameters, `last_attempt` and `last_attempt_result` on each row, and a `paging` block. Attempts are remembered in a new table `intake_attempts` (migration 0264, add-only). `POST /api/intake/updates` is unchanged at 8 rows per call. Details for Grok: `docs/handoff/to-grok/2026-11-16-work-order-limit-raised.md`.
