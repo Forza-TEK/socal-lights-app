@@ -535,5 +535,71 @@ S["manage-events"] = { id: "manage-events", file: "post-manage-events", cookie: 
   nextUp(EP, "Show off your home", "Put your lights on the map with Showcase a House"),
 ]};
 
+
+// ---------------- New videos (2026-11-16): calendar and share, installer dashboard, pricing, contest logo, live location ----------------
+const EFP = "Find and plan";
+S["calendar-share"] = { id: "calendar-share", file: "find-calendar-share", cookie: null, routes: NOCFG, ...MAPSPEC, steps: [
+  hook(EFP, "Add an event to your calendar and share it", "The calendar and share buttons", "In this video, you will add an event to your calendar, and share it with a friend. We start on the map."),
+  ...openShort(),
+  { cap: "Open an event", say: "Tap any event in the list to open it.", do: async (p, h) => { await p.locator("article.item.ev").first().waitFor({ timeout: 20000 }); await h.click("article.item.ev >> nth=0", { after: 1800 }); await p.locator(".actionbar [data-cal]").first().waitFor({ timeout: 20000 }); }, pad: 0.3 },
+  { cap: "The buttons", say: "Near the bottom of the event, beside Directions, is a row of small round buttons. The heart saves it to your favorites. The arrow shares it. And the calendar adds it to your calendar.", do: async (p, h) => { await h.hover(".actionbar [data-fav]", 1100); await h.hover(".actionbar [data-share]", 1100); await h.hover(".actionbar [data-cal]", 1100); }, pad: 0.3 },
+  { cap: "Tap the calendar", say: "Tap the calendar. On an iPhone, or when your maps app is Apple Maps, the site makes a calendar file. Open it, and the event goes into Apple Calendar or Outlook, with its date, time and place.", do: async (p, h) => { await p.evaluate(() => { try { localStorage.setItem("socal-maps", "apple"); } catch {} document.dispatchEvent(new CustomEvent("maps-changed", { detail: "apple" })); }); await h.click(".actionbar [data-cal]", { after: 2600 }); }, pad: 0.3 },
+  { cap: "Google Calendar", say: "If Google Maps is your maps app, it opens Google Calendar instead, with the event already filled in. Just tap Save.", do: async (p, h) => { await sleep(2400); }, pad: 0.3 },
+  { cap: "Tap Share", say: "Now tap the share arrow. On a phone, it opens your phone's own share menu. Choose Messages, email, or any app. On a computer, the link appears, ready to paste into a message, an email, or a post.", do: async (p, h) => { await h.click(".actionbar [data-share]", { after: 2600 }); }, pad: 0.3 },
+  { cap: "The link", say: "Whoever gets the link sees a preview card with the event's name and picture. When they tap it, the event opens on the map.", do: async (p, h) => { await sleep(2600); }, pad: 0.3 },
+  recap(EFP, "Calendar and share", ["Open an event", "Tap the calendar to add it", "Tap the arrow to share the link", "Friends open it on the map"], "That is how you add an event to your calendar, and share it. Do it for every event you do not want to miss."),
+  nextUp(EFP, "Save a night out", "Add events and homes to your favorites"),
+]};
+
+S["installer-dashboard"] = { id: "installer-dashboard", file: "sponsors-dashboard", cookie: ck.u_inst, routes: NOCFG, ...MAPSPEC, steps: [
+  hook(ES, "Your installer dashboard", "What you see after you sign in", "In this video, you will tour the dashboard a lighting company sees after signing in: your numbers, your homes, your details, and your activity. We start on the map."),
+  ...openShort(),
+  { cap: "Open your dashboard", say: "Once your profile is yours, sign in and open your dashboard. It has four tabs.", do: async (p, h) => { await p.goto(BASE + "/installer/bright-nights-lighting/manage", { waitUntil: "domcontentloaded" }); await p.locator(".stats").first().waitFor({ timeout: 20000 }); await sleep(600); }, pad: 0.3 },
+  { cap: "Overview", say: "Overview shows your numbers: profile views over the last thirty days, the homes on the map that name your company, and the quote requests you have received.", do: async (p, h) => { await h.hover(".stats", 2600); }, pad: 0.3 },
+  target("Tap Homes", "Tap Homes. Homes that name your company wait here for your answer. Confirm the ones you really installed, so visitors see the check mark.", nav("homes"), { after: 2200 }),
+  target("Tap Details", "Tap Details. This is where you set how people reach you: your phone, your website, the areas you serve, and a short About blurb. It all shows on your public page.", nav("details"), { after: 2200 }),
+  { cap: "Your logo", say: "Below that is your logo. A logo makes your company easy to spot, on your page and in the homes you installed.", do: async (p, h) => { await h.scrollTo("#lf", 240).catch(() => {}); await h.hover("#lf", 1800); }, pad: 0.3 },
+  target("Tap Activity", "Tap Activity. See how many people looked at your profile each day, and read the quote requests families sent you, with their email and phone.", nav("activity"), { after: 2600 }),
+  recap(ES, "Your installer dashboard", ["Overview: your numbers", "Homes: confirm what you installed", "Details and logo", "Activity: views and quote requests"], "That is your installer dashboard. Check it often, so no quote request waits."),
+  nextUp(ES, "Sponsor your installer company", "Banner, Top of the list, or both"),
+]};
+
+S.pricing = { id: "pricing", file: "find-pricing", cookie: null, ...MAPSPEC, steps: [
+  hook(EFP, "Pricing in two minutes", "Four tabs, and what each one buys", "In this video, you will see what is free on SoCal Lights, and what the paid options are. Nothing here asks for payment. We start on the map."),
+  ...openShort(),
+  { cap: "Open Pricing", say: "The Pricing page is linked at the bottom of every page, and you can always go straight to it. Finding lights and events is free, and so is posting them. Paid options only make your listing easier to see.", do: async (p, h) => { await p.goto(BASE + "/pricing", { waitUntil: "domcontentloaded" }); await p.locator('[role=tab][data-k]').first().waitFor({ timeout: 20000 }); await sleep(1500); }, pad: 0.3 },
+  { cap: "The four tabs", say: "At the top are four tabs, one for each kind of visitor: Homeowners, Event organizers, Contest organizers, and Installers.", do: async (p, h) => { for (const k of ["homeowners", "events", "contests", "banner"]) await h.hover(`[role=tab][data-k="${k}"]`, 700); }, pad: 0.3 },
+  target("Tap Homeowners", "Homeowners first. Adding your home, and entering a contest, are free. A contest winner, second, or third place can also feature their home for thirty days: a Featured pin is ten dollars, and the top of the list is fifteen.", '[role=tab][data-k="homeowners"]', { after: 3800 }),
+  { cap: "Tap Event organizers", say: "Next, Event organizers. Listing your event is free. Featured placement is optional. A Featured pin is twenty five dollars. Add the banner, or the top of the list, and it is fifty. All three is seventy five. You pay once, with no subscription.", do: async (p, h) => { await h.click('[role=tab][data-k="events"]', { after: 1500 }); await h.scrollTo("#plans", 200).catch(() => {}); await sleep(600); }, pad: 0.3 },
+  target("Tap Contest organizers", "Contest organizers next. Residents enter and vote for free. An organizer chooses a pass. One contest is one hundred forty nine dollars. Up to five contests is two ninety nine. Up to twenty is four ninety nine, in a twelve month window. A pass counts contests only.", '[role=tab][data-k="contests"]', { after: 4800, pre: async (p) => { await p.evaluate(() => window.scrollTo(0, 0)); } }),
+  target("Tap Installers", "And Installers. A profile card with your company page is free. Paid placements are always labeled Sponsor: a banner is fifty dollars for the season, the top of the list is fifty, and both together are seventy five.", '[role=tab][data-k="banner"]', { after: 4200 }),
+  { cap: "Good to know", say: "At the bottom is Good to know. It answers how you pay, what season means, and refunds. Payments are on Stripe's secure page. And paying never changes who wins a contest.", do: async (p, h) => { await h.scrollTo("text=Good to know", 200).catch(() => {}); await sleep(3200); }, pad: 0.3 },
+  recap(EFP, "Pricing in two minutes", ["Finding and posting are free", "Homeowners, Events, Contests, Installers", "Paid options only add visibility", "Paying never changes a contest result"], "That is pricing, in two minutes. Finding lights is free, and always will be."),
+  nextUp(EFP, "Find lights near me", "The map, seasons and filters"),
+]};
+
+S["contest-logo"] = { id: "contest-logo", file: "run-logo", cookie: ck.u_org, routes: NOCFG, ...MAPSPEC, steps: [
+  hook(ER, "Add your contest logo", "Your logo on the contest page", "In this video, you will add your city or group logo to your contest. We start on the map."),
+  ...toDash(),
+  target("Tap Details", "In your dashboard, tap Details.", nav("details"), { after: 1800 }),
+  { cap: "Contest logo", say: "Find Contest logo. Until you add one, we draw an icon from your contest name. A logo also stands in for homes that have no photo yet.", do: async (p, h) => { await h.scrollTo("#logocard", 240).catch(() => {}); await h.hover("#logocard", 2600); }, pad: 0.3 },
+  { cap: "Tap Upload a logo", say: "Tap Upload a logo, and choose a picture from your phone or computer. A square picture works best. JPG, PNG, or WebP. Big images are shrunk for you.", do: async (p, h) => { const [fc] = await Promise.all([p.waitForEvent("filechooser"), h.click("#logocard label.phpick", { after: 300 })]); await fc.setFiles(process.env.LOGO_SQUARE || process.env.LOGO); await sleep(2800); }, pad: 0.3 },
+  { cap: "Your logo", say: "Your logo is saved right away. It shows on your contest page, and on every home that has no photo.", do: async (p, h) => { await h.hover("#lg-img", 2400); }, pad: 0.3 },
+  { cap: "Replace or remove", say: "To change it later, tap Replace logo. To go back to the drawn icon, tap Remove logo.", do: async (p, h) => { await h.hover("#logocard label.phpick", 1400); await h.hover("#lg-rm", 1400); }, pad: 0.3 },
+  recap(ER, "Your contest logo", ["Dashboard, then Details", "Tap Upload a logo", "It shows on your contest page", "Replace or remove it any time"], "That is how you add your logo. Your contest now looks like yours."),
+  nextUp(ER, "Share your contest", "Link, QR code, and email"),
+]};
+
+S["live-location"] = { id: "live-location", file: "find-location", cookie: null, routes: NOCFG, ...MAPSPEC, steps: [
+  hook(EFP, "Use my location", "What it does, and what it does not send", "In this video, you will use your location on the map, and learn what happens to it. We start at the website."),
+  ...openSite(undefined, true),
+  { cap: "The location button", say: "Any time you want to come back to where you are, tap the location button on the map. It is the small circle with a target.", do: async (p, h) => { await h.hover(".maplibregl-ctrl-geolocate", 2400); }, pad: 0.3 },
+  { cap: "What is sent", say: "Your location is used on your device, to center the map and to estimate drive times. It is not sent to our servers for that.", do: async (p, h) => { await sleep(3200); }, pad: 0.3 },
+  { cap: "One exception", say: "There is one exception. On a home, the button I saw it lit tonight sends your position to our server once, only to check that you are within about a quarter mile. We do not store it. We keep only a yes or no.", do: async (p, h) => { await h.click("#seasonbtn", { after: 700 }); await h.click('[data-sp]:has-text("Christmas")', { after: 1200 }); await h.type("#q", "Garcia Family"); await h.click("#pbody .item >> nth=0", { after: 1600 }); await p.locator(".onbtn").first().waitFor({ timeout: 20000 }); await p.locator(".onbtn").first().scrollIntoViewIfNeeded(); await h.hover(".onbtn", 3200); }, pad: 0.3 },
+  { cap: "You can say no", say: "You can always decline to share your location. Everything still works. You just will not see distances.", do: async (p, h) => { await sleep(3200); }, pad: 0.3 },
+  recap(EFP, "Use my location", ["Tap the location button", "The map centers on you", "Not sent to our servers for that", "Say no, and it all still works"], "That is how location works on SoCal Lights. It stays on your device, unless you tap I saw it lit tonight."),
+  nextUp(EFP, "Pricing in two minutes", "What is free, and what the paid options buy"),
+]};
+
 const id = process.argv[2];
 if (id) { if (!S[id]) throw new Error("no video " + id); await record(S[id]); }
