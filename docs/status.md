@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin redesign, Reports converted
+Reports now use the new format: pill tabs (Home removals, All removals, Visitor reports), tables, and a full-page record with a Back link for each removal request (Approve/Decline at the top right). Admin redesign: 6 of 22 areas done; next is Replaced records, then Houses (test its bulk bar), Contests, Installers and the rest. Checked with empty data only; open a real removal request to see the record page.
+
 ## 2026-11-16: Admin Progress page removed
 Rey wanted only the "SoCal Lights Progress" Claude dashboard kept current, not a new Admin page. Removed Admin > System > Progress, its endpoints (`/api/admin/progress`, `/api/progress-log`), the half-hourly `progress-log` cron job and its heartbeat entry. Migration 0265 stays (never edit a migration); its `progress_log` table is unused. The Claude dashboard now shows only the Admin redesign status (22 areas; 5 done), updated by hand with each conversion. The daily refresh routine is switched off.
 

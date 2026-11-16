@@ -1292,38 +1292,47 @@ async function renderAds() {
 }
 
 /* ---------- reports: "Something wrong? Tell us" from visitors ---------- */
-const rmCard = (r) => {
-  const l = r.listing, done = r.status !== "open", pick = (m) => btn("ghost", `Remove: ${m.name || m.address}${m.city ? " (" + m.city + ")" : ""}`, `data-rm="approve" data-target="${esc(m.target)}"`);
-  return rec({
-    attrs: `data-rmid="${esc(r.id)}"`, title: "Remove a home: " + esc((l && l.name) || r.address || r.ref), meta: when(r.createdAt),
-    tags: [[r.status === "open" ? "Waiting" : r.status === "done" ? "Removed" : "Declined", r.status === "open" ? "warn" : r.status === "done" ? "ok" : "bad"], ...(l && l.addedBy ? [["Added by an organizer", ""]] : [])],
-    facts: fact("Contact", `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`) + (r.ref ? fact("Listing id", `<code>${esc(r.ref)}</code>`) : "") + (r.address ? fact("Typed", esc(r.address)) : "") + (r.note ? fact("Note", esc(r.note)) : "")
-      + (l ? fact("Listing", esc([l.name, l.address, l.city].filter(Boolean).join(", "))) + (l.consent ? fact("Organizer confirmed", `${esc(l.consent.email)} on ${esc(l.consent.created_at)} (${l.consent.n} homes, wording ${esc(l.consent.version)})`) : "") : "")
-      + (done ? fact("Handled", esc(r.handledAt || "") + (r.target ? ` · ${esc(r.target)}` : "") + (r.adminNote ? ` · ${esc(r.adminNote)}` : "")) : ""),
-    body: !done && !l ? (r.matches.length ? `<p class="meta" style="margin:0">No listing id. Possible matches by address:</p><div class="row" style="gap:8px;flex-wrap:wrap">${r.matches.map(pick).join("")}</div>` : `<p class="meta" style="margin:0">No listing id and no address match. Search the Events tab by street, then close this request.</p>`) : "",
-    main: done ? "" : l ? btn("main", "Approve and remove the listing", `data-rm="approve" data-target="${esc(l.target)}"`) : btn("ghost", "Nothing to remove, close it", 'data-rm="approve" data-nothing="1"'),
-    danger: done ? "" : btn("danger", "Decline", 'data-rm="decline"'),
-  });
-};
+let RPVIEW = "removals", RMOPEN = "";
 async function renderReports() {
   const main = $("#main"), [list, rem] = await Promise.all([api("/api/admin/reports"), api("/api/admin/removals").catch(() => [])]);
-  const open = rem.filter((r) => r.status === "open").length;
+  const open = rem.filter((r) => r.status === "open").length, shown = rem.filter((r) => r.status === "open" || RPVIEW === "removals-all");
   setCount("reports", list.length + open);
-  const removals = rem.length ? `<h2 style="font-size:18px;margin:6px 0">Remove my home requests (${open} waiting)</h2><p class="meta" style="margin:0 0 12px">A resident asked us to take a home off the site. Approve deletes the listing (and any photos), marks it done and emails the person. Decline emails them your note. Aim to answer within two business days.</p><div class="cards">${rem.map(rmCard).join("")}</div>` : "";
-  const reports = list.length ? `${rem.length ? '<h2 style="font-size:18px;margin:18px 0 6px">Reports</h2>' : ""}<p class="meta" style="margin:0 0 12px">From the "Something wrong? Tell us" link on events and houses. Fix the event or house, then dismiss the report.</p><div class="cards">${list.map((r) => rec({
-    attrs: `data-rid="${esc(r.id)}"`, title: esc(r.name || r.ref), tags: [["New", "warn"]], meta: when(r.created_at),
-    body: `<p style="margin:0;white-space:pre-line">${esc(r.message)}</p>`, facts: fact("About", `<code>${esc(r.ref)}</code>`) + fact("Reply to", r.contact ? `<a href="mailto:${esc(r.contact)}">${esc(r.contact)}</a>` : "They left no email"),
-    edit: btn("ghost", "Open Events", 'data-tab="events"'), danger: btn("danger", "Dismiss", "data-rdismiss"),
-  })).join("")}</div>` : "";
-  main.innerHTML = list.length || rem.length ? toolbar({ search: { placeholder: "Search reports" }, count: String(list.length + open) }) + removals + reports : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`;
-  wireToolbar(main, { onSearch: (q) => filterCards(main, q) }); applyPreset(main);
+  const rmRec = RMOPEN && rem.find((r) => r.id === RMOPEN); if (RMOPEN && !rmRec) RMOPEN = "";
+  const rmTag = (r) => [r.status === "open" ? "Waiting" : r.status === "done" ? "Removed" : "Declined", r.status === "open" ? "warn" : r.status === "done" ? "ok" : "bad"];
+  if (rmRec) { // the full record of one removal request
+    const r = rmRec, l = r.listing, done = r.status !== "open", t = rmTag(r), name = (l && l.name) || r.address || r.ref || "Request";
+    setDetail(name);
+    const pick = (m) => btn("ghost", `Remove: ${m.name || m.address}${m.city ? " (" + m.city + ")" : ""}`, `data-rm="approve" data-target="${esc(m.target)}"`);
+    const kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
+    main.innerHTML = `<div class="rpage"><a class="rback" href="#reports" id="rmBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to Reports</a>
+      <div class="pghead"><div><h2>Removal request</h2></div><div class="pgacts" data-rmid="${esc(r.id)}">${done ? "" : (l ? btn("main", "Approve and remove the listing", `data-rm="approve" data-target="${esc(l.target)}"`) : btn("ghost", "Nothing to remove, close it", 'data-rm="approve" data-nothing="1"')) + btn("danger", "Decline", 'data-rm="decline"')}</div></div>
+      <section class="rcard"><h3>Overview</h3>${kv([["Status", `<span class="tag ${t[1]}">${t[0]}</span>`], ["Received", when(r.createdAt)], ["Contact", `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`], ["Listing id", r.ref ? `<code>${esc(r.ref)}</code>` : ""], ["Typed address", esc(r.address || "")], ["Note", esc(r.note || "")]])}</section>
+      ${l ? `<section class="rcard"><h3>Listing</h3>${kv([["Home", esc([l.name, l.address, l.city].filter(Boolean).join(", "))], ["Added by", l.addedBy ? "An organizer" : ""], ["Organizer confirmed", l.consent ? `${esc(l.consent.email)} on ${esc(l.consent.created_at)} (${l.consent.n} homes, wording ${esc(l.consent.version)})` : ""]])}</section>` : ""}
+      ${!done && !l ? `<section class="rcard"><h3>Possible matches</h3>${r.matches.length ? `<p class="meta" style="margin:0 0 8px">No listing id. Matches by address:</p><div class="row" style="gap:8px;flex-wrap:wrap">${r.matches.map(pick).join("")}</div>` : `<p class="meta" style="margin:0">No listing id and no address match. Search the Events tab by street, then close this request.</p>`}</section>` : ""}
+      ${done ? `<section class="rcard"><h3>Handled</h3>${kv([["When", esc(r.handledAt || "")], ["Listing", esc(r.target || "")], ["Admin note", esc(r.adminNote || "")]])}</section>` : ""}</div>`;
+    window.scrollTo(0, 0);
+    main.querySelector("#rmBack").onclick = (e) => { e.preventDefault(); RMOPEN = ""; setDetail(""); renderReports(); };
+    return;
+  }
+  setDetail("");
+  const tabs = [["removals", "Home removals", open], ["removals-all", "All removals", 0], ["reports", "Visitor reports", list.length]];
+  const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === RPVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>`;
+  const wire = () => { main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { RPVIEW = b.dataset.view; renderReports(); })); main.querySelectorAll("[data-ropen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); RMOPEN = a.dataset.ropen; renderReports(); })); };
+  if (RPVIEW === "reports") {
+    main.innerHTML = head + `<div class="pghead"><div><h2>Visitor reports</h2><p>From the "Something wrong? Tell us" link on events and houses. Fix the event or house, then dismiss the report.</p></div></div>`
+      + (list.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>About</th><th>Message</th><th>Reply to</th><th>Received</th><th class="ac">Actions</th></tr></thead><tbody>${list.map((r) => `<tr data-rid="${esc(r.id)}"><td><b>${esc(r.name || r.ref)}</b><span class="sub"><code>${esc(r.ref)}</code></span></td><td style="white-space:pre-line;min-width:200px">${esc(r.message)}</td><td>${r.contact ? `<a class="rl" href="mailto:${esc(r.contact)}">${esc(r.contact)}</a>` : "They left no email"}</td><td>${when(r.created_at)}</td><td class="ac">${btn("ghost", "Open Events", 'data-tab="events"').replace('class="btn ghost"', 'class="btn ghost sm"')} ${btn("danger", "Dismiss", "data-rdismiss").replace('class="btn ghost danger"', 'class="btn ghost danger sm"')}</td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${list.length} report${list.length === 1 ? "" : "s"}</span></div></div>` : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`);
+    wire(); return;
+  }
+  main.innerHTML = head + `<div class="pghead"><div><h2>Home removals</h2><p>A resident asked us to take a home off the site. Approve deletes the listing (and any photos), marks it done and emails the person. Decline emails them your note. Aim to answer within two business days.</p></div></div>`
+    + (shown.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Home</th><th>Contact</th><th>Received</th><th>Status</th><th class="ac">Actions</th></tr></thead><tbody>${shown.map((r) => { const l = r.listing, t = rmTag(r); return `<tr data-rmid="${esc(r.id)}"><td><a class="rl" href="#reports" data-ropen="${esc(r.id)}">${esc((l && l.name) || r.address || r.ref || "Request")}</a><span class="sub">${esc(l ? [l.address, l.city].filter(Boolean).join(", ") : r.address || "")}</span></td><td><a class="rl" href="mailto:${esc(r.email)}">${esc(r.email)}</a></td><td>${when(r.createdAt)}</td><td><span class="tag ${t[1]}">${t[0]}</span></td><td class="ac"><a class="rl" href="#reports" data-ropen="${esc(r.id)}">Open</a></td></tr>`; }).join("")}</tbody></table></div><div class="pager"><span class="meta">${shown.length} request${shown.length === 1 ? "" : "s"}</span></div></div>` : `<div class="empty">${RPVIEW === "removals" ? "No removal requests waiting." : "No removal requests yet."}</div>`);
+  wire();
 }
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-rdismiss]"); if (!b) return;
   if (!tap(b, "dismiss")) return;
   const card = b.closest("[data-rid]"); b.disabled = true;
   try { await api("/api/admin/reports", { method: "POST", body: JSON.stringify({ id: card.dataset.rid, action: "dismiss" }) }); card.remove(); toast("Dismissed"); refreshCounts(); if (!document.querySelector("[data-rid]")) renderReports(); }
-  catch (err) { b.disabled = false; card.querySelector(".msg").className = "msg err"; card.querySelector(".msg").textContent = err.message; }
+  catch (err) { b.disabled = false; toast(err.message, true); }
 });
 
 $("#main").addEventListener("click", async (e) => {
@@ -1334,7 +1343,7 @@ $("#main").addEventListener("click", async (e) => {
   if (act === "approve") { if (b.dataset.target) body.target = b.dataset.target; if (b.dataset.nothing) body.nothing = true; }
   if (act === "decline") { const r = await askReason({ title: "Decline this request", hint: "A note for the person who asked. It is included in the email. Leave it blank to send none.", go: "Decline" }); if (r === null) { b.dataset.armed = ""; return; } body.reason = r; }
   b.disabled = true;
-  try { await api("/api/admin/removals", { method: "POST", body: JSON.stringify(body) }); toast(act === "approve" ? "Done. The person was emailed." : "Declined. The person was emailed."); refreshCounts(); renderReports(); }
+  try { await api("/api/admin/removals", { method: "POST", body: JSON.stringify(body) }); toast(act === "approve" ? "Done. The person was emailed." : "Declined. The person was emailed."); RMOPEN = ""; refreshCounts(); renderReports(); }
   catch (err) { b.disabled = false; toast(err.message); }
 });
 
