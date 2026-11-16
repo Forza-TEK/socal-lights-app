@@ -4,5 +4,5 @@ UPDATE events SET free=0, price='Price not listed', updated_at=datetime('now') W
 UPDATE events SET free=0, price='Price not listed', updated_at=datetime('now') WHERE id='tg-salvation-army-oceanside' AND free=1;
 UPDATE events SET free=0, price='Price not listed', updated_at=datetime('now') WHERE id='tg-salvation-army-el-cajon' AND free=1;
 -- Mt. Helix Turkey Trot Community Walk is in the unincorporated community Casa de Oro-Mount Helix, not La Mesa (same fix as 0277).
--- Only the city key changes (county stays San Diego; pin ~1.3 km from the community center; address kept). The old url host mthelixpark.org no longer resolves (validator url-dead), so it moves to the working www host.
-UPDATE events SET city='Casa de Oro-Mount Helix', url='https://www.mthelixpark.org/', updated_at=datetime('now') WHERE id='g13-mt-helix-turkey-trot-walk' AND city='La Mesa';
+-- Only the city key changes (county stays San Diego; pin ~1.3 km from the community center; address kept).
+UPDATE events SET city='Casa de Oro-Mount Helix', updated_at=datetime('now') WHERE id='g13-mt-helix-turkey-trot-walk' AND city='La Mesa';
