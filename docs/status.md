@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: AI assistant intro wording
+The introduction on Admin > AI assistant always said the assistant was off until turned on, even while it was on. It now says whether it is on, off or stopped by the kill switch, and that it only answers while switched on.
+
 ## 2026-11-16: Pricing audiences as tabs above the title
 On /pricing the four audiences (Homeowners, Event organizers, Contest organizers, Installers) moved from the left menu to sliding tabs above the page title, with icons and the same look and glide as the Admin tabs. On a phone the row swipes sideways and keeps the chosen tab in view. The side menu now has only the site links (Map, Add, Tutorials, Help, Your profile) and the phone bottom bar shows Map, Add, Tutorials, Help and More instead of the audiences. Links like /pricing#events, #contests, #banner and #homeowners still open the right tab; arrow keys, Home and End move between tabs. Checked on desktop (light) and phone (dark). Without scripts every section is still listed.
 
