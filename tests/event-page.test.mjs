@@ -18,7 +18,7 @@ const seed = () => {
 test("confirmed upcoming event: own preview tags, Event data, indexable, map button", async () => {
   const h = await (await get(seed(), "conf")).text();
   assert.match(h, /<title>Candy Lane in Altadena, CA \| SoCal Lights<\/title>/);
-  assert.match(h, /property="og:url" content="https:\/\/x\.test\/e\/conf"/); assert.match(h, /og:image" content="https:\/\/x\.test\/cdn-cgi\/image\/width=1200,height=630,fit=cover,quality=70,format=jpeg\/https:\/\/img\.example\.org\/a\.jpg"/); assert.match(h, /og:image:width" content="1200"/); assert.match(h, /twitter:image" content="https:\/\/x\.test\/cdn-cgi/);
+  assert.match(h, /property="og:url" content="https:\/\/x\.test\/e\/conf"/); assert.match(h, /og:image" content="https:\/\/x\.test\/img\/share\.png"/); /* a photo on another website is never sent through our image resizer (open-proxy fix): the share picture is the site card */ assert.match(h, /og:image:width" content="1200"/); assert.match(h, /twitter:image" content="https:\/\/x\.test\/img\/share\.png"/);
   assert.match(h, /twitter:card/); assert.match(h, /"@type":"Event"/); assert.match(h, /"price":"0"/);
   assert.doesNotMatch(h, /name="robots"/); assert.match(h, /href="\/#e-conf"/); assert.match(h, /href="\/in\/altadena"/);
 });

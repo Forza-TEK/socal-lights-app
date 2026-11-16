@@ -1,6 +1,7 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js?v=20261115i";
 import { IN_APP as NATIVE_IN_APP, nativeShare, syncReminder } from "/native.js?v=20261115a";
+import { resizedImage } from "/imgurl.js?v=20261116a";
 import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261115a";
 import { STOCK } from "/stock.js?v=20261114a";
 import { parseVideo } from "/video.js?v=20261115a";
@@ -165,24 +166,29 @@ function calendarFor(ev) {
 const citySlug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 // A home the sweeps found on a public contest or tour page (not a contest itself): its owner can claim it by posting their own
 const isSweepHome = (ev) => /view from the street/i.test(ev.v || "") && !String(ev.id).startsWith("c-");
-const reportLink = (name, key, city, rm) => `<p class="reportline">${city ? `<a href="/in/${citySlug(city)}">More in ${esc(city)}</a> · ` : ""}<a data-report="${esc(key)}|${esc(name)}" href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Something wrong? Tell us</a>${rm ? ` · <a class="removehome" href="/remove-home?ref=${encodeURIComponent(key.replace(/^e-/, ""))}&name=${encodeURIComponent(String(name).slice(0, 80))}">Not your listing? Remove my home</a>` : ""}</p>`;
+const reportLink = (name, key, city, rm) => `<p class="reportline">${city ? `<a href="/in/${citySlug(city)}">More in ${esc(city)}</a> · ` : ""}<a data-report="${esc(key)}|${esc(name)}" href="mailto:info@socallights.app?subject=${encodeURIComponent("Correction: " + name)}&body=${encodeURIComponent("About: " + name + "\n" + location.origin + "/#" + key + "\n\nWhat is wrong or missing?\n\n")}">Report or hide this listing</a>${rm ? ` · <a class="removehome" href="/remove-home?ref=${encodeURIComponent(key.replace(/^e-/, ""))}&name=${encodeURIComponent(String(name).slice(0, 80))}">Not your listing? Remove my home</a>` : ""}</p>`;
 
 // "Something wrong? Tell us": a short form instead of an email app; falls back to the email link if scripts are off
 document.addEventListener("click", (e) => {
   const a = e.target.closest("a[data-report]"); if (!a) return; e.preventDefault();
   const [ref, ...rest] = a.dataset.report.split("|"), name = rest.join("|");
   const o = document.createElement("div"); o.className = "rptscrim";
-  o.innerHTML = `<form class="rptdlg" role="dialog" aria-modal="true" aria-label="Report a problem"><h3>Something wrong?</h3><p>${esc(name)}</p><label>What should we fix?<textarea name="m" rows="4" maxlength="600" placeholder="e.g. The date has changed, the pin is on the wrong street, it is closed."></textarea></label><label>Your email, if you want a reply <span>(optional)</span><input name="c" type="email" maxlength="120" autocomplete="email"></label><p class="rpterr" role="alert" hidden></p><div class="rptrow"><button class="rptgo" type="submit">Send</button><button class="rptx" type="button">Cancel</button></div></form>`;
-  document.body.appendChild(o); const f = o.querySelector("form"); f.m.focus();
+  o.innerHTML = `<form class="rptdlg" role="dialog" aria-modal="true" aria-label="Report or hide this listing"><h3>Report or hide</h3><p>${esc(name)}</p><fieldset class="rptwhy"><legend>What is the problem?</legend><label><input type="radio" name="why" value="objectionable"> Offensive, unsafe or inappropriate photo or text</label><label><input type="radio" name="why" value="fake"> Not a real event or home</label><label><input type="radio" name="why" value="wrong" checked> Wrong information (date, place, price, closed)</label><label><input type="radio" name="why" value="other"> Something else</label></fieldset><label>Details <span>(optional)</span><textarea name="m" rows="3" maxlength="600" placeholder="e.g. The date has changed, the pin is on the wrong street."></textarea></label><label>Your email, if you want a reply <span>(optional)</span><input name="c" type="email" maxlength="120" autocomplete="email"></label><p class="rpterr" role="alert" hidden></p><p class="rptnote">We review reports of objectionable content within 24 hours and remove what breaks the Terms.</p><div class="rptrow"><button class="rptgo" type="submit">Send report</button><button class="rpthide" type="button">Hide for me</button><button class="rptx" type="button">Cancel</button></div></form>`;
+  document.body.appendChild(o); const f = o.querySelector("form"); f.why[2].focus();
+  o.querySelector(".rpthide").onclick = () => { HIDDEN.add(ref); saveHidden(); E = keepShown(E, "e-"); SHOW = keepShown(SHOW, "h-"); o.remove(); state.detail = null; state.sel = null; applyFilters(); toast("Hidden for you. Bring hidden items back from the ⋯ menu."); };
   const close = () => o.remove(); o.onclick = (ev) => { if (ev.target === o) close(); }; o.querySelector(".rptx").onclick = close;
   f.onsubmit = async (ev) => { ev.preventDefault(); const er = o.querySelector(".rpterr"); er.hidden = true;
-    const r = await fetch("/api/report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ref, name, message: f.m.value, contact: f.c.value }) }).catch(() => null), j = r ? await r.json().catch(() => ({})) : {};
+    const r = await fetch("/api/report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ref, name, reason: f.why.value, message: f.m.value, contact: f.c.value }) }).catch(() => null), j = r ? await r.json().catch(() => ({})) : {};
     if (!r || !r.ok) { er.textContent = (j && j.error) || "That didn't send. Try again."; er.hidden = false; return; }
-    close(); toast("Thanks. We'll look into it."); };
+    close(); toast(f.why.value === "objectionable" ? "Thanks. We review these within 24 hours." : "Thanks. We'll look into it."); };
 });
 
 /* ---------- state ---------- */
 let E = [], SHOW = [], CONFIG = {};
+// "Hide this for me" (Apple 1.2 user-generated content): the person's own list of items they never want to see again, kept on this device. Events are "e-<id>", homes "h-<id>".
+let HIDDEN = new Set(); try { HIDDEN = new Set(JSON.parse(localStorage.getItem("socal-hidden") || "[]").filter((k) => typeof k === "string").slice(0, 500)); } catch {}
+const keepShown = (arr, pre) => (HIDDEN.size ? arr.filter((x) => !HIDDEN.has(pre + x.id)) : arr);
+const saveHidden = () => { try { localStorage.setItem("socal-hidden", JSON.stringify([...HIDDEN].slice(-500))); } catch {} };
 const state = { vis: new Set(), season: defaultSeason(TODAY), all: false, q: "", date: "", weekend: false, city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
 // Inside the app, saving an event sets a reminder for its first day and un-saving removes it (no-op in a browser or until the app build has the plugin; see native.js)
@@ -663,18 +669,15 @@ function photosOf(ev, hero) {
 const ARW_L = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>`;
 const ARW_R = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>`;
 // Official images live on other sites: fetch them without a referrer, load them lazily, and fall back to the stock photo if one fails
-// Smaller copies of photos for the list and popup, made by Cloudflare image resizing (/cdn-cgi/image). It is used only once a quick test shows it works on this site (and is remembered), otherwise the original photo loads, and a failed copy falls back to the original.
-// Remote photos are resized from the first visit (city pages already do this unconditionally and it works; a failed copy falls back to the original). Only a remembered failed probe ("0") turns it off.
-// Our own photos (/img/events, /api/photo) are resized from the first visit too, same rule: only a remembered failed probe ("0") turns it off.
-let THUMBS = true, THUMBS_REMOTE = true; try { THUMBS = localStorage.getItem("socal-thumbs") !== "0"; THUMBS_REMOTE = localStorage.getItem("socal-thumbs-remote") !== "0"; } catch {}
+// Smaller copies of OUR OWN photos for the list and popup, made by Cloudflare image resizing (/cdn-cgi/image). It is used only once a quick test shows it works on this site (and is remembered), otherwise the original photo loads, and a failed copy falls back to the original.
+// Photos hosted on other websites are never sent through the resizer (public/imgurl.js: it would make our domain an open image proxy); they load from their own site, as https.
+let THUMBS = true; try { THUMBS = localStorage.getItem("socal-thumbs") !== "0"; } catch {}
 const thumbProbe = (u) => fetch("/cdn-cgi/image/width=16/" + u, { method: "HEAD" }).then((r) => r.ok && /^image\//.test(r.headers.get("content-type") || "")).catch(() => false);
 // a device that already learned thumbnails work does not ask again on every load (the probe showed as an aborted request on each page view)
 (THUMBS && (() => { try { return localStorage.getItem("socal-thumbs") === "1"; } catch { return false; } })() ? Promise.resolve(true) : thumbProbe(location.origin + "/img/badge-160.webp")).then((ok) => { THUMBS = ok; try { localStorage.setItem("socal-thumbs", ok ? "1" : "0"); } catch {} });
-// photos hosted on other sites can only be resized when Cloudflare is set to resize from any origin: test one of them once the events are loaded
-function probeRemoteThumbs() { const e = E.find((x) => /^https?:/.test(x.img || "")); if (e) thumbProbe(e.img).then((ok) => { THUMBS_REMOTE = ok; try { localStorage.setItem("socal-thumbs-remote", ok ? "1" : "0"); } catch {} }); }
-// Photos stored as http:// are never requested directly from an https page (mixed content): the resizer fetches them for us, and the fallback copy is the https address.
+// Photos stored as http:// are never requested directly from an https page (mixed content), so the original is always the https address.
 const secure = (u) => String(u || "").replace(/^http:\/\//i, "https://");
-const thumbOf = (u, w) => { u = u || ""; return (THUMBS && /^\/(img\/events|api\/photo|img\/stock\/t)\//.test(u)) || (THUMBS_REMOTE && /^https?:\/\//.test(u)) ? `/cdn-cgi/image/width=${w},quality=75,format=auto/${u.startsWith("/") ? location.origin + u : u}` : secure(u); };
+const thumbOf = (u, w) => { u = u || ""; return (THUMBS && /^\/(img\/events|api\/photo|img\/stock\/t)\//.test(u) && resizedImage(u, `width=${w},quality=75,format=auto`, location.origin)) || secure(u); };
 // w: the width asked for (list cards 320, pop-up 800, details 900); h: when given, the box is declared so nothing moves while the photo loads. Only the first cards load at once: the rest wait until they near the screen.
 const photoImg = (ph, eager, w = 640, h = 0) => { const t = thumbOf(ph.src, w), o = secure(ph.src); return `<img class="evimg" src="${esc(t)}"${t !== o ? ` data-orig="${esc(o)}"` : ""}${ph.fb ? ` data-fb="${esc(ph.fb)}" data-fbc="${esc(ph.fbc)}" data-fbl="${esc(ph.fbl)}" data-w="${t !== o ? w : 0}"${ph.keep ? " data-keep=\"1\"" : ""}` : ""} alt=""${h ? ` width="${w}" height="${h}"` : ""} loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`; };
 // The official picture gives way to the stock photo of that kind of event when it failed to load, or (by its size and shape, see photoguess.js) is a blurry or tiny picture, or a logo or banner on a non-city event
@@ -1347,6 +1350,7 @@ function moreHtml() {
     + (SIGNED_IN ? "" : row("a", 'href="/tutorials"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>`, "Tutorials", "Short how-to videos"))
     + (SIGNED_IN ? "" : row("a", 'href="/help"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>`, "Help", "Answers and how-to steps"))
     + row("a", 'href="/es" hreflang="es" lang="es"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>`, "Español", "SoCal Lights en español")
+    + (HIDDEN.size ? row("button", 'type="button" data-m="unhide"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>`, "Show hidden items", HIDDEN.size + " hidden on this device") : "")
     + row("a", 'href="/privacy"', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>`, "Privacy & terms", "How accounts and your data are handled")
     + row("a", `href="mailto:${esc(SITE.contactEmail || "info@socallights.app")}"`, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`, "Contact us", esc(SITE.contactEmail || "info@socallights.app"));
 }
@@ -1394,6 +1398,7 @@ $("#moremenu").addEventListener("click", (e) => {
   const b = e.target.closest("[data-m]"); if (!b) { if (e.target.closest("a")) closeMore(); return; }
   const k = b.dataset.m;
   if (k === "alerts") { closeMore(); openAlerts(); return; }
+  if (k === "unhide") { HIDDEN.clear(); saveHidden(); closeMore(); toast("Hidden items are back."); refreshData(); return; }
   if (k === "night") {
     setTheme(theme() === "dark" ? "light" : "dark");
     // update the row in place so the switch slides and the icon swaps
@@ -1711,8 +1716,8 @@ async function load() {
     headOnly = !!headP && evR0.status === "fulfilled" && Array.isArray(evR0.value) && evR0.value.length > 0;
     const evR = headP && !headOnly ? (await Promise.allSettled([fullP]))[0] : evR0;
     if (evR.status !== "fulfilled" || !Array.isArray(evR.value)) throw new Error("events failed");
-    E = tidyEvents(evR.value); setTimeout(probeRemoteThumbs, 1500);
-    SHOW = postsR.status === "fulfilled" && Array.isArray(postsR.value) ? postsR.value : []; CONFIG = cfgR.status === "fulfilled" && cfgR.value ? cfgR.value : {};
+    E = tidyEvents(keepShown(evR.value, "e-"));
+    SHOW = postsR.status === "fulfilled" && Array.isArray(postsR.value) ? keepShown(postsR.value, "h-") : []; CONFIG = cfgR.status === "fulfilled" && cfgR.value ? cfgR.value : {};
     if (postsR.status !== "fulfilled") setTimeout(refreshData, 10000);
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses();
@@ -1751,7 +1756,7 @@ let loadedAt = Date.now();
 // The whole list has arrived after the first screen was drawn from the small one: use it, then redraw the list (keeping its scroll position), the counts and the map
 function takeFull(ev) {
   if (!headOnly || !Array.isArray(ev)) return;
-  headOnly = false; E = tidyEvents(ev);
+  headOnly = false; E = tidyEvents(keepShown(ev, "e-"));
   E.forEach((e) => { const d = DETAIL.get(e.id); if (d) HEAVY.forEach((k) => (e[k] = d[k])); });
   E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
   placeHouses(); loadedAt = Date.now(); document.body.classList.remove("headonly");
@@ -1764,7 +1769,7 @@ async function refreshData() {
     const [evR, postsR] = await Promise.allSettled([get("/api/events"), get("/api/posts")]);
     const ev = evR.status === "fulfilled" ? evR.value : null, posts = postsR.status === "fulfilled" ? postsR.value : null;
     if (!Array.isArray(ev) && !Array.isArray(posts)) return;
-    if (Array.isArray(ev)) { E = tidyEvents(ev); if (headOnly) { headOnly = false; document.body.classList.remove("headonly"); } } if (Array.isArray(posts)) SHOW = posts;
+    if (Array.isArray(ev)) { E = tidyEvents(keepShown(ev, "e-")); if (headOnly) { headOnly = false; document.body.classList.remove("headonly"); } } if (Array.isArray(posts)) SHOW = keepShown(posts, "h-");
     E.forEach((e) => { const d = DETAIL.get(e.id); if (d) HEAVY.forEach((k) => (e[k] = d[k])); }); // keep the details already loaded (the list has none)
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses(); loadedAt = Date.now();

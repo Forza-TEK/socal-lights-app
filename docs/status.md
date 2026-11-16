@@ -1,5 +1,10 @@
 # Status
 
+## 2026-11-16: App and web audit, PR 3 of 3 (Report and Hide, image resizer; branch `app-policy-ugc`, stacked on `app-web-fixes`)
+- Apple 1.2 (M5): the "Something wrong?" link on events and homes is now "Report or hide this listing": reasons (including Offensive, unsafe or inappropriate), posts to the existing `POST /api/report` (5 an hour per connection, repeats stored once a day), plus "Hide for me" kept on the device and "Show hidden items" in the menu. No migration.
+- Open image resizer (H4): `public/imgurl.js` builds every `/cdn-cgi/image` address and refuses hosts that are not ours; third-party photos load as they are, a share picture is made only from our own photos. The Cloudflare dashboard step is in the decisions file.
+- Decisions for the owner, with a recommendation each: `docs/audit/2026-11-16/app-policy-decisions.md` (age rating vs user content, prize contests under 5.3, Terms wording, dashboard steps). Nothing was guessed.
+
 ## 2026-11-16: App and web audit, PR 2 of 3 (iPhone shell, branch `app-ios-shell`; not buildable or testable here)
 - `Info.plist`: camera and photo library strings (a Take Photo tap without the camera string ends the app: H2), an accurate location string (M1), arm64 instead of armv7. New `PrivacyInfo.xcprivacy` wired into the Xcode project (M2). `MARKETING_VERSION` 1.0.1 in the project and the workflow. `allowNavigation`: unpkg removed, video hosts added (M8). `@capacitor/local-notifications` added to `app/package.json`, the lock file (checked with a clean `npm ci`), the Podfile and the Android gradle files (H6); `syncReminder` stays app-only through the existing plugin check.
 - Left alone on purpose: `limitsNavigationsToAppBoundDomains` false (H3, needs a device test), signing, the iOS workflow was not run. Owner steps and the build contents are in `docs/app-store.md` ("Next iOS build", "Manual steps").

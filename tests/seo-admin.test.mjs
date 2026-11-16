@@ -44,8 +44,11 @@ test("event page: share image through our resizer with size and twitter:image; F
   addEvent(raw, "conf", { name: "Candy Lane", city: "Altadena" });
   raw.prepare("UPDATE events SET status='confirmed', image='http://img.example.org/a.jpg', address='1 Candy Ln, Altadena, CA 91001', hours='6-9 pm', start_date=?, end_date=? WHERE id='conf'").run(ptToday(5), ptToday(5));
   const h = await (await eventPage(ctx(env, "/e/conf", { id: "conf" }))).text();
-  assert.match(h, /og:image" content="https:\/\/x\.test\/cdn-cgi\/image\/width=1200,height=630,fit=cover,quality=70,format=jpeg\/https:\/\/img\.example\.org\/a\.jpg"/, "https photo, resized, ours");
-  assert.match(h, /og:image:width" content="1200"/); assert.match(h, /og:image:height" content="630"/); assert.match(h, /name="twitter:image" content="https:\/\/x\.test\/cdn-cgi/);
+  assert.match(h, /og:image" content="https:\/\/x\.test\/img\/share\.png"/, "a photo on another website is never sent through our resizer: the site card is the share picture");
+  raw.prepare("UPDATE events SET image='https://x.test/api/photo/p/9' WHERE id='conf'").run();
+  const own = await (await eventPage(ctx(env, "/e/conf", { id: "conf" }))).text();
+  assert.match(own, /og:image" content="https:\/\/x\.test\/cdn-cgi\/image\/width=1200,height=630,fit=cover,quality=70,format=jpeg\/https:\/\/x\.test\/api\/photo\/p\/9"/, "our own photo, resized");
+  assert.match(h, /og:image:width" content="1200"/); assert.match(h, /og:image:height" content="630"/); assert.match(h, /name="twitter:image" content="https:\/\/x\.test\/img\/share\.png"/);
   assert.doesNotMatch(h, /og:image" content="https:\/\/img\.example\.org/);
   assert.match(h, /data-fav="conf"/); assert.match(h, /socal-favs/, "the same favorites list as the map");
   assert.match(h, /href="\/e\/conf\.ics"/); assert.match(h, /href="https:\/\/www\.google\.com\/maps\/dir\/\?api=1&amp;destination=/);
@@ -143,7 +146,7 @@ test("/past is noindex until a result exists; contest pages are not blocked in r
   const p = await (await pastIndex(ctx(env, "/past"))).text(); assert.match(p, /noindex,follow/);
   const robots = read("public/robots.txt"); assert.doesNotMatch(robots, /Disallow: \/c\//); assert.match(robots, /Disallow: \/admin\//);
   assert.match(read("public/_headers"), /\/c\/\*\n {2}X-Robots-Tag: noindex/, "still noindex by header");
-  const c = read("functions/c/[slug].js"); assert.match(c, /twitter:image/); assert.match(c, /og:image:width/); assert.match(c, /cdn-cgi\/image/);
+  const c = read("functions/c/[slug].js"); assert.match(c, /twitter:image/); assert.match(c, /og:image:width/); assert.match(c, /resizedImage\(photo/);
 });
 
 test("help articles keep Article data (SEO-12: it was already there)", () => {
