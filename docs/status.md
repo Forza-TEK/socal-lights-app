@@ -1,5 +1,9 @@
 # Status
 
+## 2026-11-16: App and web audit, PR 2 of 3 (iPhone shell, branch `app-ios-shell`; not buildable or testable here)
+- `Info.plist`: camera and photo library strings (a Take Photo tap without the camera string ends the app: H2), an accurate location string (M1), arm64 instead of armv7. New `PrivacyInfo.xcprivacy` wired into the Xcode project (M2). `MARKETING_VERSION` 1.0.1 in the project and the workflow. `allowNavigation`: unpkg removed, video hosts added (M8). `@capacitor/local-notifications` added to `app/package.json`, the lock file (checked with a clean `npm ci`), the Podfile and the Android gradle files (H6); `syncReminder` stays app-only through the existing plugin check.
+- Left alone on purpose: `limitsNavigationsToAppBoundDomains` false (H3, needs a device test), signing, the iOS workflow was not run. Owner steps and the build contents are in `docs/app-store.md` ("Next iOS build", "Manual steps").
+
 ## 2026-11-16: Visitor audit, part 3 of 3: content rules (branch `audit-visitor-content`)
 - F7: Tonight and This weekend leave out Expected events whose hours say "check site". F17: "Free + paid extras" tag when a free event has a fee, "free in past years" is not free, unlisted prices all read "Price not listed". F15: `http://` event photos are upgraded to `https://`. F14: a home titled "Home at <street>" is listed as "Home in <city>". F11: Español in the More menu. F16: the map says "Home" / "Homes".
 - Decisions, options and what is not fixed (F6 photo, F13 shop sort, F21): `docs/audit/2026-11-16/visitor-decisions.md`.

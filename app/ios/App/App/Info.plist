@@ -28,7 +28,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -46,7 +46,11 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>SoCal Lights uses your location to center the map and estimate drive times. It stays on your device.</string>
+	<string>SoCal Lights uses your location to show what is near you, center the map and estimate drive times. Your position is sent to our server only if you tap I saw it lit tonight, to check that you are near that home; it is not stored.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>SoCal Lights uses the camera only when you choose Take Photo to add a picture of your lights display or event to a listing you submit.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SoCal Lights reads the photos you pick to add pictures of your lights display or event to a listing you submit.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>
