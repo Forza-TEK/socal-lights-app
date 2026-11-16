@@ -365,16 +365,15 @@ let CLVIEW = "pending";
 async function renderClaims() {
   const main = $("#main"), [pend, ok, no] = await Promise.all(["pending", "approved", "declined"].map((s) => api("/api/admin/claims?status=" + s)));
   const rows = CLVIEW === "pending" ? pend : CLVIEW === "declined" ? no : ok;
-  setCount("claims", pend.length);
-  const bar = toolbar({ views: [{ k: "pending", label: "Waiting", n: pend.length }, { k: "approved", label: "Approved", n: ok.length }, { k: "declined", label: "Declined", n: no.length }], active: CLVIEW, count: String(rows.length) });
-  const go = () => wireToolbar(main, { onView: (v) => { CLVIEW = v; renderClaims(); }, onSearch: () => {} });
-  if (!rows.length) { main.innerHTML = bar + `<div class="empty">${CLVIEW === "pending" ? "No claims waiting. A claim only lets the person buy Featured for that event; it gives no edit rights. When you approve or decline one, the person is emailed once." : "Nothing here."}</div>`; go(); return; }
-  main.innerHTML = bar + `<div class="cards">${rows.map((x) => rec({
-    attrs: `data-clid="${esc(x.id)}"`, title: esc(x.name || x.event_id), tags: [[x.status === "pending" ? "Waiting" : x.status === "approved" ? "Approved" : "Declined", x.status === "pending" ? "warn" : x.status === "approved" ? "ok" : "bad"]], meta: esc((x.created_at || "").slice(0, 16)) + " UTC",
-    facts: fact("Claimed by", `<span style="user-select:all">${esc(x.claimant)}</span>`) + fact("Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "None") + fact("Where", esc(x.city || "")) + (x.method ? fact("Approved by", esc(x.method)) : ""),
-    edit: "", main: x.status !== "approved" ? btn("main", "Approve", 'data-clact="approve"') : "", danger: x.status !== "declined" ? btn("danger", "Decline", 'data-clact="decline"') : "",
-  })).join("")}</div>`;
-  go();
+  setCount("claims", pend.length); setDetail("");
+  const tabs = [["pending", "Waiting", pend.length], ["approved", "Approved", ok.length], ["declined", "Declined", no.length]];
+  const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === CLVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
+    <div class="pghead"><div><h2>Event claims</h2><p>A claim only lets the person buy Featured for that event; it gives no edit rights. When you approve or decline one, the person is emailed once.</p></div></div>`;
+  const wire = () => main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { CLVIEW = b.dataset.view; renderClaims(); }));
+  if (!rows.length) { main.innerHTML = head + `<div class="empty">${CLVIEW === "pending" ? "No claims waiting." : "Nothing here."}</div>`; wire(); return; }
+  const st = (x) => (x.status === "pending" ? ["Waiting", "warn"] : x.status === "approved" ? ["Approved", "ok"] : ["Declined", "bad"]);
+  main.innerHTML = head + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Event</th><th>Claimed by</th><th>Event page</th><th>Added</th><th>Status</th><th class="ac">Actions</th></tr></thead><tbody>${rows.map((x) => `<tr data-clid="${esc(x.id)}"><td><b>${esc(x.name || x.event_id)}</b><span class="sub">${esc(x.city || "")}</span></td><td><span style="user-select:all">${esc(x.claimant)}</span></td><td>${x.url ? `<a class="rl" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "None"}</td><td>${esc((x.created_at || "").slice(0, 16))} UTC</td><td><span class="tag ${st(x)[1]}">${st(x)[0]}</span>${x.method ? `<span class="sub">by ${esc(x.method)}</span>` : ""}</td><td class="ac">${x.status !== "approved" ? btn("main", "Approve", 'data-clact="approve"').replace('class="btn ice"', 'class="btn ice sm"') : ""} ${x.status !== "declined" ? btn("danger", "Decline", 'data-clact="decline"').replace('class="btn ghost danger"', 'class="btn ghost danger sm"') : ""}</td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${rows.length} claim${rows.length === 1 ? "" : "s"}</span></div></div>`;
+  wire();
 }
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-clact]"); if (!b) return;
