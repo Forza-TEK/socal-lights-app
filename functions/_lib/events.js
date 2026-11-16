@@ -1,9 +1,30 @@
 // Shared helpers for creating events from submissions.
 import { clean, safeUrl, COUNTIES } from "./util.js";
 import { SEASONS } from "../../public/seasons.js";
+import { CITY } from "../../public/cities.js";
+import { normalizeHours, freeFlagProblem } from "../../scripts/event-rules.mjs";
 
 export const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 export const slug = (s) => String(s).toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+const kmApart = (a, b) => { const R = 6371, r = Math.PI / 180, x = (b[0] - a[0]) * r, y = (b[1] - a[1]) * r, h = Math.sin(x / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(y / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+
+// The data rules the Grok intake, the public form and the migration check enforce, applied to a save from the Admin event form (audit 2026-11-16, H2).
+// `e` is the cleaned event as the form sends it (start/end, free 0|1, price, hours, url, county, city, lat, lng); `prev` is the stored row when it is an edit (columns as in the table),
+// `cityCounties` the counties already used for e.city. A rule is only applied to what the editor CHANGED, so older rows that break a rule can still be moved to another season or confirmed in bulk.
+// Returns { hours, problems }: hours is the normalized text (silently tidied, never rejected); problems are plain sentences for the form.
+export function adminEventRules(e, prev = null, cityCounties = []) {
+  const problems = [], changed = (...f) => !prev || f.some((k) => String(prev[k] ?? "") !== String(e[k] ?? ""));
+  const hours = normalizeHours(e.hours);
+  if (changed("free", "price")) { const fp = freeFlagProblem(e.free, e.price); if (fp) problems.push(fp + "."); }
+  if (e.url && changed("url") && !/^https:\/\/[^\s]+$/i.test(e.url)) problems.push("The link must be a full web address starting with https://.");
+  if (changed("city", "lat", "lng")) {
+    const pt = CITY[e.city];
+    if (pt) { const lim = ["Los Angeles", "San Diego"].includes(e.city) ? 45 : 30, d = kmApart([e.lat, e.lng], pt); if (d > lim) problems.push(`The pin is ${Math.round(d)} km from the center of ${e.city}. Check the city and the pin.`); }
+  }
+  if (changed("county", "city") && cityCounties.length && !cityCounties.includes(e.county)) problems.push(`${e.city} events are in ${cityCounties.join(" or ")} County in our data, not ${e.county}. Check the county and the city.`);
+  return { hours, problems };
+}
 
 // Inserts or updates one event (same columns as the admin editor). The scheduled upkeep never touches featured/featured_until.
 export async function upsertEvent(env, e) {

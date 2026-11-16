@@ -7,7 +7,7 @@ import { renderEmails } from "/admin/emails.js?v=20261116b";
 import { renderHelp } from "/admin/help.js?v=20261116b";
 import { renderPartner } from "/admin/partner.js?v=20261116b";
 import { renderChat } from "/admin/chat.js?v=20261116c";
-import { renderGrok } from "/admin/grok.js?v=20261116b";
+import { renderGrok } from "/admin/grok.js?v=20261116c";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261116a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
 import { pageHost } from "/admin/pagehost.js?v=20261116a";
@@ -713,26 +713,28 @@ async function renderEvents() {
   $("#evHealth").onchange = (x) => { EVHEALTH = x.target.value; refilter(); };
   main.querySelector("[data-sort]").onchange = (x) => { EVSORT = x.target.value; refilter(); };
   $("#addEv").onclick = () => editEvent(null);
-  // ---- bulk actions: a second tap confirms; status and season changes can be undone, a delete cannot ----
+  // ---- bulk actions: a second tap confirms; status, season changes and deletes can be undone (a delete from its tombstone) ----
   $("#evAll").onchange = (x) => { const all = evFiltered(); if (x.target.checked && all.length > BULK_MAX) { x.target.checked = false; return toast(`Pick at most ${BULK_MAX} at a time. Narrow the filters first.`, true); } all.forEach((e) => (x.target.checked ? EVSEL.add(e.id) : EVSEL.delete(e.id))); paint(); };
   $("#evClear").onclick = () => { EVSEL.clear(); paint(); };
-  const run = async (btn, verb, fn, undoable) => {
+  const run = async (btn, verb, fn, undoable, restorable) => {
     const ids = [...EVSEL]; if (!ids.length || !tap(btn, verb.replace("{n}", ids.length))) return;
     document.querySelectorAll("#evBulk button, #evBulk select").forEach((b) => (b.disabled = true));
     const list = ids.map((id) => EVENTS.find((e) => e.id === id)).filter(Boolean), before = list.map((e) => ({ ...e })), okIds = []; let failed = 0, skipped = 0;
     for (const [i, e] of list.entries()) { btn.textContent = `Working ${i + 1} of ${list.length}…`; try { await fn(e); okIds.push(e.id); } catch (er) { if (er.status === 409) skipped++; else failed++; } }
     EVSEL.clear(); const done = okIds.length, bad = failed + skipped;
     const msg = `${done} event${done === 1 ? "" : "s"} done` + (skipped ? `, ${skipped} skipped (a paid Featured order is running: open each one to confirm)` : "") + (failed ? `, ${failed} could not be saved` : "");
-    toast(msg, !!bad && !done, undoable && done ? { undo: async () => { let u = 0; for (const e of before.filter((b) => okIds.includes(b.id))) { try { await api("/api/admin/events", { method: "POST", body: JSON.stringify(evBody(e)) }); u++; } catch {} } toast(`Undone for ${u} event${u === 1 ? "" : "s"}`); renderEvents(); refreshCounts(); } } : {});
+    toast(msg, !!bad && !done, restorable && done ? { undo: () => restoreEvents(okIds) } : undoable && done ? { undo: async () => { let u = 0; for (const e of before.filter((b) => okIds.includes(b.id))) { try { await api("/api/admin/events", { method: "POST", body: JSON.stringify(evBody(e)) }); u++; } catch {} } toast(`Undone for ${u} event${u === 1 ? "" : "s"}`); renderEvents(); refreshCounts(); } } : {});
     renderEvents(); refreshCounts();
   };
   const post = (e, over) => api("/api/admin/events", { method: "POST", body: JSON.stringify(evBody(e, over)) });
   $("#evSetC").onclick = (x) => run(x.target, "set {n} to confirmed", (e) => post(e, { status: "confirmed" }), true);
   $("#evSetE").onclick = (x) => run(x.target, "set {n} to expected", (e) => post(e, { status: "expected" }), true);
   $("#evMove").onclick = (x) => { const to = $("#evMoveTo").value; run(x.target, `move {n} to ${SEASONS[to].short || SEASONS[to].label}`, (e) => post(e, { season: to, type: SEASONS[to].types[e.t] ? e.t : Object.keys(SEASONS[to].types)[0] }), true); };
-  $("#evDel").onclick = (x) => run(x.target, "delete {n} for good (no undo)", (e) => api("/api/admin/events/" + encodeURIComponent(e.id), { method: "DELETE" }), false);
+  $("#evDel").onclick = (x) => run(x.target, "delete {n} (Undo is offered afterwards)", (e) => api("/api/admin/events/" + encodeURIComponent(e.id), { method: "DELETE" }), false, true);
 }
 const BULK_MAX = 200;
+// Brings deleted events back from their tombstones (the Undo on a delete)
+const restoreEvents = async (ids) => { try { const r = await api("/api/admin/events/restore", { method: "POST", body: JSON.stringify({ action: "restore", ids }) }); toast(`Brought back ${r.restored.length} event${r.restored.length === 1 ? "" : "s"}` + (r.skipped.length ? `, ${r.skipped.length} could not be restored` : ""), !r.restored.length); } catch (er) { toast(er.message, true); } if (tab === "events") renderEvents(); else render(); refreshCounts(); };
 function editEvent(ev) {
   const e = ev || { id: "", n: "", c: "Orange", city: "", t: Object.keys((SEASONS[evSeason] || SEASONS.christmas).types)[0], s: TODAY, e: TODAY, st: "expected", free: true, p: "Free", h: "", lat: 33.68, lng: -117.83, b: "", u: "", sn: SEASONS[evSeason] ? evSeason : "christmas" };
   const typeOpts = (sn, cur) => Object.entries(SEASONS[sn].types).map(([v, l]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${l}</option>`).join("");
@@ -779,7 +781,7 @@ function editEvent(ev) {
   $("#evBack").onclick = back; main.querySelector("[data-mcancel]").onclick = back;
   let placed = false; // the paid placement fields are sent only once they have loaded, so a failed load can never wipe a placement
   if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
-  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Delete anyway", danger: true }))) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted"); if (tab === "events") renderEvents(); else render(); };
+  if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Delete anyway", danger: true }))) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted", false, { undo: () => restoreEvents([ev.id]) }); if (tab === "events") renderEvents(); else render(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");
     const id = ev ? ev.id : $("#eN").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) + "-" + Math.random().toString(36).slice(2, 6);
@@ -856,13 +858,15 @@ async function openUser(id, sec = "") {
 const VERB = { restore: "restored", photo_remove: "removed a photo from", photo_move: "reordered the photos of", dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for", reset: "reset to default" };
 const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", removals: "home removal", normalize: "data check", emails: "email template" };
 let LOG = { area: "", offset: 0 };
+// An edit's changed fields as "field: before to after" lines
+const logDetail = (j) => { let d; try { d = j ? JSON.parse(j) : null; } catch { d = null; } return d ? Object.entries(d).map(([k, [a, b]]) => `<span class="sub">${esc(k)}: <s>${esc(a || "none")}</s> &rarr; ${esc(b || "none")}</span>`).join("") : ""; };
 async function renderLog() {
   const main = $("#main");
   const d = await api("/api/admin/log?" + new URLSearchParams(LOG));
   const opt = (v, l) => `<option value="${v}" ${LOG.area === v ? "selected" : ""}>${l}</option>`;
   setDetail("");
   main.innerHTML = `<div class="pghead"><div><h2>Activity log</h2><p>What the Admins did: approving, declining, editing, deleting, suspending and similar actions.</p></div></div>` + toolbar({ right: `<select id="lga" aria-label="Show">${opt("", "Everything")}${opt("users", "Accounts")}${opt("posts", "Houses")}${opt("events", "Events")}${opt("submissions", "Submitted events")}${opt("contests", "Contests")}${opt("installers", "Installers")}${opt("reports", "Reports")}</select>`, count: `${d.total} action${d.total === 1 ? "" : "s"} recorded` })
-    + (d.entries.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>When</th><th>Who</th><th>What they did</th></tr></thead><tbody>${d.entries.map((e) => `<tr><td>${when(e.at)}</td><td>${esc(e.admin || "admin")}</td><td>${esc(VERB[e.action] || e.action)} ${esc(AREA[e.area] || e.area)} <b>${esc(e.label || e.target_id || "")}</b></td></tr>`).join("")}</tbody></table></div>${pager({ offset: d.offset, shown: d.entries.length, total: d.total, page: d.page, idPrev: "lgPrev", idNext: "lgNext" })}</div>`
+    + (d.entries.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>When</th><th>Who</th><th>What they did</th></tr></thead><tbody>${d.entries.map((e) => `<tr><td>${when(e.at)}</td><td>${esc(e.admin || "admin")}</td><td>${esc(VERB[e.action] || e.action)} ${esc(AREA[e.area] || e.area)} <b>${esc(e.label || e.target_id || "")}</b>${logDetail(e.detail)}</td></tr>`).join("")}</tbody></table></div>${pager({ offset: d.offset, shown: d.entries.length, total: d.total, page: d.page, idPrev: "lgPrev", idNext: "lgNext" })}</div>`
     : `<div class="empty">Nothing recorded yet. Approving, declining, editing, deleting, suspending and similar actions will show up here.</div>`);
   $("#lga").onchange = (e) => { LOG.area = e.target.value; LOG.offset = 0; renderLog(); };
   if ($("#lgPrev")) $("#lgPrev").onclick = () => { LOG.offset = Math.max(0, LOG.offset - d.page); renderLog(); };

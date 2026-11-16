@@ -1,6 +1,6 @@
 // Every /api/admin/* request must carry a valid Cloudflare Access login. Changes (anything but a read) are logged.
 import { requireAdmin, err } from "../../_lib/util.js";
-import { parseTarget, labelFor, actionName, record } from "../../_lib/adminlog.js";
+import { parseTarget, labelFor, actionName, record, snapshot, diffDetail } from "../../_lib/adminlog.js";
 import { sameOriginStrict } from "../../_lib/auth.js";
 
 export async function onRequest(context) {
@@ -19,7 +19,9 @@ export async function onRequest(context) {
   const bid = !t.id && body && typeof (body.id || body.event_id) === "string" ? (body.id || body.event_id).toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 40) : "";
   const label = t.id ? await labelFor(env, t.area, t.id) : (bid && (await labelFor(env, t.area, bid))) || String((body && body.name) || "").slice(0, 120);
   const existed = !t.id && !!bid && !!(await labelFor(env, t.area, bid));
+  const before = await snapshot(env, t.area, t.id || bid); // an event edit logs which fields changed, with the old and new values
   const res = await context.next();
-  if (res.status < 400) await record(env, { admin: who.email, area: t.area, action: existed && !(body && body.action) ? "edit" : actionName(request.method, body, t.id), id: t.id || bid, label });
+  const detail = res.status < 400 && before ? diffDetail(before, await snapshot(env, t.area, t.id || bid)) : "";
+  if (res.status < 400) await record(env, { admin: who.email, area: t.area, action: existed && !(body && body.action) ? "edit" : actionName(request.method, body, t.id), id: t.id || bid, label, detail });
   return res;
 }

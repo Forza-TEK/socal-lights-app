@@ -1,12 +1,12 @@
 // Admin > From Grok: the events Grok sent from its browser pass (docs/monetization/grok-browser-pass.md) and the changes it made to events already on the map.
 // Same format as Events: pill tabs, a table, and a full-page record with a Back link and the actions at the top right.
-import { esc, btn, toast, tap } from "/admin/kit.js?v=20261116a";
+import { esc, btn, toast, tap, askBox } from "/admin/kit.js?v=20261116a";
 import { SEASONS } from "/seasons.js?v=20261115a";
 
 async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: "same-origin", headers: opts.body ? { "content-type": "application/json" } : {}, ...opts });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.error || "Something went wrong. Try again.");
+  if (!r.ok) { const e = new Error(d.error || "Something went wrong. Try again."); e.data = d; throw e; }
   return d;
 }
 const LABEL = { published: ["On the map", "ok"], held: ["Held for you", "warn"], unpublished: ["Taken down", "bad"], rejected: ["Rejected", "bad"] };
@@ -52,7 +52,8 @@ export async function renderGrok(main) {
     const g = b.dataset.ga, rej = open && VIEW !== "updates" && open.status === "rejected";
     if ((g === "unpublish" || g === "update_revert" || g === "remove_photo" || (g === "publish" && rej)) && !tap(b, { unpublish: "unpublish", update_revert: "undo", remove_photo: "remove the photo", publish: "publish anyway" }[g])) return; // a second tap goes ahead
     b.disabled = true;
-    try { await api("/api/admin/grok", { method: "POST", body: JSON.stringify({ action: b.dataset.ga, id: OPEN || b.closest("[data-gid]").dataset.gid }) }); toast(DONE[b.dataset.ga]); OPEN = ""; detail(""); renderGrok(main); }
+    const send = (force) => api("/api/admin/grok", { method: "POST", body: JSON.stringify({ action: g, id: OPEN || b.closest("[data-gid]").dataset.gid, force }) });
+    try { try { await send(false); } catch (er) { if (er.data && er.data.code === "duplicate" && (await askBox({ title: "Possible duplicate", message: er.message, go: "Publish anyway", danger: true }))) await send(true); else throw er; } toast(DONE[b.dataset.ga]); OPEN = ""; detail(""); renderGrok(main); }
     catch (er) { b.disabled = false; toast(er.message, true); }
   };
   if (open) { // the full record
