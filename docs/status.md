@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin redesign, Installers and Users converted
+Installers and Users are tables with search (Users keep their All/Active/Suspended pill tabs and paging). Their profiles, which were windows, are now full pages with a Back link; the content and forms are unchanged. Search-everything opens the profile page directly. Tested locally with a seeded user and installer (list, profile page, Back, save, hide). Admin redesign: 11 of 22 areas done; next is Orders.
+
 ## 2026-11-16: Admin redesign, Contests converted
 Contests use pill tabs (Needs a look, Live, Ended, Unpublished, Contest passes), a table with search, and a full-page record with a Back link and the Edit, Sponsors, Approve, Unpublish and Delete actions at the top right. Tested locally with seeded contests (list, record, approve, tabs). Admin redesign: 9 of 22 areas done; next is Installers.
 

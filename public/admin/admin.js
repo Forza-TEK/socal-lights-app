@@ -17,7 +17,7 @@ const COUNTIES = ["Los Angeles", "Orange", "Riverside", "San Bernardino", "San D
 const TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
 let evSeason = defaultSeason(TODAY);
 const photo = (k) => "/api/admin/photo/" + k.split("/").map(encodeURIComponent).join("/");
-let tab = "dashboard", PVIEW = "pending", EVENTS = [], POSTS = [], HSORT = "new", HOPEN = "", COPEN = "";
+let tab = "dashboard", PVIEW = "pending", EVENTS = [], POSTS = [], HSORT = "new", HOPEN = "", COPEN = "", INSTOPEN = "", UOPEN = "";
 const sortList = (list, key, by) => [...list].sort(by[key] || by.new);
 const HSORTS = [["new", "Newest first"], ["old", "Oldest first"], ["name", "Name A to Z"], ["city", "City A to Z"]];
 const HBY = { new: (a, b) => String(b.created || "").localeCompare(String(a.created || "")), old: (a, b) => String(a.created || "").localeCompare(String(b.created || "")), name: (a, b) => String(a.title || "").localeCompare(String(b.title || "")), city: (a, b) => String(a.city || "").localeCompare(String(b.city || "")) || String(a.title || "").localeCompare(String(b.title || "")) };
@@ -778,22 +778,23 @@ const when = (s) => (s ? esc(String(s).slice(0, 16).replace("T", " ")) + " UTC" 
 const ago = (s) => { if (!s) return "never"; const d = Math.floor((Date.now() - new Date(String(s).replace(" ", "T") + "Z")) / 86400000); return d <= 0 ? "today" : d === 1 ? "yesterday" : d + " days ago"; };
 async function renderUsers() {
   const main = $("#main");
+  if (UOPEN) { const id = UOPEN; UOPEN = ""; return openUser(id); }
   const qs = new URLSearchParams({ q: USERS.q, status: USERS.status, offset: USERS.offset });
   const d = await api("/api/admin/users?" + qs);
-  setCount("users", d.all);
-  const bar = toolbar({ views: [{ k: "", label: "All", n: d.all }, { k: "active", label: "Active" }, { k: "suspended", label: "Suspended", n: d.suspended }], active: USERS.status, search: { placeholder: "Search name or email", value: USERS.q }, right: `<a class="btn ghost" href="/api/admin/users?format=csv&q=${encodeURIComponent(USERS.q)}&status=${USERS.status}" download>Download CSV</a>`, count: `${d.total}` });
-  main.innerHTML = bar + (d.users.length ? `<div class="cards">${d.users.map((u) => rec({
-    compact: true, attrs: `data-uid="${esc(u.id)}"`, title: esc(u.name || "(no name)"), tags: u.status === "suspended" ? [["Suspended", "bad"]] : [],
-    body: `<span class="sub">${esc(u.email)}${u.google ? " · Google" : ""} · joined ${esc((u.created_at || "").slice(0, 10))} · last sign-in ${ago(u.last_login)}</span><div class="ucounts" aria-label="What they have done">${[["Homes and entries", u.homes + u.entries + (u.added || 0), u.added ? `${u.added} added as organizer` : "", "posts"], ["Events", u.events || 0, "", "events"], ["Contests run", u.contests, "", "contests"], ["Votes", u.votes, "", "votes"]].map(([l, n, t, k]) => `<button type="button" class="ucount${n ? "" : " zero"}" data-open="${esc(u.id)}" data-sec="${k}" title="${esc(t || "Open their " + l.toLowerCase())}" aria-label="${esc(l)}: ${n}. Open the records"><b>${n}</b><span>${l}</span></button>`).join("")}</div>`,
-    edit: btn("ghost", "Profile", `data-open="${esc(u.id)}"`),
-  })).join("")}</div>` + pager({ offset: d.offset, shown: d.users.length, total: d.total, page: d.page, idPrev: "uPrev", idNext: "uNext" }) : `<div class="empty">${USERS.q || USERS.status ? "Nothing matches that." : "Nobody has made a profile yet."}</div>`);
+  setCount("users", d.all); setDetail("");
+  const tabs = [["", "All", d.all], ["active", "Active", 0], ["suspended", "Suspended", d.suspended]];
+  const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === USERS.status}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
+    <div class="pghead"><div><h2>Users</h2><p>People with a profile. Open one for their homes, events, contests and account actions.</p></div><div class="pgacts"><a class="btn ghost" href="/api/admin/users?format=csv&q=${encodeURIComponent(USERS.q)}&status=${USERS.status}" download>Download CSV</a></div></div>`;
+  const bar = toolbar({ search: { placeholder: "Search name or email", value: USERS.q }, count: `${d.total}` });
+  const num = (u, n, sec) => `<a class="rl" href="#users" data-open="${esc(u.id)}" data-sec="${sec}">${n}</a>`;
+  main.innerHTML = head + bar + (d.users.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Person</th><th>Joined</th><th>Last sign-in</th><th>Homes and entries</th><th>Events</th><th>Contests</th><th>Votes</th><th>Status</th><th class="ac">Actions</th></tr></thead><tbody>${d.users.map((u) => `<tr data-uid="${esc(u.id)}"><td><a class="rl" href="#users" data-open="${esc(u.id)}">${esc(u.name || "(no name)")}</a><span class="sub">${esc(u.email)}${u.google ? " · Google" : ""}</span></td><td>${esc((u.created_at || "").slice(0, 10))}</td><td>${ago(u.last_login)}</td><td>${num(u, u.homes + u.entries + (u.added || 0), "posts")}${u.added ? `<span class="sub">${u.added} added as organizer</span>` : ""}</td><td>${num(u, u.events || 0, "events")}</td><td>${num(u, u.contests, "contests")}</td><td>${num(u, u.votes, "votes")}</td><td>${u.status === "suspended" ? '<span class="tag bad">Suspended</span>' : '<span class="tag ok">Active</span>'}</td><td class="ac"><a class="rl" href="#users" data-open="${esc(u.id)}">Open</a></td></tr>`).join("")}</tbody></table></div>${pager({ offset: d.offset, shown: d.users.length, total: d.total, page: d.page, idPrev: "uPrev", idNext: "uNext" })}</div>` : `<div class="empty">${USERS.q || USERS.status ? "Nothing matches that." : "Nobody has made a profile yet."}</div>`);
   wireToolbar(main, { onView: (v) => { USERS.status = v; USERS.offset = 0; renderUsers(); }, onSearch: (q) => { USERS.q = q; USERS.offset = 0; renderUsers().then(() => { const i = $("[data-search]"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); } });
   if ($("#uPrev")) $("#uPrev").onclick = () => { USERS.offset = Math.max(0, USERS.offset - d.page); renderUsers(); };
   if ($("#uNext")) $("#uNext").onclick = () => { USERS.offset += d.page; renderUsers(); };
-  main.querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openUser(b.dataset.open, b.dataset.sec)));
+  main.querySelectorAll("[data-open]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); openUser(b.dataset.open, b.dataset.sec); }));
 }
 async function openUser(id, sec = "") {
-  const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
+  const m = pageHost("users", renderUsers), close = () => { m.hidden = true; m.innerHTML = ""; };
   m.hidden = false; m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="empty">Loading…</div></div>`;
   let d; try { d = await api("/api/admin/users/" + id); } catch (e) { m.innerHTML = `<div class="card"><p>${esc(e.message)}</p><button class="btn ghost" type="button" id="mClose">Close</button></div>`; $("#mClose").onclick = close; return; }
   const u = d.user, sus = u.status === "suspended";
@@ -822,7 +823,7 @@ async function openUser(id, sec = "") {
   m.querySelectorAll("[data-ua]").forEach((b) => (b.onclick = async () => {
     const a = b.dataset.ua;
     if (a === "suspend" && !tap(b, "suspend")) return;
-    try { await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: a, confirm: a === "delete" ? $("#uDel").value : undefined }) }); if (a === "delete") { close(); renderUsers(); } else if (a === "signout") { msg("Signed out on every device."); } else { await openUser(id); renderUsers(); } } catch (er) { msg(er.message, true); }
+    try { await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: a, confirm: a === "delete" ? $("#uDel").value : undefined }) }); if (a === "delete") { close(); renderUsers(); } else if (a === "signout") { msg("Signed out on every device."); } else { await openUser(id); } } catch (er) { msg(er.message, true); }
   }));
 }
 
@@ -870,18 +871,32 @@ async function renderOverlaps() {
 
 
 /* ---------- installers: edit a profile, hide it, or merge two spellings of one company ---------- */
+// A profile that used to be a window, shown as a full page instead: the same content, a Back link where the X was, the title in the page head.
+// Behaves like the #modal element for the code that fills it (hidden, innerHTML, querySelector), so those forms did not change.
+function pageHost(backText, rerender) {
+  const main = $("#main"); let open = false;
+  return {
+    get hidden() { return !open; },
+    set hidden(v) { if (v && open) { open = false; setDetail(""); rerender(); } else if (!v) open = true; },
+    set innerHTML(html) {
+      if (!html || !open) return;
+      const t = document.createElement("template"); t.innerHTML = html; const card = t.content.firstElementChild, mh = card && card.querySelector(".mh"), h2 = mh && mh.querySelector("h2");
+      const title = h2 ? h2.innerHTML : "", plain = h2 ? h2.textContent : ""; if (mh) mh.remove();
+      main.innerHTML = `<div class="rpage"><a class="rback" href="#${tab}" id="mClose"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to ${esc(backText)}</a>${title ? `<div class="pghead"><div><h2>${title}</h2></div></div>` : ""}<section class="rcard">${card ? card.innerHTML : ""}</section></div>`;
+      if (plain) setDetail(plain); window.scrollTo(0, 0);
+    },
+    querySelector: (s) => main.querySelector(s), querySelectorAll: (s) => main.querySelectorAll(s),
+  };
+}
 let INST = [];
 async function renderInstallers() {
   const main = $("#main");
-  INST = await api("/api/admin/installers");
+  if (INSTOPEN) { const id = INSTOPEN; INSTOPEN = ""; return openInstaller(id); }
+  INST = await api("/api/admin/installers"); setDetail("");
   setCount("installers", INST.length);
-  if (!INST.length) { main.innerHTML = `<div class="empty">No installer profiles yet. One appears when an installer posts a display or a homeowner names the company that installed their lights.</div>`; return; }
-  main.innerHTML = toolbar({ search: { placeholder: "Search installers" }, right: dl("installers"), count: String(INST.length) }) + `<div class="cards">${INST.map((i) => rec({
-    attrs: `data-iid="${esc(i.id)}"`, title: esc(i.name), tags: [i.status === "hidden" ? ["Hidden", "bad"] : ["Active", "ok"], ...(i.unconfirmed ? [[i.unconfirmed + " not confirmed", "warn"]] : [])],
-    meta: `${i.homes} home${i.homes === 1 ? "" : "s"} · <a href="/installer/${esc(i.slug)}" target="_blank" rel="noopener">view page</a> · <a href="${asUrl("/installer/" + i.slug + "/manage")}" target="_blank" rel="noopener">manage as owner</a>`,
-    facts: fact("Website", esc(i.web)) + fact("Phone", esc(i.phone)) + fact("Service area", esc(i.area)) + fact("Confirmation email", esc(i.email)) + fact("Owner", esc(i.owner_email)),
-    edit: btn("ghost", "Profile", `data-iedit="${esc(i.id)}"`), main: btn("ghost", i.status === "hidden" ? "Show" : "Hide", `data-iact="${i.status === "hidden" ? "show" : "hide"}"`),
-  })).join("")}</div>`;
+  const head = `<div class="pghead"><div><h2>Installers</h2><p>Installer profiles. One appears when an installer posts a display or a homeowner names the company that installed their lights. Open one for its homes, quote requests and edit form.</p></div><div class="pgacts">${dl("installers")}</div></div>`;
+  if (!INST.length) { main.innerHTML = head + `<div class="empty">No installer profiles yet. One appears when an installer posts a display or a homeowner names the company that installed their lights.</div>`; return; }
+  main.innerHTML = head + toolbar({ search: { placeholder: "Search installers" }, count: String(INST.length) }) + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Installer</th><th>Homes</th><th>Contact</th><th>Owner</th><th>Status</th><th class="ac">Actions</th></tr></thead><tbody>${INST.map((i) => `<tr data-iid="${esc(i.id)}"><td><a class="rl" href="#installers" data-iedit="${esc(i.id)}">${esc(i.name)}</a><span class="sub">${esc(i.area || "")}</span></td><td>${i.homes}${i.unconfirmed ? `<span class="sub">${i.unconfirmed} not confirmed</span>` : ""}</td><td>${esc(i.phone || "")}<span class="sub">${esc(i.web || "")}</span></td><td>${esc(i.owner_email || "")}</td><td><span class="tag ${i.status === "hidden" ? "bad" : "ok"}">${i.status === "hidden" ? "Hidden" : "Active"}</span></td><td class="ac"><a class="rl" href="#installers" data-iedit="${esc(i.id)}">Open</a> ${btn("ghost", i.status === "hidden" ? "Show" : "Hide", `data-iact="${i.status === "hidden" ? "show" : "hide"}"`).replace('class="btn ghost"', 'class="btn ghost sm"')}</td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${INST.length} installer${INST.length === 1 ? "" : "s"}</span></div></div>`;
   wireToolbar(main, { onSearch: (q) => filterCards(main, q) }); applyPreset(main);
 }
 const instAct = async (id, body) => api("/api/admin/installers/" + id, { method: "POST", body: JSON.stringify(body) });
@@ -903,7 +918,7 @@ document.addEventListener("click", (e) => {
 
 // The installer's profile: who they are, everything linked to them, then the edit form
 async function openInstaller(id) {
-  const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; };
+  const m = pageHost("installers", renderInstallers), close = () => { m.hidden = true; m.innerHTML = ""; };
   m.hidden = false; m.innerHTML = `<div class="card wide"><div class="empty">Loading…</div></div>`;
   if (!INST.length) INST = await api("/api/admin/installers").catch(() => []);
   let d; try { d = await api("/api/admin/installers/" + id); } catch (e) { toast(e.message, true); return close(); }
@@ -928,16 +943,16 @@ async function openInstaller(id) {
     <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>`, true);
   wireAreas(m); $("#mClose").onclick = close;
   const msg = (t, bad) => { const e = $("#iMsg"); e.className = bad ? "msg err" : "msg"; e.textContent = t; };
-  $("#iForm").onsubmit = async (e) => { e.preventDefault(); const body = { action: "edit" }; m.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value)); try { await instAct(i.id, body); toast("Saved"); await openInstaller(i.id); if (tab === "installers") renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
+  $("#iForm").onsubmit = async (e) => { e.preventDefault(); const body = { action: "edit" }; m.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value)); try { await instAct(i.id, body); toast("Saved"); await openInstaller(i.id); refreshCounts(); } catch (er) { msg(er.message, true); } };
   $("#iMergeGo").onclick = async (e) => { const into = $("#iMerge").value; if (!into) return msg("Choose the profile to keep.", true); if (!tap(e.target, "merge")) return; try { await instAct(i.id, { action: "merge", into }); close(); toast("Merged"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
 }
 $("#main").addEventListener("click", async (e) => {
   const ed = e.target.closest("[data-iedit]"); if (ed) return openInstaller(ed.dataset.iedit);
   const b = e.target.closest("[data-iact]"); if (!b) return;
-  const card = b.closest("[data-iid]"), msg = card.querySelector(".msg");
+  const card = b.closest("[data-iid]"), msg = card.querySelector(".msg") || { set className(v) {}, set textContent(v) {} };
   b.disabled = true;
   try { await instAct(card.dataset.iid, { action: b.dataset.iact }); toast(b.dataset.iact === "hide" ? "Hidden from the site" : "Shown on the site"); renderInstallers(); refreshCounts(); }
-  catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
+  catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; toast(err.message, true); }
 });
 
 
@@ -1410,8 +1425,8 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal
     if (g === "houses") { PRESET = it.title; setTab(it.status === "pending" ? "pending" : "approved"); }
     else if (g === "events") { evSeason = it.season || "christmas"; EVQ = it.title; setTab("events"); }
     else if (g === "subs") { PRESET = it.title; SUBVIEW = it.status === "published" ? "published" : it.status === "declined" ? "declined" : "pending"; setTab("subs"); }
-    else if (g === "installers") { setTab("installers"); openInstaller(it.id); }
-    else if (g === "users") { setTab("users"); openUser(it.id); }
+    else if (g === "installers") { INSTOPEN = it.id; setTab("installers"); }
+    else if (g === "users") { UOPEN = it.id; setTab("users"); }
     else if (g === "contests") { CSEARCH = it.title; CVIEW = it.flagged || it.status === "pending" ? "look" : it.status === "live" ? "live" : it.status === "declined" ? "declined" : "ended"; setTab("contests"); }
   };
   const paint = (groups) => {
