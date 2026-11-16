@@ -16,7 +16,12 @@ import { readWorkersReply } from "../functions/_lib/chatmodel.js";
 
 const ORIGIN = "https://socallights.app";
 const dollars = (c) => "$" + c / 100;
-const START = ptToday(10), END = ptToday(25), WRONG = ptToday(40); // relative to today so the suite does not age out
+// relative to today so the suite does not age out. WRONG is a date that nothing the model is shown can contain: no stored event uses it and the help text never names it (real events run into late December and January, and a date on one of them would be a legitimate answer)
+import { readdirSync, readFileSync } from "node:fs";
+import { KB_CHUNKS } from "../functions/_lib/chatkb-data.js";
+const MIGRATED = readdirSync("migrations").filter((f) => f.endsWith(".sql")).map((f) => readFileSync("migrations/" + f, "utf8")).join("\n"), KBTEXT = JSON.stringify(KB_CHUNKS);
+const START = ptToday(10), END = ptToday(25);
+const WRONG = Array.from({ length: 120 }, (_, i) => ptToday(120 + i)).find((d) => { const M = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][+d.slice(5, 7) - 1], day = +d.slice(8, 10), m = +d.slice(5, 7); return !MIGRATED.includes(d) && ![`${M} ${day}`, `${M.slice(0, 3)} ${day}`, `${day} ${M}`, `${m}/${day}`].some((x) => KBTEXT.includes(x)); }) || ptToday(300);
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const parts = (ymd) => ({ month: MONTHS[+ymd.slice(5, 7) - 1], mon: MONTHS[+ymd.slice(5, 7) - 1].slice(0, 3), day: +ymd.slice(8, 10), m: +ymd.slice(5, 7) });
 const short = (ymd) => `${parts(ymd).mon} ${parts(ymd).day}`, long = (ymd) => `${parts(ymd).month} ${parts(ymd).day}`;
