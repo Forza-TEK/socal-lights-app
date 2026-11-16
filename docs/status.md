@@ -1,5 +1,12 @@
 # Status
 
+## 2026-11-16: Five new tutorial videos (and the earlier Your events re-records)
+- New videos, computer and phone (PR #714): **Add an event to your calendar and share it** (`find-calendar-share`, 1:30), **Use my location** (`find-location`, 1:44), **Pricing in two minutes** (`find-pricing`, 2:14), **Your installer dashboard** (`sponsors-dashboard`, 1:31), **Add your contest logo** (`run-logo`, 1:46). Each file is under 3.4 MB (H.264 CRF 27, 1280x720 / 720x1280, AAC 64k); `scripts/tutorials/shrink.sh` applies that encoding to new recordings. Pricing quotes the prices the page shows (from `/api/config`): re-record it if a price changes.
+- Earlier today (PRs #608, #610): Manage your events (new), Add an event and Your profile re-recorded, and 24 other videos re-recorded so the account menu shows the **Your events** row; migration 0247 links Manage your events to its three Help articles.
+- Recorder fixes: `quick`/`custom` need the demo comp (`seed-comp.sql`); `add-homes`/`approve` clear seeded votes (homes cannot be added once voting starts); `entry-photos` picks the visible Add photos button; the installer dashboard has demo views and quote requests (`seed-installer-dash.sql`); the contest logo video uploads a square demo logo (`LOGO_SQUARE`).
+- Not done: the five new videos are not linked from Help articles (needs a migration); the voice (SO-cal Lights dot app) has not been checked by ear.
+- Found while recording: "Add to calendar" gave an all-day event when the hours are one start time ("7pm"); handed to another session (`timeRange` in `public/app.js` and `functions/_lib/eventld.js` only read ranges like "6-9 pm").
+
 ## 2026-11-16: Grok browser-pass fixes
 Worked Grok's request (docs/handoff/to-claude/2026-11-16-browser-pass-fixes.md), migration 0280: BCV Winterfest venue is Noble Creek Community Center with the official page as its link (address and pin were already right); New Year's Eve at OC Winter Fest now links to winterfestoc.com (ocwinterfest.com is parked) and stays expected because that site shows no NYE night. Six hosts that fail from our side too went on the blocked list; visitlongbeach.com loads, so it did not. Open for Rey: the Riverside Turkey Trot and the Naples Island boat parade cancellations in Admin > From Grok > Updates.
 
