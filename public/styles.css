@@ -1019,3 +1019,9 @@ body:has(#seasonmenu)::after{content:"";position:fixed;inset:0;z-index:55;backgr
 .vidbtn small{margin-left:auto;font-size:12px;font-weight:500;color:var(--muted)}
 .vidwrap{margin:14px 0 0}.vidframe{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:14px;background:#000}
 .vidlink{display:inline-block;margin-top:6px;font-size:13px;color:var(--muted)}
+
+/* Status notes over the map (offline, map tiles down). pointer-events:none: a note never takes a touch, so it cannot get between a finger and the map (pinch fix of 2026-11-14). */
+:root{--peek:0px} /* the phone sheet's visible height, set by app.js (setSheet) */
+.mapnote{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--peek) + 16px);z-index:30;max-width:min(92vw,420px);padding:8px 14px;border-radius:14px;background:var(--ink);color:var(--surface);font-size:13.5px;font-weight:600;line-height:1.35;text-align:center;box-shadow:var(--shadow-sm,0 2px 10px rgba(0,0,0,.18));pointer-events:none}
+#maptiles{bottom:calc(var(--peek) + 70px)}
+#seasonmenu .nowtag.soon{color:var(--muted);background:var(--surface-2)}
