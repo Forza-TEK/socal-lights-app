@@ -17,7 +17,7 @@ const COUNTIES = ["Los Angeles", "Orange", "Riverside", "San Bernardino", "San D
 const TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
 let evSeason = defaultSeason(TODAY);
 const photo = (k) => "/api/admin/photo/" + k.split("/").map(encodeURIComponent).join("/");
-let tab = "dashboard", PVIEW = "pending", EVENTS = [], POSTS = [], HSORT = "new";
+let tab = "dashboard", PVIEW = "pending", EVENTS = [], POSTS = [], HSORT = "new", HOPEN = "";
 const sortList = (list, key, by) => [...list].sort(by[key] || by.new);
 const HSORTS = [["new", "Newest first"], ["old", "Oldest first"], ["name", "Name A to Z"], ["city", "City A to Z"]];
 const HBY = { new: (a, b) => String(b.created || "").localeCompare(String(a.created || "")), old: (a, b) => String(a.created || "").localeCompare(String(b.created || "")), name: (a, b) => String(a.title || "").localeCompare(String(b.title || "")), city: (a, b) => String(a.city || "").localeCompare(String(b.city || "")) || String(a.title || "").localeCompare(String(b.title || "")) };
@@ -46,7 +46,7 @@ const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
 function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; const bd = $("#bdot"); if (bd) { bd.hidden = !w; $("#bell").title = w ? `${w} waiting` : "Nothing is waiting"; } }
 function setTab(t, push = true) {
-  if (t !== tab) PVIEW = "pending";
+  if (t !== tab) { PVIEW = "pending"; HOPEN = ""; }
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
   $("#ptitle").textContent = TITLES[t] || ""; $("#pgroup").textContent = groupOf(t); setDetail("");
@@ -93,21 +93,56 @@ async function render() {
     if (tab === "help") return renderHelp(main);
     if (tab === "chat") return renderChat(main);
     if (tab === "grok") return renderGrok(main);
-    if (tab === "approved" && PVIEW === "contest") {
-      const list = await api("/api/admin/posts?contest=1"); POSTS = list;
-      const cbar = toolbar({ views: [{ k: "pending", label: "Published" }, { k: "contest", label: "Contest entries", n: list.length }], active: "contest", search: { placeholder: "Search entries, people, cities" } });
-      main.innerHTML = cbar + (list.length ? `<div class="cards">${list.map(postCard).join("")}</div>` : `<div class="empty">No contest entries yet.</div>`);
-      wireToolbar(main, { onView: (v) => { PVIEW = v; render(); }, onSearch: (q) => filterCards(main, q) }); applyPreset(main); return;
-    }
-    const waiting = await api("/api/admin/posts?status=" + tab), declined = tab === "pending" ? await api("/api/admin/posts?status=declined") : [];
-    if (tab === "pending") setCount("pending", waiting.length);
-    const showing = sortList(tab === "pending" && PVIEW === "declined" ? declined : waiting, HSORT, HBY);
-    const bar = toolbar({ views: tab === "pending" ? [{ k: "pending", label: "Waiting", n: waiting.length }, { k: "declined", label: "Declined", n: declined.length }] : tab === "approved" ? [{ k: "pending", label: "Published" }, { k: "contest", label: "Contest entries" }] : [], active: PVIEW, search: { placeholder: "Search houses, people, cities" }, right: sortSelect(HSORTS, HSORT) + dl("houses" + (tab === "pending" ? (PVIEW === "declined" ? "&status=declined" : "&status=pending") : "&status=approved")), count: String(showing.length) });
-    const go = () => { wireToolbar(main, { onView: (v) => { PVIEW = v; render(); }, onSearch: (q) => filterCards(main, q), onSort: (v) => { HSORT = v; render(); } }); applyPreset(main); };
-    if (!showing.length) { main.innerHTML = bar + `<div class="empty">${tab !== "pending" ? "No published houses yet." : PVIEW === "declined" ? "Nothing declined." : "Nothing waiting for review."}</div>`; go(); return; }
-    const bulk = tab === "pending" && PVIEW !== "declined" ? `<div class="bulk" id="bulk"><label class="chk"><input type="checkbox" id="selAll"> Select all</label><span class="grow"></span><span class="meta" id="selN"></span><button class="btn ice" type="button" id="bulkGo" hidden></button><button class="btn ghost" type="button" id="bulkClear" hidden>Clear</button></div>` : "";
-    POSTS = showing; main.innerHTML = bar + bulk + `<div class="cards">${showing.map(postCard).join("")}</div>`; go(); if (bulk) wireBulk(main);
+    return renderHouses();
   } catch (e) { main.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+// Houses: Houses waiting and Published houses share one page. A table, then a full record with a Back link.
+async function renderHouses() {
+  const main = $("#main"), pend = tab === "pending", contest = !pend && PVIEW === "contest";
+  const [waiting, declined, cList, live] = await Promise.all([
+    pend ? api("/api/admin/posts?status=pending") : [], pend ? api("/api/admin/posts?status=declined") : [],
+    !pend ? api("/api/admin/posts?contest=1") : [], !pend && !contest ? api("/api/admin/posts?status=approved") : [],
+  ]);
+  if (pend) setCount("pending", waiting.length);
+  const dec = pend && PVIEW === "declined", rows = sortList(pend ? (dec ? declined : waiting) : contest ? cList : live, HSORT, HBY);
+  POSTS = pend ? [...waiting, ...declined] : contest ? cList : live;
+  const one = HOPEN && POSTS.find((p) => p.id === HOPEN); if (HOPEN && !one) HOPEN = "";
+  const kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v !== "" && v != null).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
+  const stat = (p) => (p.contest ? ["Contest entry", ""] : dec ? ["Declined", "bad"] : pend ? ["Waiting", "warn"] : ["Published", "ok"]);
+  if (one) { // the full record
+    const p = one, st = stat(p), web = p.web ? `<a href="${esc(p.web)}" target="_blank" rel="noopener">${esc(p.web)}</a>` : "";
+    const acts = btn("ghost", "Edit", `data-editpost="${esc(p.id)}"`) + (p.contest ? "" : btn("ghost", `Photos (${p.photos.length})`, `data-editpost="${esc(p.id)}" data-focus="photos"`))
+      + (p.contest ? "" : dec ? btn("main", "Restore to waiting", 'data-act="restore"') + btn("danger", "Delete", 'data-act="delete"') : pend ? btn("main", "Approve and publish", 'data-act="approve"') + btn("danger", "Decline", 'data-act="decline"') : btn("ghost", "Unpublish", 'data-act="unpublish"') + btn("danger", "Remove from site", 'data-act="delete"'));
+    const notes = [p.hiddenBySweep ? "<b>Not on the map.</b> You chose the sweep record for this address (Replaced records)." : "",
+      p.claimed ? `<b>Says this is their home.</b> They tapped “Is this your home?” on “${esc(p.claimed.name)}”. ${p.claimed.matched ? (p.status === "pending" ? "The address matches, so approving replaces that listing." : "The address matches, so it replaces that listing on the map.") : "The addresses do not match, so it does not replace that listing. Check the street in Edit."}` : "",
+      p.replaces ? `<b>Replaces a sweep record.</b> When you approve this, the automatic listing at the same address is hidden: ${p.replaces.map((r) => esc(r.name)).join("; ")}.` : "",
+      p.nearby ? `Same street, different number (both stay listed): ${p.nearby.map((r) => esc(r.name + " (" + (r.address || "").split(",")[0] + ")")).join("; ")}.` : ""].filter(Boolean);
+    setDetail(p.title);
+    main.innerHTML = `<div class="rpage" data-id="${esc(p.id)}" data-name="${esc(p.title)}"><a class="rback" href="#${tab}" id="hBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to ${pend ? "houses waiting" : "published houses"}</a>
+      <div class="pghead"><div><h2>House detail</h2></div><div class="pgacts">${acts}</div></div><span class="msg" role="status"></span>
+      ${notes.length ? `<section class="rcard">${notes.map((n) => `<p class="meta" style="margin:0 0 6px;color:var(--ink)">${n}</p>`).join("")}</section>` : ""}
+      <section class="rcard"><h3>Overview</h3>${kv([["Title", esc(p.title)], ["Status", `<span class="tag ${st[1]}">${st[0]}</span>`], ["Posted as", p.contest ? (p.byOrganizer ? (p.linked ? "Linked by homeowner" : "Added by organizer") : "Resident entry") : p.kind === "installer" ? "Installer" : "Homeowner"], ["Contest", esc(p.contest || "")], ["Name / business", esc(p.biz)], ["Received", p.created ? esc(p.created.slice(0, 16)) + " UTC" : ""]])}</section>
+      <section class="rcard"><h3>Where</h3>${kv([["Street address", esc(p.address || "—") + ' <span class="meta">(shown on the map)</span>'], ["City", esc(p.city || "") + (p.county ? " · " + esc(p.county) : "")], ["Where", esc(p.where || "")]])}</section>
+      <section class="rcard"><h3>Contact and about</h3>${kv([["Contact", `<span style="user-select:all">${esc(p.contact_email || "—")}</span>`], ["Public phone", esc(p.phone || "")], ["Website", web], ["Installed by", p.inst && p.kind !== "installer" ? esc(p.inst.name) + (p.inst.ok ? " (confirmed)" : " (claimed by the homeowner, not confirmed)") : ""], ["About", `<span style="white-space:pre-line">${esc(p.desc)}</span>`]])}</section>
+      ${p.contest ? "" : `<section class="rcard"><h3>Photos (${p.photos.length})</h3>${p.photos.length ? `<div class="pics">${p.photos.map((k) => `<a href="${photo(k)}" target="_blank" rel="noopener"><img src="${photo(k)}" alt="" loading="lazy"></a>`).join("")}</div>` : '<p class="meta" style="margin:0">No photos</p>'}</section>`}</div>`;
+    window.scrollTo(0, 0); $("#hBack").onclick = (e) => { e.preventDefault(); HOPEN = ""; setDetail(""); renderHouses(); };
+    return;
+  }
+  setDetail("");
+  const tabs = pend ? [["pending", "Waiting", waiting.length], ["declined", "Declined", declined.length]] : [["pending", "Published", live.length || (contest ? null : 0)], ["contest", "Contest entries", cList.length]];
+  const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === PVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
+    <div class="pghead"><div><h2>${pend ? "Houses waiting" : "Published houses"}</h2><p>${pend ? "Houses and installer posts people submitted. Open one to see its photos, then approve or decline it." : contest ? "Homes entered in a contest." : "Houses and installer posts that are on the map."}</p></div></div>`;
+  const bar = toolbar({ search: { placeholder: contest ? "Search entries, people, cities" : "Search houses, people, cities" }, right: sortSelect(HSORTS, HSORT) + (contest ? "" : dl("houses" + (pend ? (dec ? "&status=declined" : "&status=pending") : "&status=approved"))), count: String(rows.length) });
+  const go = () => { wireToolbar(main.querySelector(".tbar"), { onSearch: (q) => filterCards(main, q), onSort: (v) => { HSORT = v; renderHouses(); } }); main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { PVIEW = b.dataset.view; renderHouses(); })); applyPreset(main); };
+  if (!rows.length) { main.innerHTML = head + bar + `<div class="empty">${contest ? "No contest entries yet." : !pend ? "No published houses yet." : dec ? "Nothing declined." : "Nothing waiting for review."}</div>`; go(); return; }
+  const bulk = pend && !dec ? `<div class="bulk" id="bulk"><label class="chk"><input type="checkbox" id="selAll"> Select all</label><span class="grow"></span><span class="meta" id="selN"></span><button class="btn ice" type="button" id="bulkGo" hidden></button><button class="btn ghost" type="button" id="bulkClear" hidden>Clear</button></div>` : "";
+  const cols = contest ? "<th>Entry</th><th>Contest</th><th>Posted by</th><th>Contact</th><th>Address</th>" : "<th>House</th><th>City</th><th>Posted as</th><th>Photos</th><th>Received</th>";
+  const cells = (p) => contest ? `<td><a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">${esc(p.title)}</a></td><td>${esc(p.contest)}</td><td>${esc(p.biz)}</td><td>${esc(p.contact_email || "—")}</td><td>${esc(p.address || "—")}</td>`
+    : `<td>${pend && !dec ? `<input type="checkbox" class="rsel" data-sel="${esc(p.id)}" aria-label="Select ${esc(p.title)}"> ` : ""}<a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">${esc(p.title)}</a><span class="sub">${esc(p.biz)}</span></td><td>${esc(p.city)}<span class="sub">${esc(p.county || "")}</span></td><td><span class="tag">${p.kind === "installer" ? "Installer" : "Homeowner"}</span></td><td>${p.photos.length}</td><td>${esc((p.created || "").slice(0, 16))} UTC</td>`;
+  POSTS = pend ? [...waiting, ...declined] : contest ? cList : live;
+  main.innerHTML = head + bar + bulk + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr>${cols}<th class="ac">Actions</th></tr></thead><tbody>${rows.map((p) => `<tr data-id="${esc(p.id)}">${cells(p)}<td class="ac"><a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">Open</a></td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${rows.length} ${contest ? "entr" + (rows.length === 1 ? "y" : "ies") : "house" + (rows.length === 1 ? "" : "s")}</span></div></div>`;
+  main.querySelectorAll("[data-hopen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); HOPEN = a.dataset.hopen; renderHouses(); }));
+  go(); if (bulk) wireBulk(main);
 }
 function postCard(p) {
   const web = p.web ? `<a href="${esc(p.web)}" target="_blank" rel="noopener">${esc(p.web)}</a>` : "";
@@ -131,9 +166,10 @@ function postCard(p) {
 }
 // Pick several waiting houses and approve them in one go
 function wireBulk(main) {
-  const boxes = () => [...main.querySelectorAll(".rec:not([hidden]) .rsel")], picked = () => boxes().filter((b) => b.checked);
+  const boxes = () => [...main.querySelectorAll("tbody tr:not([hidden]) .rsel")], picked = () => boxes().filter((b) => b.checked);
   const paint = () => { const n = picked().length; $("#selN").textContent = n ? `${n} selected` : ""; $("#bulkGo").hidden = !n; $("#bulkClear").hidden = !n; $("#bulkGo").textContent = `Approve ${n} house${n === 1 ? "" : "s"}`; $("#selAll").checked = n > 0 && n === boxes().length; };
   main.addEventListener("change", (e) => { if (e.target.matches(".rsel")) paint(); });
+  const si = main.querySelector("[data-search]"); if (si) si.addEventListener("input", () => setTimeout(paint, 350)); // the count follows what the search leaves showing
   $("#selAll").onchange = (e) => { boxes().forEach((b) => (b.checked = e.target.checked)); paint(); };
   $("#bulkClear").onclick = () => { boxes().forEach((b) => (b.checked = false)); paint(); };
   $("#bulkGo").onclick = async (e) => {
@@ -148,17 +184,17 @@ function wireBulk(main) {
 const DONE = { approve: "Published", decline: "Declined", unpublish: "Unpublished", delete: "Removed", restore: "Back in the waiting list" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-act]"); if (!b) return;
-  const card = b.closest("[data-id]"), id = card.dataset.id, act = b.dataset.act, msg = card.querySelector(".msg"), name = card.querySelector("h3").textContent, extra = {};
+  const card = b.closest("[data-id]"), id = card.dataset.id, act = b.dataset.act, msg = card.querySelector(".msg") || { set className(v) {}, set textContent(v) {} }, name = card.dataset.name || (card.querySelector("h3") || {}).textContent || "this house", extra = {};
   if (act === "decline") { const r = await askReason({ title: "Decline " + name, hint: "This is emailed to the person who added it. Leave it blank to send no reason." }); if (r === null) return; extra.reason = r; }
   else if ((act === "delete" || act === "unpublish") && !tap(b, act === "delete" ? "remove" : act)) return;
   b.disabled = true; msg.className = "msg"; msg.textContent = act === "approve" ? "Publishing…" : "Working…";
   try {
     if (act === "delete") await api("/api/admin/posts/" + id, { method: "DELETE" });
     else await api("/api/admin/posts/" + id, { method: "POST", body: JSON.stringify({ action: act, ...extra }) });
-    card.remove(); refreshCounts(); if (!document.querySelector(".rec")) render();
+    HOPEN = ""; setDetail(""); render(); refreshCounts();
     const undo = act === "decline" ? { action: "restore" } : act === "unpublish" ? { action: "approve", notify: false } : null;
     toast(DONE[act] || "Done", false, undo ? { undo: async () => { try { await api("/api/admin/posts/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); render(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
-  } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
+  } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; toast(err.message, true); }
 });
 
 // An in-page window that asks for an optional reason (emailed to the person). Resolves to the text, or null when cancelled.
