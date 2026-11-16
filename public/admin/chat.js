@@ -22,7 +22,7 @@ export async function renderChat(main) {
   if (d.provider === "claude" && !d.anthropicKey) ready.push("The ANTHROPIC_API_KEY secret is not set, so every question would get the error message.");
   if (d.provider === "claude" && s.capUsd <= 0) ready.push("The Claude path costs money and your monthly cap is $0, so it will not answer. Raise the cap or switch back to Workers AI (remove CHAT_PROVIDER).");
   if (!d.turnstile) ready.push("TURNSTILE_SECRET is not set, so the \"I am human\" check is skipped.");
-  main.innerHTML = `<div class="pghead"><div><h2>AI assistant</h2><p>The AI assistant answers questions about help articles, prices and events only. It is <b>off</b> until you turn it on here. It stores no message text and no IP address, only the counts below. How it works, and what to check before turning it on: docs/ai-assistant.md.</p></div></div>
+  main.innerHTML = `<div class="pghead"><div><h2>AI assistant</h2><p>The AI assistant answers questions about help articles, prices and events only. It is <b>${d.live ? "on" : s.kill || d.envKill ? "stopped by the kill switch" : "off"}</b> right now, and it only answers while it is switched on here. It stores no message text and no IP address, only the counts below. How it works, and what to check before turning it on: docs/ai-assistant.md.</p></div></div>
     <section class="ucard u-${state[0] === "ok" ? "ok" : state[0] === "bad" ? "limit" : "ok"}" aria-label="Switches"><div class="uh"><h3>Status</h3><span class="tag ${state[0]}">${esc(state[1])}</span></div>
       ${why ? `<p class="msg err" role="status">${esc(why)}</p>` : ""}
       ${ready.map((r) => `<p class="msg err">${esc(r)}</p>`).join("")}
