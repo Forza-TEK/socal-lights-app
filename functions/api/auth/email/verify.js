@@ -1,9 +1,11 @@
 // POST /api/auth/email/verify { email, code } — checks the code and signs the person in.
 import { json, err } from "../../../_lib/util.js";
-import { normEmail, okEmail, sha256, upsertUser, startSession, sameOrigin, SUSPENDED_MSG } from "../../../_lib/auth.js";
+import { normEmail, okEmail, sha256, upsertUser, startSession, sameOrigin, SUSPENDED_MSG, readCookie, NONCE_COOKIE, nonceHash } from "../../../_lib/auth.js";
 
 // Verify attempts allowed per network address per hour. The address is stored only as a one-way hash (in submit_log, which is pruned after 48 hours like the other IP rows).
 export const VERIFY_PER_IP_HOUR = 30;
+// Wrong guesses from a browser that did not ask for the code, per address per hour (M9). They never use up the real person's five tries.
+export const FOREIGN_GUESSES_PER_EMAIL_HOUR = 10;
 
 export async function onRequestPost({ request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -15,14 +17,28 @@ export async function onRequestPost({ request, env }) {
   await env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ipKey).run();
   const { n: tried } = await env.DB.prepare("SELECT COUNT(*) AS n FROM submit_log WHERE ip = ? AND created_at > datetime('now','-1 hour')").bind(ipKey).first();
   if (tried > VERIFY_PER_IP_HOUR) return err(429, "Too many attempts. Try again in an hour.");
-  const row = await env.DB.prepare("SELECT id, code_hash, tries FROM login_codes WHERE email = ? AND expires_at > datetime('now') ORDER BY id DESC LIMIT 1").bind(email).first();
+  const row = await env.DB.prepare("SELECT id, code_hash, tries, nonce_hash FROM login_codes WHERE email = ? AND expires_at > datetime('now') ORDER BY id DESC LIMIT 1").bind(email).first();
   if (!row || row.tries >= 5) return err(400, "That code has expired. Ask for a new one.");
+  // M9: a code asked for in this browser (its cookie matches) spends one of five tries per wrong guess. A guess from any other browser (a stranger who asked for a code for someone else's address, or a person who
+  // moved to another device) is checked too, so the right code still works, but a wrong one costs the real person nothing: it only counts against a small per-address hourly cap. Codes made before the cookie existed behave as before.
+  const nonce = readCookie(request, NONCE_COOKIE), mine = !row.nonce_hash || (!!nonce && (await nonceHash(nonce)) === row.nonce_hash);
+  if (!mine) {
+    const ek = "ve:" + (await sha256("verify-email:" + email)).slice(0, 24);
+    await env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ek).run();
+    const { n: foreign } = await env.DB.prepare("SELECT COUNT(*) AS n FROM submit_log WHERE ip = ? AND created_at > datetime('now','-1 hour')").bind(ek).first();
+    if (foreign > FOREIGN_GUESSES_PER_EMAIL_HOUR) return err(429, "Too many tries for this address from other devices. Use the browser where you asked for the code, or ask for a new code in an hour.");
+    if (row.code_hash !== (await sha256(`${email}:${code}`))) return err(400, "That code doesn't match. Check the email and try again.");
+  } else {
   // Spend one of the 5 attempts in a single statement before comparing (a read-then-write let parallel guesses all pass the check); if no attempt was left, nothing is compared
   const spent = await env.DB.prepare("UPDATE login_codes SET tries = tries + 1 WHERE id = ? AND tries < 5").bind(row.id).run();
   if (!spent.meta || spent.meta.changes !== 1) return err(400, "That code has expired. Ask for a new one.");
   if (row.code_hash !== (await sha256(`${email}:${code}`))) return err(400, "That code doesn't match. Check the email and try again.");
+  }
   await env.DB.prepare("DELETE FROM login_codes WHERE email = ?").bind(email).run();
   const user = await upsertUser(env, email);
   if (user.status === "suspended") return err(403, SUSPENDED_MSG);
+  // L2: remember the address as typed, so mail about their listings goes where they actually read it (the account key drops +tags and Gmail dots)
+  const typed = String(b.email).trim().toLowerCase();
+  await env.DB.prepare("UPDATE users SET login_email = ? WHERE id = ?").bind(typed, user.id).run().catch(() => {});
   return json({ ok: true, user: { id: user.id, email: user.email, name: user.name } }, { headers: { "set-cookie": await startSession(env, request, user.id) } });
 }

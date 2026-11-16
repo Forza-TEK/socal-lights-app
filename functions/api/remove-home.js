@@ -32,8 +32,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     ...ipPruneStatements(env),
   ]);
-  // Say what the listing is called in the acknowledgment when we can find it (so the person sees we understood), otherwise echo what they typed.
-  let shown = address || ref;
+  // Say what the listing is called in the acknowledgment when we can find it (so the person sees we understood). Text they typed is never echoed back (L11): this mail goes to any address a stranger can type.
+  let shown = "the home you described";
   try { const t = ref ? await resolveRef(env, ref) : null; if (t) shown = `${t.row.name || t.row.title || ref}${t.row.address ? ", " + t.row.address : ""}`; } catch {}
   const team = env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com";
   const jobs = Promise.all([

@@ -2,7 +2,7 @@
 import { json, err, verifyTurnstile } from "../../../_lib/util.js";
 import { sendTemplate } from "../../../_lib/mailtpl.js";
 import { ipPruneStatements } from "../../../_lib/retention.js";
-import { normEmail, okEmail, appReviewCode, isDisposable, sha256, sameOrigin, isSuspended, SUSPENDED_MSG } from "../../../_lib/auth.js";
+import { normEmail, okEmail, appReviewCode, isDisposable, sha256, sameOrigin, isSuspended, SUSPENDED_MSG, setCookie, NONCE_COOKIE, nonceHash } from "../../../_lib/auth.js";
 
 export async function onRequestPost({ request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -22,14 +22,17 @@ export async function onRequestPost({ request, env }) {
   const reviewCode = appReviewCode(env, email); // App Store reviewer: the fixed code and no mail (see appReviewCode in _lib/auth.js)
   const code = reviewCode || String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, "0");
   const exp = new Date(Date.now() + 10 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+  // M9: the code belongs to the browser that asked for it. A short-lived cookie holds a random value; only its hash is stored with the code.
+  const nonce = [...crypto.getRandomValues(new Uint8Array(16))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  const mine = { headers: { "set-cookie": setCookie(request, NONCE_COOKIE, nonce, 600) } };
   await env.DB.batch([
-    env.DB.prepare("INSERT INTO login_codes (email,code_hash,ip,expires_at) VALUES (?,?,?,?)").bind(email, await sha256(`${email}:${code}`), ip, exp),
+    env.DB.prepare("INSERT INTO login_codes (email,code_hash,ip,expires_at,nonce_hash) VALUES (?,?,?,?,?)").bind(email, await sha256(`${email}:${code}`), ip, exp, await nonceHash(nonce)),
     ...ipPruneStatements(env),
   ]);
   // Local development only (DEV_AUTH=1 in .dev.vars, localhost): hand the code back instead of emailing it.
-  if (reviewCode) return json({ ok: true });
-  if (env.DEV_AUTH === "1" && new URL(request.url).hostname === "localhost" && !env.RESEND_API_KEY) return json({ ok: true, devCode: code });
+  if (reviewCode) return json({ ok: true }, mine);
+  if (env.DEV_AUTH === "1" && new URL(request.url).hostname === "localhost" && !env.RESEND_API_KEY) return json({ ok: true, devCode: code }, mine);
   const sent = await sendTemplate(env, "signin_code", String(b.email).trim(), { code });
   if (!sent) return err(502, "We couldn't send the email. Please try again in a moment.");
-  return json({ ok: true });
+  return json({ ok: true }, mine);
 }

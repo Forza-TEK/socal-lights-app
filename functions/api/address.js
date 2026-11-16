@@ -2,6 +2,8 @@
 // The key stays on the server (GEOAPIFY_KEY, a Pages secret). Without a key this returns an empty list and the form works as plain text.
 // Callers wait for 5+ characters and pause between keystrokes; identical queries are cached for a day, so most lookups cost nothing.
 import { json } from "../_lib/util.js";
+import { sameOriginStrict } from "../_lib/auth.js";
+import { checkThrottle, hashKey } from "../_lib/throttle.js";
 import { CITY } from "../../public/cities.js";
 
 // kind=area: cities and counties for "Areas served" (same dropdown as street addresses). Local names first, then Geoapify cities/counties when a key is set.
@@ -21,13 +23,19 @@ async function areas(q, env) {
   return out.slice(0, 8);
 }
 
+// L8: the street lookup spends a daily allowance at the address service (3,000 credits on the free plan), so it answers only our own pages, only for something that looks like an address
+// (a number and at least two words), and at most 60 lookups a minute per connection (hashed; a refusal is an empty list, so the form simply keeps working as plain text).
+export const ADDRESS_PER_MINUTE = 60;
 export async function onRequestGet({ request, env }) {
   const sp = new URL(request.url).searchParams, q = (sp.get("q") || "").trim().replace(/\s+/g, " ").slice(0, 100);
+  if (!sameOriginStrict(request)) return json({ suggestions: [], on: !!env.GEOAPIFY_KEY }, { status: 403, headers: { "cache-control": "no-store" } });
   if (sp.get("kind") === "area") { const a = q.length >= 2 ? await areas(q, env) : []; return json({ suggestions: a, on: !!env.GEOAPIFY_KEY }, { headers: { "cache-control": "public, max-age=3600" } }); }
   const near = (sp.get("near") || "").split(",").map(Number); // "lat,lng" of the chosen city: results closest to it come first
   const hasNear = near.length === 2 && near.every(Number.isFinite) && near[0] > 32 && near[0] < 36 && near[1] > -122 && near[1] < -114;
   const headers = { "cache-control": "public, max-age=86400" };
-  if (q.length < 5 || !/\d/.test(q) || !env.GEOAPIFY_KEY) return json({ suggestions: [], on: !!env.GEOAPIFY_KEY }, { headers });
+  if (q.length < 5 || !/\d/.test(q) || q.split(" ").length < 2 || !env.GEOAPIFY_KEY) return json({ suggestions: [], on: !!env.GEOAPIFY_KEY }, { headers });
+  const slow = await checkThrottle(env, [{ kind: "address-ip", key: await hashKey(env, "ip", request.headers.get("CF-Connecting-IP") || "unknown"), max: ADDRESS_PER_MINUTE, windowSeconds: 60, msg: "slow down" }]);
+  if (slow) return json({ suggestions: [], on: true, limited: true }, { headers: { "cache-control": "no-store" } });
   try {
     const u = new URL("https://api.geoapify.com/v1/geocode/autocomplete");
     // A hard rectangle around Southern California (a bias alone lets "100 Main St" in other states crowd out the local ones)

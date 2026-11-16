@@ -13,6 +13,7 @@ import { findOrCreateInstaller } from "../_lib/installers.js";
 import { approveEntry } from "../_lib/contests.js";
 import { checkSubmitLimits, limitResponse, CONTACT } from "../_lib/submitlimit.js";
 import { sendReceipt } from "../_lib/receipt.js";
+import { mailAddress } from "../_lib/auth.js";
 import { normZip, phoneField, normName, normStreet, normText, normEmailText, normRadio, line } from "../_lib/fields.js";
 
 const AUTO_HOMES_PER_DAY = 60; // safety valve: past this many in a day, new homes wait for review
@@ -212,7 +213,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (!contest) receipt = await sendReceipt(env, waitUntil, { id: published ? "home_live" : "home_received", to: email, vars: { name: title, city, map: `https://socallights.app/#h-${id}`, link: "https://socallights.app/profile#displays" } });
   // "We received your entry": what happens next, the voting dates and where to edit or withdraw it (the Your home card on the contest page)
   if (contest && cu.email) {
-    const job = sendTemplate(env, "entry_received", cu.email, { name: title || biz, contest: contest.name, review: published ? "It is on the contest page and the map now." : "The organizer will review it before it goes on the map.", vote_start: fmtDate(contest.vote_start), vote_end: fmtDate(contest.vote_end), link: `https://socallights.app/c/${contest.slug}` }).catch(() => {});
+    const job = sendTemplate(env, "entry_received", await mailAddress(env, cu.email), { name: title || biz, contest: contest.name, review: published ? "It is on the contest page and the map now." : "The organizer will review it before it goes on the map.", vote_start: fmtDate(contest.vote_start), vote_end: fmtDate(contest.vote_end), link: `https://socallights.app/c/${contest.slug}` }).catch(() => {});
     if (waitUntil) waitUntil(job);
   }
   await bump(env, contest ? "fn:contest-entry-done" : "fn:add-house-done");

@@ -19,23 +19,28 @@
 </head>
 <body>
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a></div></div>
-<main><div class="unsub" id="box"><p class="meta">One moment…</p></div></main>
+<main id="content"><p class="sr" id="live" role="status" aria-live="polite"></p><div class="unsub" id="box"><p class="meta">One moment…</p></div></main>
 <script>
 (function () {
   var t = new URLSearchParams(location.search).get("t") || "", box = document.getElementById("box");
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
-  function draw(d) {
+  var live = document.getElementById("live");
+  // After a change the page redraws: put the heading in focus and say the result in a live region that is always on the page, so a screen reader hears it (L5)
+  function announce(h, msg) { var e = box.querySelector("h1"); if (e) { e.setAttribute("tabindex", "-1"); if (h) e.focus(); } live.textContent = ""; setTimeout(function () { live.textContent = msg || ""; }, 50); }
+  var OTHER = '<p class="small">This page covers reminders, updates and result emails only. The monthly update is a separate list: use the link at the bottom of a monthly email, or switch it off in <a href="/profile#account">Your profile, Account tab</a>.</p>';
+  function draw(d, acted) {
     box.innerHTML = d.optout
-      ? '<h1>You are unsubscribed</h1><p>We will stop sending reminders, updates and result emails to <b>' + esc(d.email) + '</b>. You will still get service emails, such as sign-in codes and decisions about your listings.</p><button class="btn out" id="back" type="button">Changed your mind? Turn them back on</button>'
-      : '<h1>Stop these emails?</h1><p>Unsubscribe <b>' + esc(d.email) + '</b> from reminders, updates and result emails from SoCal Lights. You will still get service emails, such as sign-in codes and decisions about your listings.</p><button class="btn" id="go" type="button">Unsubscribe</button>';
+      ? '<h1>You are unsubscribed</h1><p>We will stop sending reminders, updates and result emails to <b>' + esc(d.email) + '</b>. You will still get service emails, such as sign-in codes and decisions about your listings.</p><button class="btn out" id="back" type="button">Changed your mind? Turn them back on</button>' + OTHER
+      : '<h1>Stop these emails?</h1><p>Unsubscribe <b>' + esc(d.email) + '</b> from reminders, updates and result emails from SoCal Lights. You will still get service emails, such as sign-in codes and decisions about your listings.</p><button class="btn" id="go" type="button">Unsubscribe</button>' + OTHER;
     var b = document.getElementById("go") || document.getElementById("back");
     b.onclick = function () { b.disabled = true; send(!d.optout); };
+    announce(!!acted, acted ? (d.optout ? "You are unsubscribed from reminders, updates and result emails." : "Those emails are turned back on.") : "");
   }
-  function fail(m) { box.innerHTML = '<h1>That link did not work</h1><p class="err">' + esc(m) + '</p><p>Write to <a href="mailto:info@socallights.app">info@socallights.app</a> and we will take you off the list.</p>'; }
+  function fail(m) { box.innerHTML = '<h1>That link did not work</h1><p class="err" role="alert">' + esc(m) + '</p><p>If you can sign in, <a href="/profile#account">Your profile, Account tab</a> has the monthly update switch. Otherwise write to <a href="mailto:info@socallights.app">info@socallights.app</a> from the address you want removed and we will take you off the list.</p>'; announce(true, ""); }
   function send(optout) {
     fetch("/api/unsub", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: t, optout: optout }) })
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "Something went wrong."); return j; }); })
-      .then(draw).catch(function (e) { fail(e.message); });
+      .then(function (j) { draw(j, true); }).catch(function (e) { fail(e.message); });
   }
   if (!t) return fail("This page needs the link from your email.");
   fetch("/api/unsub?t=" + encodeURIComponent(t)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); }).then(draw).catch(function (e) { fail(e.message); });
