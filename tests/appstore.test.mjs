@@ -15,8 +15,10 @@ import { newEnv, stubFetch, addUser } from "./_pay.mjs";
 const ORIGIN = "https://socallights.app";
 const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
 const post = (fn, env, path, body, { ip = "203.0.113.5", headers = {} } = {}) => fn({ request: new Request(ORIGIN + path, { method: "POST", headers: { "content-type": "application/json", "CF-Connecting-IP": ip, ...headers }, body: JSON.stringify(body) }), env });
-const reqCode = (env, email, o) => post(start, env, "/api/auth/email/start", { email }, o);
-const doVerify = (env, email, code, o) => post(verify, env, "/api/auth/email/verify", { email, code }, o);
+// The browser that asked for a code keeps the cookie it came with (M9: the code is tied to that browser), so the verify call here sends it back.
+const jar = new WeakMap();
+const reqCode = async (env, email, o) => { const r = await post(start, env, "/api/auth/email/start", { email }, o); const c = (r.headers.get("set-cookie") || "").split(";")[0]; if (c) jar.set(env, c); return r; };
+const doVerify = (env, email, code, o = {}) => post(verify, env, "/api/auth/email/verify", { email, code }, { ...o, headers: { ...(jar.get(env) ? { cookie: jar.get(env) } : {}), ...(o.headers || {}) } });
 const mailOk = () => stubFetch(() => new Response(JSON.stringify({ id: "m1" }), { status: 200 }));
 const mails = (f) => f.calls.filter((c) => /resend\.com/.test(c.url));
 const codeFrom = (f) => { const m = mails(f).map((c) => JSON.parse(c.init.body)).pop(); return m && (m.subject.match(/\d{6}/) || [])[0]; };

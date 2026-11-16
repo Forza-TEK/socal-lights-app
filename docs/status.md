@@ -1,5 +1,12 @@
 # Status
 
+## 2026-11-16: Creation audit, part 2: accounts and email (branch `audit-creation-accounts`)
+- M9 a sign-in code is tied to the browser that asked for it (short-lived cookie `scl_code_nonce`, only its hash is stored in `login_codes.nonce_hash`): a stranger's wrong guesses from another browser no longer use up the real person's five tries (they count only against 10 an hour per address and the 30 an hour per network cap), and a correct code typed on another device still works. Codes made before this behave as before. The limit of 4 codes per address per hour is unchanged (the App Store reviewer login uses it).
+- L2 sign-in keeps the address as typed (`users.login_email`); receipts and the "we received your entry" mail go there; the account stays keyed by the stripped address. Other mail still uses the account address.
+- L4 and L5 the two unsubscribe pages say which list they control and point at each other and at Your profile; changes are announced in a live region that is always on the page and the heading takes focus. `monthlyMayReceive` (`functions/_lib/newsletter.js`) is the one check the future monthly sender must pass (opt-in, reminder opt-out, hard bounce, complaint, deleted account).
+- L8 `/api/address` answers only our own pages, needs a number and two words, and is limited to 60 lookups a minute per connection (an empty list when limited). L10 the profile picture is checked by its bytes and limited to 10 changes a day. L11 the "Remove my home" acknowledgment never repeats typed text.
+- Migration `0268_account_login.sql` (two new columns, add-only). Tests: `tests/audit-creation-accounts.test.mjs` (10); `tests/appstore.test.mjs` keeps the code cookie between request and verify.
+
 ## 2026-11-16: Creation audit, part 1: listings (branch `audit-creation-listings`)
 Fixes from the creation-flows audit (report in `docs/audit/2026-11-16/`; decisions for the owner in `creation-decisions.md`; contest findings left for later in `creation-contest-followups.md`).
 - H1 "Run again next year" works only on an event that is on the map, refuses a second copy for the same year, counts toward the 5 an hour and 8 a day limits and the review words; the button shows only for live events.

@@ -1,7 +1,7 @@
 // The monthly update: a SEPARATE opt-in. Having an account or a listing never subscribes anyone; the controls are unchecked by default.
 // This file only stores the permission (who, role, topics, when, how, which wording). The monthly email itself is a later task and must not be sent to anyone without an
 // active row here (unsubscribed_at IS NULL). Unsubscribing also adds the address to the shared do-not-contact list (one-way hash, source "app").
-import { suppressFromApp } from "./outreach.js";
+import { suppressFromApp, outreachHashes } from "./outreach.js";
 import { unsubHeaders } from "./mailtpl.js";
 
 // Bump when the wording below changes; every row records the version the person saw.
@@ -79,6 +79,20 @@ export async function unsubscribe(env, { token, email }) {
   await env.DB.prepare("UPDATE newsletter_optins SET unsubscribed_at = COALESCE(unsubscribed_at, datetime('now')), updated_at = datetime('now') WHERE email = ?").bind(row.email).run();
   await suppressFromApp(env, row.email);
   return true;
+}
+
+// The one check the future monthly sender must pass for every address (L4 of the 2026-11-16 audit). There are two unsubscribe pages (/unsubscribe for reminders and result emails, /prefs for this update);
+// each also puts the address on the shared do-not-contact list. Honored here: an active opt-in (the /prefs unsubscribe), no reminder opt-out (the /unsubscribe page), and no hard bounce, complaint or deleted account.
+// (The general suppression list is not checked as a whole: unsubscribing from this update puts the address on it, and a person who opts in again must be able to receive it.)
+export async function monthlyMayReceive(env, email) {
+  const e = cleanEmail(email);
+  const o = await optinFor(env, e);
+  if (!o || !o.active) return false;
+  const p = await env.DB.prepare("SELECT optout FROM email_prefs WHERE email = ?").bind(e).first().catch(() => null);
+  if (p && p.optout) return false;
+  const { h, n } = await outreachHashes(env, e), hs = [...new Set([h, n])];
+  const s = await env.DB.prepare(`SELECT 1 AS x FROM outreach_suppressions WHERE email_hash IN (${hs.map(() => "?").join(",")}) AND (reason IN ('bounce','complaint') OR source = 'account_deleted') LIMIT 1`).bind(...hs).first();
+  return !s;
 }
 
 // For the future monthly email (not sent yet): the person's own preferences page and the headers that give mail apps a one-click unsubscribe (RFC 8058) to the same /api/prefs machinery.

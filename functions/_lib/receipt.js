@@ -15,6 +15,7 @@ import { sendTemplate } from "./mailtpl.js";
 import { outreachHashes } from "./outreach.js";
 import { checkThrottle, hashKey } from "./throttle.js";
 import { logOp } from "./oplog.js";
+import { mailAddress } from "./auth.js";
 
 export const RECEIPT_MAX_PER_DAY = 20;
 
@@ -32,11 +33,12 @@ export async function sendReceipt(env, waitUntil, { id, to, vars }) {
   try {
     const addr = String(to || "").trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr)) return "invalid";
-    try { if (await undeliverable(env, addr)) return "undeliverable"; }
+    const dest = await mailAddress(env, addr); // L2: the address the person typed to sign in, not the alias-stripped account key
+    try { if (await undeliverable(env, addr) || (dest !== addr && await undeliverable(env, dest))) return "undeliverable"; }
     catch (e) { await logOp(env, "email", `${id}: receipt not sent, the bounce check failed (${e && e.message})`); return "held"; }
     const blocked = await checkThrottle(env, [{ kind: "receipt", key: await hashKey(env, "receipt", addr), max: RECEIPT_MAX_PER_DAY, windowHours: 24, msg: "receipt limit" }]);
     if (blocked) return "throttled";
-    const job = sendTemplate(env, id, addr, vars).catch((e) => logOp(env, "email", `${id}: receipt could not be prepared (${e && e.message})`));
+    const job = sendTemplate(env, id, dest, vars).catch((e) => logOp(env, "email", `${id}: receipt could not be prepared (${e && e.message})`));
     if (waitUntil) waitUntil(job); else await job;
     return "queued";
   } catch (e) { await logOp(env, "email", `${id}: receipt failed (${e && e.message})`); return "held"; }

@@ -19,7 +19,7 @@
 </head>
 <body>
 <div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright"><a class="maplink" href="/" aria-label="Open the map"><span class="long">Open the map</span><span class="short">Map</span></a></div></div>
-<main id="content"><div class="pref" id="box"><p class="meta">One moment…</p></div></main>
+<main id="content"><p class="sr" id="live" role="status" aria-live="polite"></p><div class="pref" id="box"><p class="meta">One moment…</p></div></main>
 <script>
 (function () {
   var t = new URLSearchParams(location.search).get("t") || "", box = document.getElementById("box"), S = null;
@@ -28,14 +28,19 @@
     var r = S.config.roles.filter(function (x) { return x.id === role; })[0];
     return r ? r.topics.map(function (x) { return '<label class="chk"><input type="checkbox" data-topic="' + esc(x.id) + '"' + (picked.indexOf(x.id) >= 0 ? " checked" : "") + '> <span>' + esc(x.label) + "</span></label>"; }).join("") : "";
   };
-  function fail(m) { box.innerHTML = '<h1>That link did not work</h1><p class="err" role="alert">' + esc(m) + '</p><p>Write to <a href="mailto:info@socallights.app">info@socallights.app</a> and we will take you off the list.</p>'; }
+  var live = document.getElementById("live");
+  // The page redraws after every change: focus the heading and say the result in a live region that is always on the page, so a screen reader hears it (L5)
+  function announce(h, msg) { var e = box.querySelector("h1"); if (e) { e.setAttribute("tabindex", "-1"); if (h) e.focus(); } live.textContent = ""; setTimeout(function () { live.textContent = msg || ""; }, 50); }
+  var OTHER = '<p class="small ok">This page covers the monthly update only. Reminders and result emails have their own unsubscribe link at the bottom of those emails.</p>';
+  function fail(m) { box.innerHTML = '<h1>That link did not work</h1><p class="err" role="alert">' + esc(m) + '</p><p>If you can sign in, <a href="/profile#account">Your profile, Account tab</a> has the monthly update switch. Otherwise write to <a href="mailto:info@socallights.app">info@socallights.app</a> from the address you want removed and we will take you off the list.</p>'; announce(true, ""); }
   function draw(msg) {
-    if (!S.active) { box.innerHTML = '<h1>You are unsubscribed</h1><p>We will not send the monthly update to <b>' + esc(S.email) + '</b>. You will still get service emails, such as sign-in codes and decisions about your listings.</p><p class="ok" role="status">' + esc(msg || "") + '</p><p><a class="btn out" href="/" style="display:inline-flex;align-items:center;text-decoration:none">Open the map</a></p>'; return; }
+    if (!S.active) { box.innerHTML = '<h1>You are unsubscribed</h1><p>We will not send the monthly update to <b>' + esc(S.email) + '</b>. You will still get service emails, such as sign-in codes and decisions about your listings.</p><p><a class="btn out" href="/" style="display:inline-flex;align-items:center;text-decoration:none">Open the map</a></p>' + OTHER; announce(!!msg, msg ? "You are unsubscribed from the monthly update." : ""); return; }
     box.innerHTML = '<h1>Monthly update preferences</h1><p>For <b>' + esc(S.email) + '</b>. Change what you get, or stop it. No sign-in needed.</p>'
       + '<fieldset><legend>I am</legend>' + S.config.roles.map(function (r) { return '<label class="chk"><input type="radio" name="role" value="' + esc(r.id) + '"' + (S.role === r.id ? " checked" : "") + '> <span>' + esc(r.label) + "</span></label>"; }).join("") + "</fieldset>"
       + '<fieldset><legend>I would like <span class="ok" style="font-weight:400">(optional)</span></legend><div id="topics" style="display:grid;gap:6px">' + topicsFor(S.role, S.topics) + "</div></fieldset>"
-      + '<p class="err" id="err" role="alert" hidden></p><div class="row"><button class="btn" id="save" type="button">Save</button><button class="btn out" id="stop" type="button">Unsubscribe</button><span class="ok" id="msg" role="status">' + esc(msg || "") + "</span></div>"
-      + '<p class="ok" style="font-size:14px">' + esc(S.config.disclosure) + "</p>";
+      + '<p class="err" id="err" role="alert" hidden></p><div class="row"><button class="btn" id="save" type="button">Save</button><button class="btn out" id="stop" type="button">Unsubscribe</button><span class="ok" id="msg">' + esc(msg || "") + "</span></div>"
+      + '<p class="ok" style="font-size:14px">' + esc(S.config.disclosure) + "</p>" + OTHER;
+    announce(!!msg, msg ? "Your monthly update preferences are saved." : "");
     var picked = function () { return [].slice.call(box.querySelectorAll("[data-topic]:checked")).map(function (c) { return c.getAttribute("data-topic"); }); };
     [].forEach.call(box.querySelectorAll("[name=role]"), function (r) { r.onchange = function () { S.role = r.value; document.getElementById("topics").innerHTML = topicsFor(r.value, picked().filter(function (x) { return topicsFor(r.value, [x]).indexOf('data-topic="' + x + '"') >= 0; })); }; });
     document.getElementById("save").onclick = function () { send({ action: "save", role: S.role, topics: picked() }, "Saved."); };

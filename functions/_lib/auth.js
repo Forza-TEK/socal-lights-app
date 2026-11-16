@@ -7,6 +7,9 @@ import { EMAIL_KEY, utcDay } from "./cfusage.js";
 import { readActAs } from "./actas.js";
 
 export const COOKIE = "scl_session";
+// The sign-in code is tied to the browser that asked for it (M9 of the 2026-11-16 audit): a random value in this cookie, its hash stored with the code.
+export const NONCE_COOKIE = "scl_code_nonce";
+export const nonceHash = (n) => sha256("code-nonce:" + n);
 const SESSION_DAYS = 30;
 
 // Same person, however they spell the address: lowercase, no +tag, and no dots for Gmail.
@@ -80,6 +83,17 @@ export async function getUser(request, env) {
 export async function requireUser(request, env) {
   const u = await getUser(request, env);
   return u ? { user: u } : { res: err(401, "Please sign in first.") };
+}
+
+// The address mail about a person's listings should go to: the one they typed to sign in (L2), when it is the same mailbox as the account's alias-stripped address; otherwise the address as given.
+export async function mailAddress(env, accountEmail) {
+  const base = String(accountEmail || "").trim().toLowerCase();
+  try {
+    const r = await env.DB.prepare("SELECT login_email FROM users WHERE email = ?").bind(normEmail(base)).first();
+    const typed = String((r && r.login_email) || "").trim().toLowerCase();
+    if (typed && okEmail(typed) && normEmail(typed) === normEmail(base)) return typed;
+  } catch {}
+  return base;
 }
 
 // Finds or creates the account for a verified email.
