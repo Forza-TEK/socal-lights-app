@@ -52,17 +52,17 @@
         },
         {
           "id": "app",
-          "title": "Put SoCal Lights on your phone and use it offline",
-          "desc": "Add SoCal Lights to your phone and use it without a connection.",
+          "title": "Get the SoCal Lights app",
+          "desc": "Get the iPhone app from the App Store, sign in with a code, and see what is different from the website. Android: add the website to your home screen.",
           "url": "/tutorials/find-app.mp4",
-          "length": "1:20",
+          "length": "1:32",
           "captions": "/tutorials/find-app.vtt",
           "poster": "/tutorials/find-app.jpg",
           "mobile": {
             "url": "/tutorials/find-app-mobile.mp4",
             "poster": "/tutorials/find-app-mobile.jpg",
             "captions": "/tutorials/find-app-mobile.vtt",
-            "length": "1:19"
+            "length": "1:32"
           }
         },
         {
@@ -258,12 +258,12 @@
           "captions": "/tutorials/run-pass-app.vtt",
           "url": "/tutorials/run-pass-app.mp4",
           "poster": "/tutorials/run-pass-app.jpg",
-          "length": "3:56",
+          "length": "3:54",
           "mobile": {
             "url": "/tutorials/run-pass-app-mobile.mp4",
             "poster": "/tutorials/run-pass-app-mobile.jpg",
             "captions": "/tutorials/run-pass-app-mobile.vtt",
-            "length": "3:54"
+            "length": "3:53"
           }
         },
         {
