@@ -12,7 +12,7 @@ const git = (...a) => execFileSync("git", a, { encoding: "utf8", stdio: ["ignore
 test("safe area: one shared rule for every page except the map; sticky bars and the app frame add the inset themselves", () => {
   const t = read("public/tokens.css");
   assert.match(t, /--sat:env\(safe-area-inset-top,0px\)/);
-  assert.match(t, /body:not\(:has\(>#map\)\)\{padding-top:var\(--sat\);/, "the rule is scoped away from the map page (its body holds <main id=\"map\">)");
+  assert.match(t, /body:where\(:not\(:has\(>#map\)\)\)\{padding-top:var\(--sat\);/, "the rule is scoped away from the map page (its body holds <main id=\"map\">)");
   const a = read("public/appshell.css");
   assert.match(a, /\.sh-top\{position:sticky;top:0;[^}]*padding:calc\(14px \+ var\(--sat\)\)/, "Profile, Help and Tutorials top bar");
   assert.match(a, /\.sh-side\{position:sticky;[^}]*padding:calc\(18px \+ var\(--sat\)\)/);
