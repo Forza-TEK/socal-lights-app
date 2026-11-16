@@ -447,6 +447,22 @@ S["contest-pass-app"] = { id: "contest-pass-app", file: "run-pass-app", cookie: 
   nextUp(ER, "Contest passes", "How you choose a pass on the website"),
 ]};
 
+// Get the app (rewritten 2026-11-16: the iPhone app is live in the App Store). The App Store step is a plain title card, never a copy of the store's pages. The app is shown by the site's own app mode (browser string SoCalLightsApp).
+S.app = { id: "app", file: "find-app", phone: true, warm: true, ua: "Mozilla/5.0 SoCalLightsApp/1.0", routes: [{ url: "**/api/config", json: {} }], cookie: null, start: "/", steps: [
+  { ...hook("Find and plan", "Get the SoCal Lights app", "On your iPhone, from the App Store", "In this video, you will get the SoCal Lights app on your iPhone, and see what is the same as the website, and what is different. On an Android phone, you can still add the website to your home screen."), pre: authPre },
+  { card: { ey: "On your iPhone", title: "Open the App Store", sub: "Search for SoCal Lights, tap Get, then tap Open" }, say: "On your iPhone, open the App Store. Search for SoCal Lights, and tap Get. When it finishes, tap Open.", pad: 1.2 },
+  { cap: "The app opens on the map", say: "This is the app. It opens on the same map as the website, with the same places, filters, favorites and routes. And every update to the website reaches the app by itself.", do: async (p, h) => { await p.waitForSelector("#pbody .item", { timeout: 20000 }).catch(() => {}); await h.hover("#q", 1400); await h.hover("#pbody .item >> nth=0", 1400); }, pad: 0.4 },
+  { cap: "Tap the person icon", say: "To sign in, tap the person icon at the top.", target: "#acctbtn", after: 2000 },
+  { cap: "Tap Sign in", say: "Then tap Sign in.", target: 'button:has-text("Sign in") >> visible=true >> nth=0', after: 2000 },
+  { cap: "Sign in with a code", say: "In the app, you sign in with a code that we email to you. You type your email, and we send the code. There is no password.", do: async (p, h) => { await p.evaluate(() => { document.querySelectorAll("iframe[src*=challenges]").forEach((f) => { const b = f.closest("div:not(:only-child)") || f.parentElement; (f.parentElement.parentElement || f.parentElement).style.display = "none"; }); document.querySelectorAll("#si-ts,[id*=turnstile],[class*=turnstile],[data-sitekey]").forEach((e) => (e.style.display = "none")); }).catch(() => {}); await p.locator("input[type=email]:visible").first().waitFor({ timeout: 10000 }).catch(() => {}); await h.hover("input[type=email]:visible", 2600).catch(() => sleep(2600)); }, pad: 0.5, poster: true },
+  { cap: "Close", say: "Let us close this.", do: async (p, h) => { await p.keyboard.press("Escape"); await sleep(800); await p.goto(BASE + "/", { waitUntil: "domcontentloaded" }); await p.waitForSelector("#morebtn", { timeout: 15000 }); await sleep(1200); }, pad: 0.3 },
+  ...navSteps([target("Tap the three dots", "Now tap the three dots, at the top right.", "#morebtn", { after: 1400 })]),
+  { cap: "What is not in the app", say: "Look at this menu. There is no Support item and no Feature your event. Tips, Featured placements and contest passes are paid on the website, so the app never asks you for a payment.", do: async (p, h) => { await h.hover("#moremenu", 3200); }, pad: 0.5 },
+  { card: { ey: "In the app", title: "Delete your account", sub: "Your profile, then Account, then Delete my account" }, say: "And if you ever want to leave, open Your profile, then Account, and tap Delete my account. It takes two taps, and it removes your account and personal data.", pad: 1.0 },
+  { card: { ey: "On an Android phone", title: "Chrome's menu, then Install app", sub: "In Chrome, tap the browser's three dots, not the site's, then Install app or Add to Home screen" }, say: "On an Android phone, use Chrome. Tap the three dots in Chrome itself, at the top of the browser, not on the site. Then tap Install app, or Add to Home screen.", pad: 1.0 },
+  nextUp("Find and plan", "Find contests", "Live now, Mine and Past results, and the Enter or vote button on a map card"),
+]};
+
 // ---- Today's organizer and homeowner features (2026-11-10): editing a home the organizer added, photos and the homeowner's private link, and the homeowner's own page ----
 // Seeds: scripts/tutorials/seed-ownhomes.sql (three homes the organizer added, each with a private link, no photos, nobody linked). Demo photos come from public/img.
 const PHOTO = (n) => new URL(`../../public/img/${n}`, import.meta.url).pathname;
