@@ -57,6 +57,24 @@ export function trustOf(email, site) {
 const OFFICIAL = /\b(city|town of|county|counties|municipal|municipality|hoa|h\.o\.a|homeowners?|home ?owner'?s?|chamber|school|schools|unified|pta|ptsa|official|officially|sheriff|police)\b/i;
 export const officialSounding = (...texts) => texts.some((t) => OFFICIAL.test(String(t || "")));
 
+// First-vote check (owner decision 2026-11-16, option (a)): the first vote of each account in a contest needs a Turnstile "I am human" check when the contest
+// has a prize or is run by a city. The rule is read only from data the contest already has: no new column, nothing stored about the visitor.
+//  - prize: prize_mode "one" with a prize text, or "each" with at least one non-empty prize.
+//  - run by a city: the organization name says city / town of / county / municipal, or the website or the organizer's email domain ends in .gov.
+const CITYWORD = /\b(city|town of|county|municipal|municipality)\b/i;
+const govHost = (h) => /(^|\.)gov$/i.test(String(h || "").replace(/\.$/, ""));
+export function hasPrize(c) {
+  if (c.prize_mode === "one") return !!String(c.prize || "").trim();
+  if (c.prize_mode === "each") return Object.values(prizesOf(c)).some((v) => String(v || "").trim());
+  return false;
+}
+export function cityRun(c) {
+  if (CITYWORD.test(String(c.org || ""))) return true;
+  let host = ""; try { host = new URL(/^https?:/i.test(c.site || "") ? c.site : "https://" + c.site).hostname; } catch {}
+  return govHost(host) || govHost(String(c.contact_email || "").split("@")[1]);
+}
+export const needsFirstVoteCheck = (c) => hasPrize(c) || cityRun(c);
+
 // Audit M7: more than these is refused with a message, never silently cut (the wizard shows the same numbers).
 export const MAX_CATS = 8, MAX_JUDGES = 15;
 

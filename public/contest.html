@@ -112,13 +112,31 @@ function zoom(key, cap) {
   o.onclick = close; document.addEventListener("keydown", k); document.body.appendChild(o); o.querySelector("button").focus();
 }
 
+// "I am human" check (Cloudflare Turnstile) in a small dialog; resolves with the token, or "" when the voter cancels or the check cannot load. The message under the title is the server's reason.
+let TSKEY;
+async function humanCheck(msg) {
+  if (TSKEY === undefined) TSKEY = await fetch("/api/config").then((r) => r.json()).then((c) => c.turnstileSiteKey || "").catch(() => "");
+  if (TSKEY && !window.turnstile) await new Promise((res) => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; s.async = true; s.onload = res; s.onerror = res; document.head.appendChild(s); });
+  if (!TSKEY || !window.turnstile) { toast("The check could not load. Check your connection and try voting again."); return ""; }
+  return new Promise((res) => {
+    const host = document.createElement("div"); host.className = "modal"; const prev = document.activeElement;
+    host.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="hc-t"><h2 id="hc-t">One quick check</h2><p class="muted" id="hc-m" role="alert">${esc(msg || "Please complete the quick check to cast your first vote.")}</p><p class="small muted">You only do this once in this contest.</p><div id="hc-w"></div><button class="btn ghost" id="hc-x" type="button">Cancel</button></div>`;
+    const done = (t) => { host.remove(); document.querySelectorAll("[data-hc-inert]").forEach((c) => { c.removeAttribute("inert"); c.removeAttribute("data-hc-inert"); }); if (prev && prev.focus) prev.focus(); res(t); };
+    [...document.body.children].forEach((c) => { if (!c.hasAttribute("inert")) { c.setAttribute("inert", ""); c.setAttribute("data-hc-inert", ""); } });
+    document.body.appendChild(host);
+    window.turnstile.render(host.querySelector("#hc-w"), { sitekey: TSKEY, callback: (t) => done(t), "error-callback": () => { host.querySelector("#hc-m").textContent = "The check did not load. Please try again."; } });
+    host.querySelector("#hc-x").onclick = () => done(""); host.onkeydown = (e) => { if (e.key === "Escape") done(""); }; host.querySelector("#hc-x").focus();
+  });
+}
 async function vote(id, category) {
   if (BUSY) return; // a double tap sends one vote, not two
   BUSY = true; document.querySelectorAll("[data-vote]").forEach((b) => (b.disabled = true));
   try {
     if (!D.me.signedIn) { const u = await signIn({ title: "Sign in to vote", next: location.pathname }); if (!u) return; await load(); refreshAcct($("#acct")); }
-    const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/vote`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ post_id: id, category }) });
-    const j = await r.json().catch(() => ({}));
+    const send = (token) => fetch(`/api/contests/${encodeURIComponent(slug)}/vote`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ post_id: id, category, ...(token ? { "cf-turnstile-response": token } : {}) }) }).then(async (r) => ({ r, j: await r.json().catch(() => ({})) }));
+    let { r, j } = await send("");
+    // The first vote of an account in a contest with a prize or run by a city asks for an "I am human" check; the answer says so (needs_check) and the vote is sent again with the token.
+    while (!r.ok && j.needs_check) { const token = await humanCheck(j.error); if (!token) return; ({ r, j } = await send(token)); }
     if (!r.ok) return toast(j.error || "Couldn't record your vote.");
     // One confirmation that stays on the page (the ballot moves on to the next category by itself, so a short toast would be gone before it is read)
     VOTEMSG = j.same ? `${category}: that is already your vote for ${j.name}.` : j.moved ? `${category}: your vote moved to ${j.name}.` : `${category}: vote recorded for ${j.name}.`;
