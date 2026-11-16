@@ -142,7 +142,7 @@ test("demo login: the demo account cannot reach Admin (Admin is Cloudflare Acces
 test("a signed-in person can delete their account from the profile's Account tab, with a confirm step; nobody else can", async () => {
   const html = read("public/profile.html");
   assert.match(html, /<h2>Delete my account<\/h2>/); assert.match(html, /id="delacct"/);
-  assert.match(html, /if \(!da\.dataset\.sure\) \{[^}]*Tap again to permanently delete/, "the first tap only asks; the second deletes");
+  assert.match(html, /id="delbox" hidden/, "the first tap only opens the confirm box (L1)"); assert.match(html, /dtype\.value\.trim\(\)\.toLowerCase\(\) !== "delete"/, "the final button needs the word delete"); assert.match(html, /id="delsay" role="status"/, "the step is announced");
   assert.match(html, /fetch\("\/api\/me", \{ method: "DELETE" \}\)/);
   // nothing in the markup hides it from the app, and it needs no email or website step
   assert.ok(!/SoCalLightsApp/.test(html), "the app sees the same Account tab");

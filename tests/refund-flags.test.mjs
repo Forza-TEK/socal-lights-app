@@ -155,6 +155,7 @@ const HANDLES = /\b(flagRefundDue|refundDueStatements|contestDeletedStatements|t
 // Files that remove one of these rows and are allowed not to flag, with the reason. Keep this list short.
 const ALLOWED = {
   "functions/api/admin/installers/[id].js": "has the flag on hide; the merge delete moves the orders to the kept profile first",
+  "functions/_lib/installers.js": "dropEmptyStub only deletes a hidden (pending) profile that a homeowner's post created: never active, no owner, no other post, so no order can exist for it",
 };
 
 test("guard: every function that deletes an event, home or installer row, or hides an installer, uses the refund-flag helper", () => {

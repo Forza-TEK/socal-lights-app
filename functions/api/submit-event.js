@@ -20,7 +20,7 @@ const day = (s) => { const [, m, d] = String(s).split("-").map(Number); return M
 const whenOf = (e) => (e.end_date && e.end_date !== e.start_date ? `${day(e.start_date)} to ${day(e.end_date)}` : day(e.start_date));
 
 const AUTO_PUBLISH_PER_DAY = 100; // safety valve: past this, everything waits for review
-import { BAD } from "../_lib/moderation.js"; // the same rule the edit sheet uses
+import { needsReview } from "../_lib/moderation.js"; // the same rule the edit sheet uses
 
 // Can a Featured placement be bought for this event today? (the same calculation the checkout uses: featuring opens 30 days before the event, and not after it ended)
 const featurable = (ev) => { const t = ptToday(); return Object.keys(EVENT_PLANS).some((k) => !eventQuote(ev, k, t).problem); };
@@ -58,7 +58,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (e.address.length < 6) return err(400, "Enter the street address (or the two cross streets for a parade).");
   if (e.blurb.length < 20) return err(400, "Add a one- or two-sentence description (at least 20 characters).");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.email)) return err(400, "Enter an email address so we can reach you if something needs fixing.");
-  if (BAD.test(`${e.name} ${e.blurb} ${e.venue}`)) return err(400, "That doesn't look like a community event listing.");
+  if (needsReview(e.name, e.blurb, e.venue, e.hours, e.price, e.address, e.url)) return err(400, "That doesn't look like a community event listing.");
   if (!e.free && !e.price) e.price = "Price not listed";
   if (e.free && !e.price) e.price = "Free";
 
@@ -89,8 +89,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const reasons = [];
   if (!located) reasons.push("pin is at the city center (address not found)");
   if (!check.ok) reasons.push(check.note);
-  const auto = today24 < AUTO_PUBLISH_PER_DAY;
-  if (!auto) reasons.push("daily auto-publish limit reached");
+  // M3: an event whose web page could not be matched AND whose address could not be found has nothing to show it is real, so a person looks first (the one case that is held besides a busy day).
+  const unproven = !located && !check.ok;
+  if (unproven) reasons.push("held: no matching event page and the address was not found");
+  const auto = today24 < AUTO_PUBLISH_PER_DAY && !unproven;
+  if (today24 >= AUTO_PUBLISH_PER_DAY) reasons.push("daily auto-publish limit reached");
 
   const id = newId();
   const eventId = auto ? `u-${slug(e.name).slice(0, 24)}-${newId().slice(0, 6)}` : null;
@@ -107,9 +110,9 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: "confirmed", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
     await bump(env, "fn:add-event-done");
     const receipt = await sendReceipt(env, waitUntil, { id: "event_live", to: e.email, vars: { name: e.name, when: whenOf(e), map: `https://socallights.app/#e-${eventId}`, link: "https://socallights.app/profile#events" } });
-    return json({ ok: true, status: "published", id: eventId, submission_id: id, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Your event is on the map." });
+    return json({ ok: true, status: "published", id: eventId, submission_id: id, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), located, receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Your event is on the map." });
   }
   await bump(env, "fn:add-event-done");
   const receipt = await sendReceipt(env, waitUntil, { id: "event_received", to: e.email, vars: { name: e.name, when: whenOf(e), link: "https://socallights.app/profile#events" } });
-  return json({ ok: true, status: "pending", submission_id: id, receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Thanks! We'll check your event and add it shortly." });
+  return json({ ok: true, status: "pending", submission_id: id, located, held: unproven ? "unproven" : "busy", receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Thanks! We'll check your event and add it shortly." });
 }

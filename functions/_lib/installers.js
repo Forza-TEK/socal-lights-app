@@ -32,8 +32,8 @@ export async function findInstaller(env, name, web = "") {
 //    (S-04): then `owned` is true, blank contact details may be filled in, and the post can be confirmed at once. Everyone else gets the profile back with owned = false,
 //    and the caller attaches the post as "unverified" until the profile's owner confirms.
 //  - A company nobody has listed gets a new profile. `trusted` means the installer posted it themselves: then the new profile carries their phone, area and email,
-//    is marked as created by them, and their typed website is tagged web_src = 'user' (an email at that domain cannot claim the profile at once; only an Admin-set website can).
-export async function findOrCreateInstaller(env, { name, web = "", phone = "", area = "", email = "", trusted = false }) {
+//    is marked as created by them, and their typed website is tagged web_src = 'user'. `status` is "active" (a public page) unless the caller asks for "pending" (hidden until Admin switches it on; M1 of the 2026-11-16 audit) (an email at that domain cannot claim the profile at once; only an Admin-set website can).
+export async function findOrCreateInstaller(env, { name, web = "", phone = "", area = "", email = "", trusted = false, status = "active" }) {
   const nm = clean(name, 80);
   if (!nm) return null;
   const row = await findInstaller(env, nm, web);
@@ -49,7 +49,12 @@ export async function findOrCreateInstaller(env, { name, web = "", phone = "", a
   let slug = instSlug(nm);
   if (await env.DB.prepare("SELECT 1 AS x FROM installers WHERE slug = ?").bind(slug).first()) slug = `${slug.slice(0, 52)}-${newId().slice(0, 5)}`;
   const id = newId(), by = trusted ? String(email || "").toLowerCase() : "";
-  const rec = { id, slug, name: nm, web: web || "", phone: trusted ? phone : "", area: trusted ? area : "", email: trusted ? email : "", blurb: "", status: "active", owner_email: "", created_by: by, web_src: web ? "user" : "" };
-  await env.DB.prepare("INSERT INTO installers (id,slug,name,web,phone,area,email,created_by,web_src) VALUES (?,?,?,?,?,?,?,?,?)").bind(id, slug, nm, rec.web, rec.phone, rec.area, rec.email, rec.created_by, rec.web_src).run();
+  const rec = { id, slug, name: nm, web: web || "", phone: trusted ? phone : "", area: trusted ? area : "", email: trusted ? email : "", blurb: "", status, owner_email: "", created_by: by, web_src: web ? "user" : "" };
+  await env.DB.prepare("INSERT INTO installers (id,slug,name,web,phone,area,email,created_by,web_src,status) VALUES (?,?,?,?,?,?,?,?,?,?)").bind(id, slug, nm, rec.web, rec.phone, rec.area, rec.email, rec.created_by, rec.web_src, status).run();
   return { inst: rec, owned: trusted, created: true };
 }
+
+// A hidden profile that a homeowner's post created (M1) and that nothing else uses any more: removed with the post. Never touches an active profile, one with an owner, or one an installer created.
+export const dropEmptyStub = (env, installerId) => (installerId
+  ? env.DB.prepare("DELETE FROM installers WHERE id = ? AND status = 'pending' AND created_by = '' AND owner_email = '' AND NOT EXISTS (SELECT 1 FROM posts WHERE installer_id = ?)").bind(installerId, installerId).run().catch(() => {})
+  : null);

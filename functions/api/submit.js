@@ -7,7 +7,8 @@ import { ipPruneStatements } from "../_lib/retention.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 import { fmtDate } from "../../public/contestfmt.js";
-import { getUser } from "../_lib/auth.js";
+import { getUser, sameOrigin } from "../_lib/auth.js";
+import { checkThrottle, hashKey } from "../_lib/throttle.js";
 import { findOrCreateInstaller } from "../_lib/installers.js";
 import { approveEntry } from "../_lib/contests.js";
 import { checkSubmitLimits, limitResponse, CONTACT } from "../_lib/submitlimit.js";
@@ -15,7 +16,7 @@ import { sendReceipt } from "../_lib/receipt.js";
 import { normZip, phoneField, normName, normStreet, normText, normEmailText, normRadio, line } from "../_lib/fields.js";
 
 const AUTO_HOMES_PER_DAY = 60; // safety valve: past this many in a day, new homes wait for review
-import { BAD } from "../_lib/moderation.js"; // the same "needs a person to look" rule the edit sheet uses
+import { needsReview } from "../_lib/moderation.js"; // the same "needs a person to look" rule the edit sheet uses
 import { getContest, windows, isStaff, judgeOf } from "../_lib/contests.js";
 import { homeKey } from "../_lib/homes.js";
 
@@ -33,6 +34,7 @@ function sniff(bytes) {
 
 export async function onRequestPost({ request, env, waitUntil }) {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  if (!sameOrigin(request)) return err(403, "Not allowed."); // L7: the same second lock every other signed-in write has (the cookie is SameSite=Lax too)
 
   let form;
   try { form = await request.formData(); } catch { return err(400, "The form couldn't be read. Please try again."); }
@@ -88,6 +90,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (address.length < 5) return err(400, "Enter the street address of the house.");
   if (pro && !web && !phone) return err(400, "Installers: add a website or a phone number for quotes.");
   if (pro && !form.get("permission")) return err(400, "Confirm you have the homeowner's permission to show this address.");
+  // M4: a home's street address is public, so the poster states that it is theirs (or that they have its owner's permission). Stored with the home. Contest entries have their own form and rules.
+  if (!contest && !pro && !form.get("permission")) return err(400, "Confirm that this is your home, or that you have its owner's permission to show the address.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err(400, "Enter an email address so the site owner can reach you.");
   if (pro && webRaw && !web) return err(400, "Enter a valid website address, like example.com.");
 
@@ -123,14 +127,20 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   // The pin goes on the exact address; if it can't be found it falls back to the city center (the admin can fix it)
   let [lat, lng] = CITY[city];
-  const pt = await geocodeAddress(address, city, [lat, lng]); if (pt) [lat, lng] = pt;
+  const pt = await geocodeAddress(address, city, [lat, lng]); const located = !!pt; if (pt) [lat, lng] = pt;
   const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
   const county = nearestCounty(lat, lng, evs);
 
+  // M2: what makes a new home wait for a person instead of going live (contest entries follow the organizer's own approval setting instead).
+  //   "address": the pin could not be found (it would sit at the city center) or the street has no house number; "text": a word that needs a look in ANY free-text field, not only the name and description.
+  const textBad = needsReview(biz, title, descr, street, address, where, area, form.get("lights_on"), form.get("radio"), form.get("installer_name"), form.get("installer_web"), webRaw);
+  const holds = [];
+  if (!contest) { if (!located || !/^\s*\d/.test(street || address)) holds.push("address"); if (textBad) holds.push("text"); }
+
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,entry_no,approved_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'CA',?,?,?,?,?,${contest ? "(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?)" : "NULL"},${autoApprove ? "datetime('now')" : "NULL"})`
+      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,entry_no,approved_at,address_consent_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'CA',?,?,?,?,?,${contest ? "(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?)" : "NULL"},${autoApprove ? "datetime('now')" : "NULL"},${!contest && form.get("permission") ? "datetime('now')" : "NULL"})`
     ).bind(id, autoApprove ? "approved" : "pending", biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area, contest ? contest.id : null, "", cu.id, ...(contest ? [contest.id] : [])),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     ...ipPruneStatements(env),
@@ -148,42 +158,47 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await env.DB.prepare("UPDATE posts SET lights_on = ?, visit = ?, parking = ?, accessible = ?, radio = ? WHERE id = ?").bind(line(form.get("lights_on"), 60), visit, parking, form.get("accessible") ? 1 : 0, normRadio(clean(form.get("radio"), 40)), id).run();
   } catch {}
   // Installer profile: an installer's own post makes (or joins) their profile; a homeowner can name the company that installed their lights
+  // M1: a homeowner can only LINK to a company that already has a public profile. A company nobody has listed yet gets a profile that stays hidden (status "pending", not on any public
+  // page) until Admin switches it on, and never when the text trips the review words. The mail to a profile's contact is capped per profile (a few a day) so it cannot be used to send
+  // someone else's words to a company over and over.
+  const tellInstaller = async (inst, vars) => {
+    if (!inst.email) return;
+    const slow = await checkThrottle(env, [{ kind: "installer-listed", key: await hashKey(env, "inst", inst.id), max: 5, windowHours: 24, msg: "installer notice limit" }]);
+    if (slow) return;
+    const job = sendTemplate(env, "installer_listed", inst.email, vars).catch(() => {});
+    if (waitUntil) waitUntil(job);
+  };
   try {
     if (pro) {
       // S-04: posting under the name of a company that already has a profile never changes that profile. The post is confirmed at once only when the poster owns
       // (or created) the profile; otherwise it shows as unverified until the profile's owner confirms it from the email we send them.
-      const r = await findOrCreateInstaller(env, { name: biz, web, phone, area, email, trusted: true });
+      const r = await findOrCreateInstaller(env, { name: biz, web, phone, area, email, trusted: true, status: textBad ? "pending" : "active" });
       if (r && r.owned) await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 1 WHERE id = ?").bind(r.inst.id, id).run();
       else if (r) {
         const token = newId() + newId(), to = r.inst.owner_email || r.inst.email;
         await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 0, installer_token = ? WHERE id = ?").bind(r.inst.id, token, id).run();
-        if (to) {
-          const job = sendTemplate(env, "installer_listed", to, { title, biz: `Someone posting as ${r.inst.name}`, installer: r.inst.name, city, confirm: `https://socallights.app/api/installers/confirm?t=${token}` }).catch(() => {});
-          if (waitUntil) waitUntil(job);
-        }
+        if (to) await tellInstaller({ id: r.inst.id, email: to }, { title, biz: `Someone posting as ${r.inst.name}`, installer: r.inst.name, city, confirm: `https://socallights.app/api/installers/confirm?t=${token}` });
       }
     } else {
       const iname = normName(clean(form.get("installer_name"), 80)), iwebRaw = clean(form.get("installer_web"), 200);
-      if (iname.length >= 2) {
-        const found = await findOrCreateInstaller(env, { name: iname, web: iwebRaw ? webUrl(iwebRaw) || "" : "" }), inst = found && found.inst;
+      if (iname.length >= 2 && !needsReview(iname, iwebRaw)) {
+        const found = await findOrCreateInstaller(env, { name: iname, web: iwebRaw ? webUrl(iwebRaw) || "" : "", status: "pending" }), inst = found && found.inst;
         if (inst) {
           const token = newId() + newId();
           await env.DB.prepare("UPDATE posts SET installer_id = ?, installer_confirmed = 0, installer_token = ? WHERE id = ?").bind(inst.id, token, id).run();
-          // If we know how to reach the installer, ask them to confirm. The claim shows on the card right away either way.
-          if (inst.email) {
-            const job = sendTemplate(env, "installer_listed", inst.email, { title, biz, installer: inst.name, city, confirm: `https://socallights.app/api/installers/confirm?t=${token}` }).catch(() => {});
-            if (waitUntil) waitUntil(job);
-          }
+          // If we know how to reach the installer, ask them to confirm. The claim shows on the card right away when the profile is public.
+          await tellInstaller(inst, { title, biz, installer: inst.name, city, confirm: `https://socallights.app/api/installers/confirm?t=${token}` });
         }
       }
     }
   } catch {}
-  // Homes and installer displays go live right away; they can be unpublished from the admin. Spammy text or a busy day holds them for review.
+  // Homes and installer displays go live right away; they can be unpublished from the admin. An address that could not be found, free text that trips the review words, or a busy day holds them for review.
   let published = !!contest && autoApprove;
   if (!contest) {
     try {
       const { n: today } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NULL AND status = 'approved' AND created_at > datetime('now','-1 day')").first();
-      if (!BAD.test(`${biz} ${title} ${descr}`) && today < AUTO_HOMES_PER_DAY) { await approveEntry(env, { id, photos: JSON.stringify(keys) }); published = true; }
+      if (today >= AUTO_HOMES_PER_DAY) holds.push("busy");
+      if (!holds.length) { await approveEntry(env, { id, photos: JSON.stringify(keys) }); published = true; }
     } catch {}
   }
   // Manual approval: tell the organizer there is something waiting for them
@@ -201,5 +216,5 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (waitUntil) waitUntil(job);
   }
   await bump(env, contest ? "fn:contest-entry-done" : "fn:add-house-done");
-  return json({ ok: true, id, status: published ? "published" : "pending", receipt: receipt === "queued" ? "sent" : "", email });
+  return json({ ok: true, id, status: published ? "published" : "pending", located, ...(holds.length ? { held: holds[0] } : {}), receipt: receipt === "queued" ? "sent" : "", email });
 }
