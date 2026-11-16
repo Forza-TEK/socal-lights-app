@@ -17,7 +17,7 @@ const COUNTIES = ["Los Angeles", "Orange", "Riverside", "San Bernardino", "San D
 const TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
 let evSeason = defaultSeason(TODAY);
 const photo = (k) => "/api/admin/photo/" + k.split("/").map(encodeURIComponent).join("/");
-let tab = "dashboard", PVIEW = "pending", EVENTS = [], POSTS = [], HSORT = "new", HOPEN = "";
+let tab = "dashboard", PVIEW = "pending", EVENTS = [], POSTS = [], HSORT = "new", HOPEN = "", COPEN = "";
 const sortList = (list, key, by) => [...list].sort(by[key] || by.new);
 const HSORTS = [["new", "Newest first"], ["old", "Oldest first"], ["name", "Name A to Z"], ["city", "City A to Z"]];
 const HBY = { new: (a, b) => String(b.created || "").localeCompare(String(a.created || "")), old: (a, b) => String(a.created || "").localeCompare(String(b.created || "")), name: (a, b) => String(a.title || "").localeCompare(String(b.title || "")), city: (a, b) => String(a.city || "").localeCompare(String(b.city || "")) || String(a.title || "").localeCompare(String(b.title || "")) };
@@ -46,7 +46,7 @@ const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
 function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; const bd = $("#bdot"); if (bd) { bd.hidden = !w; $("#bell").title = w ? `${w} waiting` : "Nothing is waiting"; } }
 function setTab(t, push = true) {
-  if (t !== tab) { PVIEW = "pending"; HOPEN = ""; }
+  if (t !== tab) { PVIEW = "pending"; HOPEN = ""; COPEN = ""; }
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
   $("#ptitle").textContent = TITLES[t] || ""; $("#pgroup").textContent = groupOf(t); setDetail("");
@@ -481,24 +481,34 @@ async function renderContests() {
   setCount("contests", n.look);
   setCount("contestsAll", CONTESTS.filter((c) => c.status !== "declined").length); // the plain total beside the name, like Installers and Users
   if (!CVIEW) CVIEW = n.look ? "look" : n.live ? "live" : n.ended ? "ended" : "declined"; // only the first time: picking "Needs a look" with nothing in it shows the empty note instead of jumping away
-  const list = g(CVIEW);
-  const bar = toolbar({ views: [{ k: "look", label: "Needs a look", n: n.look }, { k: "live", label: "Live", n: n.live }, { k: "ended", label: "Ended", n: n.ended }, { k: "declined", label: "Unpublished", n: n.declined }, { k: "passes", label: "Contest passes" }], active: CVIEW, search: { placeholder: "Search contests, organizers", value: CSEARCH }, right: dl("contests"), count: String(list.length) });
-  const wire = () => { wireToolbar(main, { onView: (v) => { CVIEW = v; if ((v === "passes") !== (tab === "passes")) return setTab(v === "passes" ? "passes" : "contests"); renderContests(); }, onSearch: (q) => { CSEARCH = q; filterCards(main, q); } }); if (CSEARCH) filterCards(main, CSEARCH); applyPreset(main); };
-  if (CVIEW === "passes") { main.innerHTML = bar + `<div id="passes">Loading…</div>`; wire(); return renderPasses(); }
-  if (!list.length) { main.innerHTML = bar + `<div class="empty">${CVIEW === "look" ? "Nothing needs a look. New contests go live right away. One shows here when the organizer's email could not be matched to a website." : "No contests here."}</div>`; wire(); return; }
-  main.innerHTML = bar + `<div class="cards">${list.map((c) => {
-    const tone = c.status === "live" ? "ok" : c.status === "declined" ? "bad" : c.status === "pending" ? "warn" : "";
-    const label = c.status === "live" ? (c.announced ? "Winners announced" : "Live") : c.status === "declined" ? "Unpublished" : c.status === "pending" ? "Waiting" : "Ended";
-    return rec({
-      attrs: `data-cid="${esc(c.id)}"`, title: esc(c.name), tags: [[label, tone], ...(flagged(c) ? [["Needs a look", "warn"]] : [])], meta: esc((c.created_at || "").slice(0, 16)) + " UTC",
-      facts: fact("Run by", esc(c.org) + " · " + esc(c.city)) + fact("Organizer", `<span style="user-select:all">${esc(c.owner_email || c.contact_email || "no owner")}</span>`) + fact("Website", c.site ? `<a href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site)}</a>` : "none given") + fact("Why it needs a look", esc(c.note || ""))
-        + fact("Dates", `Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}`) + fact("Activity", `${fmt(c.entries)} ${c.entries === 1 ? "entry" : "entries"} · ${fmt(c.votes)} ${c.votes === 1 ? "vote" : "votes"}`)
-        + fact("Pages", `<a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">Public page</a> · <a href="${asUrl("/c/" + c.slug + "/manage")}" target="_blank" rel="noopener">Organizer dashboard (as the organizer)</a>`),
-      edit: btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`) + btn("ghost", "Sponsors", `data-csp="${esc(c.id)}"`),
-      main: (c.status === "live" ? (flagged(c) ? btn("main", "Looks fine", 'data-cact="approve"') : "") + btn("ghost", "Unpublish", 'data-cact="decline"') : c.status === "closed" ? "" : btn("main", c.status === "pending" ? "Approve (goes on the map)" : "Make live again", 'data-cact="approve"')),
-      danger: btn("danger", c.entries ? `Delete with ${c.entries} ${c.entries === 1 ? "entry" : "entries"}` : "Delete", 'data-cact="delete"'),
-    });
-  }).join("")}</div>`;
+  const list = g(CVIEW), one = COPEN && CONTESTS.find((c) => c.id === COPEN); if (COPEN && !one) COPEN = "";
+  const label = (c) => (c.status === "live" ? (c.announced ? "Winners announced" : "Live") : c.status === "declined" ? "Unpublished" : c.status === "pending" ? "Waiting" : "Ended");
+  const tone = (c) => (c.status === "live" ? "ok" : c.status === "declined" ? "bad" : c.status === "pending" ? "warn" : "");
+  if (one && CVIEW !== "passes") { // the full record
+    const c = one, kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v !== "" && v != null).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
+    const acts = btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`) + btn("ghost", "Sponsors", `data-csp="${esc(c.id)}"`)
+      + (c.status === "live" ? (flagged(c) ? btn("main", "Looks fine", 'data-cact="approve"') : "") + btn("ghost", "Unpublish", 'data-cact="decline"') : c.status === "closed" ? "" : btn("main", c.status === "pending" ? "Approve (goes on the map)" : "Make live again", 'data-cact="approve"'))
+      + btn("danger", c.entries ? `Delete with ${c.entries} ${c.entries === 1 ? "entry" : "entries"}` : "Delete", 'data-cact="delete"');
+    setDetail(c.name);
+    main.innerHTML = `<div class="rpage" data-cid="${esc(c.id)}" data-name="${esc(c.name)}"><a class="rback" href="#contests" id="cBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to contests</a>
+      <div class="pghead"><div><h2>Contest detail</h2></div><div class="pgacts">${acts}</div></div><span class="msg" role="status"></span>
+      ${flagged(c) ? `<section class="rcard"><p class="meta" style="margin:0;color:var(--ink)"><b>Needs a look.</b> ${esc(c.note)}</p></section>` : ""}
+      <section class="rcard"><h3>Overview</h3>${kv([["Name", esc(c.name)], ["Status", `<span class="tag ${tone(c)}">${label(c)}</span>`], ["Run by", esc(c.org) + " · " + esc(c.city)], ["Created", esc((c.created_at || "").slice(0, 16)) + " UTC"]])}</section>
+      <section class="rcard"><h3>Organizer</h3>${kv([["Email", `<span style="user-select:all">${esc(c.owner_email || c.contact_email || "no owner")}</span>`], ["Website", c.site ? `<a href="${esc(c.site)}" target="_blank" rel="noopener">${esc(c.site)}</a>` : "none given"]])}</section>
+      <section class="rcard"><h3>Dates and activity</h3>${kv([["Dates", `Entries to ${esc(c.entries_close)} · voting ${esc(c.vote_start)} to ${esc(c.vote_end)}`], ["Activity", `${fmt(c.entries)} ${c.entries === 1 ? "entry" : "entries"} · ${fmt(c.votes)} ${c.votes === 1 ? "vote" : "votes"}`], ["Pages", `<a href="/c/${esc(c.slug)}" target="_blank" rel="noopener">Public page</a> · <a href="${asUrl("/c/" + c.slug + "/manage")}" target="_blank" rel="noopener">Organizer dashboard (as the organizer)</a>`]])}</section></div>`;
+    window.scrollTo(0, 0); $("#cBack").onclick = (e) => { e.preventDefault(); COPEN = ""; setDetail(""); renderContests(); };
+    return;
+  }
+  setDetail("");
+  const tabs = [["look", "Needs a look", n.look], ["live", "Live", n.live], ["ended", "Ended", n.ended], ["declined", "Unpublished", n.declined], ["passes", "Contest passes", 0]];
+  const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === CVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
+    <div class="pghead"><div><h2>${CVIEW === "passes" ? "Contest passes" : "Contests"}</h2><p>${CVIEW === "passes" ? "Passes and comps per organization." : "Contests start right away. One needs a look when the organizer's email could not be matched to a website. Open a row for the details."}</p></div>${CVIEW === "passes" ? "" : `<div class="pgacts">${dl("contests")}</div>`}</div>`;
+  const bar = CVIEW === "passes" ? "" : toolbar({ search: { placeholder: "Search contests, organizers", value: CSEARCH }, count: String(list.length) });
+  const wire = () => { wireToolbar(main.querySelector(".tbar") || main, { onSearch: (q) => { CSEARCH = q; filterCards(main, q); } }); main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { CVIEW = b.dataset.view; COPEN = ""; if ((CVIEW === "passes") !== (tab === "passes")) return setTab(CVIEW === "passes" ? "passes" : "contests"); renderContests(); })); if (CSEARCH) filterCards(main, CSEARCH); applyPreset(main); };
+  if (CVIEW === "passes") { main.innerHTML = head + `<div id="passes">Loading…</div>`; wire(); return renderPasses(); }
+  if (!list.length) { main.innerHTML = head + bar + `<div class="empty">${CVIEW === "look" ? "Nothing needs a look. New contests go live right away. One shows here when the organizer's email could not be matched to a website." : "No contests here."}</div>`; wire(); return; }
+  main.innerHTML = head + bar + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Contest</th><th>Organizer</th><th>Dates</th><th>Activity</th><th>Status</th><th class="ac">Actions</th></tr></thead><tbody>${list.map((c) => `<tr data-cid="${esc(c.id)}"><td><a class="rl" href="#contests" data-copen="${esc(c.id)}">${esc(c.name)}</a><span class="sub">${esc(c.org)} · ${esc(c.city)}</span></td><td><span style="user-select:all">${esc(c.owner_email || c.contact_email || "no owner")}</span></td><td>Entries to ${esc(c.entries_close)}<span class="sub">voting ${esc(c.vote_start)} to ${esc(c.vote_end)}</span></td><td>${fmt(c.entries)} ${c.entries === 1 ? "entry" : "entries"}<span class="sub">${fmt(c.votes)} ${c.votes === 1 ? "vote" : "votes"}</span></td><td><span class="tag ${tone(c)}">${label(c)}</span>${flagged(c) ? ' <span class="tag warn">Needs a look</span>' : ""}</td><td class="ac"><a class="rl" href="#contests" data-copen="${esc(c.id)}">Open</a></td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${list.length} contest${list.length === 1 ? "" : "s"}</span></div></div>`;
+  main.querySelectorAll("[data-copen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); COPEN = a.dataset.copen; renderContests(); }));
   wire();
 }
 /* ---------- Contest passes: usage per organization, comps (free for a founding partner), passes bought, "more than 20" leads ---------- */
@@ -598,16 +608,16 @@ const orgLabelOf = (k) => (String(k).startsWith("d:") ? String(k).slice(2) : Str
 const CDONE = { approve: "Contest is live", decline: "Contest unpublished", delete: "Contest deleted" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-cact]"); if (!b) return;
-  const card = b.closest("[data-cid]"), msg = card.querySelector(".msg"), act = b.dataset.cact;
-  const cname = card.querySelector("h3").textContent, extra = {};
+  const card = b.closest("[data-cid]"), msg = card.querySelector(".msg") || { set className(v) {}, set textContent(v) {} }, act = b.dataset.cact;
+  const cname = card.dataset.name || "this contest", extra = {};
   if (act === "decline") { const r = await askReason({ title: "Unpublish " + cname, hint: "This is emailed to the organizer. Leave it blank to send no reason.", go: "Unpublish" }); if (r === null) return; extra.reason = r; }
   else if (act === "delete" && !tap(b, "delete for good")) return;
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try {
     const res = await api("/api/admin/contests/" + card.dataset.cid, act === "delete" ? { method: "DELETE" } : { method: "POST", body: JSON.stringify({ action: act, ...extra }) });
     toast(CDONE[act] + (res && res.overCap ? `. Heads up: ${res.overCap.org} is now over its contest limit (${res.overCap.used} of ${res.overCap.cap}); see Contest passes` : ""), false, act === "decline" ? { undo: async () => { try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: "approve", notify: false }) }); toast("Undone"); renderContests(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
-    renderContests(); refreshCounts(); }
-  catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
+    COPEN = ""; renderContests(); refreshCounts(); }
+  catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; toast(err.message, true); }
 });
 
 /* ---------- events ---------- */
