@@ -57,6 +57,9 @@ export function trustOf(email, site) {
 const OFFICIAL = /\b(city|town of|county|counties|municipal|municipality|hoa|h\.o\.a|homeowners?|home ?owner'?s?|chamber|school|schools|unified|pta|ptsa|official|officially|sheriff|police)\b/i;
 export const officialSounding = (...texts) => texts.some((t) => OFFICIAL.test(String(t || "")));
 
+// Audit M7: more than these is refused with a message, never silently cut (the wizard shows the same numbers).
+export const MAX_CATS = 8, MAX_JUDGES = 15;
+
 // Organizer-added homes allowed while a contest still has a review note (an organizer Admin has not vouched for yet).
 export const UNTRUSTED_ADDED_CAP = 25;
 

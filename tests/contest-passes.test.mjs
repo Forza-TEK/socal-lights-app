@@ -163,10 +163,12 @@ test("counting: drafts, held for review, declined and never-live do not count; a
   // a contest with an official-sounding name from a free-mail organizer is held (pending): not live, no live_at, not counted, and needs no pass yet
   const held = await make(env, me.cookie, { name: "City of Covina Official Lights", org: "City of Covina" }); assert.equal(held.status, 200); assert.equal(held.body.status, "pending");
   assert.equal(row(raw, held.body.slug).live_at, ""); assert.equal((await ent(env, me.cookie, "")).body.used, 0);
+  raw.prepare("UPDATE contests SET status = 'declined' WHERE id = ?").run(row(raw, held.body.slug).id); // L9: one held contest per account at a time; this one is closed so a second can be created
   const held2 = await make(env, me.cookie, { name: "Town of Covina Official Lights", org: "Covina HOA" }); assert.equal(held2.body.status, "pending", "created freely");
   // Admin declines one before it was ever live: still not counted
   await adminContest({ params: { id: row(raw, held.body.slug).id }, request: rq("/x", { action: "decline" }), env, waitUntil: () => {} });
   assert.equal((await ent(env, me.cookie, "")).body.used, 0);
+  raw.prepare("UPDATE contests SET status = 'declined' WHERE status = 'pending'").run(); // L9: nothing waiting any more
   fresh(raw); const a = await first(env, me, "pass_1", P1, nameN(0)); assert.equal(a.status, 200);
   assert.equal((await make(env, me.cookie, nameN(1))).status, 402, "one live contest uses the single-contest pass"); fresh(raw);
   // unpublished by its creator: it was live, so it still counts

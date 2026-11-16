@@ -105,7 +105,8 @@ test("N-02: a free-mail organizer with an official-sounding name is held for rev
     // cannot add organizer-added homes while pending
     const add = await call(entriesPost, { params: { slug: c.slug }, request: jreq(`/api/contests/${c.slug}/entries`, gm, { confirm: true, homes: [{ address: "10 Elm Ave" }] }), env }).then(jbody);
     assert.equal(add.status, 400); assert.match(add.body.error, /isn't live/);
-    // a genuine small group is not blocked
+    // a genuine small group is not blocked (L9: one contest waits for review per account, so Admin declines the first one before this account creates another)
+    raw.prepare("UPDATE contests SET status = 'declined' WHERE id = ?").run(c.id);
     const plain = await create(env, gm, contestBody());
     assert.equal(plain.body.status, "live");
     assert.equal(q(raw, "SELECT COUNT(*) AS n FROM events WHERE id LIKE 'c-%'")[0].n, 1);

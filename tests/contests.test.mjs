@@ -45,9 +45,9 @@ test("create: an entry deadline of today is accepted (the date rules are Pacific
   assert.equal((await J(post(env, u.cookie, good({ closes: ptToday(0), vs: ptToday(1), ve: ptToday(9) })))).http, 200);
   assert.equal((await J(post(env, u.cookie, good({ name: "Another Showdown", closes: ptToday(-1) })))).http, 400);
 });
-test("create: goes live and onto the map; the season comes from the entry deadline; categories are de-duplicated and capped at 8", async () => {
+test("create: goes live and onto the map; the season comes from the entry deadline; categories are de-duplicated (8 is the most allowed)", async () => {
   const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@city.gov");
-  const r = await J(post(env, u.cookie, good({ site: "https://city.gov", cats: ["A one", "A one", "B", "C", "D", "E", "F", "G", "H", "I"] })));
+  const r = await J(post(env, u.cookie, good({ site: "https://city.gov", cats: ["A one", "A one", "B", "C", "D", "E", "F", "G", "H"] })));
   assert.equal(r.http, 200); assert.equal(r.status, "live"); assert.equal(r.trust, "match");
   const c = row(raw, r.slug);
   assert.equal(c.status, "live"); assert.equal(c.note, "", "a matching email leaves nothing for Admin to check");

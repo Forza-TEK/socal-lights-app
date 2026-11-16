@@ -230,9 +230,9 @@ export const TEMPLATES = [
 
   // ---- Contest organizers
   { id: "entry_new", group: "contest", unsub: "link", name: "New contest entry waiting", to: "The contest organizer", when: "A home is entered in a contest.",
-    vars: { title: ["Home name", "The Garcia Home"], street: ["Street", "12 Elm Ct"], city: ["City", "Pasadena"], contest: ["Contest name", "Maple Street Holiday Lights"], link: ["Manage page", `${SITE}/c/maple-street/manage`, true] },
+    vars: { title: ["Home name", "The Garcia Home"], street: ["Street", "12 Elm Ct"], city: ["City", "Pasadena"], contest: ["Contest name", "Maple Street Holiday Lights"], note: ["Heads-up line (blank if none)", "This home is in Irvine, not the contest's city."], link: ["Manage page", `${SITE}/c/maple-street/manage`, true] },
     subject: "New entry waiting: {{contest}}",
-    text: "~ New entry\n\n# An entry is waiting for you\n\n**{{title}}** ({{street}}, {{city}}) entered **{{contest}}** and is waiting for your OK. Photos are held privately until you approve.\n\n[Review the entry]({{link}})\n\n* You got this email because you organize {{contest}} on SoCal Lights." },
+    text: "~ New entry\n\n# An entry is waiting for you\n\n**{{title}}** ({{street}}, {{city}}) entered **{{contest}}** and is waiting for your OK. Photos are held privately until you approve.{{#note}}\n\n**Please check:** {{note}}{{/note}}\n\n[Review the entry]({{link}})\n\n* You got this email because you organize {{contest}} on SoCal Lights." },
   { id: "contest_team_changed", group: "contest", unsub: "link", name: "Contest team changed something", to: "The other organizers of the contest", when: "An organizer edits the contest.",
     vars: { who: ["Who did it", "Dana Lee"], contest: ["Contest name", "Maple Street Holiday Lights"], changes: ["The list of changes (built by the site)", "- Voting ends: Dec 20 -> Dec 22", true], link: ["Manage page", `${SITE}/c/maple-street/manage`] },
     subject: "{{who}} updated {{contest}}",

@@ -442,7 +442,7 @@ function render() {
       if (!$("#e-cats").disabled) body.cats = $("#e-cats").value.split("\n").map((x) => x.trim()).filter(Boolean);
       const r = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
       if (!r.ok) { er.textContent = j.error || "That didn't save. Try again."; er.hidden = false; return; }
-      toast("Saved."); await load();
+      toast(j.held ? j.message : "Saved."); await load();
     };
   }
   document.querySelectorAll("[data-act]").forEach((b) => (b.onclick = async () => {

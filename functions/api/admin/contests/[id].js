@@ -27,7 +27,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
       if (frozen.length) return err(409, "The winners are announced, so the name, organizer, city and dates are locked. You can still change the welcome text, the website and the contact email.");
     }
     if (f.site && !/^https?:\/\//i.test(f.site)) return err(400, "The website must start with http:// or https://.");
-    await env.DB.prepare("UPDATE contests SET name=?, org=?, city=?, descr=?, site=?, contact_email=?, entries_close=?, vote_start=?, vote_end=?, updated_at=datetime('now') WHERE id=?")
+    await env.DB.prepare("UPDATE contests SET pending_edit='', name=?, org=?, city=?, descr=?, site=?, contact_email=?, entries_close=?, vote_start=?, vote_end=?, updated_at=datetime('now') WHERE id=?")
       .bind(f.name, f.org, f.city, f.descr, f.site, f.contact_email, f.entries_close, f.vote_start, f.vote_end, c.id).run();
     if (c.status === "live") await listOnMap(env, { ...c, name: f.name, org: f.org, city: f.city, descr: f.descr, vote_end: f.vote_end });
     // The contact email only says where the contest's notices go. The organizer account (owner_id) is not changed by it: a new organizer has to be added as a co-organizer by the creator.
@@ -42,6 +42,12 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
       const key = c.org_key || (await orgKeyFor(env, (owner && owner.email) || c.contact_email, c.site)), ent = await orgState(env, key);
       if (!ent.canCreate) overCap = { org: orgLabel(key), used: ent.used + 1, cap: ent.cap };
       await env.DB.prepare("UPDATE contests SET live_at = ?, org_key = ? WHERE id = ? AND live_at = ''").bind(todayPT(), key, c.id).run();
+    }
+    // H2: a rename or text change the creator asked for while live is applied now that Admin looked at it
+    let applied = {}; try { applied = c.pending_edit ? JSON.parse(c.pending_edit) : {}; } catch { applied = {}; }
+    if (applied.name && applied.org) {
+      await env.DB.prepare("UPDATE contests SET name=?, org=?, descr=?, rules=?, pending_edit='' WHERE id=?").bind(String(applied.name).slice(0, 90), String(applied.org).slice(0, 80), applied.descr != null ? String(applied.descr).slice(0, 200) : c.descr, applied.rules != null ? String(applied.rules).slice(0, 4000) : c.rules, c.id).run();
+      Object.assign(c, { name: String(applied.name).slice(0, 90), org: String(applied.org).slice(0, 80), descr: applied.descr != null ? String(applied.descr).slice(0, 200) : c.descr });
     }
     await env.DB.prepare("UPDATE contests SET status='live', note='', unpublished_by='', updated_at=datetime('now') WHERE id=?").bind(c.id).run();
     await listOnMap(env, { ...c, status: "live" });

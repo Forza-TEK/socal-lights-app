@@ -7,11 +7,14 @@ import { enqueueMail, drainMail } from "../../_lib/mailbatch.js";
 import { logOp } from "../../_lib/oplog.js";
 import { inviteJudges } from "./[slug]/judges.js";
 import { getUser, sameOrigin, okEmail } from "../../_lib/auth.js";
-import { getContest, windows, states, contestSlug, withTail, todayPT, isDate, listOnMap, unlistFromMap, isStaff, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
+import { getContest, windows, states, contestSlug, withTail, todayPT, isDate, listOnMap, unlistFromMap, isStaff, trustOf, officialSounding, MAX_CATS, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { publicEntry } from "../../_lib/archive.js";
 import { judgeProgress } from "../../_lib/judging.js";
 import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
 import { normName, normText } from "../../_lib/fields.js";
+import { needsReview } from "../../_lib/moderation.js";
+import { checkThrottle, hashKey } from "../../_lib/throttle.js";
+import { tell } from "../../_lib/notify.js";
 import { reserveSends } from "../../_lib/sendlimit.js";
 import { isPublic, staffView, publicView } from "../../_lib/sponsors.js";
 import { founderKeys, isFounder } from "../../_lib/founder.js";
@@ -169,8 +172,9 @@ async function editContest(env, c, b, user, waitUntil) {
   if (ve < today) return err(400, "The voting end date has already passed.");
   let categories = cats(c);
   if (Array.isArray(b.cats)) {
-    const next = [...new Set(b.cats.map((x) => clean(x, 30)).filter(Boolean))].slice(0, 8);
+    const next = [...new Set(b.cats.map((x) => clean(x, 30)).filter(Boolean))];
     if (!next.length) return err(400, "Keep at least one category.");
+    if (next.length > MAX_CATS) return err(400, `Use at most ${MAX_CATS} categories.`);
     if (JSON.stringify(next) !== JSON.stringify(categories)) {
       const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE contest_id = ?").bind(c.id).first();
       if (n) return err(400, "Categories can't change after voting has started, because votes belong to a category.");
@@ -184,12 +188,26 @@ async function editContest(env, c, b, user, waitUntil) {
   const approval = b.approval === "auto" ? "auto" : "manual";
   const iname = clean(b.installerName, 80), iemail = clean(b.installerEmail, 120).toLowerCase(), iurl = clean(b.installerUrl, 200) ? webUrl(clean(b.installerUrl, 200)) : "";
   if (iname && !okEmail(iemail)) return err(400, "Enter the email where quote requests should go.");
+  // Audit H2: the official-sounding / review-words hold also runs on edit. The contest stays live under its OLD text; the requested change waits for Admin ("Looks fine" applies it).
+  // Not re-held: a verified/matching organizer, a name that was already official-sounding, or text that already carried a review word.
+  const trust = trustOf(user.email, c.site);
+  const newlyOfficial = trust !== "match" && officialSounding(name, org) && !officialSounding(c.name, c.org);
+  const newlyWords = needsReview(name, org, descr, rules) && !needsReview(c.name, c.org, c.descr, c.rules);
+  const hold = newlyOfficial || newlyWords;
+  const want = { name, org, descr, rules }, keep = { name: c.name, org: c.org, descr: c.descr, rules: c.rules || "" };
+  const held = hold && Object.keys(want).some((k) => want[k] !== keep[k]);
+  const fin = held ? keep : want; // what is written now
   await env.DB.prepare("UPDATE contests SET installer_name=?, installer_email=?, installer_url=? WHERE id=?").bind(iname, iname ? iemail : "", iurl || "", c.id).run();
   await env.DB.prepare("UPDATE contests SET name=?, org=?, descr=?, entries_close=?, vote_start=?, vote_end=?, categories=?, rules=?, prize_mode=?, prize=?, prizes=?, sponsor=?, approval=?, updated_at=datetime('now') WHERE id=?")
-    .bind(name, org, descr, closes, vs, ve, JSON.stringify(categories), rules, prizeMode, prize, JSON.stringify(prizes), sponsor, approval, c.id).run();
-  if (c.status === "live") await listOnMap(env, { ...c, name, org, descr, vote_end: ve });
-  await teamChanged(env, c, user, diff(c, { name, org, descr, entries_close: closes, vote_start: vs, vote_end: ve, categories: JSON.stringify(categories), rules, prize_mode: prizeMode, prize, prizes: JSON.stringify(prizes), sponsor, approval, installer_name: iname, installer_email: iname ? iemail : "", installer_url: iurl || "" }, CONTEST_FIELDS), waitUntil);
-  return json({ ok: true });
+    .bind(fin.name, fin.org, fin.descr, closes, vs, ve, JSON.stringify(categories), fin.rules, prizeMode, prize, JSON.stringify(prizes), sponsor, approval, c.id).run();
+  if (held) {
+    const note = `${newlyOfficial ? "official-sounding name" : "review words"} held on edit: wants name "${name}", org "${org}"`;
+    await env.DB.prepare("UPDATE contests SET pending_edit = ?, note = CASE WHEN note = '' THEN ? ELSE note || '; ' || ? END WHERE id = ?").bind(JSON.stringify(want), note, note, c.id).run();
+    if (!(await checkThrottle(env, [{ kind: "contest-review", key: await hashKey(env, "u", user.id), max: 1, windowHours: 1, msg: "" }]))) tell(env, waitUntil, env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", "contest_review", { name: c.name, org: c.org, city: c.city, email: user.email, note, what: "It stays live under its old name until you decide: Looks fine applies the requested change.", link: "https://socallights.app/admin/" });
+  } else if (c.pending_edit) await env.DB.prepare("UPDATE contests SET pending_edit = '' WHERE id = ?").bind(c.id).run(); // a newer, ordinary edit replaces a held one
+  if (c.status === "live") await listOnMap(env, { ...c, name: fin.name, org: fin.org, descr: fin.descr, vote_end: ve });
+  await teamChanged(env, c, user, diff(c, { name: fin.name, org: fin.org, descr: fin.descr, entries_close: closes, vote_start: vs, vote_end: ve, categories: JSON.stringify(categories), rules: fin.rules, prize_mode: prizeMode, prize, prizes: JSON.stringify(prizes), sponsor, approval, installer_name: iname, installer_email: iname ? iemail : "", installer_url: iurl || "" }, CONTEST_FIELDS), waitUntil);
+  return json({ ok: true, ...(held ? { held: true, message: "Saved. The new name or wording needs a quick look from our team first, so your contest keeps its current name until we approve it. Everything else you changed is saved." } : {}) });
 }
 
 // Everyone who entered gets the results; winners get a congratulations with their prize. Judges and the organizer are told too.

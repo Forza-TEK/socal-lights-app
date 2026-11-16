@@ -104,8 +104,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const key = homeKey(street || address), same = key ? (await env.DB.prepare("SELECT street, address FROM posts WHERE contest_id = ? AND status != 'declined'").bind(contest.id).all()).results.some((p) => homeKey(p.street || p.address) === key) : false;
     if (same) return err(400, "This address is already entered in this contest. One home may enter once.");
   }
-  const autoApprove = !!contest && contest.approval === "auto";
+  // Audit M8: an entry from another city is kept but never auto-approved (the organizer is told), so the "auto" setting cannot put an out-of-area home on the map by itself.
+  const otherCity = !!contest && city !== contest.city;
+  const autoApprove = !!contest && contest.approval === "auto" && !otherCity;
   const files = form.getAll("photos").filter((f) => f && typeof f === "object" && f.size > 0);
+  if (contest && !files.length) return err(400, "Add at least one photo of your home.");
   if (files.length > MAX_PHOTOS) return err(400, `Send up to ${MAX_PHOTOS} photos.`);
 
   const id = newId();
@@ -204,7 +207,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   }
   // Manual approval: tell the organizer there is something waiting for them
   if (contest && !autoApprove && contest.contact_email) {
-    const job = sendTemplate(env, "entry_new", contest.contact_email, { title, street, city, contest: contest.name, link: `https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});
+    const job = sendTemplate(env, "entry_new", contest.contact_email, { title, street, city, contest: contest.name, note: otherCity ? `This home is in ${city}, but the contest is for ${contest.city}. It was not approved automatically.` : "", link: `https://socallights.app/c/${contest.slug}/manage` }).catch(() => {});
     if (waitUntil) waitUntil(job);
   }
   // A receipt to the person who added a home (not for contest entries: the organizer's own flow covers those): "you're live" when it went on the map, "we got it" when it waits for review.
@@ -213,7 +216,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (!contest) receipt = await sendReceipt(env, waitUntil, { id: published ? "home_live" : "home_received", to: email, vars: { name: title, city, map: `https://socallights.app/#h-${id}`, link: "https://socallights.app/profile#displays" } });
   // "We received your entry": what happens next, the voting dates and where to edit or withdraw it (the Your home card on the contest page)
   if (contest && cu.email) {
-    const job = sendTemplate(env, "entry_received", await mailAddress(env, cu.email), { name: title || biz, contest: contest.name, review: published ? "It is on the contest page and the map now." : "The organizer will review it before it goes on the map.", vote_start: fmtDate(contest.vote_start), vote_end: fmtDate(contest.vote_end), link: `https://socallights.app/c/${contest.slug}` }).catch(() => {});
+    const job = sendTemplate(env, "entry_received", await mailAddress(env, cu.email), { name: title || biz, contest: contest.name, review: published ? "It is on the contest page and the map now." : otherCity ? `Your home is in ${city} and this contest is for ${contest.city}, so the organizer will decide whether it can be in. They review it before it goes on the map.` : "The organizer will review it before it goes on the map.", vote_start: fmtDate(contest.vote_start), vote_end: fmtDate(contest.vote_end), link: `https://socallights.app/c/${contest.slug}` }).catch(() => {});
     if (waitUntil) waitUntil(job);
   }
   await bump(env, contest ? "fn:contest-entry-done" : "fn:add-house-done");
