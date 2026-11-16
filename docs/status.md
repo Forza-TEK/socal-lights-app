@@ -1534,3 +1534,8 @@ Migration 0234: confirmed 10 Ventura/SB/San Bernardino-county Christmas events f
 - Migration 0260: 3 events added (Rubicon Theatre "A Christmas Carol: A Ghost Story" Dec 2–24, Ventura; Gingerbread House Exhibit & Tours, Oxnard; Santa Paws Pet Photo Nights at The Collection, Oxnard). No photos (Visit Oxnard's og:image was a Holly Trolley picture; Rubicon's is a small title banner).
 - Not added (no dated 2026 source loaded): Port Hueneme tree lighting (city site not reachable; past years Nov 28/Dec 3 at City Hall), Fillmore & Western Railway (no longer runs excursions), Brotherhood Winery tree lighting (2025 only), Ventura Majestic sing-along (2025 only), Cal Lutheran Christmas concerts, Moorpark Chanukah and Dec 12 concert, Oaks menorah display (only on conejovalleyguide roundup), Caring Santa (no time), Sip, Taste & Tour of Tree Lane (no address), NYE 2026 (not announced yet).
 - Network: simivalleycultural.org and the Port Hueneme city site did not resolve from this session; tickpick/Rubicon ticket pages gave 403.
+
+## 2026-11-16 owner decisions (App Store policy)
+- Contest creation stays available in the app. Owner: contests are run and prized by users, not by Forza-TEK. Not hidden. Apple 5.3 risk accepted by owner; fallback if a reviewer objects: add official-rules link and "Apple is not a sponsor" on in-app contest pages.
+- The "reviewed within 24 hours" report promise stays; owner checks Admin > Reports daily.
+- Terms now forbid unlawful, hateful, sexually explicit content and photos of people without permission (public/terms.html, What you post).
