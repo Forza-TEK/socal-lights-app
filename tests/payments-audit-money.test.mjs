@@ -90,7 +90,7 @@ test("M5 / L1: contest pass and partner payment pages carry the refund rule; the
     assert.equal((await J(partnerCheckout({ request: rq("/api/partner/checkout", {}, clerk.cookie), env }))).status, 200);
     var p = f.calls[2]; assert.match(decode(p), /If we cannot apply your plan, you get a full refund/); assert.match(decode(p), /\d+ days? left in this season/);
   } finally { f.restore(); }
-  assert.match(decode(a), /consent_collection\[terms_of_service\]=required/); assert.match(decode(p), /consent_collection\[terms_of_service\]=required/);
+  assert.match(decode(a), /consent_collection\[terms_of_service\]=required/); assert.match(decode(a), /statement_descriptor_suffix\]=SOCALLIGHTS/); assert.match(decode(p), /statement_descriptor_suffix\]=SOCALLIGHTS/); assert.match(decode(p), /consent_collection\[terms_of_service\]=required/);
   assert.ok(refundNote("event").length < 1000);
   for (const file of ["functions/api/feature/checkout.js", "functions/api/sponsor/checkout.js", "functions/api/installers/[slug]/manage.js"]) assert.doesNotMatch(readFileSync(file, "utf8"), /consent_collection/, file + " must not ask for Terms consent");
   for (const file of ["functions/api/feature/checkout.js", "functions/api/sponsor/checkout.js"]) assert.match(readFileSync(file, "utf8"), /custom_text\[submit\]\[message\]/, file);

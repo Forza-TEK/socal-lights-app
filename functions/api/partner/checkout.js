@@ -32,6 +32,7 @@ export async function onRequestPost({ request, env }) {
     "metadata[quote_from]": q.from, "metadata[quote_to]": q.to, "metadata[quote_cents]": String(q.cents),
     "custom_text[submit][message]": refundNote("partner"),
     "consent_collection[terms_of_service]": "required", // owner decision 2026-11-16: the "I agree to the Terms" tick (Terms URL is set in Stripe) on the $149-and-up checkouts only
+    "payment_intent_data[statement_descriptor_suffix]": "SOCALLIGHTS", // owner decision 2026-11-16: buyers see FORZA-TEK* SOCALLIGHTS (Stripe shortens the account name to fit 22 characters)
     "payment_intent_data[description]": `SoCal Lights Event Partner: ${orgLabel(key)}`.slice(0, 200),
     success_url: `${origin}/partner?paid=1`,
     cancel_url: `${origin}/partner?cancelled=1`,
