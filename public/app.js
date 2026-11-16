@@ -1600,7 +1600,7 @@ function keepSelectedVisible() {
   }, 340); // after the sheet's slide transition
 }
 function setSheet(s) {
-  sheetState = s; const panel = $("#panel");
+  sheetState = s; const panel = $("#panel"); panel.dataset.sheet = s; // the style sheet hides the count row behind the tab bar at "peek"
   if (!isPhone()) { panel.style.removeProperty("transform"); return; }
   placeSheet(s === "peek" ? peekY() : 0); followRoutePill();
   document.documentElement.style.setProperty("--peek", sheetVisible() + "px");

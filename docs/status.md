@@ -1,5 +1,11 @@
 # Status
 
+## 2026-11-16: Visitor audit, part 2 of 3: layout and tap targets (branch `audit-visitor-layout`)
+- F3: the "Ask SoCal Lights" button is hidden while an event or home card is open (it covered the Directions button; the sticky bar can sit anywhere, so lifting it could not clear it).
+- F4: at Peek on a phone the count and Sort (under the tab bar, shown as "1,076 pl") are hidden until the sheet is pulled up; Peek height unchanged (owner tuned it low). Option to raise Peek is in `docs/audit/2026-11-16/visitor-decisions.md`.
+- F19: the chip row wraps on a tablet so Sort shows. F18: the label over a photo is white with a shadow, also on Free events. F10: 44 px targets for "More in / Something wrong / Remove my home", photo arrows, link buttons, Plan route buttons, the sponsor pause button (hit area), the `/in` city links. Sponsor pills and the photo credit stay 24 px (see decisions).
+- Tests: `tests/visitor-layout.test.mjs`. `styles.css` and `app.js` `?v=20261116c`. Pinch fix untouched; `elementFromPoint` over the map band identical before and after (in the PR).
+
 ## 2026-11-16: Creation audit, part 3: add pages (branch `audit-creation-addflows`)
 - M5 on /add-house, /add-event and /add-contest, every step now moves focus: into the first text box, or onto the step's heading when the step has none; the finished screen focuses its heading too. Before, focus fell back to the top of the page after every tile step.
 - L3 if the monthly-update choice cannot be saved, the confirmation screen says so and points to Your profile, Account tab.
