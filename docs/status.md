@@ -1622,3 +1622,6 @@ Migration 0278 takes the duplicate Grok row (grok-43rd-light-up-a-life-car-b3000
 - After approval: release it (Pending Developer Release), then rotate APP_REVIEW_CODE (Cloudflare Pages secret) and redeploy.
 - Owner decisions (contest, Stripe, privacy, etc.) are collected on the Decisions artifact; read the `decisions` collection and apply in order.
 - Not started: 7 new tutorial videos (calendar and share, installer dashboard, Pricing in two minutes, contest logo, live location, and others).
+
+## 2026-11-16 Add to calendar keeps the start time
+An event whose hours give only a start time ("7pm") came into the calendar as all-day. Now it is a two-hour event from that time (capped at midnight), and hours that run past midnight ("7pm–12:16am") end the next morning. Fixed in public/app.js (map button, Google link and .ics) and functions/_lib/eventld.js (event page .ics); tests in tests/seo-admin.test.mjs. Multi-day events with daily hours are still all-day.

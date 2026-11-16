@@ -128,15 +128,22 @@ const ymd = (s) => s.replace(/-/g, "");
 const nextDay = (s) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); };
 function timeRange(ev) {
   if (ev.s !== ev.e) return null;
-  const m = String(hoursOf(ev) || ev.h || "").match(/^\D{0,12}?(\d{1,2})(?::(\d{2}))?\s*([ap])?\.?m?\.?\s*(?:–|-|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?/i);
-  if (!m) return null;
+  const str = String(hoursOf(ev) || ev.h || "");
   const to24 = (h, mi, ap) => { h = +h % 12; if (/p/i.test(ap)) h += 12; return h * 60 + (+mi || 0); };
-  const endAp = m[6], startAp = m[3] || endAp;
-  let s = to24(m[1], m[2], startAp), e = to24(m[4], m[5], endAp);
-  if (!m[3] && s >= e) s -= 12 * 60; // "11–1 pm": the start is in the morning
-  if (s < 0 || e <= s) return null;
   const f = (x) => String(Math.floor(x / 60)).padStart(2, "0") + String(x % 60).padStart(2, "0") + "00";
-  return [f(s), f(e)];
+  const m = str.match(/^\D{0,12}?(\d{1,2})(?::(\d{2}))?\s*([ap])?\.?m?\.?\s*(?:–|-|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?/i);
+  if (m) {
+    const endAp = m[6], startAp = m[3] || endAp;
+    let s = to24(m[1], m[2], startAp), e = to24(m[4], m[5], endAp);
+    if (!m[3] && s >= e) s -= 12 * 60;
+    if (s < 0 || e === s) return null;
+    return e < s ? [f(s), f(e), 1] : [f(s), f(e)]; // 3rd value 1: ends next day
+  }
+  // start time only: 2 hours, capped at midnight
+  const m2 = str.match(/^\D{0,12}?(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\b/i);
+  if (!m2 || +m2[1] > 12) return null;
+  const st = to24(m2[1], m2[2], m2[3]);
+  return [f(st), f(Math.min(st + 120, 1439))];
 }
 function calParts(ev) {
   const tr = timeRange(ev), desc = [hoursOf(ev) || "", ev.u || "", "Found on SoCal Lights: " + location.origin + "/#e-" + ev.id].filter(Boolean).join("\n");
@@ -151,12 +158,12 @@ function addToCalendar(id) {
 function calendarFor(ev) {
   const { tr, desc, loc } = calParts(ev);
   if (mapsApp === "google") {
-    const dates = tr ? `${ymd(ev.s)}T${tr[0]}/${ymd(ev.e)}T${tr[1]}` : `${ymd(ev.s)}/${ymd(nextDay(ev.e))}`;
+    const dates = tr ? `${ymd(ev.s)}T${tr[0]}/${ymd(tr[2] ? nextDay(ev.e) : ev.e)}T${tr[1]}` : `${ymd(ev.s)}/${ymd(nextDay(ev.e))}`;
     window.open("https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(ev.n) + "&dates=" + dates + "&details=" + encodeURIComponent(desc) + "&location=" + encodeURIComponent(loc), "_blank", "noopener");
     return;
   }
   const esc2 = (s) => String(s).replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
-  const when = tr ? `DTSTART:${ymd(ev.s)}T${tr[0]}\r\nDTEND:${ymd(ev.e)}T${tr[1]}` : `DTSTART;VALUE=DATE:${ymd(ev.s)}\r\nDTEND;VALUE=DATE:${ymd(nextDay(ev.e))}`;
+  const when = tr ? `DTSTART:${ymd(ev.s)}T${tr[0]}\r\nDTEND:${ymd(tr[2] ? nextDay(ev.e) : ev.e)}T${tr[1]}` : `DTSTART;VALUE=DATE:${ymd(ev.s)}\r\nDTEND;VALUE=DATE:${ymd(nextDay(ev.e))}`;
   const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//SoCal Lights//EN", "BEGIN:VEVENT", "UID:" + ev.id + "@socallights.app", "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z", when, "SUMMARY:" + esc2(ev.n), "LOCATION:" + esc2(loc), "DESCRIPTION:" + esc2(desc), "END:VEVENT", "END:VCALENDAR"].join("\r\n");
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" })); a.download = ev.id + ".ics"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   toast("Calendar file ready");

@@ -93,21 +93,28 @@ export function shareImage(e, origin) {
 // "6-9 pm" style hours of a one-day event as [start, end] clock strings "HHMMSS", else null (all-day)
 export function timeRange(e) {
   if (e.s !== e.e) return null;
-  const m = String(e.h || "").match(/^\D{0,12}?(\d{1,2})(?::(\d{2}))?\s*([ap])?\.?m?\.?\s*(?:–|-|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?/i);
-  if (!m) return null;
+  const str = String(e.h || "");
   const to24 = (h, mi, ap) => { h = +h % 12; if (/p/i.test(ap)) h += 12; return h * 60 + (+mi || 0); };
-  const endAp = m[6], startAp = m[3] || endAp;
-  let s = to24(m[1], m[2], startAp); const en = to24(m[4], m[5], endAp);
-  if (!m[3] && s >= en) s -= 12 * 60;
-  if (s < 0 || en <= s) return null;
   const f = (x) => String(Math.floor(x / 60)).padStart(2, "0") + String(x % 60).padStart(2, "0") + "00";
-  return [f(s), f(en)];
+  const m = str.match(/^\D{0,12}?(\d{1,2})(?::(\d{2}))?\s*([ap])?\.?m?\.?\s*(?:–|-|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?/i);
+  if (m) {
+    const endAp = m[6], startAp = m[3] || endAp;
+    let s = to24(m[1], m[2], startAp); const en = to24(m[4], m[5], endAp);
+    if (!m[3] && s >= en) s -= 12 * 60;
+    if (s < 0 || en === s) return null;
+    return en < s ? [f(s), f(en), 1] : [f(s), f(en)]; // a third value of 1 means it ends the next morning
+  }
+  // only a start time ("7pm"): a two-hour event from then, never past midnight
+  const m2 = str.match(/^\D{0,12}?(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\b/i);
+  if (!m2 || +m2[1] > 12) return null;
+  const st = to24(m2[1], m2[2], m2[3]);
+  return [f(st), f(Math.min(st + 120, 1439))];
 }
 // A calendar file (.ics) for one event, same fields as the map's "Add to calendar" button. Times are local to the event (floating), all-day when no hours are known.
 export function eventIcs(e, origin) {
   const ymd = (d) => d.replace(/-/g, ""), next = (d) => new Date(Date.parse(d + "T12:00:00Z") + 86400000).toISOString().slice(0, 10), tr = timeRange(e);
   const esc2 = (x) => String(x).replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
-  const when = tr ? `DTSTART:${ymd(e.s)}T${tr[0]}\r\nDTEND:${ymd(e.e)}T${tr[1]}` : `DTSTART;VALUE=DATE:${ymd(e.s)}\r\nDTEND;VALUE=DATE:${ymd(next(e.e))}`;
+  const when = tr ? `DTSTART:${ymd(e.s)}T${tr[0]}\r\nDTEND:${ymd(tr[2] ? next(e.e) : e.e)}T${tr[1]}` : `DTSTART;VALUE=DATE:${ymd(e.s)}\r\nDTEND;VALUE=DATE:${ymd(next(e.e))}`;
   const desc = [e.h || "", e.st === "c" ? "" : "Dates are estimated: check the event's site before you go.", http(e.u), `Found on SoCal Lights: ${origin}/e/${encodeURIComponent(e.id)}`].filter(Boolean).join("\n");
   return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//SoCal Lights//EN", "BEGIN:VEVENT", `UID:${e.id}@socallights.app`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`, when, `SUMMARY:${esc2(e.n)}`, `LOCATION:${esc2([e.v, e.a].filter(Boolean).join(", "))}`, `DESCRIPTION:${esc2(desc)}`, "END:VEVENT", "END:VCALENDAR", ""].join("\r\n");
 }
