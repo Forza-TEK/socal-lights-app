@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin redesign, signed-in visitor pages (Your profile)
+The lists on Your profile (Drafts, Contests, Displays, Events) are one bordered card with hairline dividers, like the Admin tables, and statuses are pills instead of dots (green On the map, amber In review, grey otherwise). Buttons, inline edit forms and everything behind them are unchanged. Looked at as a seeded user on desktop and on a phone in dark mode (via Admin acting as the user); light mode and the add and edit forms were not re-checked. Admin redesign: the Admin is done (20 areas). The visitor add and edit flows (/add-house, /add-event, /add-contest and their edit windows) are not converted yet.
+
 ## 2026-11-16: Admin redesign, Dashboard converted
 The Dashboard gets the page head (title and greeting) and its revenue list is a table in the same style as the rest. Looked at locally. Admin redesign: 20 of 21 areas done; the signed-in visitor pages are the last.
 
