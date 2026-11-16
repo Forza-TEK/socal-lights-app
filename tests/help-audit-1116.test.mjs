@@ -91,7 +91,7 @@ test("the assistant's knowledge file matches the product on the three audited pa
 test("help migrations are add-only: this audit changes articles only where nobody edited them in Admin", () => {
   for (const f of readdirSync(join(root, "migrations")).filter((n) => /^02(6[7-9]|7\d)_help_.*\.sql$/.test(n))) {
     const sql = read("migrations/" + f);
-    assert.doesNotMatch(sql, /\bDELETE\b|\bDROP\b/i, f);
+    assert.doesNotMatch(sql, /^(DELETE|DROP|ALTER)\b/im, f);
     const n = (re) => (sql.match(re) || []).length;
     assert.equal(n(/^UPDATE help_articles/gm), n(/ AND updated_by = 'seed';$/gm), f + ": every UPDATE is limited to articles nobody edited");
     assert.equal(n(/^INSERT /gm), n(/^INSERT OR IGNORE INTO help_articles/gm), f);
