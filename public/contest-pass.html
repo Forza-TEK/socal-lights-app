@@ -36,7 +36,7 @@ const say = (t) => { $("#msg").textContent = t; if (t) $("#msg").scrollIntoView(
 const back = /^manage:[a-z0-9-]{1,60}$/.test(q.get("back") || "") ? q.get("back") : "pass";
 const cfg = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
 // ?site= is the contest website from the wizard: it decides which organization the pass belongs to (the same way a new contest does). Kept through Stripe.
-const site = q.get("site") || "";
+let site = q.get("site") || "";
 const entitlement = async () => { const r = await fetch("/api/contest-pass/entitlement" + (site ? "?site=" + encodeURIComponent(site) : ""), { cache: "no-store" }); return r.ok ? r.json() : null; };
 if (IN_APP) { $("#app").innerHTML = `<p>Contest passes are bought on our website, in your browser, not inside the app.</p><p><a class="btn" href="${esc(passPageUrl(site))}" id="web" target="_blank" rel="noopener">Continue on socallights.app</a></p>`; $("#web").onclick = (e) => { e.preventDefault(); openWeb($("#web").href); }; }
 else if (!(await me()).user) {
@@ -48,7 +48,11 @@ else if (!(await me()).user) {
     const lead = v.comp && v.canCreate ? "" : v.active
       ? `<p><b>${esc(v.org)}</b> has used <b>${v.used}</b> of <b>${v.unlimited ? "unlimited" : v.cap}</b> contests in its 12-month window (${esc(niceDate(v.windowStart))} to ${esc(niceDate(v.windowEnd))}).${v.canCreate ? " You can still start a contest." : ""}</p>`
       : `<p><b>${esc(v.org)}</b> has no contest pass running. Choose a pass to start a 12-month window; it begins the day you pay.</p>`;
-    $("#app").innerHTML = lead + pickerHtml(v, cfg) + `<p><a class="btn out" href="/add-contest">Create a contest</a></p>`;
+    // The pass belongs to the organization the contest website decides (the same rule a new contest uses); the box lets the buyer set it before paying.
+    const who = `<p class="small" style="margin:0 0 6px"><label for="orgsite"><b>Contest website</b> (optional)</label><br><input id="orgsite" type="text" inputmode="url" autocomplete="url" maxlength="200" placeholder="example.org" value="${esc(site)}" style="max-width:320px;width:100%"> <button class="btn out sm" id="orgsite-go" type="button">Check</button><br><span class="muted">This pass will belong to: <b id="orgwho">${esc(v.org)}</b>. Use the website you will give when you create the contest, so the pass is found there.</span></p>`;
+    $("#app").innerHTML = lead + who + pickerHtml(v, cfg) + `<p><a class="btn out" href="/add-contest">Create a contest</a></p>`;
+    $("#orgsite-go").onclick = async () => { site = $("#orgsite").value.trim(); paint(await entitlement()); };
+    $("#orgsite").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); $("#orgsite-go").click(); } };
     document.querySelectorAll("[data-pass]").forEach((b) => (b.onclick = async () => {
       beacon("fn:pass-choose"); b.disabled = true; b.textContent = "Opening payment…";
       const r = await fetch("/api/contest-pass/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: b.dataset.pass, back, ...(site ? { site } : {}) }) }), j = await r.json().catch(() => ({}));

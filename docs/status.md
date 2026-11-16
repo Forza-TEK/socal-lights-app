@@ -3,6 +3,14 @@
 ## 2026-11-16: AI assistant intro wording
 The introduction on Admin > AI assistant always said the assistant was off until turned on, even while it was on. It now says whether it is on, off or stopped by the kill switch, and that it only answers while switched on.
 
+## 2026-11-16: Payments audit, PR 1 of 3 (high findings H1 to H4; branch `audit/payments-high`)
+- H1: a contest pass bought with no website now belongs to the buyer's email-domain organization (`d:covinaca.gov` for clerk@covinaca.gov; free-mail stays `u:<email>`), a pass running on that domain is found by a contest created with a blank or different website (unless the person bought for themselves), and /contest-pass has a "Contest website" box that says whose pass it will be.
+- H2: "Run it again" works only for a live or announced contest; the copy keeps the source's review note.
+- H3: every vote void/restore is written to the contest change log (voter code, category, home, reason; no email), the frozen results store how many votes were removed and the results page says so.
+- H4: the vote review is paged (300 at a time, Show more, Show only flagged voters); totals and fraud flags are worked out in SQL over all votes.
+- Tests: `tests/payments-audit-high.test.mjs`. No price, migration or public CSS/JS changed (no `?v=` bump needed).
+- Owner decision pending (PR 3 lists it): organizers still see voter emails, because the Privacy page says so.
+
 ## 2026-11-16: Pricing audiences as tabs above the title
 On /pricing the four audiences (Homeowners, Event organizers, Contest organizers, Installers) moved from the left menu to sliding tabs above the page title, with icons and the same look and glide as the Admin tabs. On a phone the row swipes sideways and keeps the chosen tab in view. The side menu now has only the site links (Map, Add, Tutorials, Help, Your profile) and the phone bottom bar shows Map, Add, Tutorials, Help and More instead of the audiences. Links like /pricing#events, #contests, #banner and #homeowners still open the right tab; arrow keys, Home and End move between tabs. Checked on desktop (light) and phone (dark). Without scripts every section is still listed.
 

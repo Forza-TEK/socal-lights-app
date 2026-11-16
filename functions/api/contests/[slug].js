@@ -51,7 +51,7 @@ export async function onRequestGet({ params, request, env }) {
     sponsors: sponsors.filter((x) => isOwner || isPublic(x)).map((x) => (isOwner ? staffView(x) : publicView(x))), // the public sees only sponsors that are shown (logo, name, website); the organizer team sees the records
     installer: c.installer_name ? { name: c.installer_name, url: c.installer_url || "", slug: (await env.DB.prepare("SELECT slug FROM installers WHERE lower(name) = lower(?) AND status = 'active'").bind(c.installer_name).first())?.slug || "" } : null,
     ...(isOwner ? { installerEmail: c.installer_email || "" } : {}),
-    contest: { logo: logoUrl(c), founder: isFounder(await founderKeys(env), c.org_key), slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, status: c.status, unpublishedByOwner: c.status === "declined" && c.unpublished_by === "owner",  entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open, ...states(c) },
+    contest: { logo: logoUrl(c), founder: isFounder(await founderKeys(env), c.org_key), slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, votesRemoved: frozen ? frozen.voided || 0 : 0, status: c.status, unpublishedByOwner: c.status === "declined" && c.unpublished_by === "owner",  entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open, ...states(c) },
     entries, winners: frozen ? frozen.winners : c.announced ? live.winners : {}, jwinners: frozen ? frozen.jwinners || {} : c.announced ? live.jwinners : {}, awards, prizes,
     me: { signedIn: !!user, isOwner, isCreator: !!user && !!c.owner_id && c.owner_id === user.id, isJudge: !!jrow, votes: mine },
   }, { headers: { "cache-control": "no-store" } });
@@ -100,7 +100,8 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
     const awards = awardList(c, r);
     const jv = {};
     if (hasJudges(c)) for (const p of r.posts) jv[p.id] = c.judge_method === "score" ? r.jscore[p.id] || null : r.jpick[p.id] || null;
-    const snap = { at: todayPT(), categories: r.categories, winners: r.winners, jwinners: r.jwinners, awards, jv,
+    const voided = (await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE contest_id = ? AND voided = 1").bind(c.id).first()).n; // audit H3: the results page says how many votes were removed
+    const snap = { at: todayPT(), voided, categories: r.categories, winners: r.winners, jwinners: r.jwinners, awards, jv,
       entries: r.posts.map((p) => ({ id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, dq: !!p.dq, votes: hasPublic(c) ? Object.fromEntries(r.categories.map((k) => [k, (r.counts[p.id] || {})[k] || 0])) : null,
         jv: jv[p.id] ? Object.fromEntries(r.categories.map((k) => [k, c.judge_method === "score" ? (jv[p.id][k] ? { avg: Math.round(jv[p.id][k].avg * 100) / 100, n: jv[p.id][k].n, tr: !!jv[p.id][k].tr } : null) : jv[p.id][k] || 0])) : undefined })) };
     // One write only: a double click or a second tab changes no row here and gets the usual "locked" answer
@@ -117,9 +118,12 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
 // "Run it again next year": a new contest with the same settings, rules, prizes, sponsors and judges, and every date a year later.
 const plusYear = (d) => { const x = new Date(d + "T12:00:00Z"); x.setUTCFullYear(x.getUTCFullYear() + 1); return x.toISOString().slice(0, 10); };
 async function cloneContest(env, c, user) {
+  // Audit H2: only a contest that is (or was) really live can be run again. A declined, held-for-review or Admin-closed one never becomes live through a copy; one the creator unpublished
+  // themselves can be put back with "publish again" first.
+  if (!(c.status === "live" || c.announced)) return err(400, c.status === "pending" ? "This contest is still waiting for review, so it can't be run again yet." : c.status === "declined" && c.unpublished_by === "owner" ? "Put this contest back on the map first, then you can run it again." : "This contest can't be run again. Contact us if you think that is a mistake.");
   // Contest passes: a copy that goes live counts toward the organization's window like any other contest (a copy held for review does not count yet).
   const gate = await liveGate(env, user.email, c.site);
-  if (c.status !== "pending" && !gate.ok) return json({ error: PAYWALL_MESSAGE, code: "pass_required", ...gate.view }, { status: 402 });
+  if (!gate.ok) return json({ error: PAYWALL_MESSAGE, code: "pass_required", ...gate.view }, { status: 402 });
   const jn = (await env.DB.prepare("SELECT COUNT(*) AS n FROM judges WHERE contest_id = ?").bind(c.id).first()).n;
   if (jn) { const over = await reserveSends(env, user, c.id, "judge", jn); if (over) return err(429, over); }
   const closes = plusYear(c.entries_close); let vs = plusYear(c.vote_start), ve = plusYear(c.vote_end);
@@ -128,8 +132,8 @@ async function cloneContest(env, c, user) {
   const name = /\b20\d\d\b/.test(c.name) ? c.name.replace(/\b(20\d\d)\b/, (y) => String(+y + 1)) : `${c.name} ${closes.slice(0, 4)}`;
   let slug = contestSlug(name);
   if (await getContest(env, slug)) slug = withTail(slug, newId().slice(0, 5));
-  const skip = new Set(["sponsor_token", "sponsor_link_on", "sponsor_admin_off", "sponsor_pay_hidden", "org_key", "live_at", "id", "slug", "name", "announced", "results", "event_id", "note", "created_at", "updated_at", "remind_open", "remind_close", "entries_close", "vote_start", "vote_end", "season", "status", "entries_open", "voting_open"]);
-  const row = { ...Object.fromEntries(Object.entries(c).filter(([k]) => !skip.has(k))), id: newId(), slug, name, entries_close: closes, vote_start: vs, vote_end: ve, season: seasonFor(closes), status: c.status === "pending" ? "pending" : "live", owner_id: c.owner_id };
+  const skip = new Set(["sponsor_token", "sponsor_link_on", "sponsor_admin_off", "sponsor_pay_hidden", "org_key", "live_at", "id", "slug", "name", "announced", "results", "event_id", "unpublished_by", "created_at", "updated_at", "remind_open", "remind_close", "entries_close", "vote_start", "vote_end", "season", "status", "entries_open", "voting_open"]);
+  const row = { ...Object.fromEntries(Object.entries(c).filter(([k]) => !skip.has(k))), id: newId(), slug, name, entries_close: closes, vote_start: vs, vote_end: ve, season: seasonFor(closes), status: "live", owner_id: c.owner_id }; // note stays with the copy (it is what limits organizer-added homes and sponsor payment text until Admin vouches)
   row.org_key = gate.key; row.live_at = row.status === "live" ? todayPT() : "";
   const cols = Object.keys(row);
   await env.DB.prepare(`INSERT INTO contests (${cols.join(",")}) VALUES (${cols.map(() => "?").join(",")})`).bind(...cols.map((k) => row[k])).run();
