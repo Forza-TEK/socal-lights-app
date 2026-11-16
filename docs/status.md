@@ -1568,3 +1568,10 @@ Migration 0234: confirmed 10 Ventura/SB/San Bernardino-county Christmas events f
 
 ## 2026-11-16 Light Up a Life, Carpinteria duplicate
 Migration 0278 takes the duplicate Grok row (grok-43rd-light-up-a-life-car-b30002) off the map; the sweep row g20-lual-carpinteria-2026 stays. Missed by 0271.
+
+## 2026-11-16 iOS 1.0.1 submitted
+- Build 2 (version 1.0.1, workflow `iOS app` run 5) submitted to App Review by the owner. Review notes now cover user content (Report or hide, human review before publishing, 24-hour response) and contests (run and prized by users; passes sold only on the website). Demo login unchanged.
+- Age rating answered honestly: Unrestricted Web Access No (external links open outside the app), User-Generated Content Yes, Advertising Yes, Alcohol Infrequent, Horror/Fear Infrequent, Contests Infrequent, everything else None/No. Calculated 13+.
+- After approval: release it (Pending Developer Release), then rotate APP_REVIEW_CODE (Cloudflare Pages secret) and redeploy.
+- Owner decisions (contest, Stripe, privacy, etc.) are collected on the Decisions artifact; read the `decisions` collection and apply in order.
+- Not started: 7 new tutorial videos (calendar and share, installer dashboard, Pricing in two minutes, contest logo, live location, and others).
