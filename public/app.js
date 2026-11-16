@@ -290,7 +290,20 @@ function startMap() {
   });
   map.on("style.load", initLayers);
   map.on("load", initLayers);
+  // Tile server unreachable: say so (the pins and the list still work) instead of leaving a blank white map; the note goes away when tiles arrive
+  map.on("error", (e) => { if (e && e.sourceId && navigator.onLine !== false) mapNote("maptiles", "Map tiles are unavailable right now. The list still works."); });
+  map.on("sourcedata", (e) => { if (e && e.isSourceLoaded && e.sourceId) mapNote("maptiles", ""); });
 }
+// Small status notes over the map. They never take touches (pointer-events:none), so panning and pinching stay free under them.
+function mapNote(id, text) {
+  let n = document.getElementById(id);
+  if (!text) { if (n) n.remove(); return; }
+  if (!n) { n = document.createElement("div"); n.id = id; n.className = "mapnote"; n.setAttribute("role", "status"); document.body.appendChild(n); }
+  if (n.textContent !== text) n.textContent = text;
+}
+// Offline: the map and places come from the saved copy; say so, and refresh the data when the connection returns
+function offlineNote() { mapNote("offnote", navigator.onLine === false ? "You're offline. Showing saved places; photos, directions and updates need a connection." : ""); }
+addEventListener("offline", offlineNote); addEventListener("online", () => { offlineNote(); if (typeof refreshData === "function") refreshData(); }); offlineNote();
 const MAPLIB = "/vendor/maplibre-gl-4.7.1";
 function loadMapLib() {
   if (map) return;
@@ -645,7 +658,8 @@ const ARW_R = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" strok
 // Our own photos (/img/events, /api/photo) are resized from the first visit too, same rule: only a remembered failed probe ("0") turns it off.
 let THUMBS = true, THUMBS_REMOTE = true; try { THUMBS = localStorage.getItem("socal-thumbs") !== "0"; THUMBS_REMOTE = localStorage.getItem("socal-thumbs-remote") !== "0"; } catch {}
 const thumbProbe = (u) => fetch("/cdn-cgi/image/width=16/" + u, { method: "HEAD" }).then((r) => r.ok && /^image\//.test(r.headers.get("content-type") || "")).catch(() => false);
-thumbProbe(location.origin + "/img/badge-160.webp").then((ok) => { THUMBS = ok; try { localStorage.setItem("socal-thumbs", ok ? "1" : "0"); } catch {} });
+// a device that already learned thumbnails work does not ask again on every load (the probe showed as an aborted request on each page view)
+(THUMBS && (() => { try { return localStorage.getItem("socal-thumbs") === "1"; } catch { return false; } })() ? Promise.resolve(true) : thumbProbe(location.origin + "/img/badge-160.webp")).then((ok) => { THUMBS = ok; try { localStorage.setItem("socal-thumbs", ok ? "1" : "0"); } catch {} });
 // photos hosted on other sites can only be resized when Cloudflare is set to resize from any origin: test one of them once the events are loaded
 function probeRemoteThumbs() { const e = E.find((x) => /^https?:/.test(x.img || "")); if (e) thumbProbe(e.img).then((ok) => { THUMBS_REMOTE = ok; try { localStorage.setItem("socal-thumbs-remote", ok ? "1" : "0"); } catch {} }); }
 // Photos stored as http:// are never requested directly from an https page (mixed content): the resizer fetches them for us, and the fallback copy is the https address.
@@ -867,6 +881,7 @@ function renderPanel(opts) {
   const head = $("#phead"), body = $("#pbody");
   if (state.tab !== "events" || state.detail) { const rp = rtPill(); if (rp) rp.hidden = true; } // the map's Route these pill belongs to the Places tab
   document.body.classList.toggle("detail-open", !!state.detail);
+  if (!state.detail) dropDetailStep();
   if (state.detail) { head.hidden = true; body.innerHTML = detailHtml(state.detail); wireDetail(); return; }
   head.hidden = false;
   // One list of places: events and home displays together
@@ -892,8 +907,9 @@ function renderPanel(opts) {
     listPageSig = pageSig;
     listSig = sig; listVis = vis; listShown = Math.min(vis.length, LIST_PAGE); updateRoutePill(vis);
     body.innerHTML = vis.length ? `<h2 class="sr">Places in view</h2><div class="list">${listWithSponsors(vis.slice(0, listShown), tops)}</div>${listShown < vis.length ? `<div id="listmore" class="listmore" aria-hidden="true"></div>` : ""}${teaser()}${IN_APP ? "" : `<p class="keepfree"><button type="button" class="linkbtn" data-support>Enjoying SoCal Lights? Keep it free ♥</button></p>`}<p class="copyline">\u00a9 ${new Date().getFullYear()} Forza-TEK. SoCal Lights. All rights reserved.</p>`
+      : !E.length ? `<div class="empty" role="alert">Events couldn't load. Check your connection and try again.<button class="linkbtn" type="button" id="retryload">Try again</button></div>`
       : !state.all && !state.city && !E.some((e) => (e.sn || "christmas") === state.season) ? `<div class="empty">No ${esc((SEASONS[state.season] || {}).short || "seasonal")} events are listed yet. We start adding them about six weeks ahead, so check back soon. Know of one? <a href="/add-event">Add an event</a>.</div>`
-      : state.q ? `<div class="empty">No places match \u201c${esc(state.q)}\u201d.<button class="linkbtn" type="button" id="clearq">Clear search</button></div>`
+      : state.q ? `<div class="empty">No places match \u201c${esc(state.q)}\u201d.${(() => { const d = didYouMean(state.q); return d.length ? ` Did you mean ${d.map((c) => `<button class="linkbtn" type="button" data-sc="${esc(c)}">${esc(c)}</button>`).join(" or ")}?` : ""; })()}<button class="linkbtn" type="button" id="clearq">Clear search</button></div>`
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
     watchTopCards(body);
   } else if (state.tab === "shop") {
@@ -1077,7 +1093,28 @@ function showDetail(ev) {
   if (cr && q) { const l = safeUrl(q.link), n = document.createElement(l ? "a" : "span"); n.className = "credit"; n.id = "hcredit"; n.textContent = q.credit; if (l) { n.href = l; n.target = "_blank"; n.rel = "noopener"; } cr.replaceWith(n); }
 }
 function dismissWelcome() { const w = $("#welcome"); if (w) { w.remove(); try { localStorage.setItem("socal-welcomed", "1"); } catch {} } } // opening an event means "not now" to the location prompt
-function openDetail(k) { dismissWelcome(); if (k !== state.detail && /^e:/.test(k)) { tick("fn:event-open"); DERR.delete(k.slice(2)); } state.detail = k; state.sel = k; renderPanel(); renderPreview(); scroller().scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
+// Opening an event or home is a history step (the address bar shows the shareable #e-<id> / #h-<id> link), so the phone's Back gesture and the browser Back button close the card and return to the list instead of leaving the site; Forward reopens it.
+const detailHash = (k) => (/^e:/.test(k) ? "#e-" : "#h-") + encodeURIComponent(k.slice(2));
+const inDetailStep = () => { try { return !!(history.state && history.state.scl); } catch { return false; } };
+function pushDetail(k) {
+  try {
+    const h = detailHash(k), st = { scl: k };
+    if (inDetailStep() || location.hash === h) history.replaceState(st, "", h); // already on a card's step (or arrived on its link): do not stack another
+    else history.pushState(st, "", h);
+  } catch {}
+}
+// A card closed by anything but Back (a filter, the map, a tab): the step is relabelled as the list so Back does not reopen a closed card
+const dropDetailStep = () => { if (inDetailStep()) { try { history.replaceState(null, "", location.pathname + location.search); } catch {} } };
+function closeDetail() { // the card's round Back arrow: take the history step back when there is one, otherwise just close
+  if (inDetailStep()) { try { history.back(); return; } catch {} }
+  state.keep = state.detail; state.detail = null; if (isPhone()) state.sel = null; renderPanel(); renderPreview(); keepSelectedVisible();
+}
+addEventListener("popstate", (e) => {
+  const k = e.state && e.state.scl;
+  if (!k) { if (state.detail) { state.keep = state.detail; state.detail = null; if (isPhone()) state.sel = null; renderPanel(); renderPreview(); keepSelectedVisible(); } return; }
+  if (k !== state.detail && findKey(k)) openDetail(k, true);
+});
+function openDetail(k, fromHistory) { dismissWelcome(); if (k !== state.detail && /^e:/.test(k)) { tick("fn:event-open"); DERR.delete(k.slice(2)); } state.detail = k; state.sel = k; if (!fromHistory) pushDetail(k); renderPanel(); renderPreview(); scroller().scrollTop = 0; if (isPhone()) setSheet("full"); drawHL(); }
 function detailHtml(k) {
   const it = findKey(k); if (!it) return "";
   if (it.kind === "ev") {
@@ -1111,7 +1148,7 @@ function wireDetail() {
     const it = findKey(state.detail), items = lbItems(it), t = area.querySelector(".pvtrack,.track");
     if (items.length) openLightbox(items, t ? Math.round(t.scrollLeft / t.clientWidth) : 0, it.kind === "ev" ? it.ev.n : it.p.title);
   });
-  $("#back").onclick = () => { state.keep = state.detail; state.detail = null; if (isPhone()) state.sel = null; renderPanel(); renderPreview(); keepSelectedVisible(); };
+  $("#back").onclick = closeDetail;
   const tr = $("#track"); if (tr) { const n = tr.children.length;
     document.querySelectorAll(".gallery .nav, .hero .pvnav").forEach((b) => (b.onclick = () => tr.scrollBy({ left: tr.clientWidth * Number(b.dataset.g), behavior: "smooth" })));
     tr.onscroll = () => { const i = Math.round(tr.scrollLeft / tr.clientWidth), c = $("#gcount"); if (c) c.textContent = i + 1 + " / " + n;
@@ -1382,13 +1419,15 @@ function seasonPeek(ms) {
   seasonMiniT = setTimeout(() => { if (!$("#seasonmenu")) sb.classList.add("mini"); }, ms);
 }
 { const sb = $("#seasonbtn"); if (sb) { sb.addEventListener("mouseenter", () => { clearTimeout(seasonMiniT); sb.classList.remove("mini"); }); sb.addEventListener("mouseleave", () => seasonPeek(1800)); sb.addEventListener("focus", () => { clearTimeout(seasonMiniT); sb.classList.remove("mini"); }); } }
+// A season with no upcoming event and no posted home is marked in the menu, so choosing it does not come as a surprise
+const seasonHasPlaces = (k) => E.some((e) => (e.sn || "christmas") === k && e.e >= TODAY) || SHOW.some((p) => (p.season || "christmas") === k);
 // One "Halloween ▾" button lists the six seasons (beside the search on desktop, under it on phones)
 function toggleSeasonPick(btn, mode) {
   const shop = mode === "shop", cur = shop ? shopSeason() : state.all ? "all" : state.season; // the Shop tab uses this same menu to choose what to shop for
   if ($("#seasonmenu")) { closeSeasonMenu(); return; }
   closeFilters(); closeMore(); closePop();
   const m = document.createElement("div"); m.id = "seasonmenu"; m.setAttribute("role", "menu");
-  m.innerHTML = (!shop && (state.city || state.all) ? `<button type="button" role="menuitemradio" aria-checked="${cur === "all"}" data-sp="all" class="${cur === "all" ? "on" : ""}"><span class="sico" aria-hidden="true">🗓️</span> All seasons${state.city ? " in " + esc(state.city) : ""}</button>` : "") + seasonsFrom(NOW_SEASON).filter((k) => !shop || SITE.shop[k]).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === cur}" data-sp="${k}" class="${k === cur ? "on" : ""}"><span class="sico" aria-hidden="true">${phaseFor(k, TODAY).icon}</span> ${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : ""}</button>`).join("");
+  m.innerHTML = (!shop && (state.city || state.all) ? `<button type="button" role="menuitemradio" aria-checked="${cur === "all"}" data-sp="all" class="${cur === "all" ? "on" : ""}"><span class="sico" aria-hidden="true">🗓️</span> All seasons${state.city ? " in " + esc(state.city) : ""}</button>` : "") + seasonsFrom(NOW_SEASON).filter((k) => !shop || SITE.shop[k]).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === cur}" data-sp="${k}" class="${k === cur ? "on" : ""}"><span class="sico" aria-hidden="true">${phaseFor(k, TODAY).icon}</span> ${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : !shop && !seasonHasPlaces(k) ? ` <span class="nowtag soon">Nothing listed yet</span>` : ""}</button>`).join("");
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 8 + "px"; m.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
   btn.setAttribute("aria-expanded", "true");
@@ -1453,7 +1492,26 @@ document.querySelectorAll("#bnav [data-tab]").forEach((b) => (b.onclick = () => 
 // the phone's search box shares its row with the logo and night-mode button, so keep the hint short enough to fit
 const fitHint = () => { $("#q").placeholder = innerWidth > 860 ? "Search places or city" : innerWidth > 380 ? "Search places" : "Search"; };
 fitHint(); addEventListener("resize", fitHint);
-let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); showSuggestions(); }, 120); };
+let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); showSuggestions(); if (state.q && isPhone() && sheetState === "peek" && !E.some(evMatch) && !SHOW.some(instMatch)) setSheet("full"); }, 120); }; // nothing matched: lift the collapsed sheet so the "no places" message (and "did you mean") can be read
+// Misspelled searches: a city within one or two letters of what was typed ("Pasedena" for Pasadena)
+function editDist(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]); for (let j = 1; j <= b.length; j++) d[0][j] = j; // Damerau-Levenshtein: a swapped pair ("anahiem") counts as one slip
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) { d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1); }
+  return d[a.length][b.length];
+}
+function didYouMean(q) {
+  q = hay(q).trim(); if (q.length < 5 || /^\d+$/.test(q)) return [];
+  const max = q.length >= 8 ? 2 : 1;
+  return Object.keys(CITY_OPTS).map((c) => { const h = hay(c); return [c, Math.min(editDist(q, h, max), ...h.split(" ").filter((w) => w.length >= 5).map((w) => editDist(q, w, max)))]; }).filter((x) => x[1] <= max && x[1] > 0).sort((a, b) => a[1] - b[1] || a[0].length - b[0].length || a[0].localeCompare(b[0])).slice(0, 2).map((x) => x[0]);
+}
+// A ZIP code matches the address text of events; say what it found and where
+function zipInfo(q) {
+  if (!/^\d{5}$/.test(q)) return null;
+  const hit = E.filter((e) => e.e >= TODAY && (e.a || "").includes(q)); if (!hit.length) return null;
+  const by = {}; hit.forEach((e) => { by[e.city] = (by[e.city] || 0) + 1; });
+  return { n: hit.length, city: Object.keys(by).sort((a, b) => by[b] - by[a])[0] };
+}
 // Suggestions under the search box: cities (move the map there) and places (open their details)
 let suggIdx = -1;
 function closeSuggestions() { const s = $("#sugg"); if (s) s.remove(); suggIdx = -1; $("#q").setAttribute("aria-expanded", "false"); $("#q").removeAttribute("aria-activedescendant"); }
@@ -1462,16 +1520,20 @@ function showSuggestions() {
   if (q.length < 2) { closeSuggestions(); return; }
   const cities = Object.keys(CITY_OPTS).filter((c) => hay(c).startsWith(q) || hay(c).split(" ").some((w, i) => i && w.startsWith(q))).sort().slice(0, 4);
   const places = E.filter((e) => e.e >= TODAY && hay(e.n + " " + e.city).includes(q)).sort((a, b) => a.s.localeCompare(b.s)).slice(0, 4);
-  if (!cities.length && !places.length) { closeSuggestions(); return; }
+  const zip = zipInfo(q), dym = !cities.length && !places.length && !zip ? didYouMean(q) : [];
+  if (!cities.length && !places.length && !zip && !dym.length) { closeSuggestions(); return; }
   let s = $("#sugg"); if (!s) { s = document.createElement("div"); s.id = "sugg"; s.setAttribute("role", "listbox"); document.body.appendChild(s); }
   { const r = box.getBoundingClientRect(), wide = innerWidth <= 860; s.style.top = r.bottom + 8 + "px"; s.style.left = (wide ? 12 : r.left) + "px"; s.style.width = (wide ? innerWidth - 24 : r.width) + "px"; }
   $("#q").setAttribute("aria-expanded", "true"); suggIdx = -1;
-  s.innerHTML = cities.map((c, i) => `<button type="button" role="option" id="sg-c-${i}" data-sc="${esc(c)}"><span class="si">📍</span><span><b>${esc(c)}</b><small>Show this city on the map</small></span></button>`).join("")
+  s.innerHTML = (zip ? `<button type="button" role="option" id="sg-z-0" data-zip="1"><span class="si">📍</span><span><b>ZIP ${esc(q)} (${esc(zip.city)})</b><small>${zip.n} place${zip.n === 1 ? "" : "s"} listed here</small></span></button>` : "")
+    + dym.map((c, i) => `<button type="button" role="option" id="sg-d-${i}" data-sc="${esc(c)}"><span class="si">📍</span><span><b>Did you mean ${esc(c)}?</b><small>Show this city on the map</small></span></button>`).join("")
+    + cities.map((c, i) => `<button type="button" role="option" id="sg-c-${i}" data-sc="${esc(c)}"><span class="si">📍</span><span><b>${esc(c)}</b><small>Show this city on the map</small></span></button>`).join("")
     + places.map((e, i) => `<button type="button" role="option" id="sg-e-${i}" data-se="${esc(e.id)}"><span class="si">${esc(phaseFor(e.sn && SEASONS[e.sn] ? e.sn : state.season, TODAY).icon)}</span><span><b>${esc(e.n)}</b><small>${esc(e.city)} · ${esc(whenShort(e))}</small></span></button>`).join("");
 }
 document.addEventListener("click", (e) => {
   const wl = e.target.closest("[data-welcome]"); if (wl) { try { localStorage.setItem("socal-welcomed", "1"); } catch {} const w = $("#welcome"); if (w) w.remove(); if (wl.dataset.welcome === "go" && geo) geo.trigger(); return; }
   const sc = e.target.closest("[data-sc]"), se = e.target.closest("[data-se]");
+  if (e.target.closest("[data-zip]")) { closeSuggestions(); return; } // the ZIP filter is already applied; the row only explains it
   if (sc) { const c = CITY_OPTS[sc.dataset.sc]; $("#q").value = ""; state.q = ""; closeSuggestions(); applyFilters(); if (c && mapReady) map.easeTo({ center: [c[1], c[0]], zoom: 11.5, duration: 700 }); return; }
   if (se) { const id = se.dataset.se, ev = E.find((x) => x.id === id); $("#q").value = ""; state.q = ""; closeSuggestions(); applyFilters(); if (ev) { if (ev.sn && SEASONS[ev.sn] && ev.sn !== state.season) setSeason(ev.sn); selectKey("e:" + id, "list"); } return; }
   if (!e.target.closest(".search,#sugg")) closeSuggestions();
@@ -1617,6 +1679,14 @@ function mapWhenCalm() {
   document.addEventListener("load", onImg, true);
 }
 let headOnly = false, fullP = null;
+// The events did not arrive: say so (not "no events yet") with a Try again button
+function loadFailed() {
+  const off = navigator.onLine === false;
+  $("#pbody").innerHTML = `<div class="empty" role="alert">${off ? "You're offline, so the events couldn't load." : "Events couldn't load. Check your connection and try again."}<button class="linkbtn" type="button" id="retryload">Try again</button></div>`;
+  const head = $("#phead"); if (head) head.innerHTML = "";
+  if (isPhone()) setSheet("full"); // the collapsed sheet would hide the message and its button
+}
+document.addEventListener("click", (e) => { if (e.target.closest("#retryload")) { $("#pbody").innerHTML = `<div class="empty">Finding festive fun near you…</div>`; load(); } });
 async function load() {
   try {
     // Each list loads on its own: the events are the app (no events = the error message), but homes or settings failing leave the map working (homes retry in 10 seconds, then every 15 minutes).
@@ -1635,7 +1705,7 @@ async function load() {
     E.forEach((e) => { if (!CITY_OPTS[e.city]) CITY_OPTS[e.city] = [e.lat, e.lng]; });
     placeHouses();
   } catch {
-    $("#pbody").innerHTML = `<div class="empty">Events couldn't load. Check your connection and refresh the page.</div>`; loadMapLib(); return;
+    loadFailed(); loadMapLib(); return;
   }
   if (headOnly) document.body.classList.add("headonly"); // the counts wait for the whole list (index.html hides them meanwhile)
   renderSeasonBar(); applyFilters(); startBanner();

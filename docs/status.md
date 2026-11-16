@@ -88,6 +88,13 @@ The introduction on Admin > AI assistant always said the assistant was off until
 - Tests: `tests/payments-audit-high.test.mjs`. No price, migration or public CSS/JS changed (no `?v=` bump needed).
 - Owner decision pending (PR 3 lists it): organizers still see voter emails, because the Privacy page says so.
 
+## 2026-11-16: Visitor audit, part 1 of 3: Back button, load errors, search, offline notes (branch `audit-visitor-nav-errors`)
+- F1: opening an event or home pushes a history step (`#e-<id>` / `#h-<id>`); phone Back or browser Back closes the card, Forward reopens it, the round Back arrow takes the step back. A card closed by a filter, the map or a tab relabels its step so Back never reopens it.
+- F2: a failed event list shows "Events couldn't load" with Try again (and lifts the collapsed phone sheet so it can be read); an empty list is never "No events yet".
+- F5/F12: "Pasedena" gets "Did you mean Pasadena?" (suggestion row and the no-results message); a ZIP shows "ZIP 92101 (San Diego), N places listed here"; a search with no results lifts the collapsed phone sheet.
+- F8/F9: "You're offline, showing saved places" note and a "Map tiles are unavailable" note; both are `pointer-events:none` so they never take a touch from the map. F20: season menu marks seasons with nothing listed. F22 (partly): the thumbnail probe is skipped on devices that already learned it works.
+- Tests: `tests/visitor-nav.test.mjs`. `app.js` and `styles.css` `?v=20261116b`. Pinch fix untouched: `elementFromPoint` over the map band is identical before and after (output in the PR).
+
 ## 2026-11-16: Pricing audiences as tabs above the title
 On /pricing the four audiences (Homeowners, Event organizers, Contest organizers, Installers) moved from the left menu to sliding tabs above the page title, with icons and the same look and glide as the Admin tabs. On a phone the row swipes sideways and keeps the chosen tab in view. The side menu now has only the site links (Map, Add, Tutorials, Help, Your profile) and the phone bottom bar shows Map, Add, Tutorials, Help and More instead of the audiences. Links like /pricing#events, #contests, #banner and #homeowners still open the right tab; arrow keys, Home and End move between tabs. Checked on desktop (light) and phone (dark). Without scripts every section is still listed.
 
