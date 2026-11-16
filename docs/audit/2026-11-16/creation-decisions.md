@@ -17,7 +17,7 @@ Each item below was fixed with the safest minimal behavior (hold for review rath
 
 ## 3. "This is my home" statement (M4)
 
-- Now: the homeowner path asks for a tick on the address step: "This is my home, or I have its owner's permission to show the address on the map." The server refuses a home without it and stores the time (`posts.address_consent_at`, migration 0267). Contest entries have their own form and are unchanged.
+- Now: the homeowner path asks for a tick on the address step: "This is my home, or I have its owner's permission to show the address on the map." The server refuses a home without it and stores the time (`posts.address_consent_at`, migration 0274). Contest entries have their own form and are unchanged.
 - Not built: an option to show only the street name without the number. That changes the map pin, the card and the removal flow, and needs an owner decision on whether privacy-minded homeowners should be allowed to hide the number.
 - Recommendation: build the hide-number option only if /remove-home requests start to be about address privacy rather than about posts by other people.
 

@@ -6,7 +6,7 @@ Fixes from the creation-flows audit (report in `docs/audit/2026-11-16/`; decisio
 - M1 a homeowner naming an installer can only link to a public profile; a new name makes a hidden profile (Admin switches it on), review words make none, mail to a profile's contact capped at 5 a day, deleting the home removes an unused hidden profile.
 - M2 a new home with an address that cannot be found, no house number, or review words in any free-text field waits for review and the answer and add page say why; events say when the pin is at the city center.
 - M3 an event with no matching page and an address that cannot be found waits for review; review words in hours, price, address and web address refuse the event (new or edited); a changed web page that does not match drops a live event to Expected with a note.
-- M4 homeowners tick "This is my home, or I have its owner's permission" (server enforces it; the time is stored in `posts.address_consent_at`, migration 0267).
+- M4 homeowners tick "This is my home, or I have its owner's permission" (server enforces it; the time is stored in `posts.address_consent_at`, migration 0274).
 - M6 Your profile: every home and event that is not live has a plain label and reason, Delete (and Edit while in review). L1 deleting the account asks for the word "delete" and is announced. L6 stale Account-tab sentence replaced. L7 `/api/submit` has the same-origin check.
 - Tests: `tests/audit-creation-listings.test.mjs` (16); `tests/submit.test.mjs`, `add-flows`, `add-rest`, `appstore`, `refund-flags` updated for the new rules. `tests/chat.test.mjs` "dates: only dates from the events..." also fails here; it depends on today's date and none of this touches the chat code.
 
