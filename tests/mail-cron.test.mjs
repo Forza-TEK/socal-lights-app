@@ -78,11 +78,36 @@ test("deploy watch: passes main's latest commit from GitHub to the site, still c
   s = stub([{ status: 500 }, { status: 500, body: {} }, {}]); try { assert.equal(await runJob({ ALERT_CRON_KEY: KEY }, "deploy-watch"), "fail"); } finally { s.restore(); }
 });
 
+test("uptime: ok when the app pages answer and the real domain answers 200/301/302/403; any failure reports fail; retries stay under the 50-call limit", async () => {
+  const fast = globalThis.setTimeout; globalThis.setTimeout = (f) => fast(f, 0);
+  const pages = { "/": "<title>SoCal Lights</title>", "/api/config": '{"turnstileSiteKey":"x"}', "/api/events": '[{"id":"a"}]', "/in/irvine": "Irvine lights" };
+  const run1 = async ({ domain = 403, broken = null } = {}) => {
+    const calls = [], real = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      const u = String(url); calls.push({ u, method: init && init.method });
+      if (u.includes("/api/heartbeat")) return new Response("", { status: 200 });
+      if (u === "https://socallights.app/") { if (domain === "throw") throw new Error("dns"); return new Response("", { status: domain }); }
+      const path = u.replace("https://socal-lights.pages.dev", "");
+      if (broken === path) return new Response("oops", { status: 500 });
+      return new Response(pages[path] || "", { status: 200 });
+    };
+    try { const status = await runJob({ ALERT_CRON_KEY: KEY }, "uptime"); return { status, calls }; } finally { globalThis.fetch = real; }
+  };
+  try {
+    for (const code of [200, 301, 302, 403]) { const r = await run1({ domain: code }); assert.equal(r.status, "ok", "domain " + code); assert.match(r.calls.at(-1).u, /\/api\/heartbeat\?job=uptime&status=ok$/); assert.equal(r.calls.at(-1).method, "POST"); assert.equal(r.calls.length, 6, "5 checks and a heartbeat"); }
+    for (const domain of [500, 503, "throw"]) { const r = await run1({ domain }); assert.equal(r.status, "fail", "domain " + domain); assert.match(r.calls.at(-1).u, /job=uptime&status=fail$/); }
+    const bad = await run1({ broken: "/api/events" }); assert.equal(bad.status, "fail"); assert.equal(bad.calls.filter((c) => c.u.endsWith("/api/events")).length, 3, "three tries");
+    assert.ok(bad.calls.length <= 50, "under the Worker's 50-call limit");
+  } finally { globalThis.setTimeout = fast; }
+});
+
 test("wiring: every cron in wrangler.toml has jobs, every job has a heartbeat name the site knows, scheduled() runs the right ones, the deploy workflow sets the key", async () => {
   const toml = readFileSync("workers/mail-cron/wrangler.toml", "utf8");
   const listed = [...toml.match(/crons = \[(.*?)\]/s)[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
   assert.deepEqual(listed.sort(), Object.keys(CRONS).sort(), "the cron list and the job table agree");
   for (const names of Object.values(CRONS)) for (const n of names) { assert.ok(JOBS[n], n + " has a job"); assert.ok(HEARTBEAT_JOBS[n], n + " reports to a heartbeat the site knows"); }
+  assert.deepEqual(CRONS["*/10 * * * *"], ["deploy-watch", "uptime"], "the uptime check shares the 10-minute cron");
+  assert.equal(HEARTBEAT_JOBS.uptime.staleH, 1);
   const ran = [], s = stub([{ body: { remaining: 0, sent: 0, failed: 0 } }, {}]);
   try {
     worker.scheduled({ cron: "30 17 * * 4" }, { ALERT_CRON_KEY: KEY }, { waitUntil: (p) => ran.push(p) }); assert.equal(ran.length, 1); await ran[0];

@@ -47,6 +47,32 @@ export const JOBS = {
     const r = await call(env, "/api/deploy-check" + q), j = await body(r);
     return r.ok && ["ok", "stalled", "not_configured", "unknown"].includes(j.state) ? "ok" : "fail";
   },
+  // Uptime check (the old GitHub uptime.yml, now on the Cloudflare clock): the app must answer through its pages.dev address (the same code and database as the real site, but not behind the zone's bot protection),
+  // and the real domain must answer at all (200, 301, 302 or 403 = DNS, TLS and Cloudflare are alive; no answer or a 5xx = fail). Each URL gets up to 3 tries (2 seconds apart); 5 URLs = at most 15 calls, so with the heartbeat and
+  // the deploy watch sharing the run this stays well under the 50-call limit. A failed check reports fail (the site's heartbeat banner and /api/health say so; Better Stack is the external monitor).
+  uptime: async () => {
+    const UA = "Mozilla/5.0 (compatible; socal-lights-clock)";
+    const tryUrl = async (url, good) => {
+      for (let i = 0; i < 3; i++) {
+        try {
+          const r = await fetch(url, { headers: { "user-agent": UA }, redirect: "manual", signal: AbortSignal.timeout(15000) });
+          if (await good(r)) return true;
+        } catch {}
+        if (i < 2) await sleep(2000);
+      }
+      return false;
+    };
+    const page = (text) => (r) => r.status === 200 ? r.text().then((t) => t.includes(text)) : false;
+    const checks = [
+      [BASE + "/", page("SoCal Lights")],
+      [BASE + "/api/config", page("turnstileSiteKey")],
+      [BASE + "/api/events", page('"id"')],
+      [BASE + "/in/irvine", page("Irvine")],
+      ["https://socallights.app/", (r) => [200, 301, 302, 403].includes(r.status)],
+    ];
+    for (const [url, good] of checks) if (!(await tryUrl(url, good))) return "fail";
+    return "ok";
+  },
   // Contest reminders (voting opens, voting closes soon): each is queued once per contest.
   "contest-reminders": async (env) => {
     const r = await call(env, "/api/contest-remind"), j = await body(r);
@@ -73,7 +99,7 @@ export const JOBS = {
 // Which jobs each cron trigger runs (UTC; the same moments as the old GitHub schedules). Keep in step with wrangler.toml.
 export const CRONS = {
   "*/5 * * * *": ["mail-outbox"],
-  "*/10 * * * *": ["deploy-watch"],
+  "*/10 * * * *": ["deploy-watch", "uptime"],
   "7,37 * * * *": ["usage-check"],
   "47 14 * * *": ["stripe-reconcile"],
   "17 15 * * *": ["sponsor-renewals"],
