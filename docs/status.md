@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin redesign, Contests converted
+Contests use pill tabs (Needs a look, Live, Ended, Unpublished, Contest passes), a table with search, and a full-page record with a Back link and the Edit, Sponsors, Approve, Unpublish and Delete actions at the top right. Tested locally with seeded contests (list, record, approve, tabs). Admin redesign: 9 of 22 areas done; next is Installers.
+
 ## 2026-11-16: Admin redesign, Houses converted
 Houses waiting and Published houses use the new format: pill tabs (Waiting/Declined; Published/Contest entries), tables with a search and sort, and a full-page record with a Back link, photos and the Approve, Decline, Edit, Photos, Unpublish and Remove actions at the top right. The bulk bar (select several waiting houses, Approve) works on the table rows; its selection count now follows the search. Admin redesign: 8 of 22 areas done; next is Contests. Tested locally with seeded houses (list, bulk select, record page, back); the approve, decline and remove buttons were not clicked.
 
