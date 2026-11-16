@@ -1,6 +1,7 @@
 // POST   /api/admin/contests/<id> { action: "approve" | "decline" | "edit", ...fields for edit } — approve = live and on the map (and clears the review note), decline = take it off the map.
 // DELETE /api/admin/contests/<id> — removes the contest and everything in it.
 import { json, err } from "../../../_lib/util.js";
+import { CITY } from "../../../../public/cities.js";
 import { listOnMap, unlistFromMap, deleteContest, todayPT } from "../../../_lib/contests.js";
 import { orgKeyFor } from "../../../_lib/passkey.js";
 import { orgState, orgLabel } from "../../../_lib/passes.js";
@@ -15,12 +16,22 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     const f = { name: t(b.name, 90), org: t(b.org, 90), city: t(b.city, 60), descr: String(b.descr ?? "").trim().slice(0, 1000), site: t(b.site, 200), contact_email: t(b.contact_email, 120).toLowerCase(), entries_close: d(b.entries_close), vote_start: d(b.vote_start), vote_end: d(b.vote_end) };
     if (!f.name || !f.org || !f.city) return err(400, "A contest needs a name, an organizer and a city.");
     if (!f.entries_close || !f.vote_start || !f.vote_end) return err(400, "Enter all three dates as YYYY-MM-DD.");
-    if (f.vote_end < f.vote_start) return err(400, "Voting ends before it starts.");
+    if (!CITY[f.city]) return err(400, "Choose a city from the list (the map pin is placed from it).");
+    if (f.vote_start <= f.entries_close) return err(400, "Voting should start after entries close.");
+    if (f.vote_end <= f.vote_start) return err(400, "Voting should end after it starts.");
+    if (f.contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.contact_email)) return err(400, "Enter a valid contact email.");
+    // Audit M10: once winners are announced the results are frozen and /past, the archive and the emails already read this name, organizer, city and these dates. Only the welcome text,
+    // the website and the contact email can still change.
+    if (c.announced) {
+      const frozen = ["name", "org", "city", "entries_close", "vote_start", "vote_end"].filter((k) => f[k] !== c[k]);
+      if (frozen.length) return err(409, "The winners are announced, so the name, organizer, city and dates are locked. You can still change the welcome text, the website and the contact email.");
+    }
     if (f.site && !/^https?:\/\//i.test(f.site)) return err(400, "The website must start with http:// or https://.");
     await env.DB.prepare("UPDATE contests SET name=?, org=?, city=?, descr=?, site=?, contact_email=?, entries_close=?, vote_start=?, vote_end=?, updated_at=datetime('now') WHERE id=?")
       .bind(f.name, f.org, f.city, f.descr, f.site, f.contact_email, f.entries_close, f.vote_start, f.vote_end, c.id).run();
     if (c.status === "live") await listOnMap(env, { ...c, name: f.name, org: f.org, city: f.city, descr: f.descr, vote_end: f.vote_end });
-    return json({ ok: true });
+    // The contact email only says where the contest's notices go. The organizer account (owner_id) is not changed by it: a new organizer has to be added as a co-organizer by the creator.
+    return json({ ok: true, ...(f.contact_email !== c.contact_email ? { note: "The contact email changed. The organizer account that runs the contest did not." } : {}) });
   }
   if (b.action === "approve") {
     // Contest passes: approving makes the contest count (live_at is set once, the first time it is live). Admin's decision always goes through; when it takes the organization over its

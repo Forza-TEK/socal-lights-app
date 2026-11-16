@@ -12,7 +12,7 @@ import { reserveSends } from "../../_lib/sendlimit.js";
 import { tell } from "../../_lib/notify.js";
 import { founderKeys, isFounder } from "../../_lib/founder.js";
 import { sendReceipt } from "../../_lib/receipt.js";
-import { liveGate, PAYWALL_MESSAGE } from "../../_lib/passkey.js";
+import { liveGate, overAllowance, PAYWALL_MESSAGE } from "../../_lib/passkey.js";
 
 export async function onRequestGet({ env }) {
   const { results } = await env.DB.prepare("SELECT slug,name,org,org_key,city,county,entries_close,vote_start,vote_end,announced,status,entries_open,voting_open FROM contests WHERE status='live' ORDER BY created_at DESC LIMIT 100").all();
@@ -74,6 +74,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     `INSERT INTO contests (id,slug,owner_id,name,org,city,county,descr,site,contact_email,season,status,entries_close,vote_start,vote_end,categories,vote_rule,approval,show_counts,one_win,rules,note,mode,judge_method,prize_mode,prize,prizes,sponsor,org_key,live_at)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(c.id, c.slug, c.owner_id, c.name, c.org, c.city, c.county, c.descr, c.site, c.contact_email, c.season, c.status, c.entries_close, c.vote_start, c.vote_end, c.categories, c.vote_rule, c.approval, c.show_counts, c.one_win, rules, c.note, mode, method, prizeMode, prize, JSON.stringify(prizes), sponsor, gate.key, live ? todayPT() : "").run();
+  // Audit M7: count again with the row in; two requests at the same moment can both pass the gate above. Over the allowance: take the row back and show the pass picker.
+  if (live && (await overAllowance(env, gate.key))) { await env.DB.prepare("DELETE FROM contests WHERE id = ?").bind(c.id).run(); return json({ error: PAYWALL_MESSAGE, code: "pass_required", ...gate.view }, { status: 402 }); }
   if (live) await listOnMap(env, c);
   if (judgeEmails.length) await inviteJudges(env, { id: c.id, slug, name, org, judge_method: method }, judgeEmails);
   if (c.note) tell(env, waitUntil, env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", "contest_review", { name, org, city, email: user.email, note: c.note, what: official ? "It is not live yet: it waits for you, cannot add organizer-added homes and cannot buy a paid placement until you approve it." : "It is live, but until you click Looks fine the organizer can add only a few homes of their own (25) and cannot buy a paid placement.", link: "https://socallights.app/admin/" });

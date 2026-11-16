@@ -39,6 +39,9 @@ export async function onRequestPost({ params, request, env }) {
   if (!post) return err(404, "That home isn't in this contest.");
   if (post.user_id === user.id) return err(400, "You can't judge your own home.");
   if (b.action === "conflict") {
+    // Audit L3: a conflict of interest is declared before scoring. Once this judge has a pick or score on the home it can't be switched on or off (it would quietly change the result).
+    const has = await env.DB.prepare("SELECT 1 AS x FROM judge_picks WHERE contest_id = ? AND judge_id = ? AND post_id = ? UNION SELECT 1 FROM judge_scores WHERE contest_id = ? AND judge_id = ? AND post_id = ?").bind(c.id, j.id, post.id, c.id, j.id, post.id).first();
+    if (has) return err(400, "You've already voted on this home. Change your pick or clear your score on it first if you need to declare a conflict.");
     if (b.on) await env.DB.prepare("INSERT OR IGNORE INTO judge_conflicts (contest_id,judge_id,post_id) VALUES (?,?,?)").bind(c.id, j.id, post.id).run();
     else await env.DB.prepare("DELETE FROM judge_conflicts WHERE contest_id = ? AND judge_id = ? AND post_id = ?").bind(c.id, j.id, post.id).run();
     return json({ ok: true });

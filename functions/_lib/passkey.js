@@ -58,4 +58,6 @@ export async function liveGate(env, email, site, today = todayPT()) {
   const key = await orgKeyFor(env, email, site), ent = await orgState(env, key, today);
   return { key, ent, ok: ent.canCreate, view: entitlementView(key, ent) };
 }
+// Audit M7: true when, with the contest just inserted, the organization has gone over its allowance (two requests passed the gate at the same moment). The caller deletes its row.
+export async function overAllowance(env, key, today = todayPT()) { const ent = await orgState(env, key, today); return !ent.unlimited && ent.used > ent.cap; }
 export const PAYWALL_MESSAGE = "Running this contest needs a contest pass with room for it. Choose a pass to continue.";

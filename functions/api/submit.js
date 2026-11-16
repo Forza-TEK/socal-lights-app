@@ -16,7 +16,8 @@ import { normZip, phoneField, normName, normStreet, normText, normEmailText, nor
 
 const AUTO_HOMES_PER_DAY = 60; // safety valve: past this many in a day, new homes wait for review
 import { BAD } from "../_lib/moderation.js"; // the same "needs a person to look" rule the edit sheet uses
-import { getContest, windows } from "../_lib/contests.js";
+import { getContest, windows, isStaff, judgeOf } from "../_lib/contests.js";
+import { homeKey } from "../_lib/homes.js";
 
 const MAX_PHOTOS = 8;
 const MAX_BYTES = 6 * 1024 * 1024; // the browser resizes photos first, so real uploads are far smaller
@@ -93,6 +94,10 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (contest) {
     const { n: mine } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id = ? AND user_id = ? AND status != 'declined'").bind(contest.id, cu.id).first();
     if (mine >= 5) return err(400, "You've reached the limit of 5 entries in this contest.");
+    // Audit M9: the default rules say organizer staff and judges may not win, and that one home may enter once. Enforce both.
+    if ((await isStaff(env, contest, cu)) || (await judgeOf(env, contest, cu))) return err(400, "Organizers, co-organizers and judges can't enter their own contest. This is in the official rules.");
+    const key = homeKey(street || address), same = key ? (await env.DB.prepare("SELECT street, address FROM posts WHERE contest_id = ? AND status != 'declined'").bind(contest.id).all()).results.some((p) => homeKey(p.street || p.address) === key) : false;
+    if (same) return err(400, "This address is already entered in this contest. One home may enter once.");
   }
   const autoApprove = !!contest && contest.approval === "auto";
   const files = form.getAll("photos").filter((f) => f && typeof f === "object" && f.size > 0);

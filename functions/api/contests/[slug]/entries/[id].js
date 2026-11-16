@@ -3,6 +3,7 @@ import { json, err, clean } from "../../../../_lib/util.js";
 import { sendTemplate } from "../../../../_lib/mailtpl.js";
 import { getUser, sameOrigin } from "../../../../_lib/auth.js";
 import { ownerOf, approveEntry } from "../../../../_lib/contests.js";
+import { logContest } from "../../../../_lib/changes.js";
 import { newPhotoToken, photoLink } from "../../../../_lib/entryphotos.js";
 import { parseHome, homeKey, locate } from "../../../../_lib/homes.js";
 import { normName, normText } from "../../../../_lib/fields.js";
@@ -10,7 +11,7 @@ import { fmtDate } from "../../../../../public/contestfmt.js";
 
 export async function onRequestPost({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
-  const { c, res } = await ownerOf(request, env, params.slug, getUser);
+  const { c, res, user } = await ownerOf(request, env, params.slug, getUser);
   if (res) return res;
   const row = await env.DB.prepare("SELECT * FROM posts WHERE id = ? AND contest_id = ?").bind(params.id, c.id).first();
   if (!row) return err(404, "That entry doesn't exist.");
@@ -59,9 +60,11 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   }
   if (b.action === "decline") {
     const reason = clean(b.reason, 300), wasPending = row.status === "pending";
+    const removed = (await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE post_id = ?").bind(row.id).first()).n; // audit L7: the votes go with the entry, so the change log says how many
     // Pending photos are private and stay so the organizer can undo; photos of an approved entry are public, so they are removed
     if (!wasPending) await Promise.all(JSON.parse(row.photos || "[]").map((k) => env.PHOTOS.delete(k)));
     await env.DB.batch([env.DB.prepare(`UPDATE posts SET status='declined'${wasPending ? "" : ", photos='[]'"} WHERE id = ?`).bind(row.id), env.DB.prepare("DELETE FROM votes WHERE post_id = ?").bind(row.id)]);
+    if (removed) await logContest(env, c.id, { email: user.email, name: user.name || user.email }, [{ label: `Entry ${row.entry_no ? "#" + row.entry_no + " " : ""}declined`, old: `${removed} vote${removed === 1 ? "" : "s"} counted`, new: `${removed} vote${removed === 1 ? "" : "s"} removed with the entry` }]);
     tell("entry_declined", { name, contest: c.name, org: c.org, reason, link: `${page}/enter` });
     return json({ ok: true });
   }
