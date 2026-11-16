@@ -7,7 +7,7 @@ import { INSTALLER_PLANS, ptToday } from "../../_lib/featured.js";
 import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { ownsInstaller } from "../../_lib/ownership.js";
 import { sponsorWindow, sponsorProblem } from "../../_lib/sponsor.js";
-import { sha256hex, checkoutLimit, createCheckoutSession } from "../../_lib/stripe.js";
+import { sha256hex, checkoutLimit, createCheckoutSession, refundNote } from "../../_lib/stripe.js";
 import { bump } from "../../_lib/funnel.js";
 import { CONSENT_VERSION } from "../../_lib/renewal.js";
 
@@ -41,6 +41,7 @@ export async function onRequestPost({ request, env }) {
     "metadata[plan]": plan,
     "metadata[user_id]": user.id,
     "metadata[quote_from]": w.from, "metadata[quote_to]": w.to, "metadata[quote_cents]": String(w.cents), // what the buyer was quoted: the webhook applies exactly this, or holds the order if it no longer fits
+    "custom_text[submit][message]": refundNote("installer"),
     "payment_intent_data[description]": `SoCal Lights Sponsor: ${inst.name} (${plan})`.slice(0, 200),
     success_url: `${origin}/sponsor?paid=1&installer=${encodeURIComponent(inst.slug)}&plan=${plan}`,
     cancel_url: `${origin}/sponsor?cancelled=1&installer=${encodeURIComponent(inst.slug)}&plan=${plan}`,

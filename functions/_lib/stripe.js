@@ -1,3 +1,4 @@
+import { REFUND, refundTermsUrl } from "../../public/refund-terms.js";
 // Shared by the payment endpoints: the idempotency hash, the per-account cap on payment pages, and the Checkout Session request.
 export const sha256hex = async (t) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map((b) => b.toString(16).padStart(2, "0")).join("");
 
@@ -14,6 +15,8 @@ export async function checkoutLimit(env, userId) {
 }
 
 // Opens a Stripe Checkout Session. Returns the payment page URL, or "" when Stripe could not be reached or refused.
+// Audit M5: the refund rule is shown on the payment page itself (the same sentence as Pricing and the receipt, public/refund-terms.js), so a buyer and a dispute both see it at the moment of payment.
+export const refundNote = (kind) => `${REFUND[kind] || REFUND.event} Full terms: ${refundTermsUrl(kind)}`.slice(0, 1000);
 export async function createCheckoutSession(env, form, idem) {
   const r = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "idempotency-key": idem, "content-type": "application/x-www-form-urlencoded" }, body: form }).catch(() => null);
   const d = r ? await r.json().catch(() => ({})) : {};

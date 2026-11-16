@@ -7,7 +7,7 @@ import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { partnerKey } from "../../_lib/partnerapply.js";
 import { partnerState, partnerQuote, EVENT_PARTNER, PARTNER_PLAN } from "../../_lib/partner.js";
 import { orgLabel } from "../../_lib/passes.js";
-import { sha256hex, checkoutLimit, createCheckoutSession } from "../../_lib/stripe.js";
+import { sha256hex, checkoutLimit, createCheckoutSession, refundNote } from "../../_lib/stripe.js";
 import { ptToday } from "../../_lib/time.js";
 import { bump } from "../../_lib/funnel.js";
 
@@ -27,9 +27,10 @@ export async function onRequestPost({ request, env }) {
     "line_items[0][price_data][currency]": "usd",
     "line_items[0][price_data][unit_amount]": String(q.cents), // from partner.js; never from the browser
     "line_items[0][price_data][product_data][name]": `Event Partner on SoCal Lights: ${orgLabel(key)}`.slice(0, 120),
-    "line_items[0][price_data][product_data][description]": `Up to ${EVENT_PARTNER.cap} events · ${q.season} season · ${niceYmd(q.from)} to ${niceYmd(q.to)}`.slice(0, 200),
+    "line_items[0][price_data][product_data][description]": `Up to ${EVENT_PARTNER.cap} events · ${q.season} season · ${niceYmd(q.from)} to ${niceYmd(q.to)} · ${q.daysLeft} day${q.daysLeft === 1 ? "" : "s"} left in this season`.slice(0, 200),
     "metadata[event_id]": key, "metadata[target]": "event_partner", "metadata[plan]": PARTNER_PLAN, "metadata[user_id]": user.id,
     "metadata[quote_from]": q.from, "metadata[quote_to]": q.to, "metadata[quote_cents]": String(q.cents),
+    "custom_text[submit][message]": refundNote("partner"),
     "payment_intent_data[description]": `SoCal Lights Event Partner: ${orgLabel(key)}`.slice(0, 200),
     success_url: `${origin}/partner?paid=1`,
     cancel_url: `${origin}/partner?cancelled=1`,

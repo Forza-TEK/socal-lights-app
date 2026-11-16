@@ -5,7 +5,7 @@ import { orgKeyFor } from "./passkey.js";
 import { normEmail } from "./auth.js";
 import { ownsEvent } from "./ownership.js";
 import { eventQuote, applyEventTier } from "./featured.js";
-import { partnerState, offerFor, partnerQuote } from "./partner.js";
+import { partnerState, offerFor, partnerQuote, daysLeft } from "./partner.js";
 import { orgLabel } from "./passes.js";
 import { ptToday } from "./time.js";
 
@@ -19,7 +19,7 @@ export async function partnerView(env, user, site, today = ptToday()) {
   const key = await partnerKey(env, user, site), ent = await partnerState(env, key, today);
   const events = (await env.DB.prepare("SELECT p.event_id AS id, e.name, e.city, p.applied_from AS from_day, p.applied_until AS until FROM event_partner_events p LEFT JOIN events e ON e.id = p.event_id WHERE p.org_key = ? AND p.season_start = ? AND p.status = 'active' ORDER BY p.created_at").bind(key, ent.season.start).all()).results;
   const q = partnerQuote(ent, today);
-  return { org: orgLabel(key), verified: key.startsWith("d:"), season: ent.season, covered: ent.covered, hasPlan: ent.hasPlan, comp: ent.comp ? { until: ent.comp.until, unlimited: ent.comp.unlimited } : null,
+  return { org: orgLabel(key), verified: key.startsWith("d:"), season: { ...ent.season, daysLeft: daysLeft(today, ent.season.end) }, covered: ent.covered, hasPlan: ent.hasPlan, comp: ent.comp ? { until: ent.comp.until, unlimited: ent.comp.unlimited } : null,
     used: ent.used, cap: ent.cap, unlimited: ent.unlimited, remaining: ent.remaining, canApply: ent.canApply, offer: offerFor(ent), buyProblem: q.problem, events, user_key: key };
 }
 
@@ -43,11 +43,15 @@ export async function applyPartnerToEvent(env, user, eventId, site, today = ptTo
   const nf = applyEventTier(ev, "ev_pin", today, q.to);
   const source = ent.hasPlan ? (await env.DB.prepare("SELECT session_id FROM event_partner_plans WHERE org_key = ? AND season_start = ? AND status = 'active' ORDER BY created_at LIMIT 1").bind(key, ent.season.start).first()).session_id : "";
   const verified = key.startsWith("d:") ? 1 : 0;
-  await env.DB.batch([
+  // Audit M7: the cap is checked inside the INSERT (same transaction as the row it counts), so two requests at the same moment cannot both take the last place; the event is only
+  // changed when its row went in.
+  const cap = ent.unlimited ? 1_000_000 : ent.cap;
+  const done = await env.DB.batch([
     // a released or revoked row for this event and season is replaced
     env.DB.prepare("DELETE FROM event_partner_events WHERE event_id = ? AND season_start = ? AND status != 'active'").bind(ev.id, ent.season.start),
-    env.DB.prepare("INSERT INTO event_partner_events (event_id, season_start, org_key, source_session, applied_from, applied_until, applied_featured, status, user_id) VALUES (?,?,?,?,?,?,?, 'active', ?)").bind(ev.id, ent.season.start, key, source, today, q.to, nf.featured, user.id),
-    env.DB.prepare("UPDATE events SET featured=?, featured_until=?, banner_until=?, partner_until=?, partner_verified=?, updated_at=datetime('now') WHERE id=?").bind(nf.featured, nf.featured_until, nf.banner_until, q.to, verified, ev.id),
+    env.DB.prepare("INSERT INTO event_partner_events (event_id, season_start, org_key, source_session, applied_from, applied_until, applied_featured, status, user_id) SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, 'active', ?8 WHERE (SELECT COUNT(*) FROM event_partner_events WHERE org_key = ?3 AND season_start = ?2 AND status = 'active') < ?9").bind(ev.id, ent.season.start, key, source, today, q.to, nf.featured, user.id, cap),
+    env.DB.prepare("UPDATE events SET featured=?, featured_until=?, banner_until=?, partner_until=?, partner_verified=?, updated_at=datetime('now') WHERE id=? AND EXISTS (SELECT 1 FROM event_partner_events WHERE event_id = ? AND season_start = ? AND source_session = ? AND status = 'active' AND applied_from = ? AND user_id = ?)").bind(nf.featured, nf.featured_until, nf.banner_until, q.to, verified, ev.id, ev.id, ent.season.start, source, today, user.id),
   ]);
+  if (!done[1].meta || !done[1].meta.changes) return { status: 409, error: `All ${ent.cap} events of this plan are used for the ${ent.season.label} season. Write to info@socallights.app if you need more.` };
   return { ok: true, event: ev.name, from: today, to: q.to, used: ent.used + 1, cap: ent.cap, remaining: ent.unlimited ? null : ent.cap - ent.used - 1 };
 }

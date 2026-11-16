@@ -17,6 +17,8 @@ export const PARTNER_PLAN = "partner"; // the plan key on feature_orders rows wi
 export const PUBLIC_EVENT_PARTNER = { label: EVENT_PARTNER.label, cents: EVENT_PARTNER.cents, cap: EVENT_PARTNER.cap };
 export const isPartnerOrder = (o) => !!o && o.target === "event_partner";
 
+// Days from today to the season's last day, both counted (audit M6: the plan is one price per season whenever it is bought).
+export const daysLeft = (today, end) => Math.max(0, Math.round((Date.parse(end + "T12:00:00Z") - Date.parse(today + "T12:00:00Z")) / 86400000) + 1);
 const rank = (a) => (a < 0 ? Infinity : a);
 // season: seasonOf(today); plans: active plans of this season [{ cap }]; comps: running comps [{ allowed, valid_until, note }]; used: covered events this season.
 export function partnerEntitlement(season, plans = [], comps = [], used = 0) {
@@ -31,7 +33,7 @@ export function partnerEntitlement(season, plans = [], comps = [], used = 0) {
 }
 // What buying costs this organization today. problem = "" when it can be bought. A comp or a plan already held means nothing to buy.
 export function partnerQuote(ent, today = ptToday()) {
-  const q = { plan: PARTNER_PLAN, label: EVENT_PARTNER.label, cap: EVENT_PARTNER.cap, cents: EVENT_PARTNER.cents, from: today, to: ent.season.end, season: ent.season.label, problem: "" };
+  const q = { plan: PARTNER_PLAN, label: EVENT_PARTNER.label, cap: EVENT_PARTNER.cap, cents: EVENT_PARTNER.cents, from: today, to: ent.season.end, season: ent.season.label, daysLeft: daysLeft(today, ent.season.end), problem: "" };
   if (ent.comp) q.problem = "Your organization is covered as a Founding partner, so there is nothing to buy.";
   else if (ent.hasPlan) q.problem = `Your organization already has an Event Partner plan for the ${ent.season.label} season.`;
   return q;

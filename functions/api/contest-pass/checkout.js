@@ -7,7 +7,7 @@ import { json, err, clean } from "../../_lib/util.js";
 import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { keyForUser } from "../../_lib/passkey.js";
 import { orgState, passQuote, CONTEST_PASSES, orgLabel } from "../../_lib/passes.js";
-import { sha256hex, checkoutLimit, createCheckoutSession } from "../../_lib/stripe.js";
+import { sha256hex, checkoutLimit, createCheckoutSession, refundNote } from "../../_lib/stripe.js";
 import { bump } from "../../_lib/funnel.js";
 
 // Where the buyer lands after Stripe: back = "wizard" (it creates the contest by itself), "manage:<slug>" (a contest dashboard) or the pass page. Never an outside address.
@@ -39,13 +39,14 @@ export async function onRequestPost({ request, env }) {
     "metadata[plan]": plan,
     "metadata[user_id]": user.id,
     "metadata[quote_from]": q.from, "metadata[quote_to]": q.to, "metadata[quote_cents]": String(q.cents), // what the buyer was quoted
+    "custom_text[submit][message]": refundNote("pass"),
     "payment_intent_data[description]": `SoCal Lights contest pass: ${orgLabel(key)} (${plan})`.slice(0, 200),
     success_url: `${origin}${back}${sep}pass=paid&plan=${plan}`,
     cancel_url: `${origin}${back}${sep}pass=cancelled&plan=${plan}`,
   });
   if (goodEmail) { f.set("customer_email", goodEmail); f.set("payment_intent_data[receipt_email]", goodEmail); }
   // Same organization + pass + window + price within 10 minutes reuses one Checkout session (double clicks). A hash; the account is included so two people never share a session.
-  const idem = "pass-" + (await sha256hex(`${key}|${plan}|${q.from}|${q.to}|${q.cents}|${user.id}|${Math.floor(Date.now() / 600_000)}`));
+  const idem = "pass-" + (await sha256hex(`${key}|${plan}|${q.from}|${q.to}|${q.cents}|${back}|${user.id}|${Math.floor(Date.now() / 600_000)}`)); // back is in the key (audit L1): the same pass bought from a different page has a different return address, and Stripe refuses a reused key with other parameters
   const limited = await checkoutLimit(env, user.id);
   if (limited) return err(429, limited);
   const url = await createCheckoutSession(env, f, idem);

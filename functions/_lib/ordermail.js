@@ -46,7 +46,9 @@ async function once(env, o, column, id, extra) {
 // "Your payment was not applied; we are refunding it."
 export const notifyNotApplied = (env, order) => once(env, order, "not_applied_notice_at", "payment_not_applied", {});
 // "Your refund was issued." off: a placement that was on has been switched off.
-export const notifyRefunded = (env, order, { off = false } = {}) => once(env, order, "refund_notice_at", "refund_issued", { off: off ? "yes" : "" });
+// A contest pass or an Event Partner plan says what happens to it (audit L5): switched off, or kept because contests or events it already covers are running (Admin looks at those by hand).
+export const refundAfter = (order, off) => (order.target === "contest_pass" ? (off ? "Your contest pass is switched off." : "Your contest pass and the contests that are already live stay as they are. We will write to you if that changes.") : order.target === "event_partner" ? (off ? "Your Event Partner plan is switched off." : "Your Event Partner plan and the events it already covers stay as they are. We will write to you if that changes.") : "");
+export const notifyRefunded = (env, order, { off = false } = {}) => { const after = refundAfter(order, off); return once(env, order, "refund_notice_at", "refund_issued", { off: after ? "" : off ? "yes" : "", after }); };
 
 // Orders that were flagged "refund due" after the payment (an event declined or removed, a pass that could not be applied...) have no webhook moment of their own: the scheduled digest calls this
 // to tell the buyers. An order whose removal can be undone (note ends with RESTORE_MARK: the event or profile may come back) is left alone until it is really refund due.
