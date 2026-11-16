@@ -6,6 +6,7 @@ import { clean, webUrl, nearestCounty, geocodeAddress } from "./util.js";
 import { line, normName } from "./fields.js";
 import { slug, isDate } from "./events.js";
 import { streetParts } from "./addrkey.js";
+import { findNearDuplicate, nearDuplicate } from "./dupes.js";
 import { BAD } from "./moderation.js";
 import { ptToday } from "./time.js";
 import { CITY } from "../../public/cities.js";
@@ -191,7 +192,7 @@ export async function processRows(env, rows, { dryRun = false, doFetch = fetch, 
   const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
   const { c: todays } = await env.DB.prepare("SELECT COUNT(*) AS c FROM intake_events WHERE status = 'published' AND received_at > datetime('now','-1 day')").first();
   let budget = Math.max(0, PUBLISH_PER_DAY - todays);
-  const out = [], writes = [], seen = new Set(), removals = await loadRemovals(env);
+  const out = [], writes = [], seen = new Set(), sent = [], removals = await loadRemovals(env);
   for (let i = 0; i < rows.length; i++) {
     const res = { index: i, name: String(rows[i] && rows[i].name || "").slice(0, 120) };
     out.push(res);
@@ -206,6 +207,9 @@ export async function processRows(env, rows, { dryRun = false, doFetch = fetch, 
     ).bind(x.id, x.name, x.start_date, x.address, x.city, x.url).first();
     if (removedHome(removals, x)) { res.verdict = "rejected"; res.reasons = [REMOVED_REASON]; continue; } // not kept: nothing about the home is stored
     if (dup) { res.verdict = "duplicate"; res.reasons = ["already on the map, already sent, or taken down by the owner (an intake row never changes an existing event)"]; continue; }
+    const near = (await findNearDuplicate(env, x)) || sent.find((r) => nearDuplicate(x, r)); // also against the other rows of this same call // same day and the same place or a near-identical name ("Tree Lighting at X" and "Tree Lighting Celebration at X")
+    if (near) { res.verdict = "duplicate"; res.reasons = [`looks like "${near.name}" (${near.id}), which is already on the map or was already sent for the same day (an intake row never changes an existing event)`]; continue; }
+    sent.push(x);
     const info = {}, pt = await geocodeAddress(x.address, x.city, CITY[x.city], ["Los Angeles", "San Diego"].includes(x.city) ? 45 : 30, doFetch, info);
     if (!pt) { res.verdict = "rejected"; res.reasons = [info.down ? "the address lookup was unavailable; send this row again later" : info.far ? `the address is far from ${x.city}: check the city and address` : "the address was not found: use the full street address with ZIP"]; if (!info.down && !dryRun) res._store = { id: x.id, x, status: "rejected" }; continue; }
     [x.lat, x.lng] = pt; x.county = nearestCounty(x.lat, x.lng, evs);

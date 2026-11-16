@@ -6,6 +6,7 @@ export async function onRequestGet({ request, env }) {
   const offset = Math.max(0, parseInt(u.searchParams.get("offset") || "0", 10) || 0), PAGE = 50;
   const W = area ? " WHERE area = ?" : "", b = area ? [area] : [];
   const { n: total } = await env.DB.prepare(`SELECT COUNT(*) AS n FROM admin_log${W}`).bind(...b).first();
-  const { results } = await env.DB.prepare(`SELECT id, at, admin, area, action, target_id, label FROM admin_log${W} ORDER BY id DESC LIMIT ${PAGE} OFFSET ${offset}`).bind(...b).all();
+  const cols = (d) => `SELECT id, at, admin, area, action, target_id, label${d ? ", detail" : ""} FROM admin_log${W} ORDER BY id DESC LIMIT ${PAGE} OFFSET ${offset}`;
+  const { results } = await env.DB.prepare(cols(true)).bind(...b).all().catch(() => env.DB.prepare(cols(false)).bind(...b).all()); // before migration 0267 there is no detail column
   return json({ entries: results, total, offset, page: PAGE });
 }

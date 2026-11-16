@@ -12,7 +12,7 @@
 // just before the first new file, applies the new files, then checks only the rows that were added or
 // changed. Needs Node 22.13+ (built-in node:sqlite). Rules are in docs/updating-events.md.
 import { DatabaseSync } from "node:sqlite";
-import { readFileSync, readdirSync, writeFileSync, appendFileSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync, appendFileSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import path from "node:path";
@@ -170,6 +170,14 @@ function checkRow(e, label) {
 }
 
 const { changed, removed } = diff(snapshot, finalRows);
+// Events an admin deleted in the live Admin (the deleted_events table, exported by the workflow to a JSON list of ids): a migration must not quietly bring one back (audit 2026-11-16, M7).
+// Reviving one on purpose needs a comment line in the migration: -- validate: revive <id>
+if (!failedSql && opt("--deleted-file") && existsSync(opt("--deleted-file"))) {
+  let ids = []; try { const j = JSON.parse(readFileSync(opt("--deleted-file"), "utf8")); ids = (Array.isArray(j) ? j : j.ids || []).map((x) => (typeof x === "string" ? x : x && x.id)).filter(Boolean); } catch (e) { warn("deleted-events", "migration", `could not read ${opt("--deleted-file")}: ${e.message}`); }
+  const gone = new Set(ids), text = newFiles.map((f) => readFileSync(path.join(migDir, f), "utf8")).join("\n");
+  for (const e of changed) if (gone.has(e.row.id) && !new RegExp(`--\\s*validate:\\s*revive\\s+${e.row.id.replace(/[^a-z0-9-]/g, "")}\\b`, "i").test(text))
+    err("admin-deleted", `row ${e.row.id}`, `an admin deleted this event in Admin, and this migration would ${e.kind === "added" ? "add" : "overwrite"} it again. Drop the row, or add the comment line "-- validate: revive ${e.row.id}" if it should come back.`, true);
+}
 if (!failedSql) {
   if (!flag("--history")) for (const e of changed) checkRow(e, "row");
   // duplicates: same name+start+city, or same address+start, against the whole table

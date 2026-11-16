@@ -10,6 +10,7 @@ import { CITY } from "../../../public/cities.js";
 import { SEASONS } from "../../../public/seasons.js";
 import { refundDueStatements, restoreRefundDue } from "../../_lib/orders.js";
 import { applyStatement, snapOf } from "../../_lib/intake-updates.js";
+import { findNearDuplicate } from "../../_lib/dupes.js";
 
 export async function onRequestGet({ env }) {
   const rows = (await env.DB.prepare("SELECT id, status, reason, name, city, county, season, type, start_date, end_date, hours, price, url, venue, address, evidence, seen, image, received_at, acted_at FROM intake_events ORDER BY received_at DESC, id LIMIT 300").all()).results;
@@ -36,6 +37,10 @@ export async function onRequestPost({ request, env }) {
   if (b.action === "publish") {
     if (!["held", "unpublished", "rejected"].includes(row.status)) return err(409, "Only a held, unpublished or rejected row can be published.");
     if (removedHome(await loadRemovals(env), row)) return err(409, "Cannot publish: " + REMOVED_REASON + ".");
+    if (!b.force) { // the same check the intake runs: a held row can be a second copy of an event that went up (or was sent) after it was held
+      const near = await findNearDuplicate(env, row, row.id);
+      if (near) return json({ error: `This looks like "${near.name}" (${near.id}), which is already on the map or was already sent for the same day. Publish it anyway only if it is a different event.`, code: "duplicate", dup: { id: near.id, name: near.name } }, { status: 409 });
+    }
     if (row.status === "rejected") { // the owner overrides the checks: the row is made complete (pin looked up, county and id worked out) and must still be a real, dated event with a known city, season and type
       const miss = [];
       if (String(row.name || "").trim().length < 4) miss.push("a name");

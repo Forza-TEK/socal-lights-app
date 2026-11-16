@@ -11,6 +11,7 @@ import { checkFields, checkImage, normalizeKinds, MAX_ROWS } from "../functions/
 
 const KEY = "test-intake-key-0123456789abcdef";
 const NOW = "2026-11-15T20:00:00Z", TODAY = "2026-11-15";
+const DIFFERENT = ["Lantern Walk", "Santa Train", "Menorah Lighting", "Ice Skating", "Boat Parade", "Snowy Market", "Candle Concert", "Cookie Bake", "Reindeer Run", "Carol Sing"]; // names that are plainly different events (the near-duplicate check compares names at the same venue and day)
 const mk = (extra = {}) => newEnv({ GROK_INTAKE_KEY: KEY, ...extra });
 const good = (o = {}) => ({
   name: "Mission Inn Festival of Lights", city: "Riverside", season: "christmas", type: "show", start: "2026-11-27", end: "2027-01-06", hours: "5:30pm–9:30pm", free: true, price: "Free",
@@ -106,7 +107,7 @@ test("photo link: kept as a link (never copied) on the event, dropped with a rea
       ["http://example.org/a.jpg", /https/], ["https://scontent-lax3-1.xx.fbcdn.net/v/t39/a.jpg?oe=abc", /expire/], ["https://example.org/site-logo.png", /logo/],
       ["https://example.org/placeholder.jpg", /badge|placeholder/], ["not a url", /valid/],
     ];
-    for (const [i, [u, re]] of bad.entries()) { const r = await send(env, [good({ name: "Photo bad " + i + " fest", address: `${100 + i} Main St, Riverside, CA 92501`, url: `https://example.org/p${i}`, image_url: u })]); assert.equal(r.body.results[0].verdict, "published", u); assert.match(r.body.results[0].image, re, u); assert.equal(raw.prepare("SELECT image FROM events WHERE id = ?").get(r.body.results[0].id).image, null, u); }
+    for (const [i, [u, re]] of bad.entries()) { const r = await send(env, [good({ name: DIFFERENT[i] + " bad photo", address: `${100 + i} Main St, Riverside, CA 92501`, url: `https://example.org/p${i}`, image_url: u })]); assert.equal(r.body.results[0].verdict, "published", u); assert.match(r.body.results[0].image, re, u); assert.equal(raw.prepare("SELECT image FROM events WHERE id = ?").get(r.body.results[0].id).image, null, u); }
     globalThis.fetch = head(200, "text/html"); const html = await send(env, [good({ name: "Html page fest", address: "201 Main St, Riverside, CA 92501", url: "https://example.org/q201", image_url: "https://example.org/a.jpg" })]); assert.match(html.body.results[0].image, /not a picture/);
     globalThis.fetch = head(404, "text/html"); const gone = await send(env, [good({ name: "Gone photo fest", address: "202 Main St, Riverside, CA 92501", url: "https://example.org/q202", image_url: "https://example.org/a.jpg" })]); assert.match(gone.body.results[0].image, /no longer exists/);
     globalThis.fetch = head(403, "text/html"); const blocked = await send(env, [good({ name: "Blocked site fest", address: "203 Main St, Riverside, CA 92501", url: "https://example.org/q203", image_url: "https://example.org/a.jpg" })]); assert.equal(blocked.body.results[0].image, "linked", "a site that refuses our check keeps the link");
@@ -271,7 +272,7 @@ test("a full call stays under the 50 outgoing calls a Pages Function may make", 
     const { env } = mk(); let outgoing = 0;
     globalThis.fetch = async () => { outgoing++; return new Response("[]"); }; // every geocoder fails: the worst case, both geocoders per row
     env.DB.stats.reset();
-    await send(env, Array.from({ length: MAX_ROWS }, (_, i) => good({ name: `Limit test festival ${i}` })));
+    await send(env, Array.from({ length: MAX_ROWS }, (_, i) => good({ name: DIFFERENT[i] + " limit test" })));
     assert.ok(outgoing + env.DB.stats.calls < 50, `${outgoing} geocoder calls + ${env.DB.stats.calls} database calls`);
   });
 });
@@ -281,7 +282,7 @@ test("a full call with photo links (one address lookup and one link check per ro
     const { env } = mk(); let outgoing = 0;
     globalThis.fetch = async (u, o) => { outgoing++; return o && o.method === "HEAD" ? new Response(null, { status: 200, headers: { "content-type": "image/jpeg" } }) : new Response(JSON.stringify({ result: { addressMatches: [{ matchedAddress: "X", coordinates: { x: -117.3717, y: 33.9806 } }] } })); };
     env.DB.stats.reset();
-    const r = await send(env, Array.from({ length: MAX_ROWS }, (_, i) => good({ name: `Photo budget festival ${i}`, address: `${300 + i} Main St, Riverside, CA 92501`, url: `https://example.org/b${i}`, image_url: `https://example.org/i${i}.jpg` })));
+    const r = await send(env, Array.from({ length: MAX_ROWS }, (_, i) => good({ name: DIFFERENT[i] + " photo budget", address: `${300 + i} Main St, Riverside, CA 92501`, url: `https://example.org/b${i}`, image_url: `https://example.org/i${i}.jpg` })));
     assert.equal(r.body.published, MAX_ROWS); assert.ok(outgoing + env.DB.stats.calls < 50, `${outgoing} outgoing + ${env.DB.stats.calls} database calls`);
   });
 });

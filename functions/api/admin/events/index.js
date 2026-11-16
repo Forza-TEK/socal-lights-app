@@ -4,6 +4,7 @@ import { json, err, clean, safeUrl, COUNTIES } from "../../../_lib/util.js";
 import { SEASONS } from "../../../../public/seasons.js";
 import { parseVideo } from "../../../../public/video.js";
 import { build } from "../../events.js";
+import { adminEventRules } from "../../../_lib/events.js";
 import { eventFloor, ptToday } from "../../../_lib/featured.js";
 export async function onRequestGet({ env }) { const b = await build(env, true, true, true); return new Response(b.body, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", etag: b.tag } }); }
 const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -28,6 +29,14 @@ export async function onRequestPost({ request, env }) {
   if (!SEASONS[e.season].types[e.type]) return err(400, "Choose an event type that fits the season.");
   if (!isDate(e.start) || !isDate(e.end) || e.end < e.start) return err(400, "Check the start and end dates.");
   if (!(e.lat > 32 && e.lat < 35.8 && e.lng > -121.5 && e.lng < -114)) return err(400, "The location is outside Southern California.");
+
+  // The same data rules as the Grok intake, the public form and the migration check (functions/_lib/events.js adminEventRules). Hours are tidied; the rest are refused with a plain sentence.
+  if (e.free && !e.price) e.price = "Free";
+  const prev = await env.DB.prepare("SELECT free, price, hours, url, county, city, lat, lng FROM events WHERE id = ?").bind(e.id).first();
+  const cityCounties = (await env.DB.prepare("SELECT DISTINCT county FROM events WHERE city = ?").bind(e.city).all()).results.map((r) => r.county);
+  const rules = adminEventRules(e, prev, cityCounties);
+  if (rules.problems.length) return err(400, rules.problems.join(" "));
+  e.hours = rules.hours;
 
   // Paid placement fields, only when the editor sends them (an older page or a script that does not send them leaves them alone). A date or level set by hand never cuts off a paid order that is still running.
   const pl = b.placement && typeof b.placement === "object" ? b.placement : null;
@@ -59,5 +68,6 @@ export async function onRequestPost({ request, env }) {
   ).bind(e.id, e.name, e.county, e.city, e.type, e.start, e.end, e.status, e.free, e.price, e.hours, e.lat, e.lng, e.blurb, e.url, e.season).run();
   try { await withVenue(); if (vidIn !== undefined) await env.DB.prepare("UPDATE events SET video = ? WHERE id = ?").bind(vid ? vid.watch : "", e.id).run(); if (place) await env.DB.prepare("UPDATE events SET featured=?, featured_until=?, banner_until=? WHERE id=?").bind(place.lvl, place.fu, place.bu, e.id).run(); }
   catch (x) { if (/no column named|no such column/i.test(String(x && x.message))) await withoutVenue(); else throw x; }
-  return json({ ok: true, id: e.id });
+  try { await env.DB.prepare("DELETE FROM deleted_events WHERE id = ?").bind(e.id).run(); } catch {} // saving an event on purpose lifts its "deleted by an admin" mark
+  return json({ ok: true, id: e.id, hours: e.hours, price: e.price });
 }

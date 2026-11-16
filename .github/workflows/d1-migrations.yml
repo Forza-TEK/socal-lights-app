@@ -41,8 +41,22 @@ jobs:
           if [ -z "$SHA" ] || ! git cat-file -e "$SHA^{commit}" 2>/dev/null; then SHA="${{ github.event.before }}"; fi
           echo "Checking migrations added since $SHA"
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+      - run: npm ci
+      - name: List the events an admin deleted in Admin (so a migration cannot bring one back by accident)
+        continue-on-error: true   # never blocks: without the secret, or before migration 0267 reaches the live database, the check simply has nothing to compare with
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 52d622850c5e367e319d35143c43a275
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "No token: skipping the deleted-events list."; exit 0; fi
+          TOKEN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | grep -oE '[A-Za-z0-9_-]{30,}' | head -n 1)
+          CLOUDFLARE_API_TOKEN="$TOKEN" npx wrangler d1 execute socal-lights --remote --json --command "SELECT id FROM deleted_events" > "$RUNNER_TEMP/deleted.json" || exit 0
+          node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const r=(j[0]&&j[0].results)||[];require("fs").writeFileSync(process.argv[2],JSON.stringify(r.map(x=>x.id)));console.log(r.length+" admin-deleted event(s) listed")' "$RUNNER_TEMP/deleted.json" "$RUNNER_TEMP/deleted-ids.json" || true
       - name: Check the new migrations
-        run: node --no-warnings scripts/validate-migrations.mjs --gate --base "${{ steps.base.outputs.sha }}"
+        run: |
+          EXTRA=""
+          if [ -s "$RUNNER_TEMP/deleted-ids.json" ]; then EXTRA="--deleted-file $RUNNER_TEMP/deleted-ids.json"; fi
+          node --no-warnings scripts/validate-migrations.mjs --gate --base "${{ steps.base.outputs.sha }}" $EXTRA
 
   migrate:
     needs: [validate]

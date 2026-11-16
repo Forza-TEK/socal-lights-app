@@ -12,11 +12,14 @@ export async function onRequestGet({ params, env }) {
   return json({ featured: e.featured || 0, featured_until: e.featured_until || "", banner_until: e.banner_until || "", floor: await eventFloor(env.DB, params.id, ptToday()) }, { headers: { "cache-control": "no-store" } });
 }
 
-export async function onRequestDelete({ request, params, env }) {
+export async function onRequestDelete({ request, params, env, data = {} }) {
   const live = await livePaidOrders(env.DB, params.id, ptToday());
   if (live.length && new URL(request.url).searchParams.get("confirm") !== "1") return paidPlacementConflict(live, "delete");
+  // Keep the whole row (a tombstone): it makes the delete undoable (POST /api/admin/events/restore) and lets the migration gate refuse a later migration that would bring the event back by accident.
+  const row = await env.DB.prepare("SELECT * FROM events WHERE id = ?").bind(params.id).first();
+  if (row) { try { await env.DB.prepare("INSERT OR REPLACE INTO deleted_events (id, name, row, deleted_by) VALUES (?,?,?,?)").bind(params.id, String(row.name || "").slice(0, 120), JSON.stringify(row), String(data.admin && data.admin.email || "").slice(0, 120)).run(); } catch {} } // before migration 0267 the table is missing: the delete still goes ahead
   await env.DB.prepare("DELETE FROM events WHERE id = ?").bind(params.id).run();
   if (live.length) await env.DB.prepare("UPDATE feature_orders SET status = 'refund_due', note = ? WHERE event_id = ? AND status = 'paid'")
     .bind("[auto] The event was deleted while this placement was running. Refund it in the Stripe dashboard, then mark it refunded here.", params.id).run();
-  return json({ ok: true, refund_due: live.length });
+  return json({ ok: true, refund_due: live.length, restorable: !!row });
 }

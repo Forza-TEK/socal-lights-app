@@ -35,7 +35,21 @@ export const actionName = (method, body, id) => {
   if (body && typeof body.action === "string" && /^[a-z_]{2,20}$/.test(body.action)) return body.action;
   return method === "DELETE" ? "delete" : method === "PUT" || method === "PATCH" ? "edit" : id ? "edit" : "add";
 };
-export async function record(env, { admin, area, action, id, label }) {
+// What an event looked like (every column but the bookkeeping ones), for the before and after values in the log. Only the events area is snapshotted.
+export async function snapshot(env, area, id) {
+  if (area !== "events" || !id) return null;
+  try { const r = await env.DB.prepare("SELECT * FROM events WHERE id = ?").bind(id).first(); if (r) { delete r.updated_at; } return r || null; } catch { return null; }
+}
+// {"field":[before,after]} for the fields that changed (an add or a delete has no pair); "" when nothing changed. Kept short.
+export function diffDetail(before, after) {
+  if (!before || !after) return "";
+  const d = {};
+  for (const k of Object.keys(after)) if (String(before[k] ?? "") !== String(after[k] ?? "")) d[k] = [String(before[k] ?? "").slice(0, 120), String(after[k] ?? "").slice(0, 120)];
+  return Object.keys(d).length ? JSON.stringify(d).slice(0, 1500) : "";
+}
+export async function record(env, { admin, area, action, id, label, detail = "" }) {
   if (area === "users" && action === "delete") label = ""; // the person's email is gone with the account (privacy audit PL-04); the log keeps who, when and the id
-  try { await env.DB.prepare("INSERT INTO admin_log (admin,area,action,target_id,label) VALUES (?,?,?,?,?)").bind(String(admin || "").slice(0, 120), area, action, id || "", label || "").run(); } catch {}
+  const who = String(admin || "").slice(0, 120);
+  try { await env.DB.prepare("INSERT INTO admin_log (admin,area,action,target_id,label,detail) VALUES (?,?,?,?,?,?)").bind(who, area, action, id || "", label || "", detail || "").run(); }
+  catch { try { await env.DB.prepare("INSERT INTO admin_log (admin,area,action,target_id,label) VALUES (?,?,?,?,?)").bind(who, area, action, id || "", label || "").run(); } catch {} } // before migration 0267 there is no detail column
 }
