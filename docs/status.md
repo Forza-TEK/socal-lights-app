@@ -1565,3 +1565,6 @@ Migration 0234: confirmed 10 Ventura/SB/San Bernardino-county Christmas events f
 
 ## 2026-11-16 re-key Christmas on Mt. Helix
 - Migration 0277 moves `g13-christmas-on-mt-helix` from city La Mesa to Casa de Oro-Mount Helix (Grok handoff request, now done). County, pin and address unchanged. Note for Grok in `docs/handoff/to-grok/2026-11-16-mt-helix-rekeyed.md`.
+
+## 2026-11-16 Light Up a Life, Carpinteria duplicate
+Migration 0278 takes the duplicate Grok row (grok-43rd-light-up-a-life-car-b30002) off the map; the sweep row g20-lual-carpinteria-2026 stays. Missed by 0271.
