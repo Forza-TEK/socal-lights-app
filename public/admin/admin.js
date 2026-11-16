@@ -8,7 +8,6 @@ import { renderHelp } from "/admin/help.js?v=20261113a";
 import { renderPartner } from "/admin/partner.js?v=20261113a";
 import { renderChat } from "/admin/chat.js?v=20261113a";
 import { renderGrok } from "/admin/grok.js?v=20261116a";
-import { renderProgress } from "/admin/progress.js?v=20261116a";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261116a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
 
@@ -36,8 +35,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "passes", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "grok", "progress", "emails", "help", "chat"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", grok: "From Grok", progress: "Progress", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "passes", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "grok", "emails", "help", "chat"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", grok: "From Grok", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 // The breadcrumb in the top bar: the menu group, the page, and (on a full record) the record's name
 const groupOf = (t) => { const b = document.querySelector(`#side [data-tab="${t}"]`); if (!b) return ""; let n = b.closest(".grp"); n = n && n.previousElementSibling; while (n && !n.classList.contains("gh")) n = n.previousElementSibling; return n ? n.textContent.trim() : ""; };
 const setDetail = (name) => { const d = $("#pdetail"); if (d) d.innerHTML = name ? `<span class="csep" aria-hidden="true">/</span><b>${esc(name)}</b>` : ""; };
@@ -94,7 +93,6 @@ async function render() {
     if (tab === "help") return renderHelp(main);
     if (tab === "chat") return renderChat(main);
     if (tab === "grok") return renderGrok(main);
-    if (tab === "progress") return renderProgress(main);
     if (tab === "approved" && PVIEW === "contest") {
       const list = await api("/api/admin/posts?contest=1"); POSTS = list;
       const cbar = toolbar({ views: [{ k: "pending", label: "Published" }, { k: "contest", label: "Contest entries", n: list.length }], active: "contest", search: { placeholder: "Search entries, people, cities" } });

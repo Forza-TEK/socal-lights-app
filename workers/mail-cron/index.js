@@ -47,11 +47,6 @@ export const JOBS = {
     const r = await call(env, "/api/deploy-check" + q), j = await body(r);
     return r.ok && ["ok", "stalled", "not_configured", "unknown"].includes(j.state) ? "ok" : "fail";
   },
-  // Admin > Progress history: one row every half hour (the site counts the map and Grok's work and writes it).
-  "progress-log": async (env) => {
-    const r = await call(env, "/api/progress-log"), j = await body(r);
-    return r.ok && j.ok === true ? "ok" : "fail";
-  },
   // Contest reminders (voting opens, voting closes soon): each is queued once per contest.
   "contest-reminders": async (env) => {
     const r = await call(env, "/api/contest-remind"), j = await body(r);
@@ -82,7 +77,7 @@ export const CRONS = {
   "7,37 * * * *": ["usage-check"],
   "47 14 * * *": ["stripe-reconcile"],
   "17 15 * * *": ["sponsor-renewals"],
-  "13,43 * * * *": ["verify-events", "progress-log"],
+  "13,43 * * * *": ["verify-events"],
   "15 17 * * *": ["contest-reminders"],
   "30 17 * * 4": ["alerts"],
 };
