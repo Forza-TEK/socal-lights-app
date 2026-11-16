@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Video PRs #693, #694, #695 merged
+- Rebased each on main in turn (already-merged stacked commits dropped), regenerated `functions/_lib/chatkb-data.js`, Tests green, squash-merged. `find-map.mp4` was 15 MB after the re-record and failed the under-8 MB test in `tests/app-web-fixes.test.mjs`; re-encoded at 1280x720 (4.6 MB). Many other tutorial videos are 8 to 22 MB (`run-custom*.mp4` 22 MB); only `find-map` is checked by a test. The chat "dates" test passed on main today.
+
 ## 2026-11-16: Videos `app` (rewritten) and `contest-pass-app` re-recorded (computer and phone, branch `videos-b3-app`)
 - The iPhone app is live, so `find-app` is now "Get the SoCal Lights app": open the App Store, search SoCal Lights, tap Get, then Open (a plain title card, generic because no listing name or link exists in the repo); the app opens on the same map; sign in with an emailed code (shown in the site's app mode); the menu has no Support or Feature your event, payments stay on the website; delete account (Your profile, Account, Delete my account); Android keeps the Chrome Install app card. The old "nothing to download from a store" narration is gone. `tutorials.json` title and description updated. `contest-pass-app` re-recorded unchanged in wording (current header). `check-sync.mjs` 4 of 4 pass. Stacked on `videos-b2`.
 ## 2026-11-16: Videos `installer-profile`, `claim`, `profile`, `manage-events` re-recorded (computer and phone, branch `videos-b2-account`)
