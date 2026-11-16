@@ -2,6 +2,7 @@
 // its comps and plans, and a form to grant it a comp. "Grant a comp" at the top does the same for a new organization (founder cities are free; no price is ever shown to them).
 // Plans bought also show in Orders.
 import { esc, btn, rec, fact, toast, modalFrame, tap } from "/admin/kit.js?v=20261116a";
+import { pageHost } from "/admin/pagehost.js?v=20261116a";
 
 const $ = (s) => document.querySelector(s);
 async function api(path, opts = {}) {
@@ -44,13 +45,13 @@ const planCard = (p) => rec({ title: esc(p.label), tags: [[p.status === "active"
   facts: fact("Season", `${esc(pdate(p.season_start))} to ${esc(pdate(p.season_end))}`) + fact("Paid", esc("$" + ((p.amount || 0) / 100).toFixed(2))) + fact("Buyer", esc(p.email || "")) + fact("Order", esc(p.order_status || "")) });
 
 function openGrant() {
-  const m = $("#modal"); m.hidden = false; m.innerHTML = modalFrame("Grant a comp", `<div class="f">${grantForm("pg", true)}</div>`, true);
+  const m = pageHost("Event Partners", () => renderPartner(MAIN)); m.hidden = false; m.innerHTML = modalFrame("Grant a comp", `<div class="f">${grantForm("pg", true)}</div>`, true);
   const close = () => { m.hidden = true; m.innerHTML = ""; }; $("#mClose").onclick = close;
   wireGrant(m, "pg", "", async () => { close(); await renderPartner(MAIN); });
 }
 function openOrg(key) {
   const o = PD.orgs.find((x) => x.key === key); if (!o) return;
-  const m = $("#modal"); m.hidden = false;
+  const m = pageHost("Event Partners", () => renderPartner(MAIN)); m.hidden = false;
   const comps = PD.comps.filter((c) => c.org_key === key), plans = PD.plans.filter((p) => p.org_key === key), [t, tone] = orgStatus(o);
   const events = o.events.length ? `<ul class="plist">${o.events.map((e) => `<li data-evrow="${esc(e.id)}">${esc(e.name || e.id)} <span class="meta">${esc(e.applied_from)} to ${esc(e.applied_until)}</span> <a href="#" data-act="release" data-ev="${esc(e.id)}" data-ss="${esc(e.season_start)}">free this slot</a></li>`).join("")}</ul>` : `<div class="empty">No event is covered under this organization yet.</div>`;
   m.innerHTML = modalFrame(o.label, `<p class="meta">${esc(o.key)} <span class="tag ${tone}">${esc(t)}</span></p>
@@ -90,10 +91,10 @@ export async function renderPartner(main) {
   try { d = await api("/api/admin/partner"); } catch (er) { main.innerHTML = `<div class="empty">${esc(er.message)}</div>`; return; }
   PD = d;
   const old = d.comps.filter((c) => !c.running).length + d.plans.filter((p) => p.status !== "active").length;
-  main.innerHTML = `<div class="dhrow"><h2 class="dh">Organizations (${d.orgs.length})</h2>${btn("main", "Grant a comp", 'id="ppNew"')}</div>
-    <p class="meta">Every organization with a plan, a comp or a covered event this season (${esc(d.season.label)}, through ${esc(pdate(d.season.end))}). Open one for its events, comps and plans.</p>
-    ${d.orgs.length ? `<div class="cards">${d.orgs.map(orgRow).join("")}</div>` : `<div class="empty">No organization has a plan, a comp or a covered event this season yet.</div>`}
+  document.dispatchEvent(new CustomEvent("admin:detail", { detail: "" }));
+  main.innerHTML = `<div class="pghead"><div><h2>Event Partners</h2><p>Every organization with a plan, a comp or a covered event this season (${esc(d.season.label)}, through ${esc(pdate(d.season.end))}). Open one for its events, comps and plans.</p></div><div class="pgacts">${btn("main", "Grant a comp", 'id="ppNew"')}</div></div>
+    ${d.orgs.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Organization</th><th>Events this season</th><th>Status</th><th class="ac">Actions</th></tr></thead><tbody>${d.orgs.map((o) => { const [t, tone] = orgStatus(o), cap = o.unlimited ? "unlimited" : o.cap ?? 0; return `<tr data-pkey="${esc(o.key)}"><td><a class="rl" href="#partner" data-pkeylink="${esc(o.key)}">${esc(o.label)}</a><span class="sub">${esc(o.key)}</span></td><td>${o.used} of ${cap}${o.comp ? `<span class="sub">comp through ${esc(pdate(o.comp.until))}</span>` : ""}</td><td><span class="tag ${tone}">${esc(t)}</span></td><td class="ac"><a class="rl" href="#partner" data-pkeylink="${esc(o.key)}">Open</a></td></tr>`; }).join("")}</tbody></table></div><div class="pager"><span class="meta">${d.orgs.length} organization${d.orgs.length === 1 ? "" : "s"}</span></div></div>` : `<div class="empty">No organization has a plan, a comp or a covered event this season yet.</div>`}
     ${old ? `<details class="pleads"><summary>Ended comps and past plans (${old})</summary><div class="cards">${d.comps.filter((c) => !c.running).map(compCard).join("")}${d.plans.filter((p) => p.status !== "active").map(planCard).join("")}</div></details>` : ""}`;
   $("#ppNew").onclick = openGrant;
-  main.querySelectorAll("[data-pkey]").forEach((card) => (card.onclick = (e) => { if (e.target.closest("a")) return; openOrg(card.dataset.pkey); }));
+  main.querySelectorAll("[data-pkeylink]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); openOrg(a.dataset.pkeylink); }));
 }
