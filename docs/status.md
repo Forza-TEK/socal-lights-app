@@ -1,5 +1,10 @@
 # Status
 
+## 2026-11-16: Videos `feature`, `sponsor`, `event-partner` re-recorded (computer and phone, branch `videos-a-feature-sponsor-partner`)
+- They said "three dots, Promote your event"; the item is "Feature your event". Re-scripted from the current UI (Pricing's four sliding tabs; the `feature` Pay step and the `sponsor` and `event-partner` Stripe steps now name the six methods: card, Apple Pay, Google Pay, Amazon Pay, Cash App Pay, Link). No dollar amounts are spoken (prices are on screen: $25 / $50 / $50 / $75 events, $50 / $50 / $75 installers, $149 Event Partner). Same ids and file names, so links still work; lengths and captions updated in `public/tutorials.json`. Recorded against a local copy with demo data; checkout requests are held, nothing is sent to Stripe. `check-sync.mjs`: 6 of 6 pass.
+- Voice: same Kokoro `af_heart` pipeline. `scripts/tutorials/tts.py` now says the brand with the stress on SO ("SO-cal Lights dot app") and adds a slight pause (a comma, about 0.26 s) after "free" before "on / at / for / in"; the clip cache key is now `kokoro2-` so older clips are not reused.
+- Owner/next step: run `node scripts/build-chat-kb.mjs` (the assistant reads these captions; `tests/chat.test.mjs` "generated knowledge base file is current" fails until it is regenerated). Not run in this branch because the Help/assistant rewrite is on another branch.
+
 ## 2026-11-16: App and web audit, PR 3 of 3 (Report and Hide, image resizer; branch `app-policy-ugc`, stacked on `app-web-fixes`)
 - Apple 1.2 (M5): the "Something wrong?" link on events and homes is now "Report or hide this listing": reasons (including Offensive, unsafe or inappropriate), posts to the existing `POST /api/report` (5 an hour per connection, repeats stored once a day), plus "Hide for me" kept on the device and "Show hidden items" in the menu. No migration.
 - Open image resizer (H4): `public/imgurl.js` builds every `/cdn-cgi/image` address and refuses hosts that are not ours; third-party photos load as they are, a share picture is made only from our own photos. The Cloudflare dashboard step is in the decisions file.

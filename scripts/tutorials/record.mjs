@@ -79,7 +79,7 @@ export async function record(spec) {
   // Voice files are cached by text, so re-recording a video only speaks the lines that changed
   const cacheDir = `${WORK}/tts`; mkdirSync(cacheDir, { recursive: true });
   const spoken = (t) => t.replaceAll("SoCal", "So Cal"); // said as two words; captions keep the brand spelling
-  const KOKORO = process.env.TTS_ENGINE === "kokoro", engine = KOKORO ? `kokoro-${process.env.KOKORO_VOICE || "af_heart"}-${process.env.KOKORO_SPEED || "1.0"}-` : "hfc_female-" + (process.env.LENGTH_SCALE || "1.0");
+  const KOKORO = process.env.TTS_ENGINE === "kokoro", engine = KOKORO ? `kokoro2-${process.env.KOKORO_VOICE || "af_heart"}-${process.env.KOKORO_SPEED || "1.0"}-` : "hfc_female-" + (process.env.LENGTH_SCALE || "1.0");
   const keyOf = (t) => createHash("sha1").update(engine + "|" + spoken(t)).digest("hex");
   const todo = [...new Set(texts.filter((t) => t && !existsSync(`${cacheDir}/${keyOf(t)}.wav`)))];
   if (todo.length && !DRY) { mkdirSync(w + "/wav", { recursive: true }); writeFileSync(w + "/todo.json", JSON.stringify(todo.map(spoken)));

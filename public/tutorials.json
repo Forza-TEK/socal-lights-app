@@ -518,14 +518,14 @@
           "title": "Sponsor your installer company",
           "desc": "Banner, Top of the list, or both: pick your company, check the dates, and stop at the secure payment page.",
           "url": "/tutorials/sponsors-sponsor.mp4",
-          "length": "2:20",
+          "length": "2:39",
           "captions": "/tutorials/sponsors-sponsor.vtt",
           "poster": "/tutorials/sponsors-sponsor.jpg",
           "mobile": {
             "url": "/tutorials/sponsors-sponsor-mobile.mp4",
             "poster": "/tutorials/sponsors-sponsor-mobile.jpg",
             "captions": "/tutorials/sponsors-sponsor-mobile.vtt",
-            "length": "2:20"
+            "length": "2:39"
           }
         }
       ]
@@ -600,14 +600,14 @@
           "title": "Feature an event or a home",
           "desc": "Pick a plan, pick your event or winning home, check the dates. Stops at the secure payment page.",
           "url": "/tutorials/post-feature.mp4",
-          "length": "2:30",
+          "length": "2:33",
           "captions": "/tutorials/post-feature.vtt",
           "poster": "/tutorials/post-feature.jpg",
           "mobile": {
             "url": "/tutorials/post-feature-mobile.mp4",
             "poster": "/tutorials/post-feature-mobile.jpg",
             "captions": "/tutorials/post-feature-mobile.vtt",
-            "length": "2:28"
+            "length": "2:34"
           }
         },
         {
@@ -617,12 +617,12 @@
           "captions": "/tutorials/post-partner.vtt",
           "url": "/tutorials/post-partner.mp4",
           "poster": "/tutorials/post-partner.jpg",
-          "length": "2:50",
+          "length": "2:55",
           "mobile": {
             "url": "/tutorials/post-partner-mobile.mp4",
             "poster": "/tutorials/post-partner-mobile.jpg",
             "captions": "/tutorials/post-partner-mobile.vtt",
-            "length": "2:50"
+            "length": "2:56"
           }
         }
       ]
