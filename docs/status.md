@@ -1,5 +1,8 @@
 # Status
 
+
+## 2026-11-16: Stripe Terms consent on pass and Event Partner checkouts (branch `claude/stripe-terms-consent`, payments decision p2; not merged)
+
 ## 2026-11-16: First-vote Turnstile check (branch `claude/first-vote-turnstile`; payments decision p5, option (a))
 
 The first vote of each account in a contest with a prize or run by a city needs the "I am human" check; later votes and other contests are unchanged. Rule and details: `docs/contests.md` ("First-vote check"). No migration, nothing new stored. Tests: `tests/first-vote-check.test.mjs`. Public asset `contest.html` is inline, so no `?v=` bump; `index.html` untouched (pinch guard untouched); no help text changed.
