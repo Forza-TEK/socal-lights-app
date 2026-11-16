@@ -11,3 +11,5 @@ CREATE TABLE IF NOT EXISTS progress_log (
   updates_applied INTEGER NOT NULL DEFAULT 0, -- Grok update-call changes applied, all time
   intake_published INTEGER NOT NULL DEFAULT 0 -- Grok intake rows published, all time
 );
+-- Starts the clock for the new "progress-log" cron job so it is not flagged before its first run.
+INSERT OR IGNORE INTO job_heartbeats (job) VALUES ('progress-log');
