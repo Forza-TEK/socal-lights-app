@@ -65,6 +65,12 @@ test("calendar file: all-day when there are no hours; hours like '6-9 pm' and '1
   assert.deepEqual(timeRange({ s: "2026-12-11", e: "2026-12-11", h: "6-9 pm" }), ["180000", "210000"]);
   assert.deepEqual(timeRange({ s: "2026-12-11", e: "2026-12-11", h: "11-1 pm" }), ["110000", "130000"]);
   assert.equal(timeRange({ s: "2026-12-11", e: "2026-12-12", h: "6-9 pm" }), null);
+  assert.deepEqual(timeRange({ s: "2026-11-19", e: "2026-11-19", h: "7pm" }), ["190000", "210000"], "a start time alone is a two-hour event, not all-day");
+  assert.deepEqual(timeRange({ s: "2026-12-31", e: "2026-12-31", h: "7pm–12:16am" }), ["190000", "001600", 1], "past midnight ends the next morning");
+  assert.deepEqual(timeRange({ s: "2026-12-05", e: "2026-12-05", h: "11:30pm" }), ["233000", "235900"], "never past midnight");
+  assert.equal(timeRange({ s: "2026-12-05", e: "2026-12-05", h: "Nightly; check site" }), null);
+  assert.match(eventIcs({ id: "t", n: "T", s: "2026-11-19", e: "2026-11-19", h: "7pm", st: "c" }, "https://x.test"), /DTSTART:20261119T190000\r\nDTEND:20261119T210000/);
+  assert.match(eventIcs({ id: "n", n: "N", s: "2026-12-31", e: "2026-12-31", h: "7pm–12:16am", st: "c" }, "https://x.test"), /DTSTART:20261231T190000\r\nDTEND:20270101T001600/);
   const t = eventIcs({ id: "a", n: "X", s: "2026-12-11", e: "2026-12-13", h: "nightly", st: "e", u: "https://e.example/x" }, "https://x.test");
   assert.match(t, /DTSTART;VALUE=DATE:20261211/); assert.match(t, /DTEND;VALUE=DATE:20261214/); assert.match(t, /Dates are estimated/);
 });
