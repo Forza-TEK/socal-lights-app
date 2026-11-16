@@ -1,4 +1,4 @@
-// Help Center audit 2026-11-16, part 2 (missing topics): writes migrations/0268_help_new_topics_2026-11-16.sql.
+// Help Center audit 2026-11-16, part 2 (missing topics): writes migrations/0270_help_new_topics_2026-11-16.sql.
 // Usage: node scripts/help/updates-1116b.mjs [--md]
 // Fifteen new articles (INSERT OR IGNORE) and a few cross-links added to existing articles (UPDATE ... replace(), only where updated_by is still 'seed').
 // Every claim was checked against the code (see the comment above each article). No prices are written in any article: they are on /pricing.
@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { join, dirname } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const OUT = "0268_help_new_topics_2026-11-16.sql";
+const OUT = "0270_help_new_topics_2026-11-16.sql";
 
 const db = new DatabaseSync(":memory:");
 for (const f of readdirSync(join(ROOT, "migrations")).filter((n) => n.endsWith(".sql")).sort()) { if (f >= OUT) continue; db.exec(readFileSync(join(ROOT, "migrations", f), "utf8")); }

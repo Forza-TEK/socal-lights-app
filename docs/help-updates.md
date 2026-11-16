@@ -3280,7 +3280,7 @@ Text:
 
 # Help Center audit (2026-11-16), part 2: the new articles
 
-Migration `0268_help_new_topics_2026-11-16.sql` adds these 15 articles and links to them from the articles people read next. A new article is added only if its address is free, so to change one later, edit it in Admin > Help. Regenerate with `node scripts/help/updates-1116b.mjs --md`. Slugs never change.
+Migration `0270_help_new_topics_2026-11-16.sql` adds these 15 articles and links to them from the articles people read next. A new article is added only if its address is free, so to change one later, edit it in Admin > Help. Regenerate with `node scripts/help/updates-1116b.mjs --md`. Slugs never change.
 
 ## where-is-the-add-button
 New article. Category: post. Type: answer. Order: 5.
