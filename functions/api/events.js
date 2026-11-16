@@ -73,3 +73,6 @@ export async function onRequestGet(context) {
   if (cache) context.waitUntil(cache.put(key, storedCopy(b)));
   return new Response(b.body, { status: 200, headers: headersFor(b.tag) });
 }
+
+// HEAD (uptime tools, crawlers): the same status and headers as GET, no body
+export async function onRequestHead(ctx) { const r = await onRequestGet(ctx); return new Response(null, { status: r.status, headers: r.headers }); }

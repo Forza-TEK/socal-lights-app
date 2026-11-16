@@ -5,14 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Add to SoCal Lights</title>
 <meta name="description" content="Add an event or your lights display to the SoCal Lights map for free, or start a contest.">
+<link rel="canonical" href="https://socallights.app/add"><meta property="og:title" content="Add to SoCal Lights"><meta property="og:description" content="Add an event or your lights display to the SoCal Lights map for free, or start a contest."><meta property="og:url" content="https://socallights.app/add"><meta property="og:type" content="website"><meta property="og:site_name" content="SoCal Lights"><meta property="og:image" content="https://socallights.app/img/share.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Add to SoCal Lights"><meta name="twitter:description" content="Add an event or your lights display to the SoCal Lights map for free, or start a contest."><meta name="twitter:image" content="https://socallights.app/img/share.png">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/tokens.css?v=20261115b">
-<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/tokens.css?v=20261116b">
+<link rel="stylesheet" href="/addflow.css?v=20261116b">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
@@ -41,6 +42,6 @@ if (!/SoCalLightsApp/.test(navigator.userAgent)) fetch("/api/config").then((r) =
 // Contests need sign-in. Until Google or emailed codes are switched on, hide that choice rather than send people to a dead end.
 fetch("/api/auth/me", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (!j.user) document.querySelectorAll(".signnote").forEach((n) => (n.hidden = false)); if (!j.methods || (!j.methods.google && !j.methods.email)) document.getElementById("o-contest")?.remove(); }).catch(() => {});
 </script>
-<script src="/footer.js?v=20261111x560" defer></script>
+<script src="/footer.js?v=20261116b" defer></script>
 </body>
 </html>

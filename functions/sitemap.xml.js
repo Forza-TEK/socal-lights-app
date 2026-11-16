@@ -17,3 +17,6 @@ export async function onRequestGet({ request, env }) {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((x) => { const [u, upd] = Array.isArray(x) ? x : [x, ""], d = /^\d{4}-\d{2}-\d{2}/.test(upd || "") ? upd.slice(0, 10) : ""; return `<url><loc>${origin}${u.replace(/&/g, "&amp;")}</loc>${d ? `<lastmod>${d}</lastmod>` : ""}</url>`; }).join("\n")}\n</urlset>\n`;
   return new Response(xml, { headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
 }
+
+// HEAD (uptime tools, some crawlers): the same status and headers as GET, no body
+export async function onRequestHead(ctx) { const r = await onRequestGet(ctx); return new Response(null, { status: r.status, headers: r.headers }); }

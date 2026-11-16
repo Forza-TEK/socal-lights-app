@@ -1,7 +1,15 @@
 // Copyright line and links at the bottom of every page except the map (the map has its own, in the credit pill and under the Places list).
 (function () {
+  // Inside the iPhone/Android app (browser string has SoCalLightsApp): mark the page, and leave out the pages that sell or price things. Apple 3.1.1 does not allow steering people to buy elsewhere from inside the app,
+  // so the price and purchase pages are not offered there (the website is unchanged; the server still refuses every checkout from the app).
+  try {
+    if (/SoCalLightsApp/.test(navigator.userAgent)) {
+      document.documentElement.classList.add("in-app");
+      if (/^\/(pricing|sponsor|sponsor-invite|partner|feature|contest-pass)\/?$/.test(location.pathname)) { location.replace("/"); return; }
+    }
+  } catch (e) {}
   // The AI assistant (when it is switched on) goes with the person from page to page: chat.js does nothing unless /api/config says chatEnabled, and it keeps the chat in this tab. Not on forms, checkout or admin pages.
-  try { var cp = location.pathname; if (!window.__sclChat && (cp === "/add" || /^\/(help|tutorials|pricing|privacy|terms|contests|c|in|past|e|installer|profile)(\/|$)/.test(cp))) { var cs = document.createElement("script"); cs.src = "/chat.js?v=20261111e"; cs.defer = true; document.head.appendChild(cs); } } catch (e) {}
+  try { var cp = location.pathname; if (!window.__sclChat && (cp === "/add" || /^\/(help|tutorials|pricing|privacy|terms|contests|c|in|past|e|installer|profile)(\/|$)/.test(cp))) { var cs = document.createElement("script"); cs.src = "/chat.js?v=20261116d"; cs.defer = true; document.head.appendChild(cs); } } catch (e) {}
   // every page registers the offline worker (the map does it in index.html), so any page you have opened once opens again with no signal
   try { if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () {}); }); } catch (e) {}
   // "Skip to the content": the first Tab stop on every page that has a main area (the map has its own skip link)
@@ -51,7 +59,7 @@
     var host = document.querySelector("main") || document.querySelector(".sh-content") || document.body;
     var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
     var f = document.createElement("footer"); f.id = "sitefoot"; f.className = "sitefoot";
-    f.innerHTML = "<span>© " + y + " Forza-TEK. SoCal Lights. All rights reserved.</span><span class=\"sf-l\"><a href=\"/pricing\">Pricing</a><a href=\"/privacy\">Privacy</a><a href=\"/terms\">Terms</a><a href=\"mailto:info@socallights.app\">Contact</a></span>";
+    f.innerHTML = "<span>© " + y + " Forza-TEK. SoCal Lights. All rights reserved.</span><span class=\"sf-l\"><a class=\"web-only\" href=\"/pricing\">Pricing</a><a href=\"/privacy\">Privacy</a><a href=\"/terms\">Terms</a><a href=\"mailto:info@socallights.app\">Contact</a></span>";
     host.appendChild(f);
   };
   if (document.readyState === "complete") add(); else window.addEventListener("load", add);

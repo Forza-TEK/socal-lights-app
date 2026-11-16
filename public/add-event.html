@@ -5,14 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Add your event · SoCal Lights</title>
 <meta name="description" content="Put your Halloween, holiday or seasonal event on the SoCal Lights map. It's free.">
+<link rel="canonical" href="https://socallights.app/add-event"><meta property="og:title" content="Add your event · SoCal Lights"><meta property="og:description" content="Put your Halloween, holiday or seasonal event on the SoCal Lights map. It's free."><meta property="og:url" content="https://socallights.app/add-event"><meta property="og:type" content="website"><meta property="og:site_name" content="SoCal Lights"><meta property="og:image" content="https://socallights.app/img/share.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Add your event · SoCal Lights"><meta name="twitter:description" content="Put your Halloween, holiday or seasonal event on the SoCal Lights map. It's free."><meta name="twitter:image" content="https://socallights.app/img/share.png">
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/tokens.css?v=20261115b">
-<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/tokens.css?v=20261116b">
+<link rel="stylesheet" href="/addflow.css?v=20261116b">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
@@ -30,7 +31,7 @@ const acct = (await me()).user;
 // your event belongs to the account that adds it, so sign in before anything else
 if (!acct) {
   document.getElementById("app").innerHTML = `<a class="skipl" href="#main">Skip to the form</a><div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>
-    <main class="main" id="main" tabindex="-1"><h1>Sign in to add an event</h1><p class="help">Your event is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p>
+    <main class="main" id="main" tabindex="-1"><h1>Sign in to add an event</h1><p class="help">Your event is saved to your account, and only you (and the site owner) can change or remove it. Sign in with <span class="g-or">Google or </span>an emailed code. It takes a few seconds.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></main>`;
   mountAcct(document.getElementById("acct"));
   await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add an event", next: location.pathname + location.search })) go(); }; });
@@ -124,6 +125,6 @@ run({ preview, steps, data: d, persist: "scl-event-draft", uid: acct.id, prefill
   actions: { skipurl(_, a) { d.url = ""; a.next(); } },
   after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });
 </script>
-<script src="/footer.js?v=20261111x560" defer></script>
+<script src="/footer.js?v=20261116b" defer></script>
 </body>
 </html>

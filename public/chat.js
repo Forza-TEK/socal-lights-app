@@ -56,7 +56,7 @@
     // Short notice with a "More info" button: the longer privacy details open only when asked for
     var note = el("div", { class: "scl-chat-note" }), noteTop = el("p", {}), more = el("button", { type: "button", class: "scl-chat-more", "aria-expanded": "false", "aria-controls": "scl-chat-more", text: "More info" });
     noteTop.appendChild(document.createTextNode("Automated AI assistant, not a person. It can be wrong, so check prices on "));
-    noteTop.appendChild(el("a", { href: "/pricing", text: "Pricing" }));
+    noteTop.appendChild(/SoCalLightsApp/.test(navigator.userAgent) ? document.createTextNode("the event page") : el("a", { href: "/pricing", text: "Pricing" }));
     noteTop.appendChild(document.createTextNode(". "));
     noteTop.appendChild(more);
     var moreBox = el("p", { id: "scl-chat-more", hidden: "" });

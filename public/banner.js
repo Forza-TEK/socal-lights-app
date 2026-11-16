@@ -43,7 +43,7 @@ const pill = (it) => {
   const tel = telHref(it.p), ext = /^https?:/.test(it.u);
   return `<span class="sp-pill" data-id="${esc(it.id)}"><a class="sp-name" href="${esc(it.u)}" data-k="click"${ext ? ' target="_blank" rel="noopener sponsored nofollow"' : ""}>${esc(it.n)}</a>${tel ? `<span class="sp-sep" aria-hidden="true">|</span><a class="sp-tel" href="${esc(tel)}" data-k="call" aria-label="Call ${esc(it.n)} at ${esc(fmtPhone(it.p))}">${esc(fmtPhone(it.p))}</a>` : ""}</span>`;
 };
-const EMPTY = `<a class="sp-pill sp-empty" href="/pricing">Advertise here</a>`;
+const EMPTY = /SoCalLightsApp/.test(navigator.userAgent) ? "" : `<a class="sp-pill sp-empty" href="/pricing">Advertise here</a>`; // no price or purchase link inside the app (Apple 3.1.1)
 
 function paint() {
   if (!el) return;

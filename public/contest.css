@@ -33,7 +33,7 @@ body{padding-bottom:60px}
 .crumb.wide{max-width:960px}
 
 /* Ballot strip: one category at a time, with progress */
-.ballot{position:sticky;top:0;z-index:5;padding:8px 4px;margin:0 0 8px;background:var(--bg,#fff);border-bottom:1px solid var(--line,#e8e3dc)}
+.ballot{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;padding:8px 4px;margin:0 0 8px;background:var(--bg,#fff);border-bottom:1px solid var(--line,#e8e3dc)}
 .ballot .cat{flex:none;min-height:44px;padding:0 14px;border-radius:99px;border:1px solid var(--line,#ddd);background:transparent;color:inherit;font:inherit;font-weight:500;cursor:pointer}
 .ballot .cat.on{background:var(--season,#d9480f);border-color:var(--season,#d9480f);color:var(--on-season,#fff)}
 .ballot{min-width:0}.ballot .tabs{display:flex;gap:8px;overflow-x:auto}.ballot .count{font-size:.85rem;opacity:.8;margin:0 0 6px 2px}
