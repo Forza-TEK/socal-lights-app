@@ -3,6 +3,7 @@
 ## 2026-11-16: First-vote Turnstile check (branch `claude/first-vote-turnstile`; payments decision p5, option (a))
 
 The first vote of each account in a contest with a prize or run by a city needs the "I am human" check; later votes and other contests are unchanged. Rule and details: `docs/contests.md` ("First-vote check"). No migration, nothing new stored. Tests: `tests/first-vote-check.test.mjs`. Public asset `contest.html` is inline, so no `?v=` bump; `index.html` untouched (pinch guard untouched); no help text changed.
+
 ## 2026-11-16: Owner answers to the payments and visitor audit decisions (branches `claude/events-fixes-0279`, `claude/first-vote-turnstile`)
 
 Recorded from `docs/audit/2026-11-16/payments-decisions.md` (p), `creation-*` (c), `visitor-decisions.md` (v) and the operations list (o).
