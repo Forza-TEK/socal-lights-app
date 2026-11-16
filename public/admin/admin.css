@@ -454,3 +454,14 @@ details.fbox>summary{display:none}
 }
 details.fbox::details-content{display:contents}
 @media (max-width:760px){details.fbox::details-content{display:block}}
+
+/* label and value pairs in a record card */
+.rcard{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:18px 20px;margin:0 0 16px}
+.rcard h3{margin:0 0 14px;font:700 16px var(--font)}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 32px}
+.kv .k{font:600 13px var(--font);color:var(--muted);margin-bottom:3px}
+.kv .v,.rcard .v{overflow-wrap:anywhere}
+.kv .v a,.rcard .v a{color:var(--ink);text-underline-offset:3px}
+.gimg{max-width:240px;max-height:160px;border-radius:10px;display:block}
+.btn.sm{min-height:36px;padding:0 10px;font-size:13px}
+@media (max-width:760px){.kv{grid-template-columns:1fr}}
