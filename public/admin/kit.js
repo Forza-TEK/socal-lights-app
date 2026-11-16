@@ -34,10 +34,10 @@ export const wireToolbar = (root, { onView, onSearch, onSort }) => {
 // Hide the cards that don't contain the typed words; updates the running count. Used by every list that is already on the page.
 export function filterCards(root, q) {
   const w = q.toLowerCase().split(/\s+/).filter(Boolean); let n = 0;
-  const cards = root.querySelectorAll(".rec");
+  const cards = root.querySelectorAll(".rec, .dtab tbody tr");
   cards.forEach((c) => { const t = c.textContent.toLowerCase(); const ok = w.every((x) => t.includes(x)); c.hidden = !ok; if (ok) n++; });
   const el = root.querySelector("[data-tcount]"); if (el) el.textContent = q ? `${n} of ${cards.length}` : `${cards.length}`;
-  let none = root.querySelector(".nomatch"); if (!n && cards.length) { if (!none) { none = document.createElement("div"); none.className = "empty nomatch"; none.textContent = "Nothing matches that."; cards[0].parentNode.after(none); } } else if (none) none.remove();
+  let none = root.querySelector(".nomatch"); if (!n && cards.length) { if (!none) { none = document.createElement("div"); none.className = "empty nomatch"; none.textContent = "Nothing matches that."; (cards[0].closest(".dtc") || cards[0].parentNode).after(none); } } else if (none) none.remove();
   enhanceLists(root, !!q);
 }
 
