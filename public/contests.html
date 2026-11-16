@@ -12,19 +12,19 @@
 <meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/tokens.css?v=20261116b">
+<link rel="stylesheet" href="/tokens.css?v=20261116c">
 <link rel="stylesheet" href="/addflow.css?v=20261116b">
 <link rel="stylesheet" href="/contest.css?v=20261116b">
 <style>
 .ctop{flex-wrap:wrap;gap:12px}.ctop>div{min-width:0}body.wide .hdr{max-width:1160px}.cmain.wide{max-width:1160px}.cmain.wide .help,.cmain.wide .ctop p{max-width:70ch}
 .cmain .card{background:#fff;border-radius:18px}:root[data-theme="dark"] .cmain .card{background:var(--tile)}
 .cmain .card h2{font-weight:800;font-size:20px;letter-spacing:-.01em}
-#live{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));align-items:stretch}#live .card{align-content:start}#live .card:only-child{grid-column:1/-1}
-#live .card .actions{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}#live .card .actions .btn{flex:1 1 auto;justify-content:center;padding:0 14px;text-align:center}
-#mine{display:grid;gap:18px}@media(min-width:900px){#mine{grid-template-columns:1fr 1fr;align-items:start}#mine>.card.center{grid-column:1/-1}}
+#p-live{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));align-items:stretch}#p-live .card{align-content:start}#p-live .card:only-child{grid-column:1/-1}
+#p-live .card .actions{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}#p-live .card .actions .btn{flex:1 1 auto;justify-content:center;padding:0 14px;text-align:center}
+#p-mine{display:grid;gap:18px}@media(min-width:900px){#p-mine{grid-template-columns:1fr 1fr;align-items:start}#p-mine>.card.center{grid-column:1/-1}}
 @media(min-width:900px){.entries{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 36px}.entry:nth-child(2){border-top:0}}
-#past{display:grid;gap:18px}
-.wins{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.win{border:1px solid var(--line);border-radius:12px;overflow:hidden}.win .ph{height:130px;background:var(--tile)}.win img{width:100%;height:100%;object-fit:cover;display:block}.win .b{padding:12px 14px;display:grid;gap:2px}.win .m{color:var(--muted);font-size:14px}.win b{font-weight:500}.entries{display:grid}.entry{padding:16px 0;border-top:1px solid var(--line);display:grid;gap:10px}.entry:first-child{border-top:0}.eh{display:grid;grid-template-columns:64px minmax(0,1fr);gap:14px;align-items:center}.eh img,.eh .ph{width:64px;height:48px;object-fit:cover;border-radius:8px;background:var(--tile);display:block}.eh b{font-weight:500;display:block}.eh .m{color:var(--muted);font-size:14px;display:block}.res{display:grid;gap:4px;padding-left:78px}.rline{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}@media(max-width:520px){.res{padding-left:0}}.tabsrow{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.tabsrow button{min-height:44px;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-weight:500;cursor:pointer}.tabsrow button[aria-selected=true]{background:var(--season);border-color:var(--season);color:var(--on-season,#fff)}.ctop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}#live,#mine,#past{display:grid;gap:16px}#live[hidden],#mine[hidden],#past[hidden]{display:none}</style>
+#p-past{display:grid;gap:18px}
+.wins{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.win{border:1px solid var(--line);border-radius:12px;overflow:hidden}.win .ph{height:130px;background:var(--tile)}.win img{width:100%;height:100%;object-fit:cover;display:block}.win .b{padding:12px 14px;display:grid;gap:2px}.win .m{color:var(--muted);font-size:14px}.win b{font-weight:500}.entries{display:grid}.entry{padding:16px 0;border-top:1px solid var(--line);display:grid;gap:10px}.entry:first-child{border-top:0}.eh{display:grid;grid-template-columns:64px minmax(0,1fr);gap:14px;align-items:center}.eh img,.eh .ph{width:64px;height:48px;object-fit:cover;border-radius:8px;background:var(--tile);display:block}.eh b{font-weight:500;display:block}.eh .m{color:var(--muted);font-size:14px;display:block}.res{display:grid;gap:4px;padding-left:78px}.rline{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}@media(max-width:520px){.res{padding-left:0}}.tabsrow{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.tabsrow button{min-height:44px;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-weight:500;cursor:pointer}.tabsrow button[aria-selected=true]{background:var(--season);border-color:var(--season);color:var(--on-season,#fff)}.ctop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}#p-live,#p-mine,#p-past{display:grid;gap:16px}#p-live[hidden],#p-mine[hidden],#p-past[hidden]{display:none}</style>
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="wide">
@@ -32,7 +32,7 @@
 <main class="cmain wide">
 <div class="ctop"><div><h1>Contests</h1><p class="help" style="margin-top:8px">Vote for your favorite home, enter your own, or run a contest for your neighborhood. <a href="/tutorials#run">How it works</a></p></div><a class="btn org" href="/add-contest">Start a contest</a></div>
 <div class="tabsrow" role="tablist" aria-label="Contests"><button type="button" role="tab" data-tab="live">Live now</button><button type="button" role="tab" data-tab="mine">Mine</button><button type="button" role="tab" data-tab="past">Past results</button></div>
-<div id="live" hidden></div><div id="mine" hidden></div><div id="past" hidden></div>
+<div id="p-live" hidden></div><div id="p-mine" hidden></div><div id="p-past" hidden></div>
 </main>
 <script type="module">
 import { me, signIn, esc } from "/auth.js?v=20261111z";
@@ -47,14 +47,14 @@ let tab = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "live
 function show(t) {
   tab = t; history.replaceState(null, "", "#" + t);
   document.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
-  for (const k of TABS) $("#" + k).hidden = k !== t;
+  for (const k of TABS) $("#p-" + k).hidden = k !== t;
   if (!loaded[t]) { loaded[t] = true; ({ live: loadLive, mine: loadMine, past: loadPast })[t](); }
 }
 document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => show(b.dataset.tab)));
 
 // Live now: every live contest, with what you can do in it today
 async function loadLive() {
-  const box = $("#live"); box.innerHTML = `<p class="loading">Loading…</p>`;
+  const box = $("#p-live"); box.innerHTML = `<p class="loading">Loading…</p>`;
   const L = await fetch("/api/contests").then((r) => r.json()).catch(() => []);
   const open = L.filter((c) => !c.announced);
   box.innerHTML = open.length ? open.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)}</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${c.founder ? `<span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span>` : ""}${statusChips(c).map((p) => `<span class="pill ${p.tone === "ok" ? "p-ok" : p.tone === "bad" ? "p-no" : "p-idle"}">${esc(p.text)}</span>`).join("")}</div><div class="actions"><a class="btn org" href="/c/${esc(c.slug)}">${c.votingOpen ? "Vote" : "See the contest"}</a>${c.entriesOpen ? `<a class="btn ghost" href="/c/${esc(c.slug)}/enter">Enter my home</a>` : ""}</div></section>`).join("")
@@ -63,7 +63,7 @@ async function loadLive() {
 
 // Mine: contests you run or help run, and homes you entered
 async function loadMine() {
-  const box = $("#mine"), i = await me();
+  const box = $("#p-mine"), i = await me();
   if (!i.user) { box.innerHTML = `<div class="card center"><h2>Sign in to see your contests</h2><p class="muted">Contests you run, help run or entered show up here.</p><button class="btn org" type="button" id="go">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to see your contests", next: "/contests#mine" })) { refreshAcct($("#acct")); loaded.mine = false; show("mine"); } }; return; }
   const o = await fetch("/api/me/overview", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   if (!o) { box.innerHTML = `<div class="card"><p class="muted">Couldn't load your contests. Try again in a moment.</p></div>`; return; }
@@ -75,7 +75,7 @@ async function loadMine() {
 // Past results: the season and year archive
 let ALL = [], sel = "";
 async function loadPast() {
-  const app = $("#past"); app.innerHTML = `<p class="loading">Loading…</p>`;
+  const app = $("#p-past"); app.innerHTML = `<p class="loading">Loading…</p>`;
   ALL = await fetch("/api/archive").then((r) => r.json()).catch(() => []);
   if (!ALL.length) { app.innerHTML = `<div class="card"><h2>No finished contests yet</h2><p class="muted">When a contest announces its winners, it appears here by season and year.</p></div>`; return; }
   const labels = [...new Set(ALL.map((c) => c.label))]; sel = labels.includes(sel) ? sel : labels[0]; draw(labels);
@@ -88,7 +88,7 @@ const rows = (c) => c.entries.map((e) => {
 }).join("");
 function draw(labels) {
   const cs = ALL.filter((c) => c.label === sel);
-  $("#past").innerHTML = `<div class="field" style="max-width:340px"><label for="arch">Season | Year</label><select class="in" id="arch">${labels.map((l) => `<option ${l === sel ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>
+  $("#p-past").innerHTML = `<div class="field" style="max-width:340px"><label for="arch">Season | Year</label><select class="in" id="arch">${labels.map((l) => `<option ${l === sel ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>
   ${cs.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)} · ${c.entries.length} contestant${c.entries.length === 1 ? "" : "s"} · results locked ${esc(fmtDate(c.at))}</p>${c.founder ? `<p><span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span></p>` : ""}</div>
     ${c.awards.length ? `<div><h3 style="margin-bottom:10px">Winners</h3><div class="wins">${c.awards.map((a) => a.winners.map((w) => `<div class="win"><div class="ph">${w.photo ? `<img src="/api/photo/${esc(w.photo)}" alt="${esc(w.name)} lights" loading="lazy">` : ""}</div><div class="b"><span class="small" style="display:flex;gap:6px;align-items:center">${CROWN} ${esc(a.category)}</span><span class="m">${esc(a.label)}${a.tie ? " · " + esc(a.tie) : ""}</span><b>${esc(w.name)}</b><span class="m">${esc(w.address || w.city || "")}</span>${a.prize ? `<span class="m" style="margin-top:6px">Prize: ${esc(a.prize)}</span>` : ""}</div></div>`).join("")).join("")}</div></div>` : ""}
     <div><h3 style="margin-bottom:6px">All contestants and results</h3>${c.entries.length ? `<div class="entries">${rows(c)}</div>` : `<p class="muted">No contestants.</p>`}</div>
@@ -97,6 +97,6 @@ function draw(labels) {
 }
 show(tab);
 </script>
-<script src="/footer.js?v=20261116b" defer></script>
+<script src="/footer.js?v=20261116c" defer></script>
 </body>
 </html>
