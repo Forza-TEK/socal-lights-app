@@ -11,8 +11,8 @@
 <meta name="theme-color" content="#ffffff">
 <script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/tokens.css?v=20261115b">
-<link rel="stylesheet" href="/addflow.css?v=20261111x560">
+<link rel="stylesheet" href="/tokens.css?v=20261116b">
+<link rel="stylesheet" href="/addflow.css?v=20261116b">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
@@ -37,7 +37,7 @@ const acct = (await me()).user; if (acct) { try { const ov = await (await fetch(
 // your display belongs to the account that adds it, so sign in before anything else
 if (!acct) {
   document.getElementById("app").innerHTML = `<a class="skipl" href="#main">Skip to the form</a><div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>
-    <main class="main" id="main" tabindex="-1"><h1>Sign in to add your lights display</h1><p class="help">Your display is saved to your account, and only you (and the site owner) can change or remove it. Sign in with Google or an emailed code. It takes a few seconds.</p>
+    <main class="main" id="main" tabindex="-1"><h1>Sign in to add your lights display</h1><p class="help">Your display is saved to your account, and only you (and the site owner) can change or remove it. Sign in with <span class="g-or">Google or </span>an emailed code. It takes a few seconds.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></main>`;
   mountAcct(document.getElementById("acct"));
   await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add your lights display", next: location.pathname + location.search })) go(); }; });
@@ -115,6 +115,6 @@ const steps = [
 const preview = (x) => pvCard({ photo: (x.photos && x.photos[0] && x.photos[0].url) || "", title: x.kind === "installer" ? (x.biz || x.title) : x.title, ph: "Your display's name", when: "Home display", lines: [{ t: [x.city, SEASONS[x.season] ? SEASONS[x.season].label : ""].filter(Boolean).join(" \u00b7 ") || "Your city", e: !x.city }, { t: x.desc ? (x.desc.length > 90 ? x.desc.slice(0, 90) + "\u2026" : x.desc) : "A line about your lights", e: !x.desc }], tags: [x.kind === "installer" ? "Professional installer" : "Homeowner"] });
 run({ preview, steps, data: d, persist: "scl-house-draft", uid: acct.id, prefill: (x) => { const v = take("home"); if (!v || !Object.keys(v).length) return false; Object.assign(x, v); return true; }, help: "/help/show-off-your-house", account: { kind: "house", title: (x) => x.title || x.biz }, noPersist: ["photos", "email", "nl"], season: (x) => x.season, addr: { cities }, after: (s) => { if (s.id === "review") ts.mount(); } });
 </script>
-<script src="/footer.js?v=20261111x560" defer></script>
+<script src="/footer.js?v=20261116b" defer></script>
 </body>
 </html>

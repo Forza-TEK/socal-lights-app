@@ -99,6 +99,15 @@ The introduction on Admin > AI assistant always said the assistant was off until
 - Tests: `tests/payments-audit-high.test.mjs`. No price, migration or public CSS/JS changed (no `?v=` bump needed).
 - Owner decision pending (PR 3 lists it): organizers still see voter emails, because the Privacy page says so.
 
+## 2026-11-16: App and web audit, PR 1 of 3 (web fixes that reach the site and the iPhone app together; branch `app-web-fixes`)
+- Safe area (H1): every page except the map keeps its header below the status bar and Dynamic Island: one rule in `tokens.css` (`body:not(:has(>#map))`, so the map page is untouched, its pinch guard `.searchrow{pointer-events:none}` unchanged and now pinned by `tests/app-web-fixes.test.mjs`), plus the Profile/Help/Tutorials frame (`appshell.css`), the offline page, the contest ballot strip and the form windows. Map hit-test at y 40-160 on an iPhone 14 profile is identical before and after.
+- In the app (M3, M4, H5): no "Google or" wording on the sign-in pages, the install Help articles say "You are already using the app", and the price and purchase pages (/pricing /sponsor /sponsor-invite /partner /feature /contest-pass), the footer Pricing link, "Advertise here" and the chat's Pricing link are left out (done in `footer.js`, so the payment code is untouched; prices, checkout and server rules unchanged). The website is unchanged.
+- SEO (M11): canonical/og/twitter on /privacy /terms /feature /add-event /add; the pages.dev address is noindex (`_headers` host rule and `_middleware.js`).
+- CSP (M10): still report-only, now lists the Cloudflare analytics beacon; the path to enforcement is `docs/runbooks/csp.md`.
+- Video (M13): `find-map.mp4` 16.1 MB to 4.6 MB (1280 px, same length); tutorial videos cached a week. The other tutorial videos are still large (see `docs/app-store.md`).
+- Small ones: HEAD on /sitemap.xml and /api/events (L1), 24 px link targets in footers/breadcrumbs (L3), image fade off under reduced motion (L4). Already fine on main: search focus ring (M12), offline Try again button (L8).
+- Not changed: main-thread work (H7): the first screen is already drawn from a small list and the map loads when calm; further splitting needs measuring on a device.
+
 ## 2026-11-16: Visitor audit, part 1 of 3: Back button, load errors, search, offline notes (branch `audit-visitor-nav-errors`)
 - F1: opening an event or home pushes a history step (`#e-<id>` / `#h-<id>`); phone Back or browser Back closes the card, Forward reopens it, the round Back arrow takes the step back. A card closed by a filter, the map or a tab relabels its step so Back never reopens it.
 - F2: a failed event list shows "Events couldn't load" with Try again (and lifts the collapsed phone sheet so it can be read); an empty list is never "No events yet".

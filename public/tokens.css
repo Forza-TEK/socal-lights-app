@@ -17,6 +17,7 @@
   --season:var(--s-christmas); --on-season:#ffffff;
   --f:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --f-body:var(--f); --f-display:var(--f); --f-mono:var(--f); --font:var(--f);
   --mono:ui-monospace,Menlo,monospace;
+  --sat:env(safe-area-inset-top,0px);   /* the notch / Dynamic Island / status bar height: 0 in a normal browser, about 47-59 px in the iPhone app (its web view runs under the status bar) */
   color-scheme:light;
 }
 :root[data-theme="dark"]{
@@ -50,3 +51,14 @@
 .maplink .short{display:none}
 @media(max-width:480px){.maplink .long{display:none}.maplink .short{display:inline}.maplink{padding:0 14px}}
 @media print{.maplink{display:none}}
+
+/* ---- iPhone app: the web view runs under the status bar and Dynamic Island (viewport-fit=cover, contentInset "never"), so every page keeps its header out of that area.
+   One rule for every page that loads this file (Add, Profile, Pricing, Contests, Help, city, event and installer pages, 404). It is 0 in a normal browser. The map has its own
+   inset handling (styles.css resets this) and the Profile/Tutorials/Help frame pads its own sticky top bar (appshell.css). A page that sets its own left/right body padding
+   (the add forms) keeps it because their stylesheet loads after this file. ---- */
+/* NOT the map page: its body has the map as a direct child (<main id="map">) and keeps its own touch and inset handling exactly as it was (the 2026-11-14 pinch fix, tests/app-safe-area.test.mjs) */
+body:not(:has(>#map)){padding-top:var(--sat);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+/* wording that only fits a normal browser ("Google or " in "Sign in with Google or an emailed code"): footer.js adds .in-app to <html> inside the iPhone/Android app */
+html.in-app .g-or,html.in-app .web-only{display:none!important}
+/* touch/click targets: text links in footers and breadcrumbs are at least 24 px tall (WCAG 2.2 target size) */
+.foot a,.crumbs a{display:inline-flex;align-items:center;min-height:24px}

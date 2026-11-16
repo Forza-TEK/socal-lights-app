@@ -20,7 +20,7 @@
 .mfoot{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
 .mfoot.sticky{position:sticky;bottom:0;margin:6px -24px -24px;padding:14px 24px calc(14px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line);z-index:2}
 /* The edit window */
-.fwin{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;background:rgba(10,12,18,.55);padding:16px}
+.fwin{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;background:rgba(10,12,18,.55);padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .fwin .card{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:24px;width:100%;max-width:680px;max-height:calc(100dvh - 32px);overflow:auto;box-sizing:border-box}
 .fwin .mh{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.fwin .mh h2{margin:0;font:400 24px/1.2 var(--font);letter-spacing:-.015em}
 .fwin .xbtn{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0}

@@ -4,7 +4,17 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(self)
   X-Frame-Options: SAMEORIGIN
   Strict-Transport-Security: max-age=31536000
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://challenges.cloudflare.com; worker-src 'self' blob:; frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://player.vimeo.com iframe.videodelivery.net https://*.cloudflarestream.com; object-src 'none'; base-uri 'self'; form-action 'self' checkout.stripe.com; frame-ancestors 'self'
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://challenges.cloudflare.com https://cloudflareinsights.com; worker-src 'self' blob:; frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://player.vimeo.com iframe.videodelivery.net https://*.cloudflarestream.com; object-src 'none'; base-uri 'self'; form-action 'self' checkout.stripe.com; frame-ancestors 'self'
+
+# the pages.dev address serves the same site; keep it out of search results (the real address is socallights.app). Function responses get the same header from functions/_middleware.js
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+# tutorial videos: a week in the browser instead of 4 hours (they were re-downloaded over cellular; find-map.mp4 is now 4.6 MB, docs/app-store.md has the rest of the plan)
+/tutorials/*.mp4
+  Cache-Control: public, max-age=604800
 
 /admin/*
   Cache-Control: no-store

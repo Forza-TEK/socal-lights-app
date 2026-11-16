@@ -16,12 +16,15 @@ const HEADERS = [
   ["Content-Security-Policy-Report-Only", CSP_REPORT_ONLY],
 ];
 
-export async function onRequest({ next, env }) {
+// The pages.dev address serves the same site as socallights.app; it must not be indexed as a duplicate (static files get the same header from public/_headers).
+export const isPagesDevHost = (request) => { try { return new URL(request.url).hostname.endsWith(".pages.dev"); } catch { return false; } };
+
+export async function onRequest({ request, next, env }) {
   let res;
   try { res = await next(); }
   catch (e) { try { if (env && env.DB) await noteQuotaError(env, e, "request"); } catch {} throw e; } // an uncaught quota error is noted as a "limit", then handled as before
   try {
-    const missing = HEADERS.filter(([k]) => !res.headers.has(k));
+    const missing = (request && isPagesDevHost(request) ? [...HEADERS, ["X-Robots-Tag", "noindex"]] : HEADERS).filter(([k]) => !res.headers.has(k));
     if (!missing.length) return res;
     try { for (const [k, v] of missing) res.headers.set(k, v); return res; } // the usual case: headers are mutable
     catch { // an immutable response (for example one passed straight through from fetch): copy the headers onto a new Response sharing the same body
