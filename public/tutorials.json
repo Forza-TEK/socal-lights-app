@@ -10,14 +10,14 @@
           "title": "Find lights near me",
           "desc": "Use your location, the seasons, city search and filters to find what is on near you.",
           "url": "/tutorials/find-map.mp4",
-          "length": "3:02",
+          "length": "2:55",
           "captions": "/tutorials/find-map.vtt",
           "poster": "/tutorials/find-map.jpg",
           "mobile": {
             "url": "/tutorials/find-map-mobile.mp4",
             "poster": "/tutorials/find-map-mobile.jpg",
             "captions": "/tutorials/find-map-mobile.vtt",
-            "length": "2:53"
+            "length": "2:54"
           }
         },
         {
@@ -25,14 +25,14 @@
           "title": "Plan a night of lights",
           "desc": "Save favorites, build a route and share it.",
           "url": "/tutorials/find-night.mp4",
-          "length": "2:31",
+          "length": "2:37",
           "captions": "/tutorials/find-night.vtt",
           "poster": "/tutorials/find-night.jpg",
           "mobile": {
             "url": "/tutorials/find-night-mobile.mp4",
             "poster": "/tutorials/find-night-mobile.jpg",
             "captions": "/tutorials/find-night-mobile.vtt",
-            "length": "2:30"
+            "length": "2:28"
           }
         },
         {
@@ -40,7 +40,7 @@
           "title": "Get the weekly lights email",
           "desc": "Sign up for the weekly email and unsubscribe any time.",
           "url": "/tutorials/find-email.mp4",
-          "length": "1:31",
+          "length": "1:30",
           "captions": "/tutorials/find-email.vtt",
           "poster": "/tutorials/find-email.jpg",
           "mobile": {
@@ -92,7 +92,7 @@
             "url": "/tutorials/find-pro-mobile.mp4",
             "poster": "/tutorials/find-pro-mobile.jpg",
             "captions": "/tutorials/find-pro-mobile.vtt",
-            "length": "1:28"
+            "length": "1:27"
           }
         }
       ]
