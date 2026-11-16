@@ -37,20 +37,26 @@ async function api(path, opts = {}) {
 
 const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "passes", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "grok", "emails", "help", "chat"];
 const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
+// The breadcrumb in the top bar: the menu group, the page, and (on a full record) the record's name
+const groupOf = (t) => { const b = document.querySelector(`#side [data-tab="${t}"]`); if (!b) return ""; let n = b.closest(".grp"); n = n && n.previousElementSibling; while (n && !n.classList.contains("gh")) n = n.previousElementSibling; return n ? n.textContent.trim() : ""; };
+const setDetail = (name) => { const d = $("#pdetail"); if (d) d.innerHTML = name ? `<span class="csep" aria-hidden="true">/</span><b>${esc(name)}</b>` : ""; };
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
-function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; }
+function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; const bd = $("#bdot"); if (bd) { bd.hidden = !w; $("#bell").title = w ? `${w} waiting` : "Nothing is waiting"; } }
 function setTab(t, push = true) {
   if (t !== tab) PVIEW = "pending";
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
-  $("#ptitle").textContent = TITLES[t] || "";
+  $("#ptitle").textContent = TITLES[t] || ""; $("#pgroup").textContent = groupOf(t); setDetail("");
   closeSheet(); window.scrollTo(0, 0);
   if (push && location.hash.split("/")[0] !== "#" + t) history.replaceState(null, "", "#" + t);
   render();
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) setTab(b.dataset.tab); });
+{ const pb = $("#pmb"), pmenu = $("#pmenu"), shut = () => { pmenu.hidden = true; pb.setAttribute("aria-expanded", "false"); };
+  pb.onclick = (e) => { e.stopPropagation(); pmenu.hidden = !pmenu.hidden; pb.setAttribute("aria-expanded", String(!pmenu.hidden)); };
+  document.addEventListener("click", (e) => { if (!e.target.closest(".pm")) shut(); }); document.addEventListener("keydown", (e) => { if (e.key === "Escape") shut(); }); }
 const sheet = $("#side");
 wireFold($("#main"));
 function openSheet() { document.body.classList.add("sheet-open"); $("#moreBtn") && $("#moreBtn").setAttribute("aria-expanded", "true"); }
@@ -552,7 +558,7 @@ $("#main").addEventListener("click", async (e) => {
 });
 
 /* ---------- events ---------- */
-let EVQ = "", EVLIMIT = 0, EVSORT = "date", EVSTATUS = "", EVCOUNTY = "", EVHEALTH = "";
+let EVQ = "", EVLIMIT = 0, EVSORT = "date", EVSTATUS = "", EVCOUNTY = "", EVHEALTH = "", EVVIEW = ""; // EVVIEW: "", "grok" or "ended" (the other tabs use EVSTATUS)
 const EVSEL = new Set(); // ids ticked for a bulk action; kept across pages, filters and searches until an action runs or Clear is tapped
 const evPage = () => (phone() ? PAGE_PHONE : 60);
 const priceNum = (e) => { if (e.free) return 0; const m = String(e.p || "").match(/\$\s*(\d+(?:\.\d+)?)/); return m ? Number(m[1]) : 1e9; };
@@ -570,26 +576,30 @@ const viewLink = (id) => `<a class="btn ghost" href="/e/${encodeURIComponent(id)
 const evBody = (e, over = {}) => ({ id: e.id, season: e.sn || "christmas", name: e.n, county: e.c, city: e.city, type: e.t, start: e.s, end: e.e, status: e.st === "c" ? "confirmed" : "expected", free: !!e.free, price: e.p, hours: e.h, lat: e.lat, lng: e.lng, blurb: e.b, url: e.u, venue: e.v, address: e.a, ...over });
 const evFiltered = () => {
   const w = EVQ.toLowerCase().split(/\s+/).filter(Boolean), test = healthTest(EVHEALTH);
-  return EVENTS.filter((e) => (evSeason === "all" || (e.sn || "christmas") === evSeason) && (!EVSTATUS || e.st === EVSTATUS) && (!EVCOUNTY || e.c === EVCOUNTY) && (!test || test(e, TODAY)) && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x))).sort(EVCMP[EVSORT] || EVCMP.date);
+  return EVENTS.filter((e) => (evSeason === "all" || (e.sn || "christmas") === evSeason) && (!EVSTATUS || e.st === EVSTATUS) && (EVVIEW !== "grok" || String(e.id).startsWith("grok-")) && (EVVIEW !== "ended" || e.e < TODAY) && (!EVCOUNTY || e.c === EVCOUNTY) && (!test || test(e, TODAY)) && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x))).sort(EVCMP[EVSORT] || EVCMP.date);
 };
 async function renderEvents() {
   EVENTS = await (await fetch("/api/admin/events", { cache: "no-store" })).json();
   const main = $("#main");
   const sel = (id, label, opts, cur) => `<select id="${id}" aria-label="${label}">${opts.map(([k, l]) => `<option value="${esc(k)}" ${k === cur ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
   const seasonSel = sel("evSeason", "Season", [["all", "All seasons"], ...Object.entries(SEASONS).map(([k, v]) => [k, v.label])], evSeason);
-  const filters = seasonSel + sel("evStatus", "Dates", [["", "Confirmed and expected"], ["c", "Confirmed only"], ["e", "Expected only"]], EVSTATUS) + sel("evCounty", "County", [["", "All counties"], ...COUNTIES.map((c) => [c, c + " County"])], EVCOUNTY)
+  const filters = seasonSel + sel("evCounty", "County", [["", "All counties"], ...COUNTIES.map((c) => [c, c + " County"])], EVCOUNTY)
     + sel("evHealth", "Needs a look", [["", "Everything"], ...HEALTH.map(([k, l]) => [k, l])], EVHEALTH) + sortSelect(EVSORTS, EVSORT);
-  main.innerHTML = toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: filters + `<a class="btn ghost" id="evDl" href="/api/admin/export?type=events${evSeason === "all" ? "" : "&season=" + evSeason}" download>Download CSV</a>`, add: { id: "addEv", label: "Add an event" }, count: "" })
+  const evTabs = [["", "All events"], ["e", "Expected"], ["c", "Confirmed"], ["grok", "From Grok"], ["ended", "Ended"]], evOn = () => EVVIEW || EVSTATUS;
+  main.innerHTML = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show events">${evTabs.map(([k, l]) => `<button type="button" data-view="${k || "all"}" aria-pressed="${k === evOn()}">${l}</button>`).join("")}</div></div>
+    <div class="pghead"><div><h2>Events</h2><p>Every event on the public map. Open a row to see and edit the full record.</p></div><button type="button" class="btn ice" id="addEv">Add an event</button></div>`
+    + toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: `<details class="fbox" id="evFbox" open><summary>Filters</summary>${filters}<a class="btn ghost" id="evDl" href="/api/admin/export?type=events${evSeason === "all" ? "" : "&season=" + evSeason}" download>Download CSV</a></details>`, count: "" })
     + `<div class="bulk" id="evBulk"><label class="chk"><input type="checkbox" id="evAll"> <span id="evAllL">Select all</span></label><span class="grow"></span><span class="meta" id="evSelN"></span>
       <button class="btn ice" type="button" id="evSetC" hidden></button><button class="btn ghost" type="button" id="evSetE" hidden></button>
       <select id="evMoveTo" aria-label="Move to season" hidden>${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join("")}</select><button class="btn ghost" type="button" id="evMove" hidden></button>
       <button class="btn ghost danger" type="button" id="evDel" hidden></button><button class="btn ghost" type="button" id="evClear" hidden>Clear</button></div><div id="evlist"></div>`;
+  if (phone()) $("#evFbox").open = false; // on a phone the filters fold behind one button
   if (!EVLIMIT) EVLIMIT = evPage();
   let shown = [];
   const paintBulk = () => {
     const n = EVSEL.size, all = evFiltered(), on = n > 0, plural = `${n} event${n === 1 ? "" : "s"}`;
     $("#evSelN").textContent = on ? `${n} selected` : ""; $("#evAllL").textContent = `Select all ${all.length} shown by the filters`;
-    $("#evAll").checked = all.length > 0 && all.every((e) => EVSEL.has(e.id));
+    $("#evAll").checked = all.length > 0 && all.every((e) => EVSEL.has(e.id)); $("#evBulk").hidden = !on; const ah = $("#evAllH"); if (ah) ah.checked = $("#evAll").checked;
     $("#evSetC").textContent = `Set ${plural} to confirmed`; $("#evSetE").textContent = `Set ${plural} to expected`; $("#evMove").textContent = "Move to season"; $("#evDel").textContent = `Delete ${plural}`;
     ["evSetC", "evSetE", "evMoveTo", "evMove", "evDel", "evClear"].forEach((id) => ($("#" + id).hidden = !on));
   };
@@ -597,20 +607,21 @@ async function renderEvents() {
     const all = evFiltered(); shown = all.slice(0, EVLIMIT);
     main.querySelector("[data-tcount]") ? 0 : main.querySelector(".tbar .grow").insertAdjacentHTML("afterend", '<span class="meta tcount" data-tcount></span>');
     main.querySelector("[data-tcount]").textContent = `${all.length} event${all.length === 1 ? "" : "s"}`;
-    $("#evlist").innerHTML = all.length ? `<div class="cards">${shown.map((e) => rec({
-      compact: true, cls: e.e < TODAY ? "past" : "", attrs: `data-eid="${esc(e.id)}"`, title: `<input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}> ` + esc(e.n), tags: [[e.st === "c" ? "Confirmed" : "Expected", e.st === "c" ? "ok" : "warn"], ...(String(e.id).startsWith("grok-") ? [["From Grok"]] : []), ...(e.e < TODAY ? [["Ended"]] : [])],
-      meta: "", body: `<span class="sub">${esc(e.city)}, ${esc(e.c)} · ${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""} · ${esc(e.p || "")}</span>`, edit: btn("ghost", "Edit", `data-edit="${esc(e.id)}"`), main: viewLink(e.id),
-    })).join("")}</div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : ""}` : `<div class="empty">${EVQ || EVSTATUS || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
-    $("#evlist").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => editEvent(EVENTS.find((x) => x.id === b.dataset.edit))));
+    const srcOf = (id) => (String(id).startsWith("grok-") ? "Grok" : String(id).startsWith("u-") ? "Organizer" : String(id).startsWith("hcontest-") ? "Contest" : "Sweep");
+    $("#evlist").innerHTML = all.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th class="cb"><input type="checkbox" id="evAllH" aria-label="Select all ${all.length} shown by the filters" ${all.length > 0 && all.every((e) => EVSEL.has(e.id)) ? "checked" : ""}></th><th>Event</th><th>City</th><th>Dates</th><th>Status</th><th>Source</th><th class="ac">Actions</th></tr></thead><tbody>${shown.map((e) => `<tr class="${e.e < TODAY ? "past" : ""}" data-eid="${esc(e.id)}"><td class="cb"><input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}></td>
+      <td><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">${esc(e.n)}</a><span class="sub">${esc(e.v || "")}</span></td><td>${esc(e.city)}<span class="sub">${esc(e.c)}</span></td><td>${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}<span class="sub">${esc(e.h || e.p || "")}</span></td>
+      <td><span class="tag ${e.st === "c" ? "ok" : "warn"}">${e.st === "c" ? "Confirmed" : "Expected"}</span>${e.e < TODAY ? ' <span class="tag">Ended</span>' : ""}</td><td>${srcOf(e.id)}</td><td class="ac"><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">Edit</a> · <a class="rl" href="/e/${encodeURIComponent(e.id)}" target="_blank" rel="noopener">View card</a></td></tr>`).join("")}</tbody></table></div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : `<div class="pager"><span class="meta">${all.length} event${all.length === 1 ? "" : "s"}</span></div>`}</div>` : `<div class="empty">${EVQ || EVSTATUS || EVVIEW || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
+    $("#evlist").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = (x) => { x.preventDefault(); editEvent(EVENTS.find((y) => y.id === b.dataset.edit)); }));
     $("#evlist").querySelectorAll("[data-esel]").forEach((b) => (b.onchange = () => { b.checked ? EVSEL.add(b.dataset.esel) : EVSEL.delete(b.dataset.esel); paintBulk(); }));
+    if ($("#evAllH")) $("#evAllH").onchange = (x) => { $("#evAll").checked = x.target.checked; $("#evAll").onchange({ target: $("#evAll") }); };
     if ($("#evMore")) $("#evMore").onclick = () => { EVLIMIT += evPage(); paint(); };
     paintBulk();
   };
   paint();
-  wireToolbar(main, { onSearch: (q) => { EVQ = q; EVLIMIT = evPage(); paint(); } });
+  wireToolbar(main.querySelector(".tbar"), { onSearch: (q) => { EVQ = q; EVLIMIT = evPage(); paint(); } });
   const refilter = () => { EVLIMIT = evPage(); $("#evDl").href = "/api/admin/export?type=events" + (evSeason === "all" ? "" : "&season=" + evSeason); paint(); };
   $("#evSeason").onchange = (x) => { evSeason = x.target.value; refilter(); };
-  $("#evStatus").onchange = (x) => { EVSTATUS = x.target.value; refilter(); };
+  main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { const k = b.dataset.view === "all" ? "" : b.dataset.view; EVSTATUS = k === "e" || k === "c" ? k : ""; EVVIEW = k === "grok" || k === "ended" ? k : ""; main.querySelectorAll(".pgtabs [data-view]").forEach((o) => o.setAttribute("aria-pressed", String(o === b))); refilter(); }));
   $("#evCounty").onchange = (x) => { EVCOUNTY = x.target.value; refilter(); };
   $("#evHealth").onchange = (x) => { EVHEALTH = x.target.value; refilter(); };
   main.querySelector("[data-sort]").onchange = (x) => { EVSORT = x.target.value; refilter(); };
@@ -638,8 +649,10 @@ const BULK_MAX = 200;
 function editEvent(ev) {
   const e = ev || { id: "", n: "", c: "Orange", city: "", t: Object.keys((SEASONS[evSeason] || SEASONS.christmas).types)[0], s: TODAY, e: TODAY, st: "expected", free: true, p: "Free", h: "", lat: 33.68, lng: -117.83, b: "", u: "", sn: SEASONS[evSeason] ? evSeason : "christmas" };
   const typeOpts = (sn, cur) => Object.entries(SEASONS[sn].types).map(([v, l]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${l}</option>`).join("");
-  const m = $("#modal");
-  m.innerHTML = `<div class="card wide" role="dialog" aria-modal="true"><div class="mh"><h2>${ev ? "Edit event" : "Add an event"}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  const main = $("#main"), title = ev ? "Event detail" : "Add an event";
+  setDetail(ev ? ev.n : "New event"); window.scrollTo(0, 0);
+  main.innerHTML = `<div class="rpage"><a class="rback" href="#events" id="evBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to ${tab === "events" ? "events" : "the list"}</a>
+  <div class="pghead"><div><h2>${title}</h2></div><div class="pgacts">${ev ? viewLink(ev.id) : ""}<button class="btn ice" type="submit" form="evForm">Save</button>${ev ? `<button class="btn ghost danger" type="button" id="eDel">Delete event</button>` : ""}</div></div>
   <form class="f" id="evForm" novalidate>
     ${fsec("Event", "", ff("eN", "Name", `<input id="eN" value="${esc(e.n)}" maxlength="120" required>`)
       + ff("eSn", "Season", `<select id="eSn">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (e.sn || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`, { c: "c3" }) + ff("eT", "Type", `<select id="eT">${typeOpts(e.sn || "christmas", e.t)}</select>`, { c: "c3" })
@@ -649,12 +662,12 @@ function editEvent(ev) {
     ${fsec("Where", "Directions use the street address. The pin sets where the event appears on the map.", ff("eCity", "City or area", `<input id="eCity" value="${esc(e.city)}" maxlength="60" required>`, { c: "c4" }) + ff("eC", "County", `<select id="eC">${COUNTIES.map((c) => `<option ${c === e.c ? "selected" : ""}>${c}</option>`).join("")}</select>`, { c: "c2" })
       + ff("eV", "Venue", `<input id="eV" value="${esc(e.v || "")}" maxlength="120" placeholder="Crown Valley Community Park">`, { c: "c3" }) + ff("eA", "Street address", `<input id="eA" data-addr autocomplete="off" value="${esc(e.a || "")}" maxlength="200" placeholder="29751 Crown Valley Pkwy, Laguna Niguel, CA 92677">`, { c: "c3" })
       + `<div class="ff c6"><div class="row" style="margin-bottom:8px"><button class="btn ghost" type="button" id="eGeo">Place pin from address</button><span class="meta" id="geoMsg">Or click the map, or drag the pin.</span></div><div id="pick"></div><div class="meta dates" id="ll" style="margin-top:4px"></div></div>`)}
-    ${fsec("Details", "", ff("eB", "Description", `<textarea id="eB" maxlength="600" rows="4">${esc(e.b)}</textarea>`) + ff("eU", "Event website", `<input id="eU" type="url" value="${esc(e.u)}" maxlength="300" placeholder="https://">`) + ff("eV", "Video (YouTube or Vimeo link)", `<input id="eV" type="url" value="${esc(e.vid || "")}" maxlength="300" placeholder="https://www.youtube.com/watch?v=...">`, { c: "c6" }))}
+    ${fsec("Details", "", ff("eB", "Description", `<textarea id="eB" maxlength="600" rows="4">${esc(e.b)}</textarea>`) + ff("eU", "Event website", `<input id="eU" type="url" value="${esc(e.u)}" maxlength="300" placeholder="https://">`) + ff("eVid", "Video (YouTube or Vimeo link)", `<input id="eVid" type="url" value="${esc(e.vid || "")}" maxlength="300" placeholder="https://www.youtube.com/watch?v=...">`, { c: "c6" }))}
     ${ev ? fsec("Paid placement", "Featured: 1 is the gold pin and badge, 2 also lists the event first. Banner: the event is a pill labeled Featured in the strip at the top of the map list. Organizers buy these themselves at /feature (see Orders). A level or date set here can never be lower or earlier than a paid order that is still running. Leave a date empty for no end date (Featured) or to keep the banner off.",
       ff("eFl", "Featured level", `<select id="eFl" disabled><option value="0">Off</option><option value="1">1: pin and badge</option><option value="2">2: also listed first</option></select>`, { c: "c2" }) + ff("eFu", "Featured until", `<input id="eFu" type="date" disabled>`, { c: "c2" }) + ff("eBu", "Banner until", `<input id="eBu" type="date" disabled>`, { c: "c2", hint: "Loading…" })) : ""}
-    <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="grow"></span>${ev ? `<button class="btn ghost danger" type="button" id="eDel">Delete event</button>` : ""}<span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
+    <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
   </form></div>`;
-  m.hidden = false;
+  if (ev && tab !== "events") $("#evBack").lastChild.textContent = "Back";
   let lat = e.lat, lng = e.lng;
   const show = () => ($("#ll").textContent = lat.toFixed(5) + ", " + lng.toFixed(5));
   const pm = new maplibregl.Map({ container: "pick", style: "https://tiles.openfreemap.org/styles/liberty", center: [lng, lat], zoom: ev ? 13 : 8 });
@@ -674,15 +687,16 @@ function editEvent(ev) {
       gm.textContent = "Found: " + j[0].display_name.split(",").slice(0, 3).join(",") + ". Drag the pin if it needs a nudge.";
     } catch { gm.textContent = "Lookup failed. Click the map to place the pin."; }
   };
-  const close = () => { pm.remove(); m.hidden = true; m.innerHTML = ""; };
-  $("#mClose").onclick = close;
+  const close = () => { pm.remove(); setDetail(""); };
+  const back = (x) => { if (x) x.preventDefault(); close(); if (tab === "events") renderEvents(); else render(); };
+  $("#evBack").onclick = back; main.querySelector("[data-mcancel]").onclick = back;
   let placed = false; // the paid placement fields are sent only once they have loaded, so a failed load can never wipe a placement
   if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
   if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Delete anyway", danger: true }))) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted"); if (tab === "events") renderEvents(); else render(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");
     const id = ev ? ev.id : $("#eN").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) + "-" + Math.random().toString(36).slice(2, 6);
-    const body = { id, season: $("#eSn").value, name: $("#eN").value, county: $("#eC").value, city: $("#eCity").value, type: $("#eT").value, start: $("#eS").value, end: $("#eE").value, status: $("#eSt").value, video: $("#eV").value, free: $("#eF").checked, price: $("#eP").value, hours: $("#eH").value, lat, lng, blurb: $("#eB").value, url: $("#eU").value, venue: $("#eV").value, address: $("#eA").value };
+    const body = { id, season: $("#eSn").value, name: $("#eN").value, county: $("#eC").value, city: $("#eCity").value, type: $("#eT").value, start: $("#eS").value, end: $("#eE").value, status: $("#eSt").value, video: $("#eVid").value, free: $("#eF").checked, price: $("#eP").value, hours: $("#eH").value, lat, lng, blurb: $("#eB").value, url: $("#eU").value, venue: $("#eV").value, address: $("#eA").value };
     if (ev && placed) body.placement = { featured: Number($("#eFl").value), featured_until: $("#eFu").value, banner_until: $("#eBu").value };
     try { await api("/api/admin/events", { method: "POST", body: JSON.stringify(body) }); close(); toast("Saved"); if (tab === "events") renderEvents(); else render(); }
     catch (err) { msg.className = "msg err"; msg.textContent = err.message; }
@@ -690,7 +704,7 @@ function editEvent(ev) {
 }
 
 (async () => {
-  try { const me = await api("/api/admin/me"); $("#who").textContent = me.email; $("#whoi").textContent = (me.email || "?")[0].toUpperCase(); const h = location.hash.slice(1).split("/")[0]; setTab(TABS.includes(h) ? h : "dashboard", false); }
+  try { const me = await api("/api/admin/me"); $("#who").textContent = me.email; $("#whoi").textContent = (me.email || "?")[0].toUpperCase(); $("#pmi").textContent = (me.email || "?")[0].toUpperCase(); $("#pme").textContent = me.email || ""; const h = location.hash.slice(1).split("/")[0]; setTab(TABS.includes(h) ? h : "dashboard", false); }
   catch (e) { $("#who").textContent = ""; $("#main").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 })();
 
@@ -937,7 +951,7 @@ function runsCard(r) {
     <li><div class="dli" style="cursor:default"><span class="dt"><b>Last Stripe event received</b><small>${r.stripe ? esc(r.stripe.type) + " · " + esc(agoShort(r.stripe.at)) : "none yet (payments reach the site once a real purchase or test event arrives)"}</small></span></div></li>
     <li><div class="dli" style="cursor:default"><span class="dt"><b>Event data last published</b><small>${r.migration ? esc(r.migration.name) + " · applied " + esc(agoShort(r.migration.at)) : "not available"}</small></span></div></li></ul><p class="meta" style="margin:8px 0 0">${esc(r.notRecorded.join(" "))}</p>`;
 }
-document.addEventListener("click", (e) => { const b = e.target.closest("[data-hfilter]"); if (b) { evSeason = "all"; EVHEALTH = b.dataset.hfilter; EVQ = ""; EVSTATUS = ""; EVCOUNTY = ""; EVLIMIT = 0; setTab("events"); } });
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-hfilter]"); if (b) { evSeason = "all"; EVHEALTH = b.dataset.hfilter; EVQ = ""; EVSTATUS = ""; EVVIEW = ""; EVCOUNTY = ""; EVLIMIT = 0; setTab("events"); } });
 async function renderDashboard() {
   const main = $("#main"), d = await api("/api/admin/dashboard");
   const a = d.attention, todo = [

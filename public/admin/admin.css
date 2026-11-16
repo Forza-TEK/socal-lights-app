@@ -363,3 +363,94 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 button.ucount{font:inherit;cursor:pointer;-webkit-appearance:none;appearance:none}
 button.ucount:focus-visible{outline:2px solid var(--season);outline-offset:2px}
 #ps-votes:focus,.psec:focus{outline:none}
+
+/* ---------- Admin redesign (2026-11-16): top bar with breadcrumb and Help / Notifications / Profile, pill tabs, tables, full-page records ---------- */
+.crumb{display:flex;align-items:center;gap:8px;min-width:0;color:var(--muted);font:500 14px var(--font)}
+.crumb #pgroup:empty,.crumb #pgroup:empty+.csep{display:none}
+.crumb .csep{color:var(--muted)}
+body.admin .top .crumb h1{margin:0;font:600 14px/1.2 var(--font);color:var(--ink);letter-spacing:0;white-space:nowrap}
+.crumb #pdetail{display:inline-flex;align-items:center;gap:8px;min-width:0}
+.crumb #pdetail b{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:36ch}
+.ttool{position:relative;min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.ttool .tl{font:500 14px var(--font)}
+.bdot{position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;background:#e5484d;border:2px solid var(--bg);box-sizing:content-box}
+.pav{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font:700 12px var(--font)}
+.pm{position:relative}
+.pmenu{position:absolute;right:0;top:calc(100% + 6px);min-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:6px;z-index:60}
+.pmenu .pme{padding:8px 10px;color:var(--muted);font-size:13px;overflow-wrap:anywhere;border-bottom:1px solid var(--line);margin-bottom:4px}
+.pmenu a{display:block;padding:10px;border-radius:8px;color:var(--ink);text-decoration:none;font-weight:500;min-height:44px;line-height:24px}
+.pmenu a:hover{background:var(--surface-2)}
+@media (max-width:760px){.ttool .tl{display:none}.crumb #pgroup,.crumb #pgroup+.csep{display:none}}
+/* pill tabs (the sections of a page) */
+.seg{display:inline-flex;gap:2px;border:0;border-radius:10px;background:var(--surface-2);padding:3px;overflow:hidden}
+.seg button{border-radius:8px;min-height:36px;padding:0 12px;font:500 13px var(--font)}
+.seg button+button{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14);font-weight:600}
+.pgtabs{margin:0 0 18px;max-width:100%;overflow-x:auto}
+/* page header: title and description on the left, the main action on the right */
+.pghead{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin:0 0 16px}
+.pghead>div:first-child{flex:1 1 320px;min-width:0}
+.pghead h2{margin:0;font:800 26px/1.2 var(--font);letter-spacing:-.01em}
+.pghead p{margin:6px 0 0;color:var(--muted);max-width:640px}
+.pgacts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* tables */
+.dtc{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;margin-top:12px}
+.dtw{overflow-x:auto}
+table.dtab{width:100%;min-width:860px;border-collapse:collapse;background:transparent;border-radius:0;font-size:14px}
+.dtab th{font:700 13px var(--font);letter-spacing:0;text-transform:none;color:var(--ink);padding:12px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+.dtab td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+.dtab tbody tr:last-child td{border-bottom:0}
+.dtab tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--surface-2) 45%,var(--surface))}
+.dtab .cb{width:44px;padding-right:0}.dtab .ac{text-align:right;white-space:nowrap}
+.dtab .sub{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.dtab a.rl{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
+.dtab td:nth-child(2) a.rl{font-weight:700}
+.dtab tr.past td{opacity:.6}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.dtc .pager{padding:12px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px}
+/* a full-page record: back link, title with actions, cards of fields */
+.rpage{max-width:980px;margin:0 auto}
+.rback{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--ice);font-weight:500;text-decoration:none}
+.rpage .fsec{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:18px 20px;margin:0 0 16px}
+.rpage .fsec>legend{float:none;width:auto;font:700 16px var(--font);letter-spacing:0;text-transform:none;color:var(--ink);margin:0 0 4px;padding:0}
+.rpage .mfoot.sticky{position:sticky;bottom:0;margin:8px 0 0;padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px))}
+@media (max-width:760px){.pghead h2{font-size:22px}.pgacts{width:100%}.pgacts .btn{flex:1}}
+
+.ttool{width:auto;height:44px;border:0;border-radius:10px;padding:0 10px}
+.ttool:hover{background:var(--surface-2)}
+.ttool.bell,.ttool.pmb{width:44px;padding:0}
+.ttool .tl{font:500 14px var(--font)}
+body.admin .seg{background:var(--surface-2);border:0}
+.tbar select{flex:0 1 auto;min-width:150px}
+
+.bulk[hidden]{display:none}
+.dtab th.cb input,.dtab td.cb input{width:20px;height:20px;accent-color:var(--ink);margin:0}
+.tbar select,.tbar .tsearch,.tbar .btn{min-height:40px;font-size:14px}
+.tbar .tsearch{flex:1 1 260px}
+
+.seg button{white-space:nowrap}
+details.fbox{display:contents}
+details.fbox>summary{display:none}
+@media (max-width:760px){
+  details.fbox{display:block;flex:1 1 100%}
+  details.fbox>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:1px solid var(--line2);border-radius:10px;cursor:pointer;font:600 14px var(--font);list-style:none}
+  details.fbox>summary::-webkit-details-marker{display:none}
+  details.fbox[open]>summary{margin-bottom:8px}
+  details.fbox>select,details.fbox>.btn{display:block;width:100%;margin:0 0 8px}
+  table.dtab{min-width:0}
+  .dtab thead{display:none}
+  .dtab tbody tr{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:start;padding:12px 6px 12px 0;border-bottom:1px solid var(--line)}
+  .dtab tbody tr:last-child{border-bottom:0}
+  .dtab tbody td{display:block;padding:1px 14px 1px 0;border:0;background:none!important;grid-column:2}
+  .dtab tbody td.cb{grid-column:1;grid-row:1/6;padding:2px 0 0 14px}
+  .dtab tbody td:nth-child(6){display:none}
+  .dtab tbody td.ac{text-align:left;padding-top:6px}
+  .dtab tbody td:nth-child(5){padding-top:4px}
+}
+@media (max-width:760px){
+  .dtab tbody td:nth-child(3) .sub,.dtab tbody td:nth-child(4) .sub{display:inline;margin:0}
+  .dtab tbody td:nth-child(3) .sub::before,.dtab tbody td:nth-child(4) .sub::before{content:" · "}
+  .dtab tbody td:nth-child(2) .sub{margin-top:0}
+}
+details.fbox::details-content{display:contents}
+@media (max-width:760px){details.fbox::details-content{display:block}}

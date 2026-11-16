@@ -290,12 +290,12 @@ test("ADM-05, 06, 08, 11: bulk select on Events and submitted events, sort contr
 
 test("Admin asset versions moved together", () => {
   const idx = read("public/admin/index.html"), js = read("public/admin/admin.js");
-  assert.match(idx, /admin\.css\?v=20261115b/); assert.match(idx, /admin\.js\?v=20261115p/); assert.match(js, /kit\.js\?v=20261113a/); assert.match(js, /health\.js\?v=20261113b/);
+  assert.match(idx, /admin\.css\?v=20261116f/); assert.match(idx, /admin\.js\?v=20261116d/); assert.match(js, /kit\.js\?v=20261113a/); assert.match(js, /health\.js\?v=20261113b/);
 });
 
 test("Admin event rows and published submissions link to the event's public card", () => {
   const js = read("public/admin/admin.js");
   assert.match(js, /const viewLink = \(id\) => `<a class="btn ghost" href="\/e\/\$\{encodeURIComponent\(id\)\}" target="_blank" rel="noopener"/);
-  assert.match(js, /main: viewLink\(e\.id\)/);
+  assert.match(js, /href="\/e\/\$\{encodeURIComponent\(e\.id\)\}" target="_blank" rel="noopener">View card<\/a>/, "the events table has a View card link on every row");
   assert.match(js, /x\.event_id \? viewLink\(x\.event_id\)/);
 });
