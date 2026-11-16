@@ -15,7 +15,18 @@
 <link rel="stylesheet" href="/tokens.css?v=20261115b">
 <link rel="stylesheet" href="/addflow.css?v=20261111x560">
 <link rel="stylesheet" href="/info.css?v=20261111x560">
-<style>.pcards.tight{grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr))}.pcard,.wcard,.pfree{min-width:0;overflow-wrap:anywhere}.faq details[hidden],.faq details[data-appoff]{display:none}.wcard .big{margin:0}details summary::marker{color:var(--muted)}</style>
+<style>.pcards.tight{grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr))}.pcard,.wcard,.pfree{min-width:0;overflow-wrap:anywhere}.faq details[hidden],.faq details[data-appoff]{display:none}.wcard .big{margin:0}details summary::marker{color:var(--muted)}
+/* The four audiences as sliding tabs above the title (same look and glide as the Admin tabs); the side menu keeps only the site links */
+.sh-side .sh-own{display:none!important}
+.ptabrow{position:relative;display:flex;width:max-content;max-width:100%;gap:2px;padding:3px;margin:0 0 20px;border-radius:10px;background:var(--surface-2);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.ptabrow::-webkit-scrollbar{display:none}
+.ptabrow button{all:unset;box-sizing:border-box;position:relative;z-index:1;flex:none;cursor:pointer;min-height:40px;padding:0 14px;display:inline-flex;align-items:center;gap:8px;border-radius:8px;font:600 14px var(--font);color:var(--muted);white-space:nowrap}
+.ptabrow button svg{flex:none}
+.ptabrow button[aria-selected="true"]{color:var(--ink)}
+.ptabrow button:focus-visible{outline:2px solid var(--season);outline-offset:-2px}
+.ptabrow .ind{position:absolute;left:0;top:3px;bottom:3px;width:0;border-radius:8px;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.14);z-index:0;pointer-events:none;transition:transform .32s cubic-bezier(.3,.7,.2,1),width .32s cubic-bezier(.3,.7,.2,1)}
+@media (prefers-reduced-motion:reduce){.ptabrow .ind{transition-duration:.12s}}
+</style>
 <script src="/hit.js?v=20261107a" defer></script>
 <script src="/chat.js?v=20261111e" defer></script>
 </head>
@@ -100,17 +111,35 @@ import { PASS_KEYS, passCopy, moreCopy, contactHref, dollars as passDollars } fr
 const $ = (q) => document.querySelector(q);
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const dollars = (p) => "$" + (p.cents % 100 ? (p.cents / 100).toFixed(2) : p.cents / 100);
-// One audience at a time, chosen in the app frame's menu (without scripts every section is listed). The links /pricing#events, #contests, #banner and #homeowners open the right one.
+// One audience at a time, chosen with the tabs above the title (without scripts every section is listed). The links /pricing#events, #contests, #banner and #homeowners open the right one.
 {
   const ORDER = ["homeowners", "events", "contests", "banner"], panels = Object.fromEntries([...document.querySelectorAll("[data-panel]")].map((e) => [e.dataset.panel, e]));
   const keys = ORDER.filter((k) => panels[k]), ICON = { homeowners: "home", events: "cal", contests: "trophy", banner: "star" }, LABEL = { banner: "Installers" };
   const owner = (id) => { const e = id && document.getElementById(id); const p = e && e.closest("[data-panel]"); return p ? p.dataset.panel : ""; };
   const first = () => { const h = location.hash.slice(1); return owner(h) || (keys.includes(h) ? h : keys[0]); };
   document.body.classList.add("sh-page"); document.querySelector("main").classList.add("ptabs-on");
-  const sh = mountShell({ page: "pricing", title: "Pricing", items: keys.map((k) => ({ k, label: LABEL[k] || panels[k].dataset.label, icon: ICON[k] })), active: first(), onPick: (k) => { pick(k); try { history.replaceState(null, "", "#" + (panels[k].id || k)); } catch {} if (scrollY > 0) scrollTo(0, 0); } });
+  const NAV = [["map", "Map", "/", "map"], ["add", "Add", "/add", "add"], ["tut", "Tutorials", "/tutorials", "play"], ["help", "Help", "/help", "help"]]; // the phone bottom bar; the audiences are the tabs above the title
+  mountShell({ page: "pricing", title: "Pricing", items: NAV.map(([k, label, , icon]) => ({ k, label, icon })), active: "", onPick: (k) => { const n = NAV.find((x) => x[0] === k); if (n) location.assign(n[2]); } });
+  const IC = { homeowners: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-6h6v6"/>', events: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', contests: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>', banner: '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>' };
+  const row = document.createElement("div"); row.className = "ptabrow"; row.setAttribute("role", "tablist"); row.setAttribute("aria-label", "Pricing for");
+  row.innerHTML = '<span class="ind" aria-hidden="true"></span>' + keys.map((k) => `<button type="button" role="tab" data-k="${k}" aria-selected="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg><span>${LABEL[k] || panels[k].dataset.label}</span></button>`).join("");
+  document.querySelector("main h1").before(row);
+  const ind = row.querySelector(".ind"); let placed = false;
+  const slide = () => {
+    const b = row.querySelector('[aria-selected="true"]'); if (!b || !row.getClientRects().length) { placed = false; return; }
+    if (!placed) ind.style.transition = "none";
+    ind.style.width = b.offsetWidth + "px"; ind.style.transform = `translateX(${b.offsetLeft}px)`;
+    if (!placed) { void ind.offsetWidth; ind.style.transition = ""; }
+    const r = b.offsetLeft + b.offsetWidth, smooth = placed && !matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto";
+    if (row.scrollWidth > row.clientWidth + 1) { if (b.offsetLeft < row.scrollLeft + 8) row.scrollTo({ left: Math.max(0, b.offsetLeft - 8), behavior: smooth }); else if (r > row.scrollLeft + row.clientWidth - 8) row.scrollTo({ left: r - row.clientWidth + 8, behavior: smooth }); } // a long row scrolls so the chosen tab shows
+    placed = true;
+  };
+  addEventListener("resize", () => { placed = false; slide(); }); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { placed = false; slide(); });
+  row.addEventListener("click", (e) => { const b = e.target.closest("button[data-k]"); if (!b) return; pick(b.dataset.k); try { history.replaceState(null, "", "#" + (panels[b.dataset.k].id || b.dataset.k)); } catch {} });
+  row.addEventListener("keydown", (e) => { const i = keys.indexOf(row.querySelector('[aria-selected="true"]').dataset.k), n = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: keys.length - 1 }[e.key]; if (n === undefined) return; e.preventDefault(); const k = keys[(n + keys.length) % keys.length]; pick(k); row.querySelector(`[data-k="${k}"]`).focus(); });
   const REF = { homeowners: ["home", REFUND.home], events: ["event", REFUND.event + " An Event Partner plan: " + REFUND.partner], contests: ["pass", REFUND.pass], banner: ["installer", REFUND.installer] };
   const faq = (k) => { document.querySelectorAll("details[data-for]").forEach((d) => { d.hidden = !d.dataset.for.split(" ").includes(k); }); const r = REF[k], p = document.getElementById("refundtext"); if (r && p) { p.textContent = r[1] + " See our "; const a = document.createElement("a"); a.href = "/terms#" + REFUND_ANCHOR[r[0]]; a.textContent = "Terms"; p.append(a, "."); } };
-  const pick = (k) => { if (!panels[k]) k = keys[0]; keys.forEach((x) => { panels[x].hidden = x !== k; }); sh.setActive(k); document.documentElement.dataset.ptab = k; faq(k); };
+  const pick = (k) => { if (!panels[k]) k = keys[0]; keys.forEach((x) => { panels[x].hidden = x !== k; }); row.querySelectorAll("button[data-k]").forEach((b) => { b.setAttribute("aria-selected", String(b.dataset.k === k)); b.tabIndex = b.dataset.k === k ? 0 : -1; }); slide(); document.documentElement.dataset.ptab = k; faq(k); };
   const fromHash = () => { const h = location.hash.slice(1); pick(first()); const t = h && document.getElementById(h); if (t && !t.matches("[data-panel]")) t.scrollIntoView(); };
   fromHash(); addEventListener("hashchange", fromHash);
 }
