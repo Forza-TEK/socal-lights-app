@@ -53,7 +53,7 @@ test("PAY-03: a payment taken but not applied tells the buyer we are refunding i
     insertOrder(raw, "cs_due", "refund_due");
     assert.equal(await sweepNotApplied(env), 1);
     let m = sent(net); assert.equal(m.length, 1);
-    assert.match(m[0].subject, /Your payment was not applied: we are refunding it/); assert.match(m[0].text, /\$25\.00/); assert.match(m[0].text, /Order reference: SL-S_DUE|Order reference: SL-/);
+    assert.match(m[0].subject, /Your payment was not applied: we will refund it/); assert.match(m[0].text, /\$25\.00/); assert.match(m[0].text, /Order reference: SL-S_DUE|Order reference: SL-/);
     assert.equal(m[0].reply_to, "info@socallights.app");
     assert.equal(await sweepNotApplied(env), 0, "once per order");
     // the refund

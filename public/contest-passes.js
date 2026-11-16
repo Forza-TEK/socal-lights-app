@@ -16,7 +16,7 @@ export const CONTEST_CONTENTS = [
   "An organizer dashboard: approve entries, announce winners, export the results",
 ];
 export const FAIR = "Entering and voting stay free for everyone. Payment never affects any result, vote, judge or ranking.";
-export const WINDOW_RULE = "Your 12-month window starts the day you buy your pass, or the day your first contest goes live if that comes first. A contest counts when it goes live: drafts, contests held for review and contests that were never live do not count. When the window ends, your next contest needs a new pass.";
+export const WINDOW_RULE = "Your 12-month window starts the day you buy your pass, or the day your first contest goes live if that comes first. A contest counts when it goes live: drafts, contests held for review and contests that were never live do not count. A contest that was live and is later unpublished, by you or by us, still counts. When the window ends, your next contest needs a new pass.";
 
 // How many contests a pass covers, in words. cap 1 is a single contest.
 export const capLine = (cap) => (cap === 1 ? "1 contest in your 12-month window" : `Up to ${cap} contests in your 12-month window in total`);

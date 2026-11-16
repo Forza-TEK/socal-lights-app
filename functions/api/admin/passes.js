@@ -13,21 +13,24 @@ import { todayPT, isDate } from "../../_lib/contests.js";
 
 export async function onRequestGet({ env }) {
   const today = todayPT();
-  const [cs, ps, cm, ld] = await Promise.all([
+  const [cs, ps, cm, ld, activePasses, runningComps] = await Promise.all([
     env.DB.prepare("SELECT id, slug, name, org_key, live_at, status FROM contests WHERE org_key != '' AND live_at != '' ORDER BY live_at").all(),
     env.DB.prepare("SELECT p.session_id, p.org_key, p.cap, p.window_start, p.window_end, p.cents, p.status, p.created_at, o.amount, o.status AS order_status, o.email FROM contest_passes p LEFT JOIN feature_orders o ON o.session_id = p.session_id ORDER BY p.created_at DESC LIMIT 300").all(),
     env.DB.prepare("SELECT id, org_key, allowed, valid_until, note, created_by, revoked, badge, badge_until, created_at FROM contest_comps ORDER BY created_at DESC LIMIT 200").all(),
     env.DB.prepare("SELECT id, email, org_key, note, created_at FROM contest_pass_leads ORDER BY created_at DESC LIMIT 50").all(),
+    // Audit L4: the used / cap / over figures come from EVERY running pass and comp, not from the newest rows of the display lists above (which stop at 300 and 200)
+    env.DB.prepare("SELECT org_key, cap, window_start, window_end, status FROM contest_passes WHERE status = 'active' AND window_end >= ?").bind(today).all(),
+    env.DB.prepare("SELECT org_key, allowed, valid_until, note, revoked FROM contest_comps WHERE revoked = 0 AND valid_until >= ?").bind(today).all(),
   ]);
   const byKey = new Map();
   for (const c of cs.results) (byKey.get(c.org_key) || byKey.set(c.org_key, []).get(c.org_key)).push(c);
-  for (const k of new Set([...ps.results.map((p) => p.org_key), ...cm.results.map((c) => c.org_key)])) if (!byKey.has(k)) byKey.set(k, []);
+  for (const k of new Set([...ps.results.map((p) => p.org_key), ...cm.results.map((c) => c.org_key), ...activePasses.results.map((p) => p.org_key), ...runningComps.results.map((c) => c.org_key)])) if (!byKey.has(k)) byKey.set(k, []);
   const orgs = [...byKey].map(([key, list]) => {
-    const w = windowFromDates(list.map((c) => c.live_at), today, ps.results.filter((p) => p.org_key === key && p.status === "active" && p.window_end >= today).map((p) => p.window_start));
-    const ent = entitlementOf(w, ps.results.filter((p) => p.org_key === key && p.status === "active" && w.active && p.window_start === w.start), [...cm.results.filter((c) => c.org_key === key && !c.revoked && c.valid_until >= today), ...(freeDomain(key) ? [{ allowed: -1, valid_until: FREE_UNTIL, note: "Free domain (set in code)" }] : [])]);
+    const w = windowFromDates(list.map((c) => c.live_at), today, activePasses.results.filter((p) => p.org_key === key).map((p) => p.window_start));
+    const ent = entitlementOf(w, activePasses.results.filter((p) => p.org_key === key && w.active && p.window_start === w.start), [...runningComps.results.filter((c) => c.org_key === key), ...(freeDomain(key) ? [{ allowed: -1, valid_until: FREE_UNTIL, note: "Free domain (set in code)" }] : [])]);
     return { key, free: freeDomain(key), label: orgLabel(key), used: ent.used, cap: ent.cap, unlimited: ent.unlimited, windowStart: ent.windowStart, windowEnd: ent.windowEnd, over: !ent.unlimited && ent.used > ent.cap, comp: ent.comp, contests: list.filter((c) => !w.active || (c.live_at >= w.start && c.live_at <= w.end)).map((c) => ({ id: c.id, slug: c.slug, name: c.name, live_at: c.live_at, status: c.status })) };
   }).sort((a, b) => (b.over - a.over) || b.used - a.used);
-  return json({ today, free: FREE_CONTESTS, orgs, passes: ps.results, comps: cm.results.map((c) => ({ ...c, badge: !!c.badge, badge_running: !!c.badge && !c.revoked && (c.badge_until || c.valid_until) >= today, label: orgLabel(c.org_key), running: !c.revoked && c.valid_until >= today })), leads: ld.results.map((l) => ({ ...l, label: orgLabel(l.org_key) })) }, { headers: { "cache-control": "no-store" } });
+  return json({ today, free: FREE_CONTESTS, orgs, truncated: { passes: ps.results.length >= 300, comps: cm.results.length >= 200 }, passes: ps.results, comps: cm.results.map((c) => ({ ...c, badge: !!c.badge, badge_running: !!c.badge && !c.revoked && (c.badge_until || c.valid_until) >= today, label: orgLabel(c.org_key), running: !c.revoked && c.valid_until >= today })), leads: ld.results.map((l) => ({ ...l, label: orgLabel(l.org_key) })) }, { headers: { "cache-control": "no-store" } });
 }
 
 export async function onRequestPost({ request, env, data }) {

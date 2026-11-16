@@ -7,7 +7,7 @@ import { PLANS, EVENT_PLANS, eventQuote } from "../../_lib/featured.js";
 import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
 import { ownsEvent } from "../../_lib/ownership.js";
 import { homeForCheckout, HOME_PLANS, placeWord } from "../../_lib/podium.js";
-import { sha256hex, checkoutLimit, createCheckoutSession } from "../../_lib/stripe.js";
+import { sha256hex, checkoutLimit, createCheckoutSession, refundNote } from "../../_lib/stripe.js";
 import { ptToday } from "../../_lib/time.js";
 
 // True when the dates are the buyer's own: they submitted the event (and can edit it), or it is the map listing of a contest they run.
@@ -80,6 +80,7 @@ export async function onRequestPost({ request, env }) {
     ...(q ? { "metadata[quote_from]": q.from, "metadata[quote_to]": q.to, "metadata[quote_cents]": String(q.cents) } : {}), // what the buyer was quoted: the webhook applies this window and checks the amount against it
     "metadata[plan]": plan,
     "metadata[user_id]": user.id,
+    "custom_text[submit][message]": refundNote(home ? "home" : "event"),
     "payment_intent_data[description]": `SoCal Lights Featured: ${ev.name} (${plan})`.slice(0, 200),
     // Back to the same page: the success view names the event and plan; a cancel keeps both chosen (a pending submission goes by its submission id).
     success_url: `${origin}/feature?paid=1&plan=${plan}${home ? "&home=1" : pending ? "&sub=" + encodeURIComponent(subId) : "&event=" + encodeURIComponent(ev.id)}`,

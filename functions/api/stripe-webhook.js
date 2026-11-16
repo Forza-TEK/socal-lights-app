@@ -34,6 +34,8 @@ export async function onRequestPost({ request, env }) {
   }
   let evt; try { evt = JSON.parse(raw); } catch { return err(400, "Bad payload."); }
   if (!evt || !evt.id || !HANDLED.has(evt.type)) return json({ ok: true, ignored: evt && evt.type });
+  // Audit L2: a test-mode event (livemode false) must never switch on a paid placement when the site runs on a live key; a stray test endpoint or a replayed test payment would otherwise count.
+  if (evt.livemode === false && /^(sk|rk)_live_/.test(String(env.STRIPE_SECRET_KEY || ""))) return json({ ok: true, ignored: "test-mode event" });
 
   if (await env.DB.prepare("SELECT 1 FROM stripe_events WHERE id = ?").bind(evt.id).first()) return json({ ok: true, duplicate: true });
 
