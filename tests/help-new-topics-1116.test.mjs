@@ -15,7 +15,7 @@ const CATS = new Set(["find", "post", "enter", "vote", "run", "sponsors", "accou
 
 // slug -> [source file, labels the article quotes from the product]
 const NEW = {
-  "where-is-the-add-button": ["public/index.html", ['id="addbtn"', 'aria-label="Add an event, a contest or a home display"', 'id="morebtn"']],
+  "where-is-the-add-button": ["public/index.html", ['id="addbtn"', 'aria-label="Add an event, a contest or a home"', 'id="morebtn"']],
   "add-an-event-to-your-calendar": ["public/app.js", ["Add to calendar", "Calendar file ready", "calendar.google.com", "BEGIN:VCALENDAR"]],
   "event-video-link": ["public/app.js", ["Watch the video", "data-vid"]],
   "add-your-contest-logo": ["public/organizer.html", ["Contest logo", "Upload a logo", "Replace logo", "Remove logo", "600 KB"]],
