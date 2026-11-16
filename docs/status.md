@@ -1,5 +1,15 @@
 # Status
 
+## 2026-11-16: Creation audit, part 1: listings (branch `audit-creation-listings`)
+Fixes from the creation-flows audit (report in `docs/audit/2026-11-16/`; decisions for the owner in `creation-decisions.md`; contest findings left for later in `creation-contest-followups.md`).
+- H1 "Run again next year" works only on an event that is on the map, refuses a second copy for the same year, counts toward the 5 an hour and 8 a day limits and the review words; the button shows only for live events.
+- M1 a homeowner naming an installer can only link to a public profile; a new name makes a hidden profile (Admin switches it on), review words make none, mail to a profile's contact capped at 5 a day, deleting the home removes an unused hidden profile.
+- M2 a new home with an address that cannot be found, no house number, or review words in any free-text field waits for review and the answer and add page say why; events say when the pin is at the city center.
+- M3 an event with no matching page and an address that cannot be found waits for review; review words in hours, price, address and web address refuse the event (new or edited); a changed web page that does not match drops a live event to Expected with a note.
+- M4 homeowners tick "This is my home, or I have its owner's permission" (server enforces it; the time is stored in `posts.address_consent_at`, migration 0267).
+- M6 Your profile: every home and event that is not live has a plain label and reason, Delete (and Edit while in review). L1 deleting the account asks for the word "delete" and is announced. L6 stale Account-tab sentence replaced. L7 `/api/submit` has the same-origin check.
+- Tests: `tests/audit-creation-listings.test.mjs` (16); `tests/submit.test.mjs`, `add-flows`, `add-rest`, `appstore`, `refund-flags` updated for the new rules. `tests/chat.test.mjs` "dates: only dates from the events..." also fails here; it depends on today's date and none of this touches the chat code.
+
 ## 2026-11-16: Event data audit fixes (migrations 0271, 0272, 0273, three PRs)
 Fixes for the event-data findings of audit 2 (H4, M1 to M5, M9, L6, L7), each checked against the event's official page loaded politely on 2026-11-16.
 - 0271 duplicates: 11 Grok-side duplicates removed (event deleted, intake row `unpublished` so Grok cannot re-add), missing links, hours and address folded into the kept rows. dplights and soc-dp-harbor-after-dark are different events and stay.

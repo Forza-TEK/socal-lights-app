@@ -25,7 +25,7 @@ const geo = ({ census = null, osm = null, down = false, page = null } = {}) => s
 const PASADENA = [34.148, -118.144];
 
 // ---------------- house / installer posts ----------------
-const homeForm = (o = {}) => { const f = new FormData(); const d = { biz: "Lee Family", title: "Maple Street Lights", city: "Pasadena", desc: "Ten thousand lights synced to music every night.", street: "123 Maple St", zip: "91101", ...o }; for (const [k, v] of Object.entries(d)) if (v !== undefined && v !== null) f.append(k, v); return f; };
+const homeForm = (o = {}) => { const f = new FormData(); const d = { biz: "Lee Family", title: "Maple Street Lights", city: "Pasadena", desc: "Ten thousand lights synced to music every night.", street: "123 Maple St", zip: "91101", permission: "1", ...o }; for (const [k, v] of Object.entries(d)) if (v !== undefined && v !== null) f.append(k, v); return f; };
 const postHome = (env, form, cookie, ip = "203.0.113.7") => submitHome({ request: new Request(ORIGIN + "/api/submit", { method: "POST", headers: { "CF-Connecting-IP": ip, ...(cookie ? { cookie } : {}) }, body: form }), env });
 const body = async (r) => ({ ...(await r.json()), http: r.status }); // http = the HTTP status; status = the post or event status in the answer
 
@@ -44,7 +44,8 @@ test("house post: validation messages (name, city, zip, address, installer rules
     await bad({ zip: "9110" }, /ZIP/);
     await bad({ street: "", address: "x" }, /street address/);
     await bad({ kind: "installer" }, /website or a phone/);
-    await bad({ kind: "installer", web: "example.com" }, /permission/);
+    await bad({ kind: "installer", web: "example.com", permission: undefined }, /permission/);
+    await bad({ permission: undefined }, /your home, or that you have its owner.s permission/); // M4
     await bad({ kind: "installer", web: "not a site !!", phone: "626-555-0100", permission: "1" }, /valid website/);
     const many = homeForm(); for (let i = 0; i < 9; i++) many.append("photos", jpeg()); await bad({}, /up to 8/, many);
     const notImg = homeForm(); notImg.append("photos", new File([new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])], "x.jpg")); await bad({}, /JPG, PNG or WebP/, notImg);
@@ -154,15 +155,28 @@ test("event: geocode hit pins it; with a page that mentions the name and year it
     assert.equal(sub.status, "published"); assert.equal(sub.verified, 1); assert.equal(sub.contact_email, "o@example.com");
   } finally { f.restore(); }
 });
-test("event: geocoder down and no web page: still published (confirmed: the organizer gave the dates), pin at the city center, reasons recorded", async () => {
+test("event: geocoder down but a page that matches: still published (confirmed), pin at the city center, reasons recorded, the answer says located false", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), year = ptToday(20).slice(0, 4);
+  const f = geo({ page: `<h1>Pasadena Holiday Parade ${year}</h1>` });
+  try {
+    const r = await body(await postEvent(env, evBody({ url: "https://parade.example.org/info" }), u.cookie)); assert.equal(r.http, 200);
+    const ev = raw.prepare("SELECT status, lat, lng FROM events WHERE id = ?").get(r.id);
+    assert.equal(ev.status, "confirmed"); assert.deepEqual([ev.lat, ev.lng], PASADENA); assert.equal(r.located, false, "M2: the poster is told the pin is at the city center");
+    assert.match(raw.prepare("SELECT note FROM event_submissions WHERE id = ?").get(r.submission_id).note, /city center/);
+  } finally { f.restore(); }
+});
+test("event: no matching page AND an address that cannot be found is held for review (M3), not published", async () => {
   const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), f = geo({ down: true });
   try {
     const r = await body(await postEvent(env, evBody(), u.cookie)); assert.equal(r.http, 200);
-    const ev = raw.prepare("SELECT status, lat, lng FROM events WHERE id = ?").get(r.id);
-    assert.equal(ev.status, "confirmed"); assert.deepEqual([ev.lat, ev.lng], PASADENA);
-    const note = raw.prepare("SELECT note FROM event_submissions WHERE id = ?").get(r.submission_id).note;
-    assert.match(note, /city center/); assert.match(note, /no event web page/);
+    assert.equal(r.status, "pending"); assert.equal(r.held, "unproven"); assert.equal(r.located, false);
+    assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM events WHERE id LIKE 'u-%'").get().n, 0, "nothing on the map");
+    const sub = raw.prepare("SELECT status, note FROM event_submissions").get(); assert.equal(sub.status, "pending"); assert.match(sub.note, /held/); assert.match(sub.note, /no event web page/);
   } finally { f.restore(); }
+});
+test("event: an address that is found and no web page still goes live (the owner's rule: events publish right away)", async () => {
+  const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), f = geo({ census: PASADENA });
+  try { const r = await body(await postEvent(env, evBody(), u.cookie)); assert.equal(r.status, "published"); assert.equal(r.located, true); } finally { f.restore(); }
 });
 test("event: a page that is down or does not mention the year does not stop it being confirmed, but the page check is recorded as not verified", async () => {
   const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com");

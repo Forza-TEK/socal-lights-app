@@ -32,7 +32,7 @@ const shell = mountShell({ page: "prof", title: "Your profile", active: (locatio
 const $ = (q) => document.querySelector(q), app = $("#app"), cities = Object.keys(CITY).sort();
 const KEYS = { house: "scl-house-draft", event: "scl-event-draft", contest: "scl-contest-draft" }, PAGE = { house: "/add-house", event: "/add-event", contest: "/add-contest" }, LABEL = { house: "Lighting display", event: "Event", contest: "Contest", entry: "Contest entry" }, dpage = (d) => (d.kind === "entry" ? (d.slug ? `/c/${d.slug}/enter` : "/add") : PAGE[d.kind] || "/add");
 const when = (s) => { try { return new Date(String(s).replace(" ", "T") + "Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
-const stat = { approved: ["live", "Live"], published: ["live", "Live"], live: ["live", "Live"], pending: ["warn", "In review"], declined: ["", "Declined"], closed: ["", "Ended"] };
+const stat = { approved: ["live", "Live"], published: ["live", "Live"], live: ["live", "Live"], pending: ["warn", "In review"], declined: ["", "Not accepted"], closed: ["", "Ended"] };
 const dot = (s, over) => { const [c, l] = over || stat[s] || ["", s]; return `<span class="spill ${c}">${esc(l)}</span>`; }; // a status pill, the same style as the Admin
 let O = null, NL = { optin: null, config: null }, BD = { badges: [], master: true, off: {} }, tab = (location.hash || "").slice(1) || "drafts";
 
@@ -55,22 +55,25 @@ async function syncLocal() {
 const head = (h, add) => `<div class="sechead"><h2>${h}</h2>${add ? `<a class="btn out sm" href="${add[1]}">${add[0]}</a>` : ""}</div>`;
 const fld = (k, l, v, ex = "") => `<label class="mf"><span>${l}</span><input data-k="${k}" value="${esc(v ?? "")}" ${ex}></label>`;
 const sel = (k, l, v, opts) => `<label class="mf"><span>${l}</span><select data-k="${k}">${opts.map(([a, b]) => `<option value="${a}" ${String(v) === a ? "selected" : ""}>${b}</option>`).join("")}</select></label>`;
+// A line under a listing that is not on the map: why, and what to do (M6). Every status gets a plain sentence and the person can always delete their own listing.
+const reasonLine = (status, what) => status === "pending" ? `<div class="small muted" style="margin-top:4px">A person is looking it over before it goes on the map. You can still change it or delete it while you wait.</div>`
+  : status === "declined" ? `<div class="small" style="margin-top:4px">We could not put this ${what} on the map. Reply to the email we sent you, or write to <a href="mailto:info@socallights.app">info@socallights.app</a> and we will tell you why. You can delete it.</div>` : "";
 // A home you posted: edit, take down for the season, put back
 const ago = (at) => { const t = new Date(String(at || "").replace(" ", "T") + "Z").getTime(), m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " days ago"; };
 // The installer and the homeowner share a listing: say so, and show who changed which field
 const sharedLine = (h) => (h.inst ? `<div class="small" style="margin-top:4px">${h.inst.ok ? `Shared with <a href="/installer/${esc(h.inst.slug)}">${esc(h.inst.name)}</a>, who can edit it too and is emailed when you change it.` : `Waiting for <a href="/installer/${esc(h.inst.slug)}">${esc(h.inst.name)}</a> to confirm. Once they do, you both can edit this listing.`}</div>` : "") + (h.changes && h.changes[0] ? `<div class="small chgnote">Last change: <b>${esc(h.changes[0].by_name || "Someone")}</b> changed <b>${esc(h.changes[0].field)}</b> · ${esc(ago(h.changes[0].at))}</div>` : "");
 const chgList = (cs) => (cs && cs.length ? `<div class="chgbox"><b>Recent changes</b><ul class="chg">${cs.map((c) => `<li><span class="who">${esc(c.by_name || "Someone")}</span> changed <b>${esc(c.field)}</b>: <span class="was">${esc(c.old || "(blank)")}</span> &rarr; ${esc(c.new || "(blank)")} <span class="muted">· ${esc(ago(c.at))}</span></li>`).join("")}</ul></div>` : "");
 function homeRow(h) {
-  const st = h.status === "approved" ? ["live", "On the map"] : h.status === "paused" ? ["", "Taken down for the season"] : h.status === "pending" ? ["warn", "In review"] : ["", h.status];
+  const st = h.status === "approved" ? ["live", "On the map"] : h.status === "paused" ? ["", "Taken down for the season"] : h.status === "pending" ? ["warn", "In review"] : h.status === "declined" ? ["", "Not accepted"] : ["", "Not on the map"];
   const pro = h.poster_type === "installer";
-  return `<div class="rowi mrow" data-home="${esc(h.id)}"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status, st)}</span>${sharedLine(h)}</div>
-   <div class="acts">${h.status === "approved" || h.status === "paused" ? `<button class="btn out sm" type="button" data-medit>Edit</button><button class="btn out sm" type="button" data-hact="${h.status === "paused" ? "resume" : "pause"}">${h.status === "paused" ? "Put back on the map" : "Take down for the season"}</button><button class="btn out sm danger" type="button" data-hdel>Delete</button>` : ""}</div>
+  return `<div class="rowi mrow" data-home="${esc(h.id)}"><div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status, st)}</span>${sharedLine(h)}${reasonLine(h.status, "home")}</div>
+   <div class="acts">${h.status === "approved" || h.status === "paused" ? `<button class="btn out sm" type="button" data-medit>Edit</button><button class="btn out sm" type="button" data-hact="${h.status === "paused" ? "resume" : "pause"}">${h.status === "paused" ? "Put back on the map" : "Take down for the season"}</button>` : h.status === "pending" ? `<button class="btn out sm" type="button" data-medit>Edit</button>` : ""}<button class="btn out sm danger" type="button" data-hdel>Delete</button></div>
    ${homeForm(h, { pro, changes: chgList(h.changes), own: true, cities, seasons: SEASON_LIST })}</div>`;
 }
 // A contest you run or help run: where it stands, and the buttons for it
 const dshort = (iso) => { try { return new Date(iso + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
 function contestRow(c) {
-  const st = c.announced ? ["", "Winners announced"] : c.status === "live" ? ["live", "Live"] : c.status === "pending" ? ["warn", "In review"] : c.status === "declined" ? ["", "Taken off the map"] : ["", c.status];
+  const st = c.announced ? ["", "Winners announced"] : c.status === "live" ? ["live", "Live"] : c.status === "pending" ? ["warn", "In review"] : c.status === "declined" ? ["", "Taken off the map"] : ["", "Not on the map"];
   return `<div class="rowi"><div><b>${esc(c.name)}</b><br><span class="small muted">${c.role === "owner" ? "You run it" : "You help run it"} · ${dot(c.status, st)}${c.vote_start ? ` · Voting ${dshort(c.vote_start)} to ${dshort(c.vote_end)}` : ""}${c.waiting ? ` · <span class="waitnote">${c.waiting} ${c.waiting === 1 ? "entry" : "entries"} waiting for you</span>` : ""}</span></div>
    <div class="acts"><a class="btn out sm" href="/c/${esc(c.slug)}/manage">Manage</a><a class="btn out sm" href="/c/${esc(c.slug)}">View page</a></div></div>`;
 }
@@ -78,16 +81,16 @@ function contestRow(c) {
 const linked = () => (O.entries || []).filter((e) => e.manage && e.status === "approved");
 // A home you entered in someone's contest
 function entryRow(e) {
-  const st = e.status === "approved" ? ["live", "In the contest"] : e.status === "pending" ? ["warn", "Waiting for the organizer"] : e.status === "declined" ? ["", "Not accepted"] : ["", e.status];
+  const st = e.status === "approved" ? ["live", "In the contest"] : e.status === "pending" ? ["warn", "Waiting for the organizer"] : e.status === "declined" ? ["", "Not accepted"] : ["", "Not in the contest"];
   return `<div class="rowi"><div><b>${esc(e.title || e.biz)}</b><br><span class="small muted">${esc(e.contest)} · ${dot(e.status, st)}</span></div>
    <div class="acts">${e.manage ? `<a class="btn sm" href="${esc(e.manage)}">Manage your home</a>` : ""}<a class="btn out sm" href="/c/${esc(e.slug)}">Open contest</a></div></div>`;
 }
 // An event you added: edit, cancelled or postponed tag, run again next year
 function eventRow(e) {
   const live = e.status === "published" && e.event_id;
-  const st = live ? ["live", e.notice === "cancelled" ? "Cancelled" : e.notice === "postponed" ? "Postponed" : "On the map"] : e.status === "pending" ? ["warn", "In review"] : ["", e.status];
-  return `<div class="rowi mrow" data-ev="${esc(e.id)}"><div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${esc(e.start_date)}${e.end_date !== e.start_date ? " to " + esc(e.end_date) : ""} · ${dot(e.status, st)}</span></div>
-   <div class="acts">${live ? `<button class="btn out sm" type="button" data-medit>Edit</button><select class="btn out sm" data-notice aria-label="Event notice"><option value="">No notice</option><option value="cancelled" ${e.notice === "cancelled" ? "selected" : ""}>Cancelled</option><option value="postponed" ${e.notice === "postponed" ? "selected" : ""}>Postponed</option></select>` : ""}${e.status === "published" || e.status === "pending" ? `<button class="btn out sm" type="button" data-ecopy>Run again next year</button><button class="btn out sm danger" type="button" data-edel>Delete</button>` : ""}</div>
+  const st = live ? ["live", e.notice === "cancelled" ? "Cancelled" : e.notice === "postponed" ? "Postponed" : "On the map"] : e.status === "pending" ? ["warn", "In review"] : e.status === "declined" ? ["", "Not accepted"] : ["", "Not on the map"];
+  return `<div class="rowi mrow" data-ev="${esc(e.id)}"><div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${esc(e.start_date)}${e.end_date !== e.start_date ? " to " + esc(e.end_date) : ""} · ${dot(e.status, st)}</span>${reasonLine(e.status, "event")}</div>
+   <div class="acts">${live || e.status === "pending" ? `<button class="btn out sm" type="button" data-medit>Edit</button>` : ""}${live ? `<select class="btn out sm" data-notice aria-label="Event notice"><option value="">No notice</option><option value="cancelled" ${e.notice === "cancelled" ? "selected" : ""}>Cancelled</option><option value="postponed" ${e.notice === "postponed" ? "selected" : ""}>Postponed</option></select><button class="btn out sm" type="button" data-ecopy>Run again next year</button>` : ""}<button class="btn out sm danger" type="button" data-edel>Delete</button></div>
    ${eventForm(e, { cities, seasons: SEASON_LIST })}</div>`;
 }
 const list = (rows, empty) => (rows.length ? `<div class="list">${rows.join("")}</div>` : `<p class="muted pempty">${empty}</p>`);
@@ -135,7 +138,8 @@ function panel() {
     <p class="err" id="perr" role="alert" hidden></p><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn" type="submit">Save</button><span class="muted small" id="pok" role="status"></span></div></form>
     ${nlSection()}
     <div style="margin-top:8px"><button class="btn out" id="so" type="button">Sign out</button></div>
-    <section style="margin-top:12px"><h2>Delete my account</h2><p class="muted small" id="delmsg">Deletes your account, saved drafts, profile picture, contest entries and votes, closes contests you run, and removes your email from homes and events you posted. It also ends the monthly update, and your address goes on our do-not-contact list as a one-way hash (not the address itself) so we do not contact you again. This can't be undone.</p><p class="err" id="delerr" role="alert" hidden></p><div style="margin-top:10px"><button class="btn out" id="delacct" type="button" style="color:var(--bad);border-color:var(--bad)">Delete my account</button></div></section><p class="small muted">Homes and events are matched by the email you typed on the form.</p>`;
+    <section style="margin-top:12px"><h2>Delete my account</h2><p class="muted small" id="delmsg">Deletes your account, saved drafts, profile picture, contest entries and votes, closes contests you run, and removes your email from homes and events you posted. It also ends the monthly update, and your address goes on our do-not-contact list as a one-way hash (not the address itself) so we do not contact you again. This can't be undone.</p><p class="muted small">If a paid placement is still running on something you added, deleting the account takes it down and flags it for us to review the refund; we cannot bring it back.</p><p class="err" id="delerr" role="alert" hidden></p><p class="small" id="delsay" role="status" aria-live="polite"></p><div style="margin-top:10px"><button class="btn out" id="delacct" type="button" style="color:var(--bad);border-color:var(--bad)">Delete my account</button></div>
+      <div id="delbox" hidden><div style="margin-top:10px;display:grid;gap:10px;max-width:360px"><label class="mf"><span>Type <b>delete</b> to confirm</span><input id="deltype" autocomplete="off" autocapitalize="off" spellcheck="false"></label><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn out" id="delgo" type="button" disabled style="color:var(--bad);border-color:var(--bad)">Permanently delete my account</button><button class="btn out" id="delcancel" type="button">Keep my account</button></div></div></div></section><p class="small muted">Homes and events you add are tied to this account's email.</p>`;
 }
 
 function render() {
@@ -213,12 +217,20 @@ function wire() {
   app.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; history.replaceState(null, "", "#" + tab); render(); }));
   app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => confirmDelete(b, { name: b.dataset.name || "this draft", what: "the saved draft", row: b.closest(".rowi"), url: "/api/drafts/" + b.dataset.del })));
   const ep = $("#editprof"); if (ep) ep.onclick = () => { tab = "account"; history.replaceState(null, "", "#account"); render(); window.scrollTo(0, 0); };
-  const da = $("#delacct"); if (da) da.onclick = async () => {
-    if (!da.dataset.sure) { da.dataset.sure = "1"; da.textContent = "Tap again to permanently delete"; return; }
-    da.disabled = true; const r = await fetch("/api/me", { method: "DELETE" });
-    if (!r.ok) { const j = await r.json().catch(() => ({})); const er = $("#delerr"); er.textContent = j.error || "Couldn't delete your account. Try again."; er.hidden = false; da.disabled = false; return; }
-    clearAllLocalDrafts(); location.href = "/?deleted=1";
-  };
+  // Deleting the account cannot be undone, so it takes more than a second tap: the button opens a box that says what goes away and asks for the word "delete" (announced to a screen reader), with a way back.
+  const da = $("#delacct"), dbox = $("#delbox"), dsay = $("#delsay"), dtype = $("#deltype"), dgo = $("#delgo");
+  if (da && dbox) {
+    const say = (t) => { if (dsay) dsay.textContent = t; };
+    da.onclick = () => { dbox.hidden = false; da.hidden = true; say("Type the word delete to turn on the final button."); dtype.value = ""; dgo.disabled = true; dtype.focus(); };
+    $("#delcancel").onclick = () => { dbox.hidden = true; da.hidden = false; say("Cancelled. Your account was not deleted."); da.focus(); };
+    dtype.oninput = () => { dgo.disabled = dtype.value.trim().toLowerCase() !== "delete"; };
+    dgo.onclick = async () => {
+      if (dgo.disabled) return;
+      dgo.disabled = true; say("Deleting your account…"); const r = await fetch("/api/me", { method: "DELETE" });
+      if (!r.ok) { const j = await r.json().catch(() => ({})); const er = $("#delerr"); er.textContent = j.error || "Couldn't delete your account. Try again."; er.hidden = false; dgo.disabled = false; say(""); return; }
+      clearAllLocalDrafts(); location.href = "/?deleted=1";
+    };
+  }
   const save = () => fetch("/api/me/badges", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ master: BD.master, off: BD.off }) });
   const bm = app.querySelector("[data-bpm]"); if (bm) bm.onchange = async () => { BD.master = bm.checked; await save(); render(); };
   app.querySelectorAll("[data-bp]").forEach((c) => (c.onchange = async () => { if (c.checked) delete BD.off[c.dataset.bp]; else BD.off[c.dataset.bp] = true; await save(); render(); }));
@@ -249,7 +261,7 @@ function wire() {
       attachAddress(f, { getCity: () => (f.querySelector('[data-k="city"]') || {}).value || "", onPick: (s) => { const set = (k, v) => { const el = f.querySelector(`[data-k="${k}"]`); if (el) el.value = v; }; set("address", s.street); if (cities.includes(s.city)) set("city", s.city); } });
       f.onsubmit = async (e) => {
         e.preventDefault(); er.hidden = true;
-        try { const j = await post("/api/me/events/" + row.dataset.ev, { action: "edit", ...collect() }); if (closeW) closeW(); toast(j.located === false ? "Saved. We couldn't find that exact street, so the pin is at the center of the city. Check the address." : "Saved.", j.located === false ? 9000 : undefined); load(); }
+        try { const j = await post("/api/me/events/" + row.dataset.ev, { action: "edit", ...collect() }); if (closeW) closeW(); toast(j.status === "expected" && j.located !== false ? "Saved. We could not match the new web page to this event, so it shows as Expected until we check it." : j.located === false ? "Saved. We couldn't find that exact street, so the pin is at the center of the city. Check the address." : "Saved.", j.located === false || j.status === "expected" ? 9000 : undefined); load(); }
         catch (x) { er.textContent = friendlyError(x); er.hidden = false; }
       };
       const nt = row.querySelector("[data-notice]"); if (nt) nt.onchange = async () => { try { await post("/api/me/events/" + row.dataset.ev, { action: "notice", notice: nt.value }); toast(nt.value ? "Tag added to the event." : "Tag removed."); load(); } catch (x) { toast(x.message); } };

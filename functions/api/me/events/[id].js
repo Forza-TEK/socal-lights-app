@@ -9,7 +9,9 @@ import { politeFetch } from "../../../_lib/botfetch.js";
 import { json, err, clean, webUrl, newId, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
 import { CITY } from "../../../../public/cities.js";
 import { SEASONS } from "../../../../public/seasons.js";
-import { BAD } from "../../../_lib/moderation.js";
+import { needsReview } from "../../../_lib/moderation.js";
+import { checkSubmitLimits, limitResponse } from "../../../_lib/submitlimit.js";
+import { ipPruneStatements } from "../../../_lib/retention.js";
 import { requireUser, sameOrigin, normEmail } from "../../../_lib/auth.js";
 import { isDate, slug, upsertEvent, verifyEventPage } from "../../../_lib/events.js";
 import { parseVideo } from "../../../../public/video.js";
@@ -73,10 +75,10 @@ export async function onRequestPost({ params, request, env }) {
     if (urlRaw && !url) return err(400, "That doesn't look like a valid web address.");
     // The same rules as a new event (functions/api/submit-event.js): the words that need a person's look are refused, a season needs one of its own types, the city must be listed,
     // the street address needs 6 characters, and a changed address is looked up again so the pin moves with it.
-    if (BAD.test(`${name} ${blurb} ${venue}`)) return err(400, "That doesn't look like a community event listing.");
     const season = b.season === undefined ? s.season : SEASONS[b.season] ? b.season : "", type = b.type === undefined ? s.type : clean(b.type, 10);
     if (b.season !== undefined || b.type !== undefined) { if (!season || !SEASONS[season].types[type]) return err(400, "Choose a season and an event type."); }
     const city = b.city === undefined ? s.city : clean(b.city, 60), address = b.address === undefined ? String(s.address || "") : line(b.address, 160);
+    if (needsReview(name, blurb, venue, hours, price, address, urlRaw)) return err(400, "That doesn't look like a community event listing."); // every text field, not only the name, blurb and venue (M3)
     if (b.city !== undefined && !CITY[city]) return err(400, "Choose a city from the list.");
     if (b.address !== undefined && address.length < 6) return err(400, "Enter the street address (or the two cross streets for a parade).");
     let { lat, lng, county } = s, located;
@@ -86,17 +88,34 @@ export async function onRequestPost({ params, request, env }) {
     }
     // A new web page, name or first day is checked the way a new event's page is: "Confirmed" only when the page mentions the event and its year, otherwise "Expected".
     const cur = live ? await env.DB.prepare("SELECT status FROM events WHERE id = ?").bind(s.event_id).first() : null;
-    let status = cur ? cur.status : "expected", verified = s.verified;
-    if (url !== (s.url || "") || name !== s.name || start !== s.start_date) { const ck = url ? await verifyEventPage(url, name, start, politeFetch(env)) : { ok: false }; status = "confirmed"; verified = ck.ok ? 1 : 0; } // the organizer states the dates, so the event stays confirmed; `verified` only records that its page matched
-    await env.DB.prepare("UPDATE event_submissions SET name=?, blurb=?, venue=?, start_date=?, end_date=?, hours=?, free=?, price=?, url=?, season=?, type=?, city=?, address=?, lat=?, lng=?, county=?, verified=? WHERE id=?").bind(name, blurb, venue, start, end, hours, free, price, url, season, type, city, address, lat, lng, county, verified, s.id).run();
+    let status = cur ? cur.status : "expected", verified = s.verified, note = s.note;
+    if (url !== (s.url || "") || name !== s.name || start !== s.start_date) {
+      const ck = url ? await verifyEventPage(url, name, start, politeFetch(env)) : { ok: false }; status = "confirmed"; verified = ck.ok ? 1 : 0; // the organizer states the dates, so the event stays confirmed; `verified` only records that its page matched
+      // M3: a NEW web page that could not be matched to the event no longer rides on "Confirmed": the event goes back to "Expected" and the note tells Admin why, until a person looks.
+      if (url !== (s.url || "") && url && !ck.ok) { status = "expected"; note = `edited by the organizer: new web page did not match the event (${ck.note || "not checked"})`; }
+    }
+    await env.DB.prepare("UPDATE event_submissions SET name=?, blurb=?, venue=?, start_date=?, end_date=?, hours=?, free=?, price=?, url=?, season=?, type=?, city=?, address=?, lat=?, lng=?, county=?, verified=?, note=? WHERE id=?").bind(name, blurb, venue, start, end, hours, free, price, url, season, type, city, address, lat, lng, county, verified, note || "", s.id).run();
     if (live) await upsertEvent(env, { id: s.event_id, name, county, city, type, start_date: start, end_date: end, status, free, price, hours, lat, lng, blurb, url, season, venue, address });
     if (live && vidIn !== undefined) await env.DB.prepare("UPDATE events SET video = ? WHERE id = ?").bind(vid ? vid.watch : "", s.event_id).run();
-    return json({ ok: true, ...(located === undefined ? {} : { located }) });
+    return json({ ok: true, status, ...(located === undefined ? {} : { located }) });
   }
   if (b.action === "copy") {
+    // H1: only an event that is on the map can be run again (an event in review or declined cannot be turned into a live one this way), and the copy goes through the same rules a new event does:
+    // the review words, the per-account hourly and daily limits, and one copy for a given next-year date.
+    if (!live) return err(400, "Only an event that is on the map can be run again next year.");
+    if (needsReview(s.name, s.blurb, s.venue, s.hours, s.price, s.address, s.url)) return err(400, "That doesn't look like a community event listing.");
     const start = plusYear(s.start_date), end = plusYear(s.end_date), id = newId(), eventId = `u-${slug(s.name).slice(0, 24)}-${newId().slice(0, 6)}`;
-    await env.DB.prepare(`INSERT INTO event_submissions (id,status,name,county,city,season,type,start_date,end_date,free,price,hours,lat,lng,blurb,url,venue,address,contact_email,verified,note,event_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(id, "published", s.name, s.county, s.city, s.season, s.type, start, end, s.free, s.price, s.hours, s.lat, s.lng, s.blurb, s.url, s.venue, s.address, s.contact_email, 0, "copied from last year by the organizer", eventId).run();
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const there = await env.DB.prepare("SELECT 1 AS x FROM event_submissions WHERE lower(contact_email) = lower(?) AND lower(name) = lower(?) AND start_date = ? LIMIT 1").bind(s.contact_email, s.name, start).first();
+    if (there) return err(409, "You already have this event for next year. Find it in your list and edit the dates there.");
+    const lim = await checkSubmitLimits(env, { ip, user, kind: "event" });
+    if (lim) return limitResponse(lim);
+    await env.DB.batch([
+      env.DB.prepare(`INSERT INTO event_submissions (id,status,name,county,city,season,type,start_date,end_date,free,price,hours,lat,lng,blurb,url,venue,address,contact_email,verified,note,event_id)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(id, "published", s.name, s.county, s.city, s.season, s.type, start, end, s.free, s.price, s.hours, s.lat, s.lng, s.blurb, s.url, s.venue, s.address, s.contact_email, 0, "copied from last year by the organizer", eventId),
+      env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
+      ...ipPruneStatements(env),
+    ]);
     await upsertEvent(env, { id: eventId, name: s.name, county: s.county, city: s.city, type: s.type, start_date: start, end_date: end, status: "expected", free: s.free, price: s.price, hours: s.hours, lat: s.lat, lng: s.lng, blurb: s.blurb, url: s.url, season: s.season, venue: s.venue, address: s.address });
     return json({ ok: true, id: eventId });
   }
