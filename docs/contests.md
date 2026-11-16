@@ -1,10 +1,10 @@
 # Accounts and home decorating contests
 
-**Live on `main` but hidden** (pages unlinked and `noindex`; migration `0109` applied). Sign-in is off until the Google and Resend secrets are set. The interactive sample goes further than the shipped pages: judges, award structures and prizes, season archive, profile, badges, avatars, address autocomplete, notifications and frozen result snapshots exist only in the sample so far. See `docs/voting-standards.md` for the voting review.
+**Live.** The Add hub (`/add`) links the contest wizard and the entry form, and sign-in with Google or an emailed code is on. The wizard and the contest pages stay `noindex`. (This file began as the plan for a hidden launch; the setup steps near the end are kept as history and the sample notes below are older than the shipped pages.) The interactive sample goes further than the shipped pages: judges, award structures and prizes, season archive, profile, badges, avatars, address autocomplete, notifications and frozen result snapshots exist only in the sample so far. See `docs/voting-standards.md` for the voting review.
 
 ## What it does
 - **Add hub** (`/add`): choose an event (`/add-event`), a contest (`/add-contest`) or a lighting display (`/add-house`). All three use the step-by-step flow in `public/addflow.js`.
-- **Contest wizard** (`/add-contest`): four screens (Basics, Dates, Rules, Review). Signing in happens on the last screen; the draft survives the Google redirect.
+- **Contest wizard** (`/add-contest`): four screens (Basics, Dates, Rules, Review). Signing in happens before the first step, the same as `/add-event` and `/add-house`; the draft is kept on the device and in the account, and survives the Google redirect.
 - **Contest page** (`/c/<slug>`): the page the QR code opens. Shows the contest, the approved homes, and Vote buttons.
 - **Entry form** (`/c/<slug>/enter`): photos, address, name. Needs sign-in. Posts to `/api/submit` with a `contest` field. A home does not pick a category: it competes in every category.
 - **Organizer dashboard** (`/c/<slug>/manage`): approve or decline entries, pause/start voting, hide counts, announce winners, copy link, QR poster.
@@ -16,6 +16,7 @@
 - **Live contests** are listed on the map as an event (`events.id = c-<slug>`). Approved entries are ordinary `posts` rows (with `contest_id`, `category`, `entry_no`, `user_id`), so they appear on the map and in the list like any home.
 - **Entries**: an organizer can also add homes herself (see "Organizer-added entries" below). `manual` approval keeps photos under `pending/` until the organizer approves (same promotion as the admin's approve). `auto` stores them under `p/` straight away.
 - **Voting is per category**: the organizer defines voting categories (for example Best Overall, Most Creative). Every approved home is listed in every category, and each voter picks one favorite home in each category. `votes` has `UNIQUE(contest_id, user_id, category)`, which is what guarantees one vote per person per category; voting again in a category moves that vote. Nobody can vote for their own home. Voting needs the dates (or the organizer's "Start now") and stops when winners are announced. Winners are the top home in each category. For a single overall winner, use one category.
+- **Caps that are silent today**: a contest takes at most 8 voting categories and 15 judges; the API drops the extras without a message (to be changed to a clear error, see M7 in `docs/audit/2026-11-16/creation-contest-followups.md`). "Run it again" (`action: "clone"`) copies a contest forward a year with its judges and sponsors; the status rule for it is H3 in the same file.
 - **Dates and overrides**: entries and voting follow the dates; the organizer can pause either, or start voting early.
 
 ## Fairness rules (migration 0110)

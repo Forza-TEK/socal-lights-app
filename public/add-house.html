@@ -18,7 +18,7 @@
 <body>
 <div id="app"></div>
 <script type="module">
-import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, check, photoField, photoRow, sumRow, validSite, isEmail, PRIV, OPT, today, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261115k";
+import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, check, photoField, photoRow, sumRow, validSite, isEmail, PRIV, OPT, today, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261116a";
 import { draftKey } from "/drafts-local.js?v=20261111z";
 import { capture, take } from "/chatprefill.js?v=20261111b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261115a";
@@ -91,7 +91,7 @@ const steps = [
   { id: "photos", sec: "Photos", title: "Add photos", help: "Photos help families find the right house. You can skip this and add them any time from Your profile (open your home and choose Edit).", body: (x) => photoField(x) },
   { id: "review", sec: "Review", title: "Check everything, then send it", help: "It goes on the map right away. You can ask us to change or remove it any time.", cta: "Put it on the map",
     body: (x) => `<div class="sum">${sumRow("Posting as", pro(x) ? "A professional installer" : "A homeowner", "kind")}${sumRow("Name", esc(x.biz), "name")}${!pro(x) && x.hadPro === "yes" ? sumRow("Installed by", esc([x.instName.trim(), x.instWeb.trim()].filter(Boolean).join(" · ")), "installer") : ""}${sumRow("Season", esc(SEASONS[x.season].label), "season")}${sumRow("Display", esc(x.title), "about")}${sumRow(pro(x) ? "About this installation" : "About this house", esc(x.desc), "about")}${pro(x) ? sumRow("How to reach you", esc([x.web.trim(), x.phone.trim(), x.area.trim() ? "Serves " + x.area.trim() : ""].filter(Boolean).join(" · ")), "biz") : ""}${sumRow("Address", `${esc(x.street)}, ${esc(x.city)} ${esc(x.zip)}`, "addr")}${sumRow("Visit tips", esc([x.lightsOn.trim() && "Lights on " + x.lightsOn.trim(), { drive: "Drive by", walk: "Walk by", both: "Drive or walk" }[x.visit], { free: "Free parking nearby", street: "Street parking", none: "Hard to park" }[x.parking], x.accessible && "Stroller and wheelchair friendly", x.radio.trim() && "Radio " + x.radio.trim(), x.where.trim()].filter(Boolean).join(" · ")), "where")}${photoRow(x)}</div>
-      <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). Only the site owner sees it.</p></div>${nlCheck(x)}<div id="ts"></div>`,
+      <div class="field"><span class="lab">Contact email</span><p class="small muted" style="margin:0"><b>${esc(acct.email)}</b> (your account). ${pro(x) ? "The site owner sees it, and quote requests from families are emailed to it." : "Only the site owner sees it."}</p></div>${nlCheck(x)}<div id="ts"></div>`,
     submit: async (x, api) => {
       ts.need();
       const fd = new FormData(), set = { kind: x.kind, biz: x.biz.trim(), email: x.email.trim(), title: x.title.trim(), season: x.season, lights_on: x.lightsOn.trim(), visit: x.visit, parking: x.parking, radio: x.radio.trim(), ...(x.accessible ? { accessible: "1" } : {}), street: x.street.trim(), city: x.city, state: "CA", zip: x.zip.trim(), where: x.where.trim(), desc: x.desc.trim() };

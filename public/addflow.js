@@ -48,10 +48,14 @@ export const check = (d, k, text) => `<label class="chk"><input type="checkbox" 
 // The optional monthly-update box on the last step of the add forms (only for a signed-in person). Always UNCHECKED, never saved in a draft (the pages list "nl" in noPersist).
 // It is a separate permission from the listing; the choice is sent after the listing was saved (nlSave) and never blocks it.
 export const nlCheck = (x) => `<div class="field nl-opt">${check(x, "nl", `Email me a monthly update with seasonal recommendations <span class="opt-lbl">Optional</span>`)}<p class="small muted" style="margin:2px 0 0">Separate from your listing. You can change the topics or unsubscribe any time. Sponsored or affiliate content will be identified.</p></div>`;
+// L3: if the choice could not be saved (a refused call or a dropped connection) the confirmation screen says so and where to turn it on, instead of leaving the person to believe they subscribed.
+let nlFailed = false;
 export async function nlSave(x, role, page) {
+  nlFailed = false;
   if (!x.nl) return;
-  try { await fetch("/api/me/newsletter", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ optin: true, role, topics: [], method: "add-listing checkbox", source_page: page }) }); } catch {}
+  try { const r = await fetch("/api/me/newsletter", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ optin: true, role, topics: [], method: "add-listing checkbox", source_page: page }) }); if (!r.ok) nlFailed = true; } catch { nlFailed = true; }
 }
+const nlNotice = () => { const t = nlFailed; nlFailed = false; return t ? `<p class="small err" role="status" id="nlfail">We could not turn on the monthly update. Your listing was saved. You can turn the update on from Your profile, Account tab.</p>` : ""; };
 export const photoField =(d, { max = 8, help = "" } = {}) =>
   `<div class="drop" id="drop"><span>${help || `Up to ${max} photos. The first one is the cover. They shrink on your phone, so uploads are quick, and they stay on this device if you reload or tap Save &amp; exit. iPhone photos (HEIC) are converted to JPG for you.`}</span><label class="btn out sm" for="f-photos" style="margin:0">Choose photos</label><input id="f-photos" data-photos type="file" accept="image/*" multiple hidden></div><div class="thumbs" id="thumbs">${thumbsHtml(d)}</div><p class="err" id="perr" role="alert" hidden></p>`;
 const thumbsHtml = (d) => (d.photos || []).map((p, i) => `<div class="t"><img src="${p.url}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button>${i === 0 ? "<em>COVER</em>" : ""}</div>`).join("");
@@ -156,7 +160,7 @@ export function run(o) {
   const syncExit = () => { const el = $("#exitbtn"); if (!el || S.done !== null) return; const h = exitBtn(); if (el.innerHTML !== h) el.innerHTML = h; };
   const hdr = (done) => `<a class="skipl" href="#main">Skip to the form</a><div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${done ? "" : `<a class="link" href="${esc(o.help || "/help")}" target="_blank" rel="noopener"><span class="hl-w">Need help?</span><span class="hl-n">Help</span><span class="sr"> (opens in a new tab)</span></a><span id="exitbtn">${exitBtn()}</span>`}${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>`;
   function draw(focus) {
-    if (S.done !== null) { root.innerHTML = `${hdr(true)}<main class="main" id="main" tabindex="-1">${S.done}</main>`; window.scrollTo(0, 0); return; }
+    if (S.done !== null) { root.innerHTML = `${hdr(true)}<main class="main" id="main" tabindex="-1">${S.done}${nlNotice()}</main>`; const h = root.querySelector("main h1"); if (h) { h.setAttribute("tabindex", "-1"); h.style.outline = "none"; h.focus({ preventScroll: true }); } window.scrollTo(0, 0); return; }
     const st = steps(); S.i = Math.max(0, Math.min(S.i, st.length - 1)); const s = st[S.i];
     if (o.season) document.documentElement.dataset.season = o.season(d);
     const secs = [...new Set(st.map((x) => x.sec))], cur = secs.indexOf(s.sec);
@@ -164,9 +168,11 @@ export function run(o) {
     const last = !!s.submit;
     // A draft that was restored (reload, or opened from Your profile) says when it was saved and can be thrown away
     const note = S.restored && o.persist ? `<p class="draftnote" id="draftnote">${S.savedAt ? `Draft saved ${esc(new Date(S.savedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))} on this device.` : "You have a saved draft."} <button class="link" type="button" data-a="startover">Start over</button></p>` : "";
-    root.innerHTML = `${hdr()}<main class="main" id="main" tabindex="-1">${note}<h1>${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<div class="errbox"><p class="err" id="err" role="alert" tabindex="-1" ${S.err ? "" : "hidden"}>${esc(S.err)}</p><p class="small errhelp" id="errhelp" ${S.help ? "" : "hidden"}>${S.help ? S.help : ""}</p><button class="btn out sm" type="button" data-a="retry" id="retrybtn" ${S.retry ? "" : "hidden"}>Try again</button></div></main>${o.preview ? `<aside class="pvcard" id="pvcard" aria-label="Preview of your listing"><span class="pvl">Preview</span><div id="pvbody">${o.preview(d)}</div><p class="pvn">This is how it will look to people. It updates as you type.</p></aside>` : ""}
+    root.innerHTML = `${hdr()}<main class="main" id="main" tabindex="-1">${note}<h1 tabindex="-1" style="outline:none">${esc(T(s.title))}</h1>${s.help ? `<p class="help">${T(s.help)}</p>` : ""}${s.body(d)}<div class="errbox"><p class="err" id="err" role="alert" tabindex="-1" ${S.err ? "" : "hidden"}>${esc(S.err)}</p><p class="small errhelp" id="errhelp" ${S.help ? "" : "hidden"}>${S.help ? S.help : ""}</p><button class="btn out sm" type="button" data-a="retry" id="retrybtn" ${S.retry ? "" : "hidden"}>Try again</button></div></main>${o.preview ? `<aside class="pvcard" id="pvcard" aria-label="Preview of your listing"><span class="pvl">Preview</span><div id="pvbody">${o.preview(d)}</div><p class="pvn">This is how it will look to people. It updates as you type.</p></aside>` : ""}
     <div class="bar" role="navigation" aria-label="Steps"><div class="segs" role="progressbar" aria-label="Progress: ${esc(s.sec)}" aria-valuemin="1" aria-valuemax="${st.length}" aria-valuenow="${S.i + 1}" aria-valuetext="Step ${S.i + 1} of ${st.length}: ${esc(s.sec)}">${segs}</div><div class="nav"><button class="link" type="button" data-a="back">${S.i === 0 ? "Cancel" : "Back"}</button><span class="stepn small muted" aria-hidden="true">Step ${S.i + 1} of ${st.length}</span><button class="btn" type="button" data-a="next" id="nextbtn">${esc(T(s.cta) || (last ? "Submit" : "Next"))}</button></div></div>`;
-    if (focus) { const f = root.querySelector(".in,[data-tile]"); if (f && f.classList.contains("in")) f.focus({ preventScroll: true }); window.scrollTo(0, 0); }
+    // M5: the whole page is redrawn for each step, so the button that was pressed is gone. A step with a text box puts focus in it; any other step puts focus on its heading, so a keyboard
+    // user continues from the top of the new step and a screen reader announces it (without this, focus fell back to the start of the document).
+    if (focus) { const f = root.querySelector(".in,[data-tile]"); if (f && f.classList.contains("in")) f.focus({ preventScroll: true }); else { const h = root.querySelector("main h1"); if (h) h.focus({ preventScroll: true }); } window.scrollTo(0, 0); }
     if (o.after) o.after(s, d);
   }
   // Tie the message to the field it is about: the first empty field on the step gets aria-invalid and aria-describedby="err" (cleared when the person types)
@@ -285,12 +291,13 @@ export function run(o) {
     const pe = $("#perr"), say = (t) => { if (pe) { pe.textContent = t; pe.hidden = !t; } }; say(""); d.photos ||= [];
     for (const f of list) {
       if (d.photos.length >= 8) { say("That's the limit of 8 photos."); break; }
-      if (!f.type.startsWith("image/")) { say("Skipped a file that isn't a photo."); continue; }
+      const nm = `“${String(f.name || "photo").slice(0, 40)}”`; // L13: name the file a message is about
+      if (!f.type.startsWith("image/")) { say(`Skipped ${nm}: it isn't a photo.`); continue; }
       try {
         const b = await shrink(f);
         if (d.photos.length >= 8) { say("That's the limit of 8 photos."); break; } // checked again after the (slow) shrink, so several quick picks cannot go past 8
         dirty = true; syncExit(); d.photos.push({ blob: b, url: URL.createObjectURL(b) }); pv(); await keepPhotos();
-      } catch { say(/hei[cf]/i.test(f.type + " " + f.name) ? "This browser can't open HEIC photos. On an iPhone they are converted for you; on a computer, export the photo as JPG first." : "One photo couldn't be read. Try a JPG or PNG."); }
+      } catch { say(/hei[cf]/i.test(f.type + " " + f.name) ? `This browser can't open ${nm} (a HEIC photo). On an iPhone they are converted for you; on a computer, export the photo as JPG first.` : `${nm} couldn't be read. Try a JPG or PNG.`); }
       const th = $("#thumbs"); if (th) th.innerHTML = thumbsHtml(d);
     }
   }
