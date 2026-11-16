@@ -1562,3 +1562,6 @@ Migration 0234: confirmed 10 Ventura/SB/San Bernardino-county Christmas events f
 - Total mp4 size 686 MB -> 265 MB. find-map.mp4 (4.6 MB) was left as is because the re-encode was larger.
 - Largest remaining: run-custom-mobile 9.0 MB, run-custom 7.9 MB, run-quick-mobile 6.2 MB (all 5 to 7 minute clips); the rest are under 6 MB.
 - Recipe for new clips: `ffmpeg -i in.mp4 -vf "scale='min(1280,iw)':-2" -c:v libx264 -preset slow -crf 27 -pix_fmt yuv420p -c:a aac -b:a 64k -movflags +faststart out.mp4` (use 720 wide for phone clips).
+
+## 2026-11-16 re-key Christmas on Mt. Helix
+- Migration 0277 moves `g13-christmas-on-mt-helix` from city La Mesa to Casa de Oro-Mount Helix (Grok handoff request, now done). County, pin and address unchanged. Note for Grok in `docs/handoff/to-grok/2026-11-16-mt-helix-rekeyed.md`.
