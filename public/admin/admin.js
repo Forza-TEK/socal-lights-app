@@ -1018,7 +1018,7 @@ function revenueStrip(r, link = false) {
   const t = r.total;
   return `<h2 class="dh">Revenue, last ${r.days} days</h2><section class="hcard" aria-label="Revenue, last ${r.days} days">
     <div class="stats"><div class="stat"><b>${usdOf(t.net)}</b><span>net of refunds</span></div><div class="stat"><b>${fmt(t.orders)}</b><span>orders</span></div><div class="stat"><b>${usdOf(t.refunded)}</b><span>refunded</span></div><div class="stat"><b>${usdOf(t.atRisk)}</b><span>refund due, held or disputed</span></div></div>
-    ${r.rows.length ? `<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th scope="col">Product</th><th scope="col">Orders</th><th scope="col">Collected</th><th scope="col">Refunded</th><th scope="col">Net</th></tr></thead><tbody>${r.rows.map((x) => `<tr><td>${esc(x.label)}</td><td>${fmt(x.orders)}</td><td>${usdOf(x.gross)}</td><td>${usdOf(x.refunded)}</td><td>${usdOf(x.net)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="meta" style="margin:10px 0 0">No orders in the last ${r.days} days.</p>`}
+    ${r.rows.length ? `<div class="dtw" style="margin-top:12px"><table class="dtab"><thead><tr><th scope="col">Product</th><th scope="col">Orders</th><th scope="col">Collected</th><th scope="col">Refunded</th><th scope="col">Net</th></tr></thead><tbody>${r.rows.map((x) => `<tr><td>${esc(x.label)}</td><td>${fmt(x.orders)}</td><td>${usdOf(x.gross)}</td><td>${usdOf(x.refunded)}</td><td>${usdOf(x.net)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="meta" style="margin:10px 0 0">No orders in the last ${r.days} days.</p>`}
     <p class="meta" style="margin:10px 0 0">Added up from the orders this site recorded; the Stripe dashboard is the record of money. ${r.otherCurrency ? `${r.otherCurrency} order(s) in another currency are left out. ` : ""}${link ? 'Details and refunds: <a href="#orders" data-tab="orders">Orders</a>.' : ""}</p></section>`;
 }
 function errorsCard(e) {
@@ -1037,7 +1037,7 @@ function runsCard(r) {
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-hfilter]"); if (b) { evSeason = "all"; EVHEALTH = b.dataset.hfilter; EVQ = ""; EVSTATUS = ""; EVVIEW = ""; EVCOUNTY = ""; EVLIMIT = 0; setTab("events"); } });
 async function renderDashboard() {
-  const main = $("#main"), d = await api("/api/admin/dashboard");
+  const main = $("#main"), d = await api("/api/admin/dashboard"); setDetail("");
   const a = d.attention, todo = [
     ["pending", a.waitHomes, "house", "waiting for your review"], ["subs", a.waitEvents, "event", "submitted, waiting for review"], ["contests", a.waitContests, "contest", "waiting for approval"],
     ["reports", a.reports, "report", "from visitors this week"], ["installers", a.claims, "installer claim", "to confirm"],
@@ -1045,7 +1045,7 @@ async function renderDashboard() {
   const tile = (k, n, l, more = "") => `<div class="stat"><b>${fmt(n)}</b><span>${l}</span>${more ? `<small class="meta">${more}</small>` : ""}</div>`;
   const kindTab = { home: "pending", event: "subs" };
   main.innerHTML = `
-    <p class="hello">${hour < 5 ? "Hello" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}. ${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p>
+    <div class="pghead"><div><h2>Dashboard</h2><p>${hour < 5 ? "Hello" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}. ${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p></div></div>
     ${d.staleJobs && d.staleJobs.length ? `<div class="limitbanner" role="alert"><b>${d.staleJobs.length === 1 ? "A scheduled job has stopped reporting in." : d.staleJobs.length + " scheduled jobs have stopped reporting in."}</b>${d.staleJobs.slice(0, 5).map((j) => `<span>${esc(j.line)}</span>`).join("")}<span>GitHub runs scheduled jobs late or skips them. Run the workflow by hand from GitHub > Actions, or see docs/runbooks/monitoring.md.</span></div>` : ""}
     ${d.limits && d.limits.length ? `<button type="button" class="limitbanner" data-tab="usage"><b>A Cloudflare or email limit was hit at ${esc(String(d.limits[0].at).slice(0, 16))} UTC.</b><span>${esc(String(d.limits[0].detail).slice(0, 140))} Open Cloudflare usage to see which one and what to do.</span></button>` : ""}
     <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l]) => `<button type="button" class="tcard" data-tab="${k}"><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>` : `<div class="calm">${dico("check", "okic")}<div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests or reports are waiting.</p></div></div>`}</section>
