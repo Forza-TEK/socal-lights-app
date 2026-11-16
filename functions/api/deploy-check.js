@@ -3,14 +3,14 @@
 // 8+ minutes (builds run one at a time, so a hung preview blocks production), a failed newest production build, or production not on main's latest commit 20+ minutes after it was made.
 // The Worker passes main's head (it asks GitHub's public API; this site calls no host but Cloudflare). When something is stalled the owner is emailed, at most once every 3 hours.
 // Answers { state: ok | stalled | not_configured | unknown, problems: [text], notified }. Uses the Pages secrets CF_PAGES_TOKEN (or CF_ANALYTICS_TOKEN) and CF_ACCOUNT_ID.
-import { json, err } from "../_lib/util.js";
+import { json, err, sameKey } from "../_lib/util.js";
 import { checkDeploys } from "../_lib/deploys.js";
 import { logOp } from "../_lib/oplog.js";
 import { sendTemplate } from "../_lib/mailtpl.js";
 
 export async function onRequest({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
-  if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
+  if (!env.ALERT_CRON_KEY || key.length < 16 || !sameKey(key, env.ALERT_CRON_KEY)) return err(401, "Not allowed.");
   if (request.method !== "POST" && request.method !== "GET") return err(405, "Use POST.");
   const u = new URL(request.url), sha = (u.searchParams.get("sha") || "").slice(0, 40), at = u.searchParams.get("at") || "";
   const head = /^[0-9a-f]{7,40}$/i.test(sha) && !Number.isNaN(Date.parse(at)) ? { sha, at } : null;

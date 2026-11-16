@@ -5,14 +5,14 @@
 // Only events people submitted are touched; the sweep-found events follow the stricter rules in docs/confirmation-plan.md.
 // A page that still fails is asked again after 6 hours, until the event ends; a site whose bot protection blocks the check is asked again after 3 days (a person confirms those in Admin). At most 6 events per run, checked in parallel (about 12 outgoing calls at most).
 import { politeFetch } from "../_lib/botfetch.js";
-import { json, err } from "../_lib/util.js";
+import { json, err, sameKey } from "../_lib/util.js";
 import { verifyEventPage } from "../_lib/events.js";
 import { logOp } from "../_lib/oplog.js";
 
 const BATCH = 6;
 export async function onRequest({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
-  if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
+  if (!env.ALERT_CRON_KEY || key.length < 16 || !sameKey(key, env.ALERT_CRON_KEY)) return err(401, "Not allowed.");
   if (request.method !== "POST" && request.method !== "GET") return err(405, "Use POST.");
   const { results: due } = await env.DB.prepare(
     `SELECT s.id AS sid, e.id AS eid, e.name, e.url, e.start_date FROM event_submissions s JOIN events e ON e.id = s.event_id

@@ -2,12 +2,12 @@
 //   POST ?job=<name>&status=ok|fail[&detail=text]   a workflow reports that it ran (uptime and backup do; the jobs that call the site record themselves)
 //   GET                                              every job: last run, hours ago, stale / failed, plus the deploy check state
 // Answers { ok, stale: [...lines], jobs: [...] }. Never writes anything but its own row.
-import { json, err } from "../_lib/util.js";
+import { json, err, sameKey } from "../_lib/util.js";
 import { JOBS, recordHeartbeat, jobStatus, problemJobs } from "../_lib/heartbeat.js";
 
 export async function onRequest({ request, env }) {
   const key = request.headers.get("x-alert-key") || "";
-  if (!env.ALERT_CRON_KEY || key.length < 16 || key !== env.ALERT_CRON_KEY) return err(401, "Not allowed.");
+  if (!env.ALERT_CRON_KEY || key.length < 16 || !sameKey(key, env.ALERT_CRON_KEY)) return err(401, "Not allowed.");
   const url = new URL(request.url);
   if (request.method === "POST") {
     const job = url.searchParams.get("job") || "";

@@ -9,6 +9,13 @@ export const json = (data, init = {}) =>
   });
 
 export const err = (status, message) => json({ error: message }, { status });
+// Compares two secrets without stopping at the first different character (the time a plain === takes can leak how much of a guess matched).
+export function sameKey(a, b) {
+  a = String(a ?? ""); b = String(b ?? "");
+  let d = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return d === 0;
+}
 
 export const COUNTIES = ["Los Angeles", "Orange", "Riverside", "San Bernardino", "San Diego", "Ventura", "Santa Barbara"];
 
@@ -160,7 +167,7 @@ export async function requireAdmin(request, env) {
     if (!ok) return null;
     const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
     if (!aud.includes(env.ACCESS_AUD)) return null;
-    if (payload.exp && payload.exp * 1000 < Date.now()) return null;
+    if (!payload.exp || payload.exp * 1000 < Date.now()) return null; // Cloudflare always sets exp; a token without one is not accepted
     if (payload.iss && payload.iss !== `https://${env.ACCESS_TEAM_DOMAIN}`) return null;
     return { email: payload.email || "" };
   } catch {

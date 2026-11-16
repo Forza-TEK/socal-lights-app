@@ -17,12 +17,14 @@ export async function onRequestGet({ env }) {
   const dst = /PDT/.test(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles", timeZoneName: "short" }));
   const day = new Date(`${ptDate}T00:00:00${dst ? "-07:00" : "-08:00"}`).toISOString().slice(0, 19).replace("T", " ");
   const week = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 19).replace("T", " ");
-  const [waitHomes, waitEvents, waitContests, reports, claims, homesLive, evStats, contestsLive, installers, users, newUsers, subsToday, homesToday, entriesToday, votesWeek, litToday, hits, recentHomes, recentEvents, contests, activity] = await Promise.all([
+  const [waitHomes, waitEvents, waitContests, reports, claims, eventClaims, grokHeld, homesLive, evStats, contestsLive, installers, users, newUsers, subsToday, homesToday, entriesToday, votesWeek, litToday, hits, recentHomes, recentEvents, contests, activity] = await Promise.all([
     n("SELECT COUNT(*) AS n FROM posts WHERE status = 'pending' AND contest_id IS NULL"),
     n("SELECT COUNT(*) AS n FROM event_submissions WHERE status = 'pending'"),
     n("SELECT COUNT(*) AS n FROM contests WHERE status = 'pending' OR (status = 'live' AND note != '')"),
     n("SELECT (SELECT COUNT(*) FROM reports WHERE created_at > ?) + (SELECT COUNT(*) FROM removal_requests WHERE status = 'open') AS n", week),
     n("SELECT COUNT(*) AS n FROM posts WHERE installer_id IS NOT NULL AND installer_confirmed = 0 AND poster_type != 'installer' AND status = 'approved'"),
+    n("SELECT COUNT(*) AS n FROM event_claims WHERE status = 'pending'"),
+    n("SELECT (SELECT COUNT(*) FROM intake_events WHERE status = 'held') + (SELECT COUNT(*) FROM intake_updates WHERE status = 'held') AS n"),
     n("SELECT COUNT(*) AS n FROM posts WHERE status = 'approved' AND contest_id IS NULL"),
     loadEventStats(env, ptDate), // what the public map shows (not every row ever stored), and the data health counts
     n("SELECT COUNT(*) AS n FROM contests WHERE status = 'live' AND announced = 0"),
@@ -65,7 +67,7 @@ export async function onRequestGet({ env }) {
     revenue: rev, errors, runs,
     funnel: { steps: STEPS, counts: await funnelCounts(env), refs: refRows.map((r) => ({ code: r.page.slice(4), today: r.today || 0, week: r.week || 0 })) },
     trends: { days, houses: tHouses, votes: tVotes, accounts: tAccounts, views: tViews, topPages, clicks },
-    attention: { waitHomes, waitEvents, waitContests, reports, claims },
+    attention: { waitHomes, waitEvents, waitContests, reports, claims, eventClaims, grokHeld },
     today: { homes: homesToday, events: subsToday, entries: entriesToday },
     live: { homes: homesLive, events: evStats.map.total, eventsConfirmed: evStats.map.confirmed, eventsExpected: evStats.map.expected, contests: contestsLive, installers },
     people: { users, newUsers, votesWeek, hits, litToday },

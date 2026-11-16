@@ -1,6 +1,6 @@
 // Admin > From Grok: the events Grok sent from its browser pass (docs/monetization/grok-browser-pass.md) and the changes it made to events already on the map.
 // Same format as Events: pill tabs, a table, and a full-page record with a Back link and the actions at the top right.
-import { esc, btn, toast } from "/admin/kit.js?v=20261116a";
+import { esc, btn, toast, tap } from "/admin/kit.js?v=20261116a";
 import { SEASONS } from "/seasons.js?v=20261115a";
 
 async function api(path, opts = {}) {
@@ -49,6 +49,8 @@ export async function renderGrok(main) {
   const open = OPEN && (VIEW === "updates" ? (d.updates || []).find((x) => x.id === OPEN) : d.rows.find((r) => r.id === OPEN));
   if (OPEN && !open) OPEN = "";
   const act = async (b) => {
+    const g = b.dataset.ga, rej = open && VIEW !== "updates" && open.status === "rejected";
+    if ((g === "unpublish" || g === "update_revert" || g === "remove_photo" || (g === "publish" && rej)) && !tap(b, { unpublish: "unpublish", update_revert: "undo", remove_photo: "remove the photo", publish: "publish anyway" }[g])) return; // a second tap goes ahead
     b.disabled = true;
     try { await api("/api/admin/grok", { method: "POST", body: JSON.stringify({ action: b.dataset.ga, id: OPEN || b.closest("[data-gid]").dataset.gid }) }); toast(DONE[b.dataset.ga]); OPEN = ""; detail(""); renderGrok(main); }
     catch (er) { b.disabled = false; toast(er.message, true); }

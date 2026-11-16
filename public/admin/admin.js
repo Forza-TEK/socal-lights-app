@@ -7,7 +7,7 @@ import { renderEmails } from "/admin/emails.js?v=20261116b";
 import { renderHelp } from "/admin/help.js?v=20261116b";
 import { renderPartner } from "/admin/partner.js?v=20261116b";
 import { renderChat } from "/admin/chat.js?v=20261116c";
-import { renderGrok } from "/admin/grok.js?v=20261116a";
+import { renderGrok } from "/admin/grok.js?v=20261116b";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261116a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
 import { pageHost } from "/admin/pagehost.js?v=20261116a";
@@ -45,7 +45,7 @@ document.addEventListener("admin:detail", (e) => setDetail(e.detail || ""));
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
-function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; const bd = $("#bdot"); if (bd) { bd.hidden = !w; $("#bell").title = w ? `${w} waiting` : "Nothing is waiting"; } }
+function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.grok || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; const bd = $("#bdot"); if (bd) { bd.hidden = !w; $("#bell").title = w ? `${w} waiting` : "Nothing is waiting"; } }
 function setTab(t, push = true) {
   if (t !== tab) { PVIEW = "pending"; HOPEN = ""; COPEN = ""; OORDER = ""; }
   tab = t;
@@ -139,7 +139,7 @@ async function renderHouses() {
   const bulk = pend && !dec ? `<div class="bulk" id="bulk"><label class="chk"><input type="checkbox" id="selAll"> Select all</label><span class="grow"></span><span class="meta" id="selN"></span><button class="btn ice" type="button" id="bulkGo" hidden></button><button class="btn ghost" type="button" id="bulkClear" hidden>Clear</button></div>` : "";
   const cols = contest ? "<th>Entry</th><th>Contest</th><th>Posted by</th><th>Contact</th><th>Address</th>" : "<th>House</th><th>City</th><th>Posted as</th><th>Photos</th><th>Received</th>";
   const cells = (p) => contest ? `<td><a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">${esc(p.title)}</a></td><td>${esc(p.contest)}</td><td>${esc(p.biz)}</td><td>${esc(p.contact_email || "—")}</td><td>${esc(p.address || "—")}</td>`
-    : `<td>${pend && !dec ? `<input type="checkbox" class="rsel" data-sel="${esc(p.id)}" aria-label="Select ${esc(p.title)}"> ` : ""}<a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">${esc(p.title)}</a><span class="sub">${esc(p.biz)}</span></td><td>${esc(p.city)}<span class="sub">${esc(p.county || "")}</span></td><td><span class="tag">${p.kind === "installer" ? "Installer" : "Homeowner"}</span></td><td>${p.photos.length}</td><td>${esc((p.created || "").slice(0, 16))} UTC</td>`;
+    : `<td>${pend && !dec ? `<input type="checkbox" class="rsel" data-sel="${esc(p.id)}" aria-label="Select ${esc(p.title)}"> ` : ""}<a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">${esc(p.title)}</a><span class="sub">${esc(p.biz)}</span></td><td>${esc(p.city)}<span class="sub">${esc(p.county || "")}</span></td><td><span class="tag">${p.kind === "installer" ? "Installer" : "Homeowner"}</span></td><td data-label="Photos">${p.photos.length}</td><td data-label="Received">${esc((p.created || "").slice(0, 16))} UTC</td>`;
   POSTS = pend ? [...waiting, ...declined] : contest ? cList : live;
   main.innerHTML = head + bar + bulk + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr>${cols}<th class="ac">Actions</th></tr></thead><tbody>${rows.map((p) => `<tr data-id="${esc(p.id)}">${cells(p)}<td class="ac"><a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">Open</a></td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${rows.length} ${contest ? "entr" + (rows.length === 1 ? "y" : "ies") : "house" + (rows.length === 1 ? "" : "s")}</span></div></div>`;
   main.querySelectorAll("[data-hopen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); HOPEN = a.dataset.hopen; renderHouses(); }));
@@ -323,7 +323,7 @@ async function renderSubs() {
   if (!SUBS.length) { main.innerHTML = head + bar + `<div class="empty">${SUBVIEW === "pending" ? "Nothing waiting. New events go live right away; look under Live to review or unpublish them." : SUBVIEW === "declined" ? "Nothing declined." : "No submitted events are live."}</div>`; go(); return; }
   const sbulk = pend ? `<div class="bulk" id="sbulk" hidden><span class="meta" id="sSelN"></span><span class="grow"></span><button class="btn ice" type="button" id="sPubC" hidden></button><button class="btn ghost" type="button" id="sPubE" hidden></button><button class="btn ghost danger" type="button" id="sDec" hidden></button><button class="btn ghost" type="button" id="sClear" hidden>Clear</button></div>` : "";
   main.innerHTML = head + bar + sbulk + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr>${pend ? '<th class="cb"><input type="checkbox" id="sAll" aria-label="Select all shown"></th>' : ""}<th>Event</th><th>City</th><th>Dates</th><th>Contact</th><th>Added</th><th class="ac">Actions</th></tr></thead><tbody>
-    ${SUBS.map((x) => `<tr data-sid="${esc(x.id)}">${pend ? `<td class="cb"><input type="checkbox" class="rsel" data-ssel="${esc(x.id)}" aria-label="Select ${esc(x.name)}"></td>` : ""}<td><a class="rl" href="#subs" data-sopen="${esc(x.id)}">${esc(x.name)}</a><span class="sub">${esc(x.venue || "")}</span></td><td>${esc(x.city)}<span class="sub">${esc(x.county || "")}</span></td><td>${esc(x.start_date)}${x.end_date !== x.start_date ? " to " + esc(x.end_date) : ""}<span class="sub">${esc(x.hours || "no hours")}</span></td><td>${esc(x.contact_email)}</td><td>${esc((x.created_at || "").slice(0, 16))} UTC</td><td class="ac"><a class="rl" href="#subs" data-sopen="${esc(x.id)}">Open</a></td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${SUBS.length} event${SUBS.length === 1 ? "" : "s"}</span></div></div>`;
+    ${SUBS.map((x) => `<tr data-sid="${esc(x.id)}">${pend ? `<td class="cb"><input type="checkbox" class="rsel" data-ssel="${esc(x.id)}" aria-label="Select ${esc(x.name)}"></td>` : ""}<td><a class="rl" href="#subs" data-sopen="${esc(x.id)}">${esc(x.name)}</a><span class="sub">${esc(x.venue || "")}</span></td><td>${esc(x.city)}<span class="sub">${esc(x.county || "")}</span></td><td>${esc(x.start_date)}${x.end_date !== x.start_date ? " to " + esc(x.end_date) : ""}<span class="sub">${esc(x.hours || "no hours")}</span></td><td data-label="Contact">${esc(x.contact_email)}</td><td data-label="Added">${esc((x.created_at || "").slice(0, 16))} UTC</td><td class="ac"><a class="rl" href="#subs" data-sopen="${esc(x.id)}">Open</a></td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${SUBS.length} event${SUBS.length === 1 ? "" : "s"}</span></div></div>`;
   main.querySelectorAll("[data-sopen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); SUBOPEN = a.dataset.sopen; renderSubs(); }));
   go(); if (pend) wireSubsBulk(main);
 }
@@ -414,6 +414,7 @@ async function renderClaims() {
 }
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-clact]"); if (!b) return;
+  if (!tap(b, b.dataset.clact)) return; // a second tap decides: the person is emailed once
   const card = b.closest("[data-clid]"); b.disabled = true;
   try { const r = await api("/api/admin/claims/" + card.dataset.clid, { method: "POST", body: JSON.stringify({ action: b.dataset.clact }) }); toast((b.dataset.clact === "approve" ? "Approved" : "Declined") + (r && r.emailed ? " and emailed" : " (no email sent)")); renderClaims(); refreshCounts(); } catch (er) { b.disabled = false; toast(er.message, true); }
 });
@@ -692,7 +693,7 @@ async function renderEvents() {
   const paint = () => {
     const all = evFiltered(); shown = all.slice(0, EVLIMIT);
     main.querySelector("[data-tcount]") ? 0 : main.querySelector(".tbar .grow").insertAdjacentHTML("afterend", '<span class="meta tcount" data-tcount></span>');
-    main.querySelector("[data-tcount]").textContent = `${all.length} event${all.length === 1 ? "" : "s"}`;
+    main.querySelector("[data-tcount]").textContent = `${all.length} event${all.length === 1 ? "" : "s"}` + (evSeason !== "all" ? ` in this season (menu count: all seasons)` : "");
     const srcOf = (id) => (String(id).startsWith("grok-") ? "Grok" : String(id).startsWith("u-") ? "Organizer" : String(id).startsWith("hcontest-") ? "Contest" : "Sweep");
     $("#evlist").innerHTML = all.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th class="cb"><input type="checkbox" id="evAllH" aria-label="Select all ${all.length} shown by the filters" ${all.length > 0 && all.every((e) => EVSEL.has(e.id)) ? "checked" : ""}></th><th>Event</th><th>City</th><th>Dates</th><th>Status</th><th>Source</th><th class="ac">Actions</th></tr></thead><tbody>${shown.map((e) => `<tr class="${e.e < TODAY ? "past" : ""}" data-eid="${esc(e.id)}"><td class="cb"><input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}></td>
       <td><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">${esc(e.n)}</a><span class="sub">${esc(e.v || "")}</span></td><td>${esc(e.city)}<span class="sub">${esc(e.c)}</span></td><td>${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}<span class="sub">${esc(e.h || e.p || "")}</span></td>
@@ -1040,7 +1041,8 @@ async function renderDashboard() {
   const main = $("#main"), d = await api("/api/admin/dashboard"); setDetail("");
   const a = d.attention, todo = [
     ["pending", a.waitHomes, "house", "waiting for your review"], ["subs", a.waitEvents, "event", "submitted, waiting for review"], ["contests", a.waitContests, "contest", "waiting for approval"],
-    ["reports", a.reports, "report", "from visitors this week"], ["installers", a.claims, "installer claim", "to confirm"],
+    ["reports", a.reports, "report", "from visitors this week"], ["installers", a.claims, "installer claim", "on a home, to confirm"],
+    ["claims", a.eventClaims, "event claim", "waiting for a decision"], ["grok", a.grokHeld, "Grok item", "held for your review"],
   ].filter((t) => t[1] > 0);
   const tile = (k, n, l, more = "") => `<div class="stat"><b>${fmt(n)}</b><span>${l}</span>${more ? `<small class="meta">${more}</small>` : ""}</div>`;
   const kindTab = { home: "pending", event: "subs" };
@@ -1048,7 +1050,7 @@ async function renderDashboard() {
     <div class="pghead"><div><h2>Dashboard</h2><p>${hour < 5 ? "Hello" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}. ${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p></div></div>
     ${d.staleJobs && d.staleJobs.length ? `<div class="limitbanner" role="alert"><b>${d.staleJobs.length === 1 ? "A scheduled job has stopped reporting in." : d.staleJobs.length + " scheduled jobs have stopped reporting in."}</b>${d.staleJobs.slice(0, 5).map((j) => `<span>${esc(j.line)}</span>`).join("")}<span>GitHub runs scheduled jobs late or skips them. Run the workflow by hand from GitHub > Actions, or see docs/runbooks/monitoring.md.</span></div>` : ""}
     ${d.limits && d.limits.length ? `<button type="button" class="limitbanner" data-tab="usage"><b>A Cloudflare or email limit was hit at ${esc(String(d.limits[0].at).slice(0, 16))} UTC.</b><span>${esc(String(d.limits[0].detail).slice(0, 140))} Open Cloudflare usage to see which one and what to do.</span></button>` : ""}
-    <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l]) => `<button type="button" class="tcard" data-tab="${k}"><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>` : `<div class="calm">${dico("check", "okic")}<div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests or reports are waiting.</p></div></div>`}</section>
+    <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l]) => `<button type="button" class="tcard" data-tab="${k}"><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>` : `<div class="calm">${dico("check", "okic")}<div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests, reports, event claims or Grok rows are waiting.</p></div></div>`}</section>
     <h2 class="dh">Today</h2>
     <div class="stats">${tile("h", d.today.homes, "new houses")}${tile("e", d.today.events, "events submitted")}${tile("c", d.today.entries, "contest entries")}${tile("l", d.people.litToday, "lights switched on")}</div>
     <h2 class="dh">On the site now</h2>

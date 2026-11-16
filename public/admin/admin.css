@@ -47,7 +47,7 @@ body.admin .acard label{display:grid;gap:4px;font-size:14px;color:var(--muted,in
 .col{min-width:0;display:flex;flex-direction:column}
 .side{position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;gap:6px;padding:18px 12px 12px;border-right:1px solid var(--line);background:var(--bg);overflow:hidden;z-index:60}
 .side .abrand{padding:4px 10px 14px}.side .abrand .nlb{display:block;white-space:nowrap;line-height:1.1}.side .abrand small{display:inline-block;vertical-align:2px;margin-left:8px;padding:2px 7px;border:1px solid var(--line2);border-radius:99px;font-weight:600;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);-webkit-text-fill-color:var(--muted)}
-.nvlist{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;display:grid;align-content:start;gap:2px}
+.nvlist{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;display:grid;align-content:start;gap:2px;background:linear-gradient(var(--bg) 30%,transparent) top,linear-gradient(transparent,var(--bg) 70%) bottom,radial-gradient(farthest-side at 50% 0,rgba(0,0,0,.2),transparent) top,radial-gradient(farthest-side at 50% 100%,rgba(0,0,0,.2),transparent) bottom;background-repeat:no-repeat;background-size:100% 32px,100% 32px,100% 10px,100% 10px;background-attachment:local,local,scroll,scroll} /* a soft shadow shows when more menu items are above or below */
 .gh{margin:16px 12px 6px;font:600 11px/1 var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .grp{display:grid;gap:2px}
 .nv,.bb{font:500 15px/1.2 var(--font);color:var(--muted);background:transparent;border:0;cursor:pointer;text-decoration:none}
@@ -443,7 +443,9 @@ details.fbox>summary{display:none}
   .dtab tbody tr:last-child{border-bottom:0}
   .dtab tbody td{display:block;padding:1px 14px 1px 0;border:0;background:none!important;grid-column:2}
   .dtab tbody td.cb{grid-column:1;grid-row:1/6;padding:2px 0 0 14px}
-  .dtab tbody td:nth-child(6){display:none}
+  .dtab tbody td:nth-child(6):not(.ac){display:none}
+  .dtab tbody td[data-label]::before{content:attr(data-label) ": ";color:var(--muted);font-weight:600}
+  .dtab tbody td.ac .rl,.dtab tbody td.ac .btn{display:inline-flex;align-items:center;min-height:36px}
   .dtab tbody td.ac{text-align:left;padding-top:6px}
   .dtab tbody td:nth-child(5){padding-top:4px}
 }
