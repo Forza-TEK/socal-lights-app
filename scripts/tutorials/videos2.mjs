@@ -591,10 +591,9 @@ S["contest-logo"] = { id: "contest-logo", file: "run-logo", cookie: ck.u_org, ro
 ]};
 
 S["live-location"] = { id: "live-location", file: "find-location", cookie: null, routes: NOCFG, ...MAPSPEC, steps: [
-  hook(EFP, "Use my location", "What it does, and what it does not send", "In this video, you will use the location button on the map, and learn what happens to your location. We start on the map."),
-  ...openShort(),
-  { cap: "The location button", say: "On the map is a location button, a small circle with a target. Tap it to center the map on you.", do: async (p, h) => { await h.hover(".maplibregl-ctrl-geolocate", 1400); await h.click(".maplibregl-ctrl-geolocate", { after: 2200 }); await h.click(".maplibregl-ctrl-geolocate", { after: 2600 }); }, pad: 0.3 },
-  { cap: "Near you", say: "The map moves to where you are, and the places in the list show how far away they are.", do: async (p, h) => { await sleep(3000); }, pad: 0.3 },
+  hook(EFP, "Use my location", "What it does, and what it does not send", "In this video, you will use your location on the map, and learn what happens to it. We start at the website."),
+  ...openSite(undefined, true),
+  { cap: "The location button", say: "Any time you want to come back to where you are, tap the location button on the map. It is the small circle with a target.", do: async (p, h) => { await h.hover(".maplibregl-ctrl-geolocate", 2400); }, pad: 0.3 },
   { cap: "What is sent", say: "Your location is used on your device, to center the map and to estimate drive times. It is not sent to our servers for that.", do: async (p, h) => { await sleep(3200); }, pad: 0.3 },
   { cap: "One exception", say: "There is one exception. On a home, the button I saw it lit tonight sends your position to our server once, only to check that you are within about a quarter mile. We do not store it. We keep only a yes or no.", do: async (p, h) => { await h.click("#seasonbtn", { after: 700 }); await h.click('[data-sp]:has-text("Christmas")', { after: 1200 }); await h.type("#q", "Garcia Family"); await h.click("#pbody .item >> nth=0", { after: 1600 }); await p.locator(".onbtn").first().waitFor({ timeout: 20000 }); await p.locator(".onbtn").first().scrollIntoViewIfNeeded(); await h.hover(".onbtn", 3200); }, pad: 0.3 },
   { cap: "You can say no", say: "You can always decline to share your location. Everything still works. You just will not see distances.", do: async (p, h) => { await sleep(3200); }, pad: 0.3 },
