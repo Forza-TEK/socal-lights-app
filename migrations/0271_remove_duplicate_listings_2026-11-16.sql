@@ -1,0 +1,19 @@
+-- Audit 2026-11-16 (finding H4): 11 listings that are the same event as an older row (each showed twice on the map and in the weekly email).
+-- For every pair the better row stays: the sweep or organizer row, with any missing field (official link, hours) folded in from the duplicate.
+-- The duplicate Grok row is taken off the map the way Admin > From Grok > Unpublish does it: its live event is deleted and the intake row is marked 'unpublished',
+-- so Grok's intake cannot add it again (its duplicate check also looks at intake rows). A row that carries a paid Featured placement is never touched.
+-- Checked against the official pages on 2026-11-16 (dates and times agree between each pair):
+--   Sawdust Winter Fantasy (sawdustartfestival.org: Nov 20 to Dec 20 2026, Fri-Sun 11am-7pm), Coast Village Road (Dec 3 2026, 4-6pm), Ventura Harbor Village parade page,
+--   Mount of Olives nativity (moochurch.org: Dec 11-12 2026, 5:30-9:30pm), RiverPark (Nov 18, 7-8pm), Agua Caliente NYE (Dec 31 2026, 7pm).
+-- The Capistrano Lights sweep row keeps its link (the mission site closes the connection on the bot, so the Grok row link could not be checked).
+-- Not duplicates, left alone: dplights (Happy Harbor Days nightly lights) and soc-dp-harbor-after-dark (a Thursday holiday market) are two different events at one address.
+-- validate: allow-destructive (removes duplicate rows, each guarded by id)
+UPDATE events SET url='https://sawdustartfestival.org/collections/winter-fantasy', updated_at=datetime('now') WHERE id='sawdust-winter-fantasy';
+UPDATE events SET url='https://www.coastvillageroad.com/events/holiday-event-tree-lighting-2026', updated_at=datetime('now') WHERE id='g20-coast-village-tree-lighting';
+UPDATE events SET url='https://www.venturaharborvillage.com/parade-of-lights-2026/', hours='Festivities from 4pm; parade 6:30pm; fireworks 8pm', updated_at=datetime('now') WHERE id='ventura';
+-- The Fallbrook sweep row linked to last year's newspaper story and its photo came from that story; the 45th annual parade (Dec 5, 5pm) is on the organizer's event page that Grok read.
+UPDATE events SET url='https://www.facebook.com/events/4556165277989632/', status='confirmed', hours='Parade 5pm', image=NULL, updated_at=datetime('now') WHERE id='fallbrook-christmas-parade';
+-- The organizer's own Mount of Olives row keeps its place; its hours, address and blurb are fixed to the official page (the row came through the public form).
+UPDATE events SET hours='5:30pm–9:30pm', address='24772 Chrisanta Dr, Mission Viejo, CA 92691', blurb='A free drive-thru or walk-thru living nativity with costumed actors and live animals, plus some modern Christmas fun.', updated_at=datetime('now') WHERE id='u-drive-thru-nativity-at-m-d7f385';
+UPDATE intake_events SET status='unpublished', acted_at=datetime('now') WHERE id IN ('grok-the-polar-express-train-d45e34','grok-tree-lighting-celebratio-8e8900','grok-36th-annual-winter-fanta-c95ea4','grok-coast-village-tree-light-1636bf','grok-45th-annual-fallbrook-ch-98d9e9','grok-43rd-light-up-a-life-san-ec9889','grok-43rd-light-up-a-life-gol-03dc04','grok-drive-thru-nativity-at-m-29573c','grok-capistrano-lights-missio-8df7b3','grok-ventura-harbor-parade-of-b30f65','grok-outdoor-nye-celebration-5d5dc0') AND id NOT IN (SELECT event_id FROM feature_orders WHERE event_id IS NOT NULL);
+DELETE FROM events WHERE id IN ('grok-the-polar-express-train-d45e34','grok-tree-lighting-celebratio-8e8900','grok-36th-annual-winter-fanta-c95ea4','grok-coast-village-tree-light-1636bf','grok-45th-annual-fallbrook-ch-98d9e9','grok-43rd-light-up-a-life-san-ec9889','grok-43rd-light-up-a-life-gol-03dc04','grok-drive-thru-nativity-at-m-29573c','grok-capistrano-lights-missio-8df7b3','grok-ventura-harbor-parade-of-b30f65','grok-outdoor-nye-celebration-5d5dc0') AND id NOT IN (SELECT event_id FROM feature_orders WHERE event_id IS NOT NULL);

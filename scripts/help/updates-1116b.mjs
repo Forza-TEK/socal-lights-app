@@ -317,7 +317,7 @@ for (const e of EDITS) {
   if (!e.edits.length) continue;
   const row = cur(e.slug); let body = row.body, expr = "body";
   for (const [a, b] of e.edits) {
-    // the part 1 migration (0267) runs before this one, so edits can target its text; the same fragment may also be in the article before it
+    // the part 1 migration (0269) runs before this one, so edits can target its text; the same fragment may also be in the article before it
     const n = body.split(a).length - 1;
     if (n !== 1) throw new Error(`${e.slug}: the text to replace is in the article ${n} times (needs exactly 1): ${a.slice(0, 80)}`);
     body = body.replace(a, () => b); expr = `replace(${expr}, ${q(a)}, ${q(b)})`; nEdits++;
