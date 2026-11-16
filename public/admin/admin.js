@@ -8,6 +8,7 @@ import { renderHelp } from "/admin/help.js?v=20261113a";
 import { renderPartner } from "/admin/partner.js?v=20261113a";
 import { renderChat } from "/admin/chat.js?v=20261113a";
 import { renderGrok } from "/admin/grok.js?v=20261116a";
+import { renderProgress } from "/admin/progress.js?v=20261116a";
 import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261116a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
 
@@ -35,8 +36,8 @@ async function api(path, opts = {}) {
   return d;
 }
 
-const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "passes", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "grok", "emails", "help", "chat"];
-const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", grok: "From Grok", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
+const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "passes", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "grok", "progress", "emails", "help", "chat"];
+const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", grok: "From Grok", progress: "Progress", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 // The breadcrumb in the top bar: the menu group, the page, and (on a full record) the record's name
 const groupOf = (t) => { const b = document.querySelector(`#side [data-tab="${t}"]`); if (!b) return ""; let n = b.closest(".grp"); n = n && n.previousElementSibling; while (n && !n.classList.contains("gh")) n = n.previousElementSibling; return n ? n.textContent.trim() : ""; };
 const setDetail = (name) => { const d = $("#pdetail"); if (d) d.innerHTML = name ? `<span class="csep" aria-hidden="true">/</span><b>${esc(name)}</b>` : ""; };
@@ -93,6 +94,7 @@ async function render() {
     if (tab === "help") return renderHelp(main);
     if (tab === "chat") return renderChat(main);
     if (tab === "grok") return renderGrok(main);
+    if (tab === "progress") return renderProgress(main);
     if (tab === "approved" && PVIEW === "contest") {
       const list = await api("/api/admin/posts?contest=1"); POSTS = list;
       const cbar = toolbar({ views: [{ k: "pending", label: "Published" }, { k: "contest", label: "Contest entries", n: list.length }], active: "contest", search: { placeholder: "Search entries, people, cities" } });
@@ -1374,3 +1376,29 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal
   btn.onclick = () => { box.classList.add("open"); q.focus(); };
   document.addEventListener("keydown", (e) => { if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && $("#modal").hidden) { e.preventDefault(); box.classList.add("open"); q.focus(); q.select(); } });
 })();
+
+/* ---------- the pill tabs slide: one indicator glides to the chosen tab ---------- */
+// Every `.seg` (the pill tabs) gets an indicator behind its buttons. When a page redraws its tabs, the indicator starts where the same tabs' indicator was last time and slides to the new choice;
+// when only aria-pressed changes, it slides from the old tab. Reduced motion: no slide, the indicator just moves.
+{
+  const mem = new Map(), still = matchMedia("(prefers-reduced-motion: reduce)");
+  const chosen = (seg) => seg.querySelector('button[aria-pressed="true"], button[aria-selected="true"], button[aria-current]');
+  const place = (seg, ind, instant) => {
+    const b = chosen(seg); if (!b) { ind.style.opacity = "0"; return; }
+    ind.style.opacity = "1"; ind.style.transition = instant || still.matches ? "none" : "";
+    ind.style.width = b.offsetWidth + "px"; ind.style.transform = `translateX(${b.offsetLeft}px)`;
+    mem.set(seg._slKey, { l: b.offsetLeft, w: b.offsetWidth });
+  };
+  const key = (seg) => `${typeof tab === "string" ? tab : ""}|${seg.getAttribute("aria-label") || ""}|${[...document.querySelectorAll(".seg")].indexOf(seg)}`;
+  const setup = (seg) => {
+    if (seg._sl) return; seg._sl = true; seg._slKey = key(seg);
+    const ind = document.createElement("span"); ind.className = "seg-ind"; ind.setAttribute("aria-hidden", "true"); seg.prepend(ind); seg.dataset.sl = "1";
+    const prev = mem.get(seg._slKey);
+    if (prev) { ind.style.transition = "none"; ind.style.width = prev.w + "px"; ind.style.transform = `translateX(${prev.l}px)`; ind.style.opacity = "1"; void ind.offsetWidth; }
+    requestAnimationFrame(() => place(seg, ind, !prev));
+    new MutationObserver(() => place(seg, ind, false)).observe(seg, { attributes: true, subtree: true, attributeFilter: ["aria-pressed", "aria-selected", "aria-current"] });
+    addEventListener("resize", () => place(seg, ind, true));
+  };
+  const scan = () => document.querySelectorAll("#main .seg").forEach(setup);
+  new MutationObserver(scan).observe(document.getElementById("main"), { childList: true, subtree: true }); scan();
+}

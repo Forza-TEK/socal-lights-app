@@ -1,5 +1,11 @@
 # Status
 
+## 2026-11-16 (Admin > Progress: live dashboard with trend graphs)
+- Owner asked for progress "live, not every morning". New tab **Admin > System > Progress** (`public/admin/progress.js`, `functions/api/admin/progress.js`, `functions/_lib/progress.js`): counts the map (upcoming, confirmed, expected, with a photo, added by Grok), season categories against the working targets (thinnest first), upcoming events by county, Grok's work (intake published and held, updates applied and held, events tried), the Admin redesign list and what shipped, **straight from the database each time it opens and again every 30 seconds while open** (a green Live badge shows the age). Trend lines (six small graphs) read the new table `progress_log` (migration 0265): one row every half hour, written by the cron Worker job `progress-log` (`POST /api/progress-log`, key `x-alert-key`, added to the `13,43 * * * *` cron in `workers/mail-cron`, which deploys by itself when this merges) and by opening the page. History starts at the first row, so the lines fill in over the hours and days after the merge.
+- **All Admin pill tabs now slide:** one indicator glides (about a third of a second, no bounce) to the chosen tab, including when a page redraws its tabs (it starts where the same tabs' indicator was last time); reduced motion turns the glide off. `public/admin/admin.js` / `admin.css` (`.seg-ind`).
+- Two lists the database cannot know are kept by hand in `functions/_lib/progress-data.js` (`REDESIGN`, `SHIPPED`): update them whenever an Admin area is converted or something ships.
+- The Claude artifact "SoCal Lights Progress" (snapshot files refreshed daily by the scheduled task "[SCL] Progress dashboard refresh") stays as a shareable copy; Admin > Progress is the live one.
+
 ## 2026-11-16 (Admin redesign, step 4: Event claims)
 - **Event claims** in the same format: pill tabs (Waiting, Approved, Declined), a table (Event, Claimed by, Event page, Added, Status, Actions) with Approve and Decline on the row (a claim has too few fields for a separate record page). `admin.js?v=20261116i`. Tested in a browser with sample claims (approving moves the row to Approved).
 - Pills: status pills in the Admin tables no longer wrap onto two lines ("On the map" was breaking in a narrow column); `admin.css?v=20261116h`.
