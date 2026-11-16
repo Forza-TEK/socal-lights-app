@@ -9,9 +9,14 @@ if os.environ.get("TTS_ENGINE") == "kokoro":
     from kokoro_onnx import Kokoro
     k = Kokoro(sys.argv[1] + "/kokoro-v1.0.onnx", sys.argv[1] + "/voices-v1.0.bin")
     voice, speed = os.environ.get("KOKORO_VOICE", "af_heart"), float(os.environ.get("KOKORO_SPEED", "1.0"))
+    import re
+    # Approved voice rules (owner, 2026-11): the brand is said with the stress on SO ("SO-cal Lights dot app"), and there is a very slight pause (a comma) after the word "free" when it ends a phrase, e.g. "Free, on SoCal Lights dot app".
+    # Done on the phonemes, so every other word is spoken exactly as before.
+    def fix(ph): return re.sub(r"sˌoʊ ?kˈæl", "sˈoʊkæl", ph)
     for i, t in enumerate(texts):
         if not t: continue
-        s, sr = k.create(t, voice=voice, speed=speed, lang="en-us")
+        t = re.sub(r"\b([Ff]ree)\b(?=\s+(?:on|at|for|in)\b)", r"\1,", t)  # slight pause after "free" before "on SoCal Lights", "for families", ...
+        s, sr = k.create(fix(k.tokenizer.phonemize(t, "en-us")), voice=voice, speed=speed, lang="en-us", is_phonemes=True)
         sf.write(f"{out}/{i}.wav", np.asarray(s), sr, subtype="PCM_16")
 else:
     from piper import PiperVoice, SynthesisConfig
