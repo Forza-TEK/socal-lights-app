@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-16: Admin redesign, Houses converted
+Houses waiting and Published houses use the new format: pill tabs (Waiting/Declined; Published/Contest entries), tables with a search and sort, and a full-page record with a Back link, photos and the Approve, Decline, Edit, Photos, Unpublish and Remove actions at the top right. The bulk bar (select several waiting houses, Approve) works on the table rows; its selection count now follows the search. Admin redesign: 8 of 22 areas done; next is Contests. Tested locally with seeded houses (list, bulk select, record page, back); the approve, decline and remove buttons were not clicked.
+
 ## 2026-11-16: Admin redesign, Replaced records converted
 Replaced records now use pill tabs (Replaced, Same street) and tables; the "Visitors see" choice (Their record, Both, Sweep record) sits in each row. Admin redesign: 7 of 22 areas done; next is Houses (test its bulk bar), then Contests, Installers and the rest. The Claude "SoCal Lights Progress" dashboard shows the list.
 
