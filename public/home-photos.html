@@ -35,7 +35,7 @@
 <main><div class="hp" id="box"><p class="meta">Loading…</p></div></main>
 <script type="module">
 import { shrink } from "/shrink.js?v=20261111a";
-import { signIn, noteSigninResult } from "/auth.js?v=20261111z";
+import { signIn, noteSigninResult } from "/auth.js?v=20261116a";
 const box = document.getElementById("box"), token = (location.pathname.match(/^\/photos\/([A-Za-z0-9_-]{20,64})\/?$/) || [])[1] || "";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], nice = (d) => { const [, m, x] = String(d).split("-").map(Number); return m ? MON[m - 1] + " " + x : ""; };

@@ -125,6 +125,9 @@ async function cloneContest(env, c, user) {
   // Audit H2: only a contest that is (or was) really live can be run again. A declined, held-for-review or Admin-closed one never becomes live through a copy; one the creator unpublished
   // themselves can be put back with "publish again" first.
   if (!(c.status === "live" || c.announced)) return err(400, c.status === "pending" ? "This contest is still waiting for review, so it can't be run again yet." : c.status === "declined" && c.unpublished_by === "owner" ? "Put this contest back on the map first, then you can run it again." : "This contest can't be run again. Contact us if you think that is a mistake.");
+  // A copy counts toward the same per-account daily cap as creating a new contest (POST /api/contests): the 4th create-or-clone in a day is refused with the same message.
+  const today = (await env.DB.prepare("SELECT COUNT(*) AS n FROM contests WHERE owner_id = ? AND created_at > datetime('now','-1 day')").bind(user.id).first()).n;
+  if (today >= 3) return err(429, "You've created several contests today. Try again tomorrow.");
   // Contest passes: a copy that goes live counts toward the organization's window like any other contest (a copy held for review does not count yet).
   const gate = await liveGate(env, user.email, c.site);
   if (!gate.ok) return json({ error: PAYWALL_MESSAGE, code: "pass_required", ...gate.view }, { status: 402 });

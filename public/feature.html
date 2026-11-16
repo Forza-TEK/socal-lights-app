@@ -88,7 +88,7 @@ else if (!cfg.featureCheckout) { $("#auto").hidden = true; $("#manual").hidden =
 else await start();
 
 async function start() {
-  const { me, signIn } = await import("/auth.js?v=20261111z");
+  const { me, signIn } = await import("/auth.js?v=20261116a");
   const user = (await me()).user;
   const wantPlan = (k) => (EP[k] ? k : EP[LEG[k]] ? LEG[k] : "");
   const S = { plan: wantPlan(qs.get("plan")), ev: null, mine: [], user, busy: false, msg: "", changing: false, claim: null, claimMsg: "", found: [] };
@@ -289,7 +289,7 @@ async function paidView(S) {
 }
 </script>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261116a";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261116b";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 </script>
 <script src="/footer.js?v=20261116c" defer></script>
