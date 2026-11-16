@@ -46,7 +46,7 @@ const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
 function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; const bd = $("#bdot"); if (bd) { bd.hidden = !w; $("#bell").title = w ? `${w} waiting` : "Nothing is waiting"; } }
 function setTab(t, push = true) {
-  if (t !== tab) { PVIEW = "pending"; HOPEN = ""; COPEN = ""; }
+  if (t !== tab) { PVIEW = "pending"; HOPEN = ""; COPEN = ""; OORDER = ""; }
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
   $("#ptitle").textContent = TITLES[t] || ""; $("#pgroup").textContent = groupOf(t); setDetail("");
@@ -418,7 +418,7 @@ $("#main").addEventListener("click", async (e) => {
 });
 
 /* ---------- Featured orders: money that needs the owner (refunds to make, disputes, placements that did not apply) ---------- */
-let OVIEW = "attention";
+let OVIEW = "attention", OORDER = "";
 const OFLAG = { refund_due: ["Refund due", "bad"], disputed: ["Disputed", "bad"], held: ["Partial refund", "warn"], unapplied: ["Not applied", "bad"], differs: ["Placement differs", "warn"], mismatch: ["Amount differs", "warn"], note: ["See note", "warn"], cancelled: ["Event cancelled", "warn"] };
 // Event plans (current: ev_*; old: pin, top, season stay for orders already paid) and what each contains. Installer plans have their own names (INST_PLAN).
 const PLAN_NAME = { ev_pin: "Featured pin", ev_banner: "Banner + Featured pin", ev_top: "Top of the list + Featured pin", ev_all: "Top of the list + Banner + Featured pin", pin: "Featured pin (old plan)", top: "Top of the list (old plan)", season: "Full run (old plan)" };
@@ -429,15 +429,12 @@ const money = (c, cur) => (c == null ? "" : (cur && cur !== "usd" ? cur.toUpperC
 async function renderOrders() {
   const main = $("#main"), all = await api("/api/admin/orders"), rn = await api("/api/admin/renewals").catch(() => null), rv = await api("/api/admin/revenue?days=30").catch(() => null);
   const RG = { upcoming: ["Upcoming", "ok"], failed: ["Charge failed", "bad"], overdue: ["Overdue: run the job", "bad"], lapsed: ["Lapsed", "bad"], paused: ["Paused", "warn"], cancelled: ["Cancelled", ""] };
-  const renHtml = rn && rn.rows.length ? `<h2 class="dh">Automatic renewals (read-only): ${rn.counts.upcoming} upcoming, ${rn.counts.overdue} overdue, ${rn.counts.failed} failed, ${rn.counts.lapsed} lapsed, ${rn.counts.paused} paused</h2><div class="cards">${rn.rows.map((r) => rec({ attrs: "", title: esc(r.name || r.installer_id), tags: [RG[r.group] || [r.group, ""]], meta: esc(INST_PLAN[r.plan] || "Banner") + " · " + esc(money(r.price_cents)), facts: fact("Next charge", esc(r.next_charge_date || "")) + fact("Reminder sent", r.notice_sent_for ? "yes" : "not yet") + fact("Retry", esc(r.retry_at || "")) + fact("Last error", esc(r.last_error || "")) + fact("Agreed", esc((r.consent_at || "") + (r.consent_text_version ? " · wording " + r.consent_text_version : ""))) })).join("")}</div>` : "";
   const need = all.filter((o) => o.flags.length), rows = OVIEW === "attention" ? need : OVIEW === "paid" ? all.filter((o) => o.status === "paid") : OVIEW === "closed" ? all.filter((o) => o.status !== "paid") : all;
   setCount("orders", need.length);
-  const bar = toolbar({ views: [{ k: "attention", label: "Needs attention", n: need.length }, { k: "paid", label: "Paid", n: all.filter((o) => o.status === "paid").length }, { k: "closed", label: "Refunded and disputed", n: all.filter((o) => o.status !== "paid").length }, { k: "all", label: "All", n: all.length }], active: OVIEW, search: { placeholder: "Search events, emails" }, count: String(rows.length) });
-  const go = () => wireToolbar(main, { onView: (v) => { OVIEW = v; renderOrders(); }, onSearch: (q) => filterCards(main, q) });
-  if (!rows.length) { main.innerHTML = revenueStrip(rv) + bar + renHtml + `<div class="empty">${OVIEW === "attention" ? "Nothing needs you. Refunds you still have to make, disputes, partial refunds and placements that did not switch on show up here." : "No orders here yet."}</div>`; go(); return; }
-  main.innerHTML = revenueStrip(rv) + bar + renHtml + `<div class="cards">${rows.map((o) => {
+  const rnRows = rn && rn.rows.length ? rn.rows : [];
+  const oData = (o) => {
     const st = OSTATUS[o.status] || [o.status, ""], due = ["refund_due", "held", "disputed"].includes(o.status);
-    return rec({
+    return {
       attrs: `data-oid="${esc(o.session_id)}" data-onote="${esc(o.note || "")}"`, title: esc(o.target === "contest_pass" || o.target === "event_partner" ? orgLabelOf(o.event_id) : o.name || o.event_id), tags: [st, ...(o.target === "event_partner" ? [["Event Partner", ""]] : o.target === "contest_pass" ? [["Contest pass", ""]] : o.target === "home" ? [["Featured home", ""]] : o.target === "installer" ? [["Installer: " + (INST_PLAN[o.plan] || o.plan).toLowerCase(), ""], ...(o.renewal ? [["Auto-renewal", ""]] : [])] : []), ...o.flags.filter((f) => !(f === "refund_due" || f === "disputed" || f === "held")).map((f) => OFLAG[f] || [f, "warn"])], meta: esc((o.created_at || "").slice(0, 16)) + " UTC",
       facts: o.target === "event_partner" ? fact("Organization", `${esc(orgLabelOf(o.event_id))} · <a href="/admin/#partner">Event Partners</a>`) + fact("Plan", `Event Partner · <b>${esc(money(o.amount, o.currency))}</b>`) + fact("Season", o.applied_from ? `${esc(pdate(o.applied_from))} to ${esc(pdate(o.applied_until))}` : "") + fact("Payment", o.stripe_url ? `<a href="${esc(o.stripe_url)}" target="_blank" rel="noopener">${esc(o.payment_intent)} in Stripe</a>` : "") + fact("Note", esc(o.note || ""))
       : o.target === "contest_pass" ? fact("Organization", `${esc(orgLabelOf(o.event_id))} · <a href="/admin/#contests">Contest passes</a>`) + fact("Pass", `Up to ${esc(o.pass_cap)} contests · <b>${esc(money(o.amount, o.currency))}</b> <span class="meta">(${esc(o.pass_status || "not applied")})</span>`) + fact("Window", o.pass_from ? `${esc(pdate(o.pass_from))} to ${esc(pdate(o.pass_to))}` : "") + fact("Payment", o.stripe_url ? `<a href="${esc(o.stripe_url)}" target="_blank" rel="noopener">${esc(o.payment_intent)} in Stripe</a>` : "") + fact("Note", esc(o.note || ""))
@@ -447,9 +444,34 @@ async function renderOrders() {
       edit: btn("ghost", o.note ? "Edit note" : "Add note", 'data-oact="note"'),
       body: due ? '<p class="meta" style="margin:0">Use <b>Mark refunded</b> only after you refunded the payment in the Stripe dashboard. The button does not refund anything.</p>' : "",
       main: due ? btn("main", "Mark refunded", 'data-oact="mark_refunded"') : o.status === "paid" && !o.applied ? btn("main", "Apply now", 'data-oact="reapply"') : "",
-    });
-  }).join("")}</div>`;
-  go();
+    };
+  };
+  const oneO = OORDER && all.find((o) => o.session_id === OORDER); if (OORDER && !oneO) OORDER = "";
+  const kv = (html) => `<dl class="facts">${html}</dl>`;
+  if (oneO) { // the full record
+    const o = oneO, d = oData(o), nm = o.target === "contest_pass" || o.target === "event_partner" ? orgLabelOf(o.event_id) : o.name || o.event_id;
+    setDetail(nm);
+    main.innerHTML = `<div class="rpage" data-oid="${esc(o.session_id)}" data-onote="${esc(o.note || "")}" data-name="${esc(nm)}"><a class="rback" href="#orders" id="oBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to orders</a>
+      <div class="pghead"><div><h2>Order detail</h2></div><div class="pgacts">${d.edit}${d.main}</div></div><span class="msg" role="status"></span>
+      ${d.body ? `<section class="rcard">${d.body}</section>` : ""}
+      <section class="rcard"><h3>${esc(nm)}</h3><div class="rt" style="margin:0 0 10px">${d.tags.map(([l, t]) => `<span class="tag ${t || ""}">${esc(l)}</span>`).join(" ")}</div>${kv(d.facts)}<p class="meta" style="margin:10px 0 0">${d.meta}</p></section></div>`;
+    window.scrollTo(0, 0); $("#oBack").onclick = (e) => { e.preventDefault(); OORDER = ""; setDetail(""); renderOrders(); };
+    return;
+  }
+  setDetail("");
+  const tabs = [["attention", "Needs attention", need.length], ["paid", "Paid", all.filter((o) => o.status === "paid").length], ["closed", "Refunded and disputed", all.filter((o) => o.status !== "paid").length], ["all", "All", all.length], ["renewals", "Renewals", rnRows.length]];
+  const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === OVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
+    <div class="pghead"><div><h2>Orders</h2><p>${OVIEW === "renewals" ? "Automatic installer renewals. Read-only." + (rn ? ` ${rn.counts.upcoming} upcoming, ${rn.counts.overdue} overdue, ${rn.counts.failed} failed, ${rn.counts.lapsed} lapsed, ${rn.counts.paused} paused.` : "") : "Featured placements and passes people paid for. Open one to see the payment, mark a refund or add a note."}</p></div></div>`;
+  const wire = () => { wireToolbar(main, { onView: (v) => { OVIEW = v; renderOrders(); }, onSearch: (q) => filterCards(main, q) }); main.querySelectorAll("[data-oopen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); OORDER = a.dataset.oopen; renderOrders(); })); };
+  if (OVIEW === "renewals") {
+    main.innerHTML = revenueStrip(rv) + head + toolbar({ search: { placeholder: "Search installers" }, count: String(rnRows.length) }) + (rnRows.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Installer</th><th>Plan</th><th>Next charge</th><th>Reminder sent</th><th>Retry</th><th>Status</th></tr></thead><tbody>${rnRows.map((r) => { const g = RG[r.group] || [r.group, ""]; return `<tr><td><b>${esc(r.name || r.installer_id)}</b><span class="sub">${esc(r.last_error || "")}</span></td><td>${esc(INST_PLAN[r.plan] || "Banner")}<span class="sub">${esc(money(r.price_cents))}</span></td><td>${esc(r.next_charge_date || "")}</td><td>${r.notice_sent_for ? "yes" : "not yet"}</td><td>${esc(r.retry_at || "")}</td><td><span class="tag ${g[1]}">${esc(g[0])}</span></td></tr>`; }).join("")}</tbody></table></div></div>` : `<div class="empty">No automatic renewals.</div>`);
+    wire(); return;
+  }
+  const bar = toolbar({ search: { placeholder: "Search events, emails" }, count: String(rows.length) });
+  if (!rows.length) { main.innerHTML = revenueStrip(rv) + head + bar + `<div class="empty">${OVIEW === "attention" ? "Nothing needs you. Refunds you still have to make, disputes, partial refunds and placements that did not switch on show up here." : "No orders here yet."}</div>`; wire(); return; }
+  const kind = (o) => (o.target === "event_partner" ? "Event Partner" : o.target === "contest_pass" ? "Contest pass" : o.target === "home" ? "Featured home" : o.target === "installer" ? "Installer" : "Event");
+  main.innerHTML = revenueStrip(rv) + head + bar + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Order</th><th>Type</th><th>Amount</th><th>Buyer</th><th>Status</th><th>Date</th><th class="ac">Actions</th></tr></thead><tbody>${rows.map((o) => { const d = oData(o), nm = o.target === "contest_pass" || o.target === "event_partner" ? orgLabelOf(o.event_id) : o.name || o.event_id; return `<tr data-oid="${esc(o.session_id)}" data-onote="${esc(o.note || "")}" data-name="${esc(nm)}"><td><a class="rl" href="#orders" data-oopen="${esc(o.session_id)}">${esc(nm)}</a><span class="sub">${esc(o.city || "")}</span></td><td>${kind(o)}<span class="sub">${esc(o.target === "installer" ? INST_PLAN[o.plan] || o.plan : PLAN_NAME[o.plan] || "")}</span></td><td>${esc(money(o.amount, o.currency))}</td><td><span style="user-select:all">${esc(o.email || "")}</span></td><td>${d.tags.filter((t, i) => i === 0 || o.flags.includes(t[0]) || true).slice(0, 1).map(([l, t]) => `<span class="tag ${t || ""}">${esc(l)}</span>`).join("")}${o.flags.filter((f) => !(f === "refund_due" || f === "disputed" || f === "held")).map((f) => OFLAG[f] || [f, "warn"]).map(([l, t]) => ` <span class="tag ${t}">${esc(l)}</span>`).join("")}</td><td>${esc((o.created_at || "").slice(0, 16))} UTC</td><td class="ac"><a class="rl" href="#orders" data-oopen="${esc(o.session_id)}">Open</a> ${d.main.replace('class="btn ice"', 'class="btn ice sm"')}</td></tr>`; }).join("")}</tbody></table></div><div class="pager"><span class="meta">${rows.length} order${rows.length === 1 ? "" : "s"}</span></div></div>`;
+  wire();
 }
 function askNote(title, value) {
   return new Promise((done) => {
@@ -462,12 +484,12 @@ function askNote(title, value) {
 }
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-oact]"); if (!b) return;
-  const card = b.closest("[data-oid]"), act = b.dataset.oact, name = card.querySelector("h3").textContent, msg = card.querySelector(".msg"), body = { action: act };
+  const card = b.closest("[data-oid]"), act = b.dataset.oact, name = card.dataset.name || "this order", msg = card.querySelector(".msg") || { set className(v) {}, set textContent(v) {} }, body = { action: act };
   if (act === "mark_refunded" && !tap(b, "mark refunded")) return; // the card says: only after refunding in Stripe; this button refunds nothing
   if (act === "note") { const v = await askNote("Note for " + name, card.dataset.onote); if (v === null) return; body.note = v; }
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try { const d = await api("/api/admin/orders/" + encodeURIComponent(card.dataset.oid), { method: "POST", body: JSON.stringify(body) }); toast(act === "mark_refunded" ? (d.placement_differs ? "Marked refunded. The placement was left on: check it" : "Marked refunded") : act === "reapply" ? "Applied" : "Note saved"); renderOrders(); refreshCounts(); }
-  catch (er) { b.disabled = false; msg.className = "msg err"; msg.textContent = er.message; }
+  catch (er) { b.disabled = false; msg.className = "msg err"; msg.textContent = er.message; toast(er.message, true); }
 });
 
 /* ---------- contests (organizers who need a review, e.g. a Gmail address or an email that doesn't match their website) ---------- */
