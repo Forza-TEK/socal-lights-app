@@ -17,7 +17,7 @@ export async function selectIn(env, sql, ids, extra = []) {
 // A failure is logged to ops_log (kind "r2") and never thrown: the caller carries on, and the leftover files are only wasted space.
 // Photos a homeowner hid (posts.photos_hidden: file names) sit at h/<id>/<name>; they are collected too when the row carries them.
 const hiddenKeys = (r) => { try { const v = JSON.parse(r.photos_hidden || "[]"); return r.id && Array.isArray(v) ? v.map((n) => `h/${r.id}/${n}`) : []; } catch { return []; } };
-export const photoKeys = (rows, col = "photos") => rows.flatMap((r) => { try { const v = JSON.parse(r[col] || "[]"); return [...(Array.isArray(v) ? v : [v]), ...(col === "photos" ? hiddenKeys(r) : [])]; } catch { return typeof r[col] === "string" && r[col] ? [r[col]] : []; } }).filter((k) => typeof k === "string" && k);
+export const photoKeys = (rows, col = "photos") => rows.flatMap((r) => { try { const v = JSON.parse(r[col] || "[]"); return [...(Array.isArray(v) ? v : [v]), ...(col === "photos" ? hiddenKeys(r) : []), ...(col === "photos" && r.video_file ? [r.video_file] : [])]; } catch { return typeof r[col] === "string" && r[col] ? [r[col]] : []; } }).filter((k) => typeof k === "string" && k);
 export async function r2Delete(env, keys, what = "photos") {
   const list = [...new Set(keys.filter(Boolean))];
   for (let i = 0; i < list.length; i += 1000) {

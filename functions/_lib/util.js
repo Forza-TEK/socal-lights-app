@@ -1,6 +1,7 @@
 // Shared helpers for the API functions.
 import { ptToday } from "./time.js";
 import { ownerKeys, ownerUrls } from "./eventphotos.js";
+import { publicVideo } from "./postvideo.js";
 
 export const json = (data, init = {}) =>
   new Response(JSON.stringify(data), {
@@ -65,7 +66,8 @@ export function rowToPost(r, admin = false) {
     f: featuredLevel(r), // paid Featured home (podium finishers only); 0 for every other home
     kind: r.poster_type === "installer" ? "installer" : "homeowner", street: r.street || "", state: r.state || "CA", zip: r.zip || "", area: r.service_area || "",
   };
-  if (admin) { p.status = r.status; p.contact_email = r.contact_email || ""; p.approved = r.approved_at; p.show_address = !!r.show_address; }
+  Object.assign(p, publicVideo({ ...r, status: "approved" })); // the video link, or the approved clip (a clip waiting for approval is not in the public list)
+  if (admin) { p.status = r.status; p.contact_email = r.contact_email || ""; p.approved = r.approved_at; p.show_address = !!r.show_address; p.video = r.video || ""; p.video_file = r.video_file || ""; p.video_ok = !!r.video_ok; }
   return p;
 }
 

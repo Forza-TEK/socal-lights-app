@@ -23,7 +23,7 @@ export async function deleteAccount(env, id, email) {
     await env.DB.prepare("UPDATE posts SET user_id = '', contact_email = '', claimed_at = NULL, photos = ?, photos_hidden = ? WHERE id = ?").bind(JSON.stringify(keepVis), JSON.stringify(keepHid), h.id).run();
   }
   if (own.length) await r2Delete(env, own, "unlinked home photos");
-  const entries = await all("SELECT id, photos, photos_hidden FROM posts WHERE user_id = ?", id);
+  const entries = await all("SELECT id, photos, photos_hidden, video_file FROM posts WHERE user_id = ?", id);
   const installers = (await all("SELECT id FROM installers WHERE lower(owner_email) = lower(?)", email)).map((r) => r.id);
   let avatar = ""; try { avatar = ((await env.DB.prepare("SELECT avatar FROM users WHERE id = ?").bind(id).first()) || {}).avatar || ""; } catch {}
   // Sponsor records of contests this person ran: receipts (private) and, for contests that are not announced, logos go too (organizer-collected sponsors; contact details are cleared below)

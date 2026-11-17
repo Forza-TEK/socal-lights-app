@@ -6,6 +6,7 @@ import { json, err, clean, safeUrl, geocodeAddress, nearestCounty } from "../../
 import { tell } from "../../../_lib/notify.js";
 import { declinedDraft } from "../../../_lib/declined.js";
 import { markHomeRefundDue } from "../../../_lib/orders.js";
+import { clearVideo } from "../../../_lib/postvideo.js";
 import { CITY } from "../../../../public/cities.js";
 import { SEASONS } from "../../../../public/seasons.js";
 
@@ -62,6 +63,13 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     const list = keys.filter((k) => k !== body.key); await save(list);
     return json({ ok: true, photos: list });
   }
+  // Video: approve an uploaded clip so visitors can watch it, or remove the video (link or clip). The person is not emailed; they see it on their profile.
+  if (body.action === "video_approve") {
+    if (!row.video_file) return err(404, "There is no uploaded video to approve.");
+    await env.DB.prepare("UPDATE posts SET video_ok = 1 WHERE id = ?").bind(row.id).run();
+    return json({ ok: true, video: { link: "", file: row.video_file, ok: true } });
+  }
+  if (body.action === "video_remove") { await clearVideo(env, row); return json({ ok: true, video: { link: "", file: "", ok: false } }); }
   if (body.action === "photo_move") {
     const i = keys.indexOf(body.key), to = Math.max(0, Math.min(keys.length - 1, Number(body.to) || 0));
     if (i < 0) return err(404, "That photo is already gone.");
@@ -153,7 +161,7 @@ export async function onRequestDelete({ params, env }) {
   const row = await getPost(env, params.id);
   if (!row) return json({ ok: true });
   await markHomeRefundDue(env.DB, row.id, "The home was deleted while a paid Featured placement was running. Refund it in Stripe, then mark it refunded.");
-  await deletePhotos(env, JSON.parse(row.photos || "[]"));
+  await deletePhotos(env, [...JSON.parse(row.photos || "[]"), ...(row.video_file ? [row.video_file] : [])]);
   await env.DB.batch([env.DB.prepare("DELETE FROM lights_on WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM listing_changes WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM posts WHERE id=?").bind(row.id)]);
   return json({ ok: true });
 }
