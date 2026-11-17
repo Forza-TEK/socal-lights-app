@@ -89,3 +89,37 @@ Weekly and midweek upkeep, and the photo refresh, stay with Claude until Grok ha
 Follow `docs/city-sweep.md`, `docs/sweep-methods.md` and `docs/blocked-sites.md`.
 
 New watchlist venues and blocked sites go to Claude as a request in `docs/handoff/to-claude/`. Grok does not edit `docs/watchlist.json` or `docs/blocked-sites.md`.
+
+## Coverage update — 2026-11-17 (Grok sweep)
+
+Empty cities: 195 at start → 186 after (work order re-fetch, 2026-11-17).
+
+First events added in: Maywood, East Los Angeles, Rowland Heights, Oak Glen, La Crescenta (separate key "La Crescenta-Montrose" still empty), Port Hueneme, Azusa, Pepperdine University, Big Bear City.
+
+Thin categories (start → after):
+
+- posada-kwanzaa 6→9 /12
+- polar-dips 3→4 /8
+- nye-parties 36→41 /60
+- nye-fireworks 11→12 /15
+- menorah 20→21 /25
+- santa 74→75 /80
+- thanksgiving 24→25 /30
+- concerts-choirs 35→37 /60
+- ballet-theater 35→37 /40
+- home-displays 155→155 /250 (none added)
+- lunar 21, light-shows 36, trains 13 unchanged
+
+Parent sources checked today:
+
+- LA County Library events feed (visit.lacountylibrary.org eeventcaldata JSON) — good for unincorporated LA communities (East LA, La Crescenta, Lomita, Rowland Heights).
+- enjoyorangecounty.com 2026 OC holiday guide (?p=658) — used for 13 OC confirmations.
+- seecalifornia.com Christmas tree ceremonies pages (Azusa, Big Bear City, SE LA).
+- yoursocal winter-holidays / new-years-eve lists.
+- parks.ca.gov First Day Hikes (still the 2026 page; 2027 list not up yet).
+- riversideca.events (City of Riverside calendar) — Breakfast with Santa x4 already on map.
+- City sites: ci.port-hueneme.ca.us, arts.pepperdine.edu, bowers.org, lasfotosproject.org.
+
+Not yet tried: Riverside County Library (LibCal), San Diego County Library calendar (Casa de Oro branch had only a "Santa Stories" storytime).
+
+Suggested watchlist additions: visit.lacountylibrary.org feed; Los Rios Rancho (Oak Glen); Lake Arrowhead Resort; Zachari Dunes (Oxnard); Bowers Museum festivals; Pepperdine arts calendar; seecalifornia tree-ceremony index.
