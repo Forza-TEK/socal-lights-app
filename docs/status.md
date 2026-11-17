@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-17: Video on homes, stage 4 (showing it)
+A home's video shows on the map card as a "Watch the video" button under its description: a YouTube/Vimeo link plays in the privacy-friendly player, an approved clip plays right in the card; nothing loads until it is tapped. On the contest page each home with a video shows a "Watch the video" link (a link opens in a new tab, a clip plays inline). The first-screen file budget went up by 2 KB for this (tests/home-speed.test.mjs). Checked locally: clip approved in Admin, button on the card, player starts; contest entry with a link shows its link. Still to build: the video box on the Add a display and contest entry forms (today a video is added from the edit sheet after posting).
+
 ## 2026-11-17: Video on homes, stage 3 (Admin approval)
 Admin > Published houses has a "Videos waiting" view (and the Dashboard has a "videos waiting for approval" card that opens it). A house record shows its video (Admin plays an uploaded clip from a private address) with Approve video and Remove video; the list has a Video column (Clip waiting / Clip live / Link). Tested end to end locally: a clip uploaded from the edit sheet appears under Videos waiting, Approve makes it public at `/api/photo/v/<id>/<name>` (range requests work). Still to build: the same box on the Add a display and contest entry forms, and showing the video on the map card and the contest page.
 
