@@ -9,7 +9,7 @@ export const contestLabel = (c) => { const s = SEASONS[c.season] || {}; return `
 // What every page shows for a home whose entrant deleted their account (deleteAccount scrubs the snapshot entry and sets removed: true)
 export const REMOVED_TEXT = "Entry removed at the entrant's request";
 export const isRemoved = (e) => !!e && (e.removed === true || !String(e.name || "").trim());
-export const publicEntry = (e) => (isRemoved(e) ? { ...e, name: REMOVED_TEXT, biz: "", address: "", city: "", lat: null, lng: null, photos: [], removed: true } : e);
+export const publicEntry = (e) => (isRemoved(e) ? { ...e, name: REMOVED_TEXT, biz: "", address: "", city: "", lat: null, lng: null, photos: [], vid: "", vf: "", removed: true } : e);
 
 export const ARCHIVE_COLS = "slug,name,org,org_key,city,county,season,entries_close,mode,judge_method,results";
 // announced and still public (an announced contest stays 'live' even after its organizer deletes their account)

@@ -1,6 +1,7 @@
 // GET   /api/contests/<slug>  the contest, its approved homes, prizes and (when allowed) the vote counts. Personalized, never cached.
 // PATCH /api/contests/<slug>  organizer controls: pause/resume entries and voting, show counts, start voting now, announce winners.
 // Announcing freezes the results into contests.results; from then on the page, the archive and the export read that snapshot, never the live votes.
+import { publicVideo } from "../../_lib/postvideo.js";
 import { logoUrl } from "./[slug]/logo.js";
 import { json, err, clean, webUrl, newId } from "../../_lib/util.js";
 import { enqueueMail, drainMail } from "../../_lib/mailbatch.js";
@@ -42,7 +43,7 @@ export async function onRequestGet({ params, request, env }) {
   const entries = frozen
     ? frozen.entries.map((e) => ({ ...publicEntry(e), mine: own.has(e.id) }))
     : live.posts.map((p) => ({
-        id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, descr: /^Entry in /.test(p.descr || "") ? "" : (p.descr || "").slice(0, 300),
+        id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), ...publicVideo(p), no: p.entry_no, descr: /^Entry in /.test(p.descr || "") ? "" : (p.descr || "").slice(0, 300),
         votes: showCounts && hasPublic(c) ? Object.fromEntries(categories.map((k) => [k, (live.counts[p.id] || {})[k] || 0])) : null, mine: own.has(p.id), manage: ownTok[p.id], flagged: isOwner ? !!p.dq : undefined,
         jv: isOwner && hasJudges(c) ? jshow(p.id) : undefined,
       }));
@@ -106,7 +107,7 @@ export async function onRequestPatch({ params, request, env, waitUntil }) {
     if (hasJudges(c)) for (const p of r.posts) jv[p.id] = c.judge_method === "score" ? r.jscore[p.id] || null : r.jpick[p.id] || null;
     const voided = (await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE contest_id = ? AND voided = 1").bind(c.id).first()).n; // audit H3: the results page says how many votes were removed
     const snap = { at: todayPT(), voided, categories: r.categories, winners: r.winners, jwinners: r.jwinners, awards, jv,
-      entries: r.posts.map((p) => ({ id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), no: p.entry_no, dq: !!p.dq, votes: hasPublic(c) ? Object.fromEntries(r.categories.map((k) => [k, (r.counts[p.id] || {})[k] || 0])) : null,
+      entries: r.posts.map((p) => ({ id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), ...publicVideo(p), no: p.entry_no, dq: !!p.dq, votes: hasPublic(c) ? Object.fromEntries(r.categories.map((k) => [k, (r.counts[p.id] || {})[k] || 0])) : null,
         jv: jv[p.id] ? Object.fromEntries(r.categories.map((k) => [k, c.judge_method === "score" ? (jv[p.id][k] ? { avg: Math.round(jv[p.id][k].avg * 100) / 100, n: jv[p.id][k].n, tr: !!jv[p.id][k].tr } : null) : jv[p.id][k] || 0])) : undefined })) };
     // One write only: a double click or a second tab changes no row here and gets the usual "locked" answer
     const wrote = await env.DB.prepare("UPDATE contests SET announced = 1, results = ?, updated_at = datetime('now') WHERE id = ? AND announced = 0").bind(JSON.stringify(snap), c.id).run();
