@@ -18,7 +18,7 @@ const COUNTIES = ["Los Angeles", "Orange", "Riverside", "San Bernardino", "San D
 const TODAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
 let evSeason = defaultSeason(TODAY);
 const photo = (k) => "/api/admin/photo/" + k.split("/").map(encodeURIComponent).join("/");
-let tab = "dashboard", PVIEW = "pending", EVENTS = [], POSTS = [], HSORT = "new", HOPEN = "", COPEN = "", INSTOPEN = "", UOPEN = "";
+let tab = "dashboard", PVIEW = "pending", EVENTS = [], POSTS = [], HSORT = "new", HOPEN = "", COPEN = "", INSTOPEN = "", UOPEN = "", NEXTVIEW = "";
 const sortList = (list, key, by) => [...list].sort(by[key] || by.new);
 const HSORTS = [["new", "Newest first"], ["old", "Oldest first"], ["name", "Name A to Z"], ["city", "City A to Z"]];
 const HBY = { new: (a, b) => String(b.created || "").localeCompare(String(a.created || "")), old: (a, b) => String(a.created || "").localeCompare(String(b.created || "")), name: (a, b) => String(a.title || "").localeCompare(String(b.title || "")), city: (a, b) => String(a.city || "").localeCompare(String(b.city || "")) || String(a.title || "").localeCompare(String(b.title || "")) };
@@ -47,7 +47,7 @@ const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
 function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.grok || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; const bd = $("#bdot"); if (bd) { bd.hidden = !w; $("#bell").title = w ? `${w} waiting` : "Nothing is waiting"; } }
 function setTab(t, push = true) {
-  if (t !== tab) { PVIEW = "pending"; HOPEN = ""; COPEN = ""; OORDER = ""; }
+  if (t !== tab || NEXTVIEW) { PVIEW = NEXTVIEW || "pending"; HOPEN = ""; COPEN = ""; OORDER = ""; NEXTVIEW = ""; }
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
   $("#ptitle").textContent = TITLES[t] || ""; $("#pgroup").textContent = groupOf(t); setDetail("");
@@ -55,7 +55,7 @@ function setTab(t, push = true) {
   if (push && location.hash.split("/")[0] !== "#" + t) history.replaceState(null, "", "#" + t);
   render();
 }
-document.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) setTab(b.dataset.tab); });
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (!b) return; if (b.dataset.pview) NEXTVIEW = b.dataset.pview; setTab(b.dataset.tab); }); // a card can open a tab on a given view (videos waiting)
 { const pb = $("#pmb"), pmenu = $("#pmenu"), shut = () => { pmenu.hidden = true; pb.setAttribute("aria-expanded", "false"); };
   pb.onclick = (e) => { e.stopPropagation(); pmenu.hidden = !pmenu.hidden; pb.setAttribute("aria-expanded", String(!pmenu.hidden)); };
   document.addEventListener("click", (e) => { if (!e.target.closest(".pm")) shut(); }); document.addEventListener("keydown", (e) => { if (e.key === "Escape") shut(); }); }
@@ -102,17 +102,19 @@ async function renderHouses() {
   const main = $("#main"), pend = tab === "pending", contest = !pend && PVIEW === "contest";
   const [waiting, declined, cList, live] = await Promise.all([
     pend ? api("/api/admin/posts?status=pending") : [], pend ? api("/api/admin/posts?status=declined") : [],
-    !pend ? api("/api/admin/posts?contest=1") : [], !pend && !contest ? api("/api/admin/posts?status=approved") : [],
+    !pend ? api("/api/admin/posts?contest=1") : [], !pend ? api("/api/admin/posts?status=approved") : [],
   ]);
   if (pend) setCount("pending", waiting.length);
-  const dec = pend && PVIEW === "declined", rows = sortList(pend ? (dec ? declined : waiting) : contest ? cList : live, HSORT, HBY);
-  POSTS = pend ? [...waiting, ...declined] : contest ? cList : live;
+  const dec = pend && PVIEW === "declined", vids = !pend && PVIEW === "videos", waitVid = (x) => x.video_file && !x.video_ok, vcount = [...live, ...cList].filter(waitVid).length;
+  const rows = sortList(pend ? (dec ? declined : waiting) : contest ? cList : vids ? [...live, ...cList].filter(waitVid) : live, HSORT, HBY);
+  POSTS = pend ? [...waiting, ...declined] : [...live, ...cList];
   const one = HOPEN && POSTS.find((p) => p.id === HOPEN); if (HOPEN && !one) HOPEN = "";
   const kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v !== "" && v != null).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
   const stat = (p) => (p.contest ? ["Contest entry", ""] : dec ? ["Declined", "bad"] : pend ? ["Waiting", "warn"] : ["Published", "ok"]);
   if (one) { // the full record
     const p = one, st = stat(p), web = p.web ? `<a href="${esc(p.web)}" target="_blank" rel="noopener">${esc(p.web)}</a>` : "";
-    const acts = btn("ghost", "Edit", `data-editpost="${esc(p.id)}"`) + (p.contest ? "" : btn("ghost", `Photos (${p.photos.length})`, `data-editpost="${esc(p.id)}" data-focus="photos"`))
+    const vacts = (p.video_file && !p.video_ok ? btn("main", "Approve video", 'data-act="video_approve"') : "") + (p.video_file || p.video ? btn("ghost", "Remove video", 'data-act="video_remove"') : "");
+    const acts = vacts + btn("ghost", "Edit", `data-editpost="${esc(p.id)}"`) + (p.contest ? "" : btn("ghost", `Photos (${p.photos.length})`, `data-editpost="${esc(p.id)}" data-focus="photos"`))
       + (p.contest ? "" : dec ? btn("main", "Restore to waiting", 'data-act="restore"') + btn("danger", "Delete", 'data-act="delete"') : pend ? btn("main", "Approve and publish", 'data-act="approve"') + btn("danger", "Decline", 'data-act="decline"') : btn("ghost", "Unpublish", 'data-act="unpublish"') + btn("danger", "Remove from site", 'data-act="delete"'));
     const notes = [p.hiddenBySweep ? "<b>Not on the map.</b> You chose the sweep record for this address (Replaced records)." : "",
       p.claimed ? `<b>Says this is their home.</b> They tapped “Is this your home?” on “${esc(p.claimed.name)}”. ${p.claimed.matched ? (p.status === "pending" ? "The address matches, so approving replaces that listing." : "The address matches, so it replaces that listing on the map.") : "The addresses do not match, so it does not replace that listing. Check the street in Edit."}` : "",
@@ -125,21 +127,22 @@ async function renderHouses() {
       <section class="rcard"><h3>Overview</h3>${kv([["Title", esc(p.title)], ["Status", `<span class="tag ${st[1]}">${st[0]}</span>`], ["Posted as", p.contest ? (p.byOrganizer ? (p.linked ? "Linked by homeowner" : "Added by organizer") : "Resident entry") : p.kind === "installer" ? "Installer" : "Homeowner"], ["Contest", esc(p.contest || "")], ["Name / business", esc(p.biz)], ["Received", p.created ? esc(p.created.slice(0, 16)) + " UTC" : ""]])}</section>
       <section class="rcard"><h3>Where</h3>${kv([["Street address", esc(p.address || "—") + ' <span class="meta">(shown on the map)</span>'], ["City", esc(p.city || "") + (p.county ? " · " + esc(p.county) : "")], ["Where", esc(p.where || "")]])}</section>
       <section class="rcard"><h3>Contact and about</h3>${kv([["Contact", `<span style="user-select:all">${esc(p.contact_email || "—")}</span>`], ["Public phone", esc(p.phone || "")], ["Website", web], ["Installed by", p.inst && p.kind !== "installer" ? esc(p.inst.name) + (p.inst.ok ? " (confirmed)" : " (claimed by the homeowner, not confirmed)") : ""], ["About", `<span style="white-space:pre-line">${esc(p.desc)}</span>`]])}</section>
+      ${p.video_file || p.video ? `<section class="rcard"><h3>Video</h3>${p.video_file ? `<video controls playsinline preload="metadata" src="/api/admin/photo/${esc(p.video_file)}" style="display:block;max-width:480px;width:100%;border-radius:10px;background:#000"></video><p class="meta" style="margin:8px 0 0">${p.video_ok ? "Approved: visitors can watch it." : "Waiting for your approval. Visitors cannot see it yet."}</p>` : `<p style="margin:0">Link (shown at once): <a href="${esc(p.video)}" target="_blank" rel="noopener">${esc(p.video)}</a></p>`}</section>` : ""}
       ${p.contest ? "" : `<section class="rcard"><h3>Photos (${p.photos.length})</h3>${p.photos.length ? `<div class="pics">${p.photos.map((k) => `<a href="${photo(k)}" target="_blank" rel="noopener"><img src="${photo(k)}" alt="" loading="lazy"></a>`).join("")}</div>` : '<p class="meta" style="margin:0">No photos</p>'}</section>`}</div>`;
     window.scrollTo(0, 0); $("#hBack").onclick = (e) => { e.preventDefault(); HOPEN = ""; setDetail(""); renderHouses(); };
     return;
   }
   setDetail("");
-  const tabs = pend ? [["pending", "Waiting", waiting.length], ["declined", "Declined", declined.length]] : [["pending", "Published", live.length || (contest ? null : 0)], ["contest", "Contest entries", cList.length]];
+  const tabs = pend ? [["pending", "Waiting", waiting.length], ["declined", "Declined", declined.length]] : [["pending", "Published", live.length], ["videos", "Videos waiting", vcount], ["contest", "Contest entries", cList.length]];
   const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === PVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
-    <div class="pghead"><div><h2>${pend ? "Houses waiting" : "Published houses"}</h2><p>${pend ? "Houses and installer posts people submitted. Open one to see its photos, then approve or decline it." : contest ? "Homes entered in a contest." : "Houses and installer posts that are on the map."}</p></div></div>`;
+    <div class="pghead"><div><h2>${pend ? "Houses waiting" : "Published houses"}</h2><p>${pend ? "Houses and installer posts people submitted. Open one to see its photos, then approve or decline it." : contest ? "Homes entered in a contest." : vids ? "Uploaded video clips waiting for your approval. A clip is hidden from visitors until you approve it; video links show at once." : "Houses and installer posts that are on the map."}</p></div></div>`;
   const bar = toolbar({ search: { placeholder: contest ? "Search entries, people, cities" : "Search houses, people, cities" }, right: sortSelect(HSORTS, HSORT) + (contest ? "" : dl("houses" + (pend ? (dec ? "&status=declined" : "&status=pending") : "&status=approved"))), count: String(rows.length) });
   const go = () => { wireToolbar(main.querySelector(".tbar"), { onSearch: (q) => filterCards(main, q), onSort: (v) => { HSORT = v; renderHouses(); } }); main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { PVIEW = b.dataset.view; renderHouses(); })); applyPreset(main); };
-  if (!rows.length) { main.innerHTML = head + bar + `<div class="empty">${contest ? "No contest entries yet." : !pend ? "No published houses yet." : dec ? "Nothing declined." : "Nothing waiting for review."}</div>`; go(); return; }
+  if (!rows.length) { main.innerHTML = head + bar + `<div class="empty">${contest ? "No contest entries yet." : vids ? "No videos waiting for approval." : !pend ? "No published houses yet." : dec ? "Nothing declined." : "Nothing waiting for review."}</div>`; go(); return; }
   const bulk = pend && !dec ? `<div class="bulk" id="bulk"><label class="chk"><input type="checkbox" id="selAll"> Select all</label><span class="grow"></span><span class="meta" id="selN"></span><button class="btn ice" type="button" id="bulkGo" hidden></button><button class="btn ghost" type="button" id="bulkClear" hidden>Clear</button></div>` : "";
-  const cols = contest ? "<th>Entry</th><th>Contest</th><th>Posted by</th><th>Contact</th><th>Address</th>" : "<th>House</th><th>City</th><th>Posted as</th><th>Photos</th><th>Received</th>";
+  const cols = contest ? "<th>Entry</th><th>Contest</th><th>Posted by</th><th>Contact</th><th>Address</th>" : "<th>House</th><th>City</th><th>Posted as</th><th>Photos</th><th>Video</th><th>Received</th>";
   const cells = (p) => contest ? `<td><a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">${esc(p.title)}</a></td><td>${esc(p.contest)}</td><td>${esc(p.biz)}</td><td>${esc(p.contact_email || "—")}</td><td>${esc(p.address || "—")}</td>`
-    : `<td>${pend && !dec ? `<input type="checkbox" class="rsel" data-sel="${esc(p.id)}" aria-label="Select ${esc(p.title)}"> ` : ""}<a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">${esc(p.title)}</a><span class="sub">${esc(p.biz)}</span></td><td>${esc(p.city)}<span class="sub">${esc(p.county || "")}</span></td><td><span class="tag">${p.kind === "installer" ? "Installer" : "Homeowner"}</span></td><td data-label="Photos">${p.photos.length}</td><td data-label="Received">${esc((p.created || "").slice(0, 16))} UTC</td>`;
+    : `<td>${pend && !dec ? `<input type="checkbox" class="rsel" data-sel="${esc(p.id)}" aria-label="Select ${esc(p.title)}"> ` : ""}<a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">${esc(p.title)}</a><span class="sub">${esc(p.biz)}</span></td><td>${esc(p.city)}<span class="sub">${esc(p.county || "")}</span></td><td><span class="tag">${p.kind === "installer" ? "Installer" : "Homeowner"}</span></td><td data-label="Photos">${p.photos.length}</td><td data-label="Video">${p.video_file ? `<span class="tag ${p.video_ok ? "ok" : "warn"}">${p.video_ok ? "Clip live" : "Clip waiting"}</span>` : p.video ? '<span class="tag">Link</span>' : ""}</td><td data-label="Received">${esc((p.created || "").slice(0, 16))} UTC</td>`;
   POSTS = pend ? [...waiting, ...declined] : contest ? cList : live;
   main.innerHTML = head + bar + bulk + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr>${cols}<th class="ac">Actions</th></tr></thead><tbody>${rows.map((p) => `<tr data-id="${esc(p.id)}">${cells(p)}<td class="ac"><a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">Open</a></td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${rows.length} ${contest ? "entr" + (rows.length === 1 ? "y" : "ies") : "house" + (rows.length === 1 ? "" : "s")}</span></div></div>`;
   main.querySelectorAll("[data-hopen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); HOPEN = a.dataset.hopen; renderHouses(); }));
@@ -182,7 +185,7 @@ function wireBulk(main) {
   };
   paint();
 }
-const DONE = { approve: "Published", decline: "Declined", unpublish: "Unpublished", delete: "Removed", restore: "Back in the waiting list" };
+const DONE = { approve: "Published", decline: "Declined", unpublish: "Unpublished", delete: "Removed", restore: "Back in the waiting list", video_approve: "Video approved: visitors can watch it", video_remove: "Video removed" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-act]"); if (!b) return;
   const card = b.closest("[data-id]"), id = card.dataset.id, act = b.dataset.act, msg = card.querySelector(".msg") || { set className(v) {}, set textContent(v) {} }, name = card.dataset.name || (card.querySelector("h3") || {}).textContent || "this house", extra = {};
@@ -192,7 +195,8 @@ $("#main").addEventListener("click", async (e) => {
   try {
     if (act === "delete") await api("/api/admin/posts/" + id, { method: "DELETE" });
     else await api("/api/admin/posts/" + id, { method: "POST", body: JSON.stringify({ action: act, ...extra }) });
-    HOPEN = ""; setDetail(""); render(); refreshCounts();
+    if (!act.startsWith("video_")) { HOPEN = ""; setDetail(""); } // a video action keeps the record open
+    render(); refreshCounts();
     const undo = act === "decline" ? { action: "restore" } : act === "unpublish" ? { action: "approve", notify: false } : null;
     toast(DONE[act] || "Done", false, undo ? { undo: async () => { try { await api("/api/admin/posts/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); render(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; toast(err.message, true); }
@@ -1046,7 +1050,7 @@ async function renderDashboard() {
   const a = d.attention, todo = [
     ["pending", a.waitHomes, "house", "waiting for your review"], ["subs", a.waitEvents, "event", "submitted, waiting for review"], ["contests", a.waitContests, "contest", "waiting for approval"],
     ["reports", a.reports, "report", "from visitors this week"], ["installers", a.claims, "installer claim", "on a home, to confirm"],
-    ["claims", a.eventClaims, "event claim", "waiting for a decision"], ["grok", a.grokHeld, "Grok item", "held for your review"],
+    ["claims", a.eventClaims, "event claim", "waiting for a decision"], ["grok", a.grokHeld, "Grok item", "held for your review"], ["approved", a.waitVideos, "video", "waiting for approval", "videos"],
   ].filter((t) => t[1] > 0);
   const tile = (k, n, l, more = "") => `<div class="stat"><b>${fmt(n)}</b><span>${l}</span>${more ? `<small class="meta">${more}</small>` : ""}</div>`;
   const kindTab = { home: "pending", event: "subs" };
@@ -1054,7 +1058,7 @@ async function renderDashboard() {
     <div class="pghead"><div><h2>Dashboard</h2><p>${hour < 5 ? "Hello" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}. ${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p></div></div>
     ${d.staleJobs && d.staleJobs.length ? `<div class="limitbanner" role="alert"><b>${d.staleJobs.length === 1 ? "A scheduled job has stopped reporting in." : d.staleJobs.length + " scheduled jobs have stopped reporting in."}</b>${d.staleJobs.slice(0, 5).map((j) => `<span>${esc(j.line)}</span>`).join("")}<span>GitHub runs scheduled jobs late or skips them. Run the workflow by hand from GitHub > Actions, or see docs/runbooks/monitoring.md.</span></div>` : ""}
     ${d.limits && d.limits.length ? `<button type="button" class="limitbanner" data-tab="usage"><b>A Cloudflare or email limit was hit at ${esc(String(d.limits[0].at).slice(0, 16))} UTC.</b><span>${esc(String(d.limits[0].detail).slice(0, 140))} Open Cloudflare usage to see which one and what to do.</span></button>` : ""}
-    <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l]) => `<button type="button" class="tcard" data-tab="${k}"><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>` : `<div class="calm">${dico("check", "okic")}<div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests, reports, event claims or Grok rows are waiting.</p></div></div>`}</section>
+    <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l, pv]) => `<button type="button" class="tcard" data-tab="${k}"${pv ? ` data-pview="${pv}"` : ""}><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>` : `<div class="calm">${dico("check", "okic")}<div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests, reports, event claims or Grok rows are waiting.</p></div></div>`}</section>
     <h2 class="dh">Today</h2>
     <div class="stats">${tile("h", d.today.homes, "new houses")}${tile("e", d.today.events, "events submitted")}${tile("c", d.today.entries, "contest entries")}${tile("l", d.people.litToday, "lights switched on")}</div>
     <h2 class="dh">On the site now</h2>
