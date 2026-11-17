@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/tokens.css?v=20261116c">
 <link rel="stylesheet" href="/addflow.css?v=20261116b">
-<link rel="stylesheet" href="/forms.css?v=20261116b">
+<link rel="stylesheet" href="/forms.css?v=20261117a">
 <link rel="stylesheet" href="/profile.css?v=20261116a">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
@@ -22,7 +22,8 @@
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast, friendlyError } from "/auth.js?v=20261116a";
 import { mountShell } from "/appshell.js?v=20261116c";
-import { homeForm, eventForm, openFormWindow, photoBoxHtml, wireSeasonType } from "/forms.js?v=20261116b";
+import { homeForm, eventForm, openFormWindow, photoBoxHtml, wireSeasonType } from "/forms.js?v=20261117a";
+import { wireVideoBox } from "/videobox.js?v=20261117a";
 import { esc, input, select, attachAddress, OPT, shrink } from "/addflow.js?v=20261116b";
 import { SEASONS } from "/seasons.js?v=20261115a";
 import { draftKey, clearAllLocalDrafts } from "/drafts-local.js?v=20261111z";
@@ -211,6 +212,7 @@ function wirePhotoBox(f, { item, url, max, opts = {} }) {
 function wireHomeExtras(row, f) {
   const id = row.dataset.home, h = O.homes.find((x) => x.id === id);
   wirePhotoBox(f, { item: h, url: "/api/me/homes/" + id, max: 8 });
+  wireVideoBox(f, { item: h, url: "/api/me/video/" + id, friendly: (x) => friendlyError(x, "That didn't work.") }); // one video: a short clip or a YouTube/Vimeo link
   attachAddress(f, { getCity: () => (f.querySelector('[data-k="city"]') || {}).value || "", onPick: (s) => { const set = (k, v) => { const el = f.querySelector(`[data-k="${k}"]`); if (el) el.value = v; }; set("street", s.street); if (cities.includes(s.city)) set("city", s.city); if (/^\d{5}/.test(s.zip)) set("zip", s.zip.slice(0, 5)); } });
 }
 function wire() {
