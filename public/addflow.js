@@ -4,6 +4,7 @@
 import { me, signIn, friendlyError, isNetError } from "/auth.js?v=20261116a";
 import { draftKey, purgeLegacyDrafts, savePhotos, loadPhotos, dropPhotos } from "/drafts-local.js?v=20261111z";
 import "/norm-ui.js?v=20261102b";
+import { inspectVideo, MAX_VIDEO_MB, MAX_VIDEO_SECONDS } from "/videobox.js?v=20261117d";
 import { CITY } from "/cities.js?v=20261115i";
 export const $ = (q, r = document) => r.querySelector(q);
 export const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -59,6 +60,13 @@ const nlNotice = () => { const t = nlFailed; nlFailed = false; return t ? `<p cl
 export const photoField =(d, { max = 8, help = "" } = {}) =>
   `<div class="drop" id="drop"><span>${help || `Up to ${max} photos. The first one is the cover. They shrink on your phone, so uploads are quick, and they stay on this device if you reload or tap Save &amp; exit. iPhone photos (HEIC) are converted to JPG for you.`}</span><label class="btn out sm" for="f-photos" style="margin:0">Choose photos</label><input id="f-photos" data-photos type="file" accept="image/*" multiple hidden></div><div class="thumbs" id="thumbs">${thumbsHtml(d)}</div><p class="err" id="perr" role="alert" hidden></p>`;
 const thumbsHtml = (d) => (d.photos || []).map((p, i) => `<div class="t"><img src="${p.url}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button>${i === 0 ? "<em>COVER</em>" : ""}</div>`).join("");
+// The optional video on a photos step: a clip chosen on this device (held until the home is saved, never stored in the draft) or a YouTube/Vimeo link (saved with the draft).
+const mb = (n) => Math.max(1, Math.round(n / 1048576)) + " MB";
+export const videoField = (d) => `<div class="field" id="vfield"><span class="lab">Video <span class="muted">(optional)</span></span><p class="small muted" style="margin:0 0 8px">A short clip of your lights, up to about a minute (${MAX_VIDEO_MB} MB), or a YouTube or Vimeo link. A clip is looked over before it shows; a link shows at once.</p>
+  <div class="drop" style="margin:0 0 10px"><span id="vstat" role="status">${d._video ? esc(d._video.name) + " (" + mb(d._video.size) + ")" : "No clip chosen."}</span><label class="btn out sm" for="f-video" style="margin:0">${d._video ? "Choose a different clip" : "Choose a video"}</label><input id="f-video" data-video type="file" accept="video/mp4,video/quicktime,video/webm,video/*" hidden>${d._video ? '<button type="button" class="btn out sm" data-vclear>Remove</button>' : ""}</div>
+  ${input(d, "videoLink", { label: "Or paste a YouTube or Vimeo link", ph: "Paste the link here", max: 300, type: "url", opt: true })}</div>`;
+// The Video row of a review screen.
+export const videoRow = (d, goto = "photos") => sumRow("Video", d._video ? esc(d._video.name) + " (clip, looked over before it shows)" : d.videoLink && d.videoLink.trim() ? esc(d.videoLink.trim()) : "", goto);
 // The whole row is the tap target (the Edit button stretches over it); an empty optional answer reads "Not added" so it can be filled in from here.
 export const sumRow = (k, v, goto) => `<div class="sumr"><span>${k}</span><b>${v || '<em class="muted">Not added</em>'}</b><button class="link" type="button" data-goto="${goto}" aria-label="Edit ${esc(String(k).toLowerCase())}">Edit</button></div>`;
 // The Photos row of a review screen: the real thumbnails and the count, a remove button on each, and a way back to add more. (The photos are kept on this device with the draft, so they are still here after a reload.)
@@ -152,7 +160,7 @@ export function run(o) {
   const save = () => {
     if (!o.persist) return;
     const k = pk(); if (k !== curKey) { const old = curKey; curKey = k; try { localStorage.removeItem(old); } catch {} dropPhotos(old); keepPhotos(); } // signed in while filling the form: the draft follows the account
-    try { const c = {}; for (const [kk, v] of Object.entries(d)) if (!(o.noPersist || []).includes(kk) && typeof v !== "function") c[kk] = v; S.savedAt = Date.now(); localStorage.setItem(curKey, JSON.stringify({ d: c, i: S.i, t: S.savedAt })); } catch {}
+    try { const c = {}; for (const [kk, v] of Object.entries(d)) if (!(o.noPersist || []).includes(kk) && !kk.startsWith("_") && typeof v !== "function") c[kk] = v; S.savedAt = Date.now(); localStorage.setItem(curKey, JSON.stringify({ d: c, i: S.i, t: S.savedAt })); } catch {}
   };
   // Save & exit appears once there is something to save (typed or chosen, or a restored draft, or past the first step); before that, a plain Exit
   const hasInput = () => dirty || S.restored || S.i > 0;
@@ -261,9 +269,16 @@ export function run(o) {
     const t = e.target; if (!root.contains(t)) return;
     if (t.matches("[data-k]") && (t.type === "checkbox" || t.tagName === "SELECT")) onValue(t);
     if (t.matches("[data-photos]")) { const f = [...t.files]; t.value = ""; addFiles(f); }
+    if (t.matches("[data-video]")) {
+      const f = t.files[0]; t.value = ""; if (!f) return; const stat = $("#vstat"), say = (m) => { if (stat) stat.textContent = m; };
+      if (f.size > MAX_VIDEO_MB * 1048576) return say(`That video is ${mb(f.size)}. The limit is ${MAX_VIDEO_MB} MB (about a minute from a phone). Pick a shorter clip.`);
+      say("Checking the video…");
+      inspectVideo(f).then((r) => { if (r.error) return say(r.error); if (r.seconds > MAX_VIDEO_SECONDS) return say(`That video is ${Math.round(r.seconds)} seconds. Keep it to about a minute so it loads quickly on phones.`); d._video = f; dirty = true; syncExit(); draw(); pv(); });
+    }
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Enter" && root.contains(e.target) && e.target.tagName === "INPUT" && !["checkbox", "file"].includes(e.target.type)) { e.preventDefault(); const dd = $(".dd"); if (dd) dd.remove(); next(); } });
   document.addEventListener("click", (e) => {
+    const vc = e.target.closest("[data-vclear]"); if (vc && root.contains(vc)) { d._video = null; draw(); return; }
     const t = e.target.closest("[data-tile],[data-a],[data-goto],[data-rm],[data-copy]"); if (!t || !root.contains(t)) return;
     if (t.dataset.tile) {
       const [k, ...v] = t.dataset.tile.split("|"); dirty = true; syncExit(); d[k] = v.join("|"); save();
@@ -292,7 +307,7 @@ export function run(o) {
     for (const f of list) {
       if (d.photos.length >= 8) { say("That's the limit of 8 photos."); break; }
       const nm = `“${String(f.name || "photo").slice(0, 40)}”`; // L13: name the file a message is about
-      if (!f.type.startsWith("image/")) { say(`Skipped ${nm}: it isn't a photo.`); continue; }
+      if (!f.type.startsWith("image/")) { say(f.type.startsWith("video/") ? `${nm} is a video. Add it in the Video box below (or after saving).` : `Skipped ${nm}: it isn't a photo.`); continue; }
       try {
         const b = await shrink(f);
         if (d.photos.length >= 8) { say("That's the limit of 8 photos."); break; } // checked again after the (slow) shrink, so several quick picks cannot go past 8

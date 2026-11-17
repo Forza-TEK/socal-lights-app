@@ -15,7 +15,7 @@ export function videoBoxHtml(h, { noun = "home" } = {}) {
 }
 
 // How long a picked clip is, and whether this browser can play it at all (if it cannot, other people's often cannot either). Resolves { seconds } or { error }.
-function inspect(file) {
+export function inspectVideo(file) {
   return new Promise((done) => {
     const v = document.createElement("video"), url = URL.createObjectURL(file); v.preload = "metadata"; v.muted = true;
     const end = (r) => { URL.revokeObjectURL(url); done(r); }, t = setTimeout(() => end({ error: "That video could not be read." }), 15000);
@@ -40,7 +40,7 @@ export function wireVideoBox(root, { item, url, noun = "home", friendly = (e) =>
     const file = e.target.files[0]; e.target.value = ""; if (!file) return;
     if (file.size > MAX_VIDEO_MB * 1048576) return say(`That video is ${Math.round(file.size / 1048576)} MB. The limit is ${MAX_VIDEO_MB} MB (about a minute from a phone). Pick a shorter clip or trim it first.`);
     say("Checking the video…");
-    const info = await inspect(file); if (info.error) return say(info.error);
+    const info = await inspectVideo(file); if (info.error) return say(info.error);
     if (info.seconds > MAX_VIDEO_SECONDS) return say(`That video is ${Math.round(info.seconds)} seconds. Keep it to about a minute so it loads quickly on phones.`);
     say(`Uploading ${Math.max(1, Math.round(file.size / 1048576))} MB… this can take a minute on a phone connection.`);
     try { set(await upload(file)); say("Uploaded. It shows on the map once it is approved, usually within a day."); } catch (x) { say(friendly(x)); }
@@ -62,4 +62,13 @@ export function mountVideoSlot(id, { noun = "home", friendly } = {}) {
     wireVideoBox(slot, { item, url: "/api/me/video/" + id, noun, ...(friendly ? { friendly } : {}) }); return true;
   };
   if (!put()) requestAnimationFrame(() => { if (!put()) setTimeout(put, 200); });
+}
+
+// After a new home or entry is saved: send the video chosen on the form (a clip or a link). Returns { sent: "", waiting, error }: sent is "clip", "link" or "" when there was none.
+export async function sendPostedVideo(id, { file, link } = {}) {
+  try {
+    if (file) { const r = await fetch("/api/me/video/" + id, { method: "PUT", headers: { "content-type": file.type || "video/mp4" }, body: file }), j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "The video didn't upload."); return { sent: "clip", waiting: true }; }
+    if (link && link.trim()) { const r = await fetch("/api/me/video/" + id, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "link", url: link.trim() }) }), j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "The video link wasn't saved."); return { sent: "link", waiting: false }; }
+  } catch (e) { return { sent: "", error: e.message || "The video didn't upload." }; }
+  return { sent: "" };
 }

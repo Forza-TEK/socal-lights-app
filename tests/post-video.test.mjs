@@ -88,4 +88,7 @@ test("the video box is on every place a home or entry is made or edited: the edi
   assert.match(read("public/contest.html"), /data-vslot=/); assert.match(read("public/contest.html"), /wireVideoBox\(el, \{ item: e, url: "\/api\/me\/video\/" \+ e\.id/);
   const slug = read("functions/api/contests/[slug].js"); assert.match(slug, /own\.has\(p\.id\) \? \{ video: p\.video \|\| ""/, "the owner sees their own video state");
   assert.match(read("public/videobox.js"), /fetch\(url, \{ method: "PUT"/, "uploads use fetch so the Admin act-as view can redirect them");
+  for (const f of ["public/add-house.html", "public/contest-enter.html"]) { const h = read(f); assert.match(h, /videoField\(x\)/, f + " has the video field on its photos step"); assert.match(h, /videoRow\(x\)/, f + " shows it on the review step"); assert.match(h, /sendPostedVideo\(j\.id, \{ file: x\._video, link: x\.videoLink \}\)/, f + " sends it after the home is saved"); }
+  const flow = read("public/addflow.js"); assert.match(flow, /data-video type="file"/); assert.match(flow, /d\._video = f/); assert.match(flow, /!kk\.startsWith\("_"\)/, "a chosen clip is never written into the saved draft");
 });
+
