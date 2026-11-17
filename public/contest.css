@@ -120,3 +120,8 @@ body[data-fest] .cmain .card{background:var(--surface,#fff);box-shadow:0 1px 2px
 body[data-fest] .crumb a{display:inline-block;background:var(--surface,#fff);padding:6px 14px;border-radius:99px;box-shadow:0 1px 2px rgba(0,0,0,.12)}
 body[data-fest] .banner h1{font-weight:600;font-size:21px}
 body[data-fest] .cmain{padding-top:min(104px,16vw)} /* room for the drawing along the top of the band to show above the first card */
+
+/* A home's video on the contest page */
+.vlink{all:unset;box-sizing:border-box;display:inline-block;margin-top:6px;min-height:32px;line-height:32px;color:var(--ink);font:600 14px var(--font);cursor:pointer;text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:4px}
+.vlink:focus-visible{outline:2px solid var(--season);outline-offset:2px}
+video.evid{display:block;width:100%;max-width:420px;margin-top:8px;border-radius:10px;background:#000}
