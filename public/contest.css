@@ -1,3 +1,5 @@
+/* defaults for the festive backdrop variables (set per contest by public/contesttheme.js) */
+:root{--fest-top:0px;--fest-art:none;--fest-art-size:360px 90px;--fest-band:none;--fest-tile:none;--fest-tile-opacity:.1}
 /* Contest page and organizer dashboard, in the add forms' look (loaded after addflow.css). */
 body{padding-bottom:60px}
 .cmain{max-width:760px;margin:0 auto;padding:2vh 0 20px;display:grid;grid-template-columns:minmax(0,1fr);gap:22px}.cmain>*{min-width:0}.cmain.wide{max-width:960px}
@@ -109,3 +111,12 @@ body{padding-bottom:60px}
 .annc h2{margin:0}.annc .actions{display:flex;gap:8px;flex-wrap:wrap}
 /* A wide table (the vote list) scrolls inside its card; it must not widen the whole page on a phone */
 .card>.tbl{min-width:0;max-width:100%}details.card{grid-template-columns:minmax(0,1fr)}
+
+/* A festive backdrop chosen from the contest's title (public/contesttheme.js): a colored band with a drawing along its top, and a faint pattern behind the page. Cards stay solid so text is easy to read. */
+body[data-fest]{position:relative;isolation:isolate}
+body[data-fest]::before{content:"";position:absolute;left:0;right:0;top:var(--fest-top,0);height:min(440px,64vh);z-index:-2;pointer-events:none;background:var(--fest-art) 0 0/var(--fest-art-size) repeat-x,var(--fest-band)}
+body[data-fest]::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--fest-tile);opacity:var(--fest-tile-opacity,.1)}
+body[data-fest] .cmain .card{background:var(--surface,#fff);box-shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.08)}
+body[data-fest] .crumb a{display:inline-block;background:var(--surface,#fff);padding:6px 14px;border-radius:99px;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+body[data-fest] .banner h1{font-weight:600;font-size:21px}
+body[data-fest] .cmain{padding-top:min(104px,16vw)} /* room for the drawing along the top of the band to show above the first card */
