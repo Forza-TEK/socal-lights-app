@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-17: Video on homes, stage 3 (Admin approval)
+Admin > Published houses has a "Videos waiting" view (and the Dashboard has a "videos waiting for approval" card that opens it). A house record shows its video (Admin plays an uploaded clip from a private address) with Approve video and Remove video; the list has a Video column (Clip waiting / Clip live / Link). Tested end to end locally: a clip uploaded from the edit sheet appears under Videos waiting, Approve makes it public at `/api/photo/v/<id>/<name>` (range requests work). Still to build: the same box on the Add a display and contest entry forms, and showing the video on the map card and the contest page.
+
 ## 2026-11-17: Video on homes, stage 2 (the edit sheet)
 The "Edit display" sheet in Your profile now has a Photos and video section: the video box (`public/videobox.js`) lets the person upload a short clip (up to 40 MB and about 75 seconds; it checks the length and that the browser can play it before uploading) or paste a YouTube/Vimeo link, shows it, replaces it or removes it; a clip says it waits for approval. The act-as route `me/video/<id>` was added so Admin can do the same on someone's behalf. Tested end to end locally with a real WebM (upload, link, remove). Still to build: the same box on the Add a display and contest entry forms, showing the video on the map card and contest page, and the Admin approve screen.
 
