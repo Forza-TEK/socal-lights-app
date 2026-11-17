@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-17: Video on homes, stage 2 (the edit sheet)
+The "Edit display" sheet in Your profile now has a Photos and video section: the video box (`public/videobox.js`) lets the person upload a short clip (up to 40 MB and about 75 seconds; it checks the length and that the browser can play it before uploading) or paste a YouTube/Vimeo link, shows it, replaces it or removes it; a clip says it waits for approval. The act-as route `me/video/<id>` was added so Admin can do the same on someone's behalf. Tested end to end locally with a real WebM (upload, link, remove). Still to build: the same box on the Add a display and contest entry forms, showing the video on the map card and contest page, and the Admin approve screen.
+
 ## 2026-11-17: Festive contest pages
 Every contest page now has a festive backdrop chosen from its title (and its season when the title says nothing): Christmas lights (a string of bulbs over a night sky, used for titles with holiday, Christmas, lights, lighting, Santa and so on, so the Eastvale Holiday Home Lighting Contest gets it), winter (snowflakes), Halloween (pumpkins and bats), harvest (autumn leaves), New Year (sparkles and confetti), Valentine's (hearts), spring (blossoms) and patriotic (stars). It is pure drawing (`public/contesttheme.js`, no pictures to download): a colored band under the page header with the drawing along its top, plus a faint pattern behind the page; cards stay solid so text reads the same. Looked at on desktop and phone, light and dark, for six themes. The organizer cannot pick a different theme yet; an override is the next step if an organizer wants one.
 

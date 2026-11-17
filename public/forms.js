@@ -1,7 +1,9 @@
 // Shared edit-form pieces for Profile, the installer page and the contest dashboard (the same layout the Admin edit windows use).
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 export { wireAreas };
-if (!document.getElementById("forms-css")) { const l = document.createElement("link"); l.id = "forms-css"; l.rel = "stylesheet"; l.href = "/forms.css?v=20261116b"; document.head.appendChild(l); }
+import { videoBoxHtml } from "/videobox.js?v=20261117a";
+export { videoBoxHtml };
+if (!document.getElementById("forms-css")) { const l = document.createElement("link"); l.id = "forms-css"; l.rel = "stylesheet"; l.href = "/forms.css?v=20261117a"; document.head.appendChild(l); }
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const fsec = (title, desc, inner, o = {}) => `<fieldset class="fsec"${o.hide ? " hidden" : ""}><legend>${title}</legend>${desc ? `<p class="fdesc">${desc}</p>` : ""}<div class="fgrid">${inner}</div></fieldset>`;
 export const ff = (label, control, o = {}) => `<div class="ff ${o.c || "c6"}"><label>${label}${control}</label>${o.hint ? `<small class="fhint">${o.hint}</small>` : ""}</div>`;
@@ -24,7 +26,7 @@ export function photoBoxHtml(h, keys = h.photos || [], opts = {}) {
 export function homeForm(h, { pro = false, changes = "", cancelAttr = "data-mcancel", own = false, cities = [], seasons = [] } = {}) {
   return `<form class="mform f" hidden novalidate>
     ${fsec("Listing", "", ff("Display name", inp("title", h.title, 'maxlength="90"'), { hint: "The name on the map card." }) + ff("About it", `<textarea data-k="desc" rows="4" maxlength="1200">${esc(h.descr || "")}</textarea>`) + (own ? ff("Season", sel("season", h.season || "christmas", seasons.map(([k, l]) => [k, l])), { c: "c3", hint: "It shows under that season on the map." }) : ""))}
-    ${own ? fsec("Photos", "Up to 8. The first one is the cover. Photos are shrunk on your phone before they upload, and they are added or removed right away (you do not need to tap Save).", `<div class="ff c6" data-pbox>${photoBoxHtml(h)}</div>`) : ""}
+    ${own ? fsec("Photos and video", "Up to 8 photos. The first one is the cover. Photos are shrunk on your phone before they upload. Photos and the video are added or removed right away (you do not need to tap Save).", `<div class="ff c6" data-pbox>${photoBoxHtml(h)}</div><div class="ff c6">${videoBoxHtml(h)}</div>`) : ""}
     ${own ? fsec("Where it is", "Changing the address moves the pin: the new address is looked up the same way as when you first added it. If the new text needs a quick look, the home goes back in review until it is approved, and you will see that when you save.", ff("City", sel("city", h.city || "", [["", "Choose a city"], ...cities.map((c) => [c, c])]), { c: "c3" }) + ff("ZIP", inp("zip", h.zip, 'maxlength="5" inputmode="numeric" autocomplete="postal-code"'), { c: "c3" }) + `<div class="ff c6 combo"><label>Street address<input data-k="street" data-addr value="${esc(h.street ?? "")}" maxlength="120" autocomplete="off"></label></div>`) : ""}
     ${fsec("Plan a visit", "Helps families decide when and how to come.", ff("Lights are on", inp("lights_on", h.lights_on, 'maxlength="60" placeholder="5 to 10 pm nightly"'), { c: "c3" }) + ff("How to see it", sel("visit", h.visit, [["", "Not sure"], ["drive", "Drive by"], ["walk", "Walk by"], ["both", "Drive or walk"]]), { c: "c3" })
       + ff("Parking", sel("parking", h.parking, [["", "Not listed"], ["free", "Free parking nearby"], ["street", "Street parking"], ["none", "Hard to park"]]), { c: "c3" }) + ff("Radio station for the music", inp("radio", h.radio, 'maxlength="40" placeholder="88.1 FM"'), { c: "c3" })

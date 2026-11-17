@@ -80,7 +80,7 @@ test("it refuses what it cannot do: off without a secret, unknown pages, an unkn
 test("every listed page maps to a real handler, and the list covers each user module", async () => {
   for (const [, load, , owner] of ROUTES) { const m = await load(); assert.ok(Object.keys(m).some((k) => /^onRequest/.test(k)), "no handler"); assert.ok(["as", "event", "home", "contest", "installer"].includes(owner)); }
   const covers = (p) => ROUTES.some(([re]) => re.test(p));
-  for (const p of ["me/events/x", "me/homes/x", "me/overview", "me/profile", "me/badges", "me/newsletter", "drafts", "drafts/x", "contests/a/manage", "contests/a/entries", "contests/a/entries/b", "contests/a/entries/b/photos", "contests/a/mine", "contests/a/judges", "contests/a/staff", "contests/a/sponsors", "installers/a/manage", "installers/a/logo", "installers/a/claim"]) assert.ok(covers(p), p);
+  for (const p of ["me/events/x", "me/homes/x", "me/video/x", "me/overview", "me/profile", "me/badges", "me/newsletter", "drafts", "drafts/x", "contests/a/manage", "contests/a/entries", "contests/a/entries/b", "contests/a/entries/b/photos", "contests/a/mine", "contests/a/judges", "contests/a/staff", "contests/a/sponsors", "installers/a/manage", "installers/a/logo", "installers/a/claim"]) assert.ok(covers(p), p);
   assert.deepEqual(matchRoute("me/homes/h1").params, { id: "h1" }); assert.deepEqual(matchRoute("contests/oak/entries/e1/photos").params, { slug: "oak", id: "e1" });
 });
 

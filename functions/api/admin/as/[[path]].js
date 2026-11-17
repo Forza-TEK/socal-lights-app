@@ -1,6 +1,7 @@
 // /api/admin/as/<user route> — an Admin does anything a signed-in person can do, on that person's behalf (docs/admin-parity.md).
 //   /api/admin/as/me/events/<submission id>          POST, DELETE   edit, photos, notice, copy, delete an event
 //   /api/admin/as/me/homes/<post id>                 GET, POST, DELETE   edit, photos, take down, put back, delete a home
+//   /api/admin/as/me/video/<post id>                 PUT, POST      the one video (a short clip or a YouTube/Vimeo link) on a home or a contest entry
 //   /api/admin/as/me/overview | profile | badges | newsletter | claims | featurable | sponsor      the person's own pages
 //   /api/admin/as/auth/me | contests | contests/<slug>   who the page thinks is signed in, the contests list and one contest
 //   /api/admin/as/drafts[/<id>]                      the person's saved drafts
@@ -14,7 +15,7 @@ import { signActAs, ACT_AS_HEADER, actAsSecret } from "../../../_lib/actas.js";
 import { record } from "../../../_lib/adminlog.js";
 
 const L = {
-  meEvents: () => import("../../me/events/[id].js"), meHomes: () => import("../../me/homes/[id].js"), meOverview: () => import("../../me/overview.js"), meProfile: () => import("../../me/profile.js"),
+  meEvents: () => import("../../me/events/[id].js"), meVideo: () => import("../../me/video/[id].js"), meHomes: () => import("../../me/homes/[id].js"), meOverview: () => import("../../me/overview.js"), meProfile: () => import("../../me/profile.js"),
   meBadges: () => import("../../me/badges.js"), meNewsletter: () => import("../../me/newsletter.js"), meClaims: () => import("../../me/claims.js"), meFeaturable: () => import("../../me/featurable.js"), meSponsor: () => import("../../me/sponsor.js"),
   draftsIndex: () => import("../../drafts/index.js"), draftsId: () => import("../../drafts/[id].js"),
   cManage: () => import("../../contests/[slug]/manage.js"), cEntries: () => import("../../contests/[slug]/entries/index.js"), cEntry: () => import("../../contests/[slug]/entries/[id].js"), cEntryPhotos: () => import("../../contests/[slug]/entries/[id]/photos.js"),
@@ -27,7 +28,7 @@ const L = {
 const ID = "([A-Za-z0-9_-]{1,64})";
 // [pattern, loader, parameter names, how to find the owner]
 export const ROUTES = [
-  [new RegExp(`^me/events/${ID}$`), L.meEvents, ["id"], "event"], [new RegExp(`^me/homes/${ID}$`), L.meHomes, ["id"], "home"],
+  [new RegExp(`^me/events/${ID}$`), L.meEvents, ["id"], "event"], [new RegExp(`^me/homes/${ID}$`), L.meHomes, ["id"], "home"], [new RegExp(`^me/video/${ID}$`), L.meVideo, ["id"], "home"],
   [/^me\/overview$/, L.meOverview, [], "as"], [/^me\/profile$/, L.meProfile, [], "as"], [/^me\/badges$/, L.meBadges, [], "as"], [/^me\/newsletter$/, L.meNewsletter, [], "as"],
   [/^me\/claims$/, L.meClaims, [], "as"], [/^me\/featurable$/, L.meFeaturable, [], "as"], [/^me\/sponsor$/, L.meSponsor, [], "as"],
   [/^auth\/me$/, L.authMe, [], "as"], [/^contests$/, L.cIndex, [], "as"], [new RegExp(`^contests/${ID}$`), L.cDetail, ["slug"], "contest"],
