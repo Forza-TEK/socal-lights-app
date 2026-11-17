@@ -1632,3 +1632,7 @@ Migration 0278 takes the duplicate Grok row (grok-43rd-light-up-a-life-car-b3000
 
 ## 2026-11-16 Add to calendar keeps the start time
 An event whose hours give only a start time ("7pm") came into the calendar as all-day. Now it is a two-hour event from that time (capped at midnight), and hours that run past midnight ("7pm–12:16am") end the next morning. Fixed in public/app.js (map button, Google link and .ics) and functions/_lib/eventld.js (event page .ics); tests in tests/seo-admin.test.mjs. Multi-day events with daily hours are still all-day.
+
+## 2026-11-17 verified bot approved
+- BotBase > Submission history (owner screenshot): **SoCalLightsBot, Data Collection, status Approved**, submitted and last updated Nov 15 2026. Cloudflare has verified the bot.
+- Next: (1) `BOT_SIGNING_KEY="$(cat <key file>)" node scripts/bot-keys.mjs --crawltest` should now answer 200 (needs the private key, which is kept outside the repo; not available in every session). (2) Optional: add the same private key as the secret `BOT_SIGNING_KEY` in the cloud environment the scheduled sweeps use, so they can use `node scripts/signed-fetch.mjs <url>` for pages that answered 403 to the plain bot. (3) Re-try the sites that turned the bot away because of a Cloudflare challenge (Visit Crestline, Tock, event.marriott.com and others in `docs/blocked-sites.md`) with one signed read each; sites behind Akamai or that block verified bots as well will still refuse.
