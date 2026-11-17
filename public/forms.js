@@ -1,7 +1,7 @@
 // Shared edit-form pieces for Profile, the installer page and the contest dashboard (the same layout the Admin edit windows use).
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 export { wireAreas };
-import { videoBoxHtml } from "/videobox.js?v=20261117c";
+import { videoBoxHtml } from "/videobox.js?v=20261117d";
 export { videoBoxHtml };
 if (!document.getElementById("forms-css")) { const l = document.createElement("link"); l.id = "forms-css"; l.rel = "stylesheet"; l.href = "/forms.css?v=20261117b"; document.head.appendChild(l); }
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
