@@ -1,6 +1,7 @@
 // The video box of a home's or a contest entry's edit sheet: one video, either a short clip uploaded from the phone or a YouTube/Vimeo link.
 // A link shows at once; a clip is held until Admin approves it (the person can watch it here meanwhile). Talks to /api/me/video/<postId> (functions/api/me/video/[id].js).
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+if (!document.getElementById("vbox-css")) { const st = document.createElement("style"); st.id = "vbox-css"; st.textContent = ".vbox video{display:block;width:100%;max-width:420px;border-radius:10px;background:#000;margin:0 0 10px}.vbox .vlink{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}.vbox .vlink input{flex:1 1 240px;min-width:0}.vbox .padd{display:flex;gap:8px;flex-wrap:wrap;align-items:center}"; document.head.appendChild(st); } // its own few styles, so it looks right on every page that uses it
 export const MAX_VIDEO_MB = 40, MAX_VIDEO_SECONDS = 75;
 
 export function videoBoxHtml(h, { noun = "home" } = {}) {
@@ -50,4 +51,15 @@ export function wireVideoBox(root, { item, url, noun = "home", friendly = (e) =>
     if (save) { const v = box().querySelector("[data-vlink-in]").value.trim(); if (!v) return say("Paste a YouTube or Vimeo link first."); try { set(await call({ action: "link", url: v })); say("Link saved."); } catch (x) { say(friendly(x)); } return; }
     if (rm) { try { set(await call({ action: "remove" })); say("Video removed."); } catch (x) { say(friendly(x)); } }
   });
+}
+
+// On the "you're done" screen of the add forms: an optional video box for the home or entry that was just created. The screen has an empty <div id="vslot"></div> for it.
+export function mountVideoSlot(id, { noun = "home", friendly } = {}) {
+  const put = () => {
+    const slot = document.getElementById("vslot"); if (!slot || slot.dataset.ready) return !!slot;
+    slot.dataset.ready = "1"; const item = { id };
+    slot.innerHTML = `<h2 style="margin-bottom:6px">Add a video <span class="muted" style="font-weight:400">(optional)</span></h2><p class="help" style="margin:0 0 10px">A short clip of your lights, up to about a minute, or a YouTube or Vimeo link. You can also add or change it later from Your profile.</p>${videoBoxHtml(item, { noun })}`;
+    wireVideoBox(slot, { item, url: "/api/me/video/" + id, noun, ...(friendly ? { friendly } : {}) }); return true;
+  };
+  if (!put()) requestAnimationFrame(() => { if (!put()) setTimeout(put, 200); });
 }
