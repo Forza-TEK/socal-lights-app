@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-17: Video on homes, stage 5 (at posting, and on the contest page)
+The video box now also appears on the "you're done" screen of Add a display and of the contest entry form (an optional "Add a video" section for the home or entry just created), and in the contest page's "Your home" card, so an entrant can add or change their video until voting closes. The contest endpoint returns an entrant's own video state to them only. The box carries its own styles (`public/videobox.js`). Checked in a browser with the API mocked for the contest card and with a real upload for the edit sheet; the add-form screens were checked by mounting the box into the page, not by completing a full submission. Known limits: clips are uploaded as they are (40 MB, about 75 seconds, MP4/MOV/WebM): an iPhone HEVC .mov plays in Safari and recent Chrome/Edge but not Firefox. A clip waits for Admin approval (Admin > Published houses > Videos waiting).
+
 ## 2026-11-17: Video on homes, stage 4 (showing it)
 A home's video shows on the map card as a "Watch the video" button under its description: a YouTube/Vimeo link plays in the privacy-friendly player, an approved clip plays right in the card; nothing loads until it is tapped. On the contest page each home with a video shows a "Watch the video" link (a link opens in a new tab, a clip plays inline). The first-screen file budget went up by 2 KB for this (tests/home-speed.test.mjs). Checked locally: clip approved in Admin, button on the card, player starts; contest entry with a link shows its link. Still to build: the video box on the Add a display and contest entry forms (today a video is added from the edit sheet after posting).
 

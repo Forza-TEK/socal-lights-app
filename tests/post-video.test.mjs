@@ -80,3 +80,12 @@ test("publicVideo: link, approved clip or nothing", () => {
   assert.deepEqual(publicVideo({ status: "approved", video_file: "v/a/1.mp4", video_ok: 1 }), { vf: "/api/photo/v/a/1.mp4" });
   assert.deepEqual(publicVideo({ status: "approved", video_file: "v/a/1.mp4", video_ok: 0 }), {}); assert.deepEqual(publicVideo({ status: "pending", video_file: "v/a/1.mp4", video_ok: 1 }), {});
 });
+
+test("the video box is on every place a home or entry is made or edited: the edit sheet, the 'you're done' screens of both add forms, and the contest page's Your home card", async () => {
+  const { readFileSync } = await import("node:fs"), read = (f) => readFileSync(f, "utf8");
+  assert.match(read("public/forms.js"), /videoBoxHtml\(h\)/); assert.match(read("public/profile.html"), /wireVideoBox\(f, \{ item: h, url: "\/api\/me\/video\/" \+ id/);
+  for (const f of ["public/add-house.html", "public/contest-enter.html"]) { const h = read(f); assert.match(h, /id="vslot"/, f); assert.match(h, /mountVideoSlot\(j\.id/, f); }
+  assert.match(read("public/contest.html"), /data-vslot=/); assert.match(read("public/contest.html"), /wireVideoBox\(el, \{ item: e, url: "\/api\/me\/video\/" \+ e\.id/);
+  const slug = read("functions/api/contests/[slug].js"); assert.match(slug, /own\.has\(p\.id\) \? \{ video: p\.video \|\| ""/, "the owner sees their own video state");
+  assert.match(read("public/videobox.js"), /fetch\(url, \{ method: "PUT"/, "uploads use fetch so the Admin act-as view can redirect them");
+});

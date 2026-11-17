@@ -46,6 +46,7 @@ export async function onRequestGet({ params, request, env }) {
         id: p.id, name: p.title || p.biz, biz: p.biz, address: p.address, city: p.city, lat: p.lat, lng: p.lng, photos: JSON.parse(p.photos || "[]"), ...publicVideo(p), no: p.entry_no, descr: /^Entry in /.test(p.descr || "") ? "" : (p.descr || "").slice(0, 300),
         votes: showCounts && hasPublic(c) ? Object.fromEntries(categories.map((k) => [k, (live.counts[p.id] || {})[k] || 0])) : null, mine: own.has(p.id), manage: ownTok[p.id], flagged: isOwner ? !!p.dq : undefined,
         jv: isOwner && hasJudges(c) ? jshow(p.id) : undefined,
+        ...(own.has(p.id) ? { video: p.video || "", video_file: p.video_file || "", video_ok: !!p.video_ok } : {}), // the owner sees their own video state (a clip waiting for approval is not public)
       }));
   const awards = frozen ? frozen.awards : c.announced ? awardList(c, live) : null;
   // What each award is worth, shown from the start so people know what they are competing for
