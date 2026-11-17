@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/tokens.css?v=20261116c">
 <link rel="stylesheet" href="/addflow.css?v=20261116b">
-<link rel="stylesheet" href="/contest.css?v=20261116b">
+<link rel="stylesheet" href="/contest.css?v=20261117a">
 <link rel="stylesheet" href="/routes.css?v=20261111x560">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
@@ -30,6 +30,7 @@ import { tourHtml, wireTour } from "/tour.js?v=20261115a";
 import { getMaps, routeUrl, navAttr } from "/maps.js?v=20261111a";
 import { fmtDate, statusChips, entriesClosedText, tieText, PT_NOTE } from "/contestfmt.js?v=20261111a";
 import { contestImage } from "/contesticon.js?v=20261111a";
+import { themeFor, applyTheme } from "/contesttheme.js?v=20261117a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
 const fmt = (s) => fmtDate(s, false);
 const initials = (o) => (o.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("") || "EN").toUpperCase();
@@ -40,7 +41,7 @@ function countVisit() { if (counted) return; counted = true; const q = new URLSe
 async function load() {
   const r = await fetch(`/api/contests/${encodeURIComponent(slug)}`, { cache: "no-store" });
   if (!r.ok) { $("#app").innerHTML = `<div class="card center"><h1>We can't find that contest</h1><p class="muted">The link may be mistyped, or the contest may not be public yet.</p><a class="btn" href="/">Back to the map</a></div>`; return; }
-  countVisit(); D = await r.json(); document.title = D.contest.name + " · SoCal Lights"; const y = scrollY; render(); scrollTo(0, y);
+  countVisit(); D = await r.json(); document.title = D.contest.name + " · SoCal Lights"; applyTheme(document.body, themeFor(D.contest.name, D.contest.season)); const y = scrollY; render(); scrollTo(0, y);
 }
 
 const CROWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>';
