@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-18: The Shop tab is back on the website
+Rey: "Looks like you took the shop tab off the website too. Put it back." The removal (PR 729) was meant for the apps; it also took the website's Shop. Reverted it: the website has the Shop tab again (Donate card first, then the Amazon categories), the "What is the Shop tab?" Help Center article is back (migration 0283 re-inserts it; 0282 stays because it already ran), the assistant's Shop paragraph and the Amazon settings are back. In the iPhone and Android apps there is no Shop tab (store rules) and no replacement: I also removed the Support tab I had added for the apps. Checked with an app user agent (Places and Favorites only) and phone and desktop browsers (Places, Favorites, Shop; Donate card then Amazon cards). Lesson: say "web too" before removing a tab that exists in two places.
+
 ## 2026-11-18: The web Shop card is a Donate link
 Rey did not like the "Support SoCal Lights" box the web Shop card opened (long text, See pricing, tip, Browse the shop, affiliate note). The first card in the web Shop is now a plain **Donate** card that goes straight to the tip page (the `donateUrl` in `public/site-config.js`, Cash App), and is left out if no donate link is set. The support box itself is unchanged for the menu item that opens it. The app's Support tab is unchanged (free actions only, no tips).
 
