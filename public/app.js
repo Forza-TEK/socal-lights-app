@@ -831,7 +831,9 @@ function positionRoutePill() {
   const r = document.getElementById("panel").getBoundingClientRect(), h = document.querySelector("#phead .hrow"), c = document.querySelector("#phead .hcount");
   // a dot is selected: its card covers the list, so the pill rides on top of that card instead
   const pv = document.getElementById("preview"), pinCard = pv && !pv.hidden && document.body.classList.contains("pin-open") ? pv.getBoundingClientRect().top : null;
-  b.classList.remove("docked"); const top = Math.round((pinCard != null ? pinCard : r.top) - 48); b.style.top = top + "px"; b.style.left = "auto"; b.style.right = top < 284 ? "70px" : "14px"; // the list stops below the pill, so the pill always rides on top of it
+  // The pill steps left, out of the column of zoom and locate buttons, BEFORE its top reaches the bottom of that column (it used to wait until it was above it, so it slid over the locate button first).
+  const ctl = document.querySelector(".maplibregl-ctrl-top-right"), cr = ctl && ctl.getBoundingClientRect(), clear = cr && cr.height ? Math.round(cr.bottom) + 24 : 284;
+  b.classList.remove("docked"); const top = Math.round((pinCard != null ? pinCard : r.top) - 48); b.style.top = top + "px"; b.style.left = "auto"; b.style.right = top < clear ? "70px" : "14px"; // the list stops below the pill, so the pill always rides on top of it
 }
 { const rp = rtPill(); if (rp) rp.addEventListener("click", () => { if (rp.dataset.hint) { toast(rp.dataset.hint, true); return; } routeFromView(); }); }
 // While the list slides (drag or tap), keep the pill on it
