@@ -1,7 +1,7 @@
 // SoCal Lights admin: review houses, manage published posts, edit events.
 import { CITY } from "/cities.js?v=20261115i";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261115a";
-import { attachAddress } from "/addflow.js?v=20261117a";
+import { attachAddress } from "/addflow.js?v=20261118a";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261116b";
 import { renderHelp } from "/admin/help.js?v=20261116b";
