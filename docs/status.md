@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-18: Phone bottom bar raised off the bottom edge
+Rey (iPhone app): the Places / Favorites bar and the AI button sat right on the bottom edge. Both were at `bottom: 2px`; they now sit at `max(10px, safe-area-inset-bottom - 8px)`: 10 px in a normal browser (no change in feel) and about 26 px in the app on a phone with a home indicator (the indicator is clear of the bar). Measured in an iPhone-sized browser: 10 px gap. The notch-sized gap could not be simulated here, so check it in the app; if it is too high or too low, change the 8 in `public/styles.css` (the two `.bnav` and `.scl-chat-fab` rules).
+
 ## 2026-11-18: The Shop tab is back on the website
 Rey: "Looks like you took the shop tab off the website too. Put it back." The removal (PR 729) was meant for the apps; it also took the website's Shop. Reverted it: the website has the Shop tab again (Donate card first, then the Amazon categories), the "What is the Shop tab?" Help Center article is back (migration 0283 re-inserts it; 0282 stays because it already ran), the assistant's Shop paragraph and the Amazon settings are back. In the iPhone and Android apps there is no Shop tab (store rules) and no replacement: I also removed the Support tab I had added for the apps. Checked with an app user agent (Places and Favorites only) and phone and desktop browsers (Places, Favorites, Shop; Donate card then Amazon cards). Lesson: say "web too" before removing a tab that exists in two places.
 
