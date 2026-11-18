@@ -5,7 +5,7 @@
 import { me, signIn, signOut, esc } from "/auth.js?v=20261116a";
 
 // styles for the account menu and the signed-out button, added once (pages without our main stylesheet get them too)
-if (!document.getElementById("chrome-css")) { const l = document.createElement("link"); l.id = "chrome-css"; l.rel = "stylesheet"; l.href = "/chrome.css?v=20261111x560"; document.head.appendChild(l); }
+if (!document.getElementById("chrome-css")) { const l = document.createElement("link"); l.id = "chrome-css"; l.rel = "stylesheet"; l.href = "/chrome.css?v=20261118a"; document.head.appendChild(l); }
 
 /* ---------- light / night (same switch and same remembered choice as the map) ---------- */
 const nextSwitch = () => { const d = new Date(); d.setMinutes(0, 0, 0); const h = d.getHours(); if (h < 6) d.setHours(6); else if (h < 18) d.setHours(18); else { d.setDate(d.getDate() + 1); d.setHours(6); } return d.getTime(); };
@@ -29,17 +29,29 @@ export async function mountAcct(el) { await acctReady; if (el) hosts.add(el); pa
 
 let menu = null;
 const closeMenu = () => { if (menu) { menu.remove(); menu = null; } document.querySelectorAll("[data-acct-menu][aria-expanded=true]").forEach((b) => b.setAttribute("aria-expanded", "false")); };
-function openMenu(btn) {
+// Which menu item is the page you are on (so the menu marks it, instead of marking the first item)
+function currentHref() {
+  const p = location.pathname.replace(/\/$/, "") || "/", h = location.hash;
+  if (p === "/profile") return h === "#events" ? "/profile#events" : h === "#contests" ? "/contests#mine" : "/profile";
+  if (p === "/contests") return "/contests#mine";
+  if (p === "/add" || /^\/add-/.test(p)) return "/add";
+  if (p === "/tutorials" || p.startsWith("/tutorials/")) return "/tutorials";
+  if (p === "/help" || p.startsWith("/help/")) return "/help";
+  return "";
+}
+function openMenu(btn, byKeyboard) {
   closeMenu(); btn.setAttribute("aria-expanded", "true");
   menu = document.createElement("div"); menu.className = "acctmenu"; menu.setAttribute("role", "menu");
   menu.innerHTML = `<div class="who" role="presentation"><b>${esc(acctUser.name || "Signed in")}</b><span>${esc(acctUser.email)}</span></div><a role="menuitem" href="/profile">Your profile</a><a role="menuitem" href="/contests#mine">Your contests</a><a role="menuitem" href="/profile#events">Your events</a><a role="menuitem" href="/add">Add an event, home or contest</a><a role="menuitem" href="/tutorials">Tutorials</a><a role="menuitem" href="/help">Help</a><button role="menuitem" type="button" data-signout>Sign out</button>`;
   document.body.appendChild(menu);
   const r = btn.getBoundingClientRect(); menu.style.top = r.bottom + 8 + "px"; menu.style.right = Math.max(8, innerWidth - r.right) + "px";
-  menu.querySelector("a").focus();
+  const here = currentHref(); if (here) { const cur = menu.querySelector(`a[href="${here}"]`); if (cur) cur.setAttribute("aria-current", "page"); }
+  // Opened with a finger or the mouse: nothing is highlighted but the page you are on. Opened from the keyboard: focus goes to that item (or the first), so Tab and Enter work.
+  if (byKeyboard) (menu.querySelector("[aria-current]") || menu.querySelector("a")).focus(); else { menu.tabIndex = -1; menu.focus({ preventScroll: true }); }
 }
 document.addEventListener("click", async (e) => {
   const b = e.target.closest("[data-acct-menu]"), si = e.target.closest("[data-acct-signin]");
-  if (b) { menu && b.getAttribute("aria-expanded") === "true" ? closeMenu() : openMenu(b); return; }
+  if (b) { menu && b.getAttribute("aria-expanded") === "true" ? closeMenu() : openMenu(b, e.detail === 0); return; }
   if (si) { const u = await signIn({ title: "Sign in", next: location.pathname + location.search + location.hash }); if (u) location.reload(); return; }
   if (e.target.closest("[data-signout]")) { await signOut(); location.href = "/"; return; }
   if (menu && !e.target.closest(".acctmenu")) closeMenu();
