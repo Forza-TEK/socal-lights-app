@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-18: The phone list follows the bar's real position (fix for the previous fix)
+Rey's iPhone still showed the tab bar over the Filters row. Cause: the earlier fix measured `env(safe-area-inset-bottom)` from script, which returned 0 in the app, so the list rose 8 px instead of about 24. `peekH()` now measures the tab bar itself (`#bnav` top) and ends the collapsed list 6 px above it, wherever the bar is. Tested by forcing the bar to 26 px (what the app computes): the gap to the Filters row is 6 px with and without that offset. Rey should confirm on the phone.
+
 ## 2026-11-18: The phone list rises with the bottom bar
 After the bar was raised, it covered the Filters / Tonight / This weekend row of the collapsed list. The collapsed list height (`peekH()` in `public/app.js`) now adds the same raise as the bar (`max(10, safe area - 8) - 2` px), so the buttons row ends just above the bar. Measured in an iPhone-sized browser: Filters row bottom 588, bar top 594 (6 px clear). With the app's home-indicator inset both move up together; check it in the app.
 
