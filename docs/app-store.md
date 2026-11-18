@@ -10,7 +10,7 @@ Bundle / package id: `app.socallights.lights` (change in `app/capacitor.config.j
 - Sign-in inside the app is the emailed code only ("Continue with Google" is hidden when the browser string has `SoCalLightsApp`: Google blocks embedded webviews, and offering Google would make Apple 4.8 require Sign in with Apple). Google and code sign-in prove the same email, so they reach the same account (`tests/appstore.test.mjs`).
 - Account deletion in the app (Apple 5.1.1(v)): Profile > Account tab > Delete my account, two taps (the second asks "Tap again to permanently delete"). `DELETE /api/me` removes the account and personal data as `public/privacy.html` describes and keeps only the do-not-contact hash.
 - Native share sheet (`@capacitor/share`) on every Share button inside the app (`public/native.js`).
-- In-app mode: no "Keep SoCal Lights Free" tip item or footer line, no Featured payment option on Add event. The Shop tab becomes a **Support** tab (gift icon): free ways to help (add your display, add an event, share the app, how to fix the map, rate the app, run a contest), with no tips, no Amazon links and no price pages. To turn on "Rate the app" put the store pages in `appStoreUrl` and `playStoreUrl` in `public/site-config.js`.
+- In-app mode: no "Keep SoCal Lights Free" tip item or footer line, no Featured payment option on Add event. There is no Shop or Support tab any more (removed 2026-11-18); donating is the "Keep SoCal Lights Free" item in the More menu, website only.
 
 ## What needs you
 1. **Apple Developer Program** ($99/yr) — individual account is fastest; a company account needs a D-U-N-S number.
