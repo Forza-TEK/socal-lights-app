@@ -233,10 +233,6 @@ url: /help#run
 keywords: print qr poster yard sign download results spreadsheet
 On the organizer dashboard you can copy the contest link and print a QR poster that opens the contest page, print entry posters, and print a yard sign. In the print window turn on background graphics so colors print. After winners are announced, the dashboard has Download results (spreadsheet). You can also hide or show vote counts, and read contest activity.
 
-## The Shop tab and affiliate links
-url: /
-The map has a Shop tab next to Places and Favorites, with ideas for each season. Its cards open an Amazon search. As an Amazon Associate we earn from qualifying purchases, at no extra cost to you. Shop links never affect contests or listings.
-
 ## Privacy basics: cookies, location, data and the AI assistant
 url: /privacy
 keywords: cookies cookie location stored data collect sell tracking ads advertising privacy
