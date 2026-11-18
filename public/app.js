@@ -1589,10 +1589,11 @@ $("#q").addEventListener("keydown", (e) => {
 // cards never move relative to the sheet and nothing is rebuilt while it moves. Peek shows the handle and the buttons row above the
 // floating tab bar; a soft fade at the bottom hides the rest of the sheet behind the tab bar and fades away as the sheet rises.
 const PEEK = 142; // visible height at Peek: the handle and the buttons row, ending right above the tab bar (the owner wants the list minimized this low; 232 raised it)
-let safeBottom = null;
+// The collapsed list ends right above the floating tab bar, wherever the bar really is (it sits higher in the apps because of the home indicator), so the height follows the bar's measured position.
+// (Measuring env(safe-area-inset-bottom) from script returned 0 in the app, which left the list 16 px too low.) 62 = where the bar's top used to be (2px gap + 60px bar) when PEEK was set.
+function barTopDist() { const b = document.getElementById("bnav"); if (!b) return 62; const r = b.getBoundingClientRect(); return r.height ? Math.round(innerHeight - r.top) : 62; }
 function peekH() {
-  if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
-  return PEEK + 2 - 6 + (typeof bannerHeight === "function" && isPhone() ? bannerHeight() : 0);
+  return PEEK + 2 - 6 - 62 + barTopDist() + (typeof bannerHeight === "function" && isPhone() ? bannerHeight() : 0);
 }
 let sheetState = "peek";
 const fullH = () => $("#panel").offsetHeight || innerHeight * 0.85;
