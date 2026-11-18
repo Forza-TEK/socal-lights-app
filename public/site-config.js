@@ -3,6 +3,7 @@ export const SITE = {
   // Tip jar. Cash App: "https://cash.app/$yourcashtag". Leave "" to hide the donate button.
   donateUrl: "https://cash.app/$RelaxationMeditation",
   donateLabel: "Tip with Cash App",
+  appStoreUrl: "", playStoreUrl: "", // the apps' store pages: when set, the Support tab inside the apps offers "Rate the app"
 
   // Amazon Associates tracking id (looks like "socallights-20"). Leave "" to hide the Shop tab.
   amazonTag: "socallightsap-20",

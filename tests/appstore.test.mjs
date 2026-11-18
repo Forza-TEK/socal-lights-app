@@ -223,7 +223,7 @@ test("native.js: share sheet and reminders use the Capacitor plugins only inside
 });
 test("every Share button goes through the native share sheet first, and saving an event sets or clears its reminder", () => {
   const app = read("public/app.js"), tour = read("public/tour.js"), contest = read("public/contest.html");
-  assert.equal((app.match(/await nativeShare\(/g) || []).length, 2, "place share and favorites share in app.js");
+  assert.equal((app.match(/await nativeShare\(/g) || []).length, 3, "place share, favorites share and the Support tab's share-the-app card in app.js");
   for (const [src, name] of [[app, "app.js"], [tour, "tour.js"], [contest, "contest.html"]]) { assert.match(src, /import \{[^}]*nativeShare[^}]*\} from "\/native\.js\?v=\w+"/, name + " imports it"); assert.ok(src.indexOf("nativeShare(") < src.indexOf("navigator.share"), name + ": native first"); }
   assert.equal((app.match(/remind\(id, /g) || []).length, 3, "all three places that save or un-save an event");
   assert.equal(read("public/index.html").match(/native\.js\?v=(\w+)/)[1], app.match(/native\.js\?v=(\w+)/)[1]);
