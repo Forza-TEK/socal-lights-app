@@ -90,6 +90,27 @@ Follow `docs/city-sweep.md`, `docs/sweep-methods.md` and `docs/blocked-sites.md`
 
 New watchlist venues and blocked sites go to Claude as a request in `docs/handoff/to-claude/`. Grok does not edit `docs/watchlist.json` or `docs/blocked-sites.md`.
 
+## Coverage update — 2026-11-18 (Grok sweep)
+
+Empty cities: 183 at start → 171 after (work order re-fetch, 2026-11-18).
+First events added in: Highland, Thousand Palms, Morongo Valley, Lake Los Angeles, Acton, South Whittier, Florence-Graham, View Park-Windsor Hills, San Diego Country Estates, East Rancho Dominguez, Cudahy, Lennox.
+
+Thin categories (start → after): concerts-choirs 37→42 /60 (focus); home-displays 155→155 /250 (focus, none found with 2026 dates + public addresses);
+thanksgiving 25→30+ /30 (no longer LOW); santa 77→80+ /80 (no longer LOW); nye-parties 41→48 /60; nye-fireworks 12→13 /15;
+ballet-theater 37→39 /40; trains 13→14 /15; light-shows 36, menorah 21, posada-kwanzaa 10, lunar 21, polar-dips 4 unchanged.
+
+Parent sources checked today:
+- LA County Library events feed (visit.lacountylibrary.org eeventcaldata JSON + event-page JSON-LD for addresses) — 8 empty-city firsts.
+- Hotel/resort holiday pages (Catamaran, Bahia, Langham Huntington, Indian Wells Resort, San Vicente Resort) for Thanksgiving.
+- Church event calendars (Calvary Chapel North Long Beach, Calvary Chapel Echo Park, Chatsworth Foursquare) for Thanksgiving dinners.
+- College/chorus sites (Westmont, APU, Biola, GMCLA, PSGMC) for concerts.
+- City sites: paramountcity.gov, cityoflapalma.org, Riviera Village, visitdelmarvillage, cardiff101.com.
+- Other county library LibNet hosts (OC, Riverside, SB, SD, Ventura) do not exist (302); try their own calendars (LibCal for Riverside) next.
+
+Suggested watchlist additions: Westmont music calendar; Plaza Theatre Palm Springs; Victoria Gardens events; Riviera Village; visitdelmarvillage.com; cardiff101.com events; paramountcity.gov events.
+
+Browser pass (same day, after the run): +13 events. Concerts-choirs +7 (Redlands x2, Laguna Beach, Temecula, Oceanside, Costa Mesa, Escondido); posada +1 (Santa Fe Springs); menorah +1 (Carlsbad); thanksgiving +1 (Catamaran, San Diego); santa +1 (Cardiff Kringle Mingle); light displays +2 (Pine Valley Camp Christmas, Palmdale Sparkle on the Square). Pine Valley was an empty city; it now has its first event.
+
 ## Coverage update — 2026-11-17 (Grok sweep)
 
 Empty cities: 195 at start → 186 after (work order re-fetch, 2026-11-17).
