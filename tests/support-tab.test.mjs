@@ -1,16 +1,16 @@
-// The Shop tab is gone (Rey, 2026-11-18): no Shop or Support tab on the website or in the apps. Donating stays in the More menu (website only); the apps have no tips or affiliate links.
+// The Shop tab: back on the website (Amazon categories, with a Donate card first), never inside the iPhone and Android apps (store rules). Nothing replaces it in the apps.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const app = readFileSync("public/app.js", "utf8"), html = readFileSync("public/index.html", "utf8");
 
-test("there is no Shop or Support tab: the page has only Places and Favorites, and the code has no shop panel", () => {
-  assert.doesNotMatch(html, /id="t-shop"|data-tab="shop"/);
-  assert.match(html, /id="t-events"/); assert.match(html, /id="t-plan"/);
-  assert.doesNotMatch(app, /state\.tab === "shop"|syncShopTab|nudgeShopTabs|const SUPPORT|data-supp-share|amzUrl|shopCats|shopSeason/, "no leftover shop code");
-  assert.match(app, /\["events", "plan"\]\.forEach/);
+test("the website has the Shop tab; the apps never do (no Support tab either)", () => {
+  assert.match(html, /id="t-shop"/); assert.match(html, /data-tab="shop"/);
+  assert.match(app, /const shopCats = \(\) => \(SITE\.amazonTag && !IN_APP \?/, "no Amazon shop inside the app wrapper");
+  assert.match(app, /const on = shopCats\(\)\.length > 0;/, "the tab follows the shop list only: hidden in the apps");
+  assert.doesNotMatch(app, /const SUPPORT = |data-supp-share|state\.tab === "shop" && IN_APP|const GIFT/, "no in-app Support tab");
 });
-test("the website's More menu still has the support item (donate), and it is left out of the apps", () => {
-  assert.match(app, /IN_APP \? "" : row\("button", 'type="button" data-m="support"'/);
-  assert.match(app, /safeUrl\(SITE\.donateUrl\)/);
+test("the web Shop's first card is a Donate link straight to the tip page", () => {
+  assert.match(app, /class="shopcard shopsupport" href="\$\{esc\(safeUrl\(SITE\.donateUrl\)\)\}"/);
+  assert.match(app, /data-m="support"/, "the More menu still has the support box");
 });
