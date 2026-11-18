@@ -46,7 +46,7 @@ import { mountShell } from "/appshell.js?v=20261118a";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (q) => document.querySelector(q);
 // Turns a pasted video link into something we can play: YouTube, Vimeo, Cloudflare Stream, or a direct video file
-const MEDIA_V = "20261118a"; // new audio and captions; the mp4s are cached for a week without this
+const MEDIA_V = "20261118b"; // new audio and captions; the mp4s are cached for a week without this
 const fresh = (url) => { if (!url) return ""; try { const u = new URL(url, location.origin); if (/\.(mp4|webm|mov|vtt)$/i.test(u.pathname)) u.searchParams.set("v", MEDIA_V); return u.pathname + u.search; } catch { return url; } };
 function player(url, poster, captions) {
   let u; try { u = new URL(url, location.origin); } catch { return ""; }
