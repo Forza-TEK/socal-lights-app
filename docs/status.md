@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-18: The web Shop card is a Donate link
+Rey did not like the "Support SoCal Lights" box the web Shop card opened (long text, See pricing, tip, Browse the shop, affiliate note). The first card in the web Shop is now a plain **Donate** card that goes straight to the tip page (the `donateUrl` in `public/site-config.js`, Cash App), and is left out if no donate link is set. The support box itself is unchanged for the menu item that opens it. The app's Support tab is unchanged (free actions only, no tips).
+
 ## 2026-11-18: Support tab in the apps, support card in the web Shop
 Rey asked why Shop is missing in the App Store app: it is hidden on purpose (store rules: no Amazon shop or tips in the apps). The tab now stays in the apps as **Support** (gift icon): Light up the map (add a display), Add an event, Spread the glow (the phone's share sheet), Fix the map (Help), Rate the app (only once `appStoreUrl` / `playStoreUrl` are set in `public/site-config.js`; both are empty now, so ask Rey for the store links), Run a contest. No money, tips, affiliate links or price pages inside the app. On the website the Shop keeps its Amazon categories and gains a "Support SoCal Lights" card on top that opens the existing support box (tip link, pricing). Checked with an app user agent and a normal one (tab label, cards, share handler wiring). Not checked inside the real app wrapper or by Apple review; whether a free-actions Support tab is fine for review is expected but not guaranteed. First-screen budget 468 KB.
 
