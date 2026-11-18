@@ -1044,3 +1044,8 @@ body.detail-open .scl-chat-fab{display:none}
 .mpchg{min-width:44px;min-height:44px}
 .quick[aria-label="Route options"] button{height:44px}
 .sp-pause{position:relative}.sp-pause::after{content:"";position:absolute;inset:-10px}
+
+/* Support tab (in the apps) and the support card in the web Shop */
+.supphead{margin:0;font-size:20px;font-weight:700}
+.shopcard{font:inherit;text-align:left;cursor:pointer}
+.shopsupport{grid-column:1/-1;border-color:var(--season-ink)}

@@ -37,7 +37,7 @@ test("the map page keeps its touch handling: pinch guard intact, nothing new abo
     const pick = (s) => s.split("\n").filter((l) => /\.searchrow|#map\b|\.topbar|\.maplibregl-ctrl|\.panel\{/.test(l)).join("\n");
     // the zoom buttons may add the top safe area (the notch / Dynamic Island in the app) to their offset; nothing else about these rules may change
     const plain = (t) => t.replace(/(\.maplibregl-ctrl-top-right\{top:)calc\(env\(safe-area-inset-top,0px\) \+ (\d+px)\)/g, "$1$2");
-    assert.equal(plain(pick(css)), pick(base), "rules for the search row, map, top bar and panel are unchanged since origin/main");
+    assert.equal(plain(pick(css)), plain(pick(base)), "rules for the search row, map, top bar and panel are unchanged since origin/main");
   }
 });
 

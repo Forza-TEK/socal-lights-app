@@ -5,7 +5,7 @@ import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonSta
 import { STOCK } from "/stock.js?v=20261114a";
 import { parseVideo } from "/video.js?v=20261115a";
 import { isCityEvent, looksLikeLogoUrl, judgePicture } from "/photoguess.js?v=20261111x560"; // logo, banner and blurry pictures give way to the stock photo (city events may keep their logo)
-import { SITE } from "/site-config.js?v=20261107a";
+import { SITE } from "/site-config.js?v=20261118a";
 import "/norm-ui.js?v=20261102b";
 import { me as authMe } from "/auth.js?v=20261116a";
 import "/chrome.js?v=20261118a"; // the account circle opens the same menu as on every other page
@@ -577,7 +577,7 @@ function setTab(t) {
   ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
   document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t));
   for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin", "tabin-r", "tabin-l"); void el.offsetWidth; el.classList.add(anim); } // the new tab slides in from the side it sits on: Places, Favorites, Shop
-  if (t === "shop") nudgeShopTabs();
+  if (t === "shop" && !IN_APP) nudgeShopTabs();
 }
 // On phones the category row swipes sideways; slide it out and back once when Shop opens so people notice.
 function nudgeShopTabs() {
@@ -936,10 +936,13 @@ function renderPanel(opts) {
       : state.q ? `<div class="empty">No places match \u201c${esc(state.q)}\u201d.${(() => { const d = didYouMean(state.q); return d.length ? ` Did you mean ${d.map((c) => `<button class="linkbtn" type="button" data-sc="${esc(c)}">${esc(c)}</button>`).join(" or ")}?` : ""; })()}<button class="linkbtn" type="button" id="clearq">Clear search</button></div>`
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
     watchTopCards(body);
+  } else if (state.tab === "shop" && IN_APP) {
+    head.innerHTML = `<div class="hrow"><h2 class="supphead">Support SoCal Lights</h2></div>`;
+    body.innerHTML = `<p class="meta" style="padding:0 14px 6px">SoCal Lights is free and run by one small team. No tips, no ads in your way: here is how to help, for free.</p><div class="shopgrid">${SUPPORT.filter((x) => x.link !== "rate" || rateUrl()).map((x) => (x.link === "share" ? `<button type="button" class="shopcard" data-supp-share><span class="shopem" aria-hidden="true">${x.em}</span><span class="shoptx">${x.t}</span><span class="shopgo">${x.d}</span></button>` : `<a class="shopcard" href="${x.link === "rate" ? esc(rateUrl()) : esc(x.link)}"${x.link === "rate" ? ' target="_blank" rel="noopener"' : ""}><span class="shopem" aria-hidden="true">${x.em}</span><span class="shoptx">${x.t}</span><span class="shopgo">${x.d}</span></a>`)).join("")}</div>`;
   } else if (state.tab === "shop") {
     const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
     head.innerHTML = `<div class="hrow"><button class="chip" type="button" data-pop="shopseason" aria-haspopup="true" aria-label="Choose a season to shop for"><span class="sico" aria-hidden="true">${phaseFor(shopSeason(), TODAY).icon}</span><span>Shop for ${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</span><svg class="caret" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
-    body.innerHTML = `<div class="shopgrid">${c[1].map(([em, l, q]) => `<a class="shopcard" href="${amzUrl(q)}" target="_blank" rel="sponsored noopener"><span class="shopem" aria-hidden="true">${em}</span><span class="shoptx">${esc(l)}</span><span class="shopgo">Amazon ↗</span></a>`).join("")}</div><p class="meta" style="padding:4px 14px 14px">As an Amazon Associate we earn from qualifying purchases, at no extra cost to you.</p>`;
+    body.innerHTML = `<div class="shopgrid"><button type="button" class="shopcard shopsupport" data-support><span class="shopem" aria-hidden="true">♥</span><span class="shoptx">Support SoCal Lights</span><span class="shopgo">Tips and ways to help</span></button>${c[1].map(([em, l, q]) => `<a class="shopcard" href="${amzUrl(q)}" target="_blank" rel="sponsored noopener"><span class="shopem" aria-hidden="true">${em}</span><span class="shoptx">${esc(l)}</span><span class="shopgo">Amazon ↗</span></a>`).join("")}</div><p class="meta" style="padding:4px 14px 14px">As an Amazon Associate we earn from qualifying purchases, at no extra cost to you.</p>`;
   } else {
     // Favorites use the same layout as Places: buttons row, count line, then the cards
     const st = routeStops();
@@ -1203,9 +1206,27 @@ const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(SITE.shop
 const SHOP_ICON = { halloween: "🎃", christmas: "🎄", newyear: "🎆", valentines: "💘", spring: "🌷", summer: "☀️" };
 const shopSeason = () => (SITE.shop[state.shopSeason] ? state.shopSeason : state.season); // follows the season button at the top until you pick another here
 const shopCats = () => (SITE.amazonTag && !IN_APP ? SITE.shop[shopSeason()] || [] : []); // no Amazon shop inside the Android/iOS wrapper
-// The Shop tab only exists when there is an Amazon tag and shop list for the season.
+// The Support tab inside the apps: free ways to help (no money, no affiliate links). Each is [emoji, title, one line, link]; "share" opens the phone's share sheet, "rate" the store page when SITE.appStoreUrl / playStoreUrl is set.
+const SUPPORT = [
+  { em: "💡", t: "Light up the map", d: "Add your own display", link: "/add-house" },
+  { em: "🎄", t: "Add an event", d: "A tree lighting, parade or haunt", link: "/add-event" },
+  { em: "📣", t: "Spread the glow", d: "Share the app with a friend", link: "share" },
+  { em: "🛠️", t: "Fix the map", d: "Wrong time? Tap Report on it", link: "/help" },
+  { em: "⭐", t: "Rate the app", d: "Helps families find us", link: "rate" },
+  { em: "🏆", t: "Run a contest", d: "Cities, HOAs and neighbors", link: "/add-contest" },
+];
+const rateUrl = () => safeUrl(IS_IOS ? SITE.appStoreUrl || "" : SITE.playStoreUrl || "");
+document.addEventListener("click", async (e) => {
+  if (!e.target.closest("[data-supp-share]")) return;
+  if (await nativeShare({ title: "SoCal Lights", text: "Holiday lights and events across Southern California", url: "https://socallights.app/" })) return;
+  try { await navigator.clipboard.writeText("https://socallights.app/"); toast("Link copied"); } catch { toast("Share this link: socallights.app"); }
+});
+// The Shop tab only exists when there is an Amazon tag and shop list for the season (inside the apps it is the Support tab).
+// Inside the iPhone and Android apps the store rules do not allow the Amazon shop or tips, so the same tab becomes "Support": ways to help that cost nothing (below).
+const GIFT = '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M7.5 8a2.5 2.5 0 1 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 1 1 0 5"/>';
 function syncShopTab() {
-  const on = shopCats().length > 0;
+  const on = shopCats().length > 0 || IN_APP;
+  if (IN_APP) for (const [el, lb] of [[$("#t-shop"), $("#t-shop .lb")], [document.querySelector('#bnav [data-tab="shop"]'), document.querySelector('#bnav [data-tab="shop"] > span')]]) { if (!el || el.dataset.support) continue; el.dataset.support = "1"; el.title = "Support us"; el.setAttribute("aria-label", "Support us"); if (lb) lb.textContent = "Support"; const sv = el.querySelector("svg"); if (sv) sv.innerHTML = GIFT; }
   $("#t-shop").hidden = !on; document.querySelector('#bnav [data-tab="shop"]').hidden = !on;
   if (!on && state.tab === "shop") setTab("events");
 }
