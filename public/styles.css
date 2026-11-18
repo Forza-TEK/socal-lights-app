@@ -899,7 +899,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .rtpill[aria-disabled="true"]{color:var(--muted)}.rtpill[aria-disabled="true"] svg{color:var(--muted)}
 .rtpill:focus-visible{outline:2px solid var(--season);outline-offset:2px}
 @media (max-width:700px){
-  .rtpill{position:fixed;z-index:36;height:40px;padding:0 14px;font-size:14px;right:14px;top:60vh;transition:background-color .15s}
+  .rtpill{position:fixed;z-index:36;height:40px;padding:0 14px;font-size:14px;right:14px;top:60vh;transition:background-color .15s,right .2s ease}
   .rtpill.docked{height:32px;padding:0 12px;font-size:13px;box-shadow:none;background:var(--season-soft)}
 }
 /* Tablets and wide phones: the pill sits under the top bar rows, at the right end of the bar */

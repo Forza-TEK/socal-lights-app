@@ -1,5 +1,8 @@
 # Status
 
+### Route pill steps left earlier (Nov 18)
+The phone "Route these" pill used to stay over the zoom/locate button column until its top was above a fixed 284px line, which is too low in the app (controls sit lower by the safe-area inset). It now steps left when it gets within 24px of the bottom of that column, measured live, with a short slide (`app.js` 20261118i, `styles.css` 20261118d). Checked: tests pass, pill stays at the edge when far below the buttons in a simulated offset. Not checked: the real iPhone safe area; please reopen the app and confirm.
+
 ## 2026-11-18: The phone list follows the bar's real position (fix for the previous fix)
 Rey's iPhone still showed the tab bar over the Filters row. Cause: the earlier fix measured `env(safe-area-inset-bottom)` from script, which returned 0 in the app, so the list rose 8 px instead of about 24. `peekH()` now measures the tab bar itself (`#bnav` top) and ends the collapsed list 6 px above it, wherever the bar is. Tested by forcing the bar to 26 px (what the app computes): the gap to the Filters row is 6 px with and without that offset. Rey should confirm on the phone.
 
