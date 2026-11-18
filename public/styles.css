@@ -13,7 +13,7 @@ button{touch-action:manipulation}
 :focus-visible{outline:2.5px solid var(--focus);outline-offset:2px}
 #map{position:fixed;inset:0;background:var(--bg)}
 .maplibregl-ctrl-bottom-left{margin-bottom:env(safe-area-inset-bottom,0px)}
-.maplibregl-ctrl-top-right{top:84px;right:calc(var(--panel-w) + 24px)}
+.maplibregl-ctrl-top-right{top:calc(env(safe-area-inset-top,0px) + 84px);right:calc(var(--panel-w) + 24px)}
 .maplibregl-ctrl-bottom-right{right:calc(var(--panel-w) + 24px)}
 .maplibregl-ctrl-group{border-radius:14px!important;box-shadow:var(--shadow-sm)!important;overflow:hidden;background:var(--surface)!important}
 .maplibregl-ctrl-group button{width:40px!important;height:40px!important}
@@ -272,8 +272,8 @@ button{touch-action:manipulation}
   .fbtn{display:grid}
   .chips{display:none}
   .topbar.fopen .chips{display:flex}
-  .maplibregl-ctrl-top-right{top:128px;right:max(4px,env(safe-area-inset-right,0px))}
-  body:has(.topbar.fopen) .maplibregl-ctrl-top-right{top:178px}
+  .maplibregl-ctrl-top-right{top:calc(env(safe-area-inset-top,0px) + 128px);right:max(4px,env(safe-area-inset-right,0px))}
+  body:has(.topbar.fopen) .maplibregl-ctrl-top-right{top:calc(env(safe-area-inset-top,0px) + 178px)}
   .maplibregl-ctrl-bottom-right{display:none}
 
   .panel{top:auto;left:0;right:0;bottom:0;width:auto;height:calc(100% - env(safe-area-inset-top,0px) - 172px);border-radius:28px 28px 0 0;transform:translate3d(0,100%,0);will-change:transform;transition:transform .32s cubic-bezier(.2,.8,.2,1)}
@@ -870,7 +870,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.sp-win{overflow-x:auto;scrollbar-width:none;-webkit-mask-image:none;mask-image:none}.sp-win::-webkit-scrollbar{display:none}.sp-track.go{animation:none;transform:none}.sp-dup{display:none}.sp-pause{display:none}}
 .fpanel:focus{outline:none}
 /* Phones turned sideways and small tablets: the search row has a second row (season, day/night), so the zoom buttons start below it instead of under the day/night button */
-@media (min-width:701px) and (max-width:1099px){.maplibregl-ctrl-top-right{top:132px}}
+@media (min-width:701px) and (max-width:1099px){.maplibregl-ctrl-top-right{top:calc(env(safe-area-inset-top,0px) + 132px)}}
 
 /* Installer "top of the list" card (banner.js sponsorCard): a labelled company card behind the Featured places */
 .sponsorcard{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border-radius:18px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink)}
@@ -905,7 +905,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 /* Tablets and wide phones: the pill sits under the top bar rows, at the right end of the bar */
 @media (min-width:701px) and (max-width:1099px){
   .rtpill{position:fixed;z-index:21;height:40px;padding:0 14px;font-size:14px;top:calc(env(safe-area-inset-top,0px) + 134px);right:calc(var(--panel-w) + 32px)}
-  .maplibregl-ctrl-top-right{top:184px!important}
+  .maplibregl-ctrl-top-right{top:calc(env(safe-area-inset-top,0px) + 184px)!important}
 }
 /* A phone turned sideways (short and wide): one slim top row, season and day/night in a column on the left, Route these under the ••• circle, and the whole list panel scrolls as one */
 @media (min-width:701px) and (max-height:500px){
@@ -916,7 +916,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
   #seasonbtn{position:fixed!important;left:14px;top:70px;width:44px;height:44px;padding:0;justify-content:center;z-index:21}#seasonbtn #seasonlbl,#seasonbtn .caret{display:none}
   #themebtn{position:fixed!important;left:14px;top:120px;width:44px;height:44px;z-index:21}
   .rtpill{top:calc(env(safe-area-inset-top,0px) + 70px);right:calc(var(--panel-w) + 32px)}
-  .maplibregl-ctrl-top-right{top:120px!important}
+  .maplibregl-ctrl-top-right{top:calc(env(safe-area-inset-top,0px) + 120px)!important}
   #welcome{top:120px;left:72px}
   .maplibregl-ctrl-attrib{font-size:9px!important;line-height:12px!important;max-width:44vw!important;padding:0 6px!important}
   .panel{overflow-y:auto;display:block}
