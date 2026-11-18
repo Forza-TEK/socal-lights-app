@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-18: The phone list rises with the bottom bar
+After the bar was raised, it covered the Filters / Tonight / This weekend row of the collapsed list. The collapsed list height (`peekH()` in `public/app.js`) now adds the same raise as the bar (`max(10, safe area - 8) - 2` px), so the buttons row ends just above the bar. Measured in an iPhone-sized browser: Filters row bottom 588, bar top 594 (6 px clear). With the app's home-indicator inset both move up together; check it in the app.
+
 ## 2026-11-18: Phone bottom bar raised off the bottom edge
 Rey (iPhone app): the Places / Favorites bar and the AI button sat right on the bottom edge. Both were at `bottom: 2px`; they now sit at `max(10px, safe-area-inset-bottom - 8px)`: 10 px in a normal browser (no change in feel) and about 26 px in the app on a phone with a home indicator (the indicator is clear of the bar). Measured in an iPhone-sized browser: 10 px gap. The notch-sized gap could not be simulated here, so check it in the app; if it is too high or too low, change the 8 in `public/styles.css` (the two `.bnav` and `.scl-chat-fab` rules).
 

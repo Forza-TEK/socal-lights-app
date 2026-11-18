@@ -1592,7 +1592,9 @@ const PEEK = 142; // visible height at Peek: the handle and the buttons row, end
 let safeBottom = null;
 function peekH() {
   if (safeBottom === null) { const t = document.createElement("div"); t.style.cssText = "position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)"; document.body.appendChild(t); safeBottom = t.offsetHeight; t.remove(); }
-  return PEEK + 2 - 6 + (typeof bannerHeight === "function" && isPhone() ? bannerHeight() : 0);
+  // the tab bar floats at max(10px, safe area - 8px) above the bottom (styles.css .bnav); the list rises by the same amount it was raised from its old 2px, so the buttons row stays clear of the bar
+  const barRaise = Math.max(10, safeBottom - 8) - 2;
+  return PEEK + 2 - 6 + barRaise + (typeof bannerHeight === "function" && isPhone() ? bannerHeight() : 0);
 }
 let sheetState = "peek";
 const fullH = () => $("#panel").offsetHeight || innerHeight * 0.85;
