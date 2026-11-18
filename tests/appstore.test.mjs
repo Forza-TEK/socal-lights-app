@@ -267,3 +267,15 @@ test("capacitor config: only hosts the site really uses, no stale unpkg, app-bou
   assert.match(cfg.appendUserAgent, /SoCalLightsApp/);
   for (const f of ["public", "functions"]) assert.ok(!/unpkg\.com/.test(execSync(`grep -rl unpkg.com ${f} --include=*.js --include=*.html --exclude-dir=vendor || true`, { cwd: new URL("..", import.meta.url).pathname, encoding: "utf8" })), "no page loads unpkg");
 });
+
+// The App Store link (docs/app-store.md): web only, never inside the app.
+test("App Store link: More menu and footer on the web only, /app redirect, Smart App Banner on the home page only", () => {
+  const URL_ = "https://apps.apple.com/us/app/socal-lights/id6834616157";
+  const app = readFileSync("public/app.js", "utf8"), foot = readFileSync("public/footer.js", "utf8");
+  assert.ok(app.includes(`(IN_APP ? "" : row("a", 'href="${URL_}" target="_blank" rel="noopener"'`), "More menu row is left out when IN_APP");
+  assert.ok(foot.includes(`class=\\"web-only\\" href=\\"${URL_}\\" target=\\"_blank\\" rel=\\"noopener\\"`), "footer link is web-only");
+  assert.match(readFileSync("public/_redirects", "utf8"), new RegExp(`^/app ${URL_.replace(/\./g, "\\.")} 302$`, "m"));
+  assert.ok(!JSON.parse(readFileSync("public/_routes.json", "utf8")).include.some((p) => p === "/app" || p === "/*"), "/app stays a static redirect");
+  assert.ok(readFileSync("public/index.html", "utf8").includes('<meta name="apple-itunes-app" content="app-id=6834616157">'));
+  for (const p of ["public/add.html", "public/pricing.html", "public/tutorials.html"]) assert.ok(!readFileSync(p, "utf8").includes("apple-itunes-app"), p);
+});

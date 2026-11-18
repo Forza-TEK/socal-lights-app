@@ -1,5 +1,8 @@
 # Status
 
+## 2026-11-18: iPhone app link on the website (branch `claude/app-store-link`)
+The app is live (https://apps.apple.com/us/app/socal-lights/id6834616157). Web only, nothing in the app: "Get the iPhone app" row in the three-dots menu (`app.js`, `IN_APP` guard), "iPhone app" footer link (`footer.js`, `web-only`), short link `/app` (302 via `public/_redirects`), Smart App Banner meta on the home page only. Assistant KB and Help already said App Store (no migration, no KB change). `?v=` bumped: app.js 20261118j, footer.js 20261118a on every page. Pinch guard untouched. Test in `tests/appstore.test.mjs`.
+
 ### Route pill steps left earlier (Nov 18)
 The phone "Route these" pill used to stay over the zoom/locate button column until its top was above a fixed 284px line, which is too low in the app (controls sit lower by the safe-area inset). It now steps left when it gets within 24px of the bottom of that column, measured live, with a short slide (`app.js` 20261118i, `styles.css` 20261118d). Checked: tests pass, pill stays at the edge when far below the buttons in a simulated offset. Not checked: the real iPhone safe area; please reopen the app and confirm.
 
