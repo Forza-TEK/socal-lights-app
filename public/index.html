@@ -35,7 +35,7 @@
 <link rel="modulepreload" href="/stock.js?v=20261114a">
 <link rel="modulepreload" href="/video.js?v=20261115a">
 <link rel="modulepreload" href="/photoguess.js?v=20261111x560">
-<link rel="modulepreload" href="/site-config.js?v=20261118b">
+<link rel="modulepreload" href="/site-config.js?v=20261118a">
 <link rel="modulepreload" href="/norm-ui.js?v=20261102b">
 <link rel="modulepreload" href="/norm.js?v=20261102b">
 <link rel="modulepreload" href="/tour.js?v=20261115a">
@@ -84,6 +84,7 @@
   <div class="ptabs" role="tablist">
     <button class="ptab" role="tab" id="t-events" aria-selected="true" type="button" title="Places"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg><span class="lb">Places</span><span class="n" id="n-events">0</span></button>
     <button class="ptab" role="tab" id="t-plan" aria-selected="false" type="button" title="Favorites" aria-label="Favorites"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg><span class="lb">Favorites</span><span class="n" id="n-plan">0</span><span class="tbadge" id="tb-plan" aria-hidden="true" hidden>0</span></button>
+    <button class="ptab" role="tab" id="t-shop" aria-selected="false" type="button" title="Shop" aria-label="Shop" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8.5h14l-1.2 11a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9z"/><path d="M8.5 11V7.5a3.5 3.5 0 0 1 7 0V11"/></svg><span class="lb">Shop</span></button>
   </div>
   <div class="phead" id="phead"></div>
   <div class="pbody" id="pbody"><div class="empty">Finding festive fun near you…</div></div>
@@ -93,6 +94,7 @@
 <nav class="bnav" id="bnav" aria-label="Sections">
   <button type="button" data-tab="events" aria-current="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg><span>Places</span></button>
   <button type="button" data-tab="plan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg><span>Favorites</span><b class="bn-n" id="bn-plan" hidden>0</b></button>
+  <button type="button" data-tab="shop" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8.5h14l-1.2 11a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9z"/><path d="M8.5 11V7.5a3.5 3.5 0 0 1 7 0V11"/></svg><span>Shop</span></button>
 </nav>
 
 <div class="navfade" id="navfade" aria-hidden="true"></div>
@@ -100,7 +102,7 @@
 <div class="menu" id="moremenu" role="menu" hidden></div>
 <div class="modal" id="modal" hidden></div>
 
-<script type="module" src="/app.js?v=20261118e"></script>
+<script type="module" src="/app.js?v=20261118c"></script>
 <script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script>
 </body>
 </html>

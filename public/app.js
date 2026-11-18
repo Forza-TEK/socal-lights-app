@@ -5,7 +5,7 @@ import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonSta
 import { STOCK } from "/stock.js?v=20261114a";
 import { parseVideo } from "/video.js?v=20261115a";
 import { isCityEvent, looksLikeLogoUrl, judgePicture } from "/photoguess.js?v=20261111x560"; // logo, banner and blurry pictures give way to the stock photo (city events may keep their logo)
-import { SITE } from "/site-config.js?v=20261118b";
+import { SITE } from "/site-config.js?v=20261118a";
 import "/norm-ui.js?v=20261102b";
 import { me as authMe } from "/auth.js?v=20261116a";
 import "/chrome.js?v=20261118a"; // the account circle opens the same menu as on every other page
@@ -79,6 +79,7 @@ document.addEventListener("click", (e) => {
     if (showOnMap("i:" + id)) { e.preventDefault(); try { history.replaceState(null, "", "/#m-" + dl[1]); } catch {} return; }
   }
   if (a.matches('.mrow[href="/feature"]')) return tick("click:promote");
+  if (a.matches(".shopcard")) return tick("click:shop");
   if (a.matches(".actionbar a.btn.go, a.legbtn")) return tick("click:route");
   if (a.matches('.actionbar a.abtn[aria-label="Event info"]')) { let h = a.getAttribute("href") || ""; try { h = decodeURIComponent(h); } catch {} return tick(/\/\/(?:[\w-]+\.)*(?:eventbrite|ticketmaster|fever|feverup)\.[a-z]{2,}(?:[/?#:]|$)/i.test(h) ? "click:ticket" : "click:event-link"); }
 }, true);
@@ -194,7 +195,7 @@ let E = [], SHOW = [], CONFIG = {};
 let HIDDEN = new Set(); try { HIDDEN = new Set(JSON.parse(localStorage.getItem("socal-hidden") || "[]").filter((k) => typeof k === "string").slice(0, 500)); } catch {}
 const keepShown = (arr, pre) => (HIDDEN.size ? arr.filter((x) => !HIDDEN.has(pre + x.id)) : arr);
 const saveHidden = () => { try { localStorage.setItem("socal-hidden", JSON.stringify([...HIDDEN].slice(-500))); } catch {} };
-const state = { vis: new Set(), season: defaultSeason(TODAY), all: false, q: "", date: "", weekend: false, city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
+const state = { vis: new Set(), season: defaultSeason(TODAY), all: false, q: "", date: "", weekend: false, city: "", radius: 10, counties: new Set(), cost: "all", type: "", conf: false, layers: { events: true, inst: true }, tab: "events", sort: "near", shopCat: 0, shopSeason: "", inView: true, sel: null, hot: null, detail: null, start: "me", me: null, meErr: "" };
 let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem("socal-favs") || "[]")); } catch {}
 // Inside the app, saving an event sets a reminder for its first day and un-saving removes it (no-op in a browser or until the app build has the plugin; see native.js)
 const remind = (id, on) => { if (NATIVE_IN_APP && !String(id).startsWith("h:")) { const ev = E.find((e) => e.id === id); if (ev) syncReminder(ev, on); } };
@@ -568,16 +569,29 @@ function placePin() {
 }
 /* ---------- panel ---------- */
 function setTab(t) {
-  const order = ["events", "plan"], dir = order.indexOf(t) - order.indexOf(state.tab), anim = dir > 0 ? "tabin-r" : dir < 0 ? "tabin-l" : "tabin";
+  const order = ["events", "plan", "shop"], dir = order.indexOf(t) - order.indexOf(state.tab), anim = dir > 0 ? "tabin-r" : dir < 0 ? "tabin-l" : "tabin";
   state.tab = t; state.detail = null;
   // The heavy part (drawing the list and the map pins: 30 to 60 ms on a laptop, 200 ms or more on a phone) runs BEFORE the tabs are marked as selected. The sliding pill starts when they are, so its
   // first frames are smooth instead of freezing for the length of that work; the wait shows up as a tiny delay before the move, which feels like a tap, not a stutter.
   renderPanel(); drawMap(); if (t === "plan") fitRoute();
-  ["events", "plan"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
+  ["events", "plan", "shop"].forEach((k) => $("#t-" + k).setAttribute("aria-selected", k === t));
   document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.toggleAttribute("aria-current", b.dataset.tab === t));
   for (const id of ["#phead", "#pbody"]) { const el = $(id); el.classList.remove("tabin", "tabin-r", "tabin-l"); void el.offsetWidth; el.classList.add(anim); } // the new tab slides in from the side it sits on: Places, Favorites, Shop
+  if (t === "shop" && !IN_APP) nudgeShopTabs();
 }
-$("#t-events").onclick = () => setTab("events"); $("#t-plan").onclick = () => setTab("plan");
+// On phones the category row swipes sideways; slide it out and back once when Shop opens so people notice.
+function nudgeShopTabs() {
+  if (!isPhone() || matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  setTimeout(() => {
+    const q = document.querySelector('.quick[aria-label="Shop categories"]');
+    if (!q || q.scrollWidth <= q.clientWidth + 20 || q.scrollLeft > 0) return;
+    const dist = Math.min(110, q.scrollWidth - q.clientWidth), dur = 1100; let t0 = 0, stop = false;
+    const halt = () => (stop = true); q.addEventListener("touchstart", halt, { once: true, passive: true });
+    const step = (now) => { if (stop || !q.isConnected) return; if (!t0) t0 = now; const k = Math.min(1, (now - t0) / dur); q.scrollLeft = dist * Math.sin(Math.PI * k) ** 2; if (k < 1) requestAnimationFrame(step); else q.scrollLeft = 0; };
+    requestAnimationFrame(step);
+  }, 450);
+}
+$("#t-events").onclick = () => setTab("events"); $("#t-shop").onclick = () => setTab("shop"); $("#t-plan").onclick = () => setTab("plan");
 
 // One pill that glides to the selected tab (top tabs on desktop, bottom bar on phones), instead of each tab fading its own background.
 // Same glide as the Admin tabs: the pill slides and resizes to the selected tab with one smooth ease (see .slidepill in styles.css), no stretch, bounce or squash.
@@ -621,7 +635,7 @@ function placeBanner(el) { const g = $("#grab"); if (el.previousElementSibling !
 let bannerOn = false;
 async function startBanner() { bannerOn = await initBanner({ place: (el) => { placeBanner(el); }, onOpenEvent: (id) => { if (!E.some((e) => e.id === id)) return false; openDetail("e:" + id); return true; }, onChange: () => { if (isPhone()) setSheet(sheetState); } }); if (bannerOn) { bannerTick(); if (!state.detail) renderPanel({ quiet: true }); } }
 function inView(lng, lat) { if (!state.inView || !mapReady) return true; const a = mapArea(), q = map.project([lng, lat]); return q.x >= a.x0 && q.x <= a.x1 && q.y >= a.y0 && q.y <= a.y1; }
-let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (bannerOn) bannerTick(); if (!state.detail && state.tab !== "plan") renderPanel({ quiet: true }); }, 80); }
+let listTimer = null; function scheduleList() { clearTimeout(listTimer); listTimer = setTimeout(() => { if (bannerOn) bannerTick(); if (!state.detail && state.tab !== "plan" && state.tab !== "shop") renderPanel({ quiet: true }); }, 80); }
 function counts() { $("#n-events").textContent = E.filter(evMatch).length + SHOW.filter(instMatch).length; $("#n-plan").textContent = favs.size; $("#bn-plan").textContent = favs.size; $("#bn-plan").hidden = !favs.size; const tb = $("#tb-plan"); if (tb) { tb.textContent = favs.size; tb.hidden = !favs.size; } }
 function datetile(ev) {
   // Running now: "THRU 31 OCT". One night: "OCT 31 1 night". Upcoming: "NOV 27 opens".
@@ -922,6 +936,13 @@ function renderPanel(opts) {
       : state.q ? `<div class="empty">No places match \u201c${esc(state.q)}\u201d.${(() => { const d = didYouMean(state.q); return d.length ? ` Did you mean ${d.map((c) => `<button class="linkbtn" type="button" data-sc="${esc(c)}">${esc(c)}</button>`).join(" or ")}?` : ""; })()}<button class="linkbtn" type="button" id="clearq">Clear search</button></div>`
       : `<div class="empty">No places in this part of the map.<button class="linkbtn" type="button" id="showall">Show all of Southern California</button></div>`;
     watchTopCards(body);
+  } else if (state.tab === "shop" && IN_APP) {
+    head.innerHTML = `<div class="hrow"><h2 class="supphead">Support SoCal Lights</h2></div>`;
+    body.innerHTML = `<p class="meta" style="padding:0 14px 6px">SoCal Lights is free and run by one small team. No tips, no ads in your way: here is how to help, for free.</p><div class="shopgrid">${SUPPORT.filter((x) => x.link !== "rate" || rateUrl()).map((x) => (x.link === "share" ? `<button type="button" class="shopcard" data-supp-share><span class="shopem" aria-hidden="true">${x.em}</span><span class="shoptx">${x.t}</span><span class="shopgo">${x.d}</span></button>` : `<a class="shopcard" href="${x.link === "rate" ? esc(rateUrl()) : esc(x.link)}"${x.link === "rate" ? ' target="_blank" rel="noopener"' : ""}><span class="shopem" aria-hidden="true">${x.em}</span><span class="shoptx">${x.t}</span><span class="shopgo">${x.d}</span></a>`)).join("")}</div>`;
+  } else if (state.tab === "shop") {
+    const cats = shopCats(), c = cats[Math.min(state.shopCat, cats.length - 1)];
+    head.innerHTML = `<div class="hrow"><button class="chip" type="button" data-pop="shopseason" aria-haspopup="true" aria-label="Choose a season to shop for"><span class="sico" aria-hidden="true">${phaseFor(shopSeason(), TODAY).icon}</span><span>Shop for ${esc(SEASONS[shopSeason()].short || SEASONS[shopSeason()].label)}</span><svg class="caret" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg></button></div><div class="quick" role="group" aria-label="Shop categories">${cats.map(([l], i) => `<button type="button" data-shop="${i}" aria-pressed="${cats.indexOf(c) === i}">${esc(l)}</button>`).join("")}</div>`;
+    body.innerHTML = `<div class="shopgrid">${safeUrl(SITE.donateUrl) ? `<a class="shopcard shopsupport" href="${esc(safeUrl(SITE.donateUrl))}" target="_blank" rel="noopener"><span class="shopem" aria-hidden="true">♥</span><span class="shoptx">Donate</span><span class="shopgo">${esc(SITE.donateLabel)} ↗</span></a>` : ""}${c[1].map(([em, l, q]) => `<a class="shopcard" href="${amzUrl(q)}" target="_blank" rel="sponsored noopener"><span class="shopem" aria-hidden="true">${em}</span><span class="shoptx">${esc(l)}</span><span class="shopgo">Amazon ↗</span></a>`).join("")}</div><p class="meta" style="padding:4px 14px 14px">As an Amazon Associate we earn from qualifying purchases, at no extra cost to you.</p>`;
   } else {
     // Favorites use the same layout as Places: buttons row, count line, then the cards
     const st = routeStops();
@@ -982,6 +1003,8 @@ $("#phead").addEventListener("click", (e) => {
   if (rt) { if (rt.dataset.hint) { toast(rt.dataset.hint, true); return; } routeFromView(); return; }
   const of = e.target.closest("[data-openfilters]"); if (of) { fOpen ? closeFilters() : openFilters(of); renderPanel(); return; }
   const cl = e.target.closest("[data-clear]"); if (cl) { clearFilter(cl.dataset.clear); return; }
+  const sc = e.target.closest("[data-pop=shopseason]"); if (sc) { toggleSeasonPick(sc, "shop"); return; }
+  const sb = e.target.closest("[data-shop]"); if (sb) { state.shopCat = +sb.dataset.shop; renderPanel(); scroller().scrollTop = 0; return; }
   const b = e.target.closest("[data-quick]"); if (!b) return;
   const f = b.dataset.quick, v = b.dataset.v;
   if (f === "date") { state.date = state.date === v ? "" : v; if (state.date) state.weekend = false; } else if (f === "weekend") { state.weekend = !state.weekend; if (state.weekend) state.date = ""; } else state.cost = state.cost === v ? "all" : v;
@@ -1179,6 +1202,34 @@ const isAff = (u) => !!affRule(u);
 // Two kinds of rule: add a tracking parameter ({ param, value }), or wrap the link in a network deep link ({ template: "https://…?u={url}" }, the form Impact/CJ give you).
 function affUrl(u) { const r = affRule(u); if (!r) return u; if (r.template) return r.template.replace("{url}", encodeURIComponent(u)); try { const x = new URL(u); x.searchParams.set(r.param, r.value); return x.href; } catch { return u; } }
 // High-end first: the search words get a "premium" nudge and Amazon sorts the results by price, high to low.
+const amzUrl = (q) => `https://www.amazon.com/s?k=${encodeURIComponent(SITE.shopHighEnd ? q + " " + SITE.shopHighEnd : q)}${SITE.shopSort ? "&s=" + encodeURIComponent(SITE.shopSort) : ""}&tag=${encodeURIComponent(SITE.amazonTag)}`;
+const SHOP_ICON = { halloween: "🎃", christmas: "🎄", newyear: "🎆", valentines: "💘", spring: "🌷", summer: "☀️" };
+const shopSeason = () => (SITE.shop[state.shopSeason] ? state.shopSeason : state.season); // follows the season button at the top until you pick another here
+const shopCats = () => (SITE.amazonTag && !IN_APP ? SITE.shop[shopSeason()] || [] : []); // no Amazon shop inside the Android/iOS wrapper
+// The Support tab inside the apps: free ways to help (no money, no affiliate links). Each is [emoji, title, one line, link]; "share" opens the phone's share sheet, "rate" the store page when SITE.appStoreUrl / playStoreUrl is set.
+const SUPPORT = [
+  { em: "💡", t: "Light up the map", d: "Add your own display", link: "/add-house" },
+  { em: "🎄", t: "Add an event", d: "A tree lighting, parade or haunt", link: "/add-event" },
+  { em: "📣", t: "Spread the glow", d: "Share the app with a friend", link: "share" },
+  { em: "🛠️", t: "Fix the map", d: "Wrong time? Tap Report on it", link: "/help" },
+  { em: "⭐", t: "Rate the app", d: "Helps families find us", link: "rate" },
+  { em: "🏆", t: "Run a contest", d: "Cities, HOAs and neighbors", link: "/add-contest" },
+];
+const rateUrl = () => safeUrl(IS_IOS ? SITE.appStoreUrl || "" : SITE.playStoreUrl || "");
+document.addEventListener("click", async (e) => {
+  if (!e.target.closest("[data-supp-share]")) return;
+  if (await nativeShare({ title: "SoCal Lights", text: "Holiday lights and events across Southern California", url: "https://socallights.app/" })) return;
+  try { await navigator.clipboard.writeText("https://socallights.app/"); toast("Link copied"); } catch { toast("Share this link: socallights.app"); }
+});
+// The Shop tab only exists when there is an Amazon tag and shop list for the season (inside the apps it is the Support tab).
+// Inside the iPhone and Android apps the store rules do not allow the Amazon shop or tips, so the same tab becomes "Support": ways to help that cost nothing (below).
+const GIFT = '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M7.5 8a2.5 2.5 0 1 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 1 1 0 5"/>';
+function syncShopTab() {
+  const on = shopCats().length > 0 || IN_APP;
+  if (IN_APP) for (const [el, lb] of [[$("#t-shop"), $("#t-shop .lb")], [document.querySelector('#bnav [data-tab="shop"]'), document.querySelector('#bnav [data-tab="shop"] > span')]]) { if (!el || el.dataset.support) continue; el.dataset.support = "1"; el.title = "Support us"; el.setAttribute("aria-label", "Support us"); if (lb) lb.textContent = "Support"; const sv = el.querySelector("svg"); if (sv) sv.innerHTML = GIFT; }
+  $("#t-shop").hidden = !on; document.querySelector('#bnav [data-tab="shop"]').hidden = !on;
+  if (!on && state.tab === "shop") setTab("events");
+}
 function openSupport() {
   const m = $("#modal"), donate = safeUrl(SITE.donateUrl);
   m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="sh"><div class="row" style="justify-content:space-between"><h2 id="sh">Support SoCal Lights</h2><button class="xbtn" type="button" id="sClose" aria-label="Close" title="Close"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
@@ -1186,9 +1237,11 @@ function openSupport() {
     <p class="blurb">What pays for it: optional paid options, such as Featured events, installer banners and contest passes for organizers, and tips from people it helped. Paid placements are always labeled and never change a contest result.</p>
     <a class="btn ghost" href="/pricing">See pricing</a>
     ${donate ? `<a class="btn go" href="${esc(donate)}" target="_blank" rel="noopener">♥ ${esc(SITE.donateLabel)}</a>` : ""}
-    ${!IN_APP && Object.keys(SITE.ticketAffiliates).length ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
+    ${shopCats().length ? `<button class="btn ghost" type="button" id="sShop">🛍️ Browse the shop</button>` : ""}
+    ${!IN_APP && (SITE.amazonTag || Object.keys(SITE.ticketAffiliates).length) ? `<p class="meta">Some links are affiliate links: we may earn a small commission at no extra cost to you.</p>` : ""}
   </div>`;
   m.hidden = false; $("#sClose").onclick = closeForm; $("#sClose").focus();
+  if ($("#sShop")) $("#sShop").onclick = () => { closeForm(); setTab("shop"); if (isPhone()) setSheet("full"); };
 }
 function closeForm() { $("#modal").hidden = true; $("#modal").innerHTML = ""; }
 document.addEventListener("keydown", (e) => { if ((e.key === "ArrowRight" || e.key === "ArrowLeft") && $("#pvtrack") && !e.target.closest("input,select,textarea") && $("#modal").hidden) { const t = $("#pvtrack"); t.scrollBy({ left: (e.key === "ArrowRight" ? 1 : -1) * t.clientWidth, behavior: "smooth" }); return; }
@@ -1203,6 +1256,14 @@ function fitCity(n, animate) {
   map.fitBounds([[c[1] - dLng, c[0] - dLat], [c[1] + dLng, c[0] + dLat]], { padding: padding(), duration: animate ? 600 : 0 });
 }
 function setCity(n) { state.city = n; applyFilters(); fitCity(n, true); }
+// The small drop-down under the Shop tab's "Shop for" button
+function openPop(chip) {
+  const k = chip.dataset.pop, p = $("#pop"); popFor = k; let h = "";
+  if (k === "shopseason") h = `<h4>Shop for</h4>${Object.keys(SITE.shop).filter((x) => SEASONS[x]).map((x) => `<label class="opt"><input type="radio" name="ss" value="${x}" ${x === shopSeason() ? "checked" : ""}> ${SHOP_ICON[x] || ""} ${esc(SEASONS[x].short || SEASONS[x].label)}</label>`).join("")}`;
+  p.innerHTML = h; p.hidden = false;
+  const r = chip.getBoundingClientRect(), pw = p.offsetWidth; p.style.top = r.bottom + 6 + "px"; p.style.left = Math.max(12, Math.min(r.left, innerWidth - pw - 12)) + "px";
+  p.querySelectorAll("input[name=ss]").forEach((r) => (r.onchange = () => { state.shopSeason = r.value; state.shopCat = 0; closePop(); renderPanel(); scroller().scrollTop = 0; }));
+}
 
 /* Filters: one panel for everything that narrows the list (a popover on desktop, a full-height sheet on phones) */
 let fOpen = false, fAnchor = null;
@@ -1422,21 +1483,21 @@ function seasonPeek(ms) {
 const seasonHasPlaces = (k) => E.some((e) => (e.sn || "christmas") === k && e.e >= TODAY) || SHOW.some((p) => (p.season || "christmas") === k);
 // One "Halloween ▾" button lists the six seasons (beside the search on desktop, under it on phones)
 function toggleSeasonPick(btn, mode) {
-  const cur = state.all ? "all" : state.season;
+  const shop = mode === "shop", cur = shop ? shopSeason() : state.all ? "all" : state.season; // the Shop tab uses this same menu to choose what to shop for
   if ($("#seasonmenu")) { closeSeasonMenu(); return; }
   closeFilters(); closeMore(); closePop();
   const m = document.createElement("div"); m.id = "seasonmenu"; m.setAttribute("role", "menu");
-  m.innerHTML = ((state.city || state.all) ? `<button type="button" role="menuitemradio" aria-checked="${cur === "all"}" data-sp="all" class="${cur === "all" ? "on" : ""}"><span class="sico" aria-hidden="true">🗓️</span> All seasons${state.city ? " in " + esc(state.city) : ""}</button>` : "") + seasonsFrom(NOW_SEASON).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === cur}" data-sp="${k}" class="${k === cur ? "on" : ""}"><span class="sico" aria-hidden="true">${phaseFor(k, TODAY).icon}</span> ${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : !seasonHasPlaces(k) ? ` <span class="nowtag soon">Nothing listed yet</span>` : ""}</button>`).join("");
+  m.innerHTML = (!shop && (state.city || state.all) ? `<button type="button" role="menuitemradio" aria-checked="${cur === "all"}" data-sp="all" class="${cur === "all" ? "on" : ""}"><span class="sico" aria-hidden="true">🗓️</span> All seasons${state.city ? " in " + esc(state.city) : ""}</button>` : "") + seasonsFrom(NOW_SEASON).filter((k) => !shop || SITE.shop[k]).map((k) => `<button type="button" role="menuitemradio" aria-checked="${k === cur}" data-sp="${k}" class="${k === cur ? "on" : ""}"><span class="sico" aria-hidden="true">${phaseFor(k, TODAY).icon}</span> ${esc(SEASONS[k].label)}${k === NOW_SEASON ? ` <span class="nowtag">On now</span>` : !shop && !seasonHasPlaces(k) ? ` <span class="nowtag soon">Nothing listed yet</span>` : ""}</button>`).join("");
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect(), w = m.offsetWidth; m.style.top = r.bottom + 8 + "px"; m.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
   btn.setAttribute("aria-expanded", "true");
-  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); if (b.dataset.sp === "all") showAllSeasons(); else setSeason(b.dataset.sp); };
-  setTimeout(() => document.addEventListener("click", function off(e) { if (!$("#seasonmenu")) { document.removeEventListener("click", off); return; } if (!e.target.closest("#seasonmenu,#seasonbtn")) { closeSeasonMenu(); document.removeEventListener("click", off); } }), 0);
+  m.onclick = (e) => { const b = e.target.closest("[data-sp]"); if (!b) return; closeSeasonMenu(); if (shop) { state.shopSeason = b.dataset.sp; state.shopCat = 0; renderPanel(); scroller().scrollTop = 0; } else if (b.dataset.sp === "all") showAllSeasons(); else setSeason(b.dataset.sp); };
+  setTimeout(() => document.addEventListener("click", function off(e) { if (!$("#seasonmenu")) { document.removeEventListener("click", off); return; } if (!e.target.closest("#seasonmenu,#seasonbtn,[data-pop=shopseason]")) { closeSeasonMenu(); document.removeEventListener("click", off); } }), 0);
 }
 $("#seasonbtn").onclick = (e) => toggleSeasonPick(e.currentTarget);
 function closeSeasonMenu() {
   const m = $("#seasonmenu"), was = !!m; if (m) m.remove();
-  const dd = document.querySelector("[data-sdrop]"); if (dd) dd.setAttribute("aria-expanded", "false");
+  const dd = document.querySelector("[data-sdrop],[data-pop=shopseason]"); if (dd) dd.setAttribute("aria-expanded", "false");
   // Only grow the season button back when its own menu was open; closing it as a side effect of another button must not
   const sb = $("#seasonbtn"); if (sb) { sb.setAttribute("aria-expanded", "false"); if (was) seasonPeek(2500); }
 }
@@ -1477,12 +1538,12 @@ function showAllSeasons() {
 }
 function setSeason(k) {
   if (!SEASONS[k] || (k === state.season && !state.all)) return;
-  state.all = false; state.season = k; state.type = ""; state.date = ""; state.weekend = false; state.city = ""; // choosing a season starts that season fresh, without the city filter state.sel = null; state.detail = null;
+  state.all = false; state.season = k; state.shopCat = 0; state.shopSeason = ""; state.type = ""; state.date = ""; state.weekend = false; state.city = ""; // choosing a season starts that season fresh, without the city filter state.sel = null; state.detail = null;
   try { history.replaceState(null, "", "#" + k); } catch {}
   renderSeasonBar(); applyFilters(); if (mapReady) { if (state.city) fitCity(state.city, true); else fitSoCal(true); }
 }
 function applyFilters() {
-  state.keep = null;
+  syncShopTab(); state.keep = null;
   state.detail = null; renderPanel(); drawMap(); renderPreview();
   if (fOpen) { refreshFilters(); placeFilters(); }
 }
