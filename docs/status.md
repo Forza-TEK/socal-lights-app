@@ -1,5 +1,8 @@
 # Status
 
+### Share on desktop now carries the link and details (Nov 19)
+Share on an event in desktop Windows (Outlook's share sheet) opened an empty email: those sheets drop the separate link and subject. The shared text now holds the event name, when and city, and the link itself (favorites list too). `app.js` 20261119a. The phone app's own share sheet is unchanged. Not checked: Windows Outlook itself (cannot run here); please press Share on an event and tell me what the email contains.
+
 ### From Grok: real buttons for every held item (Nov 19)
 Held cancellation notices only offered View card and Dismiss (the server refuses to apply a cancellation), so there was no way to act on them. Now: a held cancellation has **Take off the map** (two taps; removes the event, keeps a tombstone so it can be restored, flags any paid placement refund due, row shows "Event removed") and **Keep on map** (leaves it alone). Other held updates have **Apply** and **Ignore**. A held event has **Publish** and **Reject** (stays on record as rejected; "Publish anyway" still works later). `grok.js` 20261119d, test added. The 3 live held items are all cancellations (Naples Island boat parade, Riverside Turkey Trot, Jingle Terrace Nights): the owner decides each.
 
