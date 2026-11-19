@@ -55,14 +55,14 @@
           "title": "Get the SoCal Lights app",
           "desc": "Get the free iPhone and iPad app on the App Store, then use the map, hearts, and Route these. The same steps work on the website.",
           "url": "/tutorials/find-app.mp4",
-          "length": "1:38",
+          "length": "1:44",
           "captions": "/tutorials/find-app.vtt",
           "poster": "/tutorials/find-app.jpg",
           "mobile": {
             "url": "/tutorials/find-app-mobile.mp4",
             "poster": "/tutorials/find-app-mobile.jpg",
             "captions": "/tutorials/find-app-mobile.vtt",
-            "length": "1:37"
+            "length": "1:43"
           }
         },
         {
