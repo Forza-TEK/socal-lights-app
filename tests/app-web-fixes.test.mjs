@@ -92,7 +92,7 @@ test("HEAD works on /sitemap.xml and /api/events; the tutorial video is small an
   assert.match(read("functions/sitemap.xml.js"), /export async function onRequestHead/);
   assert.match(read("functions/api/events.js"), /export async function onRequestHead/);
   assert.ok(statSync(new URL("../public/tutorials/find-map.mp4", import.meta.url)).size < 8e6, "find-map.mp4 was 16 MB");
-  assert.match(read("public/_headers"), /\/tutorials\/\*\.mp4\n  Cache-Control: public, max-age=604800/);
+  assert.match(read("public/_headers"), /\/tutorials\/\*\.mp4\n  Cache-Control: public, max-age=86400/);
 });
 
 test("the search field has a visible focus ring (audit M12: already in place; pinned here)", () => {

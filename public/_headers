@@ -12,9 +12,9 @@ https://:project.pages.dev/*
 https://:version.:project.pages.dev/*
   X-Robots-Tag: noindex
 
-# tutorial videos: a week in the browser instead of 4 hours (they were re-downloaded over cellular; find-map.mp4 is now 4.6 MB, docs/app-store.md has the rest of the plan)
+# tutorial videos: a day in the browser and at Cloudflare's edge (owner decision 2026-11-19; it was a week, and re-recorded videos stayed stale for days). A changed video shows within 24 hours; purge /tutorials/ at once if it must show sooner.
 /tutorials/*.mp4
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=86400
 
 /admin/*
   Cache-Control: no-store
