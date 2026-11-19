@@ -1690,3 +1690,6 @@ An event whose hours give only a start time ("7pm") came into the calendar as al
 
 ## 2026-11-19 review login code rotated
 - Owner replaced the Pages secret APP_REVIEW_CODE (the old digits had appeared in a chat). A deploy is needed for Functions to read the new value; this commit triggers it. The old code must now be refused for appreview@socallights.app. Never write the code in the repo or in chat.
+
+## 2026-11-19 tutorial video cache: one day
+- Owner chose a one-day cache for /tutorials/*.mp4 (public/_headers, max-age=86400; it was a week). Reason: the Tutorial Video session found 61 of 88 videos stale at the edge after re-records and the shrink. The owner purged the whole cache and all 88 files were then verified live (same size as origin/main). After any video change, purge /tutorials/ in Cloudflare (Caching > Configuration > Purge Cache > Custom purge > Prefix socallights.app/tutorials/) if it must show sooner than 24 hours.
