@@ -725,6 +725,12 @@ async function shareItem(k) {
   if (await nativeShare({ title, text: title + " on SoCal Lights", url })) return; // the phone's own share sheet inside the app
   // Desktop share sheets (Windows Mail/Outlook) drop the separate url and subject, so the link and the details go inside the text itself.
   const body = [title + " on SoCal Lights", it.kind === "ev" ? [whenShort(it.ev), it.ev.city].filter(Boolean).join(" · ") : "", url].filter(Boolean).join("\n");
+  // On a computer the system share sheet puts the text under the mail signature and leaves the subject empty, so open a normal email instead (subject and details first, signature below) and copy the link too.
+  if (matchMedia("(hover:hover) and (pointer:fine)").matches) {
+    try { await navigator.clipboard.writeText(url); } catch {}
+    toast("Link copied. Opening your email…");
+    location.href = "mailto:?subject=" + encodeURIComponent(title + " on SoCal Lights") + "&body=" + encodeURIComponent(body.replace(/\n/g, "\r\n")); return;
+  }
   try { if (navigator.share) { await navigator.share({ title, text: body }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
   try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { toast(url); }
 }

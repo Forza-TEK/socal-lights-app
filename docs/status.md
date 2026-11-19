@@ -1,5 +1,8 @@
 # Status
 
+### Share on a computer opens a proper email (Nov 19)
+Windows Outlook's share sheet put the shared text under the signature and left the subject empty. On a computer (mouse pointer) Share now opens a normal email with the subject "<event> on SoCal Lights" and the details and link as the body, so the signature falls below; the link is also copied. Phones and the app keep their own share sheet. `app.js` 20261119b. Not checked in real Outlook (cannot run here); a computer with no mail app set up just gets the copied link.
+
 ### Share on desktop now carries the link and details (Nov 19)
 Share on an event in desktop Windows (Outlook's share sheet) opened an empty email: those sheets drop the separate link and subject. The shared text now holds the event name, when and city, and the link itself (favorites list too). `app.js` 20261119a. The phone app's own share sheet is unchanged. Not checked: Windows Outlook itself (cannot run here); please press Share on an event and tell me what the email contains.
 
