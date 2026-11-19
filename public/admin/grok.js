@@ -22,7 +22,7 @@ const link = (u) => (u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${e
 const detail = (name) => document.dispatchEvent(new CustomEvent("admin:detail", { detail: name })); // the breadcrumb in the top bar (admin.js)
 const kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v !== "" && v != null).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
 const card = (title, inner) => `<section class="rcard"><h3>${esc(title)}</h3>${inner}</section>`;
-let VIEW = "published", OPEN = "";
+let VIEW = "published", OPEN = "", PICKED = false; // PICKED: the first time the page opens it lands on whatever is waiting for you
 
 const intakeActions = (x) => (x.status === "published" ? `<a class="btn ghost" href="/e/${encodeURIComponent(x.id)}" target="_blank" rel="noopener">View card</a>` + (x.image ? btn("ghost", "Remove photo", 'data-ga="remove_photo"') : "") + btn("danger", "Unpublish", 'data-ga="unpublish"')
   : x.status === "held" || x.status === "unpublished" ? btn("main", "Publish", 'data-ga="publish"') : x.status === "rejected" ? btn("ghost", "Publish anyway", 'data-ga="publish"') : "");
@@ -45,6 +45,7 @@ function updateDetail(x) {
 
 export async function renderGrok(main) {
   const d = await api("/api/admin/grok"), n = (k) => (k === "updates" ? (d.updates || []).filter((x) => x.status === "held").length : d.counts[k] || 0);
+  if (!PICKED) { PICKED = true; if (!n("held") && n("updates")) VIEW = "updates"; else if (n("held")) VIEW = "held"; } // the Dashboard counts held events AND held updates, so open where they are
   const list = VIEW === "updates" ? d.updates || [] : d.rows.filter((r) => r.status === VIEW);
   const open = OPEN && (VIEW === "updates" ? (d.updates || []).find((x) => x.id === OPEN) : d.rows.find((r) => r.id === OPEN));
   if (OPEN && !open) OPEN = "";

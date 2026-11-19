@@ -1,5 +1,8 @@
 # Status
 
+### Dashboard "Grok item held" opens on the held items (Nov 19)
+The Dashboard counted 3 held Grok items, but they are held *updates* (Grok's changes to events already on the map; live D1: 0 held events, 3 held updates). From Grok opened on "On the map", and its Held tab lists events only, so nothing looked held. The page now opens on Held, or on Updates when only updates are held. `grok.js` 20261119a, `admin.js` 20261119a. The 3 updates still need your decision (Apply or Dismiss) under From Grok > Updates.
+
 ### Route pill steps left earlier (Nov 18)
 The phone "Route these" pill used to stay over the zoom/locate button column until its top was above a fixed 284px line, which is too low in the app (controls sit lower by the safe-area inset). It now steps left when it gets within 24px of the bottom of that column, measured live, with a short slide (`app.js` 20261118i, `styles.css` 20261118d). Checked: tests pass, pill stays at the edge when far below the buttons in a simulated offset. Not checked: the real iPhone safe area; please reopen the app and confirm.
 
