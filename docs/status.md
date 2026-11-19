@@ -1,5 +1,8 @@
 # Status
 
+### From Grok: real buttons for every held item (Nov 19)
+Held cancellation notices only offered View card and Dismiss (the server refuses to apply a cancellation), so there was no way to act on them. Now: a held cancellation has **Take off the map** (two taps; removes the event, keeps a tombstone so it can be restored, flags any paid placement refund due, row shows "Event removed") and **Keep on map** (leaves it alone). Other held updates have **Apply** and **Ignore**. A held event has **Publish** and **Reject** (stays on record as rejected; "Publish anyway" still works later). `grok.js` 20261119d, test added. The 3 live held items are all cancellations (Naples Island boat parade, Riverside Turkey Trot, Jingle Terrace Nights): the owner decides each.
+
 ### From Grok list: Needs-you box, stacked rows, search (Nov 19)
 The From Grok table needed sideways scrolling and buried the held items. Now: a "Needs you" box at the top lists every held event and held update with its one-click buttons (Publish / Apply / Dismiss / View card); below it the tabs show stacked rows (no table, no horizontal scroll at phone or desktop width), 30 at a time with Show more and a search by name or city. `grok.js` 20261119c, `admin.js` 20261119c, `admin.css` 20261119b. Checked in a browser at iPhone and 1280px widths with seeded rows and in tests; the live page sits behind Cloudflare Access so I did not look at it.
 

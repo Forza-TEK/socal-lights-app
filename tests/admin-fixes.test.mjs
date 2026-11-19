@@ -53,7 +53,7 @@ test("L2: the installer tile is named for what it counts", () => assert.match(re
 test("M6: Grok Unpublish, Undo, Remove photo and Publish anyway need a second tap; claim Approve and Decline too", () => {
   const g = read("public/admin/grok.js"), a = read("public/admin/admin.js");
   assert.match(g, /import \{[^}]*\btap\b[^}]*\} from "\/admin\/kit\.js/);
-  assert.match(g, /g === "unpublish" \|\| g === "update_revert" \|\| g === "remove_photo" \|\| \(g === "publish" && rej\)\) && !tap\(b/);
+  assert.match(g, /g === "unpublish" \|\| g === "update_revert" \|\| g === "remove_photo" \|\| g === "update_remove" \|\| \(g === "publish" && rej\)\) && !tap\(b/);
   assert.match(a, /if \(!tap\(b, b\.dataset\.clact\)\) return;/);
 });
 

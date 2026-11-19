@@ -139,3 +139,22 @@ test("L9: the weekly email and the upcoming list only read events that have not 
   assert.match(read("functions/api/alerts/send.js"), /WHERE end_date >= \? AND start_date <= \?/);
   assert.match(read("functions/_lib/upcoming.js"), /WHERE end_date >= \?/);
 });
+
+test("Grok review: a held event can be rejected; a held cancellation can take the event off the map (tombstone kept) or leave it", async () => {
+  const { env, raw } = newEnv();
+  const act = (body) => grokAct({ request: new Request("https://x/api/admin/grok", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), env });
+  await grokRow(env, "grok-held-one", "held");
+  assert.equal((await act({ action: "reject", id: "grok-held-one" })).status, 200);
+  assert.equal(raw.prepare("SELECT status FROM intake_events WHERE id = 'grok-held-one'").get().status, "rejected");
+  assert.equal((await act({ action: "reject", id: "grok-held-one" })).status, 409, "only a held row can be rejected");
+  await post(env, ev({ id: "boat", name: "Boat Parade" })); await post(env, ev({ id: "keep", name: "Keeper", city: "Irvine" }));
+  const upd = (id, ev_id) => raw.prepare("INSERT INTO intake_updates (id,event_id,event_name,status,kind,before,after) VALUES (?,?,?,?,?,?,?)").run(id, ev_id, ev_id, "held", "cancelled", "{}", "{}");
+  upd("gu-1", "boat"); upd("gu-2", "keep");
+  assert.equal((await act({ action: "update_remove", id: "gu-1" })).status, 200);
+  assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM events WHERE id = 'boat'").get().n, 0);
+  assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM deleted_events WHERE id = 'boat'").get().n, 1, "a tombstone is kept so it can be restored");
+  assert.equal(raw.prepare("SELECT status FROM intake_updates WHERE id = 'gu-1'").get().status, "removed");
+  assert.equal((await act({ action: "update_dismiss", id: "gu-2" })).status, 200);
+  assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM events WHERE id = 'keep'").get().n, 1, "Keep on map leaves the event alone");
+  assert.equal((await act({ action: "update_remove", id: "gu-2" })).status, 409, "a decided update cannot be acted on again");
+});

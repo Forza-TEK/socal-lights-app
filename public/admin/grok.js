@@ -11,10 +11,10 @@ async function api(path, opts = {}) {
 }
 const LABEL = { published: ["On the map", "ok"], held: ["Held for you", "warn"], unpublished: ["Taken down", "bad"], rejected: ["Rejected", "bad"] };
 const VIEWS = [["published", "On the map"], ["held", "Held"], ["unpublished", "Taken down"], ["rejected", "Rejected"], ["updates", "Updates"]];
-const ULABEL = { applied: ["Applied", "ok"], held: ["Needs you", "warn"], reverted: ["Undone", "bad"], dismissed: ["Dismissed", ""] };
+const ULABEL = { applied: ["Applied", "ok"], held: ["Needs you", "warn"], reverted: ["Undone", "bad"], dismissed: ["Dismissed", ""], removed: ["Event removed", "bad"] };
 const KIND = { confirm: "Confirmed from its page", change: "Corrected from its page", photo: "Photo link", cancelled: "Page says cancelled" };
 const NAMES = { start: "Starts", end: "Ends", hours: "Hours", price: "Price", free: "Free", status: "Status", image: "Photo" };
-const DONE = { publish: "Published", unpublish: "Unpublished", remove_photo: "Photo removed", update_revert: "Undone", update_apply: "Applied", update_dismiss: "Dismissed" };
+const DONE = { publish: "Published", unpublish: "Unpublished", remove_photo: "Photo removed", update_revert: "Undone", update_apply: "Applied", update_remove: "Event taken off the map", update_dismiss: "Left as is", reject: "Rejected" };
 const diff = (b, a) => Object.keys(a).filter((k) => String(a[k]) !== String(b[k])).map((k) => `${NAMES[k] || k}: <s>${esc(String(b[k] ?? "") || "none")}</s> → <b>${esc(String(a[k] ?? "") || "none")}</b>`).join("<br>");
 const jp = (v) => { try { return JSON.parse(v || "{}"); } catch { return {}; } };
 const when = (s) => esc(String(s || "").slice(0, 16).replace("T", " ")) + " UTC";
@@ -25,8 +25,8 @@ const card = (title, inner) => `<section class="rcard"><h3>${esc(title)}</h3>${i
 let VIEW = "published", OPEN = "", SHOWN = 30, QUERY = "";
 
 const intakeActions = (x) => (x.status === "published" ? `<a class="btn ghost" href="/e/${encodeURIComponent(x.id)}" target="_blank" rel="noopener">View card</a>` + (x.image ? btn("ghost", "Remove photo", 'data-ga="remove_photo"') : "") + btn("danger", "Unpublish", 'data-ga="unpublish"')
-  : x.status === "held" || x.status === "unpublished" ? btn("main", "Publish", 'data-ga="publish"') : x.status === "rejected" ? btn("ghost", "Publish anyway", 'data-ga="publish"') : "");
-const updateActions = (x) => `<a class="btn ghost" href="/e/${encodeURIComponent(x.event_id)}" target="_blank" rel="noopener">View card</a>` + (x.status === "applied" ? btn("danger", "Undo", 'data-ga="update_revert"') : x.status === "held" ? (x.kind !== "cancelled" ? btn("main", "Apply", 'data-ga="update_apply"') : "") + btn("ghost", "Dismiss", 'data-ga="update_dismiss"') : "");
+  : x.status === "held" ? btn("main", "Publish", 'data-ga="publish"') + btn("ghost", "Reject", 'data-ga="reject"') : x.status === "unpublished" ? btn("main", "Publish", 'data-ga="publish"') : x.status === "rejected" ? btn("ghost", "Publish anyway", 'data-ga="publish"') : "");
+const updateActions = (x) => `<a class="btn ghost" href="/e/${encodeURIComponent(x.event_id)}" target="_blank" rel="noopener">View card</a>` + (x.status === "applied" ? btn("danger", "Undo", 'data-ga="update_revert"') : x.status === "held" ? (x.kind === "cancelled" ? btn("danger", "Take off the map", 'data-ga="update_remove"') + btn("ghost", "Keep on map", 'data-ga="update_dismiss"') : btn("main", "Apply", 'data-ga="update_apply"') + btn("ghost", "Ignore", 'data-ga="update_dismiss"')) : "");
 
 function intakeDetail(x) {
   const [lab, kind] = LABEL[x.status] || [x.status, ""], season = SEASONS[x.season] ? SEASONS[x.season].label : x.season;
@@ -50,7 +50,7 @@ export async function renderGrok(main) {
   if (OPEN && !open) OPEN = "";
   const act = async (b) => {
     const g = b.dataset.ga, rej = open && VIEW !== "updates" && open.status === "rejected";
-    if ((g === "unpublish" || g === "update_revert" || g === "remove_photo" || (g === "publish" && rej)) && !tap(b, { unpublish: "unpublish", update_revert: "undo", remove_photo: "remove the photo", publish: "publish anyway" }[g])) return; // a second tap goes ahead
+    if ((g === "unpublish" || g === "update_revert" || g === "remove_photo" || g === "update_remove" || (g === "publish" && rej)) && !tap(b, { unpublish: "unpublish", update_revert: "undo", remove_photo: "remove the photo", update_remove: "take it off the map", publish: "publish anyway" }[g])) return; // a second tap goes ahead
     b.disabled = true;
     const send = (force) => api("/api/admin/grok", { method: "POST", body: JSON.stringify({ action: g, id: OPEN || b.closest("[data-gid]").dataset.gid, force }) });
     try { try { await send(false); } catch (er) { if (er.data && er.data.code === "duplicate" && (await askBox({ title: "Possible duplicate", message: er.message, go: "Publish anyway", danger: true }))) await send(true); else throw er; } toast(DONE[b.dataset.ga]); OPEN = ""; detail(""); renderGrok(main); }

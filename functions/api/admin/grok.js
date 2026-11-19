@@ -1,6 +1,6 @@
 // Admin > From Grok (behind requireAdmin through functions/api/admin/_middleware.js).
 // GET  /api/admin/grok            -> { configured, publishing, counts, rows: [recent intake rows] }
-// POST /api/admin/grok { action: "unpublish" | "publish" | "remove_photo", id }   or, for update rows (id starts "gu-"), { action: "update_revert" | "update_apply" | "update_dismiss", id }   one click: take a Grok event off the map (the row stays, so Grok cannot add it again), or put a held / unpublished one on it.
+// POST /api/admin/grok { action: "unpublish" | "publish" | "reject" | "remove_photo", id }   or, for update rows (id starts "gu-"), { action: "update_revert" | "update_apply" | "update_remove" | "update_dismiss", id }   one click: take a Grok event off the map (the row stays, so Grok cannot add it again), or put a held / unpublished one on it.
 import { json, err } from "../../_lib/util.js";
 import { eventStatement, publishingOn, ID_PREFIX, intakeId, checkImage, loadRemovals, removedHome, REMOVED_REASON } from "../../_lib/intake.js";
 import { geocodeAddress, nearestCounty } from "../../_lib/util.js";
@@ -25,6 +25,11 @@ export async function onRequestPost({ request, env }) {
   if (!b || typeof b.id !== "string" || !/^grokx?-/.test(b.id)) return err(400, "Choose a Grok event.");
   const row = await env.DB.prepare("SELECT * FROM intake_events WHERE id = ?").bind(b.id).first();
   if (!row) return err(404, "That row is gone.");
+  if (b.action === "reject") { // a held event the owner does not want: it leaves Needs you, stays on record as rejected (Grok cannot add it again) and can still be published later with "Publish anyway"
+    if (row.status !== "held") return err(409, "Only a held event can be rejected.");
+    await env.DB.prepare("UPDATE intake_events SET status = 'rejected', reason = 'Rejected by the owner after review', acted_at = datetime('now') WHERE id = ?").bind(row.id).run();
+    return json({ ok: true, status: "rejected" });
+  }
   if (b.action === "unpublish") {
     if (row.status !== "published") return err(409, "That event is not published.");
     await env.DB.batch([
@@ -100,6 +105,18 @@ async function updateAction(env, b) {
     if (!same(before)) return err(409, "The event was changed after this update arrived, so it was not applied. Dismiss it.");
     await env.DB.batch([applyStatement(env, u.event_id, after), mark("applied")]);
     return json({ ok: true, status: "applied" });
+  }
+  if (b.action === "update_remove") { // the page says the event is cancelled and the owner agrees: take it off the map (a tombstone is kept, so it can be restored from Replaced records / Events)
+    if (u.status !== "held") return err(409, "Only a held update can be acted on.");
+    if (!ev) { await env.DB.batch([mark("removed")]); return json({ ok: true, status: "removed" }); }
+    const row = await env.DB.prepare("SELECT * FROM events WHERE id = ?").bind(u.event_id).first();
+    if (row) { try { await env.DB.prepare("INSERT OR REPLACE INTO deleted_events (id, name, row, deleted_by) VALUES (?,?,?,?)").bind(u.event_id, String(row.name || "").slice(0, 120), JSON.stringify(row), "From Grok: cancelled").run(); } catch {} }
+    await env.DB.batch([
+      ...refundDueStatements(env.DB, { events: [u.event_id] }, "The event was removed as cancelled while a paid placement was running. Refund it in the Stripe dashboard, then mark it refunded here.", { restorable: true }),
+      env.DB.prepare("DELETE FROM events WHERE id = ?").bind(u.event_id),
+      mark("removed"),
+    ]);
+    return json({ ok: true, status: "removed" });
   }
   if (b.action === "update_dismiss") {
     if (u.status !== "held") return err(409, "Only a held update can be dismissed.");
