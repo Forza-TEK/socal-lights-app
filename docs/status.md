@@ -1687,3 +1687,6 @@ An event whose hours give only a start time ("7pm") came into the calendar as al
 ## 2026-11-17 verified bot approved
 - BotBase > Submission history (owner screenshot): **SoCalLightsBot, Data Collection, status Approved**, submitted and last updated Nov 15 2026. Cloudflare has verified the bot.
 - Next: (1) `BOT_SIGNING_KEY="$(cat <key file>)" node scripts/bot-keys.mjs --crawltest` should now answer 200 (needs the private key, which is kept outside the repo; not available in every session). (2) Optional: add the same private key as the secret `BOT_SIGNING_KEY` in the cloud environment the scheduled sweeps use, so they can use `node scripts/signed-fetch.mjs <url>` for pages that answered 403 to the plain bot. (3) Re-try the sites that turned the bot away because of a Cloudflare challenge (Visit Crestline, Tock, event.marriott.com and others in `docs/blocked-sites.md`) with one signed read each; sites behind Akamai or that block verified bots as well will still refuse.
+
+## 2026-11-19 review login code rotated
+- Owner replaced the Pages secret APP_REVIEW_CODE (the old digits had appeared in a chat). A deploy is needed for Functions to read the new value; this commit triggers it. The old code must now be refused for appreview@socallights.app. Never write the code in the repo or in chat.
