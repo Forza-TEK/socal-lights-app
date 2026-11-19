@@ -22,7 +22,7 @@ const link = (u) => (u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${e
 const detail = (name) => document.dispatchEvent(new CustomEvent("admin:detail", { detail: name })); // the breadcrumb in the top bar (admin.js)
 const kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v !== "" && v != null).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
 const card = (title, inner) => `<section class="rcard"><h3>${esc(title)}</h3>${inner}</section>`;
-let VIEW = "published", OPEN = "", PICKED = false; // PICKED: the first time the page opens it lands on whatever is waiting for you
+let VIEW = "published", OPEN = "", SHOWN = 30, QUERY = "";
 
 const intakeActions = (x) => (x.status === "published" ? `<a class="btn ghost" href="/e/${encodeURIComponent(x.id)}" target="_blank" rel="noopener">View card</a>` + (x.image ? btn("ghost", "Remove photo", 'data-ga="remove_photo"') : "") + btn("danger", "Unpublish", 'data-ga="unpublish"')
   : x.status === "held" || x.status === "unpublished" ? btn("main", "Publish", 'data-ga="publish"') : x.status === "rejected" ? btn("ghost", "Publish anyway", 'data-ga="publish"') : "");
@@ -45,7 +45,6 @@ function updateDetail(x) {
 
 export async function renderGrok(main) {
   const d = await api("/api/admin/grok"), n = (k) => (k === "updates" ? (d.updates || []).filter((x) => x.status === "held").length : d.counts[k] || 0);
-  if (!PICKED) { PICKED = true; if (!n("held") && n("updates")) VIEW = "updates"; else if (n("held")) VIEW = "held"; } // the Dashboard counts held events AND held updates, so open where they are
   const list = VIEW === "updates" ? d.updates || [] : d.rows.filter((r) => r.status === VIEW);
   const open = OPEN && (VIEW === "updates" ? (d.updates || []).find((x) => x.id === OPEN) : d.rows.find((r) => r.id === OPEN));
   if (OPEN && !open) OPEN = "";
@@ -70,19 +69,32 @@ export async function renderGrok(main) {
   detail("");
   const state = !d.configured ? `<div class="empty">Not set up yet: no <code>GROK_INTAKE_KEY</code> secret exists. Setup steps are in docs/monetization/grok-browser-pass.md.</div>`
     : `<p class="meta" style="margin:0 0 4px">${d.publishing ? "Publishing is <b>on</b>: rows that pass every check go on the map right away, tagged From Grok." : "Publishing is <b>off</b> (the secret <code>GROK_INTAKE_PUBLISH</code> is 0): rows that pass every check wait under Held, and you publish them with one click. Delete the secret or set it to 1 to publish automatically."}</p>`;
-  const head = VIEW === "updates"
-    ? `<thead><tr><th>Event</th><th>What changed</th><th>Kind</th><th>Status</th><th>Received</th><th class="ac">Actions</th></tr></thead>`
-    : `<thead><tr><th>Event</th><th>City</th><th>Dates</th><th>Status</th><th>Received</th><th class="ac">Actions</th></tr></thead>`;
-  const row = (x) => {
-    if (VIEW === "updates") { const [lab, kind] = ULABEL[x.status] || [x.status, ""]; return `<tr data-gid="${esc(x.id)}"><td><a class="rl" href="#grok" data-open="${esc(x.id)}">${esc(x.event_name || x.event_id)}</a></td><td>${diff(jp(x.before), jp(x.after)) || '<span class="sub">no change yet</span>'}</td><td>${esc(KIND[x.kind] || x.kind)}</td><td><span class="tag ${kind}">${lab}</span></td><td>${when(x.received_at)}</td><td class="ac">${updateActions(x).replace('class="btn ghost"', 'class="btn ghost sm"')}</td></tr>`; }
-    const [lab, kind] = LABEL[x.status] || [x.status, ""];
-    return `<tr data-gid="${esc(x.id)}"><td><a class="rl" href="#grok" data-open="${esc(x.id)}">${esc(x.name || "(no name)")}</a><span class="sub">${esc(x.venue || "")}</span></td><td>${esc(x.city)}<span class="sub">${esc(x.county || "")}</span></td><td>${x.start_date ? esc(x.start_date) + (x.end_date !== x.start_date ? " to " + esc(x.end_date) : "") : ""}<span class="sub">${esc(x.hours || "")}</span></td><td><span class="tag ${kind}">${lab}</span></td><td>${when(x.received_at)}</td><td class="ac"><a class="rl" href="#grok" data-open="${esc(x.id)}">Open</a></td></tr>`;
+  // One stacked row per record (no table, so nothing scrolls sideways). Rows that need you are pulled out into the "Needs you" box at the top.
+  const isUpd = (x) => String(x.id).startsWith("gu-");
+  const dates = (x) => (x.start_date ? esc(x.start_date) + (x.end_date && x.end_date !== x.start_date ? " to " + esc(x.end_date) : "") : "");
+  const sub = (x) => (isUpd(x) ? [esc(KIND[x.kind] || x.kind), when(x.received_at)] : [esc(x.city), dates(x), when(x.received_at)]).filter(Boolean).join(" · ");
+  const status = (x) => { const [lab, kind] = (isUpd(x) ? ULABEL : LABEL)[x.status] || [x.status, ""]; return `<span class="tag ${kind}">${lab}</span>`; };
+  const gacts = (x) => (isUpd(x) ? updateActions(x) : intakeActions(x)).replace(/class="btn ghost"/g, 'class="btn ghost sm"').replace(/class="btn main"/g, 'class="btn main sm"').replace(/class="btn danger"/g, 'class="btn danger sm"');
+  const grow = (x, need) => `<div class="gr${need ? " need" : ""}" data-gid="${esc(x.id)}" data-q="${esc([x.name, x.event_name, x.city, x.venue, x.event_id].join(" ").toLowerCase())}">
+    <div class="gm"><div class="gt"><a class="rl" href="#grok" data-open="${esc(x.id)}">${esc(x.name || x.event_name || x.event_id || "(no name)")}</a> ${status(x)}</div>
+      <div class="gmeta">${sub(x)}</div>${isUpd(x) ? `<div class="gd">${diff(jp(x.before), jp(x.after)) || '<span class="sub">no change yet</span>'}</div>` : x.status === "rejected" && x.reason ? `<div class="gd">${esc(x.reason)}</div>` : ""}</div>
+    <div class="ga">${gacts(x)}</div></div>`;
+  const needs = [...d.rows.filter((r) => r.status === "held"), ...(d.updates || []).filter((u) => u.status === "held")];
+  const needBox = needs.length ? `<section class="gneed" aria-label="Needs you"><h3>Needs you <span class="gn">${needs.length}</span></h3><p class="meta">Held until you decide. Open a row for the full record, or use the buttons.</p><div class="gl">${needs.map((x) => grow(x, true)).join("")}</div></section>` : `<div class="gclear">Nothing is waiting on you.</div>`;
+  const rest = list.filter((x) => x.status !== "held"), heldHere = list.length - rest.length;
+  main.innerHTML = `<div class="pghead"><div><h2>From Grok</h2><p>Events Grok found, and the changes it made to events already on the map.</p></div></div>${state}
+    ${needBox}
+    <div class="pgtabs"><div class="seg" role="group" aria-label="Show">${VIEWS.map(([k, l]) => `<button type="button" data-gv="${k}" aria-pressed="${VIEW === k}">${l}${n(k) && k !== "held" ? ` <span>${n(k)}</span>` : ""}</button>`).join("")}</div></div>
+    ${rest.length ? `<input type="search" id="gq" class="gq" placeholder="Search this list by name or city" aria-label="Search this list" value="${esc(QUERY)}"><div class="gl" id="gList">${rest.map((x) => grow(x, false)).join("")}</div><div class="pager"><span class="meta" id="gCount"></span><button type="button" class="btn ghost sm" id="gMore">Show more</button></div>`
+      : `<div class="empty">${VIEW === "published" ? "Nothing from Grok is on the map yet." : VIEW === "updates" ? (heldHere ? "Everything here is waiting in the Needs you box above." : "No updates from Grok yet. They appear here when Grok confirms or corrects an event already on the map.") : heldHere ? "Everything here is waiting in the Needs you box above." : "Nothing here."}</div>`}`;
+  const fit = () => { // show the first SHOWN rows that match the search
+    const rows = [...main.querySelectorAll("#gList .gr")], q = QUERY.trim().toLowerCase(), hit = rows.filter((r) => !q || r.dataset.q.includes(q)); if (!rows.length) return;
+    rows.forEach((r) => (r.hidden = true)); hit.slice(0, SHOWN).forEach((r) => (r.hidden = false));
+    main.querySelector("#gCount").textContent = hit.length ? `Showing ${Math.min(SHOWN, hit.length)} of ${hit.length}` : "No match";
+    main.querySelector("#gMore").hidden = hit.length <= SHOWN;
   };
-  main.innerHTML = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${VIEWS.map(([k, l]) => `<button type="button" data-gv="${k}" aria-pressed="${VIEW === k}">${l}${n(k) ? ` <span>${n(k)}</span>` : ""}</button>`).join("")}</div></div>
-    <div class="pghead"><div><h2>From Grok</h2><p>Events Grok found, and the changes it made to events already on the map. Open a row for the full record.</p></div></div>${state}
-    ${list.length ? `<div class="card dtc"><div class="dtw"><table class="dtab">${head}<tbody>${list.map(row).join("")}</tbody></table></div><div class="pager"><span class="meta">${list.length} row${list.length === 1 ? "" : "s"}</span></div></div>`
-      : `<div class="empty">${VIEW === "published" ? "Nothing from Grok is on the map yet." : VIEW === "updates" ? "No updates from Grok yet. They appear here when Grok confirms or corrects an event already on the map." : "Nothing here."}</div>`}`;
-  main.querySelectorAll("[data-gv]").forEach((b) => (b.onclick = () => { VIEW = b.dataset.gv; renderGrok(main); }));
+  const gq = main.querySelector("#gq"); if (gq) { gq.oninput = () => { QUERY = gq.value; SHOWN = 30; fit(); }; main.querySelector("#gMore").onclick = () => { SHOWN += 30; fit(); }; fit(); }
+  main.querySelectorAll("[data-gv]").forEach((b) => (b.onclick = () => { VIEW = b.dataset.gv; SHOWN = 30; QUERY = ""; renderGrok(main); }));
   main.querySelectorAll("[data-open]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); OPEN = a.dataset.open; renderGrok(main); }));
   main.querySelectorAll("[data-ga]").forEach((b) => (b.onclick = () => act(b)));
 }

@@ -519,3 +519,21 @@ body.admin .top .crumb h1{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .seg{max-width:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .seg::-webkit-scrollbar{display:none}
 .seg button{flex:none}
+
+/* From Grok: stacked rows instead of a table, with a "Needs you" box on top */
+.gl{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;margin-top:12px}
+.gr{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-start;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--line)}
+.gr:last-child{border-bottom:0}.gr[hidden]{display:none}
+.gr .gm{flex:1 1 280px;min-width:0}
+.gr .gt{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-weight:600;overflow-wrap:anywhere}
+.gr a.rl{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
+.gr .gmeta{color:var(--muted);font-size:13px;margin-top:3px}
+.gr .gd{font-size:13.5px;margin-top:6px;overflow-wrap:anywhere}
+.gr .ga{display:flex;flex-wrap:wrap;gap:8px;flex:none}
+.gr.need{border-left:4px solid var(--season)}
+.gneed{margin:14px 0 22px}.gneed h3{margin:0;font-size:18px;display:flex;align-items:center;gap:8px}
+.gneed .gn{background:var(--season);color:#fff;border-radius:999px;font-size:13px;padding:1px 9px}
+.gneed .gl{border-color:var(--season)}
+.gclear{margin:14px 0 22px;color:var(--muted);font-size:14px}
+.gq{width:100%;max-width:420px;box-sizing:border-box;margin:0 0 4px;padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}
+@media (max-width:640px){.gr .ga{width:100%}}
