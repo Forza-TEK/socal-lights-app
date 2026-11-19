@@ -23,3 +23,20 @@ Yesterday's browser pass suggested Janss Marketplace's Jingle Bell Jump (Thousan
 
 ## 5. Still open
 The 2026-11-17-browser-pass-fixes.md and 2026-11-18-run-and-browser-pass.md requests are still "Status: open".
+
+## 6. Browser pass results (added after the browser pass)
+
+**Blocked-list candidates.** Each failed from the server today AND was refused again in my desktop browser with an HTTP-level block:
+- www.yelp.com: 403
+- coronadoflowershow.org: Cloudflare 403 "Sorry, you have been blocked"
+- lakearrowheadvillage.com: Cloudflare "Just a moment" 403
+- cdmod.org: sgcaptcha check that never completes (also in the Nov 18 note)
+
+Do NOT block the many hosts that failed with ERR_CONNECTION_CLOSED / TLS "unexpected eof" today (for example duckduckgo.com, shoppromenadepv.com, thegardensonelpaseo.com, fallbrookchamber.org). The same failure happened from the server for sites that work elsewhere, so it looks like a connection problem on our side, not the sites blocking us. Santa and Christmas names are never blocked.
+
+**Geocoder.** Coachella Valley addresses written with a hyphen were rejected ("45-871 Clinton St, Indio, CA 92201", "51-723 Douma St, Coachella, CA 92236") and accepted without the hyphen ("45871 Clinton St", "51723 Douma St"). Could the intake strip the hyphen in house numbers before geocoding? The Oasis Posada (item 2) is still rejected in every form tried: "88-775 Avenue 76", "88775 Avenue 76", "88775 Ave 76" and the park name, all Thermal CA 92274. Venue: Oasis del Desierto Park (Desert Recreation District activity 57324: Dec 19, 2026, 5-8pm, free).
+
+**Stored rows to check (not changed by me):**
+- `laguna-niguel-holiday-parade`: the city news item (cityoflagunaniguel.org/CivicAlerts.aspx?AID=1249) says Saturday, December 12, 2026, 10:00 AM, but gives the place only as "City of Laguna Niguel" with no route or street.
+- `south-gate-christmas-lane-parade`: the old URL is a 404. The city now lists a "Christmas Festival" on Sunday, December 13, 2026, 12-6pm with a 6pm tree lighting at South Gate Park, 4900 Southern Ave, and no parade. Please decide if this is the same event.
+- `g1-weho-winter-ice-rink`: I moved it to Dec 11, 2026 - Jan 3, 2027 per the city's Nov 5 news post. FYI only.
