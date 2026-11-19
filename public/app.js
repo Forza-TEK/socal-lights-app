@@ -723,7 +723,9 @@ async function shareItem(k) {
   const it = findKey(k); if (!it) return;
   const title = it.kind === "ev" ? it.ev.n : it.p.title, url = location.origin + (it.kind === "ev" ? "/e/" + encodeURIComponent(it.ev.id) : "/#h-" + it.p.id); // events share a server page so texts and social posts show a preview card; its button opens the map
   if (await nativeShare({ title, text: title + " on SoCal Lights", url })) return; // the phone's own share sheet inside the app
-  try { if (navigator.share) { await navigator.share({ title, text: title + " on SoCal Lights", url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
+  // Desktop share sheets (Windows Mail/Outlook) drop the separate url and subject, so the link and the details go inside the text itself.
+  const body = [title + " on SoCal Lights", it.kind === "ev" ? [whenShort(it.ev), it.ev.city].filter(Boolean).join(" · ") : "", url].filter(Boolean).join("\n");
+  try { if (navigator.share) { await navigator.share({ title, text: body }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
   try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { toast(url); }
 }
 const SHARE = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>`;
@@ -881,7 +883,7 @@ async function shareNight() {
   if (!favs.size) return;
   const url = location.origin + "/#night-" + [...favs].map(encodeURIComponent).join(","), title = "My favorites on SoCal Lights";
   if (await nativeShare({ title, text: `${favs.size} stops for a night of lights`, url })) return;
-  try { if (navigator.share) { await navigator.share({ title, text: `${favs.size} stops for a night of lights`, url }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
+  try { if (navigator.share) { await navigator.share({ title, text: `${favs.size} stops for a night of lights\n${url}` }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
   try { await navigator.clipboard.writeText(url); toast("Link to your favorites copied"); } catch { toast(url); }
 }
 // First visit: offer to use the location so distances and Nearest work; asked once, never up front
