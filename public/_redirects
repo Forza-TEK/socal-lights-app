@@ -1,0 +1,2 @@
+# Short link to the iPhone app (App Store). Static redirect, no Function runs: /app is not in _routes.json.
+/app https://apps.apple.com/us/app/socal-lights/id6834616157 302

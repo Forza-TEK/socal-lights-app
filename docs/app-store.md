@@ -5,6 +5,7 @@ The native apps (`app/`) are thin Capacitor wrappers that load https://socalligh
 Bundle / package id: `app.socallights.lights` (change in `app/capacitor.config.json` before the first build if you want a different one; it cannot change after publishing).
 
 ## What is done
+- **Live on the App Store (2026-11-18):** https://apps.apple.com/us/app/socal-lights/id6834616157 (id 6834616157). Where the site links to it, web only (hidden with `IN_APP` / `html.in-app`): the three-dots menu row "Get the iPhone app" (`public/app.js`), the footer link "iPhone app" (`public/footer.js`), the badge on `/tutorials`, the short link https://socallights.app/app (302 in `public/_redirects`, a static redirect; `/app` is not in `public/_routes.json`), and the Smart App Banner meta `apple-itunes-app` on the home page only. The assistant knowledge base and Help articles already say it is in the App Store. Test: `tests/appstore.test.mjs`.
 - `public/privacy.html` — privacy policy (live at https://socallights.app/privacy). Use this URL in every store listing.
 - `app/` — Capacitor project with iOS and Android platforms generated, icons installed, location permission text and Android permissions set.
 - Sign-in inside the app is the emailed code only ("Continue with Google" is hidden when the browser string has `SoCalLightsApp`: Google blocks embedded webviews, and offering Google would make Apple 4.8 require Sign in with Apple). Google and code sign-in prove the same email, so they reach the same account (`tests/appstore.test.mjs`).
@@ -50,7 +51,7 @@ SoCal Lights puts holiday and seasonal fun across Southern California on one map
 • Seasons: Halloween, Thanksgiving & Christmas, New Year, Spring and Summer
 • Add your event or showcase your house, free (sign in with an emailed code to create a listing or enter a contest)
 
-Free to browse, no ads. Browsing needs no account; an account is only needed to create a listing or enter a contest, and you can delete it any time in the app (Profile > Account > Delete my account).
+Free to browse. Local sponsors may appear. Browsing needs no account; an account is only needed to create a listing or enter a contest, and you can delete it any time in the app (Profile > Account > Delete my account).
 **Keywords (iOS, 100 chars):** christmas lights,halloween,haunted house,pumpkin patch,tree lighting,los angeles,orange county,san diego,holiday events
 **Category:** Travel (secondary: Lifestyle). **Age rating:** 4+ (no objectionable content; Halloween events are family-oriented).
 **Support URL:** https://socallights.app  **Marketing URL:** https://socallights.app  **Privacy policy:** https://socallights.app/privacy  **Contact:** info@socallights.app
