@@ -1,5 +1,8 @@
 # Status
 
+### From Grok list: Needs-you box, stacked rows, search (Nov 19)
+The From Grok table needed sideways scrolling and buried the held items. Now: a "Needs you" box at the top lists every held event and held update with its one-click buttons (Publish / Apply / Dismiss / View card); below it the tabs show stacked rows (no table, no horizontal scroll at phone or desktop width), 30 at a time with Show more and a search by name or city. `grok.js` 20261119c, `admin.js` 20261119c, `admin.css` 20261119b. Checked in a browser at iPhone and 1280px widths with seeded rows and in tests; the live page sits behind Cloudflare Access so I did not look at it.
+
 ### Dashboard "Grok item held" opens on the held items (Nov 19)
 The Dashboard counted 3 held Grok items, but they are held *updates* (Grok's changes to events already on the map; live D1: 0 held events, 3 held updates). From Grok opened on "On the map", and its Held tab lists events only, so nothing looked held. The page now opens on Held, or on Updates when only updates are held. `grok.js` 20261119a, `admin.js` 20261119a. The 3 updates still need your decision (Apply or Dismiss) under From Grok > Updates.
 ## 2026-11-18: iPhone app link on the website (branch `claude/app-store-link`)
