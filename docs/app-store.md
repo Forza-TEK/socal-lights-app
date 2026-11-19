@@ -51,7 +51,7 @@ SoCal Lights puts holiday and seasonal fun across Southern California on one map
 • Seasons: Halloween, Thanksgiving & Christmas, New Year, Spring and Summer
 • Add your event or showcase your house, free (sign in with an emailed code to create a listing or enter a contest)
 
-Free to browse, no ads. Browsing needs no account; an account is only needed to create a listing or enter a contest, and you can delete it any time in the app (Profile > Account > Delete my account).
+Free to browse. Local sponsors may appear. Browsing needs no account; an account is only needed to create a listing or enter a contest, and you can delete it any time in the app (Profile > Account > Delete my account).
 **Keywords (iOS, 100 chars):** christmas lights,halloween,haunted house,pumpkin patch,tree lighting,los angeles,orange county,san diego,holiday events
 **Category:** Travel (secondary: Lifestyle). **Age rating:** 4+ (no objectionable content; Halloween events are family-oriented).
 **Support URL:** https://socallights.app  **Marketing URL:** https://socallights.app  **Privacy policy:** https://socallights.app/privacy  **Contact:** info@socallights.app

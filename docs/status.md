@@ -1693,3 +1693,6 @@ An event whose hours give only a start time ("7pm") came into the calendar as al
 
 ## 2026-11-19 tutorial video cache: one day
 - Owner chose a one-day cache for /tutorials/*.mp4 (public/_headers, max-age=86400; it was a week). Reason: the Tutorial Video session found 61 of 88 videos stale at the edge after re-records and the shrink. The owner purged the whole cache and all 88 files were then verified live (same size as origin/main). After any video change, purge /tutorials/ in Cloudflare (Caching > Configuration > Purge Cache > Custom purge > Prefix socallights.app/tutorials/) if it must show sooner than 24 hours.
+
+## 2026-11-19 App Store description: sponsors, not "no ads"
+- Owner confirmed the sponsor strip appears inside the iPhone app, so the Advertising answer in the age rating (Contains Advertising) is right and the live description line "Free, no ads" is not. Corrected wording is in docs/app-store.md ("Free to browse. Local sponsors may appear."). A live version's description is locked in App Store Connect: change it when the next version (1.0.2) is created. Do not claim "no ads" anywhere else.
