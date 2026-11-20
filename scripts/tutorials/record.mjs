@@ -9,6 +9,9 @@ import { retimeVtt } from "./captions.mjs";
 const BASE = process.env.BASE || "http://localhost:8788";
 const VOICE = process.env.VOICE, WORK = process.env.WORK || "/tmp/tut", OUT = process.env.OUT || "public/tutorials";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Camera (CAMERA=1): the picture eases in on the thing being explained and back out, like a screen-recording editor's auto-zoom. The page is recorded at full size; the zoom is applied afterwards (ffmpeg zoompan), and the caption is drawn on top afterwards so it keeps its size and never zooms out of view.
+const CAMERA = process.env.CAMERA === "1";
+const CAM_MAX = parseFloat(process.env.CAM_MAX || (process.env.MOBILE === "1" ? "2" : "1.7"));
 const dur = (f) => parseFloat(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", f]).toString());
 const OVERLAY = `(() => {
   const st = document.createElement("style"); st.textContent = "#__cur{position:fixed;z-index:2147483647;left:0;top:0;width:22px;height:22px;pointer-events:none;transition:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}#__hl{position:fixed;z-index:2147483640;border:4px solid #e8590c;border-radius:12px;box-shadow:0 0 0 7px rgba(232,89,12,.28);pointer-events:none;animation:__pulse 1s ease-in-out infinite}@keyframes __pulse{50%{box-shadow:0 0 0 12px rgba(232,89,12,.12)}}#__rip{position:fixed;z-index:2147483646;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:3px solid rgba(232,90,10,.9);pointer-events:none;animation:__rip .6s ease-out forwards}@keyframes __rip{to{transform:scale(3.6);opacity:0}}#__mail{position:fixed;inset:0;z-index:2147483643;background:#eef0f3;overflow:auto;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1f1d1a}#__mail .bar{display:flex;align-items:center;gap:12px;padding:14px 28px;background:#fff;border-bottom:1px solid #dcdfe4;font-size:15px;color:#555}#__mail .bar b{font-size:17px;color:#1f1d1a}#__mail .hd{max-width:760px;margin:0 auto;padding:22px 20px 10px}#__mail .hd h2{margin:0 0 12px;font-size:26px;font-weight:500}#__mail .who{display:flex;gap:12px;align-items:center;font-size:15px}#__mail .av{width:42px;height:42px;border-radius:50%;background:#e0560a;color:#fff;display:grid;place-items:center;font-weight:600}#__mail .who small{display:block;color:#6b6760;font-size:13px}#__mail .body{max-width:760px;margin:0 auto 40px;padding:0 20px;zoom:.86}#__mail .body .plain{background:#fff;border-radius:12px;padding:28px 32px;font:16px/1.7 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}#__mail .body .plain a{color:#1a56d6}#__mail .tag{margin-left:auto;font-size:12px;color:#8a8680}#__cap{position:fixed;z-index:2147483645;left:50%;bottom:__BOT__px;transform:translateX(-50%);max-width:92vw;background:rgba(28,28,34,.94);color:#fff;font:600 22px/1.25 'Plus Jakarta Sans',system-ui,sans-serif;padding:12px 22px;border-radius:12px;text-align:center;pointer-events:none}#__card{position:fixed;inset:0;z-index:2147483644;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:24px;background:radial-gradient(ellipse at 30% 25%,#fbf1e6 0,#fffaf5 38%,#fff 75%);font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1f1d1a}#__card img{width:96px;height:96px;border-radius:50%;margin-bottom:12px}#__card .wm{font-weight:600;font-size:26px;margin-bottom:22px}#__card .wm b{color:#e0560a;font-weight:600}#__card .ey{font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:#c8324f;font-weight:500}#__card h1{font-weight:300;font-size:60px;line-height:1.12;margin:10px 0;max-width:1000px}#__perm{position:fixed;z-index:2147483642;left:24px;top:84px;width:360px;background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.28);padding:18px 18px 14px;font:15px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;color:#202124}#__perm b{display:block;font-size:15px;margin-bottom:4px}#__perm p{margin:0 0 14px;color:#5f6368}#__perm .row{display:flex;gap:8px;justify-content:flex-end}#__perm button{font:600 14px system-ui;padding:9px 18px;border-radius:999px;border:1px solid #dadce0;background:#fff;color:#1a56d6}#__perm .allow{background:#1a56d6;color:#fff;border-color:#1a56d6}#__card .ub{margin:26px 0 8px;display:inline-flex;align-items:center;gap:14px;padding:18px 34px;border-radius:999px;background:#fff;border:2px solid #d9d3c8;box-shadow:0 6px 24px rgba(0,0,0,.08);font-size:46px;font-weight:500;color:#1f1d1a}#__card .ub svg{width:34px;height:34px}#__card ul{list-style:none;margin:18px 0 0;padding:0;text-align:left;font-size:25px;line-height:1.5;color:#3b3935;max-width:760px}#__card li{padding-left:34px;position:relative;margin:8px 0}#__card li:before{content:'';position:absolute;left:0;top:11px;width:16px;height:16px;border-radius:50%;background:#e0560a}#__card p{font-size:23px;color:#6b6760;margin:0;max-width:900px}";
@@ -26,10 +29,17 @@ const OVERLAY = `(() => {
   addEventListener("mousedown", (e) => { const r = document.createElement("div"); r.id = "__rip"; r.style.left = e.clientX + "px"; r.style.top = e.clientY + "px"; document.body.appendChild(r); setTimeout(() => r.remove(), 700); }, true);
 })();`;
 class Helper {
-  constructor(page) { this.page = page; this.x = 200; this.y = 200; }
+  constructor(page) { this.page = page; this.x = 200; this.y = 200; this.moves = []; this.cz = 1; this.cnx = 0.5; this.cny = 0.5; this.caps = []; this.movedInStep = false; this.vp = { width: 1280, height: 720 }; this.T = () => 0; }
+  // One camera move: from now, over d seconds, to zoom z centred on (nx, ny) (fractions of the screen); ease-in-out
+  camTo(z, nx, ny, d = 0.8) { if (!CAMERA) return; if (Math.abs(z - this.cz) < 0.02 && Math.abs(nx - this.cnx) < 0.02 && Math.abs(ny - this.cny) < 0.02) return; this.moves.push({ t: this.T(), d, dz: z - this.cz, dx: nx - this.cnx, dy: ny - this.cny }); this.cz = z; this.cnx = nx; this.cny = ny; }
+  camReset(d = 0.7) { this.camTo(1, 0.5, 0.5, d); }
+  // Frame a target box: a small button fills about half of the screen; a big target (most of the screen) is shown whole
+  camFor(b) { if (!CAMERA) return; this.movedInStep = true; const { width: W, height: H } = this.vp; if (b.width > W * 0.6 || b.height > H * 0.45) return this.camReset(); const k = Math.min(W / (b.width + 60), H / (b.height + 60)), z = Math.max(1, Math.min(CAM_MAX, k * 0.5)); this.camTo(z, (b.x + b.width / 2) / W, (b.y + b.height / 2) / H); }
+  // Caption bookkeeping: the caption is not in the recorded picture (CAMERA hides it); it is drawn on top at the end from these times
+  capEvent(text, top = false) { const t = this.T(), open = this.caps.length && this.caps[this.caps.length - 1].end === null ? this.caps[this.caps.length - 1] : null; if (open) { if (open.text === text) return; open.end = t; } if (text) this.caps.push({ text, start: t, end: null, top }); }
   async move(sel, opt = {}) { if (MOB && typeof sel === "string") sel = MSEL(sel); if (MOB && typeof sel === "string" && /data-k=/.test(sel) && !(await this.page.locator(sel).count()) && (await this.page.locator("#sh-more").count())) await this.click("#sh-more", { after: 900 }); // phone dashboards keep most sections behind More
     if (MOB && typeof sel === "string" && /^#pbody|^\.panel|data-route|data-nroute/.test(sel) && await this.page.evaluate(() => { const p = document.querySelector(".panel"); return !!p && p.getBoundingClientRect().top > innerHeight * 0.45; })) await this.click('#bnav [data-tab="events"]', { after: 1200 }); // the list sheet is down: raise it
-    const loc = typeof sel === "string" ? this.page.locator(sel).first() : sel; await loc.scrollIntoViewIfNeeded().catch(() => {}); if (MOB) await loc.evaluate((el) => { const r = el.getBoundingClientRect(); if (r.bottom > innerHeight - 110 || r.top < 60) el.scrollIntoView({ block: "center" }); }).catch(() => {}); /* phone: keep the target clear of the sticky Next bar */ let b = await loc.boundingBox(); if (MOB && b && b.y > 600 && !/bnav/.test(String(sel)) && (await this.page.locator("#bnav").count())) { await this.click('#bnav [data-tab="events"]', { after: 1200 }); b = await loc.boundingBox(); } if (!b) throw new Error("no box for " + sel);
+    const loc = typeof sel === "string" ? this.page.locator(sel).first() : sel; await loc.scrollIntoViewIfNeeded().catch(() => {}); if (MOB) await loc.evaluate((el) => { const r = el.getBoundingClientRect(); if (r.bottom > innerHeight - 110 || r.top < 60) el.scrollIntoView({ block: "center" }); }).catch(() => {}); /* phone: keep the target clear of the sticky Next bar */ let b = await loc.boundingBox(); if (MOB && b && b.y > 600 && !/bnav/.test(String(sel)) && (await this.page.locator("#bnav").count())) { await this.click('#bnav [data-tab="events"]', { after: 1200 }); b = await loc.boundingBox(); } if (!b) throw new Error("no box for " + sel); this.camFor(b);
     await this.page.evaluate((b) => { let r = document.getElementById("__hl"); if (!r) { r = document.createElement("div"); r.id = "__hl"; document.body.appendChild(r); } const g = 6; r.style.left = b.x - g + "px"; r.style.top = b.y - g + "px"; r.style.width = b.width + 2 * g + "px"; r.style.height = b.height + 2 * g + "px"; }, b);
     const tx = b.x + (opt.fx ?? 0.5) * b.width, ty = b.y + (opt.fy ?? 0.5) * b.height; const sx = this.x, sy = this.y, n = Math.hypot(tx - sx, ty - sy) < 6 ? 0 : 38; // already pointing at it: no second glide
     // The glide is timed by the clock, not by a fixed number of mouse moves: on a loaded machine each move takes 50 to 100 ms, so 38 moves took 2 to 4 s and the tap (the screen change) came seconds after the words "tap ...". Now it always takes 0.7 s.
@@ -94,12 +104,13 @@ export async function record(spec) {
   const ctx = await br.newContext({ ...(spec.ua ? { userAgent: spec.ua } : {}), viewport: vp, deviceScaleFactor: SC, colorScheme: "light", hasTouch: MOB, isMobile: MOB, permissions: ["clipboard-read", "clipboard-write", ...(spec.geo && !spec.lateGeo ? ["geolocation"] : [])], geolocation: spec.geo });
   const until = Date.now() + 864e5;
   await ctx.addInitScript(`try{localStorage.setItem("socal-theme","light");${spec.welcome ? "" : 'localStorage.setItem("socal-welcomed","1");'}localStorage.setItem("socal-theme-until","${until}")}catch(e){}`);
+  if (CAMERA) await ctx.addInitScript(`(() => { const st = document.createElement("style"); st.textContent = "#__cap{display:none!important}"; const add = () => { if (!document.head) return setTimeout(add, 20); document.head.appendChild(st); }; add(); })();`);
   await ctx.addInitScript(OVERLAY.replaceAll("__BOT__", MOB ? "150" : spec.phone ? "92" : "22") + (MOB ? MOBCSS : ""));
   for (const rt of spec.routes || (spec.route ? [spec.route] : [])) await ctx.route(rt.url, (r) => r.fulfill({ json: rt.json })); // e.g. hide the Turnstile widget locally, or stand in for the mail service
   if (spec.cookie) await ctx.addCookies([{ name: "scl_session", value: spec.cookie, url: BASE }]);
   if (spec.warm) { const wp = await ctx.newPage(); await wp.goto(BASE + "/", { waitUntil: "networkidle" }); await sleep(2500); await wp.reload({ waitUntil: "networkidle" }); await sleep(3000); await wp.close(); } // lets the app's offline cache fill, like a phone that has used the app before
   const page = await ctx.newPage();
-  const h = new Helper(page); h.ctx = ctx; const marks = []; let poster = null;
+  const h = new Helper(page); h.ctx = ctx; h.vp = vp; h.T = () => T(); const marks = []; let poster = null;
   const card = (c) => page.evaluate((c) => { const o = document.getElementById("__card"); if (o) o.remove(); if (!c) return; const d = document.createElement("div"); d.id = "__card"; d.innerHTML = `<img src="/img/badge-160.webp" alt=""><div class="wm">SoCal <b>Lights</b></div><div class="ey">${c.ey}</div><h1>${c.title}</h1>${c.urlbar ? `<div class="ub"><svg viewBox="0 0 24 24" fill="none" stroke="#6b6760" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>${c.urlbar}</div>` : ""}<p>${c.sub || ""}</p>${c.list ? `<ul>${c.list.map((x) => `<li>${x}</li>`).join("")}</ul>` : ""}`; document.body.appendChild(d); }, c);
   await page.goto(BASE + (spec.start || "/"), { waitUntil: "networkidle" }); await sleep(spec.start === "/" ? 4500 : 600); // the map needs a moment to draw its tiles
   await card(spec.steps[0] && spec.steps[0].card ? { ...spec.steps[0].card, first: true } : null); // the first thing on screen is the title card, never the loading map
@@ -110,11 +121,11 @@ export async function record(spec) {
   if (!DRY) await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, maxWidth: Math.round(vp.width * SC), maxHeight: Math.round(vp.height * SC), everyNthFrame: 1 });
   const t00 = Date.now(), ref = t00 / 1000; var T = () => (Date.now() - t00) / 1000;
   for (let i = 0; i < spec.steps.length; i++) {
-    const s = spec.steps[i]; const t0 = T();
+    const s = spec.steps[i]; const t0 = T(); h.movedInStep = false; if (s.card) h.camReset();
     if (process.env.DBG) console.log('step', i, s.cap || (s.card && s.card.title) || '', page.url());
     await card(s.card ? { ...s.card, first: i === 0 } : null);
     if (s.mail !== "keep") await h.showMail(s.mail ? { ...s.mail, html: s.mail.html && s.mail.html.replaceAll("https://socallights.app", BASE) } : null);
-    await page.evaluate((c) => { let e = document.getElementById("__cap"); if (!c) { if (e) e.remove(); return; } if (!e) { e = document.createElement("div"); e.id = "__cap"; document.body.appendChild(e); } e.textContent = c; }, s.card ? "" : s.cap || "");
+    await page.evaluate((c) => { let e = document.getElementById("__cap"); if (!c) { if (e) e.remove(); return; } if (!e) { e = document.createElement("div"); e.id = "__cap"; document.body.appendChild(e); } e.textContent = c; }, s.card ? "" : s.cap || ""); h.capEvent(s.card ? "" : s.cap || "");
     const A = audio[i][0], B = audio[i][1];
     if (A) marks.push({ t: t0 + 0.4, f: A.f, d: A.d, text: A.text });
     const end = t0 + 0.4 + (A?.d || 0) + (B ? 0.1 : (s.pad ?? 0.5));
@@ -128,11 +139,13 @@ export async function record(spec) {
     { const bad = await page.evaluate(() => [...document.querySelectorAll(".err, [role=alert]")].filter((e) => e.offsetParent && /couldn.t|can.t|didn.t|enter a |should |invalid|wrong|try again|isn.t|not allowed|too many/i.test(e.textContent)).map((e) => e.textContent.trim()).join(" | ")).catch(() => ""); if (bad) { await page.screenshot({ path: `${w}/error-${i}.png` }); throw new Error(`The page showed an error on step ${i} (${s.cap || "card"}): ${bad}`); } } // a recording must never show a failed action
     if (s.poster) poster = T();
     const left = end - T(); if (left > 0) await sleep(left * 1000);
-    if (s.target) { await sleep(250); if (s.beforeClick) await s.beforeClick(page, h); await h.click(s.target, { after: 0 }); await page.evaluate(() => { const c = document.getElementById("__cap"); if (c) c.remove(); }).catch(() => {}); await sleep(s.after ?? 1500); } // the caption goes the moment the screen changes, so it never describes the old screen
+    if (s.target) { await sleep(250); if (s.beforeClick) await s.beforeClick(page, h); await h.click(s.target, { after: 0 }); await page.evaluate(() => { const c = document.getElementById("__cap"); if (c) c.remove(); }).catch(() => {}); h.capEvent(""); await sleep(s.after ?? 1500); } // the caption goes the moment the screen changes, so it never describes the old screen
     if (process.env.SHOTS) await page.screenshot({ path: `${w}/s${String(i).padStart(2, '0')}.png` }).catch(() => {});
     if (s.post) { try { await s.post(page, h); } catch (e) { await page.screenshot({ path: `${w}/fail-post-${i}.png` }); throw e; } }
     if (B) { const tb = T() + 0.3; marks.push({ t: tb, f: B.f, d: B.d, text: B.text }); const left2 = tb + B.d + (s.pad ?? 0.5) - T(); if (left2 > 0) await sleep(left2 * 1000); } // the explanation after the tap is spoken over the new screen
+    if (!h.movedInStep && !s.card) h.camReset();
   }
+  h.capEvent("");
   const total = T() + 0.3; await sleep(300);
   await cdp.send("Page.stopScreencast").catch(() => {}); await page.close(); await ctx.close(); await br.close();
   if (DRY) { console.log(spec.file, "dry run OK:", spec.steps.length, "steps"); return; }
@@ -156,7 +169,34 @@ export async function record(spec) {
   const fc = marks.map((m, k) => `[${k + 1}:a]adelay=${Math.round(m.t * 1000)}|${Math.round(m.t * 1000)}[a${k}]`).join(";") + (marks.length ? ";" : "") + marks.map((_, k) => `[a${k}]`).join("") + `amix=inputs=${marks.length}:normalize=0[am];[am]aresample=48000:async=1,apad[aout]`; // apad: the audio runs on as silence to the last frame (end card), so both streams are as long as the video, and both start at 0
   const vf = MOB ? "scale=1080:1920:flags=lanczos" : spec.phone ? "scale=-2:1380:flags=lanczos,pad=2560:1440:(ow-iw)/2:30:color=#fbf3ea" : "scale=2560:1440:flags=lanczos";
   const mp4 = `${OUT}/${spec.file}${MOB ? "-mobile" : ""}.mp4`;
-  execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", w + "/frames.txt", ...inputs, "-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "23", "-preset", "medium", "-vf", vf + ",fps=30", "-r", "30", "-c:a", "aac", "-b:a", "160k", "-ac", "2", "-ar", "48000", "-t", String(total2), "-movflags", "+faststart", mp4], { stdio: "inherit" });
+  const encodeArgs = ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "23", "-preset", "medium", "-r", "30", "-c:a", "aac", "-b:a", "160k", "-ac", "2", "-ar", "48000", "-t", String(total2), "-movflags", "+faststart", mp4];
+  if (CAMERA && !spec.phone) {
+    // Camera and captions are applied now, on the finished frames (times follow the fast-forwarded timeline)
+    const cmoves = h.moves.map((m) => ({ ...m, t: remap(m.t) })), capList = h.caps.filter((c) => c.end !== null && c.text).map((c) => ({ ...c, start: remap(c.start), end: Math.max(remap(c.end), remap(c.start) + 0.5) }));
+    const W0 = Math.round(vp.width * SC), H0 = Math.round(vp.height * SC), BOTCSS = MOB ? 150 : 22;
+    const sm = (m) => { const q = `clip((on/30-${m.t.toFixed(3)})/${m.d.toFixed(3)},0,1)`; return `(${q}*${q}*(3-2*${q}))`; }; // smoothstep: ease in and out
+    const sum = (k, base) => base + cmoves.map((m) => `+(${m[k].toFixed(4)})*${sm(m)}`).join("");
+    let chain = "[0:v]fps=30";
+    if (cmoves.length) chain += `,scale=iw*2:ih*2:flags=bicubic,zoompan=z='${sum("dz", "1")}':x='clip((${sum("dx", "0.5")})*iw-iw/zoom/2,0,iw-iw/zoom)':y='clip((${sum("dy", "0.5")})*ih-ih/zoom/2,0,ih-ih/zoom)':d=1:s=${W0}x${H0}:fps=30`;
+    chain += `,${vf}[vz]`;
+    // the captions, drawn as pictures of the same pill the page used, so they keep their size when the camera zooms
+    const capDir = w + "/caps"; mkdirSync(capDir, { recursive: true });
+    const br2 = await chromium.launch(), c2 = await br2.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: SC }), pg2 = await c2.newPage();
+    await pg2.goto(BASE + "/tutorials", { waitUntil: "domcontentloaded" }); await sleep(800);
+    for (let k = 0; k < capList.length; k++) {
+      await pg2.evaluate(([t, mob]) => { document.documentElement.style.background = "transparent"; document.body.style.background = "transparent"; document.body.innerHTML = ""; const e = document.createElement("div"); e.id = "__cap2"; e.textContent = t; e.style.cssText = `position:fixed;left:50%;top:40px;transform:translateX(-50%);max-width:${mob ? 86 : 92}vw;background:rgba(28,28,34,.94);color:#fff;font:600 ${mob ? 15 : 22}px/1.25 'Plus Jakarta Sans',system-ui,sans-serif;padding:${mob ? "9px 14px" : "12px 22px"};border-radius:${mob ? 10 : 12}px;text-align:center;width:max-content`; document.body.appendChild(e); }, [capList[k].text, MOB]);
+      await pg2.evaluate(() => document.fonts.ready); await sleep(150);
+      await (await pg2.$("#__cap2")).screenshot({ path: `${capDir}/${k}.png`, omitBackground: true });
+    }
+    await br2.close();
+    const parts = [chain]; let prev = "[vz]"; const capIn = [];
+    capList.forEach((c, k) => { const idx = 1 + marks.length + k, dur = c.end - c.start; capIn.push("-loop", "1", "-framerate", "30", "-t", dur.toFixed(3), "-i", `${capDir}/${k}.png`);
+      parts.push(`[${idx}:v]format=rgba,fade=t=in:st=0:d=0.2:alpha=1,fade=t=out:st=${Math.max(0, dur - 0.18).toFixed(2)}:d=0.18:alpha=1,setpts=PTS+${c.start.toFixed(3)}/TB[c${k}]`);
+      parts.push(`${prev}[c${k}]overlay=x=(W-w)/2:y=${c.top ? 40 * SC : `H-h-${BOTCSS * SC}`}:eof_action=pass:enable='between(t,${c.start.toFixed(3)},${c.end.toFixed(3)})'[o${k}]`); prev = `[o${k}]`; });
+    writeFileSync(w + "/filter.txt", parts.join(";\n") + ";\n" + fc);
+    execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", w + "/frames.txt", ...inputs, ...capIn, "-filter_complex_script", w + "/filter.txt", "-map", prev, "-map", "[aout]", ...encodeArgs], { stdio: "inherit" });
+  } else
+  execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", w + "/frames.txt", ...inputs, "-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-vf", vf + ",fps=30", ...encodeArgs], { stdio: "inherit" });
 
   // ---- Checks before a video counts as finished: it must open on the title card and the voice must already be speaking ----
   const probe = (args) => spawnSync("ffmpeg", ["-hide_banner", ...args], { encoding: "utf8" }).stderr;
