@@ -22,8 +22,15 @@ adb shell input swipe $((W/2)) $((H*30/100)) $((W/2)) $((H*80/100)) 400; sleep 2
 for i in 1 2 3 4; do adb shell input tap $((W*i/5)) $((H*94/100)); sleep 4; shot 3-bar-$i; done
 adb shell input keyevent KEYCODE_BACK; sleep 2; shot 4-after-back
 # Drive the WebView over DevTools: open an event card, Favorites, the account menu and a few pages.
-SOCK=$(adb shell cat /proc/net/unix | grep -a webview_devtools_remote | head -1 | sed 's/.*@//' | tr -d '\r')
-if [ -n "$SOCK" ]; then adb forward tcp:9222 localabstract:$SOCK && node .github/scripts/android-drive.mjs "$OUT" || echo "drive step failed" >> "$OUT/drive-log.txt"; else echo "no webview devtools socket found" > "$OUT/drive-log.txt"; fi
+SOCK=""
+for i in $(seq 1 30); do # the WebView opens its DevTools socket a little after the page starts; wait up to 90 s
+  SOCK=$(adb shell cat /proc/net/unix | grep -a webview_devtools_remote | head -1 | sed 's/.*@//' | tr -d '\r')
+  [ -n "$SOCK" ] && break; sleep 3
+done
+if [ -n "$SOCK" ]; then
+  adb forward tcp:9222 localabstract:$SOCK
+  node .github/scripts/android-drive.mjs "$OUT" > "$OUT/drive-stdout.txt" 2>&1 || { echo "drive step failed:" >> "$OUT/drive-log.txt"; tail -20 "$OUT/drive-stdout.txt" >> "$OUT/drive-log.txt"; }
+else echo "no webview devtools socket found after 90 s" > "$OUT/drive-log.txt"; adb shell cat /proc/net/unix | grep -a devtools >> "$OUT/drive-log.txt" || true; fi
 adb shell dumpsys activity activities | grep -i "mResumedActivity" > "$OUT/resumed.txt" || true
 adb logcat -d -v time > "$OUT/logcat-all.txt" || true
 grep -E "AndroidRuntime|FATAL|Capacitor.*(E|W)/|chromium.*(ERROR|Uncaught)|ERR_" "$OUT/logcat-all.txt" > "$OUT/errors.txt" || true
