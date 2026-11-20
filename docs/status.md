@@ -1,5 +1,8 @@
 # Status
 
+### Android: status-bar fix confirmed in the emulator (Nov 20)
+Third "Android test" run (after `adjustMarginsForEdgeToEdge: "force"`): on the virtual Pixel 6 and Pixel C the top bar (logo, search, buttons) now sits fully below the status bar and the bottom bar sits above the gesture bar; map, clusters, list and filters render with no app errors. Still to look at: the strip under the bottom bar is the window colour (light), check in dark mode; the list-drag screenshot did not move the sheet because the test swipe started on the bottom bar (test script only, not the app); other screens (event card, Add, Favorites, account menu) are not yet exercised. Next: build the signed Play bundle with "Android app" once the Play Console account is confirmed (Rey to say which Google account owns it; no Play email exists in socallightsapp@gmail.com).
+
 ### Android: first real screens, and the status-bar fix (Nov 20)
 Second "Android test" run (local copy of the site) loaded the real app on the virtual Pixel 6 and Pixel C: map, clusters, list, filters and bottom bar all render; no app errors in the log. One real problem: Android drew the page under the status bar and the gesture bar (the top bar was cut off and the bottom bar touched the gesture line) because the wrapper had no inset handling. Fix: `app/capacitor.config.json` now sets `android.adjustMarginsForEdgeToEdge: "force"` (Android only; iOS untouched). Needs a new Android build to take effect, so re-run "Android test" to compare and "Android app" for the Play bundle.
 
