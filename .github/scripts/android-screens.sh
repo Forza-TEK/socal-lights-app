@@ -16,7 +16,7 @@ shot() { adb exec-out screencap -p > "$OUT/$1.png"; }
 sleep 30; shot 1-opened
 SIZE=$(adb shell wm size | grep -o '[0-9]*x[0-9]*' | tail -1); W=${SIZE%x*}; H=${SIZE#*x}
 # drag the list sheet up, then back down
-adb shell input swipe $((W/2)) $((H*82/100)) $((W/2)) $((H*30/100)) 400; sleep 3; shot 2-list-up
+adb shell input swipe $((W/2)) $((H*78/100)) $((W/2)) $((H*30/100)) 400; sleep 3; shot 2-list-up
 adb shell input swipe $((W/2)) $((H*30/100)) $((W/2)) $((H*80/100)) 400; sleep 2
 # the four bottom-bar spots (phone only has the bar), left to right
 for i in 1 2 3 4; do adb shell input tap $((W*i/5)) $((H*94/100)); sleep 4; shot 3-bar-$i; done
