@@ -5,13 +5,37 @@
   "server": {
     "url": "https://socallights.app",
     "cleartext": false,
-    "allowNavigation": ["socallights.app", "*.socallights.app", "tiles.openfreemap.org", "fonts.googleapis.com", "fonts.gstatic.com", "challenges.cloudflare.com", "www.youtube-nocookie.com", "player.vimeo.com", "iframe.videodelivery.net", "*.cloudflarestream.com"]
+    "allowNavigation": [
+      "socallights.app",
+      "*.socallights.app",
+      "tiles.openfreemap.org",
+      "fonts.googleapis.com",
+      "fonts.gstatic.com",
+      "challenges.cloudflare.com",
+      "www.youtube-nocookie.com",
+      "player.vimeo.com",
+      "iframe.videodelivery.net",
+      "*.cloudflarestream.com"
+    ]
   },
   "appendUserAgent": "SoCalLightsApp/1.0",
   "backgroundColor": "#0b0d12",
-  "ios": { "contentInset": "never", "limitsNavigationsToAppBoundDomains": false },
+  "ios": {
+    "contentInset": "never",
+    "limitsNavigationsToAppBoundDomains": false
+  },
   "plugins": {
-    "SplashScreen": { "launchShowDuration": 1200, "backgroundColor": "#0b0d12", "showSpinner": false },
-    "StatusBar": { "style": "DARK", "backgroundColor": "#0b0d12" }
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#0b0d12",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0b0d12"
+    }
+  },
+  "android": {
+    "adjustMarginsForEdgeToEdge": "force"
   }
 }

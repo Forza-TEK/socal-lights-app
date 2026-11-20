@@ -1,5 +1,8 @@
 # Status
 
+### Android: first real screens, and the status-bar fix (Nov 20)
+Second "Android test" run (local copy of the site) loaded the real app on the virtual Pixel 6 and Pixel C: map, clusters, list, filters and bottom bar all render; no app errors in the log. One real problem: Android drew the page under the status bar and the gesture bar (the top bar was cut off and the bottom bar touched the gesture line) because the wrapper had no inset handling. Fix: `app/capacitor.config.json` now sets `android.adjustMarginsForEdgeToEdge: "force"` (Android only; iOS untouched). Needs a new Android build to take effect, so re-run "Android test" to compare and "Android app" for the Play bundle.
+
 ### Android emulator: first run result and fix (Nov 20)
 First "Android test" run: build, install and launch worked on the virtual Pixel 6 and Pixel C, but Cloudflare's bot check blocked the emulator (a GitHub datacenter address) so every screenshot was "Verify you are human". We do not bypass the bot check. The workflow now serves a local copy of the site on the test machine (same files, local database, migrations applied) and points the debug app at it (config changed only inside the CI run, nothing committed), so the real screens load in a real Android WebView. Note: this tests the site files and the Android wrapper, not Cloudflare itself. Google Play registration could not be confirmed: no Play email exists in socallightsapp@gmail.com (Gmail connected to Claude); Rey to check which Google account owns the Play Console.
 
