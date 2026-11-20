@@ -1,5 +1,8 @@
 # Status
 
+### Android test: run 7 findings (Nov 20)
+Tablet (dark mode): the real app loads and the event card, Favorites tab and "Plan your drive in 3 steps" card all render correctly; no layout problems seen. Phone: map and bottom bar fine. The driver lost the phone's WebView because the script pressed Back (which closes the app at the root), and stalled on the account button (it navigates, so DevTools never answers); fixed: no Back press, 8 s timeout on every DevTools call.
+
 ### Android test: network fix (Nov 20)
 Run 6: the driver attached on the phone but the app showed "address unreachable" for the local copy of the site (the virtual phone booted onto flaky 3G instead of Wi-Fi), and the tablet had no page. The app now reaches the local copy through `adb reverse` (localhost:8788) so the emulator's network no longer matters. Also: the driver's pricing/add/help steps need a real page URL once the app is loaded.
 
