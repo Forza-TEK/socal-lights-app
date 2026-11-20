@@ -37,7 +37,7 @@ jobs:
           python3 - <<'PY'
           import json
           c = json.load(open("capacitor.config.json"))
-          c["server"]["url"] = "http://10.0.2.2:8788"
+          c["server"]["url"] = "http://localhost:8788"
           c["server"]["cleartext"] = True
           json.dump(c, open("capacitor.config.json", "w"), indent=2)
           PY
