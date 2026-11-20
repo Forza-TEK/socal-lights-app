@@ -1,5 +1,8 @@
 # Status
 
+### Android emulator: first run result and fix (Nov 20)
+First "Android test" run: build, install and launch worked on the virtual Pixel 6 and Pixel C, but Cloudflare's bot check blocked the emulator (a GitHub datacenter address) so every screenshot was "Verify you are human". We do not bypass the bot check. The workflow now serves a local copy of the site on the test machine (same files, local database, migrations applied) and points the debug app at it (config changed only inside the CI run, nothing committed), so the real screens load in a real Android WebView. Note: this tests the site files and the Android wrapper, not Cloudflare itself. Google Play registration could not be confirmed: no Play email exists in socallightsapp@gmail.com (Gmail connected to Claude); Rey to check which Google account owns the Play Console.
+
 ### Android: emulator test workflow (Nov 20)
 Rey has no Android device and has registered a Google Play developer account. Added `.github/workflows/android-test.yml` ("Android test", run by hand): builds a debug app, starts a virtual Pixel 6 phone and Pixel C tablet (Android 14) on GitHub, installs it, opens it, drags the list, taps the bottom bar, and saves screenshots plus an error log as the artifact `android-screens-phone` / `-tablet` (script: `.github/scripts/android-screens.sh`). Next: run it, read the screens, fix what is off, then re-run "Android app" for a fresh signed bundle and start the Play closed test (12 testers for 14 days is Google's rule for new personal accounts).
 

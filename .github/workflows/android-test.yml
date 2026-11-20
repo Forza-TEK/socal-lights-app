@@ -19,9 +19,27 @@ jobs:
         with: { node-version: 22 }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
-      - name: Install and sync
+      # Cloudflare's bot check blocks GitHub's datacenter addresses (the first run only saw "Verify you are human"), and we do not get around it.
+      # So the test serves its own copy of the site on this machine (same files, local database) and points the debug app at it. Nothing is committed.
+      - name: Start a local copy of the site
+        run: |
+          npm ci
+          yes | npx wrangler d1 migrations apply socal-lights --local
+          nohup npx wrangler pages dev public --port 8788 --ip 0.0.0.0 --local > wrangler.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:8788/ > /dev/null && break; sleep 2; done
+          curl -sf http://localhost:8788/api/events | head -c 200
+      - name: Install and sync (debug app points at the local copy)
         working-directory: app
-        run: npm ci && npx cap sync android
+        run: |
+          npm ci
+          python3 - <<'PY'
+          import json
+          c = json.load(open("capacitor.config.json"))
+          c["server"]["url"] = "http://10.0.2.2:8788"
+          c["server"]["cleartext"] = True
+          json.dump(c, open("capacitor.config.json", "w"), indent=2)
+          PY
+          npx cap sync android
       - name: Build the debug app
         working-directory: app/android
         run: ./gradlew assembleDebug
@@ -42,4 +60,6 @@ jobs:
         if: always()
         with:
           name: android-screens-${{ matrix.name }}
-          path: shots
+          path: |
+            shots
+            wrangler.log
