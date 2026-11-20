@@ -1,5 +1,8 @@
 # Status
 
+### Favorites share on a computer opens an email too (Nov 20)
+Sharing the favorites list on a computer now opens the same kind of email as sharing one event (subject "My favorites on SoCal Lights", stop count and link first, signature below) and copies the link. Phones and the app unchanged. `app.js` 20261120a. The 3 held Grok cancellations were decided by the owner.
+
 ### Share on a computer opens a proper email (Nov 19)
 Windows Outlook's share sheet put the shared text under the signature and left the subject empty. On a computer (mouse pointer) Share now opens a normal email with the subject "<event> on SoCal Lights" and the details and link as the body, so the signature falls below; the link is also copied. Phones and the app keep their own share sheet. `app.js` 20261119b. Not checked in real Outlook (cannot run here); a computer with no mail app set up just gets the copied link.
 

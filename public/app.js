@@ -889,6 +889,11 @@ async function shareNight() {
   if (!favs.size) return;
   const url = location.origin + "/#night-" + [...favs].map(encodeURIComponent).join(","), title = "My favorites on SoCal Lights";
   if (await nativeShare({ title, text: `${favs.size} stops for a night of lights`, url })) return;
+  if (matchMedia("(hover:hover) and (pointer:fine)").matches) { // on a computer: a normal email, subject and details first, signature below (same as sharing one event)
+    try { await navigator.clipboard.writeText(url); } catch {}
+    toast("Link copied. Opening your email…");
+    location.href = "mailto:?subject=" + encodeURIComponent(title) + "&body=" + encodeURIComponent(`${favs.size} stops for a night of lights\r\n${url}`); return;
+  }
   try { if (navigator.share) { await navigator.share({ title, text: `${favs.size} stops for a night of lights\n${url}` }); return; } } catch (err) { if (err && err.name === "AbortError") return; }
   try { await navigator.clipboard.writeText(url); toast("Link to your favorites copied"); } catch { toast(url); }
 }
