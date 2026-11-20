@@ -6,8 +6,9 @@ S=${S:-/tmp/claude-0/-home-user-socal-lights-app/a6006ced-60e4-514a-904a-06730a0
 export STATE_DIR=/tmp/state-${PORT:-8788}
 PORT=${PORT:-8788}; SUF=""; PERSIST="--persist-to /tmp/state-$PORT"; [ "$PORT" != "8788" ] && { SUF="-$PORT"; export BASE=http://localhost:$PORT; }  # every port has its own database copy; build one with: npx wrangler d1 migrations apply socal-lights --local --persist-to /tmp/state-<port>
 OUTD=$S/out; WORKD=$S/work$SUF; [ "$MOBILE" = "1" ] && { OUTD=$S/outm; WORKD=$S/workm$SUF; }
-export PLAYWRIGHT_PATH=/usr/local/lib/node_modules_global/playwright VOICE=$([ "$TTS_ENGINE" = "kokoro" ] && echo $S/kokoro || echo ${VOICE:-$S/voice/en_US-hfc_female-medium.onnx}) COOKIES=${DEMO:-$S/demo2}/cookies.json WORK=$WORKD OUT=$OUTD LOGO_SQUARE=$S/assets/oak-square.png LOGO=$S/assets/oak-hill-hardware.png LENGTH_SCALE=${LENGTH_SCALE:-1.15} MOBILE=${MOBILE:-0}
 [ -n "$OUTDIR" ] && OUTD=$OUTDIR   # test recordings go to their own folder
+export PLAYWRIGHT_PATH=/usr/local/lib/node_modules_global/playwright VOICE=$([ "$TTS_ENGINE" = "kokoro" ] && echo $S/kokoro || echo ${VOICE:-$S/voice/en_US-hfc_female-medium.onnx}) COOKIES=${DEMO:-$S/demo2}/cookies.json WORK=$WORKD OUT=$OUTD LOGO_SQUARE=$S/assets/oak-square.png LOGO=$S/assets/oak-hill-hardware.png LENGTH_SCALE=${LENGTH_SCALE:-1.15} MOBILE=${MOBILE:-0}
+
 mkdir -p $OUTD $WORKD
 for id in "$@"; do
   curl -s -o /dev/null -m 4 localhost:$PORT/ || { (setsid nohup npx wrangler pages dev public --port $PORT --inspector-port $((PORT+1000)) $PERSIST > /tmp/dev-$PORT.log 2>&1 &); for i in $(seq 1 30); do curl -s -o /dev/null -m 3 localhost:$PORT/ && break; sleep 3; done; }
