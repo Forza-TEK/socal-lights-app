@@ -1,5 +1,8 @@
 # Status
 
+### Android: emulator test workflow (Nov 20)
+Rey has no Android device and has registered a Google Play developer account. Added `.github/workflows/android-test.yml` ("Android test", run by hand): builds a debug app, starts a virtual Pixel 6 phone and Pixel C tablet (Android 14) on GitHub, installs it, opens it, drags the list, taps the bottom bar, and saves screenshots plus an error log as the artifact `android-screens-phone` / `-tablet` (script: `.github/scripts/android-screens.sh`). Next: run it, read the screens, fix what is off, then re-run "Android app" for a fresh signed bundle and start the Play closed test (12 testers for 14 days is Google's rule for new personal accounts).
+
 ### Favorites share on a computer opens an email too (Nov 20)
 Sharing the favorites list on a computer now opens the same kind of email as sharing one event (subject "My favorites on SoCal Lights", stop count and link first, signature below) and copies the link. Phones and the app unchanged. `app.js` 20261120a. The 3 held Grok cancellations were decided by the owner.
 
