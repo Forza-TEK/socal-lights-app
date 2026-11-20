@@ -1,5 +1,8 @@
 # Status
 
+### Android test: network fix (Nov 20)
+Run 6: the driver attached on the phone but the app showed "address unreachable" for the local copy of the site (the virtual phone booted onto flaky 3G instead of Wi-Fi), and the tablet had no page. The app now reaches the local copy through `adb reverse` (localhost:8788) so the emulator's network no longer matters. Also: the driver's pricing/add/help steps need a real page URL once the app is loaded.
+
 ### Android test now drives the app (Nov 20)
 `.github/scripts/android-drive.mjs` connects to the app's WebView in the emulator over plain DevTools (first try with Playwright failed: Android WebView has no browser contexts) and, after each step, saves a native screenshot (`d-01-...` to `d-09-...`): dismiss the welcome card, open an event card, close it, Favorites tab, Places tab, account button, then the Add, Pricing and Help pages, plus `drive-log.txt` listing which steps worked and any page errors. Run "Android test" and read those files.
 

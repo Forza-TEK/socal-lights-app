@@ -10,6 +10,7 @@ adb shell pm grant $PKG android.permission.ACCESS_FINE_LOCATION || true
 adb shell pm grant $PKG android.permission.ACCESS_COARSE_LOCATION || true
 adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS || true
 adb emu geo fix -117.9 33.7 || true   # Huntington Beach, so distances and Nearest have a place to start from
+adb reverse tcp:8788 tcp:8788   # the app reaches the site served on this machine through adb, so a flaky emulator network cannot break it
 adb logcat -c
 adb shell am start -n $PKG/.MainActivity
 shot() { adb exec-out screencap -p > "$OUT/$1.png"; }
