@@ -18,10 +18,10 @@ ws.on("message", (d) => {
   else if (m.method === "Runtime.exceptionThrown") log.push("PAGE ERROR: " + (m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text).slice(0, 200));
   else if (m.method === "Runtime.consoleAPICalled" && m.params.type === "error") log.push("CONSOLE ERROR: " + m.params.args.map((a) => a.value || a.description || "").join(" ").slice(0, 200));
 });
-const send = (method, params = {}) => new Promise((res) => { const i = ++id; waiting.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); });
-const evalJs = async (expr) => { const r = await send("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true }); if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.text); return r.result?.result?.value; };
+const send = (method, params = {}) => new Promise((res) => { const i = ++id; waiting.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); setTimeout(() => { if (waiting.delete(i)) res({ timeout: true }); }, 8000); }); // a click that navigates destroys the page context and never answers
+const evalJs = async (expr) => { const r = await send("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true }); if (r.timeout) return "TIMEOUT"; if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.text); return r.result?.result?.value; };
 await send("Runtime.enable"); await send("Page.enable");
-const click = async (sel, ms = 8000) => { const end = Date.now() + ms; for (;;) { if (await evalJs(`(()=>{const e=document.querySelector(${JSON.stringify(sel)});if(!e)return false;e.click();return true})()`)) return; if (Date.now() > end) throw new Error("not found: " + sel); await sleep(500); } };
+const click = async (sel, ms = 8000) => { const end = Date.now() + ms; for (;;) { if (await evalJs(`(()=>{const e=document.querySelector(${JSON.stringify(sel)});if(!e)return false;e.click();return true})()`)) { await sleep(1500); return; } if (Date.now() > end) throw new Error("not found: " + sel); await sleep(500); } };
 const go = async (path) => { await send("Page.navigate", { url: new URL(path, await evalJs("location.href")).href }); await sleep(4000); };
 const step = async (name, fn) => { try { await fn(); await sleep(2500); log.push("ok   " + name); } catch (e) { log.push("FAIL " + name + ": " + String(e.message).split("\n")[0]); } shot("d-" + name); };
 

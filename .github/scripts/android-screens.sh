@@ -19,9 +19,6 @@ SIZE=$(adb shell wm size | grep -o '[0-9]*x[0-9]*' | tail -1); W=${SIZE%x*}; H=$
 # drag the list sheet up, then back down
 adb shell input swipe $((W/2)) $((H*78/100)) $((W/2)) $((H*30/100)) 400; sleep 3; shot 2-list-up
 adb shell input swipe $((W/2)) $((H*30/100)) $((W/2)) $((H*80/100)) 400; sleep 2
-# the four bottom-bar spots (phone only has the bar), left to right
-for i in 1 2 3 4; do adb shell input tap $((W*i/5)) $((H*94/100)); sleep 4; shot 3-bar-$i; done
-adb shell input keyevent KEYCODE_BACK; sleep 2; shot 4-after-back
 # Drive the WebView over DevTools: open an event card, Favorites, the account menu and a few pages.
 SOCK=""
 for i in $(seq 1 30); do # the WebView opens its DevTools socket a little after the page starts; wait up to 90 s
