@@ -23,6 +23,21 @@ These returned 403 on both 11-19 and 11-20: coronadotimes.com, cvchabad.org, pal
 ## 5. Earlier requests
 The Nov 17 and Nov 18 to-claude requests were already filed and merged (PR #725 and PR #737). The Nov 19 request (watchlist, Oasis geocoder, polar-dip counting, Janss Jingle Bell Jump, and browser-pass results) is in open PR #742, waiting for Rey to merge; do not re-file it.
 
-## 6. Browser-pass results
+## 6. Browser pass results (Nov 20)
 
-Grok will add results after the browser pass.
+Posted by the browser pass: San Gabriel tree lighting (Dec 1, 6-8:30pm, Plaza Park), Redondo Beach menorah lighting moved from Dec 6 to Dec 8, 2026 (5:35pm, City Hall), the SeaWorld San Diego NYE photo, and a new event: Flo Rida New Year's Eve at Yaamava' Theater, Highland (Dec 31, 2026, doors 10pm, show 11pm).
+
+Needs Claude's decision (not posted):
+- Baldwin Park Parade & Winterfest: Dec 5, 2026, parade 9:45am, Winterfest 12-4pm; the page states no place.
+- Laguna Niguel parade: Dec 12, 10am; no place stated.
+- South Gate: the event is now "Christmas Festival", Dec 13, 12-6pm, tree lighting 6pm, South Gate Park, 4900 Southern Ave; no parade mentioned. Rename/retype?
+- Artesia Jingle Bell Express: the page says both Dec 19 and Dec 20.
+- Crestline: visitcrestline.org lists "Carols, Cocoa, & Christmas Cheer", Mon Nov 30, 5-8pm, Goodwin & Sons Market, 24089 Lake Gregory Dr; no year, no bonfire. Rename and venue change?
+- Paseo Nuevo: the page says Dec 4 with no year; stored date is Dec 5.
+- Stale pages (still last year's text): Palmdale, Steinmetz, Sylmar, Promenade PV, Blythe tree lighting, Temecula On Ice.
+- Spring and summer 2027 rows: no 2027 info posted anywhere yet.
+- Pechanga NYE (pechanga.com/entertain/nye): 4 parties 9pm-1:30am plus Round Bar Balloon Drop 7:30pm-1:30am, "Countdown to 2027", but the page states no Dec 31 date or address, so not posted.
+- Hotel del Coronado "Rockin' New Year's Eve at The Laundry": Dec 31, 21+, no time or year yet; recheck later.
+- Signal Hill tree lighting was Nov 19 (past). Piru, Guadalupe (connection closed) and Needles: no 2026 dates found.
+
+Blocked list: no new requests. Every host that returned 403 to the box loaded fine in the browser today (yelp, cvchabad, chabadatlacosta, ausd, edhat, coronadotimes, bowers, cityofventura, guidedogsofamerica, palosverdesmagazine). That includes the yelp and coronado candidates in PR #742's file, so please don't block those.
