@@ -21,6 +21,9 @@ adb shell input swipe $((W/2)) $((H*30/100)) $((W/2)) $((H*80/100)) 400; sleep 2
 # the four bottom-bar spots (phone only has the bar), left to right
 for i in 1 2 3 4; do adb shell input tap $((W*i/5)) $((H*94/100)); sleep 4; shot 3-bar-$i; done
 adb shell input keyevent KEYCODE_BACK; sleep 2; shot 4-after-back
+# Drive the WebView over DevTools: open an event card, Favorites, the account menu and a few pages.
+SOCK=$(adb shell cat /proc/net/unix | grep -a webview_devtools_remote | head -1 | sed 's/.*@//' | tr -d '\r')
+if [ -n "$SOCK" ]; then adb forward tcp:9222 localabstract:$SOCK && node .github/scripts/android-drive.mjs "$OUT" || echo "drive step failed" >> "$OUT/drive-log.txt"; else echo "no webview devtools socket found" > "$OUT/drive-log.txt"; fi
 adb shell dumpsys activity activities | grep -i "mResumedActivity" > "$OUT/resumed.txt" || true
 adb logcat -d -v time > "$OUT/logcat-all.txt" || true
 grep -E "AndroidRuntime|FATAL|Capacitor.*(E|W)/|chromium.*(ERROR|Uncaught)|ERR_" "$OUT/logcat-all.txt" > "$OUT/errors.txt" || true

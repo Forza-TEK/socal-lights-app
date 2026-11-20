@@ -28,6 +28,8 @@ jobs:
           nohup npx wrangler pages dev public --port 8788 --ip 0.0.0.0 --local > wrangler.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://localhost:8788/ > /dev/null && break; sleep 2; done
           curl -sf http://localhost:8788/api/events | head -c 200
+      - name: Tools to drive the app inside the emulator
+        run: npm i --no-save playwright-core
       - name: Install and sync (debug app points at the local copy)
         working-directory: app
         run: |
