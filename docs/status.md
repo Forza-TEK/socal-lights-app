@@ -1,5 +1,8 @@
 # Status
 
+### Android emulator: result (Nov 20)
+Eight emulator runs (virtual Pixel 6 phone and Pixel C tablet, Android 14, debug build pointed at a local copy of the site). Checked and fine on Android: map with clusters and pins, event card (photo, tags, When/Cost/Hours/Where, Directions), Favorites tab and its "Plan your drive" card, account page ("Your profile", Sign in), Add page (An event / A lighting display), Help Center, dark mode; top and bottom bars clear the status and gesture bars after `adjustMarginsForEdgeToEdge: "force"`. Pricing redirects to the map inside the app (web-only, as intended). Not checked: the phone's event card and account pages (the driver's Escape key press closed the app on the phone, a test artifact, not something a user can do), real-device behaviour, the signed Play bundle, sign-in email flow, photo/video upload, share sheet. Next: Rey to confirm which Google account owns the Play Console (no Play email in socallightsapp@gmail.com), then the one-time upload key workflow and its four secrets, then "Android app" for the signed bundle and a Play closed test.
+
 ### Android test: run 7 findings (Nov 20)
 Tablet (dark mode): the real app loads and the event card, Favorites tab and "Plan your drive in 3 steps" card all render correctly; no layout problems seen. Phone: map and bottom bar fine. The driver lost the phone's WebView because the script pressed Back (which closes the app at the root), and stalled on the account button (it navigates, so DevTools never answers); fixed: no Back press, 8 s timeout on every DevTools call.
 
