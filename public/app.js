@@ -360,7 +360,7 @@ function initLayers() {
     paint: { "circle-color": C.season, "circle-opacity": 0.92, "circle-radius": ["step", ["get", "point_count"], 16, 8, 20, 20, 25], "circle-stroke-width": 1, "circle-stroke-color": C.ring } });
   map.addLayer({ id: "cluster-count", type: "symbol", source: "pts", filter: ["has", "point_count"],
     layout: { "text-field": ["get", "point_count_abbreviated"], "text-font": ["Noto Sans Bold"], "text-size": 13 }, paint: { "text-color": "#ffffff" } });
-  map.addLayer({ id: "pt", type: "circle", source: "pts", filter: ["!", ["has", "point_count"]],
+  map.addLayer({ id: "pt", type: "circle", source: "pts", filter: ["all", ["!", ["has", "point_count"]], ["!=", ["get", "feat"], 1]], // paid (featured) pins are drawn as pulsing gold badges by drawFeatured, never as a plain dot
     paint: { "circle-color": catColor(C),
       "circle-radius": ["case", ["==", ["get", "feat"], 1], 10, ["==", ["get", "cat"], "inst"], 8, ["==", ["get", "cat"], "fav"], 8, 7],
       "circle-stroke-width": 1, "circle-stroke-color": ["case", ["==", ["get", "feat"], 1], C.fav, C.ring] } });
@@ -402,6 +402,22 @@ const fc = (features) => ({ type: "FeatureCollection", features });
 const pt = (lng, lat, props) => ({ type: "Feature", geometry: { type: "Point", coordinates: [lng, lat] }, properties: props });
 
 // While a day/night style swap is loading our sources don't exist yet; initLayers redraws once they're back
+// Paid pins: a gold star badge with two slow pulsing rings (CSS animation, so it costs the phone almost nothing). Real page elements on top of the map: always visible, never merged into a cluster, tappable.
+// Placements that are still on show are drawn; with more than 40 at once the top-of-list ones come first.
+const FMARK = new Map();
+const FSTAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.2l-5.9 3.4 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+function drawFeatured(list) {
+  const shown = list.sort((a, b) => Number(b.top) - Number(a.top)).slice(0, 40), want = new Set(shown.map((x) => x.key));
+  for (const [k, m] of FMARK) if (!want.has(k)) { m.remove(); FMARK.delete(k); }
+  for (const x of shown) {
+    const have = FMARK.get(x.key); if (have) { have.setLngLat([x.lng, x.lat]); continue; }
+    const el = document.createElement("button"); el.type = "button"; el.className = "fmark"; el.setAttribute("aria-label", "Featured: " + x.name);
+    el.innerHTML = '<span class="fring"></span><span class="fring r2"></span><span class="fdot">' + FSTAR + "</span>";
+    el.addEventListener("click", (ev) => { ev.stopPropagation(); state.hot = null; selectKey(x.key, "map"); });
+    FMARK.set(x.key, new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat([x.lng, x.lat]).addTo(map));
+    el.setAttribute("aria-label", "Featured: " + x.name); // the map library sets its own generic label when it adds the element
+  }
+}
 function drawMap() {
   if (!mapReady || !map.getSource("pts")) return;
   const feats = [];
@@ -410,6 +426,10 @@ function drawMap() {
     if (state.layers.inst) SHOW.filter(instMatch).forEach((p) => feats.push(pt(p.plng, p.plat, { key: "i:" + p.id, cat: favs.has(hfav(p)) ? "fav" : "inst", feat: p.f ? 1 : 0 })));
   }
   map.getSource("pts").setData(fc(feats));
+  drawFeatured(state.tab !== "plan" ? [
+    ...(state.layers.events ? E.filter((e) => e.f && evMatch(e)).map((e) => ({ key: "e:" + e.id, lat: e.lat, lng: e.lng, name: e.n, top: e.f === 2 })) : []),
+    ...(state.layers.inst ? SHOW.filter((p) => p.f && instMatch(p)).map((p) => ({ key: "i:" + p.id, lat: p.plat, lng: p.plng, name: p.title, top: p.f === 2 })) : []),
+  ] : []);
   // planner route
   const st = state.tab === "plan" ? routeStops() : [];
   const og = state.tab === "plan" ? routeOrigin() : null, o = og ? [[og.lng, og.lat]] : [];
