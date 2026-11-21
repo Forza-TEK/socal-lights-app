@@ -90,6 +90,62 @@ Follow `docs/city-sweep.md`, `docs/sweep-methods.md` and `docs/blocked-sites.md`
 
 New watchlist venues and blocked sites go to Claude as a request in `docs/handoff/to-claude/`. Grok does not edit `docs/watchlist.json` or `docs/blocked-sites.md`.
 
+## 2026-11-21
+
+Empty cities: 154 → 150 (Signal Hill, Meiners Oaks, Lynwood, Elfin Forest filled).
+
+Parent sources checked for small/unincorporated places:
+- Ventura County Library calendar (keyword sweep): **Meiners Oaks** found (Winter Break Crafts & Games, published). Saticoy, Oak View, Piru and El Rio branches: nothing seasonal posted yet.
+- LA County Library Communico feed (45 days): **Lynwood** found (Winter Solstice Canvas Art, published); Sunkist Library (La Puente) Noon Year's Eve published. Other LACL branches in empty cities (Walnut Park, Valinda, etc.) had nothing seasonal.
+- San Diego County Parks tockify calendar: nothing new beyond existing rows.
+- Isla Vista Rec & Park District: 2026 holiday lighting date TBD (queued for browser).
+- Santa Maria Public Library, Guadalupe and Cuyama branches: nothing found.
+- Signal Hill city calendar: **Signal Hill** found (Santa's Workshop at Signal Hill Public Library, published).
+- Lynwood city calendar: December empty; Candy Cane Lane parade has an entry application only.
+- Elfin Forest Recreational Reserve (Olivenhain MWD): **Elfin Forest** found (New Year's Day guided hike, published).
+- parks.ca.gov park pages (Cuyamaca, Anza-Borrego, Bolsa Chica, Torrey Pines, Los Encinos): titles and dates only; details are in the JS events app (queued).
+- La Habra Heights and Rolling Hills calendar URLs return 404; Bradbury home page shows no events.
+- Temecula home-display map: publishes the week of Dec 7; check on the next run after that.
+
+## 2026-11-20
+
+New events: 11 published, 0 held, 0 duplicate, 2 rejected (Pechanga NYE x2 on promogogo, "does not look like a community event listing").
+Empty cities filled: Anza, Lakeland Village, Muscoy. Empty cities: 156 → 153.
+Focus categories: nye-parties 48 → 55/60; home-displays 155/250 (no change); light-shows 36 → 37/40 (Harbor Glow).
+Updates: 6 confirms applied (4 with corrections), 4 photos applied, 1 cancellation held (Andaz).
+
+Parent sources checked today:
+- **SB County Library** tribe REST API (612 events, 13 pages): found Muscoy (Wee Winter Workout). Needles and Trona branches had no holiday programs.
+- **Riverside County Library** LibCal (rivlib): found Anza (Turkey Trot & Tales) and Lakeland Village (Candy Cane Slime). Nothing seasonal at Cabazon, El Cerrito, French Valley, Highgrove, Mead Valley, Mecca, Valle Vista, Woodcrest, or Nuview/Nuevo.
+- **LA County Library** (Charter Oak, Wiseburn): nothing seasonal.
+- **Home-display listing sites** (bigredbulb, tackylighttour, holidaylightsguide): only auto-rolled or "last confirmed 2025" data, so I didn't use any. 2026 confirmation has to come from each display's own social page (they're in the browser queue).
+- **NYE hospitality**: Eventbrite JSON-LD for hotels and bars in LA, OC, Ventura, and SD; venue pages for SET Newport, Surf & Sand, Crown & Anchor, Hotel del (no time), South Coast Winery (stale "2026" copy), Punch Bowl Social (stale), Boathouse on the Bay and The Ranch LB (no times), Mission Inn (no 2026 NYE).
+
+## 2026-11-19
+
+### Parent sources checked today
+- LA County Library (LibNet eeventcaldata JSON plus JSON-LD): Nov 19-Dec 31 swept. Filled Alondra Park, Willowbrook, West Whittier-Los Nietos, Westmont, Littlerock.
+- SD County Library (BiblioCommons gateway, 21 pages): filled Rancho San Diego.
+- OC Public Libraries and Riverside Public Library (LibCal): filled Laguna Woods, Foothill Ranch and Home Gardens.
+- SB County Special Districts (tribe REST): filled Bloomington (Ayala Park).
+- Desert Recreation District (ActiveNet): 4 events found, all in non-empty cities; queued as leads to confirm.
+- SD County Parks (tockify): 7 published, filling Potrero, Spring Valley and Santa Ysabel.
+- State Parks First Day Hikes (parks.ca.gov): JS-only pages, queued for the browser.
+- Temecula Valley Winegrowers events: the NYE events already on the map.
+- runsignup: published 2 New Year's Day runs and 1 Turkey Trot.
+- Chabad sites (menorah): Orange published; North Park and Crescenta Valley queued.
+- Church and school-district calendars: Piru parade found only on the Fillmore HS calendar (queued).
+
+### Not yet tried or unusable from the server
+- Ventura County Library (JS calendar)
+- Imperial Valley parks (JS)
+- piru-ca.org
+- OC Parks events (parks.oc.gov/events has no event links in its HTML; JS)
+- LA County Parks (parks.lacounty.gov, non-200)
+
+### Focus today
+polar-dips and lunar, plus NYE share.
+
 ## Coverage update — 2026-11-18 (Grok sweep)
 
 Empty cities: 183 at start → 171 after (work order re-fetch, 2026-11-18).
