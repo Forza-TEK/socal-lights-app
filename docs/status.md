@@ -1,5 +1,12 @@
 # Status
 
+### Dates Month/Day/Year and times in the device's time zone (Nov 21)
+Rey: every date not already Month/Day/Year should be, and times should use the local device's time zone.
+- **Admin** (`kit.js` `mdy()` and `localTime()`): ISO dates (2026-12-05) now read 12/05/2026 in Events, Submitted events (list and record), Contests, From Grok, Users and the contest passes lists; every "... UTC" timestamp (orders, claims, submissions, the log, Grok, Ads, limits, houses) now reads like 11/21/2026 11:41 AM in the device's own time zone. Left as they are: the Cloudflare usage notes that explain the real UTC reset time.
+- **Your profile** event rows and the installer page's leads list: ISO dates now Month/Day/Year.
+- Left alone on purpose: dates that already start with the month ("Nov 19, 2026", "Dec 4 only", "Thu, Nov 19, 2026"), the browser's own date pickers (they follow the device), emails and other text the server writes (no device time zone there).
+- Checked in a browser with a Pacific clock (events, orders). Tests 1206 pass. `admin.js` 20261121j, `grok.js` 20261121b.
+
 ### Admin audit round 3, part 2: event Purchases, labelled counts (Nov 21)
 - **Event record > Purchases:** the Admin event editor lists every order recorded for the event (what they bought, amount, status, date) with a link to Orders (from `/api/admin/placements`). Checked in a browser with a seeded $75 order.
 - **List counts say what they are:** the bare "0" / "12" under list search boxes now reads "0 results" / "12 results" ("3 of 12 shown" while searching) (`kit.js`).

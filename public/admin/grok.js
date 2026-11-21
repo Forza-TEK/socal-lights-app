@@ -1,6 +1,6 @@
 // Admin > From Grok: the events Grok sent from its browser pass (docs/monetization/grok-browser-pass.md) and the changes it made to events already on the map.
 // Same format as Events: pill tabs, a table, and a full-page record with a Back link and the actions at the top right.
-import { esc, btn, toast, tap, askBox } from "/admin/kit.js?v=20261121a";
+import { esc, btn, toast, tap, askBox, mdy, localTime } from "/admin/kit.js?v=20261121a";
 import { SEASONS } from "/seasons.js?v=20261115a";
 
 async function api(path, opts = {}) {
@@ -17,7 +17,7 @@ const NAMES = { start: "Starts", end: "Ends", hours: "Hours", price: "Price", fr
 const DONE = { publish: "Published", unpublish: "Unpublished", remove_photo: "Photo removed", update_revert: "Undone", update_apply: "Applied", update_remove: "Event taken off the map", update_dismiss: "Left as is", reject: "Rejected" };
 const diff = (b, a) => Object.keys(a).filter((k) => String(a[k]) !== String(b[k])).map((k) => `${NAMES[k] || k}: <s>${esc(String(b[k] ?? "") || "none")}</s> → <b>${esc(String(a[k] ?? "") || "none")}</b>`).join("<br>");
 const jp = (v) => { try { return JSON.parse(v || "{}"); } catch { return {}; } };
-const when = (s) => esc(String(s || "").slice(0, 16).replace("T", " ")) + " UTC";
+const when = (s) => esc(localTime(s));
 const link = (u) => (u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a>` : "");
 const detail = (name) => document.dispatchEvent(new CustomEvent("admin:detail", { detail: name })); // the breadcrumb in the top bar (admin.js)
 const kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v !== "" && v != null).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
@@ -31,7 +31,7 @@ const updateActions = (x) => `<a class="btn ghost" href="/e/${encodeURIComponent
 function intakeDetail(x) {
   const [lab, kind] = LABEL[x.status] || [x.status, ""], season = SEASONS[x.season] ? SEASONS[x.season].label : x.season;
   return card("Overview", kv([["Name", esc(x.name || "(no name)")], ["Status", `<span class="tag ${kind}">${lab}</span>`], ["Season", esc(season)], ["Type", esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)],
-    ["Dates", esc(x.start_date) + (x.end_date !== x.start_date ? " to " + esc(x.end_date) : "")], ["Hours", esc(x.hours)], ["Price", esc(x.price)], ["Received", when(x.received_at)]]))
+    ["Dates", mdy(x.start_date) + (x.end_date !== x.start_date ? " to " + mdy(x.end_date) : "")], ["Hours", esc(x.hours)], ["Price", esc(x.price)], ["Received", when(x.received_at)]]))
     + card("Where", kv([["Venue", esc(x.venue)], ["Address", esc(x.address)], ["City", esc(x.city)], ["County", esc(x.county)]]))
     + card("Source", kv([["Page Grok read", link(x.url) + (x.seen ? ` <span class="meta">(read ${esc(x.seen)})</span>` : "")], ["What it said", esc(x.evidence)], [x.status === "rejected" ? "Why it was rejected" : "Note", esc(x.reason)]]))
     + (x.image ? card("Photo", `<a href="${esc(x.image)}" target="_blank" rel="noopener"><img class="gimg" src="${esc(x.image)}" alt="Linked photo for ${esc(x.name)}" loading="lazy" referrerpolicy="no-referrer"></a><p class="meta" style="margin:8px 0 0">Linked from the event's site, not copied.</p>`) : "");
@@ -71,7 +71,7 @@ export async function renderGrok(main) {
     : `<p class="meta" style="margin:0 0 4px">${d.publishing ? "Publishing is <b>on</b>: rows that pass every check go on the map right away, tagged From Grok." : "Publishing is <b>off</b> (the secret <code>GROK_INTAKE_PUBLISH</code> is 0): rows that pass every check wait under Held, and you publish them with one click. Delete the secret or set it to 1 to publish automatically."}</p>`;
   // One stacked row per record (no table, so nothing scrolls sideways). Rows that need you are pulled out into the "Needs you" box at the top.
   const isUpd = (x) => String(x.id).startsWith("gu-");
-  const dates = (x) => (x.start_date ? esc(x.start_date) + (x.end_date && x.end_date !== x.start_date ? " to " + esc(x.end_date) : "") : "");
+  const dates = (x) => (x.start_date ? mdy(x.start_date) + (x.end_date && x.end_date !== x.start_date ? " to " + mdy(x.end_date) : "") : "");
   const sub = (x) => (isUpd(x) ? [esc(KIND[x.kind] || x.kind), when(x.received_at)] : [esc(x.city), dates(x), when(x.received_at)]).filter(Boolean).join(" · ");
   const status = (x) => { const [lab, kind] = (isUpd(x) ? ULABEL : LABEL)[x.status] || [x.status, ""]; return `<span class="tag ${kind}">${lab}</span>`; };
   const gacts = (x) => (isUpd(x) ? updateActions(x) : intakeActions(x)).replace(/class="btn ghost"/g, 'class="btn ghost sm"').replace(/class="btn main"/g, 'class="btn main sm"').replace(/class="btn danger"/g, 'class="btn danger sm"');
