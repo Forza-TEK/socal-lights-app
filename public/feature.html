@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#ffffff">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{var t=(function(d){var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"numeric",minute:"numeric",hour12:false,timeZoneName:"short"}).formatToParts(d),g=function(k){for(var i=0;i<p.length;i++)if(p[i].type==k)return p[i].value},m=g("hour")%24*60+ +g("minute"),n=713+(g("timeZoneName")=="PDT"?60:0),H=(12+2.1*Math.sin(6.2832*(Math.floor((d-new Date(d.getFullYear(),0,0))/864e5)-80)/365))*30;return m<n-H||m>=n+H?"dark":"light"})(new Date()),o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/tokens.css?v=20261116c">
 <link rel="stylesheet" href="/addflow.css?v=20261116b">
@@ -289,7 +289,7 @@ async function paidView(S) {
 }
 </script>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261118a";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261121a";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));
 </script>
 <script src="/footer.js?v=20261118a" defer></script>
