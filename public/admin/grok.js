@@ -76,6 +76,7 @@ export async function renderGrok(main) {
   const status = (x) => { const [lab, kind] = (isUpd(x) ? ULABEL : LABEL)[x.status] || [x.status, ""]; return `<span class="tag ${kind}">${lab}</span>`; };
   const gacts = (x) => (isUpd(x) ? updateActions(x) : intakeActions(x)).replace(/class="btn ghost"/g, 'class="btn ghost sm"').replace(/class="btn main"/g, 'class="btn main sm"').replace(/class="btn danger"/g, 'class="btn danger sm"');
   const grow = (x, need) => `<div class="gr${need ? " need" : ""}" data-gid="${esc(x.id)}" data-q="${esc([x.name, x.event_name, x.city, x.venue, x.event_id].join(" ").toLowerCase())}">
+    ${isUpd(x) ? "" : `<span class="rthumb">${x.image ? `<img src="${esc(x.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>'}</span>`}
     <div class="gm"><div class="gt"><a class="rl" href="#grok" data-open="${esc(x.id)}">${esc(x.name || x.event_name || x.event_id || "(no name)")}</a> ${status(x)}</div>
       <div class="gmeta">${sub(x)}</div>${isUpd(x) ? `<div class="gd">${diff(jp(x.before), jp(x.after)) || '<span class="sub">no change yet</span>'}</div>` : x.status === "rejected" && x.reason ? `<div class="gd">${esc(x.reason)}</div>` : ""}</div>
     <div class="ga">${gacts(x)}</div></div>`;

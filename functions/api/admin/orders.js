@@ -1,5 +1,6 @@
 // GET /api/admin/orders — every Featured order, the ones that need the owner first. Actions are in orders/[id].js.
 // Read-only: nothing here calls Stripe. Refunds are made in the Stripe dashboard, then marked here.
+import { eventCovers } from "../../_lib/cover.js";
 import { json } from "../../_lib/util.js";
 import { ptToday } from "../../_lib/featured.js";
 import { orderFlags, stripeUrl, ORDER_FROM } from "../../_lib/orders.js";
@@ -15,7 +16,8 @@ export async function onRequestGet({ env }) {
      LEFT JOIN contest_passes cp ON o.target = 'contest_pass' AND cp.session_id = o.session_id
      LEFT JOIN posts hp ON o.target = 'home' AND hp.id = o.event_id LEFT JOIN contests hc ON hc.id = hp.contest_id
      ORDER BY o.created_at DESC LIMIT 500`).all();
-  const rows = results.map((o) => ({ ...o, flags: orderFlags(o, today), stripe_url: stripeUrl(o.payment_intent) }));
+  const cov = await eventCovers(env, results.filter((o) => o.target === "event").map((o) => o.event_id));
+  const rows = results.map((o) => ({ ...o, flags: orderFlags(o, today), stripe_url: stripeUrl(o.payment_intent), cover: o.target === "event" ? cov[o.event_id] || "" : "" }));
   rows.sort((a, b) => (b.flags.length > 0) - (a.flags.length > 0)); // stable: newest first inside each group
   return json(rows, { headers: { "cache-control": "no-store" } });
 }
