@@ -8,10 +8,11 @@ import { onRequestGet as dashboard } from "../functions/api/admin/dashboard.js";
 
 const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
 
-test("H1: the phone card layout hides only non-action cells; the Actions cell stays visible", () => {
+test("H1: the phone card layout hides no cell by position (every value keeps its label); the Actions cell stays visible", () => {
   const css = read("public/admin/admin.css");
-  assert.match(css, /\.dtab tbody td:nth-child\(6\):not\(\.ac\)\{display:none\}/);
-  assert.doesNotMatch(css, /td:nth-child\(6\)\{display:none\}/);
+  assert.doesNotMatch(css, /td:nth-child\(6\)[^{]*\{display:none\}/, "no column is dropped on a phone");
+  assert.match(css, /td\[data-label\]::before\{content:attr\(data-label\)/, "cells print their column name");
+  assert.match(read("public/admin/admin.js"), /function labelTables\(/, "every table gets its labels from its header row");
   // every table that has an Actions header marks the cell class "ac" in its rows
   for (const f of ["admin", "grok", "partner"]) {
     const js = read(`public/admin/${f}.js`);

@@ -443,8 +443,11 @@ details.fbox>summary{display:none}
   .dtab tbody tr:last-child{border-bottom:0}
   .dtab tbody td{display:block;padding:1px 14px 1px 0;border:0;background:none!important;grid-column:2}
   .dtab tbody td.cb{grid-column:1;grid-row:1/6;padding:2px 0 0 14px}
-  .dtab tbody td:nth-child(6):not(.ac){display:none}
   .dtab tbody td[data-label]::before{content:attr(data-label) ": ";color:var(--muted);font-weight:600}
+  .dtab tbody td[data-label]:empty{display:none}
+  /* tables with no tick-box column (Orders, Users, revenue...) use the whole card width instead of leaving 44px blank on the left */
+  .dtab tbody tr:not(:has(td.cb)){grid-template-columns:minmax(0,1fr);padding-left:14px}
+  .dtab tbody tr:not(:has(td.cb)) td{grid-column:1}
   .dtab tbody td.ac .rl,.dtab tbody td.ac .btn{display:inline-flex;align-items:center;min-height:36px}
   .dtab tbody td.ac{text-align:left;padding-top:6px}
   .dtab tbody td:nth-child(5){padding-top:4px}

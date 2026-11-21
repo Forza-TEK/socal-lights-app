@@ -158,3 +158,15 @@ test("Grok review: a held event can be rejected; a held cancellation can take th
   assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM events WHERE id = 'keep'").get().n, 1, "Keep on map leaves the event alone");
   assert.equal((await act({ action: "update_remove", id: "gu-2" })).status, 409, "a decided update cannot be acted on again");
 });
+
+test("Admin placements: what each event bought (pin, top of the list, banner) and its orders", async () => {
+  const { onRequestGet: placements } = await import("../functions/api/admin/placements.js");
+  const { env, raw } = newEnv();
+  await post(env, ev({ id: "paid-one", name: "Paid One" })); await post(env, ev({ id: "plain-one", name: "Plain One" }));
+  raw.exec("UPDATE events SET featured = 2, featured_until = '2999-01-01', banner_until = '2999-01-01' WHERE id = 'paid-one'");
+  raw.prepare("INSERT INTO feature_orders (session_id, event_id, plan, amount, email, target, status) VALUES ('cs_x','paid-one','ev_all',7500,'a@b.co','event','paid')").run();
+  const d = await (await placements({ env })).json();
+  assert.equal(d.events["paid-one"].level, 2); assert.equal(d.events["paid-one"].banner, "2999-01-01");
+  assert.deepEqual(d.events["paid-one"].orders.map((o) => [o.plan, o.cents, o.status]), [["ev_all", 7500, "paid"]]);
+  assert.equal(d.events["plain-one"], undefined, "an event with no placement and no order is not listed");
+});

@@ -1,5 +1,14 @@
 # Status
 
+### Admin audit, round 1: labels, paid placements, plain revenue words (Nov 21)
+Rey: phone layouts lack labels (only landscape showed them), "net refund" is confusing, wants to see per event what was bought (pin, top of list, banner), and fewer clicks to the listing.
+- **Labels on every phone table:** `labelTables()` in `admin.js` gives every table cell its column name (a MutationObserver, so it covers every page that builds a `.dtab`). Also removed the rule that silently hid the 6th column of every table on a phone, and the 44px blank strip on tables with no tick-box column.
+- **Events > Paid placement column and a "Paid placements" tab** (count in the tab): chips Pin / Top of list / Banner with the end date and the amount paid; "Ended" for past purchases. Data from the new `GET /api/admin/placements` (events.featured, featured_until, banner_until and the event's feature_orders). Source moved under Status to keep the Event column wide.
+- **Revenue box in plain words:** "revenue" and "orders". Refund tiles and columns appear only once someone has actually asked for a refund ("revenue after refunds", "refunds to handle").
+- **Orders opens on the full list** when nothing needs attention (it used to open on an empty "Needs attention" tab); event orders have a "View listing" link beside Open.
+- Tests: 1204 pass (placements endpoint test added). `admin.js` 20261121d, `admin.css` 20261121a.
+Still to audit (round 2): Dashboard, Houses, Users, Contests, Installers, Reports and the remaining pages on a phone; the event record page could also list the event's purchases.
+
 ### Maps-app switch button is a circle again (Nov 21)
 In the routes sheet ("Opens in Apple Maps"), the switch button was an oval: a general `.mpchg{min-width:44px}` rule in `styles.css` beat the circle's 36px width while its height stayed 36px. `maps.js` now sets width, height, min-width and min-height to 40px (measured 40x40 in a phone-size browser). Versions: `maps.js`, `tour.js`, `app.js` 20261121a.
 
