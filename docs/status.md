@@ -1,5 +1,8 @@
 # Status
 
+### Maps-app switch button is a circle again (Nov 21)
+In the routes sheet ("Opens in Apple Maps"), the switch button was an oval: a general `.mpchg{min-width:44px}` rule in `styles.css` beat the circle's 36px width while its height stayed 36px. `maps.js` now sets width, height, min-width and min-height to 40px (measured 40x40 in a phone-size browser). Versions: `maps.js`, `tour.js`, `app.js` 20261121a.
+
 ### App loading screen is now the SoCal Lights logo (Nov 21)
 The iPhone app (and Android) still showed Capacitor's stock blue-X splash on white. Replaced all 14 splash images (`app/ios/App/App/Assets.xcassets/Splash.imageset/*`, `app/android/app/src/main/res/drawable*/splash.png`) with the round app logo centred on the brand dark `#0b0d12` (same colour as the app icon background and the splash colour in `app/capacitor.config.json`). It only shows after a new app build: the iOS workflow (new TestFlight build, then submit) and "Android app". The website is unaffected. To change it again later: swap those images (or regenerate from the app icon) and rebuild.
 
