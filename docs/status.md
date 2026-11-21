@@ -1,5 +1,8 @@
 # Status
 
+### App loading screen is now the SoCal Lights logo (Nov 21)
+The iPhone app (and Android) still showed Capacitor's stock blue-X splash on white. Replaced all 14 splash images (`app/ios/App/App/Assets.xcassets/Splash.imageset/*`, `app/android/app/src/main/res/drawable*/splash.png`) with the round app logo centred on the brand dark `#0b0d12` (same colour as the app icon background and the splash colour in `app/capacitor.config.json`). It only shows after a new app build: the iOS workflow (new TestFlight build, then submit) and "Android app". The website is unaffected. To change it again later: swap those images (or regenerate from the app icon) and rebuild.
+
 ### Android emulator: result (Nov 20)
 Eight emulator runs (virtual Pixel 6 phone and Pixel C tablet, Android 14, debug build pointed at a local copy of the site). Checked and fine on Android: map with clusters and pins, event card (photo, tags, When/Cost/Hours/Where, Directions), Favorites tab and its "Plan your drive" card, account page ("Your profile", Sign in), Add page (An event / A lighting display), Help Center, dark mode; top and bottom bars clear the status and gesture bars after `adjustMarginsForEdgeToEdge: "force"`. Pricing redirects to the map inside the app (web-only, as intended). Not checked: the phone's event card and account pages (the driver's Escape key press closed the app on the phone, a test artifact, not something a user can do), real-device behaviour, the signed Play bundle, sign-in email flow, photo/video upload, share sheet. Next: Rey to confirm which Google account owns the Play Console (no Play email in socallightsapp@gmail.com), then the one-time upload key workflow and its four secrets, then "Android app" for the signed bundle and a Play closed test.
 
