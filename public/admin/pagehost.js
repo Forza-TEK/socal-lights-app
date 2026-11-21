@@ -1,6 +1,6 @@
 // A profile that used to be a window, shown as a full page instead: the same content, a Back link where the X was, the title in the page head.
 // It behaves like the #modal element for the code that fills it (hidden, innerHTML, querySelector), so those forms did not have to change.
-import { esc } from "/admin/kit.js?v=20261116a";
+import { esc } from "/admin/kit.js?v=20261121a";
 
 export function pageHost(backText, rerender) {
   const main = document.querySelector("#main"), detail = (name) => document.dispatchEvent(new CustomEvent("admin:detail", { detail: name })); // the breadcrumb in the top bar (admin.js)

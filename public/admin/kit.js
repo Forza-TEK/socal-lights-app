@@ -24,7 +24,7 @@ export const fact = (k, v) => (v === "" || v == null ? "" : `<dt>${esc(k)}</dt><
 export function toolbar({ views = [], active = "", search, add, right = "", count = "" }) {
   return `<div class="tbar">${views.length ? `<div class="seg" role="group" aria-label="Show">${views.map((v) => `<button type="button" data-view="${esc(v.k)}" aria-pressed="${v.k === active}">${esc(v.label)}${v.n != null ? ` <span>${v.n}</span>` : ""}</button>`).join("")}</div>` : ""}
     ${search ? `<input class="tsearch" type="search" data-search placeholder="${esc(search.placeholder || "Search")}" value="${esc(search.value || "")}" aria-label="${esc(search.placeholder || "Search")}">` : ""}${right}
-    <span class="grow"></span>${count ? `<span class="meta tcount" data-tcount>${count}</span>` : ""}${add ? `<button type="button" class="btn ice" id="${add.id}">${esc(add.label)}</button>` : ""}</div>`;
+    <span class="grow"></span>${count ? `<span class="meta tcount" data-tcount>${/^\d+$/.test(count) ? `${count} ${count === "1" ? "result" : "results"}` : count}</span>` : ""}${add ? `<button type="button" class="btn ice" id="${add.id}">${esc(add.label)}</button>` : ""}</div>`;
 }
 export const wireToolbar = (root, { onView, onSearch, onSort }) => {
   root.querySelectorAll("[data-view]").forEach((b) => (b.onclick = () => onView && onView(b.dataset.view)));
@@ -36,7 +36,7 @@ export function filterCards(root, q) {
   const w = q.toLowerCase().split(/\s+/).filter(Boolean); let n = 0;
   const cards = root.querySelectorAll(".rec, .dtab tbody tr");
   cards.forEach((c) => { const t = c.textContent.toLowerCase(); const ok = w.every((x) => t.includes(x)); c.hidden = !ok; if (ok) n++; });
-  const el = root.querySelector("[data-tcount]"); if (el) el.textContent = q ? `${n} of ${cards.length}` : `${cards.length}`;
+  const el = root.querySelector("[data-tcount]"); if (el) el.textContent = q ? `${n} of ${cards.length} shown` : `${cards.length} ${cards.length === 1 ? "result" : "results"}`;
   let none = root.querySelector(".nomatch"); if (!n && cards.length) { if (!none) { none = document.createElement("div"); none.className = "empty nomatch"; none.textContent = "Nothing matches that."; (cards[0].closest(".dtc") || cards[0].parentNode).after(none); } } else if (none) none.remove();
   enhanceLists(root, !!q);
 }

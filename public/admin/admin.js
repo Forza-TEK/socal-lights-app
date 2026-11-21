@@ -8,7 +8,7 @@ import { renderHelp } from "/admin/help.js?v=20261116b";
 import { renderPartner } from "/admin/partner.js?v=20261116b";
 import { renderChat } from "/admin/chat.js?v=20261116c";
 import { renderGrok } from "/admin/grok.js?v=20261121a";
-import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261116a";
+import { btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261121a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
 import { pageHost } from "/admin/pagehost.js?v=20261116a";
 
@@ -688,6 +688,13 @@ const evFiltered = () => {
   const w = EVQ.toLowerCase().split(/\s+/).filter(Boolean), test = healthTest(EVHEALTH);
   return EVENTS.filter((e) => (evSeason === "all" || (e.sn || "christmas") === evSeason) && (!EVSTATUS || e.st === EVSTATUS) && (EVVIEW !== "grok" || String(e.id).startsWith("grok-")) && (EVVIEW !== "paid" || (placeInfo(e.id) || {}).on) && (EVVIEW !== "video" || (PLACE.clips && PLACE.clips[e.id] === 0)) && (EVVIEW !== "ended" || e.e < TODAY) && (!EVCOUNTY || e.c === EVCOUNTY) && (!test || test(e, TODAY)) && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x))).sort(EVCMP[EVSORT] || EVCMP.date);
 };
+// The event editor's Purchases section: every order recorded for this event (plan, amount, status, date), with a link to Orders.
+async function paintEvBuys(ev) {
+  const box = $("#evBuys"); if (!box) return;
+  try { if (!PLACE.events[ev.id] && !PLACE.loaded) { PLACE = { ...(await api("/api/admin/placements")), loaded: true }; } } catch { /* the list below says so */ }
+  const x = PLACE.events[ev.id], list = x ? x.orders : [];
+  box.innerHTML = list.length ? `<div class="dtw"><table class="dtab"><thead><tr><th>What they bought</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>${list.map((o) => { const st = OSTATUS[o.status] || [o.status, ""]; return `<tr><td>${esc(PLAN_NAME[o.plan] || o.plan)}</td><td>${esc(money(o.cents))}</td><td><span class="tag ${st[1]}">${esc(st[0])}</span></td><td>${esc(pdate(o.at))}</td></tr>`; }).join("")}</tbody></table></div><p class="meta" style="margin:8px 0 0"><a href="#orders" data-tab="orders">Open Orders</a> for the payment details and refunds.</p>` : '<p class="meta" style="margin:0">Nothing bought for this event.</p>';
+}
 // The event editor's Video section: the uploaded clip (watch it, Approve, Remove) or the link.
 function paintEvVid(ev, p) {
   const box = $("#evVid"); if (!box) return;
@@ -805,6 +812,7 @@ function editEvent(ev) {
     ${fsec("Details", "", ff("eB", "Description", `<textarea id="eB" maxlength="600" rows="4">${esc(e.b)}</textarea>`) + ff("eU", "Event website", `<input id="eU" type="url" value="${esc(e.u)}" maxlength="300" placeholder="https://">`) + ff("eVid", "Video (YouTube or Vimeo link)", `<input id="eVid" type="url" value="${esc(e.vid || "")}" maxlength="300" placeholder="https://www.youtube.com/watch?v=...">`, { c: "c6" }))}
     ${ev ? fsec("Paid placement", "Featured: 1 is the gold pin and badge, 2 also lists the event first. Banner: the event is a pill labeled Featured in the strip at the top of the map list. Organizers buy these themselves at /feature (see Orders). A level or date set here can never be lower or earlier than a paid order that is still running. Leave a date empty for no end date (Featured) or to keep the banner off.",
       ff("eFl", "Featured level", `<select id="eFl" disabled><option value="0">Off</option><option value="1">1: pin and badge</option><option value="2">2: also listed first</option></select>`, { c: "c2" }) + ff("eFu", "Featured until", `<input id="eFu" type="date" disabled>`, { c: "c2" }) + ff("eBu", "Banner until", `<input id="eBu" type="date" disabled>`, { c: "c2", hint: "Loading…" })) : ""}
+    ${ev ? fsec("Purchases", "What this event paid for: the Featured pin, the banner and top of the list. The dates it runs are in Paid placement above; refunds are handled in Orders.", `<div class="ff c6" id="evBuys"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     ${ev ? fsec("Video", "A YouTube or Vimeo link shows at once. An uploaded clip is hidden from visitors until you approve it here. Organizers add them from Your profile (Edit the event).", `<div class="ff c6" id="evVid"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
   </form></div>`;
@@ -832,7 +840,7 @@ function editEvent(ev) {
   const back = (x) => { if (x) x.preventDefault(); close(); if (tab === "events") renderEvents(); else render(); };
   $("#evBack").onclick = back; main.querySelector("[data-mcancel]").onclick = back;
   let placed = false; // the paid placement fields are sent only once they have loaded, so a failed load can never wipe a placement
-  if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; paintEvVid(ev, p); }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
+  if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; paintEvVid(ev, p); paintEvBuys(ev); }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
   if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Delete anyway", danger: true }))) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted", false, { undo: () => restoreEvents([ev.id]) }); if (tab === "events") renderEvents(); else render(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");

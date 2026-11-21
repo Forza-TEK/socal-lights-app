@@ -1,5 +1,11 @@
 # Status
 
+### Admin audit round 3, part 2: event Purchases, labelled counts (Nov 21)
+- **Event record > Purchases:** the Admin event editor lists every order recorded for the event (what they bought, amount, status, date) with a link to Orders (from `/api/admin/placements`). Checked in a browser with a seeded $75 order.
+- **List counts say what they are:** the bare "0" / "12" under list search boxes now reads "0 results" / "12 results" ("3 of 12 shown" while searching) (`kit.js`).
+- Reviewed on a phone with no problems found: Contests, Installers, Event claims, Reports, Contest passes, Event Partners, Outreach, Ads (their cards and tab rows fit and scroll). Phone landscape: the left rail is narrow and content has room; no change made.
+- Tests 1206 pass. `admin.js` 20261121i, `kit.js` 20261121a.
+
 ### Admin audit round 3, part 1: cover photos on list rows, View listing in Your profile (Nov 21)
 Rey: a cover photo on all list views in Admin and Your profile, and a "view the listing as an outside visitor would see it" button in Your profile.
 - **Admin lists** now start each row with a 48px cover photo (a camera icon when there is none): Events (the organizer's first photo, else the picture found on the event's page), Houses (waiting, declined, published) and contest entries (first photo, through the admin photo route so pending ones show too), Submitted events, Event claims and Orders (new `cover` field from `functions/_lib/cover.js`), and From Grok rows (the photo link Grok sent). Styles `.rthumb` / `.tcell` in `admin.css`.
