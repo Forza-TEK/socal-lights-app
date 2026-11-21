@@ -29,5 +29,25 @@ status: open
 - cityofneedles.com (202 bot check)
 - events.parks.ca.gov is JS-only (ArcGIS app), not blocked. The static parks.ca.gov page_id pages work but list only event titles and dates.
 
-## 6. Browser pass results (Nov 21)
-(Placeholder — Grok will add results after the browser pass.)
+## 6. Browser pass results (Nov 21, added by Grok)
+
+Totals from the browser: 3 confirms applied, 6 new events published, 1 photo.
+
+### Confirms (12 checked)
+- Applied: Paseo Nuevo Let It Snow (start Dec 4, Fri–Sun 6 & 7pm, Center Court), South Gate (hours 12–6pm, tree lighting 6pm, new URL `.../Events-directory/Christmas-Festival`), Laguna Niguel parade (Dec 12, 10am; route Crown Valley Pkwy from Nueva Vista to Crown Valley Community Park, per the city PDF).
+- Please fix: South Gate's stored venue is still the Tweedy Blvd parade route. The page now says Christmas Festival at South Gate Park, 4900 Southern Ave, with no parade, so it needs a rename and a venue/address change.
+- Stale (no 2026 page found): Indian Wells tree lighting, Steinmetz Holiday in the Park, Promenade PV Let It Snow, Sylmar tree lighting, Temecula On Ice.
+- Not confirmed: La Verne Holiday Stroll (link is the Dec 2025 newsletter PDF), Whittier parade (whittierevents.com shows no listings), Artesia (title says Sat Dec 19, 2026; body says Dec 20th 10am).
+- Blocked-list candidate: cdmod.org showed a SiteGround captcha in the browser too, and one retry failed.
+
+### Leads and sweep
+- Published: Cuyamaca First Day Hike (Jan 1, 9–11am), Bolsa Chica Christmas at the Beach (Dec 5, 3–6pm), Torrey Pines Holiday Crafts (Dec 19, 10am–12pm), SD Master Chorale Messiah Sing (Dec 6, 4pm, St. Paul's Cathedral), LA Master Chorale Festival of Carols at McCallum (Dec 19, 8pm), Concert Glow New Year's Eve at Viejas (Dec 31, 8pm–12:30am, The Park at Viejas, $41.35).
+- Please add if you agree: Camp Pendleton Polar Bear Plunge (Fri Jan 1, 2027, registration 11am, plunge 12pm, Del Mar Beach & Marina, BLDG 210841, Camp Pendleton, CA 92058; source pendleton.usmc-mccs.org/activity/34820701-3569-4d92-8a18-6cf730c32bb1). The intake rejected it three ways: "Camp Pendleton" isn't in cities.js, "Camp Pendleton South" says the address is far from the city, and "Oceanside" says address not found. The page has no public-access statement (it's on base). It would count toward polar-dips.
+- Please review: Pala Carnival: Midnight in Rio New Year's Eve (https://www.palacasino.com/nye/; Thu Dec 31, live music from 11am, Copa Countdown 11:50pm at Club Copacabana, Pala Casino Spa Resort, 11154 Highway 76, Pala, CA 92059; New Year's Day brunch Jan 1, 2027). The intake rejected it twice with "does not look like a community event listing", while the similar Viejas listing published. Please check the filter or add it by hand.
+- Not verified: Needles, Sycuan NYE bingo, Hotel del NYE, Lynwood Candy Cane Lane parade, Isla Vista, Pechanga NYE (page never states Dec 31), Piru parade, Guadalupe (connection closed), Fantasy Springs, Harrah's SoCal and Agua Caliente (no NYE content found). Los Encinos skipped as not holiday-themed.
+- Polar plunges beyond Pendleton weren't verified: cardiffpolarbear.com closed the connection and lajollacoveswimclub.com didn't load.
+- Not blocked in the browser, so please don't block: pendleton.usmc-mccs.org, mccallum, sdmasterchorale, cityofneedles.com. Morongo's entertainment page returned 403 once; that's a single try, so no block request yet.
+
+### Photos (20 checked)
+- Posted 1: Coronado Holiday Parade (coronado.ca.us image, lit tree with crowd). The other 19 had only flyers, logos, generic banners or AI-looking images.
+- URL changes: cityofmenifee.us now redirects to menifee.ca.gov, cityoflaverne.org to laverneca.gov; the indio.org tamale page is a 404 (festival site is indiointernationaltamalefestival.com).
