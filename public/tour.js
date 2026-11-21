@@ -3,7 +3,7 @@
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const MAX_STOPS = 9;
 import { nativeShare } from "/native.js?v=20261115a";
-import { MAPS, getMaps, routeUrl, placeUrl, navAttr, mapsNow, askMaps, setMaps } from "/maps.js?v=20261111a";
+import { MAPS, getMaps, routeUrl, placeUrl, navAttr, mapsNow, askMaps, setMaps } from "/maps.js?v=20261121a";
 export { routeUrl };
 
 const miles = (a, b) => { const R = 3959, r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r, h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };

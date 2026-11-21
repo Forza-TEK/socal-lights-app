@@ -104,6 +104,31 @@ Parent sources checked today:
 - **Home-display listing sites** (bigredbulb, tackylighttour, holidaylightsguide): only auto-rolled or "last confirmed 2025" data, so I didn't use any. 2026 confirmation has to come from each display's own social page (they're in the browser queue).
 - **NYE hospitality**: Eventbrite JSON-LD for hotels and bars in LA, OC, Ventura, and SD; venue pages for SET Newport, Surf & Sand, Crown & Anchor, Hotel del (no time), South Coast Winery (stale "2026" copy), Punch Bowl Social (stale), Boathouse on the Bay and The Ranch LB (no times), Mission Inn (no 2026 NYE).
 
+## 2026-11-19
+
+### Parent sources checked today
+- LA County Library (LibNet eeventcaldata JSON plus JSON-LD): Nov 19-Dec 31 swept. Filled Alondra Park, Willowbrook, West Whittier-Los Nietos, Westmont, Littlerock.
+- SD County Library (BiblioCommons gateway, 21 pages): filled Rancho San Diego.
+- OC Public Libraries and Riverside Public Library (LibCal): filled Laguna Woods, Foothill Ranch and Home Gardens.
+- SB County Special Districts (tribe REST): filled Bloomington (Ayala Park).
+- Desert Recreation District (ActiveNet): 4 events found, all in non-empty cities; queued as leads to confirm.
+- SD County Parks (tockify): 7 published, filling Potrero, Spring Valley and Santa Ysabel.
+- State Parks First Day Hikes (parks.ca.gov): JS-only pages, queued for the browser.
+- Temecula Valley Winegrowers events: the NYE events already on the map.
+- runsignup: published 2 New Year's Day runs and 1 Turkey Trot.
+- Chabad sites (menorah): Orange published; North Park and Crescenta Valley queued.
+- Church and school-district calendars: Piru parade found only on the Fillmore HS calendar (queued).
+
+### Not yet tried or unusable from the server
+- Ventura County Library (JS calendar)
+- Imperial Valley parks (JS)
+- piru-ca.org
+- OC Parks events (parks.oc.gov/events has no event links in its HTML; JS)
+- LA County Parks (parks.lacounty.gov, non-200)
+
+### Focus today
+polar-dips and lunar, plus NYE share.
+
 ## Coverage update — 2026-11-18 (Grok sweep)
 
 Empty cities: 183 at start → 171 after (work order re-fetch, 2026-11-18).

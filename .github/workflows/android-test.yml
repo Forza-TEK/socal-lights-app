@@ -29,7 +29,7 @@ jobs:
           for i in $(seq 1 60); do curl -sf http://localhost:8788/ > /dev/null && break; sleep 2; done
           curl -sf http://localhost:8788/api/events | head -c 200
       - name: Tools to drive the app inside the emulator
-        run: npm i --no-save playwright-core
+        run: npm i --no-save ws
       - name: Install and sync (debug app points at the local copy)
         working-directory: app
         run: |
@@ -37,7 +37,7 @@ jobs:
           python3 - <<'PY'
           import json
           c = json.load(open("capacitor.config.json"))
-          c["server"]["url"] = "http://10.0.2.2:8788"
+          c["server"]["url"] = "http://localhost:8788"
           c["server"]["cleartext"] = True
           json.dump(c, open("capacitor.config.json", "w"), indent=2)
           PY

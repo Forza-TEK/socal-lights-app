@@ -47,7 +47,7 @@ function css() {
 .mpdlg label{display:flex;gap:10px;align-items:center;font-size:14px;margin-top:2px}.mpdlg input{width:20px;height:20px}
 .mpdlg .mpx{justify-self:start;border:0;background:none;color:var(--muted,#646a7a);font:600 14px inherit;font-family:inherit;padding:8px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .mapsnow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--muted,#646a7a)}.mapsnow b{color:var(--ink,#14161b)}
-.mapsnow .mpchg{-webkit-appearance:none;appearance:none;display:inline-grid;place-items:center;width:36px;height:36px;min-height:36px;padding:0;border:1.5px solid var(--line2,#b0b0b0)!important;border-radius:50%!important;background:transparent!important;color:var(--ink,#14161b);text-decoration:none}.mapsnow .mpchg:hover,.mapsnow .mpchg:focus-visible{border-color:var(--season,#c9313b)!important}
+.mapsnow .mpchg{-webkit-appearance:none;appearance:none;display:inline-grid;place-items:center;width:40px;height:40px;min-width:40px;min-height:40px;padding:0;border:1.5px solid var(--line2,#b0b0b0)!important;border-radius:50%!important;background:transparent!important;color:var(--ink,#14161b);text-decoration:none}.mapsnow .mpchg:hover,.mapsnow .mpchg:focus-visible{border-color:var(--season,#c9313b)!important}
 .mapsnow button:not(.mpchg){border:0;background:none!important;box-shadow:none;padding:6px 4px;font:600 14px inherit;font-family:inherit;color:var(--ink,#14161b);text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:32px}`;
   document.head.appendChild(st);
 }
