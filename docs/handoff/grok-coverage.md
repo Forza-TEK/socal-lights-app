@@ -90,6 +90,20 @@ Follow `docs/city-sweep.md`, `docs/sweep-methods.md` and `docs/blocked-sites.md`
 
 New watchlist venues and blocked sites go to Claude as a request in `docs/handoff/to-claude/`. Grok does not edit `docs/watchlist.json` or `docs/blocked-sites.md`.
 
+## 2026-11-20
+
+New events: 11 published, 0 held, 0 duplicate, 2 rejected (Pechanga NYE x2 on promogogo, "does not look like a community event listing").
+Empty cities filled: Anza, Lakeland Village, Muscoy. Empty cities: 156 → 153.
+Focus categories: nye-parties 48 → 55/60; home-displays 155/250 (no change); light-shows 36 → 37/40 (Harbor Glow).
+Updates: 6 confirms applied (4 with corrections), 4 photos applied, 1 cancellation held (Andaz).
+
+Parent sources checked today:
+- **SB County Library** tribe REST API (612 events, 13 pages): found Muscoy (Wee Winter Workout). Needles and Trona branches had no holiday programs.
+- **Riverside County Library** LibCal (rivlib): found Anza (Turkey Trot & Tales) and Lakeland Village (Candy Cane Slime). Nothing seasonal at Cabazon, El Cerrito, French Valley, Highgrove, Mead Valley, Mecca, Valle Vista, Woodcrest, or Nuview/Nuevo.
+- **LA County Library** (Charter Oak, Wiseburn): nothing seasonal.
+- **Home-display listing sites** (bigredbulb, tackylighttour, holidaylightsguide): only auto-rolled or "last confirmed 2025" data, so I didn't use any. 2026 confirmation has to come from each display's own social page (they're in the browser queue).
+- **NYE hospitality**: Eventbrite JSON-LD for hotels and bars in LA, OC, Ventura, and SD; venue pages for SET Newport, Surf & Sand, Crown & Anchor, Hotel del (no time), South Coast Winery (stale "2026" copy), Punch Bowl Social (stale), Boathouse on the Bay and The Ranch LB (no times), Mission Inn (no 2026 NYE).
+
 ## 2026-11-19
 
 ### Parent sources checked today
