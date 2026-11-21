@@ -109,3 +109,11 @@ export const pager = ({ offset, shown, total, page, idPrev = "pgPrev", idNext = 
   `<div class="pager"><span class="meta">${total ? `${offset + 1}–${offset + shown} of ${total}` : "0"}</span><span class="row" style="gap:8px"><button class="btn ghost" type="button" id="${idPrev}" ${offset ? "" : "disabled"}>Newer</button><button class="btn ghost" type="button" id="${idNext}" ${offset + page < total ? "" : "disabled"}>Older</button></span></div>`;
 // One modal frame for every edit window
 export const modalFrame = (title, inner, wide = false) => `<div class="card${wide ? " wide" : ""}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="mh"><h2>${esc(title)}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${inner}</div>`;
+
+// Dates read Month/Day/Year everywhere: 2026-12-05 shows as 12/05/2026.
+export const mdy = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || "")); return m ? `${m[2]}/${m[3]}/${m[1]}` : String(iso || ""); };
+// A timestamp the server stored in UTC ("2026-11-20 05:59:00" or "2026-11-20T05:59:00Z") as this device's own date and time: 11/19/2026 9:59 PM
+export const localTime = (s) => {
+  if (!s) return ""; const t = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(String(s)) ? String(s) : String(s).replace(" ", "T") + "Z"); if (isNaN(t)) return String(s);
+  const p = new Date(t); return `${String(p.getMonth() + 1).padStart(2, "0")}/${String(p.getDate()).padStart(2, "0")}/${p.getFullYear()} ${p.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+};
