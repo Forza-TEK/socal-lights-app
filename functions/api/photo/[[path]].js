@@ -1,11 +1,13 @@
 // GET /api/photo/p/<postId>/<name> — serves approved photos only.
 // GET /api/photo/e/<eventId>/<name> — a photo the owner of an event added (public, like p/).
 // GET /api/photo/v/<postId>/<name> — the video clip of a live home, once Admin approved it (Range supported). Before that only the person who posted it can open it.
+// GET /api/photo/ev/<eventId>/<name> — the video clip of an event, once Admin approved it (Range supported). Before that only the person who added the event can open it.
 // GET /api/photo/h/<postId>/<name> — a photo the homeowner hid: only that homeowner and the organizers of the contest can open it (never cached by shared caches).
 import { getUser } from "../../_lib/auth.js";
 import { isStaff } from "../../_lib/contests.js";
 import { EVENT_KEY_RE } from "../../_lib/eventphotos.js";
 import { VIDEO_KEY_RE, serveVideo } from "../../_lib/postvideo.js";
+import { EVENT_VIDEO_KEY_RE } from "../../_lib/eventvideo.js";
 
 export async function onRequestGet({ params, env, request }) {
   const key = (params.path || []).join("/");
@@ -16,6 +18,16 @@ export async function onRequestGet({ params, env, request }) {
     if (post.status === "approved" && post.video_ok) return serveVideo(env, key, request, "public, max-age=3600");
     const user = await getUser(request, env);
     if (user && (post.user_id === user.id || String(post.contact_email || "").toLowerCase() === String(user.email || "").toLowerCase())) return serveVideo(env, key, request, "private, no-store");
+    return new Response("Not found", { status: 404 });
+  }
+  const evv = EVENT_VIDEO_KEY_RE.exec(key);
+  if (evv) {
+    const ev = await env.DB.prepare("SELECT id, video_file, video_ok FROM events WHERE id = ?").bind(evv[1]).first();
+    if (!ev || ev.video_file !== key) return new Response("Not found", { status: 404 });
+    if (ev.video_ok) return serveVideo(env, key, request, "public, max-age=3600");
+    const user = await getUser(request, env);
+    const mine = user && (await env.DB.prepare("SELECT 1 AS x FROM event_submissions WHERE event_id = ? AND lower(contact_email) = ?").bind(ev.id, String(user.email || "").toLowerCase()).first());
+    if (mine) return serveVideo(env, key, request, "private, no-store");
     return new Response("Not found", { status: 404 });
   }
   const hidden = /^h\/([a-z0-9]{8,32})\/\d{1,14}\.(jpg|png|webp)$/.exec(key);

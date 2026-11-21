@@ -1,4 +1,5 @@
 // POST   /api/me/events/<submission id> { action: "edit" | "notice" | "copy" | "removephoto" | "coverphoto" } — the person who submitted an event manages it.
+// PUT    /api/me/events/<submission id> (raw video bytes, Content-Type video/*) — the organizer's video clip (MP4, MOV or WebM, up to 40 MB). It waits for Admin's approval before visitors can watch it.
 // POST   /api/me/events/<submission id> as multipart form data with "photos" — adds up to 4 photos of the event (see _lib/eventphotos.js).
 // DELETE /api/me/events/<submission id> — removes the event from the map and the list (only the person who added it).
 //   edit   : name, hours, price, free, blurb, url, venue, start, end, video (a YouTube or Vimeo link)
@@ -19,6 +20,7 @@ import { refundDueStatements } from "../../../_lib/orders.js";
 import { normName, line } from "../../../_lib/fields.js";
 import { addEventPhotos, removeEventPhoto, coverEventPhoto, ownerKeys } from "../../../_lib/eventphotos.js";
 import { checkThrottle, hashKey } from "../../../_lib/throttle.js";
+import { setEventClip, setEventLink, clearEventVideo } from "../../../_lib/eventvideo.js";
 
 const plusYear = (d) => { const x = new Date(d + "T12:00:00Z"); x.setUTCFullYear(x.getUTCFullYear() + 1); return x.toISOString().slice(0, 10); };
 
@@ -52,6 +54,22 @@ export async function onRequestPost({ params, request, env }) {
     const r = b.action === "removephoto" ? await removeEventPhoto(env, ev, String(b.key || "")) : await coverEventPhoto(env, ev, String(b.key || ""));
     if (r.error) return err(r.status || 400, r.error);
     return json({ ok: true, photos: r.photos });
+  }
+
+  if (b.action === "link") { // the shared video box: a YouTube or Vimeo link (public at once; an empty one removes the video)
+    if (!live) return err(400, "That event isn't on the map.");
+    const cur = await env.DB.prepare("SELECT id, video, video_file FROM events WHERE id = ?").bind(s.event_id).first();
+    if (!cur) return err(400, "That event isn't on the map.");
+    const r = await setEventLink(env, cur, b.url);
+    if (r.error) return err(r.status, r.error);
+    return json({ ok: true, video: r.video });
+  }
+  if (b.action === "removevideo" || b.action === "remove") {
+    if (!live) return err(400, "That event isn't on the map.");
+    const cur = await env.DB.prepare("SELECT id, video, video_file FROM events WHERE id = ?").bind(s.event_id).first();
+    if (!cur) return err(400, "That event isn't on the map.");
+    await clearEventVideo(env, cur);
+    return json({ ok: true, video: { link: "", file: "", ok: false } });
   }
 
   if (b.action === "notice") {
@@ -96,7 +114,10 @@ export async function onRequestPost({ params, request, env }) {
     }
     await env.DB.prepare("UPDATE event_submissions SET name=?, blurb=?, venue=?, start_date=?, end_date=?, hours=?, free=?, price=?, url=?, season=?, type=?, city=?, address=?, lat=?, lng=?, county=?, verified=?, note=? WHERE id=?").bind(name, blurb, venue, start, end, hours, free, price, url, season, type, city, address, lat, lng, county, verified, note || "", s.id).run();
     if (live) await upsertEvent(env, { id: s.event_id, name, county, city, type, start_date: start, end_date: end, status, free, price, hours, lat, lng, blurb, url, season, venue, address });
-    if (live && vidIn !== undefined) await env.DB.prepare("UPDATE events SET video = ? WHERE id = ?").bind(vid ? vid.watch : "", s.event_id).run();
+    if (live && vidIn !== undefined) { // a link replaces a clip; clearing the field removes whichever video there is (a clip is only removed when the field was a link: the clip box has its own Remove)
+      const cur = await env.DB.prepare("SELECT id, video, video_file FROM events WHERE id = ?").bind(s.event_id).first();
+      if (cur && (vid || cur.video)) await setEventLink(env, cur, vid ? vid.watch : "");
+    }
     return json({ ok: true, status, ...(located === undefined ? {} : { located }) });
   }
   if (b.action === "copy") {
@@ -135,4 +156,22 @@ export async function onRequestDelete({ params, request, env }) {
   await env.DB.batch(stmts);
   if (own) await Promise.all(ownerKeys(own.owner_photos).map((k) => env.PHOTOS.delete(k).catch(() => {}))); // the owner's photos go with the event
   return json({ ok: true });
+}
+
+// The organizer's video clip (raw bytes). Only the person who added the event, only while it is on the map. The clip waits for Admin's approval.
+export async function onRequestPut({ params, request, env }) {
+  if (!sameOrigin(request)) return err(403, "Not allowed.");
+  const { user, res } = await requireUser(request, env);
+  if (res) return res;
+  const s = await env.DB.prepare("SELECT * FROM event_submissions WHERE id = ?").bind(params.id).first();
+  if (!s || normEmail(s.contact_email) !== user.email) return err(404, "That event isn't yours.");
+  if (!(s.status === "published" && s.event_id)) return err(400, "A video can be added once the event is on the map.");
+  const slow = await checkThrottle(env, [{ kind: "event-video", key: await hashKey(env, "u", user.id), max: 12, windowHours: 24, msg: "That is a lot of video changes for one day. Try again tomorrow." }]);
+  if (slow) return err(429, slow);
+  if (Number(request.headers.get("content-length") || 0) > 45 * 1024 * 1024) return err(413, "That video is too large. Use one under 40 MB (about a minute from a phone).");
+  const ev = await env.DB.prepare("SELECT id, video_file FROM events WHERE id = ?").bind(s.event_id).first();
+  if (!ev) return err(400, "That event isn't on the map.");
+  const r = await setEventClip(env, ev, await request.arrayBuffer());
+  if (r.error) return err(r.status, r.error);
+  return json({ ok: true, video: { link: "", file: r.video.file, ok: false, waiting: true } });
 }

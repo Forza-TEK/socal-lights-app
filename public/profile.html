@@ -22,9 +22,9 @@
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast, friendlyError } from "/auth.js?v=20261116a";
 import { mountShell } from "/appshell.js?v=20261121a";
-import { homeForm, eventForm, openFormWindow, photoBoxHtml, wireSeasonType } from "/forms.js?v=20261117d";
-import { wireVideoBox } from "/videobox.js?v=20261117d";
-import { esc, input, select, attachAddress, OPT, shrink } from "/addflow.js?v=20261121a";
+import { homeForm, eventForm, openFormWindow, photoBoxHtml, wireSeasonType } from "/forms.js?v=20261121a";
+import { wireVideoBox } from "/videobox.js?v=20261121a";
+import { esc, input, select, attachAddress, OPT, shrink } from "/addflow.js?v=20261121b";
 import { SEASONS } from "/seasons.js?v=20261115a";
 import { draftKey, clearAllLocalDrafts } from "/drafts-local.js?v=20261111z";
 import { CITY } from "/cities.js?v=20261115i";
@@ -260,6 +260,7 @@ function wire() {
     } else {
       wireSeasonType(f, SEASON_LIST);
       if (f.querySelector("[data-pbox]")) wirePhotoBox(f, { item: O.events.find((x) => x.id === row.dataset.ev), url: "/api/me/events/" + row.dataset.ev, max: 4, opts: { live: true, noun: "event" } }); // the owner's own event photos (up to 4)
+      if (f.querySelector("[data-vwrap]")) wireVideoBox(f, { item: O.events.find((x) => x.id === row.dataset.ev), url: "/api/me/events/" + row.dataset.ev, noun: "event", friendly: (x) => friendlyError(x, "That didn't work.") }); // one video: a short clip or a YouTube/Vimeo link
       attachAddress(f, { getCity: () => (f.querySelector('[data-k="city"]') || {}).value || "", onPick: (s) => { const set = (k, v) => { const el = f.querySelector(`[data-k="${k}"]`); if (el) el.value = v; }; set("address", s.street); if (cities.includes(s.city)) set("city", s.city); } });
       f.onsubmit = async (e) => {
         e.preventDefault(); er.hidden = true;

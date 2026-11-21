@@ -1070,7 +1070,7 @@ function openLightbox(items, start = 0, title = "") {
 /* ---------- event details (blurb and link) load when an event is opened ---------- */
 // The event list leaves out each event's blurb (b) and link (u), about 40% of its bytes. GET /api/events/<id> has them: they are fetched when the details page (or the map card) opens, kept in memory for the visit,
 // and filled into the open page in place, so nothing jumps. The service worker keeps the answers for events you opened, so they still open with no signal; otherwise a short note and a Try again button show.
-const HEAVY = ["b", "u", "vid"], DETAIL = new Map(), DFETCH = new Map(), DERR = new Map();
+const HEAVY = ["b", "u", "vid", "vf"], DETAIL = new Map(), DFETCH = new Map(), DERR = new Map();
 const hasDetail = (ev) => "b" in ev;
 function loadDetail(ev) {
   if (hasDetail(ev)) return Promise.resolve(ev);
@@ -1113,6 +1113,7 @@ function wireRetry(ev) { const b = $("#dretry"); if (b) b.onclick = () => { DERR
 // An event's video (YouTube or Vimeo): a button, and the player is only loaded when it is tapped, so opening a card contacts neither site.
 function videoBlock(ev) {
   const v = ev.vid ? parseVideo(ev.vid) : null;
+  if (!v && ev.vf) return `<div id="dvideo"><button type="button" class="vidbtn" data-clip="${esc(ev.vf)}">${PLAY}<span>Watch the video</span><small>Video</small></button></div>`; // an uploaded clip Admin approved
   return `<div id="dvideo">${v ? `<button type="button" class="vidbtn" data-vid="${esc(v.embed)}" data-watch="${esc(v.watch)}"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span>Watch the video</span><small>${v.kind === "vimeo" ? "Vimeo" : "YouTube"}</small></button>` : ""}</div>`;
 }
 // A home's video: a YouTube or Vimeo link (the same Watch button as events) or an uploaded clip Admin approved. Nothing is loaded until the button is tapped.
@@ -1124,7 +1125,7 @@ function homeVideo(p) {
 }
 document.addEventListener("click", (e) => {
   const b = e.target.closest && e.target.closest("[data-clip]"); if (!b) return;
-  const v = document.createElement("video"); v.controls = true; v.playsInline = true; v.autoplay = true; v.preload = "metadata"; v.className = "vidframe"; v.src = b.dataset.clip; v.setAttribute("aria-label", "Home video");
+  const v = document.createElement("video"); v.controls = true; v.playsInline = true; v.autoplay = true; v.preload = "metadata"; v.className = "vidframe"; v.src = b.dataset.clip; v.setAttribute("aria-label", "Video");
   const wrap = document.createElement("div"); wrap.className = "vidwrap"; wrap.appendChild(v); b.replaceWith(wrap);
 });
 document.addEventListener("click", (e) => {
