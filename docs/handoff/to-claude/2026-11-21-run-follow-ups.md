@@ -7,6 +7,11 @@ status: open
 
 (PRs #742 (Nov 19) and #754 (Nov 20) are still open; their items are not repeated here.)
 
+## 0. Rey's decisions (Nov 21, do these first)
+- **Add Camp Pendleton as a city.** Rey says the base is a popular local spot and wants its events listed. Please add a "Camp Pendleton" entry to public/cities.js (and any alias/geocoder list it needs) so that addresses on base, such as "Del Mar Beach & Marina, BLDG 210841, Camp Pendleton, CA 92058", pass the near-the-city check. Then publish the Camp Pendleton Polar Bear Plunge from section 6 (Fri Jan 1, 2027, registration 11am, plunge 12pm, Del Mar Beach & Marina; source https://pendleton.usmc-mccs.org/activity/34820701-3569-4d92-8a18-6cf730c32bb1) and count it toward polar-dips.
+- **Add Pala's New Year's Eve party.** Rey's rule: an event that fits the season gets listed even if it isn't a community event (casino, resort, hospitality NYE parties included). The intake rejected it three times today with "does not look like a community event listing" (names tried: "Pala Carnival: Midnight in Rio – New Year's Eve", "Pala Carnival: Midnight in Rio New Year's Eve", "Midnight in Rio New Year's Eve at Pala"), while the Viejas NYE party published. Please loosen that check so seasonal venue events like this pass, and publish the Pala listing from section 6 (https://www.palacasino.com/nye/; Thu Dec 31, 2026, live music from 11am, parade 9:30pm, countdown 11:50pm, Pala Casino Spa Resort, 11154 Highway 76, Pala, CA 92059).
+- **cdmod.org is NOT a block candidate.** Rey opens it fine. Ignore the cdmod.org blocked-list suggestion in section 6; Grok is retrying it in the browser.
+
 ## 1. Palmdale duplicate (the update call can't remove it)
 - `g7-palmdale-sparkle-on-the-square` and `grok-sparkle-on-the-square-8dc680` are the same Palmdale event (Sparkle on the Square, Palmdale Civic Center/Chimbole area). Please keep one (the row with the 2026 dates and a working link) and delete the other. The g7 row's link is the Nov 2025 press release (newsflash 2091).
 
@@ -38,7 +43,7 @@ Totals from the browser: 3 confirms applied, 6 new events published, 1 photo.
 - Please fix: South Gate's stored venue is still the Tweedy Blvd parade route. The page now says Christmas Festival at South Gate Park, 4900 Southern Ave, with no parade, so it needs a rename and a venue/address change.
 - Stale (no 2026 page found): Indian Wells tree lighting, Steinmetz Holiday in the Park, Promenade PV Let It Snow, Sylmar tree lighting, Temecula On Ice.
 - Not confirmed: La Verne Holiday Stroll (link is the Dec 2025 newsletter PDF), Whittier parade (whittierevents.com shows no listings), Artesia (title says Sat Dec 19, 2026; body says Dec 20th 10am).
-- Blocked-list candidate: cdmod.org showed a SiteGround captcha in the browser too, and one retry failed.
+- cdmod.org: withdrawn as a block candidate per Rey (see section 0); retrying in the browser.
 
 ### Leads and sweep
 - Published: Cuyamaca First Day Hike (Jan 1, 9–11am), Bolsa Chica Christmas at the Beach (Dec 5, 3–6pm), Torrey Pines Holiday Crafts (Dec 19, 10am–12pm), SD Master Chorale Messiah Sing (Dec 6, 4pm, St. Paul's Cathedral), LA Master Chorale Festival of Carols at McCallum (Dec 19, 8pm), Concert Glow New Year's Eve at Viejas (Dec 31, 8pm–12:30am, The Park at Viejas, $41.35).
