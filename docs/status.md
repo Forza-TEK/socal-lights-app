@@ -1,5 +1,8 @@
 # Status
 
+### Admin audit, round 2: Dashboard folds on a phone (Nov 21)
+The phone Dashboard was 7,500px of scrolling. The reference sections (On the site now, Data health, Last run of each job, People, Last 14 days, Most visited pages, How people use the site, Taps on links and buttons) now fold behind one tap each (`collapseDash` in `admin.js`, `.dcoll` in `admin.css`); Needs you, Today, Revenue, Errors, Newest submissions, Contests and Your recent activity stay open. Now about 2,700px. Desktop unchanged. `admin.js` 20261121f, `admin.css` 20261121b.
+
 ### Admin audit, round 1: labels, paid placements, plain revenue words (Nov 21)
 Rey: phone layouts lack labels (only landscape showed them), "net refund" is confusing, wants to see per event what was bought (pin, top of list, banner), and fewer clicks to the listing.
 - **Labels on every phone table:** `labelTables()` in `admin.js` gives every table cell its column name (a MutationObserver, so it covers every page that builds a `.dtab`). Also removed the rule that silently hid the 6th column of every table on a phone, and the 44px blank strip on tables with no tick-box column.
