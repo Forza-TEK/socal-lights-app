@@ -8,7 +8,12 @@ import { me, signIn, signOut, esc } from "/auth.js?v=20261116a";
 if (!document.getElementById("chrome-css")) { const l = document.createElement("link"); l.id = "chrome-css"; l.rel = "stylesheet"; l.href = "/chrome.css?v=20261118a"; document.head.appendChild(l); }
 
 /* ---------- light / night (same switch and same remembered choice as the map) ---------- */
-const nextSwitch = () => { const d = new Date(); d.setMinutes(0, 0, 0); const h = d.getHours(); if (h < 6) d.setHours(6); else if (h < 18) d.setHours(18); else { d.setDate(d.getDate() + 1); d.setHours(6); } return d.getTime(); };
+const dayNight = (d) => { // same sunrise / sunset rule as every page head (Los Angeles, Pacific clock)
+  const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hour: "numeric", minute: "numeric", hour12: false, timeZoneName: "short" }).formatToParts(d), g = (k) => (p.find((x) => x.type === k) || {}).value;
+  const m = (Number(g("hour")) % 24) * 60 + Number(g("minute")), noon = 713 + (g("timeZoneName") === "PDT" ? 60 : 0), doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5), half = (12 + 2.1 * Math.sin((2 * Math.PI * (doy - 80)) / 365)) * 30;
+  return m < noon - half || m >= noon + half ? "dark" : "light";
+};
+const nextSwitch = () => { const now = Date.now(), cur = dayNight(new Date(now)); for (let m = 10; m <= 1500; m += 10) if (dayNight(new Date(now + m * 60000)) !== cur) return now + m * 60000; return now + 864e5; };
 export function toggleTheme() {
   const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = t;
   try { localStorage.setItem("socal-theme", t); localStorage.setItem("socal-theme-until", String(nextSwitch())); } catch {}

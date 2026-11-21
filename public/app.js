@@ -8,7 +8,7 @@ import { isCityEvent, looksLikeLogoUrl, judgePicture } from "/photoguess.js?v=20
 import { SITE } from "/site-config.js?v=20261118c";
 import "/norm-ui.js?v=20261102b";
 import { me as authMe } from "/auth.js?v=20261116a";
-import "/chrome.js?v=20261118a"; // the account circle opens the same menu as on every other page
+import "/chrome.js?v=20261121a"; // the account circle opens the same menu as on every other page
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261121a";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261121a";
@@ -1503,12 +1503,16 @@ function repaintMap() {
   map.setPaintProperty("pt", "circle-color", catColor(C));
   map.setPaintProperty("hl", "circle-color", catColor(C));
 }
-// Day / night: automatic (dark when the device asks for dark, and from 6 pm to 6 am by its clock); the toggle overrides it until the next switch (same rule as the script in every page head)
+// Day / night: automatic from the sun in Southern California on the Pacific clock (dark between sunset and sunrise, light between), whatever the device's own light or dark setting; the toggle overrides it until the next sunrise or sunset (same rule as the script in every page head)
 // The day / night button in the top bar (the same switch every other page has)
 { const tb = document.getElementById("themebtn"); if (tb) tb.addEventListener("click", () => setTheme(theme() === "dark" ? "light" : "dark")); }
-const darkMQ = matchMedia("(prefers-color-scheme: dark)");
-const autoTheme = () => { const h = new Date().getHours(); return h >= 18 || h < 6 || darkMQ.matches ? "dark" : "light"; };
-function nextSwitch() { const d = new Date(); d.setMinutes(0, 0, 0); const h = d.getHours(); if (h < 6) d.setHours(6); else if (h < 18) d.setHours(18); else { d.setDate(d.getDate() + 1); d.setHours(6); } return d.getTime(); }
+const dayNight = (d = new Date()) => { // sunrise and sunset for Los Angeles (about 34 N, 118 W) to within about ten minutes: solar noon near 11:53 (12:53 in daylight time), day length 12 h plus or minus 2.1 h through the year
+  const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hour: "numeric", minute: "numeric", hour12: false, timeZoneName: "short" }).formatToParts(d), g = (k) => (p.find((x) => x.type === k) || {}).value;
+  const m = (Number(g("hour")) % 24) * 60 + Number(g("minute")), noon = 713 + (g("timeZoneName") === "PDT" ? 60 : 0), doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5), half = (12 + 2.1 * Math.sin((2 * Math.PI * (doy - 80)) / 365)) * 30;
+  return m < noon - half || m >= noon + half ? "dark" : "light";
+};
+const autoTheme = () => dayNight();
+function nextSwitch() { const now = Date.now(), cur = dayNight(new Date(now)); for (let m = 10; m <= 1500; m += 10) if (dayNight(new Date(now + m * 60000)) !== cur) return now + m * 60000; return now + 864e5; }
 function setTheme(t, manual = true) {
   document.documentElement.dataset.theme = t;
   if (manual) { try { localStorage.setItem("socal-theme", t); localStorage.setItem("socal-theme-until", String(nextSwitch())); } catch {} }
@@ -1516,14 +1520,12 @@ function setTheme(t, manual = true) {
   document.querySelector('meta[name="theme-color"]').content = night ? "#0b0d12" : "#ffffff";
   if (map) map.setStyle(MAP_STYLES[t], { diff: false });
 }
-// A page left open flips at 6 pm / 6 am unless the toggle is overriding it
+// A page left open flips at sunrise and sunset unless the toggle is overriding it
 setInterval(() => {
   let until = 0; try { until = +localStorage.getItem("socal-theme-until") || 0; } catch {}
   if (until > Date.now()) return;
   const t = autoTheme(); if (t !== theme()) setTheme(t, false);
 }, 60000);
-// the device switching between light and dark (a phone's own schedule, say) is followed at once, unless the toggle is overriding it
-darkMQ.addEventListener("change", () => { let until = 0; try { until = +localStorage.getItem("socal-theme-until") || 0; } catch {} if (until > Date.now()) return; const t = autoTheme(); if (t !== theme()) setTheme(t, false); });
 if (theme() === "dark") document.querySelector('meta[name="theme-color"]').content = "#0b0d12";
 // "All seasons": every upcoming event, not just the season in view (used with a city, from a city page link)
 function showAllSeasons() {

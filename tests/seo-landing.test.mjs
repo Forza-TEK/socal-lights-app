@@ -58,14 +58,15 @@ test("front-end rules: focus ring on search, reduced-motion sponsor strip, 24px 
   assert.match(app, /const secure = \(u\)/); assert.match(app, /lbEl\.innerHTML[^\n]*secure\(q\.src\)/);
 });
 
-test("theme: every page's head script follows the device's dark setting as well as the clock, and keeps the manual override", () => {
+test("theme: every page's head script follows the sun in Southern California on the Pacific clock (not the device's dark setting), and keeps the manual override", () => {
   const pages = readdirSync("public").filter((f) => f.endsWith(".html")).map((f) => "public/" + f).concat("functions/_lib/shell.js", "public/admin/index.html");
   for (const f of pages) {
     const s = read(f); if (!s.includes("socal-theme")) continue;
-    assert.ok(s.includes('matchMedia("(prefers-color-scheme: dark)").matches'), f + " follows the device setting");
+    assert.ok(s.includes('timeZone:"America/Los_Angeles"') && !s.includes("prefers-color-scheme: dark)\").matches"), f + " uses the Pacific sunrise and sunset, not the device setting");
     assert.ok(s.includes('localStorage.getItem("socal-theme")') && s.includes("socal-theme-until"), f + " keeps the manual choice");
   }
-  assert.match(read("public/app.js"), /darkMQ\.addEventListener\("change"/);
+  assert.match(read("public/app.js"), /timeZone: "America\/Los_Angeles"/);
+  assert.doesNotMatch(read("public/app.js"), /prefers-color-scheme/, "the map app no longer follows the device's dark setting");
 });
 
 test("list cards: small copies (320 wide), only the first two load at once, sizes declared", () => {

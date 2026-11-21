@@ -1,5 +1,8 @@
 # Status
 
+### Day / night now follows the Pacific sun, not the device setting (Nov 21)
+Rey: night mode showed in daytime. Cause: the rule was "dark from 6 pm to 6 am by the device clock, OR whenever the device itself is set to dark", so a phone or computer in dark mode kept the site dark all day. Now every page (the head script in 32 pages, `functions/_lib/shell.js`, `public/app.js`, `public/chrome.js`, the offline page) uses one rule: dark between sunset and sunrise for Los Angeles on the Pacific clock (a day-length formula, within about ten minutes of the real times; tested against known Nov, Dec and Jun sunrise/sunset), light otherwise, whatever the device says. The sun/moon button still overrides until the next sunrise or sunset; an open page flips by itself (checked each minute). Test updated: `tests/seo-landing.test.mjs`. Versions: `app.js`, `chrome.js`, `addflow.js`, `appshell.js` 20261121.
+
 ### Admin audit, round 2: Dashboard folds on a phone (Nov 21)
 The phone Dashboard was 7,500px of scrolling. The reference sections (On the site now, Data health, Last run of each job, People, Last 14 days, Most visited pages, How people use the site, Taps on links and buttons) now fold behind one tap each (`collapseDash` in `admin.js`, `.dcoll` in `admin.css`); Needs you, Today, Revenue, Errors, Newest submissions, Contests and Your recent activity stay open. Now about 2,700px. Desktop unchanged. `admin.js` 20261121f, `admin.css` 20261121b.
 

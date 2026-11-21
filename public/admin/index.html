@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex">
 <title>SoCal Lights Admin</title>
 <link rel="icon" href="/favicon-64.png" type="image/png" sizes="64x64">
-<script>try{var h=new Date().getHours(),t=h>=18||h<6||matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{var t=(function(d){var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"numeric",minute:"numeric",hour12:false,timeZoneName:"short"}).formatToParts(d),g=function(k){for(var i=0;i<p.length;i++)if(p[i].type==k)return p[i].value},m=g("hour")%24*60+ +g("minute"),n=713+(g("timeZoneName")=="PDT"?60:0),H=(12+2.1*Math.sin(6.2832*(Math.floor((d-new Date(d.getFullYear(),0,0))/864e5)-80)/365))*30;return m<n-H||m>=n+H?"dark":"light"})(new Date()),o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;800&display=swap">
 <link rel="stylesheet" href="/vendor/maplibre-gl-4.7.1.css">
 <link rel="stylesheet" href="/styles.css">
@@ -43,7 +43,7 @@
 <div class="modal" id="modal" hidden></div>
 <script src="/vendor/maplibre-gl-4.7.1.js"></script>
 <script type="module">
-import { themeBtn } from "/chrome.js?v=20261118a";
+import { themeBtn } from "/chrome.js?v=20261121a";
 import { defaultSeason } from "/seasons.js?v=20261115a";
 document.getElementById("tb").innerHTML = themeBtn();
 document.documentElement.dataset.season = defaultSeason(new Date(Date.now() - 8 * 3600_000).toISOString().slice(0, 10));
