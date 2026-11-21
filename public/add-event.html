@@ -19,11 +19,12 @@
 <body>
 <div id="app"></div>
 <script type="module">
-import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261121a";
+import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261121b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261115a";
 import { CITY } from "/cities.js?v=20261115i";
 import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261111x553";
 import { me, signIn } from "/auth.js?v=20261116a";
+import { mountVideoSlot } from "/videobox.js?v=20261121a";
 import { capture, take } from "/chatprefill.js?v=20261111b";
 const cities = Object.keys(CITY).sort(), IN_APP = /SoCalLightsApp/.test(navigator.userAgent);
 capture(SEASONS, cities); // arrived from the AI assistant's "Start this event" card: remember the values (they survive sign-in) and tidy the address bar
@@ -115,7 +116,9 @@ const steps = [
         head = j.duplicate ? "You already sent this event" : j.message; help = j.held === "unproven" ? "We could not find that address or match a web page to the event, so a person will check it before it goes on the map. It is not on the map yet." : "It is waiting for review, so it is not on the map yet."; next = row("A person looks it over.", "Nothing is public until it is approved.") + row("We email you.", "You hear from us when it is on the map, or if we need something from you.") + (IN_APP ? "" : row("Featuring comes after.", "You can feature it once it is on the map.")) + row("You can still change it.", "Open Your profile, find the event and choose Edit while you wait.");
         acts = btn("/profile#events", "See it in Your profile", true) + btn("/", "Back to the map") + btn("/add-event", "Add another event");
       }
-      api.finish(`<h1>${esc(head)}</h1><p class="help">${help}</p>${mail}${next ? `<div><h2 style="margin-bottom:6px">What happens next</h2><div class="list">${next}</div></div>` : ""}<div style="display:flex;gap:12px;flex-wrap:wrap">${acts}</div>`);
+      const vbox = live && j.submission_id ? `<div id="vslot" style="margin:18px 0"></div>` : ""; // an optional photo and video step for an event that is on the map now
+      api.finish(`<h1>${esc(head)}</h1><p class="help">${help}</p>${mail}${vbox}${next ? `<div><h2 style="margin-bottom:6px">What happens next</h2><div class="list">${next}</div></div>` : ""}<div style="display:flex;gap:12px;flex-wrap:wrap">${acts}</div>`);
+      if (vbox) mountVideoSlot(j.submission_id, { noun: "event", url: "/api/me/events/" + j.submission_id });
     } },
 ];
 const fmtD = (x) => { if (!x) return ""; const [y, m, dd] = x.split("-").map(Number); return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1] + " " + dd; };

@@ -4,7 +4,7 @@
 import { me, signIn, friendlyError, isNetError } from "/auth.js?v=20261116a";
 import { draftKey, purgeLegacyDrafts, savePhotos, loadPhotos, dropPhotos } from "/drafts-local.js?v=20261111z";
 import "/norm-ui.js?v=20261102b";
-import { inspectVideo, MAX_VIDEO_MB, MAX_VIDEO_SECONDS } from "/videobox.js?v=20261117d";
+import { inspectVideo, MAX_VIDEO_MB, MAX_VIDEO_SECONDS } from "/videobox.js?v=20261121a";
 import { CITY } from "/cities.js?v=20261115i";
 export const $ = (q, r = document) => r.querySelector(q);
 export const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

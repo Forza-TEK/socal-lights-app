@@ -7,9 +7,9 @@ import { livePaidOrders, paidPlacementConflict } from "../../../_lib/orders.js";
 
 // GET /api/admin/events/<id> — the paid placement fields of one event (the editor shows them next to the event; they are not part of the public events list) and the floor paid orders set.
 export async function onRequestGet({ params, env }) {
-  const e = await env.DB.prepare("SELECT featured, featured_until, banner_until FROM events WHERE id = ?").bind(params.id).first();
+  const e = await env.DB.prepare("SELECT featured, featured_until, banner_until, video, video_file, video_ok FROM events WHERE id = ?").bind(params.id).first();
   if (!e) return json({ featured: 0, featured_until: "", banner_until: "", floor: { featured: 0, featured_until: "", banner_until: "" } }, { headers: { "cache-control": "no-store" } });
-  return json({ featured: e.featured || 0, featured_until: e.featured_until || "", banner_until: e.banner_until || "", floor: await eventFloor(env.DB, params.id, ptToday()) }, { headers: { "cache-control": "no-store" } });
+  return json({ featured: e.featured || 0, featured_until: e.featured_until || "", banner_until: e.banner_until || "", video: e.video || "", video_file: e.video_file || "", video_ok: !!e.video_ok, floor: await eventFloor(env.DB, params.id, ptToday()) }, { headers: { "cache-control": "no-store" } });
 }
 
 export async function onRequestDelete({ request, params, env, data = {} }) {

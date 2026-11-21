@@ -1,7 +1,7 @@
 // Shared edit-form pieces for Profile, the installer page and the contest dashboard (the same layout the Admin edit windows use).
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 export { wireAreas };
-import { videoBoxHtml } from "/videobox.js?v=20261117d";
+import { videoBoxHtml } from "/videobox.js?v=20261121a";
 export { videoBoxHtml };
 if (!document.getElementById("forms-css")) { const l = document.createElement("link"); l.id = "forms-css"; l.rel = "stylesheet"; l.href = "/forms.css?v=20261117b"; document.head.appendChild(l); }
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -43,7 +43,7 @@ export function eventForm(e, { cancelAttr = "data-mcancel", cities = [], seasons
   const videoField = ff("Video link (optional)", inp("video", e.video, 'maxlength="300" type="url" placeholder="Paste a YouTube or Vimeo link"'), { c: "c6" });
   return `<form class="mform f" hidden novalidate>
     ${fsec("Event", "", ff("Event name", inp("name", e.name, 'maxlength="120"')) + (seasons.length ? ff("Season", sel("season", cur[0], seasons.map(([k, l]) => [k, l])), { c: "c3" }) + ff("Type", sel("type", e.type || "", Object.entries(cur[2]).map(([k, l]) => [k, l])), { c: "c3" }) : ""))}
-    ${livePhotos ? fsec("Photos and video", "Up to 4 photos, the first is the cover; they save as you add or remove them (no need to tap Save). Video: an optional YouTube or Vimeo link, saved with Save; it shows as a Watch the video button.", `<div class="ff c6" data-pbox>${photoBoxHtml(e, e.photos || [], { max: 4, live: true, noun: "event" })}</div>` + videoField) : fsec("Video", "An optional YouTube or Vimeo link. It shows as a Watch the video button on the event page.", videoField)}
+    ${livePhotos ? fsec("Photos and video", "Up to 4 photos, the first is the cover. Video: a short clip from your phone (up to about a minute) or a YouTube or Vimeo link. Photos and the video save as you add or remove them (no need to tap Save); a clip shows once it is approved, usually within a day.", `<div class="ff c6" data-pbox>${photoBoxHtml(e, e.photos || [], { max: 4, live: true, noun: "event" })}</div><div class="ff c6" data-vwrap>${videoBoxHtml(e, { noun: "event" })}</div>`) : fsec("Video", "An optional YouTube or Vimeo link. It shows as a Watch the video button on the event page.", videoField)}
     ${cities.length ? fsec("Where", "Changing the address moves the pin: it is looked up the same way as when you first added the event.", ff("City", sel("city", e.city || "", cities.map((c) => [c, c])), { c: "c3" }) + `<div class="ff c3 combo"><label>Street address<input data-k="address" data-addr value="${esc(e.address ?? "")}" maxlength="160" autocomplete="off"></label></div>`) : ""}
     ${fsec("When", "", ff("Starts", inp("start", e.start_date, 'type="date"'), { c: "c3" }) + ff("Ends", inp("end", e.end_date, 'type="date"'), { c: "c3" }) + ff("Hours", inp("hours", e.hours, 'maxlength="120" placeholder="6 to 10 pm nightly"')))}
     ${fsec("Where and price", "", ff("Venue", inp("venue", e.venue, 'maxlength="120"'), { c: "c4" }) + ff("Price (or Free)", inp("price", e.price, 'maxlength="80"'), { c: "c2" }))}

@@ -1,4 +1,4 @@
-// GET /api/admin/placements -> { today, events: { <event id>: { level, until, banner, orders: [{ plan, cents, status, at }] } } }
+// GET /api/admin/placements -> { today, clips: { <event id>: 1 approved | 0 waiting }, events: { <event id>: { level, until, banner, orders: [{ plan, cents, status, at }] } } }
 // What each event has bought, for the Events list (Paid column and the Paid tab): the Featured pin (events.featured >= 1), top of the list (featured 2), the banner (events.banner_until),
 // each with its last day, plus every order recorded for the event. Behind requireAdmin like all of /api/admin.
 import { json } from "../../_lib/util.js";
@@ -11,5 +11,6 @@ export async function onRequestGet({ env }) {
   for (const r of live) { const x = get(r.id); x.level = r.featured >= 2 ? 2 : r.featured > 0 ? 1 : 0; x.until = r.featured_until || ""; x.banner = r.banner_until || ""; }
   const orders = (await env.DB.prepare("SELECT event_id, plan, amount, status, created_at FROM feature_orders WHERE target = 'event' ORDER BY created_at DESC").all().catch(() => ({ results: [] }))).results;
   for (const o of orders) get(o.event_id).orders.push({ plan: o.plan, cents: o.amount, status: o.status || "paid", at: String(o.created_at || "").slice(0, 10) });
-  return json({ today, events }, { headers: { "cache-control": "no-store" } });
+  const clips = (await env.DB.prepare("SELECT id, video_ok FROM events WHERE video_file != ''").all().catch(() => ({ results: [] }))).results;
+  return json({ today, events, clips: Object.fromEntries(clips.map((c) => [c.id, c.video_ok ? 1 : 0])) }, { headers: { "cache-control": "no-store" } });
 }

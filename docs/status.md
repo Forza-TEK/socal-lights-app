@@ -1,5 +1,14 @@
 # Status
 
+### Events: video clip upload (Nov 21)
+Rey: events need a way for people to upload a photo or video. What existed: the event's organizer could add up to 4 photos (Your profile > Edit the event, once the event is on the map) and paste a YouTube or Vimeo link; there was no clip upload and the Add an event form offered neither. Now:
+- **Video clip for events**, same rules as a home's (40 MB, about a minute, MP4/MOV/WebM, checked in the browser). Migration `0284_event_video_clip.sql` (events.video_file, video_ok). `PUT /api/me/events/<submission id>` uploads; the shared video box in the organizer's Edit form (Photos and video section) handles clip, link and Remove (`link` / `remove` actions). A link and a clip replace each other. The clip waits for Admin's approval; the organizer can watch it meanwhile (`/api/photo/ev/<eventId>/...`, Range supported).
+- **Add an event "you're done" screen** (when the event is on the map): an optional video box (`#vslot`) for the event just added; photos stay in Your profile > Edit (the done screen's next-steps text says so).
+- **Admin:** Events has a "Videos waiting" tab (count) and a "Video waiting" tag on the row; the event editor has a Video section (watch, Approve, Remove) via `POST /api/admin/event-video`; the Dashboard shows an "event video waiting for approval" card.
+- **Public:** an approved clip shows as a "Watch the video" button on the event card (`vf`, detail-only like `vid`).
+- Tests: `tests/event-clip.test.mjs` (2) plus updated form and version pins; 1206 pass. Versions: `app.js` 20261121c, `forms.js` / `videobox.js` 20261121a, `addflow.js` 20261121b, `admin.js` 20261121g.
+Not done: photo upload on the Add an event form itself (the event does not exist yet to attach photos to); the Edit form is where photos live. Not checked: a real phone upload end to end (the test covers the API and the browser check covers Admin).
+
 ### Day / night now follows the Pacific sun, not the device setting (Nov 21)
 Rey: night mode showed in daytime. Cause: the rule was "dark from 6 pm to 6 am by the device clock, OR whenever the device itself is set to dark", so a phone or computer in dark mode kept the site dark all day. Now every page (the head script in 32 pages, `functions/_lib/shell.js`, `public/app.js`, `public/chrome.js`, the offline page) uses one rule: dark between sunset and sunrise for Los Angeles on the Pacific clock (a day-length formula, within about ten minutes of the real times; tested against known Nov, Dec and Jun sunrise/sunset), light otherwise, whatever the device says. The sun/moon button still overrides until the next sunrise or sunset; an open page flips by itself (checked each minute). Test updated: `tests/seo-landing.test.mjs`. Versions: `app.js`, `chrome.js`, `addflow.js`, `appshell.js` 20261121.
 

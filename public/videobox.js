@@ -54,12 +54,12 @@ export function wireVideoBox(root, { item, url, noun = "home", friendly = (e) =>
 }
 
 // On the "you're done" screen of the add forms: an optional video box for the home or entry that was just created. The screen has an empty <div id="vslot"></div> for it.
-export function mountVideoSlot(id, { noun = "home", friendly } = {}) {
+export function mountVideoSlot(id, { noun = "home", friendly, url } = {}) {
   const put = () => {
     const slot = document.getElementById("vslot"); if (!slot || slot.dataset.ready) return !!slot;
     slot.dataset.ready = "1"; const item = { id };
     slot.innerHTML = `<h2 style="margin-bottom:6px">Add a video <span class="muted" style="font-weight:400">(optional)</span></h2><p class="help" style="margin:0 0 10px">A short clip of your lights, up to about a minute, or a YouTube or Vimeo link. You can also add or change it later from Your profile.</p>${videoBoxHtml(item, { noun })}`;
-    wireVideoBox(slot, { item, url: "/api/me/video/" + id, noun, ...(friendly ? { friendly } : {}) }); return true;
+    wireVideoBox(slot, { item, url: url || "/api/me/video/" + id, noun, ...(friendly ? { friendly } : {}) }); return true;
   };
   if (!put()) requestAnimationFrame(() => { if (!put()) setTimeout(put, 200); });
 }

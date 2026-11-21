@@ -1,7 +1,7 @@
 // SoCal Lights admin: review houses, manage published posts, edit events.
 import { CITY } from "/cities.js?v=20261115i";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261115a";
-import { attachAddress } from "/addflow.js?v=20261121a";
+import { attachAddress } from "/addflow.js?v=20261121b";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261116b";
 import { renderHelp } from "/admin/help.js?v=20261116b";
@@ -682,8 +682,21 @@ const viewLink = (id) => `<a class="btn ghost" href="/e/${encodeURIComponent(id)
 const evBody = (e, over = {}) => ({ id: e.id, season: e.sn || "christmas", name: e.n, county: e.c, city: e.city, type: e.t, start: e.s, end: e.e, status: e.st === "c" ? "confirmed" : "expected", free: !!e.free, price: e.p, hours: e.h, lat: e.lat, lng: e.lng, blurb: e.b, url: e.u, venue: e.v, address: e.a, ...over });
 const evFiltered = () => {
   const w = EVQ.toLowerCase().split(/\s+/).filter(Boolean), test = healthTest(EVHEALTH);
-  return EVENTS.filter((e) => (evSeason === "all" || (e.sn || "christmas") === evSeason) && (!EVSTATUS || e.st === EVSTATUS) && (EVVIEW !== "grok" || String(e.id).startsWith("grok-")) && (EVVIEW !== "paid" || (placeInfo(e.id) || {}).on) && (EVVIEW !== "ended" || e.e < TODAY) && (!EVCOUNTY || e.c === EVCOUNTY) && (!test || test(e, TODAY)) && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x))).sort(EVCMP[EVSORT] || EVCMP.date);
+  return EVENTS.filter((e) => (evSeason === "all" || (e.sn || "christmas") === evSeason) && (!EVSTATUS || e.st === EVSTATUS) && (EVVIEW !== "grok" || String(e.id).startsWith("grok-")) && (EVVIEW !== "paid" || (placeInfo(e.id) || {}).on) && (EVVIEW !== "video" || (PLACE.clips && PLACE.clips[e.id] === 0)) && (EVVIEW !== "ended" || e.e < TODAY) && (!EVCOUNTY || e.c === EVCOUNTY) && (!test || test(e, TODAY)) && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x))).sort(EVCMP[EVSORT] || EVCMP.date);
 };
+// The event editor's Video section: the uploaded clip (watch it, Approve, Remove) or the link.
+function paintEvVid(ev, p) {
+  const box = $("#evVid"); if (!box) return;
+  const file = p.video_file, link = p.video, rm = '<button type="button" class="btn ghost danger" data-evvid="remove">Remove video</button>';
+  box.innerHTML = file ? `<video controls playsinline preload="metadata" src="/api/admin/photo/${esc(file)}" style="display:block;max-width:420px;width:100%;border-radius:10px;background:#000;margin:0 0 8px"></video><p class="meta" style="margin:0 0 8px">${p.video_ok ? "Approved: visitors can watch it." : "Waiting for your approval. Visitors cannot see it yet."}</p>${p.video_ok ? "" : '<button type="button" class="btn ice" data-evvid="approve">Approve video</button> '}${rm}`
+    : link ? `<p style="margin:0 0 8px">Link (shown at once): <a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a></p>${rm}` : '<p class="meta" style="margin:0">No video.</p>';
+  box.querySelectorAll("[data-evvid]").forEach((b) => (b.onclick = async () => {
+    if (b.dataset.evvid === "remove" && !tap(b, "remove the video")) return;
+    b.disabled = true;
+    try { await api("/api/admin/event-video", { method: "POST", body: JSON.stringify({ id: ev.id, action: b.dataset.evvid }) }); toast(b.dataset.evvid === "approve" ? "Video approved" : "Video removed"); paintEvVid(ev, await api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" })); refreshCounts(); }
+    catch (x) { b.disabled = false; toast(x.message, true); }
+  }));
+}
 // What each event has bought (pin, top of the list, banner) from /api/admin/placements; "active" means today is on or before the last day.
 let PLACE = { today: "", events: {} };
 const placeInfo = (id) => {
@@ -698,6 +711,7 @@ const placeCell = (id) => {
   return p.orders.length ? `<span class="tag">Ended</span><span class="sub">${p.orders.length} past purchase${p.orders.length === 1 ? "" : "s"}</span>` : '<span class="sub">None</span>';
 };
 async function renderEvents() {
+  if (PVIEW === "video") { EVVIEW = "video"; EVSTATUS = ""; PVIEW = "pending"; } // the Dashboard card "event videos waiting"
   const [evs, pl] = await Promise.all([fetch("/api/admin/events", { cache: "no-store" }).then((r) => r.json()), api("/api/admin/placements").catch(() => null)]);
   EVENTS = evs; if (pl) PLACE = pl;
   const main = $("#main");
@@ -705,7 +719,7 @@ async function renderEvents() {
   const seasonSel = sel("evSeason", "Season", [["all", "All seasons"], ...Object.entries(SEASONS).map(([k, v]) => [k, v.label])], evSeason);
   const filters = seasonSel + sel("evCounty", "County", [["", "All counties"], ...COUNTIES.map((c) => [c, c + " County"])], EVCOUNTY)
     + sel("evHealth", "Needs a look", [["", "Everything"], ...HEALTH.map(([k, l]) => [k, l])], EVHEALTH) + sortSelect(EVSORTS, EVSORT);
-  const paidN = EVENTS.filter((e) => (placeInfo(e.id) || {}).on).length, evTabs = [["", "All events"], ["e", "Expected"], ["c", "Confirmed"], ["paid", "Paid placements" + (paidN ? " " + paidN : "")], ["grok", "From Grok"], ["ended", "Ended"]], evOn = () => EVVIEW || EVSTATUS;
+  const paidN = EVENTS.filter((e) => (placeInfo(e.id) || {}).on).length, vidN = EVENTS.filter((e) => PLACE.clips && PLACE.clips[e.id] === 0).length, evTabs = [["", "All events"], ["e", "Expected"], ["c", "Confirmed"], ["paid", "Paid placements" + (paidN ? " " + paidN : "")], ["video", "Videos waiting" + (vidN ? " " + vidN : "")], ["grok", "From Grok"], ["ended", "Ended"]], evOn = () => EVVIEW || EVSTATUS;
   main.innerHTML = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show events">${evTabs.map(([k, l]) => `<button type="button" data-view="${k || "all"}" aria-pressed="${k === evOn()}">${l}</button>`).join("")}</div></div>
     <div class="pghead"><div><h2>Events</h2><p>Every event on the public map. Open a row to see and edit the full record.</p></div><button type="button" class="btn ice" id="addEv">Add an event</button></div>`
     + toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: `<details class="fbox" id="evFbox" open><summary>Filters</summary>${filters}<a class="btn ghost" id="evDl" href="/api/admin/export?type=events${evSeason === "all" ? "" : "&season=" + evSeason}" download>Download CSV</a></details>`, count: "" })
@@ -730,7 +744,7 @@ async function renderEvents() {
     const srcOf = (id) => (String(id).startsWith("grok-") ? "Grok" : String(id).startsWith("u-") ? "Organizer" : String(id).startsWith("hcontest-") ? "Contest" : "Sweep");
     $("#evlist").innerHTML = all.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th class="cb"><input type="checkbox" id="evAllH" aria-label="Select all ${all.length} shown by the filters" ${all.length > 0 && all.every((e) => EVSEL.has(e.id)) ? "checked" : ""}></th><th>Event</th><th>City</th><th>Dates</th><th>Status</th><th>Paid placement</th><th class="ac">Actions</th></tr></thead><tbody>${shown.map((e) => `<tr class="${e.e < TODAY ? "past" : ""}" data-eid="${esc(e.id)}"><td class="cb"><input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}></td>
       <td><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">${esc(e.n)}</a><span class="sub">${esc(e.v || "")}</span></td><td>${esc(e.city)}<span class="sub">${esc(e.c)}</span></td><td>${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}<span class="sub">${esc(e.h || e.p || "")}</span></td>
-      <td><span class="tag ${e.st === "c" ? "ok" : "warn"}">${e.st === "c" ? "Confirmed" : "Expected"}</span>${e.e < TODAY ? ' <span class="tag">Ended</span>' : ""}<span class="sub">Source: ${srcOf(e.id)}</span></td><td>${placeCell(e.id)}</td><td class="ac"><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">Edit</a> · <a class="rl" href="/e/${encodeURIComponent(e.id)}" target="_blank" rel="noopener">View card</a></td></tr>`).join("")}</tbody></table></div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : `<div class="pager"><span class="meta">${all.length} event${all.length === 1 ? "" : "s"}</span></div>`}</div>` : `<div class="empty">${EVQ || EVSTATUS || EVVIEW || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
+      <td><span class="tag ${e.st === "c" ? "ok" : "warn"}">${e.st === "c" ? "Confirmed" : "Expected"}</span>${e.e < TODAY ? ' <span class="tag">Ended</span>' : ""}${PLACE.clips && PLACE.clips[e.id] === 0 ? ' <span class="tag warn">Video waiting</span>' : ""}<span class="sub">Source: ${srcOf(e.id)}</span></td><td>${placeCell(e.id)}</td><td class="ac"><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">Edit</a> · <a class="rl" href="/e/${encodeURIComponent(e.id)}" target="_blank" rel="noopener">View card</a></td></tr>`).join("")}</tbody></table></div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : `<div class="pager"><span class="meta">${all.length} event${all.length === 1 ? "" : "s"}</span></div>`}</div>` : `<div class="empty">${EVQ || EVSTATUS || EVVIEW || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
     $("#evlist").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = (x) => { x.preventDefault(); editEvent(EVENTS.find((y) => y.id === b.dataset.edit)); }));
     $("#evlist").querySelectorAll("[data-esel]").forEach((b) => (b.onchange = () => { b.checked ? EVSEL.add(b.dataset.esel) : EVSEL.delete(b.dataset.esel); paintBulk(); }));
     if ($("#evAllH")) $("#evAllH").onchange = (x) => { $("#evAll").checked = x.target.checked; $("#evAll").onchange({ target: $("#evAll") }); };
@@ -741,7 +755,7 @@ async function renderEvents() {
   wireToolbar(main.querySelector(".tbar"), { onSearch: (q) => { EVQ = q; EVLIMIT = evPage(); paint(); } });
   const refilter = () => { EVLIMIT = evPage(); $("#evDl").href = "/api/admin/export?type=events" + (evSeason === "all" ? "" : "&season=" + evSeason); paint(); };
   $("#evSeason").onchange = (x) => { evSeason = x.target.value; refilter(); };
-  main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { const k = b.dataset.view === "all" ? "" : b.dataset.view; EVSTATUS = k === "e" || k === "c" ? k : ""; EVVIEW = k === "grok" || k === "ended" || k === "paid" ? k : ""; main.querySelectorAll(".pgtabs [data-view]").forEach((o) => o.setAttribute("aria-pressed", String(o === b))); refilter(); }));
+  main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { const k = b.dataset.view === "all" ? "" : b.dataset.view; EVSTATUS = k === "e" || k === "c" ? k : ""; EVVIEW = k === "grok" || k === "ended" || k === "paid" || k === "video" ? k : ""; main.querySelectorAll(".pgtabs [data-view]").forEach((o) => o.setAttribute("aria-pressed", String(o === b))); refilter(); }));
   $("#evCounty").onchange = (x) => { EVCOUNTY = x.target.value; refilter(); };
   $("#evHealth").onchange = (x) => { EVHEALTH = x.target.value; refilter(); };
   main.querySelector("[data-sort]").onchange = (x) => { EVSORT = x.target.value; refilter(); };
@@ -787,6 +801,7 @@ function editEvent(ev) {
     ${fsec("Details", "", ff("eB", "Description", `<textarea id="eB" maxlength="600" rows="4">${esc(e.b)}</textarea>`) + ff("eU", "Event website", `<input id="eU" type="url" value="${esc(e.u)}" maxlength="300" placeholder="https://">`) + ff("eVid", "Video (YouTube or Vimeo link)", `<input id="eVid" type="url" value="${esc(e.vid || "")}" maxlength="300" placeholder="https://www.youtube.com/watch?v=...">`, { c: "c6" }))}
     ${ev ? fsec("Paid placement", "Featured: 1 is the gold pin and badge, 2 also lists the event first. Banner: the event is a pill labeled Featured in the strip at the top of the map list. Organizers buy these themselves at /feature (see Orders). A level or date set here can never be lower or earlier than a paid order that is still running. Leave a date empty for no end date (Featured) or to keep the banner off.",
       ff("eFl", "Featured level", `<select id="eFl" disabled><option value="0">Off</option><option value="1">1: pin and badge</option><option value="2">2: also listed first</option></select>`, { c: "c2" }) + ff("eFu", "Featured until", `<input id="eFu" type="date" disabled>`, { c: "c2" }) + ff("eBu", "Banner until", `<input id="eBu" type="date" disabled>`, { c: "c2", hint: "Loading…" })) : ""}
+    ${ev ? fsec("Video", "A YouTube or Vimeo link shows at once. An uploaded clip is hidden from visitors until you approve it here. Organizers add them from Your profile (Edit the event).", `<div class="ff c6" id="evVid"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
   </form></div>`;
   if (ev && tab !== "events") $("#evBack").lastChild.textContent = "Back";
@@ -813,7 +828,7 @@ function editEvent(ev) {
   const back = (x) => { if (x) x.preventDefault(); close(); if (tab === "events") renderEvents(); else render(); };
   $("#evBack").onclick = back; main.querySelector("[data-mcancel]").onclick = back;
   let placed = false; // the paid placement fields are sent only once they have loaded, so a failed load can never wipe a placement
-  if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
+  if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; paintEvVid(ev, p); }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
   if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Delete anyway", danger: true }))) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted", false, { undo: () => restoreEvents([ev.id]) }); if (tab === "events") renderEvents(); else render(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");
@@ -1079,7 +1094,7 @@ async function renderDashboard() {
   const a = d.attention, todo = [
     ["pending", a.waitHomes, "house", "waiting for your review"], ["subs", a.waitEvents, "event", "submitted, waiting for review"], ["contests", a.waitContests, "contest", "waiting for approval"],
     ["reports", a.reports, "report", "from visitors this week"], ["installers", a.claims, "installer claim", "on a home, to confirm"],
-    ["claims", a.eventClaims, "event claim", "waiting for a decision"], ["grok", a.grokHeld, "Grok item", "held for your review"], ["approved", a.waitVideos, "video", "waiting for approval", "videos"],
+    ["claims", a.eventClaims, "event claim", "waiting for a decision"], ["grok", a.grokHeld, "Grok item", "held for your review"], ["approved", a.waitVideos, "home video", "waiting for approval", "videos"], ["events", a.waitEventVideos, "event video", "waiting for approval", "video"],
   ].filter((t) => t[1] > 0);
   const tile = (k, n, l, more = "") => `<div class="stat"><b>${fmt(n)}</b><span>${l}</span>${more ? `<small class="meta">${more}</small>` : ""}</div>`;
   const kindTab = { home: "pending", event: "subs" };
