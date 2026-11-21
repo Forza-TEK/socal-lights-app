@@ -1,5 +1,12 @@
 # Status
 
+### Admin audit round 3, part 1: cover photos on list rows, View listing in Your profile (Nov 21)
+Rey: a cover photo on all list views in Admin and Your profile, and a "view the listing as an outside visitor would see it" button in Your profile.
+- **Admin lists** now start each row with a 48px cover photo (a camera icon when there is none): Events (the organizer's first photo, else the picture found on the event's page), Houses (waiting, declined, published) and contest entries (first photo, through the admin photo route so pending ones show too), Submitted events, Event claims and Orders (new `cover` field from `functions/_lib/cover.js`), and From Grok rows (the photo link Grok sent). Styles `.rthumb` / `.tcell` in `admin.css`.
+- **Your profile**: homes, contest entries and events get the same cover photo (shown once the listing is live, since photos are private before that) and a **View listing** button that opens the public page in a new tab (home: the map card `/#h-<id>`, entry: the contest page, event: `/e/<id>`); only live listings have one. The overview API now sends the entry photos and the event's linked picture.
+- Tests 1206 pass. Versions: `admin.js` 20261121h, `admin.css` 20261121c, `grok.js` 20261121a, `profile.css` 20261121a. Not checked: a signed-in profile on a real account (script parses and loads; Admin lists checked in a browser).
+Round 3 still open: list an event's purchases on its record page; the remaining Admin pages on a phone; phone landscape.
+
 ### Paid pins are pulsing gold star badges (Nov 21)
 Rey: a paid (featured) pin was only a slightly bigger green dot and hardly showed. Now every featured event and featured home is a gold star badge (34px, white ring, shadow) with two slow pulsing gold rings, drawn as page elements on top of the map (`drawFeatured`, `.fmark` in `styles.css`): always visible at every zoom, never merged into a cluster, tappable (opens the card), accessible label "Featured: <name>". CSS animation only (no per-frame JS); reduced-motion users get a still ring. Ordinary pins are unchanged. Up to 40 at once (top-of-list placements first). The plain `pt` layer no longer draws featured ones. `app.js` 20261121d, `styles.css` 20261121a; first-screen size budget raised to 471,000 bytes. Checked in a browser on phone and desktop with two featured events; not on a real phone.
 
