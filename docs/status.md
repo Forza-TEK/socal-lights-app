@@ -1,5 +1,8 @@
 # Status
 
+### Paid pins are pulsing gold star badges (Nov 21)
+Rey: a paid (featured) pin was only a slightly bigger green dot and hardly showed. Now every featured event and featured home is a gold star badge (34px, white ring, shadow) with two slow pulsing gold rings, drawn as page elements on top of the map (`drawFeatured`, `.fmark` in `styles.css`): always visible at every zoom, never merged into a cluster, tappable (opens the card), accessible label "Featured: <name>". CSS animation only (no per-frame JS); reduced-motion users get a still ring. Ordinary pins are unchanged. Up to 40 at once (top-of-list placements first). The plain `pt` layer no longer draws featured ones. `app.js` 20261121d, `styles.css` 20261121a; first-screen size budget raised to 471,000 bytes. Checked in a browser on phone and desktop with two featured events; not on a real phone.
+
 ### Events: video clip upload (Nov 21)
 Rey: events need a way for people to upload a photo or video. What existed: the event's organizer could add up to 4 photos (Your profile > Edit the event, once the event is on the map) and paste a YouTube or Vimeo link; there was no clip upload and the Add an event form offered neither. Now:
 - **Video clip for events**, same rules as a home's (40 MB, about a minute, MP4/MOV/WebM, checked in the browser). Migration `0284_event_video_clip.sql` (events.video_file, video_ok). `PUT /api/me/events/<submission id>` uploads; the shared video box in the organizer's Edit form (Photos and video section) handles clip, link and Remove (`link` / `remove` actions). A link and a clip replace each other. The clip waits for Admin's approval; the organizer can watch it meanwhile (`/api/photo/ev/<eventId>/...`, Range supported).
