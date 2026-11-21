@@ -90,6 +90,23 @@ Follow `docs/city-sweep.md`, `docs/sweep-methods.md` and `docs/blocked-sites.md`
 
 New watchlist venues and blocked sites go to Claude as a request in `docs/handoff/to-claude/`. Grok does not edit `docs/watchlist.json` or `docs/blocked-sites.md`.
 
+## 2026-11-21
+
+Empty cities: 154 → 150 (Signal Hill, Meiners Oaks, Lynwood, Elfin Forest filled).
+
+Parent sources checked for small/unincorporated places:
+- Ventura County Library calendar (keyword sweep): **Meiners Oaks** found (Winter Break Crafts & Games, published). Saticoy, Oak View, Piru and El Rio branches: nothing seasonal posted yet.
+- LA County Library Communico feed (45 days): **Lynwood** found (Winter Solstice Canvas Art, published); Sunkist Library (La Puente) Noon Year's Eve published. Other LACL branches in empty cities (Walnut Park, Valinda, etc.) had nothing seasonal.
+- San Diego County Parks tockify calendar: nothing new beyond existing rows.
+- Isla Vista Rec & Park District: 2026 holiday lighting date TBD (queued for browser).
+- Santa Maria Public Library, Guadalupe and Cuyama branches: nothing found.
+- Signal Hill city calendar: **Signal Hill** found (Santa's Workshop at Signal Hill Public Library, published).
+- Lynwood city calendar: December empty; Candy Cane Lane parade has an entry application only.
+- Elfin Forest Recreational Reserve (Olivenhain MWD): **Elfin Forest** found (New Year's Day guided hike, published).
+- parks.ca.gov park pages (Cuyamaca, Anza-Borrego, Bolsa Chica, Torrey Pines, Los Encinos): titles and dates only; details are in the JS events app (queued).
+- La Habra Heights and Rolling Hills calendar URLs return 404; Bradbury home page shows no events.
+- Temecula home-display map: publishes the week of Dec 7; check on the next run after that.
+
 ## Coverage update — 2026-11-18 (Grok sweep)
 
 Empty cities: 183 at start → 171 after (work order re-fetch, 2026-11-18).
