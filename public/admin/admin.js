@@ -424,7 +424,7 @@ $("#main").addEventListener("click", async (e) => {
 });
 
 /* ---------- Featured orders: money that needs the owner (refunds to make, disputes, placements that did not apply) ---------- */
-let OVIEW = "attention", OORDER = "";
+let OVIEW = "attention", OORDER = "", OPICKED = false; // OPICKED: once the person chooses a tab, stop choosing for them
 const OFLAG = { refund_due: ["Refund due", "bad"], disputed: ["Disputed", "bad"], held: ["Partial refund", "warn"], unapplied: ["Not applied", "bad"], differs: ["Placement differs", "warn"], mismatch: ["Amount differs", "warn"], note: ["See note", "warn"], cancelled: ["Event cancelled", "warn"] };
 // Event plans (current: ev_*; old: pin, top, season stay for orders already paid) and what each contains. Installer plans have their own names (INST_PLAN).
 const PLAN_NAME = { ev_pin: "Featured pin", ev_banner: "Banner + Featured pin", ev_top: "Top of the list + Featured pin", ev_all: "Top of the list + Banner + Featured pin", pin: "Featured pin (old plan)", top: "Top of the list (old plan)", season: "Full run (old plan)" };
@@ -435,6 +435,7 @@ const money = (c, cur) => (c == null ? "" : (cur && cur !== "usd" ? cur.toUpperC
 async function renderOrders() {
   const main = $("#main"), all = await api("/api/admin/orders"), rn = await api("/api/admin/renewals").catch(() => null), rv = await api("/api/admin/revenue?days=30").catch(() => null);
   const RG = { upcoming: ["Upcoming", "ok"], failed: ["Charge failed", "bad"], overdue: ["Overdue: run the job", "bad"], lapsed: ["Lapsed", "bad"], paused: ["Paused", "warn"], cancelled: ["Cancelled", ""] };
+  if (OVIEW === "attention" && !OPICKED && !all.some((o) => o.flags.length)) OVIEW = all.length ? "all" : "attention"; // nothing needs you: open on the full list instead of an empty page
   const need = all.filter((o) => o.flags.length), rows = OVIEW === "attention" ? need : OVIEW === "paid" ? all.filter((o) => o.status === "paid") : OVIEW === "closed" ? all.filter((o) => o.status !== "paid") : all;
   setCount("orders", need.length);
   const rnRows = rn && rn.rows.length ? rn.rows : [];
@@ -468,15 +469,16 @@ async function renderOrders() {
   const tabs = [["attention", "Needs attention", need.length], ["paid", "Paid", all.filter((o) => o.status === "paid").length], ["closed", "Refunded and disputed", all.filter((o) => o.status !== "paid").length], ["all", "All", all.length], ["renewals", "Renewals", rnRows.length]];
   const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === OVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
     <div class="pghead"><div><h2>Orders</h2><p>${OVIEW === "renewals" ? "Automatic installer renewals. Read-only." + (rn ? ` ${rn.counts.upcoming} upcoming, ${rn.counts.overdue} overdue, ${rn.counts.failed} failed, ${rn.counts.lapsed} lapsed, ${rn.counts.paused} paused.` : "") : "Featured placements and passes people paid for. Open one to see the payment, mark a refund or add a note."}</p></div></div>`;
-  const wire = () => { wireToolbar(main, { onView: (v) => { OVIEW = v; renderOrders(); }, onSearch: (q) => filterCards(main, q) }); main.querySelectorAll("[data-oopen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); OORDER = a.dataset.oopen; renderOrders(); })); };
+  const wire = () => { wireToolbar(main, { onView: (v) => { OVIEW = v; OPICKED = true; renderOrders(); }, onSearch: (q) => filterCards(main, q) }); main.querySelectorAll("[data-oopen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); OORDER = a.dataset.oopen; renderOrders(); })); };
   if (OVIEW === "renewals") {
     main.innerHTML = revenueStrip(rv) + head + toolbar({ search: { placeholder: "Search installers" }, count: String(rnRows.length) }) + (rnRows.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Installer</th><th>Plan</th><th>Next charge</th><th>Reminder sent</th><th>Retry</th><th>Status</th></tr></thead><tbody>${rnRows.map((r) => { const g = RG[r.group] || [r.group, ""]; return `<tr><td><b>${esc(r.name || r.installer_id)}</b><span class="sub">${esc(r.last_error || "")}</span></td><td>${esc(INST_PLAN[r.plan] || "Banner")}<span class="sub">${esc(money(r.price_cents))}</span></td><td>${esc(r.next_charge_date || "")}</td><td>${r.notice_sent_for ? "yes" : "not yet"}</td><td>${esc(r.retry_at || "")}</td><td><span class="tag ${g[1]}">${esc(g[0])}</span></td></tr>`; }).join("")}</tbody></table></div></div>` : `<div class="empty">No automatic renewals.</div>`);
     wire(); return;
   }
   const bar = toolbar({ search: { placeholder: "Search events, emails" }, count: String(rows.length) });
   if (!rows.length) { main.innerHTML = revenueStrip(rv) + head + bar + `<div class="empty">${OVIEW === "attention" ? "Nothing needs you. Refunds you still have to make, disputes, partial refunds and placements that did not switch on show up here." : "No orders here yet."}</div>`; wire(); return; }
+  const listingOf = (o) => (o.target === "event" ? "/e/" + encodeURIComponent(o.event_id) : o.target === "installer" && o.inst_slug ? "/installer/" + encodeURIComponent(o.inst_slug) : ""); // the public page this order paid for, one tap from the list
   const kind = (o) => (o.target === "event_partner" ? "Event Partner" : o.target === "contest_pass" ? "Contest pass" : o.target === "home" ? "Featured home" : o.target === "installer" ? "Installer" : "Event");
-  main.innerHTML = revenueStrip(rv) + head + bar + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Order</th><th>Type</th><th>Amount</th><th>Buyer</th><th>Status</th><th>Date</th><th class="ac">Actions</th></tr></thead><tbody>${rows.map((o) => { const d = oData(o), nm = o.target === "contest_pass" || o.target === "event_partner" ? orgLabelOf(o.event_id) : o.name || o.event_id; return `<tr data-oid="${esc(o.session_id)}" data-onote="${esc(o.note || "")}" data-name="${esc(nm)}"><td><a class="rl" href="#orders" data-oopen="${esc(o.session_id)}">${esc(nm)}</a><span class="sub">${esc(o.city || "")}</span></td><td>${kind(o)}<span class="sub">${esc(o.target === "installer" ? INST_PLAN[o.plan] || o.plan : PLAN_NAME[o.plan] || "")}</span></td><td>${esc(money(o.amount, o.currency))}</td><td><span style="user-select:all">${esc(o.email || "")}</span></td><td>${d.tags.filter((t, i) => i === 0 || o.flags.includes(t[0]) || true).slice(0, 1).map(([l, t]) => `<span class="tag ${t || ""}">${esc(l)}</span>`).join("")}${o.flags.filter((f) => !(f === "refund_due" || f === "disputed" || f === "held")).map((f) => OFLAG[f] || [f, "warn"]).map(([l, t]) => ` <span class="tag ${t}">${esc(l)}</span>`).join("")}</td><td>${esc((o.created_at || "").slice(0, 16))} UTC</td><td class="ac"><a class="rl" href="#orders" data-oopen="${esc(o.session_id)}">Open</a> ${d.main.replace('class="btn ice"', 'class="btn ice sm"')}</td></tr>`; }).join("")}</tbody></table></div><div class="pager"><span class="meta">${rows.length} order${rows.length === 1 ? "" : "s"}</span></div></div>`;
+  main.innerHTML = revenueStrip(rv) + head + bar + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Order</th><th>Type</th><th>Amount</th><th>Buyer</th><th>Status</th><th>Date</th><th class="ac">Actions</th></tr></thead><tbody>${rows.map((o) => { const d = oData(o), nm = o.target === "contest_pass" || o.target === "event_partner" ? orgLabelOf(o.event_id) : o.name || o.event_id; return `<tr data-oid="${esc(o.session_id)}" data-onote="${esc(o.note || "")}" data-name="${esc(nm)}"><td><a class="rl" href="#orders" data-oopen="${esc(o.session_id)}">${esc(nm)}</a><span class="sub">${esc(o.city || "")}</span></td><td>${kind(o)}<span class="sub">${esc(o.target === "installer" ? INST_PLAN[o.plan] || o.plan : PLAN_NAME[o.plan] || "")}</span></td><td>${esc(money(o.amount, o.currency))}</td><td><span style="user-select:all">${esc(o.email || "")}</span></td><td>${d.tags.filter((t, i) => i === 0 || o.flags.includes(t[0]) || true).slice(0, 1).map(([l, t]) => `<span class="tag ${t || ""}">${esc(l)}</span>`).join("")}${o.flags.filter((f) => !(f === "refund_due" || f === "disputed" || f === "held")).map((f) => OFLAG[f] || [f, "warn"]).map(([l, t]) => ` <span class="tag ${t}">${esc(l)}</span>`).join("")}</td><td>${esc((o.created_at || "").slice(0, 16))} UTC</td><td class="ac"><a class="rl" href="#orders" data-oopen="${esc(o.session_id)}">Open</a>${listingOf(o) ? ` · <a class="rl" href="${esc(listingOf(o))}" target="_blank" rel="noopener" aria-label="View the listing on the site (opens in a new tab)">View listing</a>` : ""} ${d.main.replace('class="btn ice"', 'class="btn ice sm"')}</td></tr>`; }).join("")}</tbody></table></div><div class="pager"><span class="meta">${rows.length} order${rows.length === 1 ? "" : "s"}</span></div></div>`;
   wire();
 }
 function askNote(title, value) {
@@ -648,6 +650,19 @@ $("#main").addEventListener("click", async (e) => {
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; toast(err.message, true); }
 });
 
+/* ---------- labels on every table ---------- */
+// On a phone a table turns into one card per row and its header row is hidden, so each cell takes its column's name as a label (admin.css prints it in front of the value).
+// Done here once for every table, whichever page built it. The first column is the row's title and the Actions column is buttons, so neither gets one.
+function labelTables(root) {
+  (root || document).querySelectorAll("table.dtab").forEach((t) => {
+    const heads = [...t.querySelectorAll("thead th")].map((h) => (h.classList.contains("cb") || h.classList.contains("ac") ? "" : h.textContent.trim()));
+    const title = heads.findIndex(Boolean); if (title < 0) return; // the first named column is the row's title: no label
+    t.querySelectorAll("tbody tr").forEach((tr) => [...tr.children].forEach((td, i) => { if (i > title && heads[i] && !td.hasAttribute("data-label") && !td.classList.contains("cb") && !td.classList.contains("ac")) td.setAttribute("data-label", heads[i]); }));
+  });
+}
+let labelRaf = 0;
+new MutationObserver(() => { cancelAnimationFrame(labelRaf); labelRaf = requestAnimationFrame(() => labelTables($("#main"))); }).observe($("#main"), { childList: true, subtree: true });
+
 /* ---------- events ---------- */
 let EVQ = "", EVLIMIT = 0, EVSORT = "date", EVSTATUS = "", EVCOUNTY = "", EVHEALTH = "", EVVIEW = ""; // EVVIEW: "", "grok" or "ended" (the other tabs use EVSTATUS)
 const EVSEL = new Set(); // ids ticked for a bulk action; kept across pages, filters and searches until an action runs or Clear is tapped
@@ -667,16 +682,30 @@ const viewLink = (id) => `<a class="btn ghost" href="/e/${encodeURIComponent(id)
 const evBody = (e, over = {}) => ({ id: e.id, season: e.sn || "christmas", name: e.n, county: e.c, city: e.city, type: e.t, start: e.s, end: e.e, status: e.st === "c" ? "confirmed" : "expected", free: !!e.free, price: e.p, hours: e.h, lat: e.lat, lng: e.lng, blurb: e.b, url: e.u, venue: e.v, address: e.a, ...over });
 const evFiltered = () => {
   const w = EVQ.toLowerCase().split(/\s+/).filter(Boolean), test = healthTest(EVHEALTH);
-  return EVENTS.filter((e) => (evSeason === "all" || (e.sn || "christmas") === evSeason) && (!EVSTATUS || e.st === EVSTATUS) && (EVVIEW !== "grok" || String(e.id).startsWith("grok-")) && (EVVIEW !== "ended" || e.e < TODAY) && (!EVCOUNTY || e.c === EVCOUNTY) && (!test || test(e, TODAY)) && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x))).sort(EVCMP[EVSORT] || EVCMP.date);
+  return EVENTS.filter((e) => (evSeason === "all" || (e.sn || "christmas") === evSeason) && (!EVSTATUS || e.st === EVSTATUS) && (EVVIEW !== "grok" || String(e.id).startsWith("grok-")) && (EVVIEW !== "paid" || (placeInfo(e.id) || {}).on) && (EVVIEW !== "ended" || e.e < TODAY) && (!EVCOUNTY || e.c === EVCOUNTY) && (!test || test(e, TODAY)) && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x))).sort(EVCMP[EVSORT] || EVCMP.date);
+};
+// What each event has bought (pin, top of the list, banner) from /api/admin/placements; "active" means today is on or before the last day.
+let PLACE = { today: "", events: {} };
+const placeInfo = (id) => {
+  const x = PLACE.events[id]; if (!x) return null; const t = PLACE.today;
+  const pin = x.level >= 1 && (!x.until || x.until >= t), top = x.level >= 2 && pin, ban = !!x.banner && x.banner >= t;
+  const paid = x.orders.filter((o) => ["paid", "held", "refund_due", "disputed"].includes(o.status));
+  return { pin, top, ban, on: pin || top || ban, until: [pin || top ? x.until : "", ban ? x.banner : ""].filter(Boolean).sort().pop() || "", orders: x.orders, paid, cents: paid.reduce((n, o) => n + (o.cents || 0), 0) };
+};
+const placeCell = (id) => {
+  const p = placeInfo(id); if (!p) return '<span class="sub">None</span>';
+  if (p.on) return [p.pin && "Pin", p.top && "Top of list", p.ban && "Banner"].filter(Boolean).map((t) => `<span class="tag ok">${t}</span>`).join(" ") + `<span class="sub">until ${esc(pdate(p.until) || "season end")}${p.cents ? " · " + usdOf(p.cents) + " paid" : ""}</span>`;
+  return p.orders.length ? `<span class="tag">Ended</span><span class="sub">${p.orders.length} past purchase${p.orders.length === 1 ? "" : "s"}</span>` : '<span class="sub">None</span>';
 };
 async function renderEvents() {
-  EVENTS = await (await fetch("/api/admin/events", { cache: "no-store" })).json();
+  const [evs, pl] = await Promise.all([fetch("/api/admin/events", { cache: "no-store" }).then((r) => r.json()), api("/api/admin/placements").catch(() => null)]);
+  EVENTS = evs; if (pl) PLACE = pl;
   const main = $("#main");
   const sel = (id, label, opts, cur) => `<select id="${id}" aria-label="${label}">${opts.map(([k, l]) => `<option value="${esc(k)}" ${k === cur ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
   const seasonSel = sel("evSeason", "Season", [["all", "All seasons"], ...Object.entries(SEASONS).map(([k, v]) => [k, v.label])], evSeason);
   const filters = seasonSel + sel("evCounty", "County", [["", "All counties"], ...COUNTIES.map((c) => [c, c + " County"])], EVCOUNTY)
     + sel("evHealth", "Needs a look", [["", "Everything"], ...HEALTH.map(([k, l]) => [k, l])], EVHEALTH) + sortSelect(EVSORTS, EVSORT);
-  const evTabs = [["", "All events"], ["e", "Expected"], ["c", "Confirmed"], ["grok", "From Grok"], ["ended", "Ended"]], evOn = () => EVVIEW || EVSTATUS;
+  const paidN = EVENTS.filter((e) => (placeInfo(e.id) || {}).on).length, evTabs = [["", "All events"], ["e", "Expected"], ["c", "Confirmed"], ["paid", "Paid placements" + (paidN ? " " + paidN : "")], ["grok", "From Grok"], ["ended", "Ended"]], evOn = () => EVVIEW || EVSTATUS;
   main.innerHTML = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show events">${evTabs.map(([k, l]) => `<button type="button" data-view="${k || "all"}" aria-pressed="${k === evOn()}">${l}</button>`).join("")}</div></div>
     <div class="pghead"><div><h2>Events</h2><p>Every event on the public map. Open a row to see and edit the full record.</p></div><button type="button" class="btn ice" id="addEv">Add an event</button></div>`
     + toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: `<details class="fbox" id="evFbox" open><summary>Filters</summary>${filters}<a class="btn ghost" id="evDl" href="/api/admin/export?type=events${evSeason === "all" ? "" : "&season=" + evSeason}" download>Download CSV</a></details>`, count: "" })
@@ -699,9 +728,9 @@ async function renderEvents() {
     main.querySelector("[data-tcount]") ? 0 : main.querySelector(".tbar .grow").insertAdjacentHTML("afterend", '<span class="meta tcount" data-tcount></span>');
     main.querySelector("[data-tcount]").textContent = `${all.length} event${all.length === 1 ? "" : "s"}` + (evSeason !== "all" ? ` in this season (menu count: all seasons)` : "");
     const srcOf = (id) => (String(id).startsWith("grok-") ? "Grok" : String(id).startsWith("u-") ? "Organizer" : String(id).startsWith("hcontest-") ? "Contest" : "Sweep");
-    $("#evlist").innerHTML = all.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th class="cb"><input type="checkbox" id="evAllH" aria-label="Select all ${all.length} shown by the filters" ${all.length > 0 && all.every((e) => EVSEL.has(e.id)) ? "checked" : ""}></th><th>Event</th><th>City</th><th>Dates</th><th>Status</th><th>Source</th><th class="ac">Actions</th></tr></thead><tbody>${shown.map((e) => `<tr class="${e.e < TODAY ? "past" : ""}" data-eid="${esc(e.id)}"><td class="cb"><input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}></td>
+    $("#evlist").innerHTML = all.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th class="cb"><input type="checkbox" id="evAllH" aria-label="Select all ${all.length} shown by the filters" ${all.length > 0 && all.every((e) => EVSEL.has(e.id)) ? "checked" : ""}></th><th>Event</th><th>City</th><th>Dates</th><th>Status</th><th>Paid placement</th><th class="ac">Actions</th></tr></thead><tbody>${shown.map((e) => `<tr class="${e.e < TODAY ? "past" : ""}" data-eid="${esc(e.id)}"><td class="cb"><input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}></td>
       <td><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">${esc(e.n)}</a><span class="sub">${esc(e.v || "")}</span></td><td>${esc(e.city)}<span class="sub">${esc(e.c)}</span></td><td>${esc(e.s)}${e.e !== e.s ? " to " + esc(e.e) : ""}<span class="sub">${esc(e.h || e.p || "")}</span></td>
-      <td><span class="tag ${e.st === "c" ? "ok" : "warn"}">${e.st === "c" ? "Confirmed" : "Expected"}</span>${e.e < TODAY ? ' <span class="tag">Ended</span>' : ""}</td><td>${srcOf(e.id)}</td><td class="ac"><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">Edit</a> · <a class="rl" href="/e/${encodeURIComponent(e.id)}" target="_blank" rel="noopener">View card</a></td></tr>`).join("")}</tbody></table></div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : `<div class="pager"><span class="meta">${all.length} event${all.length === 1 ? "" : "s"}</span></div>`}</div>` : `<div class="empty">${EVQ || EVSTATUS || EVVIEW || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
+      <td><span class="tag ${e.st === "c" ? "ok" : "warn"}">${e.st === "c" ? "Confirmed" : "Expected"}</span>${e.e < TODAY ? ' <span class="tag">Ended</span>' : ""}<span class="sub">Source: ${srcOf(e.id)}</span></td><td>${placeCell(e.id)}</td><td class="ac"><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">Edit</a> · <a class="rl" href="/e/${encodeURIComponent(e.id)}" target="_blank" rel="noopener">View card</a></td></tr>`).join("")}</tbody></table></div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : `<div class="pager"><span class="meta">${all.length} event${all.length === 1 ? "" : "s"}</span></div>`}</div>` : `<div class="empty">${EVQ || EVSTATUS || EVVIEW || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
     $("#evlist").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = (x) => { x.preventDefault(); editEvent(EVENTS.find((y) => y.id === b.dataset.edit)); }));
     $("#evlist").querySelectorAll("[data-esel]").forEach((b) => (b.onchange = () => { b.checked ? EVSEL.add(b.dataset.esel) : EVSEL.delete(b.dataset.esel); paintBulk(); }));
     if ($("#evAllH")) $("#evAllH").onchange = (x) => { $("#evAll").checked = x.target.checked; $("#evAll").onchange({ target: $("#evAll") }); };
@@ -712,7 +741,7 @@ async function renderEvents() {
   wireToolbar(main.querySelector(".tbar"), { onSearch: (q) => { EVQ = q; EVLIMIT = evPage(); paint(); } });
   const refilter = () => { EVLIMIT = evPage(); $("#evDl").href = "/api/admin/export?type=events" + (evSeason === "all" ? "" : "&season=" + evSeason); paint(); };
   $("#evSeason").onchange = (x) => { evSeason = x.target.value; refilter(); };
-  main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { const k = b.dataset.view === "all" ? "" : b.dataset.view; EVSTATUS = k === "e" || k === "c" ? k : ""; EVVIEW = k === "grok" || k === "ended" ? k : ""; main.querySelectorAll(".pgtabs [data-view]").forEach((o) => o.setAttribute("aria-pressed", String(o === b))); refilter(); }));
+  main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { const k = b.dataset.view === "all" ? "" : b.dataset.view; EVSTATUS = k === "e" || k === "c" ? k : ""; EVVIEW = k === "grok" || k === "ended" || k === "paid" ? k : ""; main.querySelectorAll(".pgtabs [data-view]").forEach((o) => o.setAttribute("aria-pressed", String(o === b))); refilter(); }));
   $("#evCounty").onchange = (x) => { EVCOUNTY = x.target.value; refilter(); };
   $("#evHealth").onchange = (x) => { EVHEALTH = x.target.value; refilter(); };
   main.querySelector("[data-sort]").onchange = (x) => { EVSORT = x.target.value; refilter(); };
@@ -1024,11 +1053,11 @@ const usdOf = (c) => "$" + (Number(c || 0) / 100).toLocaleString("en-US", { mini
 function revenueStrip(r, link = false) {
   if (!r) return "";
   if (r.error) return `<h2 class="dh">Revenue, last ${r.days || 30} days</h2><p class="meta">The orders could not be read: ${esc(r.error)}</p>`;
-  const t = r.total;
+  const t = r.total, anyRefund = t.refunded > 0 || t.atRisk > 0; // refund columns only appear once someone has actually asked for a refund
   return `<h2 class="dh">Revenue, last ${r.days} days</h2><section class="hcard" aria-label="Revenue, last ${r.days} days">
-    <div class="stats"><div class="stat"><b>${usdOf(t.net)}</b><span>net of refunds</span></div><div class="stat"><b>${fmt(t.orders)}</b><span>orders</span></div><div class="stat"><b>${usdOf(t.refunded)}</b><span>refunded</span></div><div class="stat"><b>${usdOf(t.atRisk)}</b><span>refund due, held or disputed</span></div></div>
-    ${r.rows.length ? `<div class="dtw" style="margin-top:12px"><table class="dtab"><thead><tr><th scope="col">Product</th><th scope="col">Orders</th><th scope="col">Collected</th><th scope="col">Refunded</th><th scope="col">Net</th></tr></thead><tbody>${r.rows.map((x) => `<tr><td>${esc(x.label)}</td><td>${fmt(x.orders)}</td><td>${usdOf(x.gross)}</td><td>${usdOf(x.refunded)}</td><td>${usdOf(x.net)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="meta" style="margin:10px 0 0">No orders in the last ${r.days} days.</p>`}
-    <p class="meta" style="margin:10px 0 0">Added up from the orders this site recorded; the Stripe dashboard is the record of money. ${r.otherCurrency ? `${r.otherCurrency} order(s) in another currency are left out. ` : ""}${link ? 'Details and refunds: <a href="#orders" data-tab="orders">Orders</a>.' : ""}</p></section>`;
+    <div class="stats"><div class="stat"><b>${usdOf(t.net)}</b><span>${anyRefund ? "revenue after refunds" : "revenue"}</span></div><div class="stat"><b>${fmt(t.orders)}</b><span>${t.orders === 1 ? "order" : "orders"}</span></div>${t.refunded > 0 ? `<div class="stat"><b>${usdOf(t.refunded)}</b><span>refunded</span></div>` : ""}${t.atRisk > 0 ? `<div class="stat"><b>${usdOf(t.atRisk)}</b><span>refunds to handle (due, held or disputed)</span></div>` : ""}</div>
+    ${r.rows.length ? `<div class="dtw" style="margin-top:12px"><table class="dtab"><thead><tr><th scope="col">Product</th><th scope="col">Orders</th><th scope="col">${anyRefund ? "Collected" : "Revenue"}</th>${anyRefund ? '<th scope="col">Refunded</th><th scope="col">Left after refunds</th>' : ""}</tr></thead><tbody>${r.rows.map((x) => `<tr><td>${esc(x.label)}</td><td>${fmt(x.orders)}</td><td>${usdOf(x.gross)}</td>${anyRefund ? `<td>${usdOf(x.refunded)}</td><td>${usdOf(x.net)}</td>` : ""}</tr>`).join("")}</tbody></table></div>` : `<p class="meta" style="margin:10px 0 0">No orders in the last ${r.days} days.</p>`}
+    <p class="meta" style="margin:10px 0 0">What people paid us, from the orders this site recorded${anyRefund ? ", with refunds taken off" : ""}. The Stripe dashboard is the record of money. ${r.otherCurrency ? `${r.otherCurrency} order(s) in another currency are left out. ` : ""}${link ? 'Details and refunds: <a href="#orders" data-tab="orders">Orders</a>.' : ""}</p></section>`;
 }
 function errorsCard(e) {
   if (!e) return "";
