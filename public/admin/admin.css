@@ -540,3 +540,11 @@ body.admin .top .crumb h1{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .gclear{margin:14px 0 22px;color:var(--muted);font-size:14px}
 .gq{width:100%;max-width:420px;box-sizing:border-box;margin:0 0 4px;padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}
 @media (max-width:640px){.gr .ga{width:100%}}
+
+/* Dashboard on a phone: reference sections fold behind one tap */
+.dcoll{border:1px solid var(--line);border-radius:12px;margin:12px 0;background:var(--surface)}
+.dcoll>summary{list-style:none;cursor:pointer;min-height:50px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 16px;font:700 16px var(--font)}
+.dcoll>summary::-webkit-details-marker{display:none}
+.dcoll>summary::after{content:"+";font:400 24px/1 var(--font);color:var(--muted)}
+.dcoll[open]>summary::after{content:"\2013"}
+.dcoll>:not(summary){margin-left:16px;margin-right:16px}.dcoll>:last-child{margin-bottom:16px}

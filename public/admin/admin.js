@@ -1111,6 +1111,19 @@ async function renderDashboard() {
       <section class="dbox"><h2 class="dh">Contests running</h2>${d.contests.length ? `<ul class="dl">${d.contests.map((c) => `<li><a class="dli" href="/c/${esc(c.slug)}" target="_blank" rel="noopener">${dico("trophy")}<span class="dt"><b>${esc(c.name)}</b><small>${esc(c.city)} · ${fmt(c.entries)} ${c.entries === 1 ? "entry" : "entries"} · ${fmt(c.votes)} ${c.votes === 1 ? "vote" : "votes"} · voting ends ${shortDate(c.vote_end)}</small></span></a></li>`).join("")}</ul>` : `<div class="empty">No contest is running right now.</div>`}
       <h2 class="dh">Your recent activity</h2>${d.activity.length ? `<ul class="dl">${collapse(d.activity).map((e) => `<li><button type="button" class="dli wrap" data-tab="log">${dico("edit")}<span class="dt"><b>${esc(VERB[e.action] || e.action)} ${esc(AREA[e.area] || e.area)} ${esc(e.label || "")}${e.n > 1 ? ` <span class="rep">×${e.n}</span>` : ""}</b><small>${esc(e.admin || "admin")} · ${agoShort(e.at)}</small></span></button></li>`).join("")}</ul>` : `<div class="empty">Nothing yet. Approvals and edits will show here.</div>`}</section>
     </div>`;
+  collapseDash(main);
+}
+// On a phone the Dashboard was 7,500px of scrolling. The reference sections (traffic, job history, site usage) fold behind one tap each; what needs a decision (Needs you, Today, Revenue, Errors) stays open.
+const DASH_FOLD = ["On the site now", "Data health", "Last run of each job", "People, last 7 days", "Last 14 days", "Most visited pages, last 14 days", "How people use the site", "Taps on links and buttons"];
+function collapseDash(main) {
+  if (!phone()) return;
+  [...main.querySelectorAll("h2.dh")].forEach((h) => { // also the ones inside the two-column boxes
+    const name = h.textContent.trim(); if (!DASH_FOLD.includes(name)) return;
+    const det = document.createElement("details"), sum = document.createElement("summary"), move = [];
+    det.className = "dcoll"; sum.textContent = name; det.appendChild(sum);
+    for (let n = h.nextSibling; n && !(n.nodeType === 1 && n.matches("h2.dh, .dcols")); n = n.nextSibling) move.push(n);
+    h.replaceWith(det); move.forEach((x) => det.appendChild(x));
+  });
 }
 
 /* ---------- Cloudflare usage, plan-aware: Workers Paid (monthly included amounts, extra charges) or free (daily hard limits). Read-only. ---------- */
