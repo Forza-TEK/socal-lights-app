@@ -29,3 +29,16 @@ test("geocoder: an address with two far-apart matches (350 Hillcrest = 350 E or 
   const one = async () => ({ json: async () => ({ result: { addressMatches: [hit(34.18116, -118.87066, "A"), hit(34.1812, -118.8707, "B")] } }) }), i2 = {};
   await geocodeAddress("350 Hillcrest", "Thousand Oaks", [34.17, -118.84], 30, one, i2); assert.equal(i2.ambiguous, undefined, "two matches a few meters apart are not ambiguous");
 });
+
+test("0286: the organizer's clip is attached to the surviving event and still plays, though its key names the deleted event", async () => {
+  const { onRequestGet: photo } = await import("../functions/api/photo/[[path]].js");
+  const { raw } = newEnv(), sql = readFileSync("migrations/0286_holidays_in_the_village_video_2026-11-22.sql", "utf8");
+  const K = "ev/u-holidays-in-the-village--4afd74/1795347712908.mov", S = "thousand-oaks-holidays-in-the-village";
+  raw.prepare("DELETE FROM events WHERE id = ?").run(S);
+  raw.prepare("INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES (?,'HITV','Ventura','Thousand Oaks','tree','2026-12-05','2026-12-06','confirmed',1,'Free','h',34.1836,-118.8877,'x','https://x.example.org/','christmas','v','a')").run(S);
+  raw.exec(sql);
+  const e = raw.prepare("SELECT video_file, video_ok FROM events WHERE id = ?").get(S); assert.equal(e.video_file, K); assert.equal(e.video_ok, 1);
+  const bytes = new Uint8Array(64), PHOTOS = { get: async (k) => (k === K ? { body: bytes, size: 64, httpEtag: '"x"', writeHttpMetadata: (h) => h.set("content-type", "video/quicktime") } : null) };
+  const res = await photo({ params: { path: K.split("/") }, env: { DB: { prepare: (q) => ({ bind: (...a) => ({ first: async () => raw.prepare(q).get(...a) }) }) }, PHOTOS }, request: new Request("https://x.test/api/photo/" + K) });
+  assert.ok(res.status === 200 || res.status === 206, "plays: " + res.status);
+});

@@ -22,8 +22,9 @@ export async function onRequestGet({ params, env, request }) {
   }
   const evv = EVENT_VIDEO_KEY_RE.exec(key);
   if (evv) {
-    const ev = await env.DB.prepare("SELECT id, video_file, video_ok FROM events WHERE id = ?").bind(evv[1]).first();
-    if (!ev || ev.video_file !== key) return new Response("Not found", { status: 404 });
+    // Found by the clip's own key, not by the event id inside it: two listings can be merged (migration 0285 + 0286), and the clip then belongs to the surviving event.
+    const ev = await env.DB.prepare("SELECT id, video_file, video_ok FROM events WHERE video_file = ?").bind(key).first();
+    if (!ev) return new Response("Not found", { status: 404 });
     if (ev.video_ok) return serveVideo(env, key, request, "public, max-age=3600");
     const user = await getUser(request, env);
     const mine = user && (await env.DB.prepare("SELECT 1 AS x FROM event_submissions WHERE event_id = ? AND lower(contact_email) = ?").bind(ev.id, String(user.email || "").toLowerCase()).first());
