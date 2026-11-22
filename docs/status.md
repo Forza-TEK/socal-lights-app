@@ -1818,3 +1818,8 @@ An event whose hours give only a start time ("7pm") came into the calendar as al
 - Map preview card and details (events and homes): the video (YouTube/Vimeo link or approved clip) is now the first slide of the same swipeable gallery as the photos (poster = first photo, tap to play; no player loads until tapped). The separate "Watch the video" button under the card is gone for items with photos (homes without photos keep it). Lightbox still shows photos only (indexes shifted past the video slide).
 - `photosOf` returns the video as item `{play}`; `photoImg` draws it via `vslide`. The event details load later, so the open card redraws once when a video arrives.
 - Budgets raised: app.js cap 200 -> 204 KB, first-screen budget 471,000 -> 476,000 (tests/home-speed.test.mjs).
+
+## 2026-11-22 (duplicate): Holidays in the Village merged (migration 0285)
+- Two rows: the sweep `thousand-oaks-holidays-in-the-village` (pin 34.1836,-118.8877 = The Oaks, 350 W Hillcrest Dr, correct) and the organizer's `u-holidays-in-the-village--4afd74` (typed "350 Hillcrest"; the Census geocoder returns 350 E and 350 W Hillcrest Dr and the form took the first, E, a pin 1.6 km east).
+- 0285: the sweep row stays and takes the organizer's 4 photos and official site; the organizer's submission now points at it (address 350 W Hillcrest Dr); the duplicate row is deleted.
+- Guard added: `geocodeAddress` reports `info.ambiguous` when the Census returns two matches more than 0.4 km apart; `submit-event` adds "the address matches more than one place (...): check the pin" to the submission note for Admin. It still publishes with the first match.
