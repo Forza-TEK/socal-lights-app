@@ -536,6 +536,7 @@ function renderPreview() {
       if (pvSwiped) { pvSwiped = false; return; }
       const items = lbItems(it); if (items.length) { const t = $("#pvtrack"); openLightbox(items, t ? Math.max(0, Math.round(t.scrollLeft / t.clientWidth) - lbOff(it)) : 0, it.kind === "ev" ? it.ev.n : it.p.title); return; }
     }
+    if (e.target.closest(".vs")) return; // the video: playing, pausing and full screen stay in the card (they used to open the details and drop the video)
     if (e.target.closest(".x")) { closePin(); return; }
     if (e.target.closest("[data-pvshare]")) { shareItem(k); return; }
     if (e.target.closest("[data-pvfav]")) { const id = it.kind === "ev" ? it.ev.id : hfav(it.p); favs.has(id) ? favs.delete(id) : favs.add(id); remind(id, favs.has(id)); saveFavs(); renderPanel(); drawMap(); renderPreview(); return; }
@@ -1216,7 +1217,7 @@ function wireDetail() {
   const it0 = findKey(state.detail); if (it0 && it0.kind === "ev") { wireRetry(it0.ev); startDetail(it0.ev); }
   const area = document.querySelector(".detail .hero.photo, .detail .gallery:has(.track)");
   if (area) area.addEventListener("click", (e) => {
-    if (e.target.closest("button,a")) return;
+    if (e.target.closest("button,a,.vs")) return;
     const it = findKey(state.detail), items = lbItems(it), t = area.querySelector(".pvtrack,.track");
     if (items.length) openLightbox(items, t ? Math.max(0, Math.round(t.scrollLeft / t.clientWidth) - lbOff(it)) : 0, it.kind === "ev" ? it.ev.n : it.p.title);
   });
