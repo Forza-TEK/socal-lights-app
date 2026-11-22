@@ -414,6 +414,7 @@ table.dtab{width:100%;min-width:860px;border-collapse:collapse;background:transp
 .rpage .fsec{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:18px 20px;margin:0 0 16px}
 .rpage .fsec>legend{float:none;width:auto;font:700 16px var(--font);letter-spacing:0;text-transform:none;color:var(--ink);margin:0 0 4px;padding:0}
 .rpage .mfoot.sticky{position:sticky;bottom:0;margin:8px 0 0;padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px))}
+.rpage .mfoot{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 @media (max-width:760px){.pghead h2{font-size:22px}.pgacts{width:100%}.pgacts .btn{flex:1}}
 
 .ttool{width:auto;height:44px;border:0;border-radius:10px;padding:0 10px}
