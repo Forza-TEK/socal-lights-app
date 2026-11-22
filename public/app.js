@@ -1854,6 +1854,7 @@ async function refreshData() {
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - loadedAt > 5 * 60000) refreshData(); });
 setInterval(() => { if (document.visibilityState === "visible") refreshData(); }, 15 * 60000);
 setSheet("peek");
-let wasPhone = isPhone(); matchMedia("(max-width:700px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); const sp = document.getElementById("sponsor"); if (sp && isPhone()) setSheet(sheetState); renderPanel(); } });
-let rT; addEventListener("resize", () => { pinBox = null; clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); renderPanel(); }, 120); });
+let wasPhone = isPhone(); matchMedia("(max-width:700px)").addEventListener("change", () => { if (wasPhone !== isPhone()) { wasPhone = isPhone(); const sp = document.getElementById("sponsor"); if (sp && isPhone()) setSheet(sheetState); if (!vidLive()) renderPanel(); } });
+const vidLive = () => document.querySelector(".vs video,.vs iframe"); // a playing video must not be rebuilt: full screen changes the window size
+let rT; addEventListener("resize", () => { pinBox = null; clearTimeout(rT); rT = setTimeout(() => { setSheet(sheetState); if (!vidLive()) renderPanel(); }, 120); });
 load();
