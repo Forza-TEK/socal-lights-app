@@ -1807,3 +1807,4 @@ An event whose hours give only a start time ("7pm") came into the calendar as al
 - `_lib/podium.js`: every approved home of the signed-in person is featurable (contest entries only once the contest is announced; disqualified entries never). Podium finish is now only `standing` (null otherwise); checkout, `/api/me/featurable`, /feature and /pricing wording updated. Winners keep the crown badge, separate from a paid pin.
 - Map: featured homes draw the pulsing badge with a house icon (`.fmark.fhome`), pulse and fill in the current season colour (`--season`); events keep the gold star.
 - Paid placement is still web-only (hidden in the apps). app.js is within ~30 bytes of its 200 KB test cap: trim before adding more.
+- "Display approved" and "Event approved" emails now carry a "Make it stand out" section linking to /feature (the claim-approved email already did). Emails are web, so this is fine for the store rules; nothing is shown inside the apps.
