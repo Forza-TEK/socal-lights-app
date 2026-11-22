@@ -201,8 +201,10 @@ export async function geocodeAddress(address, city, cityPoint, maxKm = 30, doFet
   const attempts = [
     async () => {
       const r = await doFetch(`https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=json&address=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(4000) });
-      const m = (await r.json())?.result?.addressMatches?.[0], c = m?.coordinates;
+      const all = (await r.json())?.result?.addressMatches || [], m = all[0], c = m?.coordinates;
       if (c) info.pending = m.matchedAddress || "";
+      // "350 Hillcrest" is both 350 E and 350 W Hillcrest Dr, 1.6 km apart: the first match is used, but say so (the submission note tells Admin to check the pin)
+      const o = all[1]?.coordinates; if (c && o && kmBetween([Number(c.y), Number(c.x)], [Number(o.y), Number(o.x)]) > 0.4) info.ambiguous = `${m.matchedAddress} or ${all[1].matchedAddress}`;
       return c ? [Number(c.y), Number(c.x)] : null;
     },
     async () => {

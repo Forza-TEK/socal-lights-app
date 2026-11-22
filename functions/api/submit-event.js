@@ -76,7 +76,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   // Pin: geocode the street address (rejects a hit more than 30 km from the chosen city)
   let [lat, lng] = CITY[e.city];
-  const pt = await geocodeAddress(e.address, e.city, [lat, lng]);
+  const geo = {}, pt = await geocodeAddress(e.address, e.city, [lat, lng], 30, fetch, geo);
   const located = !!pt; if (pt) [lat, lng] = pt;
   const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
   const county = nearestCounty(lat, lng, evs);
@@ -88,6 +88,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // The organizer gave the dates themselves, from a signed-in, verified account, so the event goes up "confirmed" ("expected" means dates estimated from past years). Whether its web page could be read and matched is kept in `verified` and the note for the admin.
   const reasons = [];
   if (!located) reasons.push("pin is at the city center (address not found)");
+  if (geo.ambiguous) reasons.push(`the address matches more than one place (${geo.ambiguous}): check the pin`);
   if (!check.ok) reasons.push(check.note);
   // M3: an event whose web page could not be matched AND whose address could not be found has nothing to show it is real, so a person looks first (the one case that is held besides a busy day).
   const unproven = !located && !check.ok;
