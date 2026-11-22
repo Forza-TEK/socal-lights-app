@@ -1809,3 +1809,7 @@ An event whose hours give only a start time ("7pm") came into the calendar as al
 - Paid placement is still web-only (hidden in the apps). app.js is within ~30 bytes of its 200 KB test cap: trim before adding more.
 - "Display approved" and "Event approved" emails now carry a "Make it stand out" section linking to /feature (the claim-approved email already did). Emails are web, so this is fine for the store rules; nothing is shown inside the apps.
 - "Home added: it is live" receipt also carries the "Make it stand out" section.
+
+## 2026-11-22 (video cover): event page shows the video first, then every photo
+- `/e/<id>` hero: an event's video is now the first slide (YouTube/Vimeo as a tap-to-play poster that only loads the player on tap; an Admin-approved clip as a `<video>`), followed by all of the event's photos (up to 8; before, only the first photo showed). Hero code is in `_lib/shell.js` (`hero`, `GALLERY`).
+- Not done: the map's card/detail view still shows photos with the separate Watch button (app.js is at its 200 KB test cap); homes' pages unchanged.
