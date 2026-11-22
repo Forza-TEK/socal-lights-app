@@ -1813,3 +1813,8 @@ An event whose hours give only a start time ("7pm") came into the calendar as al
 ## 2026-11-22 (video cover): event page shows the video first, then every photo
 - `/e/<id>` hero: an event's video is now the first slide (YouTube/Vimeo as a tap-to-play poster that only loads the player on tap; an Admin-approved clip as a `<video>`), followed by all of the event's photos (up to 8; before, only the first photo showed). Hero code is in `_lib/shell.js` (`hero`, `GALLERY`).
 - Not done: the map's card/detail view still shows photos with the separate Watch button (app.js is at its 200 KB test cap); homes' pages unchanged.
+
+## 2026-11-22 (one gallery): videos are the first slide on the map cards too
+- Map preview card and details (events and homes): the video (YouTube/Vimeo link or approved clip) is now the first slide of the same swipeable gallery as the photos (poster = first photo, tap to play; no player loads until tapped). The separate "Watch the video" button under the card is gone for items with photos (homes without photos keep it). Lightbox still shows photos only (indexes shifted past the video slide).
+- `photosOf` returns the video as item `{play}`; `photoImg` draws it via `vslide`. The event details load later, so the open card redraws once when a video arrives.
+- Budgets raised: app.js cap 200 -> 204 KB, first-screen budget 471,000 -> 476,000 (tests/home-speed.test.mjs).
