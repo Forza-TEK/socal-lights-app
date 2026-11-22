@@ -1056,5 +1056,8 @@ body.detail-open .scl-chat-fab{display:none}
 .fmark .fdot svg{width:15px;height:15px;fill:#6b3d00}
 .fmark .fring{position:absolute;inset:0;border-radius:50%;border:3px solid #f2a100;opacity:0;animation:fpulse 2.2s ease-out infinite;pointer-events:none}
 .fmark .fring.r2{animation-delay:1.1s}
+.fmark.fhome .fring{border-color:var(--season,#f2a100)}
+.fmark.fhome .fdot{background:linear-gradient(145deg,color-mix(in srgb,var(--season,#f2a100) 70%,#fff),var(--season,#f2a100))}
+.fmark.fhome .fdot svg{fill:#fff}
 @keyframes fpulse{0%{transform:scale(.7);opacity:.95}100%{transform:scale(2.8);opacity:0}}
 @media (prefers-reduced-motion:reduce){.fmark .fring{animation:none;opacity:.55;transform:scale(1.6)}.fmark .fring.r2{display:none}}

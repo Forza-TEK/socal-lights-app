@@ -406,13 +406,14 @@ const pt = (lng, lat, props) => ({ type: "Feature", geometry: { type: "Point", c
 // Placements that are still on show are drawn; with more than 40 at once the top-of-list ones come first.
 const FMARK = new Map();
 const FSTAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.2l-5.9 3.4 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+const FHOME = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9.5 8.2-1.3 1.5-1.2-1V20a1 1 0 0 1-1 1h-3.5v-6h-5v6H6a1 1 0 0 1-1-1v-8.3l-1.2 1-1.3-1.5z"/></svg>';
 function drawFeatured(list) {
   const shown = list.sort((a, b) => Number(b.top) - Number(a.top)).slice(0, 40), want = new Set(shown.map((x) => x.key));
   for (const [k, m] of FMARK) if (!want.has(k)) { m.remove(); FMARK.delete(k); }
   for (const x of shown) {
     const have = FMARK.get(x.key); if (have) { have.setLngLat([x.lng, x.lat]); continue; }
-    const el = document.createElement("button"); el.type = "button"; el.className = "fmark"; el.setAttribute("aria-label", "Featured: " + x.name);
-    el.innerHTML = '<span class="fring"></span><span class="fring r2"></span><span class="fdot">' + FSTAR + "</span>";
+    const el = document.createElement("button"); el.type = "button"; el.className = "fmark" + (x.home ? " fhome" : ""); el.setAttribute("aria-label", "Featured: " + x.name);
+    el.innerHTML = '<span class="fring"></span><span class="fring r2"></span><span class="fdot">' + (x.home ? FHOME : FSTAR) + "</span>";
     el.addEventListener("click", (ev) => { ev.stopPropagation(); state.hot = null; selectKey(x.key, "map"); });
     FMARK.set(x.key, new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat([x.lng, x.lat]).addTo(map));
     el.setAttribute("aria-label", "Featured: " + x.name); // the map library sets its own generic label when it adds the element
@@ -428,7 +429,7 @@ function drawMap() {
   map.getSource("pts").setData(fc(feats));
   drawFeatured(state.tab !== "plan" ? [
     ...(state.layers.events ? E.filter((e) => e.f && evMatch(e)).map((e) => ({ key: "e:" + e.id, lat: e.lat, lng: e.lng, name: e.n, top: e.f === 2 })) : []),
-    ...(state.layers.inst ? SHOW.filter((p) => p.f && instMatch(p)).map((p) => ({ key: "i:" + p.id, lat: p.plat, lng: p.plng, name: p.title, top: p.f === 2 })) : []),
+    ...(state.layers.inst ? SHOW.filter((p) => p.f && instMatch(p)).map((p) => ({ key: "i:" + p.id, lat: p.plat, lng: p.plng, name: p.title, top: p.f === 2, home: true })) : []),
   ] : []);
   // planner route
   const st = state.tab === "plan" ? routeStops() : [];

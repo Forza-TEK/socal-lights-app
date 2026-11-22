@@ -49,9 +49,9 @@ test("featurable: only the owner's podium homes; normalized email counts; 4th pl
   assert.equal(ra.body.homes[0].contest, "Lights Cup"); assert.equal(ra.body.homes[0].featured, 0);
   assert.deepEqual((await mine(env, b.cookie)).body.homes.map((h) => h.id), ["h2"], "account match");
   assert.deepEqual((await mine(env, c.cookie)).body.homes, []);
-  assert.deepEqual((await mine(env, d.cookie)).body.homes, [], "owns h4/h5/h6: 4th, zero votes and disqualified are not eligible");
+  assert.deepEqual((await mine(env, d.cookie)).body.homes.map((h) => [h.id, h.place]).sort(), [["h4", 0], ["h5", 0]], "owns h4/h5/h6: 4th and zero votes may buy (no podium place); the disqualified h6 may not");
   raw.prepare("UPDATE contests SET announced = 0").run();
-  assert.deepEqual((await mine(env, a.cookie)).body.homes, [], "nothing before the winners are announced");
+  assert.deepEqual((await mine(env, a.cookie)).body.homes, [], "a contest entry can't buy before the winners are announced");
   raw.prepare("UPDATE contests SET announced = 1, status = 'declined'").run();
   assert.deepEqual((await mine(env, a.cookie)).body.homes, [], "an unpublished contest is not live");
   assert.equal((await mine(env, "")).status, 401);
@@ -69,7 +69,7 @@ test("featurable: organizer-added homes (no owner) are listed for contest staff 
   assert.deepEqual((await mine(env, s.cookie)).body.homes, [], "a contest Admin has a note on cannot buy (existing ownership rule)");
 });
 
-test("checkout: owner of a podium home pays the server price; metadata says home; the season plan, 4th place, strangers and unannounced contests are refused", async () => {
+test("checkout: owner of a podium home pays the server price; metadata says home; the season plan, disqualified entries, strangers and unannounced contests are refused", async () => {
   const { env, raw } = newEnv(); seed(raw);
   const a = await addUser(raw, "uA", "owner@example.com"), c = await addUser(raw, "uC", "nobody@example.com"), d = await addUser(raw, "ux", "x@example.com");
   const f = stubFetch();
@@ -84,8 +84,9 @@ test("checkout: owner of a podium home pays the server price; metadata says home
     assert.equal((await buy(env, { home_id: "h1", plan: "pin" }, c.cookie)).status, 404, "someone else's home looks like a missing one");
     assert.equal((await buy(env, { home_id: "h1", plan: "pin" })).status, 401);
     const n = f.calls.length;
-    assert.equal((await buy(env, { home_id: "h4", plan: "pin" }, d.cookie)).status, 403, "4th place");
     assert.equal((await buy(env, { home_id: "h6", plan: "pin" }, d.cookie)).status, 403, "disqualified");
+    assert.equal((await buy(env, { home_id: "h4", plan: "pin" }, d.cookie)).status, 200, "4th place may buy a pin like any home (no podium badge)");
+    f.calls.length = n;
     assert.equal((await buy(env, { home_id: "nope", plan: "pin" }, a.cookie)).status, 404);
     raw.prepare("UPDATE contests SET announced = 0").run();
     assert.equal((await buy(env, { home_id: "h1", plan: "pin" }, a.cookie)).status, 404, "not announced");
