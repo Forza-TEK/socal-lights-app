@@ -41,7 +41,7 @@ export const TEMPLATES = [
   { id: "house_approved", group: "listing", name: "Display approved", to: "The person who added the display", when: "Admin approves a display.",
     vars: { name: ["Display name", "Maple Street Lights"] },
     subject: "Your display is on the map: {{name}}",
-    text: "~ Good news\n\n# Your display is on the map\n\n**{{name}}** was approved and is now on the SoCal Lights map.\n\n[See and edit your display](https://socallights.app/profile#displays)\n\n## Keep it up to date\n- You can change the details of your display any time from Your profile.\n\nThanks for being part of SoCal Lights.\n\n* You got this email because you added “{{name}}” to SoCal Lights." },
+    text: "~ Good news\n\n# Your display is on the map\n\n**{{name}}** was approved and is now on the SoCal Lights map.\n\n[See and edit your display](https://socallights.app/profile#displays)\n\n## Keep it up to date\n- You can change the details of your display any time from Your profile.\n\n## Make it stand out\n- Add a pulsing Featured pin on the map, or be listed first in your area, for 30 days.\n\n[Promote your display](https://socallights.app/feature)\n\nThanks for being part of SoCal Lights.\n\n* You got this email because you added “{{name}}” to SoCal Lights." },
   { id: "house_declined", group: "listing", name: "Display declined", to: "The person who added the display", when: "Admin declines a display.",
     vars: { name: ["Display name", "Maple Street Lights"], reason: ["Admin's note (blank if none)", "We couldn't match the address."], link: ["Link to their saved answers (the blank form if they could not be saved)", `${SITE}/add-house?draft=abc123`, true] },
     subject: "About your display: {{name}}",
@@ -49,7 +49,7 @@ export const TEMPLATES = [
   { id: "event_approved", group: "listing", name: "Event approved", to: "The person who submitted the event", when: "Admin approves an event.",
     vars: { name: ["Event name", "Candy Cane Lane"] },
     subject: "Your event is on the map: {{name}}",
-    text: "~ Good news\n\n# Your event is on the map\n\n**{{name}}** was approved and is now on the SoCal Lights map.\n\n[See and edit your event](https://socallights.app/profile#events)\n\n## Keep it up to date\n- You can change the details of your event any time from Your profile.\n\nThanks for being part of SoCal Lights.\n\n* You got this email because you added “{{name}}” to SoCal Lights." },
+    text: "~ Good news\n\n# Your event is on the map\n\n**{{name}}** was approved and is now on the SoCal Lights map.\n\n[See and edit your event](https://socallights.app/profile#events)\n\n## Keep it up to date\n- You can change the details of your event any time from Your profile.\n\n## Make it stand out\n- Add a Featured pin on the map, a banner at the top of the list, or be listed first in your area.\n\n[Promote your event](https://socallights.app/feature)\n\nThanks for being part of SoCal Lights.\n\n* You got this email because you added “{{name}}” to SoCal Lights." },
   // Receipts: sent right after someone adds a home, an event or a contest (functions/_lib/receipt.js). Short, plain, with the link to manage it and what happens next.
   { id: "home_live", group: "listing", name: "Home added: it is live", to: "The person who added a home", when: "Right after they add a home that goes on the map at once.",
     vars: { name: ["Home name", "Maple Street Lights"], city: ["City", "Pasadena"], map: ["Link to the home on the map", `${SITE}/#h-abc123`, true], link: ["Link to manage it", `${SITE}/profile#displays`, true] },
