@@ -41,7 +41,7 @@ test("new list equals the old one on a mixed data set (featured, ties, odd names
 test("home page: served from the edge copy, one narrow query on a miss and none on a hit", async () => {
   const prev = globalThis.caches, cache = mkCache(); globalThis.caches = cache;
   try {
-    const { env, raw } = newEnv(); addEvent(raw, "h1", { city: "Hometown" }); raw.prepare("UPDATE events SET status = 'confirmed' WHERE id = 'h1'").run();
+    const { env, raw } = newEnv(); raw.prepare("DELETE FROM events").run(); addEvent(raw, "h1", { city: "Hometown" }); raw.prepare("UPDATE events SET status = 'confirmed' WHERE id = 'h1'").run();
     const { spy, c } = counting(env), jobs = [];
     const p1 = await (await home(ctx(spy, jobs))).text(); await Promise.all(jobs.splice(0));
     assert.equal(c.n, 1, "one query on a miss"); assert.match(p1, /^<html><body><h1>map<\/h1><nav class="sr"/); assert.match(p1, /href="\/e\/h1"/); assert.ok(p1.endsWith("</body></html>"));
@@ -53,7 +53,7 @@ test("home page: served from the edge copy, one narrow query on a miss and none 
 test("stale copy: served at once, one rebuild for concurrent visitors, new data appears afterwards", async () => {
   const prev = globalThis.caches, cache = mkCache(); globalThis.caches = cache;
   try {
-    const { env, raw } = newEnv(); addEvent(raw, "h1", { city: "Hometown" }); raw.prepare("UPDATE events SET status = 'confirmed' WHERE id = 'h1'").run();
+    const { env, raw } = newEnv(); raw.prepare("DELETE FROM events").run(); addEvent(raw, "h1", { city: "Hometown" }); raw.prepare("UPDATE events SET status = 'confirmed' WHERE id = 'h1'").run();
     const { spy, c } = counting(env), jobs = [];
     await home(ctx(spy, jobs)); await Promise.all(jobs.splice(0));
     const k = [...cache.store.keys()][0], old = cache.store.get(k);
