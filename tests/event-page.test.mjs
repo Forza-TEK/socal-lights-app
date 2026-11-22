@@ -47,3 +47,16 @@ test("breadcrumbs: visible trail and BreadcrumbList on event pages, ended events
     assert.equal(bc.itemListElement[3].item, undefined);
   }
 });
+
+test("cover: an event's video comes first (tap-to-play link, or the approved clip), then every photo it has", async () => {
+  const env = seed(), db = env.DB;
+  const raw = (sql, ...a) => env.DB.prepare(sql).bind(...a).run();
+  await raw("UPDATE events SET images = ?, video = ? WHERE id = 'conf'", JSON.stringify(["https://img.example.org/b.jpg", "https://img.example.org/c.jpg"]), "https://youtu.be/dQw4w9WgXcQ");
+  let h = await (await get(env, "conf")).text();
+  assert.match(h, /class="count">1 \/ 4</, "video + three photos"); assert.ok(h.indexOf('class="vplay"') < h.indexOf("b.jpg"), "the video slide is first");
+  assert.match(h, /data-vid="https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ/); assert.doesNotMatch(h, /<iframe/, "nothing from YouTube loads until it is tapped");
+  await raw("UPDATE events SET video = '', video_file = 'ev/conf/1.mp4', video_ok = 0 WHERE id = 'conf'");
+  assert.doesNotMatch(await (await get(env, "conf")).text(), /<video/, "a clip waiting for approval is not shown");
+  await raw("UPDATE events SET video_ok = 1 WHERE id = 'conf'");
+  h = await (await get(env, "conf")).text(); assert.match(h, /<video controls[^>]*src="\/api\/photo\/ev\/conf\/1\.mp4"/);
+});

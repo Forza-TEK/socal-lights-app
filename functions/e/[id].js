@@ -1,6 +1,7 @@
 // GET /e/<event id> — one page per event: its own title, preview card (Open Graph) for texts and social posts, schema.org Event data
 // when the dates are confirmed, a plain-words summary built from the event's own fields, links to other events in the same city and nearby
 // cities, a share button and a weekly-list sign-up. The app itself stays on "/"; the "Open on the map" button opens the event there ("/#e-<id>").
+import { parseVideo } from "../../public/video.js";
 import { rowToEvent } from "../_lib/util.js";
 import { esc, header, hero, page, crumbs, subscribeBox, shareBtn } from "../_lib/shell.js";
 import { contestHomes } from "../_lib/contesthomes.js";
@@ -54,7 +55,11 @@ export async function onRequestGet(context) {
   const dest = encodeURIComponent([e.a || e.v, e.city].filter(Boolean).join(", ") || `${e.lat},${e.lng}`);
   const dirUrl = `https://www.google.com/maps/dir/?api=1&destination=${dest}`, hasPlace = !!(where || (e.lat && e.lng));
   const directions = where || (e.lat && e.lng) ? ` · <a href="https://www.google.com/maps/dir/?api=1&destination=${dest}" target="_blank" rel="noopener">Directions</a>` : "";
-  const heroImg = img ? [{ img: `/cdn-cgi/image/width=960,quality=75,format=auto/${img}`, orig: img, cap: "" }] : [];
+  // The cover is the event's video when it has one (a tap-to-play link or the approved clip), then every photo it has (the first one doubles as the video's poster).
+  const photoUrls = [...new Set([img, ...(e.imgs || []).map((u) => secureUrl(u))].filter(Boolean))].slice(0, 8);
+  const poster = photoUrls[0] ? `/cdn-cgi/image/width=960,quality=75,format=auto/${photoUrls[0]}` : "";
+  const vlink = e.vid ? parseVideo(e.vid) : null;
+  const heroImg = [...(vlink ? [{ embed: vlink.embed, img: poster }] : e.vf ? [{ clip: e.vf, img: poster }] : []), ...photoUrls.map((img) => ({ img: `/cdn-cgi/image/width=960,quality=75,format=auto/${img}`, orig: img, cap: "" }))];
 
   // More in the same city and the nearest cities, from the shared upcoming list (one scan of the table for all event pages)
   let related = "";
