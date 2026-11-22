@@ -47,3 +47,22 @@ test("an event's clip and its YouTube or Vimeo link replace each other; the orga
   raw.prepare("UPDATE event_submissions SET status = 'pending' WHERE id = 'sub0001'").run();
   assert.equal((await put(env, MP4(500), u.cookie)).status, 400, "an event still in review cannot take a video yet");
 });
+
+test("Admin adds photos and a video clip to any event (a sweep event too): up to 4 photos, cover and remove, and an Admin clip is approved at once", async () => {
+  const { onRequestPost: adminPhotos } = await import("../functions/api/admin/event-photos.js");
+  const { onRequestPut: adminClip } = await import("../functions/api/admin/event-video.js");
+  const { env, raw } = mk(); seed(raw);
+  const JPG = (n) => new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...Array(n).fill(7)])], "p.jpg", { type: "image/jpeg" });
+  const upload = (files) => { const fd = new FormData(); fd.append("id", "clipev"); files.forEach((f) => fd.append("photos", f)); return adminPhotos({ request: new Request(`${ORIGIN}/api/admin/event-photos`, { method: "POST", body: fd }), env }); };
+  const act = (body) => adminPhotos({ request: new Request(`${ORIGIN}/api/admin/event-photos`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), env });
+  let r = await upload([JPG(50), JPG(60)]), d = await r.json(); assert.equal(r.status, 200); assert.equal(d.photos.length, 2); assert.match(d.photos[0], /^e\/clipev\/\d+\.jpg$/);
+  assert.equal(JSON.parse(row(raw).owner_photos).length, 2);
+  assert.equal((await act({ id: "clipev", action: "cover", key: d.photos[1] })).status, 200); assert.equal(JSON.parse(row(raw).owner_photos)[0], d.photos[1], "the cover comes first");
+  assert.equal((await upload([JPG(1), JPG(2), JPG(3)])).status, 400, "no more than 4 photos");
+  assert.equal((await upload([new File([new TextEncoder().encode("not an image at all")], "x.jpg")])).status, 400, "only real images");
+  assert.equal((await act({ id: "clipev", action: "remove", key: d.photos[0] })).status, 200); assert.equal(JSON.parse(row(raw).owner_photos).length, 1);
+  assert.equal((await act({ id: "nope", action: "remove", key: "x" })).status, 404);
+  const c = await adminClip({ request: new Request(`${ORIGIN}/api/admin/event-video?id=clipev`, { method: "PUT", headers: { "content-type": "video/mp4" }, body: MP4(900) }), env });
+  assert.equal(c.status, 200); assert.equal(row(raw).video_ok, 1, "approved at once"); assert.match(row(raw).video_file, /^ev\/clipev\//);
+  assert.equal((await photo(env, row(raw).video_file)).status, 200, "visitors can watch it");
+});
