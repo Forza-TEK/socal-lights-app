@@ -1,10 +1,11 @@
-// POST /api/me/claims { event_id } — "this event is mine". A claim ONLY lets the person buy a Featured placement for that event; it
-// gives no edit rights. Auto-approved when the person's own business email domain matches (or is a parent of) the event's own website
+// POST /api/me/claims { event_id } — "this event is mine". An approved claim makes the person the event's manager (it joins Your profile > Events with Edit: details, ticket link,
+// photos, video; and they can buy a Featured placement). Auto-approved when the person's own business email domain matches (or is a parent of) the event's own website
 // and that website is not an aggregator; everything else waits for the admin (Event claims tab).
 import { json, err, clean, newId } from "../../_lib/util.js";
 import { requireUser, sameOrigin, isDisposable } from "../../_lib/auth.js";
 import { trustOf } from "../../_lib/contests.js";
 import { ptToday } from "../../_lib/time.js";
+import { grantEventOwnership } from "../../_lib/claimgrant.js";
 
 // Sites many unrelated events share: a matching email on these proves nothing about who runs the event.
 const AGGREGATORS = [
@@ -31,7 +32,7 @@ export async function onRequestPost({ request, env }) {
   if (!ev || ev.end_date < today) return err(404, "We couldn't find that event, or it has already ended.");
 
   const have = await env.DB.prepare("SELECT status FROM event_claims WHERE event_id = ? AND user_id = ?").bind(ev.id, user.id).first();
-  if (have && have.status !== "declined") return json({ ok: true, status: have.status }, h); // idempotent
+  if (have && have.status !== "declined") { if (have.status === "approved") await grantEventOwnership(env, ev.id, user.email); return json({ ok: true, status: have.status, manage: have.status === "approved" }, h); } // idempotent
   if (have) return err(403, "That claim was declined. Email info@socallights.app if that is a mistake.");
 
   const n = await env.DB.prepare("SELECT SUM(status = 'pending') AS p, SUM(created_at > datetime('now','-1 day')) AS d FROM event_claims WHERE user_id = ?").bind(user.id).first();
@@ -42,5 +43,6 @@ export async function onRequestPost({ request, env }) {
   const status = auto ? "approved" : "pending";
   await env.DB.prepare("INSERT OR IGNORE INTO event_claims (id,event_id,user_id,email,method,status,decided_at) VALUES (?,?,?,?,?,?,?)")
     .bind(newId(), ev.id, user.id, user.email, auto ? "domain" : null, status, auto ? new Date().toISOString().slice(0, 19).replace("T", " ") : null).run();
-  return json({ ok: true, status }, h);
+  if (auto) await grantEventOwnership(env, ev.id, user.email);
+  return json({ ok: true, status, manage: auto }, h);
 }

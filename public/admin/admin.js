@@ -695,12 +695,48 @@ async function paintEvBuys(ev) {
   const x = PLACE.events[ev.id], list = x ? x.orders : [];
   box.innerHTML = list.length ? `<div class="dtw"><table class="dtab"><thead><tr><th>What they bought</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>${list.map((o) => { const st = OSTATUS[o.status] || [o.status, ""]; return `<tr><td>${esc(PLAN_NAME[o.plan] || o.plan)}</td><td>${esc(money(o.cents))}</td><td><span class="tag ${st[1]}">${esc(st[0])}</span></td><td>${esc(pdate(o.at))}</td></tr>`; }).join("")}</tbody></table></div><p class="meta" style="margin:8px 0 0"><a href="#orders" data-tab="orders">Open Orders</a> for the payment details and refunds.</p>` : '<p class="meta" style="margin:0">Nothing bought for this event.</p>';
 }
+// The event editor's Photos section: the owner photos (up to 4). Photos are shrunk in the browser first (a phone photo can be 10 MB), then saved at once.
+async function shrinkPhoto(file) {
+  try {
+    const bmp = await createImageBitmap(file), k = Math.min(1, 2000 / Math.max(bmp.width, bmp.height)), c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise((res) => c.toBlob(res, "image/jpeg", 0.86)); return blob && blob.size < file.size ? new File([blob], "photo.jpg", { type: "image/jpeg" }) : file;
+  } catch { return file; }
+}
+function paintEvPhotos(ev, p) {
+  const box = $("#evPh"); if (!box) return; const keys = p.photos || [];
+  box.innerHTML = (p.linked_image ? `<p class="meta" style="margin:0 0 8px">The picture found on the event's own page shows when no photo is added here${keys.length ? "; the photos below show first" : ""}.</p>` : "")
+    + (keys.length ? `<div class="evthumbs">${keys.map((k, i) => `<div class="evph"><img src="/api/photo/${esc(k)}" alt="Photo ${i + 1}" loading="lazy">${i === 0 ? "<em>Cover</em>" : `<button type="button" class="btn ghost sm" data-evph="cover" data-key="${esc(k)}">Make cover</button>`}<button type="button" class="btn ghost danger sm" data-evph="remove" data-key="${esc(k)}">Remove</button></div>`).join("")}</div>` : '<p class="meta" style="margin:0 0 8px">No photos added here yet.</p>')
+    + (keys.length < 4 ? `<label class="btn ghost" for="evPhIn">Add photos</label><input id="evPhIn" type="file" accept="image/*" multiple hidden><span class="meta" id="evPhMsg" role="status" style="margin-left:10px"></span>` : '<p class="meta" style="margin:8px 0 0">That is the limit of 4 photos. Remove one to add another.</p>');
+  const again = async () => paintEvPhotos(ev, await api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }));
+  box.querySelectorAll("[data-evph]").forEach((b) => (b.onclick = async () => {
+    if (b.dataset.evph === "remove" && !tap(b, "remove the photo")) return;
+    b.disabled = true;
+    try { await api("/api/admin/event-photos", { method: "POST", body: JSON.stringify({ id: ev.id, action: b.dataset.evph, key: b.dataset.key }) }); toast(b.dataset.evph === "remove" ? "Photo removed" : "Cover changed"); await again(); } catch (x) { b.disabled = false; toast(x.message, true); }
+  }));
+  const inp = $("#evPhIn"); if (inp) inp.onchange = async (x) => {
+    const files = [...x.target.files].slice(0, 4 - keys.length); x.target.value = ""; if (!files.length) return; const say = (t) => ($("#evPhMsg").textContent = t);
+    say("Uploading…");
+    try {
+      const fd = new FormData(); fd.append("id", ev.id); for (const f of files) fd.append("photos", await shrinkPhoto(f));
+      const r = await fetch("/api/admin/event-photos", { method: "POST", body: fd }), j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "That didn't work.");
+      toast(files.length === 1 ? "Photo added" : "Photos added"); await again();
+    } catch (e) { say(e.message); }
+  };
+}
 // The event editor's Video section: the uploaded clip (watch it, Approve, Remove) or the link.
 function paintEvVid(ev, p) {
   const box = $("#evVid"); if (!box) return;
   const file = p.video_file, link = p.video, rm = '<button type="button" class="btn ghost danger" data-evvid="remove">Remove video</button>';
   box.innerHTML = file ? `<video controls playsinline preload="metadata" src="/api/admin/photo/${esc(file)}" style="display:block;max-width:420px;width:100%;border-radius:10px;background:#000;margin:0 0 8px"></video><p class="meta" style="margin:0 0 8px">${p.video_ok ? "Approved: visitors can watch it." : "Waiting for your approval. Visitors cannot see it yet."}</p>${p.video_ok ? "" : '<button type="button" class="btn ice" data-evvid="approve">Approve video</button> '}${rm}`
     : link ? `<p style="margin:0 0 8px">Link (shown at once): <a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a></p>${rm}` : '<p class="meta" style="margin:0">No video.</p>';
+  box.insertAdjacentHTML("beforeend", `<div style="margin-top:10px"><label class="btn ghost" for="evVidIn">${file || link ? "Replace with a clip" : "Upload a clip"}</label><input id="evVidIn" type="file" accept="video/mp4,video/quicktime,video/webm,video/*" hidden><span class="meta" id="evVidMsg" role="status" style="margin-left:10px">MP4, MOV or WebM, up to 40 MB. A clip you add here is approved at once.</span></div>`);
+  $("#evVidIn").onchange = async (x) => {
+    const f = x.target.files[0]; x.target.value = ""; if (!f) return; const say = (t) => ($("#evVidMsg").textContent = t);
+    if (f.size > 40 * 1048576) return say(`That video is ${Math.round(f.size / 1048576)} MB. The limit is 40 MB.`);
+    say("Uploading… this can take a minute.");
+    try { const r = await fetch("/api/admin/event-video?id=" + encodeURIComponent(ev.id), { method: "PUT", headers: { "content-type": f.type || "video/mp4" }, body: f }), j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "That didn't work."); toast("Video added and approved"); paintEvVid(ev, await api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" })); } catch (e) { say(e.message); }
+  };
   box.querySelectorAll("[data-evvid]").forEach((b) => (b.onclick = async () => {
     if (b.dataset.evvid === "remove" && !tap(b, "remove the video")) return;
     b.disabled = true;
@@ -813,6 +849,7 @@ function editEvent(ev) {
     ${ev ? fsec("Paid placement", "Featured: 1 is the gold pin and badge, 2 also lists the event first. Banner: the event is a pill labeled Featured in the strip at the top of the map list. Organizers buy these themselves at /feature (see Orders). A level or date set here can never be lower or earlier than a paid order that is still running. Leave a date empty for no end date (Featured) or to keep the banner off.",
       ff("eFl", "Featured level", `<select id="eFl" disabled><option value="0">Off</option><option value="1">1: pin and badge</option><option value="2">2: also listed first</option></select>`, { c: "c2" }) + ff("eFu", "Featured until", `<input id="eFu" type="date" disabled>`, { c: "c2" }) + ff("eBu", "Banner until", `<input id="eBu" type="date" disabled>`, { c: "c2", hint: "Loading…" })) : ""}
     ${ev ? fsec("Purchases", "What this event paid for: the Featured pin, the banner and top of the list. The dates it runs are in Paid placement above; refunds are handled in Orders.", `<div class="ff c6" id="evBuys"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
+    ${ev ? fsec("Photos", "Up to 4 photos, the first is the cover and shows before the picture found on the event's own page. Add one an organizer emailed you; it is saved at once, no need to tap Save.", `<div class="ff c6" id="evPh"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     ${ev ? fsec("Video", "A YouTube or Vimeo link shows at once. An uploaded clip is hidden from visitors until you approve it here. Organizers add them from Your profile (Edit the event).", `<div class="ff c6" id="evVid"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
   </form></div>`;
@@ -840,7 +877,7 @@ function editEvent(ev) {
   const back = (x) => { if (x) x.preventDefault(); close(); if (tab === "events") renderEvents(); else render(); };
   $("#evBack").onclick = back; main.querySelector("[data-mcancel]").onclick = back;
   let placed = false; // the paid placement fields are sent only once they have loaded, so a failed load can never wipe a placement
-  if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; paintEvVid(ev, p); paintEvBuys(ev); }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
+  if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; paintEvVid(ev, p); paintEvBuys(ev); paintEvPhotos(ev, p); }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
   if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Delete anyway", danger: true }))) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted", false, { undo: () => restoreEvents([ev.id]) }); if (tab === "events") renderEvents(); else render(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");

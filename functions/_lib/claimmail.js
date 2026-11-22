@@ -14,6 +14,7 @@ export async function sendClaimDecisionEmail(env, { approved, email, eventId, na
     const ok = await sendTemplate(env, id, email, {
       name: name || "your event",
       link: `${SITE}/feature?event=${encodeURIComponent(eventId || "")}`,
+      manage: `${SITE}/profile#events`,
     });
     if (!ok) await logOp(env, "email", `${id}: not sent`);
     return !!ok;

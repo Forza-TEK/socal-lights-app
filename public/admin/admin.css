@@ -553,3 +553,8 @@ body.admin .top .crumb h1{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .rthumb{flex:none;width:48px;height:48px;border-radius:10px;overflow:hidden;background:var(--surface-2,#f1f1f1);color:var(--muted);display:grid;place-items:center;border:1px solid var(--line)}
 .rthumb img{width:100%;height:100%;object-fit:cover;display:block}
 .tcell{display:flex;gap:12px;align-items:center;min-width:0}.tcell>div{min-width:0}
+
+/* the event editor's photo grid */
+.evthumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:0 0 12px}
+.evph{display:grid;gap:6px;position:relative}.evph img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:var(--surface-2)}
+.evph em{position:absolute;top:8px;left:8px;background:var(--ink);color:var(--surface);font:700 11px var(--font);font-style:normal;padding:3px 8px;border-radius:999px;letter-spacing:.04em}

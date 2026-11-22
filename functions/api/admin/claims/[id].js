@@ -1,4 +1,4 @@
-// POST /api/admin/claims/:id { action: "approve" | "decline" } — approving only lets the person buy Featured for the event (no edit rights).
+// POST /api/admin/claims/:id { action: "approve" | "decline" } — approving makes the person the event's manager (Your profile > Events > Edit) and lets them buy Featured for it.
 // The admin middleware already required the Access login and logs this to admin_log (area "claims").
 // The person is emailed the decision once (templates claim_approved / claim_declined). A repeat click, or a claim that was already
 // approved on its own (email matched the event's website), sends nothing. A failed email is logged and never blocks the decision;
@@ -6,6 +6,7 @@
 import { json, err } from "../../../_lib/util.js";
 import { sendClaimDecisionEmail } from "../../../_lib/claimmail.js";
 import { logOp } from "../../../_lib/oplog.js";
+import { grantEventOwnership } from "../../../_lib/claimgrant.js";
 
 export async function onRequestPost({ request, env, params }) {
   const b = await request.json().catch(() => ({}));
@@ -16,6 +17,7 @@ export async function onRequestPost({ request, env, params }) {
   await env.DB.prepare("UPDATE event_claims SET status = ?, method = CASE WHEN ? THEN 'admin' ELSE method END, decided_at = datetime('now') WHERE id = ?")
     .bind(status, ok ? 1 : 0, c.id).run();
 
+  if (ok) await grantEventOwnership(env, c.event_id, c.email); // the event joins their profile with Edit
   let emailed = false;
   try {
     if (!(ok && c.status === "approved" && c.method === "domain")) { // an automatic approval was never meant to send one

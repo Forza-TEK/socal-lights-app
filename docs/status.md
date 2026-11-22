@@ -1790,3 +1790,11 @@ An event whose hours give only a start time ("7pm") came into the calendar as al
 
 ## 2026-11-19 App Store description: sponsors, not "no ads"
 - Owner confirmed the sponsor strip appears inside the iPhone app, so the Advertising answer in the age rating (Contains Advertising) is right and the live description line "Free, no ads" is not. Corrected wording is in docs/app-store.md ("Free to browse. Local sponsors may appear."). A live version's description is locked in App Store Connect: change it when the next version (1.0.2) is created. Do not claim "no ads" anywhere else.
+
+## 2026-11-22: Claim to manage, Admin photos/video on any event
+- Admin event editor: new Photos section (up to 4, cover/remove) and clip upload (≤40 MB, approved at once) on any event, including sweep events (`/api/admin/event-photos`, PUT `/api/admin/event-video`).
+- Claims now give ownership: approving a claim (Admin, or automatic when the claimant's email domain matches the event's own website) adds the event to their profile > Events via an `event_submissions` row (`_lib/claimgrant.js`), so they can add a ticket link, photos and a clip. Approval email links to it.
+- New `/claim?event=<id>` page; every sweep event card shows "Is this your event? Claim it".
+- Caveats: a later sweep/migration upsert can overwrite owner edits to a claimed event; claimants can delete a claimed sweep event from their profile.
+- Pre-existing: `tests/home-cache.test.mjs` "served from the edge copy" fails on a clean tree too (not caused by this work).
+- Harbor Glow (`grok-harbor-glow-at-west-harb-2bc81d`): Marina's photo and ticket link still to be applied (Admin > Events > Edit), or she can claim it.
