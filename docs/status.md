@@ -1798,3 +1798,7 @@ An event whose hours give only a start time ("7pm") came into the calendar as al
 - Caveats: a later sweep/migration upsert can overwrite owner edits to a claimed event; claimants can delete a claimed sweep event from their profile.
 - Pre-existing: `tests/home-cache.test.mjs` "served from the edge copy" fails on a clean tree too (not caused by this work).
 - Harbor Glow (`grok-harbor-glow-at-west-harb-2bc81d`): Marina's photo and ticket link still to be applied (Admin > Events > Edit), or she can claim it.
+
+## 2026-11-22 (later): Promote buttons on the profile
+- Your profile now has **Promote** buttons: live events (-> /feature?event=), approved homes (-> /feature?home=; the page still only sells to podium homes) and installer profiles (-> /sponsor?installer=). Web only (`web-only` class): the apps hide them.
+- Open: Rey wants paid extras to work inside the iPhone/Android apps too. Apple 3.1.1 / Google Play require native in-app purchase for this; the site-wide in-app block stays until that is decided (see the question put to Rey).
