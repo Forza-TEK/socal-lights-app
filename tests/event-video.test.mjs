@@ -54,8 +54,8 @@ test("the owner's edit saves a video (also through Admin 'edit as owner') and re
 
 test("the card shows a button, loads no player until it is tapped, and the edit forms have the field", () => {
   const app = readFileSync("public/app.js", "utf8"), forms = readFileSync("public/forms.js", "utf8"), adm = readFileSync("public/admin/admin.js", "utf8");
-  assert.match(app, /data-vid="\$\{esc\(v\.embed\)\}"/); assert.match(app, /f\.src = b\.dataset\.vid/); assert.doesNotMatch(app, /<iframe/);
-  assert.match(app, /const HEAVY = \["b", "u", "vid", "vf"\]/); assert.match(app, /swap\("#dvideo", videoBlock\(ev\)\)/);
+  assert.match(app, /data-vid="\$\{esc\(v\.embed\)\}"/); assert.match(app, /const vslide = /, "the video is a slide of the one gallery"); assert.match(app, /play: pl/); assert.match(app, /f\.src = b\.dataset\.vid/); assert.doesNotMatch(app, /<iframe/);
+  assert.match(app, /const HEAVY = \["b", "u", "vid", "vf"\]/); assert.doesNotMatch(app, /videoBlock/, "no separate video button under the card any more");
   assert.match(forms, /inp\("video", e\.video/); assert.match(adm, /id="eVid"/); assert.match(adm, /video: \$\("#eVid"\)\.value/); assert.doesNotMatch(adm, /ff\("eV", "Video/, "the video field no longer shares the venue field's id (the video link was saved from the venue box)");
 });
 
