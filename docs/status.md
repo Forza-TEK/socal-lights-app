@@ -1802,3 +1802,8 @@ An event whose hours give only a start time ("7pm") came into the calendar as al
 ## 2026-11-22 (later): Promote buttons on the profile
 - Your profile now has **Promote** buttons: live events (-> /feature?event=), approved homes (-> /feature?home=; the page still only sells to podium homes) and installer profiles (-> /sponsor?installer=). Web only (`web-only` class): the apps hide them.
 - Open: Rey wants paid extras to work inside the iPhone/Android apps too. Apple 3.1.1 / Google Play require native in-app purchase for this; the site-wide in-app block stays until that is decided (see the question put to Rey).
+
+## 2026-11-22 (later still): any approved home can buy a pin or top spot
+- `_lib/podium.js`: every approved home of the signed-in person is featurable (contest entries only once the contest is announced; disqualified entries never). Podium finish is now only `standing` (null otherwise); checkout, `/api/me/featurable`, /feature and /pricing wording updated. Winners keep the crown badge, separate from a paid pin.
+- Map: featured homes draw the pulsing badge with a house icon (`.fmark.fhome`), pulse and fill in the current season colour (`--season`); events keep the gold star.
+- Paid placement is still web-only (hidden in the apps). app.js is within ~30 bytes of its 200 KB test cap: trim before adding more.

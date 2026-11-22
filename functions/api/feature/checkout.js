@@ -31,7 +31,7 @@ export async function onRequestPost({ request, env }) {
   let ev = null, pending = false, home = null;
   const subId = clean(b && b.submission_id, 40), homeId = clean(b && b.home_id, 60);
   if (homeId) {
-    // A home: only the winner, 2nd or 3rd place of an announced contest (read from the frozen results), and only its owner. Payment never touches the contest.
+    // A home: any approved home of theirs (a contest entry only once the contest is announced). Payment never touches the contest or its results; a podium finish keeps its own crown badge.
     if (!HOME_PLANS.includes(plan)) return err(400, "Homes can be featured for 30 days: choose the featured pin or top of the list.");
     const h = await homeForCheckout(env, user, homeId);
     if (h.error) return err(h.status, h.error);
@@ -74,7 +74,7 @@ export async function onRequestPost({ request, env }) {
     "line_items[0][price_data][currency]": "usd",
     "line_items[0][price_data][unit_amount]": String(p.cents), // an event: the quote's price for what it adds; a home: the plan's price. Never from the browser
     "line_items[0][price_data][product_data][name]": `Featured on SoCal Lights: ${ev.name}`.slice(0, 120),
-    "line_items[0][price_data][product_data][description]": (q ? `${p.label} · ${ev.city} · ${niceYmd(q.from)} to ${niceYmd(q.to)} (${q.season} season${q.capped === "event" ? ", your event's last day" : ""})${q.added.length < q.components.length ? " · adds " + q.added.join(", ") : ""}` : `${p.label} · ${ev.city}${home ? " · " + placeWord(home.standing.place) + ": " + home.row.cname : ""}`).slice(0, 200),
+    "line_items[0][price_data][product_data][description]": (q ? `${p.label} · ${ev.city} · ${niceYmd(q.from)} to ${niceYmd(q.to)} (${q.season} season${q.capped === "event" ? ", your event's last day" : ""})${q.added.length < q.components.length ? " · adds " + q.added.join(", ") : ""}` : `${p.label} · ${ev.city}${home && home.standing ? " · " + placeWord(home.standing.place) + ": " + home.row.cname : ""}`).slice(0, 200),
     "metadata[event_id]": ev.id,
     ...(home ? { "metadata[target]": "home" } : {}),
     ...(q ? { "metadata[quote_from]": q.from, "metadata[quote_to]": q.to, "metadata[quote_cents]": String(q.cents) } : {}), // what the buyer was quoted: the webhook applies this window and checks the amount against it

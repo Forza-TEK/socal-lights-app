@@ -155,7 +155,7 @@ async function start() {
       return planCard({ key: k, price: prices[k], unit: c.unit, name: c.name, blurb: eventTierBlurb(k), popular: cfg.popularEvent === k, selected: on,
         action: `<button class="btn pick${on ? "" : " ghost"}" type="button" data-pick="${k}" aria-pressed="${on}" aria-label="${on ? "Chosen: " : "Choose "}${esc(c.name)}, ${esc(prices[k])}">${on ? "\u2713 Chosen" : "Choose"}</button>` }); }).join("");
     return `<h2>Pick a plan</h2><div class="pcards">${cards}</div>${compareTable(keys, names, prices)}
-      <p class="meta">${esc(r.rule + r.now)}${esc(r.up)} You pay once on Stripe's secure page. No subscription. This page shows the exact dates and the total before you pay. Featuring a home that placed 1st, 2nd or 3rd in a contest is separate: 30 days, ${PL.pin ? money(PL.pin.cents) : ""} for the Featured pin or ${PL.top ? money(PL.top.cents) : ""} for Top of the list (pick your home on the next step).</p>`;
+      <p class="meta">${esc(r.rule + r.now)}${esc(r.up)} You pay once on Stripe's secure page. No subscription. This page shows the exact dates and the total before you pay. Featuring a home is separate and open to any approved home: 30 days, ${PL.pin ? money(PL.pin.cents) : ""} for the Featured pin or ${PL.top ? money(PL.top.cents) : ""} for Top of the list (pick your home on the next step).</p>`;
   }
 
   function signInBox() {
@@ -164,7 +164,7 @@ async function start() {
 
   function whichBox() {
     const rows = S.mine;
-    const li = (m) => { const ok = m.elig.ok, bits = [m.kind === "contest" ? "Contest" : m.kind === "home" ? `Home · ${m.placeText} in ${m.contest}` : m.city, when(m), running(m)].filter(Boolean).join(" · ");
+    const li = (m) => { const ok = m.elig.ok, bits = [m.kind === "contest" ? "Contest" : m.kind === "home" ? (m.placeText ? `Home · ${m.placeText} in ${m.contest}` : "Home") : m.city, when(m), running(m)].filter(Boolean).join(" · ");
       const state = m.state === "pending" ? "Waiting for our review. You can pay now; it turns on when we approve it." : ok ? "" : m.elig.reason;
       return `<li><button type="button" data-mine="${esc(m.id)}"${ok ? "" : " disabled"}><b>${esc(m.name)}</b><small>${esc(bits)}</small>${state ? `<small class="${ok ? "" : "why"}">${esc(state)}</small>` : ""}${ok ? `<small><b>${m.featured ? "Extend or upgrade" : "Feature this " + WHO(m)}</b></small>` : ""}</button></li>`; };
     return `<div id="nextsec"></div><h2>Which event?</h2>${rows.length ? `<ul class="res" id="mylist">${rows.map(li).join("")}</ul>` : `<p>You don't have an event on this account yet. Add it (free), or claim a listing that is already on the map.</p>`}

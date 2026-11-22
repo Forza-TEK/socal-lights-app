@@ -49,37 +49,48 @@ export function ownsHomeRow(user, row) {
 }
 export const isOrphanHome = (row) => !row.user_id && !String(row.contact_email || "").trim();
 
-const COLS = "p.id, p.title, p.city, p.status, p.user_id, p.contact_email, p.featured, p.featured_until, p.contest_id, c.id AS cid, c.slug, c.name AS cname, c.owner_id, c.note, c.results";
-const FROM = "posts p JOIN contests c ON c.id = p.contest_id WHERE p.status = 'approved' AND c.announced = 1 AND c.status = 'live' AND c.results != ''";
+// A home is "featurable" when it is approved and either a plain showcase home (no contest) or an entry in a contest whose results are announced (the frozen snapshot is
+// then final, so paying can never change a result and nothing is sold on an entry while voting is open). Any such home may buy a pin or top of the list; a podium finish
+// (winner, 2nd, 3rd) is shown separately by the crown badge and is only returned here as `standing` (null for everyone else).
+const COLS = "p.id, p.title, p.city, p.status, p.user_id, p.contact_email, p.featured, p.featured_until, p.contest_id, c.id AS cid, c.slug, c.name AS cname, c.owner_id, c.note, c.results, c.announced, c.status AS cstatus";
+const FROM = "posts p LEFT JOIN contests c ON c.id = p.contest_id WHERE p.status = 'approved' AND (p.contest_id IS NULL OR (c.announced = 1 AND c.status = 'live' AND c.results != ''))";
 
 // Contest staff or owner, with the same open-review rule as events (contests.note = '' means Admin has nothing to check).
 async function runsContest(env, user, row) {
-  if (row.note) return false;
+  if (!row.cid || row.note) return false;
   if (row.owner_id && row.owner_id === user.id) return true;
   return !!(await env.DB.prepare("SELECT 1 FROM contest_staff WHERE contest_id = ? AND lower(email) = lower(?)").bind(row.cid, user.email).first());
 }
+// Per contest: the podium map and the set of disqualified entry ids (a disqualified home may not buy a placement).
+const snapOf = (row, snaps) => {
+  if (!snaps.has(row.cid)) { let r = null, dq = new Set(); try { r = JSON.parse(row.results); dq = new Set((r.entries || []).filter((e) => e && e.dq).map((e) => e.id)); } catch {} let pod = new Map(); try { pod = podium(r) || new Map(); } catch {} snaps.set(row.cid, { pod, dq }); }
+  return snaps.get(row.cid);
+};
+const standingOf = (row, snaps) => (row.cid ? snapOf(row, snaps).pod.get(row.id) || null : null);
+const disqualified = (row, snaps) => !!row.cid && snapOf(row, snaps).dq.has(row.id);
 
-// What this person may feature: homes of theirs (or organizer-added homes of contests they run) on the podium of an announced contest.
-// Returns [{ row, role, standing }]. Reads only the frozen snapshot.
+// What this person may feature: their own approved homes, and organizer-added homes of contests they run that finished on the podium.
+// Returns [{ row, role, standing }]; standing is null for a home with no podium finish. Reads only the frozen snapshot.
 export async function featurableHomes(env, user) {
-  const rows = (await env.DB.prepare(`SELECT ${COLS} FROM ${FROM} ORDER BY c.entries_close DESC LIMIT 3000`).all()).results;
+  const mine = normEmail(user.email);
+  const rows = (await env.DB.prepare(`SELECT ${COLS} FROM ${FROM} AND (p.user_id = ? OR (? != '' AND lower(p.contact_email) = ?) OR (p.contest_id IS NOT NULL AND (p.user_id IS NULL OR p.user_id = ''))) ORDER BY p.created_at DESC LIMIT 3000`).bind(user.id, mine || "", mine || "").all()).results;
   const snaps = new Map(), out = [];
   for (const row of rows) {
-    const own = ownsHomeRow(user, row);
-    if (!own && !(isOrphanHome(row) && (await runsContest(env, user, row)))) continue;
-    if (!snaps.has(row.cid)) { let s = null; try { s = podium(JSON.parse(row.results)); } catch {} snaps.set(row.cid, s || new Map()); }
-    const standing = snaps.get(row.cid).get(row.id);
-    if (standing) out.push({ row, role: own ? "owner" : "organizer", standing });
+    const own = ownsHomeRow(user, row), standing = standingOf(row, snaps);
+    if (disqualified(row, snaps)) continue;
+    if (own) { out.push({ row, role: "owner", standing }); continue; }
+    if (standing && isOrphanHome(row) && (await runsContest(env, user, row))) out.push({ row, role: "organizer", standing });
   }
   return out;
 }
 
-// One home, for checkout: { error, status } or { row, standing }. Same answer (404) for a home that is missing, not announced, or not theirs.
+// One home, for checkout: { error, status } or { row, standing }. Same answer (404) for a home that is missing, not eligible, or not theirs.
 export async function homeForCheckout(env, user, postId) {
   const row = await env.DB.prepare(`SELECT ${COLS} FROM ${FROM} AND p.id = ?`).bind(postId).first();
   const own = !!row && ownsHomeRow(user, row);
   if (!row || (!own && !(isOrphanHome(row) && (await runsContest(env, user, row))))) return { status: 404, error: "We couldn't find that home among yours." };
-  let standing = null; try { standing = podium(JSON.parse(row.results)).get(row.id) || null; } catch {}
-  if (!standing) return { status: 403, error: "Featured is only for the winner, 2nd and 3rd place of an announced contest." };
+  const snaps = new Map(), standing = standingOf(row, snaps);
+  if (disqualified(row, snaps)) return { status: 403, error: "This entry was disqualified, so it can't be featured." };
+  if (!own && !standing) return { status: 403, error: "An organizer can feature a home they added only if it won, or placed 2nd or 3rd." };
   return { row, standing };
 }

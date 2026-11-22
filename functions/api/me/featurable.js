@@ -69,12 +69,12 @@ export async function onRequestGet({ request, env }) {
     for (const e of withBanner) { const r = by["ev:" + e.id]; e.banner = { shown: r ? r.shown : 0, taps: r ? r.taps : 0 }; }
   }
 
-  // Homes on a podium. A failure here must never hide the events and contests.
+  // Homes: any approved home of theirs (podium finishers carry their place; the crown badge shows a podium finish separately from a paid pin). A failure here must never hide the events and contests.
   let homes = [];
   try {
     homes = (await featurableHomes(env, user)).map(({ row, role, standing }) => { const f = level(row.featured, row.featured_until, t);
-      return { kind: "home", state: "live", id: row.id, name: row.title, city: row.city, contest: row.cname, slug: row.slug, place: standing.place, placeText: placeWord(standing.place), category: standing.category, award: standing.label, role, featured: f, until: f ? row.featured_until || null : null }; })
-      .sort((a, b) => a.place - b.place);
+      return { kind: "home", state: "live", id: row.id, name: row.title, city: row.city, contest: row.cname || "", slug: row.slug || "", place: standing ? standing.place : 0, placeText: standing ? placeWord(standing.place) : "", category: standing ? standing.category : "", award: standing ? standing.label : "", role, featured: f, until: f ? row.featured_until || null : null }; })
+      .sort((a, b) => (a.place || 99) - (b.place || 99));
   } catch (e) { console.error("featurable homes", e && e.message); }
   return json({ events, contests, homes }, h);
 }
