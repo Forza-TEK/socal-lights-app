@@ -66,9 +66,7 @@ document.addEventListener("click", (e) => { const b = e.target.closest("[data-ta
   document.addEventListener("click", (e) => { if (!e.target.closest(".pm")) shut(); }); document.addEventListener("keydown", (e) => { if (e.key === "Escape") shut(); }); }
 const sheet = $("#side");
 wireFold($("#main"));
-function openSheet() { document.body.classList.add("sheet-open"); $("#moreBtn") && $("#moreBtn").setAttribute("aria-expanded", "true"); }
-function closeSheet() { document.body.classList.remove("sheet-open"); $("#moreBtn") && $("#moreBtn").setAttribute("aria-expanded", "false"); }
-$("#moreBtn").onclick = () => (document.body.classList.contains("sheet-open") ? closeSheet() : openSheet());
+function closeSheet() { document.body.classList.remove("sheet-open"); }
 $("#scrim").onclick = closeSheet;
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
 window.addEventListener("hashchange", () => { const h = location.hash.slice(1).split("/")[0]; if (TABS.includes(h) && h !== tab) setTab(h, false); else if (h === "ads" && tab === "ads") renderAds(); });
