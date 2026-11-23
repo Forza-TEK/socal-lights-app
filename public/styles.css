@@ -285,8 +285,10 @@ button{touch-action:manipulation}
   .phead{padding:4px 16px 10px;touch-action:none;row-gap:16px}
   .phead .quick{order:-1;flex-basis:100%;touch-action:pan-x}
   .pbody{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
-  body.detail-open .pbody{padding-top:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
-  .actionbar{bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
+  /* a sticky bar is placed from the scroller's padding edge, so bottom padding would lift it: none here, the end-of-list space is a spacer instead */
+  body.detail-open .pbody{padding-top:0;padding-bottom:0}
+  body.detail-open .pbody::after{content:"";display:block;height:calc(max(10px,calc(env(safe-area-inset-bottom,0px) - 8px)) + 76px)}
+  .actionbar{bottom:max(10px,calc(env(safe-area-inset-bottom,0px) - 8px))}
   .hero{height:190px}
   /* behind the tab bar: the sheet's lower part fades out at Peek and shows through as the sheet rises */
   .navfade{display:block;position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 72px);z-index:35;pointer-events:none;background:linear-gradient(to bottom,transparent 0,var(--surface) 14%);opacity:1;transition:opacity .32s cubic-bezier(.2,.8,.2,1)}
