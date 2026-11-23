@@ -54,6 +54,7 @@ function setTab(t, push = true) {
   if (t !== tab || NEXTVIEW) { PVIEW = NEXTVIEW || "pending"; HOPEN = ""; COPEN = ""; OORDER = ""; NEXTVIEW = ""; }
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
+  const cur = document.querySelector('.bb[aria-current="page"]'); if (cur) cur.scrollIntoView({ inline: "center", block: "nearest" }); // the bottom bar scrolls sideways: keep the open section in view
   $("#ptitle").textContent = TITLES[t] || ""; $("#pgroup").textContent = groupOf(t); setDetail("");
   closeSheet(); window.scrollTo(0, 0);
   if (push && location.hash.split("/")[0] !== "#" + t) history.replaceState(null, "", "#" + t);
