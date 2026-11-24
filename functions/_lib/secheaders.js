@@ -18,4 +18,7 @@ export const CSP_REPORT_ONLY = [
   "form-action 'self' checkout.stripe.com",
   "frame-ancestors 'self'",
 ].join("; ");
+// Enforced since 2026-11-24 (runbook step 3, without form-action, which stays report-only): the directives that do not depend on inline code. Nothing the site does is affected: no page is framed by another
+// site (X-Frame-Options already said so), no plugin objects are used, and no page sets a <base> tag.
+export const CSP_ENFORCED = "frame-ancestors 'self'; object-src 'none'; base-uri 'self'";
 export const HSTS = "max-age=31536000";

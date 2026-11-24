@@ -9,14 +9,14 @@ Apple asks for: a way to filter objectionable content, a way to report it with a
 **Done (PR 3)**
 - **Report:** the existing "Something wrong?" link on every event and home card is now "Report or hide this listing". The dialog asks what is wrong (Offensive, unsafe or inappropriate / Not a real event or home / Wrong information / Something else), details and an optional email are optional, and it posts to the existing `POST /api/report` (table `reports`, shown in Admin > Reports and counted in the digest). Same abuse controls as before: 5 reports an hour per connection, and the same words about the same item are stored once a day. An "Objectionable content" report is stored with that label first. No new table, no migration.
 - **Hide for me:** a button in the same dialog hides that event or home on this device (kept in the browser, `socal-hidden`); the ⋯ menu shows "Show hidden items" while any are hidden. This is the closest match to "block" because posters are not public people: listings carry no profile to block.
-- **Filtering:** events and homes are reviewed by a person before they appear (existing flow), so there is a pre-publication filter.
+- **Filtering (corrected 2026-11-24):** events and homes are NOT all reviewed by a person before they appear. A signed-in person who passes the human check publishes at once; automatic checks (a word filter, an address check, daily limits, unproven pages) hold some for review in Admin. So the filter is automatic plus after-the-fact review of reports. Do not tell App Review that a person reviews every listing first.
 - **Contact:** info@socallights.app is in the listing, the Terms and the menu.
 
 **Still yours**
 1. **Respond within 24 hours.** The dialog promises "within 24 hours". Admin > Reports is where they land; the three-a-day digest email already counts them. Check it daily during the season, or change the sentence in `public/app.js` (search for "within 24 hours") to a promise you can keep.
 2. **Terms acceptance.** Apple likes users agreeing to terms that forbid objectionable content when they sign in or post. I did not edit the legal text. Suggested sentence for `public/terms.html` and under the sign-in sheet: "You may not post content that is unlawful, hateful, sexually explicit, or that shows other people without their permission. We remove it and may close the account." Say yes and I will add it with the sign-in line.
 3. **Not covered:** contest entry photos and installer pages have no Report button yet (the map's events and homes do). Recommended next step if the reviewer asks.
-4. **App Store Connect:** answer "Does your app have user-generated content?" yes, and say in the review notes: "Listings are reviewed by a person before they appear. Every listing has Report and Hide. Reports go to info@socallights.app within 24 hours."
+4. **App Store Connect:** answer "Does your app have user-generated content?" yes, and say in the review notes (corrected 2026-11-24): "Listings need a signed-in account and a human check and go live right away unless automatic checks hold them for our review. Every listing has Report and Hide. Reports go to info@socallights.app and we respond within 24 hours."
 
 ## 2. Age rating (Apple questionnaire) vs the content
 

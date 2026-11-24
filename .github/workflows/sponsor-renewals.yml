@@ -11,6 +11,7 @@ on:
 jobs:
   renew:
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # a hung job must not hold the queue (audit F-47)
     steps:
       - name: Run the renewals
         env:
