@@ -50,7 +50,7 @@ test("front-end rules: focus ring on search, reduced-motion sponsor strip, 24px 
   const css = read("public/styles.css"), app = read("public/app.js");
   assert.match(css, /\.search:focus-within\{outline:2\.5px solid var\(--focus\)/);
   assert.match(css, /prefers-reduced-motion:reduce\)\{\.sp-win\{overflow-x:auto[^}]*\}[^@]*\.sp-track\.go\{animation:none/);
-  assert.match(css, /\.panel:has\(>\.sponsor\) #back\{top:62px\}/);
+  assert.match(css, /\.panel:has\(>\.sponsor\) #back\{top:82px\}/);
   assert.match(css, /body\.detail-open #welcome\{display:none\}/);
   assert.match(app, /function dismissWelcome\(\)/); assert.match(app, /state\.detail \|\| \/\^#\[ehm\]-\/\.test\(location\.hash\)/);
   assert.match(app, /<div class="dlive" aria-live="polite">/);

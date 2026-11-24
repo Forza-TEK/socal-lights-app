@@ -12,8 +12,8 @@
 <meta name="theme-color" content="#ffffff">
 <script>try{var t=(function(d){var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"numeric",minute:"numeric",hour12:false,timeZoneName:"short"}).formatToParts(d),g=function(k){for(var i=0;i<p.length;i++)if(p[i].type==k)return p[i].value},m=g("hour")%24*60+ +g("minute"),n=713+(g("timeZoneName")=="PDT"?60:0),H=(12+2.1*Math.sin(6.2832*(Math.floor((d-new Date(d.getFullYear(),0,0))/864e5)-80)/365))*30;return m<n-H||m>=n+H?"dark":"light"})(new Date()),o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/tokens.css?v=20261116c">
-<link rel="stylesheet" href="/addflow.css?v=20261116b">
+<link rel="stylesheet" href="/tokens.css?v=20261124a">
+<link rel="stylesheet" href="/addflow.css?v=20261124b">
 <link rel="stylesheet" href="/info.css?v=20261111x560">
 <style>
 .plan,details,.pick{background:#fff}:root[data-theme="dark"] .plan,:root[data-theme="dark"] details,:root[data-theme="dark"] .pick{background:var(--tile)}
@@ -77,7 +77,7 @@
 <p class="meta">Questions? Email <a href="mailto:info@socallights.app?subject=Installer%20banner">info@socallights.app</a>. <a href="/pricing#banner">Back to pricing</a>.</p>
 </main>
 <script type="module">
-import { themeBtn, mountAcct } from "/addflow.js?v=20261124a";
+import { themeBtn, mountAcct } from "/addflow.js?v=20261124b";
 import { me, signIn } from "/auth.js?v=20261116a";
 import { SPONSOR_KEYS, sponsorCopy, money, niceDate, seasonRule, runsText, dayWord, renewalText } from "/sponsor-plans.js?v=20261111x553";
 document.getElementById("tb").innerHTML = themeBtn(); mountAcct(document.getElementById("acct"));

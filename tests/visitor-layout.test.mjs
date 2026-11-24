@@ -13,7 +13,7 @@ test("F4: the count row is hidden at Peek on a phone and the sheet reports its s
   assert.match(js, /panel\.dataset\.sheet = s/);
 });
 test("F19: the chip row wraps on a tablet so Sort is reachable", () => {
-  assert.match(css, /@media \(min-width:701px\) and \(max-width:1100px\)\{\.phead \.quick\{flex-wrap:wrap;overflow:visible\}\}/);
+  assert.match(css, /@media \(min-width:701px\) and \(max-width:1359px\)\{\.phead \.quick\{flex-wrap:wrap;overflow:visible\}\}/);
 });
 test("F18: the kicker over a photo is white with a shadow, also on free events", () => {
   assert.match(css, /\.hero\.photo \.kicker,\.hero\.free\.photo \.kicker\{color:#fff;text-shadow/);

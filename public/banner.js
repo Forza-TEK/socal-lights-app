@@ -114,7 +114,7 @@ export const bannerHeight = () => (el && !el.hidden ? el.offsetHeight + parseFlo
 
 // place(): moves the strip to the right spot (desktop: under the search row; phone: above the list).
 // The label at the start of the strip: "Sponsor" while any installer is in it (and when it is empty), "Featured" when it holds only events. Event pills also carry their own "Featured" label.
-function tagText() { const t = el && el.querySelector(".sp-tag"); if (t) t.textContent = cur.length && cur.every((i) => i.ev) ? "Featured" : "Sponsor"; }
+function tagText() { const t = el && el.querySelector(".sp-tag"); if (t) { const ev = cur.length && cur.every((i) => i.ev); t.textContent = ev ? "Featured" : "Sponsor"; el.classList.toggle("allev", !!ev); } } // one "Featured" label: the badge, not also on every pill
 // openEvent(eventId) -> true when the app opened that event's card on the map (then the link is not followed); otherwise the pill's link /e/<id> opens the event page.
 export async function initBanner({ place, onChange, onOpenEvent }) {
   host = place; changed = onChange || (() => {}); openEvent = onOpenEvent || (() => false);
