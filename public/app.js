@@ -745,7 +745,7 @@ function toast(msg, accent, ms) {
 }
 async function shareItem(k) {
   const it = findKey(k); if (!it) return;
-  const title = it.kind === "ev" ? it.ev.n : it.p.title, url = location.origin + (it.kind === "ev" ? "/e/" + encodeURIComponent(it.ev.id) : "/#h-" + it.p.id); // events share a server page so texts and social posts show a preview card; its button opens the map
+  const title = it.kind === "ev" ? it.ev.n : it.p.title, url = location.origin + (it.kind === "ev" ? "/e/" + encodeURIComponent(it.ev.id) : "/h/" + it.p.id); // events and homes share a server page so texts and social posts show a preview card; its button opens the map
   if (await nativeShare({ title, text: title + " on SoCal Lights", url })) return; // the phone's own share sheet inside the app
   // Desktop share sheets (Windows Mail/Outlook) drop the separate url and subject, so the link and the details go inside the text itself.
   const body = [title + " on SoCal Lights", it.kind === "ev" ? [whenShort(it.ev), it.ev.city].filter(Boolean).join(" · ") : "", url].filter(Boolean).join("\n");

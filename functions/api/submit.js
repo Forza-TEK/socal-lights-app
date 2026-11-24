@@ -228,7 +228,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // A receipt to the person who added a home (not for contest entries: the organizer's own flow covers those): "you're live" when it went on the map, "we got it" when it waits for review.
   // Skipped for an address on the do-not-contact list, and throttled (functions/_lib/receipt.js). The answer says whether one is on its way so the page can say so.
   let receipt = "";
-  if (!contest) receipt = await sendReceipt(env, waitUntil, { id: published ? "home_live" : "home_received", to: email, vars: { name: title, city, map: `https://socallights.app/#h-${id}`, link: "https://socallights.app/profile#displays" } });
+  if (!contest) receipt = await sendReceipt(env, waitUntil, { id: published ? "home_live" : "home_received", to: email, vars: { name: title, city, map: `https://socallights.app/h/${id}`, link: "https://socallights.app/profile#displays" } });
   // "We received your entry": what happens next, the voting dates and where to edit or withdraw it (the Your home card on the contest page)
   if (contest && cu.email) {
     const job = sendTemplate(env, "entry_received", await mailAddress(env, cu.email), { name: title || biz, contest: contest.name, review: published ? "It is on the contest page and the map now." : otherCity ? `Your home is in ${city} and this contest is for ${contest.city}, so the organizer will decide whether it can be in. They review it before it goes on the map.` : "The organizer will review it before it goes on the map.", vote_start: fmtDate(contest.vote_start), vote_end: fmtDate(contest.vote_end), link: `https://socallights.app/c/${contest.slug}` }).catch(() => {});

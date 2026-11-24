@@ -68,6 +68,7 @@ h1,h2,h3,.tag,.ev,.card,.foot a,.crumbs,.facts dd,.hml{overflow-wrap:anywhere}
 .dlg .chk{display:flex;gap:10px;align-items:flex-start;color:var(--ink)}.dlg .chk input{min-height:0;width:22px;height:22px;flex:none}
 .dlg .err{color:#b42318;margin:8px 0 0;font-size:14px}.dlg .row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 .linkbtn{background:none;border:0;padding:0;font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:32px}
+.bline{display:flex;gap:8px;align-items:flex-start;margin:10px 0 0}.bline .m{display:block;color:var(--muted);font-size:14px}
 .note{padding:18px;border-radius:18px;background:var(--surface);box-shadow:0 2px 10px rgba(20,22,27,.08)}
 @media print{.top,.bar,.sub-box,.evact,.nav,.count,[data-share],.skiplink,.sitefoot,.sh-side,.sh-top,.sh-bbar,.sh-skip{display:none!important}body{background:#fff;color:#000;font-size:12pt}main{max-width:none;padding:0}.card,.ev,.note,.hero{box-shadow:none;border:1px solid #bbb;break-inside:avoid}.hero{max-height:260px}main a[href^="http"]:not(.btn)::after{content:" (" attr(href) ")";font-size:.8em;overflow-wrap:anywhere}a{text-decoration:none}}
 @media(min-width:760px){.hero{aspect-ratio:16/9}.ev{grid-template-columns:120px minmax(0,1fr)}.ev .ph{width:120px;height:120px}}
