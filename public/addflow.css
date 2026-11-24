@@ -34,7 +34,7 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 .poster{background:#fff;color:#111;border:1px solid var(--line);border-radius:12px;padding:22px;text-align:center;display:grid;gap:10px;justify-items:center;max-width:300px}.poster b{font-weight:500;line-height:1.25}.poster small{color:#555}.poster svg{width:150px;height:150px}
 .copy{display:flex;gap:10px;align-items:center;border:1px solid var(--line2);border-radius:8px;padding:8px 8px 8px 14px;font-size:15px;min-width:0}.copy span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hint{background:var(--tile);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--muted)}.hint b{color:var(--ink)}
-.opt-lbl{color:var(--season-ink);font-weight:500}
+.opt-lbl{color:var(--muted);font-weight:500}
 .combo{position:relative}.dd{list-style:none;margin:0;padding:6px;position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:8;background:var(--bg);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.14);max-height:320px;overflow:auto}.dd button{all:unset;box-sizing:border-box;display:block;width:100%;padding:12px;border-radius:8px;cursor:pointer;line-height:1.3;color:var(--ink)}.dd button:hover,.dd button:focus-visible{background:var(--tile)}.dd small{display:block;color:var(--muted);font-size:13px;margin-top:2px}.dd .foot{padding:8px 12px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
 .chk{display:flex;gap:12px;align-items:flex-start;font-size:16px;font-weight:400}.chk input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--ink);flex:none}
 .big-check{width:56px;height:56px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-size:26px}
@@ -42,7 +42,7 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 .opts{display:grid;gap:12px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 /* sign-in dialog (public/auth.js) */
-.scrim{position:fixed;inset:0;background:rgba(10,12,18,.55);display:grid;place-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));z-index:50}.dlg{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:24px;width:min(420px,100%);display:grid;gap:16px;max-height:calc(100vh - 32px);overflow:auto}
+.scrim{position:fixed;inset:0;background:rgba(10,12,18,.7);display:grid;place-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));z-index:50}.dlg{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:24px;width:min(420px,100%);display:grid;gap:16px;max-height:calc(100vh - 32px);overflow:auto}
 .dlg input{width:100%;font:400 17px/1.4 var(--font);padding:14px 16px;border:1px solid var(--field);border-radius:8px;background:transparent;color:var(--ink);min-height:52px}.dlg input:focus{outline:0;border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .dlg .help{margin-top:0}.dlg .btn.org{width:100%}
 .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;border:1px solid var(--ink);border-radius:8px;background:transparent;color:var(--ink);font:500 16px var(--font);cursor:pointer;text-decoration:none}
@@ -57,13 +57,13 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 .dlg h2{font-weight:400;font-size:24px;letter-spacing:-.015em}.dlg label{font-weight:500;font-size:14px}.dlg .link{white-space:nowrap}
 .sechead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}.sechead h2{margin:0}
 .hright{display:flex;align-items:center;gap:18px}
-.tbtn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);display:inline-grid;place-items:center;cursor:pointer;padding:0}.tbtn:hover{border-color:var(--ink)}.tbtn .sun{display:none}:root[data-theme="dark"] .tbtn .sun{display:block}:root[data-theme="dark"] .tbtn .moon{display:none}
+.tbtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--shadow);color:var(--ink);display:inline-grid;place-items:center;cursor:pointer;padding:0}.tbtn:hover{box-shadow:0 0 0 1.5px var(--ink),var(--shadow)}.tbtn .sun{display:none}:root[data-theme="dark"] .tbtn .sun{display:block}:root[data-theme="dark"] .tbtn .moon{display:none}
 .avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}.avatar{overflow:hidden}
 .dlg .btn.out{background:transparent;color:var(--ink);border-color:var(--ink)}
 .acct{width:34px;height:34px;border-radius:50%;border:1px solid var(--ink);color:var(--ink);display:inline-grid;place-items:center;overflow:hidden;font-weight:500;font-size:14px;text-decoration:none}.acct img{width:100%;height:100%;object-fit:cover;display:block}
 /* the day/night circle and the signed-in circle are one size and one outline everywhere they sit together */
-.tbtn,.acct{box-sizing:border-box;flex:none;width:44px;height:44px;min-width:44px;min-height:44px;border:1px solid var(--ink);border-radius:50%;padding:0;margin:0;background:transparent;color:var(--ink);display:inline-grid;place-items:center;line-height:1;overflow:hidden}
-.tbtn:hover,.acct:hover{background:var(--tile)}
+.tbtn,.acct{box-sizing:border-box;flex:none;width:44px;height:44px;min-width:44px;min-height:44px;border:0;border-radius:50%;padding:0;margin:0;background:var(--surface);box-shadow:var(--shadow);color:var(--ink);display:inline-grid;place-items:center;line-height:1;overflow:hidden}
+.tbtn:hover,.acct:hover{background:var(--surface-2)}
 .ptabs2{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;margin-bottom:-4px}.ptabs2::-webkit-scrollbar{display:none}
 .ptabs2 button{border:0;background:none;border-bottom:2px solid transparent;padding:12px 14px;font:500 15px var(--font);color:var(--muted);cursor:pointer;white-space:nowrap}.ptabs2 button[aria-selected="true"]{color:var(--ink);border-color:var(--season)}
 .cnt{border:1px solid var(--line2);border-radius:999px;padding:0 7px;font-size:12px;margin-left:7px;color:var(--muted)}
@@ -79,7 +79,7 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 
 /* Bigger tap area for text-style buttons (Save & exit, Cancel) without moving anything */
 button.link{padding-block:11px;margin-block:-11px}
-.hdr .link,.hdr .wm{white-space:nowrap}
+.hdr .link,.hdr .wm{white-space:nowrap}.hdr .link{display:inline-flex;align-items:center;min-height:44px}
 @media(max-width:400px){.hright{gap:10px}.brand{font-size:17px;gap:8px}.hdr .link{font-size:14px}}
 
 /* Manage my listings (profile) */
@@ -102,11 +102,11 @@ input[aria-invalid=true],textarea[aria-invalid=true]{border-color:#b42318!import
 :root{--hbtn:44px}
 .hdr .hright{display:flex;align-items:center;gap:12px}
 .hdr .hright>span{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:var(--hbtn);height:var(--hbtn);line-height:0}.hdr .hright>span>span{display:inline-flex;align-items:center;justify-content:center;min-width:var(--hbtn);height:var(--hbtn);line-height:0}.hdr .acct svg{display:block}
-.hdr .tbtn,.hdr .acct{box-sizing:border-box;flex:none;width:var(--hbtn);height:var(--hbtn);min-width:var(--hbtn);min-height:var(--hbtn);margin:0;padding:0;border:1.5px solid var(--ink);border-radius:50%;background:transparent;color:var(--ink);display:inline-grid;place-items:center;overflow:hidden;line-height:1;text-decoration:none;transition:background .15s ease}
+.hdr .tbtn,.hdr .acct{box-sizing:border-box;flex:none;width:var(--hbtn);height:var(--hbtn);min-width:var(--hbtn);min-height:var(--hbtn);margin:0;padding:0;border:0;border-radius:50%;background:var(--surface);box-shadow:var(--shadow);color:var(--ink);display:inline-grid;place-items:center;overflow:hidden;line-height:1;text-decoration:none;transition:background .15s ease}
 .hdr .acct{padding:2px;font-size:16px;font-weight:600}
 .hdr .acct img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover}
 .hdr .tbtn svg{width:20px;height:20px}
-.hdr .tbtn:hover,.hdr .acct:hover{background:var(--tile)}
+.hdr .tbtn:hover,.hdr .acct:hover{background:var(--surface-2)}
 .hdr .tbtn:focus-visible,.hdr .acct:focus-visible{outline:2.5px solid var(--ink);outline-offset:2px}
 @media(max-width:400px){.hdr .brand .wm{display:none}}
 
@@ -121,7 +121,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 
 /* Live preview beside the add forms (wide screens only): fixed to the right of the 640px form */
 .pvcard{display:none}
-@media(min-width:1240px){.pvcard{display:block;position:fixed;top:132px;left:calc(50% + 370px);width:300px;z-index:1}}
+@media(min-width:1240px){.pvcard{display:block;position:fixed;top:132px;left:calc(50% + 370px);width:min(300px,calc(50vw - 386px));z-index:1}}
 .pvcard .pvl{display:inline-block;margin:0 0 10px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .pvcard .pvn{margin:10px 2px 0;font-size:13px;color:var(--muted)}
 .pvc{background:var(--bg);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 6px 22px rgba(20,22,27,.10)}:root[data-theme="dark"] .pvc{background:var(--tile)}
@@ -165,3 +165,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
   .segs{margin:0;padding:0}
   .nav{margin-top:18px}
 }
+
+/* signed-out Add pages: what the form asks for; no site footer while a step is showing (the Next bar is fixed at the bottom) */
+.main .needh{margin:0;font-size:16px;font-weight:700}.main .need{margin:6px 0 0;padding-left:20px;line-height:1.55;font-size:16px}.need li{margin:2px 0}
+body:has(.bar) .sitefoot{display:none}

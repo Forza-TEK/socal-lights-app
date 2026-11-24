@@ -47,7 +47,9 @@ export async function onRequestGet(context) {
   const cities = summarize(upcoming), me = cities.find((c) => c.slug === params.city), near = nearby(cities, params.city, 6), shown = new Set(near.map((c) => c.slug));
   const more = cities.filter((c) => c.county === county && c.slug !== params.city && !shown.has(c.slug) && c.indexable).sort((a, b) => b.n - a.n || a.city.localeCompare(b.city)).slice(0, 12);
   const link = (c, extra = "") => `<a href="/in/${esc(c.slug)}">${esc(c.city)} (${c.n})${extra}</a>`;
-  const moreHtml = `${near.length ? `<h2>Near ${esc(city)}</h2><div class="foot">${near.map((c) => link(c, ` · ${Math.max(1, Math.round(c.mi))} mi`)).join("")}</div>` : ""}${more.length ? `<h2>More places in ${esc(county)} County</h2><div class="foot">${more.map((c) => link(c)).join("")}</div>` : ""}<div class="foot"><a href="/in">All cities</a><a href="/add-event">Add an event</a><a href="/pricing">Feature your event</a><a href="/help">Help</a></div>`;
+  // a long list of links shows the first 8 and folds the rest behind "Show N more" (still in the page for search engines)
+  const fold = (arr, f) => `<div class="foot">${arr.slice(0, 8).map(f).join("")}</div>${arr.length > 8 ? `<details class="more"><summary>Show ${arr.length - 8} more</summary><div class="foot">${arr.slice(8).map(f).join("")}</div></details>` : ""}`;
+  const moreHtml = `${near.length ? `<h2>Near ${esc(city)}</h2>${fold(near, (c) => link(c, ` · ${Math.max(1, Math.round(c.mi))} mi`))}` : ""}${more.length ? `<h2>More places in ${esc(county)} County</h2>${fold(more, (c) => link(c))}` : ""}<div class="foot"><a href="/in">All cities</a><a href="/add-event">Add an event</a><a href="/pricing">Feature your event</a><a href="/help">Help</a></div>`;
   const conf = evs.filter((e) => e.st === "c").length, first = evs[0].s, last = evs.reduce((m, e) => (e.e > m ? e.e : m), evs[0].e);
   const facts = `${conf ? `${conf} confirmed` : "None confirmed yet"}${evs.length - conf ? `, ${evs.length - conf} with expected dates` : ""}. Listings run from ${fmt(first)} to ${fmt(last)}.`;
   const indexable = isIndexable(me);

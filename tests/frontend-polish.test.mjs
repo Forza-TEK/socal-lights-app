@@ -116,7 +116,7 @@ test("MAP-11/16/17: one count wording, no 300-city menu, one word in the route s
 test("owner follow-ups: the search box keeps a usable width, and the app-frame header has no second Map button beside the sidebar", () => {
   const css = read("public/styles.css");
   assert.match(css, /@media \(min-width:1100px\)\{\.searchrow\{flex-wrap:wrap[^}]*\}\.search\{flex:1 1 220px;min-width:220px\}\}/);
-  assert.match(css, /\.rtpill>span\{position:absolute/, "the pill keeps its words for screen readers");
+  assert.ok(!/\.rtpill>span\{position:absolute/.test(css), "Route these keeps its visible words at laptop widths (UI audit F21)");
   assert.match(read("public/appshell.css"), /@media \(min-width:700px\)\{\.sh-top \.maplink\{display:none\}\}/);
 });
 

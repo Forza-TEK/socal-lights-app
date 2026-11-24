@@ -177,8 +177,8 @@ test("M6: every listing on Your profile that is not live gets a plain label, a r
   assert.match(html, /declined: \["", "Not accepted"\]/);
   assert.match(html, /h\.status === "declined" \? \["", "Not accepted"\]/); assert.match(html, /e\.status === "declined" \? \["", "Not accepted"\]/);
   assert.match(html, /A person is looking it over before it goes on the map/); assert.match(html, /We could not put this \$\{what\} on the map/);
-  assert.match(html, /h\.status === "pending" \? `<button class="btn out sm" type="button" data-medit>Edit<\/button>` : ""\}<button class="btn out sm danger" type="button" data-hdel>Delete<\/button>/, "a home in review can be edited and deleted");
-  assert.match(html, /<button class="btn out sm danger" type="button" data-edel>Delete<\/button><\/div>/, "an event of any status can be deleted");
+  assert.match(html, /h\.status === "pending" \? `<button class="btn out sm" type="button" data-medit>Edit<\/button>` : ""\}\$\{moreMenu\([^]*data-hdel>Delete<\/button>`\)\}/, "a home in review can be edited and deleted (Delete sits in the More menu)");
+  assert.match(html, /<button class="btn out sm danger" type="button" data-edel>Delete<\/button>`\)\}<\/div>/, "an event of any status can be deleted (in the More menu)");
   assert.match(html, /\$\{live \|\| e\.status === "pending" \?/, "an event in review can be edited");
   assert.ok(!/\["", [hec]\.status\]/.test(html), "no raw status word is shown");
 });
