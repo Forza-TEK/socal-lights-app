@@ -13,7 +13,7 @@ import { fmtPhone, telHref } from "/norm.js?v=20261102b";
 import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261121a";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261121a";
 import { contestImage } from "/contesticon.js?v=20261111a";
-import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261116b";
+import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261124a";
 
 /* ---------- constants & helpers ---------- */
 // Day mode is the default; night mode uses a dark base map. The choice is remembered per device (set in index.html).
@@ -731,10 +731,11 @@ document.addEventListener("error", (e) => {
   if (i.dataset.fb) useStock(i);
   else i.remove(); // no stock photo either: the emoji underneath shows through
 }, true);
-// Short "when" label: "Tonight", "Thru Oct 30", "Oct 31 only", "Opens Nov 27"
+// Short "when" label: "Tonight", "Thru Oct 30, 2026", "Oct 31, 2026 only", "Opens Nov 27, 2026"
 function whenShort(ev) {
-  if (ev.s <= TODAY && ev.e >= TODAY) return ev.e === TODAY ? "Tonight" : "Thru " + fmt(ev.e);
-  return ev.s === ev.e ? fmt(ev.s) + " only" : "Opens " + fmt(ev.s);
+  const fy = (d) => fmt(d) + ", " + d.slice(0, 4); // Month Day, Year like the date line under the title
+  if (ev.s <= TODAY && ev.e >= TODAY) return ev.e === TODAY ? "Tonight" : "Thru " + fy(ev.e);
+  return ev.s === ev.e ? fy(ev.s) + " only" : "Opens " + fy(ev.s);
 }
 const HEART = `<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
 let toastT;
@@ -1569,7 +1570,7 @@ function applyFilters() {
 // Phone: the floating tab bar drives the same three tabs as the panel
 document.querySelectorAll("#bnav [data-tab]").forEach((b) => (b.onclick = () => $("#t-" + b.dataset.tab).click()));
 // the phone's search box shares its row with the logo and night-mode button, so keep the hint short enough to fit
-const fitHint = () => { $("#q").placeholder = innerWidth > 860 ? "Search places or city" : innerWidth > 380 ? "Search places" : "Search"; };
+const fitHint = () => { $("#q").placeholder = innerWidth > 860 ? "Search places or city" : innerWidth > 380 && innerWidth < 700 ? "Search places" : "Search"; };
 fitHint(); addEventListener("resize", fitHint);
 let qT; $("#q").oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim().toLowerCase(); applyFilters(); showSuggestions(); if (state.q && isPhone() && sheetState === "peek" && !E.some(evMatch) && !SHOW.some(instMatch)) setSheet("full"); }, 120); }; // nothing matched: lift the collapsed sheet so the "no places" message (and "did you mean") can be read
 // Misspelled searches: a city within one or two letters of what was typed ("Pasedena" for Pasadena)

@@ -12,8 +12,8 @@
 <meta name="theme-color" content="#ffffff">
 <script>try{var t=(function(d){var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"numeric",minute:"numeric",hour12:false,timeZoneName:"short"}).formatToParts(d),g=function(k){for(var i=0;i<p.length;i++)if(p[i].type==k)return p[i].value},m=g("hour")%24*60+ +g("minute"),n=713+(g("timeZoneName")=="PDT"?60:0),H=(12+2.1*Math.sin(6.2832*(Math.floor((d-new Date(d.getFullYear(),0,0))/864e5)-80)/365))*30;return m<n-H||m>=n+H?"dark":"light"})(new Date()),o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/tokens.css?v=20261116c">
-<link rel="stylesheet" href="/addflow.css?v=20261124a">
+<link rel="stylesheet" href="/tokens.css?v=20261124a">
+<link rel="stylesheet" href="/addflow.css?v=20261124b">
 <link rel="stylesheet" href="/contest.css?v=20261117b">
 <style>
 .ctop{flex-wrap:wrap;gap:12px}.ctop>div{min-width:0}body.wide .hdr{max-width:1160px}.cmain.wide{max-width:1160px}.cmain.wide .help,.cmain.wide .ctop p{max-width:70ch}
@@ -58,7 +58,7 @@ async function loadLive() {
   const L = await fetch("/api/contests").then((r) => r.json()).catch(() => []);
   const open = L.filter((c) => !c.announced);
   box.innerHTML = open.length ? open.map((c) => `<section class="card"><div><h2>${esc(c.name)}</h2><p class="muted small">${esc(c.org)} · ${esc(c.city)}</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${c.founder ? `<span class="pill p-founder" title="Founder city: one of the first cities to run contests on SoCal Lights">Founder city</span>` : ""}${statusChips(c).map((p) => `<span class="pill ${p.tone === "ok" ? "p-ok" : p.tone === "bad" ? "p-no" : "p-idle"}">${esc(p.text)}</span>`).join("")}</div><div class="actions"><a class="btn org" href="/c/${esc(c.slug)}">${c.votingOpen ? "Vote" : "See the contest"}</a>${c.entriesOpen ? `<a class="btn ghost" href="/c/${esc(c.slug)}/enter">Enter my home</a>` : ""}</div></section>`).join("")
-    : `<div class="card"><h2>No contests are running right now</h2><p class="muted">Want one in your neighborhood, school or HOA? It takes about a minute.</p><div class="actions"><a class="btn org" href="/add-contest">Start a contest</a></div></div>`;
+    : `<div class="card"><h2>No contests are running right now</h2><p class="muted">Want one in your neighborhood, school or HOA? Use <b>Start a contest</b> at the top of this page. It takes about a minute.</p></div>`;
 }
 
 // Mine: contests you run or help run, and homes you entered

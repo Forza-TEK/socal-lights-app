@@ -11,8 +11,8 @@
 <meta name="theme-color" content="#ffffff">
 <script>try{var t=(function(d){var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"numeric",minute:"numeric",hour12:false,timeZoneName:"short"}).formatToParts(d),g=function(k){for(var i=0;i<p.length;i++)if(p[i].type==k)return p[i].value},m=g("hour")%24*60+ +g("minute"),n=713+(g("timeZoneName")=="PDT"?60:0),H=(12+2.1*Math.sin(6.2832*(Math.floor((d-new Date(d.getFullYear(),0,0))/864e5)-80)/365))*30;return m<n-H||m>=n+H?"dark":"light"})(new Date()),o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="/tokens.css?v=20261116c">
-<link rel="stylesheet" href="/addflow.css?v=20261124a">
+<link rel="stylesheet" href="/tokens.css?v=20261124a">
+<link rel="stylesheet" href="/addflow.css?v=20261124b">
 <link rel="stylesheet" href="/contest.css?v=20261117b">
 <link rel="stylesheet" href="/forms.css?v=20261117b">
 <style>main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
@@ -25,7 +25,7 @@
 <script type="module">
 import { me, signIn, noteSigninResult, esc, toast } from "/auth.js?v=20261116a";
 import { refreshAcct } from "/addflow.js?v=20261124b";
-import { mountShell } from "/appshell.js?v=20261121a";
+import { mountShell } from "/appshell.js?v=20261124a";
 import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { homeForm, fsec, ff, openFormWindow } from "/forms.js?v=20261121a";
 const $ = (q) => document.querySelector(q), slug = location.pathname.split("/")[2] || "";
