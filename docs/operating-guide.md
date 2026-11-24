@@ -20,19 +20,27 @@ Last updated 2026-11-07. This is the one page that says where SoCal Lights work 
 
 All publish straight to `main` after validation (owner authorized 2026-10-28). Check the GitHub Actions run "Apply database migrations" if anything looks off. Full prompts live in the tasks; the rules they follow are in the repo docs (`docs/sweep-methods.md`, `docs/updating-events.md`, `docs/browser-pass.md`).
 
-## GitHub workflows (best effort: GitHub runs scheduled workflows late or skips them)
-Each reports to the site's heartbeat; a quiet one raises a banner, an issue and an email (`docs/runbooks/monitoring.md`). Direct pushes to `main` by the routines work only because the pusher is an administrator (branch protection requires the `Tests` check but `enforce_admins` is off): do not turn on "Do not allow bypassing" without moving the routines to pull requests.
+## Scheduled jobs: the Cloudflare clock Worker and GitHub workflows
+**The real clock is the Cloudflare Worker `workers/mail-cron`** (schedule in `workers/mail-cron/wrangler.toml`, job map in `workers/mail-cron/index.js` `CRONS`; deployed by `deploy-mail-cron.yml`). GitHub runs scheduled workflows 4 to 8 hours late or skips them, so the jobs moved to the Worker (UTC):
+| Cron | Jobs |
+|---|---|
+| `*/5 * * * *` | mail outbox drain |
+| `*/10 * * * *` | deploy watch, uptime check (Better Stack is the outside monitor) |
+| `7,37 * * * *` | Cloudflare usage check |
+| `13,43 * * * *` | verify events (re-check "expected" events people added) |
+| `47 14 * * *` | Stripe reconcile |
+| `17 15 * * *` | sponsor renewals |
+| `15 17 * * *` | contest reminders |
+| `25 18 * * *` | placement notices |
+| `30 17 * * THU` | weekly lights email |
+
+**Cron weekday gotcha:** Cloudflare counts weekdays 1 = Sunday to 7 = Saturday (standard cron: 0 or 7 = Sunday, 1 = Monday), so a numeric weekday in `wrangler.toml` runs a day off from what a cron guide says. Use the names (`THU`, `MON`) as the weekly email line does.
+
+**GitHub workflows** (best effort). Only `backup.yml` (10:17 daily) and `submission-digest.yml` (03:00, 15:00, 21:00) still have a schedule; `uptime.yml`, `deploy-watch.yml`, `mail-outbox.yml`, `usage-check.yml`, `sponsor-renewals.yml`, `stripe-reconcile.yml`, `alerts.yml` and `contest-reminders.yml` are manual fallbacks (Actions > Run workflow). Each reports to the site's heartbeat; a quiet one raises a banner, an issue and an email (`docs/runbooks/monitoring.md`). Direct pushes to `main` by the routines work only because the pusher is an administrator (branch protection requires the `Tests` check but `enforce_admins` is off): do not turn on "Do not allow bypassing" without moving the routines to pull requests.
 | Workflow | Schedule (UTC) | Job |
 |---|---|---|
-| `uptime.yml` | every 15 min (really 6 to 8 h) | site check, issue "Site is down" |
-| `deploy-watch.yml` | every 10 min | Pages stalled-deploy check, issue "Production deploy stalled" |
-| `usage-check.yml` | every 30 min | Cloudflare usage issue (plan-aware: Workers Paid = extra charges, free = hard limits), stale-job issue, late-backup catch-up |
-| `mail-outbox.yml` | hourly | queued emails |
-| `submission-digest.yml` | 03:00, 15:00, 21:00 | owner digest (fails if the email was not sent) |
+| `submission-digest.yml` | 03:00, 15:00, 21:00 | owner digest (fails if the email was not sent), stale-job check |
 | `backup.yml` | 10:17 daily | D1 export, restore test, private R2 copy, external ping |
-| `sponsor-renewals.yml` | 15:17 daily | automatic renewals |
-| `stripe-reconcile.yml` | 14:47 daily | Stripe vs orders, read-only |
-| `alerts.yml` | Thursday 17:30 | weekly email |
 | `d1-migrations.yml` | on push to `migrations/**` | live and preview migrations |
 | `test.yml` | every PR and push | the required `Tests` check |
 The `[SCL]` routines above have no heartbeat (they are not workflows): see "Routines" in `docs/runbooks/monitoring.md` for how to tell "ran, found nothing" from "did not run".
