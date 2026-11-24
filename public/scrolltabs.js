@@ -1,13 +1,13 @@
 // One scrolling tab row for the whole site (Admin tab rows and the Pricing audience tabs).
 // A row of tabs that is wider than its box scrolls sideways; this fades the edge that has more tabs beyond it, so a cut-off tab reads as "swipe for more"
-// instead of as a mistake, and brings the chosen tab into view. It needs no markup change: add data-scrolltabs to a row (Admin's .seg rows get it automatically).
+// instead of as a mistake, and brings the chosen tab into view. It needs no markup change: add data-scrolltabs to a row (Admin's .seg and .emtabs rows get it automatically).
 // Self-contained: it injects its own small stylesheet, works as a plain <script> and as a module, and does nothing when the row fits.
 (function () {
   if (window.scrollTabs) return;
-  var SEL = "[data-scrolltabs], .seg";
+  var SEL = "[data-scrolltabs], .seg, .emtabs";
   var st = document.createElement("style");
   st.textContent =
-    "[data-scrolltabs][data-fade],.seg[data-fade]{--stf:36px}" +
+    "[data-fade]{--stf:36px}" +
     "[data-fade=end]{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - var(--stf)),transparent);mask-image:linear-gradient(to right,#000 calc(100% - var(--stf)),transparent)}" +
     "[data-fade=start]{-webkit-mask-image:linear-gradient(to left,#000 calc(100% - var(--stf)),transparent);mask-image:linear-gradient(to left,#000 calc(100% - var(--stf)),transparent)}" +
     "[data-fade=both]{-webkit-mask-image:linear-gradient(to right,transparent,#000 var(--stf),#000 calc(100% - var(--stf)),transparent);mask-image:linear-gradient(to right,transparent,#000 var(--stf),#000 calc(100% - var(--stf)),transparent)}";

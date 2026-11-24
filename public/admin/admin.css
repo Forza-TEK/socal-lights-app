@@ -48,7 +48,13 @@ body.admin .acard label{display:grid;gap:4px;font-size:14px;color:var(--muted,in
 .side{position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;gap:6px;padding:18px 12px 12px;border-right:1px solid var(--line);background:var(--bg);overflow:hidden;z-index:60}
 .side .abrand{padding:4px 10px 14px}.side .abrand .nlb{display:block;white-space:nowrap;line-height:1.1}.side .abrand small{display:inline-block;vertical-align:2px;margin-left:8px;padding:2px 7px;border:1px solid var(--line2);border-radius:99px;font-weight:600;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);-webkit-text-fill-color:var(--muted)}
 .nvlist{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;display:grid;align-content:start;gap:2px;background:linear-gradient(var(--bg) 30%,transparent) top,linear-gradient(transparent,var(--bg) 70%) bottom,radial-gradient(farthest-side at 50% 0,rgba(0,0,0,.2),transparent) top,radial-gradient(farthest-side at 50% 100%,rgba(0,0,0,.2),transparent) bottom;background-repeat:no-repeat;background-size:100% 32px,100% 32px,100% 10px,100% 10px;background-attachment:local,local,scroll,scroll} /* a soft shadow shows when more menu items are above or below */
-.gh{margin:16px 12px 6px;font:600 11px/1 var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.gh{display:flex;align-items:center;justify-content:space-between;gap:8px;width:calc(100% - 24px);box-sizing:border-box;margin:16px 12px 6px;padding:0;border:0;background:none;cursor:pointer;text-align:left;font:600 11px/1 var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.gh:hover{color:var(--ink)}.gh svg{flex:none;transition:transform .15s}.gh[aria-expanded=false] svg{transform:rotate(-90deg)}
+@media (min-width:1100px){.grp.fold{display:none}.gh{min-height:28px;margin:8px 12px 2px}}
+.gh .gcnt{position:static;margin-left:auto;min-width:20px;height:18px;padding:0 5px;font-size:11px;line-height:16px;letter-spacing:0}
+.gh .gcnt[hidden]{display:none}
+@media (max-width:1099px){.gh{pointer-events:none}.gh svg,.gh .gcnt{display:none!important}}
+@media (prefers-reduced-motion:reduce){.gh svg{transition:none}}
 .grp{display:grid;gap:2px}
 .nv,.bb{font:500 15px/1.2 var(--font);color:var(--muted);background:transparent;border:0;cursor:pointer;text-decoration:none}
 .nv{position:relative;display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:10px;text-align:left;width:100%;box-sizing:border-box}
@@ -570,3 +576,50 @@ body.admin .top .crumb h1{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .dtab.claims td:nth-child(5){white-space:normal;min-width:140px}
 .dtab.claims td:nth-child(5) .tag{white-space:nowrap}
 @media (max-width:760px){.dtab.claims a.clhost{max-width:100%;vertical-align:baseline}}
+
+/* Tablet icon rail: every icon has its name under it (small, two lines at most) and the red numbers sit on the icon */
+@media (min-width:700px) and (max-width:1099px){
+  .shell{grid-template-columns:88px minmax(0,1fr)}
+  .side{padding:14px 8px}
+  .nv{flex-direction:column;justify-content:center;gap:3px;height:auto;min-height:56px;padding:6px 2px}
+  .nv .nlb{display:-webkit-box;flex:none;max-width:100%;font-size:10.5px;line-height:1.15;font-weight:500;text-align:center;white-space:normal;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+  .nv[aria-current="page"] .nlb{font-weight:700}
+  .nv .cnt{top:2px;right:14px}
+  .nv .cnt:not(.act){display:none}
+  .sfoot .nv .nlb,.me .nlb{display:none}
+}
+
+/* ===== Tablet tables (700-1099px): narrower columns, the row's name stays in view while the table scrolls sideways, and a fade on the right edge says there is more ===== */
+.dtc{position:relative}
+.dtc::after{content:"";position:absolute;top:0;bottom:0;right:0;width:44px;background:linear-gradient(to left,var(--surface),transparent);pointer-events:none;opacity:0;transition:opacity .15s}
+.dtc[data-more~="end"]::after{opacity:1}
+.dtc .pager{position:relative;z-index:3;background:var(--surface)}
+@media (min-width:700px) and (max-width:1099px){
+  table.dtab{min-width:0}
+  .dtab th,.dtab td{padding-left:10px;padding-right:10px}
+  .dtab th.cb,.dtab td.cb{position:sticky;left:0;z-index:2;background:var(--surface);padding-left:12px}
+  .dtab th:first-child:not(.cb),.dtab td:first-child:not(.cb),.dtab th.cb+th,.dtab td.cb+td{position:sticky;z-index:2;background:var(--surface);min-width:190px}
+  .dtab th:first-child:not(.cb),.dtab td:first-child:not(.cb){left:0}
+  .dtab th.cb+th,.dtab td.cb+td{left:44px}
+  .dtab tbody tr:nth-child(even) td:first-child,.dtab tbody tr:nth-child(even) td.cb+td,.dtab tbody tr:nth-child(even) td.cb{background:color-mix(in srgb,var(--surface-2) 45%,var(--surface))}
+  .dtc[data-more~="start"] .dtab td:first-child:not(.cb),.dtc[data-more~="start"] .dtab th:first-child:not(.cb),.dtc[data-more~="start"] .dtab td.cb+td,.dtc[data-more~="start"] .dtab th.cb+th{box-shadow:6px 0 8px -6px rgba(0,0,0,.28)}
+  .dtab .ac{white-space:normal}
+}
+
+/* ===== Phones: easy-to-hit lists (44px actions, 44px tick-box squares, rows that open when tapped) ===== */
+@media (max-width:699px){
+  .cbhit{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-10px -10px -10px -12px;cursor:pointer;vertical-align:middle}
+  .cbhit input{width:24px;height:24px;margin:0}
+  .dtab tbody td.cb{padding-left:6px;grid-row:1/6}
+  .dtab tbody td.cb .cbhit{margin:0}
+  .dtab tbody tr:has(a.rl[href^="#"]){cursor:pointer}
+  .dtab tbody td.ac{display:flex;flex-wrap:wrap;gap:8px;padding-top:8px;font-size:0}
+  .dtab tbody td.ac .rl,.dtab tbody td.ac .btn,.dtab tbody td.ac .btn.sm{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border:1px solid var(--line2);border-radius:10px;text-decoration:none;font-weight:600;font-size:14px}
+  .dtab tbody td.ac .btn.ice{border-color:var(--btn)}
+  .dtab tbody td.ac .btn.danger{border-color:currentColor}
+  .dtab tbody td.ac .sep{display:none}
+}
+@media (max-width:699px){
+  .seg button,.emtabs button{min-height:44px}
+  .dtab tbody td .tcell a.rl,.dtab tbody td:not(.ac)>a.rl[href^="#"]{display:block;min-width:44px;padding:12px 0;margin:-12px 0}
+}

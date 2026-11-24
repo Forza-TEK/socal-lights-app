@@ -43,14 +43,30 @@ async function api(path, opts = {}) {
 const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "passes", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "grok", "emails", "help", "chat"];
 const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", grok: "From Grok", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 // The breadcrumb in the top bar: the menu group, the page, and (on a full record) the record's name
-const groupOf = (t) => { const b = document.querySelector(`#side [data-tab="${t}"]`); if (!b) return ""; let n = b.closest(".grp"); n = n && n.previousElementSibling; while (n && !n.classList.contains("gh")) n = n.previousElementSibling; return n ? n.textContent.trim() : ""; };
+const groupOf = (t) => { const b = document.querySelector(`#side [data-tab="${t}"]`); if (!b) return ""; let n = b.closest(".grp"); n = n && n.previousElementSibling; while (n && !n.classList.contains("gh")) n = n.previousElementSibling; return n ? (n.dataset.grp || n.textContent.trim()) : ""; };
 const setDetail = (name) => { const d = $("#pdetail"); if (d) d.innerHTML = name ? `<span class="csep" aria-hidden="true">/</span><b>${esc(name)}</b>` : ""; };
 document.addEventListener("admin:detail", (e) => setDetail(e.detail || ""));
-const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
+const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; const kind = el.classList.contains("act") ? " waiting" : " in total"; el.setAttribute("aria-label", v + kind); el.title = v + kind; }); paintTitle(); navPaint(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
 function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.grok || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; const bd = $("#bdot"); if (bd) { bd.hidden = !w; $("#bell").title = w ? `${w} waiting` : "Nothing is waiting"; } }
+// The desktop side menu: each group title (Review, Content, Money, Marketing, System) folds its items. On a short screen (a 1280x800 laptop shows only about half of the 25 items)
+// every group starts folded except the one holding the open page, so all five titles are in view; on a tall screen they start open. A choice is remembered; opening a page opens its group.
+// Folding only applies at 1100px and wider (the tablet rail and the phone sheet show everything).
+const NAVKEY = "socal-admin-navfold";
+const navHeads = [...document.querySelectorAll("#side .nvlist > p.gh")].map((p) => {
+  const b = document.createElement("button"), grp = p.nextElementSibling, name = p.textContent.trim(); b.type = "button"; b.className = "gh"; b.dataset.grp = name;
+  b.innerHTML = `<span>${esc(name)}</span><span class="cnt act gcnt" hidden></span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`; p.replaceWith(b); return { b, grp, name };
+});
+let navSaved = null; try { navSaved = JSON.parse(localStorage.getItem(NAVKEY)); } catch {}
+const navFolded = new Set(Array.isArray(navSaved) ? navSaved : matchMedia("(max-height:899px)").matches ? navHeads.map((h) => h.name) : []);
+// A folded group still shows what is waiting inside it (the red numbers of its items added together)
+function navPaint() { navHeads.forEach(({ b, grp, name }) => { const f = navFolded.has(name); grp.classList.toggle("fold", f); b.setAttribute("aria-expanded", String(!f)); const n = [...grp.querySelectorAll(".cnt.act[data-count]:not([hidden])")].reduce((a, c) => a + (Number(c.textContent) || 0), 0), g = b.querySelector(".gcnt"); g.textContent = n; g.hidden = !(f && n); g.setAttribute("aria-label", n + " waiting in " + name); }); }
+function navOpen(t) { const h = navHeads.find((x) => x.grp.querySelector(`[data-tab="${t}"]`)); if (h && navFolded.has(h.name)) { navFolded.delete(h.name); navPaint(); } }
+navHeads.forEach(({ b, name }) => (b.onclick = () => { navFolded.has(name) ? navFolded.delete(name) : navFolded.add(name); navPaint(); try { localStorage.setItem(NAVKEY, JSON.stringify([...navFolded])); } catch {} }));
+navPaint();
 function setTab(t, push = true) {
+  navOpen(t);
   if (t !== tab || NEXTVIEW) { PVIEW = NEXTVIEW || "pending"; HOPEN = ""; COPEN = ""; OORDER = ""; NEXTVIEW = ""; }
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
@@ -666,8 +682,31 @@ function labelTables(root) {
     t.querySelectorAll("tbody tr").forEach((tr) => [...tr.children].forEach((td, i) => { if (i > title && heads[i] && !td.hasAttribute("data-label") && !td.classList.contains("cb") && !td.classList.contains("ac")) td.setAttribute("data-label", heads[i]); }));
   });
 }
+// A table wider than its box scrolls sideways (tablets): the card gets data-more="start end" so the CSS can fade the right edge and shade the pinned name column.
+function tableCues(root) {
+  (root || document).querySelectorAll(".dtc").forEach((c) => {
+    const w = c.querySelector(".dtw"); if (!w) return; const max = w.scrollWidth - w.clientWidth, x = w.scrollLeft;
+    const v = max > 2 ? (x > 2 ? "start " : "") + (x < max - 2 ? "end" : "") : ""; if ((c.dataset.more || "") !== v.trim()) { if (v.trim()) c.dataset.more = v.trim(); else delete c.dataset.more; }
+  });
+}
+// Phones: every row tick-box sits in a 44px square so it is easy to hit (the box itself stays its normal size), and a table row opens its record when tapped anywhere that is not a button or link.
+function bigChecks(root) {
+  if (!phone()) return;
+  (root || document).querySelectorAll('input.rsel[type="checkbox"], td.cb input[type="checkbox"]').forEach((i) => {
+    if (i.closest("label")) return;
+    const l = document.createElement("label"); l.className = "cbhit"; i.replaceWith(l); l.appendChild(i);
+  });
+}
 let labelRaf = 0;
-new MutationObserver(() => { cancelAnimationFrame(labelRaf); labelRaf = requestAnimationFrame(() => labelTables($("#main"))); }).observe($("#main"), { childList: true, subtree: true });
+new MutationObserver(() => { cancelAnimationFrame(labelRaf); labelRaf = requestAnimationFrame(() => { labelTables($("#main")); bigChecks($("#main")); tableCues($("#main")); }); }).observe($("#main"), { childList: true, subtree: true });
+$("#main").addEventListener("scroll", (e) => { if (e.target.classList && e.target.classList.contains("dtw")) tableCues($("#main")); }, true);
+addEventListener("resize", () => tableCues($("#main")));
+$("#main").addEventListener("click", (e) => {
+  if (!phone()) return;
+  const tr = e.target.closest("table.dtab tbody tr"); if (!tr || e.target.closest("a,button,input,label,select,textarea,summary")) return;
+  if (e.target.closest("td.cb")) { const i = tr.querySelector("td.cb input[type=checkbox]"); if (i) i.click(); return; }
+  const go = tr.querySelector('a.rl[href^="#"]'); if (go) go.click();
+});
 
 /* ---------- events ---------- */
 let EVQ = "", EVLIMIT = 0, EVSORT = "date", EVSTATUS = "", EVCOUNTY = "", EVHEALTH = "", EVVIEW = ""; // EVVIEW: "", "grok" or "ended" (the other tabs use EVSTATUS)
