@@ -40,3 +40,11 @@ test("lastRuns reports the newest Stripe event received", async () => {
   const r = await lastRuns(env, []);
   assert.deepEqual(r.stripe, { type: "checkout.session.completed", at: "2026-02-01 00:00:00" });
 });
+
+test("alerts we sent (deploy stalled, usage) are shown apart and never counted as errors", async () => {
+  const { env } = newEnv();
+  await logOp(env, "deploy-stalled", "stuck"); await logOp(env, "usage-alert", "D1 reads at 80%"); await logOp(env, "webhook", "bad signature");
+  const e = await errorsLast7(env, []);
+  assert.equal(e.total, 1, "only the webhook problem is an error"); assert.deepEqual(e.groups.map((g) => g.kind), ["webhook"]);
+  assert.deepEqual(e.alerts.map((a) => a.kind).sort(), ["deploy-stalled", "usage-alert"]); assert.match(e.alerts.find((a) => a.kind === "deploy-stalled").text, /deploy looked stuck/);
+});

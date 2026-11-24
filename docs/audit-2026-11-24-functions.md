@@ -157,3 +157,7 @@ Week 2
 6. F-48 (freeze time in tests, nightly shifted-clock run), F-50 (post-migration smoke check), F-49 (run the e2e scripts weekly).
 7. F-13 (refund button), F-14 (placement ending mail), F-26 (video approved/removed mail), F-27 (alerts cron check).
 8. If time remains: F-10 and F-11 (email change, claim breadth), F-35 (home pages), F-36 (client error beacon), F-45 (app links).
+
+## Addendum 2026-11-25: finding the first pass missed
+- **F-52 (P2, fixed): notices counted as errors.** `errorsLast7` (`functions/_lib/adminhealth.js`) counted "Deploy stalled alerts sent" and "Cloudflare usage alerts sent" as errors in the Admin dashboard's "things went wrong" total for seven days, although each means the monitoring worked. Fixed: they are returned as `alerts` and never counted. The first pass read the Admin health code (F-36, F-27) but did not classify each `ops_log` kind as error, notice or activity.
+- **Method change:** for every log kind and every "count" shown to the owner, list who reads it and what they should do about it; if the answer is nothing, it is not an error.
