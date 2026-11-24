@@ -2,6 +2,7 @@
 // at most 8 photos, JPG, PNG or WebP (checked by their first bytes, not the file name), under 6 MB each (the browser shrinks them first).
 // A live home keeps its photos under p/<id>/ (public); a taken-down or in-review home keeps them under pending/<id>/ (private), so they are never public by accident.
 import { MAX_PHOTOS, MAX_BYTES, sniff } from "./entryphotos.js";
+import { sizeProblem, MAX_TOTAL_BYTES } from "./imgsniff.js";
 
 const arr = (s) => { try { const a = JSON.parse(s || "[]"); return Array.isArray(a) ? a : []; } catch { return []; } };
 export const photoPrefix = (row) => (row.status === "approved" ? "p/" : "pending/");
@@ -14,11 +15,13 @@ export async function addHomePhotos(env, row, files) {
   if (keys.length + files.length > MAX_PHOTOS) return { error: keys.length >= MAX_PHOTOS ? `This home already has ${MAX_PHOTOS} photos. Remove one to add another.` : `A home can have up to ${MAX_PHOTOS} photos. This one has room for ${MAX_PHOTOS - keys.length} more.`, status: 400 };
   const used = new Set(keys.map((k) => k.split("/").pop())), stored = [], pre = photoPrefix(row);
   let t = Date.now(); // a name is never reused on the same home (photos are cached for a year)
+  if (files.reduce((t, f) => t + (f.size || 0), 0) > MAX_TOTAL_BYTES) return { error: "Those photos add up to more than 24 MB. Send fewer or smaller photos.", status: 400 }; // F-06
   try {
     for (const f of files) {
       if (f.size > MAX_BYTES) throw new Error("A photo is too large. Use photos under 6 MB.");
       const buf = await f.arrayBuffer(), kind = sniff(buf);
       if (!kind) throw new Error("Photos must be JPG, PNG or WebP.");
+      { const sp = sizeProblem(buf); if (sp) throw new Error(sp); } // F-06: pixel size from the header bytes
       let name = `${t}.${kind.ext}`; while (used.has(name)) name = `${++t}.${kind.ext}`;
       used.add(name); t++;
       const key = `${pre}${row.id}/${name}`;

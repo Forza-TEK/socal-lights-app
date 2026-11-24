@@ -94,7 +94,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await upsertEvent(env, { id: matchId, name: e.name, county: mcounty, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: "confirmed", free: e.free, price: e.price, hours: e.hours, lat: mlat, lng: mlng, blurb: e.blurb, url: e.url || old.url || "", season: e.season, venue: e.venue, address: e.address });
     await bump(env, "fn:add-event-done");
     const receipt = await sendReceipt(env, waitUntil, { id: "event_live", to: e.email, vars: { name: e.name, when: whenOf(e), map: `https://socallights.app/#e-${matchId}`, link: "https://socallights.app/profile#events" } });
-    return json({ ok: true, status: "published", updated: true, id: matchId, submission_id: sid, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), located: mlocated, receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "We updated the existing listing with your details. It is yours to manage now." });
+    return json({ ok: true, status: "published", updated: true, id: matchId, submission_id: sid, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), located: mlocated, receipt: receipt === "queued" ? "queued" : "", email: e.email, message: "We updated the existing listing with your details. It is yours to manage now." });
   }
 
   // Already on the map? The answer says whose it is and whether it can be featured, so the page shows only what is true (no "Feature your event" for someone else's event).
@@ -145,9 +145,9 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: "confirmed", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
     await bump(env, "fn:add-event-done");
     const receipt = await sendReceipt(env, waitUntil, { id: "event_live", to: e.email, vars: { name: e.name, when: whenOf(e), map: `https://socallights.app/#e-${eventId}`, link: "https://socallights.app/profile#events" } });
-    return json({ ok: true, status: "published", id: eventId, submission_id: id, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), located, receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Your event is on the map." });
+    return json({ ok: true, status: "published", id: eventId, submission_id: id, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), located, receipt: receipt === "queued" ? "queued" : "", email: e.email, message: "Your event is on the map." });
   }
   await bump(env, "fn:add-event-done");
   const receipt = await sendReceipt(env, waitUntil, { id: "event_received", to: e.email, vars: { name: e.name, when: whenOf(e), link: "https://socallights.app/profile#events" } });
-  return json({ ok: true, status: "pending", submission_id: id, located, held: unproven ? "unproven" : "busy", receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Thanks! We'll check your event and add it shortly." });
+  return json({ ok: true, status: "pending", submission_id: id, located, held: unproven ? "unproven" : "busy", receipt: receipt === "queued" ? "queued" : "", email: e.email, message: "Thanks! We'll check your event and add it shortly." });
 }

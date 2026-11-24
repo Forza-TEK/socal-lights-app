@@ -36,8 +36,8 @@ const subjects = (w) => w.mails.map((m) => m.subject);
 test("receipt: a home that goes live at once gets 'on the map'; one held for review gets 'we got it'; both link to manage it", async () => {
   const { env, raw } = mkEnv(), w = world(); const u = await addUser(raw, "u1", "owner@example.com");
   try {
-    const live = await j(await postHome(env, homeForm(), u.cookie)); assert.equal(live.status, "published"); assert.equal(live.receipt, "sent"); assert.equal(live.email, "owner@example.com");
-    const held = await j(await postHome(env, homeForm({ title: "Casino night lights" }), u.cookie)); assert.equal(held.status, "pending"); assert.equal(held.receipt, "sent");
+    const live = await j(await postHome(env, homeForm(), u.cookie)); assert.equal(live.status, "published"); assert.equal(live.receipt, "queued"); assert.equal(live.email, "owner@example.com");
+    const held = await j(await postHome(env, homeForm({ title: "Casino night lights" }), u.cookie)); assert.equal(held.status, "pending"); assert.equal(held.receipt, "queued");
     assert.deepEqual(subjects(w), ["Your home is on the map: Maple Street Lights", "We got your home: Casino night lights"]);
     assert.match(w.mails[0].text, /profile#displays/); assert.match(w.mails[1].text, /A person looks it over before it goes on the map/); assert.match(w.mails[1].text, /We email you when it is on the map/);
     assert.deepEqual(w.mails.map((m) => m.to), [["owner@example.com"], ["owner@example.com"]]);
@@ -46,7 +46,7 @@ test("receipt: a home that goes live at once gets 'on the map'; one held for rev
 test("receipt: an event goes live ('on the map') or waits ('we got it', not on the map)", async () => {
   const { env, raw } = mkEnv(), w = world(); const u = await addUser(raw, "u1", "o@example.com");
   try {
-    const live = await j(await postEvent(env, evBody(), u.cookie)); assert.equal(live.status, "published"); assert.equal(live.receipt, "sent");
+    const live = await j(await postEvent(env, evBody(), u.cookie)); assert.equal(live.status, "published"); assert.equal(live.receipt, "queued");
     // a busy day: 100 already published today, so the next waits for review
     const ins = raw.prepare("INSERT INTO event_submissions (id,status,name,city,season,type,start_date,end_date,contact_email) VALUES (?,?,?,?,?,?,?,?,?)");
     for (let i = 0; i < 100; i++) ins.run("x" + i, "published", "n" + i, "Pasadena", "christmas", "parade", ptToday(5), ptToday(5), "z" + i + "@example.com");
@@ -63,7 +63,7 @@ test("receipt is service mail: people who unsubscribed or were removed from mark
     raw.prepare("INSERT INTO email_prefs (email, token, optout) VALUES (?,?,1)").run("optout@example.com", "t".repeat(36));
     raw.prepare("INSERT INTO removal_requests (id, email) VALUES ('r1', 'removed@example.com')").run();
     await addSuppression(env, "listed@example.com", "unsubscribe", "app"); await addSuppression(env, "replied@example.com", "reply", "grok");
-    for (const e of ["optout@example.com", "removed@example.com", "listed@example.com", "replied@example.com"]) { const r = await post(e); assert.equal(r.status, "published"); assert.equal(r.receipt, "sent", e); }
+    for (const e of ["optout@example.com", "removed@example.com", "listed@example.com", "replied@example.com"]) { const r = await post(e); assert.equal(r.status, "published"); assert.equal(r.receipt, "queued", e); }
     assert.equal(w.mails.length, 4, "all four got their receipt");
     // never mailed: bounce, complaint, an address reported invalid, a deleted account
     await addSuppression(env, "bounced@example.com", "bounce", "grok"); await addSuppression(env, "spam@example.com", "complaint", "grok"); await addSuppression(env, "gone@example.com", "manual", "account_deleted");
@@ -81,9 +81,9 @@ test("receipt: a contest that goes live at once, and one held for review, each g
     const mk = (user, body) => contestCreate({ env, waitUntil: null, request: new Request(ORIGIN + "/api/contests", { method: "POST", headers: { "content-type": "application/json", origin: ORIGIN, cookie: user.cookie }, body: JSON.stringify(body) }) }).then(j);
     const body = (o) => ({ name: "Maple Street Holiday Lights", org: "Maple Street neighbors", city: "Pasadena", descr: "A friendly lights contest for our street.", site: "", closes: ptToday(10), vs: ptToday(12), ve: ptToday(20), cats: ["Best Overall"], ...o });
     const a = await addUser(raw, "u1", "plain@example.com"), live = await mk(a, body({}));
-    assert.equal(live.http, 200); assert.equal(live.status, "live"); assert.equal(live.receipt, "sent"); assert.equal(live.email, "plain@example.com");
+    assert.equal(live.http, 200); assert.equal(live.status, "live"); assert.equal(live.receipt, "queued"); assert.equal(live.email, "plain@example.com");
     const b = await addUser(raw, "u2", "someone@gmail.com"), held = await mk(b, body({ name: "City of Irvine Official Lights", org: "City of Irvine" }));
-    assert.equal(held.status, "pending"); assert.equal(held.receipt, "sent");
+    assert.equal(held.status, "pending"); assert.equal(held.receipt, "queued");
     const sent = w.mails.filter((m) => /^(Your contest is live|We got your contest)/.test(m.subject));
     assert.deepEqual(sent.map((m) => m.subject), ["Your contest is live: Maple Street Holiday Lights", "We got your contest: City of Irvine Official Lights"]);
     assert.match(sent[0].text, new RegExp("/c/" + live.slug + "/manage")); assert.match(sent[1].text, /Entries stay paused and it is not on the map until it is approved/);

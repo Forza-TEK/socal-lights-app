@@ -112,7 +112,7 @@ const steps = [
       //   duplicate, mine  : you already added it, it is on the map
       //   duplicate, other : someone else's event is already on the map; Feature is never offered
       //   pending          : it waits for review, so it is NOT on the map yet (no See it on the map, no Feature)
-      const mail = j.receipt === "sent" ? `<p class="small muted" role="status">We emailed a confirmation to <b>${esc(j.email || x.email)}</b>.</p>` : "", row = (h, t) => `<div><b style="font-weight:500">${h}</b><br><span class="muted">${t}</span></div>`;
+      const mail = j.receipt === "queued" || j.receipt === "sent" ? `<p class="small muted" role="status">A confirmation email is on its way to <b>${esc(j.email || x.email)}</b>. If it does not arrive in a few minutes, check your spam folder.</p>` : "", row = (h, t) => `<div><b style="font-weight:500">${h}</b><br><span class="muted">${t}</span></div>`;
       const btn = (href, t, primary) => `<a class="btn${primary ? "" : " out"}" href="${href}">${t}</a>`, feat = live && j.featurable && !IN_APP ? btn("/feature?event=" + encodeURIComponent(j.id), "Feature your event") : "";
       let head, help, next = "", acts;
       if (j.status === "duplicate" && !j.mine) {
