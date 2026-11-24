@@ -224,3 +224,9 @@ test("event: after 100 auto-published in a day, new ones wait for review and are
     assert.equal(sub.status, "pending"); assert.equal(sub.event_id, null);
   } finally { f.restore(); }
 });
+
+test("isDate accepts only real calendar days (a month 13 or a day 45 has the right shape but is not a date)", async () => {
+  const { isDate } = await import("../functions/_lib/events.js");
+  for (const ok of ["2026-12-31", "2028-02-29", "2027-01-01"]) assert.equal(isDate(ok), true, ok);
+  for (const bad of ["2026-13-45", "2026-00-10", "2026-02-30", "2027-02-29", "2026-11-31", "26-1-1", "2026-1-01", ""]) assert.equal(isDate(bad), false, bad);
+});

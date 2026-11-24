@@ -19,6 +19,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # a hung job must not hold the queue (audit F-47)
     steps:
       - uses: actions/checkout@v4
         with:

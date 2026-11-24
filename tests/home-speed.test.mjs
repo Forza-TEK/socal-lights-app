@@ -14,7 +14,7 @@ const get = (env, qs = "", headers = {}) => onRequestGet({ request: new Request(
 const pageOrder = (list, today, season) => list.filter((e) => (e.sn || "christmas") === season && e.e >= today)
   .sort((a, b) => (b.f === 2 ? 1 : 0) - (a.f === 2 ? 1 : 0) || (a.s > today ? a.s : today).localeCompare(b.s > today ? b.s : today) || a.n.localeCompare(b.n)).map((e) => e.id);
 
-const mk = (i, s, e, over = {}) => ({ id: "e" + i, n: "Event " + String(i).padStart(3, "0"), s, e, sn: "christmas", f: 0, ...over });
+const mk = (i, s, e, over = {}) => ({ id: "e" + i, n: "Event " + String(i).padStart(3, "0"), s, e, sn: defaultSeason(ptToday()), f: 0, ...over }); // the season in force today, so the test holds in any month
 const shift = (ymd, n) => new Date(Date.parse(ymd + "T12:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 
 test("headOf: the first page of the list from the head equals the first page from the whole list, ties and running events included", () => {

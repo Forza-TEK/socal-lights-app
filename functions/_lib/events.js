@@ -4,7 +4,8 @@ import { SEASONS } from "../../public/seasons.js";
 import { CITY } from "../../public/cities.js";
 import { normalizeHours, freeFlagProblem } from "../../scripts/event-rules.mjs";
 
-export const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+// A real calendar date: "2026-13-45" has the right shape but is not a day (it used to pass, and only the end-before-start check caught it, until the calendar moved past it).
+export const isDate = (s) => { if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false; const [y, m, d] = s.split("-").map(Number), t = new Date(Date.UTC(y, m - 1, d)); return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d; };
 export const slug = (s) => String(s).toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 const kmApart = (a, b) => { const R = 6371, r = Math.PI / 180, x = (b[0] - a[0]) * r, y = (b[1] - a[1]) * r, h = Math.sin(x / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(y / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };

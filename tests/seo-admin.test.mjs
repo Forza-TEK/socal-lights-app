@@ -15,7 +15,7 @@ import { onRequest as adminGate } from "../functions/api/admin/_middleware.js";
 import { onRequestGet as eventsApi } from "../functions/api/events.js";
 import { onRequest as middleware } from "../functions/_middleware.js";
 import { eventTitle, eventDesc, eventIndexable, shareImage, eventIcs, timeRange, cutName, EXPECTED_DAYS } from "../functions/_lib/eventld.js";
-import { CSP_REPORT_ONLY, HSTS } from "../functions/_lib/secheaders.js";
+import { CSP_ENFORCED, CSP_REPORT_ONLY, HSTS } from "../functions/_lib/secheaders.js";
 import { HEALTH, healthTest } from "../public/admin/health.js";
 import { healthShape } from "../functions/_lib/eventhealth.js";
 import { rowToEvent } from "../functions/_lib/util.js";
@@ -160,9 +160,9 @@ test("help articles keep Article data (SEO-12: it was already there)", () => {
 test("HSTS and a report-only CSP: same values in public/_headers and in the Function middleware; the CSP is not enforced (SEO-09)", async () => {
   const h = read("public/_headers"), star = h.slice(h.indexOf("/*"), h.indexOf("/admin/*"));
   assert.ok(star.includes(`Strict-Transport-Security: ${HSTS}`)); assert.ok(star.includes(`Content-Security-Policy-Report-Only: ${CSP_REPORT_ONLY}`));
-  assert.doesNotMatch(h, /^\s*Content-Security-Policy:/m, "no enforced CSP");
+  assert.ok(star.includes(`Content-Security-Policy: ${CSP_ENFORCED}`), "the inline-free directives are enforced (runbook step 3); the full policy stays report-only");
   const res = await middleware({ next: async () => new Response("ok"), env: {} });
-  assert.equal(res.headers.get("Strict-Transport-Security"), "max-age=31536000"); assert.equal(res.headers.get("Content-Security-Policy-Report-Only"), CSP_REPORT_ONLY); assert.equal(res.headers.get("Content-Security-Policy"), null);
+  assert.equal(res.headers.get("Strict-Transport-Security"), "max-age=31536000"); assert.equal(res.headers.get("Content-Security-Policy-Report-Only"), CSP_REPORT_ONLY); assert.equal(res.headers.get("Content-Security-Policy"), CSP_ENFORCED);
   assert.doesNotMatch(HSTS, /includeSubDomains|preload/);
   for (const d of ["default-src 'self'", "object-src 'none'", "frame-ancestors 'self'", "base-uri 'self'"]) assert.ok(CSP_REPORT_ONLY.includes(d), d);
 });

@@ -84,7 +84,7 @@ test("the pages.dev address is noindex, for static files (_headers) and Function
 test("CSP stays report-only but no longer lists the Cloudflare beacon as a violation; the path to enforcement is written down", () => {
   assert.match(CSP_REPORT_ONLY, /script-src [^;]*https:\/\/static\.cloudflareinsights\.com/);
   assert.match(CSP_REPORT_ONLY, /connect-src [^;]*https:\/\/cloudflareinsights\.com/);
-  assert.doesNotMatch(read("public/_headers"), /^\s*Content-Security-Policy:/m);
+  assert.match(read("public/_headers"), /^\s*Content-Security-Policy: frame-ancestors 'self'; object-src 'none'; base-uri 'self'$/m, "only the inline-free directives are enforced");
   assert.match(read("docs/runbooks/csp.md"), /enforc/i);
 });
 

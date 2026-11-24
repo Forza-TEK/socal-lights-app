@@ -21,6 +21,7 @@ jobs:
   validate:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # a hung job must not hold the queue (audit F-47)
     permissions:
       contents: read
       actions: read
@@ -73,6 +74,7 @@ jobs:
     needs: [validate]
     if: ${{ !cancelled() && (needs.validate.result == 'success' || needs.validate.result == 'skipped') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # a hung job must not hold the queue (audit F-47)
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: 52d622850c5e367e319d35143c43a275  # account id (not a secret)
@@ -99,9 +101,26 @@ jobs:
           cache: npm
       - run: npm ci
         if: steps.check.outputs.skip != 'true'
+      - name: Remember how many events the live database holds (for the smoke check below)
+        id: before
+        if: steps.check.outputs.skip != 'true'
+        continue-on-error: true   # never blocks: without a count the smoke check only tests the live site
+        run: |
+          npx wrangler d1 execute socal-lights --remote --json --command "SELECT COUNT(*) AS n FROM events" > "$RUNNER_TEMP/before.json"
+          echo "n=$(node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log(j[0].results[0].n)' "$RUNNER_TEMP/before.json")" >> "$GITHUB_OUTPUT"
       - name: Apply migrations to the live database
         if: steps.check.outputs.skip != 'true'
         run: npx wrangler d1 migrations apply socal-lights --remote
+      - name: Smoke check the live site after the migration (event count within 5 percent, the events API answers); a failure opens the same issue as a failed migration
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          npx wrangler d1 execute socal-lights --remote --json --command "SELECT COUNT(*) AS n FROM events" > "$RUNNER_TEMP/after.json"
+          AFTER=$(node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log(j[0].results[0].n)' "$RUNNER_TEMP/after.json")
+          BEFORE="${{ steps.before.outputs.n }}"
+          echo "Events before: ${BEFORE:-unknown}, after: $AFTER"
+          if [ -n "$BEFORE" ] && [ "$AFTER" -lt $(( BEFORE * 95 / 100 )) ]; then echo "::error::The migration removed more than 5 percent of the events ($BEFORE to $AFTER). It is applied; check it now."; exit 1; fi
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "https://socallights.app/api/events?head=1")
+          if [ "$CODE" != "200" ]; then echo "::error::https://socallights.app/api/events answered $CODE after the migration."; exit 1; fi
       - name: Also bring the PREVIEW database up to date (previews use their own database, see docs/runbooks/preview-isolation.md)
         if: steps.check.outputs.skip != 'true'
         continue-on-error: true   # never blocks the live migration; a failure only means previews may show errors until it is fixed
@@ -115,6 +134,7 @@ jobs:
     needs: [validate, migrate]
     if: ${{ always() && (needs.validate.result == 'failure' || needs.migrate.result == 'failure') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # a hung job must not hold the queue (audit F-47)
     permissions:
       issues: write
     env:
