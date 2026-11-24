@@ -10,7 +10,9 @@ import { ownerKeys } from "../../../_lib/eventphotos.js";
 export async function onRequestGet({ params, env }) {
   const e = await env.DB.prepare("SELECT featured, featured_until, banner_until, video, video_file, video_ok, owner_photos, image FROM events WHERE id = ?").bind(params.id).first();
   if (!e) return json({ featured: 0, featured_until: "", banner_until: "", floor: { featured: 0, featured_until: "", banner_until: "" } }, { headers: { "cache-control": "no-store" } });
-  return json({ featured: e.featured || 0, featured_until: e.featured_until || "", banner_until: e.banner_until || "", video: e.video || "", video_file: e.video_file || "", video_ok: !!e.video_ok, photos: ownerKeys(e.owner_photos), linked_image: e.image || "", floor: await eventFloor(env.DB, params.id, ptToday()) }, { headers: { "cache-control": "no-store" } });
+  let last_edit = null; // the newest organizer takeover that can still be reverted (events/revert.js)
+  try { const h = await env.DB.prepare("SELECT by_email, reason, created_at FROM event_edit_history WHERE event_id = ? AND reverted_at IS NULL ORDER BY id DESC LIMIT 1").bind(params.id).first(); if (h) last_edit = { by: h.by_email || "", reason: h.reason || "", at: h.created_at }; } catch { /* migration 0288 not applied yet */ }
+  return json({ last_edit, featured: e.featured || 0, featured_until: e.featured_until || "", banner_until: e.banner_until || "", video: e.video || "", video_file: e.video_file || "", video_ok: !!e.video_ok, photos: ownerKeys(e.owner_photos), linked_image: e.image || "", floor: await eventFloor(env.DB, params.id, ptToday()) }, { headers: { "cache-control": "no-store" } });
 }
 
 export async function onRequestDelete({ request, params, env, data = {} }) {
