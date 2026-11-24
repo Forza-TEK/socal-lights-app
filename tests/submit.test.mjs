@@ -25,7 +25,8 @@ const geo = ({ census = null, osm = null, down = false, page = null } = {}) => s
 const PASADENA = [34.148, -118.144];
 
 // ---------------- house / installer posts ----------------
-const homeForm = (o = {}) => { const f = new FormData(); const d = { biz: "Lee Family", title: "Maple Street Lights", city: "Pasadena", desc: "Ten thousand lights synced to music every night.", street: "123 Maple St", zip: "91101", permission: "1", ...o }; for (const [k, v] of Object.entries(d)) if (v !== undefined && v !== null) f.append(k, v); return f; };
+let HSEQ = 0; // every default home gets its own street: the same account adding the same address twice is now refused (audit F-01)
+const homeForm = (o = {}) => { const f = new FormData(); const d = { biz: "Lee Family", title: "Maple Street Lights", city: "Pasadena", desc: "Ten thousand lights synced to music every night.", street: `${100 + ++HSEQ} Maple St`, zip: "91101", permission: "1", ...o }; for (const [k, v] of Object.entries(d)) if (v !== undefined && v !== null) f.append(k, v); return f; };
 const postHome = (env, form, cookie, ip = "203.0.113.7") => submitHome({ request: new Request(ORIGIN + "/api/submit", { method: "POST", headers: { "CF-Connecting-IP": ip, ...(cookie ? { cookie } : {}) }, body: form }), env });
 const body = async (r) => ({ ...(await r.json()), http: r.status }); // http = the HTTP status; status = the post or event status in the answer
 
