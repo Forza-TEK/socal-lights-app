@@ -255,9 +255,9 @@ test("privacy manifest exists, declares no tracking, and is bundled by the Xcode
   for (const t of ["EmailAddress", "PhotosorVideos", "PreciseLocation"]) assert.match(m, new RegExp("NSPrivacyCollectedDataType" + t));
   const pj = read("app/ios/App/App.xcodeproj/project.pbxproj");
   assert.match(pj, /PrivacyInfo\.xcprivacy in Resources/); assert.match(pj, /path = PrivacyInfo\.xcprivacy/);
-  assert.equal((pj.match(/MARKETING_VERSION = 1\.0\.1;/g) || []).length, 2, "both configurations");
+  assert.equal((pj.match(/MARKETING_VERSION = 1\.0\.2;/g) || []).length, 2, "both configurations");
   const wf = read(".github/workflows/ios-app.yml");
-  assert.match(wf, /MARKETING_VERSION=1\.0\.1 /); assert.match(wf, /build_number:/, "the build number is still an input"); assert.match(wf, /CURRENT_PROJECT_VERSION=\$\{\{ inputs\.build_number \}\}/);
+  assert.match(wf, /MARKETING_VERSION=\$\{\{ inputs\.marketing_version \}\}/); assert.match(wf, /build_number:/, "the build number is still an input"); assert.match(wf, /CURRENT_PROJECT_VERSION=\$\{\{ inputs\.build_number \}\}/);
 });
 test("capacitor config: only hosts the site really uses, no stale unpkg, app-bound domains left off", () => {
   const cfg = JSON.parse(read("app/capacitor.config.json")), nav = cfg.server.allowNavigation;
