@@ -69,6 +69,10 @@ When a season's events have all ended, re-add them for next year with the **same
 dates and `status='expected'`, then confirm them as organizers announce dates. Also update that
 season's `quickDates` and `dateRange` in `public/seasons.js` to the new year. Seasons in calendar order: `newyear` (Dec 27 - Jan 31), `valentines` (Feb 1-15), `spring` (Feb 16 - May 15), `summer` (May 16 - Aug 31), `halloween` (Sep 1 - Nov 2), `christmas` (Nov 3 - Dec 26).
 
+## Events an organizer manages: leave them alone
+
+An event is organizer-managed when an organizer added it (`u-…` ids), picked it in Add an event ("update the existing listing"), or had a claim approved. Their edits are live in the database and an upsert from a migration would erase them, even a re-sent row identical to the old one. The deploy gate (`d1-migrations.yml` lists the ids from the live database) refuses any new migration that names one of these ids. In a sweep: **skip the event** (the organizer keeps it up to date). Only when a verified public source says it is cancelled or postponed, or an Admin asked for a removal, add the comment line `-- validate: overwrite-owned <id>` above the statement.
+
 ## Validate before you push
 
 ```sh
