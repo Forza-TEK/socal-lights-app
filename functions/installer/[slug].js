@@ -28,8 +28,9 @@ export async function onRequestGet({ request, env, params }) {
     <div class="bar">${telUrl ? `<a class="btn go" href="${esc(telUrl)}">Call for a quote</a>` : web ? `<a class="btn go" href="${esc(web)}" target="_blank" rel="noopener nofollow">Visit website</a>` : `<span class="btn go" aria-disabled="true">No contact details yet</span>`}${telUrl && web ? `<a class="btn hide-s" href="${esc(web)}" target="_blank" rel="noopener nofollow">Website</a>` : ""}${canQuote ? `<button class="btn" type="button" id="quotebtn"><span class="long">Request a quote</span><span class="short">Quote</span></button>` : ""}<button class="btn ic" type="button" data-share aria-label="Share this page">${SHARE}</button></div>
     </div></div>
     <h2>Displays on the map</h2>${homes.length ? `<div class="grid">${cards}</div>` : `<div class="note"><p class="sub" style="margin:0">No displays are on the map yet.</p></div>`}
-    <div class="foot"><a href="/">All of Southern California</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>${inst.owner_email ? "" : `<button class="linkbtn" type="button" id="claimbtn">Is this your company? Claim this profile</button>`}</div></main>
+    <div class="foot"><a href="/">All of Southern California</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a data-report="${esc("i-" + inst.slug)}|${esc(inst.name)}" href="mailto:info@socallights.app?subject=${encodeURIComponent("Report: " + inst.name)}">Report or hide</a>${inst.owner_email ? "" : `<button class="linkbtn" type="button" id="claimbtn">Is this your company? Claim this profile</button>`}</div></main>
     <script type="module" src="/norm-ui.js?v=20261102b"></script>
+    <script src="/report.js?v=20261124a" defer></script>
     <script type="module">
     const slug = ${jsonScript(inst.slug)}, name = ${jsonScript(inst.name)}, $ = (q) => document.querySelector(q);
     try { fetch("/api/installers/" + slug + "/hit", { method: "POST", keepalive: true }); } catch {}

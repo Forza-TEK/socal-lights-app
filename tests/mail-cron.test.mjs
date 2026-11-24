@@ -110,11 +110,19 @@ test("wiring: every cron in wrangler.toml has jobs, every job has a heartbeat na
   assert.equal(HEARTBEAT_JOBS.uptime.staleH, 1);
   const ran = [], s = stub([{ body: { remaining: 0, sent: 0, failed: 0 } }, {}]);
   try {
-    worker.scheduled({ cron: "30 17 * * 4" }, { ALERT_CRON_KEY: KEY }, { waitUntil: (p) => ran.push(p) }); assert.equal(ran.length, 1); await ran[0];
+    worker.scheduled({ cron: "30 17 * * THU" }, { ALERT_CRON_KEY: KEY }, { waitUntil: (p) => ran.push(p) }); assert.equal(ran.length, 1); await ran[0];
     assert.match(s.calls[0].url, /\/api\/alerts\/send/); assert.match(s.calls[1].url, /job=alerts&status=ok/);
     const before = s.calls.length; worker.scheduled({ cron: "unknown" }, { ALERT_CRON_KEY: KEY }, { waitUntil: (p) => ran.push(p) }); await ran[1]; assert.equal(s.calls.length, before, "an unknown schedule runs nothing");
   } finally { s.restore(); }
   assert.equal(worker.fetch().status, 404);
   const wf = readFileSync(".github/workflows/deploy-mail-cron.yml", "utf8");
   assert.match(wf, /wrangler@4 deploy --config workers\/mail-cron\/wrangler\.toml/); assert.match(wf, /secret put ALERT_CRON_KEY/); assert.doesNotMatch(wf, /echo.*\$ALERT_CRON_KEY/, "the key is never printed");
+});
+
+// F-27: Cloudflare numbers weekdays 1 = Sunday to 7 = Saturday, so "30 17 * * 4" ran the weekly email on Wednesday (2026-11-18), not Thursday. Weekdays are written as names.
+test("a Worker cron never uses a numeric weekday (Cloudflare counts 1 = Sunday); the weekly email is on THU and its heartbeat flags a missed run within a day", () => {
+  const toml = readFileSync("workers/mail-cron/wrangler.toml", "utf8");
+  for (const c of [...toml.match(/crons = \[(.*?)\]/s)[1].matchAll(/"([^"]+)"/g)].map((m) => m[1])) assert.match(c.split(" ")[4], /^(\*|[A-Z]{3}(-[A-Z]{3})?)$/, c + ": weekday must be * or a name");
+  assert.deepEqual(CRONS["30 17 * * THU"], ["alerts"]);
+  assert.equal(HEARTBEAT_JOBS.alerts.staleH, 192, "a Thursday run missed is flagged the next Friday");
 });
