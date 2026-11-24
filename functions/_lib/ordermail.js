@@ -31,7 +31,7 @@ async function recipient(env, o) {
 }
 
 // Sends once per order and kind: the column is claimed first (so two webhooks or two sweeps cannot both send), and released again when the mail service failed so the next sweep retries.
-async function once(env, o, column, id, extra) {
+export async function once(env, o, column, id, extra) {
   const claim = await env.DB.prepare(`UPDATE feature_orders SET ${column} = datetime('now') WHERE session_id = ? AND ${column} IS NULL`).bind(o.session_id).run();
   if (!(claim.meta && claim.meta.changes)) return false;
   try {

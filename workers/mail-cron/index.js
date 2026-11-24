@@ -78,6 +78,11 @@ export const JOBS = {
     const r = await call(env, "/api/contest-remind"), j = await body(r);
     return r.ok && "contests" in j ? "ok" : "fail";
   },
+  // Featured placement notices: "ends in 3 days" and "has ended" to buyers of a paid event or home placement (each sent once per order).
+  "placement-notices": async (env) => {
+    const r = await call(env, "/api/placement-notices"), j = await body(r);
+    return r.ok && j.ok === true ? "ok" : "fail";
+  },
   // People's own events that went live as "expected" because their event page could not be checked at the time: ask again, and confirm the ones whose page now passes.
   "verify-events": async (env) => {
     const r = await call(env, "/api/verify-events", 60000), j = await body(r);
@@ -105,6 +110,7 @@ export const CRONS = {
   "17 15 * * *": ["sponsor-renewals"],
   "13,43 * * * *": ["verify-events"],
   "15 17 * * *": ["contest-reminders"],
+  "25 18 * * *": ["placement-notices"],
   "30 17 * * THU": ["alerts"],
 };
 

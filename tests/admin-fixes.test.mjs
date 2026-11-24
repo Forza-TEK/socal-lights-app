@@ -69,7 +69,7 @@ test("L5: cron endpoints compare the shared key in constant time; an Access toke
   assert.equal(sameKey("abcdefghijklmnop", "abcdefghijklmnoq"), false);
   assert.equal(sameKey("abc", "abcdefghijklmnop"), false);
   assert.equal(sameKey("", ""), true); assert.equal(sameKey(undefined, "x"), false);
-  for (const f of ["admin-digest", "alerts/send", "contest-remind", "deploy-check", "heartbeat", "mail/drain", "sponsor/renewals", "stripe-reconcile", "usage-check", "verify-events"]) {
+  for (const f of ["admin-digest", "alerts/send", "contest-remind", "deploy-check", "heartbeat", "mail/drain", "placement-notices", "sponsor/renewals", "stripe-reconcile", "usage-check", "verify-events"]) {
     const js = read(`functions/api/${f}.js`);
     assert.match(js, /!sameKey\(key, env\.ALERT_CRON_KEY\)/, f); assert.doesNotMatch(js, /key !== env\.ALERT_CRON_KEY/, f);
   }
