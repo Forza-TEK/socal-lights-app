@@ -72,7 +72,7 @@ A wrapper around a website can be rejected. Mitigation already in the site: it i
 
 ## Cheapest path (decided 2026-10-30)
 - **Apple:** individual Developer Program account, $99/yr (same price as a company account but no D-U-N-S wait).
-- **No Mac rental needed:** the workflow `.github/workflows/ios-app.yml` builds on a GitHub Mac and uploads to App Store Connect. Needs four repository secrets (GitHub > Settings > Secrets and variables > Actions): `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` (the contents of the API key file from App Store Connect > Users and Access > Integrations > Team Keys, role "App Manager"). Create the app record (bundle id `app.socallights.lights`) in App Store Connect first.
+- **No Mac rental needed:** the workflow `.github/workflows/ios-app.yml` builds on a GitHub Mac and uploads to App Store Connect. Needs four repository secrets (GitHub > Settings > Secrets and variables > Actions): `APPLE_TEAM_ID`, `APPSTORE_KEY_ID`, `APPSTORE_ISSUER_ID`, `APPSTORE_KEY_P8` (the contents of the API key file from App Store Connect > Users and Access > Integrations > Team Keys, role "App Manager"). Create the app record (bundle id `app.socallights.lights`) in App Store Connect first.
 - **Google Play:** $25 once. Run "Android upload key (one time)", download its artifact, add secrets `ANDROID_KEYSTORE_B64` (contents of upload.jks.b64), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, then run "Android app" and upload the .aab in Play Console (opt in to Play App Signing).
 - **Microsoft Store:** $19 individual, once. Package with pwabuilder.com and upload in Partner Center.
 
