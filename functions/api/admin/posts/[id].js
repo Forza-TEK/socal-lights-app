@@ -63,13 +63,14 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     const list = keys.filter((k) => k !== body.key); await save(list);
     return json({ ok: true, photos: list });
   }
-  // Video: approve an uploaded clip so visitors can watch it, or remove the video (link or clip). The person is not emailed; they see it on their profile.
+  // Video: approve an uploaded clip so visitors can watch it, or remove the video (link or clip). The person is emailed about a clip (F-26; best effort, never blocks the action).
   if (body.action === "video_approve") {
     if (!row.video_file) return err(404, "There is no uploaded video to approve.");
     await env.DB.prepare("UPDATE posts SET video_ok = 1 WHERE id = ?").bind(row.id).run();
+    if (!row.video_ok) tell(env, waitUntil, row.contact_email, "video_live", { name: row.title || row.biz || "your display", link: "https://socallights.app/profile" });
     return json({ ok: true, video: { link: "", file: row.video_file, ok: true } });
   }
-  if (body.action === "video_remove") { await clearVideo(env, row); return json({ ok: true, video: { link: "", file: "", ok: false } }); }
+  if (body.action === "video_remove") { await clearVideo(env, row); if (row.video_file) tell(env, waitUntil, row.contact_email, "video_removed", { name: row.title || row.biz || "your display", link: "https://socallights.app/profile" }); return json({ ok: true, video: { link: "", file: "", ok: false } }); }
   if (body.action === "photo_move") {
     const i = keys.indexOf(body.key), to = Math.max(0, Math.min(keys.length - 1, Number(body.to) || 0));
     if (i < 0) return err(404, "That photo is already gone.");
