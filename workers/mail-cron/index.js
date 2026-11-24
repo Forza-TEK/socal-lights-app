@@ -105,7 +105,7 @@ export const CRONS = {
   "17 15 * * *": ["sponsor-renewals"],
   "13,43 * * * *": ["verify-events"],
   "15 17 * * *": ["contest-reminders"],
-  "30 17 * * 4": ["alerts"],
+  "30 17 * * THU": ["alerts"],
 };
 
 export async function runJob(env, name) {

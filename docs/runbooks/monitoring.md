@@ -68,7 +68,7 @@ GitHub's scheduler is best effort (the hourly mail job really ran every 4 to 8 h
 | Stripe reconcile | `47 14 * * *` | `/api/stripe-reconcile` (until done) | `stripe-reconcile` |
 | Sponsor renewals | `17 15 * * *` | `/api/sponsor/renewals` | `sponsor-renewals` |
 | Contest reminders | `15 17 * * *` | `/api/contest-remind` | `contest-reminders` (new) |
-| Weekly lights email | `30 17 * * 4` | `/api/alerts/send` (batches until done) | `alerts` |
+| Weekly lights email | `30 17 * * THU` | `/api/alerts/send` (batches until done) | `alerts` |
 - **Stay on GitHub** (they need GitHub or wrangler): the admin digest (it also opens the GitHub "jobs stopped" issue and starts a late backup), the nightly backup, (The uptime check moved to the Worker on 2026-11-16: GitHub still ran it only every 4 to 8 hours. `uptime.yml` is manual only; Better Stack remains the real external monitor and opens no GitHub issue now.) The deploy watch moved too (2026-11-12): its GitHub workflow still runs as a safety net until stage 2.
 - **Deploy:** `.github/workflows/deploy-mail-cron.yml` (on a change under `workers/mail-cron/`, or by hand from Actions > Deploy mail cron > Run workflow). Needs the repository secrets `CLOUDFLARE_API_TOKEN` (with **Account > Workers Scripts > Edit**) and `ALERT_CRON_KEY`. The Worker keeps its first name `socal-lights-mail-cron`.
 - **Check it:** Cloudflare dashboard > Workers & Pages > `socal-lights-mail-cron` > Triggers lists the eight schedules; Metrics/Logs show the runs; Admin > Last run of each job shows each job reporting on time; `curl -s https://socallights.app/api/health` keeps `staleJobs` empty.
