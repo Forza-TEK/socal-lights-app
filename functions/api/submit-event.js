@@ -72,7 +72,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (!m) return err(400, "That listing no longer matches what you entered. Go back and check it, or add yours as a new event.");
     if (m.mine) return json({ ok: true, status: "duplicate", id: m.id, mine: true, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), message: "You already manage this event, and it is on the map." });
     if (m.managed) return err(409, "Another organizer already manages that listing. Email info@socallights.app and we will sort it out.");
-    const old = await env.DB.prepare("SELECT name, start_date, end_date, venue, address, url, hours, price FROM events WHERE id = ?").bind(matchId).first();
+    const old = await env.DB.prepare("SELECT * FROM events WHERE id = ?").bind(matchId).first(); // the whole row: it is saved below so Admin can revert (audit F-03)
     if (!old) return err(404, "That listing is gone. Add your event as a new one.");
     let [mlat, mlng] = CITY[e.city];
     const mgeo = {}, mpt = await geocodeAddress(e.address, e.city, [mlat, mlng], 30, fetch, mgeo), mlocated = !!mpt; if (mpt) [mlat, mlng] = mpt;
@@ -80,6 +80,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const mcounty = nearestCounty(mlat, mlng, mevs), sid = newId();
     const was = `${old.name}; ${old.start_date}${old.end_date !== old.start_date ? " to " + old.end_date : ""}; ${old.venue || "no venue"}; ${old.address || "no address"}; ${old.hours || "no hours"}; ${old.price || "no price"}`.slice(0, 330);
     const note = [`updated the existing listing ${matchId} instead of adding a new one (it was: ${was})`, !mlocated && "pin is at the city center (address not found)", mgeo.ambiguous && `the address matches more than one place (${mgeo.ambiguous}): check the pin`].filter(Boolean).join("; ");
+    // Save the full previous row first, and do not change the listing if it cannot be saved: Admin's "Revert the last organizer update" depends on it.
+    try {
+      await env.DB.prepare("INSERT INTO event_edit_history (event_id,row,by_user_id,by_email,submission_id,reason) VALUES (?,?,?,?,?,?)")
+        .bind(matchId, JSON.stringify(old), String(user.id || ""), e.email, sid, "organizer used \"This is my event\" and replaced the listing's details").run();
+    } catch { return err(503, "We couldn't save the old details of that listing just now, so nothing was changed. Please try again in a minute."); }
     await env.DB.batch([
       env.DB.prepare(`INSERT INTO event_submissions (id,status,name,county,city,season,type,start_date,end_date,free,price,hours,lat,lng,blurb,url,venue,address,contact_email,verified,note,event_id)
         VALUES (?,'published',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)`).bind(sid, e.name, mcounty, e.city, e.season, e.type, e.start_date, e.end_date, e.free, e.price, e.hours, mlat, mlng, e.blurb, e.url || old.url || "", e.venue, e.address, e.email, note.slice(0, 480), matchId),

@@ -123,5 +123,6 @@ export async function deleteAccount(env, id, email) {
   ];
   for (const c of contests) if (c.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id)); // its paid placement was flagged above
   await env.DB.batch(stmts);
+  try { await env.DB.prepare("UPDATE event_edit_history SET by_email = '', by_user_id = '' WHERE by_user_id = ? OR lower(by_email) = lower(?)").bind(id, email || "-").run(); } catch { /* table added by migration 0288 */ } // the saved listing rows stay (they are the event's, not the person's); who made the change goes
   if (eventFiles.length) await r2Delete(env, eventFiles, "deleted account's event photos and clips"); // after the rows are gone, so a failed batch never leaves rows pointing at deleted files
 }
