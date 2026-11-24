@@ -7,7 +7,8 @@
 //   GET     : the recent changes (who changed which field, and when)
 // Who can open it: the person who posted it, and the installer's profile owner once the installer has confirmed they installed it
 // (or when the listing is the installer's own). Each side is emailed what the other changed.
-import { json, err, clean, webUrl, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
+import { json, err, clean, webUrl, geocodeAddress } from "../../../_lib/util.js";
+import { countyFor as countyForCity } from "../../../_lib/citycounty.js";
 import { CITY } from "../../../../public/cities.js";
 import { needsReview } from "../../../_lib/moderation.js";
 import { addHomePhotos, removeHomePhoto, coverHomePhoto } from "../../../_lib/homephotos.js";
@@ -119,8 +120,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
       if (street !== (row.street || "") || city !== row.city || zip !== (row.zip || "")) {
         const address = `${street}, ${city}, CA ${zip}`; let [lat, lng] = CITY[city];
         const pt = await geocodeAddress(address, city, [lat, lng]); located = !!pt; if (pt) [lat, lng] = pt;
-        const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
-        loc = { street, city, zip, address, lat, lng, county: nearestCounty(lat, lng, evs) };
+        loc = { street, city, zip, address, lat, lng, county: await countyForCity(env, city, lat, lng) };
       }
     }
     const next = {

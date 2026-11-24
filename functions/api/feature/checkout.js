@@ -7,7 +7,7 @@ import { PLANS, EVENT_PLANS, eventQuote } from "../../_lib/featured.js";
 import { requireUser, sameOrigin, normEmail } from "../../_lib/auth.js";
 import { ownsEvent } from "../../_lib/ownership.js";
 import { homeForCheckout, HOME_PLANS, placeWord } from "../../_lib/podium.js";
-import { sha256hex, checkoutLimit, createCheckoutSession, refundNote } from "../../_lib/stripe.js";
+import { sha256hex, checkoutLimit, otherOpenCheckout, createCheckoutSession, refundNote } from "../../_lib/stripe.js";
 import { ptToday } from "../../_lib/time.js";
 
 // True when the dates are the buyer's own: they submitted the event (and can edit it), or it is the map listing of a contest they run.
@@ -89,11 +89,13 @@ export async function onRequestPost({ request, env }) {
   if (goodEmail) { f.set("customer_email", goodEmail); f.set("payment_intent_data[receipt_email]", goodEmail); }
   // Same event + plan within 10 minutes reuses one Checkout session (double clicks). The key is a hash (the account is included so two people never share a session).
   const idem = "feature-" + (await sha256hex(`${ev.id}|${plan}|${q ? q.to + "|" + q.cents + "|" : ""}${user.id}|${Math.floor(Date.now() / 600_000)}`));
-  const limited = await checkoutLimit(env, user.id); // 6 payment pages an hour, 20 a day per account; counted only once every other check passed
+  const ref = `${ev.id}|${plan}`, second = await otherOpenCheckout(env, user.id, ref, idem); // F-16: a payment page for this same thing was opened earlier (another tab)
+  const limited = await checkoutLimit(env, user.id, { ref, idem }); // 6 payment pages an hour, 20 a day per account; counted only once every other check passed
   if (limited) return err(429, limited);
   // If Stripe cannot be reached the buyer gets the same friendly message as any other payment-page failure, not a raw error.
   const url = await createCheckoutSession(env, f, idem);
   if (!url) return err(502, "The payment page couldn't be opened. Please try again in a moment.");
   if (!home) await bump(env, "fn:event-feature-checkout"); // a number only: payment pages opened for an event
-  return json({ url });
+  // F-16: the buyer is told before paying twice. Two open pages for the same placement can both be paid; the second payment is refunded by hand days later.
+  return json({ url, ...(second ? { warning: "You already opened a payment page for this placement. Pay on only one of them: a second payment is not applied and is refunded by hand a few days later." } : {}) });
 }

@@ -29,8 +29,10 @@ export function headOf(list, today) {
 
 export async function build(env, all, ended, full, head) {
   const cutoff = ptDate(Date.now() - ENDED_GRACE_DAYS * 86400000);
-  const q = all || ended ? env.DB.prepare("SELECT * FROM events ORDER BY start_date, name") : env.DB.prepare("SELECT * FROM events WHERE end_date >= ? ORDER BY start_date, name").bind(cutoff);
-  const { results } = await q.all();
+  const q = all ? env.DB.prepare("SELECT * FROM events ORDER BY start_date, name") : ended ? env.DB.prepare("SELECT * FROM events WHERE archived_at IS NULL ORDER BY start_date, name") : env.DB.prepare("SELECT * FROM events WHERE end_date >= ? ORDER BY start_date, name").bind(cutoff);
+  let results;
+  try { ({ results } = await q.all()); }
+  catch (e) { if (!ended || all) throw e; ({ results } = await env.DB.prepare("SELECT * FROM events ORDER BY start_date, name").all()); } // F-25: before migration 0292 there is no archived_at column: answer as before
   // A sweep-made event at the same address as an approved house or installer post is replaced by that post (unless the admin chose to keep it)
   let hide = new Set();
   if (!all) try { hide = new Set(pairs(await approvedPosts(env), results).exact.filter((x) => !x.event.keep_listed).map((x) => x.event.id)); } catch {}

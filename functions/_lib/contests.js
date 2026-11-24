@@ -1,5 +1,6 @@
 // Shared helpers for home decorating contests.
-import { err, clean, nearestCounty } from "./util.js";
+import { err, clean } from "./util.js";
+import { countyFor as countyForCity } from "./citycounty.js";
 import { upsertEvent } from "./events.js";
 import { r2Delete, photoKeys } from "./dbchunk.js";
 import { logOp } from "./oplog.js";
@@ -14,7 +15,7 @@ export const FREE_DOMAINS = new Set([
   "gmail.com", "googlemail.com", "hotmail.com", "outlook.com", "live.com", "msn.com", "yahoo.com", "ymail.com", "rocketmail.com", "icloud.com", "me.com", "mac.com", "aol.com",
   "proton.me", "protonmail.com", "pm.me", "gmx.com", "gmx.net", "gmx.us", "gmx.de", "mail.com", "email.com", "zoho.com", "zohomail.com", "fastmail.com", "fastmail.fm", "hey.com", "tutanota.com", "tuta.io", "hushmail.com",
   "comcast.net", "sbcglobal.net", "att.net", "cox.net", "verizon.net", "bellsouth.net", "charter.net", "earthlink.net", "frontier.com", "frontiernet.net", "optonline.net", "roadrunner.com", "pacbell.net", "ca.rr.com", "socal.rr.com", "centurylink.net", "windstream.net", "juno.com", "netzero.net", "prodigy.net",
-  "yandex.com", "yandex.ru", "mail.ru", "qq.com", "163.com", "126.com", "naver.com", "web.de", "t-online.de", "orange.fr", "free.fr", "laposte.net", "libero.it", "btinternet.com", "sky.com", "inbox.com", "rediffmail.com",
+  "protonmail.ch", "proton.ch", "mailfence.com", "runbox.com", "posteo.de", "posteo.net", "mailbox.org", "duck.com", "skiff.com", "cock.li", "aim.com", "lycos.com", "usa.com", "post.com", "rambler.ru", "bk.ru", "list.ru", "inbox.ru", "inbox.lv", "ukr.net", "sina.com", "sohu.com", "foxmail.com", "yeah.net", "daum.net", "hanmail.net", "shaw.ca", "rogers.com", "sympatico.ca", "bell.net", "telus.net", "cableone.net", "mchsi.com", "ymail.com", "gmx.at", "gmx.ch", "gmx.fr", "gmx.co.uk", "me.com", "pobox.com", "fastmail.net", "icloud.com.cn", "yandex.com", "yandex.ru", "mail.ru", "qq.com", "163.com", "126.com", "naver.com", "web.de", "t-online.de", "orange.fr", "free.fr", "laposte.net", "libero.it", "btinternet.com", "sky.com", "inbox.com", "rediffmail.com",
 ]);
 // Regional editions of the big providers (yahoo.ca, hotmail.co.uk, live.com.mx, outlook.fr ...)
 const FREE_REGIONAL = /^(yahoo|hotmail|outlook|live|msn|gmx|aol|icloud)\.[a-z]{2,3}(\.[a-z]{2})?$/;
@@ -132,8 +133,7 @@ export const unlistFromMap = async (env, c, by = "unpublished") => c.event_id ? 
 
 export async function countyFor(env, city) {
   const [lat, lng] = CITY[city];
-  const { results } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
-  return nearestCounty(lat, lng, results);
+  return countyForCity(env, city, lat, lng); // F-07: the city table first, the nearest event only as a fallback
 }
 
 // Moves an entry's photos from pending/ to p/ so the public photo route can serve them, then approves it.

@@ -67,7 +67,7 @@ export async function onRequestGet({ env }) {
     revenue: rev, errors, runs,
     funnel: { steps: STEPS, counts: await funnelCounts(env), refs: refRows.map((r) => ({ code: r.page.slice(4), today: r.today || 0, week: r.week || 0 })) },
     trends: { days, houses: tHouses, votes: tVotes, accounts: tAccounts, views: tViews, topPages, clicks },
-    attention: { waitHomes, waitEvents, waitContests, reports, claims, eventClaims, grokHeld, waitVideos: await n("SELECT COUNT(*) AS n FROM posts WHERE status = 'approved' AND video_file != '' AND video_ok = 0"), waitEventVideos: await n("SELECT COUNT(*) AS n FROM events WHERE video_file != '' AND video_ok = 0") }, // uploaded video clips waiting for Admin's approval
+    attention: { waitHomes, waitEvents, waitContests, reports, claims, eventClaims, grokHeld, waitVideos: await n("SELECT COUNT(*) AS n FROM posts WHERE status = 'approved' AND video_file != '' AND video_ok = 0"), orphanHomes: await n("SELECT COUNT(*) AS n FROM posts WHERE (user_id IS NULL OR user_id = '') AND contest_id IS NULL AND status != 'declined'"), /* F-12: homes with no owner account: GET /api/admin/orphan-homes lists them, the home's Transfer box links one */ waitEventVideos: await n("SELECT COUNT(*) AS n FROM events WHERE video_file != '' AND video_ok = 0") }, // uploaded video clips waiting for Admin's approval
     today: { homes: homesToday, events: subsToday, entries: entriesToday },
     live: { homes: homesLive, events: evStats.map.total, eventsConfirmed: evStats.map.confirmed, eventsExpected: evStats.map.expected, contests: contestsLive, installers },
     people: { users, newUsers, votesWeek, hits, litToday },

@@ -255,6 +255,7 @@ async function start() {
       const d = await r.json().catch(() => ({}));
       if (r.status === 401) { S.busy = false; saveSel(); if (await signIn({ title: "Sign in to pay", next: urlState() })) location.reload(); draw(); return; }
       if (!r.ok || !d.url) throw new Error(d.error || "The payment page couldn't be opened.");
+      if (d.warning && !confirm(d.warning + "\n\nOpen this payment page anyway?")) { S.busy = false; S.msg = "Nothing was charged."; draw(); return; } // F-16
       location.href = d.url;
     } catch (e) { S.busy = false; S.err = true; S.msg = e.message + " You can also email " + SITE.contactEmail + "."; draw(); }
   }

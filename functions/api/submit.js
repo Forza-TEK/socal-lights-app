@@ -1,6 +1,7 @@
 // POST /api/submit — public "Showcase a House" form (multipart/form-data).
 // Saves the post as 'pending' and its photos under pending/<id>/ in R2.
-import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { json, err, clean, webUrl, newId, verifyTurnstile, geocodeAddress } from "../_lib/util.js";
+import { countyFor } from "../_lib/citycounty.js";
 import { sendTemplate } from "../_lib/mailtpl.js";
 import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
@@ -8,6 +9,8 @@ import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
 import { fmtDate } from "../../public/contestfmt.js";
 import { getUser, sameOrigin } from "../_lib/auth.js";
+import { sizeProblem, MAX_TOTAL_BYTES } from "../_lib/imgsniff.js";
+import { logOp } from "../_lib/oplog.js";
 import { checkThrottle, hashKey } from "../_lib/throttle.js";
 import { findOrCreateInstaller } from "../_lib/installers.js";
 import { approveEntry } from "../_lib/contests.js";
@@ -122,6 +125,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const files = form.getAll("photos").filter((f) => f && typeof f === "object" && f.size > 0);
   if (contest && !files.length) return err(400, "Add at least one photo of your home.");
   if (files.length > MAX_PHOTOS) return err(400, `Send up to ${MAX_PHOTOS} photos.`);
+  if (files.reduce((t, f) => t + f.size, 0) > MAX_TOTAL_BYTES) return err(400, "Those photos add up to more than 24 MB. Send fewer or smaller photos."); // F-06: a total cap, not only 6 MB each
 
   const id = newId();
   const keys = [];
@@ -132,6 +136,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
       const buf = await f.arrayBuffer();
       const kind = sniff(buf);
       if (!kind) throw new Error("Photos must be JPG, PNG or WebP.");
+      { const sp = sizeProblem(buf); if (sp) throw new Error(sp); } // F-06: pixel size from the header bytes
       const key = `${autoApprove ? "p" : "pending"}/${id}/${i + 1}.${kind.ext}`;
       await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: kind.type } });
       keys.push(key);
@@ -144,8 +149,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // The pin goes on the exact address; if it can't be found it falls back to the city center (the admin can fix it)
   let [lat, lng] = CITY[city];
   const geo = {}, pt = await geocodeAddress(address, city, [lat, lng], 30, fetch, geo); const located = !!pt; if (pt) [lat, lng] = pt; // geo.ambiguous: the Census found two places for this address (audit F-04)
-  const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
-  const county = nearestCounty(lat, lng, evs);
+  const county = await countyFor(env, city, lat, lng); // F-07: from the city table, no events scan
 
   // M2: what makes a new home wait for a person instead of going live (contest entries follow the organizer's own approval setting instead).
   //   "address": the pin could not be found (it would sit at the city center) or the street has no house number; "text": a word that needs a look in ANY free-text field, not only the name and description.
@@ -154,28 +158,35 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (!contest) { if (!located || !/^\s*\d/.test(street || address)) holds.push("address"); if (textBad) holds.push("text"); if (geo.ambiguous) holds.push("ambiguous"); if (dupNote) holds.push("duplicate"); }
   const reviewNote = [geo.ambiguous && `the address matches more than one place (${geo.ambiguous}): check the pin`, dupNote].filter(Boolean).join("; ").slice(0, 480);
 
+  // F-05: the visiting details are part of the INSERT (they used to be a second, silent UPDATE), so they cannot be lost on their own.
+  const visit = ["drive", "walk", "both"].includes(form.get("visit")) ? form.get("visit") : "", parking = ["free", "street", "none"].includes(form.get("parking")) ? form.get("parking") : "";
+  const lightsOn = line(form.get("lights_on"), 60), radio = normRadio(clean(form.get("radio"), 40)), accessible = form.get("accessible") ? 1 : 0;
+  // Follow-up writes below are best effort (the home is already saved), but a failure is logged and written into the submission note so Admin sees it.
+  const followNotes = [];
+  const followUp = async (what, fn) => { try { await fn(); } catch (e) { followNotes.push(what); await logOp(env, "submit", `post ${id}: ${what} not saved: ${e && e.message}`); } };
+  try {
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,entry_no,approved_at,address_consent_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'CA',?,?,?,?,?,${contest ? "(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?)" : "NULL"},${autoApprove ? "datetime('now')" : "NULL"},${!contest && form.get("permission") ? "datetime('now')" : "NULL"})`
-    ).bind(id, autoApprove ? "approved" : "pending", biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area, contest ? contest.id : null, "", cu.id, ...(contest ? [contest.id] : [])),
+      `INSERT INTO posts (id,status,biz,title,city,county,lat,lng,web,phone,where_txt,descr,photos,contact_email,season,address,show_address,poster_type,street,state,zip,service_area,contest_id,category,user_id,entry_no,approved_at,address_consent_at,lights_on,visit,parking,accessible,radio)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'CA',?,?,?,?,?,${contest ? "(SELECT COALESCE(MAX(entry_no),0)+1 FROM posts WHERE contest_id = ?)" : "NULL"},${autoApprove ? "datetime('now')" : "NULL"},${!contest && form.get("permission") ? "datetime('now')" : "NULL"},?,?,?,?,?)`
+    ).bind(id, autoApprove ? "approved" : "pending", biz, title, city, county, lat, lng, web, phone, where, descr, JSON.stringify(keys), email, season, address, 1, kind, street, zip, area, contest ? contest.id : null, "", cu.id, ...(contest ? [contest.id] : []), lightsOn, visit, parking, accessible, radio),
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     ...ipPruneStatements(env),
   ]);
+  } catch (e) {
+    // F-05: the photos went to R2 before this insert; a failed insert must not leave them behind with no post that owns them.
+    await Promise.all(keys.map((k) => env.PHOTOS.delete(k).catch(() => {})));
+    await logOp(env, "submit", `post ${id}: insert failed, ${keys.length} photo(s) removed from R2: ${e && e.message}`);
+    return err(500, "We couldn't save your home just now. Nothing was posted. Please try again in a few minutes.");
+  }
 
-  if (reviewNote) { try { await env.DB.prepare("UPDATE posts SET review_note = ? WHERE id = ?").bind(reviewNote, id).run(); } catch {} } // column from migration 0289; the hold itself does not depend on it
+  if (reviewNote) await followUp("review note", () => env.DB.prepare("UPDATE posts SET review_note = ? WHERE id = ?").bind(reviewNote, id).run()); // column from migration 0289; the hold itself does not depend on it
 
   // "Is this your home?" from the map: remember which automatic listing this display claims (shown to Admin when reviewing)
-  try {
+  await followUp('"is this your home" link to the map listing', async () => {
     const claim = clean(form.get("claim"), 60);
     if (claim && !contest && (await env.DB.prepare("SELECT 1 FROM events WHERE id = ?").bind(claim).first())) await env.DB.prepare("UPDATE posts SET claim_event_id = ? WHERE id = ?").bind(claim, id).run();
-  } catch {}
-
-  // Visiting details for families (all optional)
-  try {
-    const visit = ["drive", "walk", "both"].includes(form.get("visit")) ? form.get("visit") : "", parking = ["free", "street", "none"].includes(form.get("parking")) ? form.get("parking") : "";
-    await env.DB.prepare("UPDATE posts SET lights_on = ?, visit = ?, parking = ?, accessible = ?, radio = ? WHERE id = ?").bind(line(form.get("lights_on"), 60), visit, parking, form.get("accessible") ? 1 : 0, normRadio(clean(form.get("radio"), 40)), id).run();
-  } catch {}
+  });
   // Installer profile: an installer's own post makes (or joins) their profile; a homeowner can name the company that installed their lights
   // M1: a homeowner can only LINK to a company that already has a public profile. A company nobody has listed yet gets a profile that stays hidden (status "pending", not on any public
   // page) until Admin switches it on, and never when the text trips the review words. The mail to a profile's contact is capped per profile (a few a day) so it cannot be used to send
@@ -187,7 +198,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const job = sendTemplate(env, "installer_listed", inst.email, vars).catch(() => {});
     if (waitUntil) waitUntil(job);
   };
-  try {
+  await followUp("installer link", async () => {
     if (pro) {
       // S-04: posting under the name of a company that already has a profile never changes that profile. The post is confirmed at once only when the poster owns
       // (or created) the profile; otherwise it shows as unverified until the profile's owner confirms it from the email we send them.
@@ -210,15 +221,21 @@ export async function onRequestPost({ request, env, waitUntil }) {
         }
       }
     }
-  } catch {}
+  });
   // Homes and installer displays go live right away; they can be unpublished from the admin. An address that could not be found, free text that trips the review words, or a busy day holds them for review.
   let published = !!contest && autoApprove;
   if (!contest) {
     try {
       const { n: today } = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE contest_id IS NULL AND status = 'approved' AND created_at > datetime('now','-1 day')").first();
       if (today >= AUTO_HOMES_PER_DAY) holds.push("busy");
+      if (followNotes.length) holds.push("followup"); // F-05: something did not save, so a person looks before it goes live (the note says what)
       if (!holds.length) { await approveEntry(env, { id, photos: JSON.stringify(keys) }); published = true; }
-    } catch {}
+    } catch (e) { await logOp(env, "submit", `post ${id}: going live failed, it stays waiting for review: ${e && e.message}`); followNotes.push("could not go live automatically (it is waiting)"); }
+  }
+  // F-05: tell Admin what did not get saved, through the post's own note (shown in the review queue).
+  if (followNotes.length) {
+    const msg = ("Not saved at submit time: " + followNotes.join("; ")).slice(0, 300);
+    try { await env.DB.prepare("UPDATE posts SET review_note = substr(trim(COALESCE(review_note, '') || ' ' || ?), 1, 600) WHERE id = ?").bind(msg, id).run(); } catch (e) { await logOp(env, "submit", `post ${id}: ${msg} (and the note failed too: ${e && e.message})`); }
   }
   // Manual approval: tell the organizer there is something waiting for them
   if (contest && !autoApprove && contest.contact_email) {
@@ -235,5 +252,5 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (waitUntil) waitUntil(job);
   }
   await bump(env, contest ? "fn:contest-entry-done" : "fn:add-house-done");
-  return json({ ok: true, id, status: published ? "published" : "pending", located, ...(holds.length ? { held: holds[0] } : {}), receipt: receipt === "queued" ? "sent" : "", email });
+  return json({ ok: true, id, status: published ? "published" : "pending", located, ...(holds.length ? { held: holds[0] } : {}), receipt: receipt === "queued" ? "queued" : "", email });
 }
