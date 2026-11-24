@@ -1,5 +1,6 @@
 import { purgeRenewals } from "./renewal.js";
-import { r2Delete, photoKeys } from "./dbchunk.js";
+import { r2Delete, photoKeys, selectIn } from "./dbchunk.js";
+import { ownerKeys } from "./eventphotos.js";
 import { logOp } from "./oplog.js";
 import { refundDueStatements } from "./orders.js";
 import { suppressionStatements } from "./outreach.js";
@@ -8,6 +9,9 @@ import { suppressionStatements } from "./outreach.js";
 // runs (unannounced ones are closed; announced ones keep their frozen results, owner-less; both leave the map), and blanks their email on homes and events they posted.
 // It also clears the person's email, name and phone from every other table that holds them: judge invitations and ballots, quote requests they sent, installer profiles they
 // own (and the requests those received), edit logs, event claims, weekly-email signup, co-organizer rows in other people's contests and contact details on reports.
+// Events the person added themselves (their event_submissions rows whose map row is a "u-..." event nobody else manages) are removed like DELETE /api/me/events/<id> does: the event, its owner photos and
+// video clip, and a paid placement on it (or on the still-waiting submission) is flagged refund due in the same batch. An event they only manage through an approved claim, or through a "this is my event"
+// takeover of a listing that existed before (sweep and Grok rows, claim-granted rows), is NOT deleted: it is unlinked (the contact email is blanked and the claim row is deleted), so it stays on the map.
 // Homes the person added to a contest as its organizer stay (they belong to the contest); only posts.added_by is cleared.
 // Kept on purpose: feature_orders (financial records; only user_id is cleared), email_prefs (so an unsubscribed address is not mailed again), hashes that expire by themselves,
 // and one row in outreach_suppressions: a one-way hash of the address (never the address) so a deleted account is not contacted by outreach.
@@ -50,7 +54,20 @@ export async function deleteAccount(env, id, email) {
   const jMine = "SELECT j.id FROM judges j JOIN contests c ON c.id = j.contest_id WHERE c.announced = ? AND (c.owner_id = ? OR j.user_id = ? OR lower(j.email) = lower(?))";
   // Paid placements that vanish with this account (their event rows, homes and installer profile): flagged refund due FIRST, in the same batch, so Admin > Orders and the digest show them.
   // An installer profile stays on the site without an owner, but nobody can manage or renew the paid Sponsor placement any more, so it is flagged too.
-  const stmts = [...refundDueStatements(env.DB, { events: contests.map((c) => c.event_id), homes: entries.map((r) => r.id), installers }, "The account owner deleted their account while a paid placement was running. Refund it in the Stripe dashboard, then mark it refunded here."), ...snaps,
+  // The person's own events (see the header). A row is unlink-only when it came from an approved claim or a takeover, when the event id is not one the add form made, or when someone else also manages the event.
+  const subs = email ? await all("SELECT id, event_id, note FROM event_submissions WHERE lower(contact_email) = lower(?)", email) : [];
+  const keepNote = /^(claimed by the organizer|updated the existing listing )/;
+  const mine = subs.filter((r) => !keepNote.test(r.note || "") && (!r.event_id || String(r.event_id).startsWith("u-")));
+  const withEvent = [...new Set(mine.map((r) => r.event_id).filter(Boolean))];
+  const shared = new Set();
+  if (withEvent.length) {
+    for (const r of await selectIn(env, "SELECT event_id FROM event_submissions WHERE event_id IN ({IN}) AND lower(contact_email) != lower(?)", withEvent, [email])) shared.add(r.event_id);
+    for (const r of await selectIn(env, "SELECT event_id FROM event_claims WHERE event_id IN ({IN}) AND status = 'approved' AND user_id != ?", withEvent, [id])) shared.add(r.event_id);
+  }
+  const ownEvents = withEvent.filter((e) => !shared.has(e)), ownSubs = mine.filter((r) => !r.event_id || !shared.has(r.event_id));
+  const evRows = ownEvents.length ? await selectIn(env, "SELECT id, owner_photos, video_file FROM events WHERE id IN ({IN})", ownEvents) : [];
+  const eventFiles = evRows.flatMap((r) => [...ownerKeys(r.owner_photos), r.video_file]);
+  const stmts = [...refundDueStatements(env.DB, { events: [...contests.map((c) => c.event_id), ...ownEvents, ...ownSubs.map((r) => "sub:" + r.id)], homes: entries.map((r) => r.id), installers }, "The account owner deleted their account while a paid placement was running. Refund it in the Stripe dashboard, then mark it refunded here."), ...snaps,
     ...["judge_picks", "judge_scores", "judge_conflicts"].map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE judge_id IN (${jMine})`).bind(0, I, I, E)),
     env.DB.prepare(`DELETE FROM judges WHERE id IN (${jMine})`).bind(0, I, I, E),
     env.DB.prepare(`UPDATE judges SET email = 'removed-' || id, token = '', user_id = NULL WHERE id IN (${jMine})`).bind(1, I, I, E),
@@ -74,7 +91,9 @@ export async function deleteAccount(env, id, email) {
     // Homes this person added to a contest as its organizer belong to the contest: they stay, without the link back to the account.
     env.DB.prepare("UPDATE posts SET added_by = NULL WHERE added_by = ?").bind(id),
     env.DB.prepare("UPDATE posts SET contact_email = '' WHERE contest_id IS NULL AND lower(contact_email) = lower(?)").bind(email),
-    env.DB.prepare("UPDATE event_submissions SET contact_email = '' WHERE lower(contact_email) = lower(?)").bind(email),
+    ...ownEvents.map((e) => env.DB.prepare("DELETE FROM events WHERE id = ?").bind(e)),
+    ...ownSubs.map((r) => env.DB.prepare("DELETE FROM event_submissions WHERE id = ?").bind(r.id)),
+    env.DB.prepare("UPDATE event_submissions SET contact_email = '' WHERE lower(contact_email) = lower(?)").bind(email), // what is left (claimed or taken-over events) is unlinked and stays on the map
     env.DB.prepare("DELETE FROM contest_staff WHERE contest_id IN (SELECT id FROM contests WHERE owner_id = ?)").bind(id),
     env.DB.prepare("UPDATE contest_changes SET by_email = '', by_name = '' WHERE lower(by_email) = lower(?)").bind(email),
     // Organizer consent records (PL-01) are evidence that residents agreed to be listed, so the rows stay (contest, count, wording, date) but lose the organizer's account id and email.
@@ -104,4 +123,5 @@ export async function deleteAccount(env, id, email) {
   ];
   for (const c of contests) if (c.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(c.event_id)); // its paid placement was flagged above
   await env.DB.batch(stmts);
+  if (eventFiles.length) await r2Delete(env, eventFiles, "deleted account's event photos and clips"); // after the rows are gone, so a failed batch never leaves rows pointing at deleted files
 }
