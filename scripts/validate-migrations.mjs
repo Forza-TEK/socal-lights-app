@@ -178,6 +178,18 @@ if (!failedSql && opt("--deleted-file") && existsSync(opt("--deleted-file"))) {
   for (const e of changed) if (gone.has(e.row.id) && !new RegExp(`--\\s*validate:\\s*revive\\s+${e.row.id.replace(/[^a-z0-9-]/g, "")}\\b`, "i").test(text))
     err("admin-deleted", `row ${e.row.id}`, `an admin deleted this event in Admin, and this migration would ${e.kind === "added" ? "add" : "overwrite"} it again. Drop the row, or add the comment line "-- validate: revive ${e.row.id}" if it should come back.`, true);
 }
+// Events an organizer manages (a published submission or an approved claim points at them, listed by the workflow from the live database): a migration must not overwrite their edits or delete
+// their event. Any new migration that names one of these ids is refused, unless a comment line says it is deliberate: -- validate: overwrite-owned <id>   (for example a verified cancellation).
+// This is a text check on purpose: a re-sent sweep row can be identical to the one in the old migrations and still erase what the organizer changed since.
+if (!failedSql && opt("--owned-file") && existsSync(opt("--owned-file"))) {
+  let ids = []; try { const j = JSON.parse(readFileSync(opt("--owned-file"), "utf8")); ids = (Array.isArray(j) ? j : j.ids || []).map((x) => (typeof x === "string" ? x : x && x.id)).filter(Boolean); } catch (e) { warn("owned-events", "migration", `could not read ${opt("--owned-file")}: ${e.message}`); }
+  const text = newFiles.map((f) => readFileSync(path.join(migDir, f), "utf8")).join("\n");
+  for (const id of ids) {
+    if (!text.includes(`'${id}'`)) continue;
+    if (!new RegExp(`--\\s*validate:\\s*overwrite-owned\\s+${id.replace(/[^a-z0-9-]/gi, "")}\\b`, "i").test(text))
+      err("owner-managed", `event ${id}`, `an organizer manages this event (their edits are live), and this migration changes or deletes it. Leave it out (the organizer keeps it up to date), or add the comment line "-- validate: overwrite-owned ${id}" if it is deliberate.`, true);
+  }
+}
 if (!failedSql) {
   if (!flag("--history")) for (const e of changed) checkRow(e, "row");
   // duplicates: same name+start+city, or same address+start, against the whole table

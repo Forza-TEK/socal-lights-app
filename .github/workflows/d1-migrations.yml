@@ -52,10 +52,21 @@ jobs:
           TOKEN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | grep -oE '[A-Za-z0-9_-]{30,}' | head -n 1)
           CLOUDFLARE_API_TOKEN="$TOKEN" npx wrangler d1 execute socal-lights --remote --json --command "SELECT id FROM deleted_events" > "$RUNNER_TEMP/deleted.json" || exit 0
           node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const r=(j[0]&&j[0].results)||[];require("fs").writeFileSync(process.argv[2],JSON.stringify(r.map(x=>x.id)));console.log(r.length+" admin-deleted event(s) listed")' "$RUNNER_TEMP/deleted.json" "$RUNNER_TEMP/deleted-ids.json" || true
+      - name: List the events an organizer manages (so a migration cannot overwrite their edits by accident)
+        continue-on-error: true   # never blocks: without the secret the check simply has nothing to compare with
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 52d622850c5e367e319d35143c43a275
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "No token: skipping the owned-events list."; exit 0; fi
+          TOKEN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | grep -oE '[A-Za-z0-9_-]{30,}' | head -n 1)
+          CLOUDFLARE_API_TOKEN="$TOKEN" npx wrangler d1 execute socal-lights --remote --json --command "SELECT event_id AS id FROM event_submissions WHERE status = 'published' AND event_id IS NOT NULL AND event_id != '' UNION SELECT event_id FROM event_claims WHERE status = 'approved'" > "$RUNNER_TEMP/owned.json" || exit 0
+          node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const r=(j[0]&&j[0].results)||[];require("fs").writeFileSync(process.argv[2],JSON.stringify(r.map(x=>x.id)));console.log(r.length+" organizer-managed event(s) listed")' "$RUNNER_TEMP/owned.json" "$RUNNER_TEMP/owned-ids.json" || true
       - name: Check the new migrations
         run: |
           EXTRA=""
           if [ -s "$RUNNER_TEMP/deleted-ids.json" ]; then EXTRA="--deleted-file $RUNNER_TEMP/deleted-ids.json"; fi
+          if [ -s "$RUNNER_TEMP/owned-ids.json" ]; then EXTRA="$EXTRA --owned-file $RUNNER_TEMP/owned-ids.json"; fi
           node --no-warnings scripts/validate-migrations.mjs --gate --base "${{ steps.base.outputs.sha }}" $EXTRA
 
   migrate:

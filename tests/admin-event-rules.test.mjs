@@ -123,6 +123,32 @@ test("M7: the migration gate refuses a migration that brings an admin-deleted ev
   rmSync(dir, { recursive: true, force: true });
 });
 
+test("a migration that changes or deletes an event an organizer manages is refused by the gate, unless it says so (-- validate: overwrite-owned)", () => {
+  // run the real validator on a throwaway git repo with one new migration that upserts an event
+  const dir = mkdtempSync(join(tmpdir(), "mg-")), run = (...a) => execFileSync("git", a, { cwd: dir, encoding: "utf8" });
+  mkdirSync(join(dir, "scripts")); mkdirSync(join(dir, "migrations")); mkdirSync(join(dir, "public"));
+  for (const f of ["scripts/validate-migrations.mjs", "scripts/event-rules.mjs", "public/seasons.js", "public/cities.js"]) cpSync(new URL("../" + f, import.meta.url), join(dir, f));
+  writeFileSync(join(dir, "package.json"), '{"type":"module"}');
+  const sql = (extra = "") => `${extra}CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, name TEXT, county TEXT, city TEXT, type TEXT, start_date TEXT, end_date TEXT, status TEXT, free INTEGER, price TEXT, hours TEXT, lat REAL, lng REAL, blurb TEXT, url TEXT, season TEXT, venue TEXT, address TEXT, updated_at TEXT);\nINSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES ('gone-1','Tree Lighting','Orange','Irvine','tree','2026-12-05','2026-12-05','confirmed',1,'Free','5pm–9pm',33.68,-117.82,'A tree lighting downtown.','https://example.org/t','christmas','Civic Center','1 Civic Center Plaza, Irvine, CA 92606') ON CONFLICT(id) DO UPDATE SET name=excluded.name;\n`;
+  writeFileSync(join(dir, "migrations/0001_base.sql"), "SELECT 1;");
+  run("init", "-q"); run("-c", "user.email=a@b.co", "-c", "user.name=t", "add", "-A"); run("-c", "user.email=a@b.co", "-c", "user.name=t", "commit", "-qm", "base");
+  writeFileSync(join(dir, "owned.json"), JSON.stringify(["gone-1"]));
+  const check = () => { try { return { code: 0, out: execFileSync("node", ["--no-warnings", "scripts/validate-migrations.mjs", "--gate", "--owned-file", "owned.json", "--files", "0002_back.sql"], { cwd: dir, encoding: "utf8" }) }; } catch (e) { return { code: e.status, out: String(e.stdout) }; } };
+  writeFileSync(join(dir, "migrations/0002_back.sql"), sql());
+  let r = check(); assert.equal(r.code, 1, r.out); assert.match(r.out, /owner-managed/);
+  writeFileSync(join(dir, "migrations/0002_back.sql"), sql("-- validate: overwrite-owned gone-1\n"));
+  r = check(); assert.equal(r.code, 0, r.out);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+
+test("workflow lists the organizer-managed events for the gate without ever blocking on it, and the validator only refuses migrations that name one", () => {
+  const y = read(".github/workflows/d1-migrations.yml"), v = read("scripts/validate-migrations.mjs");
+  assert.match(y, /FROM event_submissions WHERE status = 'published'[^"]*UNION SELECT event_id FROM event_claims WHERE status = 'approved'/); assert.match(y, /--owned-file/);
+  assert.match(y, /List the events an organizer manages[^\n]*\n\s+continue-on-error: true/);
+  assert.match(v, /text\.includes\(`'\$\{id\}'`\)/, "a text check: a re-sent identical row would still erase the organizer's edits");
+});
+
 test("workflow lists admin-deleted events for the gate without ever blocking on it", () => {
   const y = read(".github/workflows/d1-migrations.yml");
   assert.match(y, /SELECT id FROM deleted_events/); assert.match(y, /--deleted-file/); assert.match(y, /continue-on-error: true/);
