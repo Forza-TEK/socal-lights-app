@@ -1031,11 +1031,11 @@ async function openUser(id, sec = "") {
 
 
 /* ---------- activity log (what the admin tools were used for) ---------- */
-const VERB = { restore: "restored", photo_remove: "removed a photo from", photo_move: "reordered the photos of", dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for", reset: "reset to default" };
+const VERB = { merge: "merged a duplicate into", recheck: "re-checked the page of", restore: "restored", photo_remove: "removed a photo from", photo_move: "reordered the photos of", dismiss: "dismissed", approve: "approved", decline: "declined", edit: "edited", delete: "deleted", add: "added", suspend: "suspended", unsuspend: "reactivated", signout: "signed out everywhere", rename: "renamed", note: "updated the private note on", start_voting: "started voting on", keep: "showed both records for", hide: "chose the person's record for", pick_post: "chose the person's own record for", pick_both: "chose to show both records for", pick_sweep: "chose the sweep record for", reset: "reset to default" };
 const AREA = { users: "account", posts: "house", events: "event", contests: "contest", submissions: "submitted event", overlaps: "sweep record", installers: "installer", reports: "report", removals: "home removal", normalize: "data check", emails: "email template" };
 let LOG = { area: "", offset: 0 };
 // An edit's changed fields as "field: before to after" lines
-const logDetail = (j) => { let d; try { d = j ? JSON.parse(j) : null; } catch { d = null; } return d ? Object.entries(d).map(([k, [a, b]]) => `<span class="sub">${esc(k)}: <s>${esc(a || "none")}</s> &rarr; ${esc(b || "none")}</span>`).join("") : ""; };
+const logDetail = (j) => { let d; try { d = j ? JSON.parse(j) : null; } catch { d = null; } return d ? Object.entries(d).map(([k, v]) => (Array.isArray(v) ? `<span class="sub">${esc(k)}: <s>${esc(v[0] || "none")}</s> &rarr; ${esc(v[1] || "none")}</span>` : `<span class="sub">${esc(k.replace(/_/g, " "))}: ${esc(v)}</span>`)).join("") : ""; };
 async function renderLog() {
   const main = $("#main");
   const d = await api("/api/admin/log?" + new URLSearchParams(LOG));
