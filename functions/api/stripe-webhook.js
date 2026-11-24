@@ -1,6 +1,6 @@
 // POST /api/stripe-webhook — Stripe tells us about Featured payments; we switch the placement on, and off again on refund/dispute.
 // Set up in Stripe: Developers > Webhooks > endpoint https://socallights.app/api/stripe-webhook, events checkout.session.completed,
-// checkout.session.async_payment_succeeded, checkout.session.expired, charge.refunded, charge.dispute.created, charge.dispute.closed,
+// checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, checkout.session.expired, charge.refunded, charge.dispute.created, charge.dispute.closed,
 // then store its signing secret as STRIPE_WEBHOOK_SECRET.
 //
 // Retry safety: nothing is "done" until it has really been applied. The order row records `applied`; the Stripe event id is written to
@@ -20,7 +20,7 @@ import { enrollRenewal, pauseOnRevoke } from "../_lib/renewal.js";
 import { stripeCall } from "../_lib/stripe.js";
 import { PLANS, INSTALLER_PLANS, EVENT_PLANS, ptToday, LEGACY_SEASON_CENTS, applyOrder, eventQuote, verifyStripeSignature, revokePlan, setOrderNote, AUTO } from "../_lib/featured.js";
 
-const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired", "charge.refunded", "charge.dispute.created", "charge.dispute.closed", "payment_intent.succeeded"]);
+const HANDLED = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed", "checkout.session.expired", "charge.refunded", "charge.dispute.created", "charge.dispute.closed", "payment_intent.succeeded"]);
 
 export async function onRequestPost({ request, env }) {
   const raw = await request.text();
@@ -65,6 +65,12 @@ async function handle(evt, env) {
     case "checkout.session.async_payment_succeeded": return paid(o, env);
     case "payment_intent.succeeded": // an automatic renewal charge (the daily job also records it; the order is keyed by the PaymentIntent id, so it is recorded once). Checkout payments are handled by their session.
       return o.metadata && o.metadata.renewal === "1" ? paid({ id: o.id, payment_status: "paid", amount_total: o.amount_received || o.amount, currency: o.currency, payment_intent: o.id, customer_details: { email: o.receipt_email || "" }, metadata: o.metadata }, env) : { ignored: "not a renewal charge" };
+    case "checkout.session.async_payment_failed": { // F-17: a delayed payment method (bank debit) that did not clear. Nothing was ever applied (paid() waits for "paid"), so there is nothing to switch off: file it and note any order row.
+      await logOp(env, "webhook", `payment failed to clear for session ${o.id || "?"} (${(o.metadata && o.metadata.plan) || "?"} on ${(o.metadata && o.metadata.event_id) || "?"}); nothing was applied`);
+      const ord = o.id ? await env.DB.prepare("SELECT session_id, status, applied FROM feature_orders WHERE session_id = ?").bind(o.id).first() : null;
+      if (ord && ord.status === "paid" && !ord.applied) await setOrderNote(env.DB, ord.session_id, AUTO + "the delayed payment failed to clear: check Stripe before applying anything.");
+      return { failed: o.id || null, applied: false };
+    }
     case "checkout.session.expired": return { expired: o.id || null }; // abandoned checkout: recorded in stripe_events only
     case "charge.refunded": {
       const order = await orderByPi(env, o.payment_intent);

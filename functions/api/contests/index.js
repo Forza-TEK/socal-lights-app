@@ -91,5 +91,5 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const mailOk = c.note ? !(await checkThrottle(env, [{ kind: "contest-review", key: await hashKey(env, "u", user.id), max: 1, windowHours: 1, msg: "" }])) : false;
   if (mailOk) tell(env, waitUntil, env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", "contest_review", { name, org, city, email: user.email, note: c.note, what: !live ? "It is not live yet: it waits for you, cannot add organizer-added homes and cannot buy a paid placement until you approve it." : "It is live, but until you click Looks fine the organizer can add only a few homes of their own (25) and cannot buy a paid placement.", link: "https://socallights.app/admin/" });
   const receipt = await sendReceipt(env, waitUntil, { id: c.status === "live" ? "contest_live_now" : "contest_received", to: user.email, vars: { name, link: `https://socallights.app/c/${slug}/manage`, page: `https://socallights.app/c/${slug}` } });
-  return json({ ok: true, slug, status: c.status, trust, review: !!c.note, receipt: receipt === "queued" ? "sent" : "", email: user.email });
+  return json({ ok: true, slug, status: c.status, trust, review: !!c.note, receipt: receipt === "queued" ? "queued" : "", email: user.email });
 }

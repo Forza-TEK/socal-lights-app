@@ -23,6 +23,7 @@ Defined once in `functions/_lib/heartbeat.js` (`JOBS`). Seed rows start every cl
 | `stripe-reconcile` | stripe-reconcile.yml | daily | 30 h |
 | `alerts` | alerts.yml (weekly email, Thursdays) | weekly | 8 days |
 | `placement-notices` | Worker `25 18 * * *` (no workflow) | daily | 30 h |
+| `archive-ended` | Worker `40 11 * * SUN` (no workflow) | weekly | 8 days |
 
 A job is also flagged when its last report said it **failed**. The heartbeat step in each workflow runs `if: always()` and `continue-on-error`, so it never breaks the job; it needs the existing `ALERT_CRON_KEY` secret and is skipped without it.
 

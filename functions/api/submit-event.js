@@ -2,7 +2,8 @@
 // The event is geocoded and its web page is checked. If the page really mentions the event and its year, the event
 // is published straight away; otherwise it waits in the admin's "Submitted events" tab. Either way it is logged.
 import { politeFetch } from "../_lib/botfetch.js";
-import { json, err, clean, webUrl, newId, nearestCounty, geocodeAddress, verifyTurnstile } from "../_lib/util.js";
+import { json, err, clean, webUrl, newId, geocodeAddress, verifyTurnstile } from "../_lib/util.js";
+import { countyFor } from "../_lib/citycounty.js";
 import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
 import { requireUser, sameOrigin } from "../_lib/auth.js";
@@ -76,8 +77,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (!old) return err(404, "That listing is gone. Add your event as a new one.");
     let [mlat, mlng] = CITY[e.city];
     const mgeo = {}, mpt = await geocodeAddress(e.address, e.city, [mlat, mlng], 30, fetch, mgeo), mlocated = !!mpt; if (mpt) [mlat, mlng] = mpt;
-    const { results: mevs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
-    const mcounty = nearestCounty(mlat, mlng, mevs), sid = newId();
+    const mcounty = await countyFor(env, e.city, mlat, mlng), sid = newId();
     const was = `${old.name}; ${old.start_date}${old.end_date !== old.start_date ? " to " + old.end_date : ""}; ${old.venue || "no venue"}; ${old.address || "no address"}; ${old.hours || "no hours"}; ${old.price || "no price"}`.slice(0, 330);
     const note = [`updated the existing listing ${matchId} instead of adding a new one (it was: ${was})`, !mlocated && "pin is at the city center (address not found)", mgeo.ambiguous && `the address matches more than one place (${mgeo.ambiguous}): check the pin`].filter(Boolean).join("; ");
     // Save the full previous row first, and do not change the listing if it cannot be saved: Admin's "Revert the last organizer update" depends on it.
@@ -94,7 +94,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await upsertEvent(env, { id: matchId, name: e.name, county: mcounty, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: "confirmed", free: e.free, price: e.price, hours: e.hours, lat: mlat, lng: mlng, blurb: e.blurb, url: e.url || old.url || "", season: e.season, venue: e.venue, address: e.address });
     await bump(env, "fn:add-event-done");
     const receipt = await sendReceipt(env, waitUntil, { id: "event_live", to: e.email, vars: { name: e.name, when: whenOf(e), map: `https://socallights.app/#e-${matchId}`, link: "https://socallights.app/profile#events" } });
-    return json({ ok: true, status: "published", updated: true, id: matchId, submission_id: sid, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), located: mlocated, receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "We updated the existing listing with your details. It is yours to manage now." });
+    return json({ ok: true, status: "published", updated: true, id: matchId, submission_id: sid, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), located: mlocated, receipt: receipt === "queued" ? "queued" : "", email: e.email, message: "We updated the existing listing with your details. It is yours to manage now." });
   }
 
   // Already on the map? The answer says whose it is and whether it can be featured, so the page shows only what is true (no "Feature your event" for someone else's event).
@@ -113,8 +113,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   let [lat, lng] = CITY[e.city];
   const geo = {}, pt = await geocodeAddress(e.address, e.city, [lat, lng], 30, fetch, geo);
   const located = !!pt; if (pt) [lat, lng] = pt;
-  const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
-  const county = nearestCounty(lat, lng, evs);
+  const county = await countyFor(env, e.city, lat, lng); // F-07: from the city table, no events scan
 
   // The event web page is optional. With one, we check it mentions the event and its year (then the event goes live right away); without one, a person reviews it.
   const check = e.url ? await verifyEventPage(e.url, e.name, e.start_date, politeFetch(env)) : { ok: false, note: "no event web page given" };
@@ -146,9 +145,9 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await upsertEvent(env, { id: eventId, name: e.name, county, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: "confirmed", free: e.free, price: e.price, hours: e.hours, lat, lng, blurb: e.blurb, url: e.url, season: e.season, venue: e.venue, address: e.address });
     await bump(env, "fn:add-event-done");
     const receipt = await sendReceipt(env, waitUntil, { id: "event_live", to: e.email, vars: { name: e.name, when: whenOf(e), map: `https://socallights.app/#e-${eventId}`, link: "https://socallights.app/profile#events" } });
-    return json({ ok: true, status: "published", id: eventId, submission_id: id, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), located, receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Your event is on the map." });
+    return json({ ok: true, status: "published", id: eventId, submission_id: id, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), located, receipt: receipt === "queued" ? "queued" : "", email: e.email, message: "Your event is on the map." });
   }
   await bump(env, "fn:add-event-done");
   const receipt = await sendReceipt(env, waitUntil, { id: "event_received", to: e.email, vars: { name: e.name, when: whenOf(e), link: "https://socallights.app/profile#events" } });
-  return json({ ok: true, status: "pending", submission_id: id, located, held: unproven ? "unproven" : "busy", receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "Thanks! We'll check your event and add it shortly." });
+  return json({ ok: true, status: "pending", submission_id: id, located, held: unproven ? "unproven" : "busy", receipt: receipt === "queued" ? "queued" : "", email: e.email, message: "Thanks! We'll check your event and add it shortly." });
 }

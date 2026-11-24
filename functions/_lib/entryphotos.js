@@ -5,6 +5,7 @@
 // A hidden photo is moved to h/<postId>/<name>: that path is not on the public photo route, only the homeowner and the organizers can open it.
 // posts.photos = the visible keys, posts.photos_hidden = names of hidden photos, posts.photos_org = names of the photos the organizer uploaded.
 import { todayPT } from "./contests.js";
+import { sizeProblem, MAX_TOTAL_BYTES } from "./imgsniff.js";
 
 export const MAX_PHOTOS = 8;   // visible and hidden together
 export const MAX_BYTES = 6 * 1024 * 1024;
@@ -47,12 +48,14 @@ export async function addPhotos(env, row, files, by) {
   if (total + files.length > MAX_PHOTOS) return { error: total >= MAX_PHOTOS ? `This home already has ${MAX_PHOTOS} photos. Remove one to add another.` : `A home can have up to ${MAX_PHOTOS} photos. This one has room for ${MAX_PHOTOS - total} more.`, status: 400 };
   const stored = [], used = new Set([...s.vis, ...s.hid]);
   let t = Date.now(); // milliseconds: a name is never reused on the same home, even by two uploads in the same moment
+  if (files.reduce((t, f) => t + (f.size || 0), 0) > MAX_TOTAL_BYTES) return { error: "Those photos add up to more than 24 MB. Send fewer or smaller photos.", status: 400 }; // F-06
   try {
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
       if (f.size > MAX_BYTES) throw new Error("A photo is too large. Use photos under 6 MB.");
       const buf = await f.arrayBuffer(), kind = sniff(buf);
       if (!kind) throw new Error("Photos must be JPG, PNG or WebP.");
+      { const sp = sizeProblem(buf); if (sp) throw new Error(sp); } // F-06: pixel size from the header bytes
       let name = `${t}.${kind.ext}`; while (used.has(name)) name = `${++t}.${kind.ext}`;
       used.add(name); t++;
       await env.PHOTOS.put(pKey(row.id, name), buf, { httpMetadata: { contentType: kind.type } });

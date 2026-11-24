@@ -1,3 +1,4 @@
+import { sizeProblem, MAX_TOTAL_BYTES } from "./imgsniff.js";
 // Photos the owner of an event adds (Your events > Edit): at most 4, JPG, PNG or WebP (checked by their first bytes, not the file name), under 6 MB each (the browser shrinks them first).
 // Stored in R2 as e/<event id>/<name> (public, cached for a year), listed in events.owner_photos. <name> is a millisecond timestamp plus the extension and is never reused on the same
 // event, because photos are cached for a year. The picture found on the event's web page (events.image / events.images) is untouched: the owner's photos are shown first, and
@@ -27,11 +28,13 @@ export async function addEventPhotos(env, ev, files) {
   if (keys.length + files.length > MAX_EVENT_PHOTOS) return { error: keys.length >= MAX_EVENT_PHOTOS ? `This event already has ${MAX_EVENT_PHOTOS} photos. Remove one to add another.` : `An event can have up to ${MAX_EVENT_PHOTOS} photos. You can add ${MAX_EVENT_PHOTOS - keys.length} more.`, status: 400 };
   const used = new Set(keys.map((k) => k.split("/").pop())), stored = [];
   let t = Date.now();
+  if (files.reduce((t, f) => t + (f.size || 0), 0) > MAX_TOTAL_BYTES) return { error: "Those photos add up to more than 24 MB. Send fewer or smaller photos.", status: 400 }; // F-06
   try {
     for (const f of files) {
       if (f.size > MAX_BYTES) throw new Error("A photo is too large. Use photos under 6 MB.");
       const buf = await f.arrayBuffer(), kind = sniff(buf);
       if (!kind) throw new Error("Photos must be JPG, PNG or WebP.");
+      { const sp = sizeProblem(buf); if (sp) throw new Error(sp); } // F-06: pixel size from the header bytes
       let name = `${t}.${kind.ext}`; while (used.has(name)) name = `${++t}.${kind.ext}`;
       used.add(name); t++;
       const key = `e/${ev.id}/${name}`;
