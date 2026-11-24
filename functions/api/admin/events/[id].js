@@ -12,7 +12,9 @@ export async function onRequestGet({ params, env }) {
   if (!e) return json({ featured: 0, featured_until: "", banner_until: "", floor: { featured: 0, featured_until: "", banner_until: "" } }, { headers: { "cache-control": "no-store" } });
   let last_edit = null; // the newest organizer takeover that can still be reverted (events/revert.js)
   try { const h = await env.DB.prepare("SELECT by_email, reason, created_at FROM event_edit_history WHERE event_id = ? AND reverted_at IS NULL ORDER BY id DESC LIMIT 1").bind(params.id).first(); if (h) last_edit = { by: h.by_email || "", reason: h.reason || "", at: h.created_at }; } catch { /* migration 0288 not applied yet */ }
-  return json({ last_edit, featured: e.featured || 0, featured_until: e.featured_until || "", banner_until: e.banner_until || "", video: e.video || "", video_file: e.video_file || "", video_ok: !!e.video_ok, photos: ownerKeys(e.owner_photos), linked_image: e.image || "", floor: await eventFloor(env.DB, params.id, ptToday()) }, { headers: { "cache-control": "no-store" } });
+  let check = { checked_at: null, check_note: "" }; // the last "Re-check this event's page" (events/recheck.js)
+  try { const c = await env.DB.prepare("SELECT checked_at, check_note FROM events WHERE id = ?").bind(params.id).first(); if (c) check = c; } catch { /* migration 0292 not applied yet */ }
+  return json({ last_edit, checked_at: check.checked_at || null, check_note: check.check_note || "", featured: e.featured || 0, featured_until: e.featured_until || "", banner_until: e.banner_until || "", video: e.video || "", video_file: e.video_file || "", video_ok: !!e.video_ok, photos: ownerKeys(e.owner_photos), linked_image: e.image || "", floor: await eventFloor(env.DB, params.id, ptToday()) }, { headers: { "cache-control": "no-store" } });
 }
 
 export async function onRequestDelete({ request, params, env, data = {} }) {

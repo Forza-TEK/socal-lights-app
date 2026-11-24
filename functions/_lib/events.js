@@ -48,6 +48,7 @@ export const nameTokens = (name) => [...new Set(String(name).toLowerCase().split
 export const ROBOTS_NOTE = "the site's robots.txt asks automated visitors not to read this page, so we did not (open the link yourself to confirm the dates)";
 export const BLOCKED_NOTE = "the site's bot protection blocked our automatic check (the page itself is probably fine: open the link yourself, then confirm the dates)";
 const blockedByProtection = (r) => [403, 429, 503].includes(r.status) && (/challenge/i.test(r.headers.get("cf-mitigated") || "") || /sucuri|akamaighost/i.test(r.headers.get("server") || "") || r.headers.has("x-sucuri-id"));
+const CANCEL_WORDS = /\b(cancell?ed|postponed|rescheduled|called off|no longer (?:be )?(?:held|taking place|happening))\b/i;
 // Loads the submitted event page and checks that it mentions the event and its year. Returns { ok, note }.
 // Some hosts (GoDaddy sites, for one) answer slowly or drop automated requests now and then, so a failed load is tried once more with a longer wait,
 // always under our own bot name. If both tries fail the note says the site was unreachable (not that the page is wrong), so the owner knows to open the link.
@@ -72,9 +73,11 @@ export async function verifyEventPage(url, name, startDate, doFetch = fetch) {
   const toks = nameTokens(name);
   const hit = toks.filter((t) => text.includes(t));
   const year = startDate.slice(0, 4);
-  if (!toks.length || hit.length < Math.min(2, toks.length)) return { ok: false, note: "event page does not mention the event name" };
-  if (!text.includes(year)) return { ok: false, note: `event page does not mention ${year}` };
-  return { ok: true, note: "event page mentions the name and year" };
+  // seen: what the page text actually showed, for Admin's "Re-check this event's page" (events/recheck.js). cancel is only a heads-up that the page uses a word like cancelled or postponed somewhere; a person reads the page.
+  const seen = { name: !!toks.length && hit.length >= Math.min(2, toks.length), year: text.includes(year), cancel: CANCEL_WORDS.test(text) };
+  if (!seen.name) return { ok: false, note: "event page does not mention the event name", seen };
+  if (!seen.year) return { ok: false, note: `event page does not mention ${year}`, seen };
+  return { ok: true, note: "event page mentions the name and year", seen };
 }
 
 export { clean, safeUrl, COUNTIES, SEASONS };
