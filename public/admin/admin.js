@@ -43,14 +43,30 @@ async function api(path, opts = {}) {
 const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "passes", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "grok", "emails", "help", "chat"];
 const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", grok: "From Grok", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 // The breadcrumb in the top bar: the menu group, the page, and (on a full record) the record's name
-const groupOf = (t) => { const b = document.querySelector(`#side [data-tab="${t}"]`); if (!b) return ""; let n = b.closest(".grp"); n = n && n.previousElementSibling; while (n && !n.classList.contains("gh")) n = n.previousElementSibling; return n ? n.textContent.trim() : ""; };
+const groupOf = (t) => { const b = document.querySelector(`#side [data-tab="${t}"]`); if (!b) return ""; let n = b.closest(".grp"); n = n && n.previousElementSibling; while (n && !n.classList.contains("gh")) n = n.previousElementSibling; return n ? (n.dataset.grp || n.textContent.trim()) : ""; };
 const setDetail = (name) => { const d = $("#pdetail"); if (d) d.innerHTML = name ? `<span class="csep" aria-hidden="true">/</span><b>${esc(name)}</b>` : ""; };
 document.addEventListener("admin:detail", (e) => setDetail(e.detail || ""));
-const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; }); paintTitle(); };
+const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; const kind = el.classList.contains("act") ? " waiting" : " in total"; el.setAttribute("aria-label", v + kind); el.title = v + kind; }); paintTitle(); navPaint(); };
 const COUNTS = {};
 // The browser tab shows how many things are waiting, so a pinned admin tab can be glanced at
 function paintTitle() { const w = (COUNTS.pending || 0) + (COUNTS.subs || 0) + (COUNTS.claims || 0) + (COUNTS.grok || 0) + (COUNTS.orders || 0) + (COUNTS.contests || 0) + (COUNTS.reports || 0); document.title = (w ? `(${w}) ` : "") + "SoCal Lights Admin"; const bd = $("#bdot"); if (bd) { bd.hidden = !w; $("#bell").title = w ? `${w} waiting` : "Nothing is waiting"; } }
+// The desktop side menu: each group title (Review, Content, Money, Marketing, System) folds its items. On a short screen (a 1280x800 laptop shows only about half of the 25 items)
+// every group starts folded except the one holding the open page, so all five titles are in view; on a tall screen they start open. A choice is remembered; opening a page opens its group.
+// Folding only applies at 1100px and wider (the tablet rail and the phone sheet show everything).
+const NAVKEY = "socal-admin-navfold";
+const navHeads = [...document.querySelectorAll("#side .nvlist > p.gh")].map((p) => {
+  const b = document.createElement("button"), grp = p.nextElementSibling, name = p.textContent.trim(); b.type = "button"; b.className = "gh"; b.dataset.grp = name;
+  b.innerHTML = `<span>${esc(name)}</span><span class="cnt act gcnt" hidden></span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`; p.replaceWith(b); return { b, grp, name };
+});
+let navSaved = null; try { navSaved = JSON.parse(localStorage.getItem(NAVKEY)); } catch {}
+const navFolded = new Set(Array.isArray(navSaved) ? navSaved : matchMedia("(max-height:899px)").matches ? navHeads.map((h) => h.name) : []);
+// A folded group still shows what is waiting inside it (the red numbers of its items added together)
+function navPaint() { navHeads.forEach(({ b, grp, name }) => { const f = navFolded.has(name); grp.classList.toggle("fold", f); b.setAttribute("aria-expanded", String(!f)); const n = [...grp.querySelectorAll(".cnt.act[data-count]:not([hidden])")].reduce((a, c) => a + (Number(c.textContent) || 0), 0), g = b.querySelector(".gcnt"); g.textContent = n; g.hidden = !(f && n); g.setAttribute("aria-label", n + " waiting in " + name); }); }
+function navOpen(t) { const h = navHeads.find((x) => x.grp.querySelector(`[data-tab="${t}"]`)); if (h && navFolded.has(h.name)) { navFolded.delete(h.name); navPaint(); } }
+navHeads.forEach(({ b, name }) => (b.onclick = () => { navFolded.has(name) ? navFolded.delete(name) : navFolded.add(name); navPaint(); try { localStorage.setItem(NAVKEY, JSON.stringify([...navFolded])); } catch {} }));
+navPaint();
 function setTab(t, push = true) {
+  navOpen(t);
   if (t !== tab || NEXTVIEW) { PVIEW = NEXTVIEW || "pending"; HOPEN = ""; COPEN = ""; OORDER = ""; NEXTVIEW = ""; }
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
@@ -240,6 +256,7 @@ function editPost(p, startTab = "details") {
       + ff("pArea", "Areas served", areaHtml({ id: "pArea", value: p.area }), { hint: AREAS_HINT }), { id: "pProSec", hide: p.kind !== "installer" })}
     ${fsec("About", "", ff("pSeason", "Season", `<select id="pSeason">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (p.season || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`, { c: "c3" })
       + ff("pDesc", "Description", `<textarea id="pDesc" maxlength="1200" rows="4">${esc(p.desc)}</textarea>`, { hint: "Shown on the listing." }))}
+    </div>
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="pMsg" role="status"></span></div>
   </form>${transferBox("home", p.id)}</div>`;
   m.hidden = false; $("#mClose").onclick = () => { close(); if (photosChanged) render(); };
@@ -404,19 +421,22 @@ $("#main").addEventListener("click", async (e) => {
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
 
-/* ---------- event claims ("this event is mine": approving lets them buy Featured for it, nothing else) ---------- */
+/* ---------- event claims ("this event is mine": approving makes the person the event's manager, see functions/_lib/claimgrant.js) ---------- */
 let CLVIEW = "pending";
+// The event page as a short link: the host name shows, the full address is the tooltip (a long address used to stretch the whole table)
+const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return String(u).slice(0, 40); } };
 async function renderClaims() {
   const main = $("#main"), [pend, ok, no] = await Promise.all(["pending", "approved", "declined"].map((s) => api("/api/admin/claims?status=" + s)));
   const rows = CLVIEW === "pending" ? pend : CLVIEW === "declined" ? no : ok;
   setCount("claims", pend.length); setDetail("");
   const tabs = [["pending", "Waiting", pend.length], ["approved", "Approved", ok.length], ["declined", "Declined", no.length]];
   const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === CLVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
-    <div class="pghead"><div><h2>Event claims</h2><p>A claim only lets the person buy Featured for that event; it gives no edit rights. When you approve or decline one, the person is emailed once.</p></div></div>`;
+    <div class="pghead"><div><h2>Event claims</h2><p>Someone says an event is theirs. <b>Approving makes them the event's manager:</b> it appears in their profile under Events, where they can edit it, add a ticket link, photos and a video clip, and buy Featured for it. They are emailed once, whether you approve or decline. Declining gives no access.</p></div></div>`;
   const wire = () => main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { CLVIEW = b.dataset.view; renderClaims(); }));
   if (!rows.length) { main.innerHTML = head + `<div class="empty">${CLVIEW === "pending" ? "No claims waiting." : "Nothing here."}</div>`; wire(); return; }
   const st = (x) => (x.status === "pending" ? ["Waiting", "warn"] : x.status === "approved" ? ["Approved", "ok"] : ["Declined", "bad"]);
-  main.innerHTML = head + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Event</th><th>Claimed by</th><th>Event page</th><th>Added</th><th>Status</th><th class="ac">Actions</th></tr></thead><tbody>${rows.map((x) => `<tr data-clid="${esc(x.id)}"><td>${tcell(x.cover, `<b>${esc(x.name || x.event_id)}</b><span class="sub">${esc(x.city || "")}</span>`)}</td><td><span style="user-select:all">${esc(x.claimant)}</span></td><td>${x.url ? `<a class="rl" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : "None"}</td><td>${esc(localTime(x.created_at))}</td><td><span class="tag ${st(x)[1]}">${st(x)[0]}</span>${x.method ? `<span class="sub">by ${esc(x.method)}</span>` : ""}</td><td class="ac">${x.status !== "approved" ? btn("main", "Approve", 'data-clact="approve"').replace('class="btn ice"', 'class="btn ice sm"') : ""} ${x.status !== "declined" ? btn("danger", "Decline", 'data-clact="decline"').replace('class="btn ghost danger"', 'class="btn ghost danger sm"') : ""}</td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${rows.length} claim${rows.length === 1 ? "" : "s"}</span></div></div>`;
+  const how = (x) => (x.status === "pending" ? "" : x.method === "domain" ? "automatic (website match)" : x.method === "admin" ? "by Admin" : x.method ? "by " + x.method : "") + (x.decided_at ? (x.method ? " · " : "") + localTime(x.decided_at) : "");
+  main.innerHTML = head + `<div class="card dtc"><div class="dtw"><table class="dtab claims"><thead><tr><th>Event</th><th>Claimed by</th><th>Event page</th><th>Added</th><th>Status</th><th class="ac">Actions</th></tr></thead><tbody>${rows.map((x) => `<tr data-clid="${esc(x.id)}"><td>${tcell(x.cover, `<b>${esc(x.name || x.event_id)}</b><span class="sub">${esc(x.city || "")}</span><span class="clst"><span class="tag ${st(x)[1]}">${st(x)[0]}</span></span>`)}</td><td class="clwho"><span style="user-select:all">${esc(x.claimant).replace("@", "@<wbr>")}</span></td><td>${x.url ? `<a class="rl clhost" href="${esc(x.url)}" target="_blank" rel="noopener" title="${esc(x.url)}">${esc(hostOf(x.url))}</a>` : "None"}</td><td>${esc(localTime(x.created_at))}</td><td><span class="tag ${st(x)[1]}">${st(x)[0]}</span>${how(x) ? `<span class="sub">${esc(how(x))}</span>` : ""}</td><td class="ac">${x.status !== "approved" ? btn("main", "Approve", 'data-clact="approve"').replace('class="btn ice"', 'class="btn ice sm"') : ""} ${x.status !== "declined" ? btn("danger", "Decline", 'data-clact="decline"').replace('class="btn ghost danger"', 'class="btn ghost danger sm"') : ""}</td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${rows.length} claim${rows.length === 1 ? "" : "s"}</span></div></div>`;
   wire();
 }
 $("#main").addEventListener("click", async (e) => {
@@ -676,8 +696,31 @@ function labelTables(root) {
     t.querySelectorAll("tbody tr").forEach((tr) => [...tr.children].forEach((td, i) => { if (i > title && heads[i] && !td.hasAttribute("data-label") && !td.classList.contains("cb") && !td.classList.contains("ac")) td.setAttribute("data-label", heads[i]); }));
   });
 }
+// A table wider than its box scrolls sideways (tablets): the card gets data-more="start end" so the CSS can fade the right edge and shade the pinned name column.
+function tableCues(root) {
+  (root || document).querySelectorAll(".dtc").forEach((c) => {
+    const w = c.querySelector(".dtw"); if (!w) return; const max = w.scrollWidth - w.clientWidth, x = w.scrollLeft;
+    const v = max > 2 ? (x > 2 ? "start " : "") + (x < max - 2 ? "end" : "") : ""; if ((c.dataset.more || "") !== v.trim()) { if (v.trim()) c.dataset.more = v.trim(); else delete c.dataset.more; }
+  });
+}
+// Phones: every row tick-box sits in a 44px square so it is easy to hit (the box itself stays its normal size), and a table row opens its record when tapped anywhere that is not a button or link.
+function bigChecks(root) {
+  if (!phone()) return;
+  (root || document).querySelectorAll('input.rsel[type="checkbox"], td.cb input[type="checkbox"]').forEach((i) => {
+    if (i.closest("label")) return;
+    const l = document.createElement("label"); l.className = "cbhit"; i.replaceWith(l); l.appendChild(i);
+  });
+}
 let labelRaf = 0;
-new MutationObserver(() => { cancelAnimationFrame(labelRaf); labelRaf = requestAnimationFrame(() => labelTables($("#main"))); }).observe($("#main"), { childList: true, subtree: true });
+new MutationObserver(() => { cancelAnimationFrame(labelRaf); labelRaf = requestAnimationFrame(() => { labelTables($("#main")); bigChecks($("#main")); tableCues($("#main")); }); }).observe($("#main"), { childList: true, subtree: true });
+$("#main").addEventListener("scroll", (e) => { if (e.target.classList && e.target.classList.contains("dtw")) tableCues($("#main")); }, true);
+addEventListener("resize", () => tableCues($("#main")));
+$("#main").addEventListener("click", (e) => {
+  if (!phone()) return;
+  const tr = e.target.closest("table.dtab tbody tr"); if (!tr || e.target.closest("a,button,input,label,select,textarea,summary")) return;
+  if (e.target.closest("td.cb")) { const i = tr.querySelector("td.cb input[type=checkbox]"); if (i) i.click(); return; }
+  const go = tr.querySelector('a.rl[href^="#"]'); if (go) go.click();
+});
 
 /* ---------- events ---------- */
 let EVQ = "", EVLIMIT = 0, EVSORT = "date", EVSTATUS = "", EVCOUNTY = "", EVHEALTH = "", EVVIEW = ""; // EVVIEW: "", "grok" or "ended" (the other tabs use EVSTATUS)
@@ -857,10 +900,10 @@ function editEvent(ev) {
   const typeOpts = (sn, cur) => Object.entries(SEASONS[sn].types).map(([v, l]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${l}</option>`).join("");
   const main = $("#main"), title = ev ? "Event detail" : "Add an event";
   setDetail(ev ? ev.n : "New event"); window.scrollTo(0, 0);
-  main.innerHTML = `<div class="rpage"><a class="rback" href="#events" id="evBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to ${tab === "events" ? "events" : "the list"}</a>
-  <div class="pghead"><div><h2>${title}</h2></div><div class="pgacts">${ev ? viewLink(ev.id) : ""}<button class="btn ice" type="submit" form="evForm">Save</button>${ev ? `<button class="btn ghost danger" type="button" id="eDel">Delete event</button>` : ""}</div></div>
+  main.innerHTML = `<div class="rpage evpage"><a class="rback" href="#events" id="evBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to ${tab === "events" ? "events" : "the list"}</a>
+  <div class="pghead"><div><h2>${title}</h2></div><div class="pgacts">${ev ? viewLink(ev.id) : ""}${ev ? `<button class="btn ghost danger" type="button" id="eDel">Delete event</button>` : ""}</div></div>
   <form class="f" id="evForm" novalidate>
-    ${fsec("Event", "", ff("eN", "Name", `<input id="eN" value="${esc(e.n)}" maxlength="120" required>`)
+    <div class="evl">${fsec("Event", "", ff("eN", "Name", `<input id="eN" value="${esc(e.n)}" maxlength="120" required>`)
       + ff("eSn", "Season", `<select id="eSn">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (e.sn || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`, { c: "c3" }) + ff("eT", "Type", `<select id="eT">${typeOpts(e.sn || "christmas", e.t)}</select>`, { c: "c3" })
       + ff("eSt", "Dates are", `<select id="eSt"><option value="confirmed" ${e.st === "c" ? "selected" : ""}>Confirmed for this season</option><option value="expected" ${e.st !== "c" ? "selected" : ""}>Expected (based on last year)</option></select>`, { hint: "Expected events show a note that visitors should check the event's website." }))}
     ${fsec("When and price", "", ff("eS", "Starts", `<input id="eS" type="date" value="${esc(e.s)}">`, { c: "c3" }) + ff("eE", "Ends", `<input id="eE" type="date" value="${esc(e.e)}">`, { c: "c3" }) + ff("eH", "Hours", `<input id="eH" value="${esc(e.h)}" maxlength="200" placeholder="6 to 10 pm nightly">`)
@@ -869,7 +912,7 @@ function editEvent(ev) {
       + ff("eV", "Venue", `<input id="eV" value="${esc(e.v || "")}" maxlength="120" placeholder="Crown Valley Community Park">`, { c: "c3" }) + ff("eA", "Street address", `<input id="eA" data-addr autocomplete="off" value="${esc(e.a || "")}" maxlength="200" placeholder="29751 Crown Valley Pkwy, Laguna Niguel, CA 92677">`, { c: "c3" })
       + `<div class="ff c6"><div class="row" style="margin-bottom:8px"><button class="btn ghost" type="button" id="eGeo">Place pin from address</button><span class="meta" id="geoMsg">Or click the map, or drag the pin.</span></div><div id="pick"></div><div class="meta dates" id="ll" style="margin-top:4px"></div></div>`)}
     ${fsec("Details", "", ff("eB", "Description", `<textarea id="eB" maxlength="600" rows="4">${esc(e.b)}</textarea>`) + ff("eU", "Event website", `<input id="eU" type="url" value="${esc(e.u)}" maxlength="300" placeholder="https://">`) + ff("eVid", "Video (YouTube or Vimeo link)", `<input id="eVid" type="url" value="${esc(e.vid || "")}" maxlength="300" placeholder="https://www.youtube.com/watch?v=...">`, { c: "c6" }))}
-    ${ev ? fsec("Paid placement", "Featured: 1 is the gold pin and badge, 2 also lists the event first. Banner: the event is a pill labeled Featured in the strip at the top of the map list. Organizers buy these themselves at /feature (see Orders). A level or date set here can never be lower or earlier than a paid order that is still running. Leave a date empty for no end date (Featured) or to keep the banner off.",
+    </div><div class="evr">${ev ? fsec("Paid placement", "Featured: 1 is the gold pin and badge, 2 also lists the event first. Banner: the event is a pill labeled Featured in the strip at the top of the map list. Organizers buy these themselves at /feature (see Orders). A level or date set here can never be lower or earlier than a paid order that is still running. Leave a date empty for no end date (Featured) or to keep the banner off.",
       ff("eFl", "Featured level", `<select id="eFl" disabled><option value="0">Off</option><option value="1">1: pin and badge</option><option value="2">2: also listed first</option></select>`, { c: "c2" }) + ff("eFu", "Featured until", `<input id="eFu" type="date" disabled>`, { c: "c2" }) + ff("eBu", "Banner until", `<input id="eBu" type="date" disabled>`, { c: "c2", hint: "Loading…" })) : ""}
     ${ev ? fsec("Purchases", "What this event paid for: the Featured pin, the banner and top of the list. The dates it runs are in Paid placement above; refunds are handled in Orders.", `<div class="ff c6" id="evBuys"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     ${ev ? fsec("Organizer updates", "When an organizer uses \"This is my event\" on an existing listing, the old details are saved. Revert puts them back (the paid placement, photos and video are not touched).", `<div class="ff c6" id="evRev"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
@@ -1186,8 +1229,8 @@ async function renderDashboard() {
   const tile = (k, n, l, more = "") => `<div class="stat"><b>${fmt(n)}</b><span>${l}</span>${more ? `<small class="meta">${more}</small>` : ""}</div>`;
   const kindTab = { home: "pending", event: "subs" };
   main.innerHTML = `
-    <div class="pghead"><div><h2>Dashboard</h2><p>${hour < 5 ? "Hello" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}. ${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p></div></div>
-    ${d.staleJobs && d.staleJobs.length ? `<div class="limitbanner" role="alert"><b>${d.staleJobs.length === 1 ? "A scheduled job has stopped reporting in." : d.staleJobs.length + " scheduled jobs have stopped reporting in."}</b>${d.staleJobs.slice(0, 5).map((j) => `<span>${esc(j.line)}</span>`).join("")}<span>GitHub runs scheduled jobs late or skips them. Run the workflow by hand from GitHub > Actions, or see docs/runbooks/monitoring.md.</span></div>` : ""}
+    <div class="pghead"><div><h2>${hour < 5 ? "Hello" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}</h2><p>${todo.length ? "Here is what needs you." : "Nothing is waiting on you."}</p></div></div>
+    ${d.staleJobs && d.staleJobs.length ? `<details class="limitbanner stale" role="alert"><summary><b>${d.staleJobs.length === 1 ? "A scheduled job has stopped reporting in." : d.staleJobs.length + " scheduled jobs have stopped reporting in."}</b><span class="stmore">Details</span></summary>${d.staleJobs.slice(0, 5).map((j) => `<span>${esc(j.line)}</span>`).join("")}${d.staleJobs.length > 5 ? `<span>and ${d.staleJobs.length - 5} more (see Last run of each job).</span>` : ""}<span>GitHub runs scheduled jobs late or skips them. Run the workflow by hand from GitHub > Actions, or see docs/runbooks/monitoring.md.</span></details>` : ""}
     ${d.limits && d.limits.length ? `<button type="button" class="limitbanner" data-tab="usage"><b>A Cloudflare or email limit was hit at ${esc(localTime(d.limits[0].at))}.</b><span>${esc(String(d.limits[0].detail).slice(0, 140))} Open Cloudflare usage to see which one and what to do.</span></button>` : ""}
     <section aria-label="Needs your attention">${todo.length ? `<div class="todo">${todo.map(([k, n, w, l, pv]) => `<button type="button" class="tcard" data-tab="${k}"${pv ? ` data-pview="${pv}"` : ""}><b>${fmt(n)}</b><span>${w}${n === 1 ? "" : "s"} ${l}</span><i aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DI.chev}</svg></i></button>`).join("")}</div>` : `<div class="calm">${dico("check", "okic")}<div><b>All caught up</b><p class="meta" style="margin:2px 0 0">No houses, events, contests, reports, event claims or Grok rows are waiting.</p></div></div>`}</section>
     <h2 class="dh">Today</h2>
@@ -1238,7 +1281,7 @@ function usageCard(m, u) {
   const paid = u.plan === "paid", billed = m.hardStop === false; // billed: going over costs money but does not stop the site
   const [cls, lab0] = U_TAG[m.level] || U_TAG.unknown, lab = m.level === "limit" && billed ? "Extra charges start" : lab0, pct = m.pct == null ? 0 : Math.min(100, m.pct);
   const incl = billed ? (m.period === "month" ? " included this month" : " included") : "";
-  const reset = m.period === "month" ? (paid ? `Billing month from ${u.periodStart} (UTC)` : "Month to date (calendar month, UTC)") : U_RESET[m.period];
+  const reset = m.period === "month" ? (paid ? `Billing month from ${mdy(u.periodStart)} (UTC)` : "Month to date (calendar month, UTC)") : U_RESET[m.period];
   const trend = m.trend && m.trend.length ? `<details class="utrend"><summary>Last 7 days ${usageSpark(m.trend)}</summary><table><thead><tr><th scope="col">UTC day</th><th scope="col">${m.period === "month" ? "That day" : "Used"}</th></tr></thead><tbody>${m.trend.map((p) => `<tr><td>${esc(p.d)}</td><td>${fmt(p.v)}</td></tr>`).join("")}</tbody></table></details>` : "";
   const extra = m.used != null && billed && m.over > 0 ? `<p class="meta uover"><b>Estimated extra charge: ${U_USD(m.overUsd)}</b> (${U_NUM(m, m.over)} past the included amount at ${esc(m.priceText)}). The site keeps working.</p>` : "";
   const today = m.used != null && m.period === "month" && m.today != null ? `<p class="meta" style="margin:2px 0 0">Today (UTC): ${U_NUM(m, m.today)}</p>` : "";
@@ -1270,10 +1313,10 @@ async function renderUsage() {
   const tile = (k, v, sub = "") => `<div class="ustat"><span>${k}</span><b>${v}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
   const hi = tile("Highest right now", u.top ? `${u.top.pct}%` : "No numbers yet", u.top ? esc(u.top.label) : "");
   const tiles = paid
-    ? tile("Plan", "Workers Paid", `$${u.planBaseUsd} a month`) + tile("Billing month", `Since ${esc(u.periodStart)}`, "UTC. Included amounts are for the month, not per day") + tile("Extra charges so far", U_USD(u.estimatedOverageUsd), `Beyond the $${u.planBaseUsd}. An estimate, not the invoice`) + hi
-    : tile("Plan", "Cloudflare Free", "Daily limits") + tile("Today", `UTC day ${esc(u.utcDay)}`, "Resets at 00:00 UTC and the site stops until then") + hi;
+    ? tile("Plan", "Workers Paid", `$${u.planBaseUsd} a month`) + tile("Billing month", `Since ${esc(mdy(u.periodStart))}`, "UTC. Included amounts are for the month, not per day") + tile("Extra charges so far", U_USD(u.estimatedOverageUsd), `Beyond the $${u.planBaseUsd}. An estimate, not the invoice`) + hi
+    : tile("Plan", "Cloudflare Free", "Daily limits") + tile("Today", `UTC day ${esc(mdy(u.utcDay))}`, "Resets at 00:00 UTC and the site stops until then") + hi;
   const note = paid
-    ? `Passing an included amount is <b>not</b> a stop: extra use is billed. The charge figure is an estimate from Cloudflare's analytics, so check Billing for the real number. Prices checked ${esc(u.pricingVerified)}.`
+    ? `Passing an included amount is <b>not</b> a stop: extra use is billed. The charge figure is an estimate from Cloudflare's analytics, so check Billing for the real number. Prices checked ${esc(mdy(u.pricingVerified))}.`
     : "";
   const planBar = `<div class="ustats">${tiles}</div>
     <div class="uhbar"><div class="ulegend" aria-label="Colors"><span class="tag warn">Watch</span><span class="meta">from 70%</span><span class="tag bad">Warning</span><span class="meta">from 90%</span><span class="tag bad">${paid ? "Extra charges start" : "Limit reached"}</span><span class="meta">at 100%${paid ? " of the included amount" : ""}</span></div></div>

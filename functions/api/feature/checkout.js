@@ -48,12 +48,12 @@ export async function onRequestPost({ request, env }) {
     ev = await env.DB.prepare("SELECT id, name, city, start_date, end_date, featured, featured_until, banner_until, notice, status FROM events WHERE id = ?").bind(eventId).first();
   }
   if (!ev) return err(404, "We couldn't find that event. Search for it again.");
-  // Only the owner may pay: they submitted it, hold an approved claim, or run the contest it lists. (A claim gives no edit rights.)
+  // Only the owner may pay: they submitted it, hold an approved claim, or run the contest it lists. (An approved claim also makes the person the event's manager, see functions/_lib/claimgrant.js.)
   if (!pending && !home && !(await ownsEvent(env, user, ev.id, ""))) return err(403, "Claim this event first. Only its organizer can feature it.");
   const today = ptToday();
   // The Terms promise that a cancelled or postponed event cannot be featured (payments audit M3): refuse here, not only in the page.
   if (!home && (ev.notice === "cancelled" || ev.notice === "postponed")) return err(400, `This event is marked ${ev.notice}, so it cannot be featured. Email info@socallights.app if that is a mistake.`);
-  // "Expected" listings carry projected dates that the organizer cannot correct (a claim gives no edit rights), and the paid window is computed from them (audit M8).
+  // "Expected" listings carry projected dates that only the organizer who added or claimed it can correct (an approved claim makes them its manager), and the paid window is computed from them (audit M8).
   // Hold the sale until the dates are confirmed. An event the buyer submitted themselves has dates they entered and can edit, so it is not held.
   if (!home && !pending && ev.status === "expected" && !(await ownSubmission(env, user, ev.id))) return err(400, "The dates for this listing are still projected, not confirmed, so it can't be featured yet. Email info@socallights.app with a link to your event page and we will confirm the dates; then you can feature it.");
   if (!home && ev.end_date < today) return err(400, "That event has already ended.");

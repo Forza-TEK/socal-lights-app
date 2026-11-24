@@ -41,7 +41,7 @@ export async function onRequestGet({ request, env }) {
     events.push({ kind: "event", id, name: live ? s.ename : s.name, city: live ? s.ecity : s.city, start, end, state, opens: state === "live" || state === "pending" ? opens(start, t) : null, featured: f, until: f ? s.featured_until || null : null, banner_until: live ? bannerOn(s.banner_until, t) : null, quotes: quotesFor({ start_date: start, end_date: end, featured: live ? s.featured : 0, featured_until: live ? s.featured_until : null, banner_until: live ? s.banner_until : null }, t) });
   }
 
-  // Claims: approved ones are buyable; pending ones are listed so the person sees where they stand. (A claim gives no edit rights.)
+  // Claims: approved ones are buyable; pending ones are listed so the person sees where they stand. (An approved claim also makes the person the event's manager, see functions/_lib/claimgrant.js.)
   const cl = (await env.DB.prepare(
     `SELECT c.status, e.id, e.name, e.city, e.start_date, e.end_date, e.notice, e.featured, e.featured_until, e.banner_until
      FROM event_claims c JOIN events e ON e.id = c.event_id WHERE c.user_id = ? AND c.status IN ('approved','pending') ORDER BY c.created_at DESC LIMIT 100`).bind(user.id).all()).results;
