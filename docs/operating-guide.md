@@ -33,6 +33,7 @@ All publish straight to `main` after validation (owner authorized 2026-10-28). C
 | `15 17 * * *` | contest reminders |
 | `25 18 * * *` | placement notices |
 | `30 17 * * THU` | weekly lights email |
+| `40 11 * * SUN` | archive events that ended more than 60 days ago (`/api/archive-ended`; hides them from `/api/events?ended=1`, deletes nothing; skips events with orders, a submitter, a claim or a contest) |
 
 **Cron weekday gotcha:** Cloudflare counts weekdays 1 = Sunday to 7 = Saturday (standard cron: 0 or 7 = Sunday, 1 = Monday), so a numeric weekday in `wrangler.toml` runs a day off from what a cron guide says. Use the names (`THU`, `MON`) as the weekly email line does.
 

@@ -88,6 +88,11 @@ export const JOBS = {
     const r = await call(env, "/api/verify-events", 60000), j = await body(r);
     return r.ok && typeof j.checked === "number" ? "ok" : "fail";
   },
+  // Archive events that ended more than 60 days ago (F-25): marks them so the public "everything" list stops growing; deletes nothing.
+  "archive-ended": async (env) => {
+    const r = await call(env, "/api/archive-ended"), j = await body(r);
+    return r.ok && j.ok === true ? "ok" : "fail";
+  },
   // Weekly lights email: send in batches until the list is done (up to 30 batches, a short pause between). A batch where every email failed is a mail-service problem: stop and report fail.
   alerts: async (env) => {
     for (let i = 0; i < 30; i++) {
@@ -112,6 +117,7 @@ export const CRONS = {
   "15 17 * * *": ["contest-reminders"],
   "25 18 * * *": ["placement-notices"],
   "30 17 * * THU": ["alerts"],
+  "40 11 * * SUN": ["archive-ended"], // weekday NAMES: Cloudflare numbers days 1 = Sunday, a digit would run a day off
 };
 
 export async function runJob(env, name) {

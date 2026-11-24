@@ -17,6 +17,7 @@ export const JOBS = {
   alerts: { label: "Weekly lights email", every: "week", staleH: 192 },
   "contest-reminders": { label: "Contest reminders", every: "day", staleH: 30 },
   "placement-notices": { label: "Placement ending emails", every: "day", staleH: 30 },
+  "archive-ended": { label: "Archive long-ended events", every: "week", staleH: 192 },
   "verify-events": { label: "Event page re-check", every: "30 minutes", staleH: 2 },
 };
 
