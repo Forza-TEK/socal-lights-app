@@ -45,15 +45,28 @@ const secure = (request) => new URL(request.url).protocol === "https:";
 export const setCookie = (request, name, value, maxAge) =>
   `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure(request) ? "; Secure" : ""}`;
 
-// Rejects cross-site form posts (the cookie is SameSite=Lax too, this is a second lock).
-export function sameOrigin(request) {
+// The old rule: Origin must match when present; a request with no Origin passes. Kept for the admin and chat gates below (scripts with an Access token have no Origin there).
+function originMatches(request) {
   const o = request.headers.get("origin");
   return !o || o === new URL(request.url).origin;
 }
 
-// Same rule as sameOrigin (Origin must match when present), plus the Referer when there is no Origin. Used by the admin API (S-08).
+// Rejects cross-site form posts (the cookie is SameSite=Lax too, this is a second lock).
+// F-42: a state-changing request (anything but GET/HEAD/OPTIONS) with no Origin header passes only if the browser says it is not cross-site
+// (Sec-Fetch-Site "same-origin", or "none" = typed/bookmarked); a script or an old client that sends neither is refused. Reads are unchanged.
+// Cron and key-protected endpoints (x-alert-key, Grok key) never call this.
+export function sameOrigin(request) {
+  const o = request.headers.get("origin");
+  if (o) return o === new URL(request.url).origin;
+  const m = String(request.method || "GET").toUpperCase();
+  if (m === "GET" || m === "HEAD" || m === "OPTIONS") return true;
+  const site = request.headers.get("sec-fetch-site");
+  return site === "same-origin" || site === "none";
+}
+
+// Same rule as the old sameOrigin (Origin must match when present), plus the Referer when there is no Origin. Used by the admin API (S-08) and the chat/address gates.
 export function sameOriginStrict(request) {
-  if (!sameOrigin(request)) return false;
+  if (!originMatches(request)) return false;
   if (request.headers.get("origin")) return true;
   const ref = request.headers.get("referer");
   if (!ref) return true;
