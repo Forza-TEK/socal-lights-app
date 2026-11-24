@@ -1,4 +1,4 @@
-// /api/admin/claims — people who say an event is theirs. Approving only lets them buy a Featured placement for it (no edit rights).
+// /api/admin/claims — people who say an event is theirs. Approving makes them the event's manager (claimgrant.js: Your profile > Events > Edit) and lets them buy Featured for it.
 //   GET  ?status=pending|approved|declined   (pending first)
 //   POST /api/admin/claims/:id { action: "approve" | "decline" }  (claims/[id].js)
 // The admin middleware (_middleware.js) has already required the Cloudflare Access login and logs the POST to admin_log (area "claims").

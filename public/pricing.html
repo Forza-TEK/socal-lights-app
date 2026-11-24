@@ -28,6 +28,7 @@
 @media (prefers-reduced-motion:reduce){.ptabrow .ind{transition-duration:.12s}}
 </style>
 <script src="/hit.js?v=20261107a" defer></script>
+<script src="/scrolltabs.js?v=20261124a" defer></script>
 <script src="/chat.js?v=20261116e" defer></script>
 </head>
 <body class="wide">
@@ -121,7 +122,7 @@ const dollars = (p) => "$" + (p.cents % 100 ? (p.cents / 100).toFixed(2) : p.cen
   const NAV = [["map", "Map", "/", "map"], ["add", "Add", "/add", "add"], ["tut", "Tutorials", "/tutorials", "play"], ["help", "Help", "/help", "help"]]; // the phone bottom bar; the audiences are the tabs above the title
   mountShell({ page: "pricing", title: "Pricing", items: NAV.map(([k, label, , icon]) => ({ k, label, icon })), active: "", onPick: (k) => { const n = NAV.find((x) => x[0] === k); if (n) location.assign(n[2]); } });
   const IC = { homeowners: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-6h6v6"/>', events: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', contests: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>', banner: '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>' };
-  const row = document.createElement("div"); row.className = "ptabrow"; row.setAttribute("role", "tablist"); row.setAttribute("aria-label", "Pricing for");
+  const row = document.createElement("div"); row.className = "ptabrow"; row.setAttribute("data-scrolltabs", ""); row.setAttribute("role", "tablist"); row.setAttribute("aria-label", "Pricing for");
   row.innerHTML = '<span class="ind" aria-hidden="true"></span>' + keys.map((k) => `<button type="button" role="tab" data-k="${k}" aria-selected="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg><span>${LABEL[k] || panels[k].dataset.label}</span></button>`).join("");
   document.querySelector("main h1").before(row);
   const ind = row.querySelector(".ind"); let placed = false;

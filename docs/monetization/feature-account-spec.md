@@ -47,7 +47,7 @@ _CEO, 2026-11-04. Request (owner): on the Featured page, know who is logged in a
 ### Claim flow (Phase 2)
 - `event_claims` table; `POST /api/me/claims`; admin approve or decline in a small "Event claims" section.
 - Auto-approved when the claimant's email domain (not free-mail) equals, or is a parent of, the host of the event's own web page and that host is not an aggregator, social or ticketing site (Eventbrite, Facebook, Ticketmaster, Fever and similar). Everything else waits for the admin.
-- A claim only unlocks buying Featured for that event. It gives no edit rights.
+- A claim unlocks buying Featured for that event and (since 2026-11-22) makes the person its manager: the event joins Your profile > Events and they can edit it, add a ticket link, photos and a clip.
 - Limits: 5 pending and 10 claims a day per person.
 
 ### Featured homes, podium only (Phase 3)
