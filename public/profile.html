@@ -147,6 +147,11 @@ function panel() {
     <form id="pform" class="main" style="padding:0;gap:18px;max-width:none" novalidate>${input(pf, "name", { label: "Name", opt: true, max: 80, ac: "name", ph: "Your name" })}${select(pf, "city", cities.map((c) => [c, c]), { label: `City ${OPT}`, blank: "Choose a city", ac: "address-level2" })}${input(pf, "street", { label: "Street address", opt: true, max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}${input(pf, "zip", { label: "ZIP", opt: true, max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}
     <p class="err" id="perr" role="alert" hidden></p><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn" type="submit">Save</button><span class="muted small" id="pok" role="status"></span></div></form>
     ${nlSection()}
+    <section style="margin-top:12px"><h2>Change my email</h2><p class="muted small">Your account email is <b>${esc(u.email)}</b>. To use another address, enter it and we send a 6-digit code there. Once you enter the code, your homes, events, installer profile and contests move to the new address.</p>
+      <form id="emform" style="display:grid;gap:10px;max-width:360px" novalidate><label class="mf"><span>New email</span><input id="em-new" type="email" maxlength="120" autocomplete="email" inputmode="email"></label>
+      <label class="mf" id="em-codewrap" hidden><span>6-digit code from the email</span><input id="em-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label>
+      <p class="err" id="em-err" role="alert" hidden></p><p class="muted small" id="em-ok" role="status"></p>
+      <div><button class="btn out" id="em-go" type="submit">Send me a code</button></div></form></section>
     <div style="margin-top:8px"><button class="btn out" id="so" type="button">Sign out</button></div>
     <section style="margin-top:12px"><h2>Delete my account</h2><p class="muted small" id="delmsg">Deletes your account, saved drafts, profile picture, contest entries and votes, closes contests you run, and removes your email from homes and events you posted. It also ends the monthly update, and your address goes on our do-not-contact list as a one-way hash (not the address itself) so we do not contact you again. This can't be undone.</p><p class="muted small">If a paid placement is still running on something you added, deleting the account takes it down and flags it for us to review the refund; we cannot bring it back.</p><p class="err" id="delerr" role="alert" hidden></p><p class="small" id="delsay" role="status" aria-live="polite"></p><div style="margin-top:10px"><button class="btn out" id="delacct" type="button" style="color:var(--bad);border-color:var(--bad)">Delete my account</button></div>
       <div id="delbox" hidden><div style="margin-top:10px;display:grid;gap:10px;max-width:360px"><label class="mf"><span>Type <b>delete</b> to confirm</span><input id="deltype" autocomplete="off" autocapitalize="off" spellcheck="false"></label><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn out" id="delgo" type="button" disabled style="color:var(--bad);border-color:var(--bad)">Permanently delete my account</button><button class="btn out" id="delcancel" type="button">Keep my account</button></div></div></div></section><p class="small muted">Homes and events you add are tied to this account's email.</p>`;
@@ -299,6 +304,17 @@ function wire() {
     };
   }
   const so = $("#so"); if (so) so.onclick = async () => { await signOut(); location.href = "/"; };
+  // change the account email: step 1 sends a code to the new address, step 2 confirms it (POST /api/me/email)
+  const emf = $("#emform"); if (emf) emf.onsubmit = async (e) => {
+    e.preventDefault(); const er = $("#em-err"), ok = $("#em-ok"), go = $("#em-go"), step2 = !$("#em-codewrap").hidden; er.hidden = true; ok.textContent = "";
+    const body = step2 ? { action: "confirm", email: $("#em-new").value.trim(), code: $("#em-code").value.trim() } : { action: "start", email: $("#em-new").value.trim() };
+    go.disabled = true;
+    const r = await fetch("/api/me/email", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch(() => null), j = r ? await r.json().catch(() => ({})) : {};
+    go.disabled = false;
+    if (!r || !r.ok) { er.textContent = (j && j.error) || "That didn't work. Try again."; er.hidden = false; return; }
+    if (!step2) { $("#em-codewrap").hidden = false; $("#em-new").readOnly = true; go.textContent = "Change my email"; ok.textContent = "We sent a code to " + body.email + ". It works for 10 minutes."; $("#em-code").focus(); return; }
+    ok.textContent = "Done. Your account email is now " + j.email + "."; go.hidden = true; $("#em-codewrap").hidden = true; await me(true); load();
+  };
   const pf = $("#pform"); if (pf) {
     attachAddress(pf, { getCity: () => $("#f-city").value, onPick: (s) => { $("#f-street").value = s.street; if (cities.includes(s.city)) $("#f-city").value = s.city; if (/^\d{5}/.test(s.zip)) $("#f-zip").value = s.zip.slice(0, 5); } });
     pf.onsubmit = async (e) => {

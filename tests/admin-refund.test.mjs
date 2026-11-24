@@ -61,5 +61,5 @@ test("Refund in Stripe: refused without calling Stripe for an order with no paym
 test("Admin Orders UI: a two-tap Refund in Stripe button on paid and refund-due orders, ?v= bumped", () => {
   const js = readFileSync(new URL("../public/admin/admin.js", import.meta.url), "utf8"), html = readFileSync(new URL("../public/admin/index.html", import.meta.url), "utf8");
   assert.match(js, /data-oact="refund_stripe"/); assert.match(js, /tap\(b, "refund this payment in Stripe"\)/);
-  assert.match(html, /admin\.js\?v=20261124c/);
+  assert.match(html, /admin\.js\?v=20261124d/);
 });

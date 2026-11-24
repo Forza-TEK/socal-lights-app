@@ -241,7 +241,7 @@ function editPost(p, startTab = "details") {
     ${fsec("About", "", ff("pSeason", "Season", `<select id="pSeason">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (p.season || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`, { c: "c3" })
       + ff("pDesc", "Description", `<textarea id="pDesc" maxlength="1200" rows="4">${esc(p.desc)}</textarea>`, { hint: "Shown on the listing." }))}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="pMsg" role="status"></span></div>
-  </form></div>`;
+  </form>${transferBox("home", p.id)}</div>`;
   m.hidden = false; $("#mClose").onclick = () => { close(); if (photosChanged) render(); };
   let photosChanged = false;
   let cur = 0;
@@ -484,6 +484,18 @@ async function renderOrders() {
   main.innerHTML = revenueStrip(rv) + head + bar + `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Order</th><th>Type</th><th>Amount</th><th>Buyer</th><th>Status</th><th>Date</th><th class="ac">Actions</th></tr></thead><tbody>${rows.map((o) => { const d = oData(o), nm = o.target === "contest_pass" || o.target === "event_partner" ? orgLabelOf(o.event_id) : o.name || o.event_id; return `<tr data-oid="${esc(o.session_id)}" data-onote="${esc(o.note || "")}" data-name="${esc(nm)}"><td>${tcell(o.cover, `<a class="rl" href="#orders" data-oopen="${esc(o.session_id)}">${esc(nm)}</a><span class="sub">${esc(o.city || "")}</span>`)}</td><td>${kind(o)}<span class="sub">${esc(o.target === "installer" ? INST_PLAN[o.plan] || o.plan : PLAN_NAME[o.plan] || "")}</span></td><td>${esc(money(o.amount, o.currency))}</td><td><span style="user-select:all">${esc(o.email || "")}</span></td><td>${d.tags.filter((t, i) => i === 0 || o.flags.includes(t[0]) || true).slice(0, 1).map(([l, t]) => `<span class="tag ${t || ""}">${esc(l)}</span>`).join("")}${o.flags.filter((f) => !(f === "refund_due" || f === "disputed" || f === "held")).map((f) => OFLAG[f] || [f, "warn"]).map(([l, t]) => ` <span class="tag ${t}">${esc(l)}</span>`).join("")}</td><td>${esc(localTime(o.created_at))}</td><td class="ac"><a class="rl" href="#orders" data-oopen="${esc(o.session_id)}">Open</a>${listingOf(o) ? ` · <a class="rl" href="${esc(listingOf(o))}" target="_blank" rel="noopener" aria-label="View the listing on the site (opens in a new tab)">View listing</a>` : ""} ${d.main.replace('class="btn ice"', 'class="btn ice sm"')}</td></tr>`; }).join("")}</tbody></table></div><div class="pager"><span class="meta">${rows.length} order${rows.length === 1 ? "" : "s"}</span></div></div>`;
   wire();
 }
+/* Transfer to another account (F-10b): by the new owner's email, two taps, logged by the server */
+const transferBox = (kind, id) => `<details class="xfer" style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Transfer to another account</summary><p class="meta" style="margin:8px 0">Gives this ${kind} to the person who signs in with the email below (they need an account already). The old owner loses access.</p><div class="mfoot" style="margin-top:0"><input type="email" data-xemail aria-label="New owner's email" placeholder="name@example.com" style="flex:1;min-width:200px"><button class="btn ghost" type="button" data-xfer="${kind}|${esc(id)}">Transfer</button></div><span class="msg" role="status"></span></details>`;
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-xfer]"); if (!b) return;
+  const box = b.closest(".xfer"), email = box.querySelector("[data-xemail]").value.trim(), msg = box.querySelector(".msg"), [kind, id] = b.dataset.xfer.split("|");
+  if (!email) { msg.className = "msg err"; msg.textContent = "Enter the new owner's email."; return; }
+  if (!tap(b, "transfer")) return;
+  b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
+  try { const d = await api("/api/admin/transfer", { method: "POST", body: JSON.stringify({ kind, id, email }) }); msg.textContent = "Transferred to " + d.to + "." + (d.note ? " " + d.note : ""); toast("Transferred"); }
+  catch (er) { msg.className = "msg err"; msg.textContent = er.message; }
+  b.disabled = false;
+});
 function askNote(title, value) {
   return new Promise((done) => {
     const m = $("#modal"); m.hidden = false;
@@ -852,7 +864,7 @@ function editEvent(ev) {
     ${ev ? fsec("Photos", "Up to 4 photos, the first is the cover and shows before the picture found on the event's own page. Add one an organizer emailed you; it is saved at once, no need to tap Save.", `<div class="ff c6" id="evPh"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     ${ev ? fsec("Video", "A YouTube or Vimeo link shows at once. An uploaded clip is hidden from visitors until you approve it here. Organizers add them from Your profile (Edit the event).", `<div class="ff c6" id="evVid"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
-  </form></div>`;
+  </form>${ev ? transferBox("event", e.id) : ""}</div>`;
   if (ev && tab !== "events") $("#evBack").lastChild.textContent = "Back";
   let lat = e.lat, lng = e.lng;
   const show = () => ($("#ll").textContent = lat.toFixed(5) + ", " + lng.toFixed(5));
@@ -1059,6 +1071,7 @@ async function openInstaller(id) {
     ${fsec("Map banner and top of the list", "Banner: a thin labeled strip on the map. Top of the list: a labeled company card at the top of the list, behind Featured events. The banner plus top plan gets both, so set both dates. Installers can now buy these themselves at /sponsor; a paid order sets these dates (see Orders), and a date here can never be set earlier than a paid order that is still running. Leave a date empty to keep them off. Needs a phone number or website.", ff("if-ban", "Banner until", `<input id="if-ban" data-f="banner_until" type="date" value="${esc(i.banner_until || "")}">`, { c: "c3", hint: `Last 30 days: shown ${d.banner.imp}, company link ${d.banner.click}, phone ${d.banner.call}.` }) + ff("if-top", "Top of the list until", `<input id="if-top" data-f="top_until" type="date" value="${esc(i.top_until || "")}">`, { c: "c3", hint: `Last 30 days: shown ${d.banner.lst_imp}, taps on the card ${d.banner.lst_click + d.banner.lst_call}.` }))}
     ${fsec("Contacts", "These are private. They never appear on the public page.", ff("if-email", "Email for confirmations", `<input id="if-email" data-f="email" type="email" value="${esc(i.email || "")}" maxlength="120">`, { c: "c3", hint: "Where we send requests to confirm a home." }) + ff("if-owner", "Owner email", `<input id="if-owner" data-f="owner" type="email" value="${esc(i.owner_email || "")}" maxlength="120">`, { c: "c3", hint: "This person can edit the profile after signing in." }))}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="iMsg" role="status"></span></div></form>
+    ${transferBox("installer", i.id)}
     <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Merge into another profile</summary>
     <p class="meta" style="margin:8px 0">Moves every home to the profile you keep and removes this one. Use it when one company was typed two ways.</p>
     <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>`, true);
