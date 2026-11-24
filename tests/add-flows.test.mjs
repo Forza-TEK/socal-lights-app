@@ -25,7 +25,8 @@ const world = (point = [34.15, -118.13]) => { const mails = []; const s = stubFe
   return new Response("", { status: 404 });
 }); return { mails, restore: s.restore }; };
 const mkEnv = () => newEnv({ PHOTOS: r2(), RESEND_API_KEY: "re_test", DEV_AUTH: "" });
-const homeForm = (o = {}) => { const f = new FormData(); for (const [k, v] of Object.entries({ biz: "Lee Family", title: "Maple Street Lights", city: "Pasadena", desc: "Ten thousand lights synced to music every night.", street: "123 Maple St", zip: "91101", permission: "1", ...o })) f.append(k, v); return f; };
+let HSEQ = 0; // every default home gets its own street: the same account adding the same address twice is now refused (audit F-01)
+const homeForm = (o = {}) => { const f = new FormData(); for (const [k, v] of Object.entries({ biz: "Lee Family", title: "Maple Street Lights", city: "Pasadena", desc: "Ten thousand lights synced to music every night.", street: `${100 + ++HSEQ} Maple St`, zip: "91101", permission: "1", ...o })) f.append(k, v); return f; };
 const postHome = (env, form, cookie, ip = "203.0.113.7") => submitHome({ request: new Request(ORIGIN + "/api/submit", { method: "POST", headers: { "CF-Connecting-IP": ip, cookie }, body: form }), env });
 const evBody = (o = {}) => ({ name: "Pasadena Holiday Parade", city: "Pasadena", season: "christmas", type: "parade", start: ptToday(20), end: ptToday(20), hours: "6 pm", free: true, blurb: "A lighted holiday parade down Colorado Boulevard.", url: "", venue: "Colorado Blvd", address: "100 E Colorado Blvd", ...o });
 const postEvent = (env, b, cookie, ip = "203.0.113.8") => submitEvent({ request: new Request(ORIGIN + "/api/submit-event", { method: "POST", headers: { "content-type": "application/json", "CF-Connecting-IP": ip, cookie }, body: JSON.stringify(b) }), env });

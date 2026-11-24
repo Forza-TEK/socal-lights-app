@@ -4,8 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { onRequestGet as matchGet } from "../functions/api/events/match.js";
 import { onRequestPost as submitEvent } from "../functions/api/submit-event.js";
-import { matchTokens, streetKey } from "../functions/_lib/eventmatch.js";
-import { CITY } from "../public/cities.js";
+import { matchTokens, streetKey } from "../functions/_lib/eventmatch.js";import { CITY } from "../public/cities.js";
 import { newEnv, addUser, stubFetch, ptToday } from "./_pay.mjs";
 
 const ORIGIN = "https://socallights.app";

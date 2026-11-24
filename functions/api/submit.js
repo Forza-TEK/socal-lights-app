@@ -104,6 +104,18 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const key = homeKey(street || address), same = key ? (await env.DB.prepare("SELECT street, address FROM posts WHERE contest_id = ? AND status != 'declined'").bind(contest.id).all()).results.some((p) => homeKey(p.street || p.address) === key) : false;
     if (same) return err(400, "This address is already entered in this contest. One home may enter once.");
   }
+  // Audit F-01: a normal home is compared with the homes already on the map or waiting (same house number, street and city; units ignored). The same person adding it twice is told it exists;
+  // a different person's home at the same address is NOT blocked (a family and the installer who did their lights may both post it) but is held for review with a note naming the other post.
+  let dupNote = "";
+  if (!contest) {
+    const key = homeKey(street || address), num = (/^\s*(\d{1,6})\s/.exec(street || address) || [])[1];
+    if (num && !key.startsWith("x|")) {
+      const rows = (await env.DB.prepare("SELECT id, status, street, address, user_id, contact_email FROM posts WHERE contest_id IS NULL AND status IN ('approved','pending') AND lower(city) = lower(?) AND (street LIKE ? OR address LIKE ?)").bind(city, num + " %", num + " %").all()).results.filter((p) => homeKey(p.street || p.address) === key);
+      const mine = rows.find((p) => (p.user_id && p.user_id === cu.id) || String(p.contact_email || "").toLowerCase() === email);
+      if (mine) return err(409, "You already added this home. Open Your profile, find it under Displays, and choose Edit to change it or add photos.");
+      if (rows.length) dupNote = `same address as ${rows.length === 1 ? "another home" : rows.length + " other homes"} already listed or waiting (${rows.slice(0, 3).map((p) => p.id + ", " + p.status).join("; ")}): check it is not the same house before approving`;
+    }
+  }
   // Audit M8: an entry from another city is kept but never auto-approved (the organizer is told), so the "auto" setting cannot put an out-of-area home on the map by itself.
   const otherCity = !!contest && city !== contest.city;
   const autoApprove = !!contest && contest.approval === "auto" && !otherCity;
@@ -131,7 +143,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   // The pin goes on the exact address; if it can't be found it falls back to the city center (the admin can fix it)
   let [lat, lng] = CITY[city];
-  const pt = await geocodeAddress(address, city, [lat, lng]); const located = !!pt; if (pt) [lat, lng] = pt;
+  const geo = {}, pt = await geocodeAddress(address, city, [lat, lng], 30, fetch, geo); const located = !!pt; if (pt) [lat, lng] = pt; // geo.ambiguous: the Census found two places for this address (audit F-04)
   const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
   const county = nearestCounty(lat, lng, evs);
 
@@ -139,7 +151,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
   //   "address": the pin could not be found (it would sit at the city center) or the street has no house number; "text": a word that needs a look in ANY free-text field, not only the name and description.
   const textBad = needsReview(biz, title, descr, street, address, where, area, form.get("lights_on"), form.get("radio"), form.get("installer_name"), form.get("installer_web"), webRaw);
   const holds = [];
-  if (!contest) { if (!located || !/^\s*\d/.test(street || address)) holds.push("address"); if (textBad) holds.push("text"); }
+  if (!contest) { if (!located || !/^\s*\d/.test(street || address)) holds.push("address"); if (textBad) holds.push("text"); if (geo.ambiguous) holds.push("ambiguous"); if (dupNote) holds.push("duplicate"); }
+  const reviewNote = [geo.ambiguous && `the address matches more than one place (${geo.ambiguous}): check the pin`, dupNote].filter(Boolean).join("; ").slice(0, 480);
 
   await env.DB.batch([
     env.DB.prepare(
@@ -149,6 +162,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
     ...ipPruneStatements(env),
   ]);
+
+  if (reviewNote) { try { await env.DB.prepare("UPDATE posts SET review_note = ? WHERE id = ?").bind(reviewNote, id).run(); } catch {} } // column from migration 0289; the hold itself does not depend on it
 
   // "Is this your home?" from the map: remember which automatic listing this display claims (shown to Admin when reviewing)
   try {
