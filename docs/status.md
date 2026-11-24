@@ -1,5 +1,13 @@
 # Status
 
+### Admin UI fixes from the Nov 24 audit: F5, F6, F7, F14, F15, F16, F17, F18 and the Event claims page (Nov 24)
+- **Event claims:** description now says approving makes the person the event's manager (edit, ticket link, photos, clip, buy Featured) and that they are emailed once; table has a readable Event column, the event page shows as a host-name link (full address in the tooltip), a clear Approved/Declined tag with how it was decided.
+- **F6** one shared `public/scrolltabs.js` (edge fade, brings the chosen tab into view) used by Admin `.seg`/`.emtabs` rows and the Pricing audience tabs (`data-scrolltabs` plus one script tag in `pricing.html`).
+- **F5/F16** desktop side menu groups fold (short screens start folded except the open page's group, choice remembered, folded groups show their red total); tablet rail is 88px with a name under every icon, red "waiting" badges only, aria-labels on all badges.
+- **F7/F15** tablet tables: narrower columns, pinned name column, right-edge fade; phones: row tap opens the record, tick-boxes sit in 44px squares, row actions and tab buttons 44px high.
+- **F14** dashboard: stale-jobs alert is one line with Details, filled count badges, greeting replaces the duplicate "Dashboard" title. **F17** event editor: one Save (sticky bar), two columns from 1200px, breadcrumb keeps its name. **F18** Cloudflare usage dates Month/Day/Year.
+- Not touched: F4/F8 (declined). `admin.css`/`admin.js` 20261124c, `scrolltabs.js` 20261124a. Tests 1223 pass. Not checked on a real phone or tablet; Chromium only.
+
 ### Dates Month/Day/Year and times in the device's time zone (Nov 21)
 Rey: every date not already Month/Day/Year should be, and times should use the local device's time zone.
 - **Admin** (`kit.js` `mdy()` and `localTime()`): ISO dates (2026-12-05) now read 12/05/2026 in Events, Submitted events (list and record), Contests, From Grok, Users and the contest passes lists; every "... UTC" timestamp (orders, claims, submissions, the log, Grok, Ads, limits, houses) now reads like 11/21/2026 11:41 AM in the device's own time zone. Left as they are: the Cloudflare usage notes that explain the real UTC reset time.

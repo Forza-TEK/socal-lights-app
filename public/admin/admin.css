@@ -378,7 +378,7 @@ button.ucount:focus-visible{outline:2px solid var(--season);outline-offset:2px}
 .crumb .csep{color:var(--muted)}
 body.admin .top .crumb h1{margin:0;font:600 14px/1.2 var(--font);color:var(--ink);letter-spacing:0;white-space:nowrap}
 .crumb #pdetail{display:inline-flex;align-items:center;gap:8px;min-width:0}
-.crumb #pdetail b{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:36ch}
+.crumb #pdetail b{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60ch}
 .ttool{position:relative;min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
 .ttool .tl{font:500 14px var(--font)}
 .bdot{position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;background:#e5484d;border:2px solid var(--bg);box-sizing:content-box}
@@ -633,3 +633,15 @@ details.limitbanner[open] .stmore::after{content:" (hide)"}
 details.limitbanner>span{display:block;margin-top:2px}
 .tcard b{display:inline-grid;place-items:center;min-width:40px;height:40px;padding:0 10px;box-sizing:border-box;border-radius:999px;background:var(--season);color:#fff;font:700 18px/1 var(--font);letter-spacing:0}
 :root[data-theme="dark"] .tcard b{color:#121212}
+
+/* Event editor: on a wide screen the record is two columns (event, when, where, details | placement, purchases, photos, video) with one Save bar; the breadcrumb keeps the page name whole */
+@media (min-width:1200px){
+  .rpage.evpage{max-width:1240px}
+  .evpage form.f:has(.evr){display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:0 20px;align-items:start}
+  .evpage .mfoot.sticky{grid-column:1/-1}
+}
+@media (min-width:700px){body.admin .top .crumb h1,.crumb #pgroup{flex:none;overflow:visible;text-overflow:clip}}
+
+/* Claims on a tablet: the Approved / Declined state also sits under the event name, because the Status column is off to the right of the scroll */
+.dtab.claims .clst{display:none;margin-top:6px}
+@media (min-width:700px) and (max-width:1099px){.dtab.claims .clst{display:block}}
