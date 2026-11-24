@@ -2,7 +2,7 @@
 // so a long list is split into the fewest routes of 9 or fewer, sized evenly, with each route starting where the last one ended.
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const MAX_STOPS = 9;
-import { nativeShare } from "/native.js?v=20261115a";
+import { nativeShare } from "/native.js?v=20261125a";
 import { MAPS, getMaps, routeUrl, placeUrl, navAttr, mapsNow, askMaps, setMaps } from "/maps.js?v=20261121a";
 export { routeUrl };
 
