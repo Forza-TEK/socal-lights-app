@@ -1,0 +1,88 @@
+# Weekly browser end-to-end run (audit F-49): the three Playwright scripts in tests/e2e/ against a LOCAL `wrangler pages dev` with a local D1 (migrations applied) and a local R2.
+# Nothing here touches production: no Cloudflare token, no Stripe key, no Resend key and no Turnstile secret are given to the job, and the scripts only sign in and submit to the local server
+# (DEV_AUTH=1 hands the sign-in code back on screen instead of emailing it, on localhost only).
+#
+# What this does and does not prove (read before trusting a green run):
+#  - Each script drives a real Chromium through a real flow (sign-in sheet; add a home; edit, delete and undo in Your profile; add an event). A screen that never appears, a button that cannot be
+#    clicked or a crash fails the step by timeout, and the step then fails the run. The scripts PRINT what they read (messages, focus targets) but do not assert those values: a wrong message with
+#    the screen still there stays green. Making them assert is the next step (docs/status.md).
+#  - They run in ORDER and share one browser sign-in (state.json): signin-sheet -> add-house-wizard -> profile-edit-delete. A failure in the first makes the others fail too.
+#  - NOT VERIFIED ON A RUNNER: written in a sandbox without a GitHub runner. Run in that sandbox against the same local server, signin-sheet passed (on its second try: the first timed out while the server
+#    was still compiling), add-house-wizard stopped at the "Where is it?" address step (it waited for the photo input that comes after it), and profile-edit-delete then found no home in Your profile.
+#    I could not tell whether the wizard stop is the sandbox having no internet (the address step may ask the Census geocoder, and the pages load Cloudflare's Turnstile script) or the script being
+#    out of date after the Nov 24 wizard changes. If the first manual run (Actions > Browser end-to-end > Run workflow) is red at step 2, open the e2e-out artifact (the server log and the screenshots the scripts take along the way; the scripts take none at the moment they fail).
+# A red run makes GitHub email the repository owners. Screenshots, script output and the server log are kept as an artifact for 14 days (always, so a green run can be compared).
+name: Browser end-to-end
+on:
+  schedule:
+    - cron: "23 15 * * MON"   # weekly, Monday 15:23 UTC (not on the hour; named weekday: numeric weekdays are off by one in Cloudflare cron, see docs/status.md F-27)
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: e2e
+  cancel-in-progress: false
+jobs:
+  e2e:
+    name: Playwright (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25   # a hung browser or server must not hold the queue (audit F-47)
+    env:
+      BASE: http://localhost:8791
+      OUT: ${{ github.workspace }}/e2e-out
+      PLAYWRIGHT_VERSION: "1.63.0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Playwright is not a dependency of the site, so it is installed for this job only (--no-save leaves package.json and the lockfile alone). The scripts import "playwright" from the repo's node_modules.
+      - name: Install Playwright and Chromium
+        timeout-minutes: 8
+        run: |
+          npm install --no-save "playwright@${PLAYWRIGHT_VERSION}"
+          npx playwright install --with-deps chromium
+      - name: Local database
+        run: |
+          mkdir -p "$OUT"
+          npx wrangler d1 migrations apply socal-lights --local
+      - name: Start the local site
+        run: |
+          nohup npx wrangler pages dev public --port 8791 --local --binding DEV_AUTH=1 > "$OUT/wrangler.log" 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS -o /dev/null "$BASE/"; then echo "server up after ${i}s"; break; fi
+            if [ "$i" = 60 ]; then echo "::error::the local server did not start in 60 s"; tail -40 "$OUT/wrangler.log"; exit 1; fi
+            sleep 1
+          done
+          # The first request to each Pages Function compiles it, which can take longer than a script waits: ask once now (signin-sheet timed out on its first local run and passed on the second).
+          for p in / /add-house /add-event /profile /api/events /api/me; do curl -sS -o /dev/null -m 60 "$BASE$p" || true; done
+      - name: 1. Sign-in sheet
+        run: node tests/e2e/signin-sheet.mjs 2>&1 | tee "$OUT/signin-sheet.log"; test "${PIPESTATUS[0]}" -eq 0
+        shell: bash
+        timeout-minutes: 5
+      - name: 2. Add a home (wizard)
+        run: node tests/e2e/add-house-wizard.mjs 2>&1 | tee "$OUT/add-house-wizard.log"; test "${PIPESTATUS[0]}" -eq 0
+        shell: bash
+        timeout-minutes: 6
+      - name: 3. Your profile (edit, delete, undo) and add an event
+        run: node tests/e2e/profile-edit-delete.mjs 2>&1 | tee "$OUT/profile-edit-delete.log"; test "${PIPESTATUS[0]}" -eq 0
+        shell: bash
+        timeout-minutes: 6
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Browser end-to-end"
+            echo "Result of the three scripts is in the step list above. Screenshots, script output and the local server log are in the artifact **e2e-out**."
+            echo "The scripts do not assert the values they print; read the logs if something looks off even when green."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-out
+          path: e2e-out
+          retention-days: 14
+          if-no-files-found: warn
