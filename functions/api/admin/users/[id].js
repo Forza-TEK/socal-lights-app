@@ -1,7 +1,8 @@
-// GET  /api/admin/users/:id — one person: profile, what they posted, contests they run, votes cast.
+// GET  /api/admin/users/:id — one person: profile, what they posted, contests they run, votes cast, what they bought.
 // POST /api/admin/users/:id { action } — signout | suspend | unsuspend | rename { name } | note { note } | delete { confirm: <their email> }
 import { json, err } from "../../../_lib/util.js";
 import { deleteAccount } from "../../../_lib/account.js";
+import { purchasesOf } from "../../../_lib/userbuys.js";
 
 const one = (env, id) => env.DB.prepare("SELECT id, email, name, street, city, zip, created_at, last_login, status, suspended_at, admin_note, (google_sub IS NOT NULL) AS google FROM users WHERE id = ?").bind(id).first();
 
@@ -18,7 +19,8 @@ export async function onRequestGet({ params, env }) {
     env.DB.prepare("SELECT id, name, city, status, start_date FROM event_submissions WHERE lower(contact_email) = lower(?) ORDER BY created_at DESC LIMIT 50").bind(user.email).all().then((r) => r.results).catch(() => []),
     env.DB.prepare("SELECT id, name, status FROM installers WHERE lower(owner_email) = lower(?)").bind(user.email).all().then((r) => r.results).catch(() => []),
   ]);
-  return json({ user, posts, contests, votes: votes.n, sessions: sessions.n, history, events, installers });
+  const purchases = await purchasesOf(env, user);
+  return json({ user, posts, contests, votes: votes.n, sessions: sessions.n, history, events, installers, purchases });
 }
 
 export async function onRequestPost({ params, request, env, data }) {
