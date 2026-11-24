@@ -1,5 +1,14 @@
 # Status
 
+### Home pages /h/<id> (F-35, Nov 24, branch work, not deployed)
+Every approved home (showcase homes and approved contest entries) has its own page like events have at `/e/<id>`: `functions/h/[id].js`, helpers in `functions/_lib/homepage.js`, `/h/*` added to `public/_routes.json`.
+- **What it shows:** only what the map card shows from `/api/posts` (`rowToPost`): photos (visible keys `p/...` only, never `photos_hidden`), video first (link or approved clip), title, poster name, city, installer line, winner lines the owner chose for the details page, description, address, lights on, visit/parking/stroller, radio, "see it", installer service area, phone, web. Never printed: email, tokens, review notes, consent time, any coordinates (no Directions button when there is no street address). Not on the page (on the map card): Favorite, "I saw it lit tonight".
+- **404** (the events' 404 page, noindex) for pending, declined, paused, removed (row deleted), unknown or malformed ids, and for a home the map hides because Admin kept the sweep record at that address.
+- **Search:** contest entries and older homes that show an address but have no address statement (`address_consent_at` empty) are `noindex,follow` and not in the sitemap; the other showcase homes are indexable and listed in `sitemap.xml` with the approved date. One constant to flip: `homeIndexable` in `homepage.js`.
+- **Cache:** `max-age=60, s-maxage=120` (shorter than events) so an unpublished home leaves the edge quickly.
+- **Links now `/h/<id>`:** receipt mail variable `map` (submit.js, template `home_live`), Featured-home mail (`featuremail.js`), Your profile "View listing" for homes, the app's share action (`app.js` 20261124b, 201,156 bytes). `/#h-<id>` links still work (map button, hash handler unchanged). Installer page cards and the contest page still open the map.
+- Tests: `tests/home-page.test.mjs`. Checked in Chromium at 390 and 1280 px, light and dark, local server; no horizontal overflow.
+
 ### Function audit batch: F-43, F-13, F-14, F-26, F-27, F-10 (Nov 24, branch work, not deployed)
 Code, tests and docs only; nothing was sent, charged or applied to production. Tests: whole suite passes (Stripe and Resend are stubbed in every new test).
 - **F-43 Report or hide:** new `public/report.js` (same form and `POST /api/report` as the map; no new endpoint, `app.js` untouched). Contest page (`contest.html`): a Report link on every entry row in the gallery and the ballot (ref `h-<post id>`, the same ref a home uses), "Report this contest" (ref `c-<slug>`), "Hide for me" hides the row and shares the map's `socal-hidden` device list. Installer page (`functions/installer/[slug].js`): "Report or hide" in the footer (ref `i-<slug>`). Not added to `installer-manage.html` (the owner's own page).
