@@ -561,3 +561,12 @@ body.admin .top .crumb h1{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .evthumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:0 0 12px}
 .evph{display:grid;gap:6px;position:relative}.evph img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:var(--surface-2)}
 .evph em{position:absolute;top:8px;left:8px;background:var(--ink);color:var(--surface);font:700 11px var(--font);font-style:normal;padding:3px 8px;border-radius:999px;letter-spacing:.04em}
+
+/* Event claims: the Event column keeps a readable width; the event page shows as a short host-name link (full address in its tooltip) */
+.dtab.claims th,.dtab.claims td{padding-left:12px;padding-right:12px}
+.dtab.claims td:first-child{min-width:210px}
+.dtab.claims .clwho{overflow-wrap:anywhere;min-width:170px}
+.dtab.claims a.clhost{display:inline-block;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.dtab.claims td:nth-child(5){white-space:normal;min-width:140px}
+.dtab.claims td:nth-child(5) .tag{white-space:nowrap}
+@media (max-width:760px){.dtab.claims a.clhost{max-width:100%;vertical-align:baseline}}
