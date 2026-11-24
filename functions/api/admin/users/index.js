@@ -12,7 +12,7 @@ const COLS = `u.id, u.email, u.name, u.created_at, u.last_login, u.status, u.sus
   (SELECT COUNT(*) FROM votes v WHERE v.user_id = u.id) AS votes,
   (SELECT COUNT(*) FROM feature_orders o WHERE o.user_id = u.id OR lower(o.email) = lower(u.email)) AS buys,
   (SELECT COALESCE(SUM(o.amount), 0) FROM feature_orders o WHERE o.status IN ('paid','held','dispute_won') AND (o.user_id = u.id OR lower(o.email) = lower(u.email))) AS spent`;
-const csvCell = (v) => { let s = String(v ?? ""); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }; // leading = + - @ would run as a formula in a spreadsheet
+import { csvCell } from "../../../_lib/csv.js";
 
 export async function onRequestGet({ request, env }) {
   const u = new URL(request.url), q = (u.searchParams.get("q") || "").trim().toLowerCase().slice(0, 80);
