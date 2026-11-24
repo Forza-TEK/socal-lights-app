@@ -8,6 +8,8 @@ import { INFO_LOG_SQL } from "./oplog.js";
 
 export const OP_LABEL = { mail: "Email send errors", email: "Email send errors", webhook: "Stripe webhook problems", "usage-alert": "Cloudflare usage alerts sent", "deploy-stalled": "Deploy stalled alerts sent", limit: "Cloudflare or email limits hit", renewal: "Automatic renewal problems", reconcile: "Stripe reconcile differences", ads: "Ad reporting problems", outreach: "Outreach problems", posts: "Home posting problems", contest: "Contest problems", account: "Account problems", badges: "Badge problems", removal: "Home removal problems", "sponsor-pay-link": "Sponsor payment link problems" };
 
+// Notices the site sent to its owner: the system worked, so they are shown apart and never counted as errors. `text` says in plain words what happened.
+const ALERT_KINDS = { "deploy-stalled": "A Cloudflare deploy looked stuck, and we emailed you.", "usage-alert": "A Cloudflare usage level was crossed, and we emailed you." };
 const ACTIVITY_LABEL = { outreach: "Outreach calls that worked", ads: "Ad reports received", "sponsor-pay-link": "Sponsor payment links set (for abuse review)" };
 
 export async function errorsLast7(env, jobs = [], now = Date.now()) {
@@ -18,9 +20,10 @@ export async function errorsLast7(env, jobs = [], now = Date.now()) {
   try { activity = (await env.DB.prepare("SELECT kind, COUNT(*) AS n, MAX(created_at) AS last FROM ops_log WHERE created_at > ? AND " + INFO_LOG_SQL + " GROUP BY kind ORDER BY n DESC").bind(since).all()).results.map((g) => ({ kind: g.kind, label: ACTIVITY_LABEL[g.kind] || g.kind, n: g.n, last: g.last })); } catch {}
   try { mailFailed = ((await env.DB.prepare("SELECT COUNT(*) AS n FROM mail_outbox WHERE status = 'failed' AND created_at > ?").bind(since).first()) || {}).n || 0; } catch {}
   const failedJobs = jobs.filter((j) => j.failed).map((j) => ({ job: j.job, label: j.label, last: j.last }));
-  const list = groups.map((g) => ({ kind: g.kind, label: OP_LABEL[g.kind] || g.kind, n: g.n, last: g.last, example: String(g.example || "").slice(0, 120) }));
+  const list = groups.filter((g) => !ALERT_KINDS[g.kind]).map((g) => ({ kind: g.kind, label: OP_LABEL[g.kind] || g.kind, n: g.n, last: g.last, example: String(g.example || "").slice(0, 120) }));
+  const alerts = groups.filter((g) => ALERT_KINDS[g.kind]).map((g) => ({ kind: g.kind, label: OP_LABEL[g.kind] || g.kind, n: g.n, last: g.last, text: ALERT_KINDS[g.kind] }));
   const total = list.reduce((t, g) => t + g.n, 0) + mailFailed + failedJobs.length;
-  return { total, groups: list, activity, mailFailed, failedJobs, ...(opsError ? { error: opsError } : {}), notStored: ["Server errors (5xx) and browser errors are not stored by this site. Cloudflare dashboard > Workers & Pages > socal-lights > Metrics shows server errors."] };
+  return { total, groups: list, alerts, activity, mailFailed, failedJobs, ...(opsError ? { error: opsError } : {}), notStored: ["Server errors (5xx) and browser errors are not stored by this site. Cloudflare dashboard > Workers & Pages > socal-lights > Metrics shows server errors."] };
 }
 
 // What the dashboard shows for "last run of each routine and workflow".

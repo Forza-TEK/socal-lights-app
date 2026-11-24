@@ -664,3 +664,5 @@ details.limitbanner>span{display:block;margin-top:2px}
 .fsec.flash{animation:fsflash 2.2s ease-out}
 @keyframes fsflash{0%,40%{box-shadow:0 0 0 3px var(--bad)}100%{box-shadow:0 0 0 3px transparent}}
 @media (prefers-reduced-motion:reduce){.fsec.flash{animation:none;box-shadow:0 0 0 3px var(--bad)}}
+
+.calm .wic{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--bad);color:var(--bad);font:700 20px/1 var(--font)}
