@@ -1,6 +1,6 @@
 // SoCal Lights Finder — public map app
 import { CITY } from "/cities.js?v=20261115i";
-import { IN_APP as NATIVE_IN_APP, nativeShare, syncReminder } from "/native.js?v=20261115a";
+import { IN_APP as NATIVE_IN_APP, nativeShare, syncReminder } from "/native.js?v=20261125a";
 import { SEASONS, SEASON_KEYS, TYPE_SHORT, defaultSeason, seasonsFrom, seasonStarts, phaseFor } from "/seasons.js?v=20261115a";
 import { STOCK } from "/stock.js?v=20261114a";
 import { parseVideo } from "/video.js?v=20261115a";
@@ -10,7 +10,7 @@ import "/norm-ui.js?v=20261102b";
 import { me as authMe } from "/auth.js?v=20261116a";
 import "/chrome.js?v=20261121a"; // the account circle opens the same menu as on every other page
 import { fmtPhone, telHref } from "/norm.js?v=20261102b";
-import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261121a";
+import { openRouteSheet, legs as routeLegs } from "/tour.js?v=20261125a";
 import { MAPS, getMaps, setMaps, routeUrl, navAttr, mapsNow } from "/maps.js?v=20261121a";
 import { contestImage } from "/contesticon.js?v=20261111a";
 import { initBanner, updateBanner, regionKey, bannerHeight, topSponsors, sponsorCard, watchTopCards } from "/banner.js?v=20261124a";

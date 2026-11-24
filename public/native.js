@@ -33,3 +33,14 @@ export async function syncReminder(ev, on) {
     return true;
   } catch { return false; }
 }
+
+// Universal links (audit F-45): when the installed app is opened by a tapped socallights.app link (the AASA file lists which paths), @capacitor/app reports the URL;
+// go to that page inside the app. Only our own host and the content paths are followed; anything else is ignored.
+(function () {
+  const A = plugin("App"); if (!A || !A.addListener) return;
+  try {
+    A.addListener("appUrlOpen", (e) => {
+      try { const u = new URL(e && e.url); if (u.protocol === "https:" && u.hostname === "socallights.app" && /^\/(e|h|c|in)(\/|$)/.test(u.pathname) && (location.pathname + location.search) !== u.pathname + u.search) location.href = u.pathname + u.search + u.hash; } catch {}
+    });
+  } catch {}
+})();
