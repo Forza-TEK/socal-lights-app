@@ -21,7 +21,11 @@ export async function onRequest(context) {
   const existed = !t.id && !!bid && !!(await labelFor(env, t.area, bid));
   const before = await snapshot(env, t.area, t.id || bid); // an event edit logs which fields changed, with the old and new values
   const res = await context.next();
-  const detail = res.status < 400 && before ? diffDetail(before, await snapshot(env, t.area, t.id || bid)) : "";
+  let detail = res.status < 400 && before ? diffDetail(before, await snapshot(env, t.area, t.id || bid)) : "";
+  if (res.status < 400 && context.data.logExtra) { // a handler can add plain facts to the line (the merge names the duplicate it removed); shown before the changed fields
+    let d = {}; try { d = detail ? JSON.parse(detail) : {}; } catch {}
+    detail = JSON.stringify({ ...context.data.logExtra, ...d }).slice(0, 1800);
+  }
   if (res.status < 400) await record(env, { admin: who.email, area: t.area, action: existed && !(body && body.action) ? "edit" : actionName(request.method, body, t.id), id: t.id || bid, label, detail });
   return res;
 }

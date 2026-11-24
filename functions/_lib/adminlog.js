@@ -23,7 +23,7 @@ const AREAS = {
 // "/api/admin/posts/abc" -> { area: "posts", id: "abc" }; null for anything that isn't a logged area
 export function parseTarget(pathname) {
   const m = pathname.match(/^\/api\/admin\/([a-z]+)(?:\/([^/]+))?\/?$/);
-  if (m && m[1] === "events" && m[2] === "revert") return { area: "events", id: "" }; // POST /api/admin/events/revert { id, action }: the event is named in the body, so the log shows its name and changed fields
+  if (m && m[1] === "events" && (m[2] === "revert" || m[2] === "merge" || m[2] === "recheck")) return { area: "events", id: "" }; // POST /api/admin/events/revert | merge | recheck { id, action }: the event is named in the body, so the log shows its name and changed fields
   return m && AREAS[m[1]] ? { area: m[1], id: m[2] ? decodeURIComponent(m[2]) : "" } : null;
 }
 // What the item is called right now (read before the change, so a delete still has a name)

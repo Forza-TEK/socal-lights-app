@@ -645,3 +645,22 @@ details.limitbanner>span{display:block;margin-top:2px}
 /* Claims on a tablet: the Approved / Declined state also sits under the event name, because the Status column is off to the right of the scroll */
 .dtab.claims .clst{display:none;margin-top:6px}
 @media (min-width:700px) and (max-width:1099px){.dtab.claims .clst{display:block}}
+
+/* Event editor: Merge a duplicate, Check the page, and the "Add photo" jump (Admin tools, Nov 24) */
+.mglist{display:grid;gap:6px}
+.mglist .mgpick{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;min-height:44px;height:auto;white-space:normal;padding:8px 12px;width:100%}
+.fsec{scroll-margin-top:84px}
+.mgpick .sub{font-size:13px;font-weight:400;color:var(--muted)}
+.mgbox{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;background:var(--surface-2,var(--tile))}
+.mgwarn{margin:0 0 8px;padding:8px 10px;border:1px solid var(--line2);border-radius:8px;font-size:14px}
+.mgrows{display:grid;gap:0;margin:0 0 4px}
+.mgrow{border-top:1px solid var(--line);padding:10px 0}
+.mgrow .chk{display:flex;align-items:center;gap:8px;min-height:44px;flex-wrap:wrap;margin:0}.mgrow input[type=checkbox]{width:22px;height:22px;flex:none}
+.mgrow .sub{font-size:13px;color:var(--muted)}
+.mgcmp{display:grid;gap:6px;padding-left:30px;overflow-wrap:anywhere}
+.mgcmp em{display:block;font-style:normal;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.mgcmp i{color:var(--muted)}
+.chkrow{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line)}
+.fsec.flash{animation:fsflash 2.2s ease-out}
+@keyframes fsflash{0%,40%{box-shadow:0 0 0 3px var(--bad)}100%{box-shadow:0 0 0 3px transparent}}
+@media (prefers-reduced-motion:reduce){.fsec.flash{animation:none;box-shadow:0 0 0 3px var(--bad)}}

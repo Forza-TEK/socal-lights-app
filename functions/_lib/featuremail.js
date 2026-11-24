@@ -36,7 +36,7 @@ export async function sendHomeFeaturePaidEmail(env, { order, name, until, homeId
   try {
     return await sendTemplate(env, "feature_paid_home", to, {
       name: name || "your home", plan: p.label || order.plan, amount: money(order.amount), until: until ? nice(until) : "the end of the 30 days", list,
-      link: homeId ? `${SITE}/#h-${homeId}` : `${SITE}/profile#displays`, ...receiptExtras(order, "home"),
+      link: homeId ? `${SITE}/h/${homeId}` : `${SITE}/profile#displays`, ...receiptExtras(order, "home"),
     });
   } catch (e) { console.error("home feature email", e && e.message); return false; }
 }
