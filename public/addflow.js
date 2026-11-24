@@ -130,7 +130,7 @@ export function attachAddress(root, { getCity = () => "", onPick = () => {} } = 
 
 /* ---------- the engine ---------- */
 // o: { steps, data, root, exit, season(d), persist (localStorage key), noPersist: [keys], account: { kind, title(d) }, addr: { cities }, actions: { name(arg, api) }, after(step) }
-// step: { id, sec, title, help, body(d), check(d) -> error text, skip(d), cta, redraw, submit(d, api) }
+// step: { id, sec, title, help, body(d), check(d) -> error text, skip(d), leave(d) async, cta, redraw, submit(d, api) }
 // o.persist is the draft's base name ("scl-house-draft"); the draft is kept under that name PLUS the signed-in account (o.uid: the account id, or a function that returns it), so two people on one
 // browser never see each other's draft. The answers live in localStorage, the photos in IndexedDB (public/drafts-local.js), both removed at sign-out and when the form is sent.
 export function run(o) {
@@ -224,6 +224,7 @@ export function run(o) {
       }
       S.busy = false; return;
     }
+    if (s.leave) { S.busy = true; try { await s.leave(d); } catch {} S.busy = false; } // an optional async step hook (the add-event form looks for matching listings here)
     S.i++; save(); draw(true);
   }
   // Save & exit: sign in if needed, keep the answers on your account, and go to your profile. The photos stay on this device with the draft (IndexedDB), so Continue on this device brings them back.

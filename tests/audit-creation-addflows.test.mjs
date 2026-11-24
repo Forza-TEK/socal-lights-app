@@ -47,5 +47,5 @@ test("L14: docs/contests.md describes the live hub, sign-in before step 1, and t
 test("the changed script has one new version on every page that loads it (phones keep the old file for 4 hours otherwise)", () => {
   const tags = new Set();
   for (const dir of ["public", "public/admin"]) for (const f of readdirSync(dir).filter((n) => /\.(html|js)$/.test(n))) for (const m of read(`${dir}/${f}`).matchAll(/\/addflow\.js\?v=([0-9a-z]+)/g)) tags.add(m[1]);
-  assert.deepEqual([...tags], ["20261121b"]);
+  assert.deepEqual([...tags], ["20261124a"]);
 });

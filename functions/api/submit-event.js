@@ -14,6 +14,7 @@ import { ptToday } from "../_lib/time.js";
 import { checkSubmitLimits, limitResponse } from "../_lib/submitlimit.js";
 import { sendReceipt } from "../_lib/receipt.js";
 import { EVENT_PLANS, eventQuote } from "../_lib/featured.js";
+import { findMatches } from "../_lib/eventmatch.js";
 
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const day = (s) => { const [, m, d] = String(s).split("-").map(Number); return MON[m - 1] + " " + d; };
@@ -61,6 +62,35 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (needsReview(e.name, e.blurb, e.venue, e.hours, e.price, e.address, e.url)) return err(400, "That doesn't look like a community event listing.");
   if (!e.free && !e.price) e.price = "Price not listed";
   if (e.free && !e.price) e.price = "Free";
+
+  // The organizer chose "this is my event" on a listing the form found (a sweep row, or anything not managed by someone else): update THAT listing with what they entered and make them its owner,
+  // instead of adding a second one. This stands in for the claim step, because they are adding the event themselves. The id must be one the matcher returns for what they entered
+  // (so an id cannot be picked at random), and a listing another organizer manages is never touched. What was there before is written into the submission's note, for Admin.
+  const matchId = clean(b.match_id, 80);
+  if (matchId) {
+    const m = (await findMatches(env, user, { name: e.name, city: e.city, start: e.start_date, end: e.end_date, address: e.address, today })).find((x) => x.id === matchId);
+    if (!m) return err(400, "That listing no longer matches what you entered. Go back and check it, or add yours as a new event.");
+    if (m.mine) return json({ ok: true, status: "duplicate", id: m.id, mine: true, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), message: "You already manage this event, and it is on the map." });
+    if (m.managed) return err(409, "Another organizer already manages that listing. Email info@socallights.app and we will sort it out.");
+    const old = await env.DB.prepare("SELECT name, start_date, end_date, venue, address, url, hours, price FROM events WHERE id = ?").bind(matchId).first();
+    if (!old) return err(404, "That listing is gone. Add your event as a new one.");
+    let [mlat, mlng] = CITY[e.city];
+    const mgeo = {}, mpt = await geocodeAddress(e.address, e.city, [mlat, mlng], 30, fetch, mgeo), mlocated = !!mpt; if (mpt) [mlat, mlng] = mpt;
+    const { results: mevs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
+    const mcounty = nearestCounty(mlat, mlng, mevs), sid = newId();
+    const was = `${old.name}; ${old.start_date}${old.end_date !== old.start_date ? " to " + old.end_date : ""}; ${old.venue || "no venue"}; ${old.address || "no address"}; ${old.hours || "no hours"}; ${old.price || "no price"}`.slice(0, 330);
+    const note = [`updated the existing listing ${matchId} instead of adding a new one (it was: ${was})`, !mlocated && "pin is at the city center (address not found)", mgeo.ambiguous && `the address matches more than one place (${mgeo.ambiguous}): check the pin`].filter(Boolean).join("; ");
+    await env.DB.batch([
+      env.DB.prepare(`INSERT INTO event_submissions (id,status,name,county,city,season,type,start_date,end_date,free,price,hours,lat,lng,blurb,url,venue,address,contact_email,verified,note,event_id)
+        VALUES (?,'published',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)`).bind(sid, e.name, mcounty, e.city, e.season, e.type, e.start_date, e.end_date, e.free, e.price, e.hours, mlat, mlng, e.blurb, e.url || old.url || "", e.venue, e.address, e.email, note.slice(0, 480), matchId),
+      env.DB.prepare("INSERT INTO submit_log (ip) VALUES (?)").bind(ip),
+      ...ipPruneStatements(env),
+    ]);
+    await upsertEvent(env, { id: matchId, name: e.name, county: mcounty, city: e.city, type: e.type, start_date: e.start_date, end_date: e.end_date, status: "confirmed", free: e.free, price: e.price, hours: e.hours, lat: mlat, lng: mlng, blurb: e.blurb, url: e.url || old.url || "", season: e.season, venue: e.venue, address: e.address });
+    await bump(env, "fn:add-event-done");
+    const receipt = await sendReceipt(env, waitUntil, { id: "event_live", to: e.email, vars: { name: e.name, when: whenOf(e), map: `https://socallights.app/#e-${matchId}`, link: "https://socallights.app/profile#events" } });
+    return json({ ok: true, status: "published", updated: true, id: matchId, submission_id: sid, featurable: featurable({ start_date: e.start_date, end_date: e.end_date }), located: mlocated, receipt: receipt === "queued" ? "sent" : "", email: e.email, message: "We updated the existing listing with your details. It is yours to manage now." });
+  }
 
   // Already on the map? The answer says whose it is and whether it can be featured, so the page shows only what is true (no "Feature your event" for someone else's event).
   const dup = await env.DB.prepare("SELECT id, start_date, end_date, featured, featured_until, banner_until FROM events WHERE (lower(name) = lower(?) AND start_date = ?) OR (lower(address) = lower(?) AND start_date = ? AND lower(city) = lower(?)) LIMIT 1")
