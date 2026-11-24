@@ -111,7 +111,7 @@ jobs:
       - name: Apply migrations to the live database
         if: steps.check.outputs.skip != 'true'
         run: npx wrangler d1 migrations apply socal-lights --remote
-      - name: Smoke check the live site after the migration (event count within 5 percent, the events API answers); a failure opens the same issue as a failed migration
+      - name: Smoke check after the migration (event count within 5 percent; the events API request is a warning only); a count failure opens the same issue as a failed migration
         if: steps.check.outputs.skip != 'true'
         run: |
           npx wrangler d1 execute socal-lights --remote --json --command "SELECT COUNT(*) AS n FROM events" > "$RUNNER_TEMP/after.json"
@@ -119,8 +119,9 @@ jobs:
           BEFORE="${{ steps.before.outputs.n }}"
           echo "Events before: ${BEFORE:-unknown}, after: $AFTER"
           if [ -n "$BEFORE" ] && [ "$AFTER" -lt $(( BEFORE * 95 / 100 )) ]; then echo "::error::The migration removed more than 5 percent of the events ($BEFORE to $AFTER). It is applied; check it now."; exit 1; fi
+          # The live-site request is a warning only: Cloudflare's bot protection answers GitHub's runners with a 403 (it did on 2026-11-24), and we do not work around that.
           CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "https://socallights.app/api/events?head=1")
-          if [ "$CODE" != "200" ]; then echo "::error::https://socallights.app/api/events answered $CODE after the migration."; exit 1; fi
+          if [ "$CODE" != "200" ]; then echo "::warning::https://socallights.app/api/events answered $CODE from the runner (a 403 is the bot protection; check the site yourself if the event count above also looks wrong)."; fi
       - name: Also bring the PREVIEW database up to date (previews use their own database, see docs/runbooks/preview-isolation.md)
         if: steps.check.outputs.skip != 'true'
         continue-on-error: true   # never blocks the live migration; a failure only means previews may show errors until it is fixed
