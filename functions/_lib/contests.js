@@ -1,5 +1,6 @@
 // Shared helpers for home decorating contests.
-import { err, clean, nearestCounty } from "./util.js";
+import { err, clean } from "./util.js";
+import { countyFor as countyForCity } from "./citycounty.js";
 import { upsertEvent } from "./events.js";
 import { r2Delete, photoKeys } from "./dbchunk.js";
 import { logOp } from "./oplog.js";
@@ -132,8 +133,7 @@ export const unlistFromMap = async (env, c, by = "unpublished") => c.event_id ? 
 
 export async function countyFor(env, city) {
   const [lat, lng] = CITY[city];
-  const { results } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
-  return nearestCounty(lat, lng, results);
+  return countyForCity(env, city, lat, lng); // F-07: the city table first, the nearest event only as a fallback
 }
 
 // Moves an entry's photos from pending/ to p/ so the public photo route can serve them, then approves it.

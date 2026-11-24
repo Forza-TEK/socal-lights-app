@@ -1,6 +1,7 @@
 // POST /api/submit — public "Showcase a House" form (multipart/form-data).
 // Saves the post as 'pending' and its photos under pending/<id>/ in R2.
-import { json, err, clean, webUrl, newId, verifyTurnstile, nearestCounty, geocodeAddress } from "../_lib/util.js";
+import { json, err, clean, webUrl, newId, verifyTurnstile, geocodeAddress } from "../_lib/util.js";
+import { countyFor } from "../_lib/citycounty.js";
 import { sendTemplate } from "../_lib/mailtpl.js";
 import { bump } from "../_lib/funnel.js";
 import { ipPruneStatements } from "../_lib/retention.js";
@@ -144,8 +145,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // The pin goes on the exact address; if it can't be found it falls back to the city center (the admin can fix it)
   let [lat, lng] = CITY[city];
   const geo = {}, pt = await geocodeAddress(address, city, [lat, lng], 30, fetch, geo); const located = !!pt; if (pt) [lat, lng] = pt; // geo.ambiguous: the Census found two places for this address (audit F-04)
-  const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all();
-  const county = nearestCounty(lat, lng, evs);
+  const county = await countyFor(env, city, lat, lng); // F-07: from the city table, no events scan
 
   // M2: what makes a new home wait for a person instead of going live (contest entries follow the organizer's own approval setting instead).
   //   "address": the pin could not be found (it would sit at the city center) or the street has no house number; "text": a word that needs a look in ANY free-text field, not only the name and description.

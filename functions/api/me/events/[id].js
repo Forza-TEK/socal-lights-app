@@ -7,7 +7,8 @@
 //   copy   : "Run again next year": a new event with every date moved forward a year, marked Expected (the owner's photos are not copied)
 //   removephoto / coverphoto { key } : remove one of the owner's photos, or make it the cover (the first one)
 import { politeFetch } from "../../../_lib/botfetch.js";
-import { json, err, clean, webUrl, newId, geocodeAddress, nearestCounty } from "../../../_lib/util.js";
+import { json, err, clean, webUrl, newId, geocodeAddress } from "../../../_lib/util.js";
+import { countyFor } from "../../../_lib/citycounty.js";
 import { CITY } from "../../../../public/cities.js";
 import { SEASONS } from "../../../../public/seasons.js";
 import { needsReview } from "../../../_lib/moderation.js";
@@ -102,7 +103,7 @@ export async function onRequestPost({ params, request, env }) {
     let { lat, lng, county } = s, located;
     if (CITY[city] && (city !== s.city || address.toLowerCase() !== String(s.address || "").toLowerCase())) {
       [lat, lng] = CITY[city]; const pt = await geocodeAddress(address, city, [lat, lng]); located = !!pt; if (pt) [lat, lng] = pt;
-      const { results: evs } = await env.DB.prepare("SELECT lat, lng, county FROM events").all(); county = nearestCounty(lat, lng, evs);
+      county = await countyFor(env, city, lat, lng);
     }
     // A new web page, name or first day is checked the way a new event's page is: "Confirmed" only when the page mentions the event and its year, otherwise "Expected".
     const cur = live ? await env.DB.prepare("SELECT status FROM events WHERE id = ?").bind(s.event_id).first() : null;
