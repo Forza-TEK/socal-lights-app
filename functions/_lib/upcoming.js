@@ -2,15 +2,16 @@
 // "more events in this city" and "nearby cities": every /e/<id> page reads it, so one scan of the events table (kept in the edge cache,
 // refreshed in the background) serves all of them instead of one scan per event page. Same pattern as the home page's city list.
 import { summarize } from "./cityindex.js";
+import { ownerKeys, ownerUrls } from "./eventphotos.js";
 
 const FRESH_MS = 1_200_000, KEEP_S = 7200, LEASE_MS = 30_000;
 const inflight = new Map();
-const COLS = "id, name, city, county, type, start_date, end_date, status, free, price, hours, image, lat, lng";
+const COLS = "id, name, city, county, type, start_date, end_date, status, free, price, hours, image, owner_photos, lat, lng";
 export const pacificToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
 
 export async function readUpcoming(env, today) {
   const { results } = await env.DB.prepare(`SELECT ${COLS} FROM events WHERE end_date >= ? ORDER BY start_date, name`).bind(today).all();
-  return results.map((r) => ({ id: r.id, n: r.name, city: r.city, c: r.county, t: r.type, s: r.start_date, e: r.end_date, st: r.status === "confirmed" ? "c" : "e", free: !!r.free, p: r.price || "", h: r.hours || "", img: r.image || "", lat: r.lat, lng: r.lng }));
+  return results.map((r) => ({ id: r.id, n: r.name, city: r.city, c: r.county, t: r.type, s: r.start_date, e: r.end_date, st: r.status === "confirmed" ? "c" : "e", free: !!r.free, p: r.price || "", h: r.hours || "", img: ownerUrls(ownerKeys(r.owner_photos))[0] || r.image || "", lat: r.lat, lng: r.lng }));
 }
 const copy = (list, builtAt) => new Response(JSON.stringify(list), { headers: { "content-type": "application/json", "cache-control": `public, s-maxage=${KEEP_S}`, "x-built": String(builtAt) } });
 

@@ -60,3 +60,15 @@ test("cover: an event's video comes first (tap-to-play link, or the approved cli
   await raw("UPDATE events SET video_ok = 1 WHERE id = 'conf'");
   h = await (await get(env, "conf")).text(); assert.match(h, /<video controls[^>]*src="\/api\/photo\/ev\/conf\/1\.mp4"/);
 });
+
+test("more events in the city: an event with only an organizer's uploaded photo shows it, one with no photo shows its first letter (not a blank box)", async () => {
+  const { env, raw } = newEnv(); raw.prepare("DELETE FROM events").run();
+  addEvent(raw, "main", { name: "Main Event", city: "Altadena" });
+  addEvent(raw, "mine", { name: "Harbor Glow", city: "Altadena" });
+  addEvent(raw, "none", { name: "Quiet Brunch", city: "Altadena" });
+  raw.prepare("UPDATE events SET status='confirmed' WHERE id IN ('main','mine','none')").run();
+  raw.prepare("UPDATE events SET owner_photos = ? WHERE id = 'mine'").run(JSON.stringify(["e/mine/1795498012093.jpg"]));
+  const h = await (await get(env, "main")).text();
+  assert.match(h, /<h3>Harbor Glow<\/h3>/); assert.match(h, /<img src="\/cdn-cgi\/image\/width=240,fit=cover\/https:\/\/socallights\.app\/api\/photo\/e\/mine\/1795498012093\.jpg"/);
+  const quiet = h.slice(h.indexOf("<h3>Quiet Brunch</h3>") - 260, h.indexOf("<h3>Quiet Brunch</h3>")); assert.match(quiet, /<span class="ph0" aria-hidden="true">Q<\/span>/);
+});
