@@ -86,6 +86,11 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%u)" != "7" ]; then echo "Photos are copied on Sundays; skipping"; exit 0; fi
           node scripts/backup-photos.mjs "$PHOTO_BUCKET" "$BACKUP_BUCKET"
+      - name: Check every file the database points at is in the backup (Sundays and on demand; counts only)
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%u)" != "7" ]; then echo "Checked on Sundays; skipping"; exit 0; fi
+          # Fails when a file that still exists in production (home or event photo, clip, logo, receipt) is missing from the backup bucket. Rows already pointing at nothing in production are only a warning.
+          node --no-warnings scripts/verify-backup.mjs backup.sql.gz --photos "$BACKUP_BUCKET" --live-bucket "$PHOTO_BUCKET"
       - name: Open or update a GitHub issue when the backup fails
         if: failure()
         env:
