@@ -341,7 +341,7 @@ async function renderSubs() {
   setDetail("");
   const tabs = [["pending", "Waiting", waiting.length], ["published", "Live", live.length], ["declined", "Declined", declined.length]];
   const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === SUBVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
-    <div class="pghead"><div><h2>Submitted events</h2><p>Events added by organizers through the Add your event form. They go live right away unless something looks wrong; open a row to review, edit or unpublish it.</p></div></div>`;
+    <div class="pghead"><div><h2>Submitted events</h2><p>Events added by organizers through the Add your event form. They go live right away unless something looks wrong; open a row to review, edit or unpublish it.</p></div><div class="pgacts">${dl("submissions")}</div></div>`;
   const bar = toolbar({ search: { placeholder: "Search events, cities" }, right: sortSelect(SSORTS, SSORT), count: String(SUBS.length) });
   const go = () => { wireToolbar(main.querySelector(".tbar"), { onSearch: (q) => filterCards(main, q), onSort: (v) => { SSORT = v; renderSubs(); } }); main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { SUBVIEW = b.dataset.view; renderSubs(); })); applyPreset(main); };
   if (!SUBS.length) { main.innerHTML = head + bar + `<div class="empty">${SUBVIEW === "pending" ? "Nothing waiting. New events go live right away; look under Live to review or unpublish them." : SUBVIEW === "declined" ? "Nothing declined." : "No submitted events are live."}</div>`; go(); return; }
@@ -431,7 +431,7 @@ async function renderClaims() {
   setCount("claims", pend.length); setDetail("");
   const tabs = [["pending", "Waiting", pend.length], ["approved", "Approved", ok.length], ["declined", "Declined", no.length]];
   const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === CLVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
-    <div class="pghead"><div><h2>Event claims</h2><p>Someone says an event is theirs. <b>Approving makes them the event's manager:</b> it appears in their profile under Events, where they can edit it, add a ticket link, photos and a video clip, and buy Featured for it. They are emailed once, whether you approve or decline. Declining gives no access.</p></div></div>`;
+    <div class="pghead"><div><h2>Event claims</h2><p>Someone says an event is theirs. <b>Approving makes them the event's manager:</b> it appears in their profile under Events, where they can edit it, add a ticket link, photos and a video clip, and buy Featured for it. They are emailed once, whether you approve or decline. Declining gives no access.</p></div><div class="pgacts">${dl("claims")}</div></div>`;
   const wire = () => main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { CLVIEW = b.dataset.view; renderClaims(); }));
   if (!rows.length) { main.innerHTML = head + `<div class="empty">${CLVIEW === "pending" ? "No claims waiting." : "Nothing here."}</div>`; wire(); return; }
   const st = (x) => (x.status === "pending" ? ["Waiting", "warn"] : x.status === "approved" ? ["Approved", "ok"] : ["Declined", "bad"]);
@@ -491,7 +491,7 @@ async function renderOrders() {
   setDetail("");
   const tabs = [["attention", "Needs attention", need.length], ["paid", "Paid", all.filter((o) => o.status === "paid").length], ["closed", "Refunded and disputed", all.filter((o) => o.status !== "paid").length], ["all", "All", all.length], ["renewals", "Renewals", rnRows.length]];
   const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === OVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>
-    <div class="pghead"><div><h2>Orders</h2><p>${OVIEW === "renewals" ? "Automatic installer renewals. Read-only." + (rn ? ` ${rn.counts.upcoming} upcoming, ${rn.counts.overdue} overdue, ${rn.counts.failed} failed, ${rn.counts.lapsed} lapsed, ${rn.counts.paused} paused.` : "") : "Featured placements and passes people paid for. Open one to see the payment, mark a refund or add a note."}</p></div></div>`;
+    <div class="pghead"><div><h2>Orders</h2><p>${OVIEW === "renewals" ? "Automatic installer renewals. Read-only." + (rn ? ` ${rn.counts.upcoming} upcoming, ${rn.counts.overdue} overdue, ${rn.counts.failed} failed, ${rn.counts.lapsed} lapsed, ${rn.counts.paused} paused.` : "") : "Featured placements and passes people paid for. Open one to see the payment, mark a refund or add a note."}</p></div><div class="pgacts">${dl("orders")}</div></div>`;
   const wire = () => { wireToolbar(main, { onView: (v) => { OVIEW = v; OPICKED = true; renderOrders(); }, onSearch: (q) => filterCards(main, q) }); main.querySelectorAll("[data-oopen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); OORDER = a.dataset.oopen; renderOrders(); })); };
   if (OVIEW === "renewals") {
     main.innerHTML = revenueStrip(rv) + head + toolbar({ search: { placeholder: "Search installers" }, count: String(rnRows.length) }) + (rnRows.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Installer</th><th>Plan</th><th>Next charge</th><th>Reminder sent</th><th>Retry</th><th>Status</th></tr></thead><tbody>${rnRows.map((r) => { const g = RG[r.group] || [r.group, ""]; return `<tr><td><b>${esc(r.name || r.installer_id)}</b><span class="sub">${esc(r.last_error || "")}</span></td><td>${esc(INST_PLAN[r.plan] || "Banner")}<span class="sub">${esc(money(r.price_cents))}</span></td><td>${esc(r.next_charge_date || "")}</td><td>${r.notice_sent_for ? "yes" : "not yet"}</td><td>${esc(r.retry_at || "")}</td><td><span class="tag ${g[1]}">${esc(g[0])}</span></td></tr>`; }).join("")}</tbody></table></div></div>` : `<div class="empty">No automatic renewals.</div>`);
@@ -741,7 +741,7 @@ const viewLink = (id) => `<a class="btn ghost" href="/e/${encodeURIComponent(id)
 const evBody = (e, over = {}) => ({ id: e.id, season: e.sn || "christmas", name: e.n, county: e.c, city: e.city, type: e.t, start: e.s, end: e.e, status: e.st === "c" ? "confirmed" : "expected", free: !!e.free, price: e.p, hours: e.h, lat: e.lat, lng: e.lng, blurb: e.b, url: e.u, venue: e.v, address: e.a, ...over });
 const evFiltered = () => {
   const w = EVQ.toLowerCase().split(/\s+/).filter(Boolean), test = healthTest(EVHEALTH);
-  return EVENTS.filter((e) => (evSeason === "all" || (e.sn || "christmas") === evSeason) && (!EVSTATUS || e.st === EVSTATUS) && (EVVIEW !== "grok" || String(e.id).startsWith("grok-")) && (EVVIEW !== "paid" || (placeInfo(e.id) || {}).on) && (EVVIEW !== "video" || (PLACE.clips && PLACE.clips[e.id] === 0)) && (EVVIEW !== "ended" || e.e < TODAY) && (!EVCOUNTY || e.c === EVCOUNTY) && (!test || test(e, TODAY)) && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x))).sort(EVCMP[EVSORT] || EVCMP.date);
+  return EVENTS.filter((e) => (evSeason === "all" || (e.sn || "christmas") === evSeason) && (!EVSTATUS || e.st === EVSTATUS) && (EVVIEW !== "grok" || String(e.id).startsWith("grok-")) && (EVVIEW !== "paid" || (placeInfo(e.id) || {}).on) && (EVVIEW !== "video" || (PLACE.clips && PLACE.clips[e.id] === 0)) && (EVVIEW !== "nophoto" || EVQ2.nophoto.has(e.id)) && (EVHEALTH !== "recheck" || (EVQ2.stale && EVQ2.stale.has(e.id))) && (EVVIEW !== "ended" || e.e < TODAY) && (!EVCOUNTY || e.c === EVCOUNTY) && (!test || test(e, TODAY)) && w.every((x) => (e.n + " " + e.city + " " + (e.p || "") + " " + e.c).toLowerCase().includes(x))).sort(EVCMP[EVSORT] || EVCMP.date);
 };
 // The event editor's Purchases section: every order recorded for this event (plan, amount, status, date), with a link to Orders.
 async function paintEvBuys(ev) {
@@ -790,6 +790,67 @@ function paintEvPhotos(ev, p) {
     } catch (e) { say(e.message); }
   };
 }
+// The event editor's "Merge a duplicate" section (audit F-30). This event is the one that stays. Step 1: find the duplicate (suggestions from the loaded list, or a search). Step 2: GET /api/admin/events/merge shows a preview:
+// which fields differ, which the duplicate would win by default (its organizer's details), what moves, and any reason the merge is refused (orders, claims). Step 3: a two-tap button posts the merge.
+function paintEvMerge(ev, done) {
+  const box = $("#evMerge"); if (!box) return;
+  const words = (n) => new Set(String(n).toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !["annual", "event", "festival", "holiday", "holidays", "lights", "christmas"].includes(w)));
+  const mine = words(ev.n), km = (a, b) => { const r = (x) => (x * Math.PI) / 180, d = Math.sin(r(b.lat - a.lat) / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(r(b.lng - a.lng) / 2) ** 2; return 12742 * Math.asin(Math.sqrt(d)); };
+  const row = (o) => `<button type="button" class="btn ghost mgpick" data-mgpick="${esc(o.id)}"><b>${esc(o.n)}</b><span class="sub">${esc(o.city)} · ${mdy(o.s)}${o.e !== o.s ? " to " + mdy(o.e) : ""} · ${esc(o.id)}</span></button>`;
+  const similar = EVENTS.filter((o) => o.id !== ev.id && o.e >= TODAY && (o.city === ev.city || km(o, ev) < 1.5) && ((n) => n >= 2 || (n >= 1 && km(o, ev) < 0.5))([...words(o.n)].filter((w) => mine.has(w)).length)).slice(0, 5);
+  const start = () => {
+    box.innerHTML = `${similar.length ? `<p class="meta" style="margin:0 0 6px">Possible duplicates (same area, similar name or very close):</p><div class="mglist">${similar.map(row).join("")}</div>` : '<p class="meta" style="margin:0 0 6px">No likely duplicates found. Search for the other listing:</p>'}
+      <div class="row" style="gap:8px;margin-top:8px"><input type="search" id="mgQ" placeholder="Search by name, city, address or id" aria-label="Find the duplicate" style="flex:1;min-width:0"></div><div class="mglist" id="mgRes" style="margin-top:6px"></div><div id="mgPrev"></div>`;
+    $("#mgQ").oninput = (x) => { const w = x.target.value.toLowerCase().split(/\s+/).filter(Boolean); $("#mgRes").innerHTML = w.length ? EVENTS.filter((o) => o.id !== ev.id && w.every((t) => (o.n + " " + o.city + " " + (o.a || "") + " " + o.id).toLowerCase().includes(t))).slice(0, 8).map(row).join("") || '<p class="meta" style="margin:0">Nothing matches that.</p>' : ""; wirePick(); };
+    wirePick();
+  };
+  const wirePick = () => box.querySelectorAll("[data-mgpick]").forEach((b) => (b.onclick = () => load(b.dataset.mgpick)));
+  const dmy = (t) => String(t || "").replace(/\d{4}-\d{2}-\d{2}/g, (d) => mdy(d));
+  async function load(dupId) {
+    const out = $("#mgPrev"); out.innerHTML = '<p class="meta">Loading the comparison…</p>';
+    let p; try { p = await api("/api/admin/events/merge?keep=" + encodeURIComponent(ev.id) + "&duplicate=" + encodeURIComponent(dupId), { cache: "no-store" }); } catch (x) { out.innerHTML = `<p class="msg err">${esc(x.message)}</p>`; return; }
+    const diff = p.groups.filter((g) => g.differs && g.has_duplicate_value), same = p.groups.filter((g) => !g.differs && (g.keep || g.duplicate)).map((g) => g.label);
+    const who = { duplicate: "The duplicate has the organizer's submission, so its details are ticked.", keep: "This event has the organizer's submission, so only its blanks are ticked.", both: "Both listings have an organizer.", neither: "Neither listing has an organizer; only blank fields are ticked." }[p.managed];
+    out.innerHTML = `<div class="mgbox">
+      <p style="margin:0 0 4px"><b>Keep:</b> ${esc(p.keep.name)} <span class="sub">${esc(p.keep.city)} · ${mdy(p.keep.start)}${p.keep.end !== p.keep.start ? " to " + mdy(p.keep.end) : ""}</span></p>
+      <p style="margin:0 0 8px"><b>Remove:</b> ${esc(p.duplicate.name)} <span class="sub">${esc(p.duplicate.city)} · ${mdy(p.duplicate.start)}${p.duplicate.end !== p.duplicate.start ? " to " + mdy(p.duplicate.end) : ""} · ${esc(p.duplicate.id)}</span> <button type="button" class="btn ghost sm" id="mgBack">Pick another</button></p>
+      ${p.blockers.map((b) => `<p class="msg err" role="alert" style="margin:0 0 8px">${esc(b)}</p>`).join("")}${p.warnings.map((w) => `<p class="mgwarn">${esc(w)}</p>`).join("")}
+      <p class="meta" style="margin:0 0 6px">${esc(who)} Untick anything that should stay as it is on this event.</p>
+      ${diff.length ? `<div class="mgrows">${diff.map((g) => `<div class="mgrow"><label class="chk"><input type="checkbox" data-mgf="${esc(g.key)}" aria-label="Take ${esc(g.label)} from the duplicate" ${g.default ? "checked" : ""}> <b>${esc(g.label)}</b> <span class="sub">take the duplicate's</span></label><div class="mgcmp"><span><em>This event now</em>${esc(dmy(g.keep)) || '<i>empty</i>'}</span><span><em>The duplicate has</em>${esc(dmy(g.duplicate))}</span></div></div>`).join("")}</div>` : '<p class="meta" style="margin:0 0 8px">The two listings have no different details.</p>'}
+      ${same.length ? `<p class="meta" style="margin:8px 0 0">Already the same: ${esc(same.join(", "))}.</p>` : ""}
+      <p class="meta" style="margin:8px 0 10px">${p.moves.submissions ? `${p.moves.submissions} submission${p.moves.submissions === 1 ? "" : "s"} from the duplicate's organizer will be pointed at this event. ` : "No organizer submission moves. "}The duplicate's page, photos and clip files are kept; Undo (shown after) brings it back.</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost danger" id="mgGo" ${p.can_merge ? "" : "disabled"}>Merge and remove the duplicate</button><span class="msg" id="mgMsg" role="status"></span></div></div>`;
+    $("#mgBack").onclick = () => start();
+    $("#mgGo").onclick = async (x) => {
+      const b = x.target; if (!tap(b, "merge")) return;
+      const fields = [...out.querySelectorAll("[data-mgf]")].filter((c) => c.checked).map((c) => c.dataset.mgf); b.disabled = true;
+      try {
+        const r = await api("/api/admin/events/merge", { method: "POST", body: JSON.stringify({ id: ev.id, keep: ev.id, duplicate: dupId, fields, action: "merge" }) });
+        toast(`Merged: ${p.duplicate.name} was removed`, false, { undo: () => restoreEvents([dupId]) }); done(r);
+      } catch (er) { b.disabled = false; b.textContent = "Merge and remove the duplicate"; const m = $("#mgMsg"); m.className = "msg err"; m.textContent = er.message; }
+    };
+  }
+  start();
+}
+// The event editor's "Check the event's page" section: the last result, and a button that fetches the page again (POST /api/admin/events/recheck). It only reports; nothing about the event changes.
+function paintEvCheck(ev, p) {
+  const box = $("#evChk"); if (!box) return;
+  const last = p.checked_at ? `<p style="margin:0 0 8px">Last re-checked ${esc(localTime(p.checked_at))}. ${esc(p.check_note || "")}</p>` : `<p class="meta" style="margin:0 0 8px">${p.check_note ? esc(p.check_note) + " " : ""}This event's page has never been re-checked from here.</p>`;
+  box.innerHTML = `${last}${ev.u ? `<div class="row" style="gap:10px;flex-wrap:wrap"><button type="button" class="btn ghost" id="evChkGo">Re-check this event's page</button><a class="btn ghost" href="${esc(ev.u)}" target="_blank" rel="noopener">Open the page</a></div><div id="evChkOut" role="status" style="margin-top:10px"></div>` : '<p class="meta" style="margin:0">There is no event website on this event. Add one in Details, save, then come back.</p>'}`;
+  const go = $("#evChkGo"); if (!go) return;
+  go.onclick = async () => {
+    go.disabled = true; const out = $("#evChkOut"); out.textContent = "Reading the page… this can take up to 20 seconds."; out.className = "meta";
+    try {
+      const r = await api("/api/admin/events/recheck", { method: "POST", body: JSON.stringify({ id: ev.id, action: "recheck" }) });
+      const yn = (v) => (v ? '<span class="tag ok">Yes</span>' : '<span class="tag bad">No</span>');
+      out.className = "";
+      out.innerHTML = r.read ? `<div class="chkrow"><span>Still mentions the event name</span>${yn(r.still_mentions_name)}</div><div class="chkrow"><span>Still mentions ${esc(r.year)}</span>${yn(r.still_mentions_year)}</div><div class="chkrow"><span>Says cancelled, postponed or rescheduled</span>${r.cancel_words ? '<span class="tag warn">Yes: read the page</span>' : '<span class="tag ok">No</span>'}</div><p class="meta" style="margin:8px 0 0">Saved on the event ${esc(localTime(r.checked_at))}. Nothing about the event was changed.</p>`
+        : `<p style="margin:0"><span class="tag warn">Could not read the page</span> ${esc(r.note)}</p><p class="meta" style="margin:6px 0 0">Open the page yourself. It stays on the "not re-checked" list.</p>`;
+      toast(r.read ? "Page re-checked" : "The page could not be read");
+    } catch (x) { out.className = "msg err"; out.textContent = x.message; }
+    go.disabled = false;
+  };
+}
 // The event editor's Video section: the uploaded clip (watch it, Approve, Remove) or the link.
 function paintEvVid(ev, p) {
   const box = $("#evVid"); if (!box) return;
@@ -812,6 +873,8 @@ function paintEvVid(ev, p) {
 }
 // What each event has bought (pin, top of the list, banner) from /api/admin/placements; "active" means today is on or before the last day.
 let PLACE = { today: "", events: {} };
+// The two Events work queues (GET /api/admin/event-queues): upcoming events with no photo at all, and upcoming confirmed events whose page was not re-checked in 30 days.
+let EVQ2 = { nophoto: new Set(), stale: null, checked: {} };
 const placeInfo = (id) => {
   const x = PLACE.events[id]; if (!x) return null; const t = PLACE.today;
   const pin = x.level >= 1 && (!x.until || x.until >= t), top = x.level >= 2 && pin, ban = !!x.banner && x.banner >= t;
@@ -825,14 +888,15 @@ const placeCell = (id) => {
 };
 async function renderEvents() {
   if (PVIEW === "video") { EVVIEW = "video"; EVSTATUS = ""; PVIEW = "pending"; } // the Dashboard card "event videos waiting"
-  const [evs, pl] = await Promise.all([fetch("/api/admin/events", { cache: "no-store" }).then((r) => r.json()), api("/api/admin/placements").catch(() => null)]);
+  const [evs, pl, qu] = await Promise.all([fetch("/api/admin/events", { cache: "no-store" }).then((r) => r.json()), api("/api/admin/placements").catch(() => null), api("/api/admin/event-queues").catch(() => null)]);
   EVENTS = evs; if (pl) PLACE = pl;
+  if (qu) EVQ2 = { nophoto: new Set(qu.nophoto || []), stale: qu.stale ? new Set(qu.stale) : null, checked: qu.checked || {} };
   const main = $("#main");
   const sel = (id, label, opts, cur) => `<select id="${id}" aria-label="${label}">${opts.map(([k, l]) => `<option value="${esc(k)}" ${k === cur ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
   const seasonSel = sel("evSeason", "Season", [["all", "All seasons"], ...Object.entries(SEASONS).map(([k, v]) => [k, v.label])], evSeason);
   const filters = seasonSel + sel("evCounty", "County", [["", "All counties"], ...COUNTIES.map((c) => [c, c + " County"])], EVCOUNTY)
-    + sel("evHealth", "Needs a look", [["", "Everything"], ...HEALTH.map(([k, l]) => [k, l])], EVHEALTH) + sortSelect(EVSORTS, EVSORT);
-  const paidN = EVENTS.filter((e) => (placeInfo(e.id) || {}).on).length, vidN = EVENTS.filter((e) => PLACE.clips && PLACE.clips[e.id] === 0).length, evTabs = [["", "All events"], ["e", "Expected"], ["c", "Confirmed"], ["paid", "Paid placements" + (paidN ? " " + paidN : "")], ["video", "Videos waiting" + (vidN ? " " + vidN : "")], ["grok", "From Grok"], ["ended", "Ended"]], evOn = () => EVVIEW || EVSTATUS;
+    + sel("evHealth", "Needs a look", [["", "Everything"], ...HEALTH.map(([k, l]) => [k, l]), ...(EVQ2.stale ? [["recheck", `Page not re-checked in 30 days (${EVQ2.stale.size})`]] : [])], EVHEALTH) + sortSelect(EVSORTS, EVSORT);
+  const paidN = EVENTS.filter((e) => (placeInfo(e.id) || {}).on).length, vidN = EVENTS.filter((e) => PLACE.clips && PLACE.clips[e.id] === 0).length, evTabs = [["", "All events"], ["e", "Expected"], ["c", "Confirmed"], ["paid", "Paid placements" + (paidN ? " " + paidN : "")], ["video", "Videos waiting" + (vidN ? " " + vidN : "")], ["nophoto", "No photo" + (EVQ2.nophoto.size ? " " + EVQ2.nophoto.size : "")], ["grok", "From Grok"], ["ended", "Ended"]], evOn = () => EVVIEW || EVSTATUS;
   main.innerHTML = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show events">${evTabs.map(([k, l]) => `<button type="button" data-view="${k || "all"}" aria-pressed="${k === evOn()}">${l}</button>`).join("")}</div></div>
     <div class="pghead"><div><h2>Events</h2><p>Every event on the public map. Open a row to see and edit the full record.</p></div><button type="button" class="btn ice" id="addEv">Add an event</button></div>`
     + toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: `<details class="fbox" id="evFbox" open><summary>Filters</summary>${filters}<a class="btn ghost" id="evDl" href="/api/admin/export?type=events${evSeason === "all" ? "" : "&season=" + evSeason}" download>Download CSV</a></details>`, count: "" })
@@ -857,8 +921,8 @@ async function renderEvents() {
     const srcOf = (id) => (String(id).startsWith("grok-") ? "Grok" : String(id).startsWith("u-") ? "Organizer" : String(id).startsWith("hcontest-") ? "Contest" : "Sweep");
     $("#evlist").innerHTML = all.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th class="cb"><input type="checkbox" id="evAllH" aria-label="Select all ${all.length} shown by the filters" ${all.length > 0 && all.every((e) => EVSEL.has(e.id)) ? "checked" : ""}></th><th>Event</th><th>City</th><th>Dates</th><th>Status</th><th>Paid placement</th><th class="ac">Actions</th></tr></thead><tbody>${shown.map((e) => `<tr class="${e.e < TODAY ? "past" : ""}" data-eid="${esc(e.id)}"><td class="cb"><input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}></td>
       <td>${tcell(e.img, `<a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">${esc(e.n)}</a><span class="sub">${esc(e.v || "")}</span>`)}</td><td>${esc(e.city)}<span class="sub">${esc(e.c)}</span></td><td>${mdy(e.s)}${e.e !== e.s ? " to " + mdy(e.e) : ""}<span class="sub">${esc(e.h || e.p || "")}</span></td>
-      <td><span class="tag ${e.st === "c" ? "ok" : "warn"}">${e.st === "c" ? "Confirmed" : "Expected"}</span>${e.e < TODAY ? ' <span class="tag">Ended</span>' : ""}${PLACE.clips && PLACE.clips[e.id] === 0 ? ' <span class="tag warn">Video waiting</span>' : ""}<span class="sub">Source: ${srcOf(e.id)}</span></td><td>${placeCell(e.id)}</td><td class="ac"><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">Edit</a> · <a class="rl" href="/e/${encodeURIComponent(e.id)}" target="_blank" rel="noopener">View card</a></td></tr>`).join("")}</tbody></table></div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : `<div class="pager"><span class="meta">${all.length} event${all.length === 1 ? "" : "s"}</span></div>`}</div>` : `<div class="empty">${EVQ || EVSTATUS || EVVIEW || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
-    $("#evlist").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = (x) => { x.preventDefault(); editEvent(EVENTS.find((y) => y.id === b.dataset.edit)); }));
+      <td><span class="tag ${e.st === "c" ? "ok" : "warn"}">${e.st === "c" ? "Confirmed" : "Expected"}</span>${e.e < TODAY ? ' <span class="tag">Ended</span>' : ""}${PLACE.clips && PLACE.clips[e.id] === 0 ? ' <span class="tag warn">Video waiting</span>' : ""}<span class="sub">Source: ${srcOf(e.id)}${EVHEALTH === "recheck" ? " · page " + (EVQ2.checked[e.id] ? "last re-checked " + mdy(EVQ2.checked[e.id][0]) : "never re-checked") : ""}</span></td><td>${placeCell(e.id)}</td><td class="ac"><a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">Edit</a> · ${EVQ2.nophoto.has(e.id) ? `<a class="rl addph" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}" data-focus="photos">Add photo</a> · ` : ""}<a class="rl" href="/e/${encodeURIComponent(e.id)}" target="_blank" rel="noopener">View card</a></td></tr>`).join("")}</tbody></table></div>${all.length > shown.length ? `<div class="pager"><span class="meta">Showing ${shown.length} of ${all.length}</span><button class="btn ghost" type="button" id="evMore">Show ${evPage()} more</button></div>` : `<div class="pager"><span class="meta">${all.length} event${all.length === 1 ? "" : "s"}</span></div>`}</div>` : `<div class="empty">${EVVIEW === "nophoto" && !EVQ ? "Every upcoming event in this view has a photo." : EVQ || EVSTATUS || EVVIEW || EVCOUNTY || EVHEALTH ? "Nothing matches that." : "No events in this season."}</div>`;
+    $("#evlist").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = (x) => { x.preventDefault(); editEvent(EVENTS.find((y) => y.id === b.dataset.edit), b.dataset.focus); }));
     $("#evlist").querySelectorAll("[data-esel]").forEach((b) => (b.onchange = () => { b.checked ? EVSEL.add(b.dataset.esel) : EVSEL.delete(b.dataset.esel); paintBulk(); }));
     if ($("#evAllH")) $("#evAllH").onchange = (x) => { $("#evAll").checked = x.target.checked; $("#evAll").onchange({ target: $("#evAll") }); };
     if ($("#evMore")) $("#evMore").onclick = () => { EVLIMIT += evPage(); paint(); };
@@ -868,7 +932,7 @@ async function renderEvents() {
   wireToolbar(main.querySelector(".tbar"), { onSearch: (q) => { EVQ = q; EVLIMIT = evPage(); paint(); } });
   const refilter = () => { EVLIMIT = evPage(); $("#evDl").href = "/api/admin/export?type=events" + (evSeason === "all" ? "" : "&season=" + evSeason); paint(); };
   $("#evSeason").onchange = (x) => { evSeason = x.target.value; refilter(); };
-  main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { const k = b.dataset.view === "all" ? "" : b.dataset.view; EVSTATUS = k === "e" || k === "c" ? k : ""; EVVIEW = k === "grok" || k === "ended" || k === "paid" || k === "video" ? k : ""; main.querySelectorAll(".pgtabs [data-view]").forEach((o) => o.setAttribute("aria-pressed", String(o === b))); refilter(); }));
+  main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { const k = b.dataset.view === "all" ? "" : b.dataset.view; EVSTATUS = k === "e" || k === "c" ? k : ""; EVVIEW = k === "grok" || k === "ended" || k === "paid" || k === "video" || k === "nophoto" ? k : ""; main.querySelectorAll(".pgtabs [data-view]").forEach((o) => o.setAttribute("aria-pressed", String(o === b))); refilter(); }));
   $("#evCounty").onchange = (x) => { EVCOUNTY = x.target.value; refilter(); };
   $("#evHealth").onchange = (x) => { EVHEALTH = x.target.value; refilter(); };
   main.querySelector("[data-sort]").onchange = (x) => { EVSORT = x.target.value; refilter(); };
@@ -895,7 +959,7 @@ async function renderEvents() {
 const BULK_MAX = 200;
 // Brings deleted events back from their tombstones (the Undo on a delete)
 const restoreEvents = async (ids) => { try { const r = await api("/api/admin/events/restore", { method: "POST", body: JSON.stringify({ action: "restore", ids }) }); toast(`Brought back ${r.restored.length} event${r.restored.length === 1 ? "" : "s"}` + (r.skipped.length ? `, ${r.skipped.length} could not be restored` : ""), !r.restored.length); } catch (er) { toast(er.message, true); } if (tab === "events") renderEvents(); else render(); refreshCounts(); };
-function editEvent(ev) {
+function editEvent(ev, focus) {
   const e = ev || { id: "", n: "", c: "Orange", city: "", t: Object.keys((SEASONS[evSeason] || SEASONS.christmas).types)[0], s: TODAY, e: TODAY, st: "expected", free: true, p: "Free", h: "", lat: 33.68, lng: -117.83, b: "", u: "", sn: SEASONS[evSeason] ? evSeason : "christmas" };
   const typeOpts = (sn, cur) => Object.entries(SEASONS[sn].types).map(([v, l]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${l}</option>`).join("");
   const main = $("#main"), title = ev ? "Event detail" : "Add an event";
@@ -917,6 +981,8 @@ function editEvent(ev) {
     ${ev ? fsec("Purchases", "What this event paid for: the Featured pin, the banner and top of the list. The dates it runs are in Paid placement above; refunds are handled in Orders.", `<div class="ff c6" id="evBuys"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     ${ev ? fsec("Organizer updates", "When an organizer uses \"This is my event\" on an existing listing, the old details are saved. Revert puts them back (the paid placement, photos and video are not touched).", `<div class="ff c6" id="evRev"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     ${ev ? fsec("Photos", "Up to 4 photos, the first is the cover and shows before the picture found on the event's own page. Add one an organizer emailed you; it is saved at once, no need to tap Save.", `<div class="ff c6" id="evPh"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
+    ${ev ? fsec("Merge a duplicate", "The same event listed twice? Pick the other listing here. This event stays; the other one is removed after its details you choose are copied over, and its organizer's submission is pointed at this event. You see exactly what changes first, and Undo brings the duplicate back.", `<div class="ff c6" id="evMerge"></div>`) : ""}
+    ${ev ? fsec("Check the event's page", "Looks at the event's website again (politely, like our other checks) and says whether it still mentions the event and its year. It only reports: the event is never changed, hidden or set back to expected by this.", `<div class="ff c6" id="evChk"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     ${ev ? fsec("Video", "A YouTube or Vimeo link shows at once. An uploaded clip is hidden from visitors until you approve it here. Organizers add them from Your profile (Edit the event).", `<div class="ff c6" id="evVid"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
   </form>${ev ? transferBox("event", e.id) : ""}</div>`;
@@ -943,8 +1009,9 @@ function editEvent(ev) {
   const close = () => { pm.remove(); setDetail(""); };
   const back = (x) => { if (x) x.preventDefault(); close(); if (tab === "events") renderEvents(); else render(); };
   $("#evBack").onclick = back; main.querySelector("[data-mcancel]").onclick = back;
+  if (ev) paintEvMerge(ev, () => { close(); if (tab === "events") renderEvents(); else render(); refreshCounts(); });
   let placed = false; // the paid placement fields are sent only once they have loaded, so a failed load can never wipe a placement
-  if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; paintEvVid(ev, p); paintEvBuys(ev); paintEvRev(ev, p, () => { close(); if (tab === "events") renderEvents(); else render(); }); paintEvPhotos(ev, p); }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
+  if (ev) api("/api/admin/events/" + encodeURIComponent(ev.id), { cache: "no-store" }).then((p) => { if (!$("#eFl")) return; $("#eFl").value = String(p.featured || 0); $("#eFu").value = p.featured_until || ""; $("#eBu").value = p.banner_until || ""; ["eFl", "eFu", "eBu"].forEach((i) => ($("#" + i).disabled = false)); const h = $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = p.floor && (p.floor.banner_until || p.floor.featured_until) ? `Paid orders still running: Featured to ${p.floor.featured_until || "n/a"}, banner to ${p.floor.banner_until || "n/a"}. These cannot be set lower.` : "No paid order is running."; placed = true; paintEvVid(ev, p); paintEvBuys(ev); paintEvRev(ev, p, () => { close(); if (tab === "events") renderEvents(); else render(); }); paintEvPhotos(ev, p); paintEvCheck(ev, p); if (focus === "photos") { const ph = $("#evPh") && $("#evPh").closest("fieldset"); if (ph) { ph.scrollIntoView({ block: "start" }); ph.classList.add("flash"); setTimeout(() => ph.classList.remove("flash"), 2200); } } }).catch(() => { const h = $("#eBu") && $("#eBu").closest(".ff").querySelector(".hint, small"); if (h) h.textContent = "Could not load the placement; it is left as it is."; });
   if (ev) $("#eDel").onclick = async (x) => { const b = x.target; if (!tap(b, "delete")) return; const del = "/api/admin/events/" + encodeURIComponent(ev.id); try { await api(del, { method: "DELETE" }); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Delete anyway", danger: true }))) await api(del + "?confirm=1", { method: "DELETE" }); else { b.textContent = b.dataset.label || "Delete"; return toast(er.message, true); } } close(); toast("Event deleted", false, { undo: () => restoreEvents([ev.id]) }); if (tab === "events") renderEvents(); else render(); };
   $("#evForm").onsubmit = async (x) => {
     x.preventDefault(); const msg = $("#eMsg");
@@ -1586,7 +1653,7 @@ async function renderReports() {
   const head = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show">${tabs.map(([k, l, c]) => `<button type="button" data-view="${k}" aria-pressed="${k === RPVIEW}">${l}${c ? ` <span>${c}</span>` : ""}</button>`).join("")}</div></div>`;
   const wire = () => { main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { RPVIEW = b.dataset.view; renderReports(); })); main.querySelectorAll("[data-ropen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); RMOPEN = a.dataset.ropen; renderReports(); })); };
   if (RPVIEW === "reports") {
-    main.innerHTML = head + `<div class="pghead"><div><h2>Visitor reports</h2><p>From the "Something wrong? Tell us" link on events and houses. Fix the event or house, then dismiss the report.</p></div></div>`
+    main.innerHTML = head + `<div class="pghead"><div><h2>Visitor reports</h2><p>From the "Something wrong? Tell us" link on events and houses. Fix the event or house, then dismiss the report.</p></div><div class="pgacts">${dl("reports")}</div></div>`
       + (list.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>About</th><th>Message</th><th>Reply to</th><th>Received</th><th class="ac">Actions</th></tr></thead><tbody>${list.map((r) => `<tr data-rid="${esc(r.id)}"><td><b>${esc(r.name || r.ref)}</b><span class="sub"><code>${esc(r.ref)}</code></span></td><td style="white-space:pre-line;min-width:200px">${esc(r.message)}</td><td>${r.contact ? `<a class="rl" href="mailto:${esc(r.contact)}">${esc(r.contact)}</a>` : "They left no email"}</td><td>${when(r.created_at)}</td><td class="ac">${btn("ghost", "Open Events", 'data-tab="events"').replace('class="btn ghost"', 'class="btn ghost sm"')} ${btn("danger", "Dismiss", "data-rdismiss").replace('class="btn ghost danger"', 'class="btn ghost danger sm"')}</td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${list.length} report${list.length === 1 ? "" : "s"}</span></div></div>` : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`);
     wire(); return;
   }
