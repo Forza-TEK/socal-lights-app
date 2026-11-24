@@ -155,6 +155,7 @@ const HANDLES = /\b(flagRefundDue|refundDueStatements|contestDeletedStatements|t
 // Files that remove one of these rows and are allowed not to flag, with the reason. Keep this list short.
 const ALLOWED = {
   "functions/api/admin/installers/[id].js": "has the flag on hide; the merge delete moves the orders to the kept profile first",
+  "functions/api/admin/events/merge.js": "Merge duplicate events refuses when ANY order (paid, refunded or held) points at the duplicate, and its DELETE is guarded by NOT EXISTS on feature_orders in the same batch, so a paid placement is never removed or orphaned (tests/admin-event-merge.test.mjs)",
   "functions/_lib/installers.js": "dropEmptyStub only deletes a hidden (pending) profile that a homeowner's post created: never active, no owner, no other post, so no order can exist for it",
 };
 
