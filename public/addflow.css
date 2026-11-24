@@ -34,7 +34,7 @@ textarea.in{min-height:140px;resize:vertical}.in:focus{outline:0;border-color:va
 .poster{background:#fff;color:#111;border:1px solid var(--line);border-radius:12px;padding:22px;text-align:center;display:grid;gap:10px;justify-items:center;max-width:300px}.poster b{font-weight:500;line-height:1.25}.poster small{color:#555}.poster svg{width:150px;height:150px}
 .copy{display:flex;gap:10px;align-items:center;border:1px solid var(--line2);border-radius:8px;padding:8px 8px 8px 14px;font-size:15px;min-width:0}.copy span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hint{background:var(--tile);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--muted)}.hint b{color:var(--ink)}
-.opt-lbl{color:var(--season-ink);font-weight:500}
+.opt-lbl{color:var(--muted);font-weight:500}
 .combo{position:relative}.dd{list-style:none;margin:0;padding:6px;position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:8;background:var(--bg);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.14);max-height:320px;overflow:auto}.dd button{all:unset;box-sizing:border-box;display:block;width:100%;padding:12px;border-radius:8px;cursor:pointer;line-height:1.3;color:var(--ink)}.dd button:hover,.dd button:focus-visible{background:var(--tile)}.dd small{display:block;color:var(--muted);font-size:13px;margin-top:2px}.dd .foot{padding:8px 12px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
 .chk{display:flex;gap:12px;align-items:flex-start;font-size:16px;font-weight:400}.chk input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--ink);flex:none}
 .big-check{width:56px;height:56px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-size:26px}
@@ -121,7 +121,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 
 /* Live preview beside the add forms (wide screens only): fixed to the right of the 640px form */
 .pvcard{display:none}
-@media(min-width:1240px){.pvcard{display:block;position:fixed;top:132px;left:calc(50% + 370px);width:300px;z-index:1}}
+@media(min-width:1240px){.pvcard{display:block;position:fixed;top:132px;left:calc(50% + 370px);width:min(300px,calc(50vw - 386px));z-index:1}}
 .pvcard .pvl{display:inline-block;margin:0 0 10px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .pvcard .pvn{margin:10px 2px 0;font-size:13px;color:var(--muted)}
 .pvc{background:var(--bg);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 6px 22px rgba(20,22,27,.10)}:root[data-theme="dark"] .pvc{background:var(--tile)}
@@ -165,3 +165,7 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
   .segs{margin:0;padding:0}
   .nav{margin-top:18px}
 }
+
+/* signed-out Add pages: what the form asks for; no site footer while a step is showing (the Next bar is fixed at the bottom) */
+.main .needh{margin:0;font-size:16px;font-weight:700}.main .need{margin:6px 0 0;padding-left:20px;line-height:1.55;font-size:16px}.need li{margin:2px 0}
+body:has(.bar) .sitefoot{display:none}

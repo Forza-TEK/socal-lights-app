@@ -173,7 +173,8 @@ button{touch-action:manipulation}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
 /* ---------- detail ---------- */
-.detail{display:grid;gap:14px;padding-bottom:4px}
+.detail{container-type:inline-size;display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding-bottom:4px}
+.detail>*{min-width:0}
 .hero{position:relative;margin:0 -16px;height:210px;background:var(--season-soft);overflow:hidden}
 .hero.free{background:var(--free-soft)}
 .hero:not(.photo)::before{content:"";position:absolute;right:22px;top:26px;width:104px;height:104px;background:url(/img/badge-512.webp) center/contain no-repeat}
@@ -188,7 +189,8 @@ button{touch-action:manipulation}
 .htext{position:absolute;left:18px;right:18px;bottom:16px}
 .kicker{font-size:13px;font-weight:700;color:var(--season-ink);margin-bottom:2px}
 .hero.free .kicker{color:var(--free)}
-.detail h2{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.15;text-wrap:balance}
+.hero:has(.pvcount) .htext{padding-right:56px}
+.detail h2{overflow-wrap:anywhere;margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.15;text-wrap:balance}
 .boxes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .boxes div{display:grid;gap:2px;background:var(--surface-2);border-radius:16px;padding:10px 14px}
 .boxes div:nth-child(2){grid-column:1/-1;order:3}
@@ -715,6 +717,7 @@ body.lb-open{overflow:hidden}
 .reportline a{color:inherit;text-decoration:underline;text-underline-offset:3px;display:inline-block;min-height:24px;line-height:24px}
 .reportline{display:flex;flex-wrap:wrap;align-items:center;gap:0 4px}
 .actionbar .abtn{width:46px;height:46px}
+@container (max-width:380px){.actionbar{gap:4px;padding:4px}.actionbar .abtn{width:44px;height:44px}.actionbar .btn.go{min-width:0;padding:0 10px;gap:6px}}
 
 /* accessibility helpers, filter hints, bigger tap targets */
 .sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}

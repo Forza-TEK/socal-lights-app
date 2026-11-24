@@ -13,13 +13,13 @@
 <script>try{var t=(function(d){var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"numeric",minute:"numeric",hour12:false,timeZoneName:"short"}).formatToParts(d),g=function(k){for(var i=0;i<p.length;i++)if(p[i].type==k)return p[i].value},m=g("hour")%24*60+ +g("minute"),n=713+(g("timeZoneName")=="PDT"?60:0),H=(12+2.1*Math.sin(6.2832*(Math.floor((d-new Date(d.getFullYear(),0,0))/864e5)-80)/365))*30;return m<n-H||m>=n+H?"dark":"light"})(new Date()),o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/tokens.css?v=20261116c">
-<link rel="stylesheet" href="/addflow.css?v=20261116b">
+<link rel="stylesheet" href="/addflow.css?v=20261124a">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261124a";
+import { themeBtn, acctHtml, mountAcct, run, ts, esc, input, area, select, tile, sumRow, validSite, isEmail, PRIV, OPT, today, addDays, fmt, pvCard, nlCheck, nlSave, bad, apiError } from "/addflow.js?v=20261124b";
 import { SEASONS, defaultSeason } from "/seasons.js?v=20261115a";
 import { CITY } from "/cities.js?v=20261115i";
 import { eventTierCopy, quoteLine, niceDate, EVENT_KEYS } from "/feature-plans.js?v=20261111x553";
@@ -33,6 +33,7 @@ const acct = (await me()).user;
 if (!acct) {
   document.getElementById("app").innerHTML = `<a class="skipl" href="#main">Skip to the form</a><div class="hdr" role="banner"><a class="brand" href="/" aria-label="SoCal Lights home"><img class="mark" src="/img/badge-160.webp" width="40" height="40" alt=""><span class="wm">SoCal <b>Lights</b></span></a><div class="hright">${themeBtn()}<span id="acct">${acctHtml()}</span></div></div>
     <main class="main" id="main" tabindex="-1"><h1>Sign in to add an event</h1><p class="help">Your event is saved to your account, and only you (and the site owner) can change or remove it. Sign in with <span class="g-or">Google or </span>an emailed code. It takes a few seconds.</p>
+    <div class="needbox"><h2 class="needh">What you will need</h2><ul class="need"><li>The event name, its season and what kind of event it is</li><li>The first and last day, and the hours</li><li>Whether it is free, and the price if not</li><li>The address (or the cross streets for a parade)</li><li>One or two sentences describing it; a web page is optional</li></ul></div><p class="help">About 1 minute. You can go back at any step, and nothing is public until the last one.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn" id="gate-in" type="button">Sign in</button><a class="btn out" href="/add">Back</a></div></main>`;
   mountAcct(document.getElementById("acct"));
   await new Promise((go) => { document.getElementById("gate-in").onclick = async () => { if (await signIn({ title: "Sign in to add an event", next: location.pathname + location.search })) go(); }; });

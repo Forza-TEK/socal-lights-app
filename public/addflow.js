@@ -171,8 +171,8 @@ export function run(o) {
     if (S.done !== null) { root.innerHTML = `${hdr(true)}<main class="main" id="main" tabindex="-1">${S.done}${nlNotice()}</main>`; const h = root.querySelector("main h1"); if (h) { h.setAttribute("tabindex", "-1"); h.style.outline = "none"; h.focus({ preventScroll: true }); } window.scrollTo(0, 0); return; }
     const st = steps(); S.i = Math.max(0, Math.min(S.i, st.length - 1)); const s = st[S.i];
     if (o.season) document.documentElement.dataset.season = o.season(d);
-    const secs = [...new Set(st.map((x) => x.sec))], cur = secs.indexOf(s.sec);
-    const segs = secs.map((sc, k) => { const inSec = st.filter((x) => x.sec === sc), idx = inSec.indexOf(s), f = k < cur ? 1 : k > cur ? 0 : (idx + 1) / inSec.length; return `<div class="seg" aria-hidden="true"><i style="width:${f * 100}%"></i></div>`; }).join("");
+    // one segment per step, the same count as "Step N of M"; the segments up to and including this step are filled
+    const segs = st.map((x, k) => `<div class="seg" aria-hidden="true"><i style="width:${k <= S.i ? 100 : 0}%"></i></div>`).join("");
     const last = !!s.submit;
     // A draft that was restored (reload, or opened from Your profile) says when it was saved and can be thrown away
     const note = S.restored && o.persist ? `<p class="draftnote" id="draftnote">${S.savedAt ? `Draft saved ${esc(new Date(S.savedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))} on this device.` : "You have a saved draft."} <button class="link" type="button" data-a="startover">Start over</button></p>` : "";
