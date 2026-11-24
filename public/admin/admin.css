@@ -620,6 +620,16 @@ body.admin .top .crumb h1{overflow:hidden;text-overflow:ellipsis;min-width:0}
   .dtab tbody td.ac .sep{display:none}
 }
 @media (max-width:699px){
-  .seg button,.emtabs button{min-height:44px}
+  .seg button,.emtabs button{min-height:44px;min-width:44px}
   .dtab tbody td .tcell a.rl,.dtab tbody td:not(.ac)>a.rl[href^="#"]{display:block;min-width:44px;padding:12px 0;margin:-12px 0}
 }
+
+/* Dashboard: the "jobs stopped reporting" alert is one line with a Details toggle; the Needs-you cards lead with a filled count badge */
+details.limitbanner>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;margin:-12px -16px;padding:12px 16px;cursor:pointer;list-style:none}
+details.limitbanner>summary::-webkit-details-marker{display:none}
+details.limitbanner[open]>summary{margin-bottom:4px}
+details.limitbanner .stmore{flex:none;font:600 13px var(--font);color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+details.limitbanner[open] .stmore::after{content:" (hide)"}
+details.limitbanner>span{display:block;margin-top:2px}
+.tcard b{display:inline-grid;place-items:center;min-width:40px;height:40px;padding:0 10px;box-sizing:border-box;border-radius:999px;background:var(--season);color:#fff;font:700 18px/1 var(--font);letter-spacing:0}
+:root[data-theme="dark"] .tcard b{color:#121212}
