@@ -108,7 +108,7 @@ test("the Admin page /admin/as: Admin only, only listed pages, injects the shim,
   calls.length = 0; for (const u of ["/api/events", "/api/photo/p/abc/1.jpg", "/api/admin/users", "/api/auth/logout", "/api/config", "https://example.com/api/me/overview", "/img/x.png"]) await win.fetch(u);
   assert.deepEqual(calls, ["/api/events", "/api/photo/p/abc/1.jpg", "/api/admin/users", "/api/auth/logout", "/api/config", "https://example.com/api/me/overview", "/img/x.png"], "public calls, other sites and sign-out are left alone");
   const admin = fs.readFileSync(new URL("../public/admin/admin.js", import.meta.url), "utf8");
-  assert.match(admin, /Open their profile as them/); assert.match(admin, /Edit as owner/); assert.match(admin, /manage as owner/); assert.match(admin, /Organizer dashboard \(as the organizer\)/);
+  assert.match(admin, /Open their profile as them/); assert.match(admin, /Edit as owner/); assert.match(admin, /Edit as owner ↗/); assert.match(admin, /Organizer dashboard \(as the organizer\)/);
 });
 
 import { readFileSync as readRoutes } from "node:fs";
@@ -148,5 +148,5 @@ import { readFileSync as readAdminJs } from "node:fs";
 test("Admin > Contests: an 'Edit as owner' button on the contest page and in the list opens the organizer dashboard as its owner (only when the contest has an owner account)", () => {
   const js = readAdminJs("public/admin/admin.js", "utf8");
   assert.match(js, /const acts = \(c\.owner_email \? asLink\("Edit as owner", "\/c\/" \+ c\.slug \+ "\/manage"\) : ""\)/, "the contest page's action row");
-  assert.match(js, /c\.owner_email \? ` <a class="rl" href="\$\{asUrl\("\/c\/" \+ c\.slug \+ "\/manage"\)\}" target="_blank" rel="noopener">Edit as owner<\/a>` : ""/, "the list row's actions");
+  assert.match(js, /c\.owner_email \? `<a class="rl" href="\$\{asUrl\("\/c\/" \+ c\.slug \+ "\/manage"\)\}" target="_blank" rel="noopener">Edit as owner ↗<\/a>` : ""/, "the list row's actions");
 });

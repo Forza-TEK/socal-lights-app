@@ -672,3 +672,9 @@ details.limitbanner>span{display:block;margin-top:2px}
 @media (prefers-reduced-motion:reduce){.fsec.flash{animation:none;box-shadow:0 0 0 3px var(--bad)}}
 
 .calm .wic{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--bad);color:var(--bad);font:700 20px/1 var(--font)}
+
+/* The Actions cell of a list row: Open, the owner/public links and a button, wrapped with real space between them (they used to run together as one line of text) */
+.racts{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px 18px}
+.racts a.rl{white-space:nowrap}
+.dtab td .sub .more{color:var(--ink);font-weight:600;cursor:help;white-space:nowrap}
+@media (max-width:699px){.racts{justify-content:flex-start;gap:10px}}
