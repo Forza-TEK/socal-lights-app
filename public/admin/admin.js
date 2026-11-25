@@ -1431,6 +1431,9 @@ async function renderOutreach() {
     <label for="orlog" class="meta">Addresses</label><textarea id="orlog" rows="6" style="width:100%;box-sizing:border-box;font:inherit;background:transparent;color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:10px" spellcheck="false" autocomplete="off"></textarea>
     <p style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0"><button type="button" class="btn ice" id="orrun">Check these addresses</button><label class="btn ghost" for="orfile" style="cursor:pointer">Choose a file</label><input type="file" id="orfile" accept=".csv,.txt,text/plain,text/csv" hidden><span class="meta" id="ornote" role="status"></span></p>
     <div id="orout"></div>
+    <h2 class="dh">Release overdue follow-ups</h2>
+    <p class="meta" style="margin:0 0 8px">A follow-up more than 14 days late stays held until you release it. Releasing lets the next send go out for that one step. It does not override a reply, unsubscribe, bounce, complaint, suppression, registration, listing or a finished sequence, and it never adds a third follow-up. Nothing is emailed from this page. Preview changes nothing.</p>
+    <p style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0"><label for="orseg" class="meta">Segment</label><select id="orseg" style="font:inherit;background:transparent;color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:8px"><option value="contest">Contest organizers</option><option value="installer">Installers</option><option value="event_host">Seasonal-event hosts</option></select><button type="button" class="btn ghost" id="orpreview">Preview</button><button type="button" class="btn ice" id="orrelease" hidden>Release this segment</button><span class="meta" id="orrelnote" role="status"></span></p>
     <h2 class="dh">Results by segment and step</h2>
     <div class="card dtc"><div class="dtw" tabindex="0" role="region" aria-label="Results by segment and step"><table class="dtab"><caption class="meta" style="text-align:left;padding:0 0 6px">Counted from what Grok reported. “Registered” and “Listed” are people who created an account or a listing after being emailed, credited to the latest step sent before that (not opens).${d.capped ? " Some very large tables were capped." : ""}</caption>
       <thead><tr><th scope="col">Segment</th><th scope="col">Step</th><th scope="col">Sent</th><th scope="col">Replies</th><th scope="col">Bounces</th><th scope="col">Complaints</th><th scope="col">Unsubscribes</th><th scope="col">Registered after</th><th scope="col">Listed after</th></tr></thead>
@@ -1448,14 +1451,57 @@ async function renderOutreach() {
     try {
       const r = await api("/api/admin/outreach", { method: "POST", body: JSON.stringify({ action: "reconcile", emails: list }) });
       note.textContent = "";
+      const held = r.rows.filter((x) => x.sequence.reason === "overdue_hold");
       out.innerHTML = `<div class="ugrid" style="margin:8px 0">${Object.keys(ORSTATUS).map((k) => `<article class="ucard"><div class="uh"><h3>${ORSTATUS[k]}</h3><span class="tag ${ORTAG[k]}">${k === "clear" ? "send ok" : "do not send"}</span></div><p class="unum"><b>${fmt(r.counts[k])}</b> <span class="meta">of ${fmt(r.total)}</span></p></article>`).join("")}</div>
         <p class="meta" style="margin:6px 0"><b>Due to send today</b> (status clear, step due now or at most 14 days overdue): original <b>${fmt(r.due[0])}</b>, follow-up 1 <b>${fmt(r.due[1])}</b>, follow-up 2 <b>${fmt(r.due[2])}</b>. Taken from the sends Grok reported; nothing is sent from here.</p>
-        <p style="margin:6px 0"><button type="button" class="btn ghost" id="orcsv">Download CSV</button> <span class="meta">One row per address: address, status, reasons, and the next step with its due date. Review means the website domain matches a registered installer, organizer or account: check by hand.</span></p>`;
+        <p style="margin:6px 0"><button type="button" class="btn ghost" id="orcsv">Download CSV</button> <span class="meta">One row per address: address, status, reasons, and the next step with its due date. Review means the website domain matches a registered installer, organizer or account: check by hand.</span></p>
+        ${held.length ? `<p style="margin:6px 0"><button type="button" class="btn ice" id="orrelmail">Release ${fmt(held.length)} overdue in this list</button> <span class="meta" id="orrelmailnote">Only addresses on the 14-day hold. Everyone else in the list stays as they are. Tap twice.</span></p>` : ""}`;
       $("#orcsv").onclick = () => {
         const csv = "email,status,reasons,next_step,due,due_on,sequence_reason\r\n" + r.rows.map((x) => [list[x.i], x.status, x.reasons.join(" "), x.sequence.next_step === null ? "" : x.sequence.next_step, x.sequence.due ? "yes" : "no", x.sequence.due_on || "", x.sequence.reason].map(csvCell).join(",")).join("\r\n") + "\r\n";
         const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "outreach-reconcile.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       };
+      const relMail = $("#orrelmail");
+      if (relMail) relMail.onclick = async (ev) => {
+        const btn = ev.target;
+        if (!tap(btn, `release ${held.length}`)) return;
+        btn.disabled = true;
+        try {
+          const outR = await api("/api/admin/outreach", { method: "POST", body: JSON.stringify({ action: "release", emails: held.map((x) => list[x.i]), dry_run: false }) });
+          const note2 = $("#orrelmailnote"); if (note2) note2.textContent = `Released ${fmt(outR.released)}. The next check marks that step due.`;
+          btn.hidden = true;
+        } catch (x) { const note2 = $("#orrelmailnote"); if (note2) note2.textContent = x.message; btn.disabled = false; }
+      };
     } catch (x) { note.textContent = x.message; } finally { b.disabled = false; }
+  };
+  let heldPreview = null;
+  const relBtn = $("#orrelease"), relNote = $("#orrelnote");
+  const segName = (s) => (s === "contest" ? "contest organizer" : s === "event_host" ? "event host" : "installer");
+  const disarm = (b) => { clearTimeout(b._t); b.dataset.armed = ""; b.classList.remove("armed"); };
+  $("#orseg").onchange = () => { heldPreview = null; disarm(relBtn); relBtn.hidden = true; relNote.textContent = ""; };
+  $("#orpreview").onclick = async (e) => {
+    const segment = $("#orseg").value, b = e.target;
+    disarm(relBtn); b.disabled = true; relNote.textContent = "Checking…"; relBtn.hidden = true; heldPreview = null;
+    try {
+      const r = await api("/api/admin/outreach", { method: "POST", body: JSON.stringify({ action: "release", segment, dry_run: true }) });
+      heldPreview = r;
+      const n = r.overdue, who = segName(segment);
+      relNote.textContent = n
+        ? `${fmt(n)} overdue ${who} ${n === 1 ? "sequence" : "sequences"}: follow-up 1 ${fmt(r.by_step[1])}, follow-up 2 ${fmt(r.by_step[2])}.${r.already_released ? ` ${fmt(r.already_released)} already released.` : ""}${r.skipped_suppressed ? ` ${fmt(r.skipped_suppressed)} suppressed, left held.` : ""}${r.skipped_undeliverable ? ` ${fmt(r.skipped_undeliverable)} undeliverable, left held.` : ""} Nothing changed.`
+        : `No overdue ${who} sequences. Nothing changed.`;
+      if (n) { relBtn.hidden = false; relBtn.textContent = `Release ${fmt(n)}`; }
+    } catch (x) { relNote.textContent = x.message; } finally { b.disabled = false; }
+  };
+  relBtn.onclick = async (e) => {
+    const segment = $("#orseg").value;
+    if (!heldPreview || heldPreview.segment !== segment || !heldPreview.overdue) return;
+    const b = e.target;
+    if (!tap(b, `release ${heldPreview.overdue}`)) return;
+    b.disabled = true;
+    try {
+      const r = await api("/api/admin/outreach", { method: "POST", body: JSON.stringify({ action: "release", segment, dry_run: false }) });
+      heldPreview = null; b.hidden = true;
+      relNote.textContent = `Released ${fmt(r.released)}. The next check marks that step due. A later follow-up is held again when it is more than 14 days late.`;
+    } catch (x) { relNote.textContent = x.message; b.disabled = false; }
   };
 }
 

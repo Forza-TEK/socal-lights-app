@@ -2,6 +2,7 @@
 // No real email address and no network: every address is @example.* or a made-up test domain, DNS-over-HTTPS is a stub.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { newEnv } from "./_pay.mjs";
 import { stubFetch, freezeNow } from "./_pay.mjs";
 import { outreachHashes, sequenceFor } from "../functions/_lib/outreach.js";
@@ -10,7 +11,7 @@ import { shiftDay } from "../functions/_lib/time.js";
 import { onRequest as check } from "../functions/api/outreach/check.js";
 import { onRequest as suppress } from "../functions/api/outreach/suppress.js";
 import { onRequest as event } from "../functions/api/outreach/event.js";
-import { onRequestPost as adminPost } from "../functions/api/admin/outreach.js";
+import { onRequestGet as adminGet, onRequestPost as adminPost } from "../functions/api/admin/outreach.js";
 
 const KEY = "test-outreach-key-0123456789abcdef";
 const NOON = "2026-11-20T20:00:00Z"; // 12:00 Pacific on 2026-11-20
@@ -375,4 +376,250 @@ test("admin reconcile: how many are due today per step, and the sequence for eac
     assert.deepEqual(j.counts, { registered: 1, listing: 0, review: 0, suppressed: 0, clear: 6 });
     assert.ok(!/@/.test(JSON.stringify(j)));
   });
+});
+
+// ---------------------------------------------------------------- releasing an overdue hold
+const releaseRows = async (env, raw, email) => {
+  const { h, n } = await outreachHashes(env, email);
+  return rows(raw, "SELECT event, step, segment FROM outreach_events WHERE event = 'release' AND (email_hash IN (?,?) OR alias_hash IN (?,?)) ORDER BY step", h, n, h, n);
+};
+const adminBody = (env, body) => adminPost({ request: new Request("http://localhost/api/admin/outreach", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), env }).then(async (r) => ({ status: r.status, body: await r.json() }));
+
+test("sequenceFor: a release lifts only the overdue step it names, and never a stop, a block, or a finished sequence", () => {
+  const today = "2026-11-20";
+  const sent = { event: "sent", step: 0, day: "2026-10-01" }; // follow-up 1 was due 2026-10-05
+  const release = { event: "release", step: 1, day: today };
+  assert.equal(sequenceFor([sent], "clear", today).reason, "overdue_hold");
+  assert.equal(sequenceFor([sent, { event: "release", step: "2", day: today }], "clear", today).reason, "overdue_hold", "a release for the other step does nothing, even as a string");
+  assert.deepEqual(sequenceFor([sent, release], "clear", today), { next_step: 1, due: true, due_on: "2026-10-05", reason: "released" });
+  assert.equal(sequenceFor([sent, release, { event: "reply", step: 0, day: today }], "clear", today).reason, "reply");
+  assert.equal(sequenceFor([sent, release, { event: "bounce", step: 0, day: today }], "clear", today).reason, "bounce");
+  assert.equal(sequenceFor([sent, release, { event: "complaint", step: 0, day: today }], "clear", today).reason, "complaint");
+  assert.equal(sequenceFor([sent, release, { event: "unsubscribe", step: 0, day: today }], "clear", today).reason, "unsubscribe");
+  for (const status of ["suppressed", "registered", "listing", "review"]) assert.equal(sequenceFor([sent, release], status, today).reason, "status_" + status, status);
+  const done = [sent, { event: "sent", step: 1, day: "2026-10-06" }, { event: "sent", step: 2, day: "2026-10-20" }, { event: "release", step: 2, day: today }, { event: "release", step: 3, day: today }];
+  assert.equal(sequenceFor(done, "clear", today).reason, "sequence_finished");
+  assert.equal(sequenceFor([{ event: "sent", step: 0, day: "2026-11-18" }, release], "clear", today).reason, "not_due_yet", "a release does not send a step early");
+  assert.equal(sequenceFor([{ event: "sent", step: 0, day: "2026-11-02" }, release], "clear", today).reason, "due", "inside the 14-day window the reason stays due");
+  const step2 = [sent, { event: "sent", step: 1, day: "2026-10-06" }];
+  assert.equal(sequenceFor([...step2, release], "clear", today).reason, "overdue_hold", "the step-1 release does not lift follow-up 2");
+  assert.equal(sequenceFor([...step2, { event: "release", step: 2, day: today }], "clear", today).reason, "released");
+});
+
+test("event release: lifts the overdue step, is idempotent, stores a hash only, and does not suppress", async () => {
+  await withClock(NOON, async () => {
+    const { env, raw } = mk();
+    await seed(env, raw, "Late.Organizer@contest.example", 0, ago(30), "sent", "contest");
+    assert.equal((await seqOf(env, "late.organizer@contest.example")).reason, "overdue_hold");
+    const r = await post(event, env, "event", { email: "Late.Organizer@contest.example", event: "release" });
+    assert.equal(r.status, 200);
+    assert.equal(r.body.released, true); assert.equal(r.body.duplicate, false); assert.equal(r.body.suppressed, false);
+    assert.equal(r.body.next_step, 1); assert.equal(r.body.reason, "released"); assert.equal(r.body.hold, undefined);
+    assert.deepEqual(await seqOf(env, "late.organizer@contest.example"), { next_step: 1, due: true, due_on: ago(26), reason: "released" });
+    const again = await post(event, env, "event", { email: "late.organizer@contest.example", event: "release", step: 1, segment: "contest" });
+    assert.equal(again.body.duplicate, true); assert.equal(again.body.released, true);
+    assert.equal((await releaseRows(env, raw, "late.organizer@contest.example")).length, 1, "still one release row");
+    assert.equal(rows(raw, "SELECT 1 FROM outreach_suppressions").length, 0, "a release never suppresses");
+    const dump = JSON.stringify(rows(raw, "SELECT * FROM outreach_events WHERE event = 'release'")).toLowerCase();
+    for (const part of ["late", "organizer", "contest.example", "@"]) assert.ok(!dump.includes(part), "found " + part);
+    assert.match(rows(raw, "SELECT email_hash FROM outreach_events WHERE event = 'release'")[0].email_hash, /^[0-9a-f]{64}$/);
+    const log = JSON.stringify(rows(raw, "SELECT detail FROM ops_log")).toLowerCase();
+    assert.ok(!log.includes("organizer") && !log.includes("@"), log);
+  });
+});
+
+test("event release: after the released step is sent, normal timing resumes and the next overdue step stays held", async () => {
+  await withClock(NOON, async () => {
+    const { env, raw } = mk();
+    await seed(env, raw, "two@example.org", 0, ago(40), "sent", "contest");
+    assert.equal((await post(event, env, "event", { email: "two@example.org", event: "release" })).body.next_step, 1);
+    assert.equal((await post(event, env, "event", { email: "two@example.org", event: "sent", step: 1, segment: "contest" })).status, 200);
+    assert.deepEqual(await seqOf(env, "two@example.org"), { next_step: 2, due: false, due_on: ago(30), reason: "overdue_hold" });
+    const second = await post(event, env, "event", { email: "two@example.org", event: "release" });
+    assert.equal(second.body.next_step, 2); assert.equal(second.body.released, true);
+    assert.deepEqual(await seqOf(env, "two@example.org"), { next_step: 2, due: true, due_on: ago(30), reason: "released" });
+    await post(event, env, "event", { email: "two@example.org", event: "sent", step: 2, segment: "contest" });
+    assert.equal((await seqOf(env, "two@example.org")).reason, "sequence_finished");
+    const extra = await post(event, env, "event", { email: "two@example.org", event: "release", step: 2 });
+    assert.equal(extra.body.released, false); assert.equal(extra.body.reason, "sequence_finished");
+    assert.deepEqual((await releaseRows(env, raw, "two@example.org")).map((r) => r.step), [1, 2], "no third follow-up");
+  });
+});
+
+test("event release: refuses every block, the wrong step, and a step that is not overdue, and writes nothing", async () => {
+  await withClock(NOON, async () => {
+    const { env, raw } = mk();
+    const hold = async (email, segment = "contest") => { await seed(env, raw, email, 0, ago(30), "sent", segment); };
+    for (const ev of ["reply", "bounce", "complaint", "unsubscribe"]) {
+      const email = `stop-${ev}@example.org`;
+      await hold(email);
+      assert.equal((await post(event, env, "event", { email, event: ev, step: 0, segment: "contest" })).status, 200);
+      const r = await post(event, env, "event", { email, event: "release" });
+      assert.equal(r.status, 200); assert.equal(r.body.released, false); assert.equal(r.body.reason, ev); assert.equal(r.body.hold, undefined);
+    }
+    await hold("suppressed@example.org");
+    await post(suppress, env, "suppress", { email: "suppressed@example.org", reason: "manual", source: "t" });
+    assert.equal((await post(event, env, "event", { email: "suppressed@example.org", event: "release" })).body.reason, "status_suppressed");
+    raw.prepare("INSERT INTO users (id,email,name) VALUES ('uR','registered@reg.example','R')").run();
+    await hold("registered@reg.example");
+    assert.equal((await post(event, env, "event", { email: "registered@reg.example", event: "release" })).body.reason, "status_registered");
+    raw.prepare("INSERT INTO posts (id,biz,title,city,lat,lng,descr,contact_email) VALUES ('pR','b','t','Pasadena',1,2,'d','listed@example.org')").run();
+    await hold("listed@example.org");
+    assert.equal((await post(event, env, "event", { email: "listed@example.org", event: "release" })).body.reason, "status_listing");
+    raw.prepare("INSERT INTO installers (id,slug,name,web) VALUES ('iR','r','R','reviewco.example')").run();
+    await hold("info@reviewco.example");
+    assert.equal((await post(event, env, "event", { email: "info@reviewco.example", event: "release" })).body.reason, "status_review");
+    await hold("finished@example.org");
+    await seed(env, raw, "finished@example.org", 1, ago(20), "sent", "contest");
+    await seed(env, raw, "finished@example.org", 2, ago(10), "sent", "contest");
+    assert.equal((await post(event, env, "event", { email: "finished@example.org", event: "release" })).body.reason, "sequence_finished");
+    await seed(env, raw, "early@example.org", 0, ago(1), "sent", "contest");
+    assert.equal((await post(event, env, "event", { email: "early@example.org", event: "release" })).body.reason, "not_due_yet");
+    await seed(env, raw, "inside@example.org", 0, ago(10), "sent", "contest");
+    assert.equal((await post(event, env, "event", { email: "inside@example.org", event: "release" })).body.reason, "due");
+    await hold("wrong-step@example.org");
+    const mismatch = await post(event, env, "event", { email: "wrong-step@example.org", event: "release", step: 2 });
+    assert.equal(mismatch.body.released, false); assert.equal(mismatch.body.reason, "step_mismatch"); assert.equal(mismatch.body.next_step, 1);
+    const seg = await post(event, env, "event", { email: "wrong-step@example.org", event: "release", segment: "installer" });
+    assert.equal(seg.body.released, false); assert.equal(seg.body.reason, "segment_mismatch");
+    assert.equal((await seqOf(env, "wrong-step@example.org")).reason, "overdue_hold");
+    // a release that arrives, then a complaint or a new account, must stop winning
+    await hold("then-stop@example.org");
+    assert.equal((await post(event, env, "event", { email: "then-stop@example.org", event: "release" })).body.released, true);
+    await post(event, env, "event", { email: "then-stop@example.org", event: "complaint", step: 1, segment: "contest" });
+    assert.equal((await seqOf(env, "then-stop@example.org")).reason, "complaint");
+    await hold("after-reg@later.example");
+    assert.equal((await post(event, env, "event", { email: "after-reg@later.example", event: "release" })).body.released, true);
+    raw.prepare("INSERT INTO users (id,email,name) VALUES ('uAfter','after-reg@later.example','A')").run();
+    assert.equal((await seqOf(env, "after-reg@later.example")).reason, "status_registered");
+    for (const email of ["stop-reply@example.org", "suppressed@example.org", "registered@reg.example", "listed@example.org", "info@reviewco.example", "finished@example.org", "early@example.org", "inside@example.org", "wrong-step@example.org"]) {
+      assert.equal((await releaseRows(env, raw, email)).length, 0, email);
+    }
+    const bad = await post(event, env, "event", { email: "wrong-step@example.org", event: "release", step: 3 });
+    assert.equal(bad.status, 400); assert.equal(bad.body.hold, true);
+    assert.equal((await post(event, env, "event", { email: "wrong-step@example.org", event: "release", sent_at: ago(1) })).status, 400);
+    assert.equal((await post(event, env, "event", { email: "not an email", event: "release" })).status, 400);
+    assert.equal((await releaseRows(env, raw, "wrong-step@example.org")).length, 0);
+    // the same person under a +tag or without Gmail dots shares the release
+    await seed(env, raw, "first.last@gmail.com", 0, ago(30), "sent", "contest");
+    assert.equal((await post(event, env, "event", { email: "firstlast+x@gmail.com", event: "release" })).body.released, true);
+    assert.equal((await seqOf(env, "first.last@gmail.com")).reason, "released");
+    assert.equal((await releaseRows(env, raw, "first.last@gmail.com")).length, 1);
+  });
+});
+
+test("admin release: preview a segment, then release only its overdue steps, and a list does the same", async () => {
+  await withClock(NOON, async () => {
+    const { env, raw } = mk();
+    const contest = (email, step, day, ev = "sent") => seed(env, raw, email, step, day, ev, "contest");
+    await contest("c1@example.org", 0, ago(30));
+    await contest("c2@example.org", 0, ago(30));
+    await contest("c3@example.org", 0, ago(40)); await contest("c3@example.org", 1, ago(20));
+    await seed(env, raw, "i1@example.org", 0, ago(30), "sent", "installer");
+    await seed(env, raw, "h1@example.org", 0, ago(30), "sent", "event_host");
+    await contest("c4@example.org", 0, ago(30));
+    await post(suppress, env, "suppress", { email: "c4@example.org", reason: "manual", source: "t" });
+    await contest("c5@example.org", 0, ago(30));
+    await post(event, env, "event", { email: "c5@example.org", event: "reply", step: 0, segment: "contest" });
+    await contest("c6@example.org", 0, ago(40)); await contest("c6@example.org", 1, ago(30)); await contest("c6@example.org", 2, ago(20));
+    await contest("c7@example.org", 0, ago(1));
+    await contest("c8@example.org", 0, ago(10));
+    raw.prepare("INSERT INTO users (id,email,name) VALUES ('u9','c9@reg.example','R')").run();
+    await contest("c9@reg.example", 0, ago(30));
+    await contest("c10@example.org", 0, ago(30));
+    const { h } = await outreachHashes(env, "c10@example.org");
+    raw.prepare("INSERT INTO outreach_invalid (email_hash, reason, first_seen) VALUES (?,?,?)").run(h, "no_mail_server", TODAY);
+    await contest("first.last@gmail.com", 0, ago(30));
+    await post(suppress, env, "suppress", { email: "firstlast@gmail.com", reason: "unsubscribe", source: "t" });
+    const before = rows(raw, "SELECT 1 FROM outreach_events WHERE event = 'release'").length;
+    const preview = await adminBody(env, { action: "release", segment: "contest" });
+    assert.equal(preview.status, 200);
+    assert.equal(preview.body.dry_run, true);
+    assert.equal(preview.body.overdue, 4, "c1 c2 c3 and the registered c9 (hashes cannot see the account)");
+    assert.deepEqual(preview.body.by_step, { 0: 0, 1: 3, 2: 1 });
+    assert.equal(preview.body.released, 0);
+    assert.equal(preview.body.skipped_suppressed, 2);
+    assert.equal(preview.body.skipped_undeliverable, 1);
+    assert.equal(preview.body.already_released, 0);
+    assert.equal(rows(raw, "SELECT 1 FROM outreach_events WHERE event = 'release'").length, before, "preview writes nothing");
+    assert.ok(!JSON.stringify(preview.body).includes("@") && !JSON.stringify(preview.body).includes("c1"), JSON.stringify(preview.body));
+    const omitted = await adminBody(env, { action: "release", segment: "contest", dry_run: true });
+    assert.equal(omitted.body.released, 0);
+    const applied = await adminBody(env, { action: "release", segment: "contest", dry_run: false });
+    assert.equal(applied.body.released, 4); assert.equal(applied.body.dry_run, false);
+    assert.equal(rows(raw, "SELECT 1 FROM outreach_events WHERE event = 'release'").length, 4);
+    assert.deepEqual(await seqOf(env, "c1@example.org"), { next_step: 1, due: true, due_on: ago(26), reason: "released" });
+    assert.equal((await seqOf(env, "c3@example.org")).next_step, 2); assert.equal((await seqOf(env, "c3@example.org")).reason, "released");
+    assert.equal((await seqOf(env, "c9@reg.example")).reason, "status_registered", "a release never overrides a registration");
+    assert.equal((await seqOf(env, "c9@reg.example")).due, false);
+    assert.equal((await seqOf(env, "c4@example.org")).reason, "status_suppressed");
+    assert.equal((await seqOf(env, "c5@example.org")).reason, "reply");
+    assert.equal((await seqOf(env, "first.last@gmail.com")).reason, "status_suppressed");
+    assert.equal((await seqOf(env, "c6@example.org")).reason, "sequence_finished");
+    assert.equal((await seqOf(env, "c10@example.org")).reason, "undeliverable_no_mail_server");
+    assert.equal((await seqOf(env, "i1@example.org")).reason, "overdue_hold");
+    assert.equal((await seqOf(env, "h1@example.org")).reason, "overdue_hold");
+    assert.equal((await releaseRows(env, raw, "c4@example.org")).length, 0);
+    assert.equal((await releaseRows(env, raw, "c5@example.org")).length, 0);
+    assert.equal((await releaseRows(env, raw, "c10@example.org")).length, 0);
+    assert.equal((await releaseRows(env, raw, "i1@example.org")).length, 0);
+    const again = await adminBody(env, { action: "release", segment: "contest", dry_run: false });
+    assert.equal(again.body.released, 0); assert.equal(again.body.already_released, 4); assert.equal(again.body.overdue, 0);
+    assert.equal(rows(raw, "SELECT 1 FROM outreach_events WHERE event = 'release'").length, 4, "applying twice adds nothing");
+    // the release covered step 1 only: once it is sent, step 2 is held again
+    await post(event, env, "event", { email: "c1@example.org", event: "sent", step: 1, segment: "contest" });
+    assert.equal((await seqOf(env, "c1@example.org")).reason, "overdue_hold");
+    assert.equal((await seqOf(env, "c1@example.org")).next_step, 2);
+    const next = await adminBody(env, { action: "release", segment: "contest" });
+    assert.equal(next.body.overdue, 1); assert.deepEqual(next.body.by_step, { 0: 0, 1: 0, 2: 1 }); assert.equal(next.body.already_released, 3);
+    // a pasted list releases only the rows that are actually on hold
+    const list = await adminBody(env, { action: "release", emails: ["c1@example.org", "c8@example.org", "c9@reg.example", "c6@example.org", "nobody-new@example.org"] });
+    assert.equal(list.body.dry_run, true); assert.equal(list.body.would_release, 1); assert.equal(list.body.released, 0);
+    assert.equal(list.body.rows.find((x) => x.i === 0).would_release, true);
+    assert.equal(list.body.rows.find((x) => x.i === 1).reason, "due");
+    assert.equal(list.body.rows.find((x) => x.i === 2).reason, "status_registered");
+    assert.ok(!JSON.stringify(list.body).includes("c1@example.org"));
+    const listApply = await adminBody(env, { action: "release", emails: ["c1@example.org", "c8@example.org", "c9@reg.example"], dry_run: false });
+    assert.equal(listApply.body.released, 1);
+    assert.equal((await seqOf(env, "c1@example.org")).reason, "released");
+    assert.equal((await seqOf(env, "c1@example.org")).next_step, 2);
+    assert.equal((await seqOf(env, "c8@example.org")).reason, "due");
+    assert.equal((await seqOf(env, "c9@reg.example")).reason, "status_registered");
+    const dash = await (await adminGet({ env })).json();
+    assert.ok(dash.results.every((c) => Number.isFinite(c.sent)));
+    assert.equal(dash.totals.sent, rows(raw, "SELECT 1 FROM outreach_events WHERE event = 'sent'").length, "a release is not counted as a send");
+  });
+});
+
+test("admin release: a bad call is refused and the other segment is untouched", async () => {
+  await withClock(NOON, async () => {
+    const { env, raw } = mk();
+    await seed(env, raw, "host@example.org", 0, ago(30), "sent", "event_host");
+    for (const body of [
+      { action: "release" },
+      { action: "release", segment: "contest", emails: ["a@example.org"] },
+      { action: "release", segment: "contests" },
+      { action: "release", segment: "contest", dry_run: "yes" },
+      { action: "release", emails: [] },
+      { action: "release", emails: Array.from({ length: 501 }, (_, i) => `n${i}@example.org`) },
+      { action: "nope" },
+    ]) assert.equal((await adminBody(env, body)).status, 400, JSON.stringify(body));
+    const hosts = await adminBody(env, { action: "release", segment: "event_host", dry_run: false });
+    assert.equal(hosts.body.released, 1); assert.deepEqual(hosts.body.by_step, { 0: 0, 1: 1, 2: 0 });
+    assert.equal((await seqOf(env, "host@example.org")).reason, "released");
+    const contest = await adminBody(env, { action: "release", segment: "contest" });
+    assert.equal(contest.body.overdue, 0);
+    assert.equal(rows(raw, "SELECT 1 FROM outreach_events WHERE event = 'release'").length, 1);
+  });
+});
+
+test("Admin > Outreach has a preview and a two-tap release, and the script version moved", () => {
+  const js = readFileSync(new URL("../public/admin/admin.js", import.meta.url), "utf8");
+  const html = readFileSync(new URL("../public/admin/index.html", import.meta.url), "utf8");
+  assert.match(js, /Release overdue follow-ups/);
+  assert.match(js, /id="orpreview"/); assert.match(js, /id="orrelease"/); assert.match(js, /id="orrelmail"/);
+  assert.match(js, /action: "release", segment, dry_run: true/);
+  assert.match(js, /action: "release", segment, dry_run: false/);
+  assert.match(js, /tap\(b, `release /); assert.match(js, /tap\(btn, `release /);
+  assert.match(html, /admin\.js\?v=20261125b/);
 });

@@ -20,7 +20,9 @@ export const FOLLOWUP_DAYS = { 1: 4, 2: 10 }, OVERDUE_MAX_DAYS = 14;
 const STOP_EVENTS = ["reply", "bounce", "complaint", "unsubscribe"];
 const daysBetween = (a, b) => Math.round((Date.parse(a + "T12:00:00Z") - Date.parse(b + "T12:00:00Z")) / 86400_000); // a minus b, by the calendar
 // events: this address's rows [{ event, step, day }] (any segment: a segment mismatch is ignored); status: its verdict; today: the Pacific date.
-// Answers { next_step: 0|1|2|null, due, due_on, reason }. due is true only when status is "clear" and the step is due today or at most 14 days overdue.
+// Answers { next_step: 0|1|2|null, due, due_on, reason }. due is true only when status is "clear" and the step is due today, at most 14 days overdue,
+// or the owner released that exact overdue step (reason "released"). A release is ignored for every other step, and it never wins over a stop event,
+// a status other than clear, or a finished sequence. Nothing here can offer a step past 2.
 export function sequenceFor(events, status, today) {
   const none = (reason) => ({ next_step: null, due: false, due_on: null, reason });
   const stop = events.find((e) => STOP_EVENTS.includes(e.event));
@@ -35,7 +37,11 @@ export function sequenceFor(events, status, today) {
     step = 0; dueOn = today;
   } else { step = first[1] === undefined ? 1 : 2; dueOn = shiftDay(first[0], FOLLOWUP_DAYS[step]); }
   if (dueOn > today) return { next_step: step, due: false, due_on: dueOn, reason: "not_due_yet" };
-  if (daysBetween(today, dueOn) > OVERDUE_MAX_DAYS) return { next_step: step, due: false, due_on: dueOn, reason: "overdue_hold" };
+  if (daysBetween(today, dueOn) > OVERDUE_MAX_DAYS) {
+    // a release names the step it lifts; once that step is sent, the next step is computed fresh and a release for the old step does not apply
+    if (events.some((e) => e.event === "release" && Number(e.step) === step)) return { next_step: step, due: true, due_on: dueOn, reason: "released" };
+    return { next_step: step, due: false, due_on: dueOn, reason: "overdue_hold" };
+  }
   return { next_step: step, due: true, due_on: dueOn, reason: step === 0 ? "no_original_sent_yet" : "due" };
 }
 
@@ -186,6 +192,148 @@ export async function addSuppression(env, email, reason, source) {
 // Used by the app's own unsubscribe flows: must never break the unsubscribe the person just asked for.
 export async function suppressFromApp(env, email, reason = "unsubscribe", source = "app") {
   try { return await addSuppression(env, email, reason, source); } catch { return false; }
+}
+
+// ---- releasing an overdue hold (the owner only; one step) ----
+// A "release" row names the follow-up that was past 14 days. sequenceFor honors it for that step alone, and only while the step is still the one that is due.
+// It is not a member of EVENTS: storing one must not suppress the address. The check still refuses a reply, bounce, complaint, unsubscribe, suppression, registration, listing or a finished sequence.
+const RELEASE_CAP = 50000;
+async function loadEvents(env) {
+  const out = [];
+  let after = 0;
+  for (;;) {
+    const rows = (await env.DB.prepare("SELECT id, email_hash, alias_hash, event, step, segment, day FROM outreach_events WHERE id > ? ORDER BY id LIMIT 1000").bind(after).all()).results;
+    out.push(...rows);
+    if (rows.length < 1000) break;
+    after = rows[rows.length - 1].id;
+    if (out.length > RELEASE_CAP) throw new Error("outreach events are too many to release in one pass");
+  }
+  return out;
+}
+async function loadHashSet(env, table) {
+  const set = new Set();
+  let after = "";
+  for (;;) {
+    const rows = (await env.DB.prepare(`SELECT email_hash AS h FROM ${table} WHERE email_hash > ? ORDER BY email_hash LIMIT 1000`).bind(after).all()).results;
+    for (const r of rows) set.add(r.h);
+    if (rows.length < 1000) break;
+    after = rows[rows.length - 1].h;
+    if (set.size > RELEASE_CAP) throw new Error("outreach table is too large to release in one pass");
+  }
+  return set;
+}
+// One group per person. Rows join when they share email_hash or alias_hash (the same address, or its +tag / Gmail-dots spelling).
+function groupByPerson(rows) {
+  const parent = new Map();
+  const find = (x) => { let p = parent.get(x); if (p === undefined) { parent.set(x, x); return x; } if (p !== x) { p = find(p); parent.set(x, p); } return p; };
+  const union = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
+  for (const r of rows) { find(r.email_hash); if (r.alias_hash) union(r.email_hash, r.alias_hash); }
+  const groups = new Map();
+  for (const r of rows) { const k = find(r.email_hash); const g = groups.get(k); if (g) g.push(r); else groups.set(k, [r]); }
+  return [...groups.values()];
+}
+const earliestOriginal = (evs) => {
+  let best = null;
+  for (const e of evs) if (e.event === "sent" && Number(e.step) === 0 && (!best || e.day < best.day || (e.day === best.day && e.id < best.id))) best = e;
+  return best;
+};
+const hashesOf = (evs) => { const s = new Set(); for (const e of evs) { s.add(e.email_hash); if (e.alias_hash) s.add(e.alias_hash); } return s; };
+
+// Writes one release row for the step that is overdue now. Refuses anything else, and refuses a second row for the same step.
+// opts.step / opts.segment, when passed, must be the step and segment the app computed (a caller cannot aim a release at a different step).
+async function writeRelease(env, email, step, segment) {
+  const { h, n } = await outreachHashes(env, email);
+  const sent = await env.DB.prepare("SELECT email_hash, alias_hash, segment FROM outreach_events WHERE event = 'sent' AND step = 0 AND (email_hash IN (?,?) OR alias_hash IN (?,?)) ORDER BY day, id LIMIT 1").bind(h, n, h, n).first();
+  if (!sent || !SEGMENTS.includes(sent.segment)) return { ok: false, reason: "missing_original" };
+  if (segment !== undefined && sent.segment !== segment) return { ok: false, reason: "segment_mismatch" };
+  const have = await env.DB.prepare("SELECT id FROM outreach_events WHERE event = 'release' AND step = ? AND (email_hash IN (?,?) OR alias_hash IN (?,?)) LIMIT 1").bind(step, h, n, h, n).first();
+  if (have) return { ok: true, duplicate: true, segment: sent.segment };
+  await env.DB.prepare("INSERT INTO outreach_events (email_hash, alias_hash, event, step, segment, day) VALUES (?,?,?,?,?,?)").bind(sent.email_hash, sent.alias_hash || "", "release", step, sent.segment, ptToday()).run();
+  return { ok: true, duplicate: false, segment: sent.segment };
+}
+
+const releaseBase = (row) => ({ ok: true, status: row.status, next_step: row.sequence.next_step, due_on: row.sequence.due_on, email_hash_prefix: row.hash_prefix, suppressed: false });
+
+// One address. released:false (with the sequence reason) when it is not an overdue hold the owner can lift. Never suppresses.
+export async function releaseOverdueEmail(env, email, opts = {}) {
+  const e = cleanEmail(email);
+  if (!validEmail(e)) return { ok: false, error: "bad_email" };
+  if (opts.step !== undefined && ![0, 1, 2].includes(opts.step)) return { ok: true, released: false, duplicate: false, reason: "step_not_allowed", next_step: null, due_on: null, email_hash_prefix: "", suppressed: false };
+  if (opts.segment !== undefined && !SEGMENTS.includes(opts.segment)) return { ok: false, error: "bad_segment" };
+  const row = (await checkEmails(env, [e])).results[0];
+  const seq = row.sequence, base = releaseBase(row);
+  if (row.invalid && (seq.reason === "overdue_hold" || seq.reason === "released")) return { ...base, released: false, duplicate: false, reason: "undeliverable_" + row.invalid };
+  const held = seq.reason === "overdue_hold" || seq.reason === "released";
+  if (!held || (seq.next_step !== 1 && seq.next_step !== 2)) return { ...base, released: false, duplicate: false, reason: seq.reason };
+  if (opts.step !== undefined && opts.step !== seq.next_step) return { ...base, released: false, duplicate: false, reason: "step_mismatch" };
+  const w = await writeRelease(env, e, seq.next_step, opts.segment);
+  if (!w.ok) return { ...base, released: false, duplicate: false, reason: w.reason };
+  return { ...base, released: true, duplicate: !!w.duplicate, reason: "released", segment: w.segment };
+}
+
+// A list the owner pasted. Dry run (the default) writes nothing and reports how many would be released. Only an address whose check reason is overdue_hold is released.
+export async function releaseOverdueEmails(env, emails, { dryRun = true } = {}) {
+  const checked = await checkEmails(env, emails);
+  const by_step = { 0: 0, 1: 0, 2: 0 };
+  const rows = new Array(emails.length);
+  const pending = [];
+  let already = 0, skipped = 0;
+  checked.results.forEach((row, i) => {
+    const seq = row.sequence;
+    const base = { i, next_step: seq.next_step, due_on: seq.due_on, reason: seq.reason, released: false, duplicate: false, would_release: false };
+    if (row.invalid && (seq.reason === "overdue_hold" || seq.reason === "released")) { skipped++; rows[i] = { ...base, reason: "undeliverable_" + row.invalid }; return; }
+    if (seq.reason === "released") { already++; rows[i] = { ...base, released: true, duplicate: true, reason: "released" }; return; }
+    if (seq.reason !== "overdue_hold" || (seq.next_step !== 1 && seq.next_step !== 2)) { skipped++; rows[i] = base; return; }
+    by_step[seq.next_step]++;
+    pending.push({ i, email: cleanEmail(emails[i]), step: seq.next_step });
+    rows[i] = { ...base, would_release: true };
+  });
+  let released = 0;
+  if (!dryRun) {
+    for (const p of pending) {
+      const w = await writeRelease(env, p.email, p.step);
+      if (w.duplicate) { already++; rows[p.i].released = true; rows[p.i].duplicate = true; rows[p.i].reason = "released"; }
+      else if (w.ok) { released++; rows[p.i].released = true; rows[p.i].reason = "released"; }
+      else { skipped++; by_step[p.step]--; rows[p.i].would_release = false; rows[p.i].reason = w.reason || "not_released"; }
+    }
+  }
+  return { ok: true, dry_run: !!dryRun, total: emails.length, released, would_release: pending.length, already_released: already, skipped, by_step, rows };
+}
+
+// Every overdue sequence whose original send was in this segment. Dry run (the default) only counts. Hashes only: registration and listing are still enforced later, on every check.
+export async function releaseOverdueSegment(env, segment, { dryRun = true } = {}) {
+  if (!SEGMENTS.includes(segment)) return { ok: false, error: "bad_segment" };
+  const events = await loadEvents(env);
+  const suppressed = await loadHashSet(env, "outreach_suppressions");
+  const invalid = await loadHashSet(env, "outreach_invalid");
+  const today = ptToday();
+  const by_step = { 0: 0, 1: 0, 2: 0 };
+  let overdue = 0, already_released = 0, skipped_suppressed = 0, skipped_undeliverable = 0;
+  const todo = [];
+  for (const evs of groupByPerson(events)) {
+    const original = earliestOriginal(evs);
+    if (!original || original.segment !== segment) continue;
+    const seq = sequenceFor(evs, "clear", today);
+    if (seq.reason !== "overdue_hold" && seq.reason !== "released") continue;
+    const hashes = hashesOf(evs);
+    if ([...hashes].some((h) => suppressed.has(h))) { skipped_suppressed++; continue; }
+    if ([...hashes].some((h) => invalid.has(h))) { skipped_undeliverable++; continue; }
+    if (seq.reason === "released") { already_released++; continue; }
+    if (seq.next_step !== 1 && seq.next_step !== 2) continue;
+    overdue++;
+    by_step[seq.next_step]++;
+    todo.push({ email_hash: original.email_hash, alias_hash: original.alias_hash || "", step: seq.next_step, segment: original.segment });
+  }
+  let released = 0;
+  if (!dryRun && todo.length) {
+    const day = today;
+    for (let i = 0; i < todo.length; i += 40) {
+      const chunk = todo.slice(i, i + 40);
+      await env.DB.batch(chunk.map((t) => env.DB.prepare("INSERT INTO outreach_events (email_hash, alias_hash, event, step, segment, day) VALUES (?,?,?,?,?,?)").bind(t.email_hash, t.alias_hash, "release", t.step, t.segment, day)));
+      released += chunk.length;
+    }
+  }
+  return { ok: true, dry_run: !!dryRun, segment, overdue, by_step, already_released, skipped_suppressed, skipped_undeliverable, released };
 }
 
 // ---- the key and the rate limit ----
