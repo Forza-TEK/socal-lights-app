@@ -1,0 +1,24 @@
+# Keeps the GitHub issue "Site errors" in step with the live error log, so errors reach the person fixing them without a screenshot (scripts: .github/scripts/error-issue.sh).
+# Runs every 3 hours and by hand (Actions > Error watch > Run workflow). Needs the repository secret ALERT_CRON_KEY (the same key the site checks).
+name: Error watch
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write    # only to open, rewrite or close the "Site errors" issue
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+      - name: Update the Site errors issue
+        env:
+          ALERT_CRON_KEY: ${{ secrets.ALERT_CRON_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash .github/scripts/error-issue.sh

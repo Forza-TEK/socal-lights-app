@@ -1945,3 +1945,7 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 ## 2026-11-25 Four parade listings fixed (migration 0294)
 - Peninsula Holiday Parade of Lights: date corrected Dec 5 to Sat Dec 12, 6pm (city page, entry form and Patch agree), now Confirmed. Coachella parade: Dec 4, 6-9:30pm per the city calendar, place "downtown Coachella" per the city's post; exact 2026 route not published, so the pin stays at downtown. Irwindale Christmas Spectacular: Dec 4, 6-8:30pm at Irwindale Park Plaza (city's post; pre-registration required). Baldwin Park: Dec 5, 9:45am parade, Winterfest 12-4pm, Esther Snyder Community Center, 4100 Baldwin Park Blvd (city calendar).
 - Not verified: Coachella's exact route; a search snippet that named Seneca Road belongs to a different parade and was not used.
+
+## 2026-11-25 Errors without screenshots
+- Dashboard error "ReferenceError: Can't find variable: _AutofillCallbackHandler" (5 times, from `/`, line 1, no file) was iOS autofill injecting its own script, not our code. The beacon now ignores errors with no file of ours, the server drops that text, and the dashboard card hides the 5 stored rows.
+- New: `GET /api/error-report` (key-protected, read-only), `error-watch.yml` (every 3 hours) keeping one GitHub issue "Site errors", and the hourly Claude routine reads it. See docs/runbooks/monitoring.md. Tests in tests/client-error.test.mjs.

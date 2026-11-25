@@ -91,6 +91,13 @@ The backup lives in the same Cloudflare account as the database. The repo is pub
 3. Keep the last 3.
 There is no automated off-Cloudflare copy because no private storage outside Cloudflare is set up (adding one needs an account and a secret from the owner, e.g. a Backblaze B2 bucket and an encrypted upload step: ask).
 
+## Site errors without screenshots (added 2026-11-25)
+- `GET /api/error-report?hours=24` (header `x-alert-key`, read-only) lists what the dashboard's errors card counts, with up to five example lines per kind. Normal activity, notices the site sent and browser noise are left out.
+- `.github/workflows/error-watch.yml` runs every 3 hours (and by hand) and keeps ONE GitHub issue, **Site errors**, in step with it: open while there are errors, closed when the log has been quiet for 24 hours. Editing the issue sends no email.
+- Claude's hourly routine ([SCL] Grok handoff check) reads that issue: a real bug gets a fix and a PR, browser noise is added to the filters (`NOISE` in `functions/api/client-error.js` and `NOISE_LOG_SQL` in `functions/_lib/oplog.js`) and the answer is commented on the issue.
+- Browser noise: iOS autofill and in-app browsers inject scripts that throw (`_AutofillCallbackHandler`); the beacon (`public/errors.js`) now ignores any error without one of our own files.
+- Needs the repository secret `ALERT_CRON_KEY` (already set for the other jobs). Server errors (5xx) are still not stored here: Cloudflare dashboard > Workers & Pages > socal-lights > Metrics.
+
 ## Honest limits
 - The heartbeat tells you a job reported, not that it did everything right (the job's own checks still apply).
 - `/api/health` is cached 30 seconds, so an outage shows within about a minute of the monitor's check.

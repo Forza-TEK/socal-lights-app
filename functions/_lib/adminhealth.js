@@ -4,18 +4,18 @@
 //  jobs:   the heartbeat of every scheduled GitHub workflow that reports in (job_heartbeats) plus the last time the live database applied a migration
 //          (d1_migrations: the "[SCL]" Claude routines publish event changes as migrations, so this is the closest trace they leave; they have no heartbeat of their own).
 import { sqlAgo } from "./revenue.js";
-import { INFO_LOG_SQL } from "./oplog.js";
+import { INFO_LOG_SQL, NOISE_LOG_SQL } from "./oplog.js";
 
 export const OP_LABEL = { mail: "Email send errors", email: "Email send errors", webhook: "Stripe webhook problems", "usage-alert": "Cloudflare usage alerts sent", "deploy-stalled": "Deploy stalled alerts sent", limit: "Cloudflare or email limits hit", renewal: "Automatic renewal problems", reconcile: "Stripe reconcile differences", ads: "Ad reporting problems", outreach: "Outreach problems", posts: "Home posting problems", contest: "Contest problems", account: "Account problems", badges: "Badge problems", removal: "Home removal problems", "sponsor-pay-link": "Sponsor payment link problems" };
 
 // Notices the site sent to its owner: the system worked, so they are shown apart and never counted as errors. `text` says in plain words what happened.
-const ALERT_KINDS = { "deploy-stalled": "A Cloudflare deploy looked stuck, and we emailed you.", "usage-alert": "A Cloudflare usage level was crossed, and we emailed you." };
+export const ALERT_KINDS = { "deploy-stalled": "A Cloudflare deploy looked stuck, and we emailed you.", "usage-alert": "A Cloudflare usage level was crossed, and we emailed you." };
 const ACTIVITY_LABEL = { outreach: "Outreach calls that worked", ads: "Ad reports received", "sponsor-pay-link": "Sponsor payment links set (for abuse review)" };
 
 export async function errorsLast7(env, jobs = [], now = Date.now()) {
   const since = sqlAgo(now - 7 * 86400000);
   let groups = [], activity = [], mailFailed = 0, opsError = "";
-  try { groups = (await env.DB.prepare("SELECT kind, COUNT(*) AS n, MAX(created_at) AS last, MAX(detail) AS example FROM ops_log WHERE created_at > ? AND NOT " + INFO_LOG_SQL + " GROUP BY kind ORDER BY n DESC").bind(since).all()).results; } catch (e) { opsError = "The error log could not be read."; }
+  try { groups = (await env.DB.prepare("SELECT kind, COUNT(*) AS n, MAX(created_at) AS last, MAX(detail) AS example FROM ops_log WHERE created_at > ? AND NOT " + INFO_LOG_SQL + " AND NOT " + NOISE_LOG_SQL + " GROUP BY kind ORDER BY n DESC").bind(since).all()).results; } catch (e) { opsError = "The error log could not be read."; }
   // normal activity that is logged but is not a failure (outreach and ad reports that worked, sponsor payment-link notes): shown apart, never counted as errors
   try { activity = (await env.DB.prepare("SELECT kind, COUNT(*) AS n, MAX(created_at) AS last FROM ops_log WHERE created_at > ? AND " + INFO_LOG_SQL + " GROUP BY kind ORDER BY n DESC").bind(since).all()).results.map((g) => ({ kind: g.kind, label: ACTIVITY_LABEL[g.kind] || g.kind, n: g.n, last: g.last })); } catch {}
   try { mailFailed = ((await env.DB.prepare("SELECT COUNT(*) AS n FROM mail_outbox WHERE status = 'failed' AND created_at > ?").bind(since).first()) || {}).n || 0; } catch {}
