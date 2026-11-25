@@ -143,3 +143,10 @@ test("the Admin view shows the page's real path in the address bar, because page
   // the same rule the organizer page uses to find its contest, run on the address the shim leaves behind
   assert.equal("/c/oak-hill/manage".split("/")[2], "oak-hill"); assert.equal("/admin/as".split("/")[2], "as");
 });
+
+import { readFileSync as readAdminJs } from "node:fs";
+test("Admin > Contests: an 'Edit as owner' button on the contest page and in the list opens the organizer dashboard as its owner (only when the contest has an owner account)", () => {
+  const js = readAdminJs("public/admin/admin.js", "utf8");
+  assert.match(js, /const acts = \(c\.owner_email \? asLink\("Edit as owner", "\/c\/" \+ c\.slug \+ "\/manage"\) : ""\)/, "the contest page's action row");
+  assert.match(js, /c\.owner_email \? ` <a class="rl" href="\$\{asUrl\("\/c\/" \+ c\.slug \+ "\/manage"\)\}" target="_blank" rel="noopener">Edit as owner<\/a>` : ""/, "the list row's actions");
+});
