@@ -80,3 +80,4 @@ test("the Details form order: Approving entries sits in its own Entries section 
   assert.ok(!/Voting categories[\s\S]{0,700}id="e-approval"[\s\S]{0,60}Describe each category/.test(form), "not between the categories and their descriptions");
   assert.match(org, /#e-onewrap,#e-eachwrap\{grid-column:1\/-1\}/);
 });
+
