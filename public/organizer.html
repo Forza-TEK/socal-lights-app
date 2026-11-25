@@ -174,12 +174,13 @@ async function act(path, body, okMsg) {
   if (okMsg) toast(okMsg); await load();
 }
 
+// One box per category (a sentence the organizer writes: what makes a home win it), with grey example text. Module level, because the category list's typing handler rebuilds these too.
+const catDescFields = (names, vals) => names.map((g) => `<div class="ff c6"><label class="ffl"><span class="lt">${esc(g)}</span><input data-ecatd="${esc(g)}" maxlength="140" value="${esc(vals[g] || "")}" placeholder="${esc(exampleFor(g))}"></label></div>`).join("");
 // Edit the contest's details. Dates, text, prizes and rules until winners are announced; categories only before the first vote.
 function editCard() {
   const c = D.contest; if (c.announced) return "";
   const locked = (V.total || V.votes.length) > 0, fld = (l, h, c = "c6") => `<div class="ff ${c}"><label class="ffl"><span class="lt">${l}</span>${h}</label></div>`;
   const inp = (id, v, extra = "") => `<input ${id ? `id="${id}"` : ""} value="${esc(v)}" ${extra}>`;
-  const catDescFields = (names, vals) => names.map((g) => fld(esc(g), `<input data-ecatd="${esc(g)}" maxlength="140" value="${esc(vals[g] || "")}" placeholder="${esc(exampleFor(g))}">`)).join("");
   const per = c.prizeMode === "each" ? (D.prizes || []).map((p) => `<div class="small muted">${esc(p.category)}${c.mode === "both" ? " · " + esc(p.label) : ""}: ${esc(p.prize)}</div>`).join("") : "";
   return `<details class="card" id="editcard" open><summary style="cursor:pointer;font-size:19px;font-weight:600">Edit contest details</summary>
    <p class="muted small">Change the name, dates, welcome message, prize or rules any time before winners are announced. Entrants see changes right away.</p>
@@ -437,7 +438,13 @@ function render() {
   const ef = $("#editform");
   if (ef) {
     const catBox = $("#e-catdescs"), readDescs = () => { const o = {}; document.querySelectorAll("[data-ecatd]").forEach((i) => { if (i.value.trim()) o[i.dataset.ecatd] = i.value.trim(); }); return o; };
-    $("#e-cats").addEventListener("input", () => { const keep = readDescs(), names = [...new Set($("#e-cats").value.split("\n").map((x) => x.trim()).filter(Boolean))]; catBox.innerHTML = catDescFields(names, keep); }); // the boxes follow the category list as it is typed
+    let lastNames = [...c.categories];
+    // The boxes follow the category list as it is typed. A description stays with its category: by name when the name is still there, and by position when a line was renamed
+    // (so retyping "Twinkle" as "Twinkle All the Way" keeps its sentence, even letter by letter); a new line gets an empty box with a grey example.
+    const syncCatDescs = () => { const keep = readDescs(), names = [...new Set($("#e-cats").value.split("\n").map((x) => x.trim()).filter(Boolean))], next = {};
+      names.forEach((n, i) => { if (keep[n] != null) next[n] = keep[n]; else { const was = lastNames[i]; if (was && !names.includes(was) && keep[was] != null) next[n] = keep[was]; } });
+      catBox.innerHTML = catDescFields(names, next); lastNames = names; };
+    $("#e-cats").addEventListener("input", syncCatDescs);
     const pm = $("#e-pmode"); pm.onchange = () => { $("#e-onewrap").hidden = pm.value !== "one"; $("#e-eachwrap").hidden = pm.value !== "each"; };
     ef.onsubmit = async (ev) => {
       ev.preventDefault(); const er = $("#e-err"); er.hidden = true;

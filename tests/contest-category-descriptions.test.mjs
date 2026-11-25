@@ -62,3 +62,12 @@ test("the pages: example text in the boxes, descriptions under each category, th
   assert.match(pub, /const catsBox = \(\) =>/); assert.match(pub, /\$\{winnersBox\(\)\}\$\{prizeBox\(\)\}\$\{catsBox\(\)\}/);
   assert.match(pub, /replace\(\/\[\.\\s\]\+\$\/, ""\)\)\} for each winner/);
 });
+
+test("the organizer's category boxes follow the category list as it is typed: the builder is reachable from the typing handler, and a renamed line keeps its sentence", () => {
+  const org = readFileSync("public/organizer.html", "utf8");
+  const top = org.indexOf("const catDescFields = "), card = org.indexOf("function editCard()");
+  assert.ok(top > 0 && top < card, "catDescFields is defined at module level, above editCard (a ReferenceError inside the input handler stopped the boxes refreshing)");
+  assert.ok(!/function editCard\(\)[\s\S]{0,900}const catDescFields/.test(org), "no second, local copy");
+  assert.match(org, /\$\("#e-cats"\)\.addEventListener\("input", syncCatDescs\)/);
+  assert.match(org, /const was = lastNames\[i\]; if \(was && !names\.includes\(was\) && keep\[was\] != null\) next\[n\] = keep\[was\]/, "a renamed line keeps its description (by position)");
+});
