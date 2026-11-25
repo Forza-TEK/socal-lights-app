@@ -90,6 +90,20 @@ Follow `docs/city-sweep.md`, `docs/sweep-methods.md` and `docs/blocked-sites.md`
 
 New watchlist venues and blocked sites go to Claude as a request in `docs/handoff/to-claude/`. Grok does not edit `docs/watchlist.json` or `docs/blocked-sites.md`.
 
+## 2026-11-24
+
+Grok catch-up run; the Nov 23 and Nov 24 scheduled runs were missed.
+
+Monday recurring-event re-check done today: work order fetched with `skip_attempted_days=0` and paged (offset 0 and 500): 372 to confirm + 584 without a photo = 956 rows.
+
+Focus categories: **runs** (84/90 → met) and **polar-dips** (6/8 → met), plus Thanksgiving-week items first (Nov 26–29).
+- **RunSignup public race API** (new parent source): 23 races published: 4 Thanksgiving-morning trots/walks (College of the Canyons in Santa Clarita, Fleet Feet and Running of the Turkeys in San Diego, Kindness Matters Walk in Fullerton), 17 December Santa/jingle runs (LA, San Diego, Long Beach, Santa Monica, Chino, Beaumont, Goleta, Newbury Park, Palmdale, Escondido, Venice) and 2 New Year's runs (SBRA Resolution Run on Jan 1 in Santa Barbara; Griffith Park Resolution Run on Jan 3).
+- **Hospitality pass:** 4 Thanksgiving meals published (Terranea, Four Seasons Los Angeles/Culina, South Coast Winery, Desert Willow's Terrace) and 1 Black Friday-weekend tree lighting (Dos Lagos, Corona). Casino NYE rows (Pala, Agua Caliente Cathedral City) are rejected by the intake filter; see to-claude.
+- **Lunar:** Irvine Lunar New Year Parade corrected to Feb 6, 2027, 11am (aamuseumgp.org). Rancho Cucamonga Lunar Festival confirmed, Jan 16–17, 11am–8pm (calfestival.com).
+- **California State Parks events layer:** re-checked. No 2027 First Day Hike rows yet. Bolsa Chica "Christmas at the Beach" was already on the map.
+- **Empty cities:** 153 before and after. Tried: Pala (NYE rejected by filter), Cabazon (Morongo NYE, 403), Camp Pendleton Mainside/South (MCCS site 403), El Monte, South El Monte and Lawndale (no 2026 holiday pages found). All are queued for the browser pass.
+- Next run: OC Public Libraries (libraries.oc.gov/events) for OC unincorporated places; Camp Pendleton results from the browser pass.
+
 ## 2026-11-22
 
 Parent sources checked for small and unincorporated places (new since the Nov 21 section):
