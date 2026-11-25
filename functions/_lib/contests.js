@@ -173,6 +173,14 @@ export const KIND_LABEL = { public: "People's Choice", judge: "Judges' Choice" }
 export const modeOf = (c) => (["public", "judges", "both"].includes(c.mode) ? c.mode : "public");
 export const hasPublic = (c) => modeOf(c) !== "judges";
 export const hasJudges = (c) => modeOf(c) !== "public";
+// The description the organizer wrote for each voting category: { "<category>": "<text>" }.
+export const catDescOf = (c) => { try { const o = JSON.parse(c.category_desc || "{}"); return o && typeof o === "object" && !Array.isArray(o) ? o : {}; } catch { return {}; } };
+// What the organizer sent, kept only for categories the contest has, trimmed, one line each, at most 140 characters.
+export function cleanCatDescs(input, categories) {
+  const out = {};
+  if (input && typeof input === "object" && !Array.isArray(input)) for (const [k, v] of Object.entries(input)) { const d = clean(v, 140).replace(/\s+/g, " ").trim(); if (categories.includes(k) && d) out[k] = d; }
+  return out;
+}
 export const prizesOf = (c) => { try { return JSON.parse(c.prizes || "{}"); } catch { return {}; } };
 // The prize for one award, from the contest's prize settings (one prize for all, or one per award)
 export const prizeFor = (c, cat, kind) => (c.prize_mode === "one" ? c.prize || "" : c.prize_mode === "each" ? prizesOf(c)[`${cat}|${kind}`] || "" : "");

@@ -5,7 +5,7 @@ import { requireUser, sameOrigin } from "../../_lib/auth.js";
 import { CITY } from "../../../public/cities.js";
 import { rulesDefault } from "../../../public/rules.js";
 import { SEASONS } from "../../../public/seasons.js";
-import { trustOf, officialSounding, windows, states, contestSlug, withTail, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest, KIND_LABEL, MAX_CATS, MAX_JUDGES } from "../../_lib/contests.js";
+import { cleanCatDescs, trustOf, officialSounding, windows, states, contestSlug, withTail, todayPT, isDate, seasonFor, countyFor, listOnMap, getContest, KIND_LABEL, MAX_CATS, MAX_JUDGES } from "../../_lib/contests.js";
 import { inviteJudges } from "./[slug]/judges.js";
 import { normName, normText } from "../../_lib/fields.js";
 import { reserveSends } from "../../_lib/sendlimit.js";
@@ -61,7 +61,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   // A contest goes live right away, except one that uses an official-sounding name ("City of ...", HOA, chamber, school, "official") for an organizer we could not tie
   // to a website: that waits for Admin (N-02). Any other contest we could not match keeps a note for Admin and goes live, with fewer organizer-added homes until Admin looks.
-  const trust = trustOf(user.email, site), official = trust !== "match" && officialSounding(name, org), words = needsReview(name, org, descr, b.rules), live = !official && !words;
+  const trust = trustOf(user.email, site), official = trust !== "match" && officialSounding(name, org), catDescs = cleanCatDescs(b.catDescs, categories), words = needsReview(name, org, descr, b.rules, ...Object.values(catDescs)), live = !official && !words;
   // Contest passes: a contest that would go live counts toward the organization's 12-month window. Over the allowance, the organizer gets the pass picker (402), not a silent failure.
   // A contest held for review (official-sounding name) is not live, so it does not count and needs no pass yet.
   const gate = await liveGate(env, user.email, site);
@@ -80,9 +80,9 @@ export async function onRequestPost({ request, env, waitUntil }) {
     note: (words ? "review words (text needs a look), " : "") + (trust === "match" ? "" : `${official ? "official-sounding name, " : ""}email ${trust === "free" ? "is a free-mail address" : trust === "none" ? "given with no website" : "does not match the website"}`),
   };
   await env.DB.prepare(
-    `INSERT INTO contests (id,slug,owner_id,name,org,city,county,descr,site,contact_email,season,status,entries_close,vote_start,vote_end,categories,vote_rule,approval,show_counts,one_win,rules,note,mode,judge_method,prize_mode,prize,prizes,sponsor,org_key,live_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-  ).bind(c.id, c.slug, c.owner_id, c.name, c.org, c.city, c.county, c.descr, c.site, c.contact_email, c.season, c.status, c.entries_close, c.vote_start, c.vote_end, c.categories, c.vote_rule, c.approval, c.show_counts, c.one_win, rules, c.note, mode, method, prizeMode, prize, JSON.stringify(prizes), sponsor, gate.key, live ? todayPT() : "").run();
+    `INSERT INTO contests (id,slug,owner_id,name,org,city,county,descr,site,contact_email,season,status,entries_close,vote_start,vote_end,categories,vote_rule,approval,show_counts,one_win,rules,note,mode,judge_method,prize_mode,prize,prizes,sponsor,org_key,live_at,category_desc)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+  ).bind(c.id, c.slug, c.owner_id, c.name, c.org, c.city, c.county, c.descr, c.site, c.contact_email, c.season, c.status, c.entries_close, c.vote_start, c.vote_end, c.categories, c.vote_rule, c.approval, c.show_counts, c.one_win, rules, c.note, mode, method, prizeMode, prize, JSON.stringify(prizes), sponsor, gate.key, live ? todayPT() : "", JSON.stringify(catDescs)).run();
   // Audit M7: count again with the row in; two requests at the same moment can both pass the gate above. Over the allowance: take the row back and show the pass picker.
   if (live && (await overAllowance(env, gate.key))) { await env.DB.prepare("DELETE FROM contests WHERE id = ?").bind(c.id).run(); return json({ error: PAYWALL_MESSAGE, code: "pass_required", ...gate.view }, { status: 402 }); }
   if (live) await listOnMap(env, c);
