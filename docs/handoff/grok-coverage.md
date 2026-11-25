@@ -90,6 +90,21 @@ Follow `docs/city-sweep.md`, `docs/sweep-methods.md` and `docs/blocked-sites.md`
 
 New watchlist venues and blocked sites go to Claude as a request in `docs/handoff/to-claude/`. Grok does not edit `docs/watchlist.json` or `docs/blocked-sites.md`.
 
+## 2026-11-22
+
+Parent sources checked for small and unincorporated places (new since the Nov 21 section):
+- **Riverside County Library LibCal** (rivlib.libcal.com; 398 events, Nov 22–Jan 10): **Anza** filled (Salt Dough Ornaments at Anza Library, Dec 3). Branches in other empty Riverside County places had nothing seasonal yet.
+- **San Diego County Library BiblioCommons events** (sdcl.bibliocommons.com; 1,843 events): **Descanso** filled (Santa Claus Visit, Dec 19). I also published 9 more branch events: Lakeside, Valley Center, Vista ×2, Poway, Casa de Oro, Rancho Santa Fe, Santee, 4S Ranch and El Cajon.
+- **California State Parks public events and First Day Hikes ArcGIS layers** (the data behind events.parks.ca.gov): published the Anza-Borrego First Day Hike (Borrego Springs). The Old Town Las Posadas date matched. The First Day Hikes layer has no 2027 rows yet.
+- **Whitewater Preserve / Mission Creek** New Year's Day hike: **Whitewater** filled.
+- **Visit Catalina Island events**: published Avalon Grille Thanksgiving. Two Harbors' Harbor Reef buffet was rejected because the address didn't geocode.
+- **temeculawines.org events**: published the Europa Village NYE.
+- Aggregator lists used only as leads (each row was sent from its own page): teamtitleguy turkey trots, funwithkidsinla trains, culturaldaily Nutcracker list, yoursocal and sandispots light guides.
+- Still pending: Camp Pendleton city key (already filed in 2026-11-21-run-follow-ups.md), Needles, Guadalupe, Piru, Isla Vista, Coto de Caza, Trabuco Canyon, North Tustin, Valinda, Walnut Park.
+- OC Public Libraries moved to libraries.oc.gov/events. I haven't swept it yet; it's next run's parent source for OC unincorporated places.
+
+Empty cities: 155 → 152 (Anza, Descanso and Whitewater filled). Anza was empty again this morning because its earlier event had passed.
+
 ## 2026-11-21
 
 Empty cities: 154 → 150 (Signal Hill, Meiners Oaks, Lynwood, Elfin Forest filled).
