@@ -18,7 +18,7 @@ export async function onRequestGet({ params, env }) {
     env.DB.prepare("SELECT COALESCE(SUM(n),0) AS n FROM installer_hits WHERE installer_id = ? AND day >= date('now','-6 days')").bind(installer.id).first().catch(() => ({ n: 0 })),
     installer.owner_email ? env.DB.prepare("SELECT id, name, email FROM users WHERE lower(email) = lower(?)").bind(installer.owner_email).first().catch(() => null) : null,
     all("SELECT at, admin, action FROM admin_log WHERE area = 'installers' AND target_id = ? ORDER BY id DESC LIMIT 10", installer.id),
-    env.DB.prepare("SELECT COALESCE(SUM(imp),0) AS imp, COALESCE(SUM(click),0) AS click, COALESCE(SUM(call),0) AS call FROM banner_stats WHERE installer_id = ? AND day >= date('now','-29 days')").bind(installer.id).first().catch(() => ({ imp: 0, click: 0, call: 0 })),
+    env.DB.prepare("SELECT COALESCE(SUM(imp),0) AS imp, COALESCE(SUM(click),0) AS click, COALESCE(SUM(call),0) AS call, COALESCE(SUM(lst_imp),0) AS lst_imp, COALESCE(SUM(lst_click),0) AS lst_click, COALESCE(SUM(lst_call),0) AS lst_call FROM banner_stats WHERE installer_id = ? AND day >= date('now','-29 days')").bind(installer.id).first().catch(() => ({ imp: 0, click: 0, call: 0, lst_imp: 0, lst_click: 0, lst_call: 0 })),
   ]);
   return json({ installer, homes, leads, views7: (hits && hits.n) || 0, owner, history, banner: bstats || { imp: 0, click: 0, call: 0, lst_imp: 0, lst_click: 0, lst_call: 0 } }, { headers: { "cache-control": "no-store" } });
 }

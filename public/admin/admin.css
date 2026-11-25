@@ -472,6 +472,12 @@ details.fbox::details-content{display:contents}
 /* label and value pairs in a record card */
 .rcard{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:18px 20px;margin:0 0 16px}
 .rcard h3{margin:0 0 14px;font:700 16px var(--font)}
+/* A record page (installer, user, order...) lists sections inside one card: its small headings get room above and below, the status row its own spacing, and the stat tiles clear space before the first section */
+.rcard h3.psec{margin:30px 0 12px}.rcard>.pstats+h3.psec,.rcard h3.psec:first-child{margin-top:26px}
+.rcard .rt{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;margin:0 0 18px}
+.rcard .pstats{margin-bottom:4px}
+.rcard h3.psec+.meta,.rcard h3.psec+p.meta{margin-top:0}
+.rcard ul.meta{margin:0;padding-left:20px;display:grid;gap:8px}
 .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 32px}
 .kv .k{font:600 13px var(--font);color:var(--muted);margin-bottom:3px}
 .kv .v,.rcard .v{overflow-wrap:anywhere}
