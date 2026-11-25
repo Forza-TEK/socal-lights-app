@@ -11,7 +11,7 @@ import { json, err, clean, webUrl, newId, geocodeAddress } from "../../../_lib/u
 import { countyFor } from "../../../_lib/citycounty.js";
 import { CITY } from "../../../../public/cities.js";
 import { SEASONS } from "../../../../public/seasons.js";
-import { needsReview } from "../../../_lib/moderation.js";
+import { eventNeedsReview as needsReview } from "../../../_lib/moderation.js";
 import { checkSubmitLimits, limitResponse } from "../../../_lib/submitlimit.js";
 import { ipPruneStatements } from "../../../_lib/retention.js";
 import { requireUser, sameOrigin, normEmail } from "../../../_lib/auth.js";
@@ -97,7 +97,7 @@ export async function onRequestPost({ params, request, env }) {
     const season = b.season === undefined ? s.season : SEASONS[b.season] ? b.season : "", type = b.type === undefined ? s.type : clean(b.type, 10);
     if (b.season !== undefined || b.type !== undefined) { if (!season || !SEASONS[season].types[type]) return err(400, "Choose a season and an event type."); }
     const city = b.city === undefined ? s.city : clean(b.city, 60), address = b.address === undefined ? String(s.address || "") : line(b.address, 160);
-    if (needsReview(name, blurb, venue, hours, price, address, urlRaw)) return err(400, "That doesn't look like a community event listing."); // every text field, not only the name, blurb and venue (M3)
+    if (needsReview(name, blurb, venue, address, hours, price, urlRaw)) return err(400, "That doesn't look like a community event listing."); // every text field, not only the name, blurb and venue (M3)
     if (b.city !== undefined && !CITY[city]) return err(400, "Choose a city from the list.");
     if (b.address !== undefined && address.length < 6) return err(400, "Enter the street address (or the two cross streets for a parade).");
     let { lat, lng, county } = s, located;
@@ -125,7 +125,7 @@ export async function onRequestPost({ params, request, env }) {
     // H1: only an event that is on the map can be run again (an event in review or declined cannot be turned into a live one this way), and the copy goes through the same rules a new event does:
     // the review words, the per-account hourly and daily limits, and one copy for a given next-year date.
     if (!live) return err(400, "Only an event that is on the map can be run again next year.");
-    if (needsReview(s.name, s.blurb, s.venue, s.hours, s.price, s.address, s.url)) return err(400, "That doesn't look like a community event listing.");
+    if (needsReview(s.name, s.blurb, s.venue, s.address, s.hours, s.price, s.url)) return err(400, "That doesn't look like a community event listing.");
     const start = plusYear(s.start_date), end = plusYear(s.end_date), id = newId(), eventId = `u-${slug(s.name).slice(0, 24)}-${newId().slice(0, 6)}`;
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const there = await env.DB.prepare("SELECT 1 AS x FROM event_submissions WHERE lower(contact_email) = lower(?) AND lower(name) = lower(?) AND start_date = ? LIMIT 1").bind(s.contact_email, s.name, start).first();

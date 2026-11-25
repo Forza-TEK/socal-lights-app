@@ -313,3 +313,34 @@ test("wiring: routes, admin tab, version pins, no secret in the repo", () => {
   assert.match(readFileSync("functions/_lib/adminlog.js", "utf8"), /grok: \["intake_events"/);
   assert.doesNotMatch(readFileSync("functions/_lib/intake.js", "utf8"), /GROK_INTAKE_KEY\s*=\s*["']/);
 });
+
+test("New Year's Eve at a casino resort is published, casino promos in season too; other spam words still are not", async () => {
+  await run(async () => {
+    const { env } = mk();
+    const nye = good({ name: "New Year's Eve Celebration at Pala", city: "Pala", season: "newyear", type: "nye", start: "2026-12-31", end: "2026-12-31", hours: "11am–12:30am", free: false, price: "From $25",
+      blurb: "Live music from 11am, the Rio Carnival Grande Parade at 9pm and 11:30pm, and the Copa Countdown at 11:50pm.", venue: "Pala Casino Spa & Golf Resort", address: "11154 CA-76, Pala, CA 92059", url: "https://www.palacasino.com/nye/",
+      evidence: "Thu Dec 31: live music from 11am, parade 9pm and 11:30pm, countdown 11:50pm at Pala Casino Spa & Golf Resort." });
+    geo(33.364, -117.068);
+    const r = await send(env, [nye]);
+    assert.equal(r.body.results[0].verdict, "published", JSON.stringify(r.body.results[0]));
+    geo(33.9806, -117.3717);
+    const promo = await send(env, [good({ name: "Casino bonus holiday lights night", blurb: "Claim a casino bonus and play slots every night this season while you see the resort holiday lights.", venue: "Pala Casino Spa & Golf Resort" })]);
+    assert.equal(promo.body.results[0].verdict, "published", JSON.stringify(promo.body.results[0]));
+    const other = await send(env, [good({ name: "Crypto holiday lights meetup", blurb: "A crypto holiday lights meetup with bitcoin giveaways for everyone who comes along.", venue: "Some Park" })]);
+    assert.equal(other.body.results[0].verdict, "rejected");
+  });
+});
+
+test("an address the lookup cannot find, with a pin supplied, is published at the pin (within 40 km of the city)", async () => {
+  await run(async () => {
+    const { env } = mk();
+    globalThis.fetch = async () => new Response(JSON.stringify({ result: { addressMatches: [] } }));
+    const row = good({ name: "Winter Fest Express", city: "Camp Pendleton South", season: "christmas", type: "show", start: "2026-12-05", end: "2026-12-05", hours: "7am–11am", venue: "Pacific Views Event Center", address: "Pacific Views Event Center, Camp Pendleton, CA 92055", lat: 33.2322, lng: -117.3917, url: "https://pendleton.usmc-mccs.org/calendar-of-events" });
+    const r = await send(env, [row]);
+    assert.equal(r.body.results[0].verdict, "published", JSON.stringify(r.body.results[0])); assert.equal(r.body.published, 1);
+    const far = await send(env, [{ ...row, name: "Semper Fitmas Santa Elf Run", start: "2026-12-12", end: "2026-12-12", lat: 34.5, lng: -118.9 }]);
+    assert.equal(far.body.results[0].verdict, "rejected");
+    const none = await send(env, [{ ...row, name: "Polar Bear Plunge Camp Fire", start: "2026-12-19", end: "2026-12-19", lat: undefined, lng: undefined }]);
+    assert.equal(none.body.results[0].verdict, "rejected");
+  });
+});

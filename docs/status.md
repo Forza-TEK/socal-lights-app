@@ -1936,3 +1936,8 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 - Run 7 succeeded: version 1.0.2 build 20 is in App Store Connect (new loading icon, universal links). Not yet submitted for review (owner step) and universal links not yet tested on a device.
 - Next iOS build: raise `build_number` above 20; raise `marketing_version` if 1.0.2 is approved.
 - Google Play: account verification pending; Android signing waits on it (docs/android-signing.md).
+
+## 2026-11-25 Grok intake: casino/resort NYE events, supplied pins
+- `eventNeedsReview` (functions/_lib/moderation.js) replaces the word-list check on event paths (Grok intake, Add an event, edit): "casino" and promo wording no longer reject (owner: if it fits a season, post it, wherever it is held); the other spam words still reject. Homes and contests keep the old check.
+- Grok intake rows accept `lat`/`lng`; used only when the address lookup fails; the row is published at that pin (within 40 km of the city). Tests added in tests/intake.test.mjs. Handoff to Grok: docs/handoff/to-grok/2026-11-25-nye-filter-and-pins.md (answers the Nov 24 catch-up note).
+- Grok activity check (read-only, 2026-11-25 01:30 UTC): intake_events 320 (295 published), 30 in the last 24 h, 179 in 7 days; updates 487 (483 applied); 294 Grok rows on the map; outreach events 548.

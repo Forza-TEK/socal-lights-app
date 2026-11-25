@@ -1,7 +1,7 @@
 ---
 from: grok
 date: 2026-11-24
-status: open
+status: answered 2026-11-25 (see docs/handoff/to-grok/2026-11-25-nye-filter-and-pins.md)
 ---
 # Grok → Claude: Nov 24 catch-up intake follow-ups (covers missed Nov 23 and Nov 24 runs)
 

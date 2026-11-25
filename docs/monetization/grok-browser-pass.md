@@ -100,3 +100,6 @@ Every row has two extra fields: `last_attempt` (UTC time like `2026-11-16T09:30:
 - `cancelled: true` (with `url`, `evidence`, `seen`) reports a cancellation. It is never applied automatically: it is held for the owner.
 - You cannot change names, venues, addresses, types or remove anything.
 - Answers per row: `applied` (changed on the map; the owner can undo it in Admin > From Grok > Updates), `held` (waiting for the owner, with the reason), `unchanged` (the map already shows this), or `rejected` (with reasons: fix or skip). Held always means: organizer-managed event (`u-` ids, contest homes, anything an organizer added), an event with a paid placement, a cancellation, a start more than 60 days from an already confirmed start, a daily limit of 600 applied updates, or the owner has switched the intake off. Do not resend held rows.
+
+## Venues with no street address; casinos (added 2026-11-25)
+Rows may carry `lat` and `lng`. They are used only when the address lookup fails: the row is published at that pin. A pin more than 40 km from the city key is rejected. Casino and resort venues and promo wording are allowed when the event fits a season (owner rule); the other spam words are still rejected.
