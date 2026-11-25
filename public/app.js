@@ -554,7 +554,12 @@ function closePin() { state.sel = null; $("#preview").hidden = true; document.bo
 let pinBox = null, pinRaf = 0, pinRO = null;
 // Desktop: the list can be hidden to give the whole screen to the map (remembered on this device)
 const listHidden = () => document.documentElement.classList.contains("list-hidden") && !isPhone();
-function panelW() { return listHidden() ? 0 : parseFloat(cssVar("--panel-w")) || 0; }
+function panelW() {
+  if (listHidden()) return 0;
+  let w = parseFloat(cssVar("--panel-w")) || 0;
+  if (w && isShort() && !isPhone()) { const p = document.querySelector(".panel"); if (p) w += Math.max(0, (parseFloat(getComputedStyle(p).right) || 8) - 8); } // sideways phone: the list sits inside the side margin (Dynamic Island edge)
+  return w;
+}
 function setListHidden(v, save = true) {
   document.documentElement.classList.toggle("list-hidden", v);
   const b = $("#panelToggle"); if (b) { b.setAttribute("aria-expanded", String(!v)); b.setAttribute("aria-label", v ? "Show list" : "Hide list"); b.title = v ? "Show list" : "Hide list"; }
