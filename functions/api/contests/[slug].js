@@ -8,7 +8,7 @@ import { enqueueMail, drainMail } from "../../_lib/mailbatch.js";
 import { logOp } from "../../_lib/oplog.js";
 import { inviteJudges } from "./[slug]/judges.js";
 import { getUser, sameOrigin, okEmail } from "../../_lib/auth.js";
-import { getContest, windows, states, contestSlug, withTail, todayPT, isDate, listOnMap, unlistFromMap, isStaff, trustOf, officialSounding, MAX_CATS, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
+import { cleanCatDescs, catDescOf, getContest, windows, states, contestSlug, withTail, todayPT, isDate, listOnMap, unlistFromMap, isStaff, trustOf, officialSounding, MAX_CATS, seasonFor, addDays, ownerOf, computeResults, awardList, prizeFor, modeOf, hasPublic, hasJudges, judgeOf, KIND_LABEL, cats } from "../../_lib/contests.js";
 import { publicEntry } from "../../_lib/archive.js";
 import { judgeProgress } from "../../_lib/judging.js";
 import { diff, CONTEST_FIELDS, teamChanged } from "../../_lib/changes.js";
@@ -56,7 +56,7 @@ export async function onRequestGet({ params, request, env }) {
     sponsors: sponsors.filter((x) => isOwner || isPublic(x)).map((x) => (isOwner ? staffView(x) : publicView(x))), // the public sees only sponsors that are shown (logo, name, website); the organizer team sees the records
     installer: c.installer_name ? { name: c.installer_name, url: c.installer_url || "", slug: (await env.DB.prepare("SELECT slug FROM installers WHERE lower(name) = lower(?) AND status = 'active'").bind(c.installer_name).first())?.slug || "" } : null,
     ...(isOwner ? { installerEmail: c.installer_email || "" } : {}),
-    contest: { logo: logoUrl(c), founder: isFounder(await founderKeys(env), c.org_key), slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, votesRemoved: frozen ? frozen.voided || 0 : 0, status: c.status, unpublishedByOwner: c.status === "declined" && c.unpublished_by === "owner",  entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open, ...states(c) },
+    contest: { logo: logoUrl(c), founder: isFounder(await founderKeys(env), c.org_key), slug: c.slug, name: c.name, org: c.org, city: c.city, county: c.county, descr: c.descr, categories, catDescs: cleanCatDescs(catDescOf(c), categories), approval: c.approval, showCounts: !!c.show_counts, oneWin: !!c.one_win, rules: c.rules || "", mode: modeOf(c), judgeMethod: c.judge_method === "score" ? "score" : "pick", prizeMode: c.prize_mode || "none", prize: c.prize || "", sponsor: c.sponsor || "", season: c.season, announced: !!c.announced, frozenAt: frozen ? frozen.at : null, votesRemoved: frozen ? frozen.voided || 0 : 0, status: c.status, unpublishedByOwner: c.status === "declined" && c.unpublished_by === "owner",  entriesClose: c.entries_close, voteStart: c.vote_start, voteEnd: c.vote_end, entriesOpen: w.entriesOpen, votingOpen: w.votingOpen, entriesPaused: !c.entries_open, votingPaused: !c.voting_open, ...states(c) },
     entries, winners: frozen ? frozen.winners : c.announced ? live.winners : {}, jwinners: frozen ? frozen.jwinners || {} : c.announced ? live.jwinners : {}, awards, prizes,
     me: { signedIn: !!user, isOwner, isCreator: !!user && !!c.owner_id && c.owner_id === user.id, isJudge: !!jrow, votes: mine },
   }, { headers: { "cache-control": "no-store" } });
@@ -186,6 +186,8 @@ async function editContest(env, c, b, user, waitUntil) {
       categories = next;
     }
   }
+  const catDescs = cleanCatDescs(b.catDescs && typeof b.catDescs === "object" ? b.catDescs : catDescOf(c), categories); // an older page that does not send them keeps what is saved
+  if (needsReview(...Object.values(catDescs)) && !needsReview(...Object.values(catDescOf(c)))) return err(400, "A category description has wording we can't publish. Rephrase it and save again.");
   const prizeMode = ["none", "one", "each"].includes(b.prizeMode) ? b.prizeMode : "none", prize = clean(b.prize, 140), sponsor = clean(b.sponsor, 80);
   const prizes = {}; if (prizeMode === "each" && b.prizes && typeof b.prizes === "object") for (const [k, v] of Object.entries(b.prizes)) { const [cat, kind] = String(k).split("|"); if (categories.includes(cat) && KIND_LABEL[kind] && clean(v, 100)) prizes[`${cat}|${kind}`] = clean(v, 100); }
   const rules = String(b.rules || "").replace(/\r/g, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, 4000);
@@ -203,8 +205,8 @@ async function editContest(env, c, b, user, waitUntil) {
   const held = hold && Object.keys(want).some((k) => want[k] !== keep[k]);
   const fin = held ? keep : want; // what is written now
   await env.DB.prepare("UPDATE contests SET installer_name=?, installer_email=?, installer_url=? WHERE id=?").bind(iname, iname ? iemail : "", iurl || "", c.id).run();
-  await env.DB.prepare("UPDATE contests SET name=?, org=?, descr=?, entries_close=?, vote_start=?, vote_end=?, categories=?, rules=?, prize_mode=?, prize=?, prizes=?, sponsor=?, approval=?, updated_at=datetime('now') WHERE id=?")
-    .bind(fin.name, fin.org, fin.descr, closes, vs, ve, JSON.stringify(categories), fin.rules, prizeMode, prize, JSON.stringify(prizes), sponsor, approval, c.id).run();
+  await env.DB.prepare("UPDATE contests SET name=?, org=?, descr=?, entries_close=?, vote_start=?, vote_end=?, categories=?, category_desc=?, rules=?, prize_mode=?, prize=?, prizes=?, sponsor=?, approval=?, updated_at=datetime('now') WHERE id=?")
+    .bind(fin.name, fin.org, fin.descr, closes, vs, ve, JSON.stringify(categories), JSON.stringify(catDescs), fin.rules, prizeMode, prize, JSON.stringify(prizes), sponsor, approval, c.id).run();
   if (held) {
     const note = `${newlyOfficial ? "official-sounding name" : "review words"} held on edit: wants name "${name}", org "${org}"`;
     await env.DB.prepare("UPDATE contests SET pending_edit = ?, note = CASE WHEN note = '' THEN ? ELSE note || '; ' || ? END WHERE id = ?").bind(JSON.stringify(want), note, note, c.id).run();
