@@ -71,3 +71,13 @@ test("the organizer's category boxes follow the category list as it is typed: th
   assert.match(org, /\$\("#e-cats"\)\.addEventListener\("input", syncCatDescs\)/);
   assert.match(org, /const was = lastNames\[i\]; if \(was && !names\.includes\(was\) && keep\[was\] != null\) next\[n\] = keep\[was\]/, "a renamed line keeps its description (by position)");
 });
+
+test("the Details form order: Approving entries sits in its own Entries section below the category descriptions; the prize boxes span the row", () => {
+  const org = readFileSync("public/organizer.html", "utf8");
+  const form = org.slice(org.indexOf("function editCard()"), org.indexOf("function editCard()") + 9000);
+  const at = (t) => form.indexOf(t);
+  assert.ok(at("<legend>Voting</legend>") < at("Describe each category (optional)") && at("Describe each category (optional)") < at("<legend>Entries</legend>") && at("<legend>Entries</legend>") < at('id="e-approval"') && at('id="e-approval"') < at("<legend>Prize</legend>"));
+  assert.ok(!/Voting categories[\s\S]{0,700}id="e-approval"[\s\S]{0,60}Describe each category/.test(form), "not between the categories and their descriptions");
+  assert.match(org, /#e-onewrap,#e-eachwrap\{grid-column:1\/-1\}/);
+});
+
