@@ -1961,3 +1961,7 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 - Fix: one set of variables (`--pr`, `--sair`, `--sail`) in the sideways block; the arrow, zoom buttons, Route pill, search row and the left button column are measured from the list's real edge and the real side margins; `panelW()` in app.js counts the margin too (pin card, map padding). Search placeholder ends with an ellipsis.
 - Tested by substituting 59/62 px margins into the stylesheet in a browser at 874x338 (list open and hidden; every edge measured). NOT tested on the phone itself.
 - 2026-11-25 (later): with the list hidden in landscape, "Route these" now moves to the right edge, lined up with the zoom buttons, and slides back beside the list when it opens (it had stayed where the list's edge used to be). styles.css 20261125h.
+
+## 2026-11-25 Admin > Contests: "Edit as owner"
+- A button on the contest page (next to Edit, Sponsors, Unpublish, Delete) and a link in each list row open the organizer's own dashboard (`/c/<slug>/manage`) as its owner through the existing act-as route (docs/admin-parity.md): a red "Admin view: you are acting as <email>" banner, every button works for them, and it is written to the Admin log. Only shown when the contest has an owner account. The old small text link ("Organizer dashboard (as the organizer)") is still on the page.
+- Checked in a browser (desktop and phone width) with a seeded contest locally; admin.js 20261125b. The act-as route needs the Pages secret ADMIN_AS_SECRET (or THROTTLE_SALT), as it does for events.
