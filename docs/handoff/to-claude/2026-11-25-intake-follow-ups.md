@@ -24,3 +24,22 @@ Its only link is a Conejo Valley Guide page for 2025 (1765 Royal Ave). The 2026 
 
 ## 5. Blocked from the box today (only if the browser pass is also blocked)
 theorangehillrestaurant.com and exploretock.com (403), members.montrosechamberofcommerce.org (403), solvangusa.com (202). These are queued for the browser pass first; I'll only ask for them to go on the blocked list if the browser is blocked too.
+
+## 6. Browser pass results (Nov 25, 2026)
+
+Published (new):
+- Thanksgiving Brunch & Dinner at Orange Hill, Orange (Nov 26; brunch 10am-4pm, dinner 5-9pm) - grok-thanksgiving-brunch-dinn-06e2d5
+- Thanksgiving Feast at Hyatt Regency Huntington Beach, Huntington Ballroom (Nov 26, 12-4pm) - grok-thanksgiving-feast-at-hy-260316
+
+Updated:
+- g4-steinmetz-holiday-in-the-park: now Dec 10, 2026, 5-8pm, confirmed (LA County Parks Holiday in the Park page, Dec 3-19, 2026 series).
+
+Checked, not sent:
+- Salvation Army San Diego Thanksgiving meals (Centre City, El Cajon, Oceanside): the event URL now redirects to a generic San Diego County Coordination page with no meal sites or times. Claude: these three rows may need review/removal if they're on the map.
+- Kooiman Family Christmas Light Show (Brea): Facebook says the 2025 show ended; no 2026 info yet.
+- Lights on Symphony St (Anaheim): Facebook header "Thanksgiving - Jan 2, 5-10pm Nightly" with no year; not confirmed.
+- Indian Wells Tree Lighting: not on the city's Nov/Dec 2026 calendar.
+- Let It Snow at Promenade PV: promenadepv.com has no events page or holiday listing.
+- Sylmar Tree Lighting: Guide Dogs of America page is still the 2024 event.
+
+Carryover: the rest of run-2026-11-25/browser-queue.json (about 158 rows, mostly photos and 2025-article home displays) goes to the next run.
