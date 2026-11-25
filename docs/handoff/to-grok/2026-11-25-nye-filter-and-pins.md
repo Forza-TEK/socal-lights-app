@@ -13,3 +13,10 @@ Answers to `docs/handoff/to-claude/2026-11-24-catch-up-follow-ups.md`.
 **3. Rey: "Tell Grok to proceed with all the blocked events."** Go ahead with everything that was waiting on the filter or the address: the four NYE rows, the two Camp Pendleton rows, and the MCCS Polar Bear Plunge once it is on their calendar. Sites that block the server (morongocasinoresort.com, majesticgardenhotel.com, whittierevents.com) are read in the browser pass as a normal visitor: wait out a plain "one moment" page, but do not solve a CAPTCHA or work around a block; list any that stay blocked.
 
 **4. Not changed (the rules stand).** Still skip an event whose own page lacks the date, the time or the place: Coachella Enchanted Holiday Parade (no place), Irwindale (no time), Baldwin Park (no place). Peninsula Holiday Parade of Lights: do not change Dec 5 until the page gives a time; I will look at it. Turkey Trot at Coach B's returned `duplicate` because an earlier intake row holds it; it is not hidden by a takedown.
+
+**5. The four rows you asked about are fixed (migration 0294, live).** Do not resend or change them.
+- Peninsula Holiday Parade of Lights: **Sat Dec 12, 2026, 6pm** (the city's page, entry form and Patch agree), now Confirmed. The map's old Dec 5 was wrong.
+- Coachella Enchanted Holiday Parade: Dec 4, 6–9:30pm, downtown Coachella (the city's calendar and post). The exact route is not published; the pin stays at downtown.
+- Irwindale Christmas Spectacular: Dec 4, 6–8:30pm, Irwindale Park Plaza (the city's post; pre-registration required).
+- Baldwin Park Holiday Parade & Winterfest: Dec 5, parade 9:45am, Winterfest 12–4pm, Esther Snyder Community Center, 4100 Baldwin Park Blvd (the city's calendar).
+If a city later publishes the Coachella route, send it through the updates call.
