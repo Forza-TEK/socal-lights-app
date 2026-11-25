@@ -57,7 +57,7 @@ test("H1: a copy counts toward the 8-a-day limit and keeps the review words out"
   raw.prepare("UPDATE event_submissions SET created_at = datetime('now','-2 hours')").run(); // past the hourly cap, still inside the day
   const r = await me(env, "s0", { action: "copy" }, u.cookie); assert.equal(r.http, 429); assert.match(r.error, /daily limit/);
   const { env: e2, raw: r2raw } = newEnv(); const u2 = await addUser(r2raw, "u1", "o@example.com");
-  seedEvent(r2raw, { id: "bad", eventId: "u-bad", name: "Casino Night Lights" });
+  seedEvent(r2raw, { id: "bad", eventId: "u-bad", name: "Escort Night Lights" });
   assert.equal((await me(e2, "bad", { action: "copy" }, u2.cookie)).http, 400);
 });
 test("H1: the profile shows 'Run again next year' only for an event that is on the map", () => {
@@ -125,7 +125,7 @@ test("M2: the add pages tell the poster when the pin is not exact", () => {
 test("M3: review words in the hours, price, address or web address refuse a new event", async () => {
   const { env, raw } = newEnv(); const u = await addUser(raw, "u1", "o@example.com"), f = geo({ census: PASADENA });
   try {
-    for (const [o, i] of [[{ hours: "Win bitcoin 6 pm" }, 1], [{ price: "Free casino chips", free: false }, 2], [{ address: "100 Main St, forex.example" }, 3], [{ url: "https://casino.example.com/win" }, 4]]) {
+    for (const [o, i] of [[{ hours: "Win bitcoin 6 pm" }, 1], [{ price: "Free crypto chips", free: false }, 2], [{ address: "100 Main St, forex.example" }, 3], [{ url: "https://crypto.example.com/win" }, 4]]) {
       const r = await postEvent(env, evBody(o), u.cookie, "198.51.100." + i); assert.equal(r.http, 400, JSON.stringify(o)); assert.match(r.error, /community event/);
     }
   } finally { f.restore(); }
@@ -142,7 +142,7 @@ test("M3: an edit that points a live event at a web page that does not match dro
   try {
     const good = await me(env, "s1", { action: "edit", url: "https://oakhill.example.org/lighting" }, u.cookie); assert.equal(good.http, 200); assert.equal(good.status, "confirmed");
     assert.equal(raw.prepare("SELECT status FROM events WHERE id = 'u-oak-1'").get().status, "confirmed");
-    const spam = await me(env, "s1", { action: "edit", url: "https://casino.example.com/x" }, u.cookie); assert.equal(spam.http, 400);
+    const spam = await me(env, "s1", { action: "edit", url: "https://crypto.example.com/x" }, u.cookie); assert.equal(spam.http, 400);
     const hrs = await me(env, "s1", { action: "edit", hours: "Win a loan" }, u.cookie); assert.equal(hrs.http, 400);
   } finally { f.restore(); }
 });

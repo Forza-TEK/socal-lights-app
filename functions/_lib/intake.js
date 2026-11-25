@@ -7,7 +7,7 @@ import { line, normName } from "./fields.js";
 import { slug, isDate } from "./events.js";
 import { streetParts } from "./addrkey.js";
 import { findNearDuplicate, nearDuplicate } from "./dupes.js";
-import { BAD } from "./moderation.js";
+import { eventNeedsReview } from "./moderation.js";
 import { ptToday } from "./time.js";
 import { CITY } from "../../public/cities.js";
 import { SEASONS } from "../../public/seasons.js";
@@ -15,7 +15,7 @@ import { normalizeHours, freeFlagProblem, imageProblem } from "../../scripts/eve
 
 export const MAX_ROWS = 8;            // each row costs up to 2 geocoder calls and 2 database calls; a Pages Function may make 50 outgoing calls per request
 export const RATE_PER_MIN = 30, PUBLISH_PER_DAY = 600, KEEP_REJECTED_DAYS = 30;
-export const FIELDS = ["name", "city", "season", "type", "start", "end", "hours", "free", "price", "blurb", "url", "image_url", "venue", "address", "shows", "evidence", "seen"];
+export const FIELDS = ["name", "city", "season", "type", "start", "end", "hours", "free", "price", "blurb", "url", "image_url", "venue", "address", "shows", "evidence", "seen", "lat", "lng"];
 export const SHOWS = ["date", "time", "place"];
 export const ID_PREFIX = "grok-";
 
@@ -91,6 +91,12 @@ export function normalizeKinds(r) {
   return { season, type };
 }
 
+// An optional map pin for a venue with no street address (a base, a beach, a trailhead). Used only when the address lookup fails, and only within 40 km of the city.
+export function suppliedPin(r) {
+  const lat = Number(r.lat), lng = Number(r.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng) && r.lat !== "" && r.lng !== "" && r.lat != null && r.lng != null && lat > 32 && lat < 35.5 && lng > -121 && lng < -114 ? [lat, lng] : null;
+}
+
 /** The checks that need no network: returns { row } (cleaned fields) or { problems: [..] }. Same rules as scripts/validate-migrations.mjs. */
 export function checkFields(r, today = ptToday()) {
   const p = [];
@@ -125,7 +131,7 @@ export function checkFields(r, today = ptToday()) {
   if (row.blurb.length < 20) p.push("blurb must be one or two sentences, at least 20 characters");
   else if (row.blurb.length > 180) p.push(`blurb is ${row.blurb.length} characters (max 180)`);
   if (/https?:\/\//i.test(row.blurb)) p.push("blurb must not contain a link");
-  if (BAD.test(`${row.name} ${row.blurb} ${row.venue}`)) p.push("does not look like a community event listing");
+  if (eventNeedsReview(row.name, row.blurb, row.venue, row.address)) p.push("does not look like a community event listing");
   if (!row.price) row.price = row.free ? "Free" : "";
   if (!row.free && !row.price) row.price = "Price not listed";
   const fp = freeFlagProblem(row.free, row.price); if (fp) p.push(fp);
@@ -210,7 +216,8 @@ export async function processRows(env, rows, { dryRun = false, doFetch = fetch, 
     const near = (await findNearDuplicate(env, x)) || sent.find((r) => nearDuplicate(x, r)); // also against the other rows of this same call // same day and the same place or a near-identical name ("Tree Lighting at X" and "Tree Lighting Celebration at X")
     if (near) { res.verdict = "duplicate"; res.reasons = [`looks like "${near.name}" (${near.id}), which is already on the map or was already sent for the same day (an intake row never changes an existing event)`]; continue; }
     sent.push(x);
-    const info = {}, pt = await geocodeAddress(x.address, x.city, CITY[x.city], ["Los Angeles", "San Diego"].includes(x.city) ? 45 : 30, doFetch, info);
+    const info = {}; let pt = await geocodeAddress(x.address, x.city, CITY[x.city], ["Los Angeles", "San Diego"].includes(x.city) ? 45 : 30, doFetch, info);
+    if (!pt && !info.down) { const pin = suppliedPin(rows[i]); if (pin && km(pin, CITY[x.city]) <= 40) { pt = pin; res.pin = "the address was not found, so the pin Grok supplied is used"; } } // a venue with no street address (a base, a beach): the supplied pin is used
     if (!pt) { res.verdict = "rejected"; res.reasons = [info.down ? "the address lookup was unavailable; send this row again later" : info.far ? `the address is far from ${x.city}: check the city and address` : "the address was not found: use the full street address with ZIP"]; if (!info.down && !dryRun) res._store = { id: x.id, x, status: "rejected" }; continue; }
     [x.lat, x.lng] = pt; x.county = nearestCounty(x.lat, x.lng, evs);
     const im = await checkImage(x.image, x, doFetch); x.image = im.image; if (im.note) res.image = im.note; else if (x.image) res.image = "linked";

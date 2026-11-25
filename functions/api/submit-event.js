@@ -22,7 +22,7 @@ const day = (s) => { const [, m, d] = String(s).split("-").map(Number); return M
 const whenOf = (e) => (e.end_date && e.end_date !== e.start_date ? `${day(e.start_date)} to ${day(e.end_date)}` : day(e.start_date));
 
 const AUTO_PUBLISH_PER_DAY = 100; // safety valve: past this, everything waits for review
-import { needsReview } from "../_lib/moderation.js"; // the same rule the edit sheet uses
+import { eventNeedsReview as needsReview } from "../_lib/moderation.js"; // the same rule the edit sheet uses
 
 // Can a Featured placement be bought for this event today? (the same calculation the checkout uses: featuring opens 30 days before the event, and not after it ended)
 const featurable = (ev) => { const t = ptToday(); return Object.keys(EVENT_PLANS).some((k) => !eventQuote(ev, k, t).problem); };
@@ -60,7 +60,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (e.address.length < 6) return err(400, "Enter the street address (or the two cross streets for a parade).");
   if (e.blurb.length < 20) return err(400, "Add a one- or two-sentence description (at least 20 characters).");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.email)) return err(400, "Enter an email address so we can reach you if something needs fixing.");
-  if (needsReview(e.name, e.blurb, e.venue, e.hours, e.price, e.address, e.url)) return err(400, "That doesn't look like a community event listing.");
+  if (needsReview(e.name, e.blurb, e.venue, e.address, e.hours, e.price, e.url)) return err(400, "That doesn't look like a community event listing.");
   if (!e.free && !e.price) e.price = "Price not listed";
   if (e.free && !e.price) e.price = "Free";
 
