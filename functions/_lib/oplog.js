@@ -35,6 +35,10 @@ export async function logOpOnce(env, kind, detail = "", minutes = 60) {
 // A line that says "failed" or "invalid" is still a problem.
 export const INFO_LOG_SQL = "((kind IN ('outreach','ads') AND detail NOT LIKE '%fail%' AND detail NOT LIKE '%invalid%') OR kind = 'sponsor-pay-link')";
 
+// Browser errors that are not ours: iOS autofill and in-app browsers inject their own scripts into the page and those throw (for example "Can't find variable: _AutofillCallbackHandler").
+// They are not stored by the beacon any more; this clause also hides the ones already in the log from the dashboard and the error report.
+export const NOISE_LOG_SQL = "(kind = 'client_error' AND (detail LIKE '%AutofillCallbackHandler%' OR detail LIKE '%webkit.messageHandlers%' OR detail LIKE '%__gCrWeb%'))";
+
 // Grouped summary since a timestamp ("YYYY-MM-DD HH:MM:SS", UTC): [{ kind, n, last, example }], newest group first.
 export async function opsSince(env, since) {
   try {

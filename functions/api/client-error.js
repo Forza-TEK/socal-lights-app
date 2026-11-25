@@ -5,7 +5,7 @@ import { sameOrigin } from "../_lib/auth.js";
 import { logOpOnce } from "../_lib/oplog.js";
 import { checkThrottle, hashKey } from "../_lib/throttle.js";
 
-const NOISE = /ResizeObserver|Script error|extension|chrome-extension|moz-extension|safari-extension|Non-Error promise rejection|Load failed|NetworkError|Failed to fetch|AbortError/i;
+const NOISE = /ResizeObserver|Script error|extension|chrome-extension|moz-extension|safari-extension|Non-Error promise rejection|Load failed|NetworkError|Failed to fetch|AbortError|AutofillCallbackHandler|webkit\.messageHandlers|__gCrWeb/i; // the last three: scripts injected by iOS autofill and in-app browsers, not ours
 export async function onRequestPost({ request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
   const raw = await request.text().catch(() => ""); if (raw.length > 2000) return new Response(null, { status: 204 });
