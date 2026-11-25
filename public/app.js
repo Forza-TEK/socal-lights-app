@@ -37,6 +37,7 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (d) => { const [, m, dd] = d.split("-").map(Number); return M[m - 1] + " " + dd; };
 const isPhone = () => matchMedia("(max-width:700px)").matches;
+const isShort = () => matchMedia("(max-height:500px)").matches; // a phone turned sideways: Filters is a centered sheet, not a pop-up under its button
 // A phone turned sideways: the whole list panel scrolls as one, so the header moves away and the list gets the full height
 const isLandShort = () => matchMedia("(min-width:701px) and (max-height:500px)").matches;
 const scroller = () => (isLandShort() ? document.getElementById("panel") : document.getElementById("pbody"));
@@ -585,7 +586,7 @@ function placePin() {
     const x0 = pinBox.left + q.x, y0 = pinBox.top + q.y;
     let x = Math.max(14, Math.min(x0 - W / 2, right - W)), y = y0 + 26;
     if (y + H > innerHeight - 14) y = y0 - 26 - H;
-    y = Math.max(96, Math.min(y, innerHeight - 14 - H));
+    y = Math.max(isShort() ? 62 : 96, Math.min(y, innerHeight - 14 - H));
     pv.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`;
   });
 }
@@ -1367,7 +1368,7 @@ function drawCityList(q) {
 }
 function placeFilters() {
   const f = $("#fpanel"); if (!f || f.hidden) return;
-  if (isPhone()) { f.style.top = f.style.left = f.style.maxHeight = ""; return; }
+  if (isPhone() || isShort()) { f.style.top = f.style.left = f.style.maxHeight = ""; return; }
   const r = fAnchor.getBoundingClientRect(), w = f.offsetWidth;
   f.style.left = Math.max(12, Math.min(r.right - w, innerWidth - w - 12)) + "px"; f.style.top = r.bottom + 10 + "px";
   f.style.maxHeight = Math.max(320, innerHeight - r.bottom - 24) + "px";
@@ -1383,7 +1384,7 @@ function refreshFilters() {
 function openFilters(anchor) {
   closeMore(); closePop(); closeSeasonMenu();
   fAnchor = anchor; fOpen = true;
-  const f = fPanel(); f.hidden = false; f.innerHTML = filtersHtml(); $("#fback").hidden = !isPhone();
+  const f = fPanel(); f.hidden = false; f.innerHTML = filtersHtml(); $("#fback").hidden = !(isPhone() || isShort());
   document.body.classList.add("filters-open"); placeFilters();
   f.focus({ preventScroll: true }); // focus moves into the dialog (a screen reader announces "Filters, dialog"); Tab then reaches the Close button first
 }

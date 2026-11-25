@@ -23,7 +23,8 @@ test("safe area: one shared rule for every page except the map; sticky bars and 
 });
 
 test("the map page keeps its touch handling: pinch guard intact, nothing new above the map, map styles untouched", () => {
-  const css = read("public/styles.css"), html = read("public/index.html");
+  const SIDEWAYS = /\/\* ---- Phone turned sideways[\s\S]*?\/\* end sideways phone layout \*\//; // the landscape-phone layout (2026-11-25) deliberately moves the panel, zoom buttons and list; it is checked by its own test
+  const css = read("public/styles.css").replace(SIDEWAYS, ""), html = read("public/index.html");
   assert.match(css, /\.searchrow\{pointer-events:none\}\.searchrow>\*\{pointer-events:auto\}/, "the 2026-11-14 pinch fix");
   assert.match(read("tests/css-tokens.test.mjs"), /searchrow\\\{pointer-events:none/, "and its own guard test still exists");
   assert.ok(!/(^|[^.\w-])body\{[^}]*padding-top/.test(css), "styles.css (map) adds no body padding");
@@ -32,7 +33,7 @@ test("the map page keeps its touch handling: pinch guard intact, nothing new abo
   assert.ok(!/position:fixed[^"']*(left:0|inset:0)/.test(pre), "no full-width fixed overlay before the map in the markup");
   const searchrow = [...css.matchAll(/(^|\n)\s*\.searchrow\s*\{([^}]*)\}/g)].map((m) => m[2]).join(";");
   assert.ok(!/position:fixed[^;]*;[^]*(width:100%|inset:0)/.test(searchrow) || /pointer-events:none/.test(searchrow), "the search row is not a full-width box that takes touches");
-  let base = ""; try { base = git("show", "origin/main:public/styles.css"); } catch {}
+  let base = ""; try { base = git("show", "origin/main:public/styles.css").replace(SIDEWAYS, ""); } catch {}
   if (base) {
     const pick = (s) => s.split("\n").filter((l) => /\.searchrow|#map\b|\.topbar|\.maplibregl-ctrl|\.panel\{/.test(l)).join("\n");
     // the zoom buttons may add the top safe area (the notch / Dynamic Island in the app) to their offset; nothing else about these rules may change
