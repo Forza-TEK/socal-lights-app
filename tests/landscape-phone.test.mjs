@@ -38,10 +38,11 @@ test("everything beside the list is measured from the phone's real side margin (
   assert.match(block, /\.ptoggle\{right:calc\(var\(--panel-w\) \+ var\(--pr\)\)\}/);
   assert.match(block, /\.maplibregl-ctrl-top-right\{right:calc\(var\(--panel-w\) \+ var\(--pr\) \+ 52px\)\}/);
   assert.match(block, /\.rtpill\{right:calc\(var\(--panel-w\) \+ var\(--pr\)/);
+  assert.match(block, /\.list-hidden \.rtpill\{right:calc\(env\(safe-area-inset-right,0px\) \+ 34px\)\}/, "Route these follows the list when it is hidden");
   assert.match(block, /\.topbar\{width:calc\(100vw - var\(--panel-w\) - 46px - var\(--sair\) - var\(--sail\)\)\}/);
   assert.match(js, /function panelW\(\) \{[\s\S]*?isShort\(\) && !isPhone\(\)[\s\S]*?getComputedStyle\(p\)\.right/, "the map code counts the margin too");
 });
 test("the page links the current stylesheet and script versions", () => {
   const html = readFileSync("public/index.html", "utf8");
-  assert.match(html, /styles\.css\?v=20261125g/); assert.match(html, /app\.js\?v=20261125e/);
+  assert.match(html, /styles\.css\?v=20261125h/); assert.match(html, /app\.js\?v=20261125e/);
 });

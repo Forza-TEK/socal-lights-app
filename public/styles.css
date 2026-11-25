@@ -1125,6 +1125,8 @@ body.detail-open .scl-chat-fab{display:none}
   .panel{right:var(--pr)}
   .topbar{width:calc(100vw - var(--panel-w) - 46px - var(--sair) - var(--sail))}
   .rtpill{right:calc(var(--panel-w) + var(--pr) + 24px)}
+  .rtpill{transition:right .28s cubic-bezier(.3,.8,.3,1),background-color .15s}
+  .list-hidden .rtpill{right:calc(env(safe-area-inset-right,0px) + 34px)} /* with the list hidden, Route these lines up with the zoom buttons at the right edge */
   .ptoggle{right:calc(var(--panel-w) + var(--pr))}
   .maplibregl-ctrl-top-right{right:calc(var(--panel-w) + var(--pr) + 52px)}
   .list-hidden .ptoggle{right:env(safe-area-inset-right,0px)}
