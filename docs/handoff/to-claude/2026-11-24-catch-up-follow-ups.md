@@ -40,3 +40,19 @@ Please relax the filter for the `newyear`/`nye` type at casinos, resorts and hot
 - majesticgardenhotel.com (202 bot check)
 - whittierevents.com event detail pages (SiteGround sgcaptcha "One moment, please"; the browser should clear it after 10–30 s, so probably not a real block)
 - palmsprings.com (403; a listing site, low priority)
+
+## 6. Browser pass results (Nov 24, evening)
+
+Browser checked 19 of 28 priority rows (bp1-out.json); 9 carry to the next run along with ~132 other queue rows (Rossmoor homes, 92 photo rows, spring/summer 2027 confirms, social sweep).
+
+**Published (2):** Thanksgiving Buffet at Anaheim Majestic Garden Hotel (grok-thanksgiving-buffet-at-a-5ea65e), Thanksgiving Buffet at CAVA, Renaissance Esmeralda (grok-thanksgiving-buffet-at-c-c90b02).
+
+**Needs Claude:**
+1. **Casino/resort NYE filter (Rey's Nov 21 rule).** Dry runs for Morongo Gras NYE (morongocasinoresort.com/morongo-gras: Dec 31, 2026, 8pm-1am, 49500 Seminole Dr, Cabazon 92230) and Pechanga "Countdown to 2027" (pechanga.com/entertain/nye: Round Bar 7:30pm-1:30am, 45000 Pechanga Pkwy, Temecula 92592) were rejected with "does not look like a community event listing", same as Pala and Agua Caliente. Please let seasonal hospitality NYE parties through; I'll resend all four.
+2. **Camp Pendleton addresses.** The MCCS calendar (pendleton.usmc-mccs.org/calendar-of-events) lists Semper Fitmas Santa & Elf Run (Sat Dec 12, 2026, 9-11:30am, Wire Mountain / Pacific Views South Housing Area) and Winter Fest Express (Sat Dec 5, 2026, 7-11am, Pacific Views Event Center). Base venues have no street addresses; every variant failed the geocoder. Please allow a manual pin (Pacific Views Event Center, Camp Pendleton South) or a coordinate field. Also, the christmas types don't allow a general festival type; Winter Fest Express needs one (or tell me which to use).
+3. **Coachella Enchanted Holiday Parade:** city calendar confirms 12/04/2026 6:00-9:30 PM ("Game on Coachella, Level Up the Holidays!"), but there's no place stated, so it can't be confirmed under the date/time/place rule. The tree lighting is 12/02/2026 5:30-8:30 PM.
+4. **Peninsula Holiday Parade of Lights:** the Rolling Hills Estates page says "Saturday, December 12, 2026" (past tense, no time); the map has Dec 5. It's unresolved; please don't change it yet.
+
+**Not usable (official source missing):** Promenade PV Let It Snow (only Palos Verdes Magazine; starts Nov 28, Fri-Sun 6 and 7pm), Los Alamitos Winter Wonderland (only the News Enterprise: Dec 5, 4-7:30pm), Lights on Symphony St (Facebook, no year), Kooiman (2025 show ended), Sylmar tree lighting (2024 page), Chula Vista Christmas Circle (blog says Dec 11), Irwindale (still no 2026 time), MCCS Polar Bear Plunge (not on calendar yet).
+
+**Browser-blocked too:** renaissanceesmeralda.com (connection closed), valleyviewcasino.com/entertainment (aborted). morongocasinoresort.com's Cloudflare check cleared after waiting, so it should not be blocked.
