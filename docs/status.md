@@ -1930,3 +1930,9 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 
 ## 2026-11-25: iPhone universal links (F-45)
 - `GET /.well-known/apple-app-site-association` (Team ID 39HYGXRCC8, bundle id app.socallights.lights) lists /e/*, /h/*, /c/*, /in and /in/* only; the iOS project gets `App.entitlements` (`applinks:socallights.app`) for Debug and Release; `public/native.js` follows `appUrlOpen` links to our own https content pages inside the app. It takes effect only in an app build made after this (run the "iOS app" workflow); the Associated Domains capability must be enabled for the App ID in the Apple Developer portal (Certificates, Identifiers & Profiles > Identifiers > app.socallights.lights) if the build complains. Android app links stay later: they need the Play signing certificate fingerprint (Play Console not set up yet; the Google account is socallightsapp@gmail.com).
+
+## 2026-11-25 iOS build 1.0.2 (20) uploaded
+- First run with the new code (run 6) failed at upload: Apple had closed version 1.0.1 (codes 90062, 90186). `marketing_version` is now a workflow input (default 1.0.2), PR 805.
+- Run 7 succeeded: version 1.0.2 build 20 is in App Store Connect (new loading icon, universal links). Not yet submitted for review (owner step) and universal links not yet tested on a device.
+- Next iOS build: raise `build_number` above 20; raise `marketing_version` if 1.0.2 is approved.
+- Google Play: account verification pending; Android signing waits on it (docs/android-signing.md).
