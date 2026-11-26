@@ -10,7 +10,7 @@ import { onRequestPost as removePost } from "../functions/api/remove-home.js";
 import { onRequestGet as removalsGet, onRequestPost as removalsPost } from "../functions/api/admin/removals.js";
 import { onRequestPost as submitPost } from "../functions/api/submit.js";
 import { onRequestPost as claimPost } from "../functions/api/installers/[slug]/claim.js";
-import { onRequestGet as confirmGet } from "../functions/api/installers/confirm.js";
+import { onRequestGet as confirmGet, onRequestPost as confirmPost } from "../functions/api/installers/confirm.js";
 import { onRequestPost as instQuote } from "../functions/api/installers/[slug]/quote.js";
 import { onRequestPost as contestQuote } from "../functions/api/contests/[slug]/quote.js";
 import { onRequestPost as alertsPost } from "../functions/api/alerts/index.js";
@@ -251,6 +251,10 @@ test("S-04: posting as an installer under an existing company's name does not fi
     raw.prepare("UPDATE installers SET owner_email = 'real@brightnights.com', email = 'real@brightnights.com' WHERE id = 'i1'").run();
     const conf = await confirmGet({ request: new Request(origin + "/api/installers/confirm?t=" + post.installer_token), env });
     assert.equal(conf.status, 200);
+    assert.equal(q(raw, "SELECT installer_confirmed FROM posts")[0].installer_confirmed, 0, "opening the link (a mail scanner) confirms nothing");
+    const cf = new FormData(); cf.set("t", post.installer_token);
+    const done = await confirmPost({ request: new Request(origin + "/api/installers/confirm", { method: "POST", body: cf }), env });
+    assert.equal(done.status, 200);
     assert.equal(q(raw, "SELECT installer_confirmed FROM posts")[0].installer_confirmed, 1);
   } finally { s.done(); }
 });

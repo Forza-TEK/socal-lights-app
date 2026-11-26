@@ -2044,3 +2044,7 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 - Also fixed: installers can "Stop sharing" a confirmed home and logo removal reports failures; voters can take their vote back while voting is open.
 - Also fixed: repeat installer claims are sent once a week (claimant is told it is with us); Chat Tier 3 switch labelled as not built.
 - Still open from this audit: deleted event leaves its submission "Published" (#4); report dismissal/priority (#6, #7); failed-email list (#9); installer can't undo Confirm or hide their own profile (#12, #13); voters can't retract a vote (#16); no un-announce (#17); decline reasons not stored, Unpublish sends no email (#18); passes merge preview (#15); Chat "Tier 3" switch for an unbuilt feature (#19); no Admin control for the do-not-contact list (#20); installer confirm link mutates on GET (#21).
+
+### Audit round 7 (2026-11-26)
+- Installer confirm link no longer changes anything on a plain open (mail scanners): GET shows a button, POST confirms. Admin Reports: "Objectionable content" reports sort first with an "act within 24 h" / "over 24 h" badge. Admin `?v=20261126l`.
+- Still open: report handled-state/undo, failed-email list, installer self-hide, un-announce winners, stored decline reasons, Admin do-not-contact control, contest-pass merge preview.

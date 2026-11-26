@@ -2,7 +2,7 @@
 import { json, err } from "../../_lib/util.js";
 
 export async function onRequestGet({ env }) {
-  const { results } = await env.DB.prepare("SELECT id, ref, name, message, contact, created_at FROM reports ORDER BY created_at DESC LIMIT 200").all().catch(() => ({ results: [] }));
+  const { results } = await env.DB.prepare("SELECT id, ref, name, message, contact, created_at FROM reports ORDER BY (message LIKE '%Objectionable content%') DESC, created_at DESC LIMIT 200").all().catch(() => ({ results: [] }));
   return json(results, { headers: { "cache-control": "no-store" } });
 }
 export async function onRequestPost({ request, env }) {
