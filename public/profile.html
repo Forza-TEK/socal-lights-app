@@ -58,8 +58,8 @@ const head = (h, add) => `<div class="sechead"><h2>${h}</h2>${add ? `<a class="b
 const fld = (k, l, v, ex = "") => `<label class="mf"><span>${l}</span><input data-k="${k}" value="${esc(v ?? "")}" ${ex}></label>`;
 const sel = (k, l, v, opts) => `<label class="mf"><span>${l}</span><select data-k="${k}">${opts.map(([a, b]) => `<option value="${a}" ${String(v) === a ? "selected" : ""}>${b}</option>`).join("")}</select></label>`;
 // A line under a listing that is not on the map: why, and what to do (M6). Every status gets a plain sentence and the person can always delete their own listing.
-const reasonLine = (status, what) => status === "pending" ? `<div class="small muted" style="margin-top:4px">A person is looking it over before it goes on the map. You can still change it or delete it while you wait.</div>`
-  : status === "declined" ? `<div class="small" style="margin-top:4px">We could not put this ${what} on the map. Reply to the email we sent you, or write to <a href="mailto:info@socallights.app">info@socallights.app</a> and we will tell you why. You can delete it.</div>` : "";
+const reasonLine = (status, what, id = "") => status === "pending" ? `<div class="small muted" style="margin-top:4px">A person is looking it over before it goes on the map. You can still change it or delete it while you wait.</div>`
+  : status === "declined" ? `<div class="small" style="margin-top:4px">We could not put this ${what} on the map. Reply to the email we sent you, or write to <a href="mailto:info@socallights.app">info@socallights.app</a> and we will tell you why. You can send it again for another look, or delete it.</div><button class="btn sm" type="button" data-resubmit="${esc(what)}" data-id="${esc(id)}" style="margin-top:6px">Send it again for review</button>` : "";
 // A home you posted: edit, take down for the season, put back
 const ago = (at) => { const t = new Date(String(at || "").replace(" ", "T") + "Z").getTime(), m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " days ago"; };
 // The installer and the homeowner share a listing: say so, and show who changed which field
@@ -77,6 +77,12 @@ const viewBtn = (href) => `<a class="btn out sm" href="${esc(href)}" target="_bl
 // Less-used actions live behind one "More" button, so a row shows at most View listing, Promote, Edit and More (a tap anywhere else closes the menu)
 const moreMenu = (inner) => `<details class="amore"><summary class="btn out sm" aria-label="More actions">More</summary><div class="amenu">${inner}</div></details>`;
 document.addEventListener("click", async (ev) => {
+  const rs = ev.target.closest && ev.target.closest("[data-resubmit]");
+  if (rs && !rs.disabled) {
+    rs.disabled = true; const r = await fetch("/api/me/" + (rs.dataset.resubmit === "event" ? "events/" : "homes/") + encodeURIComponent(rs.dataset.id), { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "resubmit" }) }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {}; if (r && r.ok) location.reload(); else { rs.disabled = false; alert(j.error || "That didn't send. Please try again."); }
+    return;
+  }
   const w = ev.target.closest && ev.target.closest("[data-entrywd]");
   if (w && !w.disabled) {
     if (!confirm("Withdraw your home from this contest? Its votes and photos are removed.")) return;
@@ -92,7 +98,7 @@ document.addEventListener("click", (e) => document.querySelectorAll(".amore[open
 function homeRow(h) {
   const st = h.status === "approved" ? ["live", "On the map"] : h.status === "paused" ? ["", "Taken down for the season"] : h.status === "pending" ? ["warn", "In review"] : h.status === "declined" ? ["", "Not accepted"] : ["", "Not on the map"];
   const pro = h.poster_type === "installer";
-  return `<div class="rowi mrow" data-home="${esc(h.id)}"><div class="rwrap">${thumb(h.status === "approved" && h.photos && h.photos[0] ? "/api/photo/" + h.photos[0] : "")}<div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status, st)}</span>${sharedLine(h)}${reasonLine(h.status, "home")}</div></div>
+  return `<div class="rowi mrow" data-home="${esc(h.id)}"><div class="rwrap">${thumb(h.status === "approved" && h.photos && h.photos[0] ? "/api/photo/" + h.photos[0] : "")}<div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status, st)}</span>${sharedLine(h)}${reasonLine(h.status, "home", h.id)}</div></div>
    <div class="acts">${h.status === "approved" ? viewBtn("/h/" + encodeURIComponent(h.id)) + promoBtn("/feature?home=" + encodeURIComponent(h.id), "Promote") : ""}${h.status === "approved" || h.status === "paused" || h.status === "pending" ? `<button class="btn out sm" type="button" data-medit>Edit</button>` : ""}${moreMenu(`${h.status === "approved" || h.status === "paused" ? `<button class="btn out sm" type="button" data-hact="${h.status === "paused" ? "resume" : "pause"}">${h.status === "paused" ? "Put back on the map" : "Take down for the season"}</button>` : ""}<button class="btn out sm danger" type="button" data-hdel>Delete</button>`)}</div>
    ${homeForm(h, { pro, changes: chgList(h.changes), own: true, cities, seasons: SEASON_LIST })}</div>`;
 }
@@ -115,7 +121,7 @@ function entryRow(e) {
 function eventRow(e) {
   const live = e.status === "published" && e.event_id;
   const st = live ? ["live", e.notice === "cancelled" ? "Cancelled" : e.notice === "postponed" ? "Postponed" : "On the map"] : e.status === "pending" ? ["warn", "In review"] : e.status === "declined" ? ["", "Not accepted"] : ["", "Not on the map"];
-  return `<div class="rowi mrow" data-ev="${esc(e.id)}"><div class="rwrap">${thumb(live ? (e.photos && e.photos[0] ? "/api/photo/" + e.photos[0] : e.image || "") : "")}<div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${mdy(e.start_date)}${e.end_date !== e.start_date ? " to " + mdy(e.end_date) : ""} · ${dot(e.status, st)}</span>${reasonLine(e.status, "event")}</div></div>
+  return `<div class="rowi mrow" data-ev="${esc(e.id)}"><div class="rwrap">${thumb(live ? (e.photos && e.photos[0] ? "/api/photo/" + e.photos[0] : e.image || "") : "")}<div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${mdy(e.start_date)}${e.end_date !== e.start_date ? " to " + mdy(e.end_date) : ""} · ${dot(e.status, st)}</span>${reasonLine(e.status, "event", e.id)}</div></div>
    <div class="acts">${live ? viewBtn("/e/" + encodeURIComponent(e.event_id)) + promoBtn("/feature?event=" + encodeURIComponent(e.event_id), "Promote") : ""}${live || e.status === "pending" ? `<button class="btn out sm" type="button" data-medit>Edit</button>` : ""}${live ? `` : ""}${moreMenu(`${live ? `<select class="btn out sm" data-notice aria-label="Event notice"><option value="">No notice</option><option value="cancelled" ${e.notice === "cancelled" ? "selected" : ""}>Cancelled</option><option value="postponed" ${e.notice === "postponed" ? "selected" : ""}>Postponed</option></select><button class="btn out sm" type="button" data-ecopy>Run again next year</button>` : ""}<button class="btn out sm danger" type="button" data-edel>Delete</button>`)}</div>
    ${eventForm(e, { cities, seasons: SEASON_LIST })}</div>`;
 }
@@ -141,7 +147,7 @@ function nlSection() {
 }
 function panel() {
   const o = O, u = o.user;
-  if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind} · saved ${when(d.updated_at)}${d.kind === "house" || d.kind === "entry" ? " · photos stay on the device where you added them" : ""}</span></div><div class="acts"><a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a><button class="btn out sm" type="button" data-del="${esc(d.id)}" data-name="${esc(d.title)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
+  if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind}${d.cname ? " in " + esc(d.cname) : ""} · saved ${when(d.updated_at)}${d.kind === "house" || d.kind === "entry" ? " · photos stay on the device where you added them" : ""}</span></div><div class="acts">${d.dead ? `<span class="small muted">${d.dead === "gone" ? "This contest no longer exists" : "Entries are closed"}</span>` : `<a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a>`}<button class="btn out sm" type="button" data-del="${esc(d.id)}" data-name="${esc(d.title)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
   if (tab === "contests") return head("Contests you run", ["+ Add a contest", "/add-contest"]) + list(o.contests.map(contestRow), 'You do not run or help run a contest yet. <a href="/add-contest">Create one</a>.')
     + head("Homes you entered") + list(o.entries.map(entryRow), 'You have not entered a home in a contest yet. <a href="/contests">See contests to enter</a>.');
   if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + (o.installers || []).map((i) => `<p class="small"><a class="btn out sm" href="/installer/${esc(i.slug)}/manage">Manage the ${esc(i.name)} profile</a> ${promoBtn("/sponsor?installer=" + encodeURIComponent(i.slug), "Promote your company")}</p>`).join("") + list([...o.homes.map(homeRow), ...linked().map(entryRow)], "None yet.");

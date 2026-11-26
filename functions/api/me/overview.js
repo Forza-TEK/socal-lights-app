@@ -1,5 +1,6 @@
 // GET /api/me/overview — everything for the profile page: drafts, contests you run, your contest entries, and the homes and
 // events you submitted (matched by the email you gave on the form).
+import { ptToday } from "../../_lib/time.js";
 import { cleanSlug } from "../drafts/index.js";
 import { json } from "../../_lib/util.js";
 import { requireUser } from "../../_lib/auth.js";
@@ -19,6 +20,12 @@ export async function onRequestGet({ request, env }) {
     q("SELECT s.id,s.name,s.status,s.city,s.address,s.season,s.type,s.start_date,s.end_date,s.created_at,s.hours,s.blurb,s.venue,s.url,s.free,s.price,s.event_id,e.notice,e.owner_photos,e.image,e.video,e.video_file,e.video_ok FROM event_submissions s LEFT JOIN events e ON e.id = s.event_id WHERE lower(s.contact_email) = lower(?) ORDER BY s.created_at DESC LIMIT 50", user.email),
     q("SELECT slug, name, web, phone, area FROM installers WHERE owner_email = ?", user.email),
   ]);
+  // Entry drafts: say which contest, and whether it can still take entries (a draft for a closed or deleted contest would dead-end)
+  const slugs = [...new Set(drafts.map((d) => d.slug).filter(Boolean))];
+  if (slugs.length) {
+    const cs = (await env.DB.prepare(`SELECT slug,name,entries_close,announced,status FROM contests WHERE slug IN (${slugs.map(() => "?").join(",")})`).bind(...slugs).all().catch(() => ({ results: [] }))).results, today = ptToday();
+    for (const d of drafts) if (d.slug) { const c = cs.find((x) => x.slug === d.slug); d.cname = c ? c.name : ""; d.dead = !c ? "gone" : c.announced || (c.entries_close && c.entries_close < today) || c.status !== "live" ? "closed" : ""; }
+  }
   // Who changed what on each home (the installer shares it once they have confirmed)
   if (homes.length) {
     const ids = homes.map((h) => h.id), ch = (await env.DB.prepare(`SELECT post_id, by_name, by_role, field, old, new, at FROM listing_changes WHERE post_id IN (${ids.map(() => "?").join(",")}) ORDER BY at DESC, rowid DESC LIMIT 300`).bind(...ids).all().catch(() => ({ results: [] }))).results;

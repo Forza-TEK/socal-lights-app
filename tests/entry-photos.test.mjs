@@ -430,3 +430,32 @@ test("owner bar: /api/me/owns tells an owner about their own pending home and ev
   assert.match(fs.readFileSync("functions/h/[id].js", "utf8"), /owner: "h:"/); assert.match(fs.readFileSync("functions/e/[id].js", "utf8"), /owner: "e:"/);
   assert.match(fs.readFileSync("functions/_lib/shell.js", "utf8"), /\/ownerbar\.js\?v=/);
 });
+
+test("a waiting removal request can be cancelled by its owner; entry drafts for closed or deleted contests say so", async () => {
+  const { onRequestPost: reqPost } = await import("../functions/api/me/entries/[id]/request.js");
+  const { onRequestGet: overview } = await import("../functions/api/me/overview.js");
+  const t = await setup(); await t.claim(t.users.home);
+  const call = (kind) => reqPost({ params: { id: "paaaaaaaa" }, request: new Request(`${origin}/api/me/entries/paaaaaaaa/request`, { method: "POST", headers: { "content-type": "application/json", cookie: t.users.home.cookie }, body: JSON.stringify({ kind }) }), env: t.env }).then(json);
+  await call("remove"); assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM removal_requests WHERE status='open'").get().n, 1);
+  assert.equal((await call("cancel")).status, 200); assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM removal_requests").get().n, 0);
+  t.raw.prepare("INSERT INTO drafts (id,user_id,kind,title,step,data) VALUES ('d1','uH','entry','Mine',1,?),('d2','uH','entry','Gone',1,?)").run(JSON.stringify({ contestSlug: SLUG }), JSON.stringify({ contestSlug: "nope" }));
+  const ov = await overview({ request: new Request(`${origin}/api/me/overview`, { headers: { cookie: t.users.home.cookie } }), env: t.env }).then(json);
+  const d = Object.fromEntries(ov.body.drafts.map((x) => [x.id, x]));
+  assert.equal(d.d1.dead, "closed", "entries closed 5 days ago");
+  t.raw.prepare("UPDATE contests SET entries_close = ?").run(ptToday(5));
+  const d1 = (await overview({ request: new Request(`${origin}/api/me/overview`, { headers: { cookie: t.users.home.cookie } }), env: t.env }).then(json)).body.drafts.find((x) => x.id === "d1");
+  assert.equal(d1.dead, "", "open contest: Continue works"); assert.equal(d.d1.cname, "Light Up the Town"); assert.equal(d.d2.dead, "gone");
+});
+
+test("a declined display or event can be sent back for review by its owner only", async () => {
+  const { onRequestPost: homePost } = await import("../functions/api/me/homes/[id].js");
+  const { onRequestPost: evPost } = await import("../functions/api/me/events/[id].js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO posts (id,status,biz,title,city,lat,lng,descr,photos,contact_email,season,address,street,zip,user_id) VALUES ('hdec','declined','H','H','Brea',33.9,-117.9,'x','[]','resident@x.com','christmas','1 A St','1 A St','','uR')").run();
+  t.raw.prepare("INSERT INTO event_submissions (id,name,city,season,type,start_date,end_date,contact_email,status) VALUES ('sdec','E','Brea','christmas','drive','2026-12-01','2026-12-31','resident@x.com','declined')").run();
+  const go = (fn, id, u) => fn({ params: { id }, request: new Request(`${origin}/api/me/x/${id}`, { method: "POST", headers: { "content-type": "application/json", cookie: u.cookie }, body: JSON.stringify({ action: "resubmit" }) }), env: t.env }).then(json);
+  assert.ok([403, 404].includes((await go(homePost, "hdec", t.users.other)).status));
+  assert.equal((await go(homePost, "hdec", t.users.resident)).status, 200); assert.equal(t.raw.prepare("SELECT status FROM posts WHERE id='hdec'").get().status, "pending");
+  assert.equal((await go(evPost, "sdec", t.users.other)).status, 404);
+  assert.equal((await go(evPost, "sdec", t.users.resident)).status, 200); assert.equal(t.raw.prepare("SELECT status FROM event_submissions WHERE id='sdec'").get().status, "pending");
+});
