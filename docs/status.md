@@ -2034,3 +2034,6 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 ### Audit round 4 (2026-11-26)
 - Draft rows name the contest and say "Entries are closed"/"This contest no longer exists" instead of a dead Continue. A waiting removal request can be cancelled. Declined displays/events have "Send it again for review". Withdrawing an organizer-added home deletes the homeowner's own photos (the organizer's stay).
 - Left alone on purpose: Displays tab still lists linked contest homes (deliberate); voters get no email when a voted entry is withdrawn.
+
+### Breadcrumbs on organizer, judge and installer pages (2026-11-26)
+- User found `/c/<slug>/manage` (reached from Admin "Edit as owner") had no way back. Now a breadcrumb row: "Your profile › Contests › <name>" (or "Admin › Contests › <name>" when an admin is acting as the owner); same on the installer manage page and the judge page. Lesson: the audit must open every act-as landing page and every shell page and look for an exit.
