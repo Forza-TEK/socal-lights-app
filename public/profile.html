@@ -119,8 +119,8 @@ function entryRow(e) {
 }
 // An event you added: edit, cancelled or postponed tag, run again next year
 function eventRow(e) {
-  const live = e.status === "published" && e.event_id;
-  const st = live ? ["live", e.notice === "cancelled" ? "Cancelled" : e.notice === "postponed" ? "Postponed" : "On the map"] : e.status === "pending" ? ["warn", "In review"] : e.status === "declined" ? ["", "Not accepted"] : ["", "Not on the map"];
+  const live = e.status === "published" && e.event_id && e.on_map !== 0, offMap = e.status === "published" && e.event_id && e.on_map === 0;
+  const st = live ? ["live", e.notice === "cancelled" ? "Cancelled" : e.notice === "postponed" ? "Postponed" : "On the map"] : e.status === "pending" ? ["warn", "In review"] : offMap ? ["", "Taken off the map"] : e.status === "declined" ? ["", "Not accepted"] : ["", "Not on the map"];
   return `<div class="rowi mrow" data-ev="${esc(e.id)}"><div class="rwrap">${thumb(live ? (e.photos && e.photos[0] ? "/api/photo/" + e.photos[0] : e.image || "") : "")}<div><b>${esc(e.name)}</b><br><span class="small muted">${esc(e.city)} · ${mdy(e.start_date)}${e.end_date !== e.start_date ? " to " + mdy(e.end_date) : ""} · ${dot(e.status, st)}</span>${reasonLine(e.status, "event", e.id)}</div></div>
    <div class="acts">${live ? viewBtn("/e/" + encodeURIComponent(e.event_id)) + promoBtn("/feature?event=" + encodeURIComponent(e.event_id), "Promote") : ""}${live || e.status === "pending" ? `<button class="btn out sm" type="button" data-medit>Edit</button>` : ""}${live ? `` : ""}${moreMenu(`${live ? `<select class="btn out sm" data-notice aria-label="Event notice"><option value="">No notice</option><option value="cancelled" ${e.notice === "cancelled" ? "selected" : ""}>Cancelled</option><option value="postponed" ${e.notice === "postponed" ? "selected" : ""}>Postponed</option></select><button class="btn out sm" type="button" data-ecopy>Run again next year</button>` : ""}<button class="btn out sm danger" type="button" data-edel>Delete</button>`)}</div>
    ${eventForm(e, { cities, seasons: SEASON_LIST })}</div>`;
