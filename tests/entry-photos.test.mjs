@@ -327,3 +327,21 @@ test("Admin sees contest entries in their own list and can fix a name", async ()
   const r = await json(await adminPost({ params: { id: "paaaaaaaa" }, request: new Request(`${origin}/api/admin/posts/paaaaaaaa`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "edit", title: "The D'Angelo's", biz: "The D'Angelo's" }) }), env: t.env }));
   assert.equal(r.status, 200); assert.equal(t.raw.prepare("SELECT title FROM posts WHERE id = 'paaaaaaaa'").get().title, "The D'Angelo's");
 });
+
+test("a linked homeowner can take their home off the ballot from their own page; votes clear, others and closed contests are refused; the page has a way back", async () => {
+  const t = await setup(); await t.claim(t.users.home);
+  assert.equal((await t.hp("POST", TOKEN, t.users.other, { action: "withdraw" }).then(json)).status, 403, "only the linked account");
+  assert.equal((await t.hp("POST", TOKEN, null, { action: "withdraw" }).then(json)).status, 401);
+  t.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id) VALUES ('v1','paaaaaaaa','c1','uX')").run();
+  const ok = await t.hp("POST", TOKEN, t.users.home, { action: "withdraw" }).then(json);
+  assert.equal(ok.status, 200); assert.equal(ok.body.withdrawn, true);
+  assert.equal(t.raw.prepare("SELECT status FROM posts WHERE id='paaaaaaaa'").get().status, "declined");
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM votes WHERE post_id='paaaaaaaa'").get().n, 0);
+  assert.equal((await t.hp("GET", TOKEN, t.users.home).then(json)).status, 404, "the old link no longer works");
+  const c = await setup({ voteEnd: -1 }); await c.claim(c.users.home);
+  assert.equal((await c.hp("POST", TOKEN, c.users.home, { action: "withdraw" }).then(json)).status, 409, "after voting closes, results do not change");
+  const page = (await import("node:fs")).readFileSync("public/home-photos.html", "utf8");
+  assert.match(page, /class="crumbs"[\s\S]*href="\/profile"/, "a breadcrumb back to the profile");
+  assert.match(page, /id="remove"/); assert.match(page, /\/remove-home\?ref=/);
+  assert.match((await import("node:fs")).readFileSync("public/profile.html", "utf8"), /#remove">Remove<\/a>/);
+});

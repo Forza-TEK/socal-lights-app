@@ -20,6 +20,7 @@
 .hp{max-width:640px;margin:28px auto 56px;display:grid;gap:16px}.hp h1{margin:0;font-size:28px}.hp p{margin:0}.hp .meta{color:var(--muted)}
 .hp .card{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:12px}:root[data-theme="dark"] .hp .card{background:var(--tile)}
 .hp .card h2{margin:0;font-size:18px}.hp .notice{border-left:3px solid var(--season,#c8324f);padding:4px 0 4px 14px;color:var(--ink)}
+.hp .crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:15px;color:var(--muted)}.hp .crumbs a{color:inherit;text-decoration:underline;padding:10px 2px;min-height:24px}.hp .crumbs b{color:var(--ink);font-weight:600}.hp .danger{border-color:#c8324f}.hp .go.dng{background:transparent;color:#c8324f;border-color:#c8324f}
 .hp .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
 .hp .ph{position:relative;border-radius:12px;overflow:hidden;background:var(--tile,#eee);aspect-ratio:4/3}.hp .ph img{display:block;width:100%;height:100%;object-fit:cover}
 .hp .ph button{position:absolute;top:6px;right:6px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:20px;line-height:1;cursor:pointer}
@@ -40,7 +41,7 @@ const box = document.getElementById("box"), token = (location.pathname.match(/^\
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], nice = (d) => { const [, m, x] = String(d).split("-").map(Number); return m ? MON[m - 1] + " " + x : ""; };
 const api = "/api/home-photos/" + token;
-const dead = () => { box.innerHTML = '<h1>This link isn\'t active</h1><p class="notice">The link may have been replaced, or the home is no longer in the contest. Ask the organizer of the contest for a new link.</p>'; };
+const dead = () => { box.innerHTML = '<nav class="crumbs" aria-label="Breadcrumb"><a href="/profile">Your profile</a><span aria-hidden="true">›</span><b>This home</b></nav><h1>This link isn\'t active</h1><p class="notice">The link may have been replaced, or the home is no longer in the contest. Ask the organizer of the contest for a new link.</p>'; };
 let msg = "", busy = false, D = null;
 const say = (m) => { msg = m; const e = document.getElementById("msg"); if (e) { e.textContent = m.replace(/^!/, ""); e.className = m.startsWith("!") ? "err" : "ok"; } };
 noteSigninResult();
@@ -55,13 +56,14 @@ async function load() {
   const r = await fetch(api, { cache: "no-store", credentials: "same-origin" }).catch(() => null); if (!r || !r.ok) return dead();
   D = await r.json(); draw();
 }
+const crumbs = (here) => `<nav class="crumbs" aria-label="Breadcrumb"><a href="/profile">Your profile</a><span aria-hidden="true">›</span>${D && D.contest ? `<a href="/c/${esc(D.contest.slug)}">${esc(D.contest.name)}</a><span aria-hidden="true">›</span>` : ""}<b>${here}</b></nav>`;
 const head = () => `<p class="meta"><b>${esc(D.home.title)}</b>, ${esc(D.home.address)}<br>Part of <b>${esc(D.contest.name)}</b>, run by ${esc(D.contest.org)}, ${esc(D.contest.city)}.</p>`;
 function draw() {
   if (D.state === "other") {
-    box.innerHTML = `<h1>This home is linked to another account</h1>${head()}<p class="notice">${D.signedIn ? `You are signed in as ${esc(D.email)}.` : ""} If this is your home and you think this is a mistake, ask ${esc(D.contest.org)} to unlink it and send you a new link.</p>`; return;
+    box.innerHTML = `${crumbs("This home")}<h1>This home is linked to another account</h1>${head()}<p class="notice">${D.signedIn ? `You are signed in as ${esc(D.email)}.` : ""} If this is your home and you think this is a mistake, ask ${esc(D.contest.org)} to unlink it and send you a new link.</p>`; return;
   }
   if (D.state === "unclaimed") {
-    box.innerHTML = `<h1>Is this your home?</h1>${head()}
+    box.innerHTML = `${crumbs("This home")}<h1>Is this your home?</h1>${head()}
     <p class="notice">${esc(D.contest.org)} entered your home in <b>${esc(D.contest.name)}</b>. Link it to your account to manage it: change its details, add your own photos, and hide any photos the organizer added. We use your email address to send you contest updates and results, and the organizer can see it. You can't delete the home from the contest yourself; ask the organizer if it should come off.</p>
     ${D.canLink ? (D.signedIn ? `<div class="card"><p>You are signed in as <b>${esc(D.email)}</b>.</p><button class="go" id="claim" type="button">Yes, this is my home: link it to my account</button><p id="msg" role="status" class="${msg.startsWith("!") ? "err" : "ok"}">${esc(msg.replace(/^!/, ""))}</p></div>` : `<div class="card"><p>Sign in with your email (we send a code) or with Google.</p><button class="go" id="signin" type="button">Sign in to continue</button></div>`) : `<p class="notice">The winners have been announced, so this home can't be linked any more.</p>`}`;
     const si = document.getElementById("signin"); if (si) si.onclick = async () => { const u = await signIn({ title: "Sign in to link your home", next: location.pathname }); if (u) load(); };
@@ -70,7 +72,7 @@ function draw() {
   }
   // mine
   const d = D.details, ph = D.photos, total = ph.length, room = D.max - total, open = D.open;
-  box.innerHTML = `<h1>Your home</h1>${head()}
+  box.innerHTML = `${crumbs("Your home")}<h1>Your home</h1>${head()}
   <p class="meta">Signed in as ${esc(D.email)}. ${open ? `You can change this until voting ends on <b>${esc(nice(D.voteEnd))}</b>.` : ""}</p>
   ${open ? "" : `<p class="notice">${D.announced ? "The winners have been announced" : "Voting has closed"}, so this home can't be changed any more.</p>`}
   <div class="card"><h2>Details</h2>
@@ -86,7 +88,14 @@ function draw() {
   <div class="card"><h2>Photos (${total} of ${D.max})</h2><p class="meta" style="margin:0">Photos from ${esc(D.contest.org)} can be hidden but not deleted. Your own photos can be deleted.</p>
     ${total ? `<div class="grid">${ph.map((p) => `<div class="ph${p.hidden ? " hid" : ""}"><img src="${esc(p.url)}" alt="A photo of your home" loading="lazy">${p.hidden ? '<span class="ptg ptgh">Hidden: only you and the organizer can see it</span>' : p.city ? `<span class="ptg">From ${esc(D.contest.org)}</span>` : ""}${open ? (p.city ? `<button type="button" class="hb" data-${p.hidden ? "show" : "hide"}="${esc(p.name)}">${p.hidden ? "Show again" : "Hide"}</button>` : `<button type="button" data-rm="${esc(p.name)}" aria-label="Delete this photo" title="Delete this photo">&times;</button>`) : ""}</div>`).join("")}</div>` : '<p class="meta">No photos yet.</p>'}
     ${open ? (room > 0 ? `<label class="pick"><input type="file" id="files" accept="image/jpeg,image/png,image/webp" multiple><b>Add your own photos</b><span class="meta">From your phone or computer. You can add ${room} more.</span></label>` : `<p class="meta">This home has ${D.max} photos. Delete one of your own to add another.</p>`) : ""}
-    <p id="msg" role="status" class="${msg.startsWith("!") ? "err" : "ok"}">${esc(msg.replace(/^!/, ""))}</p></div>`;
+    <p id="msg" role="status" class="${msg.startsWith("!") ? "err" : "ok"}">${esc(msg.replace(/^!/, ""))}</p></div>
+  <div class="card danger" id="remove"><h2>Remove this home from the contest</h2>${open ? `<p class="meta" style="margin:0">Take your home off the ballot. Votes it has received are cleared and ${esc(D.contest.org)} is told. This can't be undone here; ${esc(D.contest.org)} can add it back if you change your mind.</p><button class="go dng" id="wd" type="button">Remove my home from ${esc(D.contest.name)}</button>` : `<p class="meta" style="margin:0">${D.announced ? "The winners have been announced" : "Voting has closed"}, so results can't change. If you still want this home taken off the public page, send a removal request and we'll review it.</p><a class="go dng" style="display:inline-grid;align-items:center;text-decoration:none" href="/remove-home?ref=${encodeURIComponent("h-" + (D.home.id || ""))}&name=${encodeURIComponent(D.home.title)}">Ask us to remove it</a>`}</div>`;
+  const wd = document.getElementById("wd");
+  if (wd) wd.onclick = async () => {
+    if (busy || !confirm("Remove your home from " + D.contest.name + "? Votes for it will be cleared.")) return; busy = true;
+    const { r, j } = await call("POST", { action: "withdraw" }); busy = false;
+    if (r.ok) { box.innerHTML = `${crumbs("Removed")}<h1>Your home was removed</h1><p class="notice">It is no longer in <b>${esc(D.contest.name)}</b>. ${esc(D.contest.org)} has been told.</p><p><a class="go" style="display:inline-grid;align-items:center;text-decoration:none" href="/profile">Back to your profile</a></p>`; scrollTo(0, 0); } else say("!" + (j.error || "That didn't work. Please try again."));
+  };
   const form = document.getElementById("edit");
   form.onsubmit = async (e) => {
     e.preventDefault(); if (busy) return; busy = true; say("Saving…"); const f = new FormData(form);

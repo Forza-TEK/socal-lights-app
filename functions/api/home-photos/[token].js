@@ -6,14 +6,15 @@
 //   POST   { action: "hide" | "show", name } — hide a photo the organizer added from the public (it is not deleted), or show it again
 //   POST   (multipart: photos)            — add photos (up to 8 on the home, hidden ones count)
 //   DELETE ?name=<n>.jpg                  — delete one of the homeowner's OWN photos (the organizer's photos can only be hidden)
-// The homeowner can never delete the home, nor the organizer's photos. Details and photos can change until voting closes; linking is possible until winners are announced.
+//   POST   { action: "withdraw" }          — take the home off the ballot (voting open only); votes for it are cleared
+// The homeowner can't delete the organizer's photos. Details and photos can change until voting closes; linking is possible until winners are announced.
 // The token is a random 24-byte secret for one home; it only lets a person link the home to their own account. The organizer can replace it ("New link") or unlink a wrong person.
 import { json, err } from "../../_lib/util.js";
 import { getUser, sameOrigin } from "../../_lib/auth.js";
 import { TOKEN_RE, addPhotos, removePhoto, setHidden, photosOpen, claimOpen, photoList, MAX_PHOTOS } from "../../_lib/entryphotos.js";
 import { checkThrottle, hashKey } from "../../_lib/throttle.js";
 import { normName, normText, normRadio, line } from "../../_lib/fields.js";
-import { diff, logHome, HOME_FIELDS } from "../../_lib/changes.js";
+import { diff, logHome, HOME_FIELDS, logContest } from "../../_lib/changes.js";
 import { clean } from "../../_lib/util.js";
 
 const NO_STORE = { headers: { "cache-control": "no-store", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer" } };
@@ -29,7 +30,7 @@ async function load(env, token) {
 function view(row, c, user) {
   const state = !row.user_id ? "unclaimed" : user && row.user_id === user.id ? "mine" : "other";
   const out = { ok: true, state, signedIn: !!user, email: user ? user.email : "", open: photosOpen(c), canLink: claimOpen(c), announced: !!c.announced, voteEnd: c.vote_end, max: MAX_PHOTOS,
-    contest: { name: c.name, org: c.org, city: c.city, slug: c.slug }, home: { title: row.title || row.biz || "Your home", address: row.address } };
+    contest: { name: c.name, org: c.org, city: c.city, slug: c.slug }, home: { id: row.id, title: row.title || row.biz || "Your home", address: row.address } };
   if (state === "mine") Object.assign(out, { details: { title: row.title || "", desc: row.descr || "", where: row.where_txt || "", lights_on: row.lights_on || "", visit: row.visit || "", parking: row.parking || "", accessible: !!row.accessible, radio: row.radio || "" }, photos: photoList(row) });
   return out;
 }
@@ -99,6 +100,14 @@ export async function onRequestPost(ctx) {
       await logHome(env, row.id, { email: g.user.email, name: g.user.name || row.biz || g.user.email, role: "homeowner" }, changes);
     }
     return json(view(await fresh(env, row.id), c, g.user), NO_STORE);
+  }
+  if (b.action === "withdraw") {
+    // The homeowner takes their own home off the ballot (while voting is open). Votes for it are cleared; the organizer sees it in the contest log.
+    const g = await mine(ctx); if (g.res) return g.res;
+    const row = g.x.row, removed = (await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE post_id = ?").bind(row.id).first()).n;
+    await env.DB.batch([env.DB.prepare("UPDATE posts SET status='declined' WHERE id = ?").bind(row.id), env.DB.prepare("DELETE FROM votes WHERE post_id = ?").bind(row.id)]);
+    await logContest(env, row.contest_id, { email: g.user.email, name: g.user.name || g.user.email }, [{ label: `Entry ${row.entry_no ? "#" + row.entry_no + " " : ""}withdrawn by the homeowner`, old: `${removed} vote${removed === 1 ? "" : "s"} counted`, new: "Off the ballot" }]).catch(() => {});
+    return json({ ok: true, withdrawn: true, contest: { name: g.x.c.name, slug: g.x.c.slug } }, NO_STORE);
   }
   return err(400, "Unknown action.");
 }
