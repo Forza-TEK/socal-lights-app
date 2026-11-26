@@ -2024,3 +2024,6 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 - Deleting your own event no longer deletes a taken-over/claimed public listing (unlinked instead, same rule as account deletion).
 - Withdrawn entries are marked (`review_note='withdrawn'`): profile says "You withdrew this"; self-added -> "Enter again", organizer-added -> "Ask to restore"; restore is refused for organizer-declined entries and photo-less ones. Profile has Withdraw on self-added entries (also pending ones). Remove link hidden while a request is open; unclaimed-page wording fixed.
 - Still open from the resident audit: organizer-added homes not on the profile until the emailed link is used (#5); /h/<id> and /e/<id> give owners no Edit link and 404 on own pending/paused (#7); account-deletion copy understates (#8); draft Continue dead ends (#9); no cancel for a removal request (#10); declined display/event can't be edited or shows no reason (#17); voters not told when a voted entry is withdrawn (#12/#16); Displays tab duplicates contest entries (#14).
+
+### Audit round 3 (2026-11-26)
+- Profile now lists organizer-added homes that used your signed-in email before you link them (with the link, Manage, Remove). Account-deletion copy now says what is deleted.
