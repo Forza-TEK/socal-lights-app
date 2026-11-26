@@ -38,7 +38,12 @@ export async function onRequestPost({ params, request, env, data }) {
         env.DB.prepare("UPDATE users SET status = 'suspended', suspended_at = datetime('now') WHERE id = ?").bind(id),
         env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id),
       ]);
-      return json({ ok: true });
+      // Suspending doesn't take their content down; say what is still live so Admin can decide
+      const live = {
+        contests: (await env.DB.prepare("SELECT COUNT(*) AS n FROM contests WHERE owner_id = ? AND status = 'live'").bind(id).first())?.n || 0,
+        homes: (await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE user_id = ? AND status = 'approved'").bind(id).first())?.n || 0,
+      };
+      return json({ ok: true, live });
     case "unsuspend":
       await env.DB.prepare("UPDATE users SET status = 'active', suspended_at = NULL WHERE id = ?").bind(id).run();
       return json({ ok: true });

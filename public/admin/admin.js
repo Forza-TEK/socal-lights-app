@@ -556,7 +556,7 @@ async function renderContests() {
       + (c.status === "live" ? (flagged(c) ? btn("main", "Looks fine", 'data-cact="approve"') : "") + btn("ghost", "Unpublish", 'data-cact="decline"') : c.status === "closed" ? "" : btn("main", c.status === "pending" ? "Approve (goes on the map)" : "Make live again", 'data-cact="approve"'))
       + btn("danger", c.entries ? `Delete with ${c.entries} ${c.entries === 1 ? "entry" : "entries"}` : "Delete", 'data-cact="delete"');
     setDetail(c.name);
-    main.innerHTML = `<div class="rpage" data-cid="${esc(c.id)}" data-name="${esc(c.name)}"><a class="rback" href="#contests" id="cBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to contests</a>
+    main.innerHTML = `<div class="rpage" data-cid="${esc(c.id)}" data-name="${esc(c.name)}"${c.announced ? ' data-announced="1"' : ""}><a class="rback" href="#contests" id="cBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to contests</a>
       <div class="pghead"><div><h2>Contest detail</h2></div><div class="pgacts">${acts}</div></div><span class="msg" role="status"></span>
       ${flagged(c) ? `<section class="rcard"><p class="meta" style="margin:0;color:var(--ink)"><b>Needs a look.</b> ${esc(c.note)}</p></section>` : ""}
       <section class="rcard"><h3>Overview</h3>${kv([["Name", esc(c.name)], ["Status", `<span class="tag ${tone(c)}">${label(c)}</span>`], ["Run by", esc(c.org) + " · " + esc(c.city)], ["Created", esc(localTime(c.created_at))]])}</section>
@@ -677,7 +677,10 @@ $("#main").addEventListener("click", async (e) => {
   const card = b.closest("[data-cid]"), msg = card.querySelector(".msg") || { set className(v) {}, set textContent(v) {} }, act = b.dataset.cact;
   const cname = card.dataset.name || "this contest", extra = {};
   if (act === "decline") { const r = await askReason({ title: "Unpublish " + cname, hint: "This is emailed to the organizer. Leave it blank to send no reason.", go: "Unpublish" }); if (r === null) return; extra.reason = r; }
-  else if (act === "delete" && !tap(b, "delete for good")) return;
+  else if (act === "delete") {
+    const typed = prompt(`Delete "${cname}" for good? This removes its entries, photos, votes, sponsors and judges${card.dataset.announced ? " and the published winners page" : ""}, and can't be undone. The organizer is not emailed, so tell them first.\n\nType the contest name to confirm:`);
+    if (typed === null) return; if (typed.trim().toLowerCase() !== cname.trim().toLowerCase()) { toast("The name didn't match, so nothing was deleted.", true); return; }
+  }
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try {
     const res = await api("/api/admin/contests/" + card.dataset.cid, act === "delete" ? { method: "DELETE" } : { method: "POST", body: JSON.stringify({ action: act, ...extra }) });
@@ -1092,7 +1095,7 @@ async function openUser(id, sec = "") {
   m.querySelectorAll("[data-ua]").forEach((b) => (b.onclick = async () => {
     const a = b.dataset.ua;
     if (a === "suspend" && !tap(b, "suspend")) return;
-    try { await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: a, confirm: a === "delete" ? $("#uDel").value : undefined }) }); if (a === "delete") { close(); renderUsers(); } else if (a === "signout") { msg("Signed out on every device."); } else { await openUser(id); } } catch (er) { msg(er.message, true); }
+    try { const rr = await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: a, confirm: a === "delete" ? $("#uDel").value : undefined }) }); if (a === "suspend" && rr && rr.live && (rr.live.contests || rr.live.homes)) toast(`Suspended. Still live: ${rr.live.contests} contest${rr.live.contests === 1 ? "" : "s"}, ${rr.live.homes} home${rr.live.homes === 1 ? "" : "s"}. Review them under Contests and Published.`); if (a === "delete") { close(); renderUsers(); } else if (a === "signout") { msg("Signed out on every device."); } else { await openUser(id); } } catch (er) { msg(er.message, true); }
   }));
 }
 
@@ -1198,10 +1201,12 @@ async function openInstaller(id) {
     ${transferBox("installer", i.id)}
     <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Merge into another profile</summary>
     <p class="meta" style="margin:8px 0">Moves every home to the profile you keep and removes this one. Use it when one company was typed two ways.</p>
-    <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>`, true);
+    <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>
+    <details class="mdet"><summary>Delete this profile</summary><p class="meta">Removes the profile, its quote requests and its page counts. Homes that named it stay, with no installer. Needs the name typed. No email is sent.</p><div class="mfoot" style="margin-top:0"><input id="iDelName" placeholder="Type ${esc(i.name)}" aria-label="Type the installer name to delete" style="flex:1;min-width:200px"><button class="btn ghost danger" type="button" id="iDelGo">Delete profile</button></div></details>`, true);
   wireAreas(m); m.querySelector("#mClose").onclick = close;
   const msg = (t, bad) => { const e = $("#iMsg"); e.className = bad ? "msg err" : "msg"; e.textContent = t; };
   $("#iForm").onsubmit = async (e) => { e.preventDefault(); const body = { action: "edit" }; m.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value)); try { await instAct(i.id, body); toast("Saved"); await openInstaller(i.id); refreshCounts(); } catch (er) { msg(er.message, true); } };
+  $("#iDelGo").onclick = async () => { try { await instAct(i.id, { action: "delete", confirm: $("#iDelName").value }); close(); toast("Profile deleted"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
   $("#iMergeGo").onclick = async (e) => { const into = $("#iMerge").value; if (!into) return msg("Choose the profile to keep.", true); if (!tap(e.target, "merge")) return; try { await instAct(i.id, { action: "merge", into }); close(); toast("Merged"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
 }
 $("#main").addEventListener("click", async (e) => {
@@ -1650,7 +1655,7 @@ async function renderReports() {
       <section class="rcard"><h3>Overview</h3>${kv([["Status", `<span class="tag ${t[1]}">${t[0]}</span>`], ["Received", when(r.createdAt)], ["Contact", `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`], ["Listing id", r.ref ? `<code>${esc(r.ref)}</code>` : ""], ["Typed address", esc(r.address || "")], ["Note", esc(r.note || "")]])}</section>
       ${l ? `<section class="rcard"><h3>Listing</h3>${kv([["Home", esc([l.name, l.address, l.city].filter(Boolean).join(", "))], ["Added by", l.addedBy ? "An organizer" : ""], ["Organizer confirmed", l.consent ? `${esc(l.consent.email)} on ${esc(l.consent.created_at)} (${l.consent.n} homes, wording ${esc(l.consent.version)})` : ""]])}</section>` : ""}
       ${!done && !l ? `<section class="rcard"><h3>Possible matches</h3>${r.matches.length ? `<p class="meta" style="margin:0 0 8px">No listing id. Matches by address:</p><div class="row" style="gap:8px;flex-wrap:wrap">${r.matches.map(pick).join("")}</div>` : `<p class="meta" style="margin:0">No listing id and no address match. Search the Events tab by street, then close this request.</p>`}</section>` : ""}
-      ${done ? `<section class="rcard"><h3>Handled</h3>${kv([["When", esc(r.handledAt || "")], ["Listing", esc(r.target || "")], ["Admin note", esc(r.adminNote || "")]])}</section>` : ""}</div>`;
+      ${done ? `<section class="rcard"><h3>Handled</h3>${kv([["When", esc(r.handledAt || "")], ["Listing", esc(/^restored:/.test(r.target || "") ? "Entry put back in its contest" : r.target || "")], ["Admin note", esc(r.adminNote || "")]])}</section>` : ""}</div>`;
     window.scrollTo(0, 0);
     main.querySelector("#rmBack").onclick = (e) => { e.preventDefault(); RMOPEN = ""; setDetail(""); renderReports(); };
     return;
