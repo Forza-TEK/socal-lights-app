@@ -34,3 +34,11 @@ test("Admin > Installers and Contests lists: the Actions cell is a spaced group 
   assert.match(f("A, B, C, D, E, F"), /^A, B, C <span class="more" title="A, B, C, D, E, F">\+3 more<\/span>$/);
   assert.equal(f(""), "");
 });
+
+test("Admin windows wire their own X from inside the window (a record page behind one has its own #mClose, and a page-wide lookup grabbed that one: the X and Cancel did nothing), and the Edit house window keeps Save/Cancel inside its card", () => {
+  const js = readFileSync("public/admin/admin.js", "utf8");
+  assert.ok(!/\$\("#mClose"\)/.test(js), 'no page-wide $("#mClose") lookups remain');
+  assert.ok((js.match(/m\.querySelector\("#mClose"\)\.onclick/g) || []).length >= 10, "each window wires the X it contains");
+  const edit = js.slice(js.indexOf("function editPost("), js.indexOf("function editPost(") + 6500);
+  assert.ok(!/\{ hint: "Shown on the listing\." \}\)\)\}\s*<\/div>\s*<div class="mfoot sticky">/.test(edit), "no stray </div> closes the card before the Save/Cancel bar");
+});

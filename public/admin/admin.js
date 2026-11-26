@@ -227,7 +227,7 @@ function askReason({ title, hint, go = "Decline" }) {
     const m = $("#modal"); m.hidden = false;
     m.innerHTML = modalFrame(title, `<form class="f" id="rsForm" novalidate>${fsec("Reason", "", ff("rs-t", "Why? (optional)", `<textarea id="rs-t" rows="3" maxlength="400" placeholder="For example: the photo is too dark to see the lights"></textarea>`, { hint: hint || "This is emailed to them. Leave it blank to send no reason." }))}<div class="mfoot"><button class="btn danger-solid" type="submit">${esc(go)}</button><button class="btn ghost" type="button" data-mcancel>Cancel</button></div></form>`);
     const end = (v) => { m.hidden = true; m.innerHTML = ""; done(v); };
-    $("#mClose").onclick = () => end(null); m.querySelector("[data-mcancel]").addEventListener("click", () => end(null), { once: true });
+    m.querySelector("#mClose").onclick = () => end(null); m.querySelector("[data-mcancel]").addEventListener("click", () => end(null), { once: true });
     $("#rsForm").onsubmit = (e) => { e.preventDefault(); end($("#rs-t").value.trim()); }; $("#rs-t").focus();
   });
 }
@@ -256,10 +256,9 @@ function editPost(p, startTab = "details") {
       + ff("pArea", "Areas served", areaHtml({ id: "pArea", value: p.area }), { hint: AREAS_HINT }), { id: "pProSec", hide: p.kind !== "installer" })}
     ${fsec("About", "", ff("pSeason", "Season", `<select id="pSeason">${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}" ${k === (p.season || "christmas") ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select>`, { c: "c3" })
       + ff("pDesc", "Description", `<textarea id="pDesc" maxlength="1200" rows="4">${esc(p.desc)}</textarea>`, { hint: "Shown on the listing." }))}
-    </div>
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="pMsg" role="status"></span></div>
   </form>${transferBox("home", p.id)}</div>`;
-  m.hidden = false; $("#mClose").onclick = () => { close(); if (photosChanged) render(); };
+  m.hidden = false; m.querySelector("#mClose").onclick = () => { close(); if (photosChanged) render(); };
   let photosChanged = false;
   let cur = 0;
   const showTab = (t) => { $("#pForm").hidden = t !== "details"; $("#pPhotos").hidden = t !== "photos"; $("#pTabs").querySelectorAll("[data-ptab]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ptab === t))); };
@@ -382,7 +381,7 @@ function editSimple({ title, fields, values, save }) {
   m.hidden = false;
   const fld = (f) => ff("es-" + f.k, f.label, f.area ? `<textarea id="es-${f.k}" rows="3" maxlength="${f.max || 600}">${esc(values[f.k] || "")}</textarea>` : `<input id="es-${f.k}" type="${f.type || "text"}" maxlength="${f.max || 120}" value="${esc(values[f.k] || "")}" ${f.ph ? `placeholder="${esc(f.ph)}"` : ""}>`, { c: f.wide ? "c6" : "c3" });
   m.innerHTML = modalFrame(title, `<form class="f" id="esForm" novalidate>${fsec("Details", "", fields.map(fld).join(""))}<div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="esMsg" role="status"></span></div></form>`, true);
-  $("#mClose").onclick = close;
+  m.querySelector("#mClose").onclick = close;
   $("#esForm").onsubmit = async (e) => { e.preventDefault(); const body = {}; fields.forEach((f) => (body[f.k] = $("#es-" + f.k).value)); try { await save(body); close(); toast("Saved"); } catch (er) { const x = $("#esMsg"); x.className = "msg err"; x.textContent = er.message; } };
 }
 const SUBF = [{ k: "name", label: "Event name", wide: true }, { k: "venue", label: "Venue" }, { k: "address", label: "Address" }, { k: "city", label: "City" }, { k: "start_date", label: "Starts (YYYY-MM-DD)", max: 10 }, { k: "end_date", label: "Ends (YYYY-MM-DD)", max: 10 }, { k: "hours", label: "Hours" }, { k: "price", label: "Price" }, { k: "url", label: "Event page", type: "url", max: 300, wide: true }, { k: "contact_email", label: "Contact email", type: "email" }, { k: "blurb", label: "About", area: true, wide: true }];
@@ -521,7 +520,7 @@ function askNote(title, value) {
     const m = $("#modal"); m.hidden = false;
     m.innerHTML = modalFrame(title, `<form class="f" id="rsForm" novalidate>${fsec("Note", "", ff("on-t", "Your note", `<textarea id="on-t" rows="4" maxlength="500">${esc(value)}</textarea>`, { hint: "Saving your own note marks an automatic warning as seen." }))}<div class="mfoot"><button class="btn ice" type="submit">Save note</button><button class="btn ghost" type="button" data-mcancel>Cancel</button></div></form>`);
     const end = (v) => { m.hidden = true; m.innerHTML = ""; done(v); };
-    $("#mClose").onclick = () => end(null); m.querySelector("[data-mcancel]").addEventListener("click", () => end(null), { once: true });
+    m.querySelector("#mClose").onclick = () => end(null); m.querySelector("[data-mcancel]").addEventListener("click", () => end(null), { once: true });
     $("#rsForm").onsubmit = (e) => { e.preventDefault(); end($("#on-t").value.trim()); }; $("#on-t").focus();
   });
 }
@@ -609,7 +608,7 @@ function orgRow(o) {
 async function reloadPasses() { await renderPasses(); }
 function openGrant() {
   const m = $("#modal"); m.hidden = false; m.innerHTML = modalFrame("Grant a comp", `<div class="f">${grantFields("pg", true)}</div>`, true);
-  const close = () => { m.hidden = true; m.innerHTML = ""; }; $("#mClose").onclick = close;
+  const close = () => { m.hidden = true; m.innerHTML = ""; }; m.querySelector("#mClose").onclick = close;
   wireGrant(m, "pg", "", async () => { close(); await reloadPasses(); });
 }
 function openOrg(key) {
@@ -630,7 +629,7 @@ function openOrg(key) {
     <h3 class="dh">Other</h3><div class="ra" style="margin:0">${btn("ghost", "Merge into another key", 'data-pact="merge"')}<span class="msg" id="poMsgTop" role="status"></span></div>
     <p class="meta">Merging counts this organization's past and future contests, passes and comps under another key (a domain like covinaca.gov, or an email address).</p>`, true);
   const close = () => { m.hidden = true; m.innerHTML = ""; };
-  $("#mClose").onclick = close;
+  m.querySelector("#mClose").onclick = close;
   wireGrant(m, "po", key, async () => { await reloadPasses(); openOrg(key); });
   m.querySelectorAll("[data-pact]").forEach((b) => (b.onclick = async () => {
     const act = b.dataset.pact, body = { action: act };
@@ -664,10 +663,10 @@ async function openSponsors(cid) {
       <dl class="facts">${fact("Contest review note", esc(d.contest.review_note || "none (trusted)"))}${fact("Payment link", esc(iv.pay_url))}${fact("Payment text", esc(iv.pay_text))}${fact("Levels", esc(iv.levels))}${fact("Payment text hidden", iv.pay_hidden ? "yes" : "no")}</dl>
       <div class="ra">${btn("ghost", iv.switched_off_by_admin ? "Allow the invite link again" : "Switch the invite link off", `data-cf="${iv.switched_off_by_admin ? "invite_on" : "invite_off"}"`)}${btn("ghost", iv.pay_hidden ? "Show the payment text again" : "Hide the payment link and text", `data-cf="${iv.pay_hidden ? "show_pay" : "hide_pay"}"`)}<span class="sp"></span><span class="msg" role="status"></span></div></article>`;
     m.innerHTML = modalFrame("Sponsors of " + d.contest.name, `<p class="meta">Sponsor money goes to the organizer, not to SoCal Lights. Receipts are private to the organizer team and you.</p>${inv}${rows || `<div class="empty">No sponsors recorded.</div>`}`, true);
-    $("#mClose").onclick = close;
+    m.querySelector("#mClose").onclick = close;
     m.querySelectorAll("[data-cf]").forEach((b) => (b.onclick = async () => { try { await api("/api/admin/sponsors", { method: "POST", body: JSON.stringify({ action: b.dataset.cf, contest: cid, name: d.contest.name }) }); toast("Done"); openSponsors(cid); } catch (er) { toast(er.message, true); } }));
     m.querySelectorAll("[data-sh]").forEach((b) => (b.onclick = async () => { try { await api("/api/admin/sponsors", { method: "POST", body: JSON.stringify({ action: b.dataset.sh, id: b.closest("[data-sid]").dataset.sid, name: d.contest.name }) }); toast(b.dataset.sh === "hide" ? "Hidden" : "Shown again"); openSponsors(cid); } catch (er) { toast(er.message, true); } }));
-  } catch (er) { m.innerHTML = modalFrame("Sponsors", `<p>${esc(er.message)}</p>`); $("#mClose").onclick = close; }
+  } catch (er) { m.innerHTML = modalFrame("Sponsors", `<p>${esc(er.message)}</p>`); m.querySelector("#mClose").onclick = close; }
 }
 $("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-csp]"); if (b) openSponsors(b.dataset.csp); });
 const orgLabelOf = (k) => (String(k).startsWith("d:") ? String(k).slice(2) : String(k).startsWith("u:") ? String(k).slice(2) : String(k));
@@ -1064,7 +1063,7 @@ function buysSection(p) {
 async function openUser(id, sec = "") {
   const m = pageHost("users", renderUsers), close = () => { m.hidden = true; m.innerHTML = ""; };
   m.hidden = false; m.innerHTML = `<div class="card" role="dialog" aria-modal="true"><div class="empty">Loading…</div></div>`;
-  let d; try { d = await api("/api/admin/users/" + id); } catch (e) { m.innerHTML = `<div class="card"><p>${esc(e.message)}</p><button class="btn ghost" type="button" id="mClose">Close</button></div>`; $("#mClose").onclick = close; return; }
+  let d; try { d = await api("/api/admin/users/" + id); } catch (e) { m.innerHTML = `<div class="card"><p>${esc(e.message)}</p><button class="btn ghost" type="button" id="mClose">Close</button></div>`; m.querySelector("#mClose").onclick = close; return; }
   const u = d.user, sus = u.status === "suspended";
   m.innerHTML = `<div class="card wide" role="dialog" aria-modal="true"><div class="mh"><h2>${esc(u.name || u.email)}</h2><button class="xbtn" type="button" id="mClose" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     ${sus ? `<p class="msg err" style="margin:6px 0">Suspended ${when(u.suspended_at)}. They can't sign in, vote or enter contests.</p>` : ""}
@@ -1085,7 +1084,7 @@ async function openUser(id, sec = "") {
     <details style="margin-top:14px"><summary style="cursor:pointer;color:#c0392b;font-weight:700">Delete this account</summary>
     <p class="meta" style="margin:8px 0">This permanently removes their sign-ins, drafts, picture, contest entries and votes, closes the contests they run, and clears their email from homes and events they posted. It can't be undone. Type their email to confirm.</p>
     <div class="row"><input id="uDel" placeholder="${esc(u.email)}" style="flex:1;padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit"><button class="btn ghost" type="button" data-ua="delete" style="color:#c0392b">Delete</button></div></details></div>`;
-  $("#mClose").onclick = close;
+  m.querySelector("#mClose").onclick = close;
   if (sec) { const t = m.querySelector("#ps-" + sec); if (t) { t.scrollIntoView({ block: "start" }); t.focus({ preventScroll: true }); } } // a count chip on the list opens the profile at that section
   const msg = (t, bad) => { const e = $("#uMsg"); e.className = bad ? "msg err" : "msg"; e.textContent = t; };
   $("#uForm").onsubmit = async (e) => { e.preventDefault(); try { await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: "rename", name: $("#uName").value }) }); await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: "note", note: $("#uNote").value }) }); msg("Saved."); renderUsers(); } catch (er) { msg(er.message, true); } };
@@ -1199,7 +1198,7 @@ async function openInstaller(id) {
     <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Merge into another profile</summary>
     <p class="meta" style="margin:8px 0">Moves every home to the profile you keep and removes this one. Use it when one company was typed two ways.</p>
     <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>`, true);
-  wireAreas(m); $("#mClose").onclick = close;
+  wireAreas(m); m.querySelector("#mClose").onclick = close;
   const msg = (t, bad) => { const e = $("#iMsg"); e.className = bad ? "msg err" : "msg"; e.textContent = t; };
   $("#iForm").onsubmit = async (e) => { e.preventDefault(); const body = { action: "edit" }; m.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value)); try { await instAct(i.id, body); toast("Saved"); await openInstaller(i.id); refreshCounts(); } catch (er) { msg(er.message, true); } };
   $("#iMergeGo").onclick = async (e) => { const into = $("#iMerge").value; if (!into) return msg("Choose the profile to keep.", true); if (!tap(e.target, "merge")) return; try { await instAct(i.id, { action: "merge", into }); close(); toast("Merged"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
