@@ -68,6 +68,14 @@ function render() {
   wireTour(document, { slug, entries: homes });
   shell.setItems([{ k: "ballot", label: "Ballot", icon: "check" }, { k: "tour", label: "Visit the homes", icon: "map" }, ...c.categories.map((k, ci) => ({ k: "c" + ci, label: k, icon: mine(k) >= need ? "star" : "trophy" }))]);
   if (!document.querySelector(`#app [data-p="${panel}"]`)) panel = "ballot";
+  // A way back (Admin first when an admin is acting as the owner)
+  if (!document.getElementById("crumbs")) {
+    const acting = !!document.querySelector('script[src*="as-shim"]'), nav = document.createElement("nav");
+    nav.id = "crumbs"; nav.setAttribute("aria-label", "Breadcrumb"); nav.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:15px;margin:0 0 14px;color:var(--muted)";
+    nav.innerHTML = (acting ? '<a href="/admin/#contests">Admin</a><span aria-hidden="true">›</span>' : '<a href="/profile">Your profile</a><span aria-hidden="true">›</span>') + '<b style="color:var(--ink,inherit)">' + esc(c.name) + "</b>";
+    nav.querySelectorAll("a").forEach((a) => (a.style.cssText = "color:inherit;text-decoration:underline;padding:10px 2px"));
+    const host = document.querySelector("main") || document.body; host.insertBefore(nav, host.firstChild);
+  }
   shell.setTitle(c.name); shell.own(true); showPanel();
   document.querySelectorAll("[data-pick]").forEach((b) => (b.onclick = async () => { const [id, k] = b.dataset.pick.split("|"); const r = await api({ action: "pick", post_id: id, category: k }); if (!r.ok) return toast(r.j.error || "Couldn't save that."); toast(k + ": picked"); load(); }));
   document.querySelectorAll("[data-chip]").forEach((b) => (b.onclick = async () => { const [id, k, n] = b.dataset.chip.split("|"); const y = scrollY; document.querySelectorAll("[data-chip]").forEach((x) => (x.disabled = true)); const r = await api({ action: "score", post_id: id, category: k, score: n }); if (!r.ok) toast(r.j.error || "Couldn't save that."); await load(); scrollTo(0, y); }));

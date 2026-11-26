@@ -45,6 +45,8 @@ export async function onRequestPost({ request, env, params, waitUntil }) {
     await env.DB.prepare("UPDATE event_submissions SET status='pending' WHERE id = ?").bind(s.id).run();
     return json({ ok: true });
   }
+  if (b.action === "decline" && s.status === "published") return err(409, "This event is live. Unpublish it first, then decline it.");
+  if (b.action === "approve" && s.status === "published") return err(409, "This event is already published. Edit it in the Events tab so those edits are kept.");
   if (b.action === "decline") {
     await env.DB.prepare("UPDATE event_submissions SET status='declined' WHERE id = ?").bind(s.id).run();
     // A buyer who paid for Featured on a submission we decline is owed a refund: surface it in Admin > Orders (nothing is refunded automatically).

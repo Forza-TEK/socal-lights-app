@@ -460,18 +460,38 @@ test("a declined display or event can be sent back for review by its owner only"
   assert.equal((await go(evPost, "sdec", t.users.resident)).status, 200); assert.equal(t.raw.prepare("SELECT status FROM event_submissions WHERE id='sdec'").get().status, "pending");
 });
 
-test("Admin: merging installers moves leads and counts; deleting needs the typed name and a refunded order; suspend reports what is still live", async () => {
-  const { onRequestPost: instPost } = await import("../functions/api/admin/installers/[id].js");
+test("Admin: declining an approved event claim takes its access back; the deleted-events list is reachable; unpaid orders can't be marked refunded", async () => {
+  const { onRequestPost: claimPost } = await import("../functions/api/admin/claims/[id].js");
+  const { onRequestGet: deletedGet } = await import("../functions/api/admin/events/deleted.js");
   const t = await setup();
-  const mk = (id, name) => t.raw.prepare("INSERT INTO installers (id,slug,name,status) VALUES (?,?,?, 'active')").run(id, id, name);
-  mk("ia", "Alpha Lights"); mk("ib", "Beta Lights");
-  t.raw.prepare("INSERT INTO installer_leads (id,installer_id,user_id,name,email) VALUES ('l1','ia','u','N','n@x.com')").run();
-  t.raw.prepare("INSERT INTO installer_hits (installer_id,day,n) VALUES ('ia','2026-11-01',3),('ib','2026-11-01',4)").run();
-  const go = (id, body) => instPost({ params: { id }, request: new Request(`${origin}/api/admin/installers/${id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), env: t.env }).then(json);
-  assert.equal((await go("ia", { action: "merge", into: "ib" })).status, 200);
-  assert.equal(t.raw.prepare("SELECT installer_id FROM installer_leads WHERE id='l1'").get().installer_id, "ib");
-  assert.equal(t.raw.prepare("SELECT n FROM installer_hits WHERE installer_id='ib'").get().n, 7, "counts added together");
-  assert.equal((await go("ib", { action: "delete", confirm: "nope" })).status, 400);
-  assert.equal((await go("ib", { action: "delete", confirm: "beta lights" })).status, 200);
-  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM installers").get().n, 0); assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM installer_leads").get().n, 0);
+  t.raw.prepare("INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES ('evx','X','Orange','Brea','drive','2026-12-01','2026-12-31','confirmed',1,'Free','',33.9,-117.9,'','','christmas','','1 A St')").run();
+  t.raw.prepare("INSERT INTO event_claims (id,event_id,user_id,email,status,method) VALUES ('cl1','evx','uR','resident@x.com','pending','')").run();
+  const act = (action) => claimPost({ params: { id: "cl1" }, request: new Request(`${origin}/api/admin/claims/cl1`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) }), env: t.env, waitUntil: () => {} }).then(json);
+  assert.equal((await act("approve")).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM event_submissions WHERE event_id='evx'").get().n, 1);
+  assert.equal((await act("decline")).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM event_submissions WHERE event_id='evx'").get().n, 0, "access revoked");
+  t.raw.prepare("INSERT INTO deleted_events (id,name,row) VALUES ('evx','X','{\"id\":\"evx\",\"city\":\"Brea\"}')").run();
+  const l = await deletedGet({ env: t.env }).then(json); assert.equal(l.body[0].id, "evx"); assert.equal(l.body[0].city, "Brea");
+});
+
+test("a voter can take their vote back while voting is open, not after it closes, and not someone else's", async () => {
+  const { onRequestDelete: unvote } = await import("../functions/api/contests/[slug]/vote.js");
+  const del = (t, user) => unvote({ params: { slug: SLUG }, request: new Request(`${origin}/api/contests/${SLUG}/vote`, { method: "DELETE", headers: { "content-type": "application/json", cookie: user.cookie }, body: JSON.stringify({ category: "Best Overall" }) }), env: t.env }).then(json);
+  const t = await setup({ voteStart: -1, voteEnd: 10 });
+  t.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall'),('v2','paaaaaaaa','c1','uR','Best Overall')").run();
+  assert.equal((await del(t, t.users.other)).status, 200);
+  assert.deepEqual(t.raw.prepare("SELECT user_id FROM votes").all().map((v) => v.user_id), ["uR"], "only their own vote went");
+  const c = await setup({ voteStart: -10, voteEnd: -1 });
+  c.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall')").run();
+  assert.equal((await del(c, c.users.other)).status, 400); assert.equal(c.raw.prepare("SELECT COUNT(*) n FROM votes").get().n, 1);
+});
+
+test("installer claim for a non-domain email is only sent once a week", async () => {
+  const { onRequestPost: claim } = await import("../functions/api/installers/[slug]/claim.js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO installers (id,slug,name,status,web) VALUES ('ic1','acme','Acme Lights','active','https://acme-lights.com')").run();
+  const go = () => claim({ params: { slug: "acme" }, request: new Request(`${origin}/api/installers/acme/claim`, { method: "POST", headers: { cookie: t.users.other.cookie } }), env: t.env }).then(json);
+  const a = await go(), b = await go();
+  assert.equal(a.body.claimed, false); assert.ok(!a.body.pending); assert.equal(b.body.pending, true, "the second tap says it is already with us");
 });

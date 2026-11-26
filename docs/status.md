@@ -2035,6 +2035,12 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 - Draft rows name the contest and say "Entries are closed"/"This contest no longer exists" instead of a dead Continue. A waiting removal request can be cancelled. Declined displays/events have "Send it again for review". Withdrawing an organizer-added home deletes the homeowner's own photos (the organizer's stay).
 - Left alone on purpose: Displays tab still lists linked contest homes (deliberate); voters get no email when a voted entry is withdrawn.
 
-### Audit round 5 — Admin (2026-11-26)
-- Delete contest needs the typed contest name (warns about announced results). Suspend reports the live contests/homes the person still has. Installers: merge moves leads, page counts, banner stats and logo; new "Delete profile" (typed name; refused while a paid Sponsor order is unrefunded). Handled restore request reads "Entry put back in its contest". Admin `?v=20261126h`.
-- Not done: Admin can't announce winners for a contest with no owner account; the Admin Events/Orders/Messages/Errors/Outreach tabs and installer claim flow weren't audited in a browser.
+### Breadcrumbs on organizer, judge and installer pages (2026-11-26)
+- User found `/c/<slug>/manage` (reached from Admin "Edit as owner") had no way back. Now a breadcrumb row: "Your profile › Contests › <name>" (or "Admin › Contests › <name>" when an admin is acting as the owner); same on the installer manage page and the judge page. Lesson: the audit must open every act-as landing page and every shell page and look for an exit.
+
+### Audit round 6 (Admin tabs / organizer / installer, 2026-11-26) — fixed
+- Admin Events: "Recently deleted" window with Bring back (new `GET /api/admin/events/deleted`). Declining an approved event claim now removes the access it granted. Orders: "Mark refunded" also offered for paid orders with no Stripe payment id; the server refuses it for never-paid orders. Submissions: approve/decline on an already-published event is refused. Organizer: the creator always gets the Team controls (`D.me.isCreator`); removing a judge asks first and checks the result. Admin `?v=20261126i`.
+- Also fixed: an event deleted by Admin shows "Taken off the map" on the owner's profile and in Admin submissions (Move back to waiting).
+- Also fixed: installers can "Stop sharing" a confirmed home and logo removal reports failures; voters can take their vote back while voting is open.
+- Also fixed: repeat installer claims are sent once a week (claimant is told it is with us); Chat Tier 3 switch labelled as not built.
+- Still open from this audit: deleted event leaves its submission "Published" (#4); report dismissal/priority (#6, #7); failed-email list (#9); installer can't undo Confirm or hide their own profile (#12, #13); voters can't retract a vote (#16); no un-announce (#17); decline reasons not stored, Unpublish sends no email (#18); passes merge preview (#15); Chat "Tier 3" switch for an unbuilt feature (#19); no Admin control for the do-not-contact list (#20); installer confirm link mutates on GET (#21).
