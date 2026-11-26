@@ -1,3 +1,5 @@
+import { removeListing } from "../../../_lib/removal.js";
+import { logContest } from "../../../_lib/changes.js";
 // POST   /api/admin/posts/<id>  {action: "approve" | "decline" | "edit"}
 // POST   /api/admin/posts/<id>  {action: "photo_remove" | "photo_move", key, to}  or multipart "photos" files: manage the house's photos (first = cover)
 // DELETE /api/admin/posts/<id>  removes the post and its photos
@@ -161,8 +163,12 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
 export async function onRequestDelete({ params, env }) {
   const row = await getPost(env, params.id);
   if (!row) return json({ ok: true });
-  await markHomeRefundDue(env.DB, row.id, "The home was deleted while a paid Featured placement was running. Refund it in Stripe, then mark it refunded.");
-  await deletePhotos(env, [...JSON.parse(row.photos || "[]"), ...(row.video_file ? [row.video_file] : [])]);
-  await env.DB.batch([env.DB.prepare("DELETE FROM lights_on WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM listing_changes WHERE post_id = ?").bind(row.id), env.DB.prepare("DELETE FROM posts WHERE id=?").bind(row.id)]);
+  // one delete path for everything a post owns (photos, votes, judge rows, frozen contest results, paid placements); a contest entry is also noted in the organizer's change log
+  if (row.contest_id) {
+    const v = (await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE post_id = ?").bind(row.id).first()).n;
+    await logContest(env, row.contest_id, { email: "admin", name: "SoCal Lights" }, [{ label: `Entry ${row.entry_no ? "#" + row.entry_no + " " : ""}removed by SoCal Lights`, old: `${v} vote${v === 1 ? "" : "s"} counted`, new: "Removed" }]).catch(() => {});
+  }
+  await removeListing(env, "post:" + row.id);
+  if (row.video_file) await deletePhotos(env, [row.video_file]);
   return json({ ok: true });
 }

@@ -365,6 +365,21 @@ test("after voting closes the homeowner can ask for removal, and a withdrawn ent
   const { onRequestPost: adminRm } = await import("../functions/api/admin/removals.js");
   const rid = w.raw.prepare("SELECT id FROM removal_requests WHERE ref='h-paaaaaaaa'").get().id;
   const ap = await adminRm({ request: new Request(`${origin}/api/admin/removals`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: rid, action: "approve" }) }), env: w.env, waitUntil: () => {} }).then(json);
-  assert.equal(ap.status, 200); assert.equal(w.raw.prepare("SELECT status FROM posts WHERE id='paaaaaaaa'").get().status, "approved", "approving a restore puts the entry back; it does not delete it");
+  assert.equal(ap.status, 200); assert.equal(w.raw.prepare("SELECT status FROM posts WHERE id='paaaaaaaa'").get().status, w.raw.prepare("SELECT approval FROM contests WHERE id='c1'").get().approval === "auto" ? "approved" : "pending", "approving a restore puts the entry back for review (or straight in with auto approval); it does not delete it");
+  // an announced contest can't take it back; an own-entry withdrawn without photos can't be restored
+  const z = await setup(); await z.claim(z.users.home); await z.hp("POST", TOKEN, z.users.home, { action: "withdraw" });
+  z.raw.prepare("UPDATE contests SET announced = 1").run();
+  assert.equal((await call(z, z.users.home, "paaaaaaaa", "restore")).status, 409, "winners announced");
   const fs = await import("node:fs"); assert.match(fs.readFileSync("public/profile.html", "utf8"), /Restore requested[\s\S]*Removal requested/);
+});
+
+test("Admin removing a contest entry clears its votes and judge rows and tells the organizer's change log", async () => {
+  const { onRequestDelete: adminDel } = await import("../functions/api/admin/posts/[id].js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id) VALUES ('v9','paaaaaaaa','c1','uX')").run();
+  const r = await adminDel({ params: { id: "paaaaaaaa" }, env: t.env }).then(json);
+  assert.equal(r.status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM posts WHERE id='paaaaaaaa'").get().n, 0);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM votes WHERE post_id='paaaaaaaa'").get().n, 0, "no orphaned votes");
+  assert.match(JSON.stringify(t.raw.prepare("SELECT * FROM contest_changes").all()), /removed by SoCal Lights/);
 });
