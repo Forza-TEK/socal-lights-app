@@ -54,7 +54,9 @@ const fresh = async (env, id) => env.DB.prepare("SELECT * FROM posts WHERE id = 
 
 export async function onRequestGet({ params, request, env }) {
   const x = await load(env, params.token); if (!x) return gone();
-  return json(view(x.row, x.c, await getUser(request, env)), NO_STORE);
+  const v = view(x.row, x.c, await getUser(request, env));
+  if (v.state === "mine") v.removal = (await env.DB.prepare("SELECT 1 AS o FROM removal_requests WHERE ref = ? AND status = 'open'").bind("h-" + x.row.id).first()) ? "open" : "";
+  return json(v, NO_STORE);
 }
 
 export async function onRequestPost(ctx) {
