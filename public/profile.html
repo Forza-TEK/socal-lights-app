@@ -77,6 +77,13 @@ const viewBtn = (href) => `<a class="btn out sm" href="${esc(href)}" target="_bl
 // Less-used actions live behind one "More" button, so a row shows at most View listing, Promote, Edit and More (a tap anywhere else closes the menu)
 const moreMenu = (inner) => `<details class="amore"><summary class="btn out sm" aria-label="More actions">More</summary><div class="amenu">${inner}</div></details>`;
 document.addEventListener("click", async (ev) => {
+  const w = ev.target.closest && ev.target.closest("[data-entrywd]");
+  if (w && !w.disabled) {
+    if (!confirm("Withdraw your home from this contest? Its votes and photos are removed.")) return;
+    w.disabled = true; const r = await fetch("/api/contests/" + encodeURIComponent(w.dataset.slug) + "/mine?id=" + encodeURIComponent(w.dataset.entrywd), { method: "DELETE", credentials: "same-origin" }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {}; if (r && r.ok) location.reload(); else { w.disabled = false; alert(j.error || "That didn't work. Please try again."); }
+    return;
+  }
   const b = ev.target.closest && ev.target.closest("[data-entryreq]"); if (!b || b.disabled) return;
   b.disabled = true; const r = await fetch("/api/me/entries/" + encodeURIComponent(b.dataset.id) + "/request", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: b.dataset.entryreq }) }).catch(() => null);
   const j = r ? await r.json().catch(() => ({})) : {}; if (r && r.ok) location.reload(); else { b.disabled = false; alert(j.error || "That didn't send. Please try again."); }
@@ -100,9 +107,9 @@ function contestRow(c) {
 const linked = () => (O.entries || []).filter((e) => e.manage && e.status === "approved");
 // A home you entered in someone's contest
 function entryRow(e) {
-  const rq = e.req && e.req.status === "open" ? e.req.kind : "", st = rq === "restore" ? ["warn", "Restore requested"] : rq === "remove" ? ["warn", "Removal requested"] : e.status === "declined" && e.req && e.req.kind === "restore" && e.req.status === "declined" ? ["", "Restore not approved"] : e.status === "approved" ? ["live", "In the contest"] : e.status === "pending" ? ["warn", "Waiting for the organizer"] : e.status === "declined" ? ["", "Not accepted"] : ["", "Not in the contest"];
+  const rq = e.req && e.req.status === "open" ? e.req.kind : "", st = rq === "restore" ? ["warn", "Restore requested"] : rq === "remove" ? ["warn", "Removal requested"] : e.status === "declined" && e.req && e.req.kind === "restore" && e.req.status === "declined" ? ["", "Restore not approved"] : e.status === "declined" && e.withdrawn ? ["", "You withdrew this"] : e.status === "approved" ? ["live", "In the contest"] : e.status === "pending" ? ["warn", "Waiting for the organizer"] : e.status === "declined" ? ["", "Not accepted"] : ["", "Not in the contest"];
   return `<div class="rowi"><div class="rwrap">${thumb(e.status === "approved" && e.photos && e.photos[0] ? "/api/photo/" + e.photos[0] : "")}<div><b>${esc(e.title || e.biz)}</b><br><span class="small muted">${esc(e.contest)} · ${dot(e.status, st)}</span></div></div>
-   <div class="acts">${e.status === "approved" ? viewBtn("/c/" + e.slug) : ""}${e.status === "declined" && !rq ? `<button class="btn sm" type="button" data-entryreq="restore" data-id="${esc(e.id)}">Ask to restore</button>` : ""}${e.manage && e.status === "approved" ? `<a class="btn sm" href="${esc(e.manage)}">Manage your home</a><a class="btn out sm" href="${esc(e.manage)}#remove">Remove</a>` : ""}<a class="btn out sm" href="/c/${esc(e.slug)}">Open contest</a></div></div>`;
+   <div class="acts">${e.status === "approved" ? viewBtn("/c/" + e.slug) : ""}${e.status === "declined" && e.withdrawn && !rq ? (e.manage ? `<button class="btn sm" type="button" data-entryreq="restore" data-id="${esc(e.id)}">Ask to restore</button>` : `<a class="btn sm" href="/c/${esc(e.slug)}/enter">Enter again</a>`) : ""}${!e.manage && e.status !== "declined" && !e.announced && !(e.vote_end && e.vote_end < new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" })) ? `<button class="btn out sm" type="button" data-entrywd="${esc(e.id)}" data-slug="${esc(e.slug)}">Withdraw</button>` : ""}${e.manage && e.status === "approved" ? `<a class="btn sm" href="${esc(e.manage)}">Manage your home</a>${rq ? "" : `<a class="btn out sm" href="${esc(e.manage)}#remove">Remove</a>`}` : ""}<a class="btn out sm" href="/c/${esc(e.slug)}">Open contest</a></div></div>`;
 }
 // An event you added: edit, cancelled or postponed tag, run again next year
 function eventRow(e) {

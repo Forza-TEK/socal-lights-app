@@ -2018,3 +2018,9 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 - Restore approve: back to pending (manual approval) or approved (auto), refused with no photos or after winners announced, logged to the organizer's change log, no wrong "removed" emails; queue rows tagged Restore; no duplicate city in addresses.
 - Admin can remove a contest entry (button + status tag); Admin delete now uses the shared `removeListing` (votes, judge rows, frozen results, paid placements) and logs to the contest.
 - NOT fixed yet (from the audit): admin delete-contest has no typed confirm/notice; installer profiles can't be deleted/hidden by owner and merge orphans leads/stats; suspend leaves live content; admin can't announce owner-less contests; handled restore detail loses the listing link.
+
+### Audit round 2 (resident side, 2026-11-26) — fixed
+- After voting ends an entrant can no longer edit/withdraw (API 409, buttons hidden); only "Ask us to remove it".
+- Deleting your own event no longer deletes a taken-over/claimed public listing (unlinked instead, same rule as account deletion).
+- Withdrawn entries are marked (`review_note='withdrawn'`): profile says "You withdrew this"; self-added -> "Enter again", organizer-added -> "Ask to restore"; restore is refused for organizer-declined entries and photo-less ones. Profile has Withdraw on self-added entries (also pending ones). Remove link hidden while a request is open; unclaimed-page wording fixed.
+- Still open from the resident audit: organizer-added homes not on the profile until the emailed link is used (#5); /h/<id> and /e/<id> give owners no Edit link and 404 on own pending/paused (#7); account-deletion copy understates (#8); draft Continue dead ends (#9); no cancel for a removal request (#10); declined display/event can't be edited or shows no reason (#17); voters not told when a voted entry is withdrawn (#12/#16); Displays tab duplicates contest entries (#14).

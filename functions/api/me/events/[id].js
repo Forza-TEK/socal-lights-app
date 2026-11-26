@@ -151,6 +151,14 @@ export async function onRequestDelete({ params, request, env }) {
   const s = await env.DB.prepare("SELECT * FROM event_submissions WHERE id = ?").bind(params.id).first();
   if (!s || normEmail(s.contact_email) !== user.email) return err(404, "That event isn't yours.");
   // A paid Featured placement goes with the event row (or was waiting on this submission): flag it refund due first.
+  // Same rule as deleting an account: a takeover or claimed listing, an event id the add form didn't make, or one someone else also manages is only unlinked from this person; it stays on the map.
+  const keepNote = /^(claimed by the organizer|updated the existing listing )/;
+  let unlinkOnly = !!s.event_id && (keepNote.test(s.note || "") || !String(s.event_id).startsWith("u-"));
+  if (s.event_id && !unlinkOnly) {
+    const other = await env.DB.prepare("SELECT 1 AS x FROM event_submissions WHERE event_id = ? AND id != ? AND lower(contact_email) != lower(?) UNION SELECT 1 FROM event_claims WHERE event_id = ? AND status = 'approved' AND user_id != ?").bind(s.event_id, s.id, user.email, s.event_id, user.id).first();
+    unlinkOnly = !!other;
+  }
+  if (unlinkOnly) { await env.DB.prepare("UPDATE event_submissions SET contact_email = '' WHERE id = ?").bind(s.id).run(); return json({ ok: true, unlinked: true }); }
   const stmts = [...refundDueStatements(env.DB, { events: ["sub:" + s.id, s.event_id] }, "The organizer deleted the event while a paid Featured placement was running or waiting. Refund it in Stripe, then mark it refunded here."), env.DB.prepare("DELETE FROM event_submissions WHERE id = ?").bind(s.id)];
   const own = s.event_id ? await env.DB.prepare("SELECT owner_photos FROM events WHERE id = ?").bind(s.event_id).first() : null;
   if (s.event_id) stmts.push(env.DB.prepare("DELETE FROM events WHERE id = ?").bind(s.event_id));
