@@ -678,8 +678,8 @@ $("#main").addEventListener("click", async (e) => {
   const cname = card.dataset.name || "this contest", extra = {};
   if (act === "decline") { const r = await askReason({ title: "Unpublish " + cname, hint: "This is emailed to the organizer. Leave it blank to send no reason.", go: "Unpublish" }); if (r === null) return; extra.reason = r; }
   else if (act === "delete") {
-    const typed = prompt(`Delete "${cname}" for good? This removes its entries, photos, votes, sponsors and judges${card.dataset.announced ? " and the published winners page" : ""}, and can't be undone. The organizer is not emailed, so tell them first.\n\nType the contest name to confirm:`);
-    if (typed === null) return; if (typed.trim().toLowerCase() !== cname.trim().toLowerCase()) { toast("The name didn't match, so nothing was deleted.", true); return; }
+    const typed = await askBox({ title: "Delete " + cname, message: `This removes its entries, photos, votes, sponsors and judges${card.dataset.announced ? " and the published winners page" : ""}, and can't be undone. The organizer is not emailed, so tell them first.`, go: "Delete for good", input: { label: "Type the contest name to confirm", placeholder: cname, hint: "" } });
+    if (typed === null || typed === undefined) return; if (String(typed).trim().toLowerCase() !== cname.trim().toLowerCase()) { toast("The name didn't match, so nothing was deleted.", true); return; }
   }
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try {

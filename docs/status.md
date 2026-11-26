@@ -2036,5 +2036,5 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 - Left alone on purpose: Displays tab still lists linked contest homes (deliberate); voters get no email when a voted entry is withdrawn.
 
 ### Audit round 5 — Admin (2026-11-26)
-- Delete contest needs the typed contest name (warns about announced results). Suspend reports the live contests/homes the person still has. Installers: merge moves leads, page counts, banner stats and logo; new "Delete profile" (typed name; refused while a paid Sponsor order is unrefunded). Handled restore request reads "Entry put back in its contest". Admin `?v=20261126g`.
+- Delete contest needs the typed contest name (warns about announced results). Suspend reports the live contests/homes the person still has. Installers: merge moves leads, page counts, banner stats and logo; new "Delete profile" (typed name; refused while a paid Sponsor order is unrefunded). Handled restore request reads "Entry put back in its contest". Admin `?v=20261126h`.
 - Not done: Admin can't announce winners for a contest with no owner account; the Admin Events/Orders/Messages/Errors/Outreach tabs and installer claim flow weren't audited in a browser.
