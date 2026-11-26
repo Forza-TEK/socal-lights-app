@@ -23,14 +23,18 @@ export const themeBtn = () => '<button class="tbtn" type="button" data-theme-tog
 document.addEventListener("click", (e) => { if (e.target.closest("[data-theme-toggle]")) toggleTheme(); });
 
 /* ---------- account ---------- */
-let acctUser = null; const hosts = new Set(); const acctReady = me().then((i) => (acctUser = i.user)).catch(() => {});
+let acctUser = null, firstCheck = null; const hosts = new Set(); const acctReady = me().then((i) => { firstCheck = i; acctUser = i.user; }).catch(() => {});
 const PERSON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>';
 export const acctHtml = () => (acctUser
   ? `<button class="acct" type="button" data-acct-menu aria-haspopup="menu" aria-expanded="false" aria-label="Your account" title="${esc(acctUser.email)}">${acctUser.avatar ? `<img src="${esc(acctUser.avatar)}" alt="">` : esc(acctUser.email[0].toUpperCase())}</button>`
   : `<button class="acct acct-in" type="button" data-acct-signin aria-label="Sign in" title="Sign in">${PERSON}</button>`);
 const paint = () => hosts.forEach((el) => { if (el.isConnected) el.innerHTML = acctHtml(); });
 export async function refreshAcct(el) { const i = await me(true); acctUser = i.user; if (el) hosts.add(el); paint(); }
-export async function mountAcct(el) { await acctReady; if (el) hosts.add(el); paint(); }
+// A page that has just learned who is signed in (the profile page asks the server itself) tells the account button, so it never shows a sign-in icon over a signed-in page.
+export function setAcctUser(u) { acctUser = u || null; paint(); }
+// The check made as the page loads can fail or run too early (the phone's network is not ready) and then looks like "signed out". Ask once more before treating anyone as signed out.
+async function recheck() { const i = await me(true); if (!i.user) return false; acctUser = i.user; paint(); return true; }
+export async function mountAcct(el) { await acctReady; if (el) hosts.add(el); paint(); if (!acctUser && firstCheck && firstCheck.down) recheck(); }
 
 let menu = null;
 const closeMenu = () => { if (menu) { menu.remove(); menu = null; } document.querySelectorAll("[data-acct-menu][aria-expanded=true]").forEach((b) => b.setAttribute("aria-expanded", "false")); };
@@ -57,7 +61,7 @@ function openMenu(btn, byKeyboard) {
 document.addEventListener("click", async (e) => {
   const b = e.target.closest("[data-acct-menu]"), si = e.target.closest("[data-acct-signin]");
   if (b) { menu && b.getAttribute("aria-expanded") === "true" ? closeMenu() : openMenu(b, e.detail === 0); return; }
-  if (si) { const u = await signIn({ title: "Sign in", next: location.pathname + location.search + location.hash }); if (u) location.reload(); return; }
+  if (si) { if (await recheck()) { const nb = [...hosts].map((h) => h.querySelector("[data-acct-menu]")).find(Boolean); if (nb) openMenu(nb, false); return; } const u = await signIn({ title: "Sign in", next: location.pathname + location.search + location.hash }); if (u) location.reload(); return; }
   if (e.target.closest("[data-signout]")) { await signOut(); location.href = "/"; return; }
   if (menu && !e.target.closest(".acctmenu")) closeMenu();
 });

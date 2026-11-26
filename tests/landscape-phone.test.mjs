@@ -44,7 +44,7 @@ test("everything beside the list is measured from the phone's real side margin (
 });
 test("the page links the current stylesheet and script versions", () => {
   const html = readFileSync("public/index.html", "utf8");
-  assert.match(html, /styles\.css\?v=20261126b/); assert.match(html, /app\.js\?v=20261126a/);
+  assert.match(html, /styles\.css\?v=20261126b/); assert.match(html, /app\.js\?v=20261126b/);
 });
 
 test("the sponsor / Featured strip: the whole pill is the tap target (the name link is stretched over it), the call link stays its own target, and dragging the strip still cancels the tap", () => {
@@ -63,4 +63,14 @@ test("the strip's second (looping) copy is tappable: it was inert, so a tap on i
   assert.ok(!/class="sp-set sp-dup"[^>]*\binert\b/.test(js), "the looping copy is not inert");
   assert.match(js, /class="sp-set sp-dup" aria-hidden="true">\$\{set\.replace\(\/<a \/g, '<a tabindex="-1" '\)\}/);
   assert.match(readFileSync("public/app.js", "utf8"), /banner\.js\?v=20261126a/); assert.match(readFileSync("public/index.html", "utf8"), /banner\.js\?v=20261126a/);
+});
+
+test("the account button never shows a sign-in icon over a signed-in page: it re-checks before opening a sign-in sheet, retries a failed page-load check, and the profile page tells it who is signed in", () => {
+  const ch = readFileSync("public/chrome.js", "utf8"), prof = readFileSync("public/profile.html", "utf8");
+  assert.match(ch, /async function recheck\(\) \{ const i = await me\(true\); if \(!i\.user\) return false; acctUser = i\.user; paint\(\); return true; \}/);
+  assert.match(ch, /if \(si\) \{ if \(await recheck\(\)\) \{[^}]*openMenu\(nb, false\); return; \} const u = await signIn\(/, "tapping the sign-in icon asks again first and opens the account menu when the person is in fact signed in");
+  assert.match(ch, /if \(!acctUser && firstCheck && firstCheck\.down\) recheck\(\)/, "a failed first check is retried");
+  assert.match(ch, /export function setAcctUser\(u\)/);
+  assert.match(prof, /if \(i\.user\) setAcctUser\(i\.user\)/);
+  assert.match(prof, /import \{ setAcctUser \} from "\/chrome\.js\?v=20261126a"/);
 });
