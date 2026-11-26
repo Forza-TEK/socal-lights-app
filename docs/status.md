@@ -2010,3 +2010,6 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 - `public/home-photos.html`: breadcrumb (Your profile › contest › Your home) on every state, plus a "Remove this home from the contest" card (voting open: withdraws it, clears votes, logs for the organizer; voting closed: links to the removal request). New `POST {action:"withdraw"}` in `functions/api/home-photos/[token].js`. Profile contest-entry rows get a Remove link; declined entries no longer show Manage.
 - Why audits missed it: they checked pages in isolation. New method in `docs/journey-audit.md` (entry points x record states, CRUD parity table).
 - Note: run tests with `node --import ./tests/_browser-headers.mjs --test ...` (plain `node --test` shows false 403s).
+
+### Follow-up 2026-11-26: request status shown to the homeowner
+- Profile contest-entry rows show "Removal requested" / "Restore requested" (and "Restore not approved"); the page shows "Removal requested" too. New `POST /api/me/entries/<id>/request` ({kind: remove|restore}) feeds the existing Admin removal queue (restore notes start "[restore]"); Admin "Approve" on a restore puts the entry back instead of deleting. Admin bumped to `?v=20261126d`.

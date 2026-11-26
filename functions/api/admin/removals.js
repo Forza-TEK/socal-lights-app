@@ -45,6 +45,13 @@ export async function onRequestPost({ request, env, waitUntil }) {
     tell(env, waitUntil, r.email, "home_removal_declined", { listing: what, reason });
     return json({ ok: true });
   }
+  if (b.action === "approve" && /^\[restore\]/.test(r.note || "") && /^h-/.test(r.ref || "")) {
+    // An entrant who withdrew their contest entry asked to be put back (from their profile). Approving puts it back on the ballot; nothing is deleted.
+    const res = await env.DB.prepare("UPDATE posts SET status = 'approved' WHERE id = ? AND contest_id IS NOT NULL AND status = 'declined'").bind(r.ref.slice(2)).run();
+    if (!res.meta.changes) return err(400, "That entry isn't withdrawn any more, or it was deleted. Decline the request to close it.");
+    await env.DB.prepare("UPDATE removal_requests SET status = 'done', target = ?, handled_at = datetime('now') WHERE id = ?").bind("restored:" + r.ref.slice(2), r.id).run();
+    return json({ ok: true, restored: true });
+  }
   if (b.action === "approve") {
     let target = clean(b.target, 100);
     if (!target && r.ref) { const t = await resolveRef(env, r.ref); if (t) target = `${t.kind}:${t.row.id}`; }
