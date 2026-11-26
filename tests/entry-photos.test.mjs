@@ -459,3 +459,19 @@ test("a declined display or event can be sent back for review by its owner only"
   assert.equal((await go(evPost, "sdec", t.users.other)).status, 404);
   assert.equal((await go(evPost, "sdec", t.users.resident)).status, 200); assert.equal(t.raw.prepare("SELECT status FROM event_submissions WHERE id='sdec'").get().status, "pending");
 });
+
+test("Admin: merging installers moves leads and counts; deleting needs the typed name and a refunded order; suspend reports what is still live", async () => {
+  const { onRequestPost: instPost } = await import("../functions/api/admin/installers/[id].js");
+  const t = await setup();
+  const mk = (id, name) => t.raw.prepare("INSERT INTO installers (id,slug,name,status) VALUES (?,?,?, 'active')").run(id, id, name);
+  mk("ia", "Alpha Lights"); mk("ib", "Beta Lights");
+  t.raw.prepare("INSERT INTO installer_leads (id,installer_id,user_id,name,email) VALUES ('l1','ia','u','N','n@x.com')").run();
+  t.raw.prepare("INSERT INTO installer_hits (installer_id,day,n) VALUES ('ia','2026-11-01',3),('ib','2026-11-01',4)").run();
+  const go = (id, body) => instPost({ params: { id }, request: new Request(`${origin}/api/admin/installers/${id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), env: t.env }).then(json);
+  assert.equal((await go("ia", { action: "merge", into: "ib" })).status, 200);
+  assert.equal(t.raw.prepare("SELECT installer_id FROM installer_leads WHERE id='l1'").get().installer_id, "ib");
+  assert.equal(t.raw.prepare("SELECT n FROM installer_hits WHERE installer_id='ib'").get().n, 7, "counts added together");
+  assert.equal((await go("ib", { action: "delete", confirm: "nope" })).status, 400);
+  assert.equal((await go("ib", { action: "delete", confirm: "beta lights" })).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM installers").get().n, 0); assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM installer_leads").get().n, 0);
+});

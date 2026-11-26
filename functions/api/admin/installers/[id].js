@@ -74,10 +74,30 @@ export async function onRequestPost({ params, request, env }) {
       env.DB.prepare("UPDATE installers SET banner_until = MAX(banner_until, ?), top_until = MAX(top_until, ?) WHERE id = ?").bind(inst.banner_until || "", inst.top_until || "", into.id),
       env.DB.prepare("UPDATE contests SET installer_name = ? WHERE lower(installer_name) = lower(?)").bind(into.name, inst.name),
       ...fill.map((c) => env.DB.prepare(`UPDATE installers SET ${c} = ? WHERE id = ?`).bind(inst[c], into.id)),
+      // quote requests and the daily page and banner counts move over too (counts for a day both profiles have are added together)
+      env.DB.prepare("UPDATE installer_leads SET installer_id = ? WHERE installer_id = ?").bind(into.id, inst.id),
+      env.DB.prepare("INSERT INTO installer_hits (installer_id, day, n) SELECT ?, day, n FROM installer_hits WHERE installer_id = ? ON CONFLICT(installer_id, day) DO UPDATE SET n = installer_hits.n + excluded.n").bind(into.id, inst.id),
+      env.DB.prepare("DELETE FROM installer_hits WHERE installer_id = ?").bind(inst.id),
+      env.DB.prepare("INSERT INTO banner_stats (installer_id, day, imp, click, call) SELECT ?, day, imp, click, call FROM banner_stats WHERE installer_id = ? ON CONFLICT(installer_id, day) DO UPDATE SET imp = banner_stats.imp + excluded.imp, click = banner_stats.click + excluded.click, call = banner_stats.call + excluded.call").bind(into.id, inst.id),
+      env.DB.prepare("DELETE FROM banner_stats WHERE installer_id = ?").bind(inst.id),
+      ...(!into.logo && inst.logo ? [env.DB.prepare("UPDATE installers SET logo = ? WHERE id = ?").bind(inst.logo, into.id)] : []),
       env.DB.prepare("DELETE FROM installers WHERE id = ?").bind(inst.id),
     ];
     await env.DB.batch(stmts);
     return json({ ok: true, into: into.id });
+  }
+  if (b.action === "delete") { // remove the profile for good; homes that named it stay, just without an installer. Paid placements are flagged for refund first.
+    if (String(b.confirm || "").trim().toLowerCase() !== String(inst.name || "").trim().toLowerCase()) return err(400, "Type the installer's name exactly to delete the profile.");
+    const paid = await env.DB.prepare("SELECT COUNT(*) AS n FROM feature_orders WHERE target = 'installer' AND event_id = ? AND status = 'paid'").bind(inst.id).first();
+    if (paid && paid.n) return err(409, "This profile has a paid Sponsor order. Refund it under Orders and mark it refunded first.");
+    await env.DB.batch([
+      env.DB.prepare("UPDATE posts SET installer_id = '', installer_confirmed = 0 WHERE installer_id = ?").bind(inst.id),
+      env.DB.prepare("DELETE FROM installer_leads WHERE installer_id = ?").bind(inst.id),
+      env.DB.prepare("DELETE FROM installer_hits WHERE installer_id = ?").bind(inst.id),
+      env.DB.prepare("DELETE FROM banner_stats WHERE installer_id = ?").bind(inst.id),
+      env.DB.prepare("DELETE FROM installers WHERE id = ?").bind(inst.id),
+    ]);
+    return json({ ok: true });
   }
   return err(400, "Unknown action.");
 }
