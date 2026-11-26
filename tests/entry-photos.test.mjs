@@ -417,3 +417,16 @@ test("profile: an organizer-added home that used the signed-in email shows up (w
   assert.deepEqual(mine.body.entries.map((e) => e.id), ["paaaaaaaa"]); assert.equal(mine.body.entries[0].manage, "/photos/" + TOKEN);
   assert.equal(other.body.entries.length, 0);
 });
+
+test("owner bar: /api/me/owns tells an owner about their own pending home and event, and nobody else; public pages load the bar script", async () => {
+  const { onRequestGet: owns } = await import("../functions/api/me/owns.js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO posts (id,status,biz,title,city,lat,lng,descr,photos,contact_email,season,address,street,zip,user_id) VALUES ('hpend','pending','H','H','Brea',33.9,-117.9,'x','[]','resident@x.com','christmas','1 A St','1 A St','','uR')").run();
+  const ask = (u, ref) => owns({ request: new Request(`${origin}/api/me/owns?ref=${encodeURIComponent(ref)}`, { headers: u ? { cookie: u.cookie } : {} }), env: t.env }).then(json);
+  assert.deepEqual((await ask(t.users.resident, "h:hpend")).body, { owned: true, kind: "home", status: "pending", contest: false });
+  assert.equal((await ask(t.users.other, "h:hpend")).body.owned, false);
+  assert.equal((await ask(null, "h:hpend")).body.owned, false);
+  const fs = await import("node:fs");
+  assert.match(fs.readFileSync("functions/h/[id].js", "utf8"), /owner: "h:"/); assert.match(fs.readFileSync("functions/e/[id].js", "utf8"), /owner: "e:"/);
+  assert.match(fs.readFileSync("functions/_lib/shell.js", "utf8"), /\/ownerbar\.js\?v=/);
+});
