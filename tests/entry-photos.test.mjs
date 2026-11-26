@@ -474,3 +474,15 @@ test("Admin: declining an approved event claim takes its access back; the delete
   t.raw.prepare("INSERT INTO deleted_events (id,name,row) VALUES ('evx','X','{\"id\":\"evx\",\"city\":\"Brea\"}')").run();
   const l = await deletedGet({ env: t.env }).then(json); assert.equal(l.body[0].id, "evx"); assert.equal(l.body[0].city, "Brea");
 });
+
+test("a voter can take their vote back while voting is open, not after it closes, and not someone else's", async () => {
+  const { onRequestDelete: unvote } = await import("../functions/api/contests/[slug]/vote.js");
+  const del = (t, user) => unvote({ params: { slug: SLUG }, request: new Request(`${origin}/api/contests/${SLUG}/vote`, { method: "DELETE", headers: { "content-type": "application/json", cookie: user.cookie }, body: JSON.stringify({ category: "Best Overall" }) }), env: t.env }).then(json);
+  const t = await setup({ voteStart: -1, voteEnd: 10 });
+  t.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall'),('v2','paaaaaaaa','c1','uR','Best Overall')").run();
+  assert.equal((await del(t, t.users.other)).status, 200);
+  assert.deepEqual(t.raw.prepare("SELECT user_id FROM votes").all().map((v) => v.user_id), ["uR"], "only their own vote went");
+  const c = await setup({ voteStart: -10, voteEnd: -1 });
+  c.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall')").run();
+  assert.equal((await del(c, c.users.other)).status, 400); assert.equal(c.raw.prepare("SELECT COUNT(*) n FROM votes").get().n, 1);
+});

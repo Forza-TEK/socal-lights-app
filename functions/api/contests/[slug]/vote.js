@@ -34,3 +34,17 @@ export async function onRequestPost({ params, request, env }) {
     .bind(newId(), c.id, user.id, post.id, category).run();
   return json({ ok: true, moved: !!had && had.post_id !== post.id, same: !!had && had.post_id === post.id, name: post.title || post.biz });
 }
+
+// DELETE { category } — take your own vote back while voting is open. A vote the organizer voided stays voided (it keeps its row).
+export async function onRequestDelete({ params, request, env }) {
+  if (!sameOrigin(request)) return err(403, "Not allowed.");
+  const { user, res } = await requireUser(request, env);
+  if (res) return res;
+  const c = await getContest(env, params.slug);
+  if (!c || c.status !== "live") return err(404, "This contest isn't available.");
+  if (!windows(c).votingOpen) return err(400, "Voting isn't open right now, so votes can't be changed.");
+  const b = await request.json().catch(() => ({})), category = String(b.category || "");
+  if (!cats(c).includes(category)) return err(400, "Choose one of the contest's categories.");
+  await env.DB.prepare("DELETE FROM votes WHERE contest_id = ? AND user_id = ? AND category = ? AND COALESCE(voided, 0) = 0").bind(c.id, user.id, category).run();
+  return json({ ok: true });
+}
