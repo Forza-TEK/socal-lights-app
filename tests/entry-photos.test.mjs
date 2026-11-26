@@ -407,3 +407,13 @@ test("audit rules: no edit or withdraw once voting has ended; restore only for a
   assert.equal(d.status, 200); assert.equal(d.body.unlinked, true);
   assert.equal(e.raw.prepare("SELECT COUNT(*) n FROM events WHERE id='old1'").get().n, 1, "the public listing stays");
 });
+
+test("profile: an organizer-added home that used the signed-in email shows up (with its link) before the homeowner links it; someone else's does not", async () => {
+  const { onRequestGet: overview } = await import("../functions/api/me/overview.js");
+  const t = await setup();
+  t.raw.prepare("UPDATE posts SET contact_email='homeowner@x.com' WHERE id='paaaaaaaa'").run();
+  const get = (u) => overview({ request: new Request(`${origin}/api/me/overview`, { headers: { cookie: u.cookie } }), env: t.env }).then(json);
+  const mine = await get(t.users.home), other = await get(t.users.other);
+  assert.deepEqual(mine.body.entries.map((e) => e.id), ["paaaaaaaa"]); assert.equal(mine.body.entries[0].manage, "/photos/" + TOKEN);
+  assert.equal(other.body.entries.length, 0);
+});
