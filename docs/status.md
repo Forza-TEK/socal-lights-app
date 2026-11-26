@@ -2013,3 +2013,8 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 
 ### Follow-up 2026-11-26: request status shown to the homeowner
 - Profile contest-entry rows show "Removal requested" / "Restore requested" (and "Restore not approved"); the page shows "Removal requested" too. New `POST /api/me/entries/<id>/request` ({kind: remove|restore}) feeds the existing Admin removal queue (restore notes start "[restore]"); Admin "Approve" on a restore puts the entry back instead of deleting. Admin bumped to `?v=20261126d`.
+
+### Audit round 1 (organizer/installer/admin, 2026-11-26) — fixed
+- Restore approve: back to pending (manual approval) or approved (auto), refused with no photos or after winners announced, logged to the organizer's change log, no wrong "removed" emails; queue rows tagged Restore; no duplicate city in addresses.
+- Admin can remove a contest entry (button + status tag); Admin delete now uses the shared `removeListing` (votes, judge rows, frozen results, paid placements) and logs to the contest.
+- NOT fixed yet (from the audit): admin delete-contest has no typed confirm/notice; installer profiles can't be deleted/hidden by owner and merge orphans leads/stats; suspend leaves live content; admin can't announce owner-less contests; handled restore detail loses the listing link.

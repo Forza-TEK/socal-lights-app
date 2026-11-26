@@ -3,6 +3,7 @@
 // POST /api/admin/removals { id, action: "approve", target?, nothing? }   approve = delete the listing, mark done, email the requester
 //      /api/admin/removals { id, action: "decline", reason? }              decline = mark declined, email the requester
 // `target` ("event:<id>" or "post:<id>") picks the listing when the request had none or Admin found a better match; `nothing: true` closes a request when there is nothing to remove.
+import { logContest } from "../../_lib/changes.js";
 import { json, err, clean } from "../../_lib/util.js";
 import { tell } from "../../_lib/notify.js";
 import { resolveRef, candidatesFor, removeListing } from "../../_lib/removal.js";
@@ -42,15 +43,20 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (b.action === "decline") {
     const reason = clean(b.reason, 400);
     await env.DB.prepare("UPDATE removal_requests SET status = 'declined', admin_note = ?, handled_at = datetime('now') WHERE id = ?").bind(reason, r.id).run();
-    tell(env, waitUntil, r.email, "home_removal_declined", { listing: what, reason });
+    if (!/^\[restore\]/.test(r.note || "")) tell(env, waitUntil, r.email, "home_removal_declined", { listing: what, reason }); // a declined restore shows on the entrant's profile instead; the removal wording would be wrong
     return json({ ok: true });
   }
   if (b.action === "approve" && /^\[restore\]/.test(r.note || "") && /^h-/.test(r.ref || "")) {
     // An entrant who withdrew their contest entry asked to be put back (from their profile). Approving puts it back on the ballot; nothing is deleted.
-    const res = await env.DB.prepare("UPDATE posts SET status = 'approved' WHERE id = ? AND contest_id IS NOT NULL AND status = 'declined'").bind(r.ref.slice(2)).run();
-    if (!res.meta.changes) return err(400, "That entry isn't withdrawn any more, or it was deleted. Decline the request to close it.");
+    const pid = r.ref.slice(2), p = await env.DB.prepare("SELECT p.id,p.photos,p.photo_token,p.entry_no,p.contest_id,c.approval,c.announced FROM posts p JOIN contests c ON c.id = p.contest_id WHERE p.id = ? AND p.status = 'declined'").bind(pid).first();
+    if (!p) return err(400, "That entry isn't withdrawn any more, or it was deleted. Decline the request to close it.");
+    if (p.announced) return err(400, "The winners were announced, so the entry can't be put back. Decline the request.");
+    if (!p.photo_token && JSON.parse(p.photos || "[]").length === 0) return err(400, "A withdrawn entry loses its photos, so there is nothing to show. Decline the request and ask them to enter again.");
+    const back = p.approval === "auto" ? "approved" : "pending"; // with manual approval the organizer reviews it again
+    await env.DB.prepare("UPDATE posts SET status = ? WHERE id = ?").bind(back, pid).run();
+    await logContest(env, p.contest_id, { email: "admin", name: "SoCal Lights" }, [{ label: `Entry ${p.entry_no ? "#" + p.entry_no + " " : ""}restored at the entrant's request`, old: "Withdrawn", new: back === "approved" ? "In the contest" : "Waiting for your approval" }]).catch(() => {});
     await env.DB.prepare("UPDATE removal_requests SET status = 'done', target = ?, handled_at = datetime('now') WHERE id = ?").bind("restored:" + r.ref.slice(2), r.id).run();
-    return json({ ok: true, restored: true });
+    return json({ ok: true, restored: true, back });
   }
   if (b.action === "approve") {
     let target = clean(b.target, 100);
