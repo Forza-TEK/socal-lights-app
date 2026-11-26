@@ -44,5 +44,16 @@ test("everything beside the list is measured from the phone's real side margin (
 });
 test("the page links the current stylesheet and script versions", () => {
   const html = readFileSync("public/index.html", "utf8");
-  assert.match(html, /styles\.css\?v=20261125h/); assert.match(html, /app\.js\?v=20261125e/);
+  assert.match(html, /styles\.css\?v=20261126a/); assert.match(html, /app\.js\?v=20261125e/);
+});
+
+test("the sponsor / Featured strip: the whole pill is the tap target (the name link is stretched over it), the call link stays its own target, and dragging the strip still cancels the tap", () => {
+  const css = readFileSync("public/styles.css", "utf8"), js = readFileSync("public/banner.js", "utf8");
+  assert.match(css, /\.sp-pill\{position:relative\}/);
+  assert.match(css, /\.sp-pill \.sp-name::after\{content:"";position:absolute;inset:0;border-radius:inherit\}/);
+  assert.match(css, /\.sp-pill a\.sp-tel\{position:relative;z-index:1\}/);
+  assert.match(css, /\.sp-pill:has\(\.sp-name:focus-visible\)\{outline:2\.5px solid var\(--focus\)/, "keyboard focus outlines the whole pill");
+  assert.match(css, /\.sp-win\{touch-action:pan-y;cursor:grab/, "sideways drags belong to the strip");
+  assert.match(js, /win\.addEventListener\("click", \(e\) => \{ if \(suppress\) \{ e\.preventDefault\(\); e\.stopPropagation\(\); \} \}, true\)/, "a drag never counts as a tap");
+  assert.match(js, /Math\.abs\(e\.clientX - sx\) < 6/, "a drag starts after 6 px sideways");
 });

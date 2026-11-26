@@ -875,6 +875,12 @@ select option,select optgroup{background-color:var(--bg);color:var(--ink)}
 .sp-empty{position:relative}.sp-empty::after{content:"";position:absolute;inset:-6px 0}
 .sponsor.allev .sp-lbl{display:none}
 .sp-pill a:hover{text-decoration:underline;text-underline-offset:3px}
+/* The whole pill is a tap target (name link stretched over it); a drag still wins (banner.js). */
+.sp-pill{position:relative}
+.sp-pill .sp-name::after{content:"";position:absolute;inset:0;border-radius:inherit}
+.sp-pill a.sp-tel{position:relative;z-index:1}
+.sp-pill:not(.sp-empty):hover{box-shadow:inset 0 0 0 1.5px var(--ink)}.sp-pill:not(.sp-empty):hover .sp-name{text-decoration:underline;text-underline-offset:3px}
+.sp-pill:has(.sp-name:focus-visible){outline:2.5px solid var(--focus);outline-offset:1px}.sp-pill .sp-name:focus-visible{outline:none}
 .sp-empty{background:color-mix(in srgb,var(--surface) 72%,transparent);box-shadow:inset 0 0 0 1.5px var(--line2,var(--line));border:0;color:var(--muted);font-weight:600;text-decoration:none}
 .sp-sep{color:var(--muted)}
 .sp-pause{flex:none;width:var(--sp-h);height:var(--sp-h);display:grid;place-items:center;padding:0;border:0;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);cursor:pointer}
