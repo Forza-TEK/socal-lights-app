@@ -74,9 +74,9 @@ test("DELETE /api/me/homes/<id> flags the home's paid order; an unrelated home's
 });
 
 test("DELETE /api/me/events/<id> flags the event's paid order and a pending submission's", async () => {
-  const { env, raw } = newEnv(); addEvent(raw); const u = await addUser(raw, "uK", "k@x.com");
-  raw.prepare("INSERT INTO event_submissions (id,name,city,season,type,start_date,end_date,contact_email,status,event_id) VALUES ('s1','Show','Pasadena','christmas','walk',?,?,'k@x.com','published','ev1')").run(ptToday(), ptToday(40));
-  order(raw, "a", "event", "ev1"); order(raw, "b", "event", "sub:s1", { applied: 0, until: null });
+  const { env, raw } = newEnv(); addEvent(raw, "u-ev1"); const u = await addUser(raw, "uK", "k@x.com");
+  raw.prepare("INSERT INTO event_submissions (id,name,city,season,type,start_date,end_date,contact_email,status,event_id) VALUES ('s1','Show','Pasadena','christmas','walk',?,?,'k@x.com','published','u-ev1')").run(ptToday(), ptToday(40));
+  order(raw, "a", "event", "u-ev1"); order(raw, "b", "event", "sub:s1", { applied: 0, until: null });
   const r = await deleteMyEvent({ params: { id: "s1" }, request: req("DELETE", "/api/me/events/s1", null, u.cookie), env });
   assert.equal(r.status, 200);
   flagged(ord(raw, "a")); flagged(ord(raw, "b"));

@@ -383,3 +383,27 @@ test("Admin removing a contest entry clears its votes and judge rows and tells t
   assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM votes WHERE post_id='paaaaaaaa'").get().n, 0, "no orphaned votes");
   assert.match(JSON.stringify(t.raw.prepare("SELECT * FROM contest_changes").all()), /removed by SoCal Lights/);
 });
+
+test("audit rules: no edit or withdraw once voting has ended; restore only for an entry the entrant withdrew (not organizer-declined, not photo-less); a takeover event is unlinked, not deleted", async () => {
+  const { onRequestDelete: mineDel, onRequestPatch: minePat } = await import("../functions/api/contests/[slug]/mine.js");
+  const { onRequestPost: reqPost } = await import("../functions/api/me/entries/[id]/request.js");
+  const t = await setup({ voteEnd: -1 });
+  t.raw.prepare("UPDATE posts SET user_id='uR' WHERE id='prrrrrrrr'").run();
+  const r1 = await mineDel({ params: { slug: SLUG }, request: new Request(`${origin}/api/contests/${SLUG}/mine?id=prrrrrrrr`, { method: "DELETE", headers: { cookie: t.users.resident.cookie } }), env: t.env });
+  assert.equal(r1.status, 409, "voting over: no withdraw");
+  const r2 = await minePat({ params: { slug: SLUG }, request: new Request(`${origin}/api/contests/${SLUG}/mine`, { method: "PATCH", headers: { cookie: t.users.resident.cookie, "content-type": "application/json" }, body: JSON.stringify({ id: "prrrrrrrr", name: "New name" }) }), env: t.env });
+  assert.equal(r2.status, 409, "voting over: no edit");
+  const u = await setup();
+  const ask = (user, id) => reqPost({ params: { id }, request: new Request(`${origin}/api/me/entries/${id}/request`, { method: "POST", headers: { "content-type": "application/json", cookie: user.cookie }, body: JSON.stringify({ kind: "restore" }) }), env: u.env }).then(json);
+  u.raw.prepare("UPDATE posts SET status='declined', user_id='uR' WHERE id='prrrrrrrr'").run();
+  assert.equal((await ask(u.users.resident, "prrrrrrrr")).status, 409, "declined by the organizer: no restore request");
+  u.raw.prepare("UPDATE posts SET review_note='withdrawn' WHERE id='prrrrrrrr'").run();
+  assert.equal((await ask(u.users.resident, "prrrrrrrr")).status, 409, "a self-added entry lost its photos: enter again instead");
+  const { onRequestDelete: delEv } = await import("../functions/api/me/events/[id].js");
+  const e = await setup();
+  e.raw.prepare("INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES ('old1','Old','Orange','Brea','drive','2026-12-01','2026-12-31','confirmed',1,'Free','',33.9,-117.9,'','','christmas','','1 A St')").run();
+  e.raw.prepare("INSERT INTO event_submissions (id,name,city,season,type,start_date,end_date,contact_email,status,event_id,note) VALUES ('sx','Old','Brea','christmas','drive','2026-12-01','2026-12-31','resident@x.com','published','old1','updated the existing listing from the owner')").run();
+  const d = await delEv({ params: { id: "sx" }, request: new Request(`${origin}/api/me/events/sx`, { method: "DELETE", headers: { cookie: e.users.resident.cookie } }), env: e.env }).then(json);
+  assert.equal(d.status, 200); assert.equal(d.body.unlinked, true);
+  assert.equal(e.raw.prepare("SELECT COUNT(*) n FROM events WHERE id='old1'").get().n, 1, "the public listing stays");
+});

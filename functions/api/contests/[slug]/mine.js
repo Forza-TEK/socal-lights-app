@@ -4,6 +4,7 @@ import { json, err, clean } from "../../../_lib/util.js";
 import { getUser, sameOrigin } from "../../../_lib/auth.js";
 import { getContest } from "../../../_lib/contests.js";
 import { needsReview } from "../../../_lib/moderation.js";
+import { ptToday } from "../../../_lib/time.js";
 import { logContest } from "../../../_lib/changes.js";
 
 async function mine(request, env, slug, id) {
@@ -12,6 +13,7 @@ async function mine(request, env, slug, id) {
   const c = await getContest(env, slug);
   if (!c) return { res: err(404, "Not found.") };
   if (c.announced) return { res: err(409, "Results are locked.") };
+  if (c.vote_end && c.vote_end < ptToday()) return { res: err(409, "Voting has closed, so this entry can't be changed or withdrawn any more. Use \"Ask us to remove it\" from your profile.") };
   const row = await env.DB.prepare("SELECT * FROM posts WHERE id = ? AND contest_id = ? AND user_id = ?").bind(id, c.id, user.id).first();
   if (!row || row.status === "declined") return { res: err(404, "That entry isn't yours.") };
   return { c, row, user };
@@ -38,7 +40,7 @@ export async function onRequestDelete({ params, request, env }) {
   if (row.photo_token) return err(403, "The organizer added this home to the contest, so it can't be withdrawn here. You can edit it and hide the organizer's photos. Ask the organizer if it should come off the ballot.");
   const removed = (await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE post_id = ?").bind(row.id).first()).n;
   await Promise.all(JSON.parse(row.photos || "[]").map((k) => env.PHOTOS.delete(k)));
-  await env.DB.batch([env.DB.prepare("UPDATE posts SET status='declined', photos='[]' WHERE id = ?").bind(row.id), env.DB.prepare("DELETE FROM votes WHERE post_id = ?").bind(row.id)]);
+  await env.DB.batch([env.DB.prepare("UPDATE posts SET status='declined', photos='[]', review_note='withdrawn' WHERE id = ?").bind(row.id), env.DB.prepare("DELETE FROM votes WHERE post_id = ?").bind(row.id)]);
   if (removed) await logContest(env, c.id, { email: user.email, name: user.name || user.email }, [{ label: `Entry ${row.entry_no ? "#" + row.entry_no + " " : ""}withdrawn by the entrant`, old: `${removed} vote${removed === 1 ? "" : "s"} counted`, new: `${removed} vote${removed === 1 ? "" : "s"} removed with the entry` }]); // audit L7
   return json({ ok: true });
 }
