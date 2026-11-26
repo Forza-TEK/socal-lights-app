@@ -44,7 +44,7 @@ test("everything beside the list is measured from the phone's real side margin (
 });
 test("the page links the current stylesheet and script versions", () => {
   const html = readFileSync("public/index.html", "utf8");
-  assert.match(html, /styles\.css\?v=20261126a/); assert.match(html, /app\.js\?v=20261125e/);
+  assert.match(html, /styles\.css\?v=20261126b/); assert.match(html, /app\.js\?v=20261126a/);
 });
 
 test("the sponsor / Featured strip: the whole pill is the tap target (the name link is stretched over it), the call link stays its own target, and dragging the strip still cancels the tap", () => {
@@ -56,4 +56,11 @@ test("the sponsor / Featured strip: the whole pill is the tap target (the name l
   assert.match(css, /\.sp-win\{touch-action:pan-y;cursor:grab/, "sideways drags belong to the strip");
   assert.match(js, /win\.addEventListener\("click", \(e\) => \{ if \(suppress\) \{ e\.preventDefault\(\); e\.stopPropagation\(\); \} \}, true\)/, "a drag never counts as a tap");
   assert.match(js, /Math\.abs\(e\.clientX - sx\) < 6/, "a drag starts after 6 px sideways");
+});
+
+test("the strip's second (looping) copy is tappable: it was inert, so a tap on it did nothing, and it is on screen about half the time; screen readers and Tab still skip it", () => {
+  const js = readFileSync("public/banner.js", "utf8");
+  assert.ok(!/class="sp-set sp-dup"[^>]*\binert\b/.test(js), "the looping copy is not inert");
+  assert.match(js, /class="sp-set sp-dup" aria-hidden="true">\$\{set\.replace\(\/<a \/g, '<a tabindex="-1" '\)\}/);
+  assert.match(readFileSync("public/app.js", "utf8"), /banner\.js\?v=20261126a/); assert.match(readFileSync("public/index.html", "utf8"), /banner\.js\?v=20261126a/);
 });

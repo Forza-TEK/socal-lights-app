@@ -51,7 +51,8 @@ function paint() {
   // one "set" = the installers, then a single "advertise here" pill; the set is at least as wide as the strip, so the loop has no repeats
   const win = el.querySelector(".sp-win"), track = el.querySelector(".sp-track"), set = order.map(pill).join("") + EMPTY;
   track.style.setProperty("--win", (win.clientWidth || 360) + "px");
-  track.innerHTML = `<span class="sp-set">${set}</span><span class="sp-set sp-dup" aria-hidden="true" inert>${set}</span>`;
+  // The looping copy is on screen half the time, so it is tappable too (not inert); screen readers and Tab skip it.
+  track.innerHTML = `<span class="sp-set">${set}</span><span class="sp-set sp-dup" aria-hidden="true">${set.replace(/<a /g, '<a tabindex="-1" ')}</span>`;
   const w = track.firstElementChild.getBoundingClientRect().width;
   SW = w; track.classList.add("go"); nudge(0);
   watch(); changed();
