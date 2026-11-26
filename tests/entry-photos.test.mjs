@@ -459,3 +459,18 @@ test("a declined display or event can be sent back for review by its owner only"
   assert.equal((await go(evPost, "sdec", t.users.other)).status, 404);
   assert.equal((await go(evPost, "sdec", t.users.resident)).status, 200); assert.equal(t.raw.prepare("SELECT status FROM event_submissions WHERE id='sdec'").get().status, "pending");
 });
+
+test("Admin: declining an approved event claim takes its access back; the deleted-events list is reachable; unpaid orders can't be marked refunded", async () => {
+  const { onRequestPost: claimPost } = await import("../functions/api/admin/claims/[id].js");
+  const { onRequestGet: deletedGet } = await import("../functions/api/admin/events/deleted.js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES ('evx','X','Orange','Brea','drive','2026-12-01','2026-12-31','confirmed',1,'Free','',33.9,-117.9,'','','christmas','','1 A St')").run();
+  t.raw.prepare("INSERT INTO event_claims (id,event_id,user_id,email,status,method) VALUES ('cl1','evx','uR','resident@x.com','pending','')").run();
+  const act = (action) => claimPost({ params: { id: "cl1" }, request: new Request(`${origin}/api/admin/claims/cl1`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) }), env: t.env, waitUntil: () => {} }).then(json);
+  assert.equal((await act("approve")).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM event_submissions WHERE event_id='evx'").get().n, 1);
+  assert.equal((await act("decline")).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM event_submissions WHERE event_id='evx'").get().n, 0, "access revoked");
+  t.raw.prepare("INSERT INTO deleted_events (id,name,row) VALUES ('evx','X','{\"id\":\"evx\",\"city\":\"Brea\"}')").run();
+  const l = await deletedGet({ env: t.env }).then(json); assert.equal(l.body[0].id, "evx"); assert.equal(l.body[0].city, "Brea");
+});

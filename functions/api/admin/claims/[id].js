@@ -17,6 +17,8 @@ export async function onRequestPost({ request, env, params }) {
   await env.DB.prepare("UPDATE event_claims SET status = ?, method = CASE WHEN ? THEN 'admin' ELSE method END, decided_at = datetime('now') WHERE id = ?")
     .bind(status, ok ? 1 : 0, c.id).run();
 
+  if (!ok && c.status === "approved") // declining an approved claim takes the access it granted away again
+    await env.DB.prepare("DELETE FROM event_submissions WHERE event_id = ? AND lower(contact_email) = lower(?) AND note LIKE 'claimed by the organizer%'").bind(c.event_id, c.email).run();
   if (ok) await grantEventOwnership(env, c.event_id, c.email); // the event joins their profile with Edit
   let emailed = false;
   try {

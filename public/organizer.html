@@ -216,7 +216,7 @@ function teamCard() {
 
 // Co-organizers (only the creator can add or remove them)
 function staffCard() {
-  const isOwner = ME && ME === (SF.owner || "").toLowerCase();
+  const isOwner = !!(D && D.me && D.me.isCreator) || (ME && ME === (SF.owner || "").toLowerCase());
   return `<div class="card"><h2 style="font-size:19px">Co-organizers</h2><p class="muted small">People you add sign in with their own email and get this same dashboard. You can add up to 8.</p>
    <div class="list"><div class="rowi"><div><b>${esc(SF.owner || "You")}</b><br><span class="small muted">Creator</span></div></div>${SF.staff.map((x) => `<div class="rowi"><div><b>${esc(x.email)}</b><br><span class="small muted">Co-organizer</span></div>${isOwner ? `<div class="acts"><button class="btn ghost sm" type="button" data-rmstaff="${esc(x.email)}">Remove</button></div>` : ""}</div>`).join("")}</div>
    ${isOwner ? `<div class="f">${fsec("Add a co-organizer", "", ff("Their email", `<input id="newstaff" type="email" inputmode="email" placeholder="name@example.com">`, { hint: "They sign in with this email." }))}<p class="err" id="serr" role="alert" hidden></p><div class="mfoot"><button class="btn org" type="button" id="addstaff">Add co-organizer</button></div></div>` : `<p class="small muted">Only the creator can add or remove co-organizers.</p>`}</div>`;
@@ -478,7 +478,7 @@ function render() {
     act(`/api/contests/${encodeURIComponent(slug)}`, { action: b.dataset.act }, "Done.");
   }));
   const aj = $("#addjudge"); if (aj) aj.onclick = async () => { const v = $("#newjudge").value.trim(), er = $("#jerr"); er.hidden = true; if (!v) return; const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/judges`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ emails: v }) }), j = await r.json().catch(() => ({})); if (!r.ok || !j.added) { er.textContent = j.error || "That email is invalid or already a judge."; er.hidden = false; return; } toast("Judge invited."); load(); };
-  document.querySelectorAll("[data-rmjudge]").forEach((b) => (b.onclick = async () => { await fetch(`/api/contests/${encodeURIComponent(slug)}/judges?id=${encodeURIComponent(b.dataset.rmjudge)}`, { method: "DELETE" }); toast("Judge removed."); load(); }));
+  document.querySelectorAll("[data-rmjudge]").forEach((b) => (b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to remove (their picks and scores are deleted)"; return; } const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/judges?id=${encodeURIComponent(b.dataset.rmjudge)}`, { method: "DELETE" }).catch(() => null); if (r && r.ok) { toast("Judge removed."); load(); } else toast("That didn't work. Please try again.", true); }));
   const addf = $("#addform");
   if (addf) {
     const box = $("#add-list"), ok = $("#add-ok"), go = $("#add-go"), ck = $("#add-check"), res = $("#add-res"), er = $("#add-err");

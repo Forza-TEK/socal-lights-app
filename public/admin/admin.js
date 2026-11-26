@@ -473,7 +473,7 @@ async function renderOrders() {
         + fact("Payment", o.stripe_url ? `<a href="${esc(o.stripe_url)}" target="_blank" rel="noopener">${esc(o.payment_intent)} in Stripe</a>` : "") + fact("Note", esc(o.note || "")),
       edit: btn("ghost", o.note ? "Edit note" : "Add note", 'data-oact="note"') + (["paid", "refund_due", "held"].includes(o.status) && o.payment_intent ? btn("danger", "Refund in Stripe", 'data-oact="refund_stripe"') : ""),
       body: due ? '<p class="meta" style="margin:0">Use <b>Mark refunded</b> only after you refunded the payment in the Stripe dashboard. The button does not refund anything.</p>' : "",
-      main: due ? btn("main", "Mark refunded", 'data-oact="mark_refunded"') : o.status === "paid" && !o.applied ? btn("main", "Apply now", 'data-oact="reapply"') : "",
+      main: due ? btn("main", "Mark refunded", 'data-oact="mark_refunded"') : o.status === "paid" && !o.applied ? btn("main", "Apply now", 'data-oact="reapply"') + (o.payment_intent ? "" : btn("ghost", "Mark refunded", 'data-oact="mark_refunded"')) : "",
     };
   };
   const oneO = OORDER && all.find((o) => o.session_id === OORDER); if (OORDER && !oneO) OORDER = "";
@@ -898,12 +898,20 @@ async function renderEvents() {
     + sel("evHealth", "Needs a look", [["", "Everything"], ...HEALTH.map(([k, l]) => [k, l]), ...(EVQ2.stale ? [["recheck", `Page not re-checked in 30 days (${EVQ2.stale.size})`]] : [])], EVHEALTH) + sortSelect(EVSORTS, EVSORT);
   const paidN = EVENTS.filter((e) => (placeInfo(e.id) || {}).on).length, vidN = EVENTS.filter((e) => PLACE.clips && PLACE.clips[e.id] === 0).length, evTabs = [["", "All events"], ["e", "Expected"], ["c", "Confirmed"], ["paid", "Paid placements" + (paidN ? " " + paidN : "")], ["video", "Videos waiting" + (vidN ? " " + vidN : "")], ["nophoto", "No photo" + (EVQ2.nophoto.size ? " " + EVQ2.nophoto.size : "")], ["grok", "From Grok"], ["ended", "Ended"]], evOn = () => EVVIEW || EVSTATUS;
   main.innerHTML = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show events">${evTabs.map(([k, l]) => `<button type="button" data-view="${k || "all"}" aria-pressed="${k === evOn()}">${l}</button>`).join("")}</div></div>
-    <div class="pghead"><div><h2>Events</h2><p>Every event on the public map. Open a row to see and edit the full record.</p></div><button type="button" class="btn ice" id="addEv">Add an event</button></div>`
+    <div class="pghead"><div><h2>Events</h2><p>Every event on the public map. Open a row to see and edit the full record.</p></div><div class="row" style="gap:8px"><button type="button" class="btn ghost" id="evDeleted">Recently deleted</button><button type="button" class="btn ice" id="addEv">Add an event</button></div></div>`
     + toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: `<details class="fbox" id="evFbox" open><summary>Filters</summary>${filters}<a class="btn ghost" id="evDl" href="/api/admin/export?type=events${evSeason === "all" ? "" : "&season=" + evSeason}" download>Download CSV</a></details>`, count: "" })
     + `<div class="bulk" id="evBulk"><label class="chk"><input type="checkbox" id="evAll"> <span id="evAllL">Select all</span></label><span class="grow"></span><span class="meta" id="evSelN"></span>
       <button class="btn ice" type="button" id="evSetC" hidden></button><button class="btn ghost" type="button" id="evSetE" hidden></button>
       <select id="evMoveTo" aria-label="Move to season" hidden>${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join("")}</select><button class="btn ghost" type="button" id="evMove" hidden></button>
       <button class="btn ghost danger" type="button" id="evDel" hidden></button><button class="btn ghost" type="button" id="evClear" hidden>Clear</button></div><div id="evlist"></div>`;
+  $("#evDeleted").onclick = async () => {
+    const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; }; let rows = [];
+    try { rows = await api("/api/admin/events/deleted"); } catch (er) { return toast(er.message, true); }
+    m.hidden = false;
+    m.innerHTML = modalFrame("Recently deleted events", rows.length ? `<div class="list">${rows.map((r) => `<div class="rowi" style="display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0"><div><b>${esc(r.name || r.id)}</b><br><span class="meta">${esc([r.city, r.start].filter(Boolean).join(" · "))} · deleted ${when(r.deleted_at)}</span></div><button class="btn ice" type="button" data-bring="${esc(r.id)}">Bring back</button></div>`).join("")}</div>` : `<p class="meta">Nothing has been deleted lately.</p>`);
+    m.querySelector("#mClose").onclick = close;
+    m.querySelectorAll("[data-bring]").forEach((b) => (b.onclick = async () => { b.disabled = true; await restoreEvents([b.dataset.bring]); close(); }));
+  };
   if (phone()) $("#evFbox").open = false; // on a phone the filters fold behind one button
   if (!EVLIMIT) EVLIMIT = evPage();
   let shown = [];
