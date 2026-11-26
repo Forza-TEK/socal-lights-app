@@ -48,6 +48,13 @@ export async function onRequestPost({ params, request, env }) {
   }
   const b = await request.json().catch(() => ({}));
 
+  if (b.action === "resubmit") { // a declined event goes back into review
+    const sub = await env.DB.prepare("SELECT id, status, contact_email FROM event_submissions WHERE id = ?").bind(params.id).first();
+    if (!sub || normEmail(sub.contact_email) !== user.email) return err(404, "That event isn't yours.");
+    if (sub.status !== "declined") return err(400, "That event isn't declined.");
+    await env.DB.prepare("UPDATE event_submissions SET status='pending' WHERE id = ?").bind(sub.id).run();
+    return json({ ok: true });
+  }
   if (b.action === "removephoto" || b.action === "coverphoto") {
     if (!live) return err(400, "That event isn't on the map.");
     const ev = await env.DB.prepare("SELECT id, owner_photos FROM events WHERE id = ?").bind(s.event_id).first();

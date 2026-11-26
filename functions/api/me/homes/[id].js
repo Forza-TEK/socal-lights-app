@@ -81,6 +81,12 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     return json({ ok: true, photos: r.photos });
   }
 
+  if (b.action === "resubmit") { // a declined home goes back into review (the owner can edit it first; the same words that were declined will be declined again)
+    if (!mine) return err(403, "Only the person who posted this can send it again.");
+    if (row.status !== "declined") return err(400, "That listing isn't declined.");
+    await env.DB.prepare("UPDATE posts SET status='pending', approved_at=NULL, review_note='' WHERE id=?").bind(row.id).run();
+    return json({ ok: true });
+  }
   if (b.action === "pause" || b.action === "resume") {
     if (!mine) return err(403, "Only the person who posted this can take it down or put it back.");
     if (b.action === "pause") {

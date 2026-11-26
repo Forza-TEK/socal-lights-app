@@ -2030,3 +2030,7 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 
 ### Owner links on public pages (2026-11-26)
 - `/h/<id>` and `/e/<id>` (cached for everyone) load `/ownerbar.js`, which asks `GET /api/me/owns` and shows "This is your home... Edit in your profile" to the owner; the owner's own pending/paused home no longer says "can't find that home". Verified in a local browser (owner vs signed-out).
+
+### Audit round 4 (2026-11-26)
+- Draft rows name the contest and say "Entries are closed"/"This contest no longer exists" instead of a dead Continue. A waiting removal request can be cancelled. Declined displays/events have "Send it again for review". Withdrawing an organizer-added home deletes the homeowner's own photos (the organizer's stay).
+- Left alone on purpose: Displays tab still lists linked contest homes (deliberate); voters get no email when a voted entry is withdrawn.

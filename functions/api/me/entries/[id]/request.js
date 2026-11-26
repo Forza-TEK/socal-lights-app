@@ -7,9 +7,13 @@ import { sendTemplate } from "../../../../_lib/mailtpl.js";
 export async function onRequestPost({ params, request, env, waitUntil }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
   const user = await getUser(request, env); if (!user) return err(401, "Please sign in first.");
-  const b = await request.json().catch(() => ({})), kind = b.kind === "restore" ? "restore" : "remove";
+  const b = await request.json().catch(() => ({})), kind = b.kind === "restore" ? "restore" : b.kind === "cancel" ? "cancel" : "remove";
   const p = await env.DB.prepare("SELECT p.id,p.title,p.biz,p.address,p.status,c.name AS contest, c.announced, p.review_note, p.photo_token FROM posts p JOIN contests c ON c.id = p.contest_id WHERE p.id = ? AND p.user_id = ?").bind(params.id, user.id).first();
   if (!p) return err(404, "That entry isn't on your account.");
+  if (kind === "cancel") { // take back a request that is still waiting
+    await env.DB.prepare("DELETE FROM removal_requests WHERE ref = ? AND status = 'open' AND lower(email) = lower(?)").bind("h-" + p.id, user.email).run();
+    return json({ ok: true, kind });
+  }
   if (kind === "restore" ? p.status !== "declined" : p.status !== "approved") return err(409, kind === "restore" ? "This entry is still in the contest." : "This entry is not in the contest.");
   if (kind === "restore" && p.review_note !== "withdrawn") return err(409, "The organizer took this entry out of the contest, so it can only be changed by them.");
   if (kind === "restore" && !p.photo_token) return err(409, "A withdrawn entry loses its photos. Please enter your home again from the contest page.");
