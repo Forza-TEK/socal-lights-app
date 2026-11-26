@@ -21,10 +21,11 @@
 <main class="main" id="content"><div id="app" class="main" style="padding:0;max-width:none"><p class="muted">Loading…</p></div></main>
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast, friendlyError } from "/auth.js?v=20261116a";
-import { mountShell } from "/appshell.js?v=20261124a";
+import { mountShell } from "/appshell.js?v=20261126a";
+import { setAcctUser } from "/chrome.js?v=20261126a";
 import { homeForm, eventForm, openFormWindow, photoBoxHtml, wireSeasonType } from "/forms.js?v=20261121a";
 import { wireVideoBox } from "/videobox.js?v=20261121a";
-import { esc, input, select, attachAddress, OPT, shrink } from "/addflow.js?v=20261124b";
+import { esc, input, select, attachAddress, OPT, shrink } from "/addflow.js?v=20261126a";
 import { SEASONS } from "/seasons.js?v=20261115a";
 import { draftKey, clearAllLocalDrafts } from "/drafts-local.js?v=20261111z";
 import { CITY } from "/cities.js?v=20261115i";
@@ -345,7 +346,7 @@ addEventListener("hashchange", () => { tab = (location.hash || "").slice(1) || "
 let info = null, opened = false; // opened: the first tab was chosen already (a reload after an edit keeps the tab you are on)
 async function load() {
   noteSigninResult();
-  const i = await me(true); info = i;
+  const i = await me(true); info = i; if (i.user) setAcctUser(i.user); // the header button agrees with this page
   if (!i.user) { shell.own(false); app.innerHTML = `<h1>Your profile</h1><p class="help">Sign in to see your saved drafts and everything you've added.</p><div><button class="btn" id="go" type="button">Sign in</button></div>`; $("#go").onclick = async () => { if (await signIn({ title: "Sign in to your profile", next: "/profile" })) load(); }; return; }
   await syncLocal();
   const r = await fetch("/api/me/overview", { cache: "no-store" }); if (!r.ok) { app.innerHTML = `<h1>Your profile</h1><p class="err">Couldn't load your profile. Try again in a moment.</p>`; return; }
