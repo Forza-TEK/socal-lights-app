@@ -486,3 +486,12 @@ test("a voter can take their vote back while voting is open, not after it closes
   c.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall')").run();
   assert.equal((await del(c, c.users.other)).status, 400); assert.equal(c.raw.prepare("SELECT COUNT(*) n FROM votes").get().n, 1);
 });
+
+test("installer claim for a non-domain email is only sent once a week", async () => {
+  const { onRequestPost: claim } = await import("../functions/api/installers/[slug]/claim.js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO installers (id,slug,name,status,web) VALUES ('ic1','acme','Acme Lights','active','https://acme-lights.com')").run();
+  const go = () => claim({ params: { slug: "acme" }, request: new Request(`${origin}/api/installers/acme/claim`, { method: "POST", headers: { cookie: t.users.other.cookie } }), env: t.env }).then(json);
+  const a = await go(), b = await go();
+  assert.equal(a.body.claimed, false); assert.ok(!a.body.pending); assert.equal(b.body.pending, true, "the second tap says it is already with us");
+});

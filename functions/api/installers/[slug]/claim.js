@@ -3,6 +3,7 @@
 import { json, err } from "../../../_lib/util.js";
 import { sendTemplate } from "../../../_lib/mailtpl.js";
 import { getUser, sameOrigin } from "../../../_lib/auth.js";
+import { checkThrottle, hashKey } from "../../../_lib/throttle.js";
 import { trustOf } from "../../../_lib/contests.js";
 
 export async function onRequestPost({ params, request, env }) {
@@ -20,6 +21,9 @@ export async function onRequestPost({ params, request, env }) {
     await env.DB.prepare("UPDATE installers SET owner_email = ? WHERE id = ?").bind(user.email, inst.id).run();
     return json({ ok: true, claimed: true });
   }
+  // One request per person per profile a week: repeated taps don't re-send the email, and the person is told theirs is already with us
+  const dup = await checkThrottle(env, [{ kind: "installer-claim", key: await hashKey(env, "ic", user.email + "|" + inst.id), max: 1, windowHours: 168, msg: "You already asked to claim this profile. A person will confirm by email; there is nothing more to do." }]);
+  if (dup) return json({ ok: true, claimed: false, pending: true, message: dup });
   await sendTemplate(env, "installer_claim", env.ADMIN_NOTIFY_EMAIL || "rey@forza-tek.com", { email: user.email, installer: inst.name, web: (inst.web || "no website on file") + (typedByVisitor ? " (typed by a visitor, not checked)" : "") }).catch(() => {});
   return json({ ok: true, claimed: false, message: "Thanks. Because your email isn't at the company's website, a person will check and confirm by email." });
 }
