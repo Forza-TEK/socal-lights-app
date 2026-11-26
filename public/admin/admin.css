@@ -678,3 +678,8 @@ details.limitbanner>span{display:block;margin-top:2px}
 .racts a.rl{white-space:nowrap}
 .dtab td .sub .more{color:var(--ink);font-weight:600;cursor:help;white-space:nowrap}
 @media (max-width:699px){.racts{justify-content:flex-start;gap:10px}}
+
+/* One look for every action in a list row: a link that opens something is drawn as the same small ghost button as the ones that change something (Hide, Decline, Approve). The record's own name stays a text link. */
+body.admin .dtab td.ac a.rl{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid var(--ink);border-radius:8px;background:transparent;color:var(--ink);font:500 13px var(--font);text-decoration:none;white-space:nowrap}
+body.admin .dtab td.ac a.rl:hover{opacity:.88}
+body.admin .dtab td.ac .btn{min-height:36px;padding:0 12px;font:500 13px var(--font);border-radius:8px} /* the "sm" class loses to the base button rule, so the buttons in a row match the links beside them here */

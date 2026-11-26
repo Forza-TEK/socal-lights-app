@@ -53,3 +53,13 @@ test("a user's page: an 'Events they submitted' row opens that exact submission 
   const d = await (await userGet({ params: { id: "u1" }, env: { DB } })).json();
   assert.equal(d.events[0].id, "s1", "the user's record gives each submitted event's id");
 });
+
+test("one look for every action in a list row: links that open things are drawn as the same small ghost button as the ones that change things, buttons in the cell match their size, and no stray ' · ' separators remain", () => {
+  const css = readFileSync("public/admin/admin.css", "utf8"), js = readFileSync("public/admin/admin.js", "utf8");
+  assert.match(css, /body\.admin \.dtab td\.ac a\.rl\{display:inline-flex;[^}]*min-height:36px;padding:0 12px;border:1px solid var\(--ink\);border-radius:8px;[^}]*font:500 13px var\(--font\);text-decoration:none/);
+  assert.match(css, /body\.admin \.dtab td\.ac \.btn\{min-height:36px;padding:0 12px;font:500 13px var\(--font\);border-radius:8px\}/);
+  const cells = [...js.matchAll(/<td class="ac">(?:<div class="racts">)?[\s\S]{0,900}?<\/td>/g)].map((m) => m[0]);
+  assert.ok(cells.length >= 8);
+  for (const c of cells) assert.ok(!/<\/a> · /.test(c), "no ' · ' between actions: " + c.slice(0, 60));
+  for (const label of ["View card ↗", "View listing ↗", "View public page ↗", "Edit as owner ↗"]) assert.ok(js.includes(label), label);
+});
