@@ -42,3 +42,14 @@ test("Admin windows wire their own X from inside the window (a record page behin
   const edit = js.slice(js.indexOf("function editPost("), js.indexOf("function editPost(") + 6500);
   assert.ok(!/\{ hint: "Shown on the listing\." \}\)\)\}\s*<\/div>\s*<div class="mfoot sticky">/.test(edit), "no stray </div> closes the card before the Save/Cancel bar");
 });
+
+test("a user's page: an 'Events they submitted' row opens that exact submission (by id), not the list with the name typed into the search box", async () => {
+  const js = readFileSync("public/admin/admin.js", "utf8");
+  assert.match(js, /data-pf-sub="\$\{esc\(e\.name\)\}" data-pf-subid="\$\{esc\(e\.id \|\| ""\)\}" data-pf-view="\$\{e\.status === "published" \? "published" : e\.status === "declined" \? "declined" : "pending"\}"/);
+  assert.match(js, /SUBOPEN = b\.dataset\.pfSubid \|\| ""; PRESET = SUBOPEN \? "" : b\.dataset\.pfSub; SUBVIEW = b\.dataset\.pfView \|\| "pending"; setTab\("subs"\);/);
+  const { DB, raw } = makeDB(); const { onRequestGet: userGet } = await import("../functions/api/admin/users/[id].js");
+  raw.prepare("INSERT INTO users (id,email,name) VALUES ('u1','org@example.com','Olive')").run();
+  raw.prepare("INSERT INTO event_submissions (id,name,city,county,season,type,start_date,end_date,contact_email,status) VALUES ('s1','Living Nativity','Rancho Santa Fe','San Diego','christmas','show','2026-12-18','2026-12-18','org@example.com','published')").run();
+  const d = await (await userGet({ params: { id: "u1" }, env: { DB } })).json();
+  assert.equal(d.events[0].id, "s1", "the user's record gives each submitted event's id");
+});
