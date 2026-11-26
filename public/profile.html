@@ -175,6 +175,8 @@ function render() {
 const UNDO_MS = 8000, pendingDeletes = new Set();
 const undos = Object.assign(document.createElement("div"), { id: "undos", className: "undos" }); document.body.appendChild(undos);
 addEventListener("pagehide", () => pendingDeletes.forEach((send) => send(true)));
+// Switching apps or locking the phone does not fire pagehide on an iPhone (it only hides the page and pauses its timers), so a delete waiting out its Undo time was never sent and the listing came back. Hiding the page now sends it.
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") pendingDeletes.forEach((send) => send(true)); });
 function confirmDelete(btn, { name, row, url, extra = "" }) {
   let note = row.querySelector(":scope > .delnote");
   if (!note) { note = document.createElement("p"); note.className = "delnote small"; note.setAttribute("role", "status"); row.appendChild(note); }

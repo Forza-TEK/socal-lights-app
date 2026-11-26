@@ -74,3 +74,10 @@ test("the account button never shows a sign-in icon over a signed-in page: it re
   assert.match(prof, /if \(i\.user\) setAcctUser\(i\.user\)/);
   assert.match(prof, /import \{ setAcctUser \} from "\/chrome\.js\?v=20261126a"/);
 });
+
+test("profile: a delete waiting out its Undo time is sent when the page is hidden (switching apps on an iPhone does not fire pagehide), kept alive so it survives", () => {
+  const prof = readFileSync("public/profile.html", "utf8");
+  assert.match(prof, /addEventListener\("pagehide", \(\) => pendingDeletes\.forEach\(\(send\) => send\(true\)\)\);/);
+  assert.match(prof, /document\.addEventListener\("visibilitychange", \(\) => \{ if \(document\.visibilityState === "hidden"\) pendingDeletes\.forEach\(\(send\) => send\(true\)\); \}\);/);
+  assert.match(prof, /fetch\(url, \{ method: "DELETE", keepalive: !!leaving \}\)/, "the request outlives the page");
+});
