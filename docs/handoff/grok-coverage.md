@@ -90,6 +90,18 @@ Follow `docs/city-sweep.md`, `docs/sweep-methods.md` and `docs/blocked-sites.md`
 
 New watchlist venues and blocked sites go to Claude as a request in `docs/handoff/to-claude/`. Grok does not edit `docs/watchlist.json` or `docs/blocked-sites.md`.
 
+## 2026-11-26
+
+Parent sources checked:
+- Riverside County Library LibCal feed (rivlib.libcal.com list ajax), Nov 27–Dec 31: gave first events for Valle Vista, Woodcrest, Highgrove and French Valley, plus Anza, Desert Hot Springs, Cathedral City and Idyllwild (city Hemet).
+- SB County Library tribe events API: only Winter Luau and generic crafts, nothing seasonal enough. Skipped.
+- City pages: Palmdale newsflash (3 pages, then the connection dropped), Carson events list, La Puente (tree lighting, movie in the park), Temecula Holidays, Los Alamitos calendar, Menifee.
+- Hospitality and hotel pass: Catamaran, Balboa Bay, Fairmont Breakers, Four Seasons LA and Westlake Village, Baltaire, Terranea, Avalon Palm Springs, Hotel del (no time; queued) and Waldorf Monarch Beach (403; queued).
+- Small Business Saturday: OC SBDC Anaheim, Crafted San Pedro, Laguna Beach Promenade, and Bella Terra (queued).
+
+Focus categories: home-displays and lunar, with an NYE share. Light-shows were yesterday's focus.
+Home displays: city maps (Temecula's comes out the week of Dec 7) and news light tours were checked. Listing sites only had 2025 data, so none were added.
+
 ## 2026-11-24
 
 Grok catch-up run; the Nov 23 and Nov 24 scheduled runs were missed.
