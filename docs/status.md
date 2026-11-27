@@ -2058,3 +2058,6 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 
 ### Menu trim (2026-11-27)
 - Removed "Add" and "Browse by city" from the map's three-dots menu (`public/app.js`, `?v=20261127a`). The round + button still adds; the city list is still at /in. Migration 0298 fixes the help article "Browse events city by city", which told people to tap the removed row; the AI assistant KB text was updated and rebuilt. Not run in a browser (local dev server wouldn't start this session).
+
+### Impeccable design skill installed (2026-11-27)
+- Owner asked for it (https://github.com/pbakaus/impeccable, Apache 2.0, v4.11.1). Installed as `.claude/skills/impeccable/` (SKILL.md + reference markdown only). Its hooks and launcher scripts were NOT installed (they run shell commands after every edit); see `.claude/skills/impeccable/README-SOCAL.md`. Next: run `audit`/`critique`/`polish` on the contest manage, profile and Admin screens.
