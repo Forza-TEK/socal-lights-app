@@ -105,6 +105,21 @@ New watchlist venues and blocked sites go to Claude as a request in `docs/handof
 - Home-display maps expected: Ladera Ranch Dec 3, Temecula week of Dec 7, Twentynine Palms Dec 7, Mission Viejo winners Dec 11.
 - Lunar: all known 2027 festivals are already on the map. Next pass: temple and mall festivals via the social sweep.
 
+## 2026-11-25
+
+Grok re-run after the intake key was rotated.
+
+Work order fetched with `skip_attempted_days=7` (offsets 0 and 500): 366 to confirm + 616 without a photo = 982 rows.
+
+Focus categories: **light-shows** (37/40, LOW) and **lunar** (22/25, LOW), with Thanksgiving Day items first.
+- **Hospitality pass (Thanksgiving):** 6 published: Balboa Bay Resort, Tangerine Room at The Westin Anaheim, Pelican Hill (Mar Vista), Brass Bear (Santa Barbara), Ox & Ocean at Zachari Dunes (Oxnard), Boathouse on the Bay (Long Beach). Plus The Midnight Mission's community Thanksgiving (Skid Row). Fairmont Grand Del Mar was already on the map. Orange Hill (Orange) and Hyatt Regency Huntington Beach (Tock) are 403 from the box, so they're queued.
+- **Malls:** Manhattan Village tree lighting (Nov 27), Montclair Place (pet photos with Santa, gingerbread event, sensory Santa), Mountain Grove/Citrus Plaza Holly Jolly Holiday Fest (Redlands).
+- **Parks & rec / libraries (parent sources):** City of Artesia special-events pages (Community Holiday Party), Upland special events (Breakfast With Santa), San Bernardino city calendar (Feldheym Library Santa visit), Chino Hills calendar (tree lighting confirmed), Riverside Festival of Lights page (Santa's House; Candy Lane has no hours yet).
+- **Light shows:** Santa Barbara Trolley of Lights (light tour) published. Checked against the map and already there: Tanaka Farms Hikari, Sherman Gardens Merry & Bright, Six Flags Holiday in the Park, Solvang Julefest shows, Moorpark Wild Lights, Thoroughbred St.
+- **Lunar:** Alhambra hours corrected (8am–5pm, chamber page). San Diego Tết 2027 (Feb 12–14, NTC Park) is queued because the site is script-only with no hours. The UVSA Tết page still shows 2026 dates.
+- **Empty cities:** 0 new. None of today's sources covered an empty city.
+- Next run: OC Public Libraries (libraries.oc.gov/events) for OC unincorporated places (carried over), and the 2026 home-decorating contest winner lists as they post (MVAC Dec 11, Rossmoor, Glendale, Arcadia).
+
 ## 2026-11-24
 
 Grok catch-up run; the Nov 23 and Nov 24 scheduled runs were missed.
