@@ -12,6 +12,7 @@
 import { json, err } from "../../_lib/util.js";
 import { getUser, sameOrigin } from "../../_lib/auth.js";
 import { TOKEN_RE, addPhotos, removePhoto, setHidden, photosOpen, claimOpen, photoList, MAX_PHOTOS } from "../../_lib/entryphotos.js";
+import { noticeVoters } from "../../_lib/votersnotice.js";
 import { checkThrottle, hashKey } from "../../_lib/throttle.js";
 import { normName, normText, normRadio, line } from "../../_lib/fields.js";
 import { diff, logHome, HOME_FIELDS, logContest } from "../../_lib/changes.js";
@@ -24,7 +25,7 @@ async function load(env, token) {
   if (!TOKEN_RE.test(String(token || ""))) return null;
   const row = await env.DB.prepare("SELECT * FROM posts WHERE photo_token = ? AND contest_id IS NOT NULL").bind(token).first();
   if (!row || row.status !== "approved") return null;
-  const c = await env.DB.prepare("SELECT name, org, city, slug, status, announced, vote_end FROM contests WHERE id = ?").bind(row.contest_id).first();
+  const c = await env.DB.prepare("SELECT * FROM contests WHERE id = ?").bind(row.contest_id).first();
   return c ? { row, c } : null;
 }
 function view(row, c, user) {
@@ -106,7 +107,10 @@ export async function onRequestPost(ctx) {
   if (b.action === "withdraw") {
     // The homeowner takes their own home off the ballot (while voting is open). Votes for it are cleared; the organizer sees it in the contest log.
     const g = await mine(ctx); if (g.res) return g.res;
-    const row = g.x.row, removed = (await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE post_id = ?").bind(row.id).first()).n;
+    const row = g.x.row; await noticeVoters(env, { ...g.x.c, id: row.contest_id }, row.id);
+    const removed = (await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE post_id = ?").bind(row.id).first()).n;
+    // the homeowner's own photos go with it; the organizer's stay for the organizer
+    try { const A = (v) => { try { return JSON.parse(v || "[]"); } catch { return []; } }, org = new Set(A(row.photos_org)); await Promise.all([...new Set([...A(row.photos).map((k) => String(k).split("/").pop()), ...A(row.photos_hidden)])].filter((n) => !org.has(n)).map((n) => env.PHOTOS.delete(`p/${row.id}/${n}`).catch(() => {}))); } catch {}
     await env.DB.batch([env.DB.prepare("UPDATE posts SET status='declined', review_note='withdrawn' WHERE id = ?").bind(row.id), env.DB.prepare("DELETE FROM votes WHERE post_id = ?").bind(row.id)]);
     await logContest(env, row.contest_id, { email: g.user.email, name: g.user.name || g.user.email }, [{ label: `Entry ${row.entry_no ? "#" + row.entry_no + " " : ""}withdrawn by the homeowner`, old: `${removed} vote${removed === 1 ? "" : "s"} counted`, new: "Off the ballot" }]).catch(() => {});
     return json({ ok: true, withdrawn: true, contest: { name: g.x.c.name, slug: g.x.c.slug } }, NO_STORE);

@@ -79,11 +79,11 @@ function render() {
     const my = voteIn(cat), win = new Set(D.winners[cat] || []), jwin = new Set((D.jwinners || {})[cat] || []);
     const rows = D.entries.map((e) => {
       const isMy = !!my && my.post_id === e.id;
-      const label = e.mine ? "Your home" : amJudge ? "Judges vote on their ballot" : isMy ? "Your vote ✓" : !c.votingOpen ? (c.votingState === "over" ? "Voting is over" : c.votingState === "paused" ? "Voting is paused" : "Voting not open yet") : my ? "Move my vote here" : "Vote";
+      const label = e.mine ? "Your home" : amJudge ? "Judges vote on their ballot" : isMy ? (c.votingOpen ? "Your vote ✓ · tap to remove" : "Your vote ✓") : !c.votingOpen ? (c.votingState === "over" ? "Voting is over" : c.votingState === "paused" ? "Voting is paused" : "Voting not open yet") : my ? "Move my vote here" : "Vote";
       const n = e.votes ? e.votes[cat] : null;
       return `<div class="vrow${isMy ? " mine" : ""}" data-rkey="h-${esc(e.id)}">${e.photos[0] ? `<button type="button" class="zoom" data-zoom="${esc(e.photos[0])}" data-cap="${esc(e.name)}" aria-label="Enlarge photo of ${esc(e.name)}"><img src="/api/photo/${esc(e.photos[0])}" alt="${esc(e.name)} lights" loading="lazy"></button>` : `<span class="ph"><img src="${esc(contestImage(D.contest.name, D.contest.logo))}" alt="" width="40" height="40" loading="lazy"></span>`}
         <div><b>${win.has(e.id) || jwin.has(e.id) ? CROWN + " " : ""}${esc(e.name)} ${win.has(e.id) ? `<span class="pill p-ok">${both ? "People's Choice" : "Winner"}${win.size > 1 ? " (tied)" : ""}</span>` : ""}${jwin.has(e.id) ? `<span class="pill p-ok">${both ? "Judges' Choice" : "Winner"}${jwin.size > 1 ? " (tied)" : ""}</span>` : ""}</b><span class="meta">${esc(e.address || e.city)}${n !== null ? ` · ${n} vote${n === 1 ? "" : "s"}` : ""}</span>${e.descr ? `<span class="meta">${esc(e.descr)}</span>` : ""}${entryVideo(e)}${homeLinks(e)}</div>
-        <button class="btn ${isMy ? "ghost" : "org"} sm" data-vote="${esc(e.id)}" data-cat="${esc(cat)}" type="button" ${c.votingOpen && !e.mine && !isMy && !amJudge ? "" : "disabled"} aria-label="${esc(label)}: ${esc(e.name)}, ${esc(cat)}">${label}</button></div>`;
+        <button class="btn ${isMy ? "ghost" : "org"} sm" data-vote="${esc(e.id)}" data-cat="${esc(cat)}" type="button" ${c.votingOpen && !e.mine && !amJudge ? "" : "disabled"} aria-label="${esc(label)}: ${esc(e.name)}, ${esc(cat)}">${label}</button></div>`;
     }).join("");
     return `<section class="card" aria-labelledby="cat-${esc(cat.replace(/\W+/g, "-"))}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h2 id="cat-${esc(cat.replace(/\W+/g, "-"))}">${esc(cat)}${both ? ' <span class="small muted">People\'s Choice</span>' : ""}</h2>${my ? `<span class="pill p-ok">You voted</span>` : c.votingOpen ? `<span class="pill p-wait">Pick one favorite</span>` : ""}</div>${(c.catDescs || {})[cat] ? `<p class="small muted" style="margin:6px 0 10px">${esc(c.catDescs[cat])}</p>` : ""}${D.entries.length ? `<div>${rows}</div>` : `<p class="muted small">No homes yet.</p>`}</section>`;
   }).join("");
@@ -113,7 +113,7 @@ function render() {
   document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { ACT = b.dataset.tab; const y = scrollY; render(); scrollTo(0, y); }));
   document.querySelectorAll("[data-zoom]").forEach((b) => (b.onclick = () => zoom(b.dataset.zoom, b.dataset.cap)));
   const sh = $("#sharec"); if (sh) sh.onclick = async () => { const u = location.origin + "/c/" + c.slug, t = c.name + ": enter your home or vote"; try { if (await nativeShare({ title: c.name, text: t, url: u })) return; if (navigator.share) await navigator.share({ title: c.name, text: t, url: u }); else { await navigator.clipboard.writeText(u); toast("Link copied."); } } catch {} };
-  document.querySelectorAll("[data-vote]").forEach((b) => (b.onclick = () => vote(b.dataset.vote, b.dataset.cat)));
+  document.querySelectorAll("[data-vote]").forEach((b) => (b.onclick = () => (b.classList.contains("ghost") ? unvote(b.dataset.cat) : vote(b.dataset.vote, b.dataset.cat))));
   wireTour(document, { slug: c.slug, entries: D.entries });
   if (location.hash === "#tour") { const t = document.querySelector("[data-tour]"); if (t) t.scrollIntoView(); }
 }
@@ -140,6 +140,14 @@ async function humanCheck(msg) {
     window.turnstile.render(host.querySelector("#hc-w"), { sitekey: TSKEY, callback: (t) => done(t), "error-callback": () => { host.querySelector("#hc-m").textContent = "The check did not load. Please try again."; } });
     host.querySelector("#hc-x").onclick = () => done(""); host.onkeydown = (e) => { if (e.key === "Escape") done(""); }; host.querySelector("#hc-x").focus();
   });
+}
+async function unvote(category) { // take your vote back (while voting is open)
+  if (BUSY) return; BUSY = true;
+  try {
+    const r = await fetch(`/api/contests/${encodeURIComponent(slug)}/vote`, { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ category }) }), j = await r.json().catch(() => ({}));
+    if (!r.ok) return toast(j.error || "Couldn't remove your vote.");
+    VOTEMSG = `${category}: your vote was removed.`; ACT = category; await load();
+  } finally { BUSY = false; if (D) { const y = scrollY; render(); scrollTo(0, y); } }
 }
 async function vote(id, category) {
   if (BUSY) return; // a double tap sends one vote, not two

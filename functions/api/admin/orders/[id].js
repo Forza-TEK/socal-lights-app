@@ -24,6 +24,7 @@ export async function onRequestPost({ request, env, params, data }) {
   };
   if (b.action === "mark_refunded") {
     if (o.status === "refunded") return json({ ok: true });
+    if (!["paid", "refund_due", "held", "disputed"].includes(o.status)) return err(409, "This order was never paid, so there is nothing to mark refunded.");
     return json({ ok: true, placement_differs: await settle("refunded in the Stripe dashboard") });
   }
   if (b.action === "refund_stripe") {

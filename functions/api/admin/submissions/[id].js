@@ -45,8 +45,11 @@ export async function onRequestPost({ request, env, params, waitUntil }) {
     await env.DB.prepare("UPDATE event_submissions SET status='pending' WHERE id = ?").bind(s.id).run();
     return json({ ok: true });
   }
+  if (b.action === "decline" && s.status === "published") return err(409, "This event is live. Unpublish it first, then decline it.");
+  if (b.action === "approve" && s.status === "published") return err(409, "This event is already published. Edit it in the Events tab so those edits are kept.");
   if (b.action === "decline") {
     await env.DB.prepare("UPDATE event_submissions SET status='declined' WHERE id = ?").bind(s.id).run();
+    await env.DB.prepare("UPDATE event_submissions SET decline_reason = ? WHERE id = ?").bind(clean(b.reason, 400), s.id).run().catch(() => {}); // kept for the owner's profile (tolerates the column not existing yet)
     // A buyer who paid for Featured on a submission we decline is owed a refund: surface it in Admin > Orders (nothing is refunded automatically).
     const gone = s.event_id && !(await env.DB.prepare("SELECT 1 FROM events WHERE id = ?").bind(s.event_id).first());
     const due = await markRefundDue(env.DB, s.id, gone ? s.event_id : "", "The submission was declined after the buyer paid for Featured. Refund it in the Stripe dashboard, then mark it refunded here.");
@@ -56,6 +59,7 @@ export async function onRequestPost({ request, env, params, waitUntil }) {
   if (b.action === "restore") {
     if (s.status !== "declined") return err(400, "Only a declined event can be restored.");
     await env.DB.prepare("UPDATE event_submissions SET status='pending' WHERE id = ?").bind(s.id).run();
+    await env.DB.prepare("UPDATE event_submissions SET decline_reason = '' WHERE id = ?").bind(s.id).run().catch(() => {});
     // Undo of a decline: orders still waiting on a refund go back to paid (an order already marked refunded stays refunded)
     await env.DB.prepare("UPDATE feature_orders SET status='paid', note=NULL WHERE status='refund_due' AND event_id IN (?, ?)").bind("sub:" + s.id, s.event_id || "sub:" + s.id).run();
     return json({ ok: true });

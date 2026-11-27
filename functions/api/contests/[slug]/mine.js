@@ -5,6 +5,7 @@ import { getUser, sameOrigin } from "../../../_lib/auth.js";
 import { getContest } from "../../../_lib/contests.js";
 import { needsReview } from "../../../_lib/moderation.js";
 import { ptToday } from "../../../_lib/time.js";
+import { noticeVoters } from "../../../_lib/votersnotice.js";
 import { logContest } from "../../../_lib/changes.js";
 
 async function mine(request, env, slug, id) {
@@ -38,6 +39,7 @@ export async function onRequestDelete({ params, request, env }) {
   const { c, row, user, res } = await mine(request, env, params.slug, new URL(request.url).searchParams.get("id") || "");
   if (res) return res;
   if (row.photo_token) return err(403, "The organizer added this home to the contest, so it can't be withdrawn here. You can edit it and hide the organizer's photos. Ask the organizer if it should come off the ballot.");
+  await noticeVoters(env, c, row.id); // before the votes go
   const removed = (await env.DB.prepare("SELECT COUNT(*) AS n FROM votes WHERE post_id = ?").bind(row.id).first()).n;
   await Promise.all(JSON.parse(row.photos || "[]").map((k) => env.PHOTOS.delete(k)));
   await env.DB.batch([env.DB.prepare("UPDATE posts SET status='declined', photos='[]', review_note='withdrawn' WHERE id = ?").bind(row.id), env.DB.prepare("DELETE FROM votes WHERE post_id = ?").bind(row.id)]);

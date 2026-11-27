@@ -2027,3 +2027,31 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 
 ### Audit round 3 (2026-11-26)
 - Profile now lists organizer-added homes that used your signed-in email before you link them (with the link, Manage, Remove). Account-deletion copy now says what is deleted.
+
+### Owner links on public pages (2026-11-26)
+- `/h/<id>` and `/e/<id>` (cached for everyone) load `/ownerbar.js`, which asks `GET /api/me/owns` and shows "This is your home... Edit in your profile" to the owner; the owner's own pending/paused home no longer says "can't find that home". Verified in a local browser (owner vs signed-out).
+
+### Audit round 4 (2026-11-26)
+- Draft rows name the contest and say "Entries are closed"/"This contest no longer exists" instead of a dead Continue. A waiting removal request can be cancelled. Declined displays/events have "Send it again for review". Withdrawing an organizer-added home deletes the homeowner's own photos (the organizer's stay).
+- Left alone on purpose: Displays tab still lists linked contest homes (deliberate); voters get no email when a voted entry is withdrawn.
+
+### Breadcrumbs on organizer, judge and installer pages (2026-11-26)
+- User found `/c/<slug>/manage` (reached from Admin "Edit as owner") had no way back. Now a breadcrumb row: "Your profile › Contests › <name>" (or "Admin › Contests › <name>" when an admin is acting as the owner); same on the installer manage page and the judge page. Lesson: the audit must open every act-as landing page and every shell page and look for an exit.
+
+### Audit round 6 (Admin tabs / organizer / installer, 2026-11-26) — fixed
+- Admin Events: "Recently deleted" window with Bring back (new `GET /api/admin/events/deleted`). Declining an approved event claim now removes the access it granted. Orders: "Mark refunded" also offered for paid orders with no Stripe payment id; the server refuses it for never-paid orders. Submissions: approve/decline on an already-published event is refused. Organizer: the creator always gets the Team controls (`D.me.isCreator`); removing a judge asks first and checks the result. Admin `?v=20261126i`.
+- Also fixed: an event deleted by Admin shows "Taken off the map" on the owner's profile and in Admin submissions (Move back to waiting).
+- Also fixed: installers can "Stop sharing" a confirmed home and logo removal reports failures; voters can take their vote back while voting is open.
+- Also fixed: repeat installer claims are sent once a week (claimant is told it is with us); Chat Tier 3 switch labelled as not built.
+- Still open from this audit: deleted event leaves its submission "Published" (#4); report dismissal/priority (#6, #7); failed-email list (#9); installer can't undo Confirm or hide their own profile (#12, #13); voters can't retract a vote (#16); no un-announce (#17); decline reasons not stored, Unpublish sends no email (#18); passes merge preview (#15); Chat "Tier 3" switch for an unbuilt feature (#19); no Admin control for the do-not-contact list (#20); installer confirm link mutates on GET (#21).
+
+### Audit round 7 (2026-11-26)
+- Installer confirm link no longer changes anything on a plain open (mail scanners): GET shows a button, POST confirms. Admin Reports: "Objectionable content" reports sort first with an "act within 24 h" / "over 24 h" badge. Admin `?v=20261126l`.
+- Still open: report handled-state/undo, failed-email list, installer self-hide, un-announce winners, stored decline reasons, Admin do-not-contact control, contest-pass merge preview.
+
+### Five builds requested 2026-11-27
+- **Un-announce (Admin only):** contest record > "Undo announcement" (reason required, written to the organizer's change log). Unlocks the contest, drops the frozen results, clears queued AND sent results mail rows so announcing again emails everyone the corrected results; it says how many were already emailed (can't be recalled). Nobody is emailed about the undo.
+- **Decline reasons kept:** posts use `review_note` (cleared on restore/resubmit); event submissions use new column `decline_reason` (migration 0297; every read/write tolerates the column not existing yet). The owner's profile shows "Why: …" on declined displays and events.
+- **Do-not-contact list in Admin > Outreach:** type an address to add ("Do not contact") or remove ("Allow contact again", tap-twice). Hashes only.
+- **Installers can hide/show/delete their own profile** (Details panel). Refused while a paid Sponsor placement is running or on record (they are told to email us); delete needs the typed company name.
+- **Voters are emailed** (template `vote_withdrawn`, one per voter per home) when a home they voted for is withdrawn while voting is open; not after voting ends. Admin removal and organizer decline do not send it yet.

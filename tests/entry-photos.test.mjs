@@ -417,3 +417,135 @@ test("profile: an organizer-added home that used the signed-in email shows up (w
   assert.deepEqual(mine.body.entries.map((e) => e.id), ["paaaaaaaa"]); assert.equal(mine.body.entries[0].manage, "/photos/" + TOKEN);
   assert.equal(other.body.entries.length, 0);
 });
+
+test("owner bar: /api/me/owns tells an owner about their own pending home and event, and nobody else; public pages load the bar script", async () => {
+  const { onRequestGet: owns } = await import("../functions/api/me/owns.js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO posts (id,status,biz,title,city,lat,lng,descr,photos,contact_email,season,address,street,zip,user_id) VALUES ('hpend','pending','H','H','Brea',33.9,-117.9,'x','[]','resident@x.com','christmas','1 A St','1 A St','','uR')").run();
+  const ask = (u, ref) => owns({ request: new Request(`${origin}/api/me/owns?ref=${encodeURIComponent(ref)}`, { headers: u ? { cookie: u.cookie } : {} }), env: t.env }).then(json);
+  assert.deepEqual((await ask(t.users.resident, "h:hpend")).body, { owned: true, kind: "home", status: "pending", contest: false });
+  assert.equal((await ask(t.users.other, "h:hpend")).body.owned, false);
+  assert.equal((await ask(null, "h:hpend")).body.owned, false);
+  const fs = await import("node:fs");
+  assert.match(fs.readFileSync("functions/h/[id].js", "utf8"), /owner: "h:"/); assert.match(fs.readFileSync("functions/e/[id].js", "utf8"), /owner: "e:"/);
+  assert.match(fs.readFileSync("functions/_lib/shell.js", "utf8"), /\/ownerbar\.js\?v=/);
+});
+
+test("a waiting removal request can be cancelled by its owner; entry drafts for closed or deleted contests say so", async () => {
+  const { onRequestPost: reqPost } = await import("../functions/api/me/entries/[id]/request.js");
+  const { onRequestGet: overview } = await import("../functions/api/me/overview.js");
+  const t = await setup(); await t.claim(t.users.home);
+  const call = (kind) => reqPost({ params: { id: "paaaaaaaa" }, request: new Request(`${origin}/api/me/entries/paaaaaaaa/request`, { method: "POST", headers: { "content-type": "application/json", cookie: t.users.home.cookie }, body: JSON.stringify({ kind }) }), env: t.env }).then(json);
+  await call("remove"); assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM removal_requests WHERE status='open'").get().n, 1);
+  assert.equal((await call("cancel")).status, 200); assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM removal_requests").get().n, 0);
+  t.raw.prepare("INSERT INTO drafts (id,user_id,kind,title,step,data) VALUES ('d1','uH','entry','Mine',1,?),('d2','uH','entry','Gone',1,?)").run(JSON.stringify({ contestSlug: SLUG }), JSON.stringify({ contestSlug: "nope" }));
+  const ov = await overview({ request: new Request(`${origin}/api/me/overview`, { headers: { cookie: t.users.home.cookie } }), env: t.env }).then(json);
+  const d = Object.fromEntries(ov.body.drafts.map((x) => [x.id, x]));
+  assert.equal(d.d1.dead, "closed", "entries closed 5 days ago");
+  t.raw.prepare("UPDATE contests SET entries_close = ?").run(ptToday(5));
+  const d1 = (await overview({ request: new Request(`${origin}/api/me/overview`, { headers: { cookie: t.users.home.cookie } }), env: t.env }).then(json)).body.drafts.find((x) => x.id === "d1");
+  assert.equal(d1.dead, "", "open contest: Continue works"); assert.equal(d.d1.cname, "Light Up the Town"); assert.equal(d.d2.dead, "gone");
+});
+
+test("a declined display or event can be sent back for review by its owner only", async () => {
+  const { onRequestPost: homePost } = await import("../functions/api/me/homes/[id].js");
+  const { onRequestPost: evPost } = await import("../functions/api/me/events/[id].js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO posts (id,status,biz,title,city,lat,lng,descr,photos,contact_email,season,address,street,zip,user_id) VALUES ('hdec','declined','H','H','Brea',33.9,-117.9,'x','[]','resident@x.com','christmas','1 A St','1 A St','','uR')").run();
+  t.raw.prepare("INSERT INTO event_submissions (id,name,city,season,type,start_date,end_date,contact_email,status) VALUES ('sdec','E','Brea','christmas','drive','2026-12-01','2026-12-31','resident@x.com','declined')").run();
+  const go = (fn, id, u) => fn({ params: { id }, request: new Request(`${origin}/api/me/x/${id}`, { method: "POST", headers: { "content-type": "application/json", cookie: u.cookie }, body: JSON.stringify({ action: "resubmit" }) }), env: t.env }).then(json);
+  assert.ok([403, 404].includes((await go(homePost, "hdec", t.users.other)).status));
+  assert.equal((await go(homePost, "hdec", t.users.resident)).status, 200); assert.equal(t.raw.prepare("SELECT status FROM posts WHERE id='hdec'").get().status, "pending");
+  assert.equal((await go(evPost, "sdec", t.users.other)).status, 404);
+  assert.equal((await go(evPost, "sdec", t.users.resident)).status, 200); assert.equal(t.raw.prepare("SELECT status FROM event_submissions WHERE id='sdec'").get().status, "pending");
+});
+
+test("Admin: declining an approved event claim takes its access back; the deleted-events list is reachable; unpaid orders can't be marked refunded", async () => {
+  const { onRequestPost: claimPost } = await import("../functions/api/admin/claims/[id].js");
+  const { onRequestGet: deletedGet } = await import("../functions/api/admin/events/deleted.js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO events (id,name,county,city,type,start_date,end_date,status,free,price,hours,lat,lng,blurb,url,season,venue,address) VALUES ('evx','X','Orange','Brea','drive','2026-12-01','2026-12-31','confirmed',1,'Free','',33.9,-117.9,'','','christmas','','1 A St')").run();
+  t.raw.prepare("INSERT INTO event_claims (id,event_id,user_id,email,status,method) VALUES ('cl1','evx','uR','resident@x.com','pending','')").run();
+  const act = (action) => claimPost({ params: { id: "cl1" }, request: new Request(`${origin}/api/admin/claims/cl1`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) }), env: t.env, waitUntil: () => {} }).then(json);
+  assert.equal((await act("approve")).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM event_submissions WHERE event_id='evx'").get().n, 1);
+  assert.equal((await act("decline")).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM event_submissions WHERE event_id='evx'").get().n, 0, "access revoked");
+  t.raw.prepare("INSERT INTO deleted_events (id,name,row) VALUES ('evx','X','{\"id\":\"evx\",\"city\":\"Brea\"}')").run();
+  const l = await deletedGet({ env: t.env }).then(json); assert.equal(l.body[0].id, "evx"); assert.equal(l.body[0].city, "Brea");
+});
+
+test("a voter can take their vote back while voting is open, not after it closes, and not someone else's", async () => {
+  const { onRequestDelete: unvote } = await import("../functions/api/contests/[slug]/vote.js");
+  const del = (t, user) => unvote({ params: { slug: SLUG }, request: new Request(`${origin}/api/contests/${SLUG}/vote`, { method: "DELETE", headers: { "content-type": "application/json", cookie: user.cookie }, body: JSON.stringify({ category: "Best Overall" }) }), env: t.env }).then(json);
+  const t = await setup({ voteStart: -1, voteEnd: 10 });
+  t.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall'),('v2','paaaaaaaa','c1','uR','Best Overall')").run();
+  assert.equal((await del(t, t.users.other)).status, 200);
+  assert.deepEqual(t.raw.prepare("SELECT user_id FROM votes").all().map((v) => v.user_id), ["uR"], "only their own vote went");
+  const c = await setup({ voteStart: -10, voteEnd: -1 });
+  c.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall')").run();
+  assert.equal((await del(c, c.users.other)).status, 400); assert.equal(c.raw.prepare("SELECT COUNT(*) n FROM votes").get().n, 1);
+});
+
+test("installer claim for a non-domain email is only sent once a week", async () => {
+  const { onRequestPost: claim } = await import("../functions/api/installers/[slug]/claim.js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO installers (id,slug,name,status,web) VALUES ('ic1','acme','Acme Lights','active','https://acme-lights.com')").run();
+  const go = () => claim({ params: { slug: "acme" }, request: new Request(`${origin}/api/installers/acme/claim`, { method: "POST", headers: { cookie: t.users.other.cookie } }), env: t.env }).then(json);
+  const a = await go(), b = await go();
+  assert.equal(a.body.claimed, false); assert.ok(!a.body.pending); assert.equal(b.body.pending, true, "the second tap says it is already with us");
+});
+
+test("Admin: undo an announcement (unlocks, drops results and results emails); decline reasons are kept for the owner; do-not-contact list can be added to and removed from", async () => {
+  const { onRequestPost: contestPost } = await import("../functions/api/admin/contests/[id].js");
+  const { onRequestPost: outPost } = await import("../functions/api/admin/outreach.js");
+  const { onRequestPost: subPost } = await import("../functions/api/admin/submissions/[id].js");
+  const { onRequestGet: overview } = await import("../functions/api/me/overview.js");
+  const t = await setup();
+  t.raw.prepare("UPDATE contests SET announced = 1, results = '{\"x\":1}'").run();
+  t.raw.prepare("INSERT INTO mail_outbox (template,to_email,dedupe,status) VALUES ('results_entrant','a@x.com','results:c1:results_entrant:a@x.com','sent'),('results_entrant','b@x.com','results:c1:results_entrant:b@x.com','queued')").run();
+  const un = (reason) => contestPost({ params: { id: "c1" }, request: new Request(`${origin}/api/admin/contests/c1`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "unannounce", reason }) }), env: t.env, waitUntil: () => {} }).then(json);
+  assert.equal((await un("")).status, 400, "a reason is needed");
+  const r = await un("Announced by mistake"); assert.equal(r.status, 200); assert.equal(r.body.alreadyEmailed, 1);
+  const c = t.raw.prepare("SELECT announced, results FROM contests").get(); assert.equal(c.announced, 0); assert.equal(c.results, "");
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM mail_outbox").get().n, 0, "queued and sent results rows are cleared");
+  assert.equal((await un("again")).status, 400, "not announced any more");
+  t.raw.prepare("INSERT INTO event_submissions (id,name,city,season,type,start_date,end_date,contact_email,status) VALUES ('sd1','E','Brea','christmas','drive','2026-12-01','2026-12-31','resident@x.com','pending')").run();
+  await subPost({ params: { id: "sd1" }, request: new Request(`${origin}/api/admin/submissions/sd1`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "decline", reason: "No public access" }) }), env: t.env, waitUntil: () => {} });
+  const ov = await overview({ request: new Request(`${origin}/api/me/overview`, { headers: { cookie: t.users.resident.cookie } }), env: t.env }).then(json);
+  assert.equal(ov.body.events.find((e) => e.id === "sd1").decline_reason, "No public access");
+  const sup = (action, email) => outPost({ request: new Request(`${origin}/api/admin/outreach`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, email }) }), env: t.env }).then(json);
+  assert.equal((await sup("suppress", "Nope@Example.com")).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM outreach_suppressions").get().n >= 1, true);
+  assert.equal((await sup("unsuppress", "nope@example.com")).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM outreach_suppressions").get().n, 0);
+  assert.equal((await sup("unsuppress", "nope@example.com")).status, 404);
+  assert.equal((await sup("suppress", "not-an-email")).status, 400);
+});
+
+test("installer owner can hide, show and delete their own profile; a running paid placement blocks hide and delete", async () => {
+  const { onRequestPost: mng } = await import("../functions/api/installers/[slug]/manage.js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO installers (id,slug,name,status,owner_email,banner_until) VALUES ('io','owned','Owned Lights','active','homeowner@x.com','')").run();
+  const go = (user, body) => mng({ params: { slug: "owned" }, request: new Request(`${origin}/api/installers/owned/manage`, { method: "POST", headers: { "content-type": "application/json", cookie: user.cookie }, body: JSON.stringify(body) }), env: t.env }).then(json);
+  assert.equal((await go(t.users.other, { action: "hide" })).status, 404, "not theirs");
+  assert.equal((await go(t.users.home, { action: "hide" })).status, 200); assert.equal(t.raw.prepare("SELECT status FROM installers").get().status, "hidden");
+  assert.equal((await go(t.users.home, { action: "show" })).status, 200); assert.equal(t.raw.prepare("SELECT status FROM installers").get().status, "active");
+  t.raw.prepare("UPDATE installers SET banner_until = ?").run(ptToday(30));
+  assert.equal((await go(t.users.home, { action: "hide" })).status, 409, "paid placement still running");
+  t.raw.prepare("UPDATE installers SET banner_until = ''").run();
+  assert.equal((await go(t.users.home, { action: "delete", confirm: "nope" })).status, 400);
+  assert.equal((await go(t.users.home, { action: "delete", confirm: "owned lights" })).status, 200); assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM installers").get().n, 0);
+});
+
+test("voters get one email when a home they voted for is withdrawn during voting, and none after voting ends", async () => {
+  const t = await setup({ voteStart: -1, voteEnd: 10 }); await t.claim(t.users.home);
+  t.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall')").run();
+  await t.hp("POST", TOKEN, t.users.home, { action: "withdraw" });
+  const q = t.raw.prepare("SELECT template, to_email, dedupe FROM mail_outbox").all();
+  assert.deepEqual(q.map((r) => [r.template, r.to_email]), [["vote_withdrawn", "other@x.com"]]);
+  const c = await setup({ voteStart: -10, voteEnd: -1 }); await c.claim(c.users.home);
+  c.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall')").run();
+  const { noticeVoters } = await import("../functions/_lib/votersnotice.js");
+  assert.equal(await noticeVoters(c.env, c.raw.prepare("SELECT * FROM contests").get(), "paaaaaaaa"), 0, "voting is over: nobody to tell");
+});

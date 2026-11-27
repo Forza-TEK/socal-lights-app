@@ -6,7 +6,7 @@ import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261116b";
 import { renderHelp } from "/admin/help.js?v=20261116b";
 import { renderPartner } from "/admin/partner.js?v=20261116b";
-import { renderChat } from "/admin/chat.js?v=20261116c";
+import { renderChat } from "/admin/chat.js?v=20261126a";
 import { renderGrok } from "/admin/grok.js?v=20261121b";
 import { mdy, localTime, btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261121a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
@@ -324,7 +324,7 @@ async function renderSubs() {
   const actions = (x) => {
     const st = x.status === "pending" ? "pending" : x.status === "declined" ? "declined" : "published";
     return (st === "pending" ? btn("ghost", "Edit", `data-sedit="${esc(x.id)}"`) : "")
-      + (st === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : st === "pending" ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : (x.event_id ? viewLink(x.event_id) : "") + (x.event_id && x.contact_email ? asLink("Edit as owner", "/profile", x.contact_email, "events") : "") + (x.event_id && x.event_status === "expected" ? btn("main", "Confirm dates", 'data-sact="confirm"') : "") + btn("ghost", "Unpublish", 'data-sact="unpublish"'))
+      + (st === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : st === "pending" ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : (x.event_id && !x.event_status ? '<span class="meta" style="align-self:center">Taken off the map (deleted). Move it back to waiting to publish it again, or bring the event back under Events > Recently deleted.</span>' : x.event_id ? viewLink(x.event_id) : "") + (x.event_id && x.contact_email ? asLink("Edit as owner", "/profile", x.contact_email, "events") : "") + (x.event_id && x.event_status === "expected" ? btn("main", "Confirm dates", 'data-sact="confirm"') : "") + btn("ghost", x.event_id && !x.event_status ? "Move back to waiting" : "Unpublish", 'data-sact="unpublish"'))
       + (st === "pending" ? btn("danger", "Decline", 'data-sact="decline"') : "");
   };
   if (one) { // the full record: Back link, actions at the top right, cards
@@ -473,7 +473,7 @@ async function renderOrders() {
         + fact("Payment", o.stripe_url ? `<a href="${esc(o.stripe_url)}" target="_blank" rel="noopener">${esc(o.payment_intent)} in Stripe</a>` : "") + fact("Note", esc(o.note || "")),
       edit: btn("ghost", o.note ? "Edit note" : "Add note", 'data-oact="note"') + (["paid", "refund_due", "held"].includes(o.status) && o.payment_intent ? btn("danger", "Refund in Stripe", 'data-oact="refund_stripe"') : ""),
       body: due ? '<p class="meta" style="margin:0">Use <b>Mark refunded</b> only after you refunded the payment in the Stripe dashboard. The button does not refund anything.</p>' : "",
-      main: due ? btn("main", "Mark refunded", 'data-oact="mark_refunded"') : o.status === "paid" && !o.applied ? btn("main", "Apply now", 'data-oact="reapply"') : "",
+      main: due ? btn("main", "Mark refunded", 'data-oact="mark_refunded"') : o.status === "paid" && !o.applied ? btn("main", "Apply now", 'data-oact="reapply"') + (o.payment_intent ? "" : btn("ghost", "Mark refunded", 'data-oact="mark_refunded"')) : "",
     };
   };
   const oneO = OORDER && all.find((o) => o.session_id === OORDER); if (OORDER && !oneO) OORDER = "";
@@ -554,9 +554,10 @@ async function renderContests() {
     const c = one, kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v !== "" && v != null).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
     const acts = (c.owner_email ? asLink("Edit as owner", "/c/" + c.slug + "/manage") : "") + btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`) + btn("ghost", "Sponsors", `data-csp="${esc(c.id)}"`)
       + (c.status === "live" ? (flagged(c) ? btn("main", "Looks fine", 'data-cact="approve"') : "") + btn("ghost", "Unpublish", 'data-cact="decline"') : c.status === "closed" ? "" : btn("main", c.status === "pending" ? "Approve (goes on the map)" : "Make live again", 'data-cact="approve"'))
+      + (c.announced ? btn("ghost", "Undo announcement", 'data-cact="unannounce"') : "")
       + btn("danger", c.entries ? `Delete with ${c.entries} ${c.entries === 1 ? "entry" : "entries"}` : "Delete", 'data-cact="delete"');
     setDetail(c.name);
-    main.innerHTML = `<div class="rpage" data-cid="${esc(c.id)}" data-name="${esc(c.name)}"><a class="rback" href="#contests" id="cBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to contests</a>
+    main.innerHTML = `<div class="rpage" data-cid="${esc(c.id)}" data-name="${esc(c.name)}"${c.announced ? ' data-announced="1"' : ""}><a class="rback" href="#contests" id="cBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to contests</a>
       <div class="pghead"><div><h2>Contest detail</h2></div><div class="pgacts">${acts}</div></div><span class="msg" role="status"></span>
       ${flagged(c) ? `<section class="rcard"><p class="meta" style="margin:0;color:var(--ink)"><b>Needs a look.</b> ${esc(c.note)}</p></section>` : ""}
       <section class="rcard"><h3>Overview</h3>${kv([["Name", esc(c.name)], ["Status", `<span class="tag ${tone(c)}">${label(c)}</span>`], ["Run by", esc(c.org) + " · " + esc(c.city)], ["Created", esc(localTime(c.created_at))]])}</section>
@@ -671,17 +672,21 @@ async function openSponsors(cid) {
 }
 $("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-csp]"); if (b) openSponsors(b.dataset.csp); });
 const orgLabelOf = (k) => (String(k).startsWith("d:") ? String(k).slice(2) : String(k).startsWith("u:") ? String(k).slice(2) : String(k));
-const CDONE = { approve: "Contest is live", decline: "Contest unpublished", delete: "Contest deleted" };
+const CDONE = { approve: "Contest is live", decline: "Contest unpublished", delete: "Contest deleted", unannounce: "Announcement undone: the results are unlocked" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-cact]"); if (!b) return;
   const card = b.closest("[data-cid]"), msg = card.querySelector(".msg") || { set className(v) {}, set textContent(v) {} }, act = b.dataset.cact;
   const cname = card.dataset.name || "this contest", extra = {};
   if (act === "decline") { const r = await askReason({ title: "Unpublish " + cname, hint: "This is emailed to the organizer. Leave it blank to send no reason.", go: "Unpublish" }); if (r === null) return; extra.reason = r; }
-  else if (act === "delete" && !tap(b, "delete for good")) return;
+  else if (act === "unannounce") { const r = await askReason({ title: "Undo the announcement of " + cname, hint: "Unlocks the contest and drops the published results. Results emails already sent can't be recalled; announcing again emails everyone the new results. This reason goes in the organizer's change log; nobody is emailed about the undo.", go: "Undo announcement" }); if (r === null) return; extra.reason = r || ""; }
+  else if (act === "delete") {
+    const typed = await askBox({ title: "Delete " + cname, message: `This removes its entries, photos, votes, sponsors and judges${card.dataset.announced ? " and the published winners page" : ""}, and can't be undone. The organizer is not emailed, so tell them first.`, go: "Delete for good", input: { label: "Type the contest name to confirm", placeholder: cname, hint: "" } });
+    if (typed === null || typed === undefined) return; if (String(typed).trim().toLowerCase() !== cname.trim().toLowerCase()) { toast("The name didn't match, so nothing was deleted.", true); return; }
+  }
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try {
     const res = await api("/api/admin/contests/" + card.dataset.cid, act === "delete" ? { method: "DELETE" } : { method: "POST", body: JSON.stringify({ action: act, ...extra }) });
-    toast(CDONE[act] + (res && res.overCap ? `. Heads up: ${res.overCap.org} is now over its contest limit (${res.overCap.used} of ${res.overCap.cap}); see Contest passes` : ""), false, act === "decline" ? { undo: async () => { try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: "approve", notify: false }) }); toast("Undone"); renderContests(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
+    toast(CDONE[act] + (res && res.alreadyEmailed ? `. ${res.alreadyEmailed} results email${res.alreadyEmailed === 1 ? " was" : "s were"} already sent` : "") + (res && res.overCap ? `. Heads up: ${res.overCap.org} is now over its contest limit (${res.overCap.used} of ${res.overCap.cap}); see Contest passes` : ""), false, act === "decline" ? { undo: async () => { try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: "approve", notify: false }) }); toast("Undone"); renderContests(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
     COPEN = ""; renderContests(); refreshCounts(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; toast(err.message, true); }
 });
@@ -898,12 +903,20 @@ async function renderEvents() {
     + sel("evHealth", "Needs a look", [["", "Everything"], ...HEALTH.map(([k, l]) => [k, l]), ...(EVQ2.stale ? [["recheck", `Page not re-checked in 30 days (${EVQ2.stale.size})`]] : [])], EVHEALTH) + sortSelect(EVSORTS, EVSORT);
   const paidN = EVENTS.filter((e) => (placeInfo(e.id) || {}).on).length, vidN = EVENTS.filter((e) => PLACE.clips && PLACE.clips[e.id] === 0).length, evTabs = [["", "All events"], ["e", "Expected"], ["c", "Confirmed"], ["paid", "Paid placements" + (paidN ? " " + paidN : "")], ["video", "Videos waiting" + (vidN ? " " + vidN : "")], ["nophoto", "No photo" + (EVQ2.nophoto.size ? " " + EVQ2.nophoto.size : "")], ["grok", "From Grok"], ["ended", "Ended"]], evOn = () => EVVIEW || EVSTATUS;
   main.innerHTML = `<div class="pgtabs"><div class="seg" role="group" aria-label="Show events">${evTabs.map(([k, l]) => `<button type="button" data-view="${k || "all"}" aria-pressed="${k === evOn()}">${l}</button>`).join("")}</div></div>
-    <div class="pghead"><div><h2>Events</h2><p>Every event on the public map. Open a row to see and edit the full record.</p></div><button type="button" class="btn ice" id="addEv">Add an event</button></div>`
+    <div class="pghead"><div><h2>Events</h2><p>Every event on the public map. Open a row to see and edit the full record.</p></div><div class="row" style="gap:8px"><button type="button" class="btn ghost" id="evDeleted">Recently deleted</button><button type="button" class="btn ice" id="addEv">Add an event</button></div></div>`
     + toolbar({ search: { placeholder: "Search events, cities", value: EVQ }, right: `<details class="fbox" id="evFbox" open><summary>Filters</summary>${filters}<a class="btn ghost" id="evDl" href="/api/admin/export?type=events${evSeason === "all" ? "" : "&season=" + evSeason}" download>Download CSV</a></details>`, count: "" })
     + `<div class="bulk" id="evBulk"><label class="chk"><input type="checkbox" id="evAll"> <span id="evAllL">Select all</span></label><span class="grow"></span><span class="meta" id="evSelN"></span>
       <button class="btn ice" type="button" id="evSetC" hidden></button><button class="btn ghost" type="button" id="evSetE" hidden></button>
       <select id="evMoveTo" aria-label="Move to season" hidden>${Object.entries(SEASONS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join("")}</select><button class="btn ghost" type="button" id="evMove" hidden></button>
       <button class="btn ghost danger" type="button" id="evDel" hidden></button><button class="btn ghost" type="button" id="evClear" hidden>Clear</button></div><div id="evlist"></div>`;
+  $("#evDeleted").onclick = async () => {
+    const m = $("#modal"), close = () => { m.hidden = true; m.innerHTML = ""; }; let rows = [];
+    try { rows = await api("/api/admin/events/deleted"); } catch (er) { return toast(er.message, true); }
+    m.hidden = false;
+    m.innerHTML = modalFrame("Recently deleted events", rows.length ? `<div class="list">${rows.map((r) => `<div class="rowi" style="display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0"><div><b>${esc(r.name || r.id)}</b><br><span class="meta">${esc([r.city, r.start].filter(Boolean).join(" · "))} · deleted ${when(r.deleted_at)}</span></div><button class="btn ice" type="button" data-bring="${esc(r.id)}">Bring back</button></div>`).join("")}</div>` : `<p class="meta">Nothing has been deleted lately.</p>`);
+    m.querySelector("#mClose").onclick = close;
+    m.querySelectorAll("[data-bring]").forEach((b) => (b.onclick = async () => { b.disabled = true; await restoreEvents([b.dataset.bring]); close(); }));
+  };
   if (phone()) $("#evFbox").open = false; // on a phone the filters fold behind one button
   if (!EVLIMIT) EVLIMIT = evPage();
   let shown = [];
@@ -1092,7 +1105,7 @@ async function openUser(id, sec = "") {
   m.querySelectorAll("[data-ua]").forEach((b) => (b.onclick = async () => {
     const a = b.dataset.ua;
     if (a === "suspend" && !tap(b, "suspend")) return;
-    try { await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: a, confirm: a === "delete" ? $("#uDel").value : undefined }) }); if (a === "delete") { close(); renderUsers(); } else if (a === "signout") { msg("Signed out on every device."); } else { await openUser(id); } } catch (er) { msg(er.message, true); }
+    try { const rr = await api("/api/admin/users/" + id, { method: "POST", body: JSON.stringify({ action: a, confirm: a === "delete" ? $("#uDel").value : undefined }) }); if (a === "suspend" && rr && rr.live && (rr.live.contests || rr.live.homes)) toast(`Suspended. Still live: ${rr.live.contests} contest${rr.live.contests === 1 ? "" : "s"}, ${rr.live.homes} home${rr.live.homes === 1 ? "" : "s"}. Review them under Contests and Published.`); if (a === "delete") { close(); renderUsers(); } else if (a === "signout") { msg("Signed out on every device."); } else { await openUser(id); } } catch (er) { msg(er.message, true); }
   }));
 }
 
@@ -1198,10 +1211,12 @@ async function openInstaller(id) {
     ${transferBox("installer", i.id)}
     <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Merge into another profile</summary>
     <p class="meta" style="margin:8px 0">Moves every home to the profile you keep and removes this one. Use it when one company was typed two ways.</p>
-    <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>`, true);
+    <div class="mfoot" style="margin-top:0"><select id="iMerge" aria-label="Merge ${esc(i.name)} into" style="flex:1;min-width:200px"><option value="">Choose the profile to keep…</option>${INST.filter((o) => o.id !== i.id).map((o) => `<option value="${esc(o.id)}">${esc(o.name)} (${o.homes})</option>`).join("")}</select><button class="btn ghost danger" type="button" id="iMergeGo">Merge</button></div></details>
+    <details class="mdet"><summary>Delete this profile</summary><p class="meta">Removes the profile, its quote requests and its page counts. Homes that named it stay, with no installer. Needs the name typed. No email is sent.</p><div class="mfoot" style="margin-top:0"><input id="iDelName" placeholder="Type ${esc(i.name)}" aria-label="Type the installer name to delete" style="flex:1;min-width:200px"><button class="btn ghost danger" type="button" id="iDelGo">Delete profile</button></div></details>`, true);
   wireAreas(m); m.querySelector("#mClose").onclick = close;
   const msg = (t, bad) => { const e = $("#iMsg"); e.className = bad ? "msg err" : "msg"; e.textContent = t; };
   $("#iForm").onsubmit = async (e) => { e.preventDefault(); const body = { action: "edit" }; m.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value)); try { await instAct(i.id, body); toast("Saved"); await openInstaller(i.id); refreshCounts(); } catch (er) { msg(er.message, true); } };
+  $("#iDelGo").onclick = async () => { try { await instAct(i.id, { action: "delete", confirm: $("#iDelName").value }); close(); toast("Profile deleted"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
   $("#iMergeGo").onclick = async (e) => { const into = $("#iMerge").value; if (!into) return msg("Choose the profile to keep.", true); if (!tap(e.target, "merge")) return; try { await instAct(i.id, { action: "merge", into }); close(); toast("Merged"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
 }
 $("#main").addEventListener("click", async (e) => {
@@ -1427,7 +1442,7 @@ async function renderOutreach() {
   setDetail("");
   main.innerHTML = `<div class="pghead"><div><h2>Outreach</h2><p>Grok checks the app before every send through a narrow, key-protected API that returns only a status word. Nothing here shows a name or an address, and nothing you paste below is stored.</p></div></div>
     <h2 class="dh">Status</h2><div class="ugrid">${apiCard}
-      <article class="ucard u-ok" aria-label="Suppression list"><div class="uh"><h3>Do-not-contact list</h3><span class="tag">${fmt(d.suppression.count)} hashed</span></div><p class="meta" style="margin:8px 0 0">One-way hashes only. Added by Grok (replies, bounces, complaints, unsubscribes), by the app (any marketing unsubscribe, deleted accounts) or by hand.</p></article></div>
+      <article class="ucard u-ok" aria-label="Suppression list"><div class="uh"><h3>Do-not-contact list</h3><span class="tag">${fmt(d.suppression.count)} hashed</span></div><p class="meta" style="margin:8px 0 0">One-way hashes only. Added by Grok (replies, bounces, complaints, unsubscribes), by the app (any marketing unsubscribe, deleted accounts) or by hand below.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><input id="orsupEmail" type="email" placeholder="name@example.com" aria-label="Email address" style="flex:1;min-width:180px"><button type="button" class="btn ghost sm" id="orsupAdd">Do not contact</button><button type="button" class="btn ghost danger sm" id="orsupDel">Allow contact again</button></div><span class="msg" id="orsupMsg" role="status"></span></article></div>
     <h2 class="dh">Reconcile a sent log</h2>
     <p class="meta" style="margin:0 0 8px">Paste up to 500 addresses (one per line, or a whole export: any text with addresses in it) or choose a .csv or .txt file. You get counts by status and a CSV for your records. Computed now, not stored.</p>
     <label for="orlog" class="meta">Addresses</label><textarea id="orlog" rows="6" style="width:100%;box-sizing:border-box;font:inherit;background:transparent;color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:10px" spellcheck="false" autocomplete="off"></textarea>
@@ -1442,6 +1457,14 @@ async function renderOutreach() {
   let list = [];
   const note = $("#ornote"), out = $("#orout");
   $("#orfile").onchange = async (e) => { const f = e.target.files[0]; e.target.value = ""; if (!f) return; if (f.size > 2e6) { note.textContent = "That file is too big."; return; } $("#orlog").value = await f.text(); note.textContent = `${fmt(parseEmails($("#orlog").value).length)} addresses found.`; };
+  const supAct = async (action, btnEl) => {
+    const m = $("#orsupMsg"), email = $("#orsupEmail").value.trim(); m.className = "msg";
+    if (!email) { m.className = "msg err"; m.textContent = "Type the email address first."; return; }
+    if (action === "unsuppress" && !tap(btnEl, "allow contact again")) return;
+    try { const r = await api("/api/admin/outreach", { method: "POST", body: JSON.stringify({ action, email }) }); m.textContent = action === "suppress" ? `Added (${r.prefix}).` : `Removed (${r.prefix}). It can be contacted again.`; $("#orsupEmail").value = ""; }
+    catch (er) { m.className = "msg err"; m.textContent = er.message; }
+  };
+  $("#orsupAdd").onclick = (e) => supAct("suppress", e.target); $("#orsupDel").onclick = (e) => supAct("unsuppress", e.target);
   $("#orrun").onclick = async (e) => {
     list = parseEmails($("#orlog").value); out.innerHTML = "";
     if (!list.length) { note.textContent = "Paste some addresses first."; return; }
@@ -1650,7 +1673,7 @@ async function renderReports() {
       <section class="rcard"><h3>Overview</h3>${kv([["Status", `<span class="tag ${t[1]}">${t[0]}</span>`], ["Received", when(r.createdAt)], ["Contact", `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`], ["Listing id", r.ref ? `<code>${esc(r.ref)}</code>` : ""], ["Typed address", esc(r.address || "")], ["Note", esc(r.note || "")]])}</section>
       ${l ? `<section class="rcard"><h3>Listing</h3>${kv([["Home", esc([l.name, l.address, l.city].filter(Boolean).join(", "))], ["Added by", l.addedBy ? "An organizer" : ""], ["Organizer confirmed", l.consent ? `${esc(l.consent.email)} on ${esc(l.consent.created_at)} (${l.consent.n} homes, wording ${esc(l.consent.version)})` : ""]])}</section>` : ""}
       ${!done && !l ? `<section class="rcard"><h3>Possible matches</h3>${r.matches.length ? `<p class="meta" style="margin:0 0 8px">No listing id. Matches by address:</p><div class="row" style="gap:8px;flex-wrap:wrap">${r.matches.map(pick).join("")}</div>` : `<p class="meta" style="margin:0">No listing id and no address match. Search the Events tab by street, then close this request.</p>`}</section>` : ""}
-      ${done ? `<section class="rcard"><h3>Handled</h3>${kv([["When", esc(r.handledAt || "")], ["Listing", esc(r.target || "")], ["Admin note", esc(r.adminNote || "")]])}</section>` : ""}</div>`;
+      ${done ? `<section class="rcard"><h3>Handled</h3>${kv([["When", esc(r.handledAt || "")], ["Listing", esc(/^restored:/.test(r.target || "") ? "Entry put back in its contest" : r.target || "")], ["Admin note", esc(r.adminNote || "")]])}</section>` : ""}</div>`;
     window.scrollTo(0, 0);
     main.querySelector("#rmBack").onclick = (e) => { e.preventDefault(); RMOPEN = ""; setDetail(""); renderReports(); };
     return;
@@ -1661,7 +1684,7 @@ async function renderReports() {
   const wire = () => { main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { RPVIEW = b.dataset.view; renderReports(); })); main.querySelectorAll("[data-ropen]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); RMOPEN = a.dataset.ropen; renderReports(); })); };
   if (RPVIEW === "reports") {
     main.innerHTML = head + `<div class="pghead"><div><h2>Visitor reports</h2><p>From the "Something wrong? Tell us" link on events and houses. Fix the event or house, then dismiss the report.</p></div><div class="pgacts">${dl("reports")}</div></div>`
-      + (list.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>About</th><th>Message</th><th>Reply to</th><th>Received</th><th class="ac">Actions</th></tr></thead><tbody>${list.map((r) => `<tr data-rid="${esc(r.id)}"><td><b>${esc(r.name || r.ref)}</b><span class="sub"><code>${esc(r.ref)}</code></span></td><td style="white-space:pre-line;min-width:200px">${esc(r.message)}</td><td>${r.contact ? `<a class="rl" href="mailto:${esc(r.contact)}">${esc(r.contact)}</a>` : "They left no email"}</td><td>${when(r.created_at)}</td><td class="ac"><div class="racts">${btn("ghost", "Open Events", 'data-tab="events"').replace('class="btn ghost"', 'class="btn ghost sm"')}${btn("danger", "Dismiss", "data-rdismiss").replace('class="btn ghost danger"', 'class="btn ghost danger sm"')}</div></td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${list.length} report${list.length === 1 ? "" : "s"}</span></div></div>` : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`);
+      + (list.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>About</th><th>Message</th><th>Reply to</th><th>Received</th><th class="ac">Actions</th></tr></thead><tbody>${list.map((r) => `<tr data-rid="${esc(r.id)}"><td><b>${esc(r.name || r.ref)}</b>${/Objectionable content/i.test(r.message || "") ? (Date.now() - new Date(String(r.created_at).replace(" ", "T") + "Z").getTime() > 864e5 ? ' <span class="tag bad">Objectionable · over 24 h</span>' : ' <span class="tag warn">Objectionable · act within 24 h</span>') : ""}<span class="sub"><code>${esc(r.ref)}</code></span></td><td style="white-space:pre-line;min-width:200px">${esc(r.message)}</td><td>${r.contact ? `<a class="rl" href="mailto:${esc(r.contact)}">${esc(r.contact)}</a>` : "They left no email"}</td><td>${when(r.created_at)}</td><td class="ac"><div class="racts">${btn("ghost", "Open Events", 'data-tab="events"').replace('class="btn ghost"', 'class="btn ghost sm"')}${btn("danger", "Dismiss", "data-rdismiss").replace('class="btn ghost danger"', 'class="btn ghost danger sm"')}</div></td></tr>`).join("")}</tbody></table></div><div class="pager"><span class="meta">${list.length} report${list.length === 1 ? "" : "s"}</span></div></div>` : `<div class="empty">No reports. Visitors can send one from the "Something wrong? Tell us" link on any event or house.</div>`);
     wire(); return;
   }
   main.innerHTML = head + `<div class="pghead"><div><h2>Home removals</h2><p>A resident asked us to take a home off the site, or an entrant asked to be put back in a contest (tagged Restore). Approving a removal deletes the listing (and any photos), marks it done and emails the person. Decline emails them your note. Aim to answer within two business days.</p></div></div>`

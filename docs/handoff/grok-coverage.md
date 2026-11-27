@@ -90,17 +90,20 @@ Follow `docs/city-sweep.md`, `docs/sweep-methods.md` and `docs/blocked-sites.md`
 
 New watchlist venues and blocked sites go to Claude as a request in `docs/handoff/to-claude/`. Grok does not edit `docs/watchlist.json` or `docs/blocked-sites.md`.
 
-## 2026-11-26
+## 2026-11-25
 
-Parent sources checked:
-- Riverside County Library LibCal feed (rivlib.libcal.com list ajax), Nov 27–Dec 31: gave first events for Valle Vista, Woodcrest, Highgrove and French Valley, plus Anza, Desert Hot Springs, Cathedral City and Idyllwild (city Hemet).
-- SB County Library tribe events API: only Winter Luau and generic crafts, nothing seasonal enough. Skipped.
-- City pages: Palmdale newsflash (3 pages, then the connection dropped), Carson events list, La Puente (tree lighting, movie in the park), Temecula Holidays, Los Alamitos calendar, Menifee.
-- Hospitality and hotel pass: Catamaran, Balboa Bay, Fairmont Breakers, Four Seasons LA and Westlake Village, Baltaire, Terranea, Avalon Palm Springs, Hotel del (no time; queued) and Waldorf Monarch Beach (403; queued).
-- Small Business Saturday: OC SBDC Anaheim, Crafted San Pedro, Laguna Beach Promenade, and Bella Terra (queued).
+Grok re-run after the intake key was rotated.
 
-Focus categories: home-displays and lunar, with an NYE share. Light-shows were yesterday's focus.
-Home displays: city maps (Temecula's comes out the week of Dec 7) and news light tours were checked. Listing sites only had 2025 data, so none were added.
+Work order fetched with `skip_attempted_days=7` (offsets 0 and 500): 366 to confirm + 616 without a photo = 982 rows.
+
+Focus categories: **light-shows** (37/40, LOW) and **lunar** (22/25, LOW), with Thanksgiving Day items first.
+- **Hospitality pass (Thanksgiving):** 6 published: Balboa Bay Resort, Tangerine Room at The Westin Anaheim, Pelican Hill (Mar Vista), Brass Bear (Santa Barbara), Ox & Ocean at Zachari Dunes (Oxnard), Boathouse on the Bay (Long Beach). Plus The Midnight Mission's community Thanksgiving (Skid Row). Fairmont Grand Del Mar was already on the map. Orange Hill (Orange) and Hyatt Regency Huntington Beach (Tock) are 403 from the box, so they're queued.
+- **Malls:** Manhattan Village tree lighting (Nov 27), Montclair Place (pet photos with Santa, gingerbread event, sensory Santa), Mountain Grove/Citrus Plaza Holly Jolly Holiday Fest (Redlands).
+- **Parks & rec / libraries (parent sources):** City of Artesia special-events pages (Community Holiday Party), Upland special events (Breakfast With Santa), San Bernardino city calendar (Feldheym Library Santa visit), Chino Hills calendar (tree lighting confirmed), Riverside Festival of Lights page (Santa's House; Candy Lane has no hours yet).
+- **Light shows:** Santa Barbara Trolley of Lights (light tour) published. Checked against the map and already there: Tanaka Farms Hikari, Sherman Gardens Merry & Bright, Six Flags Holiday in the Park, Solvang Julefest shows, Moorpark Wild Lights, Thoroughbred St.
+- **Lunar:** Alhambra hours corrected (8am–5pm, chamber page). San Diego Tết 2027 (Feb 12–14, NTC Park) is queued because the site is script-only with no hours. The UVSA Tết page still shows 2026 dates.
+- **Empty cities:** 0 new. None of today's sources covered an empty city.
+- Next run: OC Public Libraries (libraries.oc.gov/events) for OC unincorporated places (carried over), and the 2026 home-decorating contest winner lists as they post (MVAC Dec 11, Rossmoor, Glendale, Arcadia).
 
 ## 2026-11-24
 
