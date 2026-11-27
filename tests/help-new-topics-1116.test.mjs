@@ -24,7 +24,7 @@ const NEW = {
   "socal-lights-iphone-app": ["public/auth.js", ["SoCalLightsApp"]],
   "i-saw-it-lit-tonight": ["public/app.js", ["I saw it lit tonight", "Thanks, noted as lit", "Seen lit on site tonight", "Reported lit tonight"]],
   "share-an-event-or-a-home": ["public/app.js", ["Link copied", "/e/", 'aria-label="Share"']],
-  "browse-events-by-city": ["public/app.js", ["Browse by city"]],
+  "browse-events-by-city": ["public/app.js", ["Search places"]],
   "what-featured-and-sponsor-labels-mean": ["public/app.js", ["Featured", "Event Partner"]],
   "why-a-winery-or-hotel-event-is-listed": ["public/app.js", ["Something wrong? Tell us"]],
   "what-cancelled-and-postponed-mean": ["public/app.js", ["Cancelled", "Postponed"]],
