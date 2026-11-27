@@ -2061,3 +2061,7 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 
 ### Impeccable design skill installed (2026-11-27)
 - Owner asked for it (https://github.com/pbakaus/impeccable, Apache 2.0, v4.11.1). Installed as `.claude/skills/impeccable/` (SKILL.md + reference markdown only). Its hooks and launcher scripts were NOT installed (they run shell commands after every edit); see `.claude/skills/impeccable/README-SOCAL.md`. Next: run `audit`/`critique`/`polish` on the contest manage, profile and Admin screens.
+
+### Design audit pass 1 (Impeccable audit, 2026-11-27) — fixed
+- Contest/installer/judge pages: breadcrumb is one 44 px line ("‹ Your profile", or "‹ Admin: …" when acting as owner) instead of a three-line trail repeating the title. Yard sign: QR and spacing resized so "Scan to vote" clears the lights/motif strip. `.btn.sm` and `.qlink` in contest.css are 44 px (were 38/32). Admin phone: header icons, logo link and row action buttons 44 px; list checkboxes 24 px. Profile phone: row buttons sit two to a line; "Edit name & address" 44 px; links in lists use the themed link colour. Versions bumped: contest.css/printables.css/printables.js/profile.css `20261127*`, admin.css `20261127b`.
+- Left alone: inline text links (exempt from the target-size rule); Admin Contests intro paragraph length; the one-sided red bar on notice boxes (the skill's craft floor calls it a default to avoid; it is used site-wide, so changing it is a separate decision).

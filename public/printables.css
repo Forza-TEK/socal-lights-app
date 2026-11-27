@@ -21,8 +21,8 @@
 .pz-url span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80cqw}
 .pz-url img{width:5cqw;height:5cqw;border-radius:50%}
 /* yard sign: one huge word and a big code */
-.pz-sign .pz-in{padding-top:16.5cqw}
-.pz-vote{font-size:24cqw;font-weight:800;line-height:.95;letter-spacing:-.03em;color:var(--hi);text-shadow:.9cqw .9cqw 0 var(--hi2),0 0 3cqw rgba(0,0,0,.25);-webkit-text-stroke:.5cqw rgba(0,0,0,.18)}
+.pz-sign .pz-in{padding-top:13.5cqw}
+.pz-vote{font-size:22cqw;font-weight:800;line-height:.95;letter-spacing:-.03em;color:var(--hi);text-shadow:.9cqw .9cqw 0 var(--hi2),0 0 3cqw rgba(0,0,0,.25);-webkit-text-stroke:.5cqw rgba(0,0,0,.18)}
 .pz-for{font-size:4.4cqw;font-weight:700;margin-top:1cqw;color:var(--ink)}
 .pz-sign .pz-name{font-size:var(--ns,5cqw);margin-top:1.6cqw;color:var(--ink);opacity:.92}
 .pz-sign .pz-qr{margin:3cqw 0 2cqw}

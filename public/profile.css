@@ -61,3 +61,8 @@ body.prof .sh-content,body.prof .sh-content.main{display:block}
 /* row actions: the less-used ones are behind "More"; opened, the menu takes its own line under the buttons */
 .prof .list .acts .amore{position:relative}.prof .list .acts .amore[open]{flex:1 1 100%}.prof .amore summary{list-style:none;cursor:pointer}.prof .amore summary::-webkit-details-marker{display:none}.prof .amore[open] summary{background:var(--surface-2)}
 .prof .amenu{display:grid;gap:8px;max-width:340px;margin:8px 0 0 auto;padding:10px;border-radius:14px;background:var(--surface-2)}.prof .amenu .btn,.prof .amenu select{width:100%;justify-content:center}
+
+/* phone: row buttons share the width evenly (two to a line) instead of one lonely button wrapping onto its own line */
+@media (max-width:560px){.prof .list .acts{justify-content:stretch}.prof .list .acts>.btn,.prof .list .acts>.amore:not([open]){flex:1 1 calc(50% - 6px);min-width:0;text-align:center;justify-content:center}.prof .list .acts>.amore:not([open])>summary{display:flex;align-items:center;justify-content:center;width:100%}}
+.prof .who #editprof{min-height:44px}
+.prof .list a:not(.btn){color:var(--ice);text-underline-offset:3px}
