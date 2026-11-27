@@ -118,7 +118,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
 
   if (body.action === "decline") {
     // The photos stay in the private pending/ folder so a decline can be undone. The person is emailed the reason, if you wrote one.
-    await env.DB.prepare("UPDATE posts SET status='declined' WHERE id=?").bind(row.id).run();
+    await env.DB.prepare("UPDATE posts SET status='declined', review_note=? WHERE id=?").bind(clean(body.reason, 400), row.id).run(); // the reason is kept so the owner's profile can show it
     await markHomeRefundDue(env.DB, row.id, "The home was declined while a paid Featured placement was running. Refund it in Stripe, then mark it refunded.");
     // The mail links to the person's own answers (saved as a draft on their account), not a blank form
     const link = row.contest_id ? "" : await declinedDraft(env, row).catch(() => "");
@@ -127,7 +127,7 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   }
   if (body.action === "restore") {
     if (row.status !== "declined") return err(400, "Only a declined house can be restored.");
-    await env.DB.prepare("UPDATE posts SET status='pending' WHERE id=?").bind(row.id).run();
+    await env.DB.prepare("UPDATE posts SET status='pending', review_note='' WHERE id=?").bind(row.id).run();
     return json({ ok: true });
   }
 

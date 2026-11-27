@@ -2,7 +2,7 @@
 // GET  /api/admin/outreach                       -> { api, suppression: { count, last }, results: [by segment and step], totals, conversions }
 // POST /api/admin/outreach { action: "reconcile", emails: [up to 500] } -> { counts, due: { 0, 1, 2 }, rows: [{ i, status, reasons, sequence }] }  (the page builds the CSV from its own copy of the list)
 import { json, err } from "../../_lib/util.js";
-import { checkEmails, outreachHashes, cleanEmail, SEGMENTS } from "../../_lib/outreach.js";
+import { checkEmails, outreachHashes, cleanEmail, validEmail, addSuppression, SEGMENTS } from "../../_lib/outreach.js";
 import { ptDate } from "../../_lib/time.js";
 import { logOp } from "../../_lib/oplog.js";
 
@@ -78,6 +78,20 @@ export async function onRequestGet({ env }) {
 
 export async function onRequestPost({ request, env }) {
   const b = (await request.json().catch(() => null)) || {};
+  if (b.action === "suppress" || b.action === "unsuppress") {
+    // Add an address to the do-not-contact list by hand (a request from a person), or take one off (a mistake or a person who asked to hear from us again). Only hashes are stored.
+    const email = cleanEmail(b.email);
+    if (!validEmail(email)) return err(400, "Enter a full email address.");
+    const { h, n } = await outreachHashes(env, email);
+    if (b.action === "suppress") { await addSuppression(env, email, "manual", "admin"); }
+    else {
+      const had = await env.DB.prepare("SELECT COUNT(*) AS n FROM outreach_suppressions WHERE email_hash IN (?, ?)").bind(h, n).first();
+      if (!had || !had.n) return err(404, "That address isn't on the list.");
+      await env.DB.prepare("DELETE FROM outreach_suppressions WHERE email_hash IN (?, ?)").bind(h, n).run();
+    }
+    await logOp(env, "outreach", `admin ${b.action}`);
+    return json({ ok: true, prefix: h.slice(0, 8) });
+  }
   if (b.action !== "reconcile") return err(400, "Unknown action.");
   const emails = b.emails;
   if (!Array.isArray(emails) || !emails.length || emails.length > MAX_RECONCILE || !emails.every((e) => typeof e === "string" && e.length <= 320)) return err(400, `Paste between 1 and ${MAX_RECONCILE} email addresses.`);

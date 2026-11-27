@@ -1,10 +1,11 @@
-// POST   /api/admin/contests/<id> { action: "approve" | "decline" | "edit", ...fields for edit } — approve = live and on the map (and clears the review note), decline = take it off the map.
+// POST   /api/admin/contests/<id> { action: "approve" | "decline" | "unannounce" | "edit", ...fields for edit } — approve = live and on the map (and clears the review note), decline = take it off the map.
 // DELETE /api/admin/contests/<id> — removes the contest and everything in it.
 import { json, err } from "../../../_lib/util.js";
 import { CITY } from "../../../../public/cities.js";
 import { listOnMap, unlistFromMap, deleteContest, todayPT } from "../../../_lib/contests.js";
 import { orgKeyFor } from "../../../_lib/passkey.js";
 import { orgState, orgLabel } from "../../../_lib/passes.js";
+import { logContest } from "../../../_lib/changes.js";
 import { tell } from "../../../_lib/notify.js";
 
 export async function onRequestPost({ params, request, env, waitUntil }) {
@@ -59,6 +60,20 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
     await unlistFromMap(env, c, "declined by Admin");
     tell(env, waitUntil, c.contact_email, "contest_unpublished", { name: c.name, reason: String(b.reason || "").trim().slice(0, 400) });
     return json({ ok: true });
+  }
+  if (b.action === "unannounce") {
+    // Undo a mistaken announcement: votes open again (the vote window is whatever the dates say), the frozen results are dropped, and results emails that haven't gone out yet are cancelled.
+    // Emails that were already sent can't be recalled; the dedupe rows are cleared so announcing again emails everyone the corrected results.
+    if (!c.announced) return err(400, "This contest's winners are not announced.");
+    const reason = String(b.reason || "").trim().slice(0, 400);
+    if (reason.length < 3) return err(400, "Say why (a few words). It is written in the contest's change log.");
+    const mail = await env.DB.prepare("SELECT COUNT(*) AS sent FROM mail_outbox WHERE dedupe LIKE ? AND status = 'sent'").bind(`results:${c.id}:%`).first().catch(() => ({ sent: 0 }));
+    await env.DB.batch([
+      env.DB.prepare("UPDATE contests SET announced = 0, results = '', updated_at = datetime('now') WHERE id = ?").bind(c.id),
+      env.DB.prepare("DELETE FROM mail_outbox WHERE dedupe LIKE ?").bind(`results:${c.id}:%`),
+    ]);
+    await logContest(env, c.id, { email: "admin", name: "SoCal Lights" }, [{ label: "Winners", old: "Announced and locked", new: "Announcement undone by SoCal Lights: " + reason }]).catch(() => {});
+    return json({ ok: true, alreadyEmailed: mail ? mail.sent : 0 });
   }
   return err(400, "Unknown action.");
 }

@@ -1,11 +1,12 @@
 // GET /api/installers/<slug>/manage — the owner's dashboard data: details, homes that name them (to confirm or remove), page views, quote requests.
-// POST { action: "edit" | "confirm" | "remove" } — edit details (web, phone, area, blurb), confirm a homeowner's claim, or take it off.
+// POST { action: "edit" | "confirm" | "remove" | "hide" | "show" | "delete" } — edit details (web, phone, area, blurb), confirm a homeowner's claim, or take it off.
 import { json, err, clean, webUrl } from "../../../_lib/util.js";
 import { sendTemplate } from "../../../_lib/mailtpl.js";
 import { selectIn } from "../../../_lib/dbchunk.js";
 import { getUser, sameOrigin } from "../../../_lib/auth.js";
 import { phoneField, line, normText } from "../../../_lib/fields.js";
 import { INSTALLER_PLANS, ptToday } from "../../../_lib/featured.js";
+import { flagRefundDue, restoreRefundDue } from "../../../_lib/orders.js";
 import { renewalFor, renewingPlan, cancelRenewal, consentText, CONSENT_VERSION, usd } from "../../../_lib/renewal.js";
 import { stripeCall, checkoutLimit } from "../../../_lib/stripe.js";
 
@@ -33,7 +34,7 @@ export async function onRequestGet({ params, request, env }) {
   for (const h of shared) h.changes = ch.filter((c) => c.post_id === h.id).slice(0, 8);
   const rn = await renewalFor(env, inst.id).catch(() => null), run = renewingPlan(inst, ptToday()), rp = INSTALLER_PLANS[(rn && rn.plan) || (run && run.plan) || "banner"];
   const renewal = { on: !!(rn && rn.enabled === 1 && rn.status === "active"), status: rn ? rn.status : "off", plan: rp.label, price: usd(rp.cents), next_charge_date: rn && rn.enabled === 1 && rn.status === "active" ? rn.next_charge_date : "", last_error: rn && rn.status === "lapsed" ? rn.last_error : "", canTurnOn: !!run, consent: consentText(rp.cents) };
-  return json({ renewal, installer: { slug: inst.slug, name: inst.name, web: inst.web, phone: inst.phone, area: inst.area, blurb: inst.blurb, hasLogo: !!inst.logo }, claims, shared, homes: homes[0].n, views: views.reverse(), viewsTotal: views.reduce((s, v) => s + v.n, 0), leads, banner: banner ? { until: inst.banner_until, top: !!(inst.top_until && inst.top_until >= today), ...banner } : null, placement: { banner_until: inst.banner_until >= today ? inst.banner_until : "", top_until: inst.top_until >= today ? inst.top_until : "" } }, { headers: { "cache-control": "no-store" } });
+  return json({ renewal, installer: { slug: inst.slug, status: inst.status, name: inst.name, web: inst.web, phone: inst.phone, area: inst.area, blurb: inst.blurb, hasLogo: !!inst.logo }, claims, shared, homes: homes[0].n, views: views.reverse(), viewsTotal: views.reduce((s, v) => s + v.n, 0), leads, banner: banner ? { until: inst.banner_until, top: !!(inst.top_until && inst.top_until >= today), ...banner } : null, placement: { banner_until: inst.banner_until >= today ? inst.banner_until : "", top_until: inst.top_until >= today ? inst.top_until : "" } }, { headers: { "cache-control": "no-store" } });
 }
 export async function onRequestPost({ params, request, env }) {
   if (!sameOrigin(request)) return err(403, "Not allowed.");
@@ -46,6 +47,25 @@ export async function onRequestPost({ params, request, env }) {
     const ph = phoneField(b.phone); if (ph.error) return err(400, ph.error);
     await env.DB.prepare("UPDATE installers SET web=?, phone=?, area=?, blurb=? WHERE id=?").bind(web || "", ph.value, line(b.area, 240), normText(clean(b.blurb, 600)), inst.id).run();
     return json({ ok: true });
+  }
+  if (b.action === "hide" || b.action === "show" || b.action === "delete") {
+    // The owner can take their own profile off the site (hide, and show again) or delete it. A paid Sponsor placement that is still running would be cut off, so that needs us.
+    const today = ptToday(), running = (inst.banner_until && inst.banner_until >= today) || (inst.top_until && inst.top_until >= today);
+    if (b.action !== "show" && running) return err(409, "Your paid Sponsor placement is still running. Email info@socallights.app and we will end it (and refund what applies) so the profile can come down.");
+    if (b.action === "show") { await env.DB.prepare("UPDATE installers SET status = 'active' WHERE id = ?").bind(inst.id).run(); await restoreRefundDue(env.DB, { installers: [inst.id] }); return json({ ok: true, status: "active" }); }
+    if (b.action === "hide") { await env.DB.prepare("UPDATE installers SET status = 'hidden' WHERE id = ?").bind(inst.id).run(); await flagRefundDue(env.DB, { installers: [inst.id] }, "The owner hid the installer profile while a paid Sponsor placement was on record. Refund it in Stripe, then mark it refunded here.", { restorable: true }); return json({ ok: true, status: "hidden" }); }
+    if (String(b.confirm || "").trim().toLowerCase() !== String(inst.name || "").trim().toLowerCase()) return err(400, "Type the company name exactly to delete the profile.");
+    const paid = await env.DB.prepare("SELECT COUNT(*) AS n FROM feature_orders WHERE target = 'installer' AND event_id = ? AND status IN ('paid','refund_due','held')").bind(inst.id).first();
+    if (paid && paid.n) return err(409, "This profile has a paid Sponsor order on record. Email info@socallights.app and we will close it out first.");
+    await flagRefundDue(env.DB, { installers: [inst.id] }, "The owner deleted the installer profile while a paid Sponsor placement was on record. Refund it in Stripe, then mark it refunded here.");
+    await env.DB.batch([
+      env.DB.prepare("UPDATE posts SET installer_id = '', installer_confirmed = 0 WHERE installer_id = ?").bind(inst.id),
+      env.DB.prepare("DELETE FROM installer_leads WHERE installer_id = ?").bind(inst.id),
+      env.DB.prepare("DELETE FROM installer_hits WHERE installer_id = ?").bind(inst.id),
+      env.DB.prepare("DELETE FROM banner_stats WHERE installer_id = ?").bind(inst.id),
+      env.DB.prepare("DELETE FROM installers WHERE id = ?").bind(inst.id),
+    ]);
+    return json({ ok: true, deleted: true });
   }
   if (b.action === "renewal_off") { const rn = await renewalFor(env, inst.id); const was = await cancelRenewal(env, rn, "dashboard"); return json({ ok: true, was_on: was }); }
   if (b.action === "renewal_on") {

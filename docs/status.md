@@ -2048,3 +2048,10 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 ### Audit round 7 (2026-11-26)
 - Installer confirm link no longer changes anything on a plain open (mail scanners): GET shows a button, POST confirms. Admin Reports: "Objectionable content" reports sort first with an "act within 24 h" / "over 24 h" badge. Admin `?v=20261126l`.
 - Still open: report handled-state/undo, failed-email list, installer self-hide, un-announce winners, stored decline reasons, Admin do-not-contact control, contest-pass merge preview.
+
+### Five builds requested 2026-11-27
+- **Un-announce (Admin only):** contest record > "Undo announcement" (reason required, written to the organizer's change log). Unlocks the contest, drops the frozen results, clears queued AND sent results mail rows so announcing again emails everyone the corrected results; it says how many were already emailed (can't be recalled). Nobody is emailed about the undo.
+- **Decline reasons kept:** posts use `review_note` (cleared on restore/resubmit); event submissions use new column `decline_reason` (migration 0297; every read/write tolerates the column not existing yet). The owner's profile shows "Why: …" on declined displays and events.
+- **Do-not-contact list in Admin > Outreach:** type an address to add ("Do not contact") or remove ("Allow contact again", tap-twice). Hashes only.
+- **Installers can hide/show/delete their own profile** (Details panel). Refused while a paid Sponsor placement is running or on record (they are told to email us); delete needs the typed company name.
+- **Voters are emailed** (template `vote_withdrawn`, one per voter per home) when a home they voted for is withdrawn while voting is open; not after voting ends. Admin removal and organizer decline do not send it yet.
