@@ -16,7 +16,7 @@ body{padding-bottom:60px}
 .status{border-left:2px solid var(--season);padding:2px 0 2px 14px;font-size:15px;color:var(--muted)}.status.no{border-color:var(--season)}.status.ok{border-color:var(--ok)}
 .actions{display:flex;gap:12px;flex-wrap:wrap}
 .btn.org{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}.btn.bad{background:transparent;color:var(--bad);border-color:var(--bad)}
-.btn.sm{min-height:38px;padding:7px 16px;font-size:14px}
+.btn.sm{min-height:44px;padding:7px 16px;font-size:14px}
 .btn[aria-disabled="true"]{opacity:.35;pointer-events:none}
 .vrow{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}.vrow:first-of-type{border-top:0}
 .vrow img,.vrow .ph{width:72px;height:54px;object-fit:cover;border-radius:8px;background:var(--tile);display:block}.vrow b{display:block;font-weight:500;line-height:1.3;overflow-wrap:anywhere}.vrow .meta{font-size:14px;color:var(--muted);display:block}
@@ -105,7 +105,7 @@ body{padding-bottom:60px}
 /* Organizer dashboard: small quiet actions, and the "needs your OK" group first */
 .entr.pend{background:color-mix(in srgb,var(--season) 7%,transparent);border-radius:12px;padding-left:10px;padding-right:10px}
 .enth{margin:0 0 4px;font-size:15px;font-weight:600}
-.qlink{background:none;border:0;padding:6px 4px;min-height:32px;font:inherit;font-size:14px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.qlink{background:none;border:0;padding:6px 4px;min-height:44px;font:inherit;font-size:14px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .qlink:hover{color:var(--ink)}
 .cfm{display:grid;gap:12px}.cfm ul{margin:0;padding-left:20px;display:grid;gap:6px}.cfm li.warn{color:var(--ink);font-weight:600}.cfm li.fine{color:var(--muted)}
 .annc h2{margin:0}.annc .actions{display:flex;gap:8px;flex-wrap:wrap}

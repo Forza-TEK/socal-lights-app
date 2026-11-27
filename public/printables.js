@@ -64,7 +64,7 @@ export function printable(o) {
   const th = themeFor(o.season), sign = o.kind === "sign", name = esc(o.name), host = [o.org, o.city].filter(Boolean).map(esc).join(" · ");
   const when = [o.entriesClose ? `Enter by ${fmt(o.entriesClose)}` : "", o.voteStart && o.voteEnd ? `Voting ${fmt(o.voteStart)} to ${fmt(o.voteEnd)}` : ""].filter(Boolean);
   const nl = String(o.name || "").length, ns = sign ? (nl > 60 ? 3.6 : nl > 38 ? 4.2 : 5) : (nl > 60 ? 4 : nl > 38 ? 4.6 : 5);
-  const qs = sign ? (nl > 38 ? 33 : 39) : 31;
+  const qs = sign ? (nl > 38 ? 27 : 32) : 31; // the code is sized so the text under it clears the light-and-motif strip along the bottom edge
   const style = `--ns:${ns}cqw;--qs:${qs}cqw;--bg1:${th.bg[0]};--bg2:${th.bg[1]};--ink:${th.ink};--hi:${th.hi};--hi2:${th.hi2};--dim:${th.dim}`;
   const frame = `<div class="pz-qr"><div class="pz-qrin">${o.qr || ""}</div></div>`;
   const body = sign

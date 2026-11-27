@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/tokens.css?v=20261124a">
 <link rel="stylesheet" href="/addflow.css?v=20261124b">
-<link rel="stylesheet" href="/contest.css?v=20261117b">
+<link rel="stylesheet" href="/contest.css?v=20261127a">
 <link rel="stylesheet" href="/forms.css?v=20261117b">
 <style>main{max-width:900px}.thumb{width:56px;height:42px;object-fit:cover;border-radius:8px;background:var(--surface-2);display:block}</style>
 <script src="/hit.js?v=20261107a" defer></script>
@@ -85,9 +85,9 @@ function render() {
   // A way back (Admin first when an admin is acting as the owner)
   if (!document.getElementById("crumbs")) {
     const acting = !!document.querySelector('script[src*="as-shim"]'), nav = document.createElement("nav");
-    nav.id = "crumbs"; nav.setAttribute("aria-label", "Breadcrumb"); nav.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:15px;margin:0 0 14px;color:var(--muted)";
-    nav.innerHTML = (acting ? '<a href="/admin/#installers">Admin</a><span aria-hidden="true">›</span>' : '<a href="/profile">Your profile</a><span aria-hidden="true">›</span>') + '<b style="color:var(--ink,inherit)">' + esc(x.name) + "</b>";
-    nav.querySelectorAll("a").forEach((a) => (a.style.cssText = "color:inherit;text-decoration:underline;padding:10px 2px"));
+    nav.id = "crumbs"; nav.setAttribute("aria-label", "Breadcrumb"); nav.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:15px;margin:0 0 4px;color:var(--muted)";
+    nav.innerHTML = acting ? '<a href="/admin/#installers">‹ Admin: Installers</a>' : '<a href="/profile">‹ Your profile</a>';
+    nav.querySelectorAll("a").forEach((a) => (a.style.cssText = "color:inherit;text-decoration:underline;display:inline-flex;align-items:center;min-height:44px;padding:0 2px"));
     const host = document.querySelector("main") || document.body; host.insertBefore(nav, host.firstChild);
   }
   wireAreas(document); showPanel(); shell.own(true); shell.setTitle(x.name);
