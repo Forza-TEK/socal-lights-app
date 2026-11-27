@@ -90,6 +90,21 @@ Follow `docs/city-sweep.md`, `docs/sweep-methods.md` and `docs/blocked-sites.md`
 
 New watchlist venues and blocked sites go to Claude as a request in `docs/handoff/to-claude/`. Grok does not edit `docs/watchlist.json` or `docs/blocked-sites.md`.
 
+## 2026-11-27
+
+- Focus: **runs** (primary, 60/90 at start; 18 christmas trot rows published, about 78/90 now). Secondary: **light-shows** (37/40; no new qualifying shows found). NYE share: 4 venue NYE parties, 4 New Year runs, 3 Noon Year's Eve library events. Yesterday's focus was home-displays and lunar.
+- Empty cities: first events for Lawndale, El Monte, South El Monte and Bonita. 145 of 149 remain.
+- Parent sources checked:
+  - SD County Library BiblioCommons (Crest, Jacumba: nothing seasonal)
+  - LA County Library Communico, Nov 28–Jan 2
+  - Ventura County Library feed (Piru, Saticoy, El Rio, Oak View: nothing seasonal)
+  - Riverside County Library libcal, Nov 28–Jan 1, daily=true (Mecca, Nuevo, Mead Valley, El Cerrito: nothing seasonal)
+  - SB County Parks tribe API (Calico and Guasti are already on the map)
+  - City of Gardena Rec & Parks Commission agenda (Nov 9, 2026)
+- Run sources: RunSignup REST (state=CA, Dec 1–Jan 10 seasonal names), the A Better World Running calendar and Eventbrite JSON-LD. runningintheusa.com is now blocked (Cloudflare).
+- Home-display maps expected: Ladera Ranch Dec 3, Temecula week of Dec 7, Twentynine Palms Dec 7, Mission Viejo winners Dec 11.
+- Lunar: all known 2027 festivals are already on the map. Next pass: temple and mall festivals via the social sweep.
+
 ## 2026-11-25
 
 Grok re-run after the intake key was rotated.
