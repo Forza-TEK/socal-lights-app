@@ -554,6 +554,7 @@ async function renderContests() {
     const c = one, kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v !== "" && v != null).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
     const acts = (c.owner_email ? asLink("Edit as owner", "/c/" + c.slug + "/manage") : "") + btn("ghost", "Edit", `data-cedit="${esc(c.id)}"`) + btn("ghost", "Sponsors", `data-csp="${esc(c.id)}"`)
       + (c.status === "live" ? (flagged(c) ? btn("main", "Looks fine", 'data-cact="approve"') : "") + btn("ghost", "Unpublish", 'data-cact="decline"') : c.status === "closed" ? "" : btn("main", c.status === "pending" ? "Approve (goes on the map)" : "Make live again", 'data-cact="approve"'))
+      + (c.announced ? btn("ghost", "Undo announcement", 'data-cact="unannounce"') : "")
       + btn("danger", c.entries ? `Delete with ${c.entries} ${c.entries === 1 ? "entry" : "entries"}` : "Delete", 'data-cact="delete"');
     setDetail(c.name);
     main.innerHTML = `<div class="rpage" data-cid="${esc(c.id)}" data-name="${esc(c.name)}"${c.announced ? ' data-announced="1"' : ""}><a class="rback" href="#contests" id="cBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to contests</a>
@@ -671,12 +672,13 @@ async function openSponsors(cid) {
 }
 $("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-csp]"); if (b) openSponsors(b.dataset.csp); });
 const orgLabelOf = (k) => (String(k).startsWith("d:") ? String(k).slice(2) : String(k).startsWith("u:") ? String(k).slice(2) : String(k));
-const CDONE = { approve: "Contest is live", decline: "Contest unpublished", delete: "Contest deleted" };
+const CDONE = { approve: "Contest is live", decline: "Contest unpublished", delete: "Contest deleted", unannounce: "Announcement undone: the results are unlocked" };
 $("#main").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-cact]"); if (!b) return;
   const card = b.closest("[data-cid]"), msg = card.querySelector(".msg") || { set className(v) {}, set textContent(v) {} }, act = b.dataset.cact;
   const cname = card.dataset.name || "this contest", extra = {};
   if (act === "decline") { const r = await askReason({ title: "Unpublish " + cname, hint: "This is emailed to the organizer. Leave it blank to send no reason.", go: "Unpublish" }); if (r === null) return; extra.reason = r; }
+  else if (act === "unannounce") { const r = await askReason({ title: "Undo the announcement of " + cname, hint: "Unlocks the contest and drops the published results. Results emails already sent can't be recalled; announcing again emails everyone the new results. This reason goes in the organizer's change log; nobody is emailed about the undo.", go: "Undo announcement" }); if (r === null) return; extra.reason = r || ""; }
   else if (act === "delete") {
     const typed = await askBox({ title: "Delete " + cname, message: `This removes its entries, photos, votes, sponsors and judges${card.dataset.announced ? " and the published winners page" : ""}, and can't be undone. The organizer is not emailed, so tell them first.`, go: "Delete for good", input: { label: "Type the contest name to confirm", placeholder: cname, hint: "" } });
     if (typed === null || typed === undefined) return; if (String(typed).trim().toLowerCase() !== cname.trim().toLowerCase()) { toast("The name didn't match, so nothing was deleted.", true); return; }
@@ -684,7 +686,7 @@ $("#main").addEventListener("click", async (e) => {
   b.disabled = true; msg.className = "msg"; msg.textContent = "Working…";
   try {
     const res = await api("/api/admin/contests/" + card.dataset.cid, act === "delete" ? { method: "DELETE" } : { method: "POST", body: JSON.stringify({ action: act, ...extra }) });
-    toast(CDONE[act] + (res && res.overCap ? `. Heads up: ${res.overCap.org} is now over its contest limit (${res.overCap.used} of ${res.overCap.cap}); see Contest passes` : ""), false, act === "decline" ? { undo: async () => { try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: "approve", notify: false }) }); toast("Undone"); renderContests(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
+    toast(CDONE[act] + (res && res.alreadyEmailed ? `. ${res.alreadyEmailed} results email${res.alreadyEmailed === 1 ? " was" : "s were"} already sent` : "") + (res && res.overCap ? `. Heads up: ${res.overCap.org} is now over its contest limit (${res.overCap.used} of ${res.overCap.cap}); see Contest passes` : ""), false, act === "decline" ? { undo: async () => { try { await api("/api/admin/contests/" + card.dataset.cid, { method: "POST", body: JSON.stringify({ action: "approve", notify: false }) }); toast("Undone"); renderContests(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
     COPEN = ""; renderContests(); refreshCounts(); }
   catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; toast(err.message, true); }
 });
@@ -1440,7 +1442,7 @@ async function renderOutreach() {
   setDetail("");
   main.innerHTML = `<div class="pghead"><div><h2>Outreach</h2><p>Grok checks the app before every send through a narrow, key-protected API that returns only a status word. Nothing here shows a name or an address, and nothing you paste below is stored.</p></div></div>
     <h2 class="dh">Status</h2><div class="ugrid">${apiCard}
-      <article class="ucard u-ok" aria-label="Suppression list"><div class="uh"><h3>Do-not-contact list</h3><span class="tag">${fmt(d.suppression.count)} hashed</span></div><p class="meta" style="margin:8px 0 0">One-way hashes only. Added by Grok (replies, bounces, complaints, unsubscribes), by the app (any marketing unsubscribe, deleted accounts) or by hand.</p></article></div>
+      <article class="ucard u-ok" aria-label="Suppression list"><div class="uh"><h3>Do-not-contact list</h3><span class="tag">${fmt(d.suppression.count)} hashed</span></div><p class="meta" style="margin:8px 0 0">One-way hashes only. Added by Grok (replies, bounces, complaints, unsubscribes), by the app (any marketing unsubscribe, deleted accounts) or by hand below.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><input id="orsupEmail" type="email" placeholder="name@example.com" aria-label="Email address" style="flex:1;min-width:180px"><button type="button" class="btn ghost sm" id="orsupAdd">Do not contact</button><button type="button" class="btn ghost danger sm" id="orsupDel">Allow contact again</button></div><span class="msg" id="orsupMsg" role="status"></span></article></div>
     <h2 class="dh">Reconcile a sent log</h2>
     <p class="meta" style="margin:0 0 8px">Paste up to 500 addresses (one per line, or a whole export: any text with addresses in it) or choose a .csv or .txt file. You get counts by status and a CSV for your records. Computed now, not stored.</p>
     <label for="orlog" class="meta">Addresses</label><textarea id="orlog" rows="6" style="width:100%;box-sizing:border-box;font:inherit;background:transparent;color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:10px" spellcheck="false" autocomplete="off"></textarea>
@@ -1455,6 +1457,14 @@ async function renderOutreach() {
   let list = [];
   const note = $("#ornote"), out = $("#orout");
   $("#orfile").onchange = async (e) => { const f = e.target.files[0]; e.target.value = ""; if (!f) return; if (f.size > 2e6) { note.textContent = "That file is too big."; return; } $("#orlog").value = await f.text(); note.textContent = `${fmt(parseEmails($("#orlog").value).length)} addresses found.`; };
+  const supAct = async (action, btnEl) => {
+    const m = $("#orsupMsg"), email = $("#orsupEmail").value.trim(); m.className = "msg";
+    if (!email) { m.className = "msg err"; m.textContent = "Type the email address first."; return; }
+    if (action === "unsuppress" && !tap(btnEl, "allow contact again")) return;
+    try { const r = await api("/api/admin/outreach", { method: "POST", body: JSON.stringify({ action, email }) }); m.textContent = action === "suppress" ? `Added (${r.prefix}).` : `Removed (${r.prefix}). It can be contacted again.`; $("#orsupEmail").value = ""; }
+    catch (er) { m.className = "msg err"; m.textContent = er.message; }
+  };
+  $("#orsupAdd").onclick = (e) => supAct("suppress", e.target); $("#orsupDel").onclick = (e) => supAct("unsuppress", e.target);
   $("#orrun").onclick = async (e) => {
     list = parseEmails($("#orlog").value); out.innerHTML = "";
     if (!list.length) { note.textContent = "Paste some addresses first."; return; }

@@ -495,3 +495,57 @@ test("installer claim for a non-domain email is only sent once a week", async ()
   const a = await go(), b = await go();
   assert.equal(a.body.claimed, false); assert.ok(!a.body.pending); assert.equal(b.body.pending, true, "the second tap says it is already with us");
 });
+
+test("Admin: undo an announcement (unlocks, drops results and results emails); decline reasons are kept for the owner; do-not-contact list can be added to and removed from", async () => {
+  const { onRequestPost: contestPost } = await import("../functions/api/admin/contests/[id].js");
+  const { onRequestPost: outPost } = await import("../functions/api/admin/outreach.js");
+  const { onRequestPost: subPost } = await import("../functions/api/admin/submissions/[id].js");
+  const { onRequestGet: overview } = await import("../functions/api/me/overview.js");
+  const t = await setup();
+  t.raw.prepare("UPDATE contests SET announced = 1, results = '{\"x\":1}'").run();
+  t.raw.prepare("INSERT INTO mail_outbox (template,to_email,dedupe,status) VALUES ('results_entrant','a@x.com','results:c1:results_entrant:a@x.com','sent'),('results_entrant','b@x.com','results:c1:results_entrant:b@x.com','queued')").run();
+  const un = (reason) => contestPost({ params: { id: "c1" }, request: new Request(`${origin}/api/admin/contests/c1`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "unannounce", reason }) }), env: t.env, waitUntil: () => {} }).then(json);
+  assert.equal((await un("")).status, 400, "a reason is needed");
+  const r = await un("Announced by mistake"); assert.equal(r.status, 200); assert.equal(r.body.alreadyEmailed, 1);
+  const c = t.raw.prepare("SELECT announced, results FROM contests").get(); assert.equal(c.announced, 0); assert.equal(c.results, "");
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM mail_outbox").get().n, 0, "queued and sent results rows are cleared");
+  assert.equal((await un("again")).status, 400, "not announced any more");
+  t.raw.prepare("INSERT INTO event_submissions (id,name,city,season,type,start_date,end_date,contact_email,status) VALUES ('sd1','E','Brea','christmas','drive','2026-12-01','2026-12-31','resident@x.com','pending')").run();
+  await subPost({ params: { id: "sd1" }, request: new Request(`${origin}/api/admin/submissions/sd1`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "decline", reason: "No public access" }) }), env: t.env, waitUntil: () => {} });
+  const ov = await overview({ request: new Request(`${origin}/api/me/overview`, { headers: { cookie: t.users.resident.cookie } }), env: t.env }).then(json);
+  assert.equal(ov.body.events.find((e) => e.id === "sd1").decline_reason, "No public access");
+  const sup = (action, email) => outPost({ request: new Request(`${origin}/api/admin/outreach`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, email }) }), env: t.env }).then(json);
+  assert.equal((await sup("suppress", "Nope@Example.com")).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM outreach_suppressions").get().n >= 1, true);
+  assert.equal((await sup("unsuppress", "nope@example.com")).status, 200);
+  assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM outreach_suppressions").get().n, 0);
+  assert.equal((await sup("unsuppress", "nope@example.com")).status, 404);
+  assert.equal((await sup("suppress", "not-an-email")).status, 400);
+});
+
+test("installer owner can hide, show and delete their own profile; a running paid placement blocks hide and delete", async () => {
+  const { onRequestPost: mng } = await import("../functions/api/installers/[slug]/manage.js");
+  const t = await setup();
+  t.raw.prepare("INSERT INTO installers (id,slug,name,status,owner_email,banner_until) VALUES ('io','owned','Owned Lights','active','homeowner@x.com','')").run();
+  const go = (user, body) => mng({ params: { slug: "owned" }, request: new Request(`${origin}/api/installers/owned/manage`, { method: "POST", headers: { "content-type": "application/json", cookie: user.cookie }, body: JSON.stringify(body) }), env: t.env }).then(json);
+  assert.equal((await go(t.users.other, { action: "hide" })).status, 404, "not theirs");
+  assert.equal((await go(t.users.home, { action: "hide" })).status, 200); assert.equal(t.raw.prepare("SELECT status FROM installers").get().status, "hidden");
+  assert.equal((await go(t.users.home, { action: "show" })).status, 200); assert.equal(t.raw.prepare("SELECT status FROM installers").get().status, "active");
+  t.raw.prepare("UPDATE installers SET banner_until = ?").run(ptToday(30));
+  assert.equal((await go(t.users.home, { action: "hide" })).status, 409, "paid placement still running");
+  t.raw.prepare("UPDATE installers SET banner_until = ''").run();
+  assert.equal((await go(t.users.home, { action: "delete", confirm: "nope" })).status, 400);
+  assert.equal((await go(t.users.home, { action: "delete", confirm: "owned lights" })).status, 200); assert.equal(t.raw.prepare("SELECT COUNT(*) n FROM installers").get().n, 0);
+});
+
+test("voters get one email when a home they voted for is withdrawn during voting, and none after voting ends", async () => {
+  const t = await setup({ voteStart: -1, voteEnd: 10 }); await t.claim(t.users.home);
+  t.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall')").run();
+  await t.hp("POST", TOKEN, t.users.home, { action: "withdraw" });
+  const q = t.raw.prepare("SELECT template, to_email, dedupe FROM mail_outbox").all();
+  assert.deepEqual(q.map((r) => [r.template, r.to_email]), [["vote_withdrawn", "other@x.com"]]);
+  const c = await setup({ voteStart: -10, voteEnd: -1 }); await c.claim(c.users.home);
+  c.raw.prepare("INSERT INTO votes (id,post_id,contest_id,user_id,category) VALUES ('v1','paaaaaaaa','c1','uX','Best Overall')").run();
+  const { noticeVoters } = await import("../functions/_lib/votersnotice.js");
+  assert.equal(await noticeVoters(c.env, c.raw.prepare("SELECT * FROM contests").get(), "paaaaaaaa"), 0, "voting is over: nobody to tell");
+});
