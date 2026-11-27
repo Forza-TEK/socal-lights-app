@@ -2055,3 +2055,6 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 - **Do-not-contact list in Admin > Outreach:** type an address to add ("Do not contact") or remove ("Allow contact again", tap-twice). Hashes only.
 - **Installers can hide/show/delete their own profile** (Details panel). Refused while a paid Sponsor placement is running or on record (they are told to email us); delete needs the typed company name.
 - **Voters are emailed** (template `vote_withdrawn`, one per voter per home) when a home they voted for is withdrawn while voting is open; not after voting ends. Admin removal and organizer decline do not send it yet.
+
+### Menu trim (2026-11-27)
+- Removed "Add" and "Browse by city" from the map's three-dots menu (`public/app.js`, `?v=20261127a`). The round + button still adds; the city list is still at /in. Migration 0298 fixes the help article "Browse events city by city", which told people to tap the removed row; the AI assistant KB text was updated and rebuilt. Not run in a browser (local dev server wouldn't start this session).
