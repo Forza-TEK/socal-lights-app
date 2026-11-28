@@ -717,3 +717,4 @@ details.more{margin:8px 0 0}details.more>summary{cursor:pointer;min-height:44px;
   .dtab tbody td[data-label]{flex:0 1 auto;max-width:100%;font-size:14px}
   .dtab tbody td.ac{flex:1 1 100%;margin-top:6px;padding-top:0}
 }
+details.evadv{grid-column:1/-1;margin:8px 0 0;padding:0 14px;border:1px solid var(--line);border-radius:12px}details.evadv[open]{padding-bottom:12px}details.evadv>summary{font-weight:600;color:var(--ink)}

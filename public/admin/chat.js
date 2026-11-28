@@ -21,7 +21,7 @@ export async function renderChat(main) {
   if (d.provider === "workers" && !d.aiBinding) ready.push("The Workers AI binding is not connected on this deployment, so every question would get the error message. See docs/ai-assistant.md.");
   if (d.provider === "claude" && !d.anthropicKey) ready.push("The ANTHROPIC_API_KEY secret is not set, so every question would get the error message.");
   if (d.provider === "claude" && s.capUsd <= 0) ready.push("The Claude path costs money and your monthly cap is $0, so it will not answer. Raise the cap or switch back to Workers AI (remove CHAT_PROVIDER).");
-  if (!d.turnstile) ready.push("TURNSTILE_SECRET is not set, so the \"I am human\" check is skipped.");
+  if (!d.turnstile) ready.push("The \"I am human\" check is not set up (the TURNSTILE_SECRET setting is missing), so visitors are not checked.");
   main.innerHTML = `<div class="pghead"><div><h2>AI assistant</h2><p>Answers visitor questions about help articles, prices and events. It is <b>${d.live ? "on" : s.kill || d.envKill ? "stopped by the kill switch" : "off"}</b> right now. It stores no message text and no IP address, only counts. Details: docs/ai-assistant.md.</p></div></div>
     <section class="ucard u-${state[0] === "ok" ? "ok" : state[0] === "bad" ? "limit" : "ok"}" aria-label="Switches"><div class="uh"><h3>Status</h3><span class="tag ${state[0]}">${esc(state[1])}</span></div>
       ${why ? `<p class="msg err" role="status">${esc(why)}</p>` : ""}
@@ -44,8 +44,8 @@ export async function renderChat(main) {
     </section>
     <h2 class="dh">Usage</h2>
     <div class="ugrid">
-      <article class="ucard u-ok" aria-label="Free allowance today"><div class="uh"><h3>Workers AI today</h3></div>
-        <p class="unum"><b>${fmt(t.neurons)}</b> of ${fmt(d.freeNeuronsPerDay)} free neurons <span class="meta">(${pct}%)</span></p>
+      <article class="ucard u-ok" aria-label="Free allowance today"><div class="uh"><h3>Free AI allowance today</h3></div>
+        <p class="unum"><b>${fmt(t.neurons)}</b> of ${fmt(d.freeNeuronsPerDay)} free units <span class="meta">(${pct}%; Cloudflare calls them neurons)</span></p>
         <div class="ubar" role="progressbar" aria-label="Free neurons used today" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-valuetext="${pct}% of today's free allowance"><i style="width:${pct}%"></i></div>
         <p class="meta ures">Resets at 00:00 UTC (4 pm Pacific in winter, 5 pm in summer).</p></article>
       <article class="ucard u-ok" aria-label="Chats today"><div class="uh"><h3>Chats today</h3></div>
@@ -58,7 +58,7 @@ export async function renderChat(main) {
     <h2 class="dh">Actions</h2>
     <section class="ucard u-ok" aria-label="Actions"><div class="uh"><h3>What the assistant can do for visitors</h3></div>
       <p class="meta" style="margin:0 0 4px">Cards the visitor fills in and taps. These switches only matter while the assistant is on; the kill switch stops all of it.</p>
-      <div class="tiers">${[[1, "Tier 1", "Send to the team, report, weekly email, remove a home"], [2, "Tier 2", "Find places, plan a night, contest pages"], [3, "Tier 3", "Signed-in changes (the switch exists; the feature is not built yet, so it does nothing)"]].map(([n, name, desc]) => `<div class="trow"><span><b>${name}</b> <span class="tag ${s.tiers[n] && d.live ? "ok" : ""}">${s.tiers[n] ? (d.live ? "On" : "On, waiting for the assistant to be turned on") : "Off"}</span><small>${desc}</small></span>${btn(s.tiers[n] ? "ghost" : "main", s.tiers[n] ? "Turn off" : "Turn on", `data-tier="${n}"`)}</div>`).join("")}</div>
+      <div class="tiers">${[[1, "Requests", "Send to the team, report, weekly email, remove a home"], [2, "Lookups", "Find places, plan a night, contest pages"], [3, "Account changes", "Signed-in changes to their own listings (the switch exists; the feature is not built yet, so it does nothing)"]].map(([n, name, desc]) => `<div class="trow"><span><b>${name}</b> <span class="tag ${s.tiers[n] && d.live ? "ok" : ""}">${s.tiers[n] ? (d.live ? "On" : "On, waiting for the assistant to be turned on") : "Off"}</span><small>${desc}</small></span>${btn(s.tiers[n] ? "ghost" : "main", s.tiers[n] ? "Turn off" : "Turn on", `data-tier="${n}"`)}</div>`).join("")}</div>
       ${(d.actions || []).length ? `<div class="tablewrap"><table><thead><tr><th scope="col">Action (this month)</th><th scope="col">Shown</th><th scope="col">Finished</th><th scope="col">Failed</th></tr></thead><tbody>${d.actions.map((a) => `<tr><td>${esc(a.action)}</td><td>${fmt(a.shown)}</td><td>${fmt(a.done)}</td><td>${fmt(a.failed)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="meta" style="margin:8px 0 0">No action cards shown yet this month. Only counts are kept, never what visitors wrote.</p>`}
     </section>
     <h2 class="dh">Unanswered topics (last 30 days)</h2>
