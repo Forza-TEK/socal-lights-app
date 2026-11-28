@@ -14,12 +14,12 @@
 <script>try{var t=(function(d){var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"numeric",minute:"numeric",hour12:false,timeZoneName:"short"}).formatToParts(d),g=function(k){for(var i=0;i<p.length;i++)if(p[i].type==k)return p[i].value},m=g("hour")%24*60+ +g("minute"),n=713+(g("timeZoneName")=="PDT"?60:0),H=(12+2.1*Math.sin(6.2832*(Math.floor((d-new Date(d.getFullYear(),0,0))/864e5)-80)/365))*30;return m<n-H||m>=n+H?"dark":"light"})(new Date()),o=localStorage.getItem("socal-theme"),u=+localStorage.getItem("socal-theme-until")||0;if(o&&u>Date.now())t=o;document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="/tokens.css?v=20261124a">
-<link rel="stylesheet" href="/addflow.css?v=20261124b">
-<link rel="stylesheet" href="/info.css?v=20261111x560">
+<link rel="stylesheet" href="/addflow.css?v=20261128a">
+<link rel="stylesheet" href="/info.css?v=20261128a">
 <style>
 .hp{max-width:640px;margin:28px auto 56px;display:grid;gap:16px}.hp h1{margin:0;font-size:28px}.hp p{margin:0}.hp .meta{color:var(--muted)}
 .hp .card{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:12px}:root[data-theme="dark"] .hp .card{background:var(--tile)}
-.hp .card h2{margin:0;font-size:18px}.hp .notice{border-left:3px solid var(--season,#c8324f);padding:4px 0 4px 14px;color:var(--ink)}
+.hp .card h2{margin:0;font-size:18px}.hp .notice{border:1px solid color-mix(in srgb,var(--season) 40%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--season) 8%,transparent);padding:10px 14px;color:var(--ink)}
 .hp .crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:15px;color:var(--muted)}.hp .crumbs a{color:inherit;text-decoration:underline;padding:10px 2px;min-height:24px}.hp .crumbs b{color:var(--ink);font-weight:600}.hp .danger{border-color:#c8324f}.hp .go.dng{background:transparent;color:#c8324f;border-color:#c8324f}
 .hp .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
 .hp .ph{position:relative;border-radius:12px;overflow:hidden;background:var(--tile,#eee);aspect-ratio:4/3}.hp .ph img{display:block;width:100%;height:100%;object-fit:cover}

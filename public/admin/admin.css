@@ -548,7 +548,7 @@ body.admin .top .crumb h1{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .gr .gmeta{color:var(--muted);font-size:13px;margin-top:3px}
 .gr .gd{font-size:13.5px;margin-top:6px;overflow-wrap:anywhere}
 .gr .ga{display:flex;flex-wrap:wrap;gap:8px;flex:none}
-.gr.need{border-left:4px solid var(--season)}
+.gr.need{border-color:color-mix(in srgb,var(--season) 55%,var(--line));background:color-mix(in srgb,var(--season) 6%,transparent)}
 .gneed{margin:14px 0 22px}.gneed h3{margin:0;font-size:18px;display:flex;align-items:center;gap:8px}
 .gneed .gn{background:var(--season);color:#fff;border-radius:999px;font-size:13px;padding:1px 9px}
 .gneed .gl{border-color:var(--season)}

@@ -1,0 +1,15 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+test("Admin contest editor edits per-category descriptions and the API saves only the contest's categories", () => {
+  const js = readFileSync("public/admin/admin.js", "utf8"), api = readFileSync("functions/api/admin/contests/[id].js", "utf8");
+  assert.match(js, /catDescs/); assert.match(js, /shown under the category/);
+  assert.match(api, /cleanCatDescs\(b\.catDescs/); assert.match(api, /category_desc=\?/);
+});
+
+test("Notices are full tinted boxes, not a coloured bar down one side", () => {
+  for (const f of ["contest.css", "info.css", "addflow.css", "home-photos.html", "sponsor-invite.html", "organizer.html"]) {
+    assert.doesNotMatch(readFileSync("public/" + f, "utf8"), /border-left:\s*[2-5]px solid/, f);
+  }
+});
