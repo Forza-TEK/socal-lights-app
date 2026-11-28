@@ -6,7 +6,7 @@ body{padding-bottom:60px}
 #app{display:grid;gap:20px;min-width:0}
 .crumb{max-width:760px;margin:0 auto}.crumb a{color:var(--ink);font-weight:500;font-size:15px;text-underline-offset:3px}
 .card{background:transparent;border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:18px;min-width:0}
-.card h2{font-weight:400;font-size:24px;letter-spacing:-.015em}.card h3{font-weight:500;font-size:17px}
+.card h2{font-weight:700;font-size:22px;letter-spacing:-.015em}.card h3{font-weight:500;font-size:17px}
 .banner{display:flex;gap:14px;align-items:center}.banner b{display:block;font-weight:500;font-size:19px;line-height:1.25}.banner span{font-size:14px;color:var(--muted)}
 .logo.has{border:0;overflow:hidden;background:var(--tile,#fff)}.logo.has img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
 .logo{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-weight:500;font-size:15px;color:var(--ink)}
@@ -129,3 +129,5 @@ video.evid{display:block;width:100%;max-width:420px;margin-top:8px;border-radius
 /* organizer dashboard: where the contest is, and the one thing to do next */
 .strip{display:grid;gap:10px;justify-items:start;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--season-soft);font-size:15px}
 .strip b{font-weight:700}
+.pzfold{margin-top:10px}.pzfold>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:15px}
+.entfilter{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.entfilter .btn[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
