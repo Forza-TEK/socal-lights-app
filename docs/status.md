@@ -2123,3 +2123,6 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 ## Admin category descriptions, no side-bar notices
 - Admin > Contests > Edit now has a one-line description field per voting category (saved to `contests.category_desc`, cleaned like the organizer's). Checked locally in a browser: saves, reopens, shows on the public contest API.
 - Notice boxes that had a coloured bar down one side (contest status, add-flow notes, info pages, home-photos, sponsor invite, Admin "needs you" rows, your-entry row) are now a full thin border with a light tint. CSS versions bumped (addflow/info/contest/admin). Not seen on a real phone.
+
+## Impeccable hooks and launcher installed
+- `.claude/skills/impeccable/scripts/` (launcher, pinned engine version + checksums) and `.claude/settings.json` hooks (session start, after each edit, design pass at Stop). Telemetry off. Engine downloaded and run once here on the changed CSS: no findings. Not run through a full Stop pass yet.

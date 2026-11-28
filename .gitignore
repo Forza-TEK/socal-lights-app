@@ -4,3 +4,5 @@ node_modules/
 .DS_Store
 public/tutorials/_review/
 .claude/worktrees/
+.impeccable/hook.cache.json
+.impeccable/config.local.json
