@@ -2,6 +2,7 @@
 // Verdict only, no personal data. For each address, in order: { i, email_hash_prefix, status, reasons[], sequence, deliverability? }, status one of
 //   clear | registered | listing | review | suppressed.   Send acquisition mail ONLY when status is "clear", sequence.due is true (for sequence.next_step) and, when verify was asked, deliverability is ok or unknown.
 //   sequence: { next_step: 0|1|2|null, due, due_on: 'YYYY-MM-DD'|null, reason }, computed from the 'sent' events Grok reported (original, follow-up 1 on day 4, follow-up 2 on day 10, then finished).
+//   An owner "release" event makes one overdue step due (reason "released") and does not bypass a stop, a non-clear status, or a finished sequence.
 //   verify:true adds deliverability: ok | invalid_syntax | no_mail_server | disposable | unknown (free DNS check, at most 20 new domains per call; it does not prove a mailbox exists).
 // Any lookup failure answers 503 { hold: true }: hold every send. See docs/monetization/grok-outreach-api.md.
 import { outreachGuard, outreachReply, checkEmails, countsLine, cleanEmail, validEmail, FREE_MAIL, MAX_EMAILS } from "../../_lib/outreach.js";

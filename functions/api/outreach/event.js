@@ -3,7 +3,9 @@
 // sent_at (only with event "sent"; not in the future, within the last 120 days) backfills an email sent before this API existed. One 'sent' row per address and step then:
 //   the EARLIEST date is kept, so a backfill never pushes a step later and a repeat is harmless.
 // POST /api/outreach/event { email, event: "invalid", reason: invalid_syntax|no_mail_server|disposable }: remembers (as a hash) that the address cannot receive mail so later checks say so. Does NOT suppress.
-import { outreachGuard, outreachReply, suppressionStatements, outreachHashes, cleanEmail, validEmail, EVENTS, SEGMENTS, INVALID_REASONS } from "../../_lib/outreach.js";
+// POST /api/outreach/event { email, event: "release", step?: 1|2, segment?: installer|contest|event_host }: the owner lifting the 14-day hold on the step that is overdue now.
+//   Writes one "release" row for that step only. Does NOT suppress. A repeat is harmless. Refusing (not overdue, stopped, suppressed, registered, finished, wrong step) is 200 released:false, not a hold.
+import { outreachGuard, outreachReply, suppressionStatements, outreachHashes, cleanEmail, validEmail, EVENTS, SEGMENTS, INVALID_REASONS, releaseOverdueEmail } from "../../_lib/outreach.js";
 import { logOp } from "../../_lib/oplog.js";
 import { ptToday, shiftDay } from "../../_lib/time.js";
 
@@ -16,9 +18,15 @@ export async function onRequest({ request, env }) {
   if (request.method !== "POST") return outreachReply(405, { hold: true, error: "Use POST." });
   const b = (await request.json().catch(() => null)) || {};
   const email = cleanEmail(b.email), today = ptToday();
-  const shape = `Send { "email", "event": ${EVENTS.join("|")}|invalid, "step": 0|1|2, "segment": ${SEGMENTS.join("|")}, "sent_at": "YYYY-MM-DD" (optional, only with sent), "reason": ${INVALID_REASONS.join("|")} (only with invalid) }.`;
+  const shape = `Send { "email", "event": ${EVENTS.join("|")}|invalid|release, "step": 0|1|2, "segment": ${SEGMENTS.join("|")}, "sent_at": "YYYY-MM-DD" (optional, only with sent), "reason": ${INVALID_REASONS.join("|")} (only with invalid) }. For "release", email is enough; step and segment are optional and must match the step that is overdue.`;
   if (!validEmail(email)) return outreachReply(400, { hold: true, error: shape });
   try {
+    if (b.event === "release") {
+      if (b.sent_at !== undefined || b.reason !== undefined || (b.step !== undefined && ![0, 1, 2].includes(b.step)) || (b.segment !== undefined && !SEGMENTS.includes(b.segment))) return outreachReply(400, { hold: true, error: shape });
+      const r = await releaseOverdueEmail(env, email, { step: b.step, segment: b.segment });
+      await logOp(env, "outreach", `event release ${r.released ? (r.duplicate ? "duplicate" : "released") : "skipped"} step=${r.next_step == null ? "-" : r.next_step} reason=${r.reason}`);
+      return outreachReply(200, { ok: true, released: !!r.released, duplicate: !!r.duplicate, suppressed: false, next_step: r.next_step, due_on: r.due_on || null, reason: r.reason, email_hash_prefix: r.email_hash_prefix || "" });
+    }
     if (b.event === "invalid") {
       if (!INVALID_REASONS.includes(b.reason) || b.sent_at !== undefined) return outreachReply(400, { hold: true, error: shape });
       const { h } = await outreachHashes(env, email);
