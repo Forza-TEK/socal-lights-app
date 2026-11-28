@@ -66,3 +66,14 @@ body.prof .sh-content,body.prof .sh-content.main{display:block}
 @media (max-width:560px){.prof .list .acts{justify-content:stretch}.prof .list .acts>.btn,.prof .list .acts>.amore:not([open]){flex:1 1 calc(50% - 6px);min-width:0;text-align:center;justify-content:center}.prof .list .acts>.amore:not([open])>summary{display:flex;align-items:center;justify-content:center;width:100%}}
 .prof .who #editprof{min-height:44px}
 .prof .list a:not(.btn){color:var(--ice);text-underline-offset:3px}
+
+/* Same page pattern as Admin: a title with one line under it and the main action beside it; the identity card shrinks to a strip except on Account; folded explanations */
+.prof .sechead>div{flex:1 1 260px;min-width:0}
+.prof .subline{margin:4px 0 0;color:var(--muted);font-size:15px;line-height:1.4;max-width:62ch}
+.prof .sh-content .who.compact{grid-template-columns:auto minmax(0,1fr);gap:12px;padding:10px 14px;border-radius:12px}
+.prof .sh-content .who.compact .avatar{width:44px;height:44px;font-size:18px}
+.prof .sh-content .who.compact h1{font-size:18px}
+.prof .sh-content .who.compact .whoacts,.prof .sh-content .who.compact .err{display:none!important}
+.prof .sh-content .who.compact+#pp{margin-top:6px}
+.prof details.more{margin:8px 0 0}.prof details.more>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--muted);font-size:14px}.prof details.more[open]>summary{color:var(--ink)}
+.prof .acard{margin-top:12px;padding:14px 16px;border:1px solid var(--line);border-radius:12px}.prof .acard h2{margin:0 0 6px;font-size:18px}.prof .acard.danger{border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}.prof .acard details.more{margin:0}.prof .acard details.more>summary{min-height:44px;color:var(--ink)}
