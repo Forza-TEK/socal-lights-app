@@ -37,7 +37,7 @@
 .scl-chat-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 8px}
 .scl-chat-chip{min-height:44px;padding:6px 12px;border:1px solid var(--c-line);border-radius:999px;background:var(--c-bg);color:var(--c-ink);font:inherit;font-size:14px;cursor:pointer;text-align:left}
 .scl-chat-chip:hover{background:var(--c-bg2)}
-.scl-chat-ts{padding:0 14px 8px}
+.scl-chat-ts{padding:0}.scl-chat-ts.show{padding:0 14px 8px}
 .scl-chat-tsnote{margin:0 0 6px;font-size:13px;color:var(--c-muted)}
 .scl-chat-form{display:flex;gap:8px;align-items:flex-end;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--c-line)}
 .scl-chat-form textarea{flex:1;min-height:44px;max-height:120px;resize:none;padding:10px 12px;border:1px solid var(--c-line);border-radius:12px;background:var(--c-bg);color:var(--c-ink);font:inherit;font-size:16px}

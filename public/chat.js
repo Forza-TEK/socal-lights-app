@@ -6,7 +6,7 @@
   "use strict";
   if (window.__sclChat) return;
   window.__sclChat = true;
-  var CSS = "/chat.css?v=20261116a", MAX = 500, TURNS = 6, KEEP = 40, KEY = "scl-chat";
+  var CSS = "/chat.css?v=20261128a", MAX = 500, TURNS = 6, KEEP = 40, KEY = "scl-chat";
   var store = { get: function () { try { var v = JSON.parse(sessionStorage.getItem(KEY) || "null"); return v && Array.isArray(v.log) && Array.isArray(v.h) ? v : null; } catch (e) { return null; } }, set: function (v) { try { sessionStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} }, clear: function () { try { sessionStorage.removeItem(KEY); } catch (e) {} } };
   var cfgP = window.__pre && window.__pre["/api/config"];
   (cfgP || fetch("/api/config").then(function (r) { return r.json(); })).then(function (c) { if (c && c.chatEnabled) start(c); }).catch(function () {});
@@ -70,7 +70,7 @@
     var status = el("p", { class: "scl-chat-status", role: "status" });
     var chips = el("div", { class: "scl-chat-chips" });
     var ts = el("div", { class: "scl-chat-ts", hidden: "" });
-    var tsNote = el("p", { class: "scl-chat-tsnote", text: "One quick check, then ask away." });
+    var tsNote = el("p", { class: "scl-chat-tsnote", text: "One quick check, then ask away.", hidden: "" });
     var label = el("label", { class: "scl-chat-sr", for: "scl-chat-in", text: "Your question" });
     var input = el("textarea", { id: "scl-chat-in", rows: "2", maxlength: String(MAX), placeholder: "Ask about events, homes, how the site works, or prices", autocomplete: "off", enterkeyhint: "send" });
     var send = el("button", { type: "submit", class: "scl-chat-send", text: "Send" });
@@ -227,7 +227,7 @@
       if (need && !tsLoaded) {
         tsLoaded = true;
         var s = el("script", { src: "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit", async: "" });
-        s.onload = function () { if (window.turnstile) widget = window.turnstile.render(ts, { sitekey: tsKey, callback: function (t) { token = t; gate(); }, "expired-callback": function () { token = ""; gate(); } }); };
+        s.onload = function () { if (window.turnstile) widget = window.turnstile.render(ts, { sitekey: tsKey, appearance: "interaction-only", "before-interactive-callback": function () { tsNote.hidden = false; ts.classList.add("show"); }, "after-interactive-callback": function () { tsNote.hidden = true; ts.classList.remove("show"); }, callback: function (t) { token = t; gate(); }, "expired-callback": function () { token = ""; gate(); } }); };
         document.head.appendChild(s);
       }
     }
