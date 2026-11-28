@@ -13,3 +13,8 @@ test("Notices are full tinted boxes, not a coloured bar down one side", () => {
     assert.doesNotMatch(readFileSync("public/" + f, "utf8"), /border-left:\s*[2-5]px solid/, f);
   }
 });
+
+test("Admin installer record has a two-tap bulk take-down that reuses the per-home unpublish", () => {
+  const js = readFileSync("public/admin/admin.js", "utf8");
+  assert.match(js, /id="iDownAll"/); assert.match(js, /tap\(down, "take down "/); assert.match(js, /action: "unpublish"/);
+});

@@ -91,5 +91,5 @@ test("deleting the account clears who made the saved change, not the saved row; 
   } finally { w.restore(); }
   const js = readFileSync("public/admin/admin.js", "utf8"), idx = readFileSync("public/admin/index.html", "utf8");
   assert.match(js, /Revert the last organizer update/); assert.match(js, /\/api\/admin\/events\/revert/); assert.match(js, /fsec\("Organizer updates"/);
-  assert.match(idx, /admin\.js\?v=20261128n/);
+  assert.match(idx, /admin\.js\?v=20261128o/);
 });
