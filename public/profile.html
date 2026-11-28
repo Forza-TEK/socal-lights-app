@@ -14,14 +14,14 @@
 <link rel="stylesheet" href="/tokens.css?v=20261124a">
 <link rel="stylesheet" href="/addflow.css?v=20261124b">
 <link rel="stylesheet" href="/forms.css?v=20261117b">
-<link rel="stylesheet" href="/profile.css?v=20261128b">
+<link rel="stylesheet" href="/profile.css?v=20261128c">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="sh-page prof">
 <main class="main" id="content"><div id="app" class="main" style="padding:0;max-width:none"><p class="muted">Loading…</p></div></main>
 <script type="module">
 import { me, signIn, signOut, noteSigninResult, toast, friendlyError } from "/auth.js?v=20261116a";
-import { mountShell } from "/appshell.js?v=20261127a";
+import { mountShell } from "/appshell.js?v=20261128a";
 import { setAcctUser } from "/chrome.js?v=20261126a";
 import { homeForm, eventForm, openFormWindow, photoBoxHtml, wireSeasonType } from "/forms.js?v=20261121a";
 import { wireVideoBox } from "/videobox.js?v=20261121a";
@@ -58,7 +58,7 @@ const head = (h, add, sub = "") => `<div class="sechead"><div><h2>${h}</h2>${sub
 const fld = (k, l, v, ex = "") => `<label class="mf"><span>${l}</span><input data-k="${k}" value="${esc(v ?? "")}" ${ex}></label>`;
 const sel = (k, l, v, opts) => `<label class="mf"><span>${l}</span><select data-k="${k}">${opts.map(([a, b]) => `<option value="${a}" ${String(v) === a ? "selected" : ""}>${b}</option>`).join("")}</select></label>`;
 // A line under a listing that is not on the map: why, and what to do (M6). Every status gets a plain sentence and the person can always delete their own listing.
-const reasonLine = (status, what, id = "", why = "") => status === "pending" ? `<div class="small muted" style="margin-top:4px">A person is looking it over before it goes on the map. You can still change it or delete it while you wait.</div>`
+const reasonLine = (status, what, id = "", why = "") => status === "pending" ? `<div class="small muted" style="margin-top:4px">A person is looking it over before it goes on the map. You can still change it or delete it while you wait. We email you when it goes on the map.</div>`
   : status === "declined" ? `<div class="small" style="margin-top:4px">We could not put this ${what} on the map.${why ? ` <b>Why:</b> ${esc(why)}` : ""} Reply to the email we sent you, or write to <a href="mailto:info@socallights.app">info@socallights.app</a> and we will tell you why. You can send it again for another look, or delete it.</div><button class="btn sm" type="button" data-resubmit="${esc(what)}" data-id="${esc(id)}" style="margin-top:6px">Send it again for review</button>` : "";
 // A home you posted: edit, take down for the season, put back
 const ago = (at) => { const t = new Date(String(at || "").replace(" ", "T") + "Z").getTime(), m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " days ago"; };
@@ -72,7 +72,7 @@ const CAM = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke=
 const thumb = (src) => `<span class="rthumb">${src ? `<img src="${esc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : CAM}</span>`;
 // The public page, as a visitor sees it (opens in a new tab). Only listings that are live have one.
 // Paid extras (Featured pin, banner, top of the list). Web only: the app hides it, as the store rules require.
-const promoBtn = (href, label) => `<a class="btn sm web-only" href="${esc(href)}">${esc(label)}</a>`;
+const promoBtn = (href, label) => `<a class="btn out sm web-only" href="${esc(href)}">${esc(label)}</a>`;
 const viewBtn = (href) => `<a class="btn out sm" href="${esc(href)}" target="_blank" rel="noopener" aria-label="View the listing as a visitor sees it (opens in a new tab)">View listing</a>`;
 // Less-used actions live behind one "More" button, so a row shows at most View listing, Promote, Edit and More (a tap anywhere else closes the menu)
 const moreMenu = (inner, label = "More") => `<details class="amore"><summary class="btn out sm" aria-label="${label === "More" ? "More actions" : label}">${label}</summary><div class="amenu">${inner}</div></details>`;
@@ -80,26 +80,26 @@ document.addEventListener("click", async (ev) => {
   const rs = ev.target.closest && ev.target.closest("[data-resubmit]");
   if (rs && !rs.disabled) {
     rs.disabled = true; const r = await fetch("/api/me/" + (rs.dataset.resubmit === "event" ? "events/" : "homes/") + encodeURIComponent(rs.dataset.id), { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "resubmit" }) }).catch(() => null);
-    const j = r ? await r.json().catch(() => ({})) : {}; if (r && r.ok) location.reload(); else { rs.disabled = false; alert(j.error || "That didn't send. Please try again."); }
+    const j = r ? await r.json().catch(() => ({})) : {}; if (r && r.ok) location.reload(); else { rs.disabled = false; toast(j.error || "That didn't send. Please try again."); }
     return;
   }
   const w = ev.target.closest && ev.target.closest("[data-entrywd]");
   if (w && !w.disabled) {
-    if (!confirm("Withdraw your home from this contest? Its votes and photos are removed.")) return;
+    if (!w.dataset.sure) { w.dataset.sure = "1"; w.dataset.label = w.textContent; w.textContent = "Tap again: its votes and photos are removed"; setTimeout(() => { if (w.dataset.sure) { delete w.dataset.sure; w.textContent = w.dataset.label; } }, 6000); return; }
     w.disabled = true; const r = await fetch("/api/contests/" + encodeURIComponent(w.dataset.slug) + "/mine?id=" + encodeURIComponent(w.dataset.entrywd), { method: "DELETE", credentials: "same-origin" }).catch(() => null);
-    const j = r ? await r.json().catch(() => ({})) : {}; if (r && r.ok) location.reload(); else { w.disabled = false; alert(j.error || "That didn't work. Please try again."); }
+    const j = r ? await r.json().catch(() => ({})) : {}; if (r && r.ok) location.reload(); else { w.disabled = false; toast(j.error || "That didn't work. Please try again."); }
     return;
   }
   const b = ev.target.closest && ev.target.closest("[data-entryreq]"); if (!b || b.disabled) return;
   b.disabled = true; const r = await fetch("/api/me/entries/" + encodeURIComponent(b.dataset.id) + "/request", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: b.dataset.entryreq }) }).catch(() => null);
-  const j = r ? await r.json().catch(() => ({})) : {}; if (r && r.ok) location.reload(); else { b.disabled = false; alert(j.error || "That didn't send. Please try again."); }
+  const j = r ? await r.json().catch(() => ({})) : {}; if (r && r.ok) location.reload(); else { b.disabled = false; toast(j.error || "That didn't send. Please try again."); }
 });
 document.addEventListener("click", (e) => document.querySelectorAll(".amore[open]").forEach((d) => { if (!d.contains(e.target)) d.open = false; }));
 function homeRow(h) {
   const st = h.status === "approved" ? ["live", "On the map"] : h.status === "paused" ? ["", "Taken down for the season"] : h.status === "pending" ? ["warn", "In review"] : h.status === "declined" ? ["", "Not accepted"] : ["", "Not on the map"];
   const pro = h.poster_type === "installer";
-  return `<div class="rowi mrow" data-home="${esc(h.id)}"><div class="rwrap">${thumb(h.status === "approved" && h.photos && h.photos[0] ? "/api/photo/" + h.photos[0] : "")}<div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status, st)}</span>${sharedLine(h)}${reasonLine(h.status, "home", h.id, h.review_note)}</div></div>
-   <div class="acts">${h.status === "approved" ? viewBtn("/h/" + encodeURIComponent(h.id)) + promoBtn("/feature?home=" + encodeURIComponent(h.id), "Promote") : ""}${h.status === "approved" || h.status === "paused" || h.status === "pending" ? `<button class="btn out sm" type="button" data-medit>Edit</button>` : ""}${moreMenu(`${h.status === "approved" || h.status === "paused" ? `<button class="btn out sm" type="button" data-hact="${h.status === "paused" ? "resume" : "pause"}">${h.status === "paused" ? "Put back on the map" : "Take down for the season"}</button>` : ""}<button class="btn out sm danger" type="button" data-hdel>Delete</button>`, "Take down or delete")}</div>
+  return `<div class="rowi mrow" data-home="${esc(h.id)}"><div class="rwrap">${thumb(h.status === "approved" && h.photos && h.photos[0] ? "/api/photo/" + h.photos[0] : "")}<div><b>${esc(h.title || h.biz)}</b><br><span class="small muted">${esc(h.city || "")} · ${dot(h.status, st)}${h.status === "approved" && h.approved_at ? ` · since ${when(h.approved_at)}` : ""}</span>${sharedLine(h)}${reasonLine(h.status, "home", h.id, h.review_note)}</div></div>
+   <div class="acts">${h.status === "approved" ? viewBtn("/h/" + encodeURIComponent(h.id)) : ""}${h.status === "paused" ? `<button class="btn sm" type="button" data-hact="resume">Put back on the map</button>` : h.status === "approved" ? `<button class="btn out sm" type="button" data-hact="pause">Take down for the season</button>` : ""}${h.status === "approved" ? promoBtn("/feature?home=" + encodeURIComponent(h.id), "Promote") : ""}${h.status === "approved" || h.status === "paused" || h.status === "pending" ? `<button class="btn out sm" type="button" data-medit>Edit</button>` : ""}${moreMenu(`<button class="btn out sm danger" type="button" data-hdel>Delete</button>`)}</div>
    ${homeForm(h, { pro, changes: chgList(h.changes), own: true, cities, seasons: SEASON_LIST })}</div>`;
 }
 // A contest you run or help run: where it stands, and the buttons for it
@@ -115,7 +115,7 @@ const linked = () => (O.entries || []).filter((e) => e.manage && e.status === "a
 function entryRow(e) {
   const rq = e.req && e.req.status === "open" ? e.req.kind : "", st = rq === "restore" ? ["warn", "Restore requested"] : rq === "remove" ? ["warn", "Removal requested"] : e.status === "declined" && e.req && e.req.kind === "restore" && e.req.status === "declined" ? ["", "Restore not approved"] : e.status === "declined" && e.withdrawn ? ["", "You withdrew this"] : e.status === "approved" ? ["live", "In the contest"] : e.status === "pending" ? ["warn", "Waiting for the organizer"] : e.status === "declined" ? ["", "Not accepted"] : ["", "Not in the contest"];
   return `<div class="rowi"><div class="rwrap">${thumb(e.status === "approved" && e.photos && e.photos[0] ? "/api/photo/" + e.photos[0] : "")}<div><b>${esc(e.title || e.biz)}</b><br><span class="small muted">${esc(e.contest)} · ${dot(e.status, st)}</span>${rq ? `<div class="small" style="margin-top:4px">${rq === "remove" ? "You asked us to take this home out of the contest." : "You asked us to put this home back in the contest."} We will email you when it is handled.</div>` : ""}</div></div>
-   <div class="acts">${rq ? `<button class="btn sm" type="button" data-entryreq="cancel" data-id="${esc(e.id)}">Undo request</button>` : ""}${e.status === "approved" ? viewBtn("/c/" + e.slug) : ""}${e.status === "declined" && e.withdrawn && !rq ? (e.manage ? `<button class="btn sm" type="button" data-entryreq="restore" data-id="${esc(e.id)}">Ask to restore</button>` : `<a class="btn sm" href="/c/${esc(e.slug)}/enter">Enter again</a>`) : ""}${!rq && !e.manage && e.status !== "declined" && !e.announced && !(e.vote_end && e.vote_end < new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" })) ? `<button class="btn out sm" type="button" data-entrywd="${esc(e.id)}" data-slug="${esc(e.slug)}">Withdraw</button>` : ""}${e.manage && e.status === "approved" && !rq ? `<a class="btn sm" href="${esc(e.manage)}">Manage your home</a>${rq ? "" : `<a class="btn out sm" href="${esc(e.manage)}#remove">Remove</a>`}` : ""}<a class="btn out sm" href="/c/${esc(e.slug)}">Open contest</a></div></div>`;
+   <div class="acts">${rq ? `<button class="btn out sm" type="button" data-entryreq="cancel" data-id="${esc(e.id)}">Undo request</button>` : ""}${e.status === "approved" ? viewBtn("/c/" + e.slug) : ""}${e.status === "declined" && e.withdrawn && !rq ? (e.manage ? `<button class="btn sm" type="button" data-entryreq="restore" data-id="${esc(e.id)}">Ask to restore</button>` : `<a class="btn sm" href="/c/${esc(e.slug)}/enter">Enter again</a>`) : ""}${!rq && !e.manage && e.status !== "declined" && !e.announced && !(e.vote_end && e.vote_end < new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" })) ? `<button class="btn out sm" type="button" data-entrywd="${esc(e.id)}" data-slug="${esc(e.slug)}">Withdraw</button>` : ""}${e.manage && e.status === "approved" && !rq ? `<a class="btn sm" href="${esc(e.manage)}">Manage your home</a>${rq ? "" : `<a class="btn out sm" href="${esc(e.manage)}#remove">Remove</a>`}` : ""}<a class="btn out sm" href="/c/${esc(e.slug)}">Open contest</a></div></div>`;
 }
 // An event you added: edit, cancelled or postponed tag, run again next year
 function eventRow(e) {
@@ -175,8 +175,9 @@ function panel() {
       <p class="err" id="em-err" role="alert" hidden></p><p class="muted small" id="em-ok" role="status"></p>
       <div><button class="btn out" id="em-go" type="submit">Send me a code</button></div></form></details></section>
     <section class="acard"><button class="btn out" id="so" type="button">Sign out</button></section>
-    <section class="acard danger"><h2>Delete my account</h2><p class="muted small">Deletes your account and what you posted. This can't be undone.</p><details class="more"><summary>What deleting does</summary><p class="muted small" id="delmsg">Deletes your account, saved drafts, profile picture, contest entries and votes, closes contests you run, and deletes the displays and photos you posted and the events you added (events you only took over or claimed stay on the map, unlinked from you). Votes you cast are removed from any contest, including ones that have finished voting. It also ends the monthly update, and your address goes on our do-not-contact list as a one-way hash (not the address itself) so we do not contact you again. This can't be undone.</p><p class="muted small">If a paid placement is still running on something you added, deleting the account takes it down and flags it for us to review the refund; we cannot bring it back.</p></details><p class="err" id="delerr" role="alert" hidden></p><p class="small" id="delsay" role="status" aria-live="polite"></p><div style="margin-top:10px"><button class="btn out" id="delacct" type="button" style="color:var(--bad);border-color:var(--bad)">Delete my account</button></div>
-      <div id="delbox" hidden><div style="margin-top:10px;display:grid;gap:10px;max-width:360px"><label class="mf"><span>Type <b>delete</b> to confirm</span><input id="deltype" autocomplete="off" autocapitalize="off" spellcheck="false"></label><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn out" id="delgo" type="button" disabled style="color:var(--bad);border-color:var(--bad)">Permanently delete my account</button><button class="btn out" id="delcancel" type="button">Keep my account</button></div></div></div></section><p class="small muted">Homes and events you add are tied to this account's email.</p>`;
+    <section class="acard danger"><details class="more" id="closeacct"><summary><b>Close or delete my account</b></summary><p class="muted small">Deletes your account and what you posted. This can't be undone.</p><details class="more"><summary>What deleting does</summary><p class="muted small" id="delmsg">Deletes your account, saved drafts, profile picture, contest entries and votes, closes contests you run, and deletes the displays and photos you posted and the events you added (events you only took over or claimed stay on the map, unlinked from you). Votes you cast are removed from any contest, including ones that have finished voting. It also ends the monthly update, and your address goes on our do-not-contact list as a one-way hash (not the address itself) so we do not contact you again. This can't be undone.</p><p class="muted small">If a paid placement is still running on something you added, deleting the account takes it down and flags it for us to review the refund; we cannot bring it back.</p></details><p class="err" id="delerr" role="alert" hidden></p><p class="small" id="delsay" role="status" aria-live="polite"></p><div style="margin-top:10px"><button class="btn out" id="delacct" type="button" style="color:var(--bad);border-color:var(--bad)">Delete my account</button></div>
+      <div id="delbox" hidden><div style="margin-top:10px;display:grid;gap:10px;max-width:360px"><label class="mf"><span>Type <b>delete</b> to confirm</span><input id="deltype" autocomplete="off" autocapitalize="off" spellcheck="false"></label><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn out" id="delgo" type="button" disabled style="color:var(--bad);border-color:var(--bad)">Permanently delete my account</button><button class="btn out" id="delcancel" type="button">Keep my account</button></div></div></div></details></section>
+    <p class="endnote"><a href="/">Back to the map</a></p><p class="small muted">Homes and events you add are tied to this account's email.</p>`;
 }
 
 function render() {
@@ -362,7 +363,7 @@ function wire() {
   const rm = $("#avrm"); if (rm) rm.onclick = async () => { await fetch("/api/me/avatar", { method: "DELETE" }); load(); };
 }
 
-addEventListener("hashchange", () => { tab = (location.hash || "").slice(1) || "drafts"; if (O) render(); });
+addEventListener("hashchange", () => { tab = (location.hash || "").slice(1) || "displays"; if (O) render(); });
 let info = null, opened = false; // opened: the first tab was chosen already (a reload after an edit keeps the tab you are on)
 async function load() {
   noteSigninResult();

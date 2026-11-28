@@ -144,12 +144,12 @@ test("demo login: the demo account cannot reach Admin (Admin is Cloudflare Acces
 // ---- 3. Account deletion inside the app (Apple 5.1.1(v))
 test("a signed-in person can delete their account from the profile's Account tab, with a confirm step; nobody else can", async () => {
   const html = read("public/profile.html");
-  assert.match(html, /<h2>Delete my account<\/h2>/); assert.match(html, /id="delacct"/);
+  assert.match(html, /<summary><b>Close or delete my account<\/b><\/summary>/); assert.match(html, />Delete my account<\/button>/); assert.match(html, /id="delacct"/);
   assert.match(html, /id="delbox" hidden/, "the first tap only opens the confirm box (L1)"); assert.match(html, /dtype\.value\.trim\(\)\.toLowerCase\(\) !== "delete"/, "the final button needs the word delete"); assert.match(html, /id="delsay" role="status"/, "the step is announced");
   assert.match(html, /fetch\("\/api\/me", \{ method: "DELETE" \}\)/);
   // nothing in the markup hides it from the app, and it needs no email or website step
   assert.ok(!/SoCalLightsApp/.test(html), "the app sees the same Account tab");
-  const priv = read("public/privacy.html"); assert.match(priv, /open your profile, choose the Account tab and tap Delete my account/);
+  const priv = read("public/privacy.html"); assert.match(priv, /open your profile, choose the Account tab, open Close or delete my account and tap Delete my account/);
   assert.match(read("public/chrome.js"), /\/profile/, "the account menu leads to the profile");
 });
 test("DELETE /api/me removes the account, its sessions and personal data, clears the cookie, and refuses signed-out and cross-site calls", async () => {

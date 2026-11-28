@@ -13,13 +13,14 @@ const P = {
 };
 const svg = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.file}</svg>`;
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261127a"; document.head.appendChild(l); }
+if (!document.getElementById("appshell-css")) { const l = document.createElement("link"); l.id = "appshell-css"; l.rel = "stylesheet"; l.href = "/appshell.css?v=20261128a"; document.head.appendChild(l); }
 const SITE = [["map", "Map", "/", "map"], ["add", "Add", "/add", "add"], ["tut", "Tutorials", "/tutorials", "play"], ["help", "Help", "/help", "help"], ["prof", "Your profile", "/profile", "user"]];
 
 // opts: { page: "tut"|"prof"|"contest"..., extra: [[key,label,href,icon]], title, items: [{k,label,icon,count?}], active, onPick(k) }
 export function mountShell({ page, title, items, active, onPick, extra = [] }) {
   const content = document.getElementById("content");
-  const item = (i) => i.href ? `<a class="sh-nv" href="${esc(i.href)}" title="${esc(i.label)}"${i.href === location.pathname ? ' aria-current="true"' : ""}>${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span></a>` : `<button type="button" class="sh-nv" data-k="${esc(i.k)}" ${i.hidden ? "hidden" : ""} aria-current="${i.k === active}" title="${esc(i.label)}">${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span><span class="sh-cnt" data-cnt="${esc(i.k)}" ${i.count ? "" : "hidden"}>${i.count || ""}</span></button>`;
+  const inBar = (i) => !i.href && items.filter((x) => !x.href).slice(0, 4).includes(i); // the first four sections are the bottom-bar buttons: the phone "More" sheet leaves them out
+  const item = (i) => i.href ? `<a class="sh-nv" href="${esc(i.href)}" title="${esc(i.label)}"${i.href === location.pathname ? ' aria-current="true"' : ""}>${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span></a>` : `<button type="button" class="sh-nv" data-k="${esc(i.k)}" ${inBar(i) ? "data-inbar" : ""} ${i.hidden ? "hidden" : ""} aria-current="${i.k === active}" title="${esc(i.label)}">${svg(i.icon)}<span class="sh-lb">${esc(i.label)}</span><span class="sh-cnt" data-cnt="${esc(i.k)}" ${i.count ? "" : "hidden"}>${i.count || ""}</span></button>`;
   const site = [...extra, ...SITE.filter((s) => s[0] !== page && !items.some((i) => i.href === s[2]))].map(([, l, h, ic]) => `<a class="sh-nv" href="${h}" title="${l}">${svg(ic)}<span class="sh-lb">${l}</span></a>`).join("");
   const bottom = items.filter((i) => !i.href).slice(0, 4).map((i) => `<button type="button" class="sh-bb sh-own" data-k="${esc(i.k)}" aria-current="${i.k === active}">${svg(i.icon)}<span>${esc(i.label)}</span></button>`).join("");
   const root = document.createElement("div"); root.className = "sh-app";

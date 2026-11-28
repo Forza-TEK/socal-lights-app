@@ -42,6 +42,7 @@ body.sh-page{padding:0}
   }
 /* phone: top bar, bottom bar, and the full menu as a sheet from "More" */
 @media (max-width:699px){
+  .sh-side .sh-nv[data-inbar]{display:none}
   .sh-app{display:block}
   .sh-tbrand{display:grid}
   .sh-top{min-height:calc(72px + var(--sat));padding-block:calc(14px + var(--sat)) 14px;gap:8px}
