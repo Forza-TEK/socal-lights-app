@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "[ ! -f \"$CLAUDE_PROJECT_DIR/.claude/skills/impeccable/scripts/impeccable\" ] || sh \"$CLAUDE_PROJECT_DIR/.claude/skills/impeccable/scripts/impeccable\" hook", "env": { "IMPECCABLE_TELEMETRY": "off", "DO_NOT_TRACK": "1" }, "timeout": 5, "statusMessage": "Preparing build session" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Edit|Write", "hooks": [ { "type": "command", "command": "[ ! -f \"$CLAUDE_PROJECT_DIR/.claude/skills/impeccable/scripts/impeccable\" ] || sh \"$CLAUDE_PROJECT_DIR/.claude/skills/impeccable/scripts/impeccable\" hook", "env": { "IMPECCABLE_TELEMETRY": "off", "DO_NOT_TRACK": "1" }, "timeout": 5, "statusMessage": "Checking UI changes" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "[ ! -f \"$CLAUDE_PROJECT_DIR/.claude/skills/impeccable/scripts/impeccable\" ] || sh \"$CLAUDE_PROJECT_DIR/.claude/skills/impeccable/scripts/impeccable\" hook", "env": { "IMPECCABLE_TELEMETRY": "off", "DO_NOT_TRACK": "1" }, "timeout": 30, "statusMessage": "Design deep pass" } ] }
+    ]
+  }
+}

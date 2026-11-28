@@ -2,7 +2,7 @@
 // DELETE /api/admin/contests/<id> — removes the contest and everything in it.
 import { json, err } from "../../../_lib/util.js";
 import { CITY } from "../../../../public/cities.js";
-import { listOnMap, unlistFromMap, deleteContest, todayPT } from "../../../_lib/contests.js";
+import { listOnMap, unlistFromMap, deleteContest, todayPT, cats, cleanCatDescs, catDescOf } from "../../../_lib/contests.js";
 import { orgKeyFor } from "../../../_lib/passkey.js";
 import { orgState, orgLabel } from "../../../_lib/passes.js";
 import { logContest } from "../../../_lib/changes.js";
@@ -28,8 +28,10 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
       if (frozen.length) return err(409, "The winners are announced, so the name, organizer, city and dates are locked. You can still change the welcome text, the website and the contact email.");
     }
     if (f.site && !/^https?:\/\//i.test(f.site)) return err(400, "The website must start with http:// or https://.");
-    await env.DB.prepare("UPDATE contests SET pending_edit='', name=?, org=?, city=?, descr=?, site=?, contact_email=?, entries_close=?, vote_start=?, vote_end=?, updated_at=datetime('now') WHERE id=?")
-      .bind(f.name, f.org, f.city, f.descr, f.site, f.contact_email, f.entries_close, f.vote_start, f.vote_end, c.id).run();
+    // The one-line description under each voting category. An older page that does not send them keeps what is saved.
+    const catDescs = JSON.stringify(cleanCatDescs(b.catDescs && typeof b.catDescs === "object" ? b.catDescs : catDescOf(c), cats(c)));
+    await env.DB.prepare("UPDATE contests SET pending_edit='', name=?, org=?, city=?, descr=?, site=?, contact_email=?, entries_close=?, vote_start=?, vote_end=?, category_desc=?, updated_at=datetime('now') WHERE id=?")
+      .bind(f.name, f.org, f.city, f.descr, f.site, f.contact_email, f.entries_close, f.vote_start, f.vote_end, catDescs, c.id).run();
     if (c.status === "live") await listOnMap(env, { ...c, name: f.name, org: f.org, city: f.city, descr: f.descr, vote_end: f.vote_end });
     // The contact email only says where the contest's notices go. The organizer account (owner_id) is not changed by it: a new organizer has to be added as a co-organizer by the creator.
     return json({ ok: true, ...(f.contact_email !== c.contact_email ? { note: "The contact email changed. The organizer account that runs the contest did not." } : {}) });
