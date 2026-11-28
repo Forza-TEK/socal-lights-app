@@ -1639,7 +1639,9 @@ const PEEK = 142; // visible height at Peek: the handle and the buttons row, end
 // (Measuring env(safe-area-inset-bottom) from script returned 0 in the app, which left the list 16 px too low.) 62 = where the bar's top used to be (2px gap + 60px bar) when PEEK was set.
 function barTopDist() { const b = document.getElementById("bnav"); if (!b) return 62; const r = b.getBoundingClientRect(); return r.height ? Math.round(innerHeight - r.top) : 62; }
 function peekH() {
-  return PEEK + 2 - 6 - 62 + barTopDist() + (typeof bannerHeight === "function" && isPhone() ? bannerHeight() : 0);
+  // A phone turned sideways (about 375 px tall): the collapsed list shows just its handle and one row, and the sponsor line stays inside the list, so the map keeps most of the screen
+  const low = isPhone() && isShort();
+  return (low ? 84 : PEEK) + 2 - 6 - 62 + barTopDist() + (!low && typeof bannerHeight === "function" && isPhone() ? bannerHeight() : 0);
 }
 let sheetState = "peek";
 const fullH = () => $("#panel").offsetHeight || innerHeight * 0.85;

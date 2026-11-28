@@ -136,7 +136,7 @@ test("wiring: routes, share action, profile button, receipts and the pinned vers
   assert.match(readFileSync("public/_routes.json", "utf8"), /"\/h\/\*"/);
   const app = readFileSync("public/app.js", "utf8"); assert.match(app, /"\/h\/" \+ it\.p\.id/); assert.match(app, /detailHash = .*"#h-"/, "map links keep #h-<id>");
   assert.ok(Buffer.byteLength(app) < 204000);
-  assert.match(readFileSync("public/index.html", "utf8"), /app\.js\?v=20261127a/);
+  assert.match(readFileSync("public/index.html", "utf8"), /app\.js\?v=20261128a/);
   assert.match(readFileSync("public/profile.html", "utf8"), /viewBtn\("\/h\/" \+ encodeURIComponent\(h\.id\)\)/);
   assert.match(readFileSync("functions/api/submit.js", "utf8"), /map: `https:\/\/socallights\.app\/h\/\$\{id\}`/);
   assert.doesNotMatch(readFileSync("functions/_lib/featuremail.js", "utf8"), /#h-/);

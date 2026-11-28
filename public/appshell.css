@@ -68,3 +68,11 @@ body.sh-page{padding:0}
 
 .sh-noown .sh-own{display:none!important}.sh-noown .sh-bbar{grid-template-columns:repeat(1,1fr)}
 @media (min-width:700px){.sh-top .maplink{display:none}} /* the sidebar already has Map (an icon on tablets), so the header pill is only for phones */
+
+/* A phone turned sideways (about 375 px tall): a slimmer header and a one-line bottom bar, so the page keeps most of the screen */
+@media (max-width:699px) and (max-height:430px){
+  .sh-top{min-height:calc(48px + var(--sat));padding-block:calc(6px + var(--sat)) 6px}
+  .sh-bb{display:flex;justify-content:center;align-items:center;gap:8px;min-height:42px;padding:4px 0}
+  .sh-bb[aria-current="true"]::before{left:20%;right:20%}
+  .sh-content{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+}

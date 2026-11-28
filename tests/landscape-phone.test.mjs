@@ -44,7 +44,7 @@ test("everything beside the list is measured from the phone's real side margin (
 });
 test("the page links the current stylesheet and script versions", () => {
   const html = readFileSync("public/index.html", "utf8");
-  assert.match(html, /styles\.css\?v=20261126b/); assert.match(html, /app\.js\?v=20261127a/);
+  assert.match(html, /styles\.css\?v=20261126b/); assert.match(html, /app\.js\?v=20261128a/);
 });
 
 test("the sponsor / Featured strip: the whole pill is the tap target (the name link is stretched over it), the call link stays its own target, and dragging the strip still cancels the tap", () => {
