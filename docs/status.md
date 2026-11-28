@@ -2083,3 +2083,6 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 
 ### Admin phone bar: red line follows the open menu (2026-11-28)
 - The red line on the bottom bar sits on the menu whose sheet is open (it stayed on Home while the Listings sheet was up); closing the sheet puts it back on the page you are on (`paintBar()` in `admin.js`, `?v=20261128e`). Checked in a browser: Dashboard, switching sheets, closing, picking a page, Escape.
+
+### Admin second pass: Usage, Outreach, AI assistant (2026-11-28)
+- Same page layout as the list pages, but shorter: Cloudflare usage lists its 11 limits as compact rows while Cloudflare numbers are not connected (full cards once connected) and folds the 5 setup steps; Outreach leaves segment/step rows with no activity out of the results table (and says how many) and the totals row labels now line up (was shifted by one column); AI assistant folds the kill-switch and cap explanations and shows the three tiers as On/Off switch rows. Phone page length: Usage 3,219 -> 1,831 px, Outreach 3,935 -> 1,812 px, AI assistant 2,511 -> 2,321 px. Admin `admin.js ?v=20261128g`, `admin.css ?v=20261128f`, `chat.js ?v=20261128a`.

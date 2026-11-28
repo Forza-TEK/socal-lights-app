@@ -22,7 +22,7 @@ export async function renderChat(main) {
   if (d.provider === "claude" && !d.anthropicKey) ready.push("The ANTHROPIC_API_KEY secret is not set, so every question would get the error message.");
   if (d.provider === "claude" && s.capUsd <= 0) ready.push("The Claude path costs money and your monthly cap is $0, so it will not answer. Raise the cap or switch back to Workers AI (remove CHAT_PROVIDER).");
   if (!d.turnstile) ready.push("TURNSTILE_SECRET is not set, so the \"I am human\" check is skipped.");
-  main.innerHTML = `<div class="pghead"><div><h2>AI assistant</h2><p>The AI assistant answers questions about help articles, prices and events only. It is <b>${d.live ? "on" : s.kill || d.envKill ? "stopped by the kill switch" : "off"}</b> right now, and it only answers while it is switched on here. It stores no message text and no IP address, only the counts below. How it works, and what to check before turning it on: docs/ai-assistant.md.</p></div></div>
+  main.innerHTML = `<div class="pghead"><div><h2>AI assistant</h2><p>Answers visitor questions about help articles, prices and events. It is <b>${d.live ? "on" : s.kill || d.envKill ? "stopped by the kill switch" : "off"}</b> right now. It stores no message text and no IP address, only counts. Details: docs/ai-assistant.md.</p></div></div>
     <section class="ucard u-${state[0] === "ok" ? "ok" : state[0] === "bad" ? "limit" : "ok"}" aria-label="Switches"><div class="uh"><h3>Status</h3><span class="tag ${state[0]}">${esc(state[1])}</span></div>
       ${why ? `<p class="msg err" role="status">${esc(why)}</p>` : ""}
       ${ready.map((r) => `<p class="msg err">${esc(r)}</p>`).join("")}
@@ -30,7 +30,7 @@ export async function renderChat(main) {
         ${btn(s.enabled ? "ghost" : "main", s.enabled ? "Turn the assistant off" : "Turn the assistant on", 'id="cEnable"')}
         ${s.kill ? btn("main", "Release the kill switch", 'id="cKill"') : btn("danger", "Kill switch: stop it now", 'id="cKill"')}
       </div>
-      <p class="meta" style="margin:8px 0 0">The kill switch stops answers immediately and wins over the on/off switch. ${d.envKill ? "<b>CHAT_KILL is also set in Cloudflare settings</b>, which keeps it stopped until you remove it there. " : "In an emergency you can also set CHAT_KILL = 1 in Cloudflare Pages settings (no deploy needed). "}The map and chat button may keep showing for up to 5 minutes; visitors then see a polite \"not available\" message.</p>
+      <details class="more"><summary>How the kill switch works</summary><p class="meta" style="margin:6px 0 0">The kill switch stops answers immediately and wins over the on/off switch. ${d.envKill ? "<b>CHAT_KILL is also set in Cloudflare settings</b>, which keeps it stopped until you remove it there. " : "In an emergency you can also set CHAT_KILL = 1 in Cloudflare Pages settings (no deploy needed). "}The map and chat button may keep showing for up to 5 minutes; visitors then see a polite \"not available\" message.</p></details>
     </section>
     <h2 class="dh">Cost cap</h2>
     <section class="ucard u-ok" aria-label="Cost cap"><div class="uh"><h3>Monthly hard cap</h3><span class="tag">${s.capUsd > 0 ? usd(s.capUsd) + " a month" : "$0: free allowance only"}</span></div>
@@ -40,7 +40,7 @@ export async function renderChat(main) {
         <label style="display:grid;gap:4px">Most chats per day (UTC)<input id="cDayIn" type="number" min="0" max="${d.dailyMaxLimit}" step="1" value="${esc(s.dailyMax)}" inputmode="numeric" style="min-height:44px;padding:8px 10px"></label>
         <button type="submit" class="btn ice">Save limits</button><span class="msg" role="status" id="cCapMsg"></span>
       </form>
-      <p class="meta" style="margin:8px 0 0">$0 means the assistant stops when Cloudflare's free daily allowance (${fmt(d.freeNeuronsPerDay)} neurons, resets 00:00 UTC) is used up, so it can cost nothing. A higher cap lets it use paid Workers AI (or the Claude path, if switched on) until the month's counted cost reaches the cap. The counted cost is an estimate from token counts; Cloudflare's and Anthropic's own dashboards are the source of truth.</p>
+      <details class="more"><summary>How the cap works</summary><p class="meta" style="margin:6px 0 0">$0 means the assistant stops when Cloudflare's free daily allowance (${fmt(d.freeNeuronsPerDay)} neurons, resets 00:00 UTC) is used up, so it can cost nothing. A higher cap lets it use paid Workers AI (or the Claude path, if switched on) until the month's counted cost reaches the cap. The counted cost is an estimate from token counts; Cloudflare's and Anthropic's own dashboards are the source of truth.</p></details>
     </section>
     <h2 class="dh">Usage</h2>
     <div class="ugrid">
@@ -57,10 +57,8 @@ export async function renderChat(main) {
     <p class="meta">Provider in use: <b>${esc(d.provider === "claude" ? "Claude (paid)" : "Cloudflare Workers AI")}</b>, model <code>${esc(d.model)}</code>${d.gateway ? `, through AI Gateway <code>${esc(d.gateway)}</code>` : ", no AI Gateway"}. Tokens today: ${fmt(t.tokens_in)} in, ${fmt(t.tokens_out)} out. The provider is chosen by Cloudflare settings (CHAT_PROVIDER), not here.</p>
     <h2 class="dh">Actions</h2>
     <section class="ucard u-ok" aria-label="Actions"><div class="uh"><h3>What the assistant can do for visitors</h3></div>
-      <p class="meta" style="margin:0 0 8px">The assistant can offer a card the visitor fills in and taps: send a message to you (Tier 1), look things up and link to pages (Tier 2), and signed-in changes to their own listings (Tier 3, coming). These switches only matter while the assistant itself is on; the kill switch stops all of it.</p>
-      <div class="ra" style="display:flex;gap:10px;flex-wrap:wrap">
-        ${[[1, "Tier 1: send to the team, report, weekly email, remove a home"], [2, "Tier 2: find places, plan a night, contest pages"], [3, "Tier 3: signed-in changes (switch exists; the feature is not built, so it does nothing yet)"]].map(([n, label]) => btn(s.tiers[n] ? "ghost" : "main", (s.tiers[n] ? "Turn off " : "Turn on ") + label, `data-tier="${n}"`)).join("")}
-      </div>
+      <p class="meta" style="margin:0 0 4px">Cards the visitor fills in and taps. These switches only matter while the assistant is on; the kill switch stops all of it.</p>
+      <div class="tiers">${[[1, "Tier 1", "Send to the team, report, weekly email, remove a home"], [2, "Tier 2", "Find places, plan a night, contest pages"], [3, "Tier 3", "Signed-in changes (the switch exists; the feature is not built yet, so it does nothing)"]].map(([n, name, desc]) => `<div class="trow"><span><b>${name}</b> <span class="tag ${s.tiers[n] ? "ok" : ""}">${s.tiers[n] ? "On" : "Off"}</span><small>${desc}</small></span>${btn(s.tiers[n] ? "ghost" : "main", s.tiers[n] ? "Turn off" : "Turn on", `data-tier="${n}"`)}</div>`).join("")}</div>
       ${(d.actions || []).length ? `<div class="tablewrap"><table><thead><tr><th scope="col">Action (this month)</th><th scope="col">Shown</th><th scope="col">Finished</th><th scope="col">Failed</th></tr></thead><tbody>${d.actions.map((a) => `<tr><td>${esc(a.action)}</td><td>${fmt(a.shown)}</td><td>${fmt(a.done)}</td><td>${fmt(a.failed)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="meta" style="margin:8px 0 0">No action cards shown yet this month. Only counts are kept, never what visitors wrote.</p>`}
     </section>
     <h2 class="dh">Unanswered topics (last 30 days)</h2>

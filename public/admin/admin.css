@@ -694,3 +694,9 @@ body.admin .dtab td.ac .btn{min-height:36px;padding:0 12px;font:500 13px var(--f
 /* phone: the open menu sheet sits above the bottom bar, so another group can be picked without closing it first; only More shows the account line and View site */
 @media (max-width:1099px){body.sheet-open .bbar{z-index:90}body.sheet-open .side{bottom:calc(61px + env(safe-area-inset-bottom,0px));border-radius:20px 20px 0 0;max-height:calc(82dvh - 61px)}body:not([data-sheet="more"]) .sfoot{display:none}}
 @media (max-width:1099px){body.sheet-open .gh:not([hidden]){display:flex!important;margin:12px 12px 2px}body.sheet-open .grp+.gh+.grp,body.sheet-open .grp+.grp{border-top:0;margin-top:0;padding-top:0}}
+
+/* status pages (Usage, Outreach, AI assistant): long explanations fold away, switches are rows, an unconnected page is a compact list */
+details.more{margin:8px 0 0}details.more>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--muted);font-size:14px}details.more[open]>summary{color:var(--ink)}
+.tiers{margin-top:4px}.trow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid var(--line)}.trow:first-child{border-top:0}.trow>span{display:grid;gap:2px;min-width:0;justify-items:start}.trow small{color:var(--muted);font-size:13px}.trow .btn{flex:none}
+.ucompact ul{list-style:none;margin:0;padding:0}.ucompact li{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-top:1px solid var(--line)}.ucompact li:first-child{border-top:0}
+.dtab td:empty{display:none}@media (min-width:761px){.dtab td:empty{display:table-cell}}
