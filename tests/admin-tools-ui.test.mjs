@@ -31,5 +31,5 @@ test("event editor: Merge a duplicate (preview, then a two-tap merge with Undo) 
 
 test("Admin script and style versions are bumped together", () => {
   const idx = read("public/admin/index.html");
-  assert.match(idx, /admin\.js\?v=20261128m/); assert.match(idx, /admin\.css\?v=20261128o/);
+  assert.match(idx, /admin\.js\?v=20261128n/); assert.match(idx, /admin\.css\?v=20261128o/);
 });

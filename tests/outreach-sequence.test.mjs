@@ -621,5 +621,5 @@ test("Admin > Outreach has a preview and a two-tap release, and the script versi
   assert.match(js, /action: "release", segment, dry_run: true/);
   assert.match(js, /action: "release", segment, dry_run: false/);
   assert.match(js, /tap\(b, `release /); assert.match(js, /tap\(btn, `release /);
-  assert.match(html, /admin\.js\?v=20261128m/);
+  assert.match(html, /admin\.js\?v=20261128n/);
 });

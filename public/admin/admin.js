@@ -44,13 +44,20 @@ const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "co
 const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", grok: "From Grok", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 // The breadcrumb in the top bar: the menu group, the page, and (on a full record) the record's name
 const groupOf = (t) => { const b = document.querySelector(`#side [data-tab="${t}"]`); if (!b) return ""; let n = b.closest(".grp"); n = n && n.previousElementSibling; while (n && !n.classList.contains("gh")) n = n.previousElementSibling; return n ? (n.dataset.grp || n.textContent.trim()) : ""; };
-let detailOpen = false, NOBACK = false;
+let detailOpen = false, NOBACK = false, DEEP = "";
+// Which variable holds the open record on each page that has full-record pages, and how a link to one is opened
+const RECORD_OPEN = { pending: () => HOPEN, contests: () => COPEN, subs: () => SUBOPEN, orders: () => OORDER, reports: () => RMOPEN };
+const RECORD_SET = { pending: (v) => (HOPEN = v), contests: (v) => (COPEN = v), subs: (v) => (SUBOPEN = v), orders: (v) => (OORDER = v), reports: (v) => (RMOPEN = v), installers: (v) => (INSTOPEN = v), users: (v) => (UOPEN = v) };
 const setDetail = (name) => {
   const d = $("#pdetail"); if (d) d.innerHTML = name ? `<span class="csep" aria-hidden="true">/</span><b>${esc(name)}</b>` : "";
   document.querySelector(".crumb").classList.toggle("has-detail", !!name);
+  // The address names the open record (#pending/<id>), so it can be bookmarked or sent to someone
+  const syncHash = () => { if (RECORD_OPEN[tab]) { const id = RECORD_OPEN[tab](), want = "#" + tab + (name && id ? "/" + encodeURIComponent(id) : ""); if (location.hash !== want) history.replaceState(history.state, "", want); } };
+  if (!name) syncHash(); // closing: fix the address before going back; opening: after the history entry is pushed, so the list keeps its own address
   // A record is one step deeper: the phone's Back button returns to the list instead of leaving Admin
   if (name && !detailOpen) { detailOpen = true; history.pushState({ adm: 1 }, ""); }
   else if (!name && detailOpen) { detailOpen = false; if (!NOBACK && history.state && history.state.adm) history.back(); }
+  if (name) syncHash();
 };
 window.addEventListener("popstate", () => { if (!detailOpen) return; detailOpen = false; const b = document.querySelector("#main .rback"); if (b) b.click(); });
 document.addEventListener("admin:detail", (e) => setDetail(e.detail || ""));
@@ -80,6 +87,7 @@ navPaint();
 function setTab(t, push = true) {
   navOpen(t);
   if (t !== tab || NEXTVIEW) { PVIEW = NEXTVIEW || "pending"; HOPEN = ""; COPEN = ""; OORDER = ""; NEXTVIEW = ""; }
+  if (DEEP && RECORD_SET[t]) { RECORD_SET[t](DEEP); } DEEP = "";
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
   paintBar(); // the bottom-bar button carrying the red line
@@ -114,7 +122,7 @@ function openSheet(key) {
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-gsheet]"); if (!b) return; if (document.body.classList.contains("sheet-open") && b.getAttribute("aria-expanded") === "true") closeSheet(); else openSheet(b.dataset.gsheet); });
 $("#scrim").onclick = closeSheet;
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
-window.addEventListener("hashchange", () => { const h = location.hash.slice(1).split("/")[0]; if (TABS.includes(h) && h !== tab) setTab(h, false); else if (h === "ads" && tab === "ads") renderAds(); });
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1).split("/")[0]; if (TABS.includes(h) && h !== tab) { try { DEEP = location.hash.split("/")[1] ? decodeURIComponent(location.hash.split("/")[1]) : ""; } catch { DEEP = ""; } setTab(h, false); } else if (h === "ads" && tab === "ads") renderAds(); else if (h === tab && RECORD_SET[h]) { let id = ""; try { id = location.hash.split("/")[1] ? decodeURIComponent(location.hash.split("/")[1]) : ""; } catch {} if (RECORD_OPEN[h] && id !== RECORD_OPEN[h]()) { RECORD_SET[h](id); render(); } } });
 
 // The numbers on the menu, from one request, so they are right on arrival and after every change
 async function refreshCounts() { try { const c = await api("/api/admin/counts"); for (const k of Object.keys(c)) setCount(k, c[k]); } catch {} }
@@ -1070,7 +1078,7 @@ function editEvent(ev, focus) {
 }
 
 (async () => {
-  try { const me = await api("/api/admin/me"); $("#who").textContent = me.email; $("#whoi").textContent = (me.email || "?")[0].toUpperCase(); $("#pmi").textContent = (me.email || "?")[0].toUpperCase(); $("#pme").textContent = me.email || ""; const h = location.hash.slice(1).split("/")[0]; setTab(TABS.includes(h) ? h : "dashboard", false); }
+  try { const me = await api("/api/admin/me"); $("#who").textContent = me.email; $("#whoi").textContent = (me.email || "?")[0].toUpperCase(); $("#pmi").textContent = (me.email || "?")[0].toUpperCase(); $("#pme").textContent = me.email || ""; const hp = location.hash.slice(1).split("/"), h = hp[0]; try { DEEP = hp[1] ? decodeURIComponent(hp[1]) : ""; } catch { DEEP = ""; } setTab(TABS.includes(h) ? h : "dashboard", false); }
   catch (e) { $("#who").textContent = ""; $("#main").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 })();
 
