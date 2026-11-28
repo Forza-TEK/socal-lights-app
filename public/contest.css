@@ -125,3 +125,7 @@ body[data-fest] .cmain{padding-top:min(104px,16vw)} /* room for the drawing alon
 .vlink{all:unset;box-sizing:border-box;display:inline-block;margin-top:6px;min-height:32px;line-height:32px;color:var(--ink);font:600 14px var(--font);cursor:pointer;text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:4px}
 .vlink:focus-visible{outline:2px solid var(--season);outline-offset:2px}
 video.evid{display:block;width:100%;max-width:420px;margin-top:8px;border-radius:10px;background:#000}
+
+/* organizer dashboard: where the contest is, and the one thing to do next */
+.strip{display:grid;gap:10px;justify-items:start;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--season-soft);font-size:15px}
+.strip b{font-weight:700}
