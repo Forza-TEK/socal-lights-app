@@ -141,6 +141,6 @@ run({ preview, steps, data: d, persist: "scl-event-draft", uid: acct.id, prefill
   actions: { skipurl(_, a) { d.url = ""; a.next(); } },
   after: (s) => { if (s.id === "review") ts.mount(); if (s.id === "dates") { const a = document.getElementById("f-start"), b = document.getElementById("f-end"); if (a) a.min = today; if (b) b.min = d.start || today; } } });
 </script>
-<script src="/footer.js?v=20261118a" defer></script>
+<script src="/footer.js?v=20261128a" defer></script>
 </body>
 </html>

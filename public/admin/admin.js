@@ -1235,11 +1235,13 @@ async function openInstaller(id) {
   let d; try { d = await api("/api/admin/installers/" + id); } catch (e) { toast(e.message, true); return close(); }
   const i = d.installer, f = (k, l, v, ex = "") => `<label>${l}<input data-f="${k}" value="${esc(v || "")}" ${ex}></label>`;
   const conf = d.homes.filter((h) => h.installer_confirmed || h.poster_type === "installer").length;
+  const live = d.homes.filter((h) => h.status === "approved");
   m.innerHTML = modalFrame(i.name, `
     <div class="rt" style="margin:-4px 0 10px"><span class="tag ${i.status === "hidden" ? "bad" : "ok"}">${i.status === "hidden" ? "Hidden" : "Active"}</span><a class="meta" href="/installer/${esc(i.slug)}" target="_blank" rel="noopener">View public page ↗</a></div>
     <div class="stats pstats"><div class="stat"><b>${d.homes.length}</b><span>homes linked</span></div><div class="stat"><b>${conf}</b><span>confirmed</span></div><div class="stat"><b>${d.views7}</b><span>page views, 7 days</span></div><div class="stat"><b>${d.leads.length}</b><span>quote requests</span></div></div>
     ${d.owner ? psec("Owner account", 1, prow(`data-pf-user="${esc(d.owner.id)}"`, "☺", d.owner.name || d.owner.email, d.owner.email)) : `<h3 class="psec">Owner account</h3><p class="meta" style="margin:0">${i.owner_email ? esc(i.owner_email) + " has no account yet." : "Nobody has claimed this profile."}</p>`}
     ${psec("Homes linked to this installer", d.homes.length, d.homes.map((h) => prow(`data-pf-post="${esc(h.id)}"`, "⌂", h.title, `${h.city || ""} · ${h.poster_type === "installer" ? "posted by the installer" : h.installer_confirmed ? "confirmed" : "claimed by the homeowner, not confirmed"} · ${ago(h.created_at)}`, [h.status === "approved" ? "Live" : h.status === "pending" ? "Waiting" : h.status, h.status === "approved" ? "ok" : h.status === "pending" ? "warn" : ""])).join(""))}
+    ${live.length > 1 ? `<div class="mfoot" style="margin:-4px 0 12px"><button class="btn danger sm" type="button" id="iDownAll">Take all ${live.length} live homes off the map</button><span class="meta">They go back to Houses waiting, nothing is deleted. Each one can be published again.</span><span class="msg" id="iDownMsg" role="status"></span></div>` : ""}
     ${psec("Recent quote requests", d.leads.length, d.leads.map((l) => `<li><div class="dli" style="cursor:default">${dico("mail")}<span class="dt"><b>${esc(l.name)}</b><small>${esc(l.email)}${l.phone ? " · " + esc(l.phone) : ""} · ${ago(l.created_at)}</small></span></div></li>`).join(""))}
     ${d.history.length ? `<h3 class="psec">Admin history</h3><ul class="meta" style="margin:0;padding-left:18px">${d.history.map((h) => `<li>${when(h.at)} · ${esc(h.admin || "admin")} ${esc(VERB[h.action] || h.action)}</li>`).join("")}</ul>` : ""}
     <h3 class="psec">Edit details</h3>
@@ -1257,6 +1259,12 @@ async function openInstaller(id) {
   wireAreas(m); m.querySelector("#mClose").onclick = close;
   const msg = (t, bad) => { const e = $("#iMsg"); e.className = bad ? "msg err" : "msg"; e.textContent = t; };
   $("#iForm").onsubmit = async (e) => { e.preventDefault(); const body = { action: "edit" }; m.querySelectorAll("[data-f]").forEach((el) => (body[el.dataset.f] = el.value)); try { await instAct(i.id, body); toast("Saved"); await openInstaller(i.id); refreshCounts(); } catch (er) { msg(er.message, true); } };
+  const down = $("#iDownAll"); if (down) down.onclick = async () => {
+    if (!tap(down, "take down " + live.length)) return;
+    const mm = $("#iDownMsg"); down.disabled = true; let n = 0, fail = "";
+    for (const h of live) { try { mm.textContent = `Taking down ${n + 1} of ${live.length}…`; await api("/api/admin/posts/" + h.id, { method: "POST", body: JSON.stringify({ action: "unpublish" }) }); n++; } catch (er) { fail = er.message; break; } }
+    refreshCounts(); toast(fail ? `Took down ${n} of ${live.length}. Stopped: ${fail}` : `Took down ${n} homes`, !!fail); await openInstaller(i.id);
+  };
   $("#iDelGo").onclick = async () => { try { await instAct(i.id, { action: "delete", confirm: $("#iDelName").value }); close(); toast("Profile deleted"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
   $("#iMergeGo").onclick = async (e) => { const into = $("#iMerge").value; if (!into) return msg("Choose the profile to keep.", true); if (!tap(e.target, "merge")) return; try { await instAct(i.id, { action: "merge", into }); close(); toast("Merged"); renderInstallers(); refreshCounts(); } catch (er) { msg(er.message, true); } };
 }
