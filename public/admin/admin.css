@@ -700,3 +700,9 @@ details.more{margin:8px 0 0}details.more>summary{cursor:pointer;min-height:44px;
 .tiers{margin-top:4px}.trow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid var(--line)}.trow:first-child{border-top:0}.trow>span{display:grid;gap:2px;min-width:0;justify-items:start}.trow small{color:var(--muted);font-size:13px}.trow .btn{flex:none}
 .ucompact ul{list-style:none;margin:0;padding:0}.ucompact li{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-top:1px solid var(--line)}.ucompact li:first-child{border-top:0}
 .dtab td:empty{display:none}@media (min-width:761px){.dtab td:empty{display:table-cell}}
+
+/* system health is amber, not red: red stays for what needs a decision today */
+.limitbanner.stale{border-color:var(--u-watch)}.limitbanner.stale>summary b{color:var(--u-watch)}
+/* header path: the page name returns from a record, the group name opens its menu on a phone */
+.crumb.has-detail #ptitle{color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+@media (max-width:1099px){.crumb #pgroup{cursor:pointer;text-decoration:underline;text-underline-offset:3px}}
