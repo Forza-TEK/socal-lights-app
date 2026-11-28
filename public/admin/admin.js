@@ -6,7 +6,7 @@ import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261116b";
 import { renderHelp } from "/admin/help.js?v=20261116b";
 import { renderPartner } from "/admin/partner.js?v=20261116b";
-import { renderChat } from "/admin/chat.js?v=20261128a";
+import { renderChat } from "/admin/chat.js?v=20261128b";
 import { renderGrok } from "/admin/grok.js?v=20261121b";
 import { mdy, localTime, btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261121a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
@@ -44,7 +44,15 @@ const TABS = ["dashboard", "pending", "subs", "claims", "orders", "partner", "co
 const TITLES = { dashboard: "Dashboard", pending: "Houses waiting", subs: "Submitted events", claims: "Event claims", orders: "Orders", partner: "Event Partners", contests: "Contests", passes: "Contest passes", reports: "Reports", approved: "Published houses", events: "Events", installers: "Installers", users: "Users", overlaps: "Replaced records", data: "Data check", log: "Activity log", usage: "Cloudflare usage", outreach: "Outreach", ads: "Ads", grok: "From Grok", emails: "Email templates", help: "Help Center", chat: "AI assistant" };
 // The breadcrumb in the top bar: the menu group, the page, and (on a full record) the record's name
 const groupOf = (t) => { const b = document.querySelector(`#side [data-tab="${t}"]`); if (!b) return ""; let n = b.closest(".grp"); n = n && n.previousElementSibling; while (n && !n.classList.contains("gh")) n = n.previousElementSibling; return n ? (n.dataset.grp || n.textContent.trim()) : ""; };
-const setDetail = (name) => { const d = $("#pdetail"); if (d) d.innerHTML = name ? `<span class="csep" aria-hidden="true">/</span><b>${esc(name)}</b>` : ""; };
+let detailOpen = false, NOBACK = false;
+const setDetail = (name) => {
+  const d = $("#pdetail"); if (d) d.innerHTML = name ? `<span class="csep" aria-hidden="true">/</span><b>${esc(name)}</b>` : "";
+  document.querySelector(".crumb").classList.toggle("has-detail", !!name);
+  // A record is one step deeper: the phone's Back button returns to the list instead of leaving Admin
+  if (name && !detailOpen) { detailOpen = true; history.pushState({ adm: 1 }, ""); }
+  else if (!name && detailOpen) { detailOpen = false; if (!NOBACK && history.state && history.state.adm) history.back(); }
+};
+window.addEventListener("popstate", () => { if (!detailOpen) return; detailOpen = false; const b = document.querySelector("#main .rback"); if (b) b.click(); });
 document.addEventListener("admin:detail", (e) => setDetail(e.detail || ""));
 const setCount = (k, v) => { COUNTS[k] = v; document.querySelectorAll(`[data-count="${k}"]`).forEach((el) => { el.textContent = v; el.hidden = !v && el.dataset.hide0 === "1"; const kind = el.classList.contains("act") ? " waiting" : " in total"; el.setAttribute("aria-label", v + kind); el.title = v + kind; }); paintTitle(); navPaint(); };
 const COUNTS = {};
@@ -75,7 +83,7 @@ function setTab(t, push = true) {
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
   paintBar(); // the bottom-bar button carrying the red line
-  $("#ptitle").textContent = TITLES[t] || ""; $("#pgroup").textContent = groupOf(t); setDetail("");
+  $("#ptitle").textContent = TITLES[t] || ""; $("#pgroup").textContent = groupOf(t); NOBACK = true; setDetail(""); NOBACK = false;
   closeSheet(); window.scrollTo(0, 0);
   if (push && location.hash.split("/")[0] !== "#" + t) history.replaceState(null, "", "#" + t);
   render();
@@ -179,7 +187,7 @@ async function renderHouses() {
   const bar = toolbar({ search: { placeholder: contest ? "Search entries, people, cities" : "Search houses, people, cities" }, right: sortSelect(HSORTS, HSORT) + (contest ? "" : dl("houses" + (pend ? (dec ? "&status=declined" : "&status=pending") : "&status=approved"))), count: String(rows.length) });
   const go = () => { wireToolbar(main.querySelector(".tbar"), { onSearch: (q) => filterCards(main, q), onSort: (v) => { HSORT = v; renderHouses(); } }); main.querySelectorAll(".pgtabs [data-view]").forEach((b) => (b.onclick = () => { PVIEW = b.dataset.view; renderHouses(); })); applyPreset(main); };
   if (!rows.length) { main.innerHTML = head + bar + `<div class="empty">${contest ? "No contest entries yet." : vids ? "No videos waiting for approval." : !pend ? "No published houses yet." : dec ? "Nothing declined." : "Nothing waiting for review."}</div>`; go(); return; }
-  const bulk = pend && !dec ? `<div class="bulk" id="bulk"><label class="chk"><input type="checkbox" id="selAll"> Select all</label><span class="grow"></span><span class="meta" id="selN"></span><button class="btn ice" type="button" id="bulkGo" hidden></button><button class="btn ghost" type="button" id="bulkClear" hidden>Clear</button></div>` : "";
+  const bulk = pend && !dec && rows.length > 1 ? `<div class="bulk" id="bulk"><label class="chk"><input type="checkbox" id="selAll"> Select all</label><span class="grow"></span><span class="meta" id="selN"></span><button class="btn ice" type="button" id="bulkGo" hidden></button><button class="btn ghost" type="button" id="bulkClear" hidden>Clear</button></div>` : "";
   const cols = contest ? "<th>Entry</th><th>Contest</th><th>Posted by</th><th>Contact</th><th>Address</th>" : "<th>House</th><th>City</th><th>Posted as</th><th>Photos</th><th>Video</th><th>Received</th>";
   const cells = (p) => contest ? `<td>${tcell(p.photos[0] ? photo(p.photos[0]) : "", `<a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">${esc(p.title)}</a>`)}</td><td>${esc(p.contest)}</td><td>${esc(p.biz)}</td><td>${esc(p.contact_email || "—")}</td><td>${esc(p.address || "—")}</td>`
     : `<td>${tcell(p.photos[0] ? photo(p.photos[0]) : "", `${pend && !dec ? `<input type="checkbox" class="rsel" data-sel="${esc(p.id)}" aria-label="Select ${esc(p.title)}"> ` : ""}<a class="rl" href="#${tab}" data-hopen="${esc(p.id)}">${esc(p.title)}</a><span class="sub">${esc(p.biz)}</span>`)}</td><td>${esc(p.city)}<span class="sub">${esc(p.county || "")}</span></td><td><span class="tag">${p.kind === "installer" ? "Installer" : "Homeowner"}</span></td><td data-label="Photos">${p.photos.length}</td><td data-label="Video">${p.video_file ? `<span class="tag ${p.video_ok ? "ok" : "warn"}">${p.video_ok ? "Clip live" : "Clip waiting"}</span>` : p.video ? '<span class="tag">Link</span>' : ""}</td><td data-label="Received">${esc(localTime(p.created))}</td>`;
@@ -345,7 +353,7 @@ async function renderSubs() {
   const actions = (x) => {
     const st = x.status === "pending" ? "pending" : x.status === "declined" ? "declined" : "published";
     return (st === "pending" ? btn("ghost", "Edit", `data-sedit="${esc(x.id)}"`) : "")
-      + (st === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : st === "pending" ? btn("main", "Publish (confirmed)", 'data-sact="approve" data-st="confirmed"') + btn("ghost", "Publish (expected)", 'data-sact="approve" data-st="expected"') : (x.event_id && !x.event_status ? '<span class="meta" style="align-self:center">Taken off the map (deleted). Move it back to waiting to publish it again, or bring the event back under Events > Recently deleted.</span>' : x.event_id ? viewLink(x.event_id) : "") + (x.event_id && x.contact_email ? asLink("Edit as owner", "/profile", x.contact_email, "events") : "") + (x.event_id && x.event_status === "expected" ? btn("main", "Confirm dates", 'data-sact="confirm"') : "") + btn("ghost", x.event_id && !x.event_status ? "Move back to waiting" : "Unpublish", 'data-sact="unpublish"'))
+      + (st === "declined" ? btn("main", "Restore to waiting", 'data-sact="restore"') : st === "pending" ? btn("main", "Publish as confirmed", 'data-sact="approve" data-st="confirmed" title="You checked the dates and place with the organizer or the event page"') + btn("ghost", "Publish as expected", 'data-sact="approve" data-st="expected" title="Not checked yet: shown on the map as expected, to confirm later"') : (x.event_id && !x.event_status ? '<span class="meta" style="align-self:center">Taken off the map (deleted). Move it back to waiting to publish it again, or bring the event back under Events > Recently deleted.</span>' : x.event_id ? viewLink(x.event_id) : "") + (x.event_id && x.contact_email ? asLink("Edit as owner", "/profile", x.contact_email, "events") : "") + (x.event_id && x.event_status === "expected" ? btn("main", "Confirm dates", 'data-sact="confirm"') : "") + btn("ghost", x.event_id && !x.event_status ? "Move back to waiting" : "Unpublish", 'data-sact="unpublish"'))
       + (st === "pending" ? btn("danger", "Decline", 'data-sact="decline"') : "");
   };
   if (one) { // the full record: Back link, actions at the top right, cards
@@ -354,7 +362,7 @@ async function renderSubs() {
     main.innerHTML = `<div class="rpage" data-sid="${esc(x.id)}"><a class="rback" href="#subs" id="sBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to submitted events</a>
       <div class="pghead"><div><h2>Event detail</h2></div><div class="pgacts">${actions(x)}</div></div><span class="msg" role="status"></span>
       <section class="rcard"><h3>Overview</h3>${kv([["Name", esc(x.name)], ["Status", `<span class="tag ${st[1]}">${st[0]}</span>`], ["Season", esc(SEASONS[x.season] ? SEASONS[x.season].label : x.season)], ["Type", esc((SEASONS[x.season] && SEASONS[x.season].types[x.type]) || x.type)], ["Dates", mdy(x.start_date) + (x.end_date !== x.start_date ? " to " + mdy(x.end_date) : "")], ["Hours", esc(x.hours || "no hours")], ["Price", esc(x.price || "")], ["Added", esc(localTime(x.created_at))]])}</section>
-      <section class="rcard"><h3>Where</h3>${kv([["Venue", esc(x.venue)], ["Address", esc(x.address)], ["City", esc(x.city)], ["County", esc(x.county || "")], ["Pin", `${Number(x.lat).toFixed(4)}, ${Number(x.lng).toFixed(4)}`]])}</section>
+      <section class="rcard"><h3>Where</h3>${kv([["Venue", esc(x.venue)], ["Address", esc(x.address)], ["City", esc(x.city)], ["County", esc(x.county || "")], ["Pin", Number(x.lat) || Number(x.lng) ? `${Number(x.lat).toFixed(4)}, ${Number(x.lng).toFixed(4)}` : "No location yet (add the address)"]])}</section>
       <section class="rcard"><h3>Details and contact</h3>${kv([["About", esc(x.blurb)], ["Event page", x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>` : ""], ["Contact", `<span style="user-select:all">${esc(x.contact_email)}</span>`], ["Notes", esc(x.note || "")], ["Paid Featured", x.paid_plans ? `<b>${esc(x.paid_plans)}</b>` : ""]])}</section></div>`;
     $("#sBack").onclick = (e) => { e.preventDefault(); SUBOPEN = ""; setDetail(""); renderSubs(); };
     return;
@@ -518,7 +526,7 @@ async function renderOrders() {
     main.innerHTML = revenueStrip(rv) + head + toolbar({ search: { placeholder: "Search installers" }, count: String(rnRows.length) }) + (rnRows.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th>Installer</th><th>Plan</th><th>Next charge</th><th>Reminder sent</th><th>Retry</th><th>Status</th></tr></thead><tbody>${rnRows.map((r) => { const g = RG[r.group] || [r.group, ""]; return `<tr><td><b>${esc(r.name || r.installer_id)}</b><span class="sub">${esc(r.last_error || "")}</span></td><td>${esc(INST_PLAN[r.plan] || "Banner")}<span class="sub">${esc(money(r.price_cents))}</span></td><td>${esc(r.next_charge_date || "")}</td><td>${r.notice_sent_for ? "yes" : "not yet"}</td><td>${esc(r.retry_at || "")}</td><td><span class="tag ${g[1]}">${esc(g[0])}</span></td></tr>`; }).join("")}</tbody></table></div></div>` : `<div class="empty">No automatic renewals.</div>`);
     wire(); return;
   }
-  const bar = toolbar({ search: { placeholder: "Search events, emails" }, count: String(rows.length) });
+  const bar = toolbar({ search: { placeholder: "Search orders, emails" }, count: String(rows.length) });
   if (!rows.length) { main.innerHTML = revenueStrip(rv) + head + bar + `<div class="empty">${OVIEW === "attention" ? "Nothing needs you. Refunds you still have to make, disputes, partial refunds and placements that did not switch on show up here." : "No orders here yet."}</div>`; wire(); return; }
   const listingOf = (o) => (o.target === "event" ? "/e/" + encodeURIComponent(o.event_id) : o.target === "installer" && o.inst_slug ? "/installer/" + encodeURIComponent(o.inst_slug) : ""); // the public page this order paid for, one tap from the list
   const kind = (o) => (o.target === "event_partner" ? "Event Partner" : o.target === "contest_pass" ? "Contest pass" : o.target === "home" ? "Featured home" : o.target === "installer" ? "Installer" : "Event");
@@ -1809,3 +1817,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal
   };
   new MutationObserver(order).observe(main, { childList: true });
 }
+
+// The path in the header is tappable: the page name returns from a record to its list; the group name (on a phone) opens that group's menu
+$("#ptitle").addEventListener("click", () => { if (document.querySelector(".crumb.has-detail")) { const b = document.querySelector("#main .rback"); if (b) b.click(); } });
+$("#pgroup").addEventListener("click", () => { const g = $("#pgroup").textContent; const key = Object.keys(SHEETS).find((k) => SHEETS[k].includes(g)); if (key && matchMedia("(max-width:1099px)").matches) openSheet(key); });
