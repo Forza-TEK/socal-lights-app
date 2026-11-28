@@ -77,3 +77,4 @@ body.prof .sh-content,body.prof .sh-content.main{display:block}
 .prof .sh-content .who.compact+#pp{margin-top:6px}
 .prof details.more{margin:8px 0 0}.prof details.more>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--muted);font-size:14px}.prof details.more[open]>summary{color:var(--ink)}
 .prof .acard{margin-top:12px;padding:14px 16px;border:1px solid var(--line);border-radius:12px}.prof .acard h2{margin:0 0 6px;font-size:18px}.prof .acard.danger{border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}.prof .acard details.more{margin:0}.prof .acard details.more>summary{min-height:44px;color:var(--ink)}
+.prof .endnote{margin:18px 0 6px;text-align:center}.prof .endnote a{color:var(--ink);text-underline-offset:3px}

@@ -9,7 +9,7 @@ Bundle / package id: `app.socallights.lights` (change in `app/capacitor.config.j
 - `public/privacy.html` — privacy policy (live at https://socallights.app/privacy). Use this URL in every store listing.
 - `app/` — Capacitor project with iOS and Android platforms generated, icons installed, location permission text and Android permissions set.
 - Sign-in inside the app is the emailed code only ("Continue with Google" is hidden when the browser string has `SoCalLightsApp`: Google blocks embedded webviews, and offering Google would make Apple 4.8 require Sign in with Apple). Google and code sign-in prove the same email, so they reach the same account (`tests/appstore.test.mjs`).
-- Account deletion in the app (Apple 5.1.1(v)): Profile > Account tab > Delete my account, two taps (the second asks "Tap again to permanently delete"). `DELETE /api/me` removes the account and personal data as `public/privacy.html` describes and keeps only the do-not-contact hash.
+- Account deletion in the app (Apple 5.1.1(v)): Profile > Account tab > Close or delete my account (a fold) > Delete my account, then a confirm step (two taps (the second asks "Tap again to permanently delete"). `DELETE /api/me` removes the account and personal data as `public/privacy.html` describes and keeps only the do-not-contact hash.
 - Native share sheet (`@capacitor/share`) on every Share button inside the app (`public/native.js`).
 - In-app mode: no "Keep SoCal Lights Free" tip item or footer line, no Featured payment option on Add event. The Shop tab (Amazon categories) is website-only and is hidden in the apps; nothing replaces it there.
 
