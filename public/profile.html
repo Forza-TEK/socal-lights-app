@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="/tokens.css?v=20261124a">
 <link rel="stylesheet" href="/addflow.css?v=20261124b">
 <link rel="stylesheet" href="/forms.css?v=20261117b">
-<link rel="stylesheet" href="/profile.css?v=20261127c">
+<link rel="stylesheet" href="/profile.css?v=20261128b">
 <script src="/hit.js?v=20261107a" defer></script>
 </head>
 <body class="sh-page prof">
@@ -30,13 +30,13 @@ import { SEASONS } from "/seasons.js?v=20261115a";
 import { draftKey, clearAllLocalDrafts } from "/drafts-local.js?v=20261111z";
 import { CITY } from "/cities.js?v=20261115i";
 const SEASON_LIST = Object.entries(SEASONS).map(([k, v]) => [k, v.label, v.types]); // for the edit sheets: season, and the types that belong to it
-const shell = mountShell({ page: "prof", title: "Your profile", active: (location.hash || "").slice(1) || "drafts", items: [{ k: "drafts", label: "Drafts", icon: "file" }, { k: "contests", label: "Contests", icon: "trophy" }, { k: "displays", label: "Displays", icon: "home" }, { k: "events", label: "Events", icon: "cal" }, { k: "badges", label: "Badges", icon: "star", hidden: true }, { k: "account", label: "Account", icon: "user" }, { k: "tutorials", label: "Tutorials", icon: "play", href: "/tutorials" }], onPick: (k) => { tab = k; history.replaceState(null, "", "#" + k); render(); window.scrollTo(0, 0); } });
+const shell = mountShell({ page: "prof", title: "Your profile", active: (location.hash || "").slice(1) || "displays", items: [{ k: "displays", label: "Displays", icon: "home" }, { k: "events", label: "Events", icon: "cal" }, { k: "contests", label: "Contests", icon: "trophy" }, { k: "drafts", label: "Drafts", icon: "file" }, { k: "badges", label: "Badges", icon: "star", hidden: true }, { k: "account", label: "Account", icon: "user" }, { k: "tutorials", label: "Tutorials", icon: "play", href: "/tutorials" }], onPick: (k) => { tab = k; history.replaceState(null, "", "#" + k); render(); window.scrollTo(0, 0); } });
 const $ = (q) => document.querySelector(q), app = $("#app"), cities = Object.keys(CITY).sort();
 const KEYS = { house: "scl-house-draft", event: "scl-event-draft", contest: "scl-contest-draft" }, PAGE = { house: "/add-house", event: "/add-event", contest: "/add-contest" }, LABEL = { house: "Lighting display", event: "Event", contest: "Contest", entry: "Contest entry" }, dpage = (d) => (d.kind === "entry" ? (d.slug ? `/c/${d.slug}/enter` : "/add") : PAGE[d.kind] || "/add");
 const when = (s) => { try { return new Date(String(s).replace(" ", "T") + "Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch { return ""; } };
 const stat = { approved: ["live", "Live"], published: ["live", "Live"], live: ["live", "Live"], pending: ["warn", "In review"], declined: ["", "Not accepted"], closed: ["", "Ended"] };
 const dot = (s, over) => { const [c, l] = over || stat[s] || ["", s]; return `<span class="spill ${c}">${esc(l)}</span>`; }; // a status pill, the same style as the Admin
-let O = null, NL = { optin: null, config: null }, BD = { badges: [], master: true, off: {} }, tab = (location.hash || "").slice(1) || "drafts";
+let O = null, NL = { optin: null, config: null }, BD = { badges: [], master: true, off: {} }, tab = (location.hash || "").slice(1) || "displays";
 
 // After Google sign-in comes back with ?save=<kind>, move the draft kept on this device into the account
 async function syncLocal() {
@@ -54,7 +54,7 @@ async function syncLocal() {
   } catch {}
   history.replaceState(null, "", "/profile#drafts");
 }
-const head = (h, add) => `<div class="sechead"><h2>${h}</h2>${add ? `<a class="btn out sm" href="${add[1]}">${add[0]}</a>` : ""}</div>`;
+const head = (h, add, sub = "") => `<div class="sechead"><div><h2>${h}</h2>${sub ? `<p class="subline">${sub}</p>` : ""}</div>${add ? `<a class="btn out sm" href="${add[1]}">${add[0]}</a>` : ""}</div>`;
 const fld = (k, l, v, ex = "") => `<label class="mf"><span>${l}</span><input data-k="${k}" value="${esc(v ?? "")}" ${ex}></label>`;
 const sel = (k, l, v, opts) => `<label class="mf"><span>${l}</span><select data-k="${k}">${opts.map(([a, b]) => `<option value="${a}" ${String(v) === a ? "selected" : ""}>${b}</option>`).join("")}</select></label>`;
 // A line under a listing that is not on the map: why, and what to do (M6). Every status gets a plain sentence and the person can always delete their own listing.
@@ -135,7 +135,7 @@ function nlTopics(role, picked) {
 function nlSection() {
   if (!NL.config) return "";
   const o = NL.optin, on = !!(o && o.active), role = on ? o.role : "";
-  return `<section id="nlsec" style="margin-top:12px"><h2>Monthly update</h2><p class="muted small" style="margin-top:-6px">One short email a month with seasonal recommendations. It is separate from your account and your listings, and it stays off unless you turn it on.</p>
+  return `<section id="nlsec" class="acard"><h2>Monthly update</h2><p class="muted small" style="margin-top:-6px">One short email a month with seasonal recommendations. It is separate from your account and your listings, and it stays off unless you turn it on.</p>
     <label class="chk"><input type="checkbox" data-nl-on ${on ? "checked" : ""}> <span>Email me a monthly update with seasonal recommendations</span></label>
     <div id="nlopts" style="display:grid;gap:10px;margin:12px 0 0 34px" ${on ? "" : "hidden"}>
       <fieldset style="border:0;margin:0;padding:0;display:grid;gap:4px"><legend class="small" style="padding:0;font-weight:600">I am</legend>${NL.config.roles.map((r) => `<label class="chk"><input type="radio" name="nlrole" value="${esc(r.id)}" ${role === r.id ? "checked" : ""}> <span>${esc(r.label)}</span></label>`).join("")}</fieldset>
@@ -147,11 +147,11 @@ function nlSection() {
 }
 function panel() {
   const o = O, u = o.user;
-  if (tab === "drafts") return head("Saved drafts") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind}${d.cname ? " in " + esc(d.cname) : ""} · saved ${when(d.updated_at)}${d.kind === "house" || d.kind === "entry" ? " · photos stay on the device where you added them" : ""}</span></div><div class="acts">${d.dead ? `<span class="small muted">${d.dead === "gone" ? "This contest no longer exists" : "Entries are closed"}</span>` : `<a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a>`}<button class="btn out sm" type="button" data-del="${esc(d.id)}" data-name="${esc(d.title)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
-  if (tab === "contests") return head("Contests you run", ["+ Add a contest", "/add-contest"]) + list(o.contests.map(contestRow), 'You do not run or help run a contest yet. <a href="/add-contest">Create one</a>.')
-    + head("Homes you entered") + list(o.entries.map(entryRow), 'You have not entered a home in a contest yet. <a href="/contests">See contests to enter</a>.');
-  if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"]) + (o.installers || []).map((i) => `<p class="small"><a class="btn out sm" href="/installer/${esc(i.slug)}/manage">Manage the ${esc(i.name)} profile</a> ${promoBtn("/sponsor?installer=" + encodeURIComponent(i.slug), "Promote your company")}</p>`).join("") + list([...o.homes.map(homeRow), ...linked().map(entryRow)], "None yet.");
-  if (tab === "events") return head("Events you added", ["+ Add an event", "/add-event"]) + list(o.events.map(eventRow), "None yet.");
+  if (tab === "drafts") return head("Saved drafts", null, "Forms you started and saved. Continue where you left off.") + list(o.drafts.map((d) => `<div class="rowi"><div><b>${esc(d.title)}</b><br><span class="muted small">${LABEL[d.kind] || d.kind}${d.cname ? " in " + esc(d.cname) : ""} · saved ${when(d.updated_at)}${d.kind === "house" || d.kind === "entry" ? " · photos stay on the device where you added them" : ""}</span></div><div class="acts">${d.dead ? `<span class="small muted">${d.dead === "gone" ? "This contest no longer exists" : "Entries are closed"}</span>` : `<a class="btn sm" href="${dpage(d)}?draft=${esc(d.id)}">Continue</a>`}<button class="btn out sm" type="button" data-del="${esc(d.id)}" data-name="${esc(d.title)}">Delete</button></div></div>`), "No saved drafts. Tap “Save &amp; exit” in any add form to keep your place.");
+  if (tab === "contests") return head("Contests you run", ["+ Add a contest", "/add-contest"], "Contests you organize, and ones you help run.") + list(o.contests.map(contestRow), 'You do not run or help run a contest yet. <a href="/add-contest">Create one</a>.')
+    + head("Homes you entered", null, "Your homes in other people's contests.") + list(o.entries.map(entryRow), 'You have not entered a home in a contest yet. <a href="/contests">See contests to enter</a>.');
+  if (tab === "displays") return head("Lighting displays you posted", ["+ Add a display", "/add-house"], "Your lights on the map. Edit, take down for the season, or delete.") + (o.installers || []).map((i) => `<p class="small"><a class="btn out sm" href="/installer/${esc(i.slug)}/manage">Manage the ${esc(i.name)} profile</a> ${promoBtn("/sponsor?installer=" + encodeURIComponent(i.slug), "Promote your company")}</p>`).join("") + list([...o.homes.map(homeRow), ...linked().map(entryRow)], "None yet.");
+  if (tab === "events") return head("Events you added", ["+ Add an event", "/add-event"], "Events on the map that you added. Edit, run again next year, or delete.") + list(o.events.map(eventRow), "None yet.");
   if (tab === "badges") {
     const bs = BD.badges, on = (id, s) => BD.master && !BD.off[id + "|" + s];
     const CR = (n) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="#FBBF24" stroke="#A16207" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;flex:none"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 21h14" fill="none"/></svg>`;
@@ -165,26 +165,26 @@ function panel() {
   }
   // account
   const pf = { name: u.name || "", street: u.street || "", city: u.city || "", zip: u.zip || "" };
-  return head("Account") + `<p class="muted" style="margin-top:-8px">Your name and address are optional. We use them to fill in forms for you; they are never shown publicly.</p>
+  return head("Account", null, "Your name and address are optional. They fill in forms for you and are never shown publicly.") + `
     <form id="pform" class="main" style="padding:0;gap:18px;max-width:none" novalidate>${input(pf, "name", { label: "Name", opt: true, max: 80, ac: "name", ph: "Your name" })}${select(pf, "city", cities.map((c) => [c, c]), { label: `City ${OPT}`, blank: "Choose a city", ac: "address-level2" })}${input(pf, "street", { label: "Street address", opt: true, max: 120, ac: "address-line1", ph: "e.g. 27 Via Alicia", addr: true })}${input(pf, "zip", { label: "ZIP", opt: true, max: 5, mode: "numeric", ac: "postal-code", ph: "92692" })}
     <p class="err" id="perr" role="alert" hidden></p><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn" type="submit">Save</button><span class="muted small" id="pok" role="status"></span></div></form>
     ${nlSection()}
-    <section style="margin-top:12px"><h2>Change my email</h2><p class="muted small">Your account email is <b>${esc(u.email)}</b>. To use another address, enter it and we send a 6-digit code there. Once you enter the code, your homes, events, installer profile and contests move to the new address.</p>
+    <section class="acard"><details class="more"><summary><b>Change my email address</b></summary><p class="muted small">Your account email is <b>${esc(u.email)}</b>. To use another address, enter it and we send a 6-digit code there. Once you enter the code, your homes, events, installer profile and contests move to the new address.</p>
       <form id="emform" style="display:grid;gap:10px;max-width:360px" novalidate><label class="mf"><span>New email</span><input id="em-new" type="email" maxlength="120" autocomplete="email" inputmode="email"></label>
       <label class="mf" id="em-codewrap" hidden><span>6-digit code from the email</span><input id="em-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label>
       <p class="err" id="em-err" role="alert" hidden></p><p class="muted small" id="em-ok" role="status"></p>
-      <div><button class="btn out" id="em-go" type="submit">Send me a code</button></div></form></section>
-    <div style="margin-top:8px"><button class="btn out" id="so" type="button">Sign out</button></div>
-    <section style="margin-top:12px"><h2>Delete my account</h2><p class="muted small" id="delmsg">Deletes your account, saved drafts, profile picture, contest entries and votes, closes contests you run, and deletes the displays and photos you posted and the events you added (events you only took over or claimed stay on the map, unlinked from you). Votes you cast are removed from any contest, including ones that have finished voting. It also ends the monthly update, and your address goes on our do-not-contact list as a one-way hash (not the address itself) so we do not contact you again. This can't be undone.</p><p class="muted small">If a paid placement is still running on something you added, deleting the account takes it down and flags it for us to review the refund; we cannot bring it back.</p><p class="err" id="delerr" role="alert" hidden></p><p class="small" id="delsay" role="status" aria-live="polite"></p><div style="margin-top:10px"><button class="btn out" id="delacct" type="button" style="color:var(--bad);border-color:var(--bad)">Delete my account</button></div>
+      <div><button class="btn out" id="em-go" type="submit">Send me a code</button></div></form></details></section>
+    <section class="acard"><button class="btn out" id="so" type="button">Sign out</button></section>
+    <section class="acard danger"><h2>Delete my account</h2><p class="muted small">Deletes your account and what you posted. This can't be undone.</p><details class="more"><summary>What deleting does</summary><p class="muted small" id="delmsg">Deletes your account, saved drafts, profile picture, contest entries and votes, closes contests you run, and deletes the displays and photos you posted and the events you added (events you only took over or claimed stay on the map, unlinked from you). Votes you cast are removed from any contest, including ones that have finished voting. It also ends the monthly update, and your address goes on our do-not-contact list as a one-way hash (not the address itself) so we do not contact you again. This can't be undone.</p><p class="muted small">If a paid placement is still running on something you added, deleting the account takes it down and flags it for us to review the refund; we cannot bring it back.</p></details><p class="err" id="delerr" role="alert" hidden></p><p class="small" id="delsay" role="status" aria-live="polite"></p><div style="margin-top:10px"><button class="btn out" id="delacct" type="button" style="color:var(--bad);border-color:var(--bad)">Delete my account</button></div>
       <div id="delbox" hidden><div style="margin-top:10px;display:grid;gap:10px;max-width:360px"><label class="mf"><span>Type <b>delete</b> to confirm</span><input id="deltype" autocomplete="off" autocapitalize="off" spellcheck="false"></label><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn out" id="delgo" type="button" disabled style="color:var(--bad);border-color:var(--bad)">Permanently delete my account</button><button class="btn out" id="delcancel" type="button">Keep my account</button></div></div></div></section><p class="small muted">Homes and events you add are tied to this account's email.</p>`;
 }
 
 function render() {
   const o = O, em = o.user.email, n = { badges: BD.badges.length, drafts: o.drafts.length, contests: o.contests.length, entries: o.entries.length, displays: o.homes.length + linked().length, events: o.events.length };
-  const T = [["drafts", "Drafts"], ["contests", "Contests"], ["displays", "Displays"], ["events", "Events"], ...(BD.badges.length ? [["badges", "Badges"]] : []), ["account", "Account"]];
-  if (!T.some((t) => t[0] === tab)) tab = "drafts";
+  const T = [["displays", "Displays"], ["events", "Events"], ["contests", "Contests"], ["drafts", "Drafts"], ...(BD.badges.length ? [["badges", "Badges"]] : []), ["account", "Account"]];
+  if (!T.some((t) => t[0] === tab)) tab = "displays";
   shell.own(true); shell.setHidden("badges", !BD.badges.length); shell.setActive(tab); for (const [k] of T) shell.setCount(k, n[k]);
-  app.innerHTML = `<div class="who"><span class="avatar" aria-hidden="true">${info && info.user && info.user.avatar ? `<img src="${esc(info.user.avatar)}" alt="">` : esc((o.user.name || em)[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">${esc(o.user.name || "Welcome")}</h1><span class="muted">${esc(em)}</span><div style="display:flex;gap:14px;margin-top:6px"><label class="link" for="avfile" style="font-size:14px;cursor:pointer">${info && info.user && info.user.avatar ? "Change photo" : "Add a photo"}</label>${info && info.user && info.user.avatar ? '<button class="link" id="avrm" type="button" style="font-size:14px">Remove</button>' : ""}<input id="avfile" type="file" accept="image/*" hidden><button class="link" id="editprof" type="button" style="font-size:14px">Edit name &amp; address</button></div><p class="err" id="averr" role="alert" hidden></p></div></div>
+  app.innerHTML = `<div class="who${tab === "account" ? "" : " compact"}"><span class="avatar" aria-hidden="true">${info && info.user && info.user.avatar ? `<img src="${esc(info.user.avatar)}" alt="">` : esc((o.user.name || em)[0].toUpperCase())}</span><div><h1 style="font-size:clamp(26px,5vw,34px)">${esc(o.user.name || "Welcome")}</h1><span class="muted">${esc(em)}</span><div class="whoacts" style="display:flex;gap:14px;margin-top:6px"><label class="link" for="avfile" style="font-size:14px;cursor:pointer">${info && info.user && info.user.avatar ? "Change photo" : "Add a photo"}</label>${info && info.user && info.user.avatar ? '<button class="link" id="avrm" type="button" style="font-size:14px">Remove</button>' : ""}<input id="avfile" type="file" accept="image/*" hidden></div><p class="err" id="averr" role="alert" hidden></p></div></div>
     <section id="pp">${panel()}</section>`;
   wire();
 }
