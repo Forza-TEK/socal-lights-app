@@ -6,7 +6,7 @@ import { areaHtml, wireAreas } from "/areapick.js?v=20261102a";
 import { renderEmails } from "/admin/emails.js?v=20261116b";
 import { renderHelp } from "/admin/help.js?v=20261116b";
 import { renderPartner } from "/admin/partner.js?v=20261116b";
-import { renderChat } from "/admin/chat.js?v=20261128b";
+import { renderChat } from "/admin/chat.js?v=20261128c";
 import { renderGrok } from "/admin/grok.js?v=20261121b";
 import { mdy, localTime, btn, rec, fact, toolbar, wireToolbar, filterCards, tap, toast, pager, modalFrame, phone, PAGE_PHONE, wireFold, sortSelect, askBox } from "/admin/kit.js?v=20261121a";
 import { HEALTH, healthTest } from "/admin/health.js?v=20261113b";
@@ -155,7 +155,7 @@ async function renderHouses() {
   if (pend) setCount("pending", waiting.length);
   const dec = pend && PVIEW === "declined", vids = !pend && PVIEW === "videos", waitVid = (x) => x.video_file && !x.video_ok, vcount = [...live, ...cList].filter(waitVid).length;
   const rows = sortList(pend ? (dec ? declined : waiting) : contest ? cList : vids ? [...live, ...cList].filter(waitVid) : live, HSORT, HBY);
-  POSTS = pend ? [...waiting, ...declined] : [...live, ...cList];
+  POSTS = pend ? [...waiting, ...declined] : [...live, ...cList]; if (pend) WAITH = waiting;
   const one = HOPEN && POSTS.find((p) => p.id === HOPEN); if (HOPEN && !one) HOPEN = "";
   const kv = (pairs) => `<div class="kv">${pairs.filter(([, v]) => v !== "" && v != null).map(([k, v]) => `<div><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join("")}</div>`;
   const stat = (p) => (p.contest ? ["Contest entry", ""] : dec ? ["Declined", "bad"] : pend ? ["Waiting", "warn"] : ["Published", "ok"]);
@@ -240,14 +240,15 @@ $("#main").addEventListener("click", async (e) => {
   const card = b.closest("[data-id]"), id = card.dataset.id, act = b.dataset.act, msg = card.querySelector(".msg") || { set className(v) {}, set textContent(v) {} }, name = card.dataset.name || (card.querySelector("h3") || {}).textContent || "this house", extra = {};
   if (act === "decline") { const r = await askReason({ title: "Decline " + name, hint: "This is emailed to the person who added it. Leave it blank to send no reason." }); if (r === null) return; extra.reason = r; }
   else if ((act === "delete" || act === "unpublish") && !tap(b, act === "delete" ? "remove" : act)) return;
+  const wasOpen = HOPEN === id && tab === "pending" && PVIEW === "pending" && (act === "approve" || act === "decline"), nextH = wasOpen ? nextIn(WAITH, id) : null;
   b.disabled = true; msg.className = "msg"; msg.textContent = act === "approve" ? "Publishing…" : "Working…";
   try {
     if (act === "delete") await api("/api/admin/posts/" + id, { method: "DELETE" });
     else await api("/api/admin/posts/" + id, { method: "POST", body: JSON.stringify({ action: act, ...extra }) });
-    if (!act.startsWith("video_")) { HOPEN = ""; setDetail(""); } // a video action keeps the record open
+    if (!act.startsWith("video_")) { HOPEN = nextH ? nextH.id : ""; setDetail(""); } // a video action keeps the record open; after a decision the next waiting house opens
     render(); refreshCounts();
     const undo = act === "decline" ? { action: "restore" } : act === "unpublish" ? { action: "approve", notify: false } : null;
-    toast(DONE[act] || "Done", false, undo ? { undo: async () => { try { await api("/api/admin/posts/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); render(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
+    toast((DONE[act] || "Done") + (wasOpen ? nextNote(nextH) : ""), false, undo ? { undo: async () => { try { await api("/api/admin/posts/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); render(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; toast(err.message, true); }
 });
 
@@ -339,13 +340,17 @@ $("#main").addEventListener("click", (e) => { const b = e.target.closest("[data-
 
 
 /* ---------- submitted events (public "Add your event" form) ---------- */
-let SUBS = [], SUBVIEW = "pending", SSORT = "new";
+let SUBS = [], SUBVIEW = "pending", SSORT = "new", WAITH = [], WAITS = [];
+// After you decide a waiting record you were reading, the next waiting one opens, so a queue is a run of decisions (and the last one says so)
+const nextIn = (list, id) => { const i = list.findIndex((r) => r.id === id); return i < 0 ? null : list[i + 1] || list[i - 1] || null; };
+const nextNote = (n) => (n ? `. Next waiting: ${n.title || n.name}` : ". That was the last one waiting.");
 const SSORTS = [["new", "Newest first"], ["old", "Oldest first"], ["date", "Event date, soonest first"], ["name", "Name A to Z"]];
 const SBY = { new: (a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")), old: (a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")), date: (a, b) => String(a.start_date || "").localeCompare(String(b.start_date || "")), name: (a, b) => String(a.name || "").localeCompare(String(b.name || "")) };
 let SUBOPEN = "";
 async function renderSubs() {
   const main = $("#main");
   const [waiting, live, declined] = await Promise.all([api("/api/admin/submissions?status=pending"), api("/api/admin/submissions?status=published"), api("/api/admin/submissions?status=declined")]);
+  WAITS = waiting;
   SUBS = sortList(SUBVIEW === "pending" ? waiting : SUBVIEW === "declined" ? declined : live, SSORT, SBY);
   setCount("subs", waiting.length);
   const pend = SUBVIEW === "pending", all = [...waiting, ...live, ...declined], one = SUBOPEN && all.find((r) => r.id === SUBOPEN);
@@ -445,7 +450,8 @@ $("#main").addEventListener("click", async (e) => {
     const post = (more = {}) => api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify({ action: act, status: b.dataset.st, ...extra, ...more }) });
     try { await post(); } catch (er) { if (er.status === 409 && er.data && er.data.code === "paid_placement" && (await askBox({ title: "This event has a paid placement", message: er.message, go: "Confirm" }))) await post({ confirm: true }); else throw er; } // a paid placement needs an explicit yes
     const undo = act === "decline" ? { action: "restore" } : act === "unpublish" ? { action: "approve", status: x.verified ? "confirmed" : "expected", notify: false } : null;
-    SUBOPEN = ""; toast(SDONE[act] || "Done", false, undo ? { undo: async () => { try { await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); renderSubs(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
+    const nextS = SUBOPEN === id && SUBVIEW === "pending" && (act === "approve" || act === "decline") ? nextIn(WAITS, id) : null, wasOpenS = SUBOPEN === id && SUBVIEW === "pending" && (act === "approve" || act === "decline");
+    SUBOPEN = nextS ? nextS.id : ""; toast((SDONE[act] || "Done") + (wasOpenS ? nextNote(nextS) : ""), false, undo ? { undo: async () => { try { await api("/api/admin/submissions/" + id, { method: "POST", body: JSON.stringify(undo) }); toast("Undone"); renderSubs(); refreshCounts(); } catch (er) { toast(er.message, true); } } } : {});
     renderSubs(); refreshCounts();
   } catch (err) { b.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
 });
@@ -959,7 +965,7 @@ async function renderEvents() {
   const paint = () => {
     const all = evFiltered(); shown = all.slice(0, EVLIMIT);
     main.querySelector("[data-tcount]") ? 0 : main.querySelector(".tbar .grow").insertAdjacentHTML("afterend", '<span class="meta tcount" data-tcount></span>');
-    main.querySelector("[data-tcount]").textContent = `${all.length} event${all.length === 1 ? "" : "s"}` + (evSeason !== "all" ? ` in this season (menu count: all seasons)` : "");
+    main.querySelector("[data-tcount]").textContent = `${all.length} event${all.length === 1 ? "" : "s"}` + (evSeason !== "all" ? ` in this season, ${fmt(EVENTS.length)} in all seasons` : "");
     const srcOf = (id) => (String(id).startsWith("grok-") ? "Grok" : String(id).startsWith("u-") ? "Organizer" : String(id).startsWith("hcontest-") ? "Contest" : "Sweep");
     $("#evlist").innerHTML = all.length ? `<div class="card dtc"><div class="dtw"><table class="dtab"><thead><tr><th class="cb"><input type="checkbox" id="evAllH" aria-label="Select all ${all.length} shown by the filters" ${all.length > 0 && all.every((e) => EVSEL.has(e.id)) ? "checked" : ""}></th><th>Event</th><th>City</th><th>Dates</th><th>Status</th><th>Paid placement</th><th class="ac">Actions</th></tr></thead><tbody>${shown.map((e) => `<tr class="${e.e < TODAY ? "past" : ""}" data-eid="${esc(e.id)}"><td class="cb"><input type="checkbox" class="rsel" data-esel="${esc(e.id)}" aria-label="Select ${esc(e.n)}" ${EVSEL.has(e.id) ? "checked" : ""}></td>
       <td>${tcell(e.img, `<a class="rl" href="#events/${encodeURIComponent(e.id)}" data-edit="${esc(e.id)}">${esc(e.n)}</a><span class="sub">${esc(e.v || "")}</span>`)}</td><td>${esc(e.city)}<span class="sub">${esc(e.c)}</span></td><td>${mdy(e.s)}${e.e !== e.s ? " to " + mdy(e.e) : ""}<span class="sub">${esc(e.h || e.p || "")}</span></td>
@@ -1020,12 +1026,8 @@ function editEvent(ev, focus) {
     ${fsec("Details", "", ff("eB", "Description", `<textarea id="eB" maxlength="600" rows="4">${esc(e.b)}</textarea>`) + ff("eU", "Event website", `<input id="eU" type="url" value="${esc(e.u)}" maxlength="300" placeholder="https://">`) + ff("eVid", "Video (YouTube or Vimeo link)", `<input id="eVid" type="url" value="${esc(e.vid || "")}" maxlength="300" placeholder="https://www.youtube.com/watch?v=...">`, { c: "c6" }))}
     </div><div class="evr">${ev ? fsec("Paid placement", "Featured: 1 is the gold pin and badge, 2 also lists the event first. Banner: the event is a pill labeled Featured in the strip at the top of the map list. Organizers buy these themselves at /feature (see Orders). A level or date set here can never be lower or earlier than a paid order that is still running. Leave a date empty for no end date (Featured) or to keep the banner off.",
       ff("eFl", "Featured level", `<select id="eFl" disabled><option value="0">Off</option><option value="1">1: pin and badge</option><option value="2">2: also listed first</option></select>`, { c: "c2" }) + ff("eFu", "Featured until", `<input id="eFu" type="date" disabled>`, { c: "c2" }) + ff("eBu", "Banner until", `<input id="eBu" type="date" disabled>`, { c: "c2", hint: "Loading…" })) : ""}
-    ${ev ? fsec("Purchases", "What this event paid for: the Featured pin, the banner and top of the list. The dates it runs are in Paid placement above; refunds are handled in Orders.", `<div class="ff c6" id="evBuys"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
-    ${ev ? fsec("Organizer updates", "When an organizer uses \"This is my event\" on an existing listing, the old details are saved. Revert puts them back (the paid placement, photos and video are not touched).", `<div class="ff c6" id="evRev"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
     ${ev ? fsec("Photos", "Up to 4 photos, the first is the cover and shows before the picture found on the event's own page. Add one an organizer emailed you; it is saved at once, no need to tap Save.", `<div class="ff c6" id="evPh"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
-    ${ev ? fsec("Merge a duplicate", "The same event listed twice? Pick the other listing here. This event stays; the other one is removed after its details you choose are copied over, and its organizer's submission is pointed at this event. You see exactly what changes first, and Undo brings the duplicate back.", `<div class="ff c6" id="evMerge"></div>`) : ""}
-    ${ev ? fsec("Check the event's page", "Looks at the event's website again (politely, like our other checks) and says whether it still mentions the event and its year. It only reports: the event is never changed, hidden or set back to expected by this.", `<div class="ff c6" id="evChk"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
-    ${ev ? fsec("Video", "A YouTube or Vimeo link shows at once. An uploaded clip is hidden from visitors until you approve it here. Organizers add them from Your profile (Edit the event).", `<div class="ff c6" id="evVid"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}
+    ${ev ? `<details class="more evadv"><summary>More: purchases, organizer updates, merge, page check, video</summary>${ev ? fsec("Purchases", "What this event paid for: the Featured pin, the banner and top of the list. The dates it runs are in Paid placement above; refunds are handled in Orders.", `<div class="ff c6" id="evBuys"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}${ev ? fsec("Organizer updates", "When an organizer uses \"This is my event\" on an existing listing, the old details are saved. Revert puts them back (the paid placement, photos and video are not touched).", `<div class="ff c6" id="evRev"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}${ev ? fsec("Merge a duplicate", "The same event listed twice? Pick the other listing here. This event stays; the other one is removed after its details you choose are copied over, and its organizer's submission is pointed at this event. You see exactly what changes first, and Undo brings the duplicate back.", `<div class="ff c6" id="evMerge"></div>`) : ""}${ev ? fsec("Check the event's page", "Looks at the event's website again (politely, like our other checks) and says whether it still mentions the event and its year. It only reports: the event is never changed, hidden or set back to expected by this.", `<div class="ff c6" id="evChk"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}${ev ? fsec("Video", "A YouTube or Vimeo link shows at once. An uploaded clip is hidden from visitors until you approve it here. Organizers add them from Your profile (Edit the event).", `<div class="ff c6" id="evVid"><p class="meta" style="margin:0">Loading…</p></div>`) : ""}</details>` : ""}
     <div class="mfoot sticky"><button class="btn ice" type="submit">Save</button><button class="btn ghost" type="button" data-mcancel>Cancel</button><span class="msg" id="eMsg" role="status" style="flex-basis:100%"></span></div>
   </form>${ev ? transferBox("event", e.id) : ""}</div>`;
   if (ev && tab !== "events") $("#evBack").lastChild.textContent = "Back";

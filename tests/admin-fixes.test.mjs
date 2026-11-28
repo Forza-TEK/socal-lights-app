@@ -58,9 +58,9 @@ test("M6: Grok Unpublish, Undo, Remove photo and Publish anyway need a second ta
   assert.match(a, /if \(!tap\(b, b\.dataset\.clact\)\) return;/);
 });
 
-test("M8: the Events menu count says it covers all seasons, and the page count says so too", () => {
+test("M8: the Events menu count says it covers all seasons, and the page count says so too (it names the all-season total)", () => {
   assert.match(read("public/admin/index.html"), /data-count="events" title="Events on the map in all seasons"/);
-  assert.match(read("public/admin/admin.js"), /in this season \(menu count: all seasons\)/);
+  assert.match(read("public/admin/admin.js"), /in this season, \$\{fmt\(EVENTS\.length\)\} in all seasons/);
 });
 
 test("L5: cron endpoints compare the shared key in constant time; an Access token without exp is refused", async () => {
