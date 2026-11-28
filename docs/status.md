@@ -2126,3 +2126,8 @@ Answers: do T1, T5-T16, T18-T21, T24-T26; skip T2, T3, T4, T17, T23; later T22. 
 
 ## Impeccable hooks and launcher installed
 - `.claude/skills/impeccable/scripts/` (launcher, pinned engine version + checksums) and `.claude/settings.json` hooks (session start, after each edit, design pass at Stop). Telemetry off. Engine downloaded and run once here on the changed CSS: no findings. Not run through a full Stop pass yet.
+
+## Open items: Admin record links, owner thumbnails for homes in review
+- Admin: a full record now has its own address (`#pending/<id>`, `#contests/<id>`, `#subs/<id>`, `#orders/<id>`, `#reports/<id>`); opening a record puts it in the address bar, Back returns to the list's own address, and a pasted link opens the record. Installers and Users already opened by search result; they do not write their address yet. admin.js `?v=20261128n`. Checked in a browser with a waiting house and a contest.
+- Profile: a home that is in review, declined or taken down now shows its first photo to the person who posted it, through `/api/photo/pending/<id>/<n>` (poster or contest organizers only, `private, no-store`; test `tests/pending-photo-owner.test.mjs`). Admin's waiting list already showed these photos through its own route.
+- Still open: bulk take-down for installers, iPhone SE landscape layout, universal-links device test, Google Play (waiting on you).
