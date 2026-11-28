@@ -58,10 +58,14 @@ const navHeads = [...document.querySelectorAll("#side .nvlist > p.gh")].map((p) 
   const b = document.createElement("button"), grp = p.nextElementSibling, name = p.textContent.trim(); b.type = "button"; b.className = "gh"; b.dataset.grp = name;
   b.innerHTML = `<span>${esc(name)}</span><span class="cnt act gcnt" hidden></span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`; p.replaceWith(b); return { b, grp, name };
 });
+// The phone bottom bar has five buttons: Home, then Inbox, Listings, Customers and More open a sheet with that menu group (More holds Marketing and System)
+const SHEETS = { inbox: ["Inbox"], listings: ["Listings"], customers: ["Customers"], more: ["Marketing", "System"] };
 let navSaved = null; try { navSaved = JSON.parse(localStorage.getItem(NAVKEY)); } catch {}
 const navFolded = new Set(Array.isArray(navSaved) ? navSaved : matchMedia("(max-height:899px)").matches ? navHeads.map((h) => h.name) : []);
 // A folded group still shows what is waiting inside it (the red numbers of its items added together)
-function navPaint() { navHeads.forEach(({ b, grp, name }) => { const f = navFolded.has(name); grp.classList.toggle("fold", f); b.setAttribute("aria-expanded", String(!f)); const n = [...grp.querySelectorAll(".cnt.act[data-count]:not([hidden])")].reduce((a, c) => a + (Number(c.textContent) || 0), 0), g = b.querySelector(".gcnt"); g.textContent = n; g.hidden = !(f && n); g.setAttribute("aria-label", n + " waiting in " + name); }); }
+function navPaint() { navHeads.forEach(({ b, grp, name }) => { const f = navFolded.has(name); grp.classList.toggle("fold", f); b.setAttribute("aria-expanded", String(!f)); const n = [...grp.querySelectorAll(".cnt.act[data-count]:not([hidden])")].reduce((a, c) => a + (Number(c.textContent) || 0), 0), g = b.querySelector(".gcnt"); g.textContent = n; g.hidden = !(f && n); g.setAttribute("aria-label", n + " waiting in " + name); });
+  // the phone bottom bar: a dot on Inbox / Listings / Customers / More when something inside is waiting
+  for (const [key, names] of Object.entries(SHEETS)) { const dot = document.querySelector(`[data-grpdot="${key}"]`); if (!dot) continue; const n = navHeads.filter((h) => names.includes(h.name)).reduce((a, { grp }) => a + [...grp.querySelectorAll(".cnt.act[data-count]:not([hidden])")].reduce((x, c) => x + (Number(c.textContent) || 0), 0), 0); dot.hidden = !n; } }
 function navOpen(t) { const h = navHeads.find((x) => x.grp.querySelector(`[data-tab="${t}"]`)); if (h && navFolded.has(h.name)) { navFolded.delete(h.name); navPaint(); } }
 navHeads.forEach(({ b, name }) => (b.onclick = () => { navFolded.has(name) ? navFolded.delete(name) : navFolded.add(name); navPaint(); try { localStorage.setItem(NAVKEY, JSON.stringify([...navFolded])); } catch {} }));
 navPaint();
@@ -70,7 +74,7 @@ function setTab(t, push = true) {
   if (t !== tab || NEXTVIEW) { PVIEW = NEXTVIEW || "pending"; HOPEN = ""; COPEN = ""; OORDER = ""; NEXTVIEW = ""; }
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
-  const cur = document.querySelector('.bb[aria-current="page"]'); if (cur) cur.scrollIntoView({ inline: "center", block: "nearest" }); // the bottom bar scrolls sideways: keep the open section in view
+  const gname = groupOf(t); document.querySelectorAll("[data-gsheet]").forEach((b) => b.setAttribute("aria-current", SHEETS[b.dataset.gsheet].includes(gname) ? "page" : "false")); // the bottom-bar button of the menu group holding the open page
   $("#ptitle").textContent = TITLES[t] || ""; $("#pgroup").textContent = groupOf(t); setDetail("");
   closeSheet(); window.scrollTo(0, 0);
   if (push && location.hash.split("/")[0] !== "#" + t) history.replaceState(null, "", "#" + t);
@@ -82,7 +86,18 @@ document.addEventListener("click", (e) => { const b = e.target.closest("[data-ta
   document.addEventListener("click", (e) => { if (!e.target.closest(".pm")) shut(); }); document.addEventListener("keydown", (e) => { if (e.key === "Escape") shut(); }); }
 const sheet = $("#side");
 wireFold($("#main"));
-function closeSheet() { document.body.classList.remove("sheet-open"); }
+function closeSheet() {
+  document.body.classList.remove("sheet-open"); delete document.body.dataset.sheet; document.querySelectorAll("[data-gsheet]").forEach((b) => b.setAttribute("aria-expanded", "false"));
+  navHeads.forEach(({ b, grp }) => { b.hidden = false; grp.hidden = false; }); const home = document.querySelector("#side .nvlist > .grp:first-child"); if (home) home.hidden = false; navPaint();
+}
+// Phone: open the sheet showing only the chosen menu group (the Home page has its own bar button)
+function openSheet(key) {
+  const want = SHEETS[key] || []; closeSheet();
+  navHeads.forEach(({ b, grp, name }) => { const show = want.includes(name); b.hidden = !show; grp.hidden = !show; grp.classList.remove("fold"); });
+  const home = document.querySelector("#side .nvlist > .grp:first-child"); if (home) home.hidden = true;
+  document.body.classList.add("sheet-open"); document.body.dataset.sheet = key; document.querySelectorAll("[data-gsheet]").forEach((b) => b.setAttribute("aria-expanded", String(b.dataset.gsheet === key)));
+}
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-gsheet]"); if (!b) return; if (document.body.classList.contains("sheet-open") && b.getAttribute("aria-expanded") === "true") closeSheet(); else openSheet(b.dataset.gsheet); });
 $("#scrim").onclick = closeSheet;
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
 window.addEventListener("hashchange", () => { const h = location.hash.slice(1).split("/")[0]; if (TABS.includes(h) && h !== tab) setTab(h, false); else if (h === "ads" && tab === "ads") renderAds(); });
@@ -1773,4 +1788,17 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal
   };
   const scan = () => document.querySelectorAll("#main .seg").forEach(setup);
   new MutationObserver(scan).observe(document.getElementById("main"), { childList: true, subtree: true }); scan();
+}
+
+
+// Every page has the same layout order: the header (title, one line, actions), then the view tabs, then search and filters, then the list. A page that builds them in another order
+// (the view tabs above the header, a summary before both) is put in line here whenever its content is drawn.
+{
+  const main = $("#main");
+  const order = () => {
+    const kids = [...main.children], head = kids.find((k) => k.classList.contains("pghead")), tabs = kids.find((k) => k.classList.contains("pgtabs"));
+    if (!head || (kids[0] === head && (!tabs || kids[1] === tabs))) return;
+    main.insertBefore(head, main.firstChild); if (tabs) head.after(tabs);
+  };
+  new MutationObserver(order).observe(main, { childList: true });
 }

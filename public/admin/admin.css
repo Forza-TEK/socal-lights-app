@@ -423,7 +423,7 @@ table.dtab{width:100%;min-width:860px;border-collapse:collapse;background:transp
 .rpage .fsec>legend{float:none;width:auto;font:700 16px var(--font);letter-spacing:0;text-transform:none;color:var(--ink);margin:0 0 4px;padding:0}
 .rpage .mfoot.sticky{position:sticky;bottom:0;margin:8px 0 0;padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px))}
 .rpage .mfoot{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-@media (max-width:760px){.pghead h2{font-size:22px}.pgacts{width:100%}.pgacts .btn{flex:1}}
+@media (max-width:760px){.pghead h2{font-size:22px}.pgacts{width:100%}.pgacts .btn{flex:0 1 auto;min-height:44px}}
 
 .ttool{width:auto;height:44px;border:0;border-radius:10px;padding:0 10px}
 .ttool:hover{background:var(--surface-2)}
@@ -686,3 +686,11 @@ body.admin .dtab td.ac .btn{min-height:36px;padding:0 12px;font:500 13px var(--f
 
 /* phone: every row action and the header logo link are a full 44 px tap target (they were 36) */
 @media (max-width:699px){body.admin .dtab td.ac a.rl,body.admin .dtab td.ac .btn,body.admin .racts .btn,body.admin .dtab td .btn.sm{min-height:44px}.top .tbrand{display:grid;place-items:center;min-width:44px;min-height:44px}}
+
+/* phone menu sheet: a group that is not the one chosen stays out of it */
+.gh[hidden],.grp[hidden]{display:none!important}
+@media (max-width:1099px){.bbar{display:grid;grid-template-columns:repeat(5,1fr);overflow:visible}.bb{min-width:0;scroll-snap-align:none}.bb[aria-current="page"]::before{left:25%;right:25%}}
+
+/* phone: the open menu sheet sits above the bottom bar, so another group can be picked without closing it first; only More shows the account line and View site */
+@media (max-width:1099px){body.sheet-open .bbar{z-index:90}body.sheet-open .side{bottom:calc(61px + env(safe-area-inset-bottom,0px));border-radius:20px 20px 0 0;max-height:calc(82dvh - 61px)}body:not([data-sheet="more"]) .sfoot{display:none}}
+@media (max-width:1099px){body.sheet-open .gh:not([hidden]){display:flex!important;margin:12px 12px 2px}body.sheet-open .grp+.gh+.grp,body.sheet-open .grp+.grp{border-top:0;margin-top:0;padding-top:0}}
