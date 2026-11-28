@@ -268,11 +268,11 @@ test("the dashboard stays under the 50 database calls one request may make", asy
   assert.ok(env.DB.stats.calls < 50, "calls: " + env.DB.stats.calls);
 });
 
-test("ADM-07: Admin tabs regrouped Review, Content, Money, Marketing, System; every tab still there; deep links still work", () => {
+test("ADM-07: Admin tabs grouped Inbox, Listings, Customers, Marketing, System; every tab still there; deep links still work", () => {
   const html = read("public/admin/index.html"), side = html.slice(html.indexOf('<nav class="side"'), html.indexOf("</nav>", html.indexOf('<nav class="side"')));
-  assert.deepEqual([...side.matchAll(/<p class="gh">([^<]+)<\/p>/g)].map((m) => m[1]), ["Review", "Content", "Money", "Marketing", "System"]);
+  assert.deepEqual([...side.matchAll(/<p class="gh">([^<]+)<\/p>/g)].map((m) => m[1]), ["Inbox", "Listings", "Customers", "Marketing", "System"]);
   const group = (name) => { const i = side.indexOf(`<p class="gh">${name}</p>`), j = side.indexOf('<p class="gh">', i + 1); return [...side.slice(i, j < 0 ? undefined : j).matchAll(/data-tab="([a-z]+)"/g)].map((m) => m[1]); };
-  assert.deepEqual(group("Money"), ["orders", "partner", "passes"]); assert.ok(group("Marketing").includes("outreach") && group("Marketing").includes("ads") && group("Marketing").includes("emails"));
+  assert.deepEqual(group("Inbox"), ["pending", "subs", "claims", "reports", "grok", "overlaps"]); assert.deepEqual(group("Listings"), ["approved", "events", "contests", "installers"]); assert.deepEqual(group("Customers"), ["users", "orders", "partner", "passes"]); assert.ok(group("Marketing").includes("outreach") && group("Marketing").includes("ads") && group("Marketing").includes("emails"));
   const js = read("public/admin/admin.js"), TABS = js.match(/const TABS = \[([^\]]+)\]/)[1].match(/"([a-z]+)"/g).map((x) => x.replace(/"/g, ""));
   const original = ["dashboard", "pending", "subs", "claims", "orders", "partner", "contests", "reports", "approved", "events", "installers", "users", "overlaps", "data", "log", "usage", "outreach", "ads", "emails", "help", "chat"];
   for (const t of original) { assert.ok(TABS.includes(t), "deep link #" + t); assert.ok(side.includes(`data-tab="${t}"`), "nav item " + t); }
@@ -296,7 +296,7 @@ test("ADM-05, 06, 08, 11: bulk select on Events and submitted events, sort contr
 
 test("Admin asset versions moved together", () => {
   const idx = read("public/admin/index.html"), js = read("public/admin/admin.js");
-  assert.match(idx, /admin\.css\?v=20261127b/); assert.match(idx, /admin\.js\?v=20261126h/); assert.match(js, /kit\.js\?v=20261121a/); assert.match(js, /health\.js\?v=20261113b/);
+  assert.match(idx, /admin\.css\?v=20261128d/); assert.match(idx, /admin\.js\?v=20261128b/); assert.match(js, /kit\.js\?v=20261121a/); assert.match(js, /health\.js\?v=20261113b/);
 });
 
 test("Admin event rows and published submissions link to the event's public card", () => {
