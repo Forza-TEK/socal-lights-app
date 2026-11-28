@@ -1,8 +1,12 @@
 // Admin > Outreach (behind requireAdmin through functions/api/admin/_middleware.js). Everything here is computed on the fly from hashes; no prospect address is stored or returned.
 // GET  /api/admin/outreach                       -> { api, suppression: { count, last }, results: [by segment and step], totals, conversions }
 // POST /api/admin/outreach { action: "reconcile", emails: [up to 500] } -> { counts, due: { 0, 1, 2 }, rows: [{ i, status, reasons, sequence }] }  (the page builds the CSV from its own copy of the list)
+// POST /api/admin/outreach { action: "release", segment: installer|contest|event_host, dry_run?: boolean }
+//   or { action: "release", emails: [up to 500], dry_run?: boolean }
+//   dry_run defaults to true (a count, nothing written). dry_run false lifts the 14-day hold on the step that is overdue now.
+//   A release never overrides a reply, unsubscribe, bounce, complaint, suppression, registration, listing or a finished sequence, and never adds a third follow-up.
 import { json, err } from "../../_lib/util.js";
-import { checkEmails, outreachHashes, cleanEmail, validEmail, addSuppression, SEGMENTS } from "../../_lib/outreach.js";
+import { checkEmails, outreachHashes, cleanEmail, validEmail, addSuppression, SEGMENTS, releaseOverdueEmails, releaseOverdueSegment } from "../../_lib/outreach.js";
 import { ptDate } from "../../_lib/time.js";
 import { logOp } from "../../_lib/oplog.js";
 
@@ -76,6 +80,28 @@ export async function onRequestGet({ env }) {
   }, { headers: { "cache-control": "no-store" } });
 }
 
+async function releaseAction(env, b) {
+  if (b.dry_run !== undefined && typeof b.dry_run !== "boolean") return err(400, '"dry_run" must be true or false. Leave it out to preview without changing anything.');
+  const dry = b.dry_run !== false; // a missing flag previews; only an explicit false writes
+  const hasSeg = b.segment !== undefined, hasEmails = b.emails !== undefined;
+  if (hasSeg === hasEmails) return err(400, 'Send a segment ("contest", "installer" or "event_host") or a list of addresses, not both and not neither. Add "dry_run": false to apply.');
+  if (hasSeg) {
+    if (!SEGMENTS.includes(b.segment)) return err(400, "Segment must be installer, contest or event_host.");
+    let r;
+    try { r = await releaseOverdueSegment(env, b.segment, { dryRun: dry }); }
+    catch (e) { await logOp(env, "outreach", "release failed (" + String(e && e.message).slice(0, 80) + ")"); return err(503, "The release could not be completed. Try again in a minute."); }
+    await logOp(env, "outreach", `release segment=${b.segment} dry_run=${dry ? 1 : 0} overdue=${r.overdue} released=${r.released} already=${r.already_released} suppressed=${r.skipped_suppressed} undeliverable=${r.skipped_undeliverable} step1=${r.by_step[1]} step2=${r.by_step[2]}`);
+    return json({ ok: true, dry_run: r.dry_run, segment: r.segment, overdue: r.overdue, by_step: r.by_step, already_released: r.already_released, skipped_suppressed: r.skipped_suppressed, skipped_undeliverable: r.skipped_undeliverable, released: r.released }, { headers: { "cache-control": "no-store" } });
+  }
+  const emails = b.emails;
+  if (!Array.isArray(emails) || !emails.length || emails.length > MAX_RECONCILE || !emails.every((e) => typeof e === "string" && e.length <= 320)) return err(400, `Paste between 1 and ${MAX_RECONCILE} email addresses.`);
+  let r;
+  try { r = await releaseOverdueEmails(env, emails, { dryRun: dry }); }
+  catch (e) { await logOp(env, "outreach", "release failed (" + String(e && e.message).slice(0, 80) + ")"); return err(503, "The release could not be completed. Try again in a minute."); }
+  await logOp(env, "outreach", `release emails n=${emails.length} dry_run=${dry ? 1 : 0} would=${r.would_release} released=${r.released} already=${r.already_released} skipped=${r.skipped} step1=${r.by_step[1]} step2=${r.by_step[2]}`);
+  return json({ ok: true, dry_run: r.dry_run, total: r.total, released: r.released, would_release: r.would_release, already_released: r.already_released, skipped: r.skipped, by_step: r.by_step, rows: r.rows }, { headers: { "cache-control": "no-store" } });
+}
+
 export async function onRequestPost({ request, env }) {
   const b = (await request.json().catch(() => null)) || {};
   if (b.action === "suppress" || b.action === "unsuppress") {
@@ -92,6 +118,7 @@ export async function onRequestPost({ request, env }) {
     await logOp(env, "outreach", `admin ${b.action}`);
     return json({ ok: true, prefix: h.slice(0, 8) });
   }
+  if (b.action === "release") return releaseAction(env, b);
   if (b.action !== "reconcile") return err(400, "Unknown action.");
   const emails = b.emails;
   if (!Array.isArray(emails) || !emails.length || emails.length > MAX_RECONCILE || !emails.every((e) => typeof e === "string" && e.length <= 320)) return err(400, `Paste between 1 and ${MAX_RECONCILE} email addresses.`);

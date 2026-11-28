@@ -1,6 +1,6 @@
 # SoCal Lights outreach API (hand this whole file to Grok)
 
-_Self-contained. Written 2026-11-07, updated 2026-11-08 (server-side sequence timing, backfill, deliverability pre-check).  Base URL `https://socallights.app`. Companion: `grok-email-playbook.md` (wording, footer, sequence) and `grok-outreach-guide.md` (approved facts)._
+_Self-contained. Written 2026-11-07, updated 2026-11-08 (server-side sequence timing, backfill, deliverability pre-check), updated 2026-11-25 (the owner can release one overdue step).  Base URL `https://socallights.app`. Companion: `grok-email-playbook.md` (wording, footer, sequence) and `grok-outreach-guide.md` (approved facts)._
 
 ## What this is, and what it is not
 Before every outreach email you ask the app one question: **"is it safe to send acquisition mail to this address?"** The app answers with one status word per address. It returns **no names, no emails, no details**, and you get **no database access**. Everything the app stores about your prospects is a one-way hash, never the address.
@@ -61,9 +61,9 @@ The app computes the timing from the `sent` events you reported (event endpoint)
 | `next_step` | `0` original, `1` follow-up 1, `2` follow-up 2, or `null` (nothing to send, see `reason`). |
 | `due` | `true` only when `status` is `clear` AND the step is due today or overdue by at most 14 days. |
 | `due_on` | The Pacific date (`YYYY-MM-DD`) that step becomes due; `null` when `next_step` is `null`. |
-| `reason` | Why: `no_original_sent_yet` (a new prospect: the original is due now), `due`, `not_due_yet`, `overdue_hold`, `sequence_finished`, `missing_original`, `reply` / `bounce` / `complaint` / `unsubscribe` (the event that stopped it), `status_<registered|listing|review|suppressed>`, `undeliverable_<invalid_syntax|no_mail_server|disposable>`. |
+| `reason` | Why: `no_original_sent_yet` (a new prospect: the original is due now), `due`, `not_due_yet`, `overdue_hold`, `released` (the owner lifted the hold on this step: `due` is true, send it), `sequence_finished`, `missing_original`, `reply` / `bounce` / `complaint` / `unsubscribe` (the event that stopped it), `status_<registered|listing|review|suppressed>`, `undeliverable_<invalid_syntax|no_mail_server|disposable>`. |
 
-The owner-approved rules: the original is step 0. **Follow-up 1 is due 4 days after the original was sent; follow-up 2 is due 10 days after the original** (both counted from the original, in Pacific calendar days). A follow-up is due only if the previous step was sent and its date has been reached. After follow-up 2 the sequence is **finished and never restarts automatically** (`next_step` null, `sequence_finished`). A reply, bounce, complaint, unsubscribe or any status other than `clear` ends the sequence (`next_step` null). If a step is more than 14 days overdue, `due` is `false` with `overdue_hold`: **do not send; list it in your report and the owner decides.** The segment is ignored for timing (the earliest original counts). A follow-up on file with no original gives `missing_original` (do not send; tell the owner).
+The owner-approved rules: the original is step 0. **Follow-up 1 is due 4 days after the original was sent; follow-up 2 is due 10 days after the original** (both counted from the original, in Pacific calendar days). A follow-up is due only if the previous step was sent and its date has been reached. After follow-up 2 the sequence is **finished and never restarts automatically** (`next_step` null, `sequence_finished`). A reply, bounce, complaint, unsubscribe or any status other than `clear` ends the sequence (`next_step` null). If a step is more than 14 days overdue, `due` is `false` with `overdue_hold`: **do not send; list it in your report and the owner decides.** When the owner releases that step, the same check comes back `due: true`, `next_step` unchanged (1 or 2), `reason: "released"`. **Send that step.** The release covers only the step that was held: after you report it `sent`, the next step follows the normal dates and can be held again. A release never restarts a finished sequence, never adds a third follow-up, and never wins over a reply, bounce, complaint, unsubscribe, suppression, registration or listing. Do not call `release` yourself unless the owner told you to release that address. The segment is ignored for timing (the earliest original counts). A follow-up on file with no original gives `missing_original` (do not send; tell the owner).
 
 ### Deliverability pre-check (`"verify": true`)
 Free, no third party. For each address you also get `deliverability`:
@@ -119,13 +119,30 @@ curl -sS https://socallights.app/api/outreach/event \
   -d '{"email":"info@brightnights.example","event":"sent","step":0,"segment":"installer"}'
 # 200 {"ok":true,"suppressed":false,"email_hash_prefix":"9f2c41ab"}
 ```
-- `event`: `sent`, `reply`, `bounce`, `complaint`, `unsubscribe`, or `invalid` (see below).
+- `event`: `sent`, `reply`, `bounce`, `complaint`, `unsubscribe`, `invalid`, or `release` (see below).
 - `step`: `0` original, `1` first follow-up, `2` second follow-up.
 - `segment`: `installer`, `contest` (organizers) or `event_host` (seasonal-event hosts).
 - `reply`, `bounce`, `complaint` and `unsubscribe` **also add the address to the do-not-contact list automatically**. You do not need a separate suppress call for those. (`bounce` means a permanent bounce; a temporary one is not an event.)
 - **`sent_at` (optional, only with `event: "sent"`)**: `"YYYY-MM-DD"`, to **backfill** an email you sent before this API existed. It must be a real date, not in the future (Pacific), within the last 120 days; anything else is a `400`. Per address and step the app keeps **one** `sent` row with the **earliest** date: repeating a call is harmless (`"duplicate": true`), a later date never overrides an earlier one, an earlier date moves it earlier. Without `sent_at` the date is today (Pacific). Backfill every earlier send (step 0, and step 1 if you sent it) **before** the first scheduled loop, otherwise the app thinks those people were never emailed and will say `next_step: 0, due: true`.
 - **`event: "invalid"`** with `"reason": "invalid_syntax" | "no_mail_server" | "disposable"` (no `step` or `segment` needed): remembers, as a hash, that this address cannot receive mail. It does **not** suppress. Later checks answer `deliverability` with that reason at once (and `sequence.next_step` null, reason `undeliverable_...`).
+- **`event: "release"`** (no `step` or `segment` required): the owner lifting the 14-day hold. See below. It does **not** suppress, and a refusal is `200` with `released: false` (not `hold: true`), so it must not stop the rest of a send loop.
 - The app uses these only for counts by segment and step and for the sequence timing. It never stores the address.
+
+### Release an overdue hold (`event: "release"`)
+Call this only when the owner has asked you to release that address. One address per call. The app decides which step: it releases the follow-up that is overdue now, and only that one.
+```sh
+curl -sS https://socallights.app/api/outreach/event \
+  -H "Authorization: Bearer $OUTREACH_API_KEY" -H "Content-Type: application/json" \
+  -d '{"email":"info@brightnights.example","event":"release"}'
+# overdue at follow-up 1:
+# 200 {"ok":true,"released":true,"duplicate":false,"suppressed":false,"next_step":1,"due_on":"2026-10-20","reason":"released","email_hash_prefix":"9f2c41ab"}
+# not a hold the owner can lift (already due, not due yet, stopped, suppressed, registered, finished, ...):
+# 200 {"ok":true,"released":false,"duplicate":false,"suppressed":false,"next_step":1,"due_on":"2026-11-18","reason":"due","email_hash_prefix":"9f2c41ab"}
+```
+- Optional `"step": 1` or `2` and `"segment"` must match the step and segment the app has on file. A mismatch answers `released: false` with `reason` `step_mismatch` or `segment_mismatch` and writes nothing. `"step": 3` (or any step other than 0, 1 or 2), a `sent_at`, or a `reason` is a `400` and writes nothing. There is no third follow-up.
+- A second call for the same step is `released: true`, `duplicate: true`, and does not add another row.
+- The next `check` then returns `due: true` and `reason: "released"` for that `next_step`, still only when `status` is `clear`. Send it and report `sent` for that step. After that, timing is the normal day-4 / day-10 rule again.
+- A release does nothing to an address that is suppressed, unsubscribed, bounced, complained, replied, registered, listed, under review, undeliverable, missing its original, not due yet, already inside the 14-day window, or finished. Those answers stay exactly what they were.
 
 ## The follow-up sequence the owner approved
 Two follow-ups, then stop. **Never auto-restart a sequence** (a new campaign on the same person needs the owner's approval). The app enforces the timing in `sequence` (see above); you only follow it.
@@ -147,7 +164,7 @@ Rules that go with it:
 1. **Read the mailbox first**: for every reply, unsubscribe request, bounce or complaint since the last run, call `/api/outreach/event` (this suppresses) **before** anything is sent.
 2. Take your prospect list. **Call `check` in batches of 50** with `"verify": true` (if a batch answers `400` about new domains, split it into smaller batches, about 20 new domains each).
 3. If any call fails in any way (non-200, `hold: true`, timeout): **hold all sends**, stop, retry on the next run.
-4. For each result, **send only if** `status == "clear"` AND `sequence.due == true` AND `deliverability` is `ok` or `unknown`. Send **the step in `sequence.next_step`** (never a different one), with the wording for that prospect's segment.
+4. For each result, **send only if** `status == "clear"` AND `sequence.due == true` AND `deliverability` is `ok` or `unknown`. That includes `reason: "released"` (the owner lifted the 14-day hold on this step). Send **the step in `sequence.next_step`** (never a different one), with the wording for that prospect's segment.
 5. **Immediately after each send**, call `POST /api/outreach/event` with `event: "sent"`, that step and the segment. If that call fails, retry until it succeeds before sending anything else to the same person.
 6. For results that are not sent, **do not decide yourself**; put them in your report to the owner by reason: `overdue_hold`, `review`, `missing_original`, `invalid_syntax`, `no_mail_server`, `disposable`. Everything else (`not_due_yet`, `sequence_finished`, replies, suppressed, registered, listing) is simply skipped.
 7. A **new address you found** works the same way: `check` says `next_step: 0, due: true` (reason `no_original_sent_yet`) if it is clear and deliverable; you send the original and report `sent` step 0. The follow-ups then come from the app on day 4 and day 10.
@@ -177,6 +194,16 @@ On every incoming reply, bounce or complaint, **first** call `/api/outreach/even
 
 ## What the owner sees
 Admin > Outreach shows the number of checks, how many came back clear, the suppression count and results by segment and step: sent, replies, bounces, complaints, unsubscribes, and the number of people who registered or listed something after being emailed (counted from the app's own records, not opens). The owner can also reconcile your sent log against the app in bulk, and sees how many addresses are due today for each step.
+
+### How the owner releases every overdue sequence in one segment
+This is the owner, in Admin > Outreach (Cloudflare Access). It is not a Grok call. Grok keeps sending only what `check` marks `due`.
+
+1. Open **Admin > Outreach**. Under **Release overdue follow-ups**, leave the segment on **Contest organizers** (or choose Installers or Seasonal-event hosts).
+2. Click **Preview**. The page shows how many are overdue at follow-up 1 and at follow-up 2. Preview writes nothing.
+3. Click **Release N**, then click it again when it asks you to confirm. That lifts the 14-day hold on the step each of those people is due for now.
+4. The next send loop's `check` returns `due: true`, `reason: "released"`, and the same `next_step` (1 or 2). Send that step and report `sent`. The following step uses the normal dates. If that one is also more than 14 days late, it stays on `overdue_hold` until the owner releases it too.
+
+The same page can release only the overdue addresses in a pasted list (**Release N overdue in this list**, after **Check these addresses**). The preview count is also `POST /api/admin/outreach` with `{ "action": "release", "segment": "contest" }` (dry run). Adding `"dry_run": false` applies it. Omitting `dry_run` previews and writes nothing. A release stores a hash and the step, never the address. Suppressed and undeliverable addresses in that segment are left held. Anyone who has since registered, listed, replied, unsubscribed, bounced or complained is still refused by `check` even if a release row was stored.
 
 ## Pilot plan
 1. **Reconcile.** The owner pastes your sent log (up to 500 addresses at a time) into Admin > Outreach and gets counts by status plus a CSV. Anyone already `registered`, `listing` or `suppressed` is excluded from follow-ups.
