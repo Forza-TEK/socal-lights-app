@@ -1387,6 +1387,13 @@ function collapseDash(main) {
     for (let n = h.nextSibling; n && !(n.nodeType === 1 && n.matches("h2.dh, .dcols")); n = n.nextSibling) move.push(n);
     h.replaceWith(det); move.forEach((x) => det.appendChild(x));
   });
+  // Everything below Today and Errors goes behind one "More detail" fold: the phone opens on what needs you, today's numbers and the errors
+  const kids = [...main.children], todayAt = kids.findIndex((k) => k.matches("h2.dh") && /^today$/i.test(k.textContent.trim())), errAt = kids.findIndex((k) => k.classList.contains("dcols") && /errors, last 7 days/i.test(k.textContent));
+  if (todayAt >= 0 && errAt > todayAt + 1) {
+    const more = document.createElement("details"), sum = document.createElement("summary"); more.className = "dcoll dmore"; sum.textContent = "More detail: the site, revenue, traffic, newest submissions, activity"; more.appendChild(sum);
+    kids.forEach((k, i) => { if (i > todayAt + 1 && i !== errAt) more.appendChild(k); });
+    main.appendChild(more);
+  }
 }
 
 /* ---------- Cloudflare usage, plan-aware: Workers Paid (monthly included amounts, extra charges) or free (daily hard limits). Read-only. ---------- */

@@ -706,3 +706,14 @@ details.more{margin:8px 0 0}details.more>summary{cursor:pointer;min-height:44px;
 /* header path: the page name returns from a record, the group name opens its menu on a phone */
 .crumb.has-detail #ptitle{color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 @media (max-width:1099px){.crumb #pgroup{cursor:pointer;text-decoration:underline;text-underline-offset:3px}}
+
+/* phone lists: the small facts of a row run together on a line ("City: Brea  Posted as: Homeowner  Photos: 0  Received: ...") instead of one fact per line; title and actions keep their own lines */
+@media (max-width:760px){
+  .dtab tbody tr{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:14px;row-gap:2px;padding:12px 14px}
+  .dtab tbody td{grid-column:auto;padding:1px 0}
+  .dtab tbody td.cb{flex:0 0 auto;padding:0;align-self:flex-start}
+  .dtab tbody tr:has(td.cb)>td.cb+td{flex:1 1 calc(100% - 72px);min-width:0;position:static}.dtab tbody td.cb{position:static}
+  .dtab tbody tr:not(:has(td.cb))>td:first-child{flex:1 1 100%;min-width:0}
+  .dtab tbody td[data-label]{flex:0 1 auto;max-width:100%;font-size:14px}
+  .dtab tbody td.ac{flex:1 1 100%;margin-top:6px;padding-top:0}
+}
