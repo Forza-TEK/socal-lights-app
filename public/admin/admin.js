@@ -74,7 +74,7 @@ function setTab(t, push = true) {
   if (t !== tab || NEXTVIEW) { PVIEW = NEXTVIEW || "pending"; HOPEN = ""; COPEN = ""; OORDER = ""; NEXTVIEW = ""; }
   tab = t;
   document.querySelectorAll("[data-tab]").forEach((b) => { const on = b.dataset.tab === t; b.setAttribute("aria-current", on ? "page" : "false"); });
-  const gname = groupOf(t); document.querySelectorAll("[data-gsheet]").forEach((b) => b.setAttribute("aria-current", SHEETS[b.dataset.gsheet].includes(gname) ? "page" : "false")); // the bottom-bar button of the menu group holding the open page
+  paintBar(); // the bottom-bar button carrying the red line
   $("#ptitle").textContent = TITLES[t] || ""; $("#pgroup").textContent = groupOf(t); setDetail("");
   closeSheet(); window.scrollTo(0, 0);
   if (push && location.hash.split("/")[0] !== "#" + t) history.replaceState(null, "", "#" + t);
@@ -86,16 +86,22 @@ document.addEventListener("click", (e) => { const b = e.target.closest("[data-ta
   document.addEventListener("click", (e) => { if (!e.target.closest(".pm")) shut(); }); document.addEventListener("keydown", (e) => { if (e.key === "Escape") shut(); }); }
 const sheet = $("#side");
 wireFold($("#main"));
+// The red line on the phone bottom bar: on the menu that is open (while its sheet is up), otherwise on the page you are on (Home, or the menu group holding it)
+function paintBar() {
+  const open = document.body.dataset.sheet || "", gname = groupOf(tab);
+  document.querySelectorAll(".bbar [data-tab]").forEach((b) => b.setAttribute("aria-current", !open && b.dataset.tab === tab ? "page" : "false"));
+  document.querySelectorAll("[data-gsheet]").forEach((b) => b.setAttribute("aria-current", (open ? b.dataset.gsheet === open : SHEETS[b.dataset.gsheet].includes(gname)) ? "page" : "false"));
+}
 function closeSheet() {
   document.body.classList.remove("sheet-open"); delete document.body.dataset.sheet; document.querySelectorAll("[data-gsheet]").forEach((b) => b.setAttribute("aria-expanded", "false"));
-  navHeads.forEach(({ b, grp }) => { b.hidden = false; grp.hidden = false; }); const home = document.querySelector("#side .nvlist > .grp:first-child"); if (home) home.hidden = false; navPaint();
+  navHeads.forEach(({ b, grp }) => { b.hidden = false; grp.hidden = false; }); const home = document.querySelector("#side .nvlist > .grp:first-child"); if (home) home.hidden = false; navPaint(); paintBar();
 }
 // Phone: open the sheet showing only the chosen menu group (the Home page has its own bar button)
 function openSheet(key) {
   const want = SHEETS[key] || []; closeSheet();
   navHeads.forEach(({ b, grp, name }) => { const show = want.includes(name); b.hidden = !show; grp.hidden = !show; grp.classList.remove("fold"); });
   const home = document.querySelector("#side .nvlist > .grp:first-child"); if (home) home.hidden = true;
-  document.body.classList.add("sheet-open"); document.body.dataset.sheet = key; document.querySelectorAll("[data-gsheet]").forEach((b) => b.setAttribute("aria-expanded", String(b.dataset.gsheet === key)));
+  document.body.classList.add("sheet-open"); document.body.dataset.sheet = key; document.querySelectorAll("[data-gsheet]").forEach((b) => b.setAttribute("aria-expanded", String(b.dataset.gsheet === key))); paintBar();
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-gsheet]"); if (!b) return; if (document.body.classList.contains("sheet-open") && b.getAttribute("aria-expanded") === "true") closeSheet(); else openSheet(b.dataset.gsheet); });
 $("#scrim").onclick = closeSheet;
